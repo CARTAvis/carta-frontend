@@ -34,41 +34,58 @@ vector<string> systems = {
 string headerStr =
 	"SIMPLE  =                    T / conforms to FITS standard                      BITPIX  =                  -32 / array data type                                NAXIS   =                    3 / number of array dimensions                     NAXIS1  =                 5850                                                  NAXIS2  =                 1074                                                  NAXIS3  =                    1                                                  OBJECT  = 'GALFACTS_N4 Stokes I'                                  /  Object nameCTYPE1  = 'RA---CAR'           /  1st axis type                                 CRVAL1  =           333.750000 /  Reference pixel value                         CRPIX1  =              2925.50 /  Reference pixel                               CDELT1  =           -0.0166667 /  Pixel size in world coordinate units          CROTA1  =               0.0000 /  Axis rotation in degrees                      CTYPE2  = 'DEC--CAR'           /  2nd axis type                                 CRVAL2  =             0.000000 /  Reference pixel value                         CRPIX2  =             -1181.50 /  Reference pixel                               CDELT2  =            0.0166667 /  Pixel size in world coordinate units          CROTA2  =               0.0000 /  Axis rotation in degrees                      CTYPE3  = 'FREQ'               /  3rd axis type                                 CRVAL3  =    1524717952.000000 /  Reference pixel value                         CRPIX3  =                 1.00 /  Reference pixel                               CDELT3  =      -420000.0000000 /  Pixel size in world coordinate units          CROTA3  =               0.0000 /  Axis rotation in degrees                      EQUINOX =              2000.00 /  Equinox of coordinates (if any)               BUNIT   = 'Kelvin'                                 /  Units of pixel data valuesHISTORY Image was compressed by CFITSIO using scaled integer quantization:      HISTORY   q = 2.000000 / quantized level scaling parameter                      HISTORY 'SUBTRACTIVE_DITHER_1' / Pixel Quantization Algorithm                   CHECKSUM= '4LTe5LRd4LRd4LRd'   / HDU checksum updated 2017-06-01T10:19:12       DATASUM = '159657855'          / data unit checksum updated 2017-06-01T10:19:12 END                                                                             ";
 
+AstFitsChan* fitschan = nullptr;
+AstFrameSet* wcsinfo = nullptr;
+
 extern "C" {
+
+EMSCRIPTEN_KEEPALIVE int initFrame(const char* header)
+{
+    int status = 0;
+	astClearStatus;
+    astBegin;
+
+    fitschan = astFitsChan(NULL, NULL, "");
+    if (!fitschan)
+    {
+        cout << "astFitsChan returned null :(" << endl;
+        return 1;
+    }
+    if (!header)
+    {
+        cout << "Missing header argument." << endl;
+        return 1;
+    }
+
+    astPutCards(fitschan, header);
+    wcsinfo = static_cast<AstFrameSet*>(astRead(fitschan));
+
+    if (!astOK)
+    {
+        cout << "Some AST LIB error, check logs." << endl;
+        return 1;
+    }
+    else if (wcsinfo == AST__NULL)
+    {
+        cout << "No WCS found" << endl;
+        return 1;
+    }
+    else if (strcmp(astGetC(wcsinfo, "Class"), "FrameSet"))
+    {
+        cout << "check FITS header (astlib)" << endl;
+        return 1;
+    }
+    return 0;
+}
+
 EMSCRIPTEN_KEEPALIVE int plotCustomGrid(int imageX1, int imageX2, int imageY1, int imageY2, int width, int height, int padding, int gridColor,
 										int tickColor, int axesColor, int borderColor, int titleColor, int numLabColor,
 										int textLabColor, int labelType, double tol, double gapAxis1, double gapAxis2, int sys)
 {
-	int status = 0;
-
-	astClearStatus;
-	AstGuard astGuard;
-
-	AstFitsChan* fitschan = astFitsChan(NULL, NULL, "");
-	if (!fitschan)
-	{
-		cout << "astFitsChan returned null :(" << endl;
-		return 1;
-	}
-	astPutCards(fitschan, headerStr.c_str());
-	AstFrameSet* wcsinfo = static_cast<AstFrameSet*>(astRead(fitschan));
-
-	if (!astOK)
-	{
-		cout << "Some AST LIB error, check logs." << endl;
-		return 1;
-	}
-	else if (wcsinfo == AST__NULL)
-	{
-		cout << "No WCS found" << endl;
-		return 1;
-	}
-	else if (strcmp(astGetC(wcsinfo, "Class"), "FrameSet"))
-	{
-		cout << "check FITS header (astlib)" << endl;
-		return 1;
-	}
-
+    if (!wcsinfo)
+    {
+        return 1;
+    }
 	AstPlot* plot;
 	float hi = 1, lo = -1, scale, x1 = padding, x2 = width - padding, xleft, xright, xscale;
 	float y1 = padding, y2 = height - padding, ybottom, yscale, ytop;
@@ -172,9 +189,4 @@ EMSCRIPTEN_KEEPALIVE int plotCustomGrid(int imageX1, int imageX2, int imageY1, i
 	cout << "Plotted in " << dt << " ms" << endl;
 	return 0;
 }
-}
-
-int main(int argc, char* argv[])
-{
-	plotCustomGrid(0, 1024, 0, 1024, 1024, 1024, 100, 1, 1, 1, 1, 1, 1, 1, 1, 0.02, -1, -1, -1);
 }
