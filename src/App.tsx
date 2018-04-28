@@ -5,6 +5,10 @@ import * as GoldenLayout from "golden-layout";
 import {RootMenuComponent} from "./components/Menu/RootMenuComponent";
 
 class App extends React.Component {
+
+    constructor(props: any) {
+        super(props);
+    }
     public componentDidMount() {
 
         const layoutContents = [{
