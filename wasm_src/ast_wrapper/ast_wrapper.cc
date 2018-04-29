@@ -82,7 +82,8 @@ EMSCRIPTEN_KEEPALIVE int initFrame(const char* header)
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE int plotCustomGrid(int imageX1, int imageX2, int imageY1, int imageY2, int width, int height, int paddingX, int paddingY, int gridColor,
+EMSCRIPTEN_KEEPALIVE int plotCustomGrid(int imageX1, int imageX2, int imageY1, int imageY2, int width, int height,
+                                        int paddingLeft, int paddingRight, int paddingTop, int paddingBottom, int gridColor,
 										int tickColor, int axesColor, int borderColor, int titleColor, int numLabColor,
 										int textLabColor, int labelType, double tol, double gapAxis1, double gapAxis2, int sys)
 {
@@ -91,8 +92,8 @@ EMSCRIPTEN_KEEPALIVE int plotCustomGrid(int imageX1, int imageX2, int imageY1, i
         return 1;
     }
 	AstPlot* plot;
-	float hi = 1, lo = -1, scale, x1 = paddingX, x2 = width - paddingX, xleft, xright, xscale;
-	float y1 = paddingY, y2 = height - paddingY, ybottom, yscale, ytop;
+	float hi = 1, lo = -1, scale, x1 = paddingLeft, x2 = width - paddingRight, xleft, xright, xscale;
+	float y1 = paddingBottom, y2 = height - paddingTop, ybottom, yscale, ytop;
 
 	int nx = imageX2 - imageX1;
 	int ny = imageY2 - imageY1;
