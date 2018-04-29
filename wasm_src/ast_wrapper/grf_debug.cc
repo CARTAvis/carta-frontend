@@ -55,14 +55,14 @@ void applyColor(int primType)
 
 int astGFlush(void)
 {
-	LOG("astGFlush\n");
+	//LOG("astGFlush\n");
 	return 1;
 }
 
 int astGLine(int n, const float* x, const float* y)
 {
 	applyColor(GRF__LINE);
-	LOG("astGLine (%i points)", n);
+	//LOG("astGLine (%i points)", n);
 	if (n == 0)
 	{
 		return 1;
@@ -74,11 +74,11 @@ int astGLine(int n, const float* x, const float* y)
 
 	for (int i = 0; i < n; i++)
 	{
-		LOG(" (%0.3f, %0.3f)", x[i], y[i]);
+		//LOG(" (%0.3f, %0.3f)", x[i], y[i]);
 		EM_ASM_({Module.gridContext.lineTo($0, $1);}, x[i], y[i]);
 	}
 	EM_ASM(Module.gridContext.stroke(););
-	LOG("\n");
+	//LOG("\n");
 	return 1;
 }
 
@@ -91,7 +91,7 @@ int astGQch(float* chv, float* chh)
 	{
 		height = EM_ASM_DOUBLE({return 2*Module.gridContext.measureText("e").width;});
 	}
-	LOG("astGQch: %f\n", height);
+	//LOG("astGQch: %f\n", height);
 
 	if (chh)
 	{
@@ -109,19 +109,19 @@ int astGQch(float* chv, float* chh)
 int astGMark(int n, const float* x, const float* y, int type)
 {
 	applyColor(GRF__MARK);
-	LOG("astGMark (%i points)", n);
+	//LOG("astGMark (%i points)", n);
 	for (int i = 0; i < n; i++)
 	{
-		LOG(" (%0.3f, %0.3f)", x[i], y[i]);
+		//LOG(" (%0.3f, %0.3f)", x[i], y[i]);
 	}
-	LOG("\n");
+	//LOG("\n");
 	return 1;
 }
 
 int astGText(const char* text, float x, float y, const char* just,
 			 float upx, float upy)
 {
-	LOG("astGText (%s) @ (%0.2f, %0.2f) just: %s up %0.2f %0.2f\n", text, x, y, just, upx, upy);
+	//LOG("astGText (%s) @ (%0.2f, %0.2f) just: %s up %0.2f %0.2f\n", text, x, y, just, upx, upy);
 	applyColor(GRF__TEXT);
 
 	if (!just)
@@ -146,7 +146,7 @@ int astGText(const char* text, float x, float y, const char* just,
 		}
 		else
 		{
-			LOG("Unknown text justification: %s\n", just);
+			//LOG("Unknown text justification: %s\n", just);
 		}
 	}
 
@@ -165,7 +165,7 @@ int astGText(const char* text, float x, float y, const char* just,
 	}
 	else
 	{
-		LOG("Unknown text justification: %s\n", just);
+		//LOG("Unknown text justification: %s\n", just);
 	}
 
 	float angle = atan2f(-upx, upy);
@@ -184,7 +184,7 @@ int astGText(const char* text, float x, float y, const char* just,
 int astGTxExt(const char* text, float x, float y, const char* just,
 			  float upx, float upy, float* xb, float* yb)
 {
-	LOG("astGTxExt (%s) @ (%0.2f, %0.2f) just: %s  up: %0.2f %0.2f\n", text, x, y, just, upx, upy);
+	//LOG("astGTxExt (%s) @ (%0.2f, %0.2f) just: %s  up: %0.2f %0.2f\n", text, x, y, just, upx, upy);
 	float height = fontHeight;
 	if (height < 0)
 	{
@@ -223,7 +223,7 @@ int astGTxExt(const char* text, float x, float y, const char* just,
 		}
 		else
 		{
-			LOG("Unknown text justification: %s\n", just);
+			//LOG("Unknown text justification: %s\n", just);
 		}
 	}
 
@@ -251,7 +251,7 @@ int astGTxExt(const char* text, float x, float y, const char* just,
 	}
 	else
 	{
-		LOG("Unknown text justification: %s\n", just);
+		//LOG("Unknown text justification: %s\n", just);
 	}
 
 	float angle = atan2f(-upx, upy);
@@ -273,7 +273,7 @@ int astGAttr(int attr, double value, double* old_value, int prim)
 		{
 			lineThickness = value;
 			EM_ASM_({Module.gridContext.lineWidth = $0;}, lineThickness);
-			LOG("setting line width to %f\n", value);
+			//LOG("setting line width to %f\n", value);
 		}
 	}
 	else if (attr == GRF__COLOUR)
@@ -291,7 +291,7 @@ int astGAttr(int attr, double value, double* old_value, int prim)
 
 int astGScales(float* alpha, float* beta)
 {
-	LOG("astGScales\n");
+	//LOG("astGScales\n");
 	*alpha = 1.0f;
 	*beta = 1.0f;
 	return 1;
@@ -299,7 +299,7 @@ int astGScales(float* alpha, float* beta)
 
 int astGCap(int cap, int value)
 {
-	LOG("astGCap %i:%i\n", cap, value);
+	//LOG("astGCap %i:%i\n", cap, value);
 	if (cap == GRF__SCALES)
 	{
 		return 1;
@@ -312,9 +312,9 @@ int astGCap(int cap, int value)
 
 int astGBBuf(void)
 {
-	LOG("astGBBuf\n");
+	//LOG("astGBBuf\n");
 	numColors = EM_ASM_INT({return Module.colors.length;});
-	EM_ASM_({Module.gridContext.lineWidth = $0;}, lineThickness);
+	EM_ASM_({Module.gridContext.lineWidth = $0 * devicePixelRatio;}, lineThickness);
 	EM_ASM(Module.gridContext.clearRect(0, 0, Module.gridContext.canvas.width, Module.gridContext.canvas.height););
 	fontHeight = -1;
 	return 1;
@@ -322,7 +322,7 @@ int astGBBuf(void)
 
 int astGEBuf(void)
 {
-	LOG("astGEBuf\n");
+	//LOG("astGEBuf\n");
 	return 1;
 }
 
@@ -330,39 +330,39 @@ int astGEBuf(void)
 /* ==================== */
 int astG3DCap(int cap, int value)
 {
-	LOG("astG3DCap %i:%i\n", cap, value);
+	//LOG("astG3DCap %i:%i\n", cap, value);
 	return 1;
 }
 
 int astG3DFlush(void)
 {
-	LOG("astG3DFlush\n");
+	//LOG("astG3DFlush\n");
 	return 1;
 }
 
 int astG3DLine(int n, float* x, float* y, float* z)
 {
-	LOG("astG3DLine  (%i points)\n", n);
+	//LOG("astG3DLine  (%i points)\n", n);
 	return 1;
 }
 
 int astG3DQch(float* ch)
 {
-	LOG("astG3DQch\n");
+	//LOG("astG3DQch\n");
 	*ch = 10.0f;
 	return 1;
 }
 
 int astG3DMark(int n, float* x, float* y, float* z, int type, float norm[3])
 {
-	LOG("astG3DMark  (%i points)\n", n);
+	//LOG("astG3DMark  (%i points)\n", n);
 	return 1;
 }
 
 int astG3DText(const char* text, float ref[3], const char* just,
 			   float up[3], float norm[3])
 {
-	LOG("astG3DText  (%s)\n", text);
+	//LOG("astG3DText  (%s)\n", text);
 	return 1;
 }
 
@@ -370,13 +370,13 @@ int astG3DTxExt(const char* text, float ref[3], const char* just,
 				float up[3], float norm[3], float* xb, float* yb,
 				float* zb, float bl[3])
 {
-	LOG("astG3DTxExt  (%s)\n", text);
+	//LOG("astG3DTxExt  (%s)\n", text);
 	return 1;
 }
 
 int astG3DAttr(int attr, double value, double* old_value, int prim)
 {
-	LOG("astG3DAttr %i -> %f\n", attr, value);
+	//LOG("astG3DAttr %i -> %f\n", attr, value);
 	return 1;
 }
 

@@ -6,8 +6,9 @@ import "./App.css";
 import {PlaceholderComponent} from "./components/Placeholder/PlaceholderComponent";
 import {RootMenuComponent} from "./components/Menu/RootMenuComponent";
 import {ImageViewComponent} from "./components/ImageView/ImageViewComponent";
-import {AppState} from "./AppState";
+import {AppState} from "./Models/AppState";
 import {observer} from "mobx-react";
+import {LabelType, OverlaySettings, SystemType} from "./Models/OverlaySettings";
 
 @observer
 class App extends React.Component<{ appState: AppState }> {
@@ -87,11 +88,30 @@ class App extends React.Component<{ appState: AppState }> {
         this.goldenLayout.registerComponent("placeholder", PlaceholderComponent);
         this.goldenLayout.registerComponent("image-view", ImageViewComponent);
 
+        let settings = new OverlaySettings();
+        settings.system = SystemType.Ecliptic;
+        settings.labelType = LabelType.Exterior;
+        settings.border.visible = true;
+        settings.color = 4;
+        settings.width = 1;
+        settings.tolerance = 0.02;
+        settings.title.visible = true;
+        settings.title.gap = 0.02;
+        settings.title.color = 4;
+        settings.grid.visible = true;
+        settings.grid.color = 3;
+        settings.axes.labelVisible = true;
+        settings.ticks.width = 1;
+        settings.ticks.length = 0.01;
+        this.props.appState.overlaySettings = settings;
+
         AST.onReady.then(() => {
             // We will eventually read the header from a file. Suppressing linting error for now
             // tslint:disable-next-line
             const initResult = AST.initFrame("SIMPLE  =                    T / conforms to FITS standard                      BITPIX  =                  -32 / array data type                                NAXIS   =                    3 / number of array dimensions                     NAXIS1  =                 5850                                                  NAXIS2  =                 1074                                                  NAXIS3  =                    1                                                  OBJECT  = 'GALFACTS_N4 Stokes I'                                  /  Object nameCTYPE1  = 'RA---CAR'           /  1st axis type                                 CRVAL1  =           333.750000 /  Reference pixel value                         CRPIX1  =              2925.50 /  Reference pixel                               CDELT1  =           -0.0166667 /  Pixel size in world coordinate units          CROTA1  =               0.0000 /  Axis rotation in degrees                      CTYPE2  = 'DEC--CAR'           /  2nd axis type                                 CRVAL2  =             0.000000 /  Reference pixel value                         CRPIX2  =             -1181.50 /  Reference pixel                               CDELT2  =            0.0166667 /  Pixel size in world coordinate units          CROTA2  =               0.0000 /  Axis rotation in degrees                      CTYPE3  = 'FREQ'               /  3rd axis type                                 CRVAL3  =    1524717952.000000 /  Reference pixel value                         CRPIX3  =                 1.00 /  Reference pixel                               CDELT3  =      -420000.0000000 /  Pixel size in world coordinate units          CROTA3  =               0.0000 /  Axis rotation in degrees                      EQUINOX =              2000.00 /  Equinox of coordinates (if any)               BUNIT   = 'Kelvin'                                 /  Units of pixel data valuesHISTORY Image was compressed by CFITSIO using scaled integer quantization:      HISTORY   q = 2.000000 / quantized level scaling parameter                      HISTORY 'SUBTRACTIVE_DITHER_1' / Pixel Quantization Algorithm                   CHECKSUM= '4LTe5LRd4LRd4LRd'   / HDU checksum updated 2017-06-01T10:19:12       DATASUM = '159657855'          / data unit checksum updated 2017-06-01T10:19:12 END                                                                             ");
-            console.log(initResult);
+            if (initResult !== 0) {
+                console.error("Problem loading AST library");
+            }
             this.props.appState.astReady = true;
         });
     }

@@ -82,12 +82,11 @@ EMSCRIPTEN_KEEPALIVE int initFrame(const char* header)
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE int plotCustomGrid(int imageX1, int imageX2, int imageY1, int imageY2, int width, int height,
-                                        int paddingLeft, int paddingRight, int paddingTop, int paddingBottom, int gridColor,
-										int tickColor, int axesColor, int borderColor, int titleColor, int numLabColor,
-										int textLabColor, int labelType, double tol, double gapAxis1, double gapAxis2, int sys)
+
+EMSCRIPTEN_KEEPALIVE int plotGrid(int imageX1, int imageX2, int imageY1, int imageY2, int width, int height,
+                                        int paddingLeft, int paddingRight, int paddingTop, int paddingBottom, const char* args)
 {
-    if (!wcsinfo)
+ if (!wcsinfo)
     {
         return 1;
     }
@@ -110,88 +109,14 @@ EMSCRIPTEN_KEEPALIVE int plotCustomGrid(int imageX1, int imageX2, int imageY1, i
 	float gbox[] = {xleft, ybottom, xright, ytop};
 	double pbox[] = {(double)imageX1, (double)imageY1, (double)imageX2, (double)imageY2};
 	auto tStart = chrono::high_resolution_clock::now();
-	plot = astPlot(wcsinfo, gbox, pbox, "");
-
-	if (sys >= 0 && sys < systems.size())
-	{
-		astSet(plot, "System=%s", systems[sys].c_str());
-	}
-
-	astSet(plot, "Font=%i", 3);
-	astSet(plot, "Color=%i", 1);
-
-	astSet(plot, "Grid=%i", gridColor >= 0 ? 1 : 0);
-	if (gridColor >= 0)
-	{
-		astSet(plot, "Color(grid)=%i", gridColor);
-	}
-
-	astSet(plot, "Border=%i", borderColor >= 0 ? 1 : 0);
-	if (borderColor >= 0)
-	{
-		astSet(plot, "Color(border)=%i", borderColor);
-	}
-
-	astSet(plot, "DrawTitle=%i", titleColor >= 0 ? 1 : 0);
-	if (titleColor >= 0)
-	{
-		astSet(plot, "Color(title)=%i", titleColor);
-	}
-
-	astSet(plot, "DrawAxes=%i", axesColor >= 0 ? 1 : 0);
-	if (axesColor >= 0)
-	{
-		astSet(plot, "Color(axes)=%i", axesColor);
-	}
-
-	if (tickColor >= 0)
-	{
-		astSet(plot, "Color(ticks)=%i", tickColor);
-	}
-	else
-	{
-		astSet(plot, "MinTick=0");
-	}
-
-	astSet(plot, "NumLab=%i", numLabColor >= 0 ? 1 : 0);
-	if (numLabColor >= 0)
-	{
-		astSet(plot, "Color(numlab)=%i", numLabColor);
-	}
-
-	astSet(plot, "textLab=%i", textLabColor >= 0 ? 1 : 0);
-	if (numLabColor >= 0)
-	{
-		astSet(plot, "Color(textLab)=%i", textLabColor);
-	}
-
-	if (labelType)
-	{
-		astSet(plot, "Labelling=interior");
-	}
-	else
-	{
-		astSet(plot, "Labelling=exterior");
-	}
-
-	astSet(plot, "Tol=%f", tol);
-
-	if (gapAxis1 > 0)
-	{
-		astSet(plot, "Gap(1)=%f", gapAxis1);
-	}
-	if (gapAxis2 > 0)
-	{
-		astSet(plot, "Gap(2)=%f", gapAxis2);
-	}
-
+	plot = astPlot(wcsinfo, gbox, pbox, args);
 	astBBuf(plot);
-	astGrid(plot);
-	astEBuf(plot);
-	auto tEnd = chrono::high_resolution_clock::now();
-	astAnnul(plot);
-	auto dt = chrono::duration_cast<chrono::milliseconds>(tEnd - tStart).count();
-	cout << "Plotted in " << dt << " ms" << endl;
-	return 0;
+    astGrid(plot);
+    astEBuf(plot);
+    auto tEnd = chrono::high_resolution_clock::now();
+    astAnnul(plot);
+    auto dt = chrono::duration_cast<chrono::milliseconds>(tEnd - tStart).count();
+    cout << "Plotted in " << dt << " ms" << endl;
+    return 0;
 }
 }

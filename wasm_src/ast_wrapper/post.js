@@ -31,7 +31,7 @@ Module.setPalette = function (colors) {
     Module.colors = colors;
 };
 
-Module.setFont = function(font) {
+Module.setFont = function (font) {
     Module.font = font;
     if (Module.gridContext) {
         Module.gridContext.font = font;
@@ -46,35 +46,8 @@ Module.setCanvas = function (canvas) {
     Module.gridContext.font = Module.font;
 };
 
-Module.plot = function (settings) {
-    var defaultColor = (settings.color === undefined) ? Module.DEFAULT_COLOR : settings.color;
-    var defaultPadding = (settings.padding === undefined) ? 100 : settings.padding;
-    Module._plotCustomGrid(
-        (settings.imageX1 === undefined) ? 0 : settings.imageX1,
-        (settings.imageX2 === undefined) ? 500 : settings.imageX2,
-        (settings.imageY1 === undefined) ? 0 : settings.imageY1,
-        (settings.imageY2 === undefined) ? 500 : settings.imageY2,
-        (settings.width === undefined) ? 500 : settings.width,
-        (settings.height === undefined) ? 500 : settings.height,
-        (settings.paddingLeft === undefined) ? defaultPadding : settings.paddingLeft,
-        (settings.paddingRight === undefined) ? defaultPadding : settings.paddingRight,
-        (settings.paddingTop === undefined) ? defaultPadding : settings.paddingTop,
-        (settings.paddingBottom === undefined) ? defaultPadding : settings.paddingBottom,
-        (settings.gridColor === undefined) ? defaultColor : settings.gridColor,
-        (settings.tickColor === undefined) ? defaultColor : settings.tickColor,
-        (settings.axesColor === undefined) ? defaultColor : settings.axesColor,
-        (settings.borderColor === undefined) ? defaultColor : settings.borderColor,
-        (settings.titleColor === undefined) ? defaultColor : settings.titleColor,
-        (settings.numLabColor === undefined) ? defaultColor : settings.numLabColor,
-        (settings.textLabColor === undefined) ? defaultColor : settings.textLabColor,
-        (settings.labelType === undefined) ? Module.LABEL_EXTERIOR : settings.labelType,
-        (settings.tol === undefined) ? Module.DEFAULT_TOLERANCE : settings.tol,
-        (settings.gapAxis1 === undefined) ? -1 : settings.gapAxis1,
-        (settings.gapAxis2 === undefined) ? -1 : settings.gapAxis2,
-        (settings.sys === undefined) ? -1 : settings.sys);
-};
+Module.plot = Module.cwrap('plotGrid', 'number', ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
 
-//Module.plot = Module.cwrap('plotCustomGrid', 'number', Array(19).fill("number"));
 Module.initFrame = Module.cwrap('initFrame', 'number', ['string']);
 
 Module.onReady = new Promise(function (func) {

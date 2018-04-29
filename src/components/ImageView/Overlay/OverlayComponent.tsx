@@ -1,11 +1,13 @@
 import * as React from "react";
 import {Colors} from "@blueprintjs/core";
 import * as AST from "../../../wrappers/ast_wrapper";
+import {LabelType, OverlaySettings} from "../../../Models/OverlaySettings";
 
 export class OverlayComponentProps {
     astReady: boolean;
     width: number;
     height: number;
+    settings: OverlaySettings;
 }
 
 export class OverlayComponent extends React.Component<OverlayComponentProps> {
@@ -25,6 +27,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     }
 
     updateCanvas = () => {
+        const settings = this.props.settings;
+
         this.canvas.width = this.props.width * devicePixelRatio;
         this.canvas.height = this.props.height * devicePixelRatio;
 
@@ -42,8 +46,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             ]);
             let fontSize = 18 * devicePixelRatio;
             let padding = 65;
-            const displayTitle = false;
-            const displayLabelText = true;
+            const displayTitle = settings.title.visible;
+            const displayLabelText = settings.axes.labelVisible;
+            const displayNumText = (settings.axes.numberVisible !== false) && settings.labelType !== LabelType.Interior;
             const minSize = Math.min(this.canvas.width, this.canvas.height);
             const scalingStartSize = 600;
             if (minSize < scalingStartSize) {
@@ -54,29 +59,20 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             AST.setFont(`${fontSize}px sans-serif`);
 
             AST.setCanvas(this.canvas);
-
             const paddingRatios = [
-                (displayLabelText ? 1.0 : 0.6),
+                (displayLabelText ? 0.4 : 0) + (displayNumText ? 0.6 : 0),
                 0.2,
                 (displayTitle ? 1.0 : 0.2),
-                (displayLabelText ? 1.0 : 0.5)
+                (displayLabelText ? 0.4 : 0) + (displayNumText ? 0.6 : 0)
             ];
 
-            AST.plot({
-                imageX1: 0, imageX2: this.props.width - padding * (paddingRatios[0] + paddingRatios[1]),
-                imageY1: 0, imageY2: this.props.height - padding * (paddingRatios[2] + paddingRatios[3]),
-                width: this.props.width * devicePixelRatio, height: this.props.height * devicePixelRatio,
-                paddingLeft: paddingRatios[0] * padding * devicePixelRatio,
-                paddingRight: paddingRatios[1] * padding * devicePixelRatio,
-                paddingTop: paddingRatios[2] * padding * devicePixelRatio,
-                paddingBottom: paddingRatios[3] * padding * devicePixelRatio,
-                labelType: AST.LABEL_EXTERIOR,
-                color: 4,
-                gridColor: 2,
-                textLabColor: displayLabelText ? 4 : -1,
-                titleColor: displayTitle ? 4 : -1,
-                sys: AST.SYS_GALACTIC
-            });
+            AST.plot(
+                0, this.props.width - padding * (paddingRatios[0] + paddingRatios[1]),
+                0, this.props.height - padding * (paddingRatios[2] + paddingRatios[3]),
+                this.props.width * devicePixelRatio, this.props.height * devicePixelRatio,
+                paddingRatios[0] * padding * devicePixelRatio, paddingRatios[1] * padding * devicePixelRatio,
+                paddingRatios[2] * padding * devicePixelRatio, paddingRatios[3] * padding * devicePixelRatio,
+                this.props.settings.stringify());
         }
     };
 
