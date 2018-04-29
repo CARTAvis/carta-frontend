@@ -14,6 +14,7 @@
         "moduleResolution": "node",
         "rootDir": "src",
         "forceConsistentCasingInFileNames": true,
+        "experimentalDecorators": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "noImplicitAny": true,

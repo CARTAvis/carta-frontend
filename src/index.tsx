@@ -7,12 +7,16 @@ import "@blueprintjs/icons/lib/css/blueprint-icons.css";
 import "./layout-base.css";
 import "./layout-theme.css";
 import registerServiceWorker from "./registerServiceWorker";
+import {AppState} from "./AppState";
 
-window["React"] = React;
-window["ReactDOM"] = ReactDOM;
+// GoldenLayout requires these in the global namespace
+window["React"] = React; // tslint:disable-line
+window["ReactDOM"] = ReactDOM; // tslint:disable-line
+
+const appState = new AppState();
 
 ReactDOM.render(
-    <App/>,
+    <App appState={appState}/>,
     document.getElementById("root") as HTMLElement
 );
 registerServiceWorker();

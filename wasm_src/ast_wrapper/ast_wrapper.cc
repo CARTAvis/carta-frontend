@@ -42,6 +42,10 @@ extern "C" {
 EMSCRIPTEN_KEEPALIVE int initFrame(const char* header)
 {
     int status = 0;
+    if (wcsinfo)
+    {
+        astEnd;
+    }
 	astClearStatus;
     astBegin;
 
@@ -78,7 +82,7 @@ EMSCRIPTEN_KEEPALIVE int initFrame(const char* header)
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE int plotCustomGrid(int imageX1, int imageX2, int imageY1, int imageY2, int width, int height, int padding, int gridColor,
+EMSCRIPTEN_KEEPALIVE int plotCustomGrid(int imageX1, int imageX2, int imageY1, int imageY2, int width, int height, int paddingX, int paddingY, int gridColor,
 										int tickColor, int axesColor, int borderColor, int titleColor, int numLabColor,
 										int textLabColor, int labelType, double tol, double gapAxis1, double gapAxis2, int sys)
 {
@@ -87,8 +91,8 @@ EMSCRIPTEN_KEEPALIVE int plotCustomGrid(int imageX1, int imageX2, int imageY1, i
         return 1;
     }
 	AstPlot* plot;
-	float hi = 1, lo = -1, scale, x1 = padding, x2 = width - padding, xleft, xright, xscale;
-	float y1 = padding, y2 = height - padding, ybottom, yscale, ytop;
+	float hi = 1, lo = -1, scale, x1 = paddingX, x2 = width - paddingX, xleft, xright, xscale;
+	float y1 = paddingY, y2 = height - paddingY, ybottom, yscale, ytop;
 
 	int nx = imageX2 - imageX1;
 	int ny = imageY2 - imageY1;

@@ -1,2 +1,18 @@
-## CARTA Frontend
+# CARTA Frontend
 
+## Prerequisites
+The build process relies heavily on `npm` and `nodejs`, so make sure they are installed and accesible.
+WebAssembly compilation requires the Emscripten compiler (`emcc`) to be in the path. Details can be found [here](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html).
+
+
+## Build process:
+There are three steps in the build process. Some are more automated than others.
+* **Building statically linked WebAssembly libraries of dependencies**, such as [AST](https://github.com/Starlink/ast), [ZFP](https://github.com/LLNL/zfp) and [SZ](https://github.com/disheng222/SZ).
+Each dependecy can be built using the individual build scripts in the `wasm_libs` subdirectory, or using the `build_libs.sh` script.
+There are no plans to further automate this process, as the libs are unlikely to require recompilation on a regular basis.
+* **Building WebAssembly wrapper modules**, which either correspond directly to a dependency mentioned above, or are based on custom code (such as converting floating point (FP32) values to RGBA values).
+These modules can be built using the individual build scripts in `wasm_src` subdirectory, or using the `build_wrappers.sh` script.
+Currently, each build script copies the JavaScript portion of the wrapper to `src/wrappers`, and the WebAssembly binary to `public`.
+In future, this step will not be required, once the Webpack build process has been refined. In addition, this process should probably be automated in future, to build whenever changes to the source files occur.
+* **Webpack** is used to build and bundle all the JavaScript, Sass and HTML code elegantly. You can run `npm start` to run a live dev server, while the build process watches for any changes to source files.
+Standalone versions can be built with `npm build`, which produces a distributable build in the `build` folder.

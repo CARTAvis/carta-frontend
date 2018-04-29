@@ -9,7 +9,7 @@ extern "C" {
 #define PI 3.14159265
 #define LOG //printf
 
-double colorVal = 0;
+double colorVals[3];
 
 int appliedColorVal = -1;
 
@@ -40,16 +40,15 @@ void rot2D(float* x, float* y, float cx, float cy, float angle)
 	*y = rotatedY + cy;
 }
 
-void applyColor()
+void applyColor(int primType)
 {
-	int index = ((int) colorVal) % numColors;
-	if (index != appliedColorVal)
+	int index = ((int) colorVals[primType]) % numColors;
+	//if (index != appliedColorVal)
 	{
 		EM_ASM_({
 					Module.gridContext.strokeStyle = Module.colors[$0];
 			Module.gridContext.fillStyle = Module.colors[$0];
 				}, index);
-		LOG("setting line color to %i\n", index);
 		appliedColorVal = index;
 	}
 }
@@ -62,7 +61,7 @@ int astGFlush(void)
 
 int astGLine(int n, const float* x, const float* y)
 {
-	applyColor();
+	applyColor(GRF__LINE);
 	LOG("astGLine (%i points)", n);
 	if (n == 0)
 	{
@@ -109,7 +108,7 @@ int astGQch(float* chv, float* chh)
 
 int astGMark(int n, const float* x, const float* y, int type)
 {
-	applyColor();
+	applyColor(GRF__MARK);
 	LOG("astGMark (%i points)", n);
 	for (int i = 0; i < n; i++)
 	{
@@ -122,9 +121,8 @@ int astGMark(int n, const float* x, const float* y, int type)
 int astGText(const char* text, float x, float y, const char* just,
 			 float upx, float upy)
 {
-	//float width = EM_ASM_DOUBLE({return Module.gridContext.measureText(UTF8ToString($0)).width;}, text);
 	LOG("astGText (%s) @ (%0.2f, %0.2f) just: %s up %0.2f %0.2f\n", text, x, y, just, upx, upy);
-	applyColor();
+	applyColor(GRF__TEXT);
 
 	if (!just)
 	{
@@ -194,8 +192,6 @@ int astGTxExt(const char* text, float x, float y, const char* just,
 	}
 	float width = EM_ASM_DOUBLE({return Module.gridContext.measureText(UTF8ToString($0)).width;}, text);
 
-	applyColor();
-
 	if (!just)
 	{
 		return 0;
@@ -264,31 +260,6 @@ int astGTxExt(const char* text, float x, float y, const char* just,
 	rot2D(xb + 1, yb + 1, x, y, angle);
 	rot2D(xb + 2, yb + 2, x, y, angle);
 	rot2D(xb + 3, yb + 3, x, y, angle);
-
-//	EM_ASM_({Module.gridContext.fillRect($0 - 2, $1 - 2, 4, 4);}, x, y);
-//
-//	EM_ASM_({
-//				Module.gridContext.beginPath();
-//		Module.gridContext.moveTo($0, $1);
-//			}, xb[0], yb[0]);
-//
-//	EM_ASM_({
-//				Module.gridContext.lineTo($0, $1);
-//			}, xb[1], yb[1]);
-//
-//	EM_ASM_({
-//				Module.gridContext.lineTo($0, $1);
-//			}, xb[2], yb[2]);
-//
-//	EM_ASM_({
-//				Module.gridContext.lineTo($0, $1);
-//			}, xb[3], yb[3]);
-//
-//	EM_ASM_({
-//				Module.gridContext.lineTo($0, $1);
-//		Module.gridContext.stroke();
-//			}, xb[0], yb[0]);
-
 	return 1;
 }
 
@@ -307,11 +278,11 @@ int astGAttr(int attr, double value, double* old_value, int prim)
 	}
 	else if (attr == GRF__COLOUR)
 	{
-		*old_value = colorVal;
+		*old_value = colorVals[prim];
 
 		if (value != AST__BAD)
 		{
-			colorVal = value;
+			colorVals[prim] = value;
 		}
 	}
 
