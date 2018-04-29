@@ -25,8 +25,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     }
 
     updateCanvas = () => {
-        this.canvas.width = this.canvas.offsetWidth;
-        this.canvas.height = this.canvas.offsetHeight;
+        this.canvas.width = this.props.width * devicePixelRatio;
+        this.canvas.height = this.props.height * devicePixelRatio;
 
         if (this.props.astReady) {
             AST.setPalette([         // AST color index:
@@ -55,7 +55,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             AST.plot({
                 imageX1: 0, imageX2: this.canvas.width,
                 imageY1: 0, imageY2: this.canvas.height,
-                width: this.canvas.width, height: this.canvas.height,
+                width:  this.props.width * devicePixelRatio, height:  this.props.height * devicePixelRatio,
                 padding: padding,
                 labelType: AST.LABEL_EXTERIOR,
                 color: 4,
