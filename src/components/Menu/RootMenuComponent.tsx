@@ -1,10 +1,15 @@
 import * as React from "react";
 import "./RootMenuComponent.css";
 import {Menu, MenuDivider, MenuItem, Popover, Position} from "@blueprintjs/core";
+import {AppState} from "../../Models/AppState";
+import {observer} from "mobx-react";
 
-export class RootMenuComponent extends React.PureComponent {
+@observer
+export class RootMenuComponent extends React.Component<{ appState: AppState }> {
 
     render() {
+        const appState = this.props.appState;
+
         // Modifier string for shortcut keys. OSX/iOS use '⌘', while Windows uses 'Ctrl + '
         // const modString = "Ctrl + ";
         const modString = "⌘";
@@ -36,7 +41,7 @@ export class RootMenuComponent extends React.PureComponent {
                     <MenuItem text="Custom Preset 1"/>
                     <MenuItem text="Custom Preset 2"/>
                     <MenuDivider/>
-                    <MenuItem text="Customize..." icon={"style"}/>
+                    <MenuItem text="Customize..." icon={"style"} onClick={appState.showOverlaySettings}/>
                     <MenuItem text="Save Current as Preset" icon={"floppy-disk"}/>
                 </MenuItem>
                 <MenuItem text="Graphs" icon={"timeline-line-chart"}>

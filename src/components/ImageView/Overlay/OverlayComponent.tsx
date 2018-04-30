@@ -2,14 +2,17 @@ import * as React from "react";
 import {Colors} from "@blueprintjs/core";
 import * as AST from "../../../wrappers/ast_wrapper";
 import {LabelType, OverlaySettings} from "../../../Models/OverlaySettings";
+import {observer} from "mobx-react";
+import {AppState} from "../../../Models/AppState";
 
 export class OverlayComponentProps {
     astReady: boolean;
     width: number;
     height: number;
-    settings: OverlaySettings;
+    overlaySettings: OverlaySettings;
 }
 
+@observer
 export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     canvas: HTMLCanvasElement;
@@ -26,8 +29,13 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         }
     }
 
+    shouldComponentUpdate(nextProps: OverlayComponentProps, state: any) {
+        console.log(nextProps);
+        return true;
+    }
+
     updateCanvas = () => {
-        const settings = this.props.settings;
+        const settings = this.props.overlaySettings;
 
         this.canvas.width = this.props.width * devicePixelRatio;
         this.canvas.height = this.props.height * devicePixelRatio;
@@ -73,10 +81,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 padding = Math.max(15, minSize / scalingStartSize * padding);
             }
             const paddingRatios = [
-                (displayLabelText[1] ? 0.5 : 0) + (displayNumText[1] ? 0.6 : 0),
+                Math.max(0.2, (displayLabelText[1] ? 0.5 : 0) + (displayNumText[1] ? 0.6 : 0)),
                 0.2,
                 (displayTitle ? 1.0 : 0.2),
-                (displayLabelText[0] ? 0.4 : 0) + (displayNumText[0] ? 0.6 : 0)
+                Math.max(0.2, (displayLabelText[0] ? 0.4 : 0) + (displayNumText[0] ? 0.6 : 0))
             ];
 
             AST.setFont(`${fontSize}px sans-serif`);
@@ -87,12 +95,14 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 this.props.width * devicePixelRatio, this.props.height * devicePixelRatio,
                 paddingRatios[0] * padding * devicePixelRatio, paddingRatios[1] * padding * devicePixelRatio,
                 paddingRatios[2] * padding * devicePixelRatio, paddingRatios[3] * padding * devicePixelRatio,
-                this.props.settings.stringify());
+                settings.stringify());
         }
     };
 
     render() {
         const backgroundColor = "#F2F2F2";
-        return <canvas ref={(ref) => this.canvas = ref} style={{width: "100%", height: "100%", backgroundColor: backgroundColor}}/>;
+        const overlayString = this.props.overlaySettings.stringify();
+        return <canvas ref={(ref) => this.canvas = ref} style={{width: "100%", height: "100%", backgroundColor: backgroundColor}}/>
+        ;
     }
 }

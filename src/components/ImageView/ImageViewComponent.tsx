@@ -23,10 +23,10 @@ export class ImageViewComponent extends React.Component<{ appState: AppState }, 
         return (
             <div style={{width: "100%", height: "100%"}}>
                 {appState.astReady &&
-                <OverlayComponent astReady={appState.astReady} width={this.state.width} height={this.state.height} settings={appState.overlaySettings}/>
+                <OverlayComponent astReady={appState.astReady} width={this.state.width} height={this.state.height} overlaySettings={appState.overlaySettings}/>
                 }
                 {!appState.astReady &&
-                <NonIdealState visual={<Spinner className="astLoadingSpinner"/>} title="Loading AST Library"/>
+                <NonIdealState visual={<Spinner className="astLoadingSpinner"/>} title={"Loading AST Library"}/>
                 }
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
             </div>

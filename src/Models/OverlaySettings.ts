@@ -1,3 +1,5 @@
+import {observable} from "mobx";
+
 export enum LabelType {
     Interior = "Interior",
     Exterior = "Exterior"
@@ -14,11 +16,11 @@ export enum SystemType {
 }
 
 export class OverlayTitleSettings {
-    visible?: boolean;
-    font?: number;
-    gap?: number;
-    color?: number;
-    text: string;
+    @observable visible?: boolean;
+    @observable font?: number;
+    @observable gap?: number;
+    @observable color?: number;
+    @observable text: string;
 
     stringify() {
         let stringList = [];
@@ -42,9 +44,9 @@ export class OverlayTitleSettings {
 }
 
 export class OverlayGridSettings {
-    visible?: boolean;
-    color?: number;
-    width?: number;
+    @observable visible?: boolean;
+    @observable color?: number;
+    @observable width?: number;
 
     stringify() {
         let stringList = [];
@@ -62,9 +64,9 @@ export class OverlayGridSettings {
 }
 
 export class OverlayBorderSettings {
-    visible?: boolean;
-    color?: number;
-    width?: number;
+    @observable visible?: boolean;
+    @observable color?: number;
+    @observable width?: number;
 
     stringify() {
         let stringList = [];
@@ -83,11 +85,11 @@ export class OverlayBorderSettings {
 }
 
 export class OverlayTickSettings {
-    density?: number;
-    color?: number;
-    width?: number;
-    length?: number;
-    majorLength?: number;
+    @observable density?: number;
+    @observable color?: number;
+    @observable width?: number;
+    @observable length?: number;
+    @observable majorLength?: number;
 
     stringify() {
         let stringList = [];
@@ -111,21 +113,21 @@ export class OverlayTickSettings {
     }
 }
 
-export class OverlayAxesSettings {
-    visible?: boolean;
-    color?: number;
-    width?: number;
-    gap?: number;
+export class OverlayAxisSettings {
+    @observable visible?: boolean;
+    @observable color?: number;
+    @observable width?: number;
+    @observable gap?: number;
 
-    numberVisible?: boolean;
-    numberFont?: number;
-    numberColor?: number;
+    @observable numberVisible?: boolean;
+    @observable numberFont?: number;
+    @observable numberColor?: number;
 
-    labelVisible?: boolean;
-    labelColor?: number;
-    labelGap?: number;
-    labelFont?: number;
-    labelText?: string;
+    @observable labelVisible?: boolean;
+    @observable labelColor?: number;
+    @observable labelGap?: number;
+    @observable labelFont?: number;
+    @observable labelText?: string;
 
     stringify(index: number) {
         const indexStringBrackets = (index > 0) ? `(${index})` : "";
@@ -178,22 +180,22 @@ export class OverlayAxesSettings {
 
 export class OverlaySettings {
     // Global options
-    labelType?: LabelType;
-    color?: number;
-    width?: number;
-    font?: number;
-    tolerance?: number;
-    system?: SystemType;
+    @observable labelType?: LabelType;
+    @observable color?: number;
+    @observable width?: number;
+    @observable font?: number;
+    @observable tolerance?: number;
+    @observable system?: SystemType;
 
     // Individual settings
-    grid = new OverlayGridSettings();
-    title = new OverlayTitleSettings();
-    border = new OverlayBorderSettings();
-    axes = new OverlayAxesSettings();
-    axis = [ new OverlayAxesSettings(), new OverlayAxesSettings()];
-    ticks = new OverlayTickSettings();
+    @observable grid = new OverlayGridSettings();
+    @observable title = new OverlayTitleSettings();
+    @observable border = new OverlayBorderSettings();
+    @observable axes = new OverlayAxisSettings();
+    @observable axis = [ new OverlayAxisSettings(), new OverlayAxisSettings()];
+    @observable ticks = new OverlayTickSettings();
     // Title settings
-    extra?: string;
+    @observable extra?: string;
 
     stringify() {
         let stringList = [];
