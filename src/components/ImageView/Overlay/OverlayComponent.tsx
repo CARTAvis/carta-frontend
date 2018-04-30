@@ -33,6 +33,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         this.canvas.height = this.props.height * devicePixelRatio;
 
         if (this.props.astReady) {
+            // Set default AST palette
             AST.setPalette([         // AST color index:
                 Colors.BLACK,        // 0
                 Colors.WHITE,        // 1
@@ -45,27 +46,41 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 Colors.LIGHT_GRAY3   // 8
             ]);
             let fontSize = 18 * devicePixelRatio;
-            let padding = 65;
+
+            // Determine which plot elements are shown, in order to adjust padding
             const displayTitle = settings.title.visible;
-            const displayLabelText = settings.axes.labelVisible;
-            const displayNumText = (settings.axes.numberVisible !== false) && settings.labelType !== LabelType.Interior;
+            const displayLabelText = settings.axis.map((axis) => {
+                if (axis.labelVisible !== undefined) {
+                    return axis.labelVisible;
+                }
+                return settings.axes.labelVisible !== false;
+            });
+            const displayNumText = settings.axis.map((axis) => {
+                if (settings.labelType === LabelType.Interior) {
+                    return false;
+                }
+                if (axis.numberVisible !== undefined) {
+                    return axis.numberVisible;
+                }
+                return settings.axes.numberVisible !== false;
+            });
+
+            let padding = 65;
             const minSize = Math.min(this.canvas.width, this.canvas.height);
             const scalingStartSize = 600;
             if (minSize < scalingStartSize) {
                 fontSize = Math.max(10, minSize / scalingStartSize * fontSize);
                 padding = Math.max(15, minSize / scalingStartSize * padding);
-                console.log(fontSize);
             }
-            AST.setFont(`${fontSize}px sans-serif`);
-
-            AST.setCanvas(this.canvas);
             const paddingRatios = [
-                (displayLabelText ? 0.4 : 0) + (displayNumText ? 0.6 : 0),
+                (displayLabelText[1] ? 0.5 : 0) + (displayNumText[1] ? 0.6 : 0),
                 0.2,
                 (displayTitle ? 1.0 : 0.2),
-                (displayLabelText ? 0.4 : 0) + (displayNumText ? 0.6 : 0)
+                (displayLabelText[0] ? 0.4 : 0) + (displayNumText[0] ? 0.6 : 0)
             ];
 
+            AST.setFont(`${fontSize}px sans-serif`);
+            AST.setCanvas(this.canvas);
             AST.plot(
                 0, this.props.width - padding * (paddingRatios[0] + paddingRatios[1]),
                 0, this.props.height - padding * (paddingRatios[2] + paddingRatios[3]),

@@ -98,11 +98,9 @@ class App extends React.Component<{ appState: AppState }> {
         settings.title.visible = true;
         settings.title.gap = 0.02;
         settings.title.color = 4;
+        settings.title.text = "A custom AST plot";
         settings.grid.visible = true;
         settings.grid.color = 3;
-        settings.axes.labelVisible = true;
-        settings.ticks.width = 1;
-        settings.ticks.length = 0.01;
         this.props.appState.overlaySettings = settings;
 
         AST.onReady.then(() => {

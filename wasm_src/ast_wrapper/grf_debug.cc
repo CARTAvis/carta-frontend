@@ -7,7 +7,6 @@ extern "C" {
 #include <math.h>
 
 #define PI 3.14159265
-#define LOG //printf
 
 double colorVals[3];
 
@@ -43,14 +42,11 @@ void rot2D(float* x, float* y, float cx, float cy, float angle)
 void applyColor(int primType)
 {
 	int index = ((int) colorVals[primType]) % numColors;
-	//if (index != appliedColorVal)
-	{
-		EM_ASM_({
-					Module.gridContext.strokeStyle = Module.colors[$0];
-			Module.gridContext.fillStyle = Module.colors[$0];
-				}, index);
-		appliedColorVal = index;
-	}
+    EM_ASM_({
+                Module.gridContext.strokeStyle = Module.colors[$0];
+        Module.gridContext.fillStyle = Module.colors[$0];
+            }, index);
+    appliedColorVal = index;
 }
 
 int astGFlush(void)
@@ -69,7 +65,7 @@ int astGLine(int n, const float* x, const float* y)
 	}
 	EM_ASM_({
 				Module.gridContext.beginPath();
-		Module.gridContext.moveTo($0, $1);
+		        Module.gridContext.moveTo($0, $1);
 			}, x[0], y[0]);
 
 	for (int i = 0; i < n; i++)
@@ -110,11 +106,6 @@ int astGMark(int n, const float* x, const float* y, int type)
 {
 	applyColor(GRF__MARK);
 	//LOG("astGMark (%i points)", n);
-	for (int i = 0; i < n; i++)
-	{
-		//LOG(" (%0.3f, %0.3f)", x[i], y[i]);
-	}
-	//LOG("\n");
 	return 1;
 }
 

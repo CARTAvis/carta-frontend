@@ -35,7 +35,7 @@ export class OverlayTitleSettings {
             stringList.push(`Color(Title)=${this.color}`);
         }
         if (this.text !== undefined) {
-            stringList.push(`Title=${this.text}`);
+            stringList.push(`Title(1)=${this.text}`);
         }
         return stringList.join(", ");
     }
@@ -115,59 +115,61 @@ export class OverlayAxesSettings {
     visible?: boolean;
     color?: number;
     width?: number;
-    gap1?: number;
-    gap2?: number;
+    gap?: number;
 
     numberVisible?: boolean;
     numberFont?: number;
     numberColor?: number;
-    labelFont?: number;
 
     labelVisible?: boolean;
     labelColor?: number;
     labelGap?: number;
+    labelFont?: number;
+    labelText?: string;
 
-    stringify() {
+    stringify(index: number) {
+        const indexStringBrackets = (index > 0) ? `(${index})` : "";
+        const indexString = (index > 0) ? `${index}` : "";
         let stringList = [];
         if (this.visible !== undefined) {
-            stringList.push(`DrawAxes=${this.visible ? 1 : 0}`);
+            stringList.push(`DrawAxes${indexStringBrackets}=${this.visible ? 1 : 0}`);
         }
         if (this.color !== undefined) {
-            stringList.push(`Color(Axes)=${this.color}`);
+            stringList.push(`Color(Axes${indexString})=${this.color}`);
         }
         if (this.width !== undefined) {
-            stringList.push(`Width(Axes)=${this.width}`);
+            stringList.push(`Width(Axes${indexString})=${this.width}`);
         }
-        if (this.gap1 !== undefined) {
-            stringList.push(`Gap(1)=${this.gap1}`);
-        }
-        if (this.gap2 !== undefined) {
-            stringList.push(`Gap(2)=${this.gap2}`);
+        if (this.gap !== undefined) {
+            stringList.push(`Gap${indexStringBrackets}=${this.gap}`);
         }
 
         if (this.numberVisible !== undefined) {
-            stringList.push(`NumLab=${this.numberVisible ? 1 : 0}`);
+            stringList.push(`NumLab${indexStringBrackets}=${this.numberVisible ? 1 : 0}`);
         }
         if (this.numberFont !== undefined) {
-            stringList.push(`Font(NumLab)=${this.numberFont}`);
+            stringList.push(`Font(NumLab${indexString})=${this.numberFont}`);
         }
 
         if (this.numberColor !== undefined) {
-            stringList.push(`Color(NumLab)=${this.numberColor}`);
+            stringList.push(`Color(NumLab${indexString})=${this.numberColor}`);
         }
 
         if (this.labelVisible !== undefined) {
-            stringList.push(`TextLab=${this.labelVisible ? 1 : 0}`);
+            stringList.push(`TextLab${indexStringBrackets}=${this.labelVisible ? 1 : 0}`);
         }
         if (this.labelFont !== undefined) {
-            stringList.push(`Font(TextLab)=${this.labelFont}`);
+            stringList.push(`Font(TextLab${indexString})=${this.labelFont}`);
         }
 
         if (this.labelColor !== undefined) {
-            stringList.push(`Color(TextLab)=${this.labelColor}`);
+            stringList.push(`Color(TextLab${indexString})=${this.labelColor}`);
         }
         if (this.labelGap !== undefined) {
-            stringList.push(`TextLabGap=${this.labelGap}`);
+            stringList.push(`TextLabGap${indexStringBrackets}=${this.labelGap}`);
+        }
+        if (this.labelText !== undefined) {
+            stringList.push(`Label${indexStringBrackets}=${this.labelText}`);
         }
 
         return stringList.join(", ");
@@ -188,6 +190,7 @@ export class OverlaySettings {
     title = new OverlayTitleSettings();
     border = new OverlayBorderSettings();
     axes = new OverlayAxesSettings();
+    axis = [ new OverlayAxesSettings(), new OverlayAxesSettings()];
     ticks = new OverlayTickSettings();
     // Title settings
     extra?: string;
@@ -210,21 +213,13 @@ export class OverlaySettings {
             stringList.push(`System=${this.system}`);
         }
 
-        if (this.grid !== undefined) {
-            stringList.push(this.grid.stringify());
-        }
-        if (this.title !== undefined) {
-            stringList.push(this.title.stringify());
-        }
-        if (this.border !== undefined) {
-            stringList.push(this.border.stringify());
-        }
-        if (this.axes !== undefined) {
-            stringList.push(this.axes.stringify());
-        }
-        if (this.ticks !== undefined) {
-            stringList.push(this.ticks.stringify());
-        }
+        stringList.push(this.grid.stringify());
+        stringList.push(this.title.stringify());
+        stringList.push(this.border.stringify());
+        stringList.push(this.axes.stringify(0));
+        stringList.push(this.axis[0].stringify(1));
+        stringList.push(this.axis[1].stringify(2));
+        stringList.push(this.ticks.stringify());
 
         if (this.extra !== undefined) {
             stringList.push(this.extra);
