@@ -120,11 +120,11 @@ class App extends React.Component<{ appState: AppState }> {
     }
 
     public render() {
-
+        const appState = this.props.appState;
         return (
             <div className="App">
-                <RootMenuComponent appState={this.props.appState}/>
-                <OverlaySettingsDialogComponent appState={this.props.appState}/>
+                <RootMenuComponent appState={appState}/>
+                <OverlaySettingsDialogComponent appState={appState}/>
             </div>
         );
     }

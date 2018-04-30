@@ -5,7 +5,7 @@ export class AppState {
     @observable astReady = false;
     @observable overlaySettings: OverlaySettings;
 
-    @observable overlaySettingsDialogVisible = true;
+    @observable overlaySettingsDialogVisible = false;
 
     @action showOverlaySettings = () => {
         this.overlaySettingsDialogVisible = true;
@@ -14,8 +14,4 @@ export class AppState {
     @action hideOverlaySettings = () => {
         this.overlaySettingsDialogVisible = false;
     };
-
-    @action testUpdate = (val: boolean) => {
-        this.overlaySettings.title.visible = val;
-    }
 }
