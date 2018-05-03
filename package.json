@@ -6,6 +6,7 @@
         "@blueprintjs/core": "^2.2.1",
         "golden-layout": "^1.5.9",
         "konva": "^2.0.3",
+        "lodash": "^4.17.10",
         "mobx": "^4.2.0",
         "mobx-react": "^5.0.0",
         "react": "^16.3.2",
@@ -29,6 +30,7 @@
     "devDependencies": {
         "@types/jest": "^22.2.3",
         "@types/jquery": "^3.3.1",
+        "@types/lodash": "^4.14.108",
         "@types/node": "^9.6.7",
         "@types/react": "^16.3.13",
         "@types/react-dom": "^16.0.5",

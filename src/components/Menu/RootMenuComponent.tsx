@@ -61,6 +61,7 @@ export class RootMenuComponent extends React.Component<{ appState: AppState }> {
 
         const panelMenu = (
             <Menu>
+                <MenuItem text="Undo layout change" icon={"undo"} disabled={!appState.layoutSettings.hasLayoutHistory} onClick={appState.layoutSettings.undoLayoutChange}/>
                 <MenuItem text="Profiles" icon={"timeline-line-chart"}>
                     <MenuItem text="X-Profile"/>
                     <MenuItem text="Y-Profile"/>

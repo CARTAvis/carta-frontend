@@ -1,4 +1,4 @@
-import {observable} from "mobx";
+import {computed, observable} from "mobx";
 
 export enum LabelType {
     Interior = "Interior",
@@ -22,7 +22,7 @@ export class OverlayTitleSettings {
     @observable color?: number;
     @observable text: string;
 
-    stringify() {
+    @computed get styleString() {
         let stringList = [];
         if (this.visible !== undefined) {
             stringList.push(`DrawTitle=${this.visible ? 1 : 0}`);
@@ -48,7 +48,7 @@ export class OverlayGridSettings {
     @observable color?: number;
     @observable width?: number;
 
-    stringify() {
+    @computed get styleString() {
         let stringList = [];
         if (this.visible !== undefined) {
             stringList.push(`Grid=${this.visible ? 1 : 0}`);
@@ -68,7 +68,7 @@ export class OverlayBorderSettings {
     @observable color?: number;
     @observable width?: number;
 
-    stringify() {
+    @computed get styleString() {
         let stringList = [];
         if (this.visible !== undefined) {
             stringList.push(`Border=${this.visible ? 1 : 0}`);
@@ -91,7 +91,7 @@ export class OverlayTickSettings {
     @observable length?: number;
     @observable majorLength?: number;
 
-    stringify() {
+    @computed get styleString() {
         let stringList = [];
         if (this.density !== undefined) {
             stringList.push(`MinTick=${this.density}`);
@@ -129,9 +129,15 @@ export class OverlayAxisSettings {
     @observable labelFont?: number;
     @observable labelText?: string;
 
-    stringify(index: number) {
-        const indexStringBrackets = (index > 0) ? `(${index})` : "";
-        const indexString = (index > 0) ? `${index}` : "";
+    axisIndex: number;
+
+    constructor(axisIndex: number) {
+        this.axisIndex = axisIndex;
+    }
+
+    @computed get styleString() {
+        const indexStringBrackets = (this.axisIndex > 0) ? `(${this.axisIndex})` : "";
+        const indexString = (this.axisIndex > 0) ? `${this.axisIndex}` : "";
         let stringList = [];
         if (this.visible !== undefined) {
             stringList.push(`DrawAxes${indexStringBrackets}=${this.visible ? 1 : 0}`);
@@ -191,11 +197,15 @@ export class OverlaySettings {
     @observable grid = new OverlayGridSettings();
     @observable title = new OverlayTitleSettings();
     @observable border = new OverlayBorderSettings();
-    @observable axes = new OverlayAxisSettings();
-    @observable axis = [ new OverlayAxisSettings(), new OverlayAxisSettings()];
+    @observable axes = new OverlayAxisSettings(0);
+    @observable axis = [new OverlayAxisSettings(1), new OverlayAxisSettings(2)];
     @observable ticks = new OverlayTickSettings();
     // Title settings
     @observable extra?: string;
+
+    @computed get styleString() {
+        return this.stringify();
+    }
 
     stringify() {
         let stringList = [];
@@ -215,13 +225,13 @@ export class OverlaySettings {
             stringList.push(`System=${this.system}`);
         }
 
-        stringList.push(this.grid.stringify());
-        stringList.push(this.title.stringify());
-        stringList.push(this.border.stringify());
-        stringList.push(this.axes.stringify(0));
-        stringList.push(this.axis[0].stringify(1));
-        stringList.push(this.axis[1].stringify(2));
-        stringList.push(this.ticks.stringify());
+        stringList.push(this.grid.styleString);
+        stringList.push(this.title.styleString);
+        stringList.push(this.border.styleString);
+        stringList.push(this.axes.styleString);
+        stringList.push(this.axis[0].styleString);
+        stringList.push(this.axis[1].styleString);
+        stringList.push(this.ticks.styleString);
 
         if (this.extra !== undefined) {
             stringList.push(this.extra);

@@ -14,12 +14,12 @@ import {LabelType, OverlaySettings, SystemType} from "./Models/OverlaySettings";
 @observer
 class App extends React.Component<{ appState: AppState }> {
 
-    goldenLayout: GoldenLayout;
-    layoutContents: ItemConfigType[];
-
     constructor(props: { appState: AppState }) {
         super(props);
-        this.layoutContents = [{
+
+        const appState = this.props.appState;
+
+        const initialLayout: ItemConfigType[] = [{
             type: "row",
             content: [{
                 type: "column",
@@ -37,11 +37,13 @@ class App extends React.Component<{ appState: AppState }> {
                         type: "react-component",
                         component: "placeholder",
                         title: "Animation",
+                        id: "animation",
                         props: {label: "Animation placeholder"}
                     }, {
                         type: "react-component",
                         component: "placeholder",
                         title: "Color map",
+                        id: "colormap",
                         props: {label: "Color map placeholder"}
                     }]
                 }]
@@ -51,16 +53,19 @@ class App extends React.Component<{ appState: AppState }> {
                     type: "react-component",
                     component: "placeholder",
                     title: "X Profile: Cursor",
+                    id: "spatialprofile0",
                     props: {label: "Graph placeholder"}
                 }, {
                     type: "react-component",
                     component: "placeholder",
                     title: "Y Profile: Cursor",
+                    id: "spatialprofile1",
                     props: {label: "Graph placeholder"}
                 }, {
                     type: "react-component",
                     component: "placeholder",
                     title: "Z Profile: Cursor",
+                    id: "spectralprofile0",
                     props: {label: "Graph placeholder"}
                 }, {
                     type: "stack",
@@ -69,25 +74,30 @@ class App extends React.Component<{ appState: AppState }> {
                         type: "react-component",
                         component: "placeholder",
                         title: "Histogram: Region #1",
+                        id: "histogram0",
                         props: {label: "Histogram placeholder"}
                     }, {
                         type: "react-component",
                         component: "placeholder",
                         title: "Statistics: Region #1",
+                        id: "statistics0",
                         props: {label: "Statistics placeholder"}
                     }]
                 }]
             }]
         }];
 
-        this.goldenLayout = new GoldenLayout({
+        const layout = new GoldenLayout({
             settings: {
                 showPopoutIcon: false
             },
-            content: this.layoutContents
+            content: initialLayout
         });
-        this.goldenLayout.registerComponent("placeholder", PlaceholderComponent);
-        this.goldenLayout.registerComponent("image-view", ImageViewComponent);
+
+        layout.registerComponent("placeholder", PlaceholderComponent);
+        layout.registerComponent("image-view", ImageViewComponent);
+
+        appState.layoutSettings.layout = layout;
 
         let settings = new OverlaySettings();
         settings.system = SystemType.Ecliptic;
@@ -102,7 +112,7 @@ class App extends React.Component<{ appState: AppState }> {
         settings.title.text = "A custom AST plot";
         settings.grid.visible = true;
         settings.grid.color = 3;
-        this.props.appState.overlaySettings = settings;
+        appState.overlaySettings = settings;
 
         AST.onReady.then(() => {
             // We will eventually read the header from a file. Suppressing linting error for now
@@ -111,12 +121,12 @@ class App extends React.Component<{ appState: AppState }> {
             if (initResult !== 0) {
                 console.error("Problem loading AST library");
             }
-            this.props.appState.astReady = true;
+            appState.astReady = true;
         });
     }
 
     public componentDidMount() {
-        this.goldenLayout.init();
+        this.props.appState.layoutSettings.layout.init();
     }
 
     public render() {

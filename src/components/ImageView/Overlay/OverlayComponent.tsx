@@ -3,7 +3,6 @@ import {Colors} from "@blueprintjs/core";
 import * as AST from "../../../wrappers/ast_wrapper";
 import {LabelType, OverlaySettings} from "../../../Models/OverlaySettings";
 import {observer} from "mobx-react";
-import {AppState} from "../../../Models/AppState";
 
 export class OverlayComponentProps {
     astReady: boolean;
@@ -14,7 +13,6 @@ export class OverlayComponentProps {
 
 @observer
 export class OverlayComponent extends React.Component<OverlayComponentProps> {
-
     canvas: HTMLCanvasElement;
 
     componentDidMount() {
@@ -27,11 +25,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         if (this.canvas) {
             this.updateCanvas();
         }
-    }
-
-    shouldComponentUpdate(nextProps: OverlayComponentProps, state: any) {
-        console.log(nextProps);
-        return true;
     }
 
     updateCanvas = () => {
@@ -95,14 +88,14 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 this.props.width * devicePixelRatio, this.props.height * devicePixelRatio,
                 paddingRatios[0] * padding * devicePixelRatio, paddingRatios[1] * padding * devicePixelRatio,
                 paddingRatios[2] * padding * devicePixelRatio, paddingRatios[3] * padding * devicePixelRatio,
-                settings.stringify());
+                settings.styleString);
         }
     };
 
     render() {
         const backgroundColor = "#F2F2F2";
-        const overlayString = this.props.overlaySettings.stringify();
-        return <canvas ref={(ref) => this.canvas = ref} style={{width: "100%", height: "100%", backgroundColor: backgroundColor}}/>
-        ;
+        const styleString = this.props.overlaySettings.styleString;
+        return <canvas key={styleString} ref={(ref) => this.canvas = ref} style={{width: "100%", height: "100%", backgroundColor: backgroundColor}}/>;
+
     }
 }
