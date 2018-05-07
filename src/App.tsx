@@ -100,7 +100,7 @@ class App extends React.Component<{ appState: AppState }> {
         appState.layoutSettings.layout = layout;
 
         let settings = new OverlaySettings();
-        settings.system = SystemType.Ecliptic;
+        settings.system = SystemType.Native;
         settings.labelType = LabelType.Exterior;
         settings.border.visible = true;
         settings.color = 4;
@@ -112,6 +112,7 @@ class App extends React.Component<{ appState: AppState }> {
         settings.title.text = "A custom AST plot";
         settings.grid.visible = true;
         settings.grid.color = 3;
+        settings.extra = "Format(1) = d";
         appState.overlaySettings = settings;
 
         AST.onReady.then(() => {

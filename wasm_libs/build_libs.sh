@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-sh ./build_ast.sh
+bash ./build_ast.sh

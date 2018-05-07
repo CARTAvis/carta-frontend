@@ -6,6 +6,7 @@ extern "C" {
 #include <emscripten.h>
 #include <math.h>
 
+#define LOG printf
 #define PI 3.14159265
 
 double colorVals[3];
@@ -43,9 +44,9 @@ void applyColor(int primType)
 {
 	int index = ((int) colorVals[primType]) % numColors;
     EM_ASM_({
-                Module.gridContext.strokeStyle = Module.colors[$0];
+        Module.gridContext.strokeStyle = Module.colors[$0];
         Module.gridContext.fillStyle = Module.colors[$0];
-            }, index);
+    }, index);
     appliedColorVal = index;
 }
 
@@ -64,13 +65,12 @@ int astGLine(int n, const float* x, const float* y)
 		return 1;
 	}
 	EM_ASM_({
-				Module.gridContext.beginPath();
-		        Module.gridContext.moveTo($0, $1);
-			}, x[0], y[0]);
+        Module.gridContext.beginPath();
+        Module.gridContext.moveTo($0, $1);
+    }, x[0], y[0]);
 
 	for (int i = 0; i < n; i++)
 	{
-		//LOG(" (%0.3f, %0.3f)", x[i], y[i]);
 		EM_ASM_({Module.gridContext.lineTo($0, $1);}, x[i], y[i]);
 	}
 	EM_ASM(Module.gridContext.stroke(););
@@ -105,7 +105,28 @@ int astGQch(float* chv, float* chh)
 int astGMark(int n, const float* x, const float* y, int type)
 {
 	applyColor(GRF__MARK);
-	//LOG("astGMark (%i points)", n);
+	if (n == 0)
+    {
+        return 1;
+    }
+
+    EM_ASM_({
+        Module.gridContext.textAlign = "center";
+        Module.gridContext.textBaseline = "middle";
+        var index = Math.max(Math.min($0, Module.shapes.length -1), 0);
+        Module.gridContext.symbolText = Module.shapes[index];
+    }, type);
+
+    for (int i = 0; i < n; i++)
+    {
+        EM_ASM_({
+            Module.gridContext.save();
+        	Module.gridContext.translate($0, $1);
+        	Module.gridContext.scale(1, -1);
+            Module.gridContext.fillText(Module.gridContext.symbolText, 0, 0);
+        	Module.gridContext.restore();
+        }, x[i], y[i]);
+    }
 	return 1;
 }
 
@@ -161,13 +182,13 @@ int astGText(const char* text, float x, float y, const char* just,
 
 	float angle = atan2f(-upx, upy);
 	EM_ASM_({
-				Module.gridContext.save();
+        Module.gridContext.save();
 		Module.gridContext.translate($1, $2);
 		Module.gridContext.rotate($3);
 		Module.gridContext.scale(1, -1);
 		Module.gridContext.fillText(UTF8ToString($0), 0, 0);
 		Module.gridContext.restore();
-			}, text, x, y, angle);
+    }, text, x, y, angle);
 
 	return 1;
 }
@@ -305,8 +326,10 @@ int astGBBuf(void)
 {
 	//LOG("astGBBuf\n");
 	numColors = EM_ASM_INT({return Module.colors.length;});
-	EM_ASM_({Module.gridContext.lineWidth = $0 * devicePixelRatio;}, lineThickness);
-	EM_ASM(Module.gridContext.clearRect(0, 0, Module.gridContext.canvas.width, Module.gridContext.canvas.height););
+	EM_ASM_({
+	    Module.gridContext.lineWidth = $0 * devicePixelRatio;
+	    Module.gridContext.clearRect(0, 0, Module.gridContext.canvas.width, Module.gridContext.canvas.height);
+    }, lineThickness);
 	fontHeight = -1;
 	return 1;
 }

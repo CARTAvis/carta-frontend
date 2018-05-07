@@ -26,6 +26,20 @@ Module.colors = [
     "yellow",
     "grey"
 ];
+Module.shapes = [
+    "\u25A1", // Square
+    "\u25E6",  // Little circle
+    "\u002B",  // Cross
+    "\u26B9",  // Sextile (star)
+    "\u25CB",  // Larger circle
+    "\u2A09",  // Cross
+    "\u25A1", // Square (repeat)
+    "\u25BD", // Triangle
+    "\u2295", // Circled plus
+    "\u25A1", // Square (repeat)
+    "\u25C7", // Diamond
+    "\u2606", // White star
+];
 
 Module.setPalette = function (colors) {
     Module.colors = colors;

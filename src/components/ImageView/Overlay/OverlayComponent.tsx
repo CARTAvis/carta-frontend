@@ -3,6 +3,7 @@ import {Colors} from "@blueprintjs/core";
 import * as AST from "../../../wrappers/ast_wrapper";
 import {LabelType, OverlaySettings} from "../../../Models/OverlaySettings";
 import {observer} from "mobx-react";
+import {MouseEvent} from "react";
 
 export class OverlayComponentProps {
     astReady: boolean;
@@ -26,6 +27,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             this.updateCanvas();
         }
     }
+
+    handleMouseMove = (ev: React.MouseEvent<HTMLCanvasElement>) => {
+        //console.log(`(${ev.nativeEvent.offsetX}, ${ev.nativeEvent.offsetY}`);
+    };
 
     updateCanvas = () => {
         const settings = this.props.overlaySettings;
@@ -95,7 +100,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     render() {
         const backgroundColor = "#F2F2F2";
         const styleString = this.props.overlaySettings.styleString;
-        return <canvas key={styleString} ref={(ref) => this.canvas = ref} style={{width: "100%", height: "100%", backgroundColor: backgroundColor}}/>;
+        return <canvas key={styleString} ref={(ref) => this.canvas = ref} style={{width: "100%", height: "100%", backgroundColor: backgroundColor}} onMouseMove={this.handleMouseMove}/>;
 
     }
 }
