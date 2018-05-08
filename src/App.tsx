@@ -11,6 +11,8 @@ import {AppState} from "./Models/AppState";
 import {observer} from "mobx-react";
 import {LabelType, OverlaySettings, SystemType} from "./Models/OverlaySettings";
 import {Control} from "carta-protobuf";
+import {SpatialProfileData, SpatialProfileState} from "./Models/SpatialProfileState";
+import {SpatialProfilerComponent} from "./components/SpatialProfiler/SpatialProfilerComponent";
 
 @observer
 class App extends React.Component<{ appState: AppState }> {
@@ -52,16 +54,26 @@ class App extends React.Component<{ appState: AppState }> {
                 type: "column",
                 content: [{
                     type: "react-component",
-                    component: "placeholder",
+                    component: "spatial-profiler",
                     title: "X Profile: Cursor",
                     id: "spatialprofile0",
-                    props: {label: "Graph placeholder"}
+                    props: {
+                        label: "X Profile (Cursor)",
+                        dataSourceId: -1,
+                        profileCoordinate: "x",
+                        appState: this.props.appState
+                    }
                 }, {
                     type: "react-component",
-                    component: "placeholder",
+                    component: "spatial-profiler",
                     title: "Y Profile: Cursor",
                     id: "spatialprofile1",
-                    props: {label: "Graph placeholder"}
+                    props: {
+                        label: "Y Profile (Cursor)",
+                        dataSourceId: -1,
+                        profileCoordinate: "y",
+                        appState: this.props.appState
+                    }
                 }, {
                     type: "react-component",
                     component: "placeholder",
@@ -97,6 +109,7 @@ class App extends React.Component<{ appState: AppState }> {
 
         layout.registerComponent("placeholder", PlaceholderComponent);
         layout.registerComponent("image-view", ImageViewComponent);
+        layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
 
         appState.layoutSettings.layout = layout;
 
@@ -123,7 +136,9 @@ class App extends React.Component<{ appState: AppState }> {
             if (initResult !== 0) {
                 console.error("Problem loading AST library");
             }
-            appState.astReady = true;
+            else {
+                appState.astReady = true;
+            }
         });
 
         // ProtoBuf test
@@ -136,6 +151,45 @@ class App extends React.Component<{ appState: AppState }> {
         });
 
         console.log({validMessage, registerViewerMessage});
+
+        // Spatial profile data test: Cursor
+        let spatialProfileTest = new SpatialProfileState();
+        spatialProfileTest.channel = 0;
+        spatialProfileTest.stokes = 0;
+        spatialProfileTest.fileId = 0;
+        spatialProfileTest.regionId = -1;
+        spatialProfileTest.x = 50;
+        spatialProfileTest.y = 50;
+        spatialProfileTest.profiles = [{
+            start: 0,
+            end: 99,
+            coordinate: "x",
+            values: new Float32Array([
+                3.5388799, 3.5388799, 3.5388799, 3.5388799, 3.5388799, 3.5388799, 3.5388799, 3.5388799, 3.5388799, 3.4591336, 3.4561,
+                3.4072924, 3.3721337, 3.3832974, 3.4105334, 3.4524047, 3.4580958, 3.4375236, 3.4199784, 3.4393167, 3.4584327, 3.4354074,
+                3.4113927, 3.4119952, 3.4215453, 3.4216359, 3.4213932, 3.4325855, 3.4327922, 3.398506, 3.399336, 3.437289, 3.4664133, 3.4839017,
+                3.4926062, 3.493307, 3.4989746, 3.4689262, 3.4236014, 3.41666, 3.4301221, 3.4599838, 3.465103, 3.4571815, 3.4482892, 3.4676614,
+                3.496216, 3.5149648, 3.524428, 3.5305812, 3.5366623, 3.5252733, 3.5099807, 3.5153043, 3.5147445, 3.5075433, 3.4916546, 3.491599,
+                3.5145745, 3.6262999, 3.974516, 4.168722, 4.255072, 4.140615, 3.8385026, 3.6227393, 3.5287037, 3.5015194, 3.506729, 3.605974,
+                3.6752694, 3.572344, 3.5049593, 3.6320043, 3.7007551, 3.7074296, 3.7284214, 3.71259, 3.5978725, 3.6083283, 3.6992102, 3.6576242,
+                3.557638, 3.5043185, 3.5170414, 3.601478, 3.7584405, 3.8834133, 3.8931904, 3.814434, 3.6640775, 3.5430145, 3.5342467, 3.5469003,
+                3.5544434, 3.5179012, 3.4899187, 3.4986625, 3.5043032, 3.5049388])
+        }, {
+            start: 0,
+            end: 99,
+            coordinate: "y",
+            values: new Float32Array([
+                3.4649298, 3.4667826, 3.4629383, 3.466211, 3.4725702, 3.4732285, 3.4746306, 3.4783895, 3.478682, 3.4795306, 3.4864075, 3.4880533,
+                3.4830766, 3.4778461, 3.4737396, 3.4744494, 3.4713385, 3.472508, 3.4888499, 3.5189433, 3.5597272, 3.5714843, 3.545362, 3.507979,
+                3.4646971, 3.4514968, 3.456988, 3.467615, 3.5172741, 3.5968275, 3.6836078, 3.826141, 3.9673371, 4.0046005, 3.9301507, 3.7608857,
+                3.5661457, 3.487837, 3.4686396, 3.4595885, 3.4436076, 3.4299421, 3.4464827, 3.4818513, 3.509606, 3.5292587, 3.536447, 3.522934,
+                3.493671, 3.4837656, 3.4992337, 3.5113368, 3.5172505, 3.518542, 3.5195243, 3.5194263, 3.5064735, 3.482475, 3.4564917, 3.4352887,
+                3.4251409, 3.417951, 3.4148626, 3.41891, 3.4224284, 3.4267948, 3.435942, 3.4396746, 3.438761, 3.4439719, 3.4420073, 3.4346523,
+                3.4311812, 3.4243217, 3.4254432, 3.4329243, 3.43806, 3.4335177, 3.4192092, 3.417901, 3.4213035, 3.4223235, 3.4333832, 3.4351563,
+                3.4341018, 3.4453797, 3.4654388, 3.4729166, 3.470188, 3.4677384, 3.468177, 3.4676323, 3.470549, 3.4872558, 3.5295255, 3.5618677,
+                3.5519793, 3.5231485, 3.5053034, 3.5028384])
+        }];
+        appState.spatialProfiles.set(spatialProfileTest.regionId, spatialProfileTest);
     }
 
     public componentDidMount() {
