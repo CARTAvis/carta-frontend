@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Colors} from "@blueprintjs/core";
-import * as AST from "../../../wrappers/ast_wrapper";
+import * as AST from "ast_wrapper";
 import {LabelType, OverlaySettings} from "../../../Models/OverlaySettings";
 import {observer} from "mobx-react";
 import {MouseEvent} from "react";
@@ -29,7 +29,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     }
 
     handleMouseMove = (ev: React.MouseEvent<HTMLCanvasElement>) => {
-        //console.log(`(${ev.nativeEvent.offsetX}, ${ev.nativeEvent.offsetY}`);
+        // console.log(`(${ev.nativeEvent.offsetX}, ${ev.nativeEvent.offsetY}`);
     };
 
     updateCanvas = () => {

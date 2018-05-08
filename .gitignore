@@ -166,5 +166,6 @@ src/*.css
 # AST
 wasm_libs/ast/*
 wasm_libs/ast-8.6.2.tar.gz
+/wasm_src/ast_wrapper/build/*
 public/ast_wrapper.wasm
-/src/wrappers/ast_wrapper.js
+/protobuf/build/

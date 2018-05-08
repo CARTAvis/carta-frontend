@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as GoldenLayout from "golden-layout";
 import {ItemConfigType} from "golden-layout";
-import * as AST from "./wrappers/ast_wrapper";
+import * as AST from "ast_wrapper";
 import "./App.css";
 import {PlaceholderComponent} from "./components/Placeholder/PlaceholderComponent";
 import {RootMenuComponent} from "./components/Menu/RootMenuComponent";
@@ -10,6 +10,7 @@ import {OverlaySettingsDialogComponent} from "./components/Dialogs/OverlaySettin
 import {AppState} from "./Models/AppState";
 import {observer} from "mobx-react";
 import {LabelType, OverlaySettings, SystemType} from "./Models/OverlaySettings";
+import {Control} from "carta-protobuf";
 
 @observer
 class App extends React.Component<{ appState: AppState }> {
@@ -124,6 +125,17 @@ class App extends React.Component<{ appState: AppState }> {
             }
             appState.astReady = true;
         });
+
+        // ProtoBuf test
+        let registerViewerMessage = Control.RegisterViewer.create({
+            sessionId: "test"
+        });
+
+        let validMessage = Control.RegisterViewer.verify({
+            sessionId: "test"
+        });
+
+        console.log({validMessage, registerViewerMessage});
     }
 
     public componentDidMount() {
