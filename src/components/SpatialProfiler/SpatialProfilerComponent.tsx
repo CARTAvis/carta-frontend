@@ -1,11 +1,14 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {AppState} from "../../Models/AppState";
-import {SpatialProfileData} from "../../Models/SpatialProfileState";
-import Plot from "react-plotly.js";
+import * as Plotly from "plotly.js/dist/plotly-cartesian";
+import createPlotlyComponent from "react-plotly.js/factory";
 import ReactResizeDetector from "react-resize-detector";
 import {Config, Data, Layout} from "plotly.js";
 import "./SpatialProfilerComponent.css";
+
+// This allows us to use a minimal Plotly.js bundle with React-Plotly.js (900k compared to 2.7 MB)
+const Plot = createPlotlyComponent(Plotly);
 
 class SpatialProfilerComponentProps {
     label: string;
@@ -69,7 +72,6 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
                 for (let i = 0; i < xVals.length; i++) {
                     xVals[i] = coordinateData[0].start + i;
                 }
-
 
                 plotData.push({
                     x: xVals,

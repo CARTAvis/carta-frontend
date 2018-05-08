@@ -11,7 +11,7 @@ import {AppState} from "./Models/AppState";
 import {observer} from "mobx-react";
 import {LabelType, OverlaySettings, SystemType} from "./Models/OverlaySettings";
 import {Control} from "carta-protobuf";
-import {SpatialProfileData, SpatialProfileState} from "./Models/SpatialProfileState";
+import {SpatialProfileState} from "./Models/SpatialProfileState";
 import {SpatialProfilerComponent} from "./components/SpatialProfiler/SpatialProfilerComponent";
 
 @observer
