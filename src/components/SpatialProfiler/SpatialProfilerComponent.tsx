@@ -75,9 +75,10 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
                     x: xVals,
                     y: coordinateData[0].values,
                     type: "scatter",
-                    mode: "lines",
+                    mode: "line",
                     line: {
-                        width: 1.0
+                        width: 1.0,
+                        shape: "hv"
                     }
 
                 });

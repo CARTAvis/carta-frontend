@@ -159,7 +159,7 @@ class App extends React.Component<{ appState: AppState }> {
         spatialProfileTest.fileId = 0;
         spatialProfileTest.regionId = -1;
         spatialProfileTest.x = 50;
-        spatialProfileTest.y = 50;
+        spatialProfileTest.y = 25;
         spatialProfileTest.profiles = [{
             start: 0,
             end: 99,
