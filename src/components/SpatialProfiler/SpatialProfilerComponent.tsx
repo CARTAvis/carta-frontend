@@ -53,9 +53,7 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
             }
         };
         // DefinitelyTyped PR #25608 issued to fix Data typing
-        // let plotData: Partial<Data[]> = [];
-        let plotData = [];
-
+        let plotData: Partial<Data[]> = [];
         let plotConfig: Partial<Config> = {
             displaylogo: false,
             modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "toggleHover", "toggleSpikelines", "hoverClosestCartesian", "hoverCompareCartesian"],
@@ -77,12 +75,11 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
                     x: xVals,
                     y: coordinateData[0].values,
                     type: "scatter",
-                    mode: "line",
+                    mode: "lines",
                     line: {
                         width: 1.0,
                         shape: "hv"
                     }
-
                 });
                 plotLayout.shapes = [{
                     yref: "paper",
