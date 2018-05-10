@@ -85,7 +85,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 Math.max(0.2, (displayLabelText[0] ? 0.4 : 0) + (displayNumText[0] ? 0.6 : 0))
             ];
 
-            AST.setFont(`${fontSize}px sans-serif`);
             AST.setCanvas(this.canvas);
             AST.plot(
                 0, this.props.width - padding * (paddingRatios[0] + paddingRatios[1]),

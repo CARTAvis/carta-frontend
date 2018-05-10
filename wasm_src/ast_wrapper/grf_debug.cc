@@ -16,7 +16,9 @@ double interval = 100;
 int counter = 0;
 int numColors = 1;
 
-double fontHeight = -1;
+int numFonts = 1;
+int fontVals[3];
+double fontSizeVals[3];
 
 void rot2D(float* x, float* y, float cx, float cy, float angle)
 {
@@ -43,6 +45,18 @@ void applyColor(int primType)
         Module.gridContext.fillStyle = Module.colors[$0];
     }, index);
     appliedColorVal = index;
+}
+
+void applyFont(int primType)
+{
+    double height = fontSizeVals[primType];
+    int index = ((int) fontVals[primType]) % numFonts;
+
+    EM_ASM_({
+        var font = Module.fonts[$0];
+        font = font.replace("{size}", $1 * devicePixelRatio + "px");
+        Module.gridContext.font = font;
+    }, index, height);
 }
 
 int astGFlush(void)
@@ -74,7 +88,8 @@ int astGQch(float* chv, float* chh)
 {
     // canvas does not provide an easy method of measuring height.
     // measuring the width of the character "E" and doubling is a crude approximation
-    float height = fontHeight;
+    float height = fontSizeVals[GRF__TEXT];
+    applyFont(GRF__FONT);
     if (height < 0)
     {
         height = EM_ASM_DOUBLE({return 2*Module.gridContext.measureText("e").width;});
@@ -96,6 +111,7 @@ int astGQch(float* chv, float* chh)
 int astGMark(int n, const float* x, const float* y, int type)
 {
     applyColor(GRF__MARK);
+    applyFont(GRF__MARK);
     if (n == 0)
     {
         return 1;
@@ -125,7 +141,7 @@ int astGText(const char* text, float x, float y, const char* just,
              float upx, float upy)
 {
     applyColor(GRF__TEXT);
-
+    applyFont(GRF__TEXT);
     if (!just)
     {
         return 0;
@@ -186,7 +202,8 @@ int astGText(const char* text, float x, float y, const char* just,
 int astGTxExt(const char* text, float x, float y, const char* just,
               float upx, float upy, float* xb, float* yb)
 {
-    float height = fontHeight;
+    float height = fontSizeVals[GRF__TEXT];
+    applyFont(GRF__TEXT);
     if (height < 0)
     {
         height = EM_ASM_DOUBLE({return 2*Module.gridContext.measureText("e").width;});
@@ -266,6 +283,9 @@ int astGTxExt(const char* text, float x, float y, const char* just,
 
 int astGAttr(int attr, double value, double* old_value, int prim)
 {
+    const char attrStrings[5][32] = {"GRF__STYLE", "GRF__WIDTH", "GRF__SIZE", "GRF__FONT", "GRF__COLOUR"};
+    const char primStrings[3][32] = {"GRF__TEXT", "GRF__LINE", "GRF__MARK"};
+
     if (attr == GRF__WIDTH)
     {
         *old_value = lineThickness;
@@ -283,6 +303,22 @@ int astGAttr(int attr, double value, double* old_value, int prim)
         if (value != AST__BAD)
         {
             colorVals[prim] = value;
+        }
+    }
+    else if (attr == GRF__SIZE)
+    {
+        *old_value = fontSizeVals[prim];
+        if (value != AST__BAD)
+        {
+            fontSizeVals[prim] = value;
+        }
+    }
+    else if (attr == GRF__FONT)
+    {
+        *old_value = fontVals[prim];
+        if (value != AST__BAD)
+        {
+            fontVals[prim] = (int)value;
         }
     }
 
@@ -309,11 +345,15 @@ int astGCap(int cap, int value)
 int astGBBuf(void)
 {
     numColors = EM_ASM_INT({return Module.colors.length;});
+    numFonts = EM_ASM_INT({return Module.fonts.length;});
     EM_ASM_({
         Module.gridContext.lineWidth = $0 * devicePixelRatio;
+        Module.gridContext.font = Module.fonts[0];
         Module.gridContext.clearRect(0, 0, Module.gridContext.canvas.width, Module.gridContext.canvas.height);
     }, lineThickness);
-    fontHeight = -1;
+    fontSizeVals[0] = 20;
+    fontSizeVals[1] = 20;
+    fontSizeVals[2] = 20;
     return 1;
 }
 

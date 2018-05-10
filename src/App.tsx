@@ -127,6 +127,11 @@ class App extends React.Component<{ appState: AppState }> {
         settings.grid.visible = true;
         settings.grid.color = 3;
         settings.extra = "Format(1) = d";
+        settings.title.font = 2;
+        settings.axes.labelFontSize = 15;
+        settings.axes.labelFont = 1;
+        settings.axes.numberFontSize = 10;
+
         appState.overlaySettings = settings;
 
         AST.onReady.then(() => {

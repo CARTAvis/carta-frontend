@@ -6,13 +6,15 @@ WebAssembly compilation requires the Emscripten compiler (`emcc`) to be in the p
 
 
 ## Build process:
-There are three steps in the build process. Some are more automated than others.
+There are four steps in the build process. Some are more automated than others.
 * **Building statically linked WebAssembly libraries of dependencies**, such as [AST](https://github.com/Starlink/ast), [ZFP](https://github.com/LLNL/zfp) and [SZ](https://github.com/disheng222/SZ).
 Each dependecy can be built using the individual build scripts in the `wasm_libs` subdirectory, or using the `build_libs.sh` script.
 There are no plans to further automate this process, as the libs are unlikely to require recompilation on a regular basis.
 * **Building WebAssembly wrapper modules**, which either correspond directly to a dependency mentioned above, or are based on custom code (such as converting floating point (FP32) values to RGBA values).
 These modules can be built using the individual build scripts in `wasm_src` subdirectory, or using the `build_wrappers.sh` script.
-Currently, each build script copies the JavaScript portion of the wrapper to `src/wrappers`, and the WebAssembly binary to `public`.
-In future, this step will not be required, once the Webpack build process has been refined. In addition, this process should probably be automated in future, to build whenever changes to the source files occur.
+Currently, each build script symlinks the JavaScript portion of the wrapper to a subdirectory of `node_modules`, and copies the WebAssembly binary to `public`.
+When running `npm start`, this step is performend whenever changes to `.c`, `.cc` or `post.js` files in the `wasm_src` folder are detected.
+* **Building static protocol buffer code** is done using the `build_proto.sh` script in the `protobuf` folder, which builds the static JavaScript code, as well as the TypeScript definitions, and symlinks to the `node_modules/carta-protobuf` directory.
+When running `npm start`, this step is performend whenever changes to `.proto` files in the `protobuf` folder are detected.
 * **Webpack** is used to build and bundle all the JavaScript, Sass and HTML code elegantly. You can run `npm start` to run a live dev server, while the build process watches for any changes to source files.
 Standalone versions can be built with `npm build`, which produces a distributable build in the `build` folder.

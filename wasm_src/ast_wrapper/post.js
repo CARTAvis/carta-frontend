@@ -14,7 +14,29 @@ Module.SYS_GALACTIC = 3;
 Module.SYS_ICRS = 4;
 Module.SYS_J200 = 5;
 
-Module.font = "20px Arial";
+Module.fonts = [
+    "{size} sans-serif",
+    "italic {size} sans-serif",
+    "bold {size} sans-serif",
+    "bold italic {size} sans-serif",
+    "{size} times",
+    "italic {size} times",
+    "bold {size} times",
+    "bold italic {size} times",
+    "{size} arial",
+    "bold {size} arial",
+    "italic {size} arial",
+    "bold italic {size} arial",
+    "{size} palatino",
+    "italic {size} palatino",
+    "bold {size} palatino",
+    "bold italic {size} palatino",
+    "{size} courier new",
+    "italic {size} courier new",
+    "bold {size} courier new",
+    "bold italic {size} courier new"
+];
+
 Module.colors = [
     "black",
     "white",
@@ -45,11 +67,8 @@ Module.setPalette = function (colors) {
     Module.colors = colors;
 };
 
-Module.setFont = function (font) {
-    Module.font = font;
-    if (Module.gridContext) {
-        Module.gridContext.font = font;
-    }
+Module.setFontList = function (fonts) {
+    Module.fonts = fonts;
 };
 
 Module.setCanvas = function (canvas) {

@@ -18,6 +18,7 @@ export enum SystemType {
 export class OverlayTitleSettings {
     @observable visible?: boolean;
     @observable font?: number;
+    @observable fontSize?: number;
     @observable gap?: number;
     @observable color?: number;
     @observable text: string;
@@ -29,6 +30,9 @@ export class OverlayTitleSettings {
         }
         if (this.font !== undefined) {
             stringList.push(`Font(Title)=${this.font}`);
+        }
+        if (this.fontSize !== undefined) {
+            stringList.push(`Size(Title)=${this.fontSize}`);
         }
         if (this.gap !== undefined) {
             stringList.push(`TitleGap=${this.gap}`);
@@ -121,12 +125,14 @@ export class OverlayAxisSettings {
 
     @observable numberVisible?: boolean;
     @observable numberFont?: number;
+    @observable numberFontSize?: number;
     @observable numberColor?: number;
 
     @observable labelVisible?: boolean;
     @observable labelColor?: number;
     @observable labelGap?: number;
     @observable labelFont?: number;
+    @observable labelFontSize?: number;
     @observable labelText?: string;
 
     axisIndex: number;
@@ -158,7 +164,9 @@ export class OverlayAxisSettings {
         if (this.numberFont !== undefined) {
             stringList.push(`Font(NumLab${indexString})=${this.numberFont}`);
         }
-
+        if (this.numberFontSize !== undefined) {
+            stringList.push(`Size(NumLab${indexString})=${this.numberFontSize}`);
+        }
         if (this.numberColor !== undefined) {
             stringList.push(`Color(NumLab${indexString})=${this.numberColor}`);
         }
@@ -169,7 +177,9 @@ export class OverlayAxisSettings {
         if (this.labelFont !== undefined) {
             stringList.push(`Font(TextLab${indexString})=${this.labelFont}`);
         }
-
+        if (this.labelFontSize !== undefined) {
+            stringList.push(`Size(TextLab${indexString})=${this.labelFontSize}`);
+        }
         if (this.labelColor !== undefined) {
             stringList.push(`Color(TextLab${indexString})=${this.labelColor}`);
         }
@@ -190,6 +200,7 @@ export class OverlaySettings {
     @observable color?: number;
     @observable width?: number;
     @observable font?: number;
+    @observable fontSize?: number;
     @observable tolerance?: number;
     @observable system?: SystemType;
 
@@ -220,6 +231,9 @@ export class OverlaySettings {
         }
         if (this.font !== undefined) {
             stringList.push(`Font=${this.font}`);
+        }
+        if (this.fontSize !== undefined) {
+            stringList.push(`Size=${this.fontSize}`);
         }
         if (this.system !== undefined && this.system !== SystemType.Native) {
             stringList.push(`System=${this.system}`);
