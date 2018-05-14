@@ -126,7 +126,7 @@ class App extends React.Component<{ appState: AppState }> {
         settings.title.text = "A custom AST plot";
         settings.grid.visible = true;
         settings.grid.color = 3;
-        settings.extra = "Format(1) = d";
+        settings.extra = "Format(1) = d.1, Format(2) = d.1";
         settings.title.font = 2;
         settings.axes.labelFontSize = 15;
         settings.axes.labelFont = 1;

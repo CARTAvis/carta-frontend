@@ -93,4 +93,36 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(int imageX1, int imageX2, int imageY1, int ima
     astAnnul(plot);
     return 0;
 }
+
+EMSCRIPTEN_KEEPALIVE const char* formatCoordinate(int axis, double value)
+{
+    if (!wcsinfo)
+    {
+        return nullptr;
+    }
+
+    return astFormat(wcsinfo, axis, value);
+}
+
+EMSCRIPTEN_KEEPALIVE int setWCSAttribute(const char* attrib)
+{
+    if (!wcsinfo)
+    {
+        return 1;
+    }
+
+    astSet(wcsinfo, attrib);
+    return 0;
+}
+
+EMSCRIPTEN_KEEPALIVE int transformCoordinates(int npoint, const double xin[], const double yin[], int forward, double xout[], double yout[])
+{
+    if (!wcsinfo)
+    {
+        return 1;
+    }
+
+    astTran2(wcsinfo, npoint, xin, yin, forward, xout, yout);
+    return 0;
+}
 }

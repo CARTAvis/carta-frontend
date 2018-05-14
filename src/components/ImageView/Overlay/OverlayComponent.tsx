@@ -86,13 +86,28 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             ];
 
             AST.setCanvas(this.canvas);
+            const Nx = this.props.width - padding * (paddingRatios[0] + paddingRatios[1]);
+            const Ny = this.props.height - padding * (paddingRatios[2] + paddingRatios[3]);
             AST.plot(
-                0, this.props.width - padding * (paddingRatios[0] + paddingRatios[1]),
-                0, this.props.height - padding * (paddingRatios[2] + paddingRatios[3]),
+                0, Nx,
+                0, Ny,
                 this.props.width * devicePixelRatio, this.props.height * devicePixelRatio,
                 paddingRatios[0] * padding * devicePixelRatio, paddingRatios[1] * padding * devicePixelRatio,
                 paddingRatios[2] * padding * devicePixelRatio, paddingRatios[3] * padding * devicePixelRatio,
                 settings.styleString);
+
+            // AST trans2 testing
+            const x = new Float64Array([0, Nx, Nx, 0]);
+            const y = new Float64Array([0, 0, Ny, Ny]);
+            const convertedWCS = (AST.pixToWCSVector(x, y));
+            for (let i = 0; i < convertedWCS.x.length; i++) {
+                console.log(AST.getFormattedCoordinates(convertedWCS.x[i], convertedWCS.y[i], "Format(1) = d.2"));
+            }
+
+            for (let i = 0; i < x.length; i++) {
+                const converted = AST.pixToWCS(x[i], y[i]);
+                console.log(AST.getFormattedCoordinates(converted.x, converted.y, "Format(1) = d.2"));
+            }
         }
     };
 
