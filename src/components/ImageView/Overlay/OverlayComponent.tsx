@@ -7,6 +7,7 @@ import {MouseEvent} from "react";
 
 export class OverlayComponentProps {
     astReady: boolean;
+    wcsInfo: number;
     width: number;
     height: number;
     overlaySettings: OverlaySettings;
@@ -38,7 +39,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         this.canvas.width = this.props.width * devicePixelRatio;
         this.canvas.height = this.props.height * devicePixelRatio;
 
-        if (this.props.astReady) {
+        if (this.props.astReady && this.props.wcsInfo) {
             // Set default AST palette
             AST.setPalette([         // AST color index:
                 Colors.BLACK,        // 0
@@ -89,6 +90,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             const Nx = this.props.width - padding * (paddingRatios[0] + paddingRatios[1]);
             const Ny = this.props.height - padding * (paddingRatios[2] + paddingRatios[3]);
             AST.plot(
+                this.props.wcsInfo,
                 0, Nx,
                 0, Ny,
                 this.props.width * devicePixelRatio, this.props.height * devicePixelRatio,
@@ -99,14 +101,14 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             // AST trans2 testing
             const x = new Float64Array([0, Nx, Nx, 0]);
             const y = new Float64Array([0, 0, Ny, Ny]);
-            const convertedWCS = (AST.pixToWCSVector(x, y));
+            const convertedWCS = (AST.pixToWCSVector(this.props.wcsInfo, x, y));
             for (let i = 0; i < convertedWCS.x.length; i++) {
-                console.log(AST.getFormattedCoordinates(convertedWCS.x[i], convertedWCS.y[i], "Format(1) = d.2"));
+                console.log(AST.getFormattedCoordinates(this.props.wcsInfo, convertedWCS.x[i], convertedWCS.y[i], "Format(1) = d.2"));
             }
 
             for (let i = 0; i < x.length; i++) {
-                const converted = AST.pixToWCS(x[i], y[i]);
-                console.log(AST.getFormattedCoordinates(converted.x, converted.y, "Format(1) = d.2"));
+                const converted = AST.pixToWCS(this.props.wcsInfo, x[i], y[i]);
+                console.log(AST.getFormattedCoordinates(this.props.wcsInfo, converted.x, converted.y, "Format(1) = d.2"));
             }
         }
     };

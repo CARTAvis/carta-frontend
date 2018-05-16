@@ -84,20 +84,22 @@ Module.setCanvas = function (canvas) {
     Module.gridContext.translate(0, -canvas.height);
     Module.gridContext.font = Module.font;
 };
-Module.setWCSAttributeString = Module.cwrap("setWCSAttribute", "number", ["string"]);
-Module.formatCoordinate = Module.cwrap("formatCoordinate", "string", ["number", "number"]);
-Module.getFormattedCoordinates = function (x, y, formatString) {
+
+Module.set = Module.cwrap("set", "number", ["number", "string"]);
+Module.format = Module.cwrap("format", "string", ["number", "number", "number"]);
+Module.transform = Module.cwrap("transform", "number", ["number", "number", "number", "number", "number", "number", "number"]);
+
+Module.getFormattedCoordinates = function (wcsInfo, x, y, formatString) {
     if (formatString) {
-        Module.setWCSAttributeString(formatString);
+        Module.set(wcsInfo, formatString);
     }
 
-    var xFormat = Module.formatCoordinate(1, x);
-    var yFormat = Module.formatCoordinate(2, y);
+    var xFormat = Module.format(wcsInfo, 1, x);
+    var yFormat = Module.format(wcsInfo, 2, y);
     return [xFormat, yFormat];
 };
 
-Module.transformCoordinates = Module.cwrap("transformCoordinates", "number", ["number", "number", "number", "number", "number", "number"]);
-Module.pixToWCSVector = function (xIn, yIn) {
+Module.pixToWCSVector = function (wcsInfo, xIn, yIn) {
     // Return empty array if arguments are invalid
     if (!(xIn instanceof Float64Array) || !(yIn instanceof Float64Array) || xIn.length !== yIn.length) {
         return {x: new Float64Array(1), y: new Float64Array(1)};
@@ -119,24 +121,24 @@ Module.pixToWCSVector = function (xIn, yIn) {
 
     Module.HEAPF64.set(xIn, Module.xIn / 8);
     Module.HEAPF64.set(yIn, Module.yIn / 8);
-    Module.transformCoordinates(N, Module.xIn, Module.yIn, 1, Module.xOut, Module.yOut);
+    Module.transform(wcsInfo, N, Module.xIn, Module.yIn, 1, Module.xOut, Module.yOut);
     var xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N);
     var yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N);
     return {x: xOut.slice(0), y: yOut.slice(0)};
 };
 
-Module.pixToWCS = function (xIn, yIn) {
+Module.pixToWCS = function (wcsInfo, xIn, yIn) {
     // Return empty array if arguments are invalid
     var N = 1;
     Module.HEAPF64.set(new Float64Array([xIn]), Module.xIn / 8);
     Module.HEAPF64.set(new Float64Array([yIn]), Module.yIn / 8);
-    Module.transformCoordinates(N, Module.xIn, Module.yIn, 1, Module.xOut, Module.yOut);
+    Module.transform(wcsInfo, N, Module.xIn, Module.yIn, 1, Module.xOut, Module.yOut);
     var xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N);
     var yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N);
     return {x: xOut[0], y: yOut[0]};
 };
 
-Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
+Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
 
 Module.initFrame = Module.cwrap("initFrame", "number", ["string"]);
 

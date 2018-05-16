@@ -13,13 +13,12 @@ void astPutErr_(int status_value, const char* message)
 
 using namespace std;
 
-AstFitsChan* fitschan = nullptr;
-AstFrameSet* wcsinfo = nullptr;
-
 extern "C" {
 
-EMSCRIPTEN_KEEPALIVE int initFrame(const char* header)
+EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
 {
+    AstFitsChan* fitschan = nullptr;
+    AstFrameSet* wcsinfo = nullptr;
     int status = 0;
     if (wcsinfo)
     {
@@ -32,12 +31,12 @@ EMSCRIPTEN_KEEPALIVE int initFrame(const char* header)
     if (!fitschan)
     {
         cout << "astFitsChan returned null :(" << endl;
-        return 1;
+        return nullptr;
     }
     if (!header)
     {
         cout << "Missing header argument." << endl;
-        return 1;
+        return nullptr;
     }
 
     astPutCards(fitschan, header);
@@ -46,23 +45,23 @@ EMSCRIPTEN_KEEPALIVE int initFrame(const char* header)
     if (!astOK)
     {
         cout << "Some AST LIB error, check logs." << endl;
-        return 1;
+        return nullptr;
     }
     else if (wcsinfo == AST__NULL)
     {
         cout << "No WCS found" << endl;
-        return 1;
+        return nullptr;
     }
     else if (strcmp(astGetC(wcsinfo, "Class"), "FrameSet"))
     {
         cout << "check FITS header (astlib)" << endl;
-        return 1;
+        return nullptr;
     }
-    return 0;
+    return wcsinfo;
 }
 
 
-EMSCRIPTEN_KEEPALIVE int plotGrid(int imageX1, int imageX2, int imageY1, int imageY2, int width, int height,
+EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, int imageX1, int imageX2, int imageY1, int imageY2, int width, int height,
                                         int paddingLeft, int paddingRight, int paddingTop, int paddingBottom, const char* args)
 {
  if (!wcsinfo)
@@ -94,7 +93,7 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(int imageX1, int imageX2, int imageY1, int ima
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE const char* formatCoordinate(int axis, double value)
+EMSCRIPTEN_KEEPALIVE const char* format(AstFrameSet* wcsinfo, int axis, double value)
 {
     if (!wcsinfo)
     {
@@ -104,7 +103,7 @@ EMSCRIPTEN_KEEPALIVE const char* formatCoordinate(int axis, double value)
     return astFormat(wcsinfo, axis, value);
 }
 
-EMSCRIPTEN_KEEPALIVE int setWCSAttribute(const char* attrib)
+EMSCRIPTEN_KEEPALIVE int set(AstFrameSet* wcsinfo, const char* attrib)
 {
     if (!wcsinfo)
     {
@@ -115,7 +114,7 @@ EMSCRIPTEN_KEEPALIVE int setWCSAttribute(const char* attrib)
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE int transformCoordinates(int npoint, const double xin[], const double yin[], int forward, double xout[], double yout[])
+EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const double xin[], const double yin[], int forward, double xout[], double yout[])
 {
     if (!wcsinfo)
     {

@@ -6,6 +6,7 @@ import {SpatialProfileState} from "./SpatialProfileState";
 export class AppState {
     // WebAssembly Module status
     @observable astReady = false;
+    @observable wcsInfo = 0;
 
     // Spatial profiles
     @observable spatialProfiles = new Map<number, SpatialProfileState>();
