@@ -96,7 +96,7 @@ Module.getFormattedCoordinates = function (wcsInfo, x, y, formatString) {
 
     var xFormat = Module.format(wcsInfo, 1, x);
     var yFormat = Module.format(wcsInfo, 2, y);
-    return [xFormat, yFormat];
+    return {x: xFormat, y: yFormat};
 };
 
 Module.pixToWCSVector = function (wcsInfo, xIn, yIn) {
