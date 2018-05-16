@@ -97,19 +97,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 paddingRatios[0] * padding * devicePixelRatio, paddingRatios[1] * padding * devicePixelRatio,
                 paddingRatios[2] * padding * devicePixelRatio, paddingRatios[3] * padding * devicePixelRatio,
                 settings.styleString);
-
-            // AST trans2 testing
-            const x = new Float64Array([0, Nx, Nx, 0]);
-            const y = new Float64Array([0, 0, Ny, Ny]);
-            const convertedWCS = (AST.pixToWCSVector(this.props.wcsInfo, x, y));
-            for (let i = 0; i < convertedWCS.x.length; i++) {
-                console.log(AST.getFormattedCoordinates(this.props.wcsInfo, convertedWCS.x[i], convertedWCS.y[i], "Format(1) = d.2"));
-            }
-
-            for (let i = 0; i < x.length; i++) {
-                const converted = AST.pixToWCS(this.props.wcsInfo, x[i], y[i]);
-                console.log(AST.getFormattedCoordinates(this.props.wcsInfo, converted.x, converted.y, "Format(1) = d.2"));
-            }
         }
     };
 
