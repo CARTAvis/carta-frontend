@@ -120,7 +120,7 @@ class App extends React.Component<{ appState: AppState }> {
         settings.color = 4;
         settings.width = 1;
         settings.tolerance = 0.02;
-        settings.title.visible = true;
+        settings.title.visible = false;
         settings.title.gap = 0.02;
         settings.title.color = 4;
         settings.title.text = "A custom AST plot";

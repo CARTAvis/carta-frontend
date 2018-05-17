@@ -3,10 +3,10 @@ import "./ImageViewComponent.css";
 import {AppState} from "../../Models/AppState";
 import {observer} from "mobx-react";
 import ReactResizeDetector from "react-resize-detector";
-import {NonIdealState, Overlay, Spinner} from "@blueprintjs/core";
+import {NonIdealState, Spinner} from "@blueprintjs/core";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
 import {CursorInfo} from "../../Models/CursorInfo";
-import {Point2D} from "../../Models/Point2D";
+import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 
 @observer
 export class ImageViewComponent extends React.Component<{ appState: AppState }, { width: number, height: number }> {
@@ -28,6 +28,7 @@ export class ImageViewComponent extends React.Component<{ appState: AppState }, 
 
     render() {
         const appState = this.props.appState;
+        const divBounds = this.containerDiv ? this.containerDiv.getBoundingClientRect() : new DOMRect();
         return (
             <div style={{width: "100%", height: "100%"}} ref={(ref) => this.containerDiv = ref}>
                 {appState.astReady &&
@@ -39,19 +40,15 @@ export class ImageViewComponent extends React.Component<{ appState: AppState }, 
                     onCursorMoved={this.onCursorMoved}
                 />
                 }
-                {appState.astReady &&
-                <Overlay isOpen={true} hasBackdrop={false}>
-                    <div
-                        style={{
-                            backgroundColor: "#ff000010",
-                            top: (this.containerDiv.getBoundingClientRect().bottom - 25) + "px",
-                            width: this.state.width + "px",
-                            height: "25px"
-                        }}
-                    >
-                        {appState.cursorInfo ? `WCS: (${appState.cursorInfo.infoWCS.x}, ${appState.cursorInfo.infoWCS.y}); Image: (${appState.cursorInfo.posImageSpace.x.toFixed(0)}, ${appState.cursorInfo.posImageSpace.y.toFixed(0)})` : ""}
-                    </div>
-                </Overlay>
+                {appState.astReady && appState.cursorInfo &&
+                <CursorOverlayComponent
+                    cursorInfo={appState.cursorInfo}
+                    width={this.state.width}
+                    bottom={0}
+                    showImage={true}
+                    showWCS={true}
+                    showValue={true}
+                />
                 }
                 {!appState.astReady &&
                 <NonIdealState visual={<Spinner className="astLoadingSpinner"/>} title={"Loading AST Library"}/>

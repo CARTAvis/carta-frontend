@@ -24,6 +24,7 @@ export class AppState {
     // Menu
     @observable overlaySettingsDialogVisible = false;
 
+    // Menu actions
     @action showOverlaySettings = () => {
         this.overlaySettingsDialogVisible = true;
     };
