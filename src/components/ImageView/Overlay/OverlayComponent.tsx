@@ -3,13 +3,14 @@ import {Colors} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {LabelType, OverlaySettings} from "../../../Models/OverlaySettings";
 import {observer} from "mobx-react";
-import {MouseEvent} from "react";
+import {CursorInfo} from "../../../Models/CursorInfo";
 
 export class OverlayComponentProps {
     wcsInfo: number;
     width: number;
     height: number;
     overlaySettings: OverlaySettings;
+    onCursorMoved?: (cursorInfo: CursorInfo) => void;
 }
 
 @observer
@@ -49,8 +50,14 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             };
             const cursorPosWCS = AST.pixToWCS(this.props.wcsInfo, cursorPosImageSpace.x, cursorPosImageSpace.y);
             const cursorPosFormatted = AST.getFormattedCoordinates(this.props.wcsInfo, cursorPosWCS.x, cursorPosWCS.y, "Format(1) = d.1, Format(2) = d.1");
-            // console.log({canvas: cursorPosCanvasSpace, image: cursorPosImageSpace, WCS: cursorPosWCS, formatted: cursorPosFormatted});
-            console.log(`(${cursorPosFormatted.x}, ${cursorPosFormatted.y})`);
+            if (this.props.onCursorMoved) {
+                this.props.onCursorMoved({
+                    posCanvasSpace: cursorPosCanvasSpace,
+                    posImageSpace: cursorPosImageSpace,
+                    posWCS: cursorPosWCS,
+                    infoWCS: cursorPosFormatted
+                });
+            }
         }
     };
 
@@ -96,6 +103,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     }
 
     renderCanvas = () => {
+        performance.mark("overlayRenderStart");
         const settings = this.props.overlaySettings;
 
         if (this.props.wcsInfo) {
@@ -121,6 +129,13 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 this.padding[0], this.padding[1], this.padding[2], this.padding[3],
                 settings.styleString);
         }
+        performance.mark("overlayRenderEnd");
+        performance.measure("overlayRender", "overlayRenderStart", "overlayRenderEnd");
+        const duration = performance.getEntriesByName("overlayRender")[0].duration;
+        performance.clearMarks("overlayRenderStart");
+        performance.clearMarks("overlayRenderEnd");
+        performance.clearMeasures("overlayRender");
+        console.log(`Overlay canvas rendered in ${duration.toFixed(1)}ms`);
     };
 
     render() {

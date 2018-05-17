@@ -2,11 +2,15 @@ import {action, observable} from "mobx";
 import {OverlaySettings} from "./OverlaySettings";
 import {LayoutState} from "./LayoutState";
 import {SpatialProfileState} from "./SpatialProfileState";
+import {CursorInfo} from "./CursorInfo";
 
 export class AppState {
     // WebAssembly Module status
     @observable astReady = false;
     @observable wcsInfo = 0;
+
+    // Cursor information
+    @observable cursorInfo: CursorInfo;
 
     // Spatial profiles
     @observable spatialProfiles = new Map<number, SpatialProfileState>();
