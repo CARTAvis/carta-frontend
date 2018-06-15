@@ -3,8 +3,11 @@ import {OverlaySettings} from "./OverlaySettings";
 import {LayoutState} from "./LayoutState";
 import {SpatialProfileState} from "./SpatialProfileState";
 import {CursorInfo} from "./CursorInfo";
+import {BackendService} from "../services/backend-service";
 
 export class AppState {
+    // Backend service
+    @observable backendService: BackendService;
     // WebAssembly Module status
     @observable astReady = false;
     @observable wcsInfo = 0;

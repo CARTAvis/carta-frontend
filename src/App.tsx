@@ -10,9 +10,11 @@ import {OverlaySettingsDialogComponent} from "./components/Dialogs/OverlaySettin
 import {AppState} from "./Models/AppState";
 import {observer} from "mobx-react";
 import {LabelType, OverlaySettings, SystemType} from "./Models/OverlaySettings";
-import {Control} from "carta-protobuf";
+import {CARTA} from "carta-protobuf";
 import {SpatialProfileState} from "./Models/SpatialProfileState";
 import {SpatialProfilerComponent} from "./components/SpatialProfiler/SpatialProfilerComponent";
+import DevTools from "mobx-react-devtools";
+import {BackendService} from "./services/backend-service";
 
 @observer
 class App extends React.Component<{ appState: AppState }> {
@@ -147,17 +149,6 @@ class App extends React.Component<{ appState: AppState }> {
             }
         });
 
-        // ProtoBuf test
-        let registerViewerMessage = Control.RegisterViewer.create({
-            sessionId: "test"
-        });
-
-        let validMessage = Control.RegisterViewer.verify({
-            sessionId: "test"
-        });
-
-        console.log({validMessage, registerViewerMessage});
-
         // Spatial profile data test: Cursor
         let spatialProfileTest = new SpatialProfileState();
         spatialProfileTest.channel = 0;
@@ -196,6 +187,11 @@ class App extends React.Component<{ appState: AppState }> {
                 3.5519793, 3.5231485, 3.5053034, 3.5028384])
         }];
         appState.spatialProfiles.set(spatialProfileTest.regionId, spatialProfileTest);
+        appState.backendService = new BackendService();
+        appState.backendService.loggingEnabled = true;
+        appState.backendService.connect("ws://localhost:3002", "1234").subscribe(res => {
+            console.log(res.sessionId);
+        });
     }
 
     public componentDidMount() {
@@ -206,6 +202,7 @@ class App extends React.Component<{ appState: AppState }> {
         const appState = this.props.appState;
         return (
             <div className="App">
+                <DevTools/>
                 <RootMenuComponent appState={appState}/>
                 <OverlaySettingsDialogComponent appState={appState}/>
             </div>

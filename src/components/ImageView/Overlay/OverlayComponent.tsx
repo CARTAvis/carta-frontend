@@ -103,7 +103,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     }
 
     renderCanvas = () => {
-        performance.mark("overlayRenderStart");
         const settings = this.props.overlaySettings;
 
         if (this.props.wcsInfo) {
@@ -129,13 +128,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 this.padding[0], this.padding[1], this.padding[2], this.padding[3],
                 settings.styleString);
         }
-        performance.mark("overlayRenderEnd");
-        performance.measure("overlayRender", "overlayRenderStart", "overlayRenderEnd");
-        const duration = performance.getEntriesByName("overlayRender")[0].duration;
-        performance.clearMarks("overlayRenderStart");
-        performance.clearMarks("overlayRenderEnd");
-        performance.clearMeasures("overlayRender");
-        console.log(`Overlay canvas rendered in ${duration.toFixed(1)}ms`);
     };
 
     render() {
