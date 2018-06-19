@@ -1,15 +1,15 @@
 import * as React from "react";
 import {Colors} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
-import {LabelType, OverlaySettings} from "../../../Models/OverlaySettings";
+import {LabelType, OverlayState} from "../../../states/OverlayState";
 import {observer} from "mobx-react";
-import {CursorInfo} from "../../../Models/CursorInfo";
+import {CursorInfo} from "../../../models/CursorInfo";
 
 export class OverlayComponentProps {
     wcsInfo: number;
     width: number;
     height: number;
-    overlaySettings: OverlaySettings;
+    overlaySettings: OverlayState;
     onCursorMoved?: (cursorInfo: CursorInfo) => void;
 }
 

@@ -1,11 +1,11 @@
 import * as React from "react";
 import "./ImageViewComponent.css";
-import {AppState} from "../../Models/AppState";
+import {AppState} from "../../states/AppState";
 import {observer} from "mobx-react";
 import ReactResizeDetector from "react-resize-detector";
 import {NonIdealState, Spinner} from "@blueprintjs/core";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
-import {CursorInfo} from "../../Models/CursorInfo";
+import {CursorInfo} from "../../models/CursorInfo";
 import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 
 @observer
@@ -36,7 +36,7 @@ export class ImageViewComponent extends React.Component<{ appState: AppState }, 
                     wcsInfo={appState.wcsInfo}
                     width={this.state.width}
                     height={this.state.height}
-                    overlaySettings={appState.overlaySettings}
+                    overlaySettings={appState.overlayState}
                     onCursorMoved={this.onCursorMoved}
                 />
                 }

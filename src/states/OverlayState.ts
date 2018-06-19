@@ -1,4 +1,4 @@
-import {computed, observable} from "mobx";
+import {action, computed, observable} from "mobx";
 
 export enum LabelType {
     Interior = "Interior",
@@ -194,7 +194,7 @@ export class OverlayAxisSettings {
     }
 }
 
-export class OverlaySettings {
+export class OverlayState {
     // Global options
     @observable labelType?: LabelType;
     @observable color?: number;
@@ -218,7 +218,17 @@ export class OverlaySettings {
         return this.stringify();
     }
 
-    stringify() {
+    // Dialog
+    @observable overlaySettingsDialogVisible = false;
+
+    @action showOverlaySettings = () => {
+        this.overlaySettingsDialogVisible = true;
+    };
+    @action hideOverlaySettings = () => {
+        this.overlaySettingsDialogVisible = false;
+    };
+
+    private stringify() {
         let stringList = [];
         if (this.labelType !== undefined) {
             stringList.push(`Labelling=${this.labelType}`);

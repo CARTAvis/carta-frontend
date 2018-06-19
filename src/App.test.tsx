@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import App from "./App";
-import {AppState} from "./Models/AppState";
+import {AppState} from "./states/AppState";
 
 it("renders without crashing", () => {
     const appState = new AppState();

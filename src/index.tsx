@@ -8,7 +8,7 @@ import "@blueprintjs/icons/lib/css/blueprint-icons.css";
 import "./layout-base.css";
 import "./layout-theme.css";
 import registerServiceWorker from "./registerServiceWorker";
-import {AppState} from "./Models/AppState";
+import {AppState} from "./states/AppState";
 
 // GoldenLayout requires these in the global namespace
 window["React"] = React; // tslint:disable-line

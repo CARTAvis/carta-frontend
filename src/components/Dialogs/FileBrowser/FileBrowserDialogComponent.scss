@@ -1,0 +1,67 @@
+$browser-table-color: #137CBD;
+
+.file-table-entry {
+    cursor: pointer;
+    &:hover {
+        background-color: rgba($browser-table-color, 0.05);
+    }
+
+    &:last-of-type{
+        td {
+            border-bottom: solid 1px rgba($browser-table-color, 0.2);
+        }
+    }
+
+    td {
+        border-right: solid 1px rgba($browser-table-color, 0.2);
+        &:first-of-type {
+            border-left: solid 1px rgba($browser-table-color, 0.2);
+            border-right: none;
+        }
+    }
+}
+
+.file-table-entry-filler {
+    td {
+        border-right: solid 1px rgba($browser-table-color, 0.2);
+        &:first-of-type {
+            border-left: solid 1px rgba($browser-table-color, 0.2);
+            border-right: none;
+        }
+    }
+
+    height: 100px;
+}
+
+.file-table-entry-selected {
+    cursor: default;
+    background-color: rgba($browser-table-color, 0.2);
+}
+
+.file-table {
+    width: 50%;
+    overflow-y: scroll;
+    margin-right: 20px;
+    thead {
+        th {
+            .pt-icon {
+                vertical-align: middle;
+                height: 10px;
+            }
+        }
+    }
+}
+
+.file-browser-dialog {
+    width: 60% !important;
+    height: 600px;
+}
+
+.file-browser-dialog-backdrop {
+    background-color: rgba(black, 0.1) !important;
+}
+
+.file-info-pre {
+    height: 400px;
+    overflow-y: scroll;
+}

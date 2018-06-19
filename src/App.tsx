@@ -7,14 +7,16 @@ import {PlaceholderComponent} from "./components/Placeholder/PlaceholderComponen
 import {RootMenuComponent} from "./components/Menu/RootMenuComponent";
 import {ImageViewComponent} from "./components/ImageView/ImageViewComponent";
 import {OverlaySettingsDialogComponent} from "./components/Dialogs/OverlaySettings/OverlaySettingsDialogComponent";
-import {AppState} from "./Models/AppState";
+import {AppState} from "./states/AppState";
 import {observer} from "mobx-react";
-import {LabelType, OverlaySettings, SystemType} from "./Models/OverlaySettings";
+import {LabelType, OverlayState, SystemType} from "./states/OverlayState";
 import {CARTA} from "carta-protobuf";
-import {SpatialProfileState} from "./Models/SpatialProfileState";
+import {SpatialProfileState} from "./states/SpatialProfileState";
 import {SpatialProfilerComponent} from "./components/SpatialProfiler/SpatialProfilerComponent";
 import DevTools from "mobx-react-devtools";
-import {BackendService} from "./services/backend-service";
+import {BackendService} from "./services/BackendService";
+import {FileBrowserDialogComponent} from "./components/Dialogs/FileBrowser/FileBrowserDialogComponent";
+import {FileBrowserState} from "./states/FileBrowserState";
 
 @observer
 class App extends React.Component<{ appState: AppState }> {
@@ -115,26 +117,26 @@ class App extends React.Component<{ appState: AppState }> {
 
         appState.layoutSettings.layout = layout;
 
-        let settings = new OverlaySettings();
-        settings.system = SystemType.Native;
-        settings.labelType = LabelType.Exterior;
-        settings.border.visible = true;
-        settings.color = 4;
-        settings.width = 1;
-        settings.tolerance = 0.02;
-        settings.title.visible = false;
-        settings.title.gap = 0.02;
-        settings.title.color = 4;
-        settings.title.text = "A custom AST plot";
-        settings.grid.visible = true;
-        settings.grid.color = 3;
-        settings.extra = "Format(1) = d.1, Format(2) = d.1";
-        settings.title.font = 2;
-        settings.axes.labelFontSize = 15;
-        settings.axes.labelFont = 1;
-        settings.axes.numberFontSize = 10;
+        let overlayState = new OverlayState();
+        overlayState.system = SystemType.Native;
+        overlayState.labelType = LabelType.Exterior;
+        overlayState.border.visible = true;
+        overlayState.color = 4;
+        overlayState.width = 1;
+        overlayState.tolerance = 0.02;
+        overlayState.title.visible = false;
+        overlayState.title.gap = 0.02;
+        overlayState.title.color = 4;
+        overlayState.title.text = "A custom AST plot";
+        overlayState.grid.visible = true;
+        overlayState.grid.color = 3;
+        overlayState.extra = "Format(1) = d.1, Format(2) = d.1";
+        overlayState.title.font = 2;
+        overlayState.axes.labelFontSize = 15;
+        overlayState.axes.labelFont = 1;
+        overlayState.axes.numberFontSize = 10;
 
-        appState.overlaySettings = settings;
+        appState.overlayState = overlayState;
 
         AST.onReady.then(() => {
             // We will eventually read the header from a file. Suppressing linting error for now
@@ -189,8 +191,9 @@ class App extends React.Component<{ appState: AppState }> {
         appState.spatialProfiles.set(spatialProfileTest.regionId, spatialProfileTest);
         appState.backendService = new BackendService();
         appState.backendService.loggingEnabled = true;
+        appState.fileBrowserState = new FileBrowserState(appState.backendService);
         appState.backendService.connect("ws://localhost:3002", "1234").subscribe(res => {
-            console.log(res.sessionId);
+            console.log(`Connected with session ID ${res.sessionId}`);
         });
     }
 
@@ -205,6 +208,7 @@ class App extends React.Component<{ appState: AppState }> {
                 <DevTools/>
                 <RootMenuComponent appState={appState}/>
                 <OverlaySettingsDialogComponent appState={appState}/>
+                <FileBrowserDialogComponent fileBrowserState={appState.fileBrowserState}/>
             </div>
         );
     }

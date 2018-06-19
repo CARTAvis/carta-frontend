@@ -16,16 +16,42 @@ export class BackendService {
     @observable log: string;
     @observable sessionId: string;
     @observable apiKey: string;
+    messageHandler = (event: MessageEvent) => {
+        if (event.data.byteLength < 40) {
+            console.log("Unknown event format");
+            return;
+        }
 
+        const eventName = this.getEventName(new Uint8Array(event.data, 0, 32));
+        const eventId = new Uint32Array(event.data, 32, 2)[0];
+        const eventData = new Uint8Array(event.data, 40);
+
+        const eventCallbackConfig = this.callbackConfig.get(eventName);
+        if (eventCallbackConfig) {
+            try {
+                const parsedMessage = eventCallbackConfig.messageType.decode(eventData);
+                this.logEvent(eventName, parsedMessage);
+                const observer = this.observerMap.get(eventName);
+                if (observer) {
+                    observer.next(parsedMessage);
+                    if (!eventCallbackConfig.streamed) {
+                        observer.complete();
+                        this.observerMap.delete(eventName);
+                    }
+                }
+            } catch (e) {
+                console.log(e);
+            }
+        }
+    };
     private latencyEmulationMs = 50;
     private connection: WebSocket;
-
     private observerMap: Map<string, Observer<any>>;
-    private callbackConfig: Map<string, {messageType: any, streamed: boolean}>;
+    private callbackConfig: Map<string, { messageType: any, streamed: boolean }>;
 
     constructor() {
-        this.observerMap  = new Map<string, Observer<any>>();
-        this.callbackConfig = new Map<string, {messageType: any, streamed: boolean}>();
+        this.observerMap = new Map<string, Observer<any>>();
+        this.callbackConfig = new Map<string, { messageType: any, streamed: boolean }>();
         this.callbackConfig.set("REGISTER_VIEWER_ACK", {messageType: CARTA.RegisterViewerAck, streamed: false});
         this.callbackConfig.set("FILE_LIST_RESPONSE", {messageType: CARTA.FileListResponse, streamed: false});
         this.callbackConfig.set("FILE_INFO_RESPONSE", {messageType: CARTA.FileInfoResponse, streamed: false});
@@ -60,89 +86,43 @@ export class BackendService {
         });
     }
 
-    messageHandler = (event: MessageEvent) => {
-        if (event.data.byteLength < 40) {
-            console.log("Unknown event format");
-            return;
-        }
-
-        const eventName = this.getEventName(new Uint8Array(event.data, 0, 32));
-        const eventId = new Uint32Array(event.data, 32, 2)[0];
-        const eventData = new Uint8Array(event.data, 40);
-
-        const eventCallbackConfig = this.callbackConfig.get(eventName);
-        if (eventCallbackConfig) {
-            try {
-                const parsedMessage = eventCallbackConfig.messageType.decode(eventData);
-                this.logEvent(eventName, parsedMessage);
-                const observer = this.observerMap.get(eventName);
-                if (observer) {
-                    observer.next(parsedMessage);
-                    if (!eventCallbackConfig.streamed) {
-                        observer.complete();
-                        this.observerMap.delete(eventName);
-                    }
-                }
-            } catch (e) {
-                console.log(e);
+    @action("file list")
+    getFileList(directory: string): Observable<CARTA.FileListResponse> {
+        return new Observable<CARTA.FileListResponse>(observer => {
+            if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+                observer.error("Not connected");
             }
-        }
+            else {
+                const message = CARTA.FileListRequest.create({directory});
+                this.logEvent("FILE_LIST_REQUEST", message, false);
+                if (this.sendEvent("FILE_LIST_REQUEST", 0, CARTA.FileListRequest.encode(message).finish())) {
+                    this.observerMap.set("FILE_LIST_RESPONSE", observer);
+                }
+                else {
+                    observer.error("Could not connect");
+                }
+            }
+        });
+    }
 
-        // if (eventName === "REGISTER_VIEWER_ACK") {
-        //     try {
-        //         const parsedMessage = CARTA.RegisterViewerAck.decode(eventData);
-        //         this.logEvent(eventName, parsedMessage);
-        //         this.onRegisterViewerAck(parsedMessage);
-        //     } catch (e) {
-        //         console.log(e);
-        //     }
-        // }
-        // else if (eventName === "FILE_LIST_RESPONSE") {
-        //     try {
-        //         const parsedMessage = CARTA.FileListResponse.decode(eventData);
-        //         this.logEvent(eventName, parsedMessage);
-        //         this.onFileListResponse(parsedMessage, eventId);
-        //     } catch (e) {
-        //         console.log(e);
-        //     }
-        // }
-        // else if (eventName === "FILE_INFO_RESPONSE") {
-        //     try {
-        //         const parsedMessage = CARTA.FileInfoResponse.decode(eventData);
-        //         this.logEvent(eventName, parsedMessage);
-        //         this.onFileInfoResponse(parsedMessage, eventId);
-        //     } catch (e) {
-        //         console.log(e);
-        //     }
-        // }
-    };
-
-    // private onRegisterViewerAck(message: CARTA.RegisterViewerAck) {
-    //     const observer = this.observerMap.get("REGISTER_VIEWER_ACK");
-    //     if (observer) {
-    //         observer.next(message);
-    //         observer.complete();
-    //         this.observerMap.delete("REGISTER_VIEWER_ACK");
-    //     }
-    // }
-    //
-    // private onFileListResponse(message: CARTA.FileListResponse, eventId: number) {
-    //     const observer = this.observerMap.get("FILE_LIST_RESPONSE");
-    //     if (observer) {
-    //         observer.next(message);
-    //         observer.complete();
-    //         this.observerMap.delete("FILE_LIST_RESPONSE");
-    //     }
-    // }
-    //
-    // private onFileInfoResponse(message: CARTA.FileInfoResponse, eventId: number) {
-    //     const observer = this.observerMap.get("FILE_INFO_RESPONSE");
-    //     if (observer) {
-    //         observer.next(message);
-    //         observer.complete();
-    //         this.observerMap.delete("FILE_INFO_RESPONSE");
-    //     }
-    // }
+    @action("file info")
+    getFileInfo(directory: string, file: string): Observable<CARTA.FileInfoResponse> {
+        return new Observable<CARTA.FileInfoResponse>(observer => {
+            if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+                observer.error("Not connected");
+            }
+            else {
+                const message = CARTA.FileInfoRequest.create({directory, file});
+                this.logEvent("FILE_INFO_REQUEST", message, false);
+                if (this.sendEvent("FILE_INFO_REQUEST", 0, CARTA.FileInfoRequest.encode(message).finish())) {
+                    this.observerMap.set("FILE_INFO_RESPONSE", observer);
+                }
+                else {
+                    observer.error("Could not connect");
+                }
+            }
+        });
+    }
 
     private sendEvent(eventName: string, eventId: number, payload: Uint8Array): boolean {
         if (this.connection.readyState === WebSocket.OPEN) {

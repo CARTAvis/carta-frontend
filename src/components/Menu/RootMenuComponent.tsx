@@ -1,7 +1,7 @@
 import * as React from "react";
 import "./RootMenuComponent.css";
 import {Menu, MenuDivider, MenuItem, Popover, Position} from "@blueprintjs/core";
-import {AppState} from "../../Models/AppState";
+import {AppState} from "../../states/AppState";
 import {observer} from "mobx-react";
 
 @observer
@@ -16,7 +16,7 @@ export class RootMenuComponent extends React.Component<{ appState: AppState }> {
 
         const fileMenu = (
             <Menu>
-                <MenuItem text="Load cube" label={`${modString}O`}/>
+                <MenuItem text="Load cube" label={`${modString}O`} onClick={appState.fileBrowserState.showFileBrowser}/>
                 <MenuItem text="Load region"/>
                 <MenuDivider/>
                 <MenuItem text="Export annotations" icon={"floppy-disk"}/>
@@ -41,7 +41,7 @@ export class RootMenuComponent extends React.Component<{ appState: AppState }> {
                     <MenuItem text="Custom Preset 1"/>
                     <MenuItem text="Custom Preset 2"/>
                     <MenuDivider/>
-                    <MenuItem text="Customize..." icon={"style"} onClick={appState.showOverlaySettings}/>
+                    <MenuItem text="Customize..." icon={"style"} onClick={appState.overlayState.showOverlaySettings}/>
                     <MenuItem text="Save Current as Preset" icon={"floppy-disk"}/>
                 </MenuItem>
                 <MenuItem text="Graphs" icon={"timeline-line-chart"}>

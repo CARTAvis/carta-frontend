@@ -1,6 +1,6 @@
 import * as React from "react";
 import "./CursorOverlayComponent.css";
-import {CursorInfo} from "../../../Models/CursorInfo";
+import {CursorInfo} from "../../../models/CursorInfo";
 import {CSSProperties} from "react";
 
 class CursorOverlayProps {

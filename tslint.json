@@ -7,7 +7,6 @@
         "align": [
             true,
             "parameters",
-            "arguments",
             "statements"
         ],
         "ban": false,
@@ -38,10 +37,7 @@
             240
         ],
         "member-ordering": [
-            true,
-            "public-before-private",
-            "static-before-instance",
-            "variables-before-functions"
+            false
         ],
         "no-any": false,
         "no-arg": true,

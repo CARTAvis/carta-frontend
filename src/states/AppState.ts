@@ -1,9 +1,10 @@
 import {action, observable} from "mobx";
-import {OverlaySettings} from "./OverlaySettings";
+import {OverlayState} from "./OverlayState";
 import {LayoutState} from "./LayoutState";
 import {SpatialProfileState} from "./SpatialProfileState";
-import {CursorInfo} from "./CursorInfo";
-import {BackendService} from "../services/backend-service";
+import {CursorInfo} from "../models/CursorInfo";
+import {BackendService} from "../services/BackendService";
+import {FileBrowserState} from "./FileBrowserState";
 
 export class AppState {
     // Backend service
@@ -19,19 +20,11 @@ export class AppState {
     @observable spatialProfiles = new Map<number, SpatialProfileState>();
 
     // Overlay
-    @observable overlaySettings = new OverlaySettings();
+    @observable overlayState = new OverlayState();
 
     // Layout
     @observable layoutSettings = new LayoutState();
 
-    // Menu
-    @observable overlaySettingsDialogVisible = false;
-
-    // Menu actions
-    @action showOverlaySettings = () => {
-        this.overlaySettingsDialogVisible = true;
-    };
-    @action hideOverlaySettings = () => {
-        this.overlaySettingsDialogVisible = false;
-    };
+    // File Browser
+    @observable fileBrowserState: FileBrowserState;
 }

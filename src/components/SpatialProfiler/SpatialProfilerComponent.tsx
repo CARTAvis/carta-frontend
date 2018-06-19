@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AppState} from "../../Models/AppState";
+import {AppState} from "../../states/AppState";
 import * as Plotly from "plotly.js/dist/plotly-cartesian";
 import createPlotlyComponent from "react-plotly.js/factory";
 import ReactResizeDetector from "react-resize-detector";
