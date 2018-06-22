@@ -81,6 +81,7 @@ export class BackendService {
                 }
             };
 
+            this.connection.onclose = (ev => console.log(ev));
             this.connection.onerror = (ev => observer.error(ev));
             this.connection.onmessage = this.messageHandler;
         });

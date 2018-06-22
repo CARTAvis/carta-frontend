@@ -56,7 +56,10 @@ export class FileBrowserState {
     }
 
     @action selectFolder(folder: string) {
-        if (this.fileList) {
+        if (folder === "..") {
+            this.selectParent();
+        }
+        else if (this.fileList) {
             const currentDir = this.fileList.directory;
             let newFolder = folder;
             if (currentDir.length && !(currentDir.length === 1 && currentDir[0] === "/")) {
