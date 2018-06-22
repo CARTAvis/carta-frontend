@@ -106,13 +106,13 @@ export class BackendService {
     }
 
     @action("file info")
-    getFileInfo(directory: string, file: string): Observable<CARTA.FileInfoResponse> {
+    getFileInfo(directory: string, file: string, hdu: string): Observable<CARTA.FileInfoResponse> {
         return new Observable<CARTA.FileInfoResponse>(observer => {
             if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
                 observer.error("Not connected");
             }
             else {
-                const message = CARTA.FileInfoRequest.create({directory, file});
+                const message = CARTA.FileInfoRequest.create({directory, file, hdu});
                 this.logEvent("FILE_INFO_REQUEST", message, false);
                 if (this.sendEvent("FILE_INFO_REQUEST", 0, CARTA.FileInfoRequest.encode(message).finish())) {
                     this.observerMap.set("FILE_INFO_RESPONSE", observer);
