@@ -2,9 +2,14 @@
 
 ## Prerequisites
 The build process relies heavily on `npm` and `nodejs`, so make sure they are installed and accesible.
-WebAssembly compilation requires the Emscripten compiler (`emcc`) to be in the path. Details can be found [here](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html). Typescript and protobufjs packages should be installed globally in order to automate the build process.
-
-
+WebAssembly compilation requires the Emscripten compiler (`emcc`) to be in the path. Details can be found [here](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html). The protocol buffer definitions reside in a git submodule that must be initialised as follows:
+```
+cd protobuf
+git submodule init
+git submodule update
+git checkout master
+```
+Prerequisite `npm` packages can be installed using `npm install`. The WebAssembly library build process requires `wget`.
 ## Build process:
 There are four steps in the build process. Some are more automated than others.
 * **Building statically linked WebAssembly libraries of dependencies**, such as [AST](https://github.com/Starlink/ast), [ZFP](https://github.com/LLNL/zfp) and [SZ](https://github.com/disheng222/SZ).
@@ -17,4 +22,6 @@ When running `npm start`, this step is performend whenever changes to `.c`, `.cc
 * **Building static protocol buffer code** is done using the `build_proto.sh` script in the `protobuf` folder, which builds the static JavaScript code, as well as the TypeScript definitions, and symlinks to the `node_modules/carta-protobuf` directory.
 When running `npm start`, this step is performend whenever changes to `.proto` files in the `protobuf` folder are detected.
 * **Webpack** is used to build and bundle all the JavaScript, Sass and HTML code elegantly. You can run `npm start` to run a live dev server, while the build process watches for any changes to source files.
-Standalone versions can be built with `npm build`, which produces a distributable build in the `build` folder.
+Standalone versions can be built with `npm run-script build`, which produces a distributable build in the `build` folder.
+
+Running `npm start` will automatically build the WebAssembly wrapper modules, as well as the protocol buffer code. All that is required is to build the WebAssembly libraries prior to running `npm start`.

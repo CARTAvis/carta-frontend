@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 # try source emsdk variables
-if [ -f ~/emsdk-portable/emsdk_env.sh ]; then
-    source ~/emsdk-portable/emsdk_env.sh
-fi
+#if [ -f ~/emsdk/emsdk_env.sh ]; then
+#    source ~/emsdk/emsdk_env.sh
+#fi
 
 cd "$(dirname "$0")"
 
