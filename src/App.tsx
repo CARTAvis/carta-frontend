@@ -17,6 +17,7 @@ import DevTools from "mobx-react-devtools";
 import {BackendService} from "./services/BackendService";
 import {FileBrowserDialogComponent} from "./components/Dialogs/FileBrowser/FileBrowserDialogComponent";
 import {FileBrowserState} from "./states/FileBrowserState";
+import {URLConnectDialogComponent} from "./components/Dialogs/URLConnect/URLConnectDialogComponent";
 
 @observer
 class App extends React.Component<{ appState: AppState }> {
@@ -193,8 +194,13 @@ class App extends React.Component<{ appState: AppState }> {
         appState.backendService.loggingEnabled = true;
         appState.fileBrowserState = new FileBrowserState(appState.backendService);
         appState.backendService.connect("ws://localhost:3002", "1234").subscribe(res => {
-            console.log(`Connected with session ID ${res.sessionId}`);
-        });
+            if (res.success) {
+                console.log(`Connected with session ID ${res.sessionId}`);
+            }
+            else {
+                console.log(res.message);
+            }
+        }, err => console.log(err));
     }
 
     public componentDidMount() {
@@ -208,6 +214,7 @@ class App extends React.Component<{ appState: AppState }> {
                 <DevTools/>
                 <RootMenuComponent appState={appState}/>
                 <OverlaySettingsDialogComponent appState={appState}/>
+                <URLConnectDialogComponent appState={appState}/>
                 <FileBrowserDialogComponent fileBrowserState={appState.fileBrowserState}/>
             </div>
         );

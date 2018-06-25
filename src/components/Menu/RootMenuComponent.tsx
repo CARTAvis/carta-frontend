@@ -3,6 +3,7 @@ import "./RootMenuComponent.css";
 import {Menu, MenuDivider, MenuItem, Popover, Position} from "@blueprintjs/core";
 import {AppState} from "../../states/AppState";
 import {observer} from "mobx-react";
+import {ConnectionStatus} from "../../services/BackendService";
 
 @observer
 export class RootMenuComponent extends React.Component<{ appState: AppState }> {
@@ -16,13 +17,14 @@ export class RootMenuComponent extends React.Component<{ appState: AppState }> {
 
         const fileMenu = (
             <Menu>
-                <MenuItem text="Load cube" label={`${modString}O`} onClick={appState.fileBrowserState.showFileBrowser}/>
+                <MenuItem text="Load cube" label={`${modString}O`} disabled={appState.backendService.connectionStatus !== ConnectionStatus.ACTIVE} onClick={appState.fileBrowserState.showFileBrowser}/>
                 <MenuItem text="Load region"/>
                 <MenuDivider/>
                 <MenuItem text="Export annotations" icon={"floppy-disk"}/>
                 <MenuItem text="Export image" icon={"media"} label={`${modString}E`}/>
                 <MenuDivider/>
                 <MenuItem text="Preferences" icon={"cog"} label={`${modString}P`}/>
+                <MenuItem text="Connect to URL" onClick={appState.showURLConnect}/>
                 <MenuDivider/>
                 <MenuItem text="Exit" icon={"log-out"} label={`${modString}Q`}/>
             </Menu>

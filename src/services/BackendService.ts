@@ -2,7 +2,7 @@ import {action, observable, reaction} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, of} from "rxjs";
 
-enum ConnectionStatus {
+export enum ConnectionStatus {
     CLOSED = 0,
     PENDING = 1,
     ACTIVE = 2,
@@ -64,6 +64,10 @@ export class BackendService {
         // this.connectionStatus = ConnectionStatus.ACTIVE;
         // this.sessionId =  response.sessionId;
         return new Observable<CARTA.RegisterViewerAck>(observer => {
+            if (this.connection) {
+                this.connection.close();
+            }
+
             this.connection = new WebSocket(url);
             this.connectionStatus = ConnectionStatus.PENDING;
             this.connection.binaryType = "arraybuffer";

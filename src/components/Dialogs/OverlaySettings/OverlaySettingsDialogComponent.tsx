@@ -35,7 +35,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appState: 
         );
 
         return (
-            <Dialog icon={"settings"} lazy={true} backdropClassName="overlay-settings-dialog-backdrop" isOpen={overlayState.overlaySettingsDialogVisible} onClose={overlayState.hideOverlaySettings} title="Overlay Settings">
+            <Dialog icon={"settings"} lazy={true} backdropClassName="minimal-dialog-backdrop" isOpen={overlayState.overlaySettingsDialogVisible} onClose={overlayState.hideOverlaySettings} title="Overlay Settings">
                 <div className="pt-dialog-body">
                     <Tabs id="overlayTabs" selectedTabId="global">
                         <Tab id="global" title="Global" panel={globalPanel}/>

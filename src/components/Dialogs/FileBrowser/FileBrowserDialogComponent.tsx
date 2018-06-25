@@ -22,7 +22,7 @@ export class FileBrowserDialogComponent extends React.Component<{ fileBrowserSta
             <Dialog
                 icon={"folder-open"}
                 className="file-browser-dialog"
-                backdropClassName="file-browser-dialog-backdrop"
+                backdropClassName="minimal-dialog-backdrop"
                 canOutsideClickClose={false}
                 lazy={true}
                 isOpen={fileBrowserState.fileBrowserDialogVisible}

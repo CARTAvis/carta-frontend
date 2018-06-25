@@ -27,4 +27,13 @@ export class AppState {
 
     // File Browser
     @observable fileBrowserState: FileBrowserState;
+
+    // Additional Dialogs
+    @observable urlConnectDialogVisible = false;
+    @action showURLConnect = () => {
+        this.urlConnectDialogVisible = true;
+    };
+    @action hideURLConnect = () => {
+        this.urlConnectDialogVisible = false;
+    };
 }
