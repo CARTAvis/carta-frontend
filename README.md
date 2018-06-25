@@ -2,7 +2,7 @@
 
 ## Prerequisites
 The build process relies heavily on `npm` and `nodejs`, so make sure they are installed and accesible.
-WebAssembly compilation requires the Emscripten compiler (`emcc`) to be in the path. Details can be found [here](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html).
+WebAssembly compilation requires the Emscripten compiler (`emcc`) to be in the path. Details can be found [here](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html). Typescript and protobufjs packages should be installed globally in order to automate the build process.
 
 
 ## Build process:
