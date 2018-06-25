@@ -43,11 +43,11 @@ export class URLConnectDialogComponent extends React.Component<{ appState: AppSt
     }
 
     validateUrl = (url) => {
-        return url && (url.startsWith("ws://") || url.startsWith("wss://") || url.startsWith("http://") || url.startsWith("https://"))
+        return url && (url.startsWith("ws://") || url.startsWith("wss://") || url.startsWith("http://") || url.startsWith("https://"));
     };
 
     handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
-        this.setState({url: ev.currentTarget.value})
+        this.setState({url: ev.currentTarget.value});
     };
 
     onConnectClicked = () => {

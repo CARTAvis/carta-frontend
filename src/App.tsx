@@ -196,6 +196,7 @@ class App extends React.Component<{ appState: AppState }> {
         appState.backendService.connect("ws://localhost:3002", "1234").subscribe(res => {
             if (res.success) {
                 console.log(`Connected with session ID ${res.sessionId}`);
+                appState.backendService.sessionId = res.sessionId;
             }
             else {
                 console.log(res.message);

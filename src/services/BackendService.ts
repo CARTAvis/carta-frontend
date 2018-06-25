@@ -52,7 +52,7 @@ export class BackendService {
     constructor() {
         this.observerMap = new Map<string, Observer<any>>();
         this.callbackConfig = new Map<string, { messageType: any, streamed: boolean }>();
-        this.callbackConfig.set("REGISTER_VIEWER_ACK", {messageType: CARTA.RegisterViewerAck, streamed: false});
+        this.callbackConfig.set("REGISTER_VIEWER_ACK", {messageType: CARTA.RegisterViewerAck, streamed: true});
         this.callbackConfig.set("FILE_LIST_RESPONSE", {messageType: CARTA.FileListResponse, streamed: false});
         this.callbackConfig.set("FILE_INFO_RESPONSE", {messageType: CARTA.FileInfoResponse, streamed: false});
         this.connectionStatus = ConnectionStatus.CLOSED;
@@ -85,9 +85,23 @@ export class BackendService {
                 }
             };
 
-            this.connection.onclose = (ev => console.log(ev));
             this.connection.onerror = (ev => observer.error(ev));
             this.connection.onmessage = this.messageHandler;
+            this.connection.onclose = (ev: CloseEvent) => {
+                // Reconnect to the same URL if Websocket is closed
+                if (!ev.wasClean) {
+                    setTimeout(() => {
+                        const newConnection = new WebSocket(url);
+                        newConnection.binaryType = "arraybuffer";
+                        newConnection.onopen = this.connection.onopen;
+                        newConnection.onerror = this.connection.onerror;
+                        newConnection.onclose = this.connection.onclose;
+                        newConnection.onmessage = this.messageHandler;
+                        this.connection = newConnection;
+                    }, 1000);
+                }
+            };
+
         });
     }
 
@@ -139,6 +153,7 @@ export class BackendService {
             return true;
         }
         else {
+            console.log("Error sending event");
             return false;
         }
     }
