@@ -52,18 +52,12 @@ export class URLConnectDialogComponent extends React.Component<{ appState: AppSt
 
     onConnectClicked = () => {
         const appState = this.props.appState;
-        appState.backendService.connect(this.state.url, "1234").subscribe(res => {
-            if (res.success) {
-                console.log(`Connected with session ID ${res.sessionId}`);
-                appState.hideURLConnect();
-            }
-            else {
-                this.setState({errMessage: res.message});
-                console.log(res.message);
-            }
+        appState.backendService.connect(this.state.url, "1234").subscribe(sessionId => {
+            console.log(`Connected with session ID ${sessionId}`);
+            appState.hideURLConnect();
         }, err => {
             this.setState({errMessage: "Could not connect to remote URL"});
             console.log(err);
         });
-    }
+    };
 }

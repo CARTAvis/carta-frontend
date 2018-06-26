@@ -193,14 +193,11 @@ class App extends React.Component<{ appState: AppState }> {
         appState.backendService = new BackendService();
         appState.backendService.loggingEnabled = true;
         appState.fileBrowserState = new FileBrowserState(appState.backendService);
-        appState.backendService.connect("ws://localhost:3002", "1234").subscribe(res => {
-            if (res.success) {
-                console.log(`Connected with session ID ${res.sessionId}`);
-                appState.backendService.sessionId = res.sessionId;
-            }
-            else {
-                console.log(res.message);
-            }
+
+        const wsURL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}/socket`;
+        console.log(`Connecting to defaullt URL: ${wsURL}`);
+        appState.backendService.connect(wsURL, "1234").subscribe(sessionId => {
+            console.log(`Connected with session ID ${sessionId}`);
         }, err => console.log(err));
     }
 

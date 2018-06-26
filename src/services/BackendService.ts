@@ -1,6 +1,6 @@
-import {action, observable, reaction} from "mobx";
+import {action, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {Observable, Observer, of} from "rxjs";
+import {Observable, Observer} from "rxjs";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -16,63 +16,43 @@ export class BackendService {
     @observable log: string;
     @observable sessionId: string;
     @observable apiKey: string;
-    messageHandler = (event: MessageEvent) => {
-        if (event.data.byteLength < 40) {
-            console.log("Unknown event format");
-            return;
-        }
 
-        const eventName = this.getEventName(new Uint8Array(event.data, 0, 32));
-        const eventId = new Uint32Array(event.data, 32, 2)[0];
-        const eventData = new Uint8Array(event.data, 40);
-
-        const eventCallbackConfig = this.callbackConfig.get(eventName);
-        if (eventCallbackConfig) {
-            try {
-                const parsedMessage = eventCallbackConfig.messageType.decode(eventData);
-                this.logEvent(eventName, parsedMessage);
-                const observer = this.observerMap.get(eventName);
-                if (observer) {
-                    observer.next(parsedMessage);
-                    if (!eventCallbackConfig.streamed) {
-                        observer.complete();
-                        this.observerMap.delete(eventName);
-                    }
-                }
-            } catch (e) {
-                console.log(e);
-            }
-        }
-    };
-    private latencyEmulationMs = 50;
     private connection: WebSocket;
     private observerMap: Map<string, Observer<any>>;
-    private callbackConfig: Map<string, { messageType: any, streamed: boolean }>;
 
     constructor() {
         this.observerMap = new Map<string, Observer<any>>();
-        this.callbackConfig = new Map<string, { messageType: any, streamed: boolean }>();
-        this.callbackConfig.set("REGISTER_VIEWER_ACK", {messageType: CARTA.RegisterViewerAck, streamed: true});
-        this.callbackConfig.set("FILE_LIST_RESPONSE", {messageType: CARTA.FileListResponse, streamed: false});
-        this.callbackConfig.set("FILE_INFO_RESPONSE", {messageType: CARTA.FileInfoResponse, streamed: false});
         this.connectionStatus = ConnectionStatus.CLOSED;
     }
 
     @action("connect")
-    connect(url: string, apiKey: string): Observable<CARTA.RegisterViewerAck> {
-        // const response = CARTA.RegisterViewerAck.create({success: true, sessionId: "1234", sessionType: CARTA.SessionType.NEW});
-        // this.connectionStatus = ConnectionStatus.ACTIVE;
-        // this.sessionId =  response.sessionId;
-        return new Observable<CARTA.RegisterViewerAck>(observer => {
-            if (this.connection) {
-                this.connection.close();
+    connect(url: string, apiKey: string): Observable<string> {
+        if (this.connection) {
+            this.connection.close();
+        }
+
+        this.connection = new WebSocket(url);
+        this.connectionStatus = ConnectionStatus.PENDING;
+        this.connection.binaryType = "arraybuffer";
+        this.connection.onmessage = this.messageHandler.bind(this);
+        this.connection.onclose = (ev: CloseEvent) => {
+            // Reconnect to the same URL if Websocket is closed
+            if (!ev.wasClean) {
+                setTimeout(() => {
+                    const newConnection = new WebSocket(url);
+                    newConnection.binaryType = "arraybuffer";
+                    newConnection.onopen = this.connection.onopen;
+                    newConnection.onerror = this.connection.onerror;
+                    newConnection.onclose = this.connection.onclose;
+                    newConnection.onmessage = this.connection.onmessage;
+                    this.connection = newConnection;
+                }, 1000);
             }
+        };
 
-            this.connection = new WebSocket(url);
-            this.connectionStatus = ConnectionStatus.PENDING;
-            this.connection.binaryType = "arraybuffer";
+        this.apiKey = apiKey;
 
-            this.apiKey = apiKey;
+        const obs = new Observable<string>(observer => {
             this.connection.onopen = () => {
                 this.connectionStatus = ConnectionStatus.ACTIVE;
                 const message = CARTA.RegisterViewer.create({sessionId: "", apiKey: apiKey});
@@ -86,23 +66,14 @@ export class BackendService {
             };
 
             this.connection.onerror = (ev => observer.error(ev));
-            this.connection.onmessage = this.messageHandler;
-            this.connection.onclose = (ev: CloseEvent) => {
-                // Reconnect to the same URL if Websocket is closed
-                if (!ev.wasClean) {
-                    setTimeout(() => {
-                        const newConnection = new WebSocket(url);
-                        newConnection.binaryType = "arraybuffer";
-                        newConnection.onopen = this.connection.onopen;
-                        newConnection.onerror = this.connection.onerror;
-                        newConnection.onclose = this.connection.onclose;
-                        newConnection.onmessage = this.messageHandler;
-                        this.connection = newConnection;
-                    }, 1000);
-                }
-            };
-
         });
+
+        obs.subscribe(res => {
+            console.log(`Connected with session ID ${res}`);
+            this.sessionId = res;
+        });
+
+        return obs;
     }
 
     @action("file list")
@@ -141,6 +112,75 @@ export class BackendService {
                 }
             }
         });
+    }
+
+    private messageHandler (event: MessageEvent) {
+        if (event.data.byteLength < 40) {
+            console.log("Unknown event format");
+            return;
+        }
+
+        const eventName = this.getEventName(new Uint8Array(event.data, 0, 32));
+        const eventId = new Uint32Array(event.data, 32, 2)[0];
+        const eventData = new Uint8Array(event.data, 40);
+
+        try {
+            let parsedMessage;
+            if (eventName === "REGISTER_VIEWER_ACK") {
+                parsedMessage = CARTA.RegisterViewerAck.decode(eventData);
+                this.onRegisterViewerAck(parsedMessage);
+            }
+            else if (eventName === "FILE_LIST_RESPONSE") {
+                parsedMessage = CARTA.FileListResponse.decode(eventData);
+                this.onFileListResponse(parsedMessage);
+            }
+            else if (eventName === "FILE_INFO_RESPONSE") {
+                parsedMessage = CARTA.FileInfoResponse.decode(eventData);
+                this.onFileInfoResponse(parsedMessage);
+            }
+            this.logEvent(eventName, parsedMessage);
+
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
+    private onRegisterViewerAck(response: CARTA.RegisterViewerAck) {
+        const observer = this.observerMap.get("REGISTER_VIEWER_ACK");
+        if (observer) {
+            if (response.success) {
+                observer.next(response.sessionId);
+            }
+            else {
+                observer.error(response.message);
+            }
+        }
+    }
+
+    private onFileListResponse(response: CARTA.FileListResponse) {
+        const observer = this.observerMap.get("FILE_LIST_RESPONSE");
+        if (observer) {
+            if (response.success) {
+                observer.next(response);
+            }
+            else {
+                observer.error(response.message);
+            }
+            observer.complete();
+        }
+    }
+
+    private onFileInfoResponse(response: CARTA.FileInfoResponse) {
+        const observer = this.observerMap.get("FILE_INFO_RESPONSE");
+        if (observer) {
+            if (response.success) {
+                observer.next(response);
+            }
+            else {
+                observer.error(response.message);
+            }
+            observer.complete();
+        }
     }
 
     private sendEvent(eventName: string, eventId: number, payload: Uint8Array): boolean {
