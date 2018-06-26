@@ -5,6 +5,7 @@ import {SpatialProfileState} from "./SpatialProfileState";
 import {CursorInfo} from "../models/CursorInfo";
 import {BackendService} from "../services/BackendService";
 import {FileBrowserState} from "./FileBrowserState";
+import {FrameState} from "./FrameState";
 
 export class AppState {
     // Backend service
@@ -12,6 +13,10 @@ export class AppState {
     // WebAssembly Module status
     @observable astReady = false;
     @observable wcsInfo = 0;
+
+    // Frames
+    @observable frames: FrameState[];
+    @observable activeFrame: number;
 
     // Cursor information
     @observable cursorInfo: CursorInfo;
