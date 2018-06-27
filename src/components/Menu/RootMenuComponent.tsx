@@ -12,12 +12,23 @@ export class RootMenuComponent extends React.Component<{ appState: AppState }> {
         const appState = this.props.appState;
 
         // Modifier string for shortcut keys. OSX/iOS use '⌘', while Windows uses 'Ctrl + '
-        // const modString = "Ctrl + ";
-        const modString = "⌘";
+        const modString = "Ctrl + ";
+        //const modString = "⌘";
 
         const fileMenu = (
             <Menu>
-                <MenuItem text="Load cube" label={`${modString}O`} disabled={appState.backendService.connectionStatus !== ConnectionStatus.ACTIVE} onClick={appState.fileBrowserState.showFileBrowser}/>
+                <MenuItem
+                    text="Open cube"
+                    label={`${modString}O`}
+                    disabled={appState.backendService.connectionStatus !== ConnectionStatus.ACTIVE}
+                    onClick={() => appState.fileBrowserState.showFileBrowser(false)}
+                />
+                <MenuItem
+                    text="Open cube as new frame"
+                    label={`${modString}A`}
+                    disabled={appState.backendService.connectionStatus !== ConnectionStatus.ACTIVE}
+                    onClick={() => appState.fileBrowserState.showFileBrowser(true)}
+                />
                 <MenuItem text="Load region"/>
                 <MenuDivider/>
                 <MenuItem text="Export annotations" icon={"floppy-disk"}/>

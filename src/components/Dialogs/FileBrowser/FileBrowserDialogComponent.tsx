@@ -62,12 +62,15 @@ export class FileBrowserDialogComponent extends React.Component<{ fileBrowserSta
                 <div className="pt-dialog-footer">
                     <div className="pt-dialog-footer-actions">
                         <AnchorButton intent={Intent.NONE} onClick={fileBrowserState.hideFileBrowser} text="Close"/>
-                        <Tooltip content={"Close any existing frames and load this file"}>
-                            <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserState.selectedFile} text="Load"/>
-                        </Tooltip>
-                        <Tooltip content={"Append this file as a new frame"}>
-                            <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserState.selectedFile} text="Load as frame"/>
-                        </Tooltip>
+                        {fileBrowserState.appendingFrame ? (
+                            <Tooltip content={"Append this file as a new frame"}>
+                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserState.selectedFile} text="Load as frame"/>
+                            </Tooltip>
+                        ) : (
+                            <Tooltip content={"Close any existing frames and load this file"}>
+                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserState.selectedFile} text="Load"/>
+                            </Tooltip>
+                        )}
                     </div>
                 </div>
             </Dialog>

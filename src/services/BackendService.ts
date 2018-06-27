@@ -114,6 +114,25 @@ export class BackendService {
         });
     }
 
+    @action("load file")
+    loadFile(directory: string, file: string, hdu: string, fileId: number, renderMode: CARTA.RenderMode): Observable<CARTA.OpenFileAck> {
+        return new Observable<CARTA.OpenFileAck>(observer => {
+            if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+                observer.error("Not connected");
+            }
+            else {
+                const message = CARTA.OpenFile.create({directory, file, hdu, fileId, renderMode});
+                this.logEvent("OPEN_FILE", message, false);
+                if (this.sendEvent("OPEN_FILE", 0, CARTA.OpenFile.encode(message).finish())) {
+                    this.observerMap.set("OPEN_FILE_ACK", observer);
+                }
+                else {
+                    observer.error("Could not connect");
+                }
+            }
+        });
+    }
+
     private messageHandler (event: MessageEvent) {
         if (event.data.byteLength < 40) {
             console.log("Unknown event format");
@@ -137,6 +156,13 @@ export class BackendService {
             else if (eventName === "FILE_INFO_RESPONSE") {
                 parsedMessage = CARTA.FileInfoResponse.decode(eventData);
                 this.onFileInfoResponse(parsedMessage);
+            }
+            else if (eventName === "OPEN_FILE_ACK") {
+                parsedMessage = CARTA.OpenFileAck.decode(eventData);
+                this.onFileOpenAck(parsedMessage);
+            }
+            else {
+                console.log(`Unsupported event response ${eventName}`);
             }
             this.logEvent(eventName, parsedMessage);
 
@@ -178,6 +204,19 @@ export class BackendService {
             }
             else {
                 observer.error(response.message);
+            }
+            observer.complete();
+        }
+    }
+
+    private onFileOpenAck(ack: CARTA.OpenFileAck) {
+        const observer = this.observerMap.get("OPEN_FILE_ACK");
+        if (observer) {
+            if (ack.success) {
+                observer.next(ack);
+            }
+            else {
+                observer.error(ack.message);
             }
             observer.complete();
         }

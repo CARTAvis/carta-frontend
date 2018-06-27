@@ -7,19 +7,20 @@ import FileListResponse = CARTA.FileListResponse;
 
 export class FileBrowserState {
     @observable fileBrowserDialogVisible = false;
+    @observable appendingFrame = false;
     @observable fileList: FileListResponse;
     @observable selectedFile: FileInfo;
     @observable selectedHDU: string;
     @observable fileInfoExtended: FileInfoExtended;
     @observable loadingList = false;
     @observable loadingInfo = false;
-    @observable sortColumn = "name";
-    @observable sortDirection = 1;
 
-    @action showFileBrowser = () => {
+    @action showFileBrowser = (append = false) => {
+        this.appendingFrame = append;
         this.fileBrowserDialogVisible = true;
         this.getFileList("");
     };
+
     @action hideFileBrowser = () => {
         this.fileBrowserDialogVisible = false;
     };
@@ -74,16 +75,6 @@ export class FileBrowserState {
             this.getFileList(this.fileList.parent);
         }
     }
-
-    @action setSortColumn = (column: string) => {
-        if (this.sortColumn === column) {
-            this.sortDirection *= -1;
-        }
-        else {
-            this.sortColumn = column;
-            this.sortDirection = 1;
-        }
-    };
 
     private backendService: BackendService;
 
