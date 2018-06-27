@@ -13,7 +13,7 @@ export class RootMenuComponent extends React.Component<{ appState: AppState }> {
 
         // Modifier string for shortcut keys. OSX/iOS use '⌘', while Windows uses 'Ctrl + '
         const modString = "Ctrl + ";
-        //const modString = "⌘";
+        // const modString = "⌘";
 
         const fileMenu = (
             <Menu>

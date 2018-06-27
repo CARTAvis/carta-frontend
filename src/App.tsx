@@ -213,7 +213,7 @@ class App extends React.Component<{ appState: AppState }> {
                 <RootMenuComponent appState={appState}/>
                 <OverlaySettingsDialogComponent appState={appState}/>
                 <URLConnectDialogComponent appState={appState}/>
-                <FileBrowserDialogComponent fileBrowserState={appState.fileBrowserState}/>
+                <FileBrowserDialogComponent appState={appState}/>
             </div>
         );
     }

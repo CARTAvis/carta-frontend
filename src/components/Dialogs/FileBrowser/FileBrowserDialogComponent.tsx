@@ -6,11 +6,12 @@ import {FileBrowserState} from "../../../states/FileBrowserState";
 import {CARTA} from "carta-protobuf";
 import FileInfo = CARTA.FileInfo;
 import {FileListComponent} from "./FileList/FileListComponent";
+import {AppState} from "../../../states/AppState";
 
 @observer
-export class FileBrowserDialogComponent extends React.Component<{ fileBrowserState: FileBrowserState }> {
+export class FileBrowserDialogComponent extends React.Component<{ appState: AppState}> {
     public render() {
-        const fileBrowserState = this.props.fileBrowserState;
+        const fileBrowserState = this.props.appState.fileBrowserState;
         let infoHeader = "";
         if (fileBrowserState.fileInfoExtended) {
             fileBrowserState.fileInfoExtended.headerEntries.forEach(header => {
@@ -64,11 +65,11 @@ export class FileBrowserDialogComponent extends React.Component<{ fileBrowserSta
                         <AnchorButton intent={Intent.NONE} onClick={fileBrowserState.hideFileBrowser} text="Close"/>
                         {fileBrowserState.appendingFrame ? (
                             <Tooltip content={"Append this file as a new frame"}>
-                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserState.selectedFile} text="Load as frame"/>
+                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserState.selectedFile} onClick={this.loadFile} text="Load as frame"/>
                             </Tooltip>
                         ) : (
                             <Tooltip content={"Close any existing frames and load this file"}>
-                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserState.selectedFile} text="Load"/>
+                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserState.selectedFile} onClick={this.loadFile} text="Load"/>
                             </Tooltip>
                         )}
                     </div>
@@ -76,4 +77,11 @@ export class FileBrowserDialogComponent extends React.Component<{ fileBrowserSta
             </Dialog>
         );
     }
+
+    loadFile = () => {
+        const backendService = this.props.appState.backendService;
+        const fileBrowserState = this.props.appState.fileBrowserState;
+        backendService.loadFile(fileBrowserState.fileList.directory, fileBrowserState.selectedFile.name, fileBrowserState.selectedHDU, 0, CARTA.RenderMode.RASTER)
+            .subscribe(res => console.log(res), err=> console.log(err));
+    };
 }
