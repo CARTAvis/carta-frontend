@@ -9,7 +9,7 @@ import {FileListComponent} from "./FileList/FileListComponent";
 import {AppState} from "../../../states/AppState";
 
 @observer
-export class FileBrowserDialogComponent extends React.Component<{ appState: AppState}> {
+export class FileBrowserDialogComponent extends React.Component<{ appState: AppState }> {
     public render() {
         const fileBrowserState = this.props.appState.fileBrowserState;
         let infoHeader = "";
@@ -82,6 +82,6 @@ export class FileBrowserDialogComponent extends React.Component<{ appState: AppS
         const backendService = this.props.appState.backendService;
         const fileBrowserState = this.props.appState.fileBrowserState;
         backendService.loadFile(fileBrowserState.fileList.directory, fileBrowserState.selectedFile.name, fileBrowserState.selectedHDU, 0, CARTA.RenderMode.RASTER)
-            .subscribe(res => console.log(res), err=> console.log(err));
+            .subscribe(res => console.log(res), err => console.log(err));
     };
 }

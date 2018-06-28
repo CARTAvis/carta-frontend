@@ -1,6 +1,6 @@
 import {action, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {Observable, Observer} from "rxjs";
+import {Observable, Observer, throwError} from "rxjs";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -78,59 +78,59 @@ export class BackendService {
 
     @action("file list")
     getFileList(directory: string): Observable<CARTA.FileListResponse> {
-        return new Observable<CARTA.FileListResponse>(observer => {
-            if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-                observer.error("Not connected");
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        }
+        else {
+            const message = CARTA.FileListRequest.create({directory});
+            this.logEvent("FILE_LIST_REQUEST", message, false);
+            if (this.sendEvent("FILE_LIST_REQUEST", 0, CARTA.FileListRequest.encode(message).finish())) {
+                return new Observable<CARTA.FileListResponse>(observer => {
+                    this.observerMap.set("FILE_LIST_RESPONSE", observer);
+                });
             }
             else {
-                const message = CARTA.FileListRequest.create({directory});
-                this.logEvent("FILE_LIST_REQUEST", message, false);
-                if (this.sendEvent("FILE_LIST_REQUEST", 0, CARTA.FileListRequest.encode(message).finish())) {
-                    this.observerMap.set("FILE_LIST_RESPONSE", observer);
-                }
-                else {
-                    observer.error("Could not connect");
-                }
+                return throwError(new Error("Could not send event"));
             }
-        });
+        }
     }
 
     @action("file info")
     getFileInfo(directory: string, file: string, hdu: string): Observable<CARTA.FileInfoResponse> {
-        return new Observable<CARTA.FileInfoResponse>(observer => {
-            if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-                observer.error("Not connected");
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        }
+        else {
+            const message = CARTA.FileInfoRequest.create({directory, file, hdu});
+            this.logEvent("FILE_INFO_REQUEST", message, false);
+            if (this.sendEvent("FILE_INFO_REQUEST", 0, CARTA.FileInfoRequest.encode(message).finish())) {
+                return new Observable<CARTA.FileInfoResponse>(observer => {
+                    this.observerMap.set("FILE_INFO_RESPONSE", observer);
+                });
             }
             else {
-                const message = CARTA.FileInfoRequest.create({directory, file, hdu});
-                this.logEvent("FILE_INFO_REQUEST", message, false);
-                if (this.sendEvent("FILE_INFO_REQUEST", 0, CARTA.FileInfoRequest.encode(message).finish())) {
-                    this.observerMap.set("FILE_INFO_RESPONSE", observer);
-                }
-                else {
-                    observer.error("Could not connect");
-                }
+                return throwError(new Error("Could not send event"));
             }
-        });
+        }
     }
 
     @action("load file")
     loadFile(directory: string, file: string, hdu: string, fileId: number, renderMode: CARTA.RenderMode): Observable<CARTA.OpenFileAck> {
-        return new Observable<CARTA.OpenFileAck>(observer => {
-            if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
-                observer.error("Not connected");
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        }
+        else {
+            const message = CARTA.OpenFile.create({directory, file, hdu, fileId, renderMode});
+            this.logEvent("OPEN_FILE", message, false);
+            if (this.sendEvent("OPEN_FILE", 0, CARTA.OpenFile.encode(message).finish())) {
+                return new Observable<CARTA.OpenFileAck>(observer => {
+                    this.observerMap.set("OPEN_FILE_ACK", observer);
+                });
             }
             else {
-                const message = CARTA.OpenFile.create({directory, file, hdu, fileId, renderMode});
-                this.logEvent("OPEN_FILE", message, false);
-                if (this.sendEvent("OPEN_FILE", 0, CARTA.OpenFile.encode(message).finish())) {
-                    this.observerMap.set("OPEN_FILE_ACK", observer);
-                }
-                else {
-                    observer.error("Could not connect");
-                }
+                return throwError(new Error("Could not send event"));
             }
-        });
+        }
     }
 
     private messageHandler (event: MessageEvent) {
