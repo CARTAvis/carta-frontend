@@ -8,6 +8,7 @@ export class FileListComponent extends React.Component<{
     selectedFile: CARTA.FileInfo,
     selectedHDU: string,
     onFileClicked: (file: CARTA.FileInfo, hdu: string) => void,
+    onFileDoubleClicked: (file: CARTA.FileInfo, hdu: string) => void,
     onFolderClicked: (folder: string) => void
 }, { sortColumn: string, sortDirection: number }> {
 
@@ -61,7 +62,7 @@ export class FileListComponent extends React.Component<{
                         className += " file-table-entry-selected";
                     }
                     return (
-                        <tr key={`${file.name}:${hdu}`} onClick={() => this.props.onFileClicked(file, hdu)} className={className}>
+                        <tr key={`${file.name}:${hdu}`}onDoubleClick={() => this.props.onFileDoubleClicked(file, hdu)} onClick={() => this.props.onFileClicked(file, hdu)} className={className}>
                             <td><Icon icon="document"/></td>
                             <td>{file.HDUList.length > 1 ? `${file.name}: HDU ${hdu}` : file.name}</td>
                             <td>{this.getFileTypeDisplay(file.type)}</td>

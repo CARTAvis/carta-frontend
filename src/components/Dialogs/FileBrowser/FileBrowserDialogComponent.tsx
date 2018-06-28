@@ -37,6 +37,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appState: AppS
                             selectedFile={fileBrowserState.selectedFile}
                             selectedHDU={fileBrowserState.selectedHDU}
                             onFileClicked={(file: FileInfo, hdu: string) => fileBrowserState.selectFile(file, hdu)}
+                            onFileDoubleClicked={(file: FileInfo, hdu: string) => this.loadFile(file.name, hdu)}
                             onFolderClicked={(folder: string) => fileBrowserState.selectFolder(folder)}
                         />
                     </div>
@@ -65,11 +66,11 @@ export class FileBrowserDialogComponent extends React.Component<{ appState: AppS
                         <AnchorButton intent={Intent.NONE} onClick={fileBrowserState.hideFileBrowser} text="Close"/>
                         {fileBrowserState.appendingFrame ? (
                             <Tooltip content={"Append this file as a new frame"}>
-                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserState.selectedFile} onClick={this.loadFile} text="Load as frame"/>
+                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserState.selectedFile} onClick={this.loadSelectedFile} text="Load as frame"/>
                             </Tooltip>
                         ) : (
                             <Tooltip content={"Close any existing frames and load this file"}>
-                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserState.selectedFile} onClick={this.loadFile} text="Load"/>
+                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserState.selectedFile} onClick={this.loadSelectedFile} text="Load"/>
                             </Tooltip>
                         )}
                     </div>
@@ -78,10 +79,13 @@ export class FileBrowserDialogComponent extends React.Component<{ appState: AppS
         );
     }
 
-    loadFile = () => {
-        const backendService = this.props.appState.backendService;
+    loadSelectedFile = () => {
         const fileBrowserState = this.props.appState.fileBrowserState;
-        backendService.loadFile(fileBrowserState.fileList.directory, fileBrowserState.selectedFile.name, fileBrowserState.selectedHDU, 0, CARTA.RenderMode.RASTER)
-            .subscribe(res => console.log(res), err => console.log(err));
+        this.loadFile(fileBrowserState.selectedFile.name, fileBrowserState.selectedHDU);
     };
+
+    loadFile(file: string, hdu: string) {
+        const fileBrowserState = this.props.appState.fileBrowserState;
+        this.props.appState.loadFile(fileBrowserState.fileList.directory, file, hdu);
+    }
 }

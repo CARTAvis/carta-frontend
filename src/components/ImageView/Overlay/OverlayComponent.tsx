@@ -49,7 +49,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 y: ((cursorPosCanvasSpace.y - LT.y) / (RB.y - LT.y)) * (this.imageBounds1.y - this.imageBounds2.y) + this.imageBounds2.y
             };
             const cursorPosWCS = AST.pixToWCS(this.props.wcsInfo, cursorPosImageSpace.x, cursorPosImageSpace.y);
-            const cursorPosFormatted = AST.getFormattedCoordinates(this.props.wcsInfo, cursorPosWCS.x, cursorPosWCS.y, "Format(1) = d.1, Format(2) = d.1");
+            const cursorPosFormatted = AST.getFormattedCoordinates(this.props.wcsInfo, cursorPosWCS.x, cursorPosWCS.y);
             if (this.props.onCursorMoved) {
                 this.props.onCursorMoved({
                     posCanvasSpace: cursorPosCanvasSpace,

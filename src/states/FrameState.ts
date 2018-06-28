@@ -32,6 +32,7 @@ export class FrameView {
 
 export class FrameState {
     @observable frameInfo: FrameInfo;
+    @observable wcsInfo: number;
     @observable requiredFrameView: FrameView;
     @observable currentFrameView: FrameView;
     @observable scaling: FrameScaling;
@@ -41,4 +42,5 @@ export class FrameState {
     @observable contrast: number;
     @observable bias: number;
     @observable rasterData: Float32Array;
+    @observable valid: boolean;
 }

@@ -18,6 +18,7 @@ import {BackendService} from "./services/BackendService";
 import {FileBrowserDialogComponent} from "./components/Dialogs/FileBrowser/FileBrowserDialogComponent";
 import {FileBrowserState} from "./states/FileBrowserState";
 import {URLConnectDialogComponent} from "./components/Dialogs/URLConnect/URLConnectDialogComponent";
+import {Alert} from "@blueprintjs/core";
 
 @observer
 class App extends React.Component<{ appState: AppState }> {
@@ -131,7 +132,8 @@ class App extends React.Component<{ appState: AppState }> {
         overlayState.title.text = "A custom AST plot";
         overlayState.grid.visible = true;
         overlayState.grid.color = 3;
-        overlayState.extra = "Format(1) = d.1, Format(2) = d.1";
+        // TODO: Fix AST issue with this string.
+        // overlayState.extra = "Format(1) = d.1, Format(2) = d.1";
         overlayState.title.font = 2;
         overlayState.axes.labelFontSize = 15;
         overlayState.axes.labelFont = 1;
@@ -140,16 +142,7 @@ class App extends React.Component<{ appState: AppState }> {
         appState.overlayState = overlayState;
 
         AST.onReady.then(() => {
-            // We will eventually read the header from a file. Suppressing linting error for now
-            // tslint:disable-next-line
-            const initResult = AST.initFrame("SIMPLE  =                    T / conforms to FITS standard                      BITPIX  =                  -32 / array data type                                NAXIS   =                    2 / number of array dimensions                     NAXIS1  =                 5850                                                  NAXIS2  =                 1074                                                  NAXIS3  =                    1                                                  OBJECT  = 'GALFACTS_N4 Stokes I'                                  /  Object nameCTYPE1  = 'RA---CAR'           /  1st axis type                                 CRVAL1  =           333.750000 /  Reference pixel value                         CRPIX1  =              2925.50 /  Reference pixel                               CDELT1  =           -0.0166667 /  Pixel size in world coordinate units          CROTA1  =               0.0000 /  Axis rotation in degrees                      CTYPE2  = 'DEC--CAR'           /  2nd axis type                                 CRVAL2  =             0.000000 /  Reference pixel value                         CRPIX2  =             -1181.50 /  Reference pixel                               CDELT2  =            0.0166667 /  Pixel size in world coordinate units          CROTA2  =               0.0000 /  Axis rotation in degrees                      EQUINOX =              2000.00 /  Equinox of coordinates (if any)               BUNIT   = 'Kelvin'                                 /  Units of pixel data valuesHISTORY Image was compressed by CFITSIO using scaled integer quantization:      HISTORY   q = 2.000000 / quantized level scaling parameter                      HISTORY 'SUBTRACTIVE_DITHER_1' / Pixel Quantization Algorithm                   CHECKSUM= '4LTe5LRd4LRd4LRd'   / HDU checksum updated 2017-06-01T10:19:12       DATASUM = '159657855'          / data unit checksum updated 2017-06-01T10:19:12 END                                                                             ");
-            if (!initResult) {
-                console.error("Problem loading AST library");
-            }
-            else {
-                appState.astReady = true;
-                appState.wcsInfo = initResult;
-            }
+            appState.astReady = true;
         });
 
         // Spatial profile data test: Cursor
@@ -214,6 +207,9 @@ class App extends React.Component<{ appState: AppState }> {
                 <OverlaySettingsDialogComponent appState={appState}/>
                 <URLConnectDialogComponent appState={appState}/>
                 <FileBrowserDialogComponent appState={appState}/>
+                <Alert isOpen={appState.alertState.alertVisible} onClose={appState.alertState.dismissAlert} canEscapeKeyCancel={true}>
+                    <p>{appState.alertState.alertText}</p>
+                </Alert>
             </div>
         );
     }

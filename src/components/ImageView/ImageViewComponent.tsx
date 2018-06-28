@@ -33,7 +33,7 @@ export class ImageViewComponent extends React.Component<{ appState: AppState }, 
             <div style={{width: "100%", height: "100%"}} ref={(ref) => this.containerDiv = ref}>
                 {appState.astReady &&
                 <OverlayComponent
-                    wcsInfo={appState.wcsInfo}
+                    wcsInfo={(appState.frames.length > appState.activeFrame && appState.frames[appState.activeFrame].valid) ? appState.frames[appState.activeFrame].wcsInfo : 0}
                     width={this.state.width}
                     height={this.state.height}
                     overlaySettings={appState.overlayState}

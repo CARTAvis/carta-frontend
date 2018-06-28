@@ -13,7 +13,6 @@ export class BackendService {
 
     @observable connectionStatus: ConnectionStatus;
     @observable loggingEnabled: boolean;
-    @observable log: string;
     @observable sessionId: string;
     @observable apiKey: string;
 
@@ -261,15 +260,12 @@ export class BackendService {
         if (this.loggingEnabled) {
             if (incoming) {
                 console.log(`<== ${eventName}`);
-                this.log += `<== ${eventName}\n`;
             }
             else {
                 console.log(`${eventName} ==>`);
-                this.log += `${eventName} ==>\n`;
             }
             console.log(message);
             console.log("\n");
-            this.log += `${JSON.stringify(message)}\n`;
         }
     }
 }
