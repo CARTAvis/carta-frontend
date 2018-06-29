@@ -18,7 +18,7 @@ export class AppState {
 
     // Frames
     @observable frames = new Array<FrameState>();
-    @observable activeFrame: number;
+    @observable activeFrame: FrameState = null;
 
     // Error alerts
     @observable alertState = new AlertState();
@@ -28,6 +28,15 @@ export class AppState {
 
     // Spatial profiles
     @observable spatialProfiles = new Map<number, SpatialProfileState>();
+
+    // Image view
+    @observable viewWidth: number;
+    @observable viewHeight: number;
+    @action setImageViewDimensions  = (w: number, h: number) => {
+        this.viewWidth = w;
+        this.viewHeight = h;
+        // TODO: update active frame's required FoV based on resized dimensions
+    };
 
     // Overlay
     @observable overlayState = new OverlayState();
@@ -66,7 +75,7 @@ export class AppState {
             else {
                 this.frames.push(newFrame);
             }
-            this.activeFrame = 0;
+            this.activeFrame = newFrame;
             this.fileBrowserState.hideFileBrowser();
         }, err => {
             this.alertState.showAlert(`Error loading file: ${err}`);
@@ -74,7 +83,7 @@ export class AppState {
     };
 
     @action loadWCS = (frame: FrameState) => {
-        let headerString = "";
+        let headerString = "SIMPLE  =                    T / conforms to FITS standard                      ";
 
         for (let entry of frame.frameInfo.fileInfoExtended.headerEntries) {
             // Skip empty header entries
@@ -92,18 +101,25 @@ export class AppState {
                 value = "2";
             }
 
-            let entryString = `${entry.name}  =  ${value}`;
+            if (entry.entryType === CARTA.EntryType.STRING) {
+                value = `'${value}'`;
+            }
+
+            let name = entry.name;
+            while (name.length < 8) {
+                name += " ";
+            }
+
+            let entryString = `${name}=  ${value}`;
             while (entryString.length < 80) {
                 entryString += " ";
             }
             headerString += entryString;
         }
-        headerString += "END";
-        console.log(headerString);
 
         const initResult = AST.initFrame(headerString);
         if (!initResult) {
-            console.error("Problem processing WCS info");
+            this.alertState.showAlert("Problem processing WCS info");
         }
         else {
             frame.wcsInfo = initResult;

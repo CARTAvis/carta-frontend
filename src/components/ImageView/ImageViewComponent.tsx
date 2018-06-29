@@ -9,17 +9,12 @@ import {CursorInfo} from "../../models/CursorInfo";
 import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 
 @observer
-export class ImageViewComponent extends React.Component<{ appState: AppState }, { width: number, height: number }> {
+export class ImageViewComponent extends React.Component<{ appState: AppState }> {
 
     containerDiv: HTMLDivElement;
 
-    constructor(props: { appState: AppState }) {
-        super(props);
-        this.state = {width: 0, height: 0};
-    }
-
     onResize = (width: number, height: number) => {
-        this.setState({width, height});
+        this.props.appState.setImageViewDimensions(width, height);
     };
 
     onCursorMoved = (cursorInfo: CursorInfo) => {
@@ -31,11 +26,11 @@ export class ImageViewComponent extends React.Component<{ appState: AppState }, 
         const divBounds = this.containerDiv ? this.containerDiv.getBoundingClientRect() : new DOMRect();
         return (
             <div style={{width: "100%", height: "100%"}} ref={(ref) => this.containerDiv = ref}>
-                {appState.astReady &&
+                {appState.astReady && appState.activeFrame && appState.activeFrame.valid &&
                 <OverlayComponent
-                    wcsInfo={(appState.frames.length > appState.activeFrame && appState.frames[appState.activeFrame].valid) ? appState.frames[appState.activeFrame].wcsInfo : 0}
-                    width={this.state.width}
-                    height={this.state.height}
+                    frame={appState.activeFrame}
+                    width={this.props.appState.viewWidth}
+                    height={this.props.appState.viewHeight}
                     overlaySettings={appState.overlayState}
                     onCursorMoved={this.onCursorMoved}
                 />
@@ -43,7 +38,7 @@ export class ImageViewComponent extends React.Component<{ appState: AppState }, 
                 {appState.astReady && appState.cursorInfo &&
                 <CursorOverlayComponent
                     cursorInfo={appState.cursorInfo}
-                    width={this.state.width}
+                    width={this.props.appState.viewWidth}
                     bottom={0}
                     showImage={true}
                     showWCS={true}

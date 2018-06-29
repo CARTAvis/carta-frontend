@@ -4,12 +4,13 @@ import * as AST from "ast_wrapper";
 import {LabelType, OverlayState} from "../../../states/OverlayState";
 import {observer} from "mobx-react";
 import {CursorInfo} from "../../../models/CursorInfo";
+import {FrameState} from "../../../states/FrameState";
 
 export class OverlayComponentProps {
-    wcsInfo: number;
     width: number;
     height: number;
     overlaySettings: OverlayState;
+    frame: FrameState;
     onCursorMoved?: (cursorInfo: CursorInfo) => void;
 }
 
@@ -22,7 +23,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     componentDidMount() {
         if (this.canvas) {
-            if (this.props.wcsInfo) {
+            if (this.props.frame.wcsInfo) {
                 this.updateImageDimensions();
             }
             this.renderCanvas();
@@ -31,7 +32,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     componentDidUpdate() {
         if (this.canvas) {
-            if (this.props.wcsInfo) {
+            if (this.props.frame.wcsInfo) {
                 this.updateImageDimensions();
             }
             this.renderCanvas();
@@ -40,7 +41,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     handleMouseMove = (ev: React.MouseEvent<HTMLCanvasElement>) => {
         const cursorPosCanvasSpace = {x: ev.nativeEvent.offsetX, y: ev.nativeEvent.offsetY};
-        if (this.props.wcsInfo) {
+        if (this.props.frame.wcsInfo) {
             const LT = {x: this.padding[0], y: this.padding[2]};
             const RB = {x: this.props.width - this.padding[1], y: this.props.height - this.padding[3]};
             const cursorPosImageSpace = {
@@ -48,8 +49,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 // y coordinate is flipped in image space
                 y: ((cursorPosCanvasSpace.y - LT.y) / (RB.y - LT.y)) * (this.imageBounds1.y - this.imageBounds2.y) + this.imageBounds2.y
             };
-            const cursorPosWCS = AST.pixToWCS(this.props.wcsInfo, cursorPosImageSpace.x, cursorPosImageSpace.y);
-            const cursorPosFormatted = AST.getFormattedCoordinates(this.props.wcsInfo, cursorPosWCS.x, cursorPosWCS.y);
+            const cursorPosWCS = AST.pixToWCS(this.props.frame.wcsInfo, cursorPosImageSpace.x, cursorPosImageSpace.y);
+            const cursorPosFormatted = AST.getFormattedCoordinates(this.props.frame.wcsInfo, cursorPosWCS.x, cursorPosWCS.y, "Format(1) = d.1, Format(2) = d.1");
             if (this.props.onCursorMoved) {
                 this.props.onCursorMoved({
                     posCanvasSpace: cursorPosCanvasSpace,
@@ -105,7 +106,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     renderCanvas = () => {
         const settings = this.props.overlaySettings;
 
-        if (this.props.wcsInfo) {
+        if (this.props.frame.wcsInfo) {
             // Set default AST palette
             AST.setPalette([         // AST color index:
                 Colors.BLACK,        // 0
@@ -121,7 +122,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
             AST.setCanvas(this.canvas);
             AST.plot(
-                this.props.wcsInfo,
+                this.props.frame.wcsInfo,
                 this.imageBounds1.x, this.imageBounds2.x,
                 this.imageBounds1.y, this.imageBounds2.y,
                 this.props.width * devicePixelRatio, this.props.height * devicePixelRatio,

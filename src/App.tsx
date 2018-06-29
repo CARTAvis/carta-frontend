@@ -132,8 +132,7 @@ class App extends React.Component<{ appState: AppState }> {
         overlayState.title.text = "A custom AST plot";
         overlayState.grid.visible = true;
         overlayState.grid.color = 3;
-        // TODO: Fix AST issue with this string.
-        // overlayState.extra = "Format(1) = d.1, Format(2) = d.1";
+        overlayState.extra = "Format(1) = d.1, Format(2) = d.1";
         overlayState.title.font = 2;
         overlayState.axes.labelFontSize = 15;
         overlayState.axes.labelFont = 1;
