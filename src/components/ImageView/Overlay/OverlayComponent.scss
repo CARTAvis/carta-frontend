@@ -1,5 +1,6 @@
 .overlay-canvas {
     width: 100%;
     height: 100%;
-    background-color: #F2F2F2
+    position: absolute;
+    z-index: 2;
 }

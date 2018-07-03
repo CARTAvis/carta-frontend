@@ -1,6 +1,7 @@
 .raster-canvas {
-    background-color: rgba(95, 53, 72, 0.3);
+    //background-color: rgba(95, 53, 72, 0.1);
     position: absolute;
+    z-index: 1;
 }
 
 .raster-div {

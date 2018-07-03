@@ -15,18 +15,26 @@ export class RasterViewComponentProps {
 export class RasterViewComponent extends React.Component<RasterViewComponentProps> {
     canvas: HTMLCanvasElement;
 
-    componentDidUpdate() {
+    componentDidMount() {
         if (this.canvas) {
-            const padding = this.props.overlaySettings.padding;
-            this.canvas.width = this.props.width - padding[0] - padding[1];
-            this.canvas.height = this.props.height - padding[2] - padding[3];
-            console.log(`Updated canvas dimensions: ${this.canvas.width}x${this.canvas.height}`);
-            this.renderCanvas();
+            this.updateCanvas();
         }
     }
 
-    renderCanvas = () => {
+    componentDidUpdate() {
+        if (this.canvas) {
+            this.updateCanvas();
+        }
+    }
 
+    private updateCanvas = () => {
+        const padding = this.props.overlaySettings.padding;
+        this.canvas.width = this.props.width - padding[0] - padding[1];
+        this.canvas.height = this.props.height - padding[2] - padding[3];
+        console.log(`Updated canvas dimensions: ${this.canvas.width}x${this.canvas.height}`);
+        const context = this.canvas.getContext("2d");
+        context.fillStyle = "black";
+        context.fillRect(0, 0, this.canvas.width-1, this.canvas.height);
     };
 
     render() {

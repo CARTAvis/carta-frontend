@@ -6,6 +6,7 @@ import {observer} from "mobx-react";
 import {CursorInfo} from "../../../models/CursorInfo";
 import {FrameState} from "../../../states/FrameState";
 import {Point2D} from "../../../models/Point2D";
+import "./OverlayComponent.css";
 
 export class OverlayComponentProps {
     width: number;
@@ -74,11 +75,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const cursorPosWCS = AST.pixToWCS(this.props.frame.wcsInfo, cursorPosImageSpace.x, cursorPosImageSpace.y);
         const cursorPosFormatted = AST.getFormattedCoordinates(this.props.frame.wcsInfo, cursorPosWCS.x, cursorPosWCS.y, "Format(1) = d.1, Format(2) = d.1");
         return {
-                posCanvasSpace: cursorPosCanvasSpace,
-                posImageSpace: cursorPosImageSpace,
-                posWCS: cursorPosWCS,
-                infoWCS: cursorPosFormatted
-            };
+            posCanvasSpace: cursorPosCanvasSpace,
+            posImageSpace: cursorPosImageSpace,
+            posWCS: cursorPosWCS,
+            infoWCS: cursorPosFormatted
+        };
     }
 
     updateImageDimensions() {
@@ -157,6 +158,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     render() {
         const styleString = this.props.overlaySettings.styleString;
         const frameView = this.props.frame.requiredFrameView;
+        const framePadding = this.props.overlaySettings.padding;
+        const w = this.props.width;
+        const h = this.props.height;
         return <canvas className="overlay-canvas" key={styleString} ref={(ref) => this.canvas = ref} onWheel={this.handleScroll} onClick={this.handleClick} onMouseMove={this.handleMouseMove}/>;
     }
 }
