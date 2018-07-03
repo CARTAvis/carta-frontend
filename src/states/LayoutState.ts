@@ -10,6 +10,7 @@ export class LayoutState {
     @observable layoutConfig: any;
     maxHistoryQueueLength = 10;
     _layoutHistory: any[] = [];
+
     @action undoLayoutChange = () => {
         if (!this._layoutHistory || this._layoutHistory.length < 2) {
             return;
@@ -72,7 +73,6 @@ export class LayoutState {
         this.layoutConfig = config;
     };
 
-    // tslint:disable-next-line
     addStateWatch = autorun(() => {
         if (!this.layout) {
             return;

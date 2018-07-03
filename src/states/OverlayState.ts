@@ -195,6 +195,9 @@ export class OverlayAxisSettings {
 }
 
 export class OverlayState {
+    // View size options
+    @observable viewWidth: number;
+    @observable viewHeight: number;
     // Global options
     @observable labelType?: LabelType;
     @observable color?: number;
@@ -205,17 +208,51 @@ export class OverlayState {
     @observable system?: SystemType;
 
     // Individual settings
-    @observable grid = new OverlayGridSettings();
-    @observable title = new OverlayTitleSettings();
-    @observable border = new OverlayBorderSettings();
-    @observable axes = new OverlayAxisSettings(0);
-    @observable axis = [new OverlayAxisSettings(1), new OverlayAxisSettings(2)];
-    @observable ticks = new OverlayTickSettings();
+    @observable grid: OverlayGridSettings;
+    @observable title: OverlayTitleSettings;
+    @observable border: OverlayBorderSettings;
+    @observable axes: OverlayAxisSettings;
+    @observable axis: Array<OverlayAxisSettings>;
+    @observable ticks: OverlayTickSettings;
     // Title settings
     @observable extra?: string;
 
     @computed get styleString() {
         return this.stringify();
+    }
+
+    @computed get padding(): Array<number> {
+        const displayTitle = this.title.visible;
+        const displayLabelText = this.axis.map((axis) => {
+            if (axis.labelVisible !== undefined) {
+                return axis.labelVisible;
+            }
+            return this.axes.labelVisible !== false;
+        });
+        const displayNumText = this.axis.map((axis) => {
+            if (this.labelType === LabelType.Interior) {
+                return false;
+            }
+            if (axis.numberVisible !== undefined) {
+                return axis.numberVisible;
+            }
+            return this.axes.numberVisible !== false;
+        });
+
+        let paddingSize = 65;
+        const minSize = Math.min(this.viewWidth, this.viewHeight);
+        const scalingStartSize = 600;
+        if (minSize < scalingStartSize) {
+            paddingSize = Math.max(15, minSize / scalingStartSize * paddingSize);
+        }
+        const paddingRatios = [
+            Math.max(0.2, (displayLabelText[1] ? 0.5 : 0) + (displayNumText[1] ? 0.6 : 0)),
+            0.2,
+            (displayTitle ? 1.0 : 0.2),
+            Math.max(0.2, (displayLabelText[0] ? 0.4 : 0) + (displayNumText[0] ? 0.6 : 0))
+        ];
+
+        return paddingRatios.map(r => r * paddingSize * devicePixelRatio);
     }
 
     // Dialog
@@ -263,5 +300,33 @@ export class OverlayState {
 
         stringList = stringList.filter(str => str.length > 0);
         return stringList.join(", ");
+    }
+
+    constructor() {
+        this.grid = new OverlayGridSettings();
+        this.title = new OverlayTitleSettings();
+        this.border = new OverlayBorderSettings();
+        this.axes = new OverlayAxisSettings(0);
+        this.axis = [new OverlayAxisSettings(1), new OverlayAxisSettings(2)];
+        this.ticks = new OverlayTickSettings();
+
+        // Default settings
+        this.system = SystemType.Native;
+        this.labelType = LabelType.Exterior;
+        this.border.visible = true;
+        this.color = 4;
+        this.width = 1;
+        this.tolerance = 0.02;
+        this.title.visible = false;
+        this.title.gap = 0.02;
+        this.title.color = 4;
+        this.title.text = "A custom AST plot";
+        this.grid.visible = true;
+        this.grid.color = 3;
+        this.extra = "Format(1) = d.1, Format(2) = d.1";
+        this.title.font = 2;
+        this.axes.labelFontSize = 15;
+        this.axes.labelFont = 1;
+        this.axes.numberFontSize = 10;
     }
 }

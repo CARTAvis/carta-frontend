@@ -7,6 +7,7 @@ import {NonIdealState, Spinner} from "@blueprintjs/core";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
 import {CursorInfo} from "../../models/CursorInfo";
 import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
+import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 
 @observer
 export class ImageViewComponent extends React.Component<{ appState: AppState }> {
@@ -21,6 +22,21 @@ export class ImageViewComponent extends React.Component<{ appState: AppState }> 
         this.props.appState.cursorInfo = cursorInfo;
     };
 
+    onClicked = (cursorInfo: CursorInfo) => {
+        const appState = this.props.appState;
+        if (appState.activeFrame) {
+            appState.activeFrame.setCenter(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y);
+        }
+    };
+
+    onZoomed = (cursorInfo: CursorInfo, delta: number) => {
+        const appState = this.props.appState;
+        if (appState.activeFrame) {
+            const zoomSpeed = 1 + Math.abs(delta / 2000.0);
+            this.props.appState.activeFrame.setZoom(this.props.appState.activeFrame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed));
+        }
+    };
+
     render() {
         const appState = this.props.appState;
         const divBounds = this.containerDiv ? this.containerDiv.getBoundingClientRect() : new DOMRect();
@@ -33,6 +49,16 @@ export class ImageViewComponent extends React.Component<{ appState: AppState }> 
                     height={this.props.appState.viewHeight}
                     overlaySettings={appState.overlayState}
                     onCursorMoved={this.onCursorMoved}
+                    onClicked={this.onClicked}
+                    onZoomed={this.onZoomed}
+                />
+                }
+                {appState.astReady && appState.activeFrame && appState.activeFrame.valid &&
+                <RasterViewComponent
+                    frame={appState.activeFrame}
+                    width={this.props.appState.viewWidth}
+                    height={this.props.appState.viewHeight}
+                    overlaySettings={appState.overlayState}
                 />
                 }
                 {appState.astReady && appState.cursorInfo &&

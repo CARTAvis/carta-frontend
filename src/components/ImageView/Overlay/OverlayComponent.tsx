@@ -5,6 +5,7 @@ import {LabelType, OverlayState} from "../../../states/OverlayState";
 import {observer} from "mobx-react";
 import {CursorInfo} from "../../../models/CursorInfo";
 import {FrameState} from "../../../states/FrameState";
+import {Point2D} from "../../../models/Point2D";
 
 export class OverlayComponentProps {
     width: number;
@@ -12,6 +13,8 @@ export class OverlayComponentProps {
     overlaySettings: OverlayState;
     frame: FrameState;
     onCursorMoved?: (cursorInfo: CursorInfo) => void;
+    onClicked?: (cursorInfo: CursorInfo) => void;
+    onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
 }
 
 @observer
@@ -41,26 +44,42 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     handleMouseMove = (ev: React.MouseEvent<HTMLCanvasElement>) => {
         const cursorPosCanvasSpace = {x: ev.nativeEvent.offsetX, y: ev.nativeEvent.offsetY};
-        if (this.props.frame.wcsInfo) {
-            const LT = {x: this.padding[0], y: this.padding[2]};
-            const RB = {x: this.props.width - this.padding[1], y: this.props.height - this.padding[3]};
-            const cursorPosImageSpace = {
-                x: ((cursorPosCanvasSpace.x - LT.x) / (RB.x - LT.x)) * (this.imageBounds2.x - this.imageBounds1.x) + this.imageBounds1.x,
-                // y coordinate is flipped in image space
-                y: ((cursorPosCanvasSpace.y - LT.y) / (RB.y - LT.y)) * (this.imageBounds1.y - this.imageBounds2.y) + this.imageBounds2.y
-            };
-            const cursorPosWCS = AST.pixToWCS(this.props.frame.wcsInfo, cursorPosImageSpace.x, cursorPosImageSpace.y);
-            const cursorPosFormatted = AST.getFormattedCoordinates(this.props.frame.wcsInfo, cursorPosWCS.x, cursorPosWCS.y, "Format(1) = d.1, Format(2) = d.1");
-            if (this.props.onCursorMoved) {
-                this.props.onCursorMoved({
-                    posCanvasSpace: cursorPosCanvasSpace,
-                    posImageSpace: cursorPosImageSpace,
-                    posWCS: cursorPosWCS,
-                    infoWCS: cursorPosFormatted
-                });
-            }
+        if (this.props.frame.wcsInfo && this.props.onCursorMoved) {
+            this.props.onCursorMoved(this.getCursorInfo(cursorPosCanvasSpace));
         }
     };
+
+    handleClick = (ev: React.MouseEvent<HTMLCanvasElement>) => {
+        const cursorPosCanvasSpace = {x: ev.nativeEvent.offsetX, y: ev.nativeEvent.offsetY};
+        if (this.props.frame.wcsInfo && this.props.onClicked) {
+            this.props.onClicked(this.getCursorInfo(cursorPosCanvasSpace));
+        }
+    };
+
+    handleScroll = (ev: React.WheelEvent<HTMLCanvasElement>) => {
+        const cursorPosCanvasSpace = {x: ev.nativeEvent.offsetX, y: ev.nativeEvent.offsetY};
+        if (this.props.frame.wcsInfo && this.props.onZoomed) {
+            this.props.onZoomed(this.getCursorInfo(cursorPosCanvasSpace), ev.deltaY);
+        }
+    };
+
+    private getCursorInfo(cursorPosCanvasSpace: Point2D) {
+        const LT = {x: this.padding[0], y: this.padding[2]};
+        const RB = {x: this.props.width - this.padding[1], y: this.props.height - this.padding[3]};
+        const cursorPosImageSpace = {
+            x: ((cursorPosCanvasSpace.x - LT.x) / (RB.x - LT.x)) * (this.imageBounds2.x - this.imageBounds1.x) + this.imageBounds1.x,
+            // y coordinate is flipped in image space
+            y: ((cursorPosCanvasSpace.y - LT.y) / (RB.y - LT.y)) * (this.imageBounds1.y - this.imageBounds2.y) + this.imageBounds2.y
+        };
+        const cursorPosWCS = AST.pixToWCS(this.props.frame.wcsInfo, cursorPosImageSpace.x, cursorPosImageSpace.y);
+        const cursorPosFormatted = AST.getFormattedCoordinates(this.props.frame.wcsInfo, cursorPosWCS.x, cursorPosWCS.y, "Format(1) = d.1, Format(2) = d.1");
+        return {
+                posCanvasSpace: cursorPosCanvasSpace,
+                posImageSpace: cursorPosImageSpace,
+                posWCS: cursorPosWCS,
+                infoWCS: cursorPosFormatted
+            };
+    }
 
     updateImageDimensions() {
         this.canvas.width = this.props.width * devicePixelRatio;
@@ -97,9 +116,12 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             Math.max(0.2, (displayLabelText[0] ? 0.4 : 0) + (displayNumText[0] ? 0.6 : 0))
         ];
 
-        this.imageBounds2.x = this.props.width - paddingSize * (paddingRatios[0] + paddingRatios[1]);
-        this.imageBounds2.y = this.props.height - paddingSize * (paddingRatios[2] + paddingRatios[3]);
-        this.imageBounds1 = {x: 0, y: 0};
+        this.imageBounds2 = {x: this.props.frame.requiredFrameView.xMax, y: this.props.frame.requiredFrameView.yMax};
+        this.imageBounds1 = {x: this.props.frame.requiredFrameView.xMin, y: this.props.frame.requiredFrameView.yMin};
+
+        // this.imageBounds2.x = this.props.width - paddingSize * (paddingRatios[0] + paddingRatios[1]);
+        // this.imageBounds2.y = this.props.height - paddingSize * (paddingRatios[2] + paddingRatios[3]);
+        // this.imageBounds1 = {x: 0, y: 0};
         this.padding = paddingRatios.map(r => r * paddingSize * devicePixelRatio);
     }
 
@@ -126,14 +148,15 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 this.imageBounds1.x, this.imageBounds2.x,
                 this.imageBounds1.y, this.imageBounds2.y,
                 this.props.width * devicePixelRatio, this.props.height * devicePixelRatio,
-                this.padding[0], this.padding[1], this.padding[2], this.padding[3],
+                settings.padding[0], settings.padding[1], settings.padding[2], settings.padding[3],
+                // this.padding[0], this.padding[1], this.padding[2], this.padding[3],
                 settings.styleString);
         }
     };
 
     render() {
-        const backgroundColor = "#F2F2F2";
         const styleString = this.props.overlaySettings.styleString;
-        return <canvas key={styleString} ref={(ref) => this.canvas = ref} style={{width: "100%", height: "100%", backgroundColor: backgroundColor}} onMouseMove={this.handleMouseMove}/>;
+        const frameView = this.props.frame.requiredFrameView;
+        return <canvas className="overlay-canvas" key={styleString} ref={(ref) => this.canvas = ref} onWheel={this.handleScroll} onClick={this.handleClick} onMouseMove={this.handleMouseMove}/>;
     }
 }

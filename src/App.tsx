@@ -119,27 +119,6 @@ class App extends React.Component<{ appState: AppState }> {
 
         appState.layoutSettings.layout = layout;
 
-        let overlayState = new OverlayState();
-        overlayState.system = SystemType.Native;
-        overlayState.labelType = LabelType.Exterior;
-        overlayState.border.visible = true;
-        overlayState.color = 4;
-        overlayState.width = 1;
-        overlayState.tolerance = 0.02;
-        overlayState.title.visible = false;
-        overlayState.title.gap = 0.02;
-        overlayState.title.color = 4;
-        overlayState.title.text = "A custom AST plot";
-        overlayState.grid.visible = true;
-        overlayState.grid.color = 3;
-        overlayState.extra = "Format(1) = d.1, Format(2) = d.1";
-        overlayState.title.font = 2;
-        overlayState.axes.labelFontSize = 15;
-        overlayState.axes.labelFont = 1;
-        overlayState.axes.numberFontSize = 10;
-
-        appState.overlayState = overlayState;
-
         AST.onReady.then(() => {
             appState.astReady = true;
         });
