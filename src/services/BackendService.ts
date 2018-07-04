@@ -1,6 +1,7 @@
 import {action, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, throwError} from "rxjs";
+import {BehaviorSubject} from "rxjs/internal/BehaviorSubject";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -18,10 +19,21 @@ export class BackendService {
 
     private connection: WebSocket;
     private observerMap: Map<string, Observer<any>>;
+    private readonly rasterStream: BehaviorSubject<CARTA.RasterImageData>;
+    private readonly logEventList: string[];
 
     constructor() {
         this.observerMap = new Map<string, Observer<any>>();
         this.connectionStatus = ConnectionStatus.CLOSED;
+        this.rasterStream = new BehaviorSubject<CARTA.RasterImageData>(null);
+        this.logEventList = [
+            "REGISTER_VIEWER",
+            "REGISTER_VIEWER_ACK"
+        ];
+    }
+
+    getRasterStream() {
+        return this.rasterStream;
     }
 
     @action("connect")
@@ -132,7 +144,19 @@ export class BackendService {
         }
     }
 
-    private messageHandler (event: MessageEvent) {
+    @action("set image view")
+    setImageView(fileId: number, xMin: number, xMax: number, yMin: number, yMax: number, mip: number): boolean {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            const message = CARTA.SetImageView.create({fileId, imageBounds: {xMin, xMax, yMin, yMax}, mip, compressionType: CARTA.CompressionType.NONE, compressionQuality: 0, numSubsets: 1});
+            this.logEvent("SET_IMAGE_VIEW", message, false);
+            if (this.sendEvent("SET_IMAGE_VIEW", 0, CARTA.SetImageView.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private messageHandler(event: MessageEvent) {
         if (event.data.byteLength < 40) {
             console.log("Unknown event format");
             return;
@@ -159,6 +183,10 @@ export class BackendService {
             else if (eventName === "OPEN_FILE_ACK") {
                 parsedMessage = CARTA.OpenFileAck.decode(eventData);
                 this.onFileOpenAck(parsedMessage);
+            }
+            else if (eventName === "RASTER_IMAGE_DATA") {
+                parsedMessage = CARTA.RasterImageData.decode(eventData);
+                this.onStreamedRasterImageData(parsedMessage);
             }
             else {
                 console.log(`Unsupported event response ${eventName}`);
@@ -221,6 +249,10 @@ export class BackendService {
         }
     }
 
+    private onStreamedRasterImageData(rasterImageData: CARTA.RasterImageData) {
+        this.rasterStream.next(rasterImageData);
+    }
+
     private sendEvent(eventName: string, eventId: number, payload: Uint8Array): boolean {
         if (this.connection.readyState === WebSocket.OPEN) {
             let eventData = new Uint8Array(32 + 8 + payload.byteLength);
@@ -257,7 +289,7 @@ export class BackendService {
     }
 
     private logEvent(eventName: string, message: any, incoming: boolean = true) {
-        if (this.loggingEnabled) {
+        if (this.loggingEnabled && this.logEventList.indexOf(eventName) >= 0) {
             if (incoming) {
                 console.log(`<== ${eventName}`);
             }

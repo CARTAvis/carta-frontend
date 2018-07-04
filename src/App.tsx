@@ -161,7 +161,6 @@ class App extends React.Component<{ appState: AppState }> {
                 3.5519793, 3.5231485, 3.5053034, 3.5028384])
         }];
         appState.spatialProfiles.set(spatialProfileTest.regionId, spatialProfileTest);
-        appState.backendService = new BackendService();
         appState.backendService.loggingEnabled = true;
         appState.fileBrowserState = new FileBrowserState(appState.backendService);
 

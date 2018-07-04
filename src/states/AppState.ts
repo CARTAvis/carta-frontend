@@ -5,10 +5,11 @@ import {SpatialProfileState} from "./SpatialProfileState";
 import {CursorInfo} from "../models/CursorInfo";
 import {BackendService} from "../services/BackendService";
 import {FileBrowserState} from "./FileBrowserState";
-import {FrameInfo, FrameState} from "./FrameState";
+import {FrameInfo, FrameState, FrameView} from "./FrameState";
 import {AlertState} from "./AlertState";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
+import {update} from "plotly.js";
 
 export class AppState {
     // Backend service
@@ -66,10 +67,10 @@ export class AppState {
             newFrame.fitZoom();
             newFrame.currentFrameView = {
                 xMin: 0,
-                xMax: newFrame.frameInfo.fileInfoExtended.width,
+                xMax: 0,
                 yMin: 0,
-                yMax: newFrame.frameInfo.fileInfoExtended.height,
-                mip: newFrame.requiredFrameView.mip
+                yMax: 0,
+                mip: 999
             };
             newFrame.valid = true;
 
@@ -133,6 +134,7 @@ export class AppState {
     };
 
     constructor() {
+        this.backendService = new BackendService();
         this.astReady = false;
         this.spatialProfiles = new Map<number, SpatialProfileState>();
         this.frames = [];
@@ -141,5 +143,52 @@ export class AppState {
         this.overlayState = new OverlayState();
         this.layoutSettings = new LayoutState();
         this.urlConnectDialogVisible = false;
+
+        const onRequiredViewUpdated = autorun(() => {
+            if (this.activeFrame) {
+                // Calculate new required frame view (cropped to file size)
+                const reqView = this.activeFrame.requiredFrameView;
+                const currentView = this.activeFrame.currentFrameView;
+                const croppedReq: FrameView = {
+                    xMin: Math.max(0, reqView.xMin),
+                    xMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.width, reqView.xMax),
+                    yMin: Math.max(0, reqView.yMin),
+                    yMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.height, reqView.yMax),
+                    mip: reqView.mip
+                };
+
+                // Calculate if new data is required
+                let updateRequired = false;
+                if (croppedReq.mip < currentView.mip) {
+                    updateRequired = true;
+                    console.log(`Update required: mip ${currentView.mip} -> ${croppedReq.mip}`);
+                }
+                else if (croppedReq.xMin < currentView.xMin || croppedReq.xMax > currentView.xMax || croppedReq.yMin < currentView.yMin || croppedReq.yMax > currentView.yMax) {
+                    updateRequired = true;
+                    console.log(`Update required: x [${currentView.xMin}, ${currentView.xMax}] -> [${croppedReq.xMin}, ${croppedReq.xMax}]; y [${currentView.yMin}, ${currentView.yMax}] -> [${croppedReq.yMin}, ${croppedReq.yMax}];`);
+                }
+
+                if (updateRequired) {
+                    this.backendService.setImageView(0, Math.floor(croppedReq.xMin), Math.ceil(croppedReq.xMax), Math.floor(croppedReq.yMin), Math.ceil(croppedReq.yMax), croppedReq.mip);
+                    // this.activeFrame.currentFrameView = croppedReq;
+                }
+            }
+        }, {delay: 16});
+
+        this.backendService.getRasterStream().subscribe(rasterImageData => {
+            if (this.activeFrame) {
+                this.activeFrame.currentFrameView = {
+                    xMin: rasterImageData.imageBounds.xMin,
+                    xMax: rasterImageData.imageBounds.xMax,
+                    yMin: rasterImageData.imageBounds.yMin,
+                    yMax: rasterImageData.imageBounds.yMax,
+                    mip: rasterImageData.mip
+                };
+
+                const rawData = rasterImageData.imageData[0];
+                this.activeFrame.rasterData = new Float32Array(rawData.buffer.slice(rawData.byteOffset, rawData.byteOffset + rawData.byteLength));
+            }
+        });
+
     }
 }
