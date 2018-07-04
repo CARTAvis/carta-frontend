@@ -15,6 +15,13 @@ export enum SystemType {
     J2000 = "J2000"
 }
 
+export class Padding {
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+}
+
 export class OverlayTitleSettings {
     @observable visible?: boolean;
     @observable font?: number;
@@ -221,7 +228,7 @@ export class OverlayState {
         return this.stringify();
     }
 
-    @computed get padding(): Array<number> {
+    @computed get padding(): Padding {
         const displayTitle = this.title.visible;
         const displayLabelText = this.axis.map((axis) => {
             if (axis.labelVisible !== undefined) {
@@ -252,7 +259,13 @@ export class OverlayState {
             Math.max(0.2, (displayLabelText[0] ? 0.4 : 0) + (displayNumText[0] ? 0.6 : 0))
         ];
 
-        return paddingRatios.map(r => r * paddingSize * devicePixelRatio);
+        const paddingValues = paddingRatios.map(r => r * paddingSize * devicePixelRatio);
+        return {
+            left: paddingValues[0],
+            right: paddingValues[1],
+            top: paddingValues[2],
+            bottom: paddingValues[3]
+        };
     }
 
     // Dialog

@@ -39,14 +39,11 @@ export class ImageViewComponent extends React.Component<{ appState: AppState }> 
 
     render() {
         const appState = this.props.appState;
-        const divBounds = this.containerDiv ? this.containerDiv.getBoundingClientRect() : new DOMRect();
         return (
-            <div style={{width: "100%", height: "100%"}} ref={(ref) => this.containerDiv = ref}>
+            <div className="image-view-div" ref={(ref) => this.containerDiv = ref}>
                 {appState.astReady && appState.activeFrame && appState.activeFrame.valid &&
                 <OverlayComponent
                     frame={appState.activeFrame}
-                    width={this.props.appState.viewWidth}
-                    height={this.props.appState.viewHeight}
                     overlaySettings={appState.overlayState}
                     onCursorMoved={this.onCursorMoved}
                     onClicked={this.onClicked}
@@ -56,15 +53,13 @@ export class ImageViewComponent extends React.Component<{ appState: AppState }> 
                 {appState.astReady && appState.activeFrame && appState.activeFrame.valid &&
                 <RasterViewComponent
                     frame={appState.activeFrame}
-                    width={this.props.appState.viewWidth}
-                    height={this.props.appState.viewHeight}
                     overlaySettings={appState.overlayState}
                 />
                 }
                 {appState.astReady && appState.cursorInfo &&
                 <CursorOverlayComponent
                     cursorInfo={appState.cursorInfo}
-                    width={this.props.appState.viewWidth}
+                    width={appState.overlayState.viewWidth}
                     bottom={0}
                     showImage={true}
                     showWCS={true}

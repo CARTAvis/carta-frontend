@@ -30,36 +30,10 @@ export class AppState {
     @observable spatialProfiles: Map<number, SpatialProfileState>;
 
     // Image view
-    @observable viewWidth: number;
-    @observable viewHeight: number;
     @action setImageViewDimensions = (w: number, h: number) => {
-        this.viewWidth = w;
-        this.viewHeight = h;
-        this.overlayState.viewWidth = this.viewWidth;
-        this.overlayState.viewHeight = this.viewHeight;
-        console.log(`Full view: w=${w}, h=${h};`);
-        console.log(this.overlayState.padding);
-        const adjustedW = this.viewWidth - this.overlayState.padding[0] - this.overlayState.padding[1];
-        const adjustedH = this.viewHeight - this.overlayState.padding[2] - this.overlayState.padding[3];
-        console.log(`Adjusted view: w=${adjustedW}, h=${adjustedH};`);
-        // TODO: update active frame's required FoV based on resized dimensions AND padding settings
-        if (this.activeFrame) {
-            this.activeFrame.setDimensions(adjustedW, adjustedH);
-        }
+        this.overlayState.viewWidth = w;
+        this.overlayState.viewHeight = h;
     };
-
-    dimensionsUpdater = autorun(() => {
-        if (!this.overlayState || !this.overlayState.padding) {
-            return;
-        }
-        const adjustedW = this.viewWidth - this.overlayState.padding[0] - this.overlayState.padding[1];
-        const adjustedH = this.viewHeight - this.overlayState.padding[2] - this.overlayState.padding[3];
-        console.log(`Autorun Adjusted view: w=${adjustedW}, h=${adjustedH};`);
-        // TODO: update active frame's required FoV based on resized dimensions AND padding settings
-        if (this.activeFrame) {
-            this.activeFrame.setDimensions(adjustedW, adjustedH);
-        }
-    });
 
     // Overlay
     @observable overlayState: OverlayState;
@@ -83,14 +57,20 @@ export class AppState {
     @action loadFile = (directory: string, file: string, hdu: string) => {
         this.backendService.loadFile(directory, file, hdu, 0, CARTA.RenderMode.RASTER).subscribe(ack => {
             console.log("Loaded");
-            let newFrame = new FrameState();
+            let newFrame = new FrameState(this.overlayState);
             newFrame.frameInfo = new FrameInfo();
             newFrame.frameInfo.fileId = ack.fileId;
             newFrame.frameInfo.fileInfo = ack.fileInfo as CARTA.FileInfo;
             newFrame.frameInfo.fileInfoExtended = ack.fileInfoExtended as CARTA.FileInfoExtended;
             newFrame.frameInfo.renderMode = CARTA.RenderMode.RASTER;
-            newFrame.setDimensions(this.viewWidth, this.viewHeight);
             newFrame.fitZoom();
+            newFrame.currentFrameView = {
+                xMin: 0,
+                xMax: newFrame.frameInfo.fileInfoExtended.width,
+                yMin: 0,
+                yMax: newFrame.frameInfo.fileInfoExtended.height,
+                mip: newFrame.requiredFrameView.mip
+            };
             newFrame.valid = true;
 
             this.loadWCS(newFrame);
@@ -161,6 +141,5 @@ export class AppState {
         this.overlayState = new OverlayState();
         this.layoutSettings = new LayoutState();
         this.urlConnectDialogVisible = false;
-        this.dimensionsUpdater();
     }
 }

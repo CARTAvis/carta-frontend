@@ -1,5 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, observable} from "mobx";
+import {OverlayState} from "./OverlayState";
+import {Point2D} from "../models/Point2D";
 
 export enum FrameScaling {
     LINEAR = 0,
@@ -29,9 +31,7 @@ export class FrameView {
 export class FrameState {
     @observable frameInfo: FrameInfo;
     @observable wcsInfo: number;
-    @observable renderWidth: number;
-    @observable renderHeight: number;
-    @observable centerX: number;
+    @observable center: Point2D;
     @observable centerY: number;
     @observable zoomLevel: number;
     @observable stokes;
@@ -45,6 +45,7 @@ export class FrameState {
     @observable bias: number;
     @observable rasterData: Float32Array;
     @observable valid: boolean;
+    private overlayState: OverlayState;
 
     @computed get requiredFrameView(): FrameView {
         // If there isn't a valid zoom, return a dummy view
@@ -66,18 +67,21 @@ export class FrameState {
         const mipRounded = (mipExact % 1.0 < 0.25) ? Math.floor(mipExact) : Math.ceil(mipExact);
 
         const requiredView = {
-            xMin: this.centerX - imageWidth / 2.0,
-            xMax: this.centerX + imageWidth / 2.0,
-            yMin: this.centerY - imageHeight / 2.0,
-            yMax: this.centerY + imageHeight / 2.0,
+            xMin: this.center.x - imageWidth / 2.0,
+            xMax: this.center.x + imageWidth / 2.0,
+            yMin: this.center.y - imageHeight / 2.0,
+            yMax: this.center.y + imageHeight / 2.0,
             mip: mipRounded
         };
         return requiredView;
     }
 
-    @action setDimensions(w: number, h: number) {
-        this.renderWidth = w;
-        this.renderHeight = h;
+    @computed get renderWidth() {
+        return this.overlayState.viewWidth - this.overlayState.padding.left - this.overlayState.padding.right;
+    }
+
+    @computed get renderHeight() {
+        return this.overlayState.viewHeight - this.overlayState.padding.top - this.overlayState.padding.bottom;
     }
 
     @action setZoom(zoom: number) {
@@ -85,32 +89,36 @@ export class FrameState {
     }
 
     @action setCenter(x: number, y: number) {
-        this.centerX = x;
-        this.centerY = y;
+        this.center = {x, y};
     }
 
+    // Sets a new zoom level and pans to keep the given point fixed
     @action zoomToPoint(x: number, y: number, zoom: number) {
-
+        const newCenter = {
+            x: x + this.zoomLevel / zoom * (this.center.x - x),
+            y: y + this.zoomLevel / zoom * (this.center.y - y)
+        };
     }
+
 
     @action fitZoomX() {
         this.zoomLevel = this.calculateZoomX();
-        this.centerX = this.frameInfo.fileInfoExtended.width / 2.0;
-        this.centerY = this.frameInfo.fileInfoExtended.height / 2.0;
+        this.center.x = this.frameInfo.fileInfoExtended.width / 2.0;
+        this.center.y = this.frameInfo.fileInfoExtended.height / 2.0;
     }
 
     @action fitZoomY() {
         this.zoomLevel = this.calculateZoomY();
-        this.centerX = this.frameInfo.fileInfoExtended.width / 2.0;
-        this.centerY = this.frameInfo.fileInfoExtended.height / 2.0;
+        this.center.x = this.frameInfo.fileInfoExtended.width / 2.0;
+        this.center.y = this.frameInfo.fileInfoExtended.height / 2.0;
     }
 
     @action fitZoom() {
         const zoomX = this.calculateZoomX();
         const zoomY = this.calculateZoomY();
         this.zoomLevel = Math.min(zoomX, zoomY);
-        this.centerX = this.frameInfo.fileInfoExtended.width / 2.0;
-        this.centerY = this.frameInfo.fileInfoExtended.height / 2.0;
+        this.center.x = this.frameInfo.fileInfoExtended.width / 2.0;
+        this.center.y = this.frameInfo.fileInfoExtended.height / 2.0;
     }
 
     private calculateZoomX() {
@@ -127,6 +135,11 @@ export class FrameState {
             return 1.0;
         }
         return this.renderHeight / imageHeight;
+    }
+
+    constructor(overlay: OverlayState) {
+        this.overlayState = overlay;
+        this.center = {x: 0, y: 0};
     }
 
 }
