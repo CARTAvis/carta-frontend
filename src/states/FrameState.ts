@@ -102,7 +102,6 @@ export class FrameState {
         this.center = newCenter;
     }
 
-
     @action fitZoomX() {
         this.zoomLevel = this.calculateZoomX();
         this.center.x = this.frameInfo.fileInfoExtended.width / 2.0;

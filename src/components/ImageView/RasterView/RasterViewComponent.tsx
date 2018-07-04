@@ -34,8 +34,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.canvasContext.save();
         this.canvasContext.scale(1, -1);
         this.canvasContext.translate(0, -this.canvas.height);
-        //this.canvasContext.fillStyle = "black";
-        //this.canvasContext.fillRect(0, 0, this.canvas.width - 1, this.canvas.height);
         const current = frame.currentFrameView;
         const full = frame.requiredFrameView;
         const fullWidth = full.xMax - full.xMin;
@@ -44,7 +42,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const LT = {x: (current.xMin - full.xMin) / fullWidth, y: (current.yMin - full.yMin) / fullHeight};
         const RB = {x: (current.xMax - full.xMin) / fullWidth, y: (current.yMax - full.yMin) / fullHeight};
         this.canvasContext.fillStyle = "red";
-        this.canvasContext.fillRect(LT.x * frame.renderWidth, LT.y * frame.renderHeight, (RB.x - LT.x) * frame.renderWidth, (RB.y - LT.y) * frame.renderWidth);
+        this.canvasContext.fillRect(LT.x * frame.renderWidth, LT.y * frame.renderHeight, (RB.x - LT.x) * frame.renderWidth, (RB.y - LT.y) * frame.renderHeight);
         this.canvasContext.restore();
     };
 
