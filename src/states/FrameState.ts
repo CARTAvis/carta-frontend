@@ -98,6 +98,8 @@ export class FrameState {
             x: x + this.zoomLevel / zoom * (this.center.x - x),
             y: y + this.zoomLevel / zoom * (this.center.y - y)
         };
+        this.zoomLevel = zoom;
+        this.center = newCenter;
     }
 
 

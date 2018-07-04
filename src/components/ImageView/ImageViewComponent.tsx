@@ -33,7 +33,8 @@ export class ImageViewComponent extends React.Component<{ appState: AppState }> 
         const appState = this.props.appState;
         if (appState.activeFrame) {
             const zoomSpeed = 1 + Math.abs(delta / 2000.0);
-            this.props.appState.activeFrame.setZoom(this.props.appState.activeFrame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed));
+            const newZoom = appState.activeFrame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
+            appState.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom);
         }
     };
 
