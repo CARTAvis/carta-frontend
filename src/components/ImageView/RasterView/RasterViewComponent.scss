@@ -1,5 +1,10 @@
 .raster-canvas {
     position: absolute;
+    z-index: 2;
+}
+
+.temp-canvas {
+    position: absolute;
     z-index: 1;
 }
 
