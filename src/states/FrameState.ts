@@ -84,6 +84,19 @@ export class FrameState {
         return this.overlayState.viewHeight - this.overlayState.padding.top - this.overlayState.padding.bottom;
     }
 
+    @action updateFromRasterData(rasterImageData: CARTA.RasterImageData) {
+        this.currentFrameView = {
+            xMin: rasterImageData.imageBounds.xMin,
+            xMax: rasterImageData.imageBounds.xMax,
+            yMin: rasterImageData.imageBounds.yMin,
+            yMax: rasterImageData.imageBounds.yMax,
+            mip: rasterImageData.mip
+        };
+
+        const rawData = rasterImageData.imageData[0];
+        this.rasterData = new Float32Array(rawData.buffer.slice(rawData.byteOffset, rawData.byteOffset + rawData.byteLength));
+    }
+
     @action setZoom(zoom: number) {
         this.zoomLevel = zoom;
     }

@@ -38,6 +38,7 @@ class App extends React.Component<{ appState: AppState }> {
                     title: "Image.fits",
                     height: 80,
                     id: "imageView",
+                    componentName: "imageView",
                     isClosable: false,
                     props: {appState: this.props.appState}
                 }, {

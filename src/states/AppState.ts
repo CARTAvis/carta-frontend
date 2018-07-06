@@ -82,6 +82,10 @@ export class AppState {
                 this.frames.push(newFrame);
             }
             this.activeFrame = newFrame;
+            const imageViewComponents = this.layoutSettings.layout.root.getItemsById("imageView");
+            if (imageViewComponents.length) {
+                imageViewComponents[0].setTitle(ack.fileInfo.name);
+            }
             this.fileBrowserState.hideFileBrowser();
         }, err => {
             this.alertState.showAlert(`Error loading file: ${err}`);
@@ -158,35 +162,16 @@ export class AppState {
                 };
 
                 // Calculate if new data is required
-                let updateRequired = false;
-                if (croppedReq.mip < currentView.mip) {
-                    updateRequired = true;
-                    console.log(`Update required: mip ${currentView.mip} -> ${croppedReq.mip}`);
-                }
-                else if (croppedReq.xMin < currentView.xMin || croppedReq.xMax > currentView.xMax || croppedReq.yMin < currentView.yMin || croppedReq.yMax > currentView.yMax) {
-                    updateRequired = true;
-                    console.log(`Update required: x [${currentView.xMin}, ${currentView.xMax}] -> [${croppedReq.xMin}, ${croppedReq.xMax}]; y [${currentView.yMin}, ${currentView.yMax}] -> [${croppedReq.yMin}, ${croppedReq.yMax}];`);
-                }
-
+                const updateRequired = (croppedReq.mip < currentView.mip) || (croppedReq.xMin < currentView.xMin || croppedReq.xMax > currentView.xMax || croppedReq.yMin < currentView.yMin || croppedReq.yMax > currentView.yMax);
                 if (updateRequired) {
                     this.backendService.setImageView(0, Math.floor(croppedReq.xMin), Math.ceil(croppedReq.xMax), Math.floor(croppedReq.yMin), Math.ceil(croppedReq.yMax), croppedReq.mip);
-                    // this.activeFrame.currentFrameView = croppedReq;
                 }
             }
         }, {delay: 16});
 
         this.backendService.getRasterStream().subscribe(rasterImageData => {
             if (this.activeFrame) {
-                this.activeFrame.currentFrameView = {
-                    xMin: rasterImageData.imageBounds.xMin,
-                    xMax: rasterImageData.imageBounds.xMax,
-                    yMin: rasterImageData.imageBounds.yMin,
-                    yMax: rasterImageData.imageBounds.yMax,
-                    mip: rasterImageData.mip
-                };
-
-                const rawData = rasterImageData.imageData[0];
-                this.activeFrame.rasterData = new Float32Array(rawData.buffer.slice(rawData.byteOffset, rawData.byteOffset + rawData.byteLength));
+                this.activeFrame.updateFromRasterData(rasterImageData);
             }
         });
 

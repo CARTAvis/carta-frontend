@@ -16,25 +16,23 @@ export class RasterViewComponentProps {
 @observer
 export class RasterViewComponent extends React.Component<RasterViewComponentProps> {
     private canvas: HTMLCanvasElement;
-    private canvasTemp: HTMLCanvasElement;
     private gl: WebGLRenderingContext;
-    private canvasContext: CanvasRenderingContext2D;
-
+    private hasFloatExtension: boolean;
     // GL buffers
+    private rasterDataBuffer: ArrayBufferLike;
+    private cmapTexture: WebGLTexture;
     private vertexPositionBuffer: WebGLBuffer;
     private vertexUVBuffer: WebGLBuffer;
     // Shader attribute handles
     private vertexPositionAttribute: number;
     private vertexUVAttribute: number;
     // Shader uniform handles
-    private pMatrixUniform: WebGLUniformLocation;
-    private mvMatrixUniform: WebGLUniformLocation;
     private MinValUniform: WebGLUniformLocation;
     private MaxValUniform: WebGLUniformLocation;
     private BiasUniform: WebGLUniformLocation;
     private ContrastUniform: WebGLUniformLocation;
     private ScaleTypeUniform: WebGLUniformLocation;
-    private ViewportSizeUniform: WebGLUniformLocation;
+    private NaNColor: WebGLUniformLocation;
     private DataTexture: WebGLUniformLocation;
     private CmapTexture: WebGLUniformLocation;
     private NumCmaps: WebGLUniformLocation;
@@ -42,22 +40,96 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     componentDidMount() {
         if (this.canvas) {
-            this.gl = this.canvas.getContext("webgl");
+            try {
+                this.gl = this.canvas.getContext("webgl");
+                if (!this.gl) {
+                    return;
+                }
+            } catch (e) {
+                console.log(e);
+            }
+            if (!this.gl) {
+                console.log("Could not initialise WebGL");
+            }
+
+            const extTextureFloat = this.gl.getExtension("OES_texture_float");
+
+            if (!extTextureFloat) {
+                console.log("Could not initialise WebGL extensions");
+                this.hasFloatExtension = false;
+            }
+            else {
+                this.hasFloatExtension = true;
+            }
+            this.cmapTexture = this.loadImageTexture("allmaps.png", WebGLRenderingContext.TEXTURE1);
             this.initShaders();
             this.initBuffers();
-            this.canvasContext = this.canvasTemp.getContext("2d");
-            this.updateCanvas();
+            this.renderCanvas();
         }
     }
 
     componentDidUpdate() {
-        if (this.canvas) {
-            this.updateCanvas();
+        const frame = this.props.frame;
+        if (frame && this.canvas && this.gl) {
+            this.clearCanvas();
+            if (frame.rasterData) {
+                // Only update texture if the buffer has changed
+                if (frame.rasterData.buffer !== this.rasterDataBuffer) {
+                    this.updateTexture();
+                }
+                this.renderCanvas();
+            }
         }
     }
 
-    private updateCanvas = () => {
+    private loadImageTexture(url: string, texIndex: number): WebGLTexture {
+        const imageTexture = this.gl.createTexture();
+        this.gl.activeTexture(texIndex);
+        this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, imageTexture);
+
+        // Placeholder texture
+        const pixel = new Uint8Array([0, 0, 255]);
+        this.gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGB, 1, 1, 0, WebGLRenderingContext.RGB, WebGLRenderingContext.UNSIGNED_BYTE, pixel);
+
+        const image = new Image();
+        // Replace the existing texture with the real one once loaded
+        image.onload = () => {
+            this.gl.activeTexture(texIndex);
+            this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, imageTexture);
+            this.gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGB, WebGLRenderingContext.RGB, WebGLRenderingContext.UNSIGNED_BYTE, image);
+            this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_WRAP_S, WebGLRenderingContext.CLAMP_TO_EDGE);
+            this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_WRAP_T, WebGLRenderingContext.CLAMP_TO_EDGE);
+            this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.NEAREST);
+            this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.NEAREST);
+        };
+        image.src = url;
+        return imageTexture;
+    }
+
+    private updateTexture() {
         const frame = this.props.frame;
+        const w = Math.floor((frame.currentFrameView.xMax - frame.currentFrameView.xMin) / frame.currentFrameView.mip);
+        const h = Math.floor((frame.currentFrameView.yMax - frame.currentFrameView.yMin) / frame.currentFrameView.mip);
+        if (!frame.rasterData || frame.rasterData.length !== w * h) {
+            console.log(`Data mismatch! L=${frame.rasterData ? frame.rasterData.length : "null"}, WxH = ${w}x${h}=${w * h}`);
+            return;
+        }
+        else {
+            this.loadFP32Texture(frame.rasterData, w, h, WebGLRenderingContext.TEXTURE0);
+            this.rasterDataBuffer = frame.rasterData.buffer;
+        }
+    }
+
+    private clearCanvas() {
+        const frame = this.props.frame;
+        // Resize and/or clear the canvas
+        this.canvas.width = frame.renderWidth;
+        this.canvas.height = frame.renderHeight;
+    }
+
+    private renderCanvas() {
+        const frame = this.props.frame;
+
         const current = frame.currentFrameView;
         const full = frame.requiredFrameView;
         const fullWidth = full.xMax - full.xMin;
@@ -72,7 +144,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             RB.x, LT.y, 0,
             LT.x, RB.y, 0,
             RB.x, RB.y, 0
-        ].map(v => -1 + 2* v));
+        ].map(v => -1 + 2 * v));
 
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexPositionBuffer);
         this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, new Float32Array(vertices), WebGLRenderingContext.STATIC_DRAW);
@@ -83,16 +155,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexUVBuffer);
         this.gl.vertexAttribPointer(this.vertexUVAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
         this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
-
-        this.canvas.width = frame.renderWidth;
-        this.canvas.height = frame.renderHeight;
-        this.canvasContext.save();
-        this.canvasContext.scale(1, -1);
-        this.canvasContext.translate(0, -this.canvas.height);
-        this.canvasContext.fillStyle = "blue";
-        this.canvasContext.fillRect(LT.x * frame.renderWidth, LT.y * frame.renderHeight, (RB.x - LT.x) * frame.renderWidth, (RB.y - LT.y) * frame.renderHeight);
-        this.canvasContext.restore();
-    };
+    }
 
     private getShaderFromString(shaderScript: string, type: number) {
         if (!shaderScript || !(type === WebGLRenderingContext.VERTEX_SHADER || type === WebGLRenderingContext.FRAGMENT_SHADER)) {
@@ -130,29 +193,26 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.vertexUVAttribute = this.gl.getAttribLocation(shaderProgram, "aVertexUV");
         this.gl.enableVertexAttribArray(this.vertexUVAttribute);
 
-        // this.pMatrixUniform = this.gl.getUniformLocation(shaderProgram, "uPMatrix");
-        // this.mvMatrixUniform = this.gl.getUniformLocation(shaderProgram, "uMVMatrix");
-        //
-        // this.MinValUniform = this.gl.getUniformLocation(shaderProgram, "uMinVal");
-        // this.MaxValUniform = this.gl.getUniformLocation(shaderProgram, "uMaxVal");
+        this.MinValUniform = this.gl.getUniformLocation(shaderProgram, "uMinVal");
+        this.MaxValUniform = this.gl.getUniformLocation(shaderProgram, "uMaxVal");
+        this.NaNColor = this.gl.getUniformLocation(shaderProgram, "uNaNColor");
         // this.BiasUniform = this.gl.getUniformLocation(shaderProgram, "uBias");
         // this.ContrastUniform = this.gl.getUniformLocation(shaderProgram, "uContrast");
         // this.ScaleTypeUniform = this.gl.getUniformLocation(shaderProgram, "uScaleType");
-        //
-        // this.ViewportSizeUniform = this.gl.getUniformLocation(shaderProgram, "uViewportSize");
-        //
-        // this.DataTexture = this.gl.getUniformLocation(shaderProgram, "uDataTexture");
-        // this.CmapTexture = this.gl.getUniformLocation(shaderProgram, "uCmapTexture");
-        // this.NumCmaps = this.gl.getUniformLocation(shaderProgram, "uNumCmaps");
-        // this.CmapIndex = this.gl.getUniformLocation(shaderProgram, "uCmapIndex");
-        // this.gl.uniform1i(this.DataTexture, 0);
-        // this.gl.uniform1i(this.CmapTexture, 1);
-        // this.gl.uniform1i(this.NumCmaps, 79);
-        // this.gl.uniform1i(this.CmapIndex, 41);
+        this.DataTexture = this.gl.getUniformLocation(shaderProgram, "uDataTexture");
+        this.CmapTexture = this.gl.getUniformLocation(shaderProgram, "uCmapTexture");
+        this.NumCmaps = this.gl.getUniformLocation(shaderProgram, "uNumCmaps");
+        this.CmapIndex = this.gl.getUniformLocation(shaderProgram, "uCmapIndex");
+        this.gl.uniform1i(this.DataTexture, 0);
+        this.gl.uniform1i(this.CmapTexture, 1);
+        this.gl.uniform1i(this.NumCmaps, 79);
+        this.gl.uniform1i(this.CmapIndex, 2);
+        this.gl.uniform1f(this.MinValUniform, 3.4);
+        this.gl.uniform1f(this.MaxValUniform, 5.50);
+        this.gl.uniform4f(this.NaNColor, 0, 0, 1, 1);
     }
 
     private initBuffers() {
-        //Create Square Position Buffer
         this.vertexPositionBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexPositionBuffer);
         const vertices = new Float32Array([
@@ -163,10 +223,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         ]);
 
         this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, vertices, WebGLRenderingContext.STATIC_DRAW);
-        //this.vertexPositionBuffer..itemSize = 3;
-        //squareVertexPositionBuffer.numItems = 4;
 
-        //Create Square UV Buffer
         this.vertexUVBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexUVBuffer);
         const uvs = new Float32Array([
@@ -177,8 +234,23 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         ]);
 
         this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, uvs, WebGLRenderingContext.STATIC_DRAW);
-        //squareVertexUVBuffer.itemSize = 2;
-        //squareVertexUVBuffer.numItems = 4;
+
+        // Create a texture.
+        const texture = this.gl.createTexture();
+        this.gl.activeTexture(WebGLRenderingContext.TEXTURE0);
+        this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
+    }
+
+    private loadFP32Texture(data: Float32Array, width: number, height: number, texIndex: number) {
+        this.gl.activeTexture(texIndex);
+        this.gl.pixelStorei(WebGLRenderingContext.UNPACK_ALIGNMENT, 1);
+        this.gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.LUMINANCE, width, height, 0, WebGLRenderingContext.LUMINANCE, WebGLRenderingContext.FLOAT, data);
+
+        // set the filtering so we don't need mips and it's not filtered
+        this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.NEAREST);
+        this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.NEAREST);
+        this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_WRAP_S, WebGLRenderingContext.CLAMP_TO_EDGE);
+        this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_WRAP_T, WebGLRenderingContext.CLAMP_TO_EDGE);
     }
 
     render() {
@@ -191,16 +263,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 <canvas
                     className="raster-canvas"
                     ref={(ref) => this.canvas = ref}
-                    style={{
-                        top: padding.top,
-                        left: padding.left,
-                        width: frame.renderWidth,
-                        height: frame.renderHeight
-                    }}
-                />
-                <canvas
-                    className="temp-canvas"
-                    ref={(ref) => this.canvasTemp = ref}
                     style={{
                         top: padding.top,
                         left: padding.left,

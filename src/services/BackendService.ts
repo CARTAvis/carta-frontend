@@ -28,7 +28,9 @@ export class BackendService {
         this.rasterStream = new BehaviorSubject<CARTA.RasterImageData>(null);
         this.logEventList = [
             "REGISTER_VIEWER",
-            "REGISTER_VIEWER_ACK"
+            "REGISTER_VIEWER_ACK",
+            // "SET_IMAGE_VIEW",
+            // "RASTER_IMAGE_DATA"
         ];
     }
 
