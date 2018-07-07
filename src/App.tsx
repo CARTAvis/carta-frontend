@@ -19,6 +19,7 @@ import {FileBrowserDialogComponent} from "./components/Dialogs/FileBrowser/FileB
 import {FileBrowserState} from "./states/FileBrowserState";
 import {URLConnectDialogComponent} from "./components/Dialogs/URLConnect/URLConnectDialogComponent";
 import {Alert} from "@blueprintjs/core";
+import {ColormapComponent} from "./components/Colormap/ColormapComponent";
 
 @observer
 class App extends React.Component<{ appState: AppState }> {
@@ -36,26 +37,22 @@ class App extends React.Component<{ appState: AppState }> {
                     type: "react-component",
                     component: "image-view",
                     title: "Image.fits",
-                    height: 80,
+                    height: 60,
                     id: "imageView",
-                    componentName: "imageView",
                     isClosable: false,
                     props: {appState: this.props.appState}
                 }, {
-                    type: "stack",
-                    content: [{
-                        type: "react-component",
-                        component: "placeholder",
-                        title: "Animation",
-                        id: "animation",
-                        props: {label: "Animation placeholder"}
-                    }, {
-                        type: "react-component",
-                        component: "placeholder",
-                        title: "Color map",
-                        id: "colormap",
-                        props: {label: "Color map placeholder"}
-                    }]
+                    type: "react-component",
+                    component: "colormap",
+                    title: "Color map",
+                    id: "colormap",
+                    props: {appState: this.props.appState}
+                }, {
+                    type: "react-component",
+                    component: "placeholder",
+                    title: "Animation",
+                    id: "animation",
+                    props: {label: "Animation placeholder"}
                 }]
             }, {
                 type: "column",
@@ -117,6 +114,7 @@ class App extends React.Component<{ appState: AppState }> {
         layout.registerComponent("placeholder", PlaceholderComponent);
         layout.registerComponent("image-view", ImageViewComponent);
         layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
+        layout.registerComponent("colormap", ColormapComponent);
 
         appState.layoutSettings.layout = layout;
 

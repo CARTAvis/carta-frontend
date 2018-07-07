@@ -20,22 +20,31 @@ export class BackendService {
     private connection: WebSocket;
     private observerMap: Map<string, Observer<any>>;
     private readonly rasterStream: BehaviorSubject<CARTA.RasterImageData>;
+    private readonly histogramStream: BehaviorSubject<CARTA.RegionHistogramData>;
+
     private readonly logEventList: string[];
 
     constructor() {
         this.observerMap = new Map<string, Observer<any>>();
         this.connectionStatus = ConnectionStatus.CLOSED;
         this.rasterStream = new BehaviorSubject<CARTA.RasterImageData>(null);
+        this.histogramStream = new BehaviorSubject<CARTA.RegionHistogramData>(null);
+
         this.logEventList = [
             "REGISTER_VIEWER",
             "REGISTER_VIEWER_ACK",
             // "SET_IMAGE_VIEW",
             // "RASTER_IMAGE_DATA"
+            "REGION_HISTOGRAM_DATA"
         ];
     }
 
     getRasterStream() {
         return this.rasterStream;
+    }
+
+    getRegionHistogramStream() {
+        return this.histogramStream;
     }
 
     @action("connect")
@@ -190,6 +199,10 @@ export class BackendService {
                 parsedMessage = CARTA.RasterImageData.decode(eventData);
                 this.onStreamedRasterImageData(parsedMessage);
             }
+            else if (eventName === "REGION_HISTOGRAM_DATA") {
+                parsedMessage = CARTA.RegionHistogramData.decode(eventData);
+                this.onStreamedRegionHistogramData(parsedMessage);
+            }
             else {
                 console.log(`Unsupported event response ${eventName}`);
             }
@@ -253,6 +266,10 @@ export class BackendService {
 
     private onStreamedRasterImageData(rasterImageData: CARTA.RasterImageData) {
         this.rasterStream.next(rasterImageData);
+    }
+
+    private onStreamedRegionHistogramData(regionHistogramData: CARTA.RegionHistogramData) {
+        this.histogramStream.next(regionHistogramData);
     }
 
     private sendEvent(eventName: string, eventId: number, payload: Uint8Array): boolean {

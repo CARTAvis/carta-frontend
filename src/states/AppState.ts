@@ -9,7 +9,6 @@ import {FrameInfo, FrameState, FrameView} from "./FrameState";
 import {AlertState} from "./AlertState";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {update} from "plotly.js";
 
 export class AppState {
     // Backend service
@@ -172,6 +171,19 @@ export class AppState {
         this.backendService.getRasterStream().subscribe(rasterImageData => {
             if (this.activeFrame) {
                 this.activeFrame.updateFromRasterData(rasterImageData);
+            }
+        });
+
+        this.backendService.getRegionHistogramStream().subscribe(regionHistogramData => {
+            if (!regionHistogramData) {
+                return;
+            }
+            // Update channel histograms
+            if (this.activeFrame && regionHistogramData.regionId === -1 && this.activeFrame.stokes === regionHistogramData.stokes) {
+                const channelHist = regionHistogramData.histograms.filter(hist => hist.channel === this.activeFrame.channel);
+                if (channelHist.length) {
+                    this.activeFrame.updateChannelHistogram(channelHist[0] as CARTA.Histogram);
+                }
             }
         });
 

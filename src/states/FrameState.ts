@@ -44,8 +44,22 @@ export class FrameState {
     @observable contrast: number;
     @observable bias: number;
     @observable rasterData: Float32Array;
+    @observable channelHistogram: CARTA.Histogram;
+    @observable percentileRanks: Array<number>;
     @observable valid: boolean;
     private overlayState: OverlayState;
+
+    constructor(overlay: OverlayState) {
+        this.overlayState = overlay;
+        this.center = {x: 0, y: 0};
+        this.stokes = 0;
+        this.channel = 0;
+        this.bias = 0;
+        this.contrast = 1;
+        this.scaling = FrameScaling.LINEAR;
+        this.colorMap = 1;
+        this.percentileRanks = [0.01, 0.05, 0.1, 0.5, 1, 2, 5, 10, 25, 50, 75, 90, 95, 98, 99, 99.5, 99.9, 99.95, 99.99];
+    }
 
     @computed get requiredFrameView(): FrameView {
         // If there isn't a valid zoom, return a dummy view
@@ -82,6 +96,60 @@ export class FrameState {
 
     @computed get renderHeight() {
         return this.overlayState.viewHeight - this.overlayState.padding.top - this.overlayState.padding.bottom;
+    }
+
+    @computed get percentiles(): Array<number> {
+        const t0 = performance.now();
+
+        if (!this.percentileRanks || !this.percentileRanks || !this.channelHistogram || !this.channelHistogram.bins.length) {
+            return [];
+        }
+
+        const minVal = this.channelHistogram.firstBinCenter - this.channelHistogram.binWidth / 2.0;
+        const dx = this.channelHistogram.binWidth;
+        const vals = this.channelHistogram.bins;
+        let remainingRanks = this.percentileRanks.slice();
+        let cumulativeSum = 0;
+
+        let totalSum = 0;
+        for (let i = 0; i < vals.length; i++) {
+            totalSum += vals[i];
+        }
+
+        if (totalSum === 0) {
+            return [];
+        }
+
+        let calculatedPercentiles = [];
+
+        for (let i = 0; i < vals.length && remainingRanks.length; i++) {
+            const currentFraction = cumulativeSum / totalSum;
+            const nextFraction = (cumulativeSum + vals[i]) / totalSum;
+            let nextRank = remainingRanks[0] / 100.0;
+            while (nextFraction >= nextRank && remainingRanks.length) {
+                // Assumes a locally uniform distribution between bins
+                const portion = (nextRank - currentFraction) / (nextFraction - currentFraction);
+                calculatedPercentiles.push(minVal + dx * (i + portion));
+                // Move to next rank
+                remainingRanks.shift();
+                nextRank = remainingRanks[0] / 100.0;
+            }
+            cumulativeSum += vals[i];
+        }
+        const t1 = performance.now();
+        console.log(`${calculatedPercentiles.length} approximate percentiles calculated from ${vals.length} elements in ${t1 - t0} ms`);
+        return calculatedPercentiles;
+    }
+
+    @action updateChannelHistogram(histogram: CARTA.Histogram) {
+        this.channelHistogram = histogram;
+        const i = 3;
+        if (this.percentiles.length > i * 2 && this.percentiles.length === this.percentileRanks.length) {
+            this.scaleMin = this.percentiles[i];
+            this.scaleMax = this.percentiles[this.percentiles.length - 1 - i];
+            console.log(`Using approximate percentile for P=${this.percentileRanks[i]} to P=${this.percentileRanks[this.percentileRanks.length - 1 - i]}`);
+            console.log(`Scale: ${this.percentiles[i]} -> ${this.percentiles[this.percentiles.length - 1 - i]}`);
+        }
     }
 
     @action updateFromRasterData(rasterImageData: CARTA.RasterImageData) {
@@ -153,11 +221,6 @@ export class FrameState {
             return 1.0;
         }
         return this.renderHeight / imageHeight;
-    }
-
-    constructor(overlay: OverlayState) {
-        this.overlayState = overlay;
-        this.center = {x: 0, y: 0};
     }
 
 }

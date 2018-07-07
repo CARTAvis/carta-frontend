@@ -52,7 +52,7 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
                 b: 60,
             }
         };
-        // DefinitelyTyped PR #25608 issued to fix Data typing
+
         let plotData: Partial<Data[]> = [];
         let plotConfig: Partial<Config> = {
             displaylogo: false,
