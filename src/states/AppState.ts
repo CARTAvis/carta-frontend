@@ -1,4 +1,4 @@
-import {action, autorun, observable} from "mobx";
+import {action, autorun, computed, observable} from "mobx";
 import {OverlayState} from "./OverlayState";
 import {LayoutState} from "./LayoutState";
 import {SpatialProfileState} from "./SpatialProfileState";
@@ -15,35 +15,26 @@ export class AppState {
     @observable backendService: BackendService;
     // WebAssembly Module status
     @observable astReady: boolean;
-
     // Frames
     @observable frames: FrameState[];
     @observable activeFrame: FrameState;
-
     // Error alerts
     @observable alertState: AlertState;
-
     // Cursor information
     @observable cursorInfo: CursorInfo;
-
     // Spatial profiles
     @observable spatialProfiles: Map<number, SpatialProfileState>;
-
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
         this.overlayState.viewWidth = w;
         this.overlayState.viewHeight = h;
     };
-
     // Overlay
     @observable overlayState: OverlayState;
-
     // Layout
     @observable layoutSettings: LayoutState;
-
     // File Browser
     @observable fileBrowserState: FileBrowserState;
-
     // Additional Dialogs
     @observable urlConnectDialogVisible: boolean;
     @action showURLConnect = () => {
@@ -52,7 +43,6 @@ export class AppState {
     @action hideURLConnect = () => {
         this.urlConnectDialogVisible = false;
     };
-
     // Frame actions
     @action loadFile = (directory: string, file: string, hdu: string) => {
         this.backendService.loadFile(directory, file, hdu, 0, CARTA.RenderMode.RASTER).subscribe(ack => {
@@ -90,7 +80,6 @@ export class AppState {
             this.alertState.showAlert(`Error loading file: ${err}`);
         });
     };
-
     @action loadWCS = (frame: FrameState) => {
         let headerString = "";
 
@@ -137,7 +126,7 @@ export class AppState {
     };
 
     constructor() {
-        this.backendService = new BackendService();
+        this.backendService = new BackendService(4);
         this.astReady = false;
         this.spatialProfiles = new Map<number, SpatialProfileState>();
         this.frames = [];
@@ -187,5 +176,9 @@ export class AppState {
             }
         });
 
+    }
+
+    @computed get zfpReady() {
+        return (this.backendService && this.backendService.zfpReady);
     }
 }

@@ -168,4 +168,13 @@ wasm_libs/ast/*
 wasm_libs/ast-*.tar.gz
 wasm_src/ast_wrapper/build/*
 public/ast_wrapper.wasm
+# ZFP
+wasm_libs/zfp/*
+wasm_libs/zfp-*.tar.gz
+wasm_src/zfp_wrapper/build/*
+wasm_src/zfp_wrapper/post.js
+public/zfp_wrapper.wasm
+
+# Protocol buffers
 protobuf/build/*
+

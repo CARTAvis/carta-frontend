@@ -3,6 +3,8 @@ import {CARTA} from "carta-protobuf";
 import {Observable, Observer, throwError} from "rxjs";
 import {BehaviorSubject} from "rxjs/internal/BehaviorSubject";
 
+const ZFPWorker = require("worker-loader!zfp_wrapper");
+
 export enum ConnectionStatus {
     CLOSED = 0,
     PENDING = 1,
@@ -11,11 +13,11 @@ export enum ConnectionStatus {
 }
 
 export class BackendService {
-
     @observable connectionStatus: ConnectionStatus;
     @observable loggingEnabled: boolean;
     @observable sessionId: string;
     @observable apiKey: string;
+    @observable zfpReady: boolean;
 
     private connection: WebSocket;
     private observerMap: Map<string, Observer<any>>;
@@ -23,12 +25,15 @@ export class BackendService {
     private readonly histogramStream: BehaviorSubject<CARTA.RegionHistogramData>;
 
     private readonly logEventList: string[];
+    private readonly zfpWorkers: Worker[];
+    private readonly zfpWorkerStatus: boolean[];
 
-    constructor() {
+    constructor(numWorkers: number) {
         this.observerMap = new Map<string, Observer<any>>();
         this.connectionStatus = ConnectionStatus.CLOSED;
         this.rasterStream = new BehaviorSubject<CARTA.RasterImageData>(null);
         this.histogramStream = new BehaviorSubject<CARTA.RegionHistogramData>(null);
+        this.zfpReady = false;
 
         this.logEventList = [
             "REGISTER_VIEWER",
@@ -37,6 +42,21 @@ export class BackendService {
             // "RASTER_IMAGE_DATA"
             "REGION_HISTOGRAM_DATA"
         ];
+
+        this.zfpWorkers = new Array(numWorkers);
+        this.zfpWorkerStatus = new Array(numWorkers);
+        for (let i = 0; i < numWorkers; i++) {
+            this.zfpWorkers[i] = new ZFPWorker();
+            this.zfpWorkers[i].onmessage = (event: MessageEvent) => {
+                if (event.data[0] === "ready") {
+                    this.zfpWorkerStatus[i] = true;
+                    if (this.zfpWorkerStatus.filter(v => v).length === numWorkers) {
+                        this.zfpReady = true;
+                        console.log(`${numWorkers} ZFP WebWorkers ready`);
+                    }
+                }
+            };
+        }
     }
 
     getRasterStream() {

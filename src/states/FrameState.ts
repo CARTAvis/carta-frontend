@@ -99,8 +99,6 @@ export class FrameState {
     }
 
     @computed get percentiles(): Array<number> {
-        const t0 = performance.now();
-
         if (!this.percentileRanks || !this.percentileRanks || !this.channelHistogram || !this.channelHistogram.bins.length) {
             return [];
         }
@@ -136,8 +134,6 @@ export class FrameState {
             }
             cumulativeSum += vals[i];
         }
-        const t1 = performance.now();
-        console.log(`${calculatedPercentiles.length} approximate percentiles calculated from ${vals.length} elements in ${t1 - t0} ms`);
         return calculatedPercentiles;
     }
 
@@ -147,8 +143,6 @@ export class FrameState {
         if (this.percentiles.length > i * 2 && this.percentiles.length === this.percentileRanks.length) {
             this.scaleMin = this.percentiles[i];
             this.scaleMax = this.percentiles[this.percentiles.length - 1 - i];
-            console.log(`Using approximate percentile for P=${this.percentileRanks[i]} to P=${this.percentileRanks[this.percentileRanks.length - 1 - i]}`);
-            console.log(`Scale: ${this.percentiles[i]} -> ${this.percentiles[this.percentiles.length - 1 - i]}`);
         }
     }
 
