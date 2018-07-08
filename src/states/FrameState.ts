@@ -156,7 +156,13 @@ export class FrameState {
         };
 
         const rawData = rasterImageData.imageData[0];
-        this.rasterData = new Float32Array(rawData.buffer.slice(rawData.byteOffset, rawData.byteOffset + rawData.byteLength));
+        // Don't need to copy buffer when dealing with compressed data
+        if (rasterImageData.compressionType !== CARTA.CompressionType.NONE) {
+            this.rasterData = new Float32Array(rawData.buffer);
+        }
+        else {
+            this.rasterData = new Float32Array(rawData.buffer.slice(rawData.byteOffset, rawData.byteOffset + rawData.byteLength));
+        }
     }
 
     @action setZoom(zoom: number) {

@@ -144,8 +144,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const fullWidth = full.xMax - full.xMin;
         const fullHeight = full.yMax - full.yMin;
 
+        // Bounds need to be adjusted because of MIP level
+        const adjustedXMax = current.xMin + Math.floor((current.xMax - current.xMin) / current.mip) * current.mip;
+        const adjustedYMax = current.yMin + Math.floor((current.yMax - current.yMin) / current.mip) * current.mip;
+
         const LT = {x: (current.xMin - full.xMin) / fullWidth, y: (current.yMin - full.yMin) / fullHeight};
-        const RB = {x: (current.xMax - full.xMin) / fullWidth, y: (current.yMax - full.yMin) / fullHeight};
+        const RB = {x: (adjustedXMax - full.xMin) / fullWidth, y: (adjustedYMax - full.yMin) / fullHeight};
 
         // Vertices are mapped from [0-1] -> [-1, 1]
         const vertices = new Float32Array([
