@@ -34,7 +34,7 @@ export class BackendService {
         this.logEventList = [
             "REGISTER_VIEWER",
             "REGISTER_VIEWER_ACK",
-            // "SET_IMAGE_VIEW",
+             "SET_IMAGE_VIEW",
             // "RASTER_IMAGE_DATA"
             "REGION_HISTOGRAM_DATA"
         ];

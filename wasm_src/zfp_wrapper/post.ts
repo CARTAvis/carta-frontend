@@ -63,7 +63,6 @@ function zfpDecompressUint8WASM(u8: Uint8Array, compressedSize: number, nx: numb
     // Free memory
     return new Float32Array(resultFloat.buffer, resultFloat.byteOffset, nx * ny);
     // END WASM
-
 }
 
 ctx.onmessage = (event => {
@@ -100,7 +99,6 @@ ctx.onmessage = (event => {
                 fillVal = !fillVal;
                 decodedIndex += L;
             }
-
 
             ctx.postMessage(["decompress", event.data[1], {
                 width: eventArgs.width,

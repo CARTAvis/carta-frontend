@@ -9,10 +9,12 @@ import {FrameInfo, FrameState, FrameView} from "./FrameState";
 import {AlertState} from "./AlertState";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
+import * as _ from "lodash";
 
 export class AppState {
     // Backend service
     @observable backendService: BackendService;
+    @observable compressionQuality: number;
     // WebAssembly Module status
     @observable astReady: boolean;
     // Frames
@@ -135,12 +137,19 @@ export class AppState {
         this.overlayState = new OverlayState();
         this.layoutSettings = new LayoutState();
         this.urlConnectDialogVisible = false;
+        this.compressionQuality = 11;
+
+        const throttledSetView = _.throttle((view: FrameView) => {
+            const quality = this.compressionQuality;
+            this.backendService.setImageView(0, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
+        }, 200);
 
         const onRequiredViewUpdated = autorun(() => {
             if (this.activeFrame) {
                 // Calculate new required frame view (cropped to file size)
                 const reqView = this.activeFrame.requiredFrameView;
                 const currentView = this.activeFrame.currentFrameView;
+
                 const croppedReq: FrameView = {
                     xMin: Math.max(0, reqView.xMin),
                     xMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.width, reqView.xMax),
@@ -152,10 +161,21 @@ export class AppState {
                 // Calculate if new data is required
                 const updateRequired = (croppedReq.mip < currentView.mip) || (croppedReq.xMin < currentView.xMin || croppedReq.xMax > currentView.xMax || croppedReq.yMin < currentView.yMin || croppedReq.yMax > currentView.yMax);
                 if (updateRequired) {
-                    this.backendService.setImageView(0, Math.floor(croppedReq.xMin), Math.ceil(croppedReq.xMax), Math.floor(croppedReq.yMin), Math.ceil(croppedReq.yMax), croppedReq.mip, 11);
+                    const reqWidth = reqView.xMax - reqView.xMin;
+                    const reqHeight = reqView.yMax - reqView.yMin;
+                    // Add an extra padding on either side to avoid spamming backend
+                    const padFraction = 0.05;
+                    const paddedView = {
+                        xMin: Math.max(0, reqView.xMin - padFraction * reqWidth),
+                        xMax: Math.min(reqView.xMax + padFraction * reqWidth, this.activeFrame.frameInfo.fileInfoExtended.width),
+                        yMin: Math.max(0, reqView.yMin - padFraction * reqHeight),
+                        yMax: Math.min(reqView.yMax + padFraction * reqHeight, this.activeFrame.frameInfo.fileInfoExtended.height),
+                        mip: reqView.mip
+                    };
+                    throttledSetView(paddedView);
                 }
             }
-        }, {delay: 16});
+        });
 
         this.backendService.getRasterStream().subscribe(rasterImageData => {
             if (this.activeFrame) {
