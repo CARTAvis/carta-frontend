@@ -29,7 +29,7 @@ export class BackendService {
         this.connectionStatus = ConnectionStatus.CLOSED;
         this.rasterStream = new BehaviorSubject<CARTA.RasterImageData>(null);
         this.histogramStream = new BehaviorSubject<CARTA.RegionHistogramData>(null);
-        this.subsetsRequired = 1; // Math.min(navigator.hardwareConcurrency || 4, 4);
+        this.subsetsRequired = Math.min(navigator.hardwareConcurrency || 4, 4);
         this.decompressionServce = new DecompressionService(this.subsetsRequired);
         this.logEventList = [
             "REGISTER_VIEWER",
@@ -280,7 +280,7 @@ export class BackendService {
                 const sizeMpix = decompressedMessage.imageData[0].length / 4e6;
                 const dt = t1 - t0;
                 const speed = sizeMpix / dt * 1e3;
-                console.log(`Decompressed ${sizeMpix} MPix in ${dt} ms (${speed} MPix/s`);
+                console.log(`Decompressed ${sizeMpix.toFixed(2)} MPix in ${dt.toFixed(2)} ms (${speed.toFixed(2)} MPix/s)`);
                 this.rasterStream.next(decompressedMessage);
             });
         }

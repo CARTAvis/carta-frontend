@@ -10,7 +10,7 @@ let dataHeap: Uint8Array = null;
 let resultFloat: Float32Array = null;
 let dataPtrUint: number = null;
 let dataHeapUint: Uint8Array = null;
-let debugOutput = true;
+let debugOutput = false;
 let id = -1;
 
 const zfpDecompress = Module.cwrap("zfpDecompress", "number", ["number", "number", "number", "number", "number", "number"]);
@@ -77,12 +77,15 @@ ctx.onmessage = (event => {
             id = event.data[1];
         }
         else if (eventName === "decompress") {
+            const eventArgs = event.data[2];
+            const compressedView = new Uint8Array(event.data[1], 0, eventArgs.subsetLength);
             if (debugOutput) {
                 performance.mark("decompressStart");
             }
-            const eventArgs = event.data[2];
-            const compressedView = new Uint8Array(event.data[1], 0, eventArgs.subsetLength);
             let imageData = zfpDecompressUint8WASM(compressedView, eventArgs.subsetLength, eventArgs.width, eventArgs.subsetHeight, eventArgs.compression);
+            if (debugOutput) {
+                performance.mark("decompressEnd");
+            }
             let outputView = new Float32Array(event.data[1], 0, eventArgs.width * eventArgs.subsetHeight);
             outputView.set(imageData);
 
@@ -98,6 +101,7 @@ ctx.onmessage = (event => {
                 decodedIndex += L;
             }
 
+
             ctx.postMessage(["decompress", event.data[1], {
                 width: eventArgs.width,
                 subsetHeight: eventArgs.subsetHeight,
@@ -105,7 +109,6 @@ ctx.onmessage = (event => {
             }], [event.data[1]]);
 
             if (debugOutput) {
-                performance.mark("decompressEnd");
                 performance.measure("dtDecompress", "decompressStart", "decompressEnd");
                 const dt = performance.getEntriesByName("dtDecompress")[0].duration;
                 performance.clearMarks();
