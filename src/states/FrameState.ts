@@ -44,6 +44,8 @@ export class FrameState {
     @observable contrast: number;
     @observable bias: number;
     @observable rasterData: Float32Array;
+    @observable overviewRasterData: Float32Array;
+    @observable overviewRasterView: FrameView;
     @observable channelHistogram: CARTA.Histogram;
     @observable percentileRanks: Array<number>;
     @observable valid: boolean;
@@ -162,6 +164,20 @@ export class FrameState {
         }
         else {
             this.rasterData = new Float32Array(rawData.buffer.slice(rawData.byteOffset, rawData.byteOffset + rawData.byteLength));
+        }
+
+        // Cache a copy of the approximate full image data
+        if (rasterImageData.imageBounds.xMin === 0 && rasterImageData.imageBounds.yMin === 0
+            && rasterImageData.imageBounds.xMax === this.frameInfo.fileInfoExtended.width
+            && rasterImageData.imageBounds.yMax === this.frameInfo.fileInfoExtended.height) {
+            this.overviewRasterData = this.rasterData.slice(0);
+            this.overviewRasterView = {
+                xMin: rasterImageData.imageBounds.xMin,
+                xMax: rasterImageData.imageBounds.xMax,
+                yMin: rasterImageData.imageBounds.yMin,
+                yMax: rasterImageData.imageBounds.yMax,
+                mip: rasterImageData.mip
+            };
         }
     }
 

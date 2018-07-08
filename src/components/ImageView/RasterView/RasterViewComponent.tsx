@@ -20,6 +20,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private hasFloatExtension: boolean;
     // GL buffers
     private rasterDataBuffer: ArrayBufferLike;
+    private overviewRasterDataBuffer: ArrayBufferLike;
     private cmapTexture: WebGLTexture;
     private vertexPositionBuffer: WebGLBuffer;
     private vertexUVBuffer: WebGLBuffer;
@@ -78,6 +79,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 if (frame.rasterData.buffer !== this.rasterDataBuffer) {
                     this.updateTexture();
                 }
+                if (frame.overviewRasterData && frame.overviewRasterData.buffer !== this.overviewRasterDataBuffer) {
+                    this.updateOverviewTexture();
+                }
                 this.updateUniforms();
                 this.renderCanvas();
             }
@@ -122,6 +126,16 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
     }
 
+    private updateOverviewTexture() {
+        const frame = this.props.frame;
+        if (frame.overviewRasterData) {
+            const overviewW = Math.floor((frame.overviewRasterView.xMax - frame.overviewRasterView.xMin) / frame.overviewRasterView.mip);
+            const overviewH = Math.floor((frame.overviewRasterView.yMax - frame.overviewRasterView.yMin) / frame.overviewRasterView.mip);
+            this.loadFP32Texture(frame.overviewRasterData, overviewW, overviewH, WebGLRenderingContext.TEXTURE2);
+            this.overviewRasterDataBuffer = frame.overviewRasterData.buffer;
+        }
+    }
+
     private updateUniforms() {
         const frame = this.props.frame;
         this.gl.uniform1f(this.MinValUniform, frame.scaleMin);
@@ -159,14 +173,34 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             RB.x, RB.y, 0
         ].map(v => -1 + 2 * v));
 
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexPositionBuffer);
-        this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, new Float32Array(vertices), WebGLRenderingContext.STATIC_DRAW);
         this.gl.viewport(0, 0, frame.renderWidth, frame.renderHeight);
         this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexPositionBuffer);
-        this.gl.vertexAttribPointer(this.vertexPositionAttribute, 3, WebGLRenderingContext.FLOAT, false, 0, 0);
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexUVBuffer);
         this.gl.vertexAttribPointer(this.vertexUVAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
+        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexPositionBuffer);
+        this.gl.vertexAttribPointer(this.vertexPositionAttribute, 3, WebGLRenderingContext.FLOAT, false, 0, 0);
+
+        if (frame.overviewRasterData) {
+            const adjustedWidth = Math.floor(frame.frameInfo.fileInfoExtended.width / frame.overviewRasterView.mip) * frame.overviewRasterView.mip;
+            const adjustedHeight = Math.floor(frame.frameInfo.fileInfoExtended.height / frame.overviewRasterView.mip) * frame.overviewRasterView.mip;
+            const overviewLT = {x: (0 - full.xMin) / fullWidth, y: (0 - full.yMin) / fullHeight};
+            const overviewRB = {x: (adjustedWidth - full.xMin) / fullWidth, y: (adjustedHeight - full.yMin) / fullHeight};
+
+            const overviewVertices = new Float32Array([
+                overviewLT.x, overviewLT.y, 0,
+                overviewRB.x, overviewLT.y, 0,
+                overviewLT.x, overviewRB.y, 0,
+                overviewRB.x, overviewRB.y, 0
+            ].map(v => -1 + 2 * v));
+
+            // Switch to TEXTURE2 for overview render
+            this.gl.uniform1i(this.DataTexture, 2);
+            this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, new Float32Array(overviewVertices), WebGLRenderingContext.STATIC_DRAW);
+            this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
+            // Switch back to TEXTURE0 for overview main render
+            this.gl.uniform1i(this.DataTexture, 0);
+        }
+        this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, new Float32Array(vertices), WebGLRenderingContext.STATIC_DRAW);
         this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
     }
 
@@ -252,6 +286,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const texture = this.gl.createTexture();
         this.gl.activeTexture(WebGLRenderingContext.TEXTURE0);
         this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
+
+        // Create a texture.
+        const textureOverview = this.gl.createTexture();
+        this.gl.activeTexture(WebGLRenderingContext.TEXTURE2);
+        this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, textureOverview);
     }
 
     private loadFP32Texture(data: Float32Array, width: number, height: number, texIndex: number) {
