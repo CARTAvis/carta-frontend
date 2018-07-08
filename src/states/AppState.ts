@@ -126,7 +126,7 @@ export class AppState {
     };
 
     constructor() {
-        this.backendService = new BackendService(4);
+        this.backendService = new BackendService();
         this.astReady = false;
         this.spatialProfiles = new Map<number, SpatialProfileState>();
         this.frames = [];
@@ -152,7 +152,7 @@ export class AppState {
                 // Calculate if new data is required
                 const updateRequired = (croppedReq.mip < currentView.mip) || (croppedReq.xMin < currentView.xMin || croppedReq.xMax > currentView.xMax || croppedReq.yMin < currentView.yMin || croppedReq.yMax > currentView.yMax);
                 if (updateRequired) {
-                    this.backendService.setImageView(0, Math.floor(croppedReq.xMin), Math.ceil(croppedReq.xMax), Math.floor(croppedReq.yMin), Math.ceil(croppedReq.yMax), croppedReq.mip);
+                    this.backendService.setImageView(0, Math.floor(croppedReq.xMin), Math.ceil(croppedReq.xMax), Math.floor(croppedReq.yMin), Math.ceil(croppedReq.yMax), croppedReq.mip, 11);
                 }
             }
         }, {delay: 16});

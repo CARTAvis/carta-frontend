@@ -10,7 +10,7 @@ let dataHeap: Uint8Array = null;
 let resultFloat: Float32Array = null;
 let dataPtrUint: number = null;
 let dataHeapUint: Uint8Array = null;
-let debugOutput = false;
+let debugOutput = true;
 let id = -1;
 
 const zfpDecompress = Module.cwrap("zfpDecompress", "number", ["number", "number", "number", "number", "number", "number"]);
@@ -77,13 +77,13 @@ ctx.onmessage = (event => {
             id = event.data[1];
         }
         else if (eventName === "decompress") {
-            // if (debugOutput) {
-            //     performance.mark("decompressStart");
-            // }
+            if (debugOutput) {
+                performance.mark("decompressStart");
+            }
             const eventArgs = event.data[2];
             const compressedView = new Uint8Array(event.data[1], 0, eventArgs.subsetLength);
-            let imageData = zfpDecompressUint8WASM(compressedView, eventArgs.subsetLength, eventArgs.regionReadResponse.width, eventArgs.subsetHeight, eventArgs.regionReadResponse.compression);
-            let outputView = new Float32Array(event.data[1], 0, eventArgs.regionReadResponse.width * eventArgs.subsetHeight);
+            let imageData = zfpDecompressUint8WASM(compressedView, eventArgs.subsetLength, eventArgs.width, eventArgs.subsetHeight, eventArgs.compression);
+            let outputView = new Float32Array(event.data[1], 0, eventArgs.width * eventArgs.subsetHeight);
             outputView.set(imageData);
 
             // put NaNs back into data
@@ -99,21 +99,22 @@ ctx.onmessage = (event => {
             }
 
             ctx.postMessage(["decompress", event.data[1], {
-                regionReadResponse: eventArgs.regionReadResponse,
+                width: eventArgs.width,
+                subsetHeight: eventArgs.subsetHeight,
                 subsetLength: eventArgs.subsetLength
             }], [event.data[1]]);
 
-            // if (debugOutput) {
-            //     performance.mark("decompressEnd");
-            //     performance.measure("dtDecompress", "decompressStart", "decompressEnd");
-            //     const dt = performance.getEntriesByName("dtDecompress")[0].duration;
-            //     performance.clearMarks();
-            //     performance.clearMeasures();
-            //     const eventSize = (4e-6 * eventArgs.width * eventArgs.height);
-            //     setTimeout(() => {
-            //         console.log(`ZFP Worker ${id} decompressed ${eventSize.toFixed(2)} MB in ${dt.toFixed(2)} ms at ${(1e3 * eventSize / dt).toFixed(2)} MB/s (${(1e3 * eventSize / dt / 4).toFixed(2)} Mpix/s)`);
-            //     }, 100);
-            // }
+            if (debugOutput) {
+                performance.mark("decompressEnd");
+                performance.measure("dtDecompress", "decompressStart", "decompressEnd");
+                const dt = performance.getEntriesByName("dtDecompress")[0].duration;
+                performance.clearMarks();
+                performance.clearMeasures();
+                const eventSize = (4e-6 * eventArgs.width * eventArgs.subsetHeight);
+                setTimeout(() => {
+                    console.log(`ZFP Worker ${id} decompressed ${eventSize.toFixed(2)} MB in ${dt.toFixed(2)} ms at ${(1e3 * eventSize / dt).toFixed(2)} MB/s (${(1e3 * eventSize / dt / 4).toFixed(2)} Mpix/s)`);
+                }, 100);
+            }
         }
     }
 

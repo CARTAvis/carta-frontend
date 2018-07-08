@@ -1,9 +1,8 @@
-import {action, observable} from "mobx";
+import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, throwError} from "rxjs";
 import {BehaviorSubject} from "rxjs/internal/BehaviorSubject";
-
-const ZFPWorker = require("worker-loader!zfp_wrapper");
+import {DecompressionService} from "./DecompressionService";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -17,24 +16,21 @@ export class BackendService {
     @observable loggingEnabled: boolean;
     @observable sessionId: string;
     @observable apiKey: string;
-    @observable zfpReady: boolean;
-
     private connection: WebSocket;
     private observerMap: Map<string, Observer<any>>;
     private readonly rasterStream: BehaviorSubject<CARTA.RasterImageData>;
     private readonly histogramStream: BehaviorSubject<CARTA.RegionHistogramData>;
-
     private readonly logEventList: string[];
-    private readonly zfpWorkers: Worker[];
-    private readonly zfpWorkerStatus: boolean[];
+    private readonly decompressionServce: DecompressionService;
+    private readonly subsetsRequired: number;
 
-    constructor(numWorkers: number) {
+    constructor() {
         this.observerMap = new Map<string, Observer<any>>();
         this.connectionStatus = ConnectionStatus.CLOSED;
         this.rasterStream = new BehaviorSubject<CARTA.RasterImageData>(null);
         this.histogramStream = new BehaviorSubject<CARTA.RegionHistogramData>(null);
-        this.zfpReady = false;
-
+        this.subsetsRequired = 1; // Math.min(navigator.hardwareConcurrency || 4, 4);
+        this.decompressionServce = new DecompressionService(this.subsetsRequired);
         this.logEventList = [
             "REGISTER_VIEWER",
             "REGISTER_VIEWER_ACK",
@@ -42,21 +38,10 @@ export class BackendService {
             // "RASTER_IMAGE_DATA"
             "REGION_HISTOGRAM_DATA"
         ];
+    }
 
-        this.zfpWorkers = new Array(numWorkers);
-        this.zfpWorkerStatus = new Array(numWorkers);
-        for (let i = 0; i < numWorkers; i++) {
-            this.zfpWorkers[i] = new ZFPWorker();
-            this.zfpWorkers[i].onmessage = (event: MessageEvent) => {
-                if (event.data[0] === "ready") {
-                    this.zfpWorkerStatus[i] = true;
-                    if (this.zfpWorkerStatus.filter(v => v).length === numWorkers) {
-                        this.zfpReady = true;
-                        console.log(`${numWorkers} ZFP WebWorkers ready`);
-                    }
-                }
-            };
-        }
+    @computed get zfpReady() {
+        return (this.decompressionServce && this.decompressionServce.zfpReady);
     }
 
     getRasterStream() {
@@ -176,9 +161,9 @@ export class BackendService {
     }
 
     @action("set image view")
-    setImageView(fileId: number, xMin: number, xMax: number, yMin: number, yMax: number, mip: number): boolean {
+    setImageView(fileId: number, xMin: number, xMax: number, yMin: number, yMax: number, mip: number, compressionQuality: number): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.SetImageView.create({fileId, imageBounds: {xMin, xMax, yMin, yMax}, mip, compressionType: CARTA.CompressionType.NONE, compressionQuality: 0, numSubsets: 1});
+            const message = CARTA.SetImageView.create({fileId, imageBounds: {xMin, xMax, yMin, yMax}, mip, compressionType: CARTA.CompressionType.ZFP, compressionQuality, numSubsets: this.subsetsRequired});
             this.logEvent("SET_IMAGE_VIEW", message, false);
             if (this.sendEvent("SET_IMAGE_VIEW", 0, CARTA.SetImageView.encode(message).finish())) {
                 return true;
@@ -285,7 +270,20 @@ export class BackendService {
     }
 
     private onStreamedRasterImageData(rasterImageData: CARTA.RasterImageData) {
-        this.rasterStream.next(rasterImageData);
+        if (rasterImageData.compressionType === CARTA.CompressionType.NONE) {
+            this.rasterStream.next(rasterImageData);
+        }
+        else {
+            const t0 = performance.now();
+            this.decompressionServce.decompressRasterData(rasterImageData).then(decompressedMessage => {
+                const t1 = performance.now();
+                const sizeMpix = decompressedMessage.imageData[0].length / 4e6;
+                const dt = t1 - t0;
+                const speed = sizeMpix / dt * 1e3;
+                console.log(`Decompressed ${sizeMpix} MPix in ${dt} ms (${speed} MPix/s`);
+                this.rasterStream.next(decompressedMessage);
+            });
+        }
     }
 
     private onStreamedRegionHistogramData(regionHistogramData: CARTA.RegionHistogramData) {
