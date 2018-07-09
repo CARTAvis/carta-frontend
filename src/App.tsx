@@ -20,6 +20,7 @@ import {FileBrowserState} from "./states/FileBrowserState";
 import {URLConnectDialogComponent} from "./components/Dialogs/URLConnect/URLConnectDialogComponent";
 import {Alert} from "@blueprintjs/core";
 import {ColormapComponent} from "./components/Colormap/ColormapComponent";
+import {LogComponent} from "./components/Log/LogComponent";
 
 @observer
 class App extends React.Component<{ appState: AppState }> {
@@ -42,11 +43,20 @@ class App extends React.Component<{ appState: AppState }> {
                     isClosable: false,
                     props: {appState: this.props.appState}
                 }, {
-                    type: "react-component",
-                    component: "colormap",
-                    title: "Color map",
-                    id: "colormap",
-                    props: {appState: this.props.appState}
+                    type: "stack",
+                    content: [{
+                        type: "react-component",
+                        component: "colormap",
+                        title: "Color map",
+                        id: "colormap",
+                        props: {appState: this.props.appState}
+                    }, {
+                        type: "react-component",
+                        component: "log",
+                        title: "Log",
+                        id: "log",
+                        props: {logState: this.props.appState.logState}
+                    }]
                 }, {
                     type: "react-component",
                     component: "placeholder",
@@ -115,6 +125,7 @@ class App extends React.Component<{ appState: AppState }> {
         layout.registerComponent("image-view", ImageViewComponent);
         layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
         layout.registerComponent("colormap", ColormapComponent);
+        layout.registerComponent("log", LogComponent);
 
         appState.layoutSettings.layout = layout;
 

@@ -10,6 +10,7 @@ import {AlertState} from "./AlertState";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import * as _ from "lodash";
+import {LogState} from "./LogState";
 
 export class AppState {
     // Backend service
@@ -22,21 +23,27 @@ export class AppState {
     @observable activeFrame: FrameState;
     // Error alerts
     @observable alertState: AlertState;
+    // Logs
+    @observable logState: LogState;
+
     // Cursor information
     @observable cursorInfo: CursorInfo;
     // Spatial profiles
     @observable spatialProfiles: Map<number, SpatialProfileState>;
+
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
         this.overlayState.viewWidth = w;
         this.overlayState.viewHeight = h;
     };
+
     // Overlay
     @observable overlayState: OverlayState;
     // Layout
     @observable layoutSettings: LayoutState;
     // File Browser
     @observable fileBrowserState: FileBrowserState;
+
     // Additional Dialogs
     @observable urlConnectDialogVisible: boolean;
     @action showURLConnect = () => {
@@ -45,6 +52,7 @@ export class AppState {
     @action hideURLConnect = () => {
         this.urlConnectDialogVisible = false;
     };
+
     // Frame actions
     @action loadFile = (directory: string, file: string, hdu: string) => {
         this.backendService.loadFile(directory, file, hdu, 0, CARTA.RenderMode.RASTER).subscribe(ack => {
@@ -128,7 +136,8 @@ export class AppState {
     };
 
     constructor() {
-        this.backendService = new BackendService();
+        this.logState = new LogState();
+        this.backendService = new BackendService(this.logState);
         this.astReady = false;
         this.spatialProfiles = new Map<number, SpatialProfileState>();
         this.frames = [];

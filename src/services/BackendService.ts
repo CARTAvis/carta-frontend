@@ -3,6 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {Observable, Observer, throwError} from "rxjs";
 import {BehaviorSubject} from "rxjs/internal/BehaviorSubject";
 import {DecompressionService} from "./DecompressionService";
+import {LogState} from "../states/LogState";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -23,8 +24,10 @@ export class BackendService {
     private readonly logEventList: string[];
     private readonly decompressionServce: DecompressionService;
     private readonly subsetsRequired: number;
+    private readonly logState: LogState;
 
-    constructor() {
+    constructor(logState: LogState) {
+        this.logState = logState;
         this.observerMap = new Map<string, Observer<any>>();
         this.connectionStatus = ConnectionStatus.CLOSED;
         this.rasterStream = new BehaviorSubject<CARTA.RasterImageData>(null);
@@ -280,7 +283,7 @@ export class BackendService {
                 const sizeMpix = decompressedMessage.imageData[0].length / 4e6;
                 const dt = t1 - t0;
                 const speed = sizeMpix / dt * 1e3;
-                console.log(`Decompressed ${sizeMpix.toFixed(2)} MPix in ${dt.toFixed(2)} ms (${speed.toFixed(2)} MPix/s)`);
+                this.logState.addInfo(`Decompressed ${sizeMpix.toFixed(2)} MPix in ${dt.toFixed(2)} ms (${speed.toFixed(2)} MPix/s)`, ["zfp"]);
                 this.rasterStream.next(decompressedMessage);
             });
         }
