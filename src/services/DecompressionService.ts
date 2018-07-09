@@ -83,8 +83,7 @@ export class DecompressionService {
 
     decompressRasterData(message: CARTA.RasterImageData) {
         return new Promise<CARTA.RasterImageData>((resolve, reject) => {
-            if (message.numSubsets > this.workers.length || message.numSubsets !== message.imageData.length
-                || message.numSubsets !== message.nanEncodings.length) {
+            if (message.imageData.length > this.workers.length || message.imageData.length !== message.nanEncodings.length) {
                 reject("Mismatched subset counts");
             }
 

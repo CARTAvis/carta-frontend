@@ -186,8 +186,8 @@ export class BackendService {
         }
 
         const eventName = this.getEventName(new Uint8Array(event.data, 0, 32));
-        const eventId = new Uint32Array(event.data, 32, 2)[0];
-        const eventData = new Uint8Array(event.data, 40);
+        const eventId = new Uint32Array(event.data, 32, 1)[0];
+        const eventData = new Uint8Array(event.data, 36);
 
         try {
             let parsedMessage;
@@ -302,10 +302,10 @@ export class BackendService {
 
     private sendEvent(eventName: string, eventId: number, payload: Uint8Array): boolean {
         if (this.connection.readyState === WebSocket.OPEN) {
-            let eventData = new Uint8Array(32 + 8 + payload.byteLength);
+            let eventData = new Uint8Array(32 + 4 + payload.byteLength);
             eventData.set(this.stringToUint8Array(eventName, 32));
             eventData.set(new Uint8Array(new Uint32Array([eventId]).buffer), 32);
-            eventData.set(payload, 40);
+            eventData.set(payload, 36);
             this.connection.send(eventData);
             return true;
         }
