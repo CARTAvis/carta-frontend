@@ -7,6 +7,7 @@ $browser-table-color: #137CBD;
     margin-right: 20px;
     thead {
         th {
+            cursor: pointer;
             .pt-icon {
                 vertical-align: middle;
                 height: 10px;
@@ -20,7 +21,7 @@ $browser-table-color: #137CBD;
 }
 
 #file-header-type {
-    width: 64px;
+    width: 84px;
 }
 
 #file-header-size {
