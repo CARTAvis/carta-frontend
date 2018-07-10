@@ -174,7 +174,14 @@ class App extends React.Component<{ appState: AppState }> {
         appState.backendService.loggingEnabled = true;
         appState.fileBrowserState = new FileBrowserState(appState.backendService);
 
-        const wsURL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}/socket`;
+        let wsURL;
+        if (process.env.NODE_ENV === "development" && process.env.REACT_APP_DEFAULT_ADDRESS) {
+            wsURL = process.env.REACT_APP_DEFAULT_ADDRESS;
+        }
+        else {
+            wsURL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}/socket`;
+        }
+
         console.log(`Connecting to defaullt URL: ${wsURL}`);
         appState.backendService.connect(wsURL, "1234").subscribe(sessionId => {
             console.log(`Connected with session ID ${sessionId}`);

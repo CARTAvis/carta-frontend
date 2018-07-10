@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {Tooltip} from "@blueprintjs/core";
 
 @observer
-export class LogComponent extends React.PureComponent<{ logState: LogState }> {
+export class LogComponent extends React.Component<{ logState: LogState }> {
 
     handleClick = () => {
         if (this.props.logState) {
