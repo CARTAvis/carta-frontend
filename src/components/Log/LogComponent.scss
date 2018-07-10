@@ -1,16 +1,37 @@
 .log {
-    padding-bottom: 20px;
-    padding-right: 5px;
-    padding-left: 5px;
+    padding: 5px;
     height: 100%;
-    pre {
-        margin-bottom: 10px;
-        height: 100%;
-        overflow-y: scroll;
+
+    .log-entry-list {
+        height: calc(100% - 30px);
+        padding: 0;
+        margin: 0;
+        div {
+            padding-top: 2px;
+        }
     }
-    .pt-popover-wrapper {
-        position: absolute;
-        bottom: 20px;
-        right: 30px;
+
+    .log-entry-follow {
+        background: rgba(#137CBD, 0.3);
+    }
+
+    .log-footer {
+        height: 30px;
+        .tag-list {
+            float:left;
+            margin-top: 5px;
+            .pt-tag {
+                margin-right: 5px;
+            }
+        }
+        .log-footer-right {
+            float: right;
+            .pt-label {
+                float: left;
+            }
+            button {
+                float: left;
+            }
+        }
     }
 }

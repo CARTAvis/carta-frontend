@@ -56,7 +56,14 @@ export class AppState {
     // Frame actions
     @action loadFile = (directory: string, file: string, hdu: string) => {
         this.backendService.loadFile(directory, file, hdu, 0, CARTA.RenderMode.RASTER).subscribe(ack => {
-            console.log("Loaded");
+            let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
+            if (ack.fileInfoExtended.dimensions > 2) {
+                dimensionsString += `\u00D7${ack.fileInfoExtended.depth}`;
+                if (ack.fileInfoExtended.dimensions > 3) {
+                    dimensionsString += ` (${ack.fileInfoExtended.stokes} Stokes cubes)`;
+                }
+            }
+            this.logState.addInfo(`Loaded file ${ack.fileInfo.name} with dimensions ${dimensionsString}`, ["file"]);
             let newFrame = new FrameState(this.overlayState);
             newFrame.frameInfo = new FrameInfo();
             newFrame.frameInfo.fileId = ack.fileId;

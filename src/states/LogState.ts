@@ -10,6 +10,14 @@ export class LogEntry {
 
 export class LogState {
     @observable logEntries: LogEntry[];
+    @observable hiddenTags: string[];
+    @observable logLevel: CARTA.ErrorSeverity;
+
+    constructor() {
+        this.logEntries = [];
+        this.hiddenTags = [];
+        this.logLevel = CARTA.ErrorSeverity.INFO;
+    }
 
     @action addLog(entry: LogEntry) {
         this.logEntries.push(entry);
@@ -27,11 +35,20 @@ export class LogState {
         this.addLog({message, title, tags, level: CARTA.ErrorSeverity.ERROR});
     }
 
-    @action clearLog() {
-        this.logEntries = [];
+    @action toggleTag(tag: string) {
+        if (this.hiddenTags.indexOf(tag) === -1) {
+            this.hiddenTags.push(tag);
+        }
+        else {
+            this.hiddenTags = this.hiddenTags.filter(t => t !== tag);
+        }
     }
 
-    constructor() {
+    @action setLevel(level: CARTA.ErrorSeverity) {
+        this.logLevel = level;
+    }
+
+    @action clearLog() {
         this.logEntries = [];
     }
 }
