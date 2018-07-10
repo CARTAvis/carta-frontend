@@ -1,0 +1,4 @@
+12c12
+< add_library(zfp ${zfp_source})
+---
+> add_library(zfp STATIC ${zfp_source})
