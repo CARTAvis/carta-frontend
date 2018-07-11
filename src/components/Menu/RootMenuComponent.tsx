@@ -1,6 +1,6 @@
 import * as React from "react";
 import "./RootMenuComponent.css";
-import {Menu, MenuDivider, MenuItem, Popover, Position} from "@blueprintjs/core";
+import {Menu, Popover, Position} from "@blueprintjs/core";
 import {AppState} from "../../states/AppState";
 import {observer} from "mobx-react";
 import {ConnectionStatus} from "../../services/BackendService";
@@ -17,103 +17,103 @@ export class RootMenuComponent extends React.Component<{ appState: AppState }> {
 
         const fileMenu = (
             <Menu>
-                <MenuItem
+                <Menu.Item
                     text="Open cube"
                     label={`${modString}O`}
                     disabled={appState.backendService.connectionStatus !== ConnectionStatus.ACTIVE}
                     onClick={() => appState.fileBrowserState.showFileBrowser(false)}
                 />
-                <MenuItem
+                <Menu.Item
                     text="Open cube as new frame"
                     label={`${modString}A`}
                     disabled={appState.backendService.connectionStatus !== ConnectionStatus.ACTIVE}
                     onClick={() => appState.fileBrowserState.showFileBrowser(true)}
                 />
-                <MenuItem text="Load region"/>
-                <MenuDivider/>
-                <MenuItem text="Export annotations" icon={"floppy-disk"}/>
-                <MenuItem text="Export image" icon={"media"} label={`${modString}E`}/>
-                <MenuDivider/>
-                <MenuItem text="Preferences" icon={"cog"} label={`${modString}P`}/>
-                <MenuItem text="Connect to URL" onClick={appState.showURLConnect}/>
-                <MenuDivider/>
-                <MenuItem text="Exit" icon={"log-out"} label={`${modString}Q`}/>
+                <Menu.Item text="Load region"/>
+                <Menu.Divider/>
+                <Menu.Item text="Export annotations" icon={"floppy-disk"}/>
+                <Menu.Item text="Export image" icon={"media"} label={`${modString}E`}/>
+                <Menu.Divider/>
+                <Menu.Item text="Preferences" icon={"cog"} label={`${modString}P`}/>
+                <Menu.Item text="Connect to URL" onClick={appState.showURLConnect}/>
+                <Menu.Divider/>
+                <Menu.Item text="Exit" icon={"log-out"} label={`${modString}Q`}/>
             </Menu>
         );
 
         const viewMenu = (
             <Menu>
-                <MenuItem text="Interface" icon={"control"}>
-                    <MenuItem text="Light" icon={"flash"}/>
-                    <MenuItem text="Dark" icon={"moon"}/>
-                </MenuItem>
-                <MenuItem text="Overlay" icon={"widget"}>
-                    <MenuItem text="DS9 Preset"/>
-                    <MenuItem text="CASA Preset"/>
-                    <MenuDivider/>
-                    <MenuItem text="Custom Preset 1"/>
-                    <MenuItem text="Custom Preset 2"/>
-                    <MenuDivider/>
-                    <MenuItem text="Customize..." icon={"style"} onClick={appState.overlayState.showOverlaySettings}/>
-                    <MenuItem text="Save Current as Preset" icon={"floppy-disk"}/>
-                </MenuItem>
-                <MenuItem text="Graphs" icon={"timeline-line-chart"}>
-                    <MenuItem text="DS9 Preset"/>
-                    <MenuItem text="CASA Preset"/>
-                    <MenuDivider/>
-                    <MenuItem text="My graph preset"/>
-                    <MenuItem text="Another graph preset"/>
-                    <MenuDivider/>
-                    <MenuItem text="Customize..." icon={"style"}/>
-                    <MenuItem text="Save Current as Preset" icon={"floppy-disk"}/>
-                </MenuItem>
+                <Menu.Item text="Interface" icon={"control"}>
+                    <Menu.Item text="Light" icon={"flash"}/>
+                    <Menu.Item text="Dark" icon={"moon"}/>
+                </Menu.Item>
+                <Menu.Item text="Overlay" icon={"widget"}>
+                    <Menu.Item text="DS9 Preset"/>
+                    <Menu.Item text="CASA Preset"/>
+                    <Menu.Divider/>
+                    <Menu.Item text="Custom Preset 1"/>
+                    <Menu.Item text="Custom Preset 2"/>
+                    <Menu.Divider/>
+                    <Menu.Item text="Customize..." icon={"style"} onClick={appState.overlayState.showOverlaySettings}/>
+                    <Menu.Item text="Save Current as Preset" icon={"floppy-disk"}/>
+                </Menu.Item>
+                <Menu.Item text="Graphs" icon={"timeline-line-chart"}>
+                    <Menu.Item text="DS9 Preset"/>
+                    <Menu.Item text="CASA Preset"/>
+                    <Menu.Divider/>
+                    <Menu.Item text="My graph preset"/>
+                    <Menu.Item text="Another graph preset"/>
+                    <Menu.Divider/>
+                    <Menu.Item text="Customize..." icon={"style"}/>
+                    <Menu.Item text="Save Current as Preset" icon={"floppy-disk"}/>
+                </Menu.Item>
 
-                <MenuItem text="Fullscreen" icon={"fullscreen"} label={"F11"}/>
+                <Menu.Item text="Fullscreen" icon={"fullscreen"} label={"F11"}/>
             </Menu>
         );
 
         const panelMenu = (
             <Menu>
-                <MenuItem text="Undo layout change" icon={"undo"} disabled={!appState.layoutSettings.hasLayoutHistory} onClick={appState.layoutSettings.undoLayoutChange}/>
-                <MenuItem text="Profiles" icon={"timeline-line-chart"}>
-                    <MenuItem text="X-Profile"/>
-                    <MenuItem text="Y-Profile"/>
-                    <MenuItem text="Z-Profile"/>
-                </MenuItem>
-                <MenuItem text="Histograms" icon={"timeline-bar-chart"}>
-                    <MenuItem text="Region Histogram"/>
-                    <MenuItem text="Slice Histogram"/>
-                </MenuItem>
-                <MenuItem text="Info Panels" icon={"info-sign"}>
-                    <MenuItem text="Region Statistics"/>
-                    <MenuItem text="Cursor Info"/>
-                    <MenuItem text="Program Log"/>
-                    <MenuItem text="Debug Info"/>
-                </MenuItem>
-                <MenuDivider/>
-                <MenuItem text="3D Height-map" icon={"mountain"}/>
-                <MenuItem text="Animator" icon={"video"}/>
-                <MenuItem text="Color map" icon={"contrast"}/>
-                <MenuDivider/>
-                <MenuItem text="Presets" icon={"new-grid-item"}>
-                    <MenuItem text="Image Only"/>
-                    <MenuItem text="3D with Profiles"/>
-                    <MenuItem text="Full Stokes"/>
-                    <MenuDivider/>
-                    <MenuItem text="Custom Preset 1" label={`${modString}1`}/>
-                    <MenuItem text="Custom Preset 2" label={`${modString}2`}/>
-                    <MenuDivider/>
-                    <MenuItem text="Save Current as Preset" icon={"floppy-disk"}/>
-                </MenuItem>
+                <Menu.Item text="Undo layout change" icon={"undo"} disabled={!appState.layoutSettings.hasLayoutHistory} onClick={appState.layoutSettings.undoLayoutChange}/>
+                <Menu.Item text="Profiles" icon={"timeline-line-chart"}>
+                    <Menu.Item text="X-Profile"/>
+                    <Menu.Item text="Y-Profile"/>
+                    <Menu.Item text="Z-Profile"/>
+                </Menu.Item>
+                <Menu.Item text="Histograms" icon={"timeline-bar-chart"}>
+                    <Menu.Item text="Region Histogram"/>
+                    <Menu.Item text="Slice Histogram"/>
+                </Menu.Item>
+                <Menu.Item text="Info Panels" icon={"info-sign"}>
+                    <Menu.Item text="Region Statistics"/>
+                    <Menu.Item text="Cursor Info"/>
+                    <Menu.Item text="Program Log"/>
+                    <Menu.Item text="Debug Info"/>
+                </Menu.Item>
+                <Menu.Divider/>
+                <Menu.Item text="3D Height-map" icon={"mountain"}/>
+                <Menu.Item text="Animator" icon={"video"}/>
+                <Menu.Item text="Color map" icon={"contrast"}/>
+                <Menu.Divider/>
+                <Menu.Item text="Presets" icon={"new-grid-item"}>
+                    <Menu.Item text="Image Only"/>
+                    <Menu.Item text="3D with Profiles"/>
+                    <Menu.Item text="Full Stokes"/>
+                    <Menu.Divider/>
+                    <Menu.Item text="Custom Preset 1" label={`${modString}1`}/>
+                    <Menu.Item text="Custom Preset 2" label={`${modString}2`}/>
+                    <Menu.Divider/>
+                    <Menu.Item text="Save Current as Preset" icon={"floppy-disk"}/>
+                </Menu.Item>
             </Menu>
         );
 
         const helpMenu = (
             <Menu>
-                <MenuItem text="Getting Started" icon={"help"} label={"F1"}/>
-                <MenuItem text="Controls and Shortcuts" icon={"info-sign"}/>
-                <MenuItem text="Search help" icon={"search"} label={"Shift + Space"}/>
-                <MenuItem text="About" icon={"info-sign"}/>
+                <Menu.Item text="Getting Started" icon={"help"} label={"F1"}/>
+                <Menu.Item text="Controls and Shortcuts" icon={"info-sign"}/>
+                <Menu.Item text="Search help" icon={"search"} label={"Shift + Space"}/>
+                <Menu.Item text="About" icon={"info-sign"}/>
             </Menu>
         );
 
@@ -121,22 +121,22 @@ export class RootMenuComponent extends React.Component<{ appState: AppState }> {
             <div className="Root-menu">
                 <Popover minimal={true} content={fileMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="Root-menu-entry">
-                        <MenuItem text="File"/>
+                        <Menu.Item text="File"/>
                     </Menu>
                 </Popover>
                 <Popover minimal={true} content={viewMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="Root-menu-entry">
-                        <MenuItem text="View"/>
+                        <Menu.Item text="View"/>
                     </Menu>
                 </Popover>
                 <Popover minimal={true} content={panelMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="Root-menu-entry">
-                        <MenuItem text="Layout"/>
+                        <Menu.Item text="Layout"/>
                     </Menu>
                 </Popover>
                 <Popover minimal={true} content={helpMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="Root-menu-entry">
-                        <MenuItem text="Help"/>
+                        <Menu.Item text="Help"/>
                     </Menu>
                 </Popover>
             </div>

@@ -160,7 +160,7 @@ export class AppState {
             this.backendService.setImageView(0, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
         }, 200);
 
-        const onRequiredViewUpdated = autorun(() => {
+        autorun(() => {
             if (this.activeFrame) {
                 // Calculate new required frame view (cropped to file size)
                 const reqView = this.activeFrame.requiredFrameView;
@@ -209,6 +209,12 @@ export class AppState {
                 if (channelHist.length) {
                     this.activeFrame.updateChannelHistogram(channelHist[0] as CARTA.Histogram);
                 }
+            }
+        });
+
+        autorun(() => {
+            if (this.astReady) {
+                this.logState.addInfo("AST library loaded", ["init", "ast"]);
             }
         });
 

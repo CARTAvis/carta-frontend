@@ -68,7 +68,7 @@ export class ImageViewComponent extends React.Component<{ appState: AppState }> 
                 />
                 }
                 {!appState.astReady &&
-                <NonIdealState visual={<Spinner className="astLoadingSpinner"/>} title={"Loading AST Library"}/>
+                <NonIdealState icon={<Spinner className="astLoadingSpinner"/>} title={"Loading AST Library"}/>
                 }
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
             </div>

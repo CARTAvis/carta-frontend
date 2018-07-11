@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, Dialog, Intent, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Dialog, H4, Intent, NonIdealState, Pre, Tooltip} from "@blueprintjs/core";
 import "./FileBrowserDialogComponent.css";
 import {FileBrowserState} from "../../../states/FileBrowserState";
 import {CARTA} from "carta-protobuf";
@@ -30,7 +30,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appState: AppS
                 onClose={fileBrowserState.hideFileBrowser}
                 title="File Browser"
             >
-                <div className="pt-dialog-body" style={{display: "flex"}}>
+                <div className="bp3-dialog-body" style={{display: "flex"}}>
                     <div className="file-list-pane">
                         <FileListComponent
                             files={fileBrowserState.fileList}
@@ -42,27 +42,17 @@ export class FileBrowserDialogComponent extends React.Component<{ appState: AppS
                         />
                     </div>
                     <div className="file-info-pane">
-                        <h4>File Information</h4>
+                        <H4>File Information</H4>
                         {!fileBrowserState.fileInfoExtended &&
-                        <div className="pt-non-ideal-state">
-                            <div className="pt-non-ideal-state-visual pt-non-ideal-state-icon">
-                                <span className="pt-icon pt-icon-document"/>
-                            </div>
-                            <h4 className="pt-non-ideal-state-title">No file selected</h4>
-                            <div className="pt-non-ideal-state-description">
-                                Select a file from the list on the left.
-                            </div>
-                        </div>
+                        <NonIdealState icon="document" title="No file selected" description="Select a file from the list on the left"/>
                         }
                         {fileBrowserState.fileInfoExtended &&
-                        <pre className="file-info-pre">
-                                {infoHeader}
-                            </pre>
+                        <Pre className="file-info-pre">{infoHeader}</Pre>
                         }
                     </div>
                 </div>
-                <div className="pt-dialog-footer">
-                    <div className="pt-dialog-footer-actions">
+                <div className="bp3-dialog-footer">
+                    <div className="bp3-dialog-footer-actions">
                         <AnchorButton intent={Intent.NONE} onClick={fileBrowserState.hideFileBrowser} text="Close"/>
                         {fileBrowserState.appendingFrame ? (
                             <Tooltip content={"Append this file as a new frame"}>
