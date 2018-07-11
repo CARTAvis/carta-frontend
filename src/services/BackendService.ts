@@ -1,4 +1,4 @@
-import {action, computed, observable} from "mobx";
+import {action, autorun, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, throwError} from "rxjs";
 import {BehaviorSubject} from "rxjs/internal/BehaviorSubject";
@@ -45,6 +45,12 @@ export class BackendService {
             // "RASTER_IMAGE_DATA"
             "REGION_HISTOGRAM_DATA"
         ];
+
+        autorun(() => {
+            if (this.zfpReady) {
+                this.logState.addInfo(`ZFP loaded with ${this.subsetsRequired} workers`, ["init", "zfp"]);
+            }
+        });
     }
 
     @computed get zfpReady() {

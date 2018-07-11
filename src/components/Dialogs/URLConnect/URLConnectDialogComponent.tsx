@@ -24,14 +24,14 @@ export class URLConnectDialogComponent extends React.Component<{ appState: AppSt
                 onClose={appState.hideURLConnect}
                 title="Connect to URL"
             >
-                <div className="pt-dialog-body">
-                    <input className="pt-input url-connect-input" type="text" placeholder="Remote URL" value={this.state.url} onChange={this.handleInput}/>
+                <div className="bp3-dialog-body">
+                    <input className="bp3-input url-connect-input" type="text" placeholder="Remote URL" value={this.state.url} onChange={this.handleInput}/>
                     {this.state.errMessage &&
                     <p>{this.state.errMessage}</p>
                     }
                 </div>
-                <div className="pt-dialog-footer">
-                    <div className="pt-dialog-footer-actions">
+                <div className="bp3-dialog-footer">
+                    <div className="bp3-dialog-footer-actions">
                         <AnchorButton intent={Intent.NONE} onClick={appState.hideURLConnect} text="Close"/>
                         <Tooltip content={"Connect to remote server at the given URL"}>
                             <AnchorButton intent={Intent.PRIMARY} onClick={this.onConnectClicked} disabled={!this.validateUrl(this.state.url)} text="Connect"/>

@@ -1,6 +1,6 @@
 import * as React from "react";
 import {CARTA} from "carta-protobuf";
-import {Icon, NonIdealState, Spinner} from "@blueprintjs/core";
+import {Icon, NonIdealState, Spinner, HTMLTable} from "@blueprintjs/core";
 import "./FileListComponent.css";
 
 export class FileListComponent extends React.Component<{
@@ -62,7 +62,7 @@ export class FileListComponent extends React.Component<{
                         className += " file-table-entry-selected";
                     }
                     return (
-                        <tr key={`${file.name}:${hdu}`}onDoubleClick={() => this.props.onFileDoubleClicked(file, hdu)} onClick={() => this.props.onFileClicked(file, hdu)} className={className}>
+                        <tr key={`${file.name}:${hdu}`} onDoubleClick={() => this.props.onFileDoubleClicked(file, hdu)} onClick={() => this.props.onFileClicked(file, hdu)} className={className}>
                             <td><Icon icon="document"/></td>
                             <td>{file.HDUList.length > 1 ? `${file.name}: HDU ${hdu}` : file.name}</td>
                             <td>{this.getFileTypeDisplay(file.type)}</td>
@@ -75,7 +75,7 @@ export class FileListComponent extends React.Component<{
 
         if (fileList) {
             return (
-                <table className="pt-html-table pt-small file-table">
+                <HTMLTable small={true} className="file-table">
                     <thead>
                     <tr>
                         <th id="file-header-icon"/>
@@ -102,11 +102,11 @@ export class FileListComponent extends React.Component<{
                     <tbody>
                     {fileEntries}
                     </tbody>
-                </table>
+                </HTMLTable>
             );
         }
         else {
-            return <NonIdealState visual={<Spinner className="fileBrowserLoadingSpinner"/>} title={"Loading files"}/>;
+            return <NonIdealState icon={<Spinner className="fileBrowserLoadingSpinner"/>} title={"Loading files"}/>;
         }
     }
 

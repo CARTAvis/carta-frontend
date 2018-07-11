@@ -8,6 +8,9 @@
         margin: 0;
         div {
             padding-top: 2px;
+            .bp3-tag {
+                margin-right: 5px;
+            }
         }
     }
 
@@ -18,20 +21,14 @@
     .log-footer {
         height: 30px;
         .tag-list {
-            float:left;
+            float: left;
             margin-top: 5px;
-            .pt-tag {
+            .bp3-tag {
                 margin-right: 5px;
             }
         }
         .log-footer-right {
             float: right;
-            .pt-label {
-                float: left;
-            }
-            button {
-                float: left;
-            }
         }
     }
 }

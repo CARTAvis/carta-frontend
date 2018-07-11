@@ -11,13 +11,13 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appState: 
         const overlayState = appState.overlayState;
         const globalPanel = (
             <div>
-                <div className="pt-form-group">
-                    <div className="pt-form-content">
+                <div className="bp3-form-group">
+                    <div className="bp3-form-content">
                         <Checkbox checked={overlayState.title.visible} indeterminate={overlayState.title.visible === undefined} label="Title" onChange={(ev) => overlayState.title.visible = ev.currentTarget.checked}/>
-                        <label className="pt-label .pt-inline">
+                        <label className="bp3-label .bp3-inline">
                             Title text
                             <input
-                                className="pt-input"
+                                className="bp3-input"
                                 type="text"
                                 placeholder="Text input"
                                 value={overlayState.title.text}
@@ -36,7 +36,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appState: 
 
         return (
             <Dialog icon={"settings"} lazy={true} backdropClassName="minimal-dialog-backdrop" isOpen={overlayState.overlaySettingsDialogVisible} onClose={overlayState.hideOverlaySettings} title="Overlay Settings">
-                <div className="pt-dialog-body">
+                <div className="bp3-dialog-body">
                     <Tabs id="overlayTabs" selectedTabId="global">
                         <Tab id="global" title="Global" panel={globalPanel}/>
                         <Tab id="axes" title="Axes (Common)"/>
@@ -44,8 +44,8 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appState: 
                         <Tab id="axis2" title="Axis 2"/>
                     </Tabs>
                 </div>
-                <div className="pt-dialog-footer">
-                    <div className="pt-dialog-footer-actions">
+                <div className="bp3-dialog-footer">
+                    <div className="bp3-dialog-footer-actions">
                         <Button intent={Intent.PRIMARY} onClick={overlayState.hideOverlaySettings} text="Close"/>
                     </div>
                 </div>
