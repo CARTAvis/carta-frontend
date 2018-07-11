@@ -61,6 +61,7 @@ export class ImageViewComponent extends React.Component<{ appState: AppState }> 
                 <CursorOverlayComponent
                     cursorInfo={appState.cursorInfo}
                     width={appState.overlayState.viewWidth}
+                    unit={appState.activeFrame.unit}
                     bottom={0}
                     showImage={true}
                     showWCS={true}

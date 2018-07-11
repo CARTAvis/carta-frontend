@@ -30,6 +30,7 @@ export class FrameView {
 
 export class FrameState {
     @observable frameInfo: FrameInfo;
+    @observable renderHiDPI: boolean;
     @observable wcsInfo: number;
     @observable center: Point2D;
     @observable centerY: number;
@@ -53,6 +54,7 @@ export class FrameState {
 
     constructor(overlay: OverlayState) {
         this.overlayState = overlay;
+        this.renderHiDPI = false;
         this.center = {x: 0, y: 0};
         this.stokes = 0;
         this.channel = 0;
@@ -75,9 +77,10 @@ export class FrameState {
             };
         }
 
+        const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
         // Required image dimensions
-        const imageWidth = this.renderWidth / this.zoomLevel;
-        const imageHeight = this.renderHeight / this.zoomLevel;
+        const imageWidth = pixelRatio * this.renderWidth / this.zoomLevel;
+        const imageHeight = pixelRatio * this.renderHeight / this.zoomLevel;
 
         const mipExact = Math.max(1.0, 1.0 / this.zoomLevel);
         const mipRounded = (mipExact % 1.0 < 0.25) ? Math.floor(mipExact) : Math.ceil(mipExact);
@@ -137,6 +140,21 @@ export class FrameState {
             cumulativeSum += vals[i];
         }
         return calculatedPercentiles;
+    }
+
+    @computed get unit() {
+        if (!this.frameInfo || !this.frameInfo.fileInfoExtended || !this.frameInfo.fileInfoExtended.headerEntries) {
+            return undefined;
+        }
+        else {
+            const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.filter(entry => entry.name === "BUNIT");
+            if (unitHeader.length) {
+                return unitHeader[0].value;
+            }
+            else {
+                return undefined;
+            }
+        }
     }
 
     @action updateChannelHistogram(histogram: CARTA.Histogram) {
@@ -225,18 +243,21 @@ export class FrameState {
 
     private calculateZoomX() {
         const imageWidth = this.frameInfo.fileInfoExtended.width;
+        const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
+
         if (imageWidth <= 0) {
             return 1.0;
         }
-        return this.renderWidth / imageWidth;
+        return this.renderWidth * pixelRatio / imageWidth;
     }
 
     private calculateZoomY() {
         const imageHeight = this.frameInfo.fileInfoExtended.height;
+        const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
         if (imageHeight <= 0) {
             return 1.0;
         }
-        return this.renderHeight / imageHeight;
+        return this.renderHeight * pixelRatio / imageHeight;
     }
 
 }

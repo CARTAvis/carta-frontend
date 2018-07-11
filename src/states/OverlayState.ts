@@ -259,7 +259,7 @@ export class OverlayState {
             Math.max(0.2, (displayLabelText[0] ? 0.4 : 0) + (displayNumText[0] ? 0.6 : 0))
         ];
 
-        const paddingValues = paddingRatios.map(r => r * paddingSize * devicePixelRatio);
+        const paddingValues = paddingRatios.map(r => r * paddingSize);
         return {
             left: paddingValues[0],
             right: paddingValues[1],

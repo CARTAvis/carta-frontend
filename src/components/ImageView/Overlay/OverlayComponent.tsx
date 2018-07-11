@@ -70,13 +70,30 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             // y coordinate is flipped in image space
             y: ((cursorPosCanvasSpace.y - LT.y) / (RB.y - LT.y)) * (frameView.yMin - frameView.yMax) + frameView.yMax
         };
+
+        const currentView = this.props.frame.currentFrameView;
+
+        const cursorPosLocalImage = {
+            x:  Math.floor((cursorPosImageSpace.x - currentView.xMin) / currentView.mip),
+            y:  Math.floor((cursorPosImageSpace.y - currentView.yMin) / currentView.mip)
+        };
+
+        const textureWidth = Math.floor((currentView.xMax - currentView.xMin) / currentView.mip);
+        const textureHeight = Math.floor((currentView.yMax - currentView.yMin) / currentView.mip);
+
+        let value = undefined;
+        if (cursorPosLocalImage.x >= 0 && cursorPosLocalImage.x <= textureWidth && cursorPosLocalImage.y >= 0 && cursorPosLocalImage.y < textureHeight) {
+            const index = (cursorPosLocalImage.y * textureWidth + cursorPosLocalImage.x);
+            value = this.props.frame.rasterData[index];
+        }
         const cursorPosWCS = AST.pixToWCS(this.props.frame.wcsInfo, cursorPosImageSpace.x, cursorPosImageSpace.y);
         const cursorPosFormatted = AST.getFormattedCoordinates(this.props.frame.wcsInfo, cursorPosWCS.x, cursorPosWCS.y, "Format(1) = d.1, Format(2) = d.1");
         return {
             posCanvasSpace: cursorPosCanvasSpace,
             posImageSpace: cursorPosImageSpace,
             posWCS: cursorPosWCS,
-            infoWCS: cursorPosFormatted
+            infoWCS: cursorPosFormatted,
+            value: value
         };
     }
 
@@ -88,6 +105,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     renderCanvas = () => {
         const settings = this.props.overlaySettings;
         const frame = this.props.frame;
+        const pixelRatio = devicePixelRatio;
         if (frame.wcsInfo) {
             // Set default AST palette
             AST.setPalette([         // AST color index:
@@ -107,8 +125,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 frame.wcsInfo,
                 frame.requiredFrameView.xMin, frame.requiredFrameView.xMax,
                 frame.requiredFrameView.yMin, frame.requiredFrameView.yMax,
-                settings.viewWidth * devicePixelRatio, settings.viewHeight * devicePixelRatio,
-                settings.padding.left, settings.padding.right, settings.padding.top, settings.padding.bottom,
+                settings.viewWidth * pixelRatio, settings.viewHeight * pixelRatio,
+                settings.padding.left * pixelRatio, settings.padding.right * pixelRatio, settings.padding.top * pixelRatio, settings.padding.bottom * pixelRatio,
                 settings.styleString);
         }
     };

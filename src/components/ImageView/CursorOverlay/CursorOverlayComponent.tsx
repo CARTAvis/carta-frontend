@@ -5,15 +5,17 @@ import {CSSProperties} from "react";
 
 class CursorOverlayProps {
     cursorInfo: CursorInfo;
-    cursorValue?: number;
     width: number;
     top?: number;
     bottom?: number;
     height?: number;
+    unit?: string;
 
     showWCS?: boolean;
     showImage?: boolean;
     showValue?: boolean;
+    showCanvas?: boolean;
+
 }
 
 export class CursorOverlayComponent extends React.PureComponent<CursorOverlayProps> {
@@ -24,11 +26,15 @@ export class CursorOverlayComponent extends React.PureComponent<CursorOverlayPro
         if (this.props.showWCS && cursorInfo.infoWCS) {
             infoStrings.push(`WCS: (${cursorInfo.infoWCS.x}, ${cursorInfo.infoWCS.y})`);
         }
+        if (this.props.showCanvas) {
+            infoStrings.push(`Canvas: (${cursorInfo.posCanvasSpace.x.toFixed(0)}, ${cursorInfo.posCanvasSpace.y.toFixed(0)})`);
+        }
         if (this.props.showImage) {
             infoStrings.push(`Image: (${cursorInfo.posImageSpace.x.toFixed(0)}, ${cursorInfo.posImageSpace.y.toFixed(0)})`);
         }
-        if (this.props.showValue) {
-            infoStrings.push(`Value: ${this.props.cursorValue !== undefined ? this.expo(this.props.cursorValue, 2) : "Undefined"}`);
+        if (this.props.showValue && this.props.cursorInfo.value !== undefined) {
+            const unitString = (this.props.unit && this.props.unit.length) ? ` ${this.props.unit}` : "";
+            infoStrings.push(`Value: ${this.expo(this.props.cursorInfo.value, 2)}${unitString}`);
         }
 
         const height = (this.props.height !== undefined && this.props.height >= 0) ? this.props.height : 20;
