@@ -174,6 +174,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         ].map(v => -1 + 2 * v));
 
         this.gl.viewport(0, 0, frame.renderWidth, frame.renderHeight);
+        this.gl.enable(WebGLRenderingContext.DEPTH_TEST);
         this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexUVBuffer);
         this.gl.vertexAttribPointer(this.vertexUVAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
@@ -187,10 +188,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             const overviewRB = {x: (adjustedWidth - full.xMin) / fullWidth, y: (adjustedHeight - full.yMin) / fullHeight};
 
             const overviewVertices = new Float32Array([
-                overviewLT.x, overviewLT.y, 0,
-                overviewRB.x, overviewLT.y, 0,
-                overviewLT.x, overviewRB.y, 0,
-                overviewRB.x, overviewRB.y, 0
+                overviewLT.x, overviewLT.y, 0.5,
+                overviewRB.x, overviewLT.y, 0.5,
+                overviewLT.x, overviewRB.y, 0.5,
+                overviewRB.x, overviewRB.y, 0.5
             ].map(v => -1 + 2 * v));
 
             // Switch to TEXTURE2 for overview render
