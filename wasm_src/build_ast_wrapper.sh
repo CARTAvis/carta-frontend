@@ -4,10 +4,9 @@ cd ast_wrapper
 mkdir -p build
 printf "Building AST wrapper..."
 emcc -std=c++11 -o build/ast_wrapper.js ast_wrapper.cc grf_debug.cc --post-js post.js \
-    -I../../wasm_libs/ast -L../../wasm_libs/ast/.libs -last -last_pal -lm -g0 -O3 \
+    -I../../wasm_libs/ast -L../../wasm_libs/ast/.libs -last -last_pal -lm -g0 -O2 \
     -s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s NO_EXIT_RUNTIME=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "cwrap", "UTF8ToString"]' \
-    -s EXPORTED_FUNCTIONS='["_plotGrid", "_initFrame", "_format", "_set", "_transform"]' \
-    -s ASSERTIONS=1
+    -s EXPORTED_FUNCTIONS='["_plotGrid", "_initFrame", "_format", "_set", "_transform"]'
 
 
 printf "Checking for AST wrapper WASM..."
