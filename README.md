@@ -18,10 +18,6 @@ There are no plans to further automate this process, as the libs are unlikely to
 * **Building WebAssembly wrapper modules**, which either correspond directly to a dependency mentioned above, or are based on custom code (such as converting floating point (FP32) values to RGBA values).
 These modules can be built using the individual build scripts in `wasm_src` subdirectory, or using the `build_wrappers.sh` script.
 Currently, each build script symlinks the JavaScript portion of the wrapper to a subdirectory of `node_modules`, and copies the WebAssembly binary to `public`.
-When running `npm start`, this step is performend whenever changes to `.c`, `.cc` or `post.js` files in the `wasm_src` folder are detected.
 * **Building static protocol buffer code** is done using the `build_proto.sh` script in the `protobuf` folder, which builds the static JavaScript code, as well as the TypeScript definitions, and symlinks to the `node_modules/carta-protobuf` directory.
-When running `npm start`, this step is performend whenever changes to `.proto` files in the `protobuf` folder are detected.
 * **Webpack** is used to build and bundle all the JavaScript, Sass and HTML code elegantly. You can run `npm start` to run a live dev server, while the build process watches for any changes to source files.
 Standalone versions can be built with `npm run-script build`, which produces a distributable build in the `build` folder.
-
-Running `npm start` will automatically build the WebAssembly wrapper modules, as well as the protocol buffer code. All that is required is to build the WebAssembly libraries prior to running `npm start`.
