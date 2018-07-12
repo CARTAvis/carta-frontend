@@ -41,14 +41,14 @@ export class BackendService {
         this.logEventList = [
             "REGISTER_VIEWER",
             "REGISTER_VIEWER_ACK",
-            "SET_IMAGE_VIEW",
+            // "SET_IMAGE_VIEW",
             // "RASTER_IMAGE_DATA"
             "REGION_HISTOGRAM_DATA"
         ];
 
         autorun(() => {
             if (this.zfpReady) {
-                this.logState.addInfo(`ZFP loaded with ${this.subsetsRequired} workers`, ["init", "zfp"]);
+                this.logState.addInfo(`ZFP loaded with ${this.subsetsRequired} workers`, ["zfp"]);
             }
         });
     }
@@ -296,7 +296,7 @@ export class BackendService {
                 this.totalDecompressionTime += dt;
                 const speed = sizeMpix / dt * 1e3;
                 const averageSpeed = this.totalDecompressionMPix / this.totalDecompressionTime * 1e3;
-                this.logState.addInfo(`Decompressed ${sizeMpix.toFixed(2)} MPix in ${dt.toFixed(2)} ms (${speed.toFixed(2)} MPix/s); Average speed: ${averageSpeed.toFixed(2)} MPix/s`, ["zfp"]);
+                this.logState.addDebug(`Decompressed ${sizeMpix.toFixed(2)} MPix in ${dt.toFixed(2)} ms (${speed.toFixed(2)} MPix/s); Average speed: ${averageSpeed.toFixed(2)} MPix/s`, ["zfp"]);
                 this.rasterStream.next(decompressedMessage);
             });
         }

@@ -36,7 +36,6 @@ export class DecompressionService {
                     // Check if all workers are ready
                     if (this.workerReady.every(v => v)) {
                         this.zfpReady = true;
-                        console.log(`ZFP Service is ready (${numWorkers} workers)`);
                         if (this.workQueue.length) {
                             const nextReadyResolve = this.workQueue.shift();
                             nextReadyResolve();

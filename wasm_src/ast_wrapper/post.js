@@ -141,6 +141,7 @@ Module.pixToWCS = function (wcsInfo, xIn, yIn) {
 Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
 
 Module.initFrame = Module.cwrap("initFrame", "number", ["string"]);
+Module.initDummyFrame = Module.cwrap("initDummyFrame", "number", []);
 
 Module.onReady = new Promise(function (func) {
     if (Module["calledRun"]) {

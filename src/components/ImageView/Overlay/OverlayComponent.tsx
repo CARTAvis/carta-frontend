@@ -74,8 +74,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const currentView = this.props.frame.currentFrameView;
 
         const cursorPosLocalImage = {
-            x:  Math.floor((cursorPosImageSpace.x - currentView.xMin) / currentView.mip),
-            y:  Math.floor((cursorPosImageSpace.y - currentView.yMin) / currentView.mip)
+            x: Math.floor((cursorPosImageSpace.x - currentView.xMin) / currentView.mip),
+            y: Math.floor((cursorPosImageSpace.y - currentView.yMin) / currentView.mip)
         };
 
         const textureWidth = Math.floor((currentView.xMax - currentView.xMin) / currentView.mip);
@@ -86,8 +86,14 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             const index = (cursorPosLocalImage.y * textureWidth + cursorPosLocalImage.x);
             value = this.props.frame.rasterData[index];
         }
-        const cursorPosWCS = AST.pixToWCS(this.props.frame.wcsInfo, cursorPosImageSpace.x, cursorPosImageSpace.y);
-        const cursorPosFormatted = AST.getFormattedCoordinates(this.props.frame.wcsInfo, cursorPosWCS.x, cursorPosWCS.y, "Format(1) = d.1, Format(2) = d.1");
+
+        let cursorPosWCS, cursorPosFormatted;
+        if (this.props.frame.validWcs) {
+            cursorPosWCS = AST.pixToWCS(this.props.frame.wcsInfo, cursorPosImageSpace.x, cursorPosImageSpace.y);
+            const formatStringX = this.props.overlaySettings.axis[0].cursorFormat ? this.props.overlaySettings.axis[0].cursorFormat : "";
+            const formatStringY = this.props.overlaySettings.axis[1].cursorFormat ? this.props.overlaySettings.axis[1].cursorFormat : "";
+            cursorPosFormatted = AST.getFormattedCoordinates(this.props.frame.wcsInfo, cursorPosWCS.x, cursorPosWCS.y, `Format(1) = ${formatStringX}, Format(2) = ${formatStringY}`);
+        }
         return {
             posCanvasSpace: cursorPosCanvasSpace,
             posImageSpace: cursorPosImageSpace,

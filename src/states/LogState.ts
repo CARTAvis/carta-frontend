@@ -12,15 +12,24 @@ export class LogState {
     @observable logEntries: LogEntry[];
     @observable hiddenTags: string[];
     @observable logLevel: CARTA.ErrorSeverity;
+    @observable logLimit: number;
 
     constructor() {
         this.logEntries = [];
         this.hiddenTags = [];
         this.logLevel = CARTA.ErrorSeverity.INFO;
+        this.logLimit = 1000;
     }
 
     @action addLog(entry: LogEntry) {
         this.logEntries.push(entry);
+        if (this.logEntries.length > this.logLimit) {
+            this.logEntries.shift();
+        }
+    }
+
+    @action addDebug(message: string, tags: string[] = [], title: string = "") {
+        this.addLog({message, title, tags, level: -1});
     }
 
     @action addInfo(message: string, tags: string[] = [], title: string = "") {

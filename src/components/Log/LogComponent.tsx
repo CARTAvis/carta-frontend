@@ -2,9 +2,10 @@ import * as React from "react";
 import "./LogComponent.css";
 import {LogState} from "../../states/LogState";
 import {observer} from "mobx-react";
-import {Button, Code, FormGroup, HTMLSelect, Label, NonIdealState, Tag, Tooltip} from "@blueprintjs/core";
+import {Button, Code, Colors, FormGroup, HTMLSelect, NonIdealState, Tag} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import ScrollToBottom from "react-scroll-to-bottom";
+import {Intent} from "@blueprintjs/core/lib/esm/common/intent";
 
 @observer
 export class LogComponent extends React.Component<{ logState: LogState }> {
@@ -39,11 +40,28 @@ export class LogComponent extends React.Component<{ logState: LogState }> {
                 continue;
             }
 
+            let intent: Intent;
+            let color: string;
+            switch (entry.level) {
+                case CARTA.ErrorSeverity.WARNING:
+                    intent = "warning";
+                    color = Colors.ORANGE4;
+                    break;
+                case CARTA.ErrorSeverity.ERROR:
+                case CARTA.ErrorSeverity.CRITICAL:
+                    intent = "danger";
+                    color = Colors.RED4;
+                    break;
+                default:
+                    intent = "none";
+            }
+
             let entryTagSpans = [];
             let visibleTags = entry.tags.filter(v => hiddenTags.indexOf(v) === -1);
             for (let j = 0; j < entry.tags.length; j++) {
                 const tag = entry.tags[j];
-                entryTagSpans.push(<Tag key={j}>{entry.tags[j]}</Tag>);
+
+                entryTagSpans.push(<Tag key={j} intent={intent}>{entry.tags[j]}</Tag>);
                 if (tagList.indexOf(tag) === -1) {
                     tagList.push(tag);
                 }
@@ -52,7 +70,7 @@ export class LogComponent extends React.Component<{ logState: LogState }> {
                 entryElements.push(
                     <div key={i}>
                         {entryTagSpans}
-                        <Code>{entry.message}</Code>
+                        <Code style={{color: color}}>{entry.message}</Code>
                     </div>
                 );
             }
@@ -79,6 +97,7 @@ export class LogComponent extends React.Component<{ logState: LogState }> {
                     <div className="log-footer-right">
                         <FormGroup inline={true} label="Log level">
                             <HTMLSelect value={logState.logLevel} onChange={this.onLogLevelChanged}>
+                                <option value={-1}>Debug</option>
                                 <option value={CARTA.ErrorSeverity.INFO}>Info</option>
                                 <option value={CARTA.ErrorSeverity.WARNING}>Warning</option>
                                 <option value={CARTA.ErrorSeverity.ERROR}>Error</option>

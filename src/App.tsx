@@ -185,6 +185,7 @@ class App extends React.Component<{ appState: AppState }> {
         console.log(`Connecting to defaullt URL: ${wsURL}`);
         appState.backendService.connect(wsURL, "1234").subscribe(sessionId => {
             console.log(`Connected with session ID ${sessionId}`);
+            this.props.appState.logState.addInfo(`Connected to server ${wsURL}`, ["server"]);
         }, err => console.log(err));
     }
 

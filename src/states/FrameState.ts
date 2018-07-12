@@ -32,6 +32,7 @@ export class FrameState {
     @observable frameInfo: FrameInfo;
     @observable renderHiDPI: boolean;
     @observable wcsInfo: number;
+    @observable validWcs: boolean;
     @observable center: Point2D;
     @observable centerY: number;
     @observable zoomLevel: number;

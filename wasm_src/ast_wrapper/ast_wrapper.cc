@@ -60,6 +60,10 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
     return wcsinfo;
 }
 
+EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame() {
+    AstFrame* frame = astFrame(2, "");
+    return astFrameSet(frame, "");
+}
 
 EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, int imageX1, int imageX2, int imageY1, int imageY2, int width, int height,
                                         int paddingLeft, int paddingRight, int paddingTop, int paddingBottom, const char* args)

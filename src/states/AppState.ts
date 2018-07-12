@@ -134,10 +134,22 @@ export class AppState {
 
         const initResult = AST.initFrame(headerString);
         if (!initResult) {
-            this.alertState.showAlert("Problem processing WCS info");
+            this.logState.addWarning(`Problem processing WCS info in file ${frame.frameInfo.fileInfo.name}`, ["ast"]);
+            frame.wcsInfo = AST.initDummyFrame();
+            // Clear formatting for labels and cursor, to use image coordinates
+            this.overlayState.axis[0].labelFormat = "";
+            this.overlayState.axis[1].labelFormat = "";
+            this.overlayState.axis[0].cursorFormat = "";
+            this.overlayState.axis[1].cursorFormat = "";
         }
         else {
             frame.wcsInfo = initResult;
+            frame.validWcs = true;
+            // Specify degrees and single decimals for WCS info
+            this.overlayState.axis[0].labelFormat = "d.1";
+            this.overlayState.axis[1].labelFormat = "d.1";
+            this.overlayState.axis[0].cursorFormat = "d.1";
+            this.overlayState.axis[1].cursorFormat = "d.1";
             console.log("Initialised WCS info from frame");
         }
     };
@@ -214,7 +226,7 @@ export class AppState {
 
         autorun(() => {
             if (this.astReady) {
-                this.logState.addInfo("AST library loaded", ["init", "ast"]);
+                this.logState.addInfo("AST library loaded", ["ast"]);
             }
         });
 
