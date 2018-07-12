@@ -66,19 +66,16 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.initBuffers();
             this.loadImageTexture("allmaps.png", WebGLRenderingContext.TEXTURE1).then(texture => {
                 this.cmapTexture = texture;
-
-                const frame = this.props.frame;
-                if (frame) {
-                    this.updateTexture();
-                    this.updateOverviewTexture();
-                    this.updateUniforms();
-                    this.renderCanvas();
-                }
+                this.updateCanvas();
             });
         }
     }
 
     componentDidUpdate() {
+        requestAnimationFrame(this.updateCanvas);
+    }
+
+    private updateCanvas = () => {
         const frame = this.props.frame;
         if (frame && this.canvas && this.gl && this.cmapTexture) {
             this.clearCanvas();
@@ -94,7 +91,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 this.renderCanvas();
             }
         }
-    }
+    };
 
     private loadImageTexture(url: string, texIndex: number): Promise<WebGLTexture> {
         return new Promise<WebGLTexture>((resolve, reject) => {
