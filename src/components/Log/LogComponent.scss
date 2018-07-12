@@ -4,8 +4,8 @@
 
     .log-entry-list {
         height: calc(100% - 30px);
-        padding: 0;
         margin: 0;
+        padding-bottom: 5px;
         div {
             padding-top: 2px;
             .bp3-tag {
@@ -20,15 +20,26 @@
 
     .log-footer {
         height: 30px;
+        .log-level {
+            float: left;
+            margin-right: 10px;
+        }
         .tag-list {
             float: left;
-            margin-top: 5px;
-            .bp3-tag {
-                margin-right: 5px;
+
+            div {
+                margin-top: 3px;
+                .bp3-tag {
+                    margin-right: 5px;
+                }
             }
         }
         .log-footer-right {
             float: right;
         }
     }
+}
+
+.tag-hidden {
+    text-decoration: line-through;
 }
