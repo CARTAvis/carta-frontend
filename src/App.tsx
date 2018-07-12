@@ -37,7 +37,7 @@ class App extends React.Component<{ appState: AppState }> {
                 content: [{
                     type: "react-component",
                     component: "image-view",
-                    title: "Image.fits",
+                    title: "No image loaded",
                     height: 60,
                     id: "imageView",
                     isClosable: false,
