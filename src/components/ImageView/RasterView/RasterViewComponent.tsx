@@ -62,17 +62,25 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             else {
                 this.hasFloatExtension = true;
             }
-            this.cmapTexture = this.loadImageTexture("allmaps.png", WebGLRenderingContext.TEXTURE1);
             this.initShaders();
             this.initBuffers();
-            this.updateUniforms();
-            this.renderCanvas();
+            this.loadImageTexture("allmaps.png", WebGLRenderingContext.TEXTURE1).then(texture => {
+                this.cmapTexture = texture;
+
+                const frame = this.props.frame;
+                if (frame) {
+                    this.updateTexture();
+                    this.updateOverviewTexture();
+                    this.updateUniforms();
+                    this.renderCanvas();
+                }
+            });
         }
     }
 
     componentDidUpdate() {
         const frame = this.props.frame;
-        if (frame && this.canvas && this.gl) {
+        if (frame && this.canvas && this.gl && this.cmapTexture) {
             this.clearCanvas();
             if (frame.rasterData) {
                 // Only update texture if the buffer has changed
@@ -88,28 +96,24 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
     }
 
-    private loadImageTexture(url: string, texIndex: number): WebGLTexture {
-        const imageTexture = this.gl.createTexture();
-        this.gl.activeTexture(texIndex);
-        this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, imageTexture);
-
-        // Placeholder texture
-        const pixel = new Uint8Array([0, 0, 255]);
-        this.gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGB, 1, 1, 0, WebGLRenderingContext.RGB, WebGLRenderingContext.UNSIGNED_BYTE, pixel);
-
-        const image = new Image();
-        // Replace the existing texture with the real one once loaded
-        image.onload = () => {
-            this.gl.activeTexture(texIndex);
-            this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, imageTexture);
-            this.gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGB, WebGLRenderingContext.RGB, WebGLRenderingContext.UNSIGNED_BYTE, image);
-            this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_WRAP_S, WebGLRenderingContext.CLAMP_TO_EDGE);
-            this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_WRAP_T, WebGLRenderingContext.CLAMP_TO_EDGE);
-            this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.NEAREST);
-            this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.NEAREST);
-        };
-        image.src = url;
-        return imageTexture;
+    private loadImageTexture(url: string, texIndex: number): Promise<WebGLTexture> {
+        return new Promise<WebGLTexture>((resolve, reject) => {
+            const image = new Image();
+            // Replace the existing texture with the real one once loaded
+            image.onload = () => {
+                const imageTexture = this.gl.createTexture();
+                this.gl.activeTexture(texIndex);
+                this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, imageTexture);
+                this.gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGB, WebGLRenderingContext.RGB, WebGLRenderingContext.UNSIGNED_BYTE, image);
+                this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_WRAP_S, WebGLRenderingContext.CLAMP_TO_EDGE);
+                this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_WRAP_T, WebGLRenderingContext.CLAMP_TO_EDGE);
+                this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.NEAREST);
+                this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.NEAREST);
+                resolve(imageTexture);
+            };
+            image.onerror = () => reject(`Error loading image ${url}`);
+            image.src = url;
+        });
     }
 
     private updateTexture() {
@@ -307,9 +311,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     render() {
+        // dummy values to trigger React's componentDidUpdate()
         const frame = this.props.frame;
-        const frameView = frame.requiredFrameView;
-        const currentView = frame.currentFrameView;
+        const frameView = frame ? frame.requiredFrameView : null;
+        const currentView = frame ? frame.currentFrameView : null;
         const padding = this.props.overlaySettings.padding;
         return (
             <div className="raster-div">
@@ -319,8 +324,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     style={{
                         top: padding.top,
                         left: padding.left,
-                        width: frame.renderWidth,
-                        height: frame.renderHeight
+                        width: frame ? frame.renderWidth : 1,
+                        height: frame ? frame.renderHeight : 1
                     }}
                 />
             </div>);

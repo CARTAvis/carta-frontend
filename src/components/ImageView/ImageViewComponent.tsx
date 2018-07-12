@@ -51,12 +51,10 @@ export class ImageViewComponent extends React.Component<{ appState: AppState }> 
                     onZoomed={this.onZoomed}
                 />
                 }
-                {appState.astReady && appState.activeFrame && appState.activeFrame.valid &&
                 <RasterViewComponent
                     frame={appState.activeFrame}
                     overlaySettings={appState.overlayState}
                 />
-                }
                 {appState.astReady && appState.cursorInfo &&
                 <CursorOverlayComponent
                     cursorInfo={appState.cursorInfo}
