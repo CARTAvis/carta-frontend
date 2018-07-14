@@ -340,7 +340,7 @@ export class OverlayState {
         this.title.color = 4;
         this.title.text = "A custom AST plot";
         this.grid.visible = true;
-        this.grid.color = 3;
+        this.grid.color = 4;
         this.title.font = 2;
         this.axes.labelFontSize = 15;
         this.axes.labelFont = 1;

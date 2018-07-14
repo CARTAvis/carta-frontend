@@ -41,8 +41,20 @@ export class RootMenuComponent extends React.Component<{ appState: AppState }> {
             </Menu>
         );
 
+        let layerItems = appState.frames.map(frame => {
+            return (
+                <Menu.Item
+                    text={frame.frameInfo.fileInfo.name}
+                    active={appState.activeFrame && appState.activeFrame.frameInfo.fileId === frame.frameInfo.fileId}
+                    key={frame.frameInfo.fileId}
+                    onClick={() => this.handleFrameSelect(frame.frameInfo.fileId)}
+                />
+            );
+        });
+
         const viewMenu = (
             <Menu>
+
                 <Menu.Item text="Interface" icon={"control"}>
                     <Menu.Item text="Light" icon={"flash"}/>
                     <Menu.Item text="Dark" icon={"moon"}/>
@@ -67,7 +79,11 @@ export class RootMenuComponent extends React.Component<{ appState: AppState }> {
                     <Menu.Item text="Customize..." icon={"style"}/>
                     <Menu.Item text="Save Current as Preset" icon={"floppy-disk"}/>
                 </Menu.Item>
-
+                {layerItems.length > 0 &&
+                <Menu.Item text="Frames" icon={"layers"}>
+                    {layerItems}
+                </Menu.Item>
+                }
                 <Menu.Item text="Fullscreen" icon={"fullscreen"} label={"F11"}/>
             </Menu>
         );
@@ -142,4 +158,14 @@ export class RootMenuComponent extends React.Component<{ appState: AppState }> {
             </div>
         );
     }
+
+    handleFrameSelect = (fileId: number) => {
+        const appState = this.props.appState;
+        if (appState.activeFrame && appState.activeFrame.frameInfo.fileId === fileId) {
+            return;
+        }
+        else {
+            appState.setActiveFrame(fileId);
+        }
+    };
 }

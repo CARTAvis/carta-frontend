@@ -54,8 +54,8 @@ export class AppState {
     };
 
     // Frame actions
-    @action loadFile = (directory: string, file: string, hdu: string) => {
-        this.backendService.loadFile(directory, file, hdu, 0, CARTA.RenderMode.RASTER).subscribe(ack => {
+    @action loadFile = (directory: string, file: string, hdu: string, fileId: number) => {
+        this.backendService.loadFile(directory, file, hdu, fileId, CARTA.RenderMode.RASTER).subscribe(ack => {
             let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
             if (ack.fileInfoExtended.dimensions > 2) {
                 dimensionsString += `\u00D7${ack.fileInfoExtended.depth}`;
@@ -79,24 +79,30 @@ export class AppState {
                 mip: 999
             };
             newFrame.valid = true;
-
             this.loadWCS(newFrame);
-            if (this.frames.length) {
-                this.frames[0] = newFrame;
+
+            // Place frame in frame array (replace frame with the same ID if it exists)
+            const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === fileId);
+            if (existingFrameIndex !== -1) {
+                this.frames[existingFrameIndex] = newFrame;
             }
             else {
                 this.frames.push(newFrame);
             }
             this.activeFrame = newFrame;
-            const imageViewComponents = this.layoutSettings.layout.root.getItemsById("imageView");
-            if (imageViewComponents.length) {
-                imageViewComponents[0].setTitle(ack.fileInfo.name);
-            }
+
+            this.updateTitle();
             this.fileBrowserState.hideFileBrowser();
         }, err => {
             this.alertState.showAlert(`Error loading file: ${err}`);
         });
     };
+
+    @action appendFile = (directory: string, file: string, hdu: string) => {
+        const currentIdList = this.frames.map(frame => frame.frameInfo.fileId).sort();
+        this.loadFile(directory, file, hdu, currentIdList.pop() + 1);
+    };
+
     @action loadWCS = (frame: FrameState) => {
         let headerString = "";
 
@@ -167,9 +173,9 @@ export class AppState {
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
 
-        const throttledSetView = _.throttle((view: FrameView) => {
+        const throttledSetView = _.throttle((view: FrameView, fileId: number) => {
             const quality = this.compressionQuality;
-            this.backendService.setImageView(0, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
+            this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
         }, 200);
 
         autorun(() => {
@@ -200,14 +206,15 @@ export class AppState {
                         yMax: Math.min(reqView.yMax + padFraction * reqHeight, this.activeFrame.frameInfo.fileInfoExtended.height),
                         mip: reqView.mip
                     };
-                    throttledSetView(paddedView);
+                    throttledSetView(paddedView, this.activeFrame.frameInfo.fileId);
                 }
             }
         });
 
         this.backendService.getRasterStream().subscribe(rasterImageData => {
-            if (this.activeFrame) {
-                this.activeFrame.updateFromRasterData(rasterImageData);
+            const updatedFrame = this.getFrame(rasterImageData.fileId);
+            if (updatedFrame) {
+                updatedFrame.updateFromRasterData(rasterImageData);
             }
         });
 
@@ -215,11 +222,12 @@ export class AppState {
             if (!regionHistogramData) {
                 return;
             }
+            const updatedFrame = this.getFrame(regionHistogramData.fileId);
             // Update channel histograms
-            if (this.activeFrame && regionHistogramData.regionId === -1 && this.activeFrame.stokes === regionHistogramData.stokes) {
-                const channelHist = regionHistogramData.histograms.filter(hist => hist.channel === this.activeFrame.channel);
+            if (updatedFrame && regionHistogramData.regionId === -1 && updatedFrame.stokes === regionHistogramData.stokes) {
+                const channelHist = regionHistogramData.histograms.filter(hist => hist.channel === updatedFrame.channel);
                 if (channelHist.length) {
-                    this.activeFrame.updateChannelHistogram(channelHist[0] as CARTA.Histogram);
+                    updatedFrame.updateChannelHistogram(channelHist[0] as CARTA.Histogram);
                 }
             }
         });
@@ -234,5 +242,32 @@ export class AppState {
 
     @computed get zfpReady() {
         return (this.backendService && this.backendService.zfpReady);
+    }
+
+    @action setActiveFrame(fileId: number) {
+        const requiredFrame = this.getFrame(fileId);
+        if (requiredFrame) {
+            this.activeFrame = requiredFrame;
+            this.updateTitle();
+        }
+        else {
+            console.log(`Can't find required frame ${fileId}`);
+        }
+    }
+
+    private getFrame(fileId: number) {
+        return this.frames.find(f => f.frameInfo.fileId === fileId);
+    }
+
+    private updateTitle() {
+        const imageViewComponents = this.layoutSettings.layout.root.getItemsById("imageView");
+        if (imageViewComponents.length) {
+            if (this.activeFrame) {
+                imageViewComponents[0].setTitle(this.activeFrame.frameInfo.fileInfo.name);
+            }
+            else {
+                imageViewComponents[0].setTitle("No image loaded");
+            }
+        }
     }
 }

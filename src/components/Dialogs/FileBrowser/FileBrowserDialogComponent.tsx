@@ -76,6 +76,12 @@ export class FileBrowserDialogComponent extends React.Component<{ appState: AppS
 
     loadFile(file: string, hdu: string) {
         const fileBrowserState = this.props.appState.fileBrowserState;
-        this.props.appState.loadFile(fileBrowserState.fileList.directory, file, hdu);
+        const frames = this.props.appState.frames;
+        if (!fileBrowserState.appendingFrame || !frames.length) {
+            this.props.appState.loadFile(fileBrowserState.fileList.directory, file, hdu, 0);
+        }
+        else {
+            this.props.appState.appendFile(fileBrowserState.fileList.directory, file, hdu);
+        }
     }
 }

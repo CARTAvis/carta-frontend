@@ -1,7 +1,6 @@
 import {action, autorun, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {Observable, Observer, throwError} from "rxjs";
-import {BehaviorSubject} from "rxjs/internal/BehaviorSubject";
+import {Observable, Observer, throwError, Subject} from "rxjs";
 import {DecompressionService} from "./DecompressionService";
 import {LogState} from "../states/LogState";
 
@@ -19,8 +18,8 @@ export class BackendService {
     @observable apiKey: string;
     private connection: WebSocket;
     private observerMap: Map<string, Observer<any>>;
-    private readonly rasterStream: BehaviorSubject<CARTA.RasterImageData>;
-    private readonly histogramStream: BehaviorSubject<CARTA.RegionHistogramData>;
+    private readonly rasterStream: Subject<CARTA.RasterImageData>;
+    private readonly histogramStream: Subject<CARTA.RegionHistogramData>;
     private readonly logEventList: string[];
     private readonly decompressionServce: DecompressionService;
     private readonly subsetsRequired: number;
@@ -32,8 +31,8 @@ export class BackendService {
         this.logState = logState;
         this.observerMap = new Map<string, Observer<any>>();
         this.connectionStatus = ConnectionStatus.CLOSED;
-        this.rasterStream = new BehaviorSubject<CARTA.RasterImageData>(null);
-        this.histogramStream = new BehaviorSubject<CARTA.RegionHistogramData>(null);
+        this.rasterStream = new Subject<CARTA.RasterImageData>();
+        this.histogramStream = new Subject<CARTA.RegionHistogramData>();
         this.subsetsRequired = Math.min(navigator.hardwareConcurrency || 4, 4);
         this.decompressionServce = new DecompressionService(this.subsetsRequired);
         this.totalDecompressionTime = 0;
@@ -42,7 +41,9 @@ export class BackendService {
             "REGISTER_VIEWER",
             "REGISTER_VIEWER_ACK",
             // "SET_IMAGE_VIEW",
-            // "RASTER_IMAGE_DATA"
+            // "RASTER_IMAGE_DATA",
+            "OPEN_FILE",
+            "OPEN_FILE_ACK",
             "REGION_HISTOGRAM_DATA"
         ];
 
