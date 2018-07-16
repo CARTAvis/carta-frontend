@@ -15,12 +15,12 @@ import DevTools from "mobx-react-devtools";
 import {FileBrowserDialogComponent} from "./components/Dialogs/FileBrowser/FileBrowserDialogComponent";
 import {FileBrowserStore} from "./stores/FileBrowserStore";
 import {URLConnectDialogComponent} from "./components/Dialogs/URLConnect/URLConnectDialogComponent";
-import {Alert} from "@blueprintjs/core";
+import {Alert, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import {ColormapComponent} from "./components/Colormap/ColormapComponent";
 import {LogComponent} from "./components/Log/LogComponent";
 
-@observer
-class App extends React.Component<{ appStore: AppStore }> {
+@HotkeysTarget
+export class App extends React.Component<{ appStore: AppStore }> {
 
     constructor(props: { appStore: AppStore }) {
         super(props);
@@ -205,6 +205,16 @@ class App extends React.Component<{ appStore: AppStore }> {
             </div>
         );
     }
-}
 
-export default App;
+    public renderHotkeys() {
+        const appStore = this.props.appStore;
+        return (
+            <Hotkeys>
+                <Hotkey group="Frame controls" global={true} combo="alt + [" label="Previous frame" onKeyDown={appStore.prevFrame}/>
+                <Hotkey group="Frame controls" global={true} combo="alt + ]" label="Next frame" onKeyDown={appStore.nextFrame}/>
+                <Hotkey group="File controls" global={true} combo="alt + o" label="Open file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser()}/>
+                <Hotkey group="File controls" global={true} combo="alt + a" label="Append file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(true)}/>
+            </Hotkeys>
+        );
+    }
+}

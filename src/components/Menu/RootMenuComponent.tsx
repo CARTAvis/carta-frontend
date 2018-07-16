@@ -12,7 +12,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         const appStore = this.props.appStore;
 
         // Modifier string for shortcut keys. OSX/iOS use '⌘', while Windows uses 'Ctrl + '
-        const modString = "Ctrl + ";
+        const modString = "alt + ";
         // const modString = "⌘";
 
         const fileMenu = (
@@ -26,7 +26,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 <Menu.Item
                     text="Open cube as new frame"
                     label={`${modString}A`}
-                    disabled={appStore.backendService.connectionStatus !== ConnectionStatus.ACTIVE}
+                    disabled={appStore.backendService.connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(true)}
                 />
                 <Menu.Item text="Load region"/>
@@ -41,7 +41,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
             </Menu>
         );
 
-        let layerItems = appStore.frames.map(frame => {
+        let layerItems = appStore.frames.sort((a, b) => a.frameInfo.fileId <= b.frameInfo.fileId ? -1 : 1).map(frame => {
             return (
                 <Menu.Item
                     text={frame.frameInfo.fileInfo.name}
@@ -82,6 +82,9 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 {layerItems.length > 0 &&
                 <Menu.Item text="Frames" icon={"layers"}>
                     {layerItems}
+                    <Menu.Divider/>
+                    <Menu.Item text="Previous frame" icon={"chevron-backward"} disabled={layerItems.length < 2} onClick={appStore.prevFrame}/>
+                    <Menu.Item text="Next frame" icon={"chevron-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame}/>
                 </Menu.Item>
                 }
                 <Menu.Item text="Fullscreen" icon={"fullscreen"} label={"F11"}/>

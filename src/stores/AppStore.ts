@@ -54,7 +54,7 @@ export class AppStore {
     };
 
     // Frame actions
-    @action loadFile = (directory: string, file: string, hdu: string, fileId: number) => {
+    @action addFrame = (directory: string, file: string, hdu: string, fileId: number) => {
         this.backendService.loadFile(directory, file, hdu, fileId, CARTA.RenderMode.RASTER).subscribe(ack => {
             let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
             if (ack.fileInfoExtended.dimensions > 2) {
@@ -100,7 +100,30 @@ export class AppStore {
 
     @action appendFile = (directory: string, file: string, hdu: string) => {
         const currentIdList = this.frames.map(frame => frame.frameInfo.fileId).sort();
-        this.loadFile(directory, file, hdu, currentIdList.pop() + 1);
+        this.addFrame(directory, file, hdu, currentIdList.pop() + 1);
+    };
+
+    @action openFile = (directory: string, file: string, hdu: string) => {
+        this.removeAllFrames();
+        this.addFrame(directory, file, hdu, 0);
+    };
+
+    @action removeFrame = (fileId: number) => {
+        if (this.frames.find(f => f.frameInfo.fileId === fileId)) {
+            if (this.backendService.closeFile(fileId)) {
+                if (this.activeFrame.frameInfo.fileId === fileId) {
+                    this.activeFrame = null;
+                }
+                this.frames = this.frames.filter(f => f.frameInfo.fileId !== fileId);
+            }
+        }
+    };
+
+    @action removeAllFrames = () => {
+        if (this.backendService.closeFile(-1)) {
+            this.activeFrame = null;
+            this.frames = [];
+        }
     };
 
     @action loadWCS = (frame: FrameStore) => {
@@ -158,6 +181,23 @@ export class AppStore {
             this.overlayStore.axis[1].cursorFormat = "d.1";
             console.log("Initialised WCS info from frame");
         }
+    };
+
+    @action shiftFrame = (delta: number) => {
+        if (this.activeFrame) {
+            const frameIds = this.frames.map(f => f.frameInfo.fileId).sort();
+            const currentIndex = frameIds.indexOf(this.activeFrame.frameInfo.fileId);
+            const requiredIndex = (this.frames.length + currentIndex + delta) % this.frames.length;
+            this.setActiveFrame(frameIds[requiredIndex]);
+        }
+    };
+
+    @action nextFrame = () => {
+        this.shiftFrame(+1);
+    };
+
+    @action prevFrame = () => {
+        this.shiftFrame(-1);
     };
 
     constructor() {

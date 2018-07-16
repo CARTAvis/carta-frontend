@@ -51,11 +51,13 @@ export class ImageViewComponent extends React.Component<{ appStore: AppStore }> 
                     onZoomed={this.onZoomed}
                 />
                 }
-                <RasterViewComponent
+                {appStore.astReady && appStore.activeFrame &&
+                < RasterViewComponent
                     frame={appStore.activeFrame}
                     overlaySettings={appStore.overlayStore}
                 />
-                {appStore.astReady && appStore.cursorInfo &&
+                }
+                {appStore.astReady && appStore.activeFrame && appStore.cursorInfo &&
                 <CursorOverlayComponent
                     cursorInfo={appStore.cursorInfo}
                     width={appStore.overlayStore.viewWidth}

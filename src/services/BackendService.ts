@@ -174,6 +174,18 @@ export class BackendService {
         }
     }
 
+    @action("close file")
+    closeFile(fileId: number): boolean {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            const message = CARTA.CloseFile.create({fileId});
+            this.logEvent("CLOSE_FILE", message, false);
+            if (this.sendEvent("CLOSE_FILE", 0, CARTA.CloseFile.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @action("set image view")
     setImageView(fileId: number, xMin: number, xMax: number, yMin: number, yMax: number, mip: number, compressionQuality: number): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {

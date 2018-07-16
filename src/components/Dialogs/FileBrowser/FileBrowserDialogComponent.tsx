@@ -78,7 +78,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         const fileBrowserStore = this.props.appStore.fileBrowserStore;
         const frames = this.props.appStore.frames;
         if (!fileBrowserStore.appendingFrame || !frames.length) {
-            this.props.appStore.loadFile(fileBrowserStore.fileList.directory, file, hdu, 0);
+            this.props.appStore.openFile(fileBrowserStore.fileList.directory, file, hdu);
         }
         else {
             this.props.appStore.appendFile(fileBrowserStore.fileList.directory, file, hdu);
