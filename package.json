@@ -1,6 +1,6 @@
 {
     "name": "carta-frontend",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "private": true,
     "homepage": "./",
     "dependencies": {
@@ -17,13 +17,13 @@
         "react": "^16.4.1",
         "react-dom": "^16.4.1",
         "react-flexbox-grid": "^2.1.2",
-        "react-konva": "^1.7.9",
+        "react-konva": "^1.7.11",
         "react-plotly.js": "^2.2.0",
         "react-resize-detector": "^3.0.1",
         "react-scripts-ts": "^2.16.0",
         "react-scroll-to-bottom": "^1.1.0",
         "react-transition-group": "^2.4.0",
-        "rxjs": "^6.2.1",
+        "rxjs": "^6.2.2",
         "source-map-explorer": "^1.5.0"
     },
     "scripts": {
@@ -40,10 +40,10 @@
         "eject": "react-scripts-ts eject"
     },
     "devDependencies": {
-        "@types/jest": "^22.2.3",
+        "@types/jest": "^23.1.6",
         "@types/jquery": "^3.3.4",
-        "@types/lodash": "^4.14.111",
-        "@types/node": "^9.6.23",
+        "@types/lodash": "^4.14.112",
+        "@types/node": "^10.5.2",
         "@types/plotly.js": "^1.38.3",
         "@types/react": "^16.4.6",
         "@types/react-dom": "^16.0.6",
