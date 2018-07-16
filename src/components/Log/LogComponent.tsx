@@ -1,6 +1,6 @@
 import * as React from "react";
 import "./LogComponent.css";
-import {LogState} from "../../states/LogState";
+import {LogStore} from "../../stores/LogStore";
 import {observer} from "mobx-react";
 import {Button, Code, Colors, FormGroup, HTMLSelect, NonIdealState, Tag} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
@@ -8,22 +8,22 @@ import ScrollToBottom from "react-scroll-to-bottom";
 import {Intent} from "@blueprintjs/core/lib/esm/common/intent";
 
 @observer
-export class LogComponent extends React.Component<{ logState: LogState }> {
+export class LogComponent extends React.Component<{ logStore: LogStore }> {
 
     onClearClicked = () => {
-        this.props.logState.clearLog();
+        this.props.logStore.clearLog();
     };
 
     onTagClicked = (tag: string) => {
-        this.props.logState.toggleTag(tag);
+        this.props.logStore.toggleTag(tag);
     };
 
     onLogLevelChanged = (event: React.FormEvent<HTMLSelectElement>) => {
-        this.props.logState.setLevel(parseInt(event.currentTarget.value));
+        this.props.logStore.setLevel(parseInt(event.currentTarget.value));
     };
 
     private isTagHidden = (tag: string) => {
-        return (this.props.logState.hiddenTags.indexOf(tag) !== -1);
+        return (this.props.logStore.hiddenTags.indexOf(tag) !== -1);
     };
 
     private colorFromSeverity(severity: CARTA.ErrorSeverity): string {
@@ -51,16 +51,16 @@ export class LogComponent extends React.Component<{ logState: LogState }> {
     }
 
     render() {
-        const logState = this.props.logState;
-        const entries = logState.logEntries;
-        const hiddenTags = logState.hiddenTags;
+        const logStore = this.props.logStore;
+        const entries = logStore.logEntries;
+        const hiddenTags = logStore.hiddenTags;
 
         let tagList = [];
         let entryElements = [];
         for (let i = 0; i < entries.length; i++) {
             const entry = entries[i];
 
-            if (entry.level < logState.logLevel) {
+            if (entry.level < logStore.logLevel) {
                 continue;
             }
 
@@ -109,7 +109,7 @@ export class LogComponent extends React.Component<{ logState: LogState }> {
 
                 <div className="log-footer">
                     <FormGroup inline={true} label="Log level:" className="log-level">
-                        <HTMLSelect value={logState.logLevel} onChange={this.onLogLevelChanged} style={{color: this.colorFromSeverity(logState.logLevel)}}>
+                        <HTMLSelect value={logStore.logLevel} onChange={this.onLogLevelChanged} style={{color: this.colorFromSeverity(logStore.logLevel)}}>
                             <option value={-1} style={{color: this.colorFromSeverity(-1)}}>Debug</option>
                             <option value={CARTA.ErrorSeverity.INFO} style={{color: this.colorFromSeverity(CARTA.ErrorSeverity.INFO)}}>Info</option>
                             <option value={CARTA.ErrorSeverity.WARNING} style={{color: this.colorFromSeverity(CARTA.ErrorSeverity.WARNING)}}>Warning</option>

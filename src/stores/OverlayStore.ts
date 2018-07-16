@@ -52,6 +52,14 @@ export class OverlayTitleSettings {
         }
         return stringList.join(", ");
     }
+
+    @action setVisible(visible: boolean = true) {
+        this.visible = visible;
+    }
+
+    @action setText(text: string) {
+        this.text = text;
+    }
 }
 
 export class OverlayGridSettings {
@@ -71,6 +79,10 @@ export class OverlayGridSettings {
             stringList.push(`Width(Grid)=${this.width}`);
         }
         return stringList.join(", ");
+    }
+
+    @action setVisible(visible: boolean = true) {
+        this.visible = visible;
     }
 }
 
@@ -92,6 +104,10 @@ export class OverlayBorderSettings {
         }
 
         return stringList.join(", ");
+    }
+
+    @action setVisible(visible: boolean = true) {
+        this.visible = visible;
     }
 }
 
@@ -204,9 +220,21 @@ export class OverlayAxisSettings {
 
         return stringList.join(", ");
     }
+
+    @action setVisible(visible: boolean = true) {
+        this.visible = visible;
+    }
+
+    @action setNumberVisible(visible: boolean = true) {
+        this.numberVisible = visible;
+    }
+
+    @action setLabelVisible(visible: boolean = true) {
+        this.labelVisible = visible;
+    }
 }
 
-export class OverlayState {
+export class OverlayStore {
     // View size options
     @observable viewWidth: number;
     @observable viewHeight: number;
@@ -228,6 +256,41 @@ export class OverlayState {
     @observable ticks: OverlayTickSettings;
     // Title settings
     @observable extra?: string;
+    // Dialog
+    @observable overlaySettingsDialogVisible = false;
+    @action showOverlaySettings = () => {
+        this.overlaySettingsDialogVisible = true;
+    };
+    @action hideOverlaySettings = () => {
+        this.overlaySettingsDialogVisible = false;
+    };
+
+    constructor() {
+        this.grid = new OverlayGridSettings();
+        this.title = new OverlayTitleSettings();
+        this.border = new OverlayBorderSettings();
+        this.axes = new OverlayAxisSettings(0);
+        this.axis = [new OverlayAxisSettings(1), new OverlayAxisSettings(2)];
+        this.ticks = new OverlayTickSettings();
+
+        // Default settings
+        this.system = SystemType.Native;
+        this.labelType = LabelType.Exterior;
+        this.border.visible = true;
+        this.color = 4;
+        this.width = 1;
+        this.tolerance = 0.02;
+        this.title.visible = false;
+        this.title.gap = 0.02;
+        this.title.color = 4;
+        this.title.text = "A custom AST plot";
+        this.grid.visible = true;
+        this.grid.color = 4;
+        this.title.font = 2;
+        this.axes.labelFontSize = 15;
+        this.axes.labelFont = 1;
+        this.axes.numberFontSize = 10;
+    }
 
     @computed get styleString() {
         return this.stringify();
@@ -273,16 +336,6 @@ export class OverlayState {
         };
     }
 
-    // Dialog
-    @observable overlaySettingsDialogVisible = false;
-
-    @action showOverlaySettings = () => {
-        this.overlaySettingsDialogVisible = true;
-    };
-    @action hideOverlaySettings = () => {
-        this.overlaySettingsDialogVisible = false;
-    };
-
     private stringify() {
         let stringList = [];
         if (this.labelType !== undefined) {
@@ -318,32 +371,5 @@ export class OverlayState {
 
         stringList = stringList.filter(str => str.length > 0);
         return stringList.join(", ");
-    }
-
-    constructor() {
-        this.grid = new OverlayGridSettings();
-        this.title = new OverlayTitleSettings();
-        this.border = new OverlayBorderSettings();
-        this.axes = new OverlayAxisSettings(0);
-        this.axis = [new OverlayAxisSettings(1), new OverlayAxisSettings(2)];
-        this.ticks = new OverlayTickSettings();
-
-        // Default settings
-        this.system = SystemType.Native;
-        this.labelType = LabelType.Exterior;
-        this.border.visible = true;
-        this.color = 4;
-        this.width = 1;
-        this.tolerance = 0.02;
-        this.title.visible = false;
-        this.title.gap = 0.02;
-        this.title.color = 4;
-        this.title.text = "A custom AST plot";
-        this.grid.visible = true;
-        this.grid.color = 4;
-        this.title.font = 2;
-        this.axes.labelFontSize = 15;
-        this.axes.labelFont = 1;
-        this.axes.numberFontSize = 10;
     }
 }

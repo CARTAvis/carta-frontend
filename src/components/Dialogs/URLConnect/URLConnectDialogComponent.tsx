@@ -2,17 +2,17 @@ import {observer} from "mobx-react";
 import * as React from "react";
 import {AnchorButton, Dialog, Intent, Tooltip} from "@blueprintjs/core";
 import "./URLConnectDialogComponent.css";
-import {AppState} from "../../../states/AppState";
+import {AppStore} from "../../../stores/AppStore";
 
 @observer
-export class URLConnectDialogComponent extends React.Component<{ appState: AppState }, { errMessage: string, url: string }> {
+export class URLConnectDialogComponent extends React.Component<{ appStore: AppStore }, { errMessage: string, url: string }> {
     constructor(props: any) {
         super(props);
         this.state = {errMessage: "", url: ""};
     }
 
     public render() {
-        const appState = this.props.appState;
+        const appStore = this.props.appStore;
         return (
             <Dialog
                 icon={"folder-open"}
@@ -20,8 +20,8 @@ export class URLConnectDialogComponent extends React.Component<{ appState: AppSt
                 backdropClassName="minimal-dialog-backdrop"
                 canOutsideClickClose={false}
                 lazy={true}
-                isOpen={appState.urlConnectDialogVisible}
-                onClose={appState.hideURLConnect}
+                isOpen={appStore.urlConnectDialogVisible}
+                onClose={appStore.hideURLConnect}
                 title="Connect to URL"
             >
                 <div className="bp3-dialog-body">
@@ -32,7 +32,7 @@ export class URLConnectDialogComponent extends React.Component<{ appState: AppSt
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
-                        <AnchorButton intent={Intent.NONE} onClick={appState.hideURLConnect} text="Close"/>
+                        <AnchorButton intent={Intent.NONE} onClick={appStore.hideURLConnect} text="Close"/>
                         <Tooltip content={"Connect to remote server at the given URL"}>
                             <AnchorButton intent={Intent.PRIMARY} onClick={this.onConnectClicked} disabled={!this.validateUrl(this.state.url)} text="Connect"/>
                         </Tooltip>
@@ -51,10 +51,10 @@ export class URLConnectDialogComponent extends React.Component<{ appState: AppSt
     };
 
     onConnectClicked = () => {
-        const appState = this.props.appState;
-        appState.backendService.connect(this.state.url, "1234").subscribe(sessionId => {
+        const appStore = this.props.appStore;
+        appStore.backendService.connect(this.state.url, "1234").subscribe(sessionId => {
             console.log(`Connected with session ID ${sessionId}`);
-            appState.hideURLConnect();
+            appStore.hideURLConnect();
         }, err => {
             this.setState({errMessage: "Could not connect to remote URL"});
             console.log(err);

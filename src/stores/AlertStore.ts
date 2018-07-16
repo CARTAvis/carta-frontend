@@ -1,6 +1,6 @@
 import {action, observable} from "mobx";
 
-export class AlertState {
+export class AlertStore {
     @observable alertVisible;
     @observable alertText;
 

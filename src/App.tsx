@@ -7,28 +7,25 @@ import {PlaceholderComponent} from "./components/Placeholder/PlaceholderComponen
 import {RootMenuComponent} from "./components/Menu/RootMenuComponent";
 import {ImageViewComponent} from "./components/ImageView/ImageViewComponent";
 import {OverlaySettingsDialogComponent} from "./components/Dialogs/OverlaySettings/OverlaySettingsDialogComponent";
-import {AppState} from "./states/AppState";
+import {AppStore} from "./stores/AppStore";
 import {observer} from "mobx-react";
-import {LabelType, OverlayState, SystemType} from "./states/OverlayState";
-import {CARTA} from "carta-protobuf";
-import {SpatialProfileState} from "./states/SpatialProfileState";
+import {SpatialProfileStore} from "./stores/SpatialProfileStore";
 import {SpatialProfilerComponent} from "./components/SpatialProfiler/SpatialProfilerComponent";
 import DevTools from "mobx-react-devtools";
-import {BackendService} from "./services/BackendService";
 import {FileBrowserDialogComponent} from "./components/Dialogs/FileBrowser/FileBrowserDialogComponent";
-import {FileBrowserState} from "./states/FileBrowserState";
+import {FileBrowserStore} from "./stores/FileBrowserStore";
 import {URLConnectDialogComponent} from "./components/Dialogs/URLConnect/URLConnectDialogComponent";
 import {Alert} from "@blueprintjs/core";
 import {ColormapComponent} from "./components/Colormap/ColormapComponent";
 import {LogComponent} from "./components/Log/LogComponent";
 
 @observer
-class App extends React.Component<{ appState: AppState }> {
+class App extends React.Component<{ appStore: AppStore }> {
 
-    constructor(props: { appState: AppState }) {
+    constructor(props: { appStore: AppStore }) {
         super(props);
 
-        const appState = this.props.appState;
+        const appStore = this.props.appStore;
 
         const initialLayout: ItemConfigType[] = [{
             type: "row",
@@ -41,7 +38,7 @@ class App extends React.Component<{ appState: AppState }> {
                     height: 60,
                     id: "imageView",
                     isClosable: false,
-                    props: {appState: this.props.appState}
+                    props: {appStore: this.props.appStore}
                 }, {
                     type: "stack",
                     content: [{
@@ -49,13 +46,13 @@ class App extends React.Component<{ appState: AppState }> {
                         component: "colormap",
                         title: "Color map",
                         id: "colormap",
-                        props: {appState: this.props.appState}
+                        props: {appStore: this.props.appStore}
                     }, {
                         type: "react-component",
                         component: "log",
                         title: "Log",
                         id: "log",
-                        props: {logState: this.props.appState.logState}
+                        props: {logStore: this.props.appStore.logStore}
                     }]
                 }, {
                     type: "react-component",
@@ -75,7 +72,7 @@ class App extends React.Component<{ appState: AppState }> {
                         label: "X Profile (Cursor)",
                         dataSourceId: -1,
                         profileCoordinate: "x",
-                        appState: this.props.appState
+                        appStore: this.props.appStore
                     }
                 }, {
                     type: "react-component",
@@ -86,7 +83,7 @@ class App extends React.Component<{ appState: AppState }> {
                         label: "Y Profile (Cursor)",
                         dataSourceId: -1,
                         profileCoordinate: "y",
-                        appState: this.props.appState
+                        appStore: this.props.appStore
                     }
                 }, {
                     type: "react-component",
@@ -127,14 +124,14 @@ class App extends React.Component<{ appState: AppState }> {
         layout.registerComponent("colormap", ColormapComponent);
         layout.registerComponent("log", LogComponent);
 
-        appState.layoutSettings.layout = layout;
+        appStore.layoutSettings.setLayout(layout);
 
         AST.onReady.then(() => {
-            appState.astReady = true;
+            appStore.astReady = true;
         });
 
         // Spatial profile data test: Cursor
-        let spatialProfileTest = new SpatialProfileState();
+        let spatialProfileTest = new SpatialProfileStore();
         spatialProfileTest.channel = 0;
         spatialProfileTest.stokes = 0;
         spatialProfileTest.fileId = 0;
@@ -170,9 +167,9 @@ class App extends React.Component<{ appState: AppState }> {
                 3.4341018, 3.4453797, 3.4654388, 3.4729166, 3.470188, 3.4677384, 3.468177, 3.4676323, 3.470549, 3.4872558, 3.5295255, 3.5618677,
                 3.5519793, 3.5231485, 3.5053034, 3.5028384])
         }];
-        appState.spatialProfiles.set(spatialProfileTest.regionId, spatialProfileTest);
-        appState.backendService.loggingEnabled = true;
-        appState.fileBrowserState = new FileBrowserState(appState.backendService);
+        appStore.spatialProfiles.set(spatialProfileTest.regionId, spatialProfileTest);
+        appStore.backendService.loggingEnabled = true;
+        appStore.fileBrowserStore = new FileBrowserStore(appStore.backendService);
 
         let wsURL;
         if (process.env.NODE_ENV === "development" && process.env.REACT_APP_DEFAULT_ADDRESS) {
@@ -183,27 +180,27 @@ class App extends React.Component<{ appState: AppState }> {
         }
 
         console.log(`Connecting to defaullt URL: ${wsURL}`);
-        appState.backendService.connect(wsURL, "1234").subscribe(sessionId => {
+        appStore.backendService.connect(wsURL, "1234").subscribe(sessionId => {
             console.log(`Connected with session ID ${sessionId}`);
-            this.props.appState.logState.addInfo(`Connected to server ${wsURL}`, ["server"]);
+            this.props.appStore.logStore.addInfo(`Connected to server ${wsURL}`, ["server"]);
         }, err => console.log(err));
     }
 
     public componentDidMount() {
-        this.props.appState.layoutSettings.layout.init();
+        this.props.appStore.layoutSettings.layout.init();
     }
 
     public render() {
-        const appState = this.props.appState;
+        const appStore = this.props.appStore;
         return (
             <div className="App">
                 <DevTools/>
-                <RootMenuComponent appState={appState}/>
-                <OverlaySettingsDialogComponent appState={appState}/>
-                <URLConnectDialogComponent appState={appState}/>
-                <FileBrowserDialogComponent appState={appState}/>
-                <Alert isOpen={appState.alertState.alertVisible} onClose={appState.alertState.dismissAlert} canEscapeKeyCancel={true}>
-                    <p>{appState.alertState.alertText}</p>
+                <RootMenuComponent appStore={appStore}/>
+                <OverlaySettingsDialogComponent appStore={appStore}/>
+                <URLConnectDialogComponent appStore={appStore}/>
+                <FileBrowserDialogComponent appStore={appStore}/>
+                <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
+                    <p>{appStore.alertStore.alertText}</p>
                 </Alert>
             </div>
         );

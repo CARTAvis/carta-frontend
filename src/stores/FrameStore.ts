@@ -1,6 +1,6 @@
 import {CARTA} from "carta-protobuf";
 import {action, computed, observable} from "mobx";
-import {OverlayState} from "./OverlayState";
+import {OverlayStore} from "./OverlayStore";
 import {Point2D} from "../models/Point2D";
 
 export enum FrameScaling {
@@ -28,7 +28,7 @@ export class FrameView {
     mip: number;
 }
 
-export class FrameState {
+export class FrameStore {
     @observable frameInfo: FrameInfo;
     @observable renderHiDPI: boolean;
     @observable wcsInfo: number;
@@ -51,10 +51,10 @@ export class FrameState {
     @observable channelHistogram: CARTA.Histogram;
     @observable percentileRanks: Array<number>;
     @observable valid: boolean;
-    private overlayState: OverlayState;
+    private overlayStore: OverlayStore;
 
-    constructor(overlay: OverlayState) {
-        this.overlayState = overlay;
+    constructor(overlay: OverlayStore) {
+        this.overlayStore = overlay;
         this.renderHiDPI = false;
         this.center = {x: 0, y: 0};
         this.stokes = 0;
@@ -97,11 +97,11 @@ export class FrameState {
     }
 
     @computed get renderWidth() {
-        return this.overlayState.viewWidth - this.overlayState.padding.left - this.overlayState.padding.right;
+        return this.overlayStore.viewWidth - this.overlayStore.padding.left - this.overlayStore.padding.right;
     }
 
     @computed get renderHeight() {
-        return this.overlayState.viewHeight - this.overlayState.padding.top - this.overlayState.padding.bottom;
+        return this.overlayStore.viewHeight - this.overlayStore.padding.top - this.overlayStore.padding.bottom;
     }
 
     @computed get percentiles(): Array<number> {

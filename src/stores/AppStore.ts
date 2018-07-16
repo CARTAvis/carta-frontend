@@ -1,48 +1,48 @@
 import {action, autorun, computed, observable} from "mobx";
-import {OverlayState} from "./OverlayState";
-import {LayoutState} from "./LayoutState";
-import {SpatialProfileState} from "./SpatialProfileState";
+import {OverlayStore} from "./OverlayStore";
+import {LayoutStore} from "./LayoutStore";
+import {SpatialProfileStore} from "./SpatialProfileStore";
 import {CursorInfo} from "../models/CursorInfo";
 import {BackendService} from "../services/BackendService";
-import {FileBrowserState} from "./FileBrowserState";
-import {FrameInfo, FrameState, FrameView} from "./FrameState";
-import {AlertState} from "./AlertState";
+import {FileBrowserStore} from "./FileBrowserStore";
+import {FrameInfo, FrameStore, FrameView} from "./FrameStore";
+import {AlertStore} from "./AlertStore";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import * as _ from "lodash";
-import {LogState} from "./LogState";
+import {LogStore} from "./LogStore";
 
-export class AppState {
+export class AppStore {
     // Backend service
     @observable backendService: BackendService;
     @observable compressionQuality: number;
     // WebAssembly Module status
     @observable astReady: boolean;
     // Frames
-    @observable frames: FrameState[];
-    @observable activeFrame: FrameState;
+    @observable frames: FrameStore[];
+    @observable activeFrame: FrameStore;
     // Error alerts
-    @observable alertState: AlertState;
+    @observable alertStore: AlertStore;
     // Logs
-    @observable logState: LogState;
+    @observable logStore: LogStore;
 
     // Cursor information
     @observable cursorInfo: CursorInfo;
     // Spatial profiles
-    @observable spatialProfiles: Map<number, SpatialProfileState>;
+    @observable spatialProfiles: Map<number, SpatialProfileStore>;
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
-        this.overlayState.viewWidth = w;
-        this.overlayState.viewHeight = h;
+        this.overlayStore.viewWidth = w;
+        this.overlayStore.viewHeight = h;
     };
 
     // Overlay
-    @observable overlayState: OverlayState;
+    @observable overlayStore: OverlayStore;
     // Layout
-    @observable layoutSettings: LayoutState;
+    @observable layoutSettings: LayoutStore;
     // File Browser
-    @observable fileBrowserState: FileBrowserState;
+    @observable fileBrowserStore: FileBrowserStore;
 
     // Additional Dialogs
     @observable urlConnectDialogVisible: boolean;
@@ -63,8 +63,8 @@ export class AppState {
                     dimensionsString += ` (${ack.fileInfoExtended.stokes} Stokes cubes)`;
                 }
             }
-            this.logState.addInfo(`Loaded file ${ack.fileInfo.name} with dimensions ${dimensionsString}`, ["file"]);
-            let newFrame = new FrameState(this.overlayState);
+            this.logStore.addInfo(`Loaded file ${ack.fileInfo.name} with dimensions ${dimensionsString}`, ["file"]);
+            let newFrame = new FrameStore(this.overlayStore);
             newFrame.frameInfo = new FrameInfo();
             newFrame.frameInfo.fileId = ack.fileId;
             newFrame.frameInfo.fileInfo = ack.fileInfo as CARTA.FileInfo;
@@ -92,9 +92,9 @@ export class AppState {
             this.activeFrame = newFrame;
 
             this.updateTitle();
-            this.fileBrowserState.hideFileBrowser();
+            this.fileBrowserStore.hideFileBrowser();
         }, err => {
-            this.alertState.showAlert(`Error loading file: ${err}`);
+            this.alertStore.showAlert(`Error loading file: ${err}`);
         });
     };
 
@@ -103,7 +103,7 @@ export class AppState {
         this.loadFile(directory, file, hdu, currentIdList.pop() + 1);
     };
 
-    @action loadWCS = (frame: FrameState) => {
+    @action loadWCS = (frame: FrameStore) => {
         let headerString = "";
 
         for (let entry of frame.frameInfo.fileInfoExtended.headerEntries) {
@@ -140,36 +140,36 @@ export class AppState {
 
         const initResult = AST.initFrame(headerString);
         if (!initResult) {
-            this.logState.addWarning(`Problem processing WCS info in file ${frame.frameInfo.fileInfo.name}`, ["ast"]);
+            this.logStore.addWarning(`Problem processing WCS info in file ${frame.frameInfo.fileInfo.name}`, ["ast"]);
             frame.wcsInfo = AST.initDummyFrame();
             // Clear formatting for labels and cursor, to use image coordinates
-            this.overlayState.axis[0].labelFormat = "";
-            this.overlayState.axis[1].labelFormat = "";
-            this.overlayState.axis[0].cursorFormat = "";
-            this.overlayState.axis[1].cursorFormat = "";
+            this.overlayStore.axis[0].labelFormat = "";
+            this.overlayStore.axis[1].labelFormat = "";
+            this.overlayStore.axis[0].cursorFormat = "";
+            this.overlayStore.axis[1].cursorFormat = "";
         }
         else {
             frame.wcsInfo = initResult;
             frame.validWcs = true;
             // Specify degrees and single decimals for WCS info
-            this.overlayState.axis[0].labelFormat = "d.1";
-            this.overlayState.axis[1].labelFormat = "d.1";
-            this.overlayState.axis[0].cursorFormat = "d.1";
-            this.overlayState.axis[1].cursorFormat = "d.1";
+            this.overlayStore.axis[0].labelFormat = "d.1";
+            this.overlayStore.axis[1].labelFormat = "d.1";
+            this.overlayStore.axis[0].cursorFormat = "d.1";
+            this.overlayStore.axis[1].cursorFormat = "d.1";
             console.log("Initialised WCS info from frame");
         }
     };
 
     constructor() {
-        this.logState = new LogState();
-        this.backendService = new BackendService(this.logState);
+        this.logStore = new LogStore();
+        this.backendService = new BackendService(this.logStore);
         this.astReady = false;
-        this.spatialProfiles = new Map<number, SpatialProfileState>();
+        this.spatialProfiles = new Map<number, SpatialProfileStore>();
         this.frames = [];
         this.activeFrame = null;
-        this.alertState = new AlertState();
-        this.overlayState = new OverlayState();
-        this.layoutSettings = new LayoutState();
+        this.alertStore = new AlertStore();
+        this.overlayStore = new OverlayStore();
+        this.layoutSettings = new LayoutStore();
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
 
@@ -234,7 +234,7 @@ export class AppState {
 
         autorun(() => {
             if (this.astReady) {
-                this.logState.addInfo("AST library loaded", ["ast"]);
+                this.logStore.addInfo("AST library loaded", ["ast"]);
             }
         });
 

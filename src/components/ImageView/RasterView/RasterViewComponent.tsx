@@ -1,7 +1,7 @@
-import {FrameState} from "../../../states/FrameState";
+import {FrameStore} from "../../../stores/FrameStore";
 import * as React from "react";
 import {observer} from "mobx-react";
-import {OverlayState} from "../../../states/OverlayState";
+import {OverlayStore} from "../../../stores/OverlayStore";
 import "./RasterViewComponent.css";
 
 const vertShader = require("!raw-loader!./GLSL/vert.glsl");
@@ -9,8 +9,8 @@ const pixelShader = require("!raw-loader!./GLSL/pixel_float.glsl");
 const pixelShaderSimple = require("!raw-loader!./GLSL/pixel_simple.glsl");
 
 export class RasterViewComponentProps {
-    overlaySettings: OverlayState;
-    frame: FrameState;
+    overlaySettings: OverlayStore;
+    frame: FrameStore;
 }
 
 @observer

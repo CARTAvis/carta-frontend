@@ -2,7 +2,7 @@ import {action, autorun, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, throwError, Subject} from "rxjs";
 import {DecompressionService} from "./DecompressionService";
-import {LogState} from "../states/LogState";
+import {LogStore} from "../stores/LogStore";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -25,10 +25,10 @@ export class BackendService {
     private readonly subsetsRequired: number;
     private totalDecompressionTime: number;
     private totalDecompressionMPix: number;
-    private readonly logState: LogState;
+    private readonly logStore: LogStore;
 
-    constructor(logState: LogState) {
-        this.logState = logState;
+    constructor(logStore: LogStore) {
+        this.logStore = logStore;
         this.observerMap = new Map<string, Observer<any>>();
         this.connectionStatus = ConnectionStatus.CLOSED;
         this.rasterStream = new Subject<CARTA.RasterImageData>();
@@ -49,7 +49,7 @@ export class BackendService {
 
         autorun(() => {
             if (this.zfpReady) {
-                this.logState.addInfo(`ZFP loaded with ${this.subsetsRequired} workers`, ["zfp"]);
+                this.logStore.addInfo(`ZFP loaded with ${this.subsetsRequired} workers`, ["zfp"]);
             }
         });
     }
@@ -297,7 +297,7 @@ export class BackendService {
                 this.totalDecompressionTime += dt;
                 const speed = sizeMpix / dt * 1e3;
                 const averageSpeed = this.totalDecompressionMPix / this.totalDecompressionTime * 1e3;
-                this.logState.addDebug(`Decompressed ${sizeMpix.toFixed(2)} MPix in ${dt.toFixed(2)} ms (${speed.toFixed(2)} MPix/s); Average speed: ${averageSpeed.toFixed(2)} MPix/s`, ["zfp"]);
+                this.logStore.addDebug(`Decompressed ${sizeMpix.toFixed(2)} MPix in ${dt.toFixed(2)} ms (${speed.toFixed(2)} MPix/s); Average speed: ${averageSpeed.toFixed(2)} MPix/s`, ["zfp"]);
                 this.rasterStream.next(decompressedMessage);
             });
         }

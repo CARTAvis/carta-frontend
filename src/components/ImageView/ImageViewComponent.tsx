@@ -1,6 +1,6 @@
 import * as React from "react";
 import "./ImageViewComponent.css";
-import {AppState} from "../../states/AppState";
+import {AppStore} from "../../stores/AppStore";
 import {observer} from "mobx-react";
 import ReactResizeDetector from "react-resize-detector";
 import {NonIdealState, Spinner} from "@blueprintjs/core";
@@ -10,66 +10,66 @@ import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 
 @observer
-export class ImageViewComponent extends React.Component<{ appState: AppState }> {
+export class ImageViewComponent extends React.Component<{ appStore: AppStore }> {
 
     containerDiv: HTMLDivElement;
 
     onResize = (width: number, height: number) => {
-        this.props.appState.setImageViewDimensions(width, height);
+        this.props.appStore.setImageViewDimensions(width, height);
     };
 
     onCursorMoved = (cursorInfo: CursorInfo) => {
-        this.props.appState.cursorInfo = cursorInfo;
+        this.props.appStore.cursorInfo = cursorInfo;
     };
 
     onClicked = (cursorInfo: CursorInfo) => {
-        const appState = this.props.appState;
-        if (appState.activeFrame) {
-            appState.activeFrame.setCenter(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y);
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame) {
+            appStore.activeFrame.setCenter(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y);
         }
     };
 
     onZoomed = (cursorInfo: CursorInfo, delta: number) => {
-        const appState = this.props.appState;
-        if (appState.activeFrame) {
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame) {
             const zoomSpeed = 1 + Math.abs(delta / 1000.0);
-            const newZoom = appState.activeFrame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
-            appState.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom);
+            const newZoom = appStore.activeFrame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
+            appStore.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom);
         }
     };
 
     render() {
-        const appState = this.props.appState;
+        const appStore = this.props.appStore;
         return (
             <div className="image-view-div" ref={(ref) => this.containerDiv = ref}>
-                {appState.astReady && appState.activeFrame && appState.activeFrame.valid &&
+                {appStore.astReady && appStore.activeFrame && appStore.activeFrame.valid &&
                 <OverlayComponent
-                    frame={appState.activeFrame}
-                    overlaySettings={appState.overlayState}
+                    frame={appStore.activeFrame}
+                    overlaySettings={appStore.overlayStore}
                     onCursorMoved={this.onCursorMoved}
                     onClicked={this.onClicked}
                     onZoomed={this.onZoomed}
                 />
                 }
                 <RasterViewComponent
-                    frame={appState.activeFrame}
-                    overlaySettings={appState.overlayState}
+                    frame={appStore.activeFrame}
+                    overlaySettings={appStore.overlayStore}
                 />
-                {appState.astReady && appState.cursorInfo &&
+                {appStore.astReady && appStore.cursorInfo &&
                 <CursorOverlayComponent
-                    cursorInfo={appState.cursorInfo}
-                    width={appState.overlayState.viewWidth}
-                    unit={appState.activeFrame.unit}
+                    cursorInfo={appStore.cursorInfo}
+                    width={appStore.overlayStore.viewWidth}
+                    unit={appStore.activeFrame.unit}
                     bottom={0}
                     showImage={true}
                     showWCS={true}
                     showValue={true}
                 />
                 }
-                {!appState.astReady &&
+                {!appStore.astReady &&
                 <NonIdealState icon={<Spinner className="astLoadingSpinner"/>} title={"Loading AST Library"}/>
                 }
-                {!appState.activeFrame &&
+                {!appStore.activeFrame &&
                 <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
                 }
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>

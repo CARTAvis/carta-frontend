@@ -7,7 +7,7 @@ export class SpatialProfileData {
     coordinate: string;
 }
 
-export class SpatialProfileState {
+export class SpatialProfileStore {
     @observable regionId: number;
     @observable fileId: number;
     @observable stokes: number;

@@ -4,12 +4,16 @@ import {action, autorun, computed, observable} from "mobx";
 import * as GoldenLayout from "golden-layout";
 import * as _ from "lodash";
 
-export class LayoutState {
+export class LayoutStore {
     // Layout
     @observable layout: GoldenLayout;
     @observable layoutConfig: any;
     maxHistoryQueueLength = 10;
     _layoutHistory: any[] = [];
+
+    @action setLayout(layout: GoldenLayout) {
+        this.layout = layout;
+    }
 
     @action undoLayoutChange = () => {
         if (!this._layoutHistory || this._layoutHistory.length < 2) {
@@ -33,7 +37,7 @@ export class LayoutState {
                 return;
             }
 
-            // if it's a stale config change, replace the latest state with this one, rather than appending
+            // if it's a stale config change, replace the latest Store with this one, rather than appending
             const diff = difference(current, config);
             if (isStaleChange(diff)) {
                 this._layoutHistory.pop();

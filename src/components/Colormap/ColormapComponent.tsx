@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AppState} from "../../states/AppState";
+import {AppStore} from "../../stores/AppStore";
 import * as Plotly from "plotly.js/dist/plotly-cartesian";
 import createPlotlyComponent from "react-plotly.js/factory";
 import ReactResizeDetector from "react-resize-detector";
@@ -11,7 +11,7 @@ import "./ColormapComponent.css";
 const Plot = createPlotlyComponent(Plotly);
 
 class ColormapComponentProps {
-    appState: AppState;
+    appStore: AppStore;
 }
 
 @observer
@@ -27,7 +27,7 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, {
     };
 
     render() {
-        const appState = this.props.appState;
+        const appStore = this.props.appStore;
         const backgroundColor = "#F2F2F2";
 
         let plotLayout: Partial<Layout> = {
@@ -57,8 +57,8 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, {
             setBackground: "transparent"
         };
 
-        if (appState.activeFrame && appState.activeFrame.channelHistogram && appState.activeFrame.channelHistogram.bins) {
-            const histogram = appState.activeFrame.channelHistogram;
+        if (appStore.activeFrame && appStore.activeFrame.channelHistogram && appStore.activeFrame.channelHistogram.bins) {
+            const histogram = appStore.activeFrame.channelHistogram;
             let xVals = new Array(histogram.bins.length);
             for (let i = 0; i < xVals.length; i++) {
                 xVals[i] = histogram.firstBinCenter + histogram.binWidth * i;

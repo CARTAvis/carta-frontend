@@ -2,19 +2,19 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {AnchorButton, Dialog, H4, Intent, NonIdealState, Pre, Tooltip} from "@blueprintjs/core";
 import "./FileBrowserDialogComponent.css";
-import {FileBrowserState} from "../../../states/FileBrowserState";
+import {FileBrowserStore} from "../../../stores/FileBrowserStore";
 import {CARTA} from "carta-protobuf";
 import FileInfo = CARTA.FileInfo;
 import {FileListComponent} from "./FileList/FileListComponent";
-import {AppState} from "../../../states/AppState";
+import {AppStore} from "../../../stores/AppStore";
 
 @observer
-export class FileBrowserDialogComponent extends React.Component<{ appState: AppState }> {
+export class FileBrowserDialogComponent extends React.Component<{ appStore: AppStore }> {
     public render() {
-        const fileBrowserState = this.props.appState.fileBrowserState;
+        const fileBrowserStore = this.props.appStore.fileBrowserStore;
         let infoHeader = "";
-        if (fileBrowserState.fileInfoExtended) {
-            fileBrowserState.fileInfoExtended.headerEntries.forEach(header => {
+        if (fileBrowserStore.fileInfoExtended) {
+            fileBrowserStore.fileInfoExtended.headerEntries.forEach(header => {
                 infoHeader += `${header.name}: ${header.value}\n`;
             });
         }
@@ -26,41 +26,41 @@ export class FileBrowserDialogComponent extends React.Component<{ appState: AppS
                 backdropClassName="minimal-dialog-backdrop"
                 canOutsideClickClose={false}
                 lazy={true}
-                isOpen={fileBrowserState.fileBrowserDialogVisible}
-                onClose={fileBrowserState.hideFileBrowser}
+                isOpen={fileBrowserStore.fileBrowserDialogVisible}
+                onClose={fileBrowserStore.hideFileBrowser}
                 title="File Browser"
             >
                 <div className="bp3-dialog-body" style={{display: "flex"}}>
                     <div className="file-list-pane">
                         <FileListComponent
-                            files={fileBrowserState.fileList}
-                            selectedFile={fileBrowserState.selectedFile}
-                            selectedHDU={fileBrowserState.selectedHDU}
-                            onFileClicked={(file: FileInfo, hdu: string) => fileBrowserState.selectFile(file, hdu)}
+                            files={fileBrowserStore.fileList}
+                            selectedFile={fileBrowserStore.selectedFile}
+                            selectedHDU={fileBrowserStore.selectedHDU}
+                            onFileClicked={(file: FileInfo, hdu: string) => fileBrowserStore.selectFile(file, hdu)}
                             onFileDoubleClicked={(file: FileInfo, hdu: string) => this.loadFile(file.name, hdu)}
-                            onFolderClicked={(folder: string) => fileBrowserState.selectFolder(folder)}
+                            onFolderClicked={(folder: string) => fileBrowserStore.selectFolder(folder)}
                         />
                     </div>
                     <div className="file-info-pane">
                         <H4>File Information</H4>
-                        {!fileBrowserState.fileInfoExtended &&
+                        {!fileBrowserStore.fileInfoExtended &&
                         <NonIdealState icon="document" title="No file selected" description="Select a file from the list on the left"/>
                         }
-                        {fileBrowserState.fileInfoExtended &&
+                        {fileBrowserStore.fileInfoExtended &&
                         <Pre className="file-info-pre">{infoHeader}</Pre>
                         }
                     </div>
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
-                        <AnchorButton intent={Intent.NONE} onClick={fileBrowserState.hideFileBrowser} text="Close"/>
-                        {fileBrowserState.appendingFrame ? (
+                        <AnchorButton intent={Intent.NONE} onClick={fileBrowserStore.hideFileBrowser} text="Close"/>
+                        {fileBrowserStore.appendingFrame ? (
                             <Tooltip content={"Append this file as a new frame"}>
-                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserState.selectedFile} onClick={this.loadSelectedFile} text="Load as frame"/>
+                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserStore.selectedFile} onClick={this.loadSelectedFile} text="Load as frame"/>
                             </Tooltip>
                         ) : (
                             <Tooltip content={"Close any existing frames and load this file"}>
-                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserState.selectedFile} onClick={this.loadSelectedFile} text="Load"/>
+                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserStore.selectedFile} onClick={this.loadSelectedFile} text="Load"/>
                             </Tooltip>
                         )}
                     </div>
@@ -70,18 +70,18 @@ export class FileBrowserDialogComponent extends React.Component<{ appState: AppS
     }
 
     loadSelectedFile = () => {
-        const fileBrowserState = this.props.appState.fileBrowserState;
-        this.loadFile(fileBrowserState.selectedFile.name, fileBrowserState.selectedHDU);
+        const fileBrowserStore = this.props.appStore.fileBrowserStore;
+        this.loadFile(fileBrowserStore.selectedFile.name, fileBrowserStore.selectedHDU);
     };
 
     loadFile(file: string, hdu: string) {
-        const fileBrowserState = this.props.appState.fileBrowserState;
-        const frames = this.props.appState.frames;
-        if (!fileBrowserState.appendingFrame || !frames.length) {
-            this.props.appState.loadFile(fileBrowserState.fileList.directory, file, hdu, 0);
+        const fileBrowserStore = this.props.appStore.fileBrowserStore;
+        const frames = this.props.appStore.frames;
+        if (!fileBrowserStore.appendingFrame || !frames.length) {
+            this.props.appStore.loadFile(fileBrowserStore.fileList.directory, file, hdu, 0);
         }
         else {
-            this.props.appState.appendFile(fileBrowserState.fileList.directory, file, hdu);
+            this.props.appStore.appendFile(fileBrowserStore.fileList.directory, file, hdu);
         }
     }
 }

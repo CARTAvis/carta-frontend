@@ -5,7 +5,7 @@ import FileInfoExtended = CARTA.FileInfoExtended;
 import FileInfo = CARTA.FileInfo;
 import FileListResponse = CARTA.FileListResponse;
 
-export class FileBrowserState {
+export class FileBrowserStore {
     @observable fileBrowserDialogVisible = false;
     @observable appendingFrame = false;
     @observable fileList: FileListResponse;

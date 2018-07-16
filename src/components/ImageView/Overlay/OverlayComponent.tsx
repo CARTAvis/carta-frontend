@@ -1,16 +1,16 @@
 import * as React from "react";
 import {Colors} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
-import {LabelType, OverlayState} from "../../../states/OverlayState";
+import {LabelType, OverlayStore} from "../../../stores/OverlayStore";
 import {observer} from "mobx-react";
 import {CursorInfo} from "../../../models/CursorInfo";
-import {FrameState} from "../../../states/FrameState";
+import {FrameStore} from "../../../stores/FrameStore";
 import {Point2D} from "../../../models/Point2D";
 import "./OverlayComponent.css";
 
 export class OverlayComponentProps {
-    overlaySettings: OverlayState;
-    frame: FrameState;
+    overlaySettings: OverlayStore;
+    frame: FrameStore;
     onCursorMoved?: (cursorInfo: CursorInfo) => void;
     onClicked?: (cursorInfo: CursorInfo) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;

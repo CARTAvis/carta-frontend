@@ -1,41 +1,46 @@
 import * as React from "react";
-import {AppState} from "../../../states/AppState";
+import {AppStore} from "../../../stores/AppStore";
 import {observer} from "mobx-react";
 import "./OverlaySettingsDialogComponent.css";
 import {Button, Checkbox, Dialog, Intent, Tab, Tabs} from "@blueprintjs/core";
 
 @observer
-export class OverlaySettingsDialogComponent extends React.Component<{ appState: AppState }> {
+export class OverlaySettingsDialogComponent extends React.Component<{ appStore: AppStore }> {
     public render() {
-        const appState = this.props.appState;
-        const overlayState = appState.overlayState;
+        const appStore = this.props.appStore;
+        const overlayStore = appStore.overlayStore;
         const globalPanel = (
             <div>
                 <div className="bp3-form-group">
                     <div className="bp3-form-content">
-                        <Checkbox checked={overlayState.title.visible} indeterminate={overlayState.title.visible === undefined} label="Title" onChange={(ev) => overlayState.title.visible = ev.currentTarget.checked}/>
+                        <Checkbox checked={overlayStore.title.visible} indeterminate={overlayStore.title.visible === undefined} label="Title" onChange={(ev) => overlayStore.title.setVisible(ev.currentTarget.checked)}/>
                         <label className="bp3-label .bp3-inline">
                             Title text
                             <input
                                 className="bp3-input"
                                 type="text"
                                 placeholder="Text input"
-                                value={overlayState.title.text}
-                                disabled={overlayState.title.visible === false}
-                                onChange={(ev) => overlayState.title.text = ev.currentTarget.value}
+                                value={overlayStore.title.text}
+                                disabled={overlayStore.title.visible === false}
+                                onChange={(ev) => overlayStore.title.setText(ev.currentTarget.value)}
                             />
                         </label>
                     </div>
                 </div>
-                <Checkbox checked={overlayState.grid.visible} indeterminate={overlayState.grid.visible === undefined} label="Grid" onChange={(ev) => overlayState.grid.visible = ev.currentTarget.checked}/>
-                <Checkbox checked={overlayState.border.visible} indeterminate={overlayState.border.visible === undefined} label="Border" onChange={(ev) => overlayState.border.visible = ev.currentTarget.checked}/>
-                <Checkbox checked={overlayState.axes.labelVisible || false} indeterminate={overlayState.axes.labelVisible === undefined} label="Axes Labels" onChange={(ev) => overlayState.axes.labelVisible = ev.currentTarget.checked}/>
-                <Checkbox checked={overlayState.axes.numberVisible || false} indeterminate={overlayState.axes.numberVisible === undefined} label="Axes Numbers" onChange={(ev) => overlayState.axes.numberVisible = ev.currentTarget.checked}/>
+                <Checkbox checked={overlayStore.grid.visible} indeterminate={overlayStore.grid.visible === undefined} label="Grid" onChange={(ev) => overlayStore.grid.setVisible(ev.currentTarget.checked)}/>
+                <Checkbox checked={overlayStore.border.visible} indeterminate={overlayStore.border.visible === undefined} label="Border" onChange={(ev) => overlayStore.border.setVisible(ev.currentTarget.checked)}/>
+                <Checkbox checked={overlayStore.axes.labelVisible || false} indeterminate={overlayStore.axes.labelVisible === undefined} label="Axes Labels" onChange={(ev) => overlayStore.axes.setLabelVisible(ev.currentTarget.checked)}/>
+                <Checkbox
+                    checked={overlayStore.axes.numberVisible || false}
+                    indeterminate={overlayStore.axes.numberVisible === undefined}
+                    label="Axes Numbers"
+                    onChange={(ev) => overlayStore.axes.setNumberVisible(ev.currentTarget.checked)}
+                />
             </div>
         );
 
         return (
-            <Dialog icon={"settings"} lazy={true} backdropClassName="minimal-dialog-backdrop" isOpen={overlayState.overlaySettingsDialogVisible} onClose={overlayState.hideOverlaySettings} title="Overlay Settings">
+            <Dialog icon={"settings"} lazy={true} backdropClassName="minimal-dialog-backdrop" isOpen={overlayStore.overlaySettingsDialogVisible} onClose={overlayStore.hideOverlaySettings} title="Overlay Settings">
                 <div className="bp3-dialog-body">
                     <Tabs id="overlayTabs" selectedTabId="global">
                         <Tab id="global" title="Global" panel={globalPanel}/>
@@ -46,7 +51,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appState: 
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
-                        <Button intent={Intent.PRIMARY} onClick={overlayState.hideOverlaySettings} text="Close"/>
+                        <Button intent={Intent.PRIMARY} onClick={overlayStore.hideOverlaySettings} text="Close"/>
                     </div>
                 </div>
             </Dialog>

@@ -8,7 +8,7 @@ export class LogEntry {
     message: string;
 }
 
-export class LogState {
+export class LogStore {
     @observable logEntries: LogEntry[];
     @observable hiddenTags: string[];
     @observable logLevel: CARTA.ErrorSeverity;

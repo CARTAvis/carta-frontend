@@ -1,15 +1,15 @@
 import * as React from "react";
 import "./RootMenuComponent.css";
 import {Menu, Popover, Position} from "@blueprintjs/core";
-import {AppState} from "../../states/AppState";
+import {AppStore} from "../../stores/AppStore";
 import {observer} from "mobx-react";
 import {ConnectionStatus} from "../../services/BackendService";
 
 @observer
-export class RootMenuComponent extends React.Component<{ appState: AppState }> {
+export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
 
     render() {
-        const appState = this.props.appState;
+        const appStore = this.props.appStore;
 
         // Modifier string for shortcut keys. OSX/iOS use '⌘', while Windows uses 'Ctrl + '
         const modString = "Ctrl + ";
@@ -20,14 +20,14 @@ export class RootMenuComponent extends React.Component<{ appState: AppState }> {
                 <Menu.Item
                     text="Open cube"
                     label={`${modString}O`}
-                    disabled={appState.backendService.connectionStatus !== ConnectionStatus.ACTIVE}
-                    onClick={() => appState.fileBrowserState.showFileBrowser(false)}
+                    disabled={appStore.backendService.connectionStatus !== ConnectionStatus.ACTIVE}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(false)}
                 />
                 <Menu.Item
                     text="Open cube as new frame"
                     label={`${modString}A`}
-                    disabled={appState.backendService.connectionStatus !== ConnectionStatus.ACTIVE}
-                    onClick={() => appState.fileBrowserState.showFileBrowser(true)}
+                    disabled={appStore.backendService.connectionStatus !== ConnectionStatus.ACTIVE}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(true)}
                 />
                 <Menu.Item text="Load region"/>
                 <Menu.Divider/>
@@ -35,17 +35,17 @@ export class RootMenuComponent extends React.Component<{ appState: AppState }> {
                 <Menu.Item text="Export image" icon={"media"} label={`${modString}E`}/>
                 <Menu.Divider/>
                 <Menu.Item text="Preferences" icon={"cog"} label={`${modString}P`}/>
-                <Menu.Item text="Connect to URL" onClick={appState.showURLConnect}/>
+                <Menu.Item text="Connect to URL" onClick={appStore.showURLConnect}/>
                 <Menu.Divider/>
                 <Menu.Item text="Exit" icon={"log-out"} label={`${modString}Q`}/>
             </Menu>
         );
 
-        let layerItems = appState.frames.map(frame => {
+        let layerItems = appStore.frames.map(frame => {
             return (
                 <Menu.Item
                     text={frame.frameInfo.fileInfo.name}
-                    active={appState.activeFrame && appState.activeFrame.frameInfo.fileId === frame.frameInfo.fileId}
+                    active={appStore.activeFrame && appStore.activeFrame.frameInfo.fileId === frame.frameInfo.fileId}
                     key={frame.frameInfo.fileId}
                     onClick={() => this.handleFrameSelect(frame.frameInfo.fileId)}
                 />
@@ -66,7 +66,7 @@ export class RootMenuComponent extends React.Component<{ appState: AppState }> {
                     <Menu.Item text="Custom Preset 1"/>
                     <Menu.Item text="Custom Preset 2"/>
                     <Menu.Divider/>
-                    <Menu.Item text="Customize..." icon={"style"} onClick={appState.overlayState.showOverlaySettings}/>
+                    <Menu.Item text="Customize..." icon={"style"} onClick={appStore.overlayStore.showOverlaySettings}/>
                     <Menu.Item text="Save Current as Preset" icon={"floppy-disk"}/>
                 </Menu.Item>
                 <Menu.Item text="Graphs" icon={"timeline-line-chart"}>
@@ -90,7 +90,7 @@ export class RootMenuComponent extends React.Component<{ appState: AppState }> {
 
         const panelMenu = (
             <Menu>
-                <Menu.Item text="Undo layout change" icon={"undo"} disabled={!appState.layoutSettings.hasLayoutHistory} onClick={appState.layoutSettings.undoLayoutChange}/>
+                <Menu.Item text="Undo layout change" icon={"undo"} disabled={!appStore.layoutSettings.hasLayoutHistory} onClick={appStore.layoutSettings.undoLayoutChange}/>
                 <Menu.Item text="Profiles" icon={"timeline-line-chart"}>
                     <Menu.Item text="X-Profile"/>
                     <Menu.Item text="Y-Profile"/>
@@ -160,12 +160,12 @@ export class RootMenuComponent extends React.Component<{ appState: AppState }> {
     }
 
     handleFrameSelect = (fileId: number) => {
-        const appState = this.props.appState;
-        if (appState.activeFrame && appState.activeFrame.frameInfo.fileId === fileId) {
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame && appStore.activeFrame.frameInfo.fileId === fileId) {
             return;
         }
         else {
-            appState.setActiveFrame(fileId);
+            appStore.setActiveFrame(fileId);
         }
     };
 }
