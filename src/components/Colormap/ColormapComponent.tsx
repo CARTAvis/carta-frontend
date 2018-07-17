@@ -98,10 +98,26 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, C
                 const posScaleMax = xAxis.c2p(frame.scaleMax) + leftMargin;
 
                 if (this.movingScaleMin) {
-                    frame.scaleMin = cursorVal;
+                    // Handle switchover (from moving min to moving max)
+                    if (cursorVal >= frame.scaleMax) {
+                        this.movingScaleMin = false;
+                        this.movingScaleMax = true;
+                        this.setState({hoveringScaleMax: true, hoveringScaleMin: false});
+                    }
+                    else {
+                        frame.scaleMin = cursorVal;
+                    }
                 }
                 else if (this.movingScaleMax) {
-                    frame.scaleMax = cursorVal;
+                    // Handle switchover (from moving max to moving min)
+                    if (cursorVal <= frame.scaleMin) {
+                        this.movingScaleMax = false;
+                        this.movingScaleMin = true;
+                        this.setState({hoveringScaleMin: true, hoveringScaleMax: false});
+                    }
+                    else {
+                        frame.scaleMax = cursorVal;
+                    }
                 }
                 else if (Math.abs(ev.nativeEvent.offsetX - posScaleMin) < pixelThreshold) {
                     this.setState({hoveringScaleMin: true, hoveringScaleMax: false});
