@@ -4,7 +4,7 @@ import {AppStore} from "../../stores/AppStore";
 import * as Plotly from "plotly.js/dist/plotly-cartesian";
 import createPlotlyComponent from "react-plotly.js/factory";
 import ReactResizeDetector from "react-resize-detector";
-import {Config, Data, Layout} from "plotly.js";
+import {Config, Data, Layout, Point, Shape} from "plotly.js";
 import "./ColormapComponent.css";
 
 // This allows us to use a minimal Plotly.js bundle with React-Plotly.js (900k compared to 2.7 MB)
@@ -14,21 +14,151 @@ class ColormapComponentProps {
     appStore: AppStore;
 }
 
+class ColormapComponentState {
+    width: number;
+    height: number;
+    hoveringScaleMin: boolean;
+    hoveringScaleMax: boolean;
+}
+
 @observer
-export class ColormapComponent extends React.Component<ColormapComponentProps, { width: number, height: number }> {
+export class ColormapComponent extends React.Component<ColormapComponentProps, ColormapComponentState> {
+
+    private plotRef: any;
+    private movingScaleMax: boolean;
+    private movingScaleMin: boolean;
 
     constructor(props: ColormapComponentProps) {
         super(props);
-        this.state = {width: 0, height: 0};
+        this.state = {width: 0, height: 0, hoveringScaleMin: false, hoveringScaleMax: false};
     }
 
     onResize = (width: number, height: number) => {
         this.setState({width, height});
     };
 
+    handlePlotClick = (ev) => {
+        console.log("Got plotly click");
+        // const clickX = ev.points[0].x;
+        // const appStore = this.props.appStore;
+        // if (appStore.activeFrame) {
+        //     const deltaMin = Math.abs(appStore.activeFrame.scaleMin - clickX);
+        //     const deltaMax = Math.abs(appStore.activeFrame.scaleMax - clickX);
+        //     if (deltaMin < deltaMax) {
+        //         appStore.activeFrame.scaleMin = clickX;
+        //     }
+        //     else {
+        //         appStore.activeFrame.scaleMax = clickX;
+        //     }
+        //
+        // }
+    };
+
+    handleMouseClick = (ev: React.MouseEvent<HTMLDivElement>) => {
+        if (this.movingScaleMin || this.movingScaleMax) {
+            this.movingScaleMax = false;
+            this.movingScaleMin = false;
+            return;
+        }
+
+        const frame = this.props.appStore.activeFrame;
+        const pixelThreshold = 5;
+        if (this.plotRef && frame) {
+            const xAxis = this.plotRef.el._fullLayout.xaxis;
+            if (xAxis && xAxis.p2c) {
+                console.log(xAxis);
+                const leftMargin = this.plotRef.el._fullLayout.margin.l;
+                const cursorVal = xAxis.p2c(ev.nativeEvent.offsetX - leftMargin);
+                const posScaleMin = xAxis.c2p(frame.scaleMin) + leftMargin;
+                const posScaleMax = xAxis.c2p(frame.scaleMax) + leftMargin;
+                console.log(cursorVal);
+                if (Math.abs(ev.nativeEvent.offsetX - posScaleMin) < pixelThreshold) {
+                    this.movingScaleMin = true;
+                    console.log("Moving scaleMin");
+                    ev.preventDefault();
+                }
+                else if (Math.abs(ev.nativeEvent.offsetX - posScaleMax) < pixelThreshold) {
+                    this.movingScaleMax = true;
+                    console.log("Dragging scaleMax");
+                    ev.preventDefault();
+                }
+            }
+        }
+    };
+
+    handleMouseMove = (ev: React.MouseEvent<HTMLDivElement>) => {
+        const frame = this.props.appStore.activeFrame;
+        const pixelThreshold = 5;
+        if (this.plotRef && frame) {
+            const xAxis = this.plotRef.el._fullLayout.xaxis;
+            if (xAxis && xAxis.p2c) {
+                const leftMargin = this.plotRef.el._fullLayout.margin.l;
+                const cursorVal = xAxis.p2c(ev.nativeEvent.offsetX - leftMargin);
+                const posScaleMin = xAxis.c2p(frame.scaleMin) + leftMargin;
+                const posScaleMax = xAxis.c2p(frame.scaleMax) + leftMargin;
+
+                if (this.movingScaleMin) {
+                    frame.scaleMin = cursorVal;
+                }
+                else if (this.movingScaleMax) {
+                    frame.scaleMax = cursorVal;
+                }
+                else if (Math.abs(ev.nativeEvent.offsetX - posScaleMin) < pixelThreshold) {
+                    this.setState({hoveringScaleMin: true, hoveringScaleMax: false});
+                }
+                else if (Math.abs(ev.nativeEvent.offsetX - posScaleMax) < pixelThreshold) {
+                    this.setState({hoveringScaleMax: true, hoveringScaleMin: false});
+                }
+                else if (this.state.hoveringScaleMin || this.state.hoveringScaleMax) {
+                    this.setState({hoveringScaleMax: false, hoveringScaleMin: false});
+                }
+            }
+        }
+    };
+
+    handleMouseUp = (ev: React.MouseEvent<HTMLDivElement>) => {
+        this.movingScaleMin = false;
+        this.movingScaleMax = false;
+    };
+
+    handleDrag = (ev: React.MouseEvent<HTMLDivElement>) => {
+        console.log("Drag event");
+    };
+
     render() {
         const appStore = this.props.appStore;
         const backgroundColor = "#F2F2F2";
+
+        let scaleMarkers: Partial<Shape>[] = [];
+
+        if (appStore.activeFrame) {
+            scaleMarkers = [
+                {
+                    type: "line",
+                    yref: "paper",
+                    y0: 0,
+                    y1: 1,
+                    x0: appStore.activeFrame.scaleMin,
+                    x1: appStore.activeFrame.scaleMin,
+                    line: {
+                        color: "red",
+                        width: this.state.hoveringScaleMin ? 5 : 1
+                    }
+                },
+                {
+                    type: "line",
+                    yref: "paper",
+                    y0: 0,
+                    y1: 1,
+                    x0: appStore.activeFrame.scaleMax,
+                    x1: appStore.activeFrame.scaleMax,
+                    line: {
+                        color: "red",
+                        width: this.state.hoveringScaleMax ? 5 : 1
+                    }
+                },
+            ];
+        }
 
         let plotLayout: Partial<Layout> = {
             width: this.state.width,
@@ -39,22 +169,24 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, {
                 title: `Value`
             },
             yaxis: {
-                title: "Count",
-                type: "log"
+                type: "log",
+                showticklabels: false
             },
             margin: {
                 t: 10,
                 r: 10,
-                l: 60,
+                l: 10,
                 b: 60,
-            }
+            },
+            shapes: scaleMarkers
         };
 
         let plotData: Partial<Data[]> = [];
         let plotConfig: Partial<Config> = {
             displaylogo: false,
             modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "toggleHover", "toggleSpikelines", "hoverClosestCartesian", "hoverCompareCartesian"],
-            setBackground: "transparent"
+            setBackground: "transparent",
+            doubleClick: false,
         };
 
         if (appStore.activeFrame && appStore.activeFrame.channelHistogram && appStore.activeFrame.channelHistogram.bins) {
@@ -76,8 +208,8 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, {
             });
         }
         return (
-            <div style={{width: "100%", height: "100%"}}>
-                <Plot layout={plotLayout} data={plotData} config={plotConfig}/>
+            <div style={{width: "100%", height: "100%"}} onDrag={this.handleDrag} onClick={this.handleMouseClick} onMouseMove={this.handleMouseMove}>
+                <Plot layout={plotLayout} data={plotData} config={plotConfig} onClick={this.handlePlotClick} ref={ref => this.plotRef = ref}/>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
             </div>
         );

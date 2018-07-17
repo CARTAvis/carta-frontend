@@ -312,6 +312,16 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const frame = this.props.frame;
         const frameView = frame ? frame.requiredFrameView : null;
         const currentView = frame ? frame.currentFrameView : null;
+        if (frame) {
+            const colorMapping = {
+                min: frame.scaleMin,
+                max: frame.scaleMax,
+                colormap: frame.colorMap,
+                contrast: frame.contrast,
+                bias: frame.bias,
+                scaling: frame.scaling
+            };
+        }
         const padding = this.props.overlaySettings.padding;
         return (
             <div className="raster-div">
