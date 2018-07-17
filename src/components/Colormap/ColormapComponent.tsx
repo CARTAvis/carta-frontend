@@ -66,7 +66,6 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, C
         if (this.plotRef && frame) {
             const xAxis = this.plotRef.el._fullLayout.xaxis;
             if (xAxis && xAxis.p2c) {
-                console.log(xAxis);
                 const leftMargin = this.plotRef.el._fullLayout.margin.l;
                 const cursorVal = xAxis.p2c(ev.nativeEvent.offsetX - leftMargin);
                 const posScaleMin = xAxis.c2p(frame.scaleMin) + leftMargin;
@@ -74,12 +73,10 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, C
                 console.log(cursorVal);
                 if (Math.abs(ev.nativeEvent.offsetX - posScaleMin) < pixelThreshold) {
                     this.movingScaleMin = true;
-                    console.log("Moving scaleMin");
                     ev.preventDefault();
                 }
                 else if (Math.abs(ev.nativeEvent.offsetX - posScaleMax) < pixelThreshold) {
                     this.movingScaleMax = true;
-                    console.log("Dragging scaleMax");
                     ev.preventDefault();
                 }
             }
