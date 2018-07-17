@@ -60,6 +60,7 @@ export class ImageViewComponent extends React.Component<{ appStore: AppStore }> 
                 {appStore.astReady && appStore.activeFrame && appStore.cursorInfo &&
                 <CursorOverlayComponent
                     cursorInfo={appStore.cursorInfo}
+                    mip={appStore.activeFrame.currentFrameView.mip}
                     width={appStore.overlayStore.viewWidth}
                     unit={appStore.activeFrame.unit}
                     bottom={0}

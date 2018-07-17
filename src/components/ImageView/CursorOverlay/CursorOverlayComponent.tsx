@@ -5,6 +5,7 @@ import {CSSProperties} from "react";
 
 class CursorOverlayProps {
     cursorInfo: CursorInfo;
+    mip: number;
     width: number;
     top?: number;
     bottom?: number;
@@ -33,8 +34,14 @@ export class CursorOverlayComponent extends React.PureComponent<CursorOverlayPro
             infoStrings.push(`Image: (${cursorInfo.posImageSpace.x.toFixed(0)}, ${cursorInfo.posImageSpace.y.toFixed(0)})`);
         }
         if (this.props.showValue && this.props.cursorInfo.value !== undefined) {
-            const unitString = (this.props.unit && this.props.unit.length) ? ` ${this.props.unit}` : "";
-            infoStrings.push(`Value: ${this.expo(this.props.cursorInfo.value, 2)}${unitString}`);
+            let valueString = `Value: ${this.expo(this.props.cursorInfo.value, 2)}`;
+            if (this.props.unit && this.props.unit.length) {
+                valueString += ` ${this.props.unit}`;
+            }
+            if (this.props.mip > 1) {
+                valueString += ` [${this.props.mip}\u00D7${this.props.mip} average]`;
+            }
+            infoStrings.push(valueString);
         }
 
         const height = (this.props.height !== undefined && this.props.height >= 0) ? this.props.height : 20;
