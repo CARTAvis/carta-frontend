@@ -37,23 +37,6 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, C
         this.setState({width, height});
     };
 
-    handlePlotClick = (ev) => {
-        console.log("Got plotly click");
-        // const clickX = ev.points[0].x;
-        // const appStore = this.props.appStore;
-        // if (appStore.activeFrame) {
-        //     const deltaMin = Math.abs(appStore.activeFrame.scaleMin - clickX);
-        //     const deltaMax = Math.abs(appStore.activeFrame.scaleMax - clickX);
-        //     if (deltaMin < deltaMax) {
-        //         appStore.activeFrame.scaleMin = clickX;
-        //     }
-        //     else {
-        //         appStore.activeFrame.scaleMax = clickX;
-        //     }
-        //
-        // }
-    };
-
     handleMouseClick = (ev: React.MouseEvent<HTMLDivElement>) => {
         if (this.movingScaleMin || this.movingScaleMax) {
             this.movingScaleMax = false;
@@ -67,10 +50,8 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, C
             const xAxis = this.plotRef.el._fullLayout.xaxis;
             if (xAxis && xAxis.p2c) {
                 const leftMargin = this.plotRef.el._fullLayout.margin.l;
-                const cursorVal = xAxis.p2c(ev.nativeEvent.offsetX - leftMargin);
                 const posScaleMin = xAxis.c2p(frame.scaleMin) + leftMargin;
                 const posScaleMax = xAxis.c2p(frame.scaleMax) + leftMargin;
-                console.log(cursorVal);
                 if (Math.abs(ev.nativeEvent.offsetX - posScaleMin) < pixelThreshold) {
                     this.movingScaleMin = true;
                     ev.preventDefault();
@@ -138,39 +119,56 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, C
         console.log("Drag event");
     };
 
+    private getScaleMarkers(position: number, hovering: boolean, moving: boolean) {
+        // By default, a single horizontal line marker is returned
+        let markers: any[] = [{
+            type: "line",
+            yref: "paper",
+            y0: 0,
+            y1: 1,
+            x0: position,
+            x1: position,
+            line: {
+                color: "red",
+                width: 1
+            }
+        }];
+
+        // If the marker is being hovered over, then we add a rectangle as well
+        if (hovering) {
+            // split the line into two lines above and below the rectangle, so that the line doesn't show through the semi-transparent rectangle
+            markers.push({...markers[0]});
+            markers[0].y1 = 0.33;
+            markers[1].y0 = 0.66;
+            // add the rectangle
+            markers.push({
+                type: "rect",
+                yref: "paper",
+                y0: 0.33,
+                y1: 0.66,
+                xsizemode: "pixel",
+                xanchor: position,
+                x0: -3,
+                x1: +3,
+                fillcolor: `rgba(255, 0, 0, ${moving ? 0.7 : 0.5})`,
+                line: {
+                    width: 1,
+                    color: "red"
+                }
+            });
+        }
+        return markers;
+    }
+
     render() {
         const appStore = this.props.appStore;
         const backgroundColor = "#F2F2F2";
 
-        let scaleMarkers: Partial<Shape>[] = [];
+        let scaleMarkers = [];
 
         if (appStore.activeFrame) {
-            scaleMarkers = [
-                {
-                    type: "line",
-                    yref: "paper",
-                    y0: 0,
-                    y1: 1,
-                    x0: appStore.activeFrame.scaleMin,
-                    x1: appStore.activeFrame.scaleMin,
-                    line: {
-                        color: "red",
-                        width: this.state.hoveringScaleMin ? 5 : 1
-                    }
-                },
-                {
-                    type: "line",
-                    yref: "paper",
-                    y0: 0,
-                    y1: 1,
-                    x0: appStore.activeFrame.scaleMax,
-                    x1: appStore.activeFrame.scaleMax,
-                    line: {
-                        color: "red",
-                        width: this.state.hoveringScaleMax ? 5 : 1
-                    }
-                },
-            ];
+            scaleMarkers = this.getScaleMarkers(appStore.activeFrame.scaleMin, this.state.hoveringScaleMin, this.movingScaleMin);
+            scaleMarkers = scaleMarkers.concat(this.getScaleMarkers(appStore.activeFrame.scaleMax, this.state.hoveringScaleMax, this.movingScaleMax));
         }
 
         let plotLayout: Partial<Layout> = {
@@ -213,6 +211,7 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, C
                 x: xVals,
                 y: histogram.bins,
                 type: "scatter",
+                hoverinfo: "x",
                 mode: "lines",
                 line: {
                     width: 1.0,
@@ -222,7 +221,7 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, C
         }
         return (
             <div style={{width: "100%", height: "100%"}} onDrag={this.handleDrag} onClick={this.handleMouseClick} onMouseMove={this.handleMouseMove}>
-                <Plot layout={plotLayout} data={plotData} config={plotConfig} onClick={this.handlePlotClick} ref={ref => this.plotRef = ref}/>
+                <Plot layout={plotLayout} data={plotData} config={plotConfig} ref={ref => this.plotRef = ref}/>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
             </div>
         );
