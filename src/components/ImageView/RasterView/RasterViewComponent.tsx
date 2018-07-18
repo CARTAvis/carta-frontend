@@ -3,6 +3,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {OverlayStore} from "../../../stores/OverlayStore";
 import "./RasterViewComponent.css";
+import {color} from "d3-color";
 
 const vertShader = require("!raw-loader!./GLSL/vert.glsl");
 const pixelShader = require("!raw-loader!./GLSL/pixel_float.glsl");
@@ -32,6 +33,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private MaxValUniform: WebGLUniformLocation;
     private BiasUniform: WebGLUniformLocation;
     private ContrastUniform: WebGLUniformLocation;
+    private GammaUniform: WebGLUniformLocation;
     private ScaleTypeUniform: WebGLUniformLocation;
     private NaNColor: WebGLUniformLocation;
     private DataTexture: WebGLUniformLocation;
@@ -139,9 +141,13 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     private updateUniforms() {
         const frame = this.props.frame;
-        this.gl.uniform1f(this.MinValUniform, frame.scaleMin);
-        this.gl.uniform1f(this.MaxValUniform, frame.scaleMax);
-        this.gl.uniform1i(this.CmapIndex, frame.colorMap);
+        this.gl.uniform1f(this.MinValUniform, frame.renderConfig.scaleMin);
+        this.gl.uniform1f(this.MaxValUniform, frame.renderConfig.scaleMax);
+        this.gl.uniform1i(this.CmapIndex, frame.renderConfig.colorMap);
+        this.gl.uniform1i(this.ScaleTypeUniform, frame.renderConfig.scaling);
+        this.gl.uniform1f(this.BiasUniform, frame.renderConfig.bias);
+        this.gl.uniform1f(this.ContrastUniform, frame.renderConfig.contrast);
+        this.gl.uniform1f(this.GammaUniform, frame.renderConfig.gamma);
     }
 
     private clearCanvas() {
@@ -245,9 +251,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.MinValUniform = this.gl.getUniformLocation(shaderProgram, "uMinVal");
         this.MaxValUniform = this.gl.getUniformLocation(shaderProgram, "uMaxVal");
         this.NaNColor = this.gl.getUniformLocation(shaderProgram, "uNaNColor");
-        // this.BiasUniform = this.gl.getUniformLocation(shaderProgram, "uBias");
-        // this.ContrastUniform = this.gl.getUniformLocation(shaderProgram, "uContrast");
-        // this.ScaleTypeUniform = this.gl.getUniformLocation(shaderProgram, "uScaleType");
+        this.BiasUniform = this.gl.getUniformLocation(shaderProgram, "uBias");
+        this.ContrastUniform = this.gl.getUniformLocation(shaderProgram, "uContrast");
+        this.ScaleTypeUniform = this.gl.getUniformLocation(shaderProgram, "uScaleType");
         this.DataTexture = this.gl.getUniformLocation(shaderProgram, "uDataTexture");
         this.CmapTexture = this.gl.getUniformLocation(shaderProgram, "uCmapTexture");
         this.NumCmaps = this.gl.getUniformLocation(shaderProgram, "uNumCmaps");
@@ -258,6 +264,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.gl.uniform1i(this.CmapIndex, 2);
         this.gl.uniform1f(this.MinValUniform, 3.4);
         this.gl.uniform1f(this.MaxValUniform, 5.50);
+        this.gl.uniform1f(this.BiasUniform, 0);
+        this.gl.uniform1f(this.ContrastUniform, 1);
+        this.gl.uniform1f(this.GammaUniform, 1);
         this.gl.uniform4f(this.NaNColor, 0, 0, 1, 1);
     }
 
@@ -314,15 +323,17 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const currentView = frame ? frame.currentFrameView : null;
         if (frame) {
             const colorMapping = {
-                min: frame.scaleMin,
-                max: frame.scaleMax,
-                colormap: frame.colorMap,
-                contrast: frame.contrast,
-                bias: frame.bias,
-                scaling: frame.scaling
+                min: frame.renderConfig.scaleMin,
+                max: frame.renderConfig.scaleMax,
+                colormap: frame.renderConfig.colorMap,
+                contrast: frame.renderConfig.contrast,
+                bias: frame.renderConfig.bias,
+                scaling: frame.renderConfig.scaling,
+                gamma: frame.renderConfig.gamma
             };
         }
         const padding = this.props.overlaySettings.padding;
+
         return (
             <div className="raster-div">
                 <canvas
