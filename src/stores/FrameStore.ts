@@ -9,8 +9,9 @@ export enum FrameScaling {
     SQRT = 2,
     SQUARE = 3,
     POWER = 4,
-    EXP = 5,
-    CUSTOM = 6
+    GAMMA = 5,
+    EXP = 6,
+    CUSTOM = 7
 }
 
 export class FrameInfo {
@@ -28,6 +29,16 @@ export class FrameView {
     mip: number;
 }
 
+export class FrameRenderConfig {
+    @observable scaling: FrameScaling;
+    @observable colorMap: number;
+    @observable scaleMin: number;
+    @observable scaleMax: number;
+    @observable contrast: number;
+    @observable bias: number;
+    @observable gamma: number;
+}
+
 export class FrameStore {
     @observable frameInfo: FrameInfo;
     @observable renderHiDPI: boolean;
@@ -39,18 +50,14 @@ export class FrameStore {
     @observable stokes;
     @observable channel;
     @observable currentFrameView: FrameView;
-    @observable scaling: FrameScaling;
-    @observable colorMap: number;
-    @observable scaleMin: number;
-    @observable scaleMax: number;
-    @observable contrast: number;
-    @observable bias: number;
+    @observable renderConfig: FrameRenderConfig;
     @observable rasterData: Float32Array;
     @observable overviewRasterData: Float32Array;
     @observable overviewRasterView: FrameView;
     @observable channelHistogram: CARTA.Histogram;
     @observable percentileRanks: Array<number>;
     @observable valid: boolean;
+
     private overlayStore: OverlayStore;
 
     constructor(overlay: OverlayStore) {
@@ -59,11 +66,14 @@ export class FrameStore {
         this.center = {x: 0, y: 0};
         this.stokes = 0;
         this.channel = 0;
-        this.bias = 0;
-        this.contrast = 1;
-        this.scaling = FrameScaling.LINEAR;
-        this.colorMap = 1;
         this.percentileRanks = [0.01, 0.05, 0.1, 0.5, 1, 2, 5, 10, 25, 50, 75, 90, 95, 98, 99, 99.5, 99.9, 99.95, 99.99];
+
+        this.renderConfig = new FrameRenderConfig();
+        this.renderConfig.bias = 0;
+        this.renderConfig.contrast = 1;
+        this.renderConfig.gamma = 1;
+        this.renderConfig.scaling = FrameScaling.LINEAR;
+        this.renderConfig.colorMap = 1;
     }
 
     @computed get requiredFrameView(): FrameView {
@@ -162,8 +172,8 @@ export class FrameStore {
         this.channelHistogram = histogram;
         const i = 3;
         if (this.percentiles.length > i * 2 && this.percentiles.length === this.percentileRanks.length) {
-            this.scaleMin = this.percentiles[i];
-            this.scaleMax = this.percentiles[this.percentiles.length - 1 - i];
+            this.renderConfig.scaleMin = this.percentiles[i];
+            this.renderConfig.scaleMax = this.percentiles[this.percentiles.length - 1 - i];
         }
     }
 

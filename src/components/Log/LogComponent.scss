@@ -1,7 +1,7 @@
 .log {
     padding: 5px;
     height: 100%;
-
+    min-width: 300px;
     .log-entry-list {
         height: calc(100% - 30px);
         margin: 0;
