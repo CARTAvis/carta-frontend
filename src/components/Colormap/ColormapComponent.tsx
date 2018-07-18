@@ -7,7 +7,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {Config, Data, Layout} from "plotly.js";
 import "./ColormapComponent.css";
 import {FrameScaling, FrameStore} from "../../stores/FrameStore";
-import {FormGroup, HTMLSelect, NonIdealState, NumericInput} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, NonIdealState, NumericInput, Tooltip, Position} from "@blueprintjs/core";
 
 // This allows us to use a minimal Plotly.js bundle with React-Plotly.js (900k compared to 2.7 MB)
 const Plot = createPlotlyComponent(Plotly);
@@ -213,6 +213,23 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, C
         return markers;
     }
 
+    private getTooltipText(scalingMode: FrameScaling) {
+        switch (scalingMode) {
+            case FrameScaling.LINEAR:
+                return "y=x";
+            case FrameScaling.SQUARE:
+                return "y=x\u00b2";
+            case FrameScaling.SQRT:
+                return "y=\u221ax";
+            case FrameScaling.GAMMA:
+                return "y=x^\u03B3";
+            case FrameScaling.LOG:
+                return "y=log(x)";
+            default:
+                return "Unknown";
+        }
+    }
+
     render() {
         const appStore = this.props.appStore;
         const backgroundColor = "#F2F2F2";
@@ -289,16 +306,20 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, C
                 }
                 {frame &&
                 <div className="colormap-config">
+
                     <FormGroup label={"Scaling type"} inline={true}>
-                        <HTMLSelect value={frame.renderConfig.scaling} onChange={this.handleScalingChange}>
-                            <option value={FrameScaling.LINEAR}>Linear</option>
-                            <option value={FrameScaling.LOG}>Logarithmic</option>
-                            <option value={FrameScaling.SQRT}>Square root</option>
-                            <option value={FrameScaling.SQUARE}>Squared</option>
-                            <option value={FrameScaling.POWER}>Power</option>
-                            <option value={FrameScaling.GAMMA}>Gamma</option>
-                        </HTMLSelect>
+                        <Tooltip content={this.getTooltipText(frame.renderConfig.scaling)} position={Position.BOTTOM} autoFocus={false}>
+                            <HTMLSelect value={frame.renderConfig.scaling} onChange={this.handleScalingChange}>
+                                <option value={FrameScaling.LINEAR}>Linear</option>
+                                <option value={FrameScaling.LOG}>Logarithmic</option>
+                                <option value={FrameScaling.SQRT}>Square root</option>
+                                <option value={FrameScaling.SQUARE}>Squared</option>
+                                <option value={FrameScaling.POWER}>Power</option>
+                                <option value={FrameScaling.GAMMA}>Gamma</option>
+                            </HTMLSelect>
+                        </Tooltip>
                     </FormGroup>
+
                     <FormGroup label={"Color map"} inline={true}>
                         <HTMLSelect value={frame.renderConfig.colorMap} onChange={this.handleColorMapChange}>
                             {COLOR_MAPS_ALL.map((name, index) => <option key={index} value={index}>{name}</option>)}
@@ -313,7 +334,6 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, C
                             minorStepSize={0.01}
                             majorStepSize={0.5}
                             value={frame.renderConfig.bias}
-                            disabled={frame.renderConfig.scaling === FrameScaling.GAMMA}
                             onValueChange={this.handleBiasChange}
                         />
                     </FormGroup>
@@ -326,7 +346,6 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, C
                             minorStepSize={0.01}
                             majorStepSize={0.5}
                             value={frame.renderConfig.contrast}
-                            disabled={frame.renderConfig.scaling === FrameScaling.GAMMA}
                             onValueChange={this.handleContrastChange}
                         />
                     </FormGroup>

@@ -253,6 +253,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.NaNColor = this.gl.getUniformLocation(shaderProgram, "uNaNColor");
         this.BiasUniform = this.gl.getUniformLocation(shaderProgram, "uBias");
         this.ContrastUniform = this.gl.getUniformLocation(shaderProgram, "uContrast");
+        this.GammaUniform = this.gl.getUniformLocation(shaderProgram, "uGamma");
         this.ScaleTypeUniform = this.gl.getUniformLocation(shaderProgram, "uScaleType");
         this.DataTexture = this.gl.getUniformLocation(shaderProgram, "uDataTexture");
         this.CmapTexture = this.gl.getUniformLocation(shaderProgram, "uCmapTexture");
@@ -325,7 +326,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             const colorMapping = {
                 min: frame.renderConfig.scaleMin,
                 max: frame.renderConfig.scaleMax,
-                colormap: frame.renderConfig.colorMap,
+                colorMap: frame.renderConfig.colorMap,
                 contrast: frame.renderConfig.contrast,
                 bias: frame.renderConfig.bias,
                 scaling: frame.renderConfig.scaling,

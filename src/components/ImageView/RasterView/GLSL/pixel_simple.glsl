@@ -23,6 +23,7 @@ uniform float uMinVal;
 uniform float uMaxVal;
 uniform float uBias;
 uniform float uContrast;
+uniform float uGamma;
 uniform vec4 uNaNColor;
 
 bool isnan(float val) {
@@ -52,18 +53,14 @@ void main(void) {
     else if (uScaleType == POWER) {
         alpha = pow(10.0, range * (alpha - 1.0));
     }
-
-
-    if (uScaleType == GAMMA) {
-        // TODO: Gamma mode
+    else if (uScaleType == GAMMA) {
+        alpha = pow(alpha, uGamma);
     }
-    // Skip contrast/bias when using gamma mode
-    else {
-        // bias mod
-        alpha = clamp(alpha - uBias, 0.0, 1.0);
-        // contrast mod
-        alpha = clamp((alpha - 0.5) * uContrast + 0.5, 0.0, 1.0);
-    }
+
+    // bias mod
+    alpha = clamp(alpha - uBias, 0.0, 1.0);
+    // contrast mod
+    alpha = clamp((alpha - 0.5) * uContrast + 0.5, 0.0, 1.0);
 
     float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
     vec2 cmapCoords = vec2(alpha, cmapYVal);
