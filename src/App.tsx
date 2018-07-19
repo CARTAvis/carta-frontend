@@ -2,6 +2,7 @@ import * as React from "react";
 import * as GoldenLayout from "golden-layout";
 import {ItemConfigType} from "golden-layout";
 import * as AST from "ast_wrapper";
+import * as _ from "lodash";
 import "./App.css";
 import {PlaceholderComponent} from "./components/Placeholder/PlaceholderComponent";
 import {RootMenuComponent} from "./components/Menu/RootMenuComponent";
@@ -18,114 +19,17 @@ import {URLConnectDialogComponent} from "./components/Dialogs/URLConnect/URLConn
 import {Alert, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import {ColormapComponent} from "./components/Colormap/ColormapComponent";
 import {LogComponent} from "./components/Log/LogComponent";
+import ReactResizeDetector from "react-resize-detector";
 
 @HotkeysTarget
 export class App extends React.Component<{ appStore: AppStore }> {
+
+    private glContainer: HTMLElement;
 
     constructor(props: { appStore: AppStore }) {
         super(props);
 
         const appStore = this.props.appStore;
-
-        const initialLayout: ItemConfigType[] = [{
-            type: "row",
-            content: [{
-                type: "column",
-                content: [{
-                    type: "react-component",
-                    component: "image-view",
-                    title: "No image loaded",
-                    height: 60,
-                    id: "imageView",
-                    isClosable: false,
-                    props: {appStore: this.props.appStore}
-                }, {
-                    type: "stack",
-                    content: [{
-                        type: "react-component",
-                        component: "colormap",
-                        title: "Color map",
-                        id: "colormap",
-                        props: {appStore: this.props.appStore}
-                    }, {
-                        type: "react-component",
-                        component: "log",
-                        title: "Log",
-                        id: "log",
-                        props: {logStore: this.props.appStore.logStore}
-                    }]
-                }, {
-                    type: "react-component",
-                    component: "placeholder",
-                    title: "Animation",
-                    id: "animation",
-                    props: {label: "Animation placeholder"}
-                }]
-            }, {
-                type: "column",
-                content: [{
-                    type: "react-component",
-                    component: "spatial-profiler",
-                    title: "X Profile: Cursor",
-                    id: "spatialprofile0",
-                    props: {
-                        label: "X Profile (Cursor)",
-                        dataSourceId: -1,
-                        profileCoordinate: "x",
-                        appStore: this.props.appStore
-                    }
-                }, {
-                    type: "react-component",
-                    component: "spatial-profiler",
-                    title: "Y Profile: Cursor",
-                    id: "spatialprofile1",
-                    props: {
-                        label: "Y Profile (Cursor)",
-                        dataSourceId: -1,
-                        profileCoordinate: "y",
-                        appStore: this.props.appStore
-                    }
-                }, {
-                    type: "react-component",
-                    component: "placeholder",
-                    title: "Z Profile: Cursor",
-                    id: "spectralprofile0",
-                    props: {label: "Graph placeholder"}
-                }, {
-                    type: "stack",
-                    height: 33.3,
-                    content: [{
-                        type: "react-component",
-                        component: "placeholder",
-                        title: "Histogram: Region #1",
-                        id: "histogram0",
-                        props: {label: "Histogram placeholder"}
-                    }, {
-                        type: "react-component",
-                        component: "placeholder",
-                        title: "Statistics: Region #1",
-                        id: "statistics0",
-                        props: {label: "Statistics placeholder"}
-                    }]
-                }]
-            }]
-        }];
-
-        const layout = new GoldenLayout({
-            settings: {
-                showPopoutIcon: false
-            },
-            content: initialLayout
-        });
-
-        layout.registerComponent("placeholder", PlaceholderComponent);
-        layout.registerComponent("image-view", ImageViewComponent);
-        layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
-        layout.registerComponent("colormap", ColormapComponent);
-        layout.registerComponent("log", LogComponent);
-
-        appStore.layoutSettings.setLayout(layout);
-
         AST.onReady.then(() => {
             appStore.astReady = true;
         });
@@ -187,8 +91,115 @@ export class App extends React.Component<{ appStore: AppStore }> {
     }
 
     public componentDidMount() {
+        const initialLayout: ItemConfigType[] = [{
+            type: "row",
+            content: [{
+                type: "column",
+                width: 60,
+                content: [{
+                    type: "react-component",
+                    component: "image-view",
+                    title: "No image loaded",
+                    height: 75,
+                    id: "imageView",
+                    isClosable: false,
+                    props: {appStore: this.props.appStore}
+                }, {
+                    type: "stack",
+                    content: [{
+                        type: "react-component",
+                        component: "colormap",
+                        title: "Color map",
+                        id: "colormap",
+                        props: {appStore: this.props.appStore}
+                    }, {
+                        type: "react-component",
+                        component: "log",
+                        title: "Log",
+                        id: "log",
+                        props: {logStore: this.props.appStore.logStore}
+                    }, {
+                        type: "react-component",
+                        component: "placeholder",
+                        title: "Animation",
+                        id: "animation",
+                        props: {label: "Animation placeholder"}
+                    }]
+                }]
+            }, {
+                type: "column",
+                content: [{
+                    type: "react-component",
+                    component: "spatial-profiler",
+                    title: "X Profile: Cursor",
+                    id: "spatialprofile0",
+                    props: {
+                        label: "X Profile (Cursor)",
+                        dataSourceId: -1,
+                        profileCoordinate: "x",
+                        appStore: this.props.appStore
+                    }
+                }, {
+                    type: "react-component",
+                    component: "spatial-profiler",
+                    title: "Y Profile: Cursor",
+                    id: "spatialprofile1",
+                    props: {
+                        label: "Y Profile (Cursor)",
+                        dataSourceId: -1,
+                        profileCoordinate: "y",
+                        appStore: this.props.appStore
+                    }
+                }, {
+                    type: "react-component",
+                    component: "placeholder",
+                    title: "Z Profile: Cursor",
+                    id: "spectralprofile0",
+                    props: {label: "Graph placeholder"}
+                }, {
+                    type: "stack",
+                    height: 33.3,
+                    content: [{
+                        type: "react-component",
+                        component: "placeholder",
+                        title: "Histogram: Region #1",
+                        id: "histogram0",
+                        props: {label: "Histogram placeholder"}
+                    }, {
+                        type: "react-component",
+                        component: "placeholder",
+                        title: "Statistics: Region #1",
+                        id: "statistics0",
+                        props: {label: "Statistics placeholder"}
+                    }]
+                }]
+            }]
+        }];
+        const layout = new GoldenLayout({
+            settings: {
+                showPopoutIcon: false
+            },
+            content: initialLayout
+        }, this.glContainer);
+
+        layout.registerComponent("placeholder", PlaceholderComponent);
+        layout.registerComponent("image-view", ImageViewComponent);
+        layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
+        layout.registerComponent("colormap", ColormapComponent);
+        layout.registerComponent("log", LogComponent);
+
+        this.props.appStore.layoutSettings.setLayout(layout);
+
         this.props.appStore.layoutSettings.layout.init();
     }
+
+    // GoldenLayout resize handler (throttled to 200 ms)
+    onContainerResize = _.throttle((width, height) => {
+        const appStore = this.props.appStore;
+        if (appStore.layoutSettings.layout) {
+            appStore.layoutSettings.layout.updateSize(width, height);
+        }
+    }, 200);
 
     public render() {
         const appStore = this.props.appStore;
@@ -202,6 +213,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>
+                <div className="gl-container" ref={ref => this.glContainer = ref}>
+                    <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize}/>
+                </div>
             </div>
         );
     }
