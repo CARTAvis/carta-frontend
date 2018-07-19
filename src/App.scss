@@ -4,6 +4,7 @@
     position: absolute;
     top: 0;
     left: 0;
+    z-index: -100;
 }
 
 .gl-container {
@@ -12,6 +13,7 @@
     bottom: 0;
     left: 0;
     right: 0;
+    z-index: -100;
 }
 
 .minimal-dialog-backdrop {
