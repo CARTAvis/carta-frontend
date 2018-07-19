@@ -17,7 +17,7 @@ import {FileBrowserDialogComponent} from "./components/Dialogs/FileBrowser/FileB
 import {FileBrowserStore} from "./stores/FileBrowserStore";
 import {URLConnectDialogComponent} from "./components/Dialogs/URLConnect/URLConnectDialogComponent";
 import {Alert, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
-import {ColormapComponent} from "./components/Colormap/ColormapComponent";
+import {RenderConfigComponent} from "./components/RenderConfig/RenderConfigComponent";
 import {LogComponent} from "./components/Log/LogComponent";
 import ReactResizeDetector from "react-resize-detector";
 
@@ -108,9 +108,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     type: "stack",
                     content: [{
                         type: "react-component",
-                        component: "colormap",
-                        title: "Color map",
-                        id: "colormap",
+                        component: "render-config",
+                        title: "Render Configuration",
+                        id: "render-config",
                         props: {appStore: this.props.appStore}
                     }, {
                         type: "react-component",
@@ -185,7 +185,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
         layout.registerComponent("placeholder", PlaceholderComponent);
         layout.registerComponent("image-view", ImageViewComponent);
         layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
-        layout.registerComponent("colormap", ColormapComponent);
+        layout.registerComponent("render-config", RenderConfigComponent);
         layout.registerComponent("log", LogComponent);
 
         this.props.appStore.layoutSettings.setLayout(layout);

@@ -5,9 +5,9 @@ import * as Plotly from "plotly.js/dist/plotly-cartesian";
 import createPlotlyComponent from "react-plotly.js/factory";
 import ReactResizeDetector from "react-resize-detector";
 import {Config, Data, Layout} from "plotly.js";
-import "./ColormapComponent.css";
+import "./RenderConfigComponent.css";
 import {FrameScaling, FrameStore} from "../../stores/FrameStore";
-import {FormGroup, HTMLSelect, NonIdealState, NumericInput, Tooltip, Position} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, NonIdealState, NumericInput, Tooltip, Position, ButtonGroup, Button} from "@blueprintjs/core";
 
 // This allows us to use a minimal Plotly.js bundle with React-Plotly.js (900k compared to 2.7 MB)
 const Plot = createPlotlyComponent(Plotly);
@@ -19,11 +19,11 @@ const COLOR_MAPS_ALL = ["accent", "afmhot", "autumn", "binary", "Blues", "bone",
     "RdBu", "RdGy", "RdPu", "RdYlBu", "RdYlGn", "reds", "seismic", "set1", "set2", "set3", "spectral", "spring", "summer", "tab10", "tab20",
     "tab20b", "tab20c", "terrain", "viridis", "winter", "Wistia", "YlGn", "YlGnBu", "YlOrBr", "YlOrRd"];
 
-class ColormapComponentProps {
+class RenderConfigComponentProps {
     appStore: AppStore;
 }
 
-class ColormapComponentState {
+class RenderConfigComponentState {
     width: number;
     height: number;
     hoveringScaleMin: boolean;
@@ -33,14 +33,14 @@ class ColormapComponentState {
 }
 
 @observer
-export class ColormapComponent extends React.Component<ColormapComponentProps, ColormapComponentState> {
+export class RenderConfigComponent extends React.Component<RenderConfigComponentProps, RenderConfigComponentState> {
 
     private plotRef: any;
     private movingScaleMax: boolean;
     private movingScaleMin: boolean;
     private cachedFrame: FrameStore;
 
-    constructor(props: ColormapComponentProps) {
+    constructor(props: RenderConfigComponentProps) {
         super(props);
         this.state = {width: 0, height: 0, hoveringScaleMin: false, hoveringScaleMax: false, xRange: undefined, yRange: undefined};
     }
@@ -172,6 +172,13 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, C
         this.props.appStore.activeFrame.renderConfig.gamma = value;
     };
 
+    handlePercentileRankClick = (value: number) => {
+        if (!this.props.appStore.activeFrame.setFromPercentileRank(value)) {
+            this.props.appStore.alertStore.showAlert(`Couldn't set percentile of rank ${value}%`);
+            this.props.appStore.logStore.addError(`Couldn't set percentile of rank ${value}%`, ["render"]);
+        }
+    };
+
     private getScaleMarkers(position: number, hovering: boolean, moving: boolean) {
         // By default, a single horizontal line marker is returned
         let markers: any[] = [{
@@ -240,16 +247,17 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, C
             scaleMarkers = scaleMarkers.concat(this.getScaleMarkers(frame.renderConfig.scaleMax, this.state.hoveringScaleMax, this.movingScaleMax));
         }
 
-        let unitString;
+        let unitString = "";
         if (frame && frame.unit) {
             unitString = ` (${frame.unit})`;
         }
+
         let plotLayout: Partial<Layout> = {
             autosize: true,
             paper_bgcolor: backgroundColor,
             plot_bgcolor: backgroundColor,
             xaxis: {
-                title: `Value ${unitString}`,
+                title: `Value${unitString}`,
                 range: this.state.xRange
             },
             yaxis: {
@@ -293,20 +301,27 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, C
                 }
             });
         }
-
+        const percentileRanks = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
+        const percentileRankbuttons = percentileRanks.map(rank => <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)}>{`${rank}%`}</Button>);
         return (
-            <div className="colormap-container">
+            <div className="render-config-container">
                 {!frame &&
                 <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
                 }
                 {frame &&
-                <div className="histogram-plot" onClick={this.handleMouseClick} onMouseMove={this.handleMouseMove}>
-                    <Plot layout={plotLayout} data={plotData} config={plotConfig} ref={ref => this.plotRef = ref} onRelayout={this.handlePlotRelayout} useResizeHandler={true} style={{width: "100%", height: "100%"}}/>
+                <div className="histogram-container">
+                    <div className="percentile-buttons">
+                        <ButtonGroup fill={true}>
+                            {percentileRankbuttons}
+                        </ButtonGroup>
+                    </div>
+                    <div className="histogram-plot" onClick={this.handleMouseClick} onMouseMove={this.handleMouseMove}>
+                        <Plot layout={plotLayout} data={plotData} config={plotConfig} ref={ref => this.plotRef = ref} onRelayout={this.handlePlotRelayout} useResizeHandler={true} style={{width: "100%", height: "100%"}}/>
+                    </div>
                 </div>
                 }
                 {frame &&
                 <div className="colormap-config">
-
                     <FormGroup label={"Scaling type"} inline={true}>
                         <Tooltip content={this.getTooltipText(frame.renderConfig.scaling)} position={Position.BOTTOM} autoFocus={false}>
                             <HTMLSelect value={frame.renderConfig.scaling} onChange={this.handleScalingChange}>
