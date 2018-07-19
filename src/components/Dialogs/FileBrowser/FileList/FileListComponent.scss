@@ -28,13 +28,37 @@ $browser-table-color: #137CBD;
     width: 84px;
 }
 
+// Hide table columns as the screen gets smaller
+@media only screen and (max-width: 925px) {
+    #file-header-size {
+        width: 0;
+        display: none;
+    }
+    .file-table-entry {
+        td:nth-of-type(4) {
+            display: none;
+        }
+    }
+}
+@media only screen and (max-width: 800px) {
+    #file-header-type, #file-header-size {
+        width: 0;
+        display: none;
+    }
+    .file-table-entry {
+        td:nth-of-type(3), td:nth-of-type(4) {
+            display: none;
+        }
+    }
+}
+
 .file-table-entry {
     cursor: pointer;
     &:hover {
         background-color: rgba($browser-table-color, 0.05);
     }
 
-    &:last-of-type{
+    &:last-of-type {
         td {
             border-bottom: solid 1px rgba($browser-table-color, 0.2);
         }
