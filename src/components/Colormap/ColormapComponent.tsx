@@ -261,7 +261,7 @@ export class ColormapComponent extends React.Component<ColormapComponentProps, C
                 t: 10,
                 r: 10,
                 l: 10,
-                b: 60,
+                b: 35,
             },
             shapes: scaleMarkers
         };
