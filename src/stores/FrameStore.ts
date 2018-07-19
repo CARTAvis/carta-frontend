@@ -168,6 +168,26 @@ export class FrameStore {
         }
     }
 
+    @action setFromPercentileRank(rank: number) {
+        // Find max and min if the rank is 100%
+        if (rank === 100) {
+            this.renderConfig.scaleMin = this.channelHistogram.firstBinCenter - this.channelHistogram.binWidth * 0.5;
+            this.renderConfig.scaleMax = this.channelHistogram.firstBinCenter + this.channelHistogram.binWidth * (this.channelHistogram.bins.length + 0.5);
+            return true;
+        }
+
+        // Look for the appropriate percentile and its complement
+        const indexRank = this.percentileRanks.findIndex(value => Math.abs(rank - value) < 1e-5);
+        const indexRankComplement = this.percentileRanks.findIndex(value => Math.abs((100 - rank) - value) < 1e-5);
+        if (indexRank === -1 || indexRankComplement === -1 || this.percentileRanks.length !== this.percentiles.length) {
+            return false;
+        }
+
+        this.renderConfig.scaleMin = this.percentiles[indexRankComplement];
+        this.renderConfig.scaleMax = this.percentiles[indexRank];
+        return true;
+    }
+
     @action updateChannelHistogram(histogram: CARTA.Histogram) {
         this.channelHistogram = histogram;
         const i = 3;
