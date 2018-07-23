@@ -1,6 +1,19 @@
 .App {
     height: 100%;
     width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -100;
+}
+
+.gl-container {
+    position: absolute;
+    top: 40px;
+    bottom: 5px;
+    left: 5px;
+    right: 5px;
+    z-index: -100;
 }
 
 .minimal-dialog-backdrop {
