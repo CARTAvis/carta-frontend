@@ -14,6 +14,15 @@
         padding-right: 10px;
         padding-top: 10px;
         overflow-y: auto;
+        flex-wrap: nowrap;
+        display: flex;
+        flex-direction: column;
+        div{
+            margin-left: auto;
+        }
+        .percentile-select {
+            margin-right: 0;
+        }
         .bp3-numeric-input {
             //width: 80px;
         }
@@ -29,12 +38,20 @@
         min-width: 0;
         padding-bottom: 5px;
 
-        .percentile-buttons {
-            margin: 5px auto auto 5px;
-            height: 30px;
-        }
         .histogram-plot {
             height: calc(100% - 30px);
         }
+    }
+}
+
+.percentile-buttons {
+    margin: 5px auto auto 5px;
+    height: 30px;
+}
+
+.percentile-select {
+    margin: 5px auto auto 5px;
+    .bp3-button {
+        margin-left: 5px;
     }
 }

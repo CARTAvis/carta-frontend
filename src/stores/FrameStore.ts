@@ -153,6 +153,20 @@ export class FrameStore {
         return calculatedPercentiles;
     }
 
+    @computed get histogramMin() {
+        if (!this.channelHistogram) {
+            return undefined;
+        }
+        return this.channelHistogram.firstBinCenter - 0.5 * this.channelHistogram.binWidth;
+    }
+
+    @computed get histogramMax() {
+        if (!this.channelHistogram) {
+            return undefined;
+        }
+        return this.channelHistogram.firstBinCenter + (this.channelHistogram.bins.length + 0.5) * this.channelHistogram.binWidth;
+    }
+
     @computed get unit() {
         if (!this.frameInfo || !this.frameInfo.fileInfoExtended || !this.frameInfo.fileInfoExtended.headerEntries) {
             return undefined;
@@ -171,8 +185,8 @@ export class FrameStore {
     @action setFromPercentileRank(rank: number) {
         // Find max and min if the rank is 100%
         if (rank === 100) {
-            this.renderConfig.scaleMin = this.channelHistogram.firstBinCenter - this.channelHistogram.binWidth * 0.5;
-            this.renderConfig.scaleMax = this.channelHistogram.firstBinCenter + this.channelHistogram.binWidth * (this.channelHistogram.bins.length + 0.5);
+            this.renderConfig.scaleMin = this.histogramMin;
+            this.renderConfig.scaleMax = this.histogramMax;
             return true;
         }
 

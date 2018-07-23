@@ -56,6 +56,11 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         this.setState({width, height});
     };
 
+    handleRightClick = (ev: React.MouseEvent<HTMLDivElement>) => {
+        ev.preventDefault();
+        this.handleMouseClick(ev);
+    };
+
     handleMouseClick = (ev: React.MouseEvent<HTMLDivElement>) => {
         if (this.movingScaleMin || this.movingScaleMax) {
             this.movingScaleMax = false;
@@ -102,7 +107,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                         this.setState({hoveringScaleMax: true, hoveringScaleMin: false});
                     }
                     else {
-                        frame.renderConfig.scaleMin = cursorVal;
+                        frame.renderConfig.scaleMin = Math.max(cursorVal, frame.histogramMin);
                     }
                 }
                 else if (this.movingScaleMax) {
@@ -113,7 +118,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                         this.setState({hoveringScaleMin: true, hoveringScaleMax: false});
                     }
                     else {
-                        frame.renderConfig.scaleMax = cursorVal;
+                        frame.renderConfig.scaleMax = Math.min(cursorVal, frame.histogramMax);
                     }
                 }
                 else if (Math.abs(ev.nativeEvent.offsetX - posScaleMin) < pixelThreshold) {
@@ -303,20 +308,49 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         }
         const percentileRanks = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
         const percentileRankbuttons = percentileRanks.map(rank => <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)}>{`${rank}%`}</Button>);
+        const percentileRankOptions = percentileRanks.map(rank => <option key={rank} value={rank}>{`${rank}%`}</option>);
+
+        const percentileButtonsDiv = (
+            <div className="percentile-buttons">
+                <ButtonGroup fill={true}>
+                    {percentileRankbuttons}
+                </ButtonGroup>
+            </div>
+        );
+
+        const percentileSelectDiv = (
+            <div className="percentile-select">
+                <FormGroup label="Limits" inline={true}>
+                    <HTMLSelect>
+                        {percentileRankOptions}
+                    </HTMLSelect>
+                    <Button>Apply</Button>
+                </FormGroup>
+            </div>
+        );
+
+        const percentileButtonCutoff = 600;
+        const histogramCutoff = 430;
+
         return (
             <div className="render-config-container">
                 {!frame &&
                 <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
                 }
-                {frame &&
+                {frame && this.state.width > histogramCutoff &&
                 <div className="histogram-container">
-                    <div className="percentile-buttons">
-                        <ButtonGroup fill={true}>
-                            {percentileRankbuttons}
-                        </ButtonGroup>
-                    </div>
-                    <div className="histogram-plot" onClick={this.handleMouseClick} onMouseMove={this.handleMouseMove}>
-                        <Plot layout={plotLayout} data={plotData} config={plotConfig} ref={ref => this.plotRef = ref} onRelayout={this.handlePlotRelayout} useResizeHandler={true} style={{width: "100%", height: "100%"}}/>
+                    {this.state.width > percentileButtonCutoff && percentileButtonsDiv}
+                    {this.state.width <= percentileButtonCutoff && percentileSelectDiv}
+                    <div className="histogram-plot" onClick={this.handleMouseClick} onMouseMove={this.handleMouseMove} onContextMenu={this.handleRightClick}>
+                        <Plot
+                            layout={plotLayout}
+                            data={plotData}
+                            config={plotConfig}
+                            ref={ref => this.plotRef = ref}
+                            onRelayout={this.handlePlotRelayout}
+                            useResizeHandler={true}
+                            style={{width: "100%", height: "100%"}}
+                        />
                     </div>
                 </div>
                 }
@@ -334,7 +368,6 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                             </HTMLSelect>
                         </Tooltip>
                     </FormGroup>
-
                     <FormGroup label={"Color map"} inline={true}>
                         <HTMLSelect value={frame.renderConfig.colorMap} onChange={this.handleColorMapChange}>
                             {COLOR_MAPS_ALL.map((name, index) => <option key={index} value={index}>{name}</option>)}
@@ -377,6 +410,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                             onValueChange={this.handleGammaChange}
                         />
                     </FormGroup>
+                    {this.state.width < histogramCutoff && percentileSelectDiv}
                 </div>
                 }
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
