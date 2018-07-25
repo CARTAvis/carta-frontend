@@ -27,7 +27,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
 
     componentDidUpdate() {
         if (this.createdDragSources) {
-            console.log("Already created drag sources, skipping...");
+            return;
         }
 
         if (this.props.layout && !this.createdDragSources) {

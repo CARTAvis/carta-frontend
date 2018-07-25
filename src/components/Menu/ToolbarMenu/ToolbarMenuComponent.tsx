@@ -8,7 +8,7 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
 
     componentDidUpdate() {
         if (this.createdDragSources) {
-            console.log("Already created drag sources, skipping...");
+            return;
         }
 
         const layout = this.props.appStore.layoutSettings.layout;
@@ -32,7 +32,7 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
                 component: "log",
                 title: "Log",
                 id: "log-docked",
-                props: {appStore: this.props.appStore.logStore, id: "log-docked", docked: true}
+                props: {appStore: this.props.appStore, id: "log-docked", docked: true}
             };
             const logWidget = document.getElementById("logWidget");
             if (logWidget) {
@@ -69,14 +69,14 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
 
     public render() {
         return (
-            <>
+            <div className="toolbar-menu">
                 <Tooltip content="Render Config Widget">
                     <Button icon={"style"} id="renderConfigWidget" minimal={true} onClick={this.createRenderWidget}/>
                 </Tooltip>
                 <Tooltip content="Log Widget">
                     <Button icon={"application"} id="logWidget" minimal={true} onClick={this.createLogWidget}/>
                 </Tooltip>
-            </>
+            </div>
         );
     }
 }
