@@ -4,50 +4,10 @@ import {Button, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/c
 import {AppStore} from "../../stores/AppStore";
 import {observer} from "mobx-react";
 import {ConnectionStatus} from "../../services/BackendService";
+import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 
 @observer
 export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
-
-    private colorMapRef: MenuItem;
-    private createdDragSources = false;
-
-    componentDidUpdate() {
-        if (this.createdDragSources) {
-            console.log("Already created drag sources, skipping...");
-        }
-
-        const layout = this.props.appStore.layoutSettings.layout;
-        if (layout && !this.createdDragSources) {
-            // Render config widget
-            const renderConfigWidgetConfig = {
-                type: "react-component",
-                component: "render-config",
-                title: "Render Configuration",
-                id: "render-config",
-                props: {appStore: this.props.appStore}
-            };
-            const renderConfigWidget = document.getElementById("renderConfigWidget");
-            if (renderConfigWidget) {
-                layout.createDragSource(renderConfigWidget, renderConfigWidgetConfig);
-            }
-
-            // Log widget
-            const logWidgetConfig = {
-                type: "react-component",
-                component: "log",
-                title: "Log",
-                id: "log",
-                props: {logStore: this.props.appStore.logStore}
-            };
-            const logWidget = document.getElementById("logWidget");
-            if (logWidget) {
-                layout.createDragSource(logWidget, logWidgetConfig);
-            }
-
-            this.createdDragSources = true;
-        }
-    }
-
     render() {
         const appStore = this.props.appStore;
 
@@ -151,7 +111,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 <Menu.Divider/>
                 <Menu.Item text="3D Height-map" icon={"mountain"}/>
                 <Menu.Item text="Animator" icon={"video"}/>
-                <Menu.Item text="Render Config" icon={"style"} ref={ref => this.colorMapRef = ref}/>
+                <Menu.Item text="Render Config" icon={"style"}/>
                 <Menu.Divider/>
                 <Menu.Item text="Presets" icon={"new-grid-item"}>
                     <Menu.Item text="Image Only"/>
@@ -197,12 +157,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                         <Menu.Item text="Help"/>
                     </Menu>
                 </Popover>
-                <Tooltip content="Render Config Widget">
-                    <Button icon={"style"} id="renderConfigWidget" minimal={true}/>
-                </Tooltip>
-                <Tooltip content="Log Widget">
-                    <Button icon={"application"} id="logWidget" minimal={true}/>
-                </Tooltip>
+                <ToolbarMenuComponent appStore={appStore}/>
             </div>
         );
     }

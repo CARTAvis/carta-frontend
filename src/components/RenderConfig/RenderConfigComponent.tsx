@@ -21,6 +21,8 @@ const COLOR_MAPS_ALL = ["accent", "afmhot", "autumn", "binary", "Blues", "bone",
 
 class RenderConfigComponentProps {
     appStore: AppStore;
+    id: string;
+    docked: boolean;
 }
 
 class RenderConfigComponentState {
@@ -43,6 +45,13 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
     constructor(props: RenderConfigComponentProps) {
         super(props);
         this.state = {width: 0, height: 0, hoveringScaleMin: false, hoveringScaleMax: false, xRange: undefined, yRange: undefined};
+    }
+
+    componentDidMount() {
+        const floatingWidgetStore = this.props.appStore.floatingWidgetStore;
+        if (this.props.docked && floatingWidgetStore.widgets.find(w => w.id === this.props.id)) {
+            floatingWidgetStore.removeWidget(this.props.id);
+        }
     }
 
     componentDidUpdate() {

@@ -1,29 +1,41 @@
 import * as React from "react";
 import "./LogComponent.css";
-import {LogStore} from "../../stores/LogStore";
 import {observer} from "mobx-react";
 import {Button, Code, Colors, FormGroup, HTMLSelect, NonIdealState, Tag} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import ScrollToBottom from "react-scroll-to-bottom";
 import {Intent} from "@blueprintjs/core/lib/esm/common/intent";
+import {AppStore} from "../../stores/AppStore";
+
+class LogComponentProps {
+    appStore: AppStore;
+    id: string;
+    docked: boolean;
+}
 
 @observer
-export class LogComponent extends React.Component<{ logStore: LogStore }> {
+export class LogComponent extends React.Component<LogComponentProps> {
+    componentDidMount() {
+        const floatingWidgetStore = this.props.appStore.floatingWidgetStore;
+        if (this.props.docked && floatingWidgetStore.widgets.find(w => w.id === this.props.id)) {
+            floatingWidgetStore.removeWidget(this.props.id);
+        }
+    }
 
     onClearClicked = () => {
-        this.props.logStore.clearLog();
+        this.props.appStore.logStore.clearLog();
     };
 
     onTagClicked = (tag: string) => {
-        this.props.logStore.toggleTag(tag);
+        this.props.appStore.logStore.toggleTag(tag);
     };
 
     onLogLevelChanged = (event: React.FormEvent<HTMLSelectElement>) => {
-        this.props.logStore.setLevel(parseInt(event.currentTarget.value));
+        this.props.appStore.logStore.setLevel(parseInt(event.currentTarget.value));
     };
 
     private isTagHidden = (tag: string) => {
-        return (this.props.logStore.hiddenTags.indexOf(tag) !== -1);
+        return (this.props.appStore.logStore.hiddenTags.indexOf(tag) !== -1);
     };
 
     private colorFromSeverity(severity: CARTA.ErrorSeverity): string {
@@ -51,7 +63,7 @@ export class LogComponent extends React.Component<{ logStore: LogStore }> {
     }
 
     render() {
-        const logStore = this.props.logStore;
+        const logStore = this.props.appStore.logStore;
         const entries = logStore.logEntries;
         const hiddenTags = logStore.hiddenTags;
 

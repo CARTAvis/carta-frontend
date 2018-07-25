@@ -1,60 +1,104 @@
 import * as React from "react";
 import "./FloatingWidgetComponent.css";
+import Rnd from "react-rnd";
+import {Icon} from "@blueprintjs/core";
+import * as GoldenLayout from "golden-layout";
+import {AppStore} from "../../stores/AppStore";
 
 class FloatingWidgetComponentProps {
     title: string;
-    width: number;
-    height: number;
+    layout: GoldenLayout;
+    type: string;
+    id: string;
+    appStore: AppStore;
+    minWidth: number;
+    minHeight: number;
     children?: any;
+    zIndex?: number;
+    isSelected?: boolean;
+    onSelected?: () => void;
+    onClosed?: () => void;
 }
 
-class FloatingWidgetComponentState {
-    dragStartX: number;
-    dragStartY: number;
-    isDragging: boolean;
-    offsetX: number;
-    offsetY: number;
-    initialX: number;
-    initialY: number;
-}
+export class FloatingWidgetComponent extends React.Component<FloatingWidgetComponentProps> {
 
-export class FloatingWidgetComponent extends React.Component<FloatingWidgetComponentProps, FloatingWidgetComponentState> {
-    constructor(props: FloatingWidgetComponentProps) {
-        super(props);
-        this.state = {initialX: 100, initialY: 100, dragStartX: 0, dragStartY: 0, isDragging: false, offsetX: 0, offsetY: 0};
+    private pinElementRef: HTMLElement;
+    private createdDragSources = false;
+
+    componentDidUpdate() {
+        if (this.createdDragSources) {
+            console.log("Already created drag sources, skipping...");
+        }
+
+        if (this.props.layout && !this.createdDragSources) {
+            // Render config widget
+            let widgetConfig: GoldenLayout.ItemConfigType;
+
+            if (this.props.type === "render-config") {
+                widgetConfig = {
+                    type: "react-component",
+                    component: "render-config",
+                    title: "Render Configuration",
+                    id: this.props.id,
+                    props: {appStore: this.props.appStore, id: this.props.id, docked: true}
+                };
+            }
+            else if (this.props.type === "log") {
+                widgetConfig = {
+                    type: "react-component",
+                    component: "log",
+                    title: "Log",
+                    id: this.props.id,
+                    props: {appStore: this.props.appStore, id: this.props.id, docked: true}
+                };
+            }
+
+            if (this.pinElementRef && widgetConfig) {
+                this.props.layout.createDragSource(this.pinElementRef, widgetConfig);
+            }
+
+            this.createdDragSources = true;
+        }
     }
 
-    handleMouseDown = (ev: React.MouseEvent<HTMLDivElement>) => {
-        this.setState({dragStartX: ev.nativeEvent.offsetX, dragStartY: ev.nativeEvent.offsetY});
-        ev.preventDefault();
-    };
-
-    handleMouseUp = (ev: React.MouseEvent<HTMLDivElement>) => {
-        console.log(ev);
-        this.setState({initialX: this.state.initialX + this.state.offsetX, initialY: this.state.initialY + this.state.offsetY, offsetX: 0, offsetY: 0});
-    };
-
-    handleMouseMove = (ev: React.MouseEvent<HTMLDivElement>) => {
-        if (ev.buttons === 1) {
-            const offsetX = ev.nativeEvent.offsetX - this.state.dragStartX;
-            const offsetY = ev.nativeEvent.offsetY - this.state.dragStartY;
-            this.setState({offsetX, offsetY});
-            ev.preventDefault();
-        }
-    };
+    constructor(props: FloatingWidgetComponentProps) {
+        super(props);
+    }
 
     public render() {
-        const headerHeight = 25;
+        const headerHeight = 24;
+        const titleClass = this.props.isSelected ? "floating-header selected" : "floating-header";
         return (
-            <div className="floating-widget"
-                 style={{width: `${this.props.width}px`, height: `${this.props.height + headerHeight}px`, top: `${this.state.offsetY + this.state.initialX}px`, left: `${this.state.offsetX + this.state.initialY}px`}}>
-                <div className="floating-title" onMouseDown={this.handleMouseDown} onMouseMove={this.handleMouseMove} onMouseUp={this.handleMouseUp}>
-                    {this.props.title}
+            <Rnd
+                className="floating-widget"
+                style={{zIndex: this.props.zIndex}}
+                default={{
+                    x: 100,
+                    y: 100,
+                    width: 320,
+                    height: 200,
+                }}
+                minWidth={this.props.minWidth}
+                minHeight={this.props.minHeight + headerHeight}
+                bounds={".App"}
+                dragHandleClassName={"floating-title"}
+                onMouseDown={this.props.onSelected}
+            >
+                <div className={titleClass}>
+                    <div className={"floating-title"}>
+                        {this.props.title}
+                    </div>
+                    <div className="floating-header-button" ref={ref => this.pinElementRef = ref}>
+                        <Icon icon={"pin"}/>
+                    </div>
+                    <div onMouseDown={this.props.onClosed} className="floating-header-button">
+                        <Icon icon={"cross"}/>
+                    </div>
                 </div>
                 <div className="floating-content">
                     {this.props.children}
                 </div>
-            </div>
+            </Rnd>
         );
     }
 }

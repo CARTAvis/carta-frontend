@@ -21,8 +21,10 @@ import {RenderConfigComponent} from "./components/RenderConfig/RenderConfigCompo
 import {LogComponent} from "./components/Log/LogComponent";
 import ReactResizeDetector from "react-resize-detector";
 import {FloatingWidgetComponent} from "./components/FloatingWidget/FloatingWidgetComponent";
+import {WidgetConfig} from "./stores/FloatingWidgetStore";
+import {FloatingWidgetManagerComponent} from "./components/FloatingWidgetManager/FloatingWidgetManagerComponent";
 
-@HotkeysTarget
+@HotkeysTarget @observer
 export class App extends React.Component<{ appStore: AppStore }> {
 
     private glContainer: HTMLElement;
@@ -111,14 +113,14 @@ export class App extends React.Component<{ appStore: AppStore }> {
                         type: "react-component",
                         component: "render-config",
                         title: "Render Configuration",
-                        id: "render-config",
-                        props: {appStore: this.props.appStore}
+                        id: "render-config-docked",
+                        props: {appStore: this.props.appStore, id: "render-config-docked", docked: true}
                     }, {
                         type: "react-component",
                         component: "log",
                         title: "Log",
-                        id: "log",
-                        props: {logStore: this.props.appStore.logStore}
+                        id: "log-docked",
+                        props: {appStore: this.props.appStore, id: "log-docked", docked: true}
                     }, {
                         type: "react-component",
                         component: "placeholder",
@@ -190,7 +192,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
         layout.registerComponent("log", LogComponent);
 
         this.props.appStore.layoutSettings.setLayout(layout);
-
         this.props.appStore.layoutSettings.layout.init();
     }
 
@@ -204,6 +205,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
     public render() {
         const appStore = this.props.appStore;
+
         return (
             <div className="App">
                 <DevTools/>
@@ -217,9 +219,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 <div className="gl-container" ref={ref => this.glContainer = ref}>
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize}/>
                 </div>
-                <FloatingWidgetComponent title="Testing" width={450} height={350}>
-                    <LogComponent logStore={appStore.logStore}/>
-                </FloatingWidgetComponent>
+                <FloatingWidgetManagerComponent appStore={appStore}/>
             </div>
         );
     }

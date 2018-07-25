@@ -11,6 +11,7 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import * as _ from "lodash";
 import {LogStore} from "./LogStore";
+import {FloatingWidgetStore} from "./FloatingWidgetStore";
 
 export class AppStore {
     // Backend service
@@ -52,6 +53,9 @@ export class AppStore {
     @action hideURLConnect = () => {
         this.urlConnectDialogVisible = false;
     };
+
+    // Floating Widgets
+    @observable floatingWidgetStore: FloatingWidgetStore;
 
     // Frame actions
     @action addFrame = (directory: string, file: string, hdu: string, fileId: number) => {
@@ -210,6 +214,7 @@ export class AppStore {
         this.alertStore = new AlertStore();
         this.overlayStore = new OverlayStore();
         this.layoutSettings = new LayoutStore();
+        this.floatingWidgetStore = new FloatingWidgetStore();
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
 

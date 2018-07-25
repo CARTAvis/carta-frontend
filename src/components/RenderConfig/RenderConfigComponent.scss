@@ -17,7 +17,7 @@
         flex-wrap: nowrap;
         display: flex;
         flex-direction: column;
-        div{
+        div {
             margin-left: auto;
         }
         .percentile-select {
@@ -51,6 +51,9 @@
 
 .percentile-select {
     margin: 5px auto auto 5px;
+    .bp3-form-group {
+        margin: 0;
+    }
     .bp3-button {
         margin-left: 5px;
     }
