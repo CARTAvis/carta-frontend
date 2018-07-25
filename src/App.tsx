@@ -20,6 +20,7 @@ import {Alert, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import {RenderConfigComponent} from "./components/RenderConfig/RenderConfigComponent";
 import {LogComponent} from "./components/Log/LogComponent";
 import ReactResizeDetector from "react-resize-detector";
+import {FloatingWidgetComponent} from "./components/FloatingWidget/FloatingWidgetComponent";
 
 @HotkeysTarget
 export class App extends React.Component<{ appStore: AppStore }> {
@@ -216,6 +217,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 <div className="gl-container" ref={ref => this.glContainer = ref}>
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize}/>
                 </div>
+                <FloatingWidgetComponent title="Testing" width={450} height={350}>
+                    <LogComponent logStore={appStore.logStore}/>
+                </FloatingWidgetComponent>
             </div>
         );
     }
