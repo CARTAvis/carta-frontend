@@ -1,3 +1,6 @@
+@import "../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+
+
 $title-height: 24px;
 $widget-background: #f2f2f2;
 $title-color: #777777;
@@ -30,8 +33,9 @@ $border-color: #cccccc;
             padding-right: 5px;
             padding-top: 3px;
             cursor: pointer;
+            color: $gray3;
             &:hover {
-                color: darken($title-color, 15);
+                color: black;
             }
         }
     }

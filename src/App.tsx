@@ -1,8 +1,8 @@
 import * as React from "react";
 import * as GoldenLayout from "golden-layout";
-import {ItemConfigType} from "golden-layout";
 import * as AST from "ast_wrapper";
 import * as _ from "lodash";
+import * as $ from "jquery";
 import "./App.css";
 import {PlaceholderComponent} from "./components/Placeholder/PlaceholderComponent";
 import {RootMenuComponent} from "./components/Menu/RootMenuComponent";
@@ -20,8 +20,6 @@ import {Alert, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import {RenderConfigComponent} from "./components/RenderConfig/RenderConfigComponent";
 import {LogComponent} from "./components/Log/LogComponent";
 import ReactResizeDetector from "react-resize-detector";
-import {FloatingWidgetComponent} from "./components/FloatingWidget/FloatingWidgetComponent";
-import {WidgetConfig} from "./stores/FloatingWidgetStore";
 import {FloatingWidgetManagerComponent} from "./components/FloatingWidgetManager/FloatingWidgetManagerComponent";
 
 @HotkeysTarget @observer
@@ -94,7 +92,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
     }
 
     public componentDidMount() {
-        const initialLayout: ItemConfigType[] = [{
+        const initialLayout: any[] = [{
             type: "row",
             content: [{
                 type: "column",
@@ -191,7 +189,10 @@ export class App extends React.Component<{ appStore: AppStore }> {
         layout.registerComponent("render-config", RenderConfigComponent);
         layout.registerComponent("log", LogComponent);
         layout.on("stackCreated", (stack) => {
-            stack.header.controlsContainer.prepend("<span class='pin-icon bp3-icon-standard bp3-icon-unpin'/>");
+            let unpinButton = $(`<div class="pin-icon"><span class="bp3-icon-standard bp3-icon-unpin"/></div>`);
+            unpinButton.on("click", () => this.onUnpinClicked(stack.getActiveContentItem()));
+
+            stack.header.controlsContainer.prepend(unpinButton);
         });
 
         this.props.appStore.layoutSettings.setLayout(layout);
@@ -238,4 +239,14 @@ export class App extends React.Component<{ appStore: AppStore }> {
             </Hotkeys>
         );
     }
+
+    onUnpinClicked = (item: GoldenLayout.ContentItem) => {
+        console.log(item.config);
+        const parent = item.parent;
+        const appStore = this.props.appStore;
+        const id = item.config.id as string;
+        const type = item.config["component"] as string;
+        appStore.floatingWidgetStore.addWidget({id, type, minWidth: 300, minHeight: 300});
+        item.remove();
+    };
 }
