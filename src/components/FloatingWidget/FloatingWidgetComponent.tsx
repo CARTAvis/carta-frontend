@@ -1,6 +1,6 @@
 import * as React from "react";
 import "./FloatingWidgetComponent.css";
-import Rnd from "react-rnd";
+import {Rnd} from "react-rnd";
 import {Icon} from "@blueprintjs/core";
 import * as GoldenLayout from "golden-layout";
 import {AppStore} from "../../stores/AppStore";
