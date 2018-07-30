@@ -1,3 +1,7 @@
+declare var Module: any;
+declare var addOnPostRun: any;
+declare var Promise: any;
+
 addOnPostRun(function () {
     Module.numArrayCoordinates = 1;
     Module.xIn = Module._malloc(Module.numArrayCoordinates * 8);
@@ -94,8 +98,8 @@ Module.getFormattedCoordinates = function (wcsInfo, x, y, formatString) {
         Module.set(wcsInfo, formatString);
     }
 
-    var xFormat = Module.format(wcsInfo, 1, x);
-    var yFormat = Module.format(wcsInfo, 2, y);
+    const xFormat = Module.format(wcsInfo, 1, x);
+    const yFormat = Module.format(wcsInfo, 2, y);
     return {x: xFormat, y: yFormat};
 };
 
@@ -105,7 +109,7 @@ Module.pixToWCSVector = function (wcsInfo, xIn, yIn) {
         return {x: new Float64Array(1), y: new Float64Array(1)};
     }
 
-    var N = xIn.length;
+    const N = xIn.length;
     // Return
     if (N > Module.numArrayCoordinates) {
         Module._free(Module.xIn);
@@ -122,19 +126,19 @@ Module.pixToWCSVector = function (wcsInfo, xIn, yIn) {
     Module.HEAPF64.set(xIn, Module.xIn / 8);
     Module.HEAPF64.set(yIn, Module.yIn / 8);
     Module.transform(wcsInfo, N, Module.xIn, Module.yIn, 1, Module.xOut, Module.yOut);
-    var xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N);
-    var yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N);
+    const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N);
+    const yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N);
     return {x: xOut.slice(0), y: yOut.slice(0)};
 };
 
 Module.pixToWCS = function (wcsInfo, xIn, yIn) {
     // Return empty array if arguments are invalid
-    var N = 1;
+    const N = 1;
     Module.HEAPF64.set(new Float64Array([xIn]), Module.xIn / 8);
     Module.HEAPF64.set(new Float64Array([yIn]), Module.yIn / 8);
     Module.transform(wcsInfo, N, Module.xIn, Module.yIn, 1, Module.xOut, Module.yOut);
-    var xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N);
-    var yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N);
+    const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N);
+    const yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N);
     return {x: xOut[0], y: yOut[0]};
 };
 
