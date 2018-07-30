@@ -190,6 +190,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
         layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
         layout.registerComponent("render-config", RenderConfigComponent);
         layout.registerComponent("log", LogComponent);
+        layout.on("stackCreated", (stack) => {
+            stack.header.controlsContainer.prepend("<span class='pin-icon bp3-icon-standard bp3-icon-unpin'/>");
+        });
 
         this.props.appStore.layoutSettings.setLayout(layout);
         this.props.appStore.layoutSettings.layout.init();

@@ -1,3 +1,5 @@
+@import "node_modules/@blueprintjs/core/lib/scss/variables.scss";
+
 .App {
     height: 100%;
     width: 100%;
@@ -30,4 +32,10 @@
 
 .bp3-transition-container {
     z-index: 999 !important;
+}
+
+.pin-icon {
+    float: left;
+    cursor: pointer;
+    color: $gray3;
 }
