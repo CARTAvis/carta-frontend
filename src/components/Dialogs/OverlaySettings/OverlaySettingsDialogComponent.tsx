@@ -2,7 +2,8 @@ import * as React from "react";
 import {AppStore} from "../../../stores/AppStore";
 import {observer} from "mobx-react";
 import "./OverlaySettingsDialogComponent.css";
-import {Button, Checkbox, Dialog, Intent, Tab, Tabs} from "@blueprintjs/core";
+import {Button, Checkbox, Dialog, Intent, Tab, Tabs, HTMLSelect, NumericInput} from "@blueprintjs/core";
+import * as AST from "ast_wrapper";
 
 @observer
 export class OverlaySettingsDialogComponent extends React.Component<{ appStore: AppStore }> {
@@ -23,6 +24,44 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                                 value={overlayStore.title.text}
                                 disabled={overlayStore.title.visible === false}
                                 onChange={(ev) => overlayStore.title.setText(ev.currentTarget.value)}
+                            />
+                        </label>
+                        <label className="bp3-label .bp3-inline">
+                            Font
+                            <HTMLSelect
+                                value={overlayStore.title.font}
+                                options={AST.fonts.map((x, i) => ({label: x.replace("{size} ", ""), value: i}))}
+                                disabled={overlayStore.title.visible === false}
+                                onChange={(ev) => overlayStore.title.setFont(Number(ev.currentTarget.value))}
+                            />
+                            <NumericInput
+                                min={7}
+                                placeholder="Font size"
+                                value={overlayStore.title.fontSize}
+                                disabled={overlayStore.title.visible === false}
+                                onValueChange={(value: number) => overlayStore.title.setFontSize(value)}
+                            />
+                        </label>
+                        <label className="bp3-label .bp3-inline">
+                            Gap
+                            <NumericInput
+                                placeholder="Gap"
+                                min={0}
+                                stepSize={0.01}
+                                minorStepSize={0.001}
+                                majorStepSize={0.1}
+                                value={overlayStore.title.gap}
+                                disabled={overlayStore.title.visible === false}
+                                onValueChange={(value: number) => overlayStore.title.setGap(value)}
+                            />
+                        </label>
+                        <label className="bp3-label .bp3-inline">
+                            Color
+                            <HTMLSelect
+                                value={overlayStore.title.color}
+                                options={AST.colors.map((x, i) => ({label: x, value: i}))}
+                                disabled={overlayStore.title.visible === false}
+                                onChange={(ev) => overlayStore.title.setColor(Number(ev.currentTarget.value))}
                             />
                         </label>
                     </div>

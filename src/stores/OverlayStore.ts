@@ -60,6 +60,22 @@ export class OverlayTitleSettings {
     @action setText(text: string) {
         this.text = text;
     }
+
+    @action setFont(font: number) {
+        this.font = font;
+    }
+
+    @action setFontSize(fontSize: number) {
+        this.fontSize = fontSize;
+    }
+
+    @action setGap(gap: number) {
+        this.gap = gap;
+    }
+
+    @action setColor(color: number) {
+        this.color = color;
+    }
 }
 
 export class OverlayGridSettings {
