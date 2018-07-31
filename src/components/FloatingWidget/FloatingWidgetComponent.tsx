@@ -5,7 +5,7 @@ import {Icon} from "@blueprintjs/core";
 import * as GoldenLayout from "golden-layout";
 import {AppStore} from "../../stores/AppStore";
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
-import {ImageViewComponent} from "../ImageView/ImageViewComponent";
+import {PlaceholderComponent} from "../Placeholder/PlaceholderComponent";
 
 class FloatingWidgetComponentProps {
     layout: GoldenLayout;
@@ -42,6 +42,10 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 props: {appStore: this.props.appStore, id: this.props.widgetConfig.id, docked: true}
             };
 
+            if (this.props.widgetConfig.type === PlaceholderComponent.WIDGET_CONFIG.type) {
+                itemConfig.props.label = this.props.widgetConfig.title;
+            }
+
             if (this.pinElementRef && itemConfig) {
                 this.props.layout.createDragSource(this.pinElementRef, itemConfig);
             }
@@ -63,8 +67,8 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 className="floating-widget"
                 style={{zIndex: this.props.zIndex}}
                 default={{
-                    x: this.props.appStore.floatingWidgetStore.defaultOffset,
-                    y: this.props.appStore.floatingWidgetStore.defaultOffset,
+                    x: widgetConfig.defaultX !== undefined ? widgetConfig.defaultX : this.props.appStore.floatingWidgetStore.defaultOffset,
+                    y: widgetConfig.defaultY !== undefined ? widgetConfig.defaultY : this.props.appStore.floatingWidgetStore.defaultOffset,
                     width: widgetConfig.defaultWidth,
                     height: widgetConfig.defaultHeight + headerHeight,
                 }}

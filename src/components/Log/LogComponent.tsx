@@ -29,13 +29,6 @@ export class LogComponent extends React.Component<LogComponentProps> {
         };
     }
 
-    componentDidMount() {
-        const floatingWidgetStore = this.props.appStore.floatingWidgetStore;
-        if (this.props.docked && floatingWidgetStore.widgets.find(w => w.id === this.props.id)) {
-            floatingWidgetStore.removeWidget(this.props.id);
-        }
-    }
-
     onClearClicked = () => {
         this.props.appStore.logStore.clearLog();
     };

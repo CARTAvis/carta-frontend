@@ -34,13 +34,6 @@ export class ImageViewComponent extends React.Component<ImageViewComponentProps>
         };
     }
 
-    componentDidMount() {
-        const floatingWidgetStore = this.props.appStore.floatingWidgetStore;
-        if (this.props.docked && floatingWidgetStore.widgets.find(w => w.id === this.props.id)) {
-            floatingWidgetStore.removeWidget(this.props.id);
-        }
-    }
-
     onResize = (width: number, height: number) => {
         this.props.appStore.setImageViewDimensions(width, height);
     };

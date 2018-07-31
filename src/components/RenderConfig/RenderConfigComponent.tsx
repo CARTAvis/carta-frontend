@@ -7,7 +7,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {Config, Data, Layout} from "plotly.js";
 import "./RenderConfigComponent.css";
 import {FrameScaling, FrameStore} from "../../stores/FrameStore";
-import {FormGroup, HTMLSelect, NonIdealState, NumericInput, Tooltip, Position, ButtonGroup, Button} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, NonIdealState, NumericInput, Tooltip, Position, ButtonGroup, Button, Colors} from "@blueprintjs/core";
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
 
 // This allows us to use a minimal Plotly.js bundle with React-Plotly.js (900k compared to 2.7 MB)
@@ -58,13 +58,6 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
     constructor(props: RenderConfigComponentProps) {
         super(props);
         this.state = {width: 0, height: 0, hoveringScaleMin: false, hoveringScaleMax: false, xRange: undefined, yRange: undefined};
-    }
-
-    componentDidMount() {
-        const floatingWidgetStore = this.props.appStore.floatingWidgetStore;
-        if (this.props.docked && floatingWidgetStore.widgets.find(w => w.id === this.props.id)) {
-            floatingWidgetStore.removeWidget(this.props.id);
-        }
     }
 
     componentDidUpdate() {
@@ -266,7 +259,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
 
     render() {
         const appStore = this.props.appStore;
-        const backgroundColor = "#F2F2F2";
+        const backgroundColor = Colors.LIGHT_GRAY5;
         const frame = appStore.activeFrame;
         let scaleMarkers = [];
         if (frame) {
@@ -435,7 +428,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                     {this.state.width < histogramCutoff && percentileSelectDiv}
                 </div>
                 }
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={200}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
         );
     }

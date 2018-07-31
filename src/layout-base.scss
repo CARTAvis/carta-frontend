@@ -362,3 +362,20 @@ $height6: 15px; // Appears 1 time
         z-index: 20;
     }
 }
+
+// To Hide GL drag proxies, uncomment this
+// .lm_dragProxy {
+//     display: none;
+// }
+
+// Fixes GL drag proxy sizing
+.lm_dragProxy {
+    .lm_content {
+        .lm_item_container {
+            .lm_content {
+                width: 100% !important;
+                height: 100% !important;
+            }
+        }
+    }
+}

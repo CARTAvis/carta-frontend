@@ -91,7 +91,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
         }, err => console.log(err));
     }
 
-    public componentDidMount() {
+    componentDidMount() {
         const initialLayout: any[] = [{
             type: "row",
             content: [{
@@ -123,8 +123,8 @@ export class App extends React.Component<{ appStore: AppStore }> {
                         type: "react-component",
                         component: "placeholder",
                         title: "Animation",
-                        id: "animation",
-                        props: {label: "Animation placeholder"}
+                        id: "placeholder-0",
+                        props: {appStore: this.props.appStore, id: "placeholder-0", label: "Animation placeholder"}
                     }]
                 }]
             }, {
@@ -133,30 +133,20 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     type: "react-component",
                     component: "spatial-profiler",
                     title: "X Profile: Cursor",
-                    id: "spatialprofile0",
-                    props: {
-                        label: "X Profile (Cursor)",
-                        dataSourceId: -1,
-                        profileCoordinate: "x",
-                        appStore: this.props.appStore
-                    }
+                    id: "spatial-profiler-0",
+                    props: {appStore: this.props.appStore, id: "spatial-profiler-0", docked: true}
                 }, {
                     type: "react-component",
                     component: "spatial-profiler",
                     title: "Y Profile: Cursor",
-                    id: "spatialprofile1",
-                    props: {
-                        label: "Y Profile (Cursor)",
-                        dataSourceId: -1,
-                        profileCoordinate: "y",
-                        appStore: this.props.appStore
-                    }
+                    id: "spatial-profiler-1",
+                    props: {appStore: this.props.appStore, id: "spatial-profiler-1", docked: true}
                 }, {
                     type: "react-component",
                     component: "placeholder",
                     title: "Z Profile: Cursor",
-                    id: "spectralprofile0",
-                    props: {label: "Graph placeholder"}
+                    id: "placeholder-1",
+                    props: {appStore: this.props.appStore, id: "placeholder-1", label: "Spectral placeholder"}
                 }, {
                     type: "stack",
                     height: 33.3,
@@ -164,21 +154,26 @@ export class App extends React.Component<{ appStore: AppStore }> {
                         type: "react-component",
                         component: "placeholder",
                         title: "Histogram: Region #1",
-                        id: "histogram0",
-                        props: {label: "Histogram placeholder"}
+                        id: "placeholder-2",
+                        props: {appStore: this.props.appStore, id: "placeholder-2", label: "Histogram placeholder"}
                     }, {
                         type: "react-component",
                         component: "placeholder",
                         title: "Statistics: Region #1",
-                        id: "statistics0",
-                        props: {label: "Statistics placeholder"}
+                        id: "placeholder-3",
+                        props: {appStore: this.props.appStore, id: "placeholder-3", label: "Statistics placeholder"}
                     }]
                 }]
             }]
         }];
+
+        this.props.appStore.addSpatialProfileWidget("spatial-profiler-0", -1, "x");
+        this.props.appStore.addSpatialProfileWidget("spatial-profiler-1", -1, "y");
+
         const layout = new GoldenLayout({
             settings: {
-                showPopoutIcon: false
+                showPopoutIcon: false,
+                showCloseIcon: false
             },
             dimensions: {
                 minItemWidth: 200,
@@ -201,24 +196,26 @@ export class App extends React.Component<{ appStore: AppStore }> {
             stack.header.controlsContainer.prepend(unpinButton);
         });
 
-        // layout.on("itemCreated", item => {
-        //     console.log("itemCreated");
-        //     console.log(item);
-        // });
-        // layout.on("itemDestroyed", item => {
-        //     console.log("itemDestroyed");
-        //     console.log(item);
-        // });
-        // layout.on("componentCreated", item => {
-        //     console.log("componentCreated");
-        //     console.log(item);
-        // });
+        layout.on("itemCreated", item => {
+            if (item.config.type === "component") {
+                const floatingWidgetStore = this.props.appStore.floatingWidgetStore;
+                if (floatingWidgetStore.widgets.find(w => w.id === item.config.id)) {
+                    floatingWidgetStore.removeWidget(item.config.id);
+                }
+            }
+        });
+
+        layout.on("itemDestroyed", item => {
+            if (item.config.type === "component") {
+                console.log(`itemDestroyed: ${item.config.id}`);
+            }
+        });
 
         this.props.appStore.layoutSettings.setLayout(layout);
         this.props.appStore.layoutSettings.layout.init();
     }
 
-    // GoldenLayout resize handler (throttled to 200 ms)
+    // GoldenLayout resize handler
     onContainerResize = (width, height) => {
         const appStore = this.props.appStore;
         if (appStore.layoutSettings.layout) {
@@ -267,8 +264,10 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 return RenderConfigComponent.WIDGET_CONFIG;
             case LogComponent.WIDGET_CONFIG.type:
                 return LogComponent.WIDGET_CONFIG;
+            case SpatialProfilerComponent.WIDGET_CONFIG.type:
+                return SpatialProfilerComponent.WIDGET_CONFIG;
             default:
-                return {id: "unknown", title: "Unknown", type, minWidth: 300, minHeight: 300, defaultWidth: 300, defaultHeight: 300, isCloseable: true};
+                return PlaceholderComponent.WIDGET_CONFIG;
         }
     }
 
@@ -277,11 +276,22 @@ export class App extends React.Component<{ appStore: AppStore }> {
         const id = itemConfig.id as string;
         const type = itemConfig.component;
         const title = itemConfig.title;
-
         // Get widget type from config
         let widgetConfig = this.getDefaultWidgetConfig(type);
         widgetConfig.id = id;
         widgetConfig.title = title;
+
+        // Set default size and position from the existing item
+        const container = item["container"] as GoldenLayout.Container;
+        if (container && container.width && container.height) {
+            // Snap size to grid
+            widgetConfig.defaultWidth = Math.round(container.width / 25.0) * 25;
+            widgetConfig.defaultHeight = Math.round(container.height / 25.0) * 25;
+            const el = container["_element"][0] as HTMLElement;
+            // Snap position to grid and adjust for title and container offset
+            widgetConfig.defaultX = Math.round(el.offsetLeft / 25.0) * 25 + 5;
+            widgetConfig.defaultY = Math.round(el.offsetTop / 25.0) * 25 - 25;
+        }
 
         this.props.appStore.floatingWidgetStore.addWidget(widgetConfig);
         item.remove();

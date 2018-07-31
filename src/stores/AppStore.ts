@@ -31,6 +31,11 @@ export class AppStore {
     @observable cursorInfo: CursorInfo;
     // Spatial profiles
     @observable spatialProfiles: Map<number, SpatialProfileStore>;
+    @observable spatialProfileWidgets: Map<string, {dataSourceId: number, coordinate: string}>;
+
+    @action addSpatialProfileWidget(id: string, dataSourceId: number, coordinate: string) {
+        this.spatialProfileWidgets.set(id, {dataSourceId, coordinate});
+    }
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
@@ -209,6 +214,7 @@ export class AppStore {
         this.backendService = new BackendService(this.logStore);
         this.astReady = false;
         this.spatialProfiles = new Map<number, SpatialProfileStore>();
+        this.spatialProfileWidgets = new Map<string, {dataSourceId: number, coordinate: string}>();
         this.frames = [];
         this.activeFrame = null;
         this.alertStore = new AlertStore();

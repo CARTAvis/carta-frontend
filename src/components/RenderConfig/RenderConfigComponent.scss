@@ -1,5 +1,7 @@
+@import "../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+
 .modebar {
-    background: rgba(#137CBD, 0.05) !important;
+    background: rgba($blue3, 0.05) !important;
     border-bottom-left-radius: 5px;
 }
 

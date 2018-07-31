@@ -7,6 +7,8 @@ export class WidgetConfig {
     minHeight: number;
     defaultWidth: number;
     defaultHeight: number;
+    defaultX?: number;
+    defaultY?: number;
     isCloseable: boolean;
     title: string;
 }

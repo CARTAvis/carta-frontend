@@ -7,6 +7,7 @@ import {LogComponent} from "../Log/LogComponent";
 import {observer} from "mobx-react";
 import {PlaceholderComponent} from "../Placeholder/PlaceholderComponent";
 import {ImageViewComponent} from "../ImageView/ImageViewComponent";
+import {SpatialProfilerComponent} from "../SpatialProfiler/SpatialProfilerComponent";
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component<{ appStore: AppStore }> {
@@ -29,8 +30,10 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
                 return <LogComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
             case RenderConfigComponent.WIDGET_CONFIG.type:
                 return <RenderConfigComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+            case SpatialProfilerComponent.WIDGET_CONFIG.type:
+                return <SpatialProfilerComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
             default:
-                return <PlaceholderComponent label={widgetConfig.title}/>;
+                return <PlaceholderComponent appStore={appStore} id={widgetConfig.id} docked={false} label={widgetConfig.title}/>;
         }
     }
 

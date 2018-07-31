@@ -1,7 +1,7 @@
+@import "../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+
 .toolbar-menu {
-    margin-top: 3px;
-    margin-bottom: 3px;
-    margin-left: 10px;
-    border: 1px solid #cccccc;
+    margin: 4px auto 4px 10px;
+    border: 1px solid $gray5;
     border-radius: 3px;
 }
