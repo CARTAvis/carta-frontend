@@ -209,7 +209,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             x0: position,
             x1: position,
             line: {
-                color: "red",
+                color: Colors.RED2,
                 width: 1
             }
         }];
@@ -230,10 +230,11 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                 xanchor: position,
                 x0: -3,
                 x1: +3,
-                fillcolor: `rgba(255, 0, 0, ${moving ? 0.7 : 0.5})`,
+                // Using bp3 RED2 but applying opacity
+                fillcolor: `rgba(194, 48, 48, ${moving ? 0.7 : 0.5})`,
                 line: {
                     width: 1,
-                    color: "red"
+                    color: Colors.RED2
                 }
             });
         }
@@ -317,7 +318,8 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                 mode: "lines",
                 line: {
                     width: 1.0,
-                    shape: "hv"
+                    shape: "hv",
+                    color: Colors.BLUE2
                 }
             });
         }
