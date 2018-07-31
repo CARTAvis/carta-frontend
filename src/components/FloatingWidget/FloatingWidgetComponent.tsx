@@ -67,7 +67,8 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 className="floating-widget"
                 style={{zIndex: this.props.zIndex}}
                 default={{
-                    x: widgetConfig.defaultX !== undefined ? widgetConfig.defaultX : this.props.appStore.floatingWidgetStore.defaultOffset,
+                    // Shift by 5 pixels to compensate for 5px CSS margins
+                    x: widgetConfig.defaultX !== undefined ? widgetConfig.defaultX : this.props.appStore.floatingWidgetStore.defaultOffset + 5,
                     y: widgetConfig.defaultY !== undefined ? widgetConfig.defaultY : this.props.appStore.floatingWidgetStore.defaultOffset,
                     width: widgetConfig.defaultWidth,
                     height: widgetConfig.defaultHeight + headerHeight,
