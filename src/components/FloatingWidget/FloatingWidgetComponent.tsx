@@ -4,15 +4,14 @@ import {Rnd} from "react-rnd";
 import {Icon} from "@blueprintjs/core";
 import * as GoldenLayout from "golden-layout";
 import {AppStore} from "../../stores/AppStore";
+import {WidgetConfig} from "../../stores/FloatingWidgetStore";
+import {ImageViewComponent} from "../ImageView/ImageViewComponent";
 
 class FloatingWidgetComponentProps {
-    title: string;
     layout: GoldenLayout;
-    type: string;
-    id: string;
+    widgetConfig: WidgetConfig;
     appStore: AppStore;
-    minWidth: number;
-    minHeight: number;
+    showPinButton: boolean;
     children?: any;
     zIndex?: number;
     isSelected?: boolean;
@@ -32,29 +31,19 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
 
         if (this.props.layout && !this.createdDragSources) {
             // Render config widget
-            let widgetConfig: GoldenLayout.ItemConfigType;
+            let itemConfig: GoldenLayout.ItemConfigType;
 
-            if (this.props.type === "render-config") {
-                widgetConfig = {
-                    type: "react-component",
-                    component: "render-config",
-                    title: "Render Configuration",
-                    id: this.props.id,
-                    props: {appStore: this.props.appStore, id: this.props.id, docked: true}
-                };
-            }
-            else if (this.props.type === "log") {
-                widgetConfig = {
-                    type: "react-component",
-                    component: "log",
-                    title: "Log",
-                    id: this.props.id,
-                    props: {appStore: this.props.appStore, id: this.props.id, docked: true}
-                };
-            }
+            itemConfig = {
+                type: "react-component",
+                component: this.props.widgetConfig.type,
+                title: this.props.widgetConfig.title,
+                id: this.props.widgetConfig.id,
+                isClosable: this.props.widgetConfig.isCloseable,
+                props: {appStore: this.props.appStore, id: this.props.widgetConfig.id, docked: true}
+            };
 
-            if (this.pinElementRef && widgetConfig) {
-                this.props.layout.createDragSource(this.pinElementRef, widgetConfig);
+            if (this.pinElementRef && itemConfig) {
+                this.props.layout.createDragSource(this.pinElementRef, itemConfig);
             }
 
             this.createdDragSources = true;
@@ -66,34 +55,41 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
     }
 
     public render() {
-        const headerHeight = 24;
+        const headerHeight = 25;
         const titleClass = this.props.isSelected ? "floating-header selected" : "floating-header";
+        const widgetConfig = this.props.widgetConfig;
         return (
             <Rnd
                 className="floating-widget"
                 style={{zIndex: this.props.zIndex}}
                 default={{
-                    x: 100,
-                    y: 100,
-                    width: 320,
-                    height: 200,
+                    x: this.props.appStore.floatingWidgetStore.defaultOffset,
+                    y: this.props.appStore.floatingWidgetStore.defaultOffset,
+                    width: widgetConfig.defaultWidth,
+                    height: widgetConfig.defaultHeight + headerHeight,
                 }}
-                minWidth={this.props.minWidth}
-                minHeight={this.props.minHeight + headerHeight}
-                bounds={".App"}
+                resizeGrid={[25, 25]}
+                dragGrid={[25, 25]}
+                minWidth={widgetConfig.minWidth}
+                minHeight={widgetConfig.minHeight + headerHeight}
+                bounds={".gl-container"}
                 dragHandleClassName={"floating-title"}
                 onMouseDown={this.props.onSelected}
             >
                 <div className={titleClass}>
                     <div className={"floating-title"}>
-                        {this.props.title}
+                        {widgetConfig.title}
                     </div>
+                    {this.props.showPinButton &&
                     <div className="floating-header-button" ref={ref => this.pinElementRef = ref}>
                         <Icon icon={"pin"}/>
                     </div>
+                    }
+                    {widgetConfig.isCloseable &&
                     <div onMouseDown={this.props.onClosed} className="floating-header-button">
                         <Icon icon={"cross"}/>
                     </div>
+                    }
                 </div>
                 <div className="floating-content">
                     {this.props.children}

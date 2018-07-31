@@ -6,6 +6,7 @@ import {CARTA} from "carta-protobuf";
 import ScrollToBottom from "react-scroll-to-bottom";
 import {Intent} from "@blueprintjs/core/lib/esm/common/intent";
 import {AppStore} from "../../stores/AppStore";
+import {WidgetConfig} from "../../stores/FloatingWidgetStore";
 
 class LogComponentProps {
     appStore: AppStore;
@@ -15,6 +16,19 @@ class LogComponentProps {
 
 @observer
 export class LogComponent extends React.Component<LogComponentProps> {
+    public static get WIDGET_CONFIG(): WidgetConfig {
+        return {
+            id: "log",
+            type: "log",
+            minWidth: 300,
+            minHeight: 150,
+            defaultWidth: 425,
+            defaultHeight: 200,
+            title: "Log",
+            isCloseable: true
+        };
+    }
+
     componentDidMount() {
         const floatingWidgetStore = this.props.appStore.floatingWidgetStore;
         if (this.props.docked && floatingWidgetStore.widgets.find(w => w.id === this.props.id)) {

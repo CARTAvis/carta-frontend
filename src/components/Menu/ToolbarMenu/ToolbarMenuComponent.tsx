@@ -1,7 +1,11 @@
 import * as React from "react";
+import * as GoldenLayout from "golden-layout";
 import "./ToolbarMenuComponent.css";
 import {AppStore} from "../../../stores/AppStore";
 import {Button, Tooltip} from "@blueprintjs/core";
+import {RenderConfigComponent} from "../../RenderConfig/RenderConfigComponent";
+import {LogComponent} from "../../Log/LogComponent";
+import {WidgetConfig} from "../../../stores/FloatingWidgetStore";
 
 export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }> {
     private createdDragSources = false;
@@ -14,12 +18,13 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
         const layout = this.props.appStore.layoutSettings.layout;
         if (layout && !this.createdDragSources) {
             // Render config widget
-            const renderConfigWidgetConfig = {
+            const renderConfigWidgetConfig: GoldenLayout.ReactComponentConfig = {
                 type: "react-component",
-                component: "render-config",
-                title: "Render Configuration",
-                id: "render-config-docked",
-                props: {appStore: this.props.appStore, id: "render-config-docked", docked: true}
+                component: RenderConfigComponent.WIDGET_CONFIG.type,
+                title: RenderConfigComponent.WIDGET_CONFIG.title,
+                id: `${RenderConfigComponent.WIDGET_CONFIG.id}-docked`,
+                isClosable: RenderConfigComponent.WIDGET_CONFIG.isCloseable,
+                props: {appStore: this.props.appStore, id: `${RenderConfigComponent.WIDGET_CONFIG.id}-docked`, docked: true}
             };
             const renderConfigWidget = document.getElementById("renderConfigWidget");
             if (renderConfigWidget) {
@@ -29,10 +34,11 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
             // Log widget
             const logWidgetConfig = {
                 type: "react-component",
-                component: "log",
-                title: "Log",
-                id: "log-docked",
-                props: {appStore: this.props.appStore, id: "log-docked", docked: true}
+                component: LogComponent.WIDGET_CONFIG.type,
+                title: LogComponent.WIDGET_CONFIG.title,
+                id: `${LogComponent.WIDGET_CONFIG.id}-docked`,
+                isClosable: LogComponent.WIDGET_CONFIG.isCloseable,
+                props: {appStore: this.props.appStore, id: `${LogComponent.WIDGET_CONFIG.id}-docked`, docked: true}
             };
             const logWidget = document.getElementById("logWidget");
             if (logWidget) {
@@ -44,27 +50,18 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
     }
 
     createRenderWidget = () => {
-        const floatingWidgetStore = this.props.appStore.floatingWidgetStore;
-        const existingRenderWidgets = floatingWidgetStore.widgets.filter(w => w.type === "render-config");
-
-        floatingWidgetStore.addWidget({
-            id: `render-config-${existingRenderWidgets.length}`,
-            type: "render-config",
-            minWidth: 250,
-            minHeight: 200
-        });
+        this.createWidget(RenderConfigComponent.WIDGET_CONFIG);
     };
 
     createLogWidget = () => {
-        const floatingWidgetStore = this.props.appStore.floatingWidgetStore;
-        const existingRenderWidgets = floatingWidgetStore.widgets.filter(w => w.type === "log");
+        this.createWidget(LogComponent.WIDGET_CONFIG);
+    };
 
-        floatingWidgetStore.addWidget({
-            id: `log-${existingRenderWidgets.length}`,
-            type: "log",
-            minWidth: 450,
-            minHeight: 200
-        });
+    createWidget = (widgetConfig: WidgetConfig) => {
+        const floatingWidgetStore = this.props.appStore.floatingWidgetStore;
+        const existingRenderWidgets = floatingWidgetStore.widgets.filter(w => w.type === widgetConfig.type);
+        widgetConfig.id = `${widgetConfig.id}-${existingRenderWidgets.length}`;
+        floatingWidgetStore.addWidget(widgetConfig);
     };
 
     public render() {

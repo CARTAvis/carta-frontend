@@ -98,7 +98,7 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
         return (
             <div style={{width: "100%", height: "100%"}}>
                 <Plot layout={plotLayout} data={plotData} config={plotConfig}/>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={200}/>
             </div>
         );
     }

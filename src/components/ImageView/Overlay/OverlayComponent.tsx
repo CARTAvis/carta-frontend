@@ -11,6 +11,7 @@ import "./OverlayComponent.css";
 export class OverlayComponentProps {
     overlaySettings: OverlayStore;
     frame: FrameStore;
+    docked: boolean;
     onCursorMoved?: (cursorInfo: CursorInfo) => void;
     onClicked?: (cursorInfo: CursorInfo) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
@@ -143,6 +144,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const framePadding = this.props.overlaySettings.padding;
         const w = this.props.overlaySettings.viewWidth;
         const h = this.props.overlaySettings.viewHeight;
-        return <canvas className="overlay-canvas" key={styleString} ref={(ref) => this.canvas = ref} onWheel={this.handleScroll} onClick={this.handleClick} onMouseMove={this.handleMouseMove}/>;
+        let className = "overlay-canvas";
+        if (this.props.docked) {
+            className += " docked";
+        }
+        return <canvas className={className} key={styleString} ref={(ref) => this.canvas = ref} onWheel={this.handleScroll} onClick={this.handleClick} onMouseMove={this.handleMouseMove}/>;
     }
 }

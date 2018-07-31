@@ -102,9 +102,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     component: "image-view",
                     title: "No image loaded",
                     height: 75,
-                    id: "imageView",
+                    id: "image-view",
                     isClosable: false,
-                    props: {appStore: this.props.appStore}
+                    props: {appStore: this.props.appStore, id: "image-view-docked", docked: true}
                 }, {
                     type: "stack",
                     content: [{
@@ -180,6 +180,12 @@ export class App extends React.Component<{ appStore: AppStore }> {
             settings: {
                 showPopoutIcon: false
             },
+            dimensions: {
+                minItemWidth: 200,
+                minItemHeight: 200,
+                dragProxyWidth: 600,
+                dragProxyHeight: 270,
+            },
             content: initialLayout
         }, this.glContainer);
 
@@ -195,17 +201,30 @@ export class App extends React.Component<{ appStore: AppStore }> {
             stack.header.controlsContainer.prepend(unpinButton);
         });
 
+        // layout.on("itemCreated", item => {
+        //     console.log("itemCreated");
+        //     console.log(item);
+        // });
+        // layout.on("itemDestroyed", item => {
+        //     console.log("itemDestroyed");
+        //     console.log(item);
+        // });
+        // layout.on("componentCreated", item => {
+        //     console.log("componentCreated");
+        //     console.log(item);
+        // });
+
         this.props.appStore.layoutSettings.setLayout(layout);
         this.props.appStore.layoutSettings.layout.init();
     }
 
     // GoldenLayout resize handler (throttled to 200 ms)
-    onContainerResize = _.throttle((width, height) => {
+    onContainerResize = (width, height) => {
         const appStore = this.props.appStore;
         if (appStore.layoutSettings.layout) {
             appStore.layoutSettings.layout.updateSize(width, height);
         }
-    }, 200);
+    };
 
     public render() {
         const appStore = this.props.appStore;
@@ -221,7 +240,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>
                 <div className="gl-container" ref={ref => this.glContainer = ref}>
-                    <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize}/>
+                    <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}/>
                 </div>
                 <FloatingWidgetManagerComponent appStore={appStore}/>
             </div>
@@ -240,13 +259,31 @@ export class App extends React.Component<{ appStore: AppStore }> {
         );
     }
 
+    private getDefaultWidgetConfig(type: string) {
+        switch (type) {
+            case ImageViewComponent.WIDGET_CONFIG.type:
+                return ImageViewComponent.WIDGET_CONFIG;
+            case RenderConfigComponent.WIDGET_CONFIG.type:
+                return RenderConfigComponent.WIDGET_CONFIG;
+            case LogComponent.WIDGET_CONFIG.type:
+                return LogComponent.WIDGET_CONFIG;
+            default:
+                return {id: "unknown", title: "Unknown", type, minWidth: 300, minHeight: 300, defaultWidth: 300, defaultHeight: 300, isCloseable: true};
+        }
+    }
+
     onUnpinClicked = (item: GoldenLayout.ContentItem) => {
-        console.log(item.config);
-        const parent = item.parent;
-        const appStore = this.props.appStore;
-        const id = item.config.id as string;
-        const type = item.config["component"] as string;
-        appStore.floatingWidgetStore.addWidget({id, type, minWidth: 300, minHeight: 300});
+        const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
+        const id = itemConfig.id as string;
+        const type = itemConfig.component;
+        const title = itemConfig.title;
+
+        // Get widget type from config
+        let widgetConfig = this.getDefaultWidgetConfig(type);
+        widgetConfig.id = id;
+        widgetConfig.title = title;
+
+        this.props.appStore.floatingWidgetStore.addWidget(widgetConfig);
         item.remove();
     };
 }

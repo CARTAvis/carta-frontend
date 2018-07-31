@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as _ from "lodash";
 import "./ImageViewComponent.css";
 import {AppStore} from "../../stores/AppStore";
 import {observer} from "mobx-react";
@@ -8,11 +9,37 @@ import {OverlayComponent} from "./Overlay/OverlayComponent";
 import {CursorInfo} from "../../models/CursorInfo";
 import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
+import {WidgetConfig} from "../../stores/FloatingWidgetStore";
+
+class ImageViewComponentProps {
+    appStore: AppStore;
+    id: string;
+    docked: boolean;
+}
 
 @observer
-export class ImageViewComponent extends React.Component<{ appStore: AppStore }> {
+export class ImageViewComponent extends React.Component<ImageViewComponentProps> {
+    private containerDiv: HTMLDivElement;
 
-    containerDiv: HTMLDivElement;
+    public static get WIDGET_CONFIG(): WidgetConfig {
+        return {
+            id: "image-view",
+            type: "image-view",
+            minWidth: 500,
+            minHeight: 500,
+            defaultWidth: 600,
+            defaultHeight: 600,
+            title: "Image view",
+            isCloseable: false
+        };
+    }
+
+    componentDidMount() {
+        const floatingWidgetStore = this.props.appStore.floatingWidgetStore;
+        if (this.props.docked && floatingWidgetStore.widgets.find(w => w.id === this.props.id)) {
+            floatingWidgetStore.removeWidget(this.props.id);
+        }
+    }
 
     onResize = (width: number, height: number) => {
         this.props.appStore.setImageViewDimensions(width, height);
@@ -46,6 +73,7 @@ export class ImageViewComponent extends React.Component<{ appStore: AppStore }> 
                 <OverlayComponent
                     frame={appStore.activeFrame}
                     overlaySettings={appStore.overlayStore}
+                    docked={this.props.docked}
                     onCursorMoved={this.onCursorMoved}
                     onClicked={this.onClicked}
                     onZoomed={this.onZoomed}
@@ -54,6 +82,7 @@ export class ImageViewComponent extends React.Component<{ appStore: AppStore }> 
                 {appStore.astReady && appStore.activeFrame &&
                 < RasterViewComponent
                     frame={appStore.activeFrame}
+                    docked={this.props.docked}
                     overlaySettings={appStore.overlayStore}
                 />
                 }
@@ -62,6 +91,7 @@ export class ImageViewComponent extends React.Component<{ appStore: AppStore }> 
                     cursorInfo={appStore.cursorInfo}
                     mip={appStore.activeFrame.currentFrameView.mip}
                     width={appStore.overlayStore.viewWidth}
+                    docked={this.props.docked}
                     unit={appStore.activeFrame.unit}
                     bottom={0}
                     showImage={true}
@@ -75,7 +105,7 @@ export class ImageViewComponent extends React.Component<{ appStore: AppStore }> 
                 {!appStore.activeFrame &&
                 <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
                 }
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
         );
     }

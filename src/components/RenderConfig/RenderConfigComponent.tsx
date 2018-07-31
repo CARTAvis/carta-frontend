@@ -8,6 +8,7 @@ import {Config, Data, Layout} from "plotly.js";
 import "./RenderConfigComponent.css";
 import {FrameScaling, FrameStore} from "../../stores/FrameStore";
 import {FormGroup, HTMLSelect, NonIdealState, NumericInput, Tooltip, Position, ButtonGroup, Button} from "@blueprintjs/core";
+import {WidgetConfig} from "../../stores/FloatingWidgetStore";
 
 // This allows us to use a minimal Plotly.js bundle with React-Plotly.js (900k compared to 2.7 MB)
 const Plot = createPlotlyComponent(Plotly);
@@ -36,11 +37,23 @@ class RenderConfigComponentState {
 
 @observer
 export class RenderConfigComponent extends React.Component<RenderConfigComponentProps, RenderConfigComponentState> {
-
     private plotRef: any;
     private movingScaleMax: boolean;
     private movingScaleMin: boolean;
     private cachedFrame: FrameStore;
+
+    public static get WIDGET_CONFIG(): WidgetConfig {
+        return {
+            id: "render-config",
+            type: "render-config",
+            minWidth: 250,
+            minHeight: 225,
+            defaultWidth: 650,
+            defaultHeight: 225,
+            title: "Render Configuration",
+            isCloseable: true
+        };
+    }
 
     constructor(props: RenderConfigComponentProps) {
         super(props);
@@ -422,7 +435,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                     {this.state.width < histogramCutoff && percentileSelectDiv}
                 </div>
                 }
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={200}/>
             </div>
         );
     }
