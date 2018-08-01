@@ -39,7 +39,6 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
             const matchingSources = layout["_dragSources"].filter(d => d._itemConfig.id === this.props.widgetConfig.id);
             const existingSource = matchingSources.find(d => d._element[0] === this.pinElementRef);
             if (existingSource) {
-                console.log("Found existing drag source");
                 return;
             }
 
