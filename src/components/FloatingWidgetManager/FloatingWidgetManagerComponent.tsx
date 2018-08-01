@@ -47,7 +47,6 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
                     return (
                         <FloatingWidgetComponent
                             isSelected={index === widgetConfigs.length - 1}
-                            layout={appStore.layoutSettings.layout}
                             appStore={appStore}
                             key={w.id}
                             widgetConfig={w}

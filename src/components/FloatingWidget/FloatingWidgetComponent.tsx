@@ -9,7 +9,6 @@ import {PlaceholderComponent} from "../Placeholder/PlaceholderComponent";
 import {observer} from "mobx-react";
 
 class FloatingWidgetComponentProps {
-    layout: GoldenLayout;
     widgetConfig: WidgetConfig;
     appStore: AppStore;
     showPinButton: boolean;
@@ -24,14 +23,26 @@ class FloatingWidgetComponentProps {
 export class FloatingWidgetComponent extends React.Component<FloatingWidgetComponentProps> {
 
     private pinElementRef: HTMLElement;
-    private createdDragSources = false;
+
+    componentDidMount() {
+        this.updateDragSource();
+    }
 
     componentDidUpdate() {
-        if (this.createdDragSources) {
-            return;
-        }
+        this.updateDragSource();
+    }
 
-        if (this.props.layout && !this.createdDragSources) {
+    updateDragSource() {
+        if (this.props.appStore.layoutSettings.layout && this.pinElementRef) {
+            // Check for existing drag sources
+            const layout = this.props.appStore.layoutSettings.layout;
+            const matchingSources = layout["_dragSources"].filter(d => d._itemConfig.id === this.props.widgetConfig.id);
+            const existingSource = matchingSources.find(d => d._element[0] === this.pinElementRef);
+            if (existingSource) {
+                console.log("Found existing drag source");
+                return;
+            }
+
             // Render config widget
             let itemConfig: GoldenLayout.ItemConfigType;
 
@@ -49,10 +60,8 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
             }
 
             if (this.pinElementRef && itemConfig) {
-                this.props.layout.createDragSource(this.pinElementRef, itemConfig);
+                layout.createDragSource(this.pinElementRef, itemConfig);
             }
-
-            this.createdDragSources = true;
         }
     }
 
