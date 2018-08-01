@@ -10,7 +10,7 @@ export class WidgetConfig {
     defaultX?: number;
     defaultY?: number;
     isCloseable: boolean;
-    title: string;
+    @observable title: string;
 }
 
 export class FloatingWidgetStore {
@@ -18,10 +18,17 @@ export class FloatingWidgetStore {
     @observable defaultOffset: number;
 
     @action selectWidget = (id: string) => {
-        const selectedWidget = this.widgets.find(w => w.id === id);
-        if (selectedWidget) {
-            this.widgets = this.widgets.filter(w => w.id !== id);
-            this.widgets.push(selectedWidget);
+        const selectedWidgetIndex = this.widgets.findIndex(w => w.id === id);
+        const N = this.widgets.length;
+        // Only rearrange widgets if the id is found and the widget isn't already selected.
+        if (N > 1 && selectedWidgetIndex >= 0 && selectedWidgetIndex < N - 1) {
+            const selectedWidget = this.widgets[selectedWidgetIndex];
+            for (let i = 0; i < N - 1; i++) {
+                if (i >= selectedWidgetIndex) {
+                    this.widgets[i] = this.widgets[i + 1];
+                }
+            }
+            this.widgets[N - 1] = selectedWidget;
         }
     };
 
@@ -33,6 +40,13 @@ export class FloatingWidgetStore {
 
     @action removeWidget = (id: string) => {
         this.widgets = this.widgets.filter(w => w.id !== id);
+    };
+
+    @action setWidgetTitle = (id: string, title: string) => {
+        const widget = this.widgets.find(w => w.id === id);
+        if (widget) {
+            widget.title = title;
+        }
     };
 
     constructor() {

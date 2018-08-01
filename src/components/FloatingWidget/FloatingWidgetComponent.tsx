@@ -6,6 +6,7 @@ import * as GoldenLayout from "golden-layout";
 import {AppStore} from "../../stores/AppStore";
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
 import {PlaceholderComponent} from "../Placeholder/PlaceholderComponent";
+import {observer} from "mobx-react";
 
 class FloatingWidgetComponentProps {
     layout: GoldenLayout;
@@ -19,6 +20,7 @@ class FloatingWidgetComponentProps {
     onClosed?: () => void;
 }
 
+@observer
 export class FloatingWidgetComponent extends React.Component<FloatingWidgetComponentProps> {
 
     private pinElementRef: HTMLElement;
