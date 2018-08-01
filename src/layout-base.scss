@@ -16,6 +16,8 @@ $height4: 19px; // Appears 1 time
 $height5: 18px; // Appears 1 time
 $height6: 15px; // Appears 1 time
 
+$border-radius-adjustment: 10px;
+
 .lm_root {
     position: relative;
 }
@@ -60,8 +62,10 @@ $height6: 15px; // Appears 1 time
     }
 
     &.lm_vertical {
+        width: calc(100% - #{$border-radius-adjustment});
+        left: $border-radius-adjustment/2;
         .lm_drag_handle {
-            width: $width0;
+            width: 100%;
             position: absolute;
             cursor: ns-resize;
         }
@@ -69,10 +73,11 @@ $height6: 15px; // Appears 1 time
 
     &.lm_horizontal {
         float: left;
-        height: $height0;
+        height: calc(100% - #{$border-radius-adjustment});
+        top: $border-radius-adjustment/2;
 
         .lm_drag_handle {
-            height: $height0;
+            height: 100%;
             position: absolute;
             cursor: ew-resize;
         }
