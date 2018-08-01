@@ -208,6 +208,7 @@ export class FrameStore {
 
     @action updateChannelHistogram(histogram: CARTA.Histogram) {
         this.channelHistogram = histogram;
+        // TODO: check if there is an existing (valid) histogram and set of percentiles, and use that by default
         const i = 3;
         if (this.percentiles.length > i * 2 && this.percentiles.length === this.percentileRanks.length) {
             this.renderConfig.scaleMin = this.percentiles[i];

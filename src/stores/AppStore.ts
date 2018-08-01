@@ -269,8 +269,8 @@ export class AppStore {
             }
             const updatedFrame = this.getFrame(regionHistogramData.fileId);
             // Update channel histograms
-            if (updatedFrame && regionHistogramData.regionId === -1 && updatedFrame.stokes === regionHistogramData.stokes) {
-                const channelHist = regionHistogramData.histograms.filter(hist => hist.channel === updatedFrame.channel);
+            if (updatedFrame && regionHistogramData.regionId === -1 && regionHistogramData.stokes === updatedFrame.requiredStokes) {
+                const channelHist = regionHistogramData.histograms.filter(hist => hist.channel === updatedFrame.requiredChannel);
                 if (channelHist.length) {
                     updatedFrame.updateChannelHistogram(channelHist[0] as CARTA.Histogram);
                 }
