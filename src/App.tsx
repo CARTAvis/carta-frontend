@@ -250,6 +250,16 @@ export class App extends React.Component<{ appStore: AppStore }> {
             <Hotkeys>
                 <Hotkey group="Frame controls" global={true} combo="alt + [" label="Previous frame" onKeyDown={appStore.prevFrame}/>
                 <Hotkey group="Frame controls" global={true} combo="alt + ]" label="Next frame" onKeyDown={appStore.nextFrame}/>
+                <Hotkey group="Frame controls" global={true} combo="alt + pageup" label="Next channel" onKeyDown={() => {
+                    if (appStore.activeFrame) {
+                        appStore.activeFrame.incrementChannels(1, 0);
+                    }
+                }}/>
+                <Hotkey group="Frame controls" global={true} combo="alt + pagedown" label="Previous channel" onKeyDown={() => {
+                    if (appStore.activeFrame) {
+                        appStore.activeFrame.incrementChannels(-1, 0);
+                    }
+                }}/>
                 <Hotkey group="File controls" global={true} combo="alt + o" label="Open file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser()}/>
                 <Hotkey group="File controls" global={true} combo="alt + a" label="Append file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(true)}/>
             </Hotkeys>

@@ -49,6 +49,8 @@ export class FrameStore {
     @observable zoomLevel: number;
     @observable stokes;
     @observable channel;
+    @observable requiredStokes;
+    @observable requiredChannel;
     @observable currentFrameView: FrameView;
     @observable renderConfig: FrameRenderConfig;
     @observable rasterData: Float32Array;
@@ -66,6 +68,8 @@ export class FrameStore {
         this.center = {x: 0, y: 0};
         this.stokes = 0;
         this.channel = 0;
+        this.requiredStokes = 0;
+        this.requiredChannel = 0;
         this.percentileRanks = [0.01, 0.05, 0.1, 0.5, 1, 2, 5, 10, 25, 50, 75, 90, 95, 98, 99, 99.5, 99.9, 99.95, 99.99];
 
         this.renderConfig = new FrameRenderConfig();
@@ -212,6 +216,9 @@ export class FrameStore {
     }
 
     @action updateFromRasterData(rasterImageData: CARTA.RasterImageData) {
+        this.stokes = rasterImageData.stokes;
+        this.channel = rasterImageData.channel;
+
         this.currentFrameView = {
             xMin: rasterImageData.imageBounds.xMin,
             xMax: rasterImageData.imageBounds.xMax,
@@ -242,6 +249,28 @@ export class FrameStore {
                 mip: rasterImageData.mip
             };
         }
+    }
+
+    @action setChannels(channel: number, stokes: number) {
+        this.requiredChannel = channel;
+        this.requiredStokes = stokes;
+    }
+
+    @action incrementChannels(deltaChannel: number, deltaStokes: number, wrap: boolean = true) {
+        const depth = this.frameInfo.fileInfoExtended.depth;
+        const numStokes = this.frameInfo.fileInfoExtended.stokes;
+
+        let newChannel = this.channel + deltaChannel;
+        let newStokes = this.stokes + deltaStokes;
+        if (wrap) {
+            newChannel = (newChannel + depth) % depth;
+            newStokes = (newStokes + numStokes) % numStokes;
+        }
+        else {
+            newChannel = Math.max(0, Math.min(depth - 1, newChannel));
+            newStokes = Math.max(0, Math.min(numStokes - 1, newStokes));
+        }
+        this.setChannels(newChannel, newStokes);
     }
 
     @action setZoom(zoom: number) {
