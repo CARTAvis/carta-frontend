@@ -7,7 +7,8 @@ import ReactResizeDetector from "react-resize-detector";
 import {Config, Data, Layout} from "plotly.js";
 import "./RenderConfigComponent.css";
 import {FrameScaling, FrameStore} from "../../stores/FrameStore";
-import {FormGroup, HTMLSelect, NonIdealState, NumericInput, Tooltip, Position, ButtonGroup, Button} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, NonIdealState, NumericInput, Tooltip, Position, ButtonGroup, Button, Colors} from "@blueprintjs/core";
+import {WidgetConfig} from "../../stores/FloatingWidgetStore";
 
 // This allows us to use a minimal Plotly.js bundle with React-Plotly.js (900k compared to 2.7 MB)
 const Plot = createPlotlyComponent(Plotly);
@@ -21,6 +22,8 @@ const COLOR_MAPS_ALL = ["accent", "afmhot", "autumn", "binary", "Blues", "bone",
 
 class RenderConfigComponentProps {
     appStore: AppStore;
+    id: string;
+    docked: boolean;
 }
 
 class RenderConfigComponentState {
@@ -34,11 +37,23 @@ class RenderConfigComponentState {
 
 @observer
 export class RenderConfigComponent extends React.Component<RenderConfigComponentProps, RenderConfigComponentState> {
-
     private plotRef: any;
     private movingScaleMax: boolean;
     private movingScaleMin: boolean;
     private cachedFrame: FrameStore;
+
+    public static get WIDGET_CONFIG(): WidgetConfig {
+        return {
+            id: "render-config",
+            type: "render-config",
+            minWidth: 250,
+            minHeight: 225,
+            defaultWidth: 650,
+            defaultHeight: 225,
+            title: "Render Configuration",
+            isCloseable: true
+        };
+    }
 
     constructor(props: RenderConfigComponentProps) {
         super(props);
@@ -194,7 +209,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             x0: position,
             x1: position,
             line: {
-                color: "red",
+                color: Colors.RED2,
                 width: 1
             }
         }];
@@ -215,10 +230,11 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                 xanchor: position,
                 x0: -3,
                 x1: +3,
-                fillcolor: `rgba(255, 0, 0, ${moving ? 0.7 : 0.5})`,
+                // Using bp3 RED2 but applying opacity
+                fillcolor: `rgba(194, 48, 48, ${moving ? 0.7 : 0.5})`,
                 line: {
                     width: 1,
-                    color: "red"
+                    color: Colors.RED2
                 }
             });
         }
@@ -244,7 +260,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
 
     render() {
         const appStore = this.props.appStore;
-        const backgroundColor = "#F2F2F2";
+        const backgroundColor = Colors.LIGHT_GRAY5;
         const frame = appStore.activeFrame;
         let scaleMarkers = [];
         if (frame) {
@@ -302,7 +318,8 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                 mode: "lines",
                 line: {
                     width: 1.0,
-                    shape: "hv"
+                    shape: "hv",
+                    color: Colors.BLUE2
                 }
             });
         }
@@ -413,7 +430,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                     {this.state.width < histogramCutoff && percentileSelectDiv}
                 </div>
                 }
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
         );
     }

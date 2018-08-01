@@ -12,6 +12,7 @@ const pixelShaderSimple = require("!raw-loader!./GLSL/pixel_simple.glsl");
 export class RasterViewComponentProps {
     overlaySettings: OverlayStore;
     frame: FrameStore;
+    docked: boolean;
 }
 
 @observer
@@ -334,9 +335,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             };
         }
         const padding = this.props.overlaySettings.padding;
-
+        let className = "raster-div";
+        if (this.props.docked) {
+            className += " docked";
+        }
         return (
-            <div className="raster-div">
+            <div className={className}>
                 <canvas
                     className="raster-canvas"
                     ref={(ref) => this.canvas = ref}

@@ -2,15 +2,17 @@ import {action, autorun, computed, observable} from "mobx";
 import {OverlayStore} from "./OverlayStore";
 import {LayoutStore} from "./LayoutStore";
 import {SpatialProfileStore} from "./SpatialProfileStore";
-import {CursorInfo} from "../models/CursorInfo";
-import {BackendService} from "../services/BackendService";
 import {FileBrowserStore} from "./FileBrowserStore";
 import {FrameInfo, FrameStore, FrameView} from "./FrameStore";
 import {AlertStore} from "./AlertStore";
+import {LogStore} from "./LogStore";
+import {FloatingWidgetStore} from "./FloatingWidgetStore";
+import {BackendService} from "../services/BackendService";
+import {CursorInfo} from "../models/CursorInfo";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import * as _ from "lodash";
-import {LogStore} from "./LogStore";
+import {ImageViewComponent} from "../components/ImageView/ImageViewComponent";
 
 export class AppStore {
     // Backend service
@@ -30,6 +32,11 @@ export class AppStore {
     @observable cursorInfo: CursorInfo;
     // Spatial profiles
     @observable spatialProfiles: Map<number, SpatialProfileStore>;
+    @observable spatialProfileWidgets: Map<string, {dataSourceId: number, coordinate: string}>;
+
+    @action addSpatialProfileWidget(id: string, dataSourceId: number, coordinate: string) {
+        this.spatialProfileWidgets.set(id, {dataSourceId, coordinate});
+    }
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
@@ -52,6 +59,9 @@ export class AppStore {
     @action hideURLConnect = () => {
         this.urlConnectDialogVisible = false;
     };
+
+    // Floating Widgets
+    @observable floatingWidgetStore: FloatingWidgetStore;
 
     // Frame actions
     @action addFrame = (directory: string, file: string, hdu: string, fileId: number) => {
@@ -205,11 +215,13 @@ export class AppStore {
         this.backendService = new BackendService(this.logStore);
         this.astReady = false;
         this.spatialProfiles = new Map<number, SpatialProfileStore>();
+        this.spatialProfileWidgets = new Map<string, {dataSourceId: number, coordinate: string}>();
         this.frames = [];
         this.activeFrame = null;
         this.alertStore = new AlertStore();
         this.overlayStore = new OverlayStore();
         this.layoutSettings = new LayoutStore();
+        this.floatingWidgetStore = new FloatingWidgetStore();
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
 
@@ -300,14 +312,24 @@ export class AppStore {
     }
 
     private updateTitle() {
-        const imageViewComponents = this.layoutSettings.layout.root.getItemsById("imageView");
+        let newTitle;
+        if (this.activeFrame) {
+            newTitle = this.activeFrame.frameInfo.fileInfo.name;
+        }
+        else {
+            newTitle = "No image loaded";
+        }
+
+        // Update GL title by searching for image-view components
+        const imageViewComponents = this.layoutSettings.layout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
         if (imageViewComponents.length) {
-            if (this.activeFrame) {
-                imageViewComponents[0].setTitle(this.activeFrame.frameInfo.fileInfo.name);
-            }
-            else {
-                imageViewComponents[0].setTitle("No image loaded");
-            }
+            imageViewComponents[0].setTitle(newTitle);
+        }
+
+        // Update floating window title
+        const imageViewWidget = this.floatingWidgetStore.widgets.find(w => w.type === ImageViewComponent.WIDGET_CONFIG.type);
+        if (imageViewWidget) {
+            this.floatingWidgetStore.setWidgetTitle(imageViewWidget.id, newTitle);
         }
     }
 }

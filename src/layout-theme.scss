@@ -1,16 +1,22 @@
 // Color variables (appears count calculates by raw css)
-$pane-background: #f2f2f2; // Appears 3 times
-$color1: #000000; // Appears 4 times
-$color2: #cccccc; // Appears 3 times
-$color3: #777777; // Appears 2 times
+@import "../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
-$container-background: #ffffff; // Appears 1 time
-$color5: #555555; // Appears 1 time
-$color6: #452500; // Appears 1 time
-$color7: #fafafa; // Appears 1 time
-$splitter-color: #678399; // Appears 1 time
-$splitter-color-hovered: #919fbb; // Appears 1 time
-$color10: #888888; // Appears 1 time
+$pane-background: $light-gray5;
+$tab-background: $light-gray5;
+$inactive-tab-background: $light-gray4;
+$tab-border-radius: 4px;
+
+$color1: $black; // Appears 4 times
+$border-color: $gray5; // Appears 3 times
+$title-color: $blue2; // Appears 2 times
+$inactive-title-color: $gray2; // Appears 1 time
+$placeholder-background: $blue2;
+
+$container-background: $white; // Appears 1 time
+$transition-border-color: $gray1; // Appears 1 time
+$color6: $vermilion1; // Appears 1 time
+$splitter-color: $light-gray2; // Appears 1 time
+$splitter-color-hovered: $light-gray2; // Appears 1 time
 
 // ".lm_dragging" is applied to BODY tag during Drag and is also directly applied to the root of the object being dragged
 
@@ -22,7 +28,8 @@ $color10: #888888; // Appears 1 time
 // Single Pane content (area in which final dragged content is contained)
 .lm_content {
     background: $pane-background;
-    border: 1px solid $color2;
+    border: 1px solid $border-color;
+    border-radius: 0 $tab-border-radius $tab-border-radius $tab-border-radius;
 }
 
 // Single Pane content during Drag (style of moving window following mouse)
@@ -36,13 +43,13 @@ $color10: #888888; // Appears 1 time
 // Placeholder Container of target position
 .lm_dropTargetIndicator {
     //box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.1);
-    outline: 1px dashed $color2;
+    outline: 1px dashed $border-color;
     margin: 1px;
     transition: all 200ms ease;
 
     // Inner Placeholder
     .lm_inner {
-        background: $color1;
+        background: $placeholder-background;
         opacity: 0.1;
     }
 }
@@ -71,12 +78,13 @@ $color10: #888888; // Appears 1 time
 
     // Single Tab container. A single Tab is set for each pane, a group of Tabs are contained in ".lm_header"
     .lm_tab {
-        color: $color10;
-        background: $color7;
+        color: $inactive-title-color;
+        background: $inactive-tab-background;
         margin-right: 2px;
         padding-bottom: 4px;
-        border: 1px solid $color2;
+        border: 1px solid $border-color;
         border-bottom: none;
+        border-radius: $tab-border-radius $tab-border-radius 0 0;
 
         .lm_title {
             padding-top: 1px;
@@ -84,13 +92,14 @@ $color10: #888888; // Appears 1 time
 
         // Close Tab Icon
         .lm_close_tab {
-            width: 11px;
-            height: 11px;
-            background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAYAAADEUlfTAAAAIklEQVR4nGNgYGD4z4Ad/Mdg4ODDBXCZRFgCp5EEHQMXBwAQAgz0SVCcggAAAABJRU5ErkJggg==);
+            width: 16px;
+            height: 16px;
+            // bp3 cross icon
+            background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOC4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9IjAgMCAyMCAyMCIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMjAgMjAiIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPGcgaWQ9ImNyb3NzX21hcmtfNl8iPg0KCTxnPg0KCQk8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTExLjQxLDEwbDQuMjktNC4yOUMxNS44OSw1LjUzLDE2LDUuMjgsMTYsNWMwLTAuNTUtMC40NS0xLTEtMQ0KCQkJYy0wLjI4LDAtMC41MywwLjExLTAuNzEsMC4yOUwxMCw4LjU5TDUuNzEsNC4yOUM1LjUzLDQuMTEsNS4yOCw0LDUsNEM0LjQ1LDQsNCw0LjQ1LDQsNWMwLDAuMjgsMC4xMSwwLjUzLDAuMjksMC43MUw4LjU5LDEwDQoJCQlsLTQuMjksNC4yOUM0LjExLDE0LjQ3LDQsMTQuNzIsNCwxNWMwLDAuNTUsMC40NSwxLDEsMWMwLjI4LDAsMC41My0wLjExLDAuNzEtMC4yOUwxMCwxMS40MWw0LjI5LDQuMjkNCgkJCUMxNC40NywxNS44OSwxNC43MiwxNiwxNSwxNmMwLjU1LDAsMS0wLjQ1LDEtMWMwLTAuMjgtMC4xMS0wLjUzLTAuMjktMC43MUwxMS40MSwxMHoiLz4NCgk8L2c+DQo8L2c+DQo8L3N2Zz4NCg==');
             background-position: center center;
             background-repeat: no-repeat;
-            right: 6px;
-            top: 4px;
+            right: 4px;
+            top: 2px;
             opacity: 0.4;
 
             &:hover {
@@ -101,11 +110,14 @@ $color10: #888888; // Appears 1 time
         // If Tab is active, so if it's in foreground
         &.lm_active {
             border-bottom: none;
-            box-shadow: 2px -2px 2px -2px rgba(0, 0, 0, 0.2);
+            box-shadow: 2px -2px 2px -2px rgba($blue2, 0.2);
             padding-bottom: 5px;
 
             .lm_close_tab {
-                opacity: 1;
+                opacity: 0.5;
+                &:hover {
+                    opacity: 1;
+                }
             }
         }
     }
@@ -115,7 +127,7 @@ $color10: #888888; // Appears 1 time
 .lm_stack.lm_bottom {
     .lm_header .lm_tab {
         &.lm_active {
-            box-shadow: 2px 2px 2px -2px rgba(0, 0, 0, 0.2);
+            box-shadow: 2px 2px 2px -2px rgba($blue2, 0.2);
         }
     }
 }
@@ -128,11 +140,14 @@ $color10: #888888; // Appears 1 time
 }
 
 .lm_tab {
-    &:hover, // If Tab is hovered
+    &:hover {
+        background: $tab-background;
+        color: mix($inactive-title-color, $title-color, 75%);
+    }
     &.lm_active // If Tab is active, so if it's in foreground
     {
-        background: $pane-background;
-        color: $color3;
+        background: $tab-background;
+        color: $title-color;
     }
 }
 
@@ -189,7 +204,7 @@ $color10: #888888; // Appears 1 time
 
 .lm_transition_indicator {
     background-color: $color1;
-    border: 1px dashed $color5;
+    border: 1px dashed $transition-border-color;
 }
 
 // If a specific Pane is Popped Out, so move it to a different Browser Window, Icon to restore original position is:

@@ -1,4 +1,6 @@
-$browser-table-color: #137CBD;
+@import "../../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+
+$browser-table-color: $blue3;
 
 .file-table {
     overflow-y: scroll;

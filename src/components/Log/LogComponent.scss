@@ -1,3 +1,5 @@
+@import "../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+
 .log {
     padding: 5px;
     height: 100%;
@@ -15,7 +17,7 @@
     }
 
     .log-entry-follow {
-        background: rgba(#137CBD, 0.3);
+        background: rgba($blue3, 0.3);
     }
 
     .log-footer {

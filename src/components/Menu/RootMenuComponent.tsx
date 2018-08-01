@@ -1,13 +1,13 @@
 import * as React from "react";
 import "./RootMenuComponent.css";
-import {Menu, Popover, Position} from "@blueprintjs/core";
+import {Button, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {AppStore} from "../../stores/AppStore";
 import {observer} from "mobx-react";
 import {ConnectionStatus} from "../../services/BackendService";
+import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 
 @observer
 export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
-
     render() {
         const appStore = this.props.appStore;
 
@@ -54,7 +54,6 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
 
         const viewMenu = (
             <Menu>
-
                 <Menu.Item text="Interface" icon={"control"}>
                     <Menu.Item text="Light" icon={"flash"}/>
                     <Menu.Item text="Dark" icon={"moon"}/>
@@ -112,7 +111,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 <Menu.Divider/>
                 <Menu.Item text="3D Height-map" icon={"mountain"}/>
                 <Menu.Item text="Animator" icon={"video"}/>
-                <Menu.Item text="Color map" icon={"contrast"}/>
+                <Menu.Item text="Render Config" icon={"style"}/>
                 <Menu.Divider/>
                 <Menu.Item text="Presets" icon={"new-grid-item"}>
                     <Menu.Item text="Image Only"/>
@@ -158,6 +157,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                         <Menu.Item text="Help"/>
                     </Menu>
                 </Popover>
+                <ToolbarMenuComponent appStore={appStore}/>
             </div>
         );
     }
