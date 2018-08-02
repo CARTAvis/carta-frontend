@@ -45,7 +45,7 @@ export class BackendService {
             // "RASTER_IMAGE_DATA",
             "OPEN_FILE",
             "OPEN_FILE_ACK",
-            //"REGION_HISTOGRAM_DATA"
+            // "REGION_HISTOGRAM_DATA"
         ];
 
         autorun(() => {

@@ -272,7 +272,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
         }
     };
 
-
     public renderHotkeys() {
         const appStore = this.props.appStore;
         return (
