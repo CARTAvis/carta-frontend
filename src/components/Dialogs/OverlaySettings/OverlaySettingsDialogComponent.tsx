@@ -7,6 +7,197 @@ import * as AST from "ast_wrapper";
 
 @observer
 export class OverlaySettingsDialogComponent extends React.Component<{ appStore: AppStore }> {
+    
+    private axisTabGroup(id: number) {
+        const overlayStore = this.props.appStore.overlayStore;
+        
+        // TODO: eliminate duplication by making these properties
+        const astFonts = AST.fonts.map((x, i) => ({label: x.replace("{size} ", ""), value: i}));
+        const astColors = AST.colors.map((x, i) => ({label: x, value: i}));
+        
+        var tabId;
+        var tabTitle;
+        var axis;
+        
+        if (id === 0) {
+            tabId = "axes";
+            tabTitle = "Axes";
+            axis = overlayStore.axes;
+        } else {
+            tabId = `axis${id}`;
+            tabTitle = `Axis ${id}`;
+            axis = overlayStore.axis[id - 1];
+        }
+        
+        const tabGroupSelected = (
+            overlayStore.overlaySettingsActiveTab === tabId || 
+            overlayStore.overlaySettingsActiveTab === `${tabId}Numbers` ||
+            overlayStore.overlaySettingsActiveTab === `${tabId}Labels`
+        );
+                
+        const axisPanel = (
+            <div className="panel-container">
+                <Checkbox
+                    checked={axis.visible}
+                    label="Visible"
+                    onChange={(ev) => axis.setVisible(ev.currentTarget.checked)}
+                />
+                <FormGroup label="Color" disabled={!axis.visible}>
+                    <HTMLSelect
+                        value={axis.color}
+                        options={astColors}
+                        disabled={!axis.visible}
+                        onChange={(ev) => axis.setColor(Number(ev.currentTarget.value))}
+                    />
+                </FormGroup>
+                <FormGroup label="Width" disabled={!axis.visible}>
+                    <NumericInput
+                        style={{width: "60px"}}
+                        placeholder="Width"
+                        min={0}
+                        value={axis.width}
+                        disabled={!axis.visible}
+                        onValueChange={(value: number) => axis.setWidth(value)}
+                    />
+                </FormGroup>
+                <FormGroup label="Gap" disabled={!axis.visible}>
+                    <NumericInput
+                        style={{width: "60px"}}
+                        placeholder="Gap"
+                        min={0}
+                        stepSize={0.01}
+                        minorStepSize={0.001}
+                        majorStepSize={0.1}
+                        value={axis.gap}
+                        disabled={!axis.visible}
+                        onValueChange={(value: number) => axis.setGap(value)}
+                    />
+                </FormGroup>
+                <FormGroup label="Cursor format" disabled={!axis.visible}>
+                    <input
+                        className="bp3-input"
+                        type="text"
+                        placeholder="Format"
+                        value={axis.cursorFormat}
+                        disabled={!axis.visible}
+                        onChange={(ev) => axis.setCursorFormat(ev.currentTarget.value)}
+                    />
+                </FormGroup>
+            </div>
+        );
+        
+        const axisNumbersPanel = (
+            <div className="panel-container">
+                <Checkbox
+                    checked={axis.numberVisible}
+                    label="Visible"
+                    onChange={(ev) => axis.setNumberVisible(ev.currentTarget.checked)}
+                />
+                <FormGroup label="Font" disabled={!axis.numberVisible}>
+                    <HTMLSelect
+                        value={axis.numberFont}
+                        options={astFonts}
+                        disabled={!axis.numberVisible}
+                        onChange={(ev) => axis.setNumberFont(Number(ev.currentTarget.value))}
+                    />
+                    <NumericInput
+                        style={{width: "60px"}}
+                        min={7}
+                        placeholder="Font size"
+                        value={axis.numberFontSize}
+                        disabled={!axis.numberVisible}
+                        onValueChange={(value: number) => axis.setNumberFontSize(value)}
+                    />
+                </FormGroup>
+                <FormGroup label="Color" disabled={!axis.numberVisible}>
+                    <HTMLSelect
+                        value={axis.numberColor}
+                        options={astColors}
+                        disabled={!axis.numberVisible}
+                        onChange={(ev) => axis.setNumberColor(Number(ev.currentTarget.value))}
+                    />
+                </FormGroup>
+            </div>
+        );
+        
+        const axisLabelsPanel = (
+            <div className="panel-container">
+                <Checkbox
+                    checked={axis.labelVisible}
+                    label="Visible"
+                    onChange={(ev) => axis.setLabelVisible(ev.currentTarget.checked)}
+                />
+                <FormGroup label="Text" disabled={!axis.labelVisible}>
+                    <input
+                        className="bp3-input"
+                        type="text"
+                        placeholder="Text input"
+                        value={axis.labelText}
+                        disabled={!axis.labelVisible}
+                        onChange={(ev) => axis.setLabelText(ev.currentTarget.value)}
+                    />
+                </FormGroup>
+                <FormGroup label="Font" disabled={!axis.labelVisible}>
+                    <HTMLSelect
+                        value={axis.labelFont}
+                        options={astFonts}
+                        disabled={!axis.labelVisible}
+                        onChange={(ev) => axis.setLabelFont(Number(ev.currentTarget.value))}
+                    />
+                    <NumericInput
+                        style={{width: "60px"}}
+                        min={7}
+                        placeholder="Font size"
+                        value={axis.labelFontSize}
+                        disabled={!axis.labelVisible}
+                        onValueChange={(value: number) => axis.setLabelFontSize(value)}
+                    />
+                </FormGroup>
+                <FormGroup label="Gap" disabled={!axis.labelVisible}>
+                    <NumericInput
+                        style={{width: "60px"}}
+                        placeholder="Gap"
+                        min={0}
+                        stepSize={0.01}
+                        minorStepSize={0.001}
+                        majorStepSize={0.1}
+                        value={axis.labelGap}
+                        disabled={!axis.labelVisible}
+                        onValueChange={(value: number) => axis.setLabelGap(value)}
+                    />
+                </FormGroup>
+                <FormGroup label="Color" disabled={!axis.labelVisible}>
+                    <HTMLSelect
+                        value={axis.labelColor}
+                        options={astColors}
+                        disabled={!axis.labelVisible}
+                        onChange={(ev) => axis.setLabelColor(Number(ev.currentTarget.value))}
+                    />
+                </FormGroup>
+                <FormGroup label="Format" disabled={!axis.labelVisible}>
+                    <input
+                        className="bp3-input"
+                        type="text"
+                        placeholder="Format"
+                        value={axis.labelFormat}
+                        disabled={!axis.labelVisible}
+                        onChange={(ev) => axis.setLabelFormat(ev.currentTarget.value)}
+                    />
+                </FormGroup>
+            </div>
+        );
+        
+        var axisTabs = [
+            <Tab id={tabId} title={tabTitle} panel={axisPanel}/>
+        ];
+        
+        if (tabGroupSelected) {
+            axisTabs.push(<Tab id={`${tabId}Numbers`} title="&#8227; Numbers" disabled={!axis.visible} panel={axisNumbersPanel}/>);
+            axisTabs.push(<Tab id={`${tabId}Labels`} title="&#8227; Labels" disabled={!axis.visible} panel={axisLabelsPanel}/>);
+        }
+    
+        return axisTabs;
+    }
 
     public render() {
         const overlayStore = this.props.appStore.overlayStore;
@@ -15,6 +206,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         const border = overlayStore.border;
         const ticks = overlayStore.ticks;
         const axes = overlayStore.axes;
+        const axis = overlayStore.axis;
         
         const astFonts = AST.fonts.map((x, i) => ({label: x.replace("{size} ", ""), value: i}));
         const astColors = AST.colors.map((x, i) => ({label: x, value: i}));
@@ -179,158 +371,6 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
             </div>
         );
-        
-        const axesPanel = (
-            <div className="panel-container">
-                <Checkbox
-                    checked={axes.visible}
-                    label="Visible"
-                    onChange={(ev) => axes.setVisible(ev.currentTarget.checked)}
-                />
-                <FormGroup label="Color" disabled={!axes.visible}>
-                    <HTMLSelect
-                        value={axes.color}
-                        options={astColors}
-                        disabled={!axes.visible}
-                        onChange={(ev) => axes.setColor(Number(ev.currentTarget.value))}
-                    />
-                </FormGroup>
-                <FormGroup label="Width" disabled={!axes.visible}>
-                    <NumericInput
-                        style={{width: "60px"}}
-                        placeholder="Width"
-                        min={0}
-                        value={axes.width}
-                        disabled={!axes.visible}
-                        onValueChange={(value: number) => axes.setWidth(value)}
-                    />
-                </FormGroup>
-                <FormGroup label="Gap" disabled={!axes.visible}>
-                    <NumericInput
-                        style={{width: "60px"}}
-                        placeholder="Gap"
-                        min={0}
-                        stepSize={0.01}
-                        minorStepSize={0.001}
-                        majorStepSize={0.1}
-                        value={axes.gap}
-                        disabled={!axes.visible}
-                        onValueChange={(value: number) => axes.setGap(value)}
-                    />
-                </FormGroup>
-                <FormGroup label="Cursor format" disabled={!axes.visible}>
-                    <input
-                        className="bp3-input"
-                        type="text"
-                        placeholder="Format"
-                        value={axes.cursorFormat}
-                        disabled={!axes.visible}
-                        onChange={(ev) => axes.setCursorFormat(ev.currentTarget.value)}
-                    />
-                </FormGroup>
-            </div>
-        );
-        
-        const axesNumbersPanel = (
-            <div className="panel-container">
-                <Checkbox
-                    checked={axes.numberVisible}
-                    label="Visible"
-                    onChange={(ev) => axes.setNumberVisible(ev.currentTarget.checked)}
-                />
-                <FormGroup label="Font" disabled={!axes.numberVisible}>
-                    <HTMLSelect
-                        value={axes.numberFont}
-                        options={astFonts}
-                        disabled={!axes.numberVisible}
-                        onChange={(ev) => axes.setNumberFont(Number(ev.currentTarget.value))}
-                    />
-                    <NumericInput
-                        style={{width: "60px"}}
-                        min={7}
-                        placeholder="Font size"
-                        value={axes.numberFontSize}
-                        disabled={!axes.numberVisible}
-                        onValueChange={(value: number) => axes.setNumberFontSize(value)}
-                    />
-                </FormGroup>
-                <FormGroup label="Color" disabled={!axes.numberVisible}>
-                    <HTMLSelect
-                        value={axes.numberColor}
-                        options={astColors}
-                        disabled={!axes.numberVisible}
-                        onChange={(ev) => axes.setNumberColor(Number(ev.currentTarget.value))}
-                    />
-                </FormGroup>
-            </div>
-        );
-        
-        const axesLabelsPanel = (
-            <div className="panel-container">
-                <Checkbox
-                    checked={axes.labelVisible}
-                    label="Visible"
-                    onChange={(ev) => axes.setLabelVisible(ev.currentTarget.checked)}
-                />
-                <FormGroup label="Text" disabled={!axes.labelVisible}>
-                    <input
-                        className="bp3-input"
-                        type="text"
-                        placeholder="Text input"
-                        value={axes.labelText}
-                        disabled={!axes.labelVisible}
-                        onChange={(ev) => axes.setLabelText(ev.currentTarget.value)}
-                    />
-                </FormGroup>
-                <FormGroup label="Font" disabled={!axes.labelVisible}>
-                    <HTMLSelect
-                        value={axes.labelFont}
-                        options={astFonts}
-                        disabled={!axes.labelVisible}
-                        onChange={(ev) => axes.setLabelFont(Number(ev.currentTarget.value))}
-                    />
-                    <NumericInput
-                        style={{width: "60px"}}
-                        min={7}
-                        placeholder="Font size"
-                        value={axes.labelFontSize}
-                        disabled={!axes.labelVisible}
-                        onValueChange={(value: number) => axes.setLabelFontSize(value)}
-                    />
-                </FormGroup>
-                <FormGroup label="Gap" disabled={!axes.labelVisible}>
-                    <NumericInput
-                        style={{width: "60px"}}
-                        placeholder="Gap"
-                        min={0}
-                        stepSize={0.01}
-                        minorStepSize={0.001}
-                        majorStepSize={0.1}
-                        value={axes.labelGap}
-                        disabled={!axes.labelVisible}
-                        onValueChange={(value: number) => axes.setLabelGap(value)}
-                    />
-                </FormGroup>
-                <FormGroup label="Color" disabled={!axes.labelVisible}>
-                    <HTMLSelect
-                        value={axes.labelColor}
-                        options={astColors}
-                        disabled={!axes.labelVisible}
-                        onChange={(ev) => axes.setLabelColor(Number(ev.currentTarget.value))}
-                    />
-                </FormGroup>
-                <FormGroup label="Format" disabled={!axes.labelVisible}>
-                    <input
-                        className="bp3-input"
-                        type="text"
-                        placeholder="Format"
-                        value={axes.labelFormat}
-                        disabled={!axes.labelVisible}
-                        onChange={(ev) => axes.setLabelFormat(ev.currentTarget.value)}
-                    />
-                </FormGroup>
-            </div>
-        );
 
         return (
             <Dialog
@@ -351,9 +391,8 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         <Tab id="ticks" title="Ticks" panel={ticksPanel}/>
                         <Tab id="grid" title="Grid" panel={gridPanel}/>
                         <Tab id="border" title="Border" panel={borderPanel}/>
-                        <Tab id="axes" title="Axes" panel={axesPanel}/>
-                        <Tab id="axesNumbers" title="Axes numbers" disabled={!axes.visible} panel={axesNumbersPanel}/>
-                        <Tab id="axesLabels" title="Axes labels" disabled={!axes.visible} panel={axesLabelsPanel}/>
+                        {this.axisTabGroup(0)}
+                        {overlayStore.axis.map((x, i) => (this.axisTabGroup(i + 1)))}
                     </Tabs>
                 </div>
                 <div className="bp3-dialog-footer">
