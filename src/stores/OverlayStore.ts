@@ -100,6 +100,15 @@ export class OverlayGridSettings {
     @action setVisible(visible: boolean = true) {
         this.visible = visible;
     }
+
+    @action setColor(color: number) {
+        this.color = color;
+    }
+
+    @action setWidth(width: number) {
+        this.width = width;
+    }
+    
 }
 
 export class OverlayBorderSettings {
@@ -124,6 +133,14 @@ export class OverlayBorderSettings {
 
     @action setVisible(visible: boolean = true) {
         this.visible = visible;
+    }
+
+    @action setColor(color: number) {
+        this.color = color;
+    }
+
+    @action setWidth(width: number) {
+        this.width = width;
     }
 }
 
@@ -154,6 +171,26 @@ export class OverlayTickSettings {
 
         return stringList.join(", ");
     }
+
+    @action setDensity(density: number) {
+        this.density = density;
+    }
+
+    @action setColor(color: number) {
+        this.color = color;
+    }
+
+    @action setWidth(width: number) {
+        this.width = width;
+    }
+
+    @action setLength(length: number) {
+        this.length = length;
+    }
+
+    @action setMajorLength(length: number) {
+        this.majorLength = length;
+    }
 }
 
 export class OverlayAxisSettings {
@@ -161,6 +198,7 @@ export class OverlayAxisSettings {
     @observable color?: number;
     @observable width?: number;
     @observable gap?: number;
+    @observable cursorFormat?: string;
 
     @observable numberVisible?: boolean;
     @observable numberFont?: number;
@@ -174,7 +212,6 @@ export class OverlayAxisSettings {
     @observable labelFontSize?: number;
     @observable labelText?: string;
     @observable labelFormat?: string;
-    @observable cursorFormat?: string;
 
     axisIndex: number;
 
@@ -241,13 +278,66 @@ export class OverlayAxisSettings {
         this.visible = visible;
     }
 
+    @action setColor(color: number) {
+        this.color = color;
+    }
+
+    @action setWidth(width: number) {
+        this.width = width;
+    }
+
+    @action setGap(gap: number) {
+        this.gap = gap;
+    }
+
+    @action setCursorFormat(format: string) {
+        this.cursorFormat = format;
+    }
+
     @action setNumberVisible(visible: boolean = true) {
         this.numberVisible = visible;
+    }
+
+    @action setNumberFont(font: number) {
+        this.numberFont = font;
+    }
+
+    @action setNumberFontSize(fontSize: number) {
+        this.numberFontSize = fontSize;
+    }
+
+    @action setNumberColor(color: number) {
+        this.numberColor = color;
     }
 
     @action setLabelVisible(visible: boolean = true) {
         this.labelVisible = visible;
     }
+
+    @action setLabelColor(color: number) {
+        this.labelColor = color;
+    }
+
+    @action setLabelGap(gap: number) {
+        this.labelGap = gap;
+    }
+
+    @action setLabelFont(font: number) {
+        this.labelFont = font;
+    }
+
+    @action setLabelFontSize(fontSize: number) {
+        this.labelFontSize = fontSize;
+    }
+
+    @action setLabelText(text: string) {
+        this.labelText = text;
+    }
+
+    @action setLabelFormat(format: string) {
+        this.labelFormat = format;
+    }
+
 }
 
 export class OverlayStore {
@@ -270,16 +360,28 @@ export class OverlayStore {
     @observable axes: OverlayAxisSettings;
     @observable axis: Array<OverlayAxisSettings>;
     @observable ticks: OverlayTickSettings;
+    
     // Title settings
+    
     @observable extra?: string;
+    
     // Dialog
+    
     @observable overlaySettingsDialogVisible = false;
+    
     @action showOverlaySettings = () => {
         this.overlaySettingsDialogVisible = true;
     };
+    
     @action hideOverlaySettings = () => {
         this.overlaySettingsDialogVisible = false;
     };
+    
+    @observable overlaySettingsActiveTab = "title";
+    
+    @action setOverlaySettingsActiveTab(tabId: string) {
+        this.overlaySettingsActiveTab = tabId;
+    }
 
     constructor() {
         this.grid = new OverlayGridSettings();
@@ -299,6 +401,7 @@ export class OverlayStore {
         this.title.visible = false;
         this.title.gap = 0.02;
         this.title.color = 4;
+        this.title.fontSize = 24;
         this.title.text = "A custom AST plot";
         this.grid.visible = true;
         this.grid.color = 4;
