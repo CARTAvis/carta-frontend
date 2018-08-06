@@ -16,6 +16,8 @@ $height4: 19px; // Appears 1 time
 $height5: 18px; // Appears 1 time
 $height6: 15px; // Appears 1 time
 
+$border-radius-adjustment: 10px;
+
 .lm_root {
     position: relative;
 }
@@ -60,8 +62,10 @@ $height6: 15px; // Appears 1 time
     }
 
     &.lm_vertical {
+        width: calc(100% - #{$border-radius-adjustment});
+        left: $border-radius-adjustment/2;
         .lm_drag_handle {
-            width: $width0;
+            width: 100%;
             position: absolute;
             cursor: ns-resize;
         }
@@ -69,10 +73,11 @@ $height6: 15px; // Appears 1 time
 
     &.lm_horizontal {
         float: left;
-        height: $height0;
+        height: calc(100% - #{$border-radius-adjustment});
+        top: $border-radius-adjustment/2;
 
         .lm_drag_handle {
-            height: $height0;
+            height: 100%;
             position: absolute;
             cursor: ew-resize;
         }
@@ -307,6 +312,7 @@ $height6: 15px; // Appears 1 time
     .lm_content {
         border-top: none;
         overflow: hidden;
+        height: 250px;
     }
 }
 
@@ -359,5 +365,22 @@ $height6: 15px; // Appears 1 time
 
     > .lm_icon {
         z-index: 20;
+    }
+}
+
+// To Hide GL drag proxies, uncomment this
+// .lm_dragProxy {
+//     display: none;
+// }
+
+// Fixes GL drag proxy sizing
+.lm_dragProxy {
+    .lm_content {
+        .lm_item_container {
+            .lm_content {
+                width: 100% !important;
+                height: 100% !important;
+            }
+        }
     }
 }

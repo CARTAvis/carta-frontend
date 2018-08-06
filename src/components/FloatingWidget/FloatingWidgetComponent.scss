@@ -1,0 +1,58 @@
+@import "../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+
+$title-height: 25px;
+$widget-background: $light-gray5;
+$title-color: $gray2;
+$selected-title-color: $blue2;
+$border-color: $gray4;
+$shadow-color: rgba($blue2, 0.1);
+.floating-widget {
+    background-color: $widget-background;
+    border: 1px solid $border-color;
+    border-radius: 5px;
+    //box-shadow: 0px 1px 32px 7px $shadow-color;
+    box-shadow: 0 0 0 1px rgba(16, 22, 26, 0.1), 0 4px 8px rgba(16, 22, 26, 0.15), 0 18px 46px 6px rgba(16, 22, 26, 0.15);
+    margin-bottom: 0px;
+    overflow: hidden;
+
+    .floating-header {
+        width: 100%;
+        height: $title-height;
+        background-color: darken($widget-background, 5%);
+        border-bottom: 1px solid $border-color;
+
+        &.selected {
+            background-color: darken($widget-background, 10%);
+            .floating-title {
+                color: $selected-title-color;
+            }
+        }
+
+        display: flex;
+
+        .floating-title {
+            padding-left: 5px;
+            padding-top: 3px;
+            color: $title-color;
+            font-size: 14px;
+            cursor: move;
+            flex: 1 1 100%;
+        }
+        .floating-header-button {
+            padding-right: 5px;
+            padding-top: 3px;
+            cursor: pointer;
+            color: $gray3;
+            &:hover {
+                color: black;
+            }
+        }
+    }
+
+
+
+    .floating-content {
+        width: 100%;
+        height: calc(100% - #{$title-height});
+    }
+}

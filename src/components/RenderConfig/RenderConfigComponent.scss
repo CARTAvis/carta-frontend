@@ -1,5 +1,7 @@
+@import "../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+
 .modebar {
-    background: rgba(#137CBD, 0.05) !important;
+    background: rgba($blue3, 0.05) !important;
     border-bottom-left-radius: 5px;
 }
 
@@ -17,7 +19,7 @@
         flex-wrap: nowrap;
         display: flex;
         flex-direction: column;
-        div{
+        div {
             margin-left: auto;
         }
         .percentile-select {
@@ -39,7 +41,7 @@
         padding-bottom: 5px;
 
         .histogram-plot {
-            height: calc(100% - 30px);
+            height: calc(100% - 35px);
         }
     }
 }
@@ -51,6 +53,9 @@
 
 .percentile-select {
     margin: 5px auto auto 5px;
+    .bp3-form-group {
+        margin: 0;
+    }
     .bp3-button {
         margin-left: 5px;
     }

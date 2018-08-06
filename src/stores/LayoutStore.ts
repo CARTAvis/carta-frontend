@@ -29,6 +29,7 @@ export class LayoutStore {
         this.layout.init();
         this.layoutConfig = previousLayout;
     };
+
     @action addLayoutConfigToHistory = (config: any) => {
         if (this._layoutHistory.length > 0) {
             // ignore duplicate configs

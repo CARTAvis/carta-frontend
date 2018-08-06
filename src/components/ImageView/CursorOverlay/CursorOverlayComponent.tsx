@@ -5,6 +5,7 @@ import {CSSProperties} from "react";
 
 class CursorOverlayProps {
     cursorInfo: CursorInfo;
+    docked: boolean;
     mip: number;
     width: number;
     top?: number;
