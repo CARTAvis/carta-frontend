@@ -198,12 +198,12 @@ export class OverlayAxisSettings {
     @observable color?: number;
     @observable width?: number;
     @observable gap?: number;
-    @observable cursorFormat?: string;
 
     @observable numberVisible?: boolean;
     @observable numberFont?: number;
     @observable numberFontSize?: number;
     @observable numberColor?: number;
+    @observable numberFormat?: string;
 
     @observable labelVisible?: boolean;
     @observable labelColor?: number;
@@ -211,8 +211,9 @@ export class OverlayAxisSettings {
     @observable labelFont?: number;
     @observable labelFontSize?: number;
     @observable labelText?: string;
-    @observable labelFormat?: string;
 
+    @observable customConfig?: boolean;
+    
     axisIndex: number;
 
     constructor(axisIndex: number) {
@@ -248,6 +249,9 @@ export class OverlayAxisSettings {
         if (this.numberColor !== undefined) {
             stringList.push(`Color(NumLab${indexString})=${this.numberColor}`);
         }
+        if (this.numberFormat !== undefined && this.numberFormat.length) {
+            stringList.push(`Format${indexStringBrackets}=${this.numberFormat}`);
+        }
 
         if (this.labelVisible !== undefined) {
             stringList.push(`TextLab${indexStringBrackets}=${this.labelVisible ? 1 : 0}`);
@@ -266,9 +270,6 @@ export class OverlayAxisSettings {
         }
         if (this.labelText !== undefined) {
             stringList.push(`Label${indexStringBrackets}=${this.labelText}`);
-        }
-        if (this.labelFormat !== undefined && this.labelFormat.length) {
-            stringList.push(`Format${indexStringBrackets}=${this.labelFormat}`);
         }
 
         return stringList.join(", ");
@@ -290,10 +291,6 @@ export class OverlayAxisSettings {
         this.gap = gap;
     }
 
-    @action setCursorFormat(format: string) {
-        this.cursorFormat = format;
-    }
-
     @action setNumberVisible(visible: boolean = true) {
         this.numberVisible = visible;
     }
@@ -308,6 +305,10 @@ export class OverlayAxisSettings {
 
     @action setNumberColor(color: number) {
         this.numberColor = color;
+    }
+    
+    @action setNumberFormat(format: string) {
+        this.numberFormat = format;
     }
 
     @action setLabelVisible(visible: boolean = true) {
@@ -333,9 +334,9 @@ export class OverlayAxisSettings {
     @action setLabelText(text: string) {
         this.labelText = text;
     }
-
-    @action setLabelFormat(format: string) {
-        this.labelFormat = format;
+    
+    @action setCustomConfig(customConfig: boolean = true) {
+        this.customConfig = customConfig;
     }
 
 }
@@ -409,6 +410,9 @@ export class OverlayStore {
         this.axes.labelFontSize = 15;
         this.axes.labelFont = 1;
         this.axes.numberFontSize = 10;
+        this.axes.customConfig = true;
+//         this.axis[0].customConfig = false;
+//         this.axis[1].customConfig = false;
     }
 
     @computed get styleString() {
@@ -480,8 +484,13 @@ export class OverlayStore {
         stringList.push(this.title.styleString);
         stringList.push(this.border.styleString);
         stringList.push(this.axes.styleString);
-        stringList.push(this.axis[0].styleString);
-        stringList.push(this.axis[1].styleString);
+        for (let axis of this.axis) {
+            if (axis.customConfig) {
+                stringList.push(axis.styleString);
+            }
+        }
+//         stringList.push(this.axis[0].styleString);
+//         stringList.push(this.axis[1].styleString);
         stringList.push(this.ticks.styleString);
 
         if (this.extra !== undefined) {
