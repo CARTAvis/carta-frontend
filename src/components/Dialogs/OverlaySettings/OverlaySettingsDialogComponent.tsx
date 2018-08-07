@@ -2,7 +2,7 @@ import * as React from "react";
 import {AppStore} from "../../../stores/AppStore";
 import {observer} from "mobx-react";
 import "./OverlaySettingsDialogComponent.css";
-import {Button, Checkbox, Dialog, Intent, Tab, Tabs, HTMLSelect, NumericInput, FormGroup} from "@blueprintjs/core";
+import {Button, Switch, Dialog, Intent, Tab, Tabs, HTMLSelect, NumericInput, FormGroup} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 
 @observer
@@ -18,6 +18,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         var tabId;
         var tabTitle;
         var axis;
+        var perAxisComponent;
         
         if (id === 0) {
             tabId = "axes";
@@ -37,7 +38,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 
         const axisPanel = (
             <div className="panel-container">
-                <Checkbox
+                <Switch
                     checked={axis.visible}
                     label="Visible"
                     onChange={(ev) => axis.setVisible(ev.currentTarget.checked)}
@@ -73,22 +74,28 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => axis.setGap(value)}
                     />
                 </FormGroup>
-                <FormGroup label="Cursor format" disabled={!axis.visible}>
-                    <input
-                        className="bp3-input"
-                        type="text"
-                        placeholder="Format"
-                        value={axis.cursorFormat}
-                        disabled={!axis.visible}
-                        onChange={(ev) => axis.setCursorFormat(ev.currentTarget.value)}
-                    />
-                </FormGroup>
+                { id === 0 ?
+                    [<Switch
+                        key="axis1custom"
+                        checked={overlayStore.axis[0].customConfig}
+                        label="Use custom configuration for axis 1"
+                        onChange={(ev) => overlayStore.axis[0].setCustomConfig(ev.currentTarget.checked)}
+                    />,
+                    <Switch
+                        key="axis2custom"
+                        checked={overlayStore.axis[1].customConfig}
+                        label="Use custom configuration for axis 2"
+                        onChange={(ev) => overlayStore.axis[1].setCustomConfig(ev.currentTarget.checked)}
+                    />]
+                :
+                    <Button onClick={(ev) => { axis.setCustomConfig(false); overlayStore.setOverlaySettingsActiveTab("axes"); }} text="Use default axis settings"/>
+                }
             </div>
         );
         
         const axisNumbersPanel = (
             <div className="panel-container">
-                <Checkbox
+                <Switch
                     checked={axis.numberVisible}
                     label="Visible"
                     onChange={(ev) => axis.setNumberVisible(ev.currentTarget.checked)}
@@ -117,12 +124,22 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => axis.setNumberColor(Number(ev.currentTarget.value))}
                     />
                 </FormGroup>
+                <FormGroup label="Format" disabled={!axis.numberVisible}>
+                    <input
+                        className="bp3-input"
+                        type="text"
+                        placeholder="Format"
+                        value={axis.numberFormat}
+                        disabled={!axis.numberVisible}
+                        onChange={(ev) => axis.setNumberFormat(ev.currentTarget.value)}
+                    />
+                </FormGroup>
             </div>
         );
         
         const axisLabelsPanel = (
             <div className="panel-container">
-                <Checkbox
+                <Switch
                     checked={axis.labelVisible}
                     label="Visible"
                     onChange={(ev) => axis.setLabelVisible(ev.currentTarget.checked)}
@@ -174,26 +191,16 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => axis.setLabelColor(Number(ev.currentTarget.value))}
                     />
                 </FormGroup>
-                <FormGroup label="Format" disabled={!axis.labelVisible}>
-                    <input
-                        className="bp3-input"
-                        type="text"
-                        placeholder="Format"
-                        value={axis.labelFormat}
-                        disabled={!axis.labelVisible}
-                        onChange={(ev) => axis.setLabelFormat(ev.currentTarget.value)}
-                    />
-                </FormGroup>
             </div>
         );
         
         var axisTabs = [
-            <Tab id={tabId} title={tabTitle} panel={axisPanel}/>
+            <Tab key={tabId} id={tabId} title={tabTitle} panel={axisPanel}/>
         ];
         
         if (tabGroupSelected) {
-            axisTabs.push(<Tab id={`${tabId}Numbers`} title="&#8227; Numbers" disabled={!axis.visible} panel={axisNumbersPanel}/>);
-            axisTabs.push(<Tab id={`${tabId}Labels`} title="&#8227; Labels" disabled={!axis.visible} panel={axisLabelsPanel}/>);
+            axisTabs.push(<Tab key={`${tabId}Numbers`} id={`${tabId}Numbers`} title="&#8227; Numbers" disabled={!axis.visible} panel={axisNumbersPanel}/>);
+            axisTabs.push(<Tab key={`${tabId}Labels`} id={`${tabId}Labels`} title="&#8227; Labels" disabled={!axis.visible} panel={axisLabelsPanel}/>);
         }
     
         return axisTabs;
@@ -213,7 +220,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         
         const titlePanel = (
             <div className="panel-container">
-                <Checkbox 
+                <Switch 
                     checked={title.visible}
                     label="Visible"
                     onChange={(ev) => title.setVisible(ev.currentTarget.checked)}
@@ -318,7 +325,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         
         const gridPanel = (
             <div className="panel-container">
-                <Checkbox
+                <Switch
                     checked={grid.visible}
                     label="Visible"
                     onChange={(ev) => grid.setVisible(ev.currentTarget.checked)}
@@ -346,7 +353,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         
         const borderPanel = (
             <div className="panel-container">
-                <Checkbox
+                <Switch
                     checked={border.visible}
                     label="Visible"
                     onChange={(ev) => border.setVisible(ev.currentTarget.checked)}
@@ -378,7 +385,8 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 lazy={true}
                 backdropClassName="minimal-dialog-backdrop"
                 isOpen={overlayStore.overlaySettingsDialogVisible} 
-                onClose={overlayStore.hideOverlaySettings} title="Overlay Settings"
+                onClose={overlayStore.hideOverlaySettings}
+                title="Overlay Settings"
             >
                 <div className="bp3-dialog-body">
                     <Tabs
@@ -392,7 +400,8 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         <Tab id="grid" title="Grid" panel={gridPanel}/>
                         <Tab id="border" title="Border" panel={borderPanel}/>
                         {this.axisTabGroup(0)}
-                        {overlayStore.axis.map((x, i) => (this.axisTabGroup(i + 1)))}
+                        {overlayStore.axis[0].customConfig && this.axisTabGroup(1)}
+                        {overlayStore.axis[1].customConfig && this.axisTabGroup(2)}
                     </Tabs>
                 </div>
                 <div className="bp3-dialog-footer">
