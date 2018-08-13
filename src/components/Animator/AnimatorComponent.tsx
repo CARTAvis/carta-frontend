@@ -45,17 +45,35 @@ export class AnimatorComponent extends React.Component<CubeControlsComponentProp
 
     onChannelChanged = (val: number) => {
         if (this.props.appStore.activeFrame) {
+            if (val < 0) {
+                val += this.props.appStore.activeFrame.frameInfo.fileInfoExtended.depth;
+            }
+            if (val >= this.props.appStore.activeFrame.frameInfo.fileInfoExtended.depth) {
+                val = 0;
+            }
             this.props.appStore.activeFrame.setChannels(val, this.props.appStore.activeFrame.requiredStokes);
         }
     };
 
     onStokesChanged = (val: number) => {
         if (this.props.appStore.activeFrame) {
+            if (val < 0) {
+                val += this.props.appStore.activeFrame.frameInfo.fileInfoExtended.stokes;
+            }
+            if (val >= this.props.appStore.activeFrame.frameInfo.fileInfoExtended.stokes) {
+                val = 0;
+            }
             this.props.appStore.activeFrame.setChannels(this.props.appStore.activeFrame.requiredChannel, val);
         }
     };
 
     onFrameChanged = (val: number) => {
+        if (val < 0) {
+            val += this.props.appStore.frames.length;
+        }
+        if (val >= this.props.appStore.frames.length) {
+            val = 0;
+        }
         this.props.appStore.setActiveFrameByIndex(val);
     };
 
@@ -97,7 +115,7 @@ export class AnimatorComponent extends React.Component<CubeControlsComponentProp
                 <div className="animator-slider">
                     <Radio value={AnimationMode.FRAME} checked={appStore.animatorStore.animationMode === AnimationMode.FRAME} onChange={this.onAnimationModeChanged} label="Frame"/>
                     {hideSliders &&
-                    <NumericInput value={frameIndex} min={0} max={appStore.frames.length - 1} step={1} onValueChange={this.onFrameChanged} fill={true}/>
+                    <NumericInput value={frameIndex} min={-1} max={appStore.frames.length} step={1} onValueChange={this.onFrameChanged} fill={true}/>
                     }
                     {!hideSliders &&
                     <React.Fragment>
@@ -119,7 +137,7 @@ export class AnimatorComponent extends React.Component<CubeControlsComponentProp
                 <div className="animator-slider">
                     <Radio value={AnimationMode.CHANNEL} checked={appStore.animatorStore.animationMode === AnimationMode.CHANNEL} onChange={this.onAnimationModeChanged} label="Channel"/>
                     {hideSliders &&
-                    <NumericInput value={activeFrame.requiredChannel} min={0} max={numChannels - 1} step={1} onValueChange={this.onChannelChanged} fill={true}/>
+                    <NumericInput value={activeFrame.requiredChannel} min={-1} max={numChannels} step={1} onValueChange={this.onChannelChanged} fill={true}/>
                     }
                     {!hideSliders &&
                     <React.Fragment>
@@ -139,7 +157,7 @@ export class AnimatorComponent extends React.Component<CubeControlsComponentProp
                 <div className="animator-slider">
                     <Radio value={AnimationMode.STOKES} checked={appStore.animatorStore.animationMode === AnimationMode.STOKES} onChange={this.onAnimationModeChanged} label="Stokes"/>
                     {hideSliders &&
-                    <NumericInput value={appStore.animatorStore.frameRate} min={appStore.animatorStore.minFrameRate} max={appStore.animatorStore.maxFrameRate} stepSize={1} fill={true}/>
+                    <NumericInput value={activeFrame.requiredStokes} min={-1} max={activeFrame.frameInfo.fileInfoExtended.stokes} stepSize={1} onValueChange={this.onStokesChanged} fill={true}/>
                     }
                     {!hideSliders &&
                     <React.Fragment>
