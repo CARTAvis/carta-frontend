@@ -13,6 +13,7 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import * as _ from "lodash";
 import {ImageViewComponent} from "../components/ImageView/ImageViewComponent";
+import {AnimatorStore} from "./AnimatorStore";
 
 export class AppStore {
     // Backend service
@@ -23,6 +24,8 @@ export class AppStore {
     // Frames
     @observable frames: FrameStore[];
     @observable activeFrame: FrameStore;
+    // Animation
+    @observable animatorStore: AnimatorStore;
     // Error alerts
     @observable alertStore: AlertStore;
     // Logs
@@ -201,6 +204,7 @@ export class AppStore {
         this.spatialProfileWidgets = new Map<string, { dataSourceId: number, coordinate: string }>();
         this.frames = [];
         this.activeFrame = null;
+        this.animatorStore = new AnimatorStore();
         this.alertStore = new AlertStore();
         this.overlayStore = new OverlayStore();
         this.layoutSettings = new LayoutStore();
