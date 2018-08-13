@@ -303,6 +303,16 @@ export class AppStore {
         }
     }
 
+    @action setActiveFrameByIndex(index: number) {
+        if (index >= 0 && this.frames.length > index) {
+            this.activeFrame = this.frames[index];
+            this.updateTitle();
+        }
+        else {
+            console.log(`Invalid frame index ${index}`);
+        }
+    }
+
     private getFrame(fileId: number) {
         return this.frames.find(f => f.frameInfo.fileId === fileId);
     }
