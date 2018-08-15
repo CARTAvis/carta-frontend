@@ -261,8 +261,8 @@ export class FrameStore {
         const depth = this.frameInfo.fileInfoExtended.depth;
         const numStokes = this.frameInfo.fileInfoExtended.stokes;
 
-        let newChannel = this.channel + deltaChannel;
-        let newStokes = this.stokes + deltaStokes;
+        let newChannel = this.requiredChannel + deltaChannel;
+        let newStokes = this.requiredStokes + deltaStokes;
         if (wrap) {
             newChannel = (newChannel + depth) % depth;
             newStokes = (newStokes + numStokes) % numStokes;

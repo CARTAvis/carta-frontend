@@ -237,14 +237,9 @@ export class AppStore {
 
                 // Calculate if new data is required
                 const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
-                if (updateRequiredChannels) {
-                    // Don't throttle while animation is playing
-                    if (this.animatorStore.animationState === AnimationState.PLAYING) {
-                        this.backendService.setChannels(this.activeFrame.frameInfo.fileId, this.activeFrame.requiredChannel, this.activeFrame.requiredStokes);
-                    }
-                    else {
-                        throttledSetChannels(this.activeFrame.frameInfo.fileId, this.activeFrame.requiredChannel, this.activeFrame.requiredStokes);
-                    }
+                // Don't auto-update when animation is playing
+                if (this.animatorStore.animationState === AnimationState.STOPPED && updateRequiredChannels) {
+                    throttledSetChannels(this.activeFrame.frameInfo.fileId, this.activeFrame.requiredChannel, this.activeFrame.requiredStokes);
                 }
 
                 const updateRequiredView = (croppedReq.mip < currentView.mip) || (croppedReq.xMin < currentView.xMin || croppedReq.xMax > currentView.xMax || croppedReq.yMin < currentView.yMin || croppedReq.yMax > currentView.yMax);

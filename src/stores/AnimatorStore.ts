@@ -26,9 +26,10 @@ export class AnimatorStore {
         this.frameRate = val;
     };
     @action startAnimation = () => {
-        clearTimeout(this.animateTimeout);
+        clearInterval(this.animateHandle);
         this.animationState = AnimationState.PLAYING;
         this.animate();
+        this.animateHandle = setInterval(this.animate, this.frameInterval);
     };
     @action stopAnimation = () => {
         this.animationState = AnimationState.STOPPED;
@@ -42,20 +43,20 @@ export class AnimatorStore {
                     break;
                 case AnimationMode.CHANNEL:
                     this.appStore.activeFrame.incrementChannels(1, 0);
+                    this.appStore.backendService.setChannels(this.appStore.activeFrame.frameInfo.fileId, this.appStore.activeFrame.requiredChannel, this.appStore.activeFrame.requiredStokes);
                     break;
                 case AnimationMode.STOKES:
                     this.appStore.activeFrame.incrementChannels(0, 1);
+                    this.appStore.backendService.setChannels(this.appStore.activeFrame.frameInfo.fileId, this.appStore.activeFrame.requiredChannel, this.appStore.activeFrame.requiredStokes);
                     break;
                 default:
                     break;
             }
-            // Schedule next update
-            this.animateTimeout = setTimeout(this.animate, this.frameInterval);
         }
     };
 
     private readonly appStore: AppStore;
-    private animateTimeout;
+    private animateHandle;
 
     constructor(appStore: AppStore) {
         this.frameRate = 5;
@@ -63,7 +64,7 @@ export class AnimatorStore {
         this.minFrameRate = 1;
         this.animationMode = AnimationMode.CHANNEL;
         this.animationState = AnimationState.STOPPED;
-        this.animateTimeout = null;
+        this.animateHandle = null;
         this.appStore = appStore;
     }
 
