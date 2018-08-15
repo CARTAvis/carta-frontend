@@ -3,9 +3,9 @@ import {observer} from "mobx-react";
 import "./AnimatorComponent.css";
 import {AppStore} from "../../stores/AppStore";
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
-import {Button, ButtonGroup, FormGroup, NonIdealState, NumericInput, Radio, RadioGroup, Slider} from "@blueprintjs/core";
+import {Button, ButtonGroup, FormGroup, NonIdealState, NumericInput, Radio, Slider} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {AnimationMode} from "../../stores/AnimatorStore";
+import {AnimationMode, AnimationState} from "../../stores/AnimatorStore";
 
 class CubeControlsComponentProps {
     appStore: AppStore;
@@ -82,6 +82,98 @@ export class AnimatorComponent extends React.Component<CubeControlsComponentProp
         this.props.appStore.animatorStore.setAnimationMode(newMode);
     };
 
+    onFirstClicked = () => {
+        const appStore = this.props.appStore;
+        const frame = appStore.activeFrame;
+
+        if (!frame) {
+            return;
+        }
+
+        switch (appStore.animatorStore.animationMode) {
+            case AnimationMode.FRAME:
+                appStore.setActiveFrameByIndex(0);
+                break;
+            case AnimationMode.CHANNEL:
+                frame.setChannels(0, frame.stokes);
+                break;
+            case AnimationMode.STOKES:
+                frame.setChannels(frame.channel, 0);
+                break;
+            default:
+                break;
+        }
+    };
+
+    onLastClicked = () => {
+        const appStore = this.props.appStore;
+        const frame = appStore.activeFrame;
+
+        if (!frame) {
+            return;
+        }
+
+        switch (appStore.animatorStore.animationMode) {
+            case AnimationMode.FRAME:
+                appStore.setActiveFrameByIndex(appStore.frames.length - 1);
+                break;
+            case AnimationMode.CHANNEL:
+                frame.setChannels(frame.frameInfo.fileInfoExtended.depth - 1, frame.stokes);
+                break;
+            case AnimationMode.STOKES:
+                frame.setChannels(frame.channel, frame.frameInfo.fileInfoExtended.stokes - 1);
+                break;
+            default:
+                break;
+        }
+    };
+
+    onNextClicked = () => {
+        const appStore = this.props.appStore;
+        const frame = appStore.activeFrame;
+
+        if (!frame) {
+            return;
+        }
+
+        switch (appStore.animatorStore.animationMode) {
+            case AnimationMode.FRAME:
+                appStore.nextFrame();
+                break;
+            case AnimationMode.CHANNEL:
+                frame.incrementChannels(1, 0);
+                break;
+            case AnimationMode.STOKES:
+                frame.incrementChannels(0, 1);
+                break;
+            default:
+                break;
+        }
+    };
+
+    onPrevClicked = () => {
+        const appStore = this.props.appStore;
+        const frame = appStore.activeFrame;
+
+        if (!frame) {
+            return;
+        }
+
+        switch (appStore.animatorStore.animationMode) {
+            case AnimationMode.FRAME:
+                appStore.prevFrame();
+                break;
+            case AnimationMode.CHANNEL:
+                frame.incrementChannels(-1, 0);
+                break;
+            case AnimationMode.STOKES:
+                frame.incrementChannels(0, -1);
+                break;
+            default:
+                break;
+        }
+    };
+
     private roundToClosestPreferredStep(val: number) {
         const power = Math.floor(Math.log10(val));
         const scaledVal = val / Math.pow(10, power);
@@ -115,11 +207,25 @@ export class AnimatorComponent extends React.Component<CubeControlsComponentProp
                 <div className="animator-slider">
                     <Radio value={AnimationMode.FRAME} checked={appStore.animatorStore.animationMode === AnimationMode.FRAME} onChange={this.onAnimationModeChanged} label="Frame"/>
                     {hideSliders &&
-                    <NumericInput value={frameIndex} min={-1} max={appStore.frames.length} step={1} onValueChange={this.onFrameChanged} fill={true}/>
+                    <NumericInput
+                        value={frameIndex}
+                        min={-1}
+                        max={appStore.frames.length}
+                        step={1}
+                        onValueChange={this.onFrameChanged}
+                        fill={true}
+                        disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                    />
                     }
                     {!hideSliders &&
                     <React.Fragment>
-                        <Slider value={frameIndex} min={0} max={appStore.frames.length - 1} onChange={this.onFrameChanged}/>
+                        <Slider
+                            value={frameIndex}
+                            min={0}
+                            max={appStore.frames.length - 1}
+                            onChange={this.onFrameChanged}
+                            disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                        />
                         <div className="slider-info">
                             {activeFrame.frameInfo.fileInfo.name}
                         </div>
@@ -137,11 +243,26 @@ export class AnimatorComponent extends React.Component<CubeControlsComponentProp
                 <div className="animator-slider">
                     <Radio value={AnimationMode.CHANNEL} checked={appStore.animatorStore.animationMode === AnimationMode.CHANNEL} onChange={this.onAnimationModeChanged} label="Channel"/>
                     {hideSliders &&
-                    <NumericInput value={activeFrame.requiredChannel} min={-1} max={numChannels} step={1} onValueChange={this.onChannelChanged} fill={true}/>
+                    <NumericInput
+                        value={activeFrame.requiredChannel}
+                        min={-1}
+                        max={numChannels}
+                        step={1}
+                        onValueChange={this.onChannelChanged}
+                        fill={true}
+                        disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                    />
                     }
                     {!hideSliders &&
                     <React.Fragment>
-                        <Slider value={activeFrame.requiredChannel} min={0} max={numChannels - 1} labelStepSize={channelStep} onChange={this.onChannelChanged}/>
+                        <Slider
+                            value={activeFrame.requiredChannel}
+                            min={0}
+                            max={numChannels - 1}
+                            labelStepSize={channelStep}
+                            onChange={this.onChannelChanged}
+                            disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                        />
                         <div className="slider-info">
                             {`Req: ${activeFrame.requiredChannel}; Current: ${activeFrame.channel}`}
                         </div>
@@ -157,11 +278,25 @@ export class AnimatorComponent extends React.Component<CubeControlsComponentProp
                 <div className="animator-slider">
                     <Radio value={AnimationMode.STOKES} checked={appStore.animatorStore.animationMode === AnimationMode.STOKES} onChange={this.onAnimationModeChanged} label="Stokes"/>
                     {hideSliders &&
-                    <NumericInput value={activeFrame.requiredStokes} min={-1} max={activeFrame.frameInfo.fileInfoExtended.stokes} stepSize={1} onValueChange={this.onStokesChanged} fill={true}/>
+                    <NumericInput
+                        value={activeFrame.requiredStokes}
+                        min={-1}
+                        max={activeFrame.frameInfo.fileInfoExtended.stokes}
+                        stepSize={1}
+                        onValueChange={this.onStokesChanged}
+                        disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                        fill={true}
+                    />
                     }
                     {!hideSliders &&
                     <React.Fragment>
-                        <Slider value={activeFrame.requiredStokes} min={0} max={activeFrame.frameInfo.fileInfoExtended.stokes - 1} onChange={this.onStokesChanged}/>
+                        <Slider
+                            value={activeFrame.requiredStokes}
+                            min={0}
+                            max={activeFrame.frameInfo.fileInfoExtended.stokes - 1}
+                            onChange={this.onStokesChanged}
+                            disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                        />
                         <div className="slider-info">
                             {`Req: ${activeFrame.requiredStokes}; Current: ${activeFrame.stokes}`}
                         </div>
@@ -178,18 +313,28 @@ export class AnimatorComponent extends React.Component<CubeControlsComponentProp
 
         const playbackButtons = (
             <ButtonGroup fill={true} className="playback-buttons">
-                <Button icon={"chevron-backward"}>{!iconOnly && "First"}</Button>
-                <Button icon={"step-backward"}>{!iconOnly && "Prev"}</Button>
-                <Button icon={"stop"}>{!iconOnly && "Stop"}</Button>
-                <Button icon={"play"}>{!iconOnly && "Play"}</Button>
-                <Button icon={"step-forward"}>{!iconOnly && "Next"}</Button>
-                <Button icon={"chevron-forward"}>{!iconOnly && "Last"}</Button>
+                <Button icon={"chevron-backward"} onClick={this.onFirstClicked}>{!iconOnly && "First"}</Button>
+                <Button icon={"step-backward"} onClick={this.onPrevClicked}>{!iconOnly && "Prev"}</Button>
+                <Button icon={"stop"} onClick={appStore.animatorStore.stopAnimation} active={appStore.animatorStore.animationState === AnimationState.STOPPED}>{!iconOnly && "Stop"}</Button>
+                <Button icon={"play"} onClick={appStore.animatorStore.startAnimation} active={appStore.animatorStore.animationState === AnimationState.PLAYING}>{!iconOnly && "Play"}</Button>
+                <Button icon={"step-forward"} onClick={this.onNextClicked}>{!iconOnly && "Next"}</Button>
+                <Button icon={"chevron-forward"} onClick={this.onLastClicked}>{!iconOnly && "Last"}</Button>
             </ButtonGroup>
         );
 
         const frameControl = (
             <FormGroup label="Frame rate" inline={true} className="playback-framerate">
-                <NumericInput id="framerate-numeric" value={appStore.animatorStore.frameRate} min={appStore.animatorStore.minFrameRate} max={appStore.animatorStore.maxFrameRate} stepSize={1}/>
+                <NumericInput
+                    id="framerate-numeric"
+                    value={appStore.animatorStore.frameRate}
+                    min={appStore.animatorStore.minFrameRate}
+                    max={appStore.animatorStore.maxFrameRate}
+                    stepSize={1}
+                    minorStepSize={1}
+                    majorStepSize={1}
+                    onValueChange={appStore.animatorStore.setFrameRate}
+                    disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                />
             </FormGroup>
         );
 

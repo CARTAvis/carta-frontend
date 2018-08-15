@@ -13,7 +13,7 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import * as _ from "lodash";
 import {ImageViewComponent} from "../components/ImageView/ImageViewComponent";
-import {AnimatorStore} from "./AnimatorStore";
+import {AnimationState, AnimatorStore} from "./AnimatorStore";
 
 export class AppStore {
     // Backend service
@@ -182,7 +182,7 @@ export class AppStore {
         }
     };
     @action shiftFrame = (delta: number) => {
-        if (this.activeFrame) {
+        if (this.activeFrame && this.frames.length > 1) {
             const frameIds = this.frames.map(f => f.frameInfo.fileId).sort();
             const currentIndex = frameIds.indexOf(this.activeFrame.frameInfo.fileId);
             const requiredIndex = (this.frames.length + currentIndex + delta) % this.frames.length;
@@ -204,7 +204,7 @@ export class AppStore {
         this.spatialProfileWidgets = new Map<string, { dataSourceId: number, coordinate: string }>();
         this.frames = [];
         this.activeFrame = null;
-        this.animatorStore = new AnimatorStore();
+        this.animatorStore = new AnimatorStore(this);
         this.alertStore = new AlertStore();
         this.overlayStore = new OverlayStore();
         this.layoutSettings = new LayoutStore();
@@ -219,7 +219,7 @@ export class AppStore {
 
         const throttledSetChannels = _.throttle((fileId: number, channel: number, stokes: number) => {
             this.backendService.setChannels(fileId, channel, stokes);
-        }, 10);
+        }, 200);
 
         autorun(() => {
             if (this.activeFrame) {
@@ -238,7 +238,13 @@ export class AppStore {
                 // Calculate if new data is required
                 const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
                 if (updateRequiredChannels) {
-                    throttledSetChannels(this.activeFrame.frameInfo.fileId, this.activeFrame.requiredChannel, this.activeFrame.requiredStokes);
+                    // Don't throttle while animation is playing
+                    if (this.animatorStore.animationState === AnimationState.PLAYING) {
+                        this.backendService.setChannels(this.activeFrame.frameInfo.fileId, this.activeFrame.requiredChannel, this.activeFrame.requiredStokes);
+                    }
+                    else {
+                        throttledSetChannels(this.activeFrame.frameInfo.fileId, this.activeFrame.requiredChannel, this.activeFrame.requiredStokes);
+                    }
                 }
 
                 const updateRequiredView = (croppedReq.mip < currentView.mip) || (croppedReq.xMin < currentView.xMin || croppedReq.xMax > currentView.xMax || croppedReq.yMin < currentView.yMin || croppedReq.yMax > currentView.yMax);

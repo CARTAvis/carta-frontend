@@ -277,16 +277,25 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
     public renderHotkeys() {
         const appStore = this.props.appStore;
+
+        const animatorHotkeys = [
+            <Hotkey key={0} group="Frame controls" global={true} combo="alt + ]" label="Next frame" onKeyDown={appStore.nextFrame}/>,
+            <Hotkey key={1} group="Frame controls" global={true} combo="alt + [" label="Previous frame" onKeyDown={appStore.prevFrame}/>,
+            <Hotkey key={2} group="Frame controls" global={true} combo="alt + pageup" label="Next channel" onKeyDown={this.nextChannel}/>,
+            <Hotkey key={3} group="Frame controls" global={true} combo="alt + pagedown" label="Previous channel" onKeyDown={this.prevChannel}/>,
+            <Hotkey key={4} group="Frame controls" global={true} combo="alt + shift + pageup" label="Next Stokes cube" onKeyDown={this.nextStokes}/>,
+            <Hotkey key={5} group="Frame controls" global={true} combo="alt + shift + pagedown" label="Previous Stokes cube" onKeyDown={this.prevStokes}/>
+        ];
+
+        const fileHotkeys = [
+            <Hotkey key={0} group="File controls" global={true} combo="alt + o" label="Open file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser()}/>,
+            <Hotkey key={1} group="File controls" global={true} combo="alt + a" label="Append file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(true)}/>
+        ];
+
         return (
             <Hotkeys>
-                <Hotkey group="Frame controls" global={true} combo="alt + [" label="Previous frame" onKeyDown={appStore.prevFrame}/>
-                <Hotkey group="Frame controls" global={true} combo="alt + ]" label="Next frame" onKeyDown={appStore.nextFrame}/>
-                <Hotkey group="Frame controls" global={true} combo="alt + pageup" label="Next channel" onKeyDown={this.nextChannel}/>
-                <Hotkey group="Frame controls" global={true} combo="alt + pagedown" label="Previous channel" onKeyDown={this.prevChannel}/>
-                <Hotkey group="Frame controls" global={true} combo="alt + shift + pageup" label="Next channel" onKeyDown={this.nextStokes}/>
-                <Hotkey group="Frame controls" global={true} combo="alt + shift + pagedown" label="Previous channel" onKeyDown={this.prevStokes}/>
-                <Hotkey group="File controls" global={true} combo="alt + o" label="Open file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser()}/>
-                <Hotkey group="File controls" global={true} combo="alt + a" label="Append file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(true)}/>
+                {animatorHotkeys}
+                {fileHotkeys}
             </Hotkeys>
         );
     }
