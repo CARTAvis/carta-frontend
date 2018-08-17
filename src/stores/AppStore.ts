@@ -5,7 +5,7 @@ import {SpatialProfileStore} from "./SpatialProfileStore";
 import {FileBrowserStore} from "./FileBrowserStore";
 import {FrameInfo, FrameStore, FrameView} from "./FrameStore";
 import {AlertStore} from "./AlertStore";
-import {LogStore} from "./LogStore";
+import {LogEntry, LogStore} from "./LogStore";
 import {FloatingWidgetStore} from "./FloatingWidgetStore";
 import {BackendService} from "../services/BackendService";
 import {CursorInfo} from "../models/CursorInfo";
@@ -279,6 +279,20 @@ export class AppStore {
                     updatedFrame.updateChannelHistogram(channelHist[0] as CARTA.Histogram);
                 }
             }
+        });
+
+        this.backendService.getErrorStream().subscribe(errorData => {
+            if (!errorData) {
+                return;
+            }
+            const logEntry: LogEntry = {
+                level: errorData.severity,
+                message: errorData.message,
+                tags: errorData.tags.concat(["server-sent"]),
+                title: null
+            };
+
+            this.logStore.addLog(logEntry);
         });
 
         autorun(() => {

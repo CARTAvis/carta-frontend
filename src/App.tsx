@@ -88,7 +88,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
         console.log(`Connecting to defaullt URL: ${wsURL}`);
         appStore.backendService.connect(wsURL, "1234").subscribe(sessionId => {
             console.log(`Connected with session ID ${sessionId}`);
-            this.props.appStore.logStore.addInfo(`Connected to server ${wsURL}`, ["server"]);
+            this.props.appStore.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
         }, err => console.log(err));
     }
 
