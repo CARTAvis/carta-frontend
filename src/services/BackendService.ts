@@ -41,10 +41,11 @@ export class BackendService {
             "REGISTER_VIEWER",
             "REGISTER_VIEWER_ACK",
             // "SET_IMAGE_VIEW",
+            // "SET_IMAGE_CHANNELS",
             // "RASTER_IMAGE_DATA",
             "OPEN_FILE",
             "OPEN_FILE_ACK",
-            "REGION_HISTOGRAM_DATA"
+            // "REGION_HISTOGRAM_DATA"
         ];
 
         autorun(() => {
@@ -192,6 +193,18 @@ export class BackendService {
             const message = CARTA.SetImageView.create({fileId, imageBounds: {xMin, xMax, yMin, yMax}, mip, compressionType: CARTA.CompressionType.ZFP, compressionQuality, numSubsets: this.subsetsRequired});
             this.logEvent("SET_IMAGE_VIEW", message, false);
             if (this.sendEvent("SET_IMAGE_VIEW", 0, CARTA.SetImageView.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @action("set channels")
+    setChannels(fileId: number, channel: number, stokes: number): boolean {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            const message = CARTA.SetImageChannels.create({fileId, channel, stokes});
+            this.logEvent("SET_IMAGE_CHANNELS", message, false);
+            if (this.sendEvent("SET_IMAGE_CHANNELS", 0, CARTA.SetImageChannels.encode(message).finish())) {
                 return true;
             }
         }
