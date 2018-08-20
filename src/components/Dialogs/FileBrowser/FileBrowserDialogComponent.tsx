@@ -1,12 +1,12 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, Dialog, H4, Intent, NonIdealState, Pre, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, H6, IDialogProps, Intent, NonIdealState, Pre, Tooltip} from "@blueprintjs/core";
 import "./FileBrowserDialogComponent.css";
-import {FileBrowserStore} from "../../../stores/FileBrowserStore";
 import {CARTA} from "carta-protobuf";
 import FileInfo = CARTA.FileInfo;
 import {FileListComponent} from "./FileList/FileListComponent";
 import {AppStore} from "../../../stores/AppStore";
+import {DraggableDialogComponent} from "../DraggableDialog/DraggableDialogComponent";
 
 @observer
 export class FileBrowserDialogComponent extends React.Component<{ appStore: AppStore }> {
@@ -19,17 +19,19 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             });
         }
 
+        const dialogProps: IDialogProps = {
+            icon: "folder-open",
+            className: "file-browser-dialog",
+            backdropClassName: "minimal-dialog-backdrop",
+            canOutsideClickClose: false,
+            lazy: true,
+            isOpen: fileBrowserStore.fileBrowserDialogVisible,
+            onClose: fileBrowserStore.hideFileBrowser,
+            title: "File Browser",
+        };
+
         return (
-            <Dialog
-                icon={"folder-open"}
-                className="file-browser-dialog"
-                backdropClassName="minimal-dialog-backdrop"
-                canOutsideClickClose={false}
-                lazy={true}
-                isOpen={fileBrowserStore.fileBrowserDialogVisible}
-                onClose={fileBrowserStore.hideFileBrowser}
-                title="File Browser"
-            >
+            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={600} defaultHeight={450} enableResizing={true}>
                 <div className="bp3-dialog-body" style={{display: "flex"}}>
                     <div className="file-list-pane">
                         <FileListComponent
@@ -42,9 +44,9 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         />
                     </div>
                     <div className="file-info-pane">
-                        <H4>File Information</H4>
+                        <H6>File Information</H6>
                         {!fileBrowserStore.fileInfoExtended &&
-                        <NonIdealState icon="document" title="No file selected" description="Select a file from the list on the left"/>
+                        <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected" description="Select a file from the list on the left"/>
                         }
                         {fileBrowserStore.fileInfoExtended &&
                         <Pre className="file-info-pre">{infoHeader}</Pre>
@@ -65,7 +67,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         )}
                     </div>
                 </div>
-            </Dialog>
+            </DraggableDialogComponent>
         );
     }
 
