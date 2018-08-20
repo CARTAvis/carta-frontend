@@ -31,8 +31,6 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             title: "File Browser",
         };
 
-        const rndProps = {};
-
         return (
             <ResizableDialogComponent dialogProps={dialogProps} defaultWidth={600} defaultHeight={450}>
                 <div className="bp3-dialog-body" style={{display: "flex"}}>
