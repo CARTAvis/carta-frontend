@@ -6,18 +6,24 @@
 .file-info-pane {
     width: 40%;
     margin-left: 5px;
+    display: flex;
+    flex-direction: column;
+    .bp3-heading {
+        margin-top: 7px;
+        margin-bottom: 3px;
+        flex: 0 0 auto;
+    }
+
+    .file-info-pre {
+        overflow-y: auto;
+        overflow-x: auto;
+        margin-top: 4px !important;
+        flex: 2 2 auto;
+    }
+
 }
 
 .file-list-pane {
     overflow-y: auto;
     width: 60%;
-}
-
-.file-info-pre {
-    height: 400px;
-    overflow-y: scroll;
-    overflow-x: hidden;
-    // minor alignment fix
-    position: relative;
-    top: -1px;
 }
