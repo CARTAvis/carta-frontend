@@ -1,13 +1,15 @@
 import * as React from "react";
 import * as GoldenLayout from "golden-layout";
-import "./ToolbarMenuComponent.css";
+import {observer} from "mobx-react";
 import {AppStore} from "../../../stores/AppStore";
 import {Button, Tooltip} from "@blueprintjs/core";
 import {RenderConfigComponent} from "../../RenderConfig/RenderConfigComponent";
 import {LogComponent} from "../../Log/LogComponent";
 import {WidgetConfig} from "../../../stores/FloatingWidgetStore";
 import {AnimatorComponent} from "../../Animator/AnimatorComponent";
+import "./ToolbarMenuComponent.css";
 
+@observer
 export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }> {
     private createdDragSources = false;
 
@@ -61,8 +63,12 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
     };
 
     public render() {
+        let className = "toolbar-menu";
+        if (this.props.appStore.darkTheme) {
+            className += " bp3-dark";
+        }
         return (
-            <div className="toolbar-menu">
+            <div className={className}>
                 <Tooltip content="Render Config Widget">
                     <Button icon={"style"} id="renderConfigButton" minimal={true} onClick={this.createRenderWidget}/>
                 </Tooltip>

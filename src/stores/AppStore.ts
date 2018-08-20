@@ -57,6 +57,9 @@ export class AppStore {
     };
     // Floating Widgets
     @observable floatingWidgetStore: FloatingWidgetStore;
+    // Dark theme
+    @observable darkTheme: boolean;
+
     // Frame actions
     @action addFrame = (directory: string, file: string, hdu: string, fileId: number) => {
         this.backendService.loadFile(directory, file, hdu, fileId, CARTA.RenderMode.RASTER).subscribe(ack => {
@@ -196,6 +199,14 @@ export class AppStore {
         this.shiftFrame(-1);
     };
 
+    @action setDarkTheme = () => {
+        this.darkTheme = true;
+    };
+
+    @action setLightTheme = () => {
+        this.darkTheme = false;
+    };
+
     constructor() {
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore);
@@ -211,6 +222,7 @@ export class AppStore {
         this.floatingWidgetStore = new FloatingWidgetStore();
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
+        this.darkTheme = false;
 
         const throttledSetView = _.throttle((fileId: number, view: FrameView) => {
             const quality = this.compressionQuality;

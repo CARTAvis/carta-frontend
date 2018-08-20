@@ -4,10 +4,11 @@ import * as AST from "ast_wrapper";
 import * as _ from "lodash";
 import * as $ from "jquery";
 import "./App.css";
+import "./layout-theme.css";
 import {observer} from "mobx-react";
 import DevTools from "mobx-react-devtools";
 import ReactResizeDetector from "react-resize-detector";
-import {Alert, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
+import {Alert, Colors, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import {PlaceholderComponent} from "./components/Placeholder/PlaceholderComponent";
 import {RootMenuComponent} from "./components/Menu/RootMenuComponent";
 import {ImageViewComponent} from "./components/ImageView/ImageViewComponent";
@@ -228,9 +229,20 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
     public render() {
         const appStore = this.props.appStore;
+        let className = "App";
+        let glClassName = "gl-container";
+        if (appStore.darkTheme) {
+            className += " bp3-dark";
+            glClassName += " dark-theme";
+        }
+        else {
+            glClassName += " light-theme";
+        }
+
+        document.body.style.backgroundColor = appStore.darkTheme ? Colors.DARK_GRAY4 : Colors.WHITE;
 
         return (
-            <div className="App">
+            <div className={className}>
                 <DevTools/>
                 <RootMenuComponent appStore={appStore}/>
                 <OverlaySettingsDialogComponent appStore={appStore}/>
@@ -239,7 +251,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>
-                <div className="gl-container" ref={ref => this.glContainer = ref}>
+                <div className={glClassName} ref={ref => this.glContainer = ref}>
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}/>
                 </div>
                 <FloatingWidgetManagerComponent appStore={appStore}/>
@@ -275,6 +287,16 @@ export class App extends React.Component<{ appStore: AppStore }> {
         }
     };
 
+    toggleDarkTheme = () => {
+        const appStore = this.props.appStore;
+        if (appStore.darkTheme) {
+            appStore.setLightTheme();
+        }
+        else {
+            appStore.setDarkTheme();
+        }
+    };
+
     public renderHotkeys() {
         const appStore = this.props.appStore;
 
@@ -296,6 +318,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
             <Hotkeys>
                 {animatorHotkeys}
                 {fileHotkeys}
+                <Hotkey group="Appearance" global={true} combo="shift + d" label="Toggle dark theme" onKeyDown={this.toggleDarkTheme}/>
             </Hotkeys>
         );
     }

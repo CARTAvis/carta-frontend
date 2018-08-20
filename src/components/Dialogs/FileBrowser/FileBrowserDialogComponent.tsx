@@ -19,9 +19,14 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             });
         }
 
+        let className = "file-browser-dialog";
+        if (this.props.appStore.darkTheme) {
+            className += " bp3-dark";
+        }
+
         const dialogProps: IDialogProps = {
             icon: "folder-open",
-            className: "file-browser-dialog",
+            className: className,
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,

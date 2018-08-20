@@ -14,10 +14,14 @@ export class URLConnectDialogComponent extends React.Component<{ appStore: AppSt
 
     public render() {
         const appStore = this.props.appStore;
+        let className = "url-connect-dialog";
+        if (appStore.darkTheme) {
+            className += " bp3-dark";
+        }
 
         const dialogProps: IDialogProps = {
             icon: "folder-open",
-            className: "url-connect-dialog",
+            className: className,
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,

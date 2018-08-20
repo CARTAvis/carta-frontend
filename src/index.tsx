@@ -6,7 +6,6 @@ import "./index.css";
 import "@blueprintjs/core/lib/css/blueprint.css";
 import "@blueprintjs/icons/lib/css/blueprint-icons.css";
 import "./layout-base.css";
-import "./layout-theme.css";
 import registerServiceWorker from "./registerServiceWorker";
 import {AppStore} from "./stores/AppStore";
 

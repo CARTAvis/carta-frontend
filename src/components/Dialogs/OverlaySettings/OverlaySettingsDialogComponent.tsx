@@ -40,9 +40,15 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
             </div>
         );
 
+        let className = "overlay-settings-dialog";
+        if (appStore.darkTheme) {
+            className += " bp3-dark";
+        }
+
         const dialogProps: IDialogProps = {
             icon: "settings",
             backdropClassName: "minimal-dialog-backdrop",
+            className: className,
             canOutsideClickClose: false,
             lazy: true,
             isOpen: overlayStore.overlaySettingsDialogVisible,
