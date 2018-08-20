@@ -6,7 +6,7 @@ import {CARTA} from "carta-protobuf";
 import FileInfo = CARTA.FileInfo;
 import {FileListComponent} from "./FileList/FileListComponent";
 import {AppStore} from "../../../stores/AppStore";
-import {ResizableDialogComponent} from "../ResizableDialog/ResizableDialogComponent";
+import {DraggableDialogComponent} from "../DraggableDialog/DraggableDialogComponent";
 
 @observer
 export class FileBrowserDialogComponent extends React.Component<{ appStore: AppStore }> {
@@ -21,7 +21,6 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
 
         const dialogProps: IDialogProps = {
             icon: "folder-open",
-
             className: "file-browser-dialog",
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
@@ -32,7 +31,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         };
 
         return (
-            <ResizableDialogComponent dialogProps={dialogProps} defaultWidth={600} defaultHeight={450}>
+            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={600} defaultHeight={450} enableResizing={true}>
                 <div className="bp3-dialog-body" style={{display: "flex"}}>
                     <div className="file-list-pane">
                         <FileListComponent
@@ -68,7 +67,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         )}
                     </div>
                 </div>
-            </ResizableDialogComponent>
+            </DraggableDialogComponent>
         );
     }
 

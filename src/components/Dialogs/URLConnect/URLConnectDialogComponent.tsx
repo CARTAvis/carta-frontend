@@ -1,8 +1,9 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {AnchorButton, Dialog, Intent, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Dialog, IDialogProps, Intent, Tooltip} from "@blueprintjs/core";
 import "./URLConnectDialogComponent.css";
 import {AppStore} from "../../../stores/AppStore";
+import {DraggableDialogComponent} from "../DraggableDialog/DraggableDialogComponent";
 
 @observer
 export class URLConnectDialogComponent extends React.Component<{ appStore: AppStore }, { errMessage: string, url: string }> {
@@ -13,17 +14,20 @@ export class URLConnectDialogComponent extends React.Component<{ appStore: AppSt
 
     public render() {
         const appStore = this.props.appStore;
+
+        const dialogProps: IDialogProps = {
+            icon: "folder-open",
+            className: "url-connect-dialog",
+            backdropClassName: "minimal-dialog-backdrop",
+            canOutsideClickClose: false,
+            lazy: true,
+            isOpen: appStore.urlConnectDialogVisible,
+            onClose: appStore.hideURLConnect,
+            title: "Connect to URL",
+        };
+
         return (
-            <Dialog
-                icon={"folder-open"}
-                className="url-connect-dialog"
-                backdropClassName="minimal-dialog-backdrop"
-                canOutsideClickClose={false}
-                lazy={true}
-                isOpen={appStore.urlConnectDialogVisible}
-                onClose={appStore.hideURLConnect}
-                title="Connect to URL"
-            >
+            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={300} defaultHeight={160} enableResizing={false}>
                 <div className="bp3-dialog-body">
                     <input className="bp3-input url-connect-input" type="text" placeholder="Remote URL" value={this.state.url} onChange={this.handleInput}/>
                     {this.state.errMessage &&
@@ -38,7 +42,7 @@ export class URLConnectDialogComponent extends React.Component<{ appStore: AppSt
                         </Tooltip>
                     </div>
                 </div>
-            </Dialog>
+            </DraggableDialogComponent>
         );
     }
 
