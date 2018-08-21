@@ -61,9 +61,9 @@ export class OverlayTitleSettings {
         this.text = text;
     }
 
-    @action setFont(font: number) {
+    @action setFont = (font: number) => {
         this.font = font;
-    }
+    };
 
     @action setFontSize(fontSize: number) {
         this.fontSize = fontSize;
@@ -73,9 +73,9 @@ export class OverlayTitleSettings {
         this.gap = gap;
     }
 
-    @action setColor(color: number) {
+    @action setColor = (color: number) => {
         this.color = color;
-    }
+    };
 }
 
 export class OverlayGridSettings {
@@ -101,9 +101,9 @@ export class OverlayGridSettings {
         this.visible = visible;
     }
 
-    @action setColor(color: number) {
+    @action setColor = (color: number) => {
         this.color = color;
-    }
+    };
 
     @action setWidth(width: number) {
         this.width = width;
@@ -135,9 +135,9 @@ export class OverlayBorderSettings {
         this.visible = visible;
     }
 
-    @action setColor(color: number) {
+    @action setColor = (color: number) => {
         this.color = color;
-    }
+    };
 
     @action setWidth(width: number) {
         this.width = width;
@@ -176,9 +176,9 @@ export class OverlayTickSettings {
         this.density = density;
     }
 
-    @action setColor(color: number) {
+    @action setColor = (color: number) => {
         this.color = color;
-    }
+    };
 
     @action setWidth(width: number) {
         this.width = width;
@@ -279,9 +279,9 @@ export class OverlayAxisSettings {
         this.visible = visible;
     }
 
-    @action setColor(color: number) {
+    @action setColor = (color: number) => {
         this.color = color;
-    }
+    };
 
     @action setWidth(width: number) {
         this.width = width;
@@ -295,17 +295,17 @@ export class OverlayAxisSettings {
         this.numberVisible = visible;
     }
 
-    @action setNumberFont(font: number) {
+    @action setNumberFont = (font: number) => {
         this.numberFont = font;
-    }
+    };
 
     @action setNumberFontSize(fontSize: number) {
         this.numberFontSize = fontSize;
     }
 
-    @action setNumberColor(color: number) {
+    @action setNumberColor = (color: number) => {
         this.numberColor = color;
-    }
+    };
     
     @action setNumberFormat(format: string) {
         this.numberFormat = format;
@@ -315,17 +315,17 @@ export class OverlayAxisSettings {
         this.labelVisible = visible;
     }
 
-    @action setLabelColor(color: number) {
+    @action setLabelColor = (color: number) => {
         this.labelColor = color;
-    }
+    };
 
     @action setLabelGap(gap: number) {
         this.labelGap = gap;
     }
 
-    @action setLabelFont(font: number) {
+    @action setLabelFont = (font: number) => {
         this.labelFont = font;
-    }
+    };
 
     @action setLabelFontSize(fontSize: number) {
         this.labelFontSize = fontSize;

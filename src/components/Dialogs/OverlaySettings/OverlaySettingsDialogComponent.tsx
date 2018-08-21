@@ -2,18 +2,66 @@ import * as React from "react";
 import {AppStore} from "../../../stores/AppStore";
 import {observer} from "mobx-react";
 import "./OverlaySettingsDialogComponent.css";
-import {Button, Switch, Dialog, Intent, Tab, Tabs, HTMLSelect, NumericInput, FormGroup} from "@blueprintjs/core";
+import {Button, Switch, Dialog, Intent, Tab, Tabs, HTMLSelect, NumericInput, FormGroup, MenuItem} from "@blueprintjs/core";
+import {Select, ItemRenderer} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
+
+// OLD -- to be replaced by new dialogs
+const astFonts = AST.fonts.map((x, i) => ({label: x.replace("{size} ", ""), value: i}));
+
+// Color dialog
+export class Color {
+    name: string;
+    id: number;
+    
+    constructor(name: string, id: number) {
+        this.name = name;
+        this.id = id;
+    }
+}
+
+const astColors: Color[] = AST.colors.map((x, i) => ({name: x, id: i}));
+
+const ColorSelect = Select.ofType<Color>();
+
+export const renderColor: ItemRenderer<Color> = (color, { handleClick, modifiers, query }) => {
+    return (
+        <MenuItem
+            active={modifiers.active}
+            disabled={modifiers.disabled}
+            label={String(color.id)}
+            key={color.id}
+            onClick={handleClick}
+            text={(<div style={{background: color.name, border: "solid 1px black", width: "100px"}}>&nbsp;</div>)}
+        />
+    );
+};
+
 
 @observer
 export class OverlaySettingsDialogComponent extends React.Component<{ appStore: AppStore }> {
+
+    private colorSelect(visible: boolean, currentColorId: number, colorSetter: Function) {
+        var currentColor: Color = astColors[currentColorId];
+        if (typeof currentColor === 'undefined') {
+            currentColor = astColors[0];
+        }
+        
+        return (
+            <ColorSelect
+                activeItem={currentColor}
+                itemRenderer={renderColor}
+                items={astColors}
+                disabled={!visible}
+                onItemSelect={(color) => colorSetter(color.id)}
+            >
+                <Button text={(<div style={{background: currentColor.name, border: "solid 1px black", width: "100px"}}>&nbsp;</div>)} disabled={!visible} rightIcon="double-caret-vertical" />
+            </ColorSelect>
+        )
+    }
     
     private axisTabGroup(id: number) {
         const overlayStore = this.props.appStore.overlayStore;
-        
-        // TODO: eliminate duplication by making these properties
-        const astFonts = AST.fonts.map((x, i) => ({label: x.replace("{size} ", ""), value: i}));
-        const astColors = AST.colors.map((x, i) => ({label: x, value: i}));
         
         var tabId;
         var tabTitle;
@@ -44,12 +92,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     onChange={(ev) => axis.setVisible(ev.currentTarget.checked)}
                 />
                 <FormGroup label="Color" disabled={!axis.visible}>
-                    <HTMLSelect
-                        value={axis.color}
-                        options={astColors}
-                        disabled={!axis.visible}
-                        onChange={(ev) => axis.setColor(Number(ev.currentTarget.value))}
-                    />
+                    {this.colorSelect(axis.visible, axis.color, axis.setColor)}
                 </FormGroup>
                 <FormGroup label="Width" disabled={!axis.visible}>
                     <NumericInput
@@ -117,12 +160,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     />
                 </FormGroup>
                 <FormGroup label="Color" disabled={!axis.numberVisible}>
-                    <HTMLSelect
-                        value={axis.numberColor}
-                        options={astColors}
-                        disabled={!axis.numberVisible}
-                        onChange={(ev) => axis.setNumberColor(Number(ev.currentTarget.value))}
-                    />
+                    {this.colorSelect(axis.numberVisible, axis.numberColor, axis.setNumberColor)}
                 </FormGroup>
                 <FormGroup label="Format" disabled={!axis.numberVisible}>
                     <input
@@ -184,12 +222,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     />
                 </FormGroup>
                 <FormGroup label="Color" disabled={!axis.labelVisible}>
-                    <HTMLSelect
-                        value={axis.labelColor}
-                        options={astColors}
-                        disabled={!axis.labelVisible}
-                        onChange={(ev) => axis.setLabelColor(Number(ev.currentTarget.value))}
-                    />
+                    {this.colorSelect(axis.labelVisible, axis.labelColor, axis.setLabelColor)}
                 </FormGroup>
             </div>
         );
@@ -214,9 +247,6 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         const ticks = overlayStore.ticks;
         const axes = overlayStore.axes;
         const axis = overlayStore.axis;
-        
-        const astFonts = AST.fonts.map((x, i) => ({label: x.replace("{size} ", ""), value: i}));
-        const astColors = AST.colors.map((x, i) => ({label: x, value: i}));
         
         const titlePanel = (
             <div className="panel-container">
@@ -265,12 +295,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     />
                 </FormGroup>
                 <FormGroup label="Color" disabled={!title.visible}>
-                    <HTMLSelect
-                        value={title.color}
-                        options={astColors}
-                        disabled={!title.visible}
-                        onChange={(ev) => title.setColor(Number(ev.currentTarget.value))}
-                    />
+                    {this.colorSelect(title.visible, title.color, title.setColor)}
                 </FormGroup>
             </div>
         );
@@ -287,11 +312,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     />
                 </FormGroup>
                 <FormGroup label="Color">
-                    <HTMLSelect
-                        value={ticks.color}
-                        options={astColors}
-                        onChange={(ev) => ticks.setColor(Number(ev.currentTarget.value))}
-                    />
+                    {this.colorSelect(true, ticks.color, ticks.setColor)}
                 </FormGroup>
                 <FormGroup label="Width">
                     <NumericInput
@@ -331,12 +352,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     onChange={(ev) => grid.setVisible(ev.currentTarget.checked)}
                 />
                 <FormGroup label="Color" disabled={!grid.visible}>
-                    <HTMLSelect
-                        value={grid.color}
-                        options={astColors}
-                        disabled={!grid.visible}
-                        onChange={(ev) => grid.setColor(Number(ev.currentTarget.value))}
-                    />
+                    {this.colorSelect(grid.visible, grid.color, grid.setColor)}
                 </FormGroup>
                 <FormGroup label="Width" disabled={!grid.visible}>
                     <NumericInput
@@ -359,12 +375,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     onChange={(ev) => border.setVisible(ev.currentTarget.checked)}
                 />
                 <FormGroup label="Color" disabled={!border.visible}>
-                    <HTMLSelect
-                        value={border.color}
-                        options={astColors}
-                        disabled={!border.visible}
-                        onChange={(ev) => border.setColor(Number(ev.currentTarget.value))}
-                    />
+                    {this.colorSelect(border.visible, border.color, border.setColor)}
                 </FormGroup>
                 <FormGroup label="Width" disabled={!border.visible}>
                     <NumericInput
