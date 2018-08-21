@@ -129,7 +129,7 @@ export class LogComponent extends React.Component<LogComponentProps> {
                 <div className="log-footer">
                     <FormGroup inline={true} label="Log level:" className="log-level">
                         <HTMLSelect value={logStore.logLevel} onChange={this.onLogLevelChanged} style={{color: this.colorFromSeverity(logStore.logLevel)}}>
-                            <option value={-1} style={{color: this.colorFromSeverity(-1)}}>Debug</option>
+                            <option value={CARTA.ErrorSeverity.DEBUG} style={{color: this.colorFromSeverity(CARTA.ErrorSeverity.DEBUG)}}>Debug</option>
                             <option value={CARTA.ErrorSeverity.INFO} style={{color: this.colorFromSeverity(CARTA.ErrorSeverity.INFO)}}>Info</option>
                             <option value={CARTA.ErrorSeverity.WARNING} style={{color: this.colorFromSeverity(CARTA.ErrorSeverity.WARNING)}}>Warning</option>
                             <option value={CARTA.ErrorSeverity.ERROR} style={{color: this.colorFromSeverity(CARTA.ErrorSeverity.ERROR)}}>Error</option>

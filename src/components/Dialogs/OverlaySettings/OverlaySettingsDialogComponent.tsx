@@ -2,9 +2,10 @@ import * as React from "react";
 import {AppStore} from "../../../stores/AppStore";
 import {observer} from "mobx-react";
 import "./OverlaySettingsDialogComponent.css";
-import {Button, Switch, Dialog, Intent, Tab, Tabs, HTMLSelect, NumericInput, FormGroup, MenuItem} from "@blueprintjs/core";
+import {Button, Switch, Dialog, IDialogProps, Intent, Tab, Tabs, HTMLSelect, NumericInput, FormGroup, MenuItem} from "@blueprintjs/core";
 import {Select, ItemRenderer} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
+import {DraggableDialogComponent} from "../DraggableDialog/DraggableDialogComponent";
 
 // OLD -- to be replaced by new dialogs
 const astFonts = AST.fonts.map((x, i) => ({label: x.replace("{size} ", ""), value: i}));
@@ -443,15 +444,24 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
             </div>
         );
 
+        let className = "overlay-settings-dialog";
+        if (appStore.darkTheme) {
+            className += " bp3-dark";
+        }
+
+        const dialogProps: IDialogProps = {
+            icon: "settings",
+            backdropClassName: "minimal-dialog-backdrop",
+            className: className,
+            canOutsideClickClose: false,
+            lazy: true,
+            isOpen: overlayStore.overlaySettingsDialogVisible,
+            onClose: overlayStore.hideOverlaySettings,
+            title: "Overlay Settings",
+        };
+
         return (
-            <Dialog
-                icon={"settings"}                        
-                lazy={true}
-                backdropClassName="minimal-dialog-backdrop"
-                isOpen={overlayStore.overlaySettingsDialogVisible} 
-                onClose={overlayStore.hideOverlaySettings}
-                title="Overlay Settings"
-            >
+            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={600} defaultHeight={450} enableResizing={true}>
                 <div className="bp3-dialog-body">
                     <Tabs
                         id="overlayTabs"
@@ -473,7 +483,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         <Button intent={Intent.PRIMARY} onClick={overlayStore.hideOverlaySettings} text="Close"/>
                     </div>
                 </div>
-            </Dialog>
+            </DraggableDialogComponent>
         );
     }
 }

@@ -4,23 +4,25 @@ import * as AST from "ast_wrapper";
 import * as _ from "lodash";
 import * as $ from "jquery";
 import "./App.css";
+import "./layout-theme.css";
+import {observer} from "mobx-react";
+import DevTools from "mobx-react-devtools";
+import ReactResizeDetector from "react-resize-detector";
+import {Alert, Colors, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import {PlaceholderComponent} from "./components/Placeholder/PlaceholderComponent";
 import {RootMenuComponent} from "./components/Menu/RootMenuComponent";
 import {ImageViewComponent} from "./components/ImageView/ImageViewComponent";
 import {OverlaySettingsDialogComponent} from "./components/Dialogs/OverlaySettings/OverlaySettingsDialogComponent";
-import {AppStore} from "./stores/AppStore";
-import {observer} from "mobx-react";
-import {SpatialProfileStore} from "./stores/SpatialProfileStore";
 import {SpatialProfilerComponent} from "./components/SpatialProfiler/SpatialProfilerComponent";
-import DevTools from "mobx-react-devtools";
 import {FileBrowserDialogComponent} from "./components/Dialogs/FileBrowser/FileBrowserDialogComponent";
-import {FileBrowserStore} from "./stores/FileBrowserStore";
 import {URLConnectDialogComponent} from "./components/Dialogs/URLConnect/URLConnectDialogComponent";
-import {Alert, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import {RenderConfigComponent} from "./components/RenderConfig/RenderConfigComponent";
 import {LogComponent} from "./components/Log/LogComponent";
-import ReactResizeDetector from "react-resize-detector";
 import {FloatingWidgetManagerComponent} from "./components/FloatingWidgetManager/FloatingWidgetManagerComponent";
+import {AnimatorComponent} from "./components/Animator/AnimatorComponent";
+import {FileBrowserStore} from "./stores/FileBrowserStore";
+import {SpatialProfileStore} from "./stores/SpatialProfileStore";
+import {AppStore} from "./stores/AppStore";
 
 @HotkeysTarget @observer
 export class App extends React.Component<{ appStore: AppStore }> {
@@ -87,7 +89,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
         console.log(`Connecting to defaullt URL: ${wsURL}`);
         appStore.backendService.connect(wsURL, "1234").subscribe(sessionId => {
             console.log(`Connected with session ID ${sessionId}`);
-            this.props.appStore.logStore.addInfo(`Connected to server ${wsURL}`, ["server"]);
+            this.props.appStore.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
         }, err => console.log(err));
     }
 
@@ -121,10 +123,10 @@ export class App extends React.Component<{ appStore: AppStore }> {
                         props: {appStore: this.props.appStore, id: "log-docked", docked: true}
                     }, {
                         type: "react-component",
-                        component: "placeholder",
-                        title: "Animation",
-                        id: "placeholder-0",
-                        props: {appStore: this.props.appStore, id: "placeholder-0", label: "Animation placeholder"}
+                        component: "animator",
+                        title: "Animator",
+                        id: "animator-0",
+                        props: {appStore: this.props.appStore, id: "animator-0", docked: true}
                     }]
                 }]
             }, {
@@ -189,6 +191,8 @@ export class App extends React.Component<{ appStore: AppStore }> {
         layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
         layout.registerComponent("render-config", RenderConfigComponent);
         layout.registerComponent("log", LogComponent);
+        layout.registerComponent("animator", AnimatorComponent);
+
         layout.on("stackCreated", (stack) => {
             let unpinButton = $(`<div class="pin-icon"><span class="bp3-icon-standard bp3-icon-unpin"/></div>`);
             unpinButton.on("click", () => this.onUnpinClicked(stack.getActiveContentItem()));
@@ -225,9 +229,20 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
     public render() {
         const appStore = this.props.appStore;
+        let className = "App";
+        let glClassName = "gl-container";
+        if (appStore.darkTheme) {
+            className += " bp3-dark";
+            glClassName += " dark-theme";
+        }
+        else {
+            glClassName += " light-theme";
+        }
+
+        document.body.style.backgroundColor = appStore.darkTheme ? Colors.DARK_GRAY4 : Colors.WHITE;
 
         return (
-            <div className="App">
+            <div className={className}>
                 <DevTools/>
                 <RootMenuComponent appStore={appStore}/>
                 <OverlaySettingsDialogComponent appStore={appStore}/>
@@ -236,7 +251,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>
-                <div className="gl-container" ref={ref => this.glContainer = ref}>
+                <div className={glClassName} ref={ref => this.glContainer = ref}>
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}/>
                 </div>
                 <FloatingWidgetManagerComponent appStore={appStore}/>
@@ -244,14 +259,66 @@ export class App extends React.Component<{ appStore: AppStore }> {
         );
     }
 
+    nextChannel = () => {
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame) {
+            appStore.activeFrame.incrementChannels(1, 0);
+        }
+    };
+
+    prevChannel = () => {
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame) {
+            appStore.activeFrame.incrementChannels(-1, 0);
+        }
+    };
+
+    nextStokes = () => {
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame) {
+            appStore.activeFrame.incrementChannels(0, 1);
+        }
+    };
+
+    prevStokes = () => {
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame) {
+            appStore.activeFrame.incrementChannels(0, -1);
+        }
+    };
+
+    toggleDarkTheme = () => {
+        const appStore = this.props.appStore;
+        if (appStore.darkTheme) {
+            appStore.setLightTheme();
+        }
+        else {
+            appStore.setDarkTheme();
+        }
+    };
+
     public renderHotkeys() {
         const appStore = this.props.appStore;
+
+        const animatorHotkeys = [
+            <Hotkey key={0} group="Frame controls" global={true} combo="alt + ]" label="Next frame" onKeyDown={appStore.nextFrame}/>,
+            <Hotkey key={1} group="Frame controls" global={true} combo="alt + [" label="Previous frame" onKeyDown={appStore.prevFrame}/>,
+            <Hotkey key={2} group="Frame controls" global={true} combo="alt + pageup" label="Next channel" onKeyDown={this.nextChannel}/>,
+            <Hotkey key={3} group="Frame controls" global={true} combo="alt + pagedown" label="Previous channel" onKeyDown={this.prevChannel}/>,
+            <Hotkey key={4} group="Frame controls" global={true} combo="alt + shift + pageup" label="Next Stokes cube" onKeyDown={this.nextStokes}/>,
+            <Hotkey key={5} group="Frame controls" global={true} combo="alt + shift + pagedown" label="Previous Stokes cube" onKeyDown={this.prevStokes}/>
+        ];
+
+        const fileHotkeys = [
+            <Hotkey key={0} group="File controls" global={true} combo="alt + o" label="Open file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser()}/>,
+            <Hotkey key={1} group="File controls" global={true} combo="alt + a" label="Append file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(true)}/>
+        ];
+
         return (
             <Hotkeys>
-                <Hotkey group="Frame controls" global={true} combo="alt + [" label="Previous frame" onKeyDown={appStore.prevFrame}/>
-                <Hotkey group="Frame controls" global={true} combo="alt + ]" label="Next frame" onKeyDown={appStore.nextFrame}/>
-                <Hotkey group="File controls" global={true} combo="alt + o" label="Open file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser()}/>
-                <Hotkey group="File controls" global={true} combo="alt + a" label="Append file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(true)}/>
+                {animatorHotkeys}
+                {fileHotkeys}
+                <Hotkey group="Appearance" global={true} combo="shift + d" label="Toggle dark theme" onKeyDown={this.toggleDarkTheme}/>
             </Hotkeys>
         );
     }
@@ -264,6 +331,8 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 return RenderConfigComponent.WIDGET_CONFIG;
             case LogComponent.WIDGET_CONFIG.type:
                 return LogComponent.WIDGET_CONFIG;
+            case AnimatorComponent.WIDGET_CONFIG.type:
+                return AnimatorComponent.WIDGET_CONFIG;
             case SpatialProfilerComponent.WIDGET_CONFIG.type:
                 return SpatialProfilerComponent.WIDGET_CONFIG;
             default:

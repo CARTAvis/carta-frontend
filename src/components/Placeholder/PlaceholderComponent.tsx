@@ -29,8 +29,9 @@ export class PlaceholderComponent extends React.Component<PlaceholderComponentPr
 
     render() {
         return (
-            <div className="Placeholder">
+            <div className="placeholder-container">
                 <h1>{this.props.label}</h1>
-            </div>);
+            </div>
+        );
     }
 }

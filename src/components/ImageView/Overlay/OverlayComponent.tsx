@@ -118,13 +118,13 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             AST.setPalette([         // AST color index:
                 Colors.BLACK,        // 0
                 Colors.WHITE,        // 1
-                Colors.RED3,         // 2
-                Colors.GREEN3,       // 3
-                Colors.BLUE3,        // 4
-                Colors.TURQUOISE3,   // 5
-                Colors.VERMILION3,   // 6
-                Colors.GOLD3,        // 7
-                Colors.LIGHT_GRAY3   // 8
+                Colors.RED4,         // 2
+                Colors.GREEN4,      // 3
+                Colors.BLUE4,        // 4
+                Colors.TURQUOISE4,   // 5
+                Colors.VERMILION4,   // 6
+                Colors.GOLD4,        // 7
+                Colors.LIGHT_GRAY4   // 8
             ]);
 
             AST.setCanvas(this.canvas);

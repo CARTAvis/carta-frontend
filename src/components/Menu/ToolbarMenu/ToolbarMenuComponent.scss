@@ -4,4 +4,7 @@
     margin: 4px auto 4px 10px;
     border: 1px solid $gray5;
     border-radius: 3px;
+    &.bp3-dark {
+        border: 1px solid $black;
+    }
 }

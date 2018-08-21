@@ -20,6 +20,7 @@ export class BackendService {
     private observerMap: Map<string, Observer<any>>;
     private readonly rasterStream: Subject<CARTA.RasterImageData>;
     private readonly histogramStream: Subject<CARTA.RegionHistogramData>;
+    private readonly errorStream: Subject<CARTA.ErrorData>;
     private readonly logEventList: string[];
     private readonly decompressionServce: DecompressionService;
     private readonly subsetsRequired: number;
@@ -33,6 +34,7 @@ export class BackendService {
         this.connectionStatus = ConnectionStatus.CLOSED;
         this.rasterStream = new Subject<CARTA.RasterImageData>();
         this.histogramStream = new Subject<CARTA.RegionHistogramData>();
+        this.errorStream = new Subject<CARTA.ErrorData>();
         this.subsetsRequired = Math.min(navigator.hardwareConcurrency || 4, 4);
         this.decompressionServce = new DecompressionService(this.subsetsRequired);
         this.totalDecompressionTime = 0;
@@ -41,11 +43,27 @@ export class BackendService {
             "REGISTER_VIEWER",
             "REGISTER_VIEWER_ACK",
             // "SET_IMAGE_VIEW",
+            // "SET_IMAGE_CHANNELS",
             // "RASTER_IMAGE_DATA",
             "OPEN_FILE",
             "OPEN_FILE_ACK",
-            "REGION_HISTOGRAM_DATA"
+            // "REGION_HISTOGRAM_DATA"
         ];
+
+        // Check local storage for a list of events to log to console
+        const localStorageEventlist = localStorage.getItem("DEBUG_OVERRIDE_EVENT_LIST");
+        if (localStorageEventlist) {
+            try {
+                const eventList = JSON.parse(localStorageEventlist);
+                if (eventList && Array.isArray(eventList) && eventList.length) {
+                    this.logEventList = eventList;
+                    console.log("Overriding event log list from local storage");
+                }
+            }
+            catch (e) {
+                console.log("Invalid event list read from local storage");
+            }
+        }
 
         autorun(() => {
             if (this.zfpReady) {
@@ -64,6 +82,10 @@ export class BackendService {
 
     getRegionHistogramStream() {
         return this.histogramStream;
+    }
+
+    getErrorStream() {
+        return this.errorStream;
     }
 
     @action("connect")
@@ -198,6 +220,18 @@ export class BackendService {
         return false;
     }
 
+    @action("set channels")
+    setChannels(fileId: number, channel: number, stokes: number): boolean {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            const message = CARTA.SetImageChannels.create({fileId, channel, stokes});
+            this.logEvent("SET_IMAGE_CHANNELS", message, false);
+            if (this.sendEvent("SET_IMAGE_CHANNELS", 0, CARTA.SetImageChannels.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private messageHandler(event: MessageEvent) {
         if (event.data.byteLength < 40) {
             console.log("Unknown event format");
@@ -233,6 +267,10 @@ export class BackendService {
             else if (eventName === "REGION_HISTOGRAM_DATA") {
                 parsedMessage = CARTA.RegionHistogramData.decode(eventData);
                 this.onStreamedRegionHistogramData(parsedMessage);
+            }
+            else if (eventName === "ERROR_DATA") {
+                parsedMessage = CARTA.ErrorData.decode(eventData);
+                this.onStreamedErrorData(parsedMessage);
             }
             else {
                 console.log(`Unsupported event response ${eventName}`);
@@ -317,6 +355,10 @@ export class BackendService {
 
     private onStreamedRegionHistogramData(regionHistogramData: CARTA.RegionHistogramData) {
         this.histogramStream.next(regionHistogramData);
+    }
+
+    private onStreamedErrorData(errorData: CARTA.ErrorData) {
+        this.errorStream.next(errorData);
     }
 
     private sendEvent(eventName: string, eventId: number, payload: Uint8Array): boolean {

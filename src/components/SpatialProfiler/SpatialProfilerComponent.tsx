@@ -51,7 +51,7 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
         }
 
-        const backgroundColor = Colors.LIGHT_GRAY5;
+        const backgroundColor = appStore.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
         const isXProfile = profileConfig.coordinate.indexOf("x") >= 0;
 
         let plotLayout: Partial<Layout> = {
@@ -70,6 +70,9 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
                 r: 10,
                 l: 60,
                 b: 60,
+            },
+            font: {
+                color: appStore.darkTheme ? Colors.LIGHT_GRAY3 : Colors.DARK_GRAY4
             }
         };
 
@@ -98,7 +101,8 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
                     mode: "lines",
                     line: {
                         width: 1.0,
-                        shape: "hv"
+                        shape: "hv",
+                        color: `${appStore.darkTheme ? Colors.BLUE4 : Colors.BLUE2}`
                     }
                 });
                 plotLayout.shapes = [{
