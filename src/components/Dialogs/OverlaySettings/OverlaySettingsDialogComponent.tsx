@@ -9,7 +9,7 @@ import * as AST from "ast_wrapper";
 // OLD -- to be replaced by new dialogs
 const astFonts = AST.fonts.map((x, i) => ({label: x.replace("{size} ", ""), value: i}));
 
-// Color dialog
+// Color selector
 export class Color {
     name: string;
     id: number;
@@ -37,13 +37,62 @@ export const renderColor: ItemRenderer<Color> = (color, { handleClick, modifiers
     );
 };
 
+// Font selector
+
+export class Font {
+    name: string;
+    id: number;
+    style: string;
+    weight: number;
+    family: string;
+    
+    constructor(name: string, id: number) {
+        this.name = name.replace("{size} ", "");
+        this.id = id;
+        
+        var family = this.name;
+        
+        if (name.indexOf("bold") === 0) {
+            family = family.replace("bold ", "");
+            this.weight = 700;
+        } else {
+            this.weight = 400;
+        }
+        
+        if (name.indexOf("italic") === 0) {
+            family = family.replace("italic ", "");
+            this.style = "italic";
+        } else {
+            this.style = "";
+        }
+        
+        this.family = family;
+    }
+}
+
+const astFontItems: Font[] = AST.fonts.map((x, i) => (new Font(x, i)));
+
+const FontSelect = Select.ofType<Font>();
+
+export const renderFont: ItemRenderer<Font> = (font, { handleClick, modifiers, query }) => {
+    return (
+        <MenuItem
+            active={modifiers.active}
+            disabled={modifiers.disabled}
+            label={String(font.id)}
+            key={font.id}
+            onClick={handleClick}
+            text={(<span style={{fontFamily: font.family, fontWeight: font.weight, fontStyle: font.style}}>{font.name}</span>)}
+        />
+    );
+};
 
 @observer
 export class OverlaySettingsDialogComponent extends React.Component<{ appStore: AppStore }> {
 
     private colorSelect(visible: boolean, currentColorId: number, colorSetter: Function) {
         var currentColor: Color = astColors[currentColorId];
-        if (typeof currentColor === 'undefined') {
+        if (typeof currentColor === "undefined") {
             currentColor = astColors[0];
         }
         
@@ -57,7 +106,26 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
             >
                 <Button text={(<div style={{background: currentColor.name, border: "solid 1px black", width: "100px"}}>&nbsp;</div>)} disabled={!visible} rightIcon="double-caret-vertical" />
             </ColorSelect>
-        )
+        );
+    }
+
+    private fontSelect(visible: boolean, currentFontId: number, fontSetter: Function) {
+        var currentFont: Font = astFontItems[currentFontId];
+        if (typeof currentFont === "undefined") {
+            currentFont = astFontItems[0];
+        }
+        
+        return (
+            <FontSelect
+                activeItem={currentFont}
+                itemRenderer={renderFont}
+                items={astFontItems}
+                disabled={!visible}
+                onItemSelect={(font) => fontSetter(font.id)}
+            >
+                <Button text={(<span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>)} disabled={!visible} rightIcon="double-caret-vertical" />
+            </FontSelect>
+        );
     }
     
     private axisTabGroup(id: number) {
@@ -144,12 +212,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     onChange={(ev) => axis.setNumberVisible(ev.currentTarget.checked)}
                 />
                 <FormGroup label="Font" disabled={!axis.numberVisible}>
-                    <HTMLSelect
-                        value={axis.numberFont}
-                        options={astFonts}
-                        disabled={!axis.numberVisible}
-                        onChange={(ev) => axis.setNumberFont(Number(ev.currentTarget.value))}
-                    />
+                    {this.fontSelect(axis.numberVisible, axis.numberFont, axis.setNumberFont)}
                     <NumericInput
                         style={{width: "60px"}}
                         min={7}
@@ -193,12 +256,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     />
                 </FormGroup>
                 <FormGroup label="Font" disabled={!axis.labelVisible}>
-                    <HTMLSelect
-                        value={axis.labelFont}
-                        options={astFonts}
-                        disabled={!axis.labelVisible}
-                        onChange={(ev) => axis.setLabelFont(Number(ev.currentTarget.value))}
-                    />
+                    {this.fontSelect(axis.labelVisible, axis.labelFont, axis.setLabelFont)}
                     <NumericInput
                         style={{width: "60px"}}
                         min={7}
@@ -266,12 +324,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     />
                 </FormGroup>
                 <FormGroup label="Font" disabled={!title.visible}>
-                    <HTMLSelect
-                        value={title.font}
-                        options={astFonts}
-                        disabled={!title.visible}
-                        onChange={(ev) => title.setFont(Number(ev.currentTarget.value))}
-                    />
+                    {this.fontSelect(title.visible, title.font, title.setFont)}
                     <NumericInput
                         style={{width: "60px"}}
                         min={7}
