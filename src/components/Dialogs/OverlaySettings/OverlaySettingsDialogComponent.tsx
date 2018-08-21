@@ -2,7 +2,7 @@ import * as React from "react";
 import {AppStore} from "../../../stores/AppStore";
 import {observer} from "mobx-react";
 import "./OverlaySettingsDialogComponent.css";
-import {Button, Switch, Dialog, IDialogProps, Intent, Tab, Tabs, HTMLSelect, NumericInput, FormGroup, MenuItem} from "@blueprintjs/core";
+import {Button, Switch, Dialog, IDialogProps, Intent, Tab, Tabs, NumericInput, FormGroup, MenuItem} from "@blueprintjs/core";
 import {Select, ItemRenderer} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
 import {DraggableDialogComponent} from "../DraggableDialog/DraggableDialogComponent";
@@ -445,7 +445,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         );
 
         let className = "overlay-settings-dialog";
-        if (appStore.darkTheme) {
+        if (this.props.appStore.darkTheme) {
             className += " bp3-dark";
         }
 
