@@ -91,7 +91,7 @@ export class OverlayGridSettings {
         if (this.color !== undefined) {
             stringList.push(`Color(Grid)=${this.color}`);
         }
-        if (this.width !== undefined) {
+        if (this.width !== undefined && this.width > 0) {
             stringList.push(`Width(Grid)=${this.width}`);
         }
         return stringList.join(", ");
@@ -124,7 +124,7 @@ export class OverlayBorderSettings {
         if (this.color !== undefined) {
             stringList.push(`Color(Border)=${this.color}`);
         }
-        if (this.width !== undefined) {
+        if (this.width !== undefined && this.width > 0) {
             stringList.push(`Width(Border)=${this.width}`);
         }
 
@@ -159,7 +159,7 @@ export class OverlayTickSettings {
         if (this.color !== undefined) {
             stringList.push(`Color(Ticks)=${this.color}`);
         }
-        if (this.width !== undefined) {
+        if (this.width !== undefined && this.width > 0) {
             stringList.push(`Width(Ticks)=${this.width}`);
         }
         if (this.length !== undefined) {

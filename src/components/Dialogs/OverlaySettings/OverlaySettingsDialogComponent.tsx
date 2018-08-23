@@ -373,8 +373,11 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     <NumericInput
                         style={{width: "60px"}}
                         placeholder="Width"
-                        min={0}
+                        min={0.001}
                         value={ticks.width}
+                        stepSize={0.1}
+                        minorStepSize={0.01}
+                        majorStepSize={1}
                         onValueChange={(value: number) => ticks.setWidth(value)}
                     />
                 </FormGroup>
@@ -419,8 +422,11 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     <NumericInput
                         style={{width: "60px"}}
                         placeholder="Width"
-                        min={0}
+                        min={0.001}
                         value={grid.width}
+                        stepSize={0.1}
+                        minorStepSize={0.01}
+                        majorStepSize={1}
                         disabled={!grid.visible}
                         onValueChange={(value: number) => grid.setWidth(value)}
                     />
@@ -442,8 +448,11 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     <NumericInput
                         style={{width: "60px"}}
                         placeholder="Width"
-                        min={0}
+                        min={0.001}
                         value={border.width}
+                        stepSize={0.1}
+                        minorStepSize={0.01}
+                        majorStepSize={1}
                         disabled={!border.visible}
                         onValueChange={(value: number) => border.setWidth(value)}
                     />
