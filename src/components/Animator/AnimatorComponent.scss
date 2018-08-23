@@ -1,0 +1,68 @@
+@import "../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+
+.animator-container {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    .animator-sliders {
+        margin: 10px;
+        .animator-slider {
+            display: flex;
+            width: 100%;
+            margin-bottom: 5px;
+            .bp3-radio {
+                flex: 1 1 110px;
+            }
+            .bp3-slider {
+                flex: 3 3 auto;
+                margin-right: 15px;
+            }
+            .bp3-input-group {
+                max-width: 80px;
+            }
+            .slider-info {
+                overflow-x: hidden;
+                flex: 1 1 180px;
+            }
+        }
+    }
+    .animator-playback {
+        margin-left: 10px;
+        margin-right: 10px;
+        display: flex;
+
+        &.wrap {
+            flex-wrap: wrap;
+            .playback-buttons {
+                height: auto;
+                margin-right: 0;
+            }
+            .playback-framerate {
+                margin-top: 10px;
+            }
+        }
+    }
+}
+
+.playback-framerate {
+    min-width: 150px;
+    flex: 1 1 150px;
+}
+
+#framerate-numeric {
+    width: 40px;
+}
+
+.playback-buttons {
+    flex: 3 3 auto;
+    margin-right: 10px;
+    height: 20px;
+
+    // Re-center button icons
+    .bp3-button {
+        .bp3-icon {
+            position: relative;
+            left: 3px;
+        }
+    }
+}

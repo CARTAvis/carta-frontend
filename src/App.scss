@@ -1,5 +1,15 @@
 @import "../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
+.bp3-dark {
+    background-color: $dark-gray4;
+}
+
+body {
+    &.bp3-dark {
+        background-color: $dark-gray4;
+    }
+}
+
 .App {
     height: 100%;
     width: 100%;
@@ -7,11 +17,14 @@
     top: 0;
     left: 0;
     z-index: -100;
+    .bp3-dark {
+        background-color: $dark-gray3;
+    }
 }
 
 .gl-container {
     position: absolute;
-    top: 40px;
+    top: 48px;
     bottom: 5px;
     left: 5px;
     right: 5px;
@@ -19,7 +32,7 @@
 }
 
 .minimal-dialog-backdrop {
-  background-color: rgba(black, 0.1) !important;
+    background-color: rgba(black, 0.1) !important;
 }
 
 .bp3-overlay {

@@ -55,8 +55,8 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         const viewMenu = (
             <Menu>
                 <Menu.Item text="Interface" icon={"control"}>
-                    <Menu.Item text="Light" icon={"flash"}/>
-                    <Menu.Item text="Dark" icon={"moon"}/>
+                    <Menu.Item text="Light" icon={"flash"} onClick={appStore.setLightTheme}/>
+                    <Menu.Item text="Dark" icon={"moon"} onClick={appStore.setDarkTheme}/>
                 </Menu.Item>
                 <Menu.Item text="Overlay" icon={"widget"}>
                     <Menu.Item text="DS9 Preset"/>

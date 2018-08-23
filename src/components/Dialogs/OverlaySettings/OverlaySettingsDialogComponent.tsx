@@ -2,7 +2,8 @@ import * as React from "react";
 import {AppStore} from "../../../stores/AppStore";
 import {observer} from "mobx-react";
 import "./OverlaySettingsDialogComponent.css";
-import {Button, Checkbox, Dialog, Intent, Tab, Tabs} from "@blueprintjs/core";
+import {Button, Checkbox, Dialog, IDialogProps, Intent, Tab, Tabs} from "@blueprintjs/core";
+import {DraggableDialogComponent} from "../DraggableDialog/DraggableDialogComponent";
 
 @observer
 export class OverlaySettingsDialogComponent extends React.Component<{ appStore: AppStore }> {
@@ -39,8 +40,24 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
             </div>
         );
 
+        let className = "overlay-settings-dialog";
+        if (appStore.darkTheme) {
+            className += " bp3-dark";
+        }
+
+        const dialogProps: IDialogProps = {
+            icon: "settings",
+            backdropClassName: "minimal-dialog-backdrop",
+            className: className,
+            canOutsideClickClose: false,
+            lazy: true,
+            isOpen: overlayStore.overlaySettingsDialogVisible,
+            onClose: overlayStore.hideOverlaySettings,
+            title: "Overlay Settings",
+        };
+
         return (
-            <Dialog icon={"settings"} lazy={true} backdropClassName="minimal-dialog-backdrop" isOpen={overlayStore.overlaySettingsDialogVisible} onClose={overlayStore.hideOverlaySettings} title="Overlay Settings">
+            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={600} defaultHeight={450} enableResizing={true}>
                 <div className="bp3-dialog-body">
                     <Tabs id="overlayTabs" selectedTabId="global">
                         <Tab id="global" title="Global" panel={globalPanel}/>
@@ -54,7 +71,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         <Button intent={Intent.PRIMARY} onClick={overlayStore.hideOverlaySettings} text="Close"/>
                     </div>
                 </div>
-            </Dialog>
+            </DraggableDialogComponent>
         );
     }
 }

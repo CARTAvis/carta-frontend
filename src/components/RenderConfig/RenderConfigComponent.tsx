@@ -260,7 +260,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
 
     render() {
         const appStore = this.props.appStore;
-        const backgroundColor = Colors.LIGHT_GRAY5;
+        const backgroundColor = appStore.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
         const frame = appStore.activeFrame;
         let scaleMarkers = [];
         if (frame) {
@@ -291,6 +291,9 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                 r: 10,
                 l: 10,
                 b: 35,
+            },
+            font: {
+                color: appStore.darkTheme ? Colors.LIGHT_GRAY3 : Colors.DARK_GRAY4
             },
             shapes: scaleMarkers
         };

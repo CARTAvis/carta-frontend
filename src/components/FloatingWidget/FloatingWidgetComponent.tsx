@@ -70,11 +70,17 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
 
     public render() {
         const headerHeight = 25;
-        const titleClass = this.props.isSelected ? "floating-header selected" : "floating-header";
+        let className = "floating-widget";
+        let titleClass = this.props.isSelected ? "floating-header selected" : "floating-header";
+
+        if (this.props.appStore.darkTheme) {
+            className += " bp3-dark";
+            titleClass += " bp3-dark";
+        }
         const widgetConfig = this.props.widgetConfig;
         return (
             <Rnd
-                className="floating-widget"
+                className={className}
                 style={{zIndex: this.props.zIndex}}
                 default={{
                     // Shift by 5 pixels to compensate for 5px CSS margins

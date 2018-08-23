@@ -20,4 +20,4 @@ These modules can be built using the individual build scripts in `wasm_src` subd
 Currently, each build script symlinks the JavaScript portion of the wrapper to a subdirectory of `node_modules`, and copies the WebAssembly binary to `public`.
 * **Building static protocol buffer code** is done using the `build_proto.sh` script in the `protobuf` folder, which builds the static JavaScript code, as well as the TypeScript definitions, and symlinks to the `node_modules/carta-protobuf` directory.
 * **Webpack** is used to build and bundle all the JavaScript, Sass and HTML code elegantly. You can run `npm start` to run a live dev server, while the build process watches for any changes to source files.
-Standalone versions can be built with `npm run-script build`, which produces a distributable build in the `build` folder.
+Standalone versions can be built with `npm run build`, which produces a distributable build in the `build` folder.

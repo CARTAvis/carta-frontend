@@ -29,7 +29,7 @@ export class LogStore {
     }
 
     @action addDebug(message: string, tags: string[] = [], title: string = "") {
-        this.addLog({message, title, tags, level: -1});
+        this.addLog({message, title, tags, level: CARTA.ErrorSeverity.DEBUG});
     }
 
     @action addInfo(message: string, tags: string[] = [], title: string = "") {
