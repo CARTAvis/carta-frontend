@@ -7,9 +7,6 @@ import {Select, ItemRenderer} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
 import {DraggableDialogComponent} from "../DraggableDialog/DraggableDialogComponent";
 
-// OLD -- to be replaced by new dialogs
-const astFonts = AST.fonts.map((x, i) => ({label: x.replace("{size} ", ""), value: i}));
-
 // Color selector
 export class Color {
     name: string;
@@ -71,7 +68,7 @@ export class Font {
     }
 }
 
-const astFontItems: Font[] = AST.fonts.map((x, i) => (new Font(x, i)));
+const astFonts: Font[] = AST.fonts.map((x, i) => (new Font(x, i)));
 
 const FontSelect = Select.ofType<Font>();
 
@@ -103,6 +100,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 itemRenderer={renderColor}
                 items={astColors}
                 disabled={!visible}
+                filterable={false}
                 onItemSelect={(color) => colorSetter(color.id)}
             >
                 <Button text={(<div style={{background: currentColor.name, border: "solid 1px black", width: "100px"}}>&nbsp;</div>)} disabled={!visible} rightIcon="double-caret-vertical" />
@@ -111,17 +109,19 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
     }
 
     private fontSelect(visible: boolean, currentFontId: number, fontSetter: Function) {
-        var currentFont: Font = astFontItems[currentFontId];
+        var currentFont: Font = astFonts[currentFontId];
         if (typeof currentFont === "undefined") {
-            currentFont = astFontItems[0];
+            currentFont = astFonts[0];
         }
         
         return (
             <FontSelect
                 activeItem={currentFont}
                 itemRenderer={renderFont}
-                items={astFontItems}
+                items={astFonts}
                 disabled={!visible}
+                filterable={false}
+                popoverProps={{minimal: true}}
                 onItemSelect={(font) => fontSetter(font.id)}
             >
                 <Button text={(<span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>)} disabled={!visible} rightIcon="double-caret-vertical" />
