@@ -50,14 +50,14 @@ export class Font {
         
         var family = this.name;
         
-        if (name.indexOf("bold") === 0) {
+        if (family.indexOf("bold") === 0) {
             family = family.replace("bold ", "");
             this.weight = 700;
         } else {
             this.weight = 400;
         }
         
-        if (name.indexOf("italic") === 0) {
+        if (family.indexOf("italic") === 0) {
             family = family.replace("italic ", "");
             this.style = "italic";
         } else {
