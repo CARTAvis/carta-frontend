@@ -384,6 +384,9 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         placeholder="Length"
                         min={0}
                         value={ticks.length}
+                        stepSize={0.01}
+                        minorStepSize={0.001}
+                        majorStepSize={0.1}
                         onValueChange={(value: number) => ticks.setLength(value)}
                     />
                 </FormGroup>
@@ -393,6 +396,9 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         placeholder="Major length"
                         min={0}
                         value={ticks.majorLength}
+                        stepSize={0.01}
+                        minorStepSize={0.001}
+                        majorStepSize={0.1}
                         onValueChange={(value: number) => ticks.setMajorLength(value)}
                     />
                 </FormGroup>
