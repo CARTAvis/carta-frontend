@@ -8,7 +8,12 @@
     width: 10em;
 }
 
-.bp3-select-popover {
+.bp3-select-popover .bp3-menu {
     max-height: 300px;
     overflow: auto;
+    padding: 0;
+}
+
+.bp3-select-popover.colorselect .bp3-menu {
+    min-width: 100px;
 }

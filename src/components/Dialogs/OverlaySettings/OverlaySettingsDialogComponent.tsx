@@ -27,10 +27,9 @@ export const renderColor: ItemRenderer<Color> = (color, { handleClick, modifiers
         <MenuItem
             active={modifiers.active}
             disabled={modifiers.disabled}
-            label={String(color.id)}
             key={color.id}
             onClick={handleClick}
-            text={(<div style={{background: color.name, border: "solid 1px black", width: "100px"}}>&nbsp;</div>)}
+            text={(<div style={{background: color.name, border: "solid 1px black", width: "100%"}}>&nbsp;</div>)}
         />
     );
 };
@@ -77,7 +76,6 @@ export const renderFont: ItemRenderer<Font> = (font, { handleClick, modifiers, q
         <MenuItem
             active={modifiers.active}
             disabled={modifiers.disabled}
-            label={String(font.id)}
             key={font.id}
             onClick={handleClick}
             text={(<span style={{fontFamily: font.family, fontWeight: font.weight, fontStyle: font.style}}>{font.name}</span>)}
@@ -101,7 +99,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 items={astColors}
                 disabled={!visible}
                 filterable={false}
-                popoverProps={{minimal: true}}
+                popoverProps={{minimal: true, position: "auto-end", popoverClassName: "colorselect"}}
                 onItemSelect={(color) => colorSetter(color.id)}
             >
                 <Button text={(<div style={{background: currentColor.name, border: "solid 1px black", width: "100px"}}>&nbsp;</div>)} disabled={!visible} rightIcon="double-caret-vertical" />
@@ -122,7 +120,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 items={astFonts}
                 disabled={!visible}
                 filterable={false}
-                popoverProps={{minimal: true}}
+                popoverProps={{minimal: true, position: "auto-end"}}
                 onItemSelect={(font) => fontSetter(font.id)}
             >
                 <Button text={(<span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>)} disabled={!visible} rightIcon="double-caret-vertical" />
