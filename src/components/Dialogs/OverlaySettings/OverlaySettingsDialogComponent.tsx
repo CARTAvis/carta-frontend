@@ -101,6 +101,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 items={astColors}
                 disabled={!visible}
                 filterable={false}
+                popoverProps={{minimal: true}}
                 onItemSelect={(color) => colorSetter(color.id)}
             >
                 <Button text={(<div style={{background: currentColor.name, border: "solid 1px black", width: "100px"}}>&nbsp;</div>)} disabled={!visible} rightIcon="double-caret-vertical" />
