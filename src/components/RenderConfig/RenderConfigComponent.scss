@@ -5,6 +5,23 @@
     border-bottom-left-radius: 5px;
 }
 
+.bp3-select-popover .bp3-menu {
+    max-height: 300px;
+    overflow: auto;
+    padding: 0;
+}
+
+.colormap-block {
+    width: 75px;
+    height: 15px;
+    background-size: 100%;
+    border-radius: $pt-border-radius;
+    border: 1px solid $gray2;
+    .bp3-dark {
+        border: 1px solid $light-gray5;
+    }
+}
+
 .render-config-container {
     display: flex;
     width: 100%;

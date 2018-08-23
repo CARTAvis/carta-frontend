@@ -1,13 +1,14 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AppStore} from "../../stores/AppStore";
+import ReactResizeDetector from "react-resize-detector";
+import {ItemRenderer, Select} from "@blueprintjs/select";
+import {Config, Data, Layout} from "plotly.js";
 import * as Plotly from "plotly.js/dist/plotly-cartesian";
 import createPlotlyComponent from "react-plotly.js/factory";
-import ReactResizeDetector from "react-resize-detector";
-import {Config, Data, Layout} from "plotly.js";
+import {AppStore} from "../../stores/AppStore";
 import "./RenderConfigComponent.css";
 import {FrameScaling, FrameStore} from "../../stores/FrameStore";
-import {FormGroup, HTMLSelect, NonIdealState, NumericInput, Tooltip, Position, ButtonGroup, Button, Colors} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, NonIdealState, NumericInput, Tooltip, Position, ButtonGroup, Button, Colors, MenuItem} from "@blueprintjs/core";
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
 
 // This allows us to use a minimal Plotly.js bundle with React-Plotly.js (900k compared to 2.7 MB)
@@ -19,6 +20,8 @@ const COLOR_MAPS_ALL = ["accent", "afmhot", "autumn", "binary", "Blues", "bone",
     "OrRd", "paired", "pastel1", "pastel2", "pink", "PiYG", "plasma", "PRGn", "prism", "PuBu", "PuBuGn", "PuOr", "PuRd", "purples", "rainbow",
     "RdBu", "RdGy", "RdPu", "RdYlBu", "RdYlGn", "reds", "seismic", "set1", "set2", "set3", "spectral", "spring", "summer", "tab10", "tab20",
     "tab20b", "tab20c", "terrain", "viridis", "winter", "Wistia", "YlGn", "YlGnBu", "YlOrBr", "YlOrRd"];
+
+const ColorMapSelect = Select.ofType<string>();
 
 class RenderConfigComponentProps {
     appStore: AppStore;
@@ -170,9 +173,11 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         }
     };
 
-    handleColorMapChange = (ev: React.ChangeEvent<HTMLSelectElement>) => {
-        const newColorMap = parseInt(ev.target.value);
-        this.props.appStore.activeFrame.renderConfig.colorMap = newColorMap;
+    handleColorMapChange = (newColorMap: string) => {
+        const index = COLOR_MAPS_ALL.indexOf(newColorMap);
+        if (index >= 0) {
+            this.props.appStore.activeFrame.renderConfig.colorMap = index;
+        }
     };
 
     handleScalingChange = (ev: React.ChangeEvent<HTMLSelectElement>) => {
@@ -257,6 +262,29 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                 return "Unknown";
         }
     }
+
+    renderColormapBlock = (colormap: string) => {
+        return (
+            <div className="colormap-block" style={{backgroundImage: `url("./cmaps/${colormap.toLowerCase()}.png")`}}/>
+        );
+    };
+
+
+    renderColormapSelectItem: ItemRenderer<string> = (colormap: string, {handleClick, modifiers, query}) => {
+        if (!modifiers.matchesPredicate) {
+            return null;
+        }
+        return (
+            <MenuItem
+                active={modifiers.active}
+                disabled={modifiers.disabled}
+                label={colormap}
+                key={colormap}
+                onClick={handleClick}
+                text={this.renderColormapBlock(colormap)}
+            />
+        );
+    };
 
     render() {
         const appStore = this.props.appStore;
@@ -388,10 +416,12 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                             </HTMLSelect>
                         </Tooltip>
                     </FormGroup>
+
                     <FormGroup label={"Color map"} inline={true}>
-                        <HTMLSelect value={frame.renderConfig.colorMap} onChange={this.handleColorMapChange}>
-                            {COLOR_MAPS_ALL.map((name, index) => <option key={index} value={index}>{name}</option>)}
-                        </HTMLSelect>
+                        <ColorMapSelect activeItem={COLOR_MAPS_ALL[frame.renderConfig.colorMap]} popoverProps={{minimal: true, position: "auto-end"}} filterable={false} items={COLOR_MAPS_ALL} onItemSelect={this.handleColorMapChange}
+                                        itemRenderer={this.renderColormapSelectItem}>
+                            <Button text={COLOR_MAPS_ALL[frame.renderConfig.colorMap]} rightIcon="double-caret-vertical"/>
+                        </ColorMapSelect>
                     </FormGroup>
                     <FormGroup label={"Bias"} inline={true}>
                         <NumericInput

@@ -6,6 +6,7 @@
     "dependencies": {
         "@blueprintjs/core": "^3.3.0",
         "@blueprintjs/icons": "^3.1.0",
+        "@blueprintjs/select": "^3.1.0",
         "glslify-loader": "^1.0.2",
         "golden-layout": "^1.5.9",
         "konva": "^2.2.2",
