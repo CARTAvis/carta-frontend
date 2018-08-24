@@ -5,6 +5,12 @@
     border-bottom-left-radius: 5px;
 }
 
+.mathjax-dummy {
+    display: none !important;
+    height: 0;
+    width: 0;
+}
+
 .bp3-select-popover .bp3-menu {
     max-height: 300px;
     overflow: auto;
