@@ -1,16 +1,16 @@
 import * as React from "react";
-import MathJax from "react-mathjax";
-import {observer} from "mobx-react";
 import ReactResizeDetector from "react-resize-detector";
-import {ItemRenderer, Select} from "@blueprintjs/select";
-import {Config, Data, Layout} from "plotly.js";
+import {observer} from "mobx-react";
+import MathJax from "react-mathjax";
 import * as Plotly from "plotly.js/dist/plotly-cartesian";
 import createPlotlyComponent from "react-plotly.js/factory";
+import {Config, Data, Layout} from "plotly.js";
+import {FormGroup, HTMLSelect, NonIdealState, NumericInput, ButtonGroup, Button, Colors, MenuItem} from "@blueprintjs/core";
+import {Select} from "@blueprintjs/select";
 import {AppStore} from "../../stores/AppStore";
-import "./RenderConfigComponent.css";
 import {FrameRenderConfig, FrameScaling, FrameStore} from "../../stores/FrameStore";
-import {FormGroup, HTMLSelect, NonIdealState, NumericInput, Tooltip, Position, ButtonGroup, Button, Colors, MenuItem} from "@blueprintjs/core";
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
+import "./RenderConfigComponent.css";
 
 // This allows us to use a minimal Plotly.js bundle with React-Plotly.js (900k compared to 2.7 MB)
 const Plot = createPlotlyComponent(Plotly);
