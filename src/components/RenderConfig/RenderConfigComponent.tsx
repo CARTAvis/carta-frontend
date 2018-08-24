@@ -399,7 +399,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         const histogramCutoff = 430;
 
         return (
-            <MathJax.Provider options={{tex2jax: {preview: "none"}, mml2jax: {preview: "none"}, messageStyle: "none", showMathMenu: false, showMathMenuMSIE: false}}>
+            <MathJax.Provider options={{"fast-preview": {disabled: true}, messageStyle: "none", showMathMenu: false, showMathMenuMSIE: false}}>
                 <div className="render-config-container">
                     <div className="mathjax-dummy">
                         <MathJax.Node inline formula={"y=x"}/>
