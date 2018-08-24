@@ -5,10 +5,15 @@
     border-bottom-left-radius: 5px;
 }
 
-.mathjax-dummy {
-    display: none !important;
-    height: 0;
-    width: 0;
+.equation-div {
+    height: 25px;
+    position: relative;
+    img {
+        position:absolute;
+        top:0;
+        bottom:0;
+        margin:auto;
+    }
 }
 
 .bp3-select-popover .bp3-menu {
