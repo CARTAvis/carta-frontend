@@ -10,18 +10,13 @@ import {AppStore} from "../../stores/AppStore";
 import {FrameRenderConfig, FrameScaling, FrameStore} from "../../stores/FrameStore";
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
 import "./RenderConfigComponent.css";
-import linearSVG from "./equations/linear.svg";
-import logSVG from "./equations/log.svg";
-import sqrtSVG from "./equations/sqrt.svg";
-import squaredSVG from "./equations/squared.svg";
-import gammaSVG from "./equations/gamma.svg";
 
 const equationSVGMap = new Map([
-    [FrameScaling.LINEAR, linearSVG],
-    [FrameScaling.LOG, logSVG],
-    [FrameScaling.SQRT, sqrtSVG],
-    [FrameScaling.SQUARE, gammaSVG],
-    [FrameScaling.GAMMA, squaredSVG]
+    [FrameScaling.LINEAR, "equations/linear.svg"],
+    [FrameScaling.LOG, "equations/log.svg"],
+    [FrameScaling.SQRT, "equations/sqrt.svg"],
+    [FrameScaling.SQUARE, "equations/gamma.svg"],
+    [FrameScaling.GAMMA, "equations/squared.svg"]
 ]);
 
 // This allows us to use a minimal Plotly.js bundle with React-Plotly.js (900k compared to 2.7 MB)
