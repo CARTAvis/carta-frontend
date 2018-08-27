@@ -68,19 +68,19 @@ export class FrameRenderConfig {
     @computed get scalingName() {
         const scalingType = FrameRenderConfig.SCALING_TYPES.get(this.scaling);
         if (scalingType) {
-            return scalingType.name;
+            return scalingType;
         }
         else {
             return "Unknown";
         }
     }
 
-    static readonly SCALING_TYPES = new Map<FrameScaling, { name: string, equation: string }>([
-        [FrameScaling.LINEAR, {name: "Linear", equation: "y=x"}],
-        [FrameScaling.LOG, {name: "Log", equation: "y=\\log(x)"}],
-        [FrameScaling.SQRT, {name: "Square root", equation: "y=\\sqrt{x}"}],
-        [FrameScaling.SQUARE, {name: "Squared", equation: "y=x^2"}],
-        [FrameScaling.GAMMA, {name: "Gamma", equation: "y=x^\\gamma"}]
+    static readonly SCALING_TYPES = new Map<FrameScaling, string>([
+        [FrameScaling.LINEAR, "Linear"],
+        [FrameScaling.LOG, "Log"],
+        [FrameScaling.SQRT, "Square root"],
+        [FrameScaling.SQUARE, "Squared"],
+        [FrameScaling.GAMMA, "Gamma"]
     ]);
 
     static readonly COLOR_MAPS_ALL = ["accent", "afmhot", "autumn", "binary", "Blues", "bone", "BrBG", "brg", "BuGn", "BuPu", "bwr", "CMRmap", "cool", "coolwarm",

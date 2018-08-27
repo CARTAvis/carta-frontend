@@ -1,7 +1,6 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
 import {observer} from "mobx-react";
-import MathJax from "react-mathjax";
 import * as Plotly from "plotly.js/dist/plotly-cartesian";
 import createPlotlyComponent from "react-plotly.js/factory";
 import {Config, Data, Layout} from "plotly.js";
@@ -11,6 +10,14 @@ import {AppStore} from "../../stores/AppStore";
 import {FrameRenderConfig, FrameScaling, FrameStore} from "../../stores/FrameStore";
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
 import "./RenderConfigComponent.css";
+
+const equationSVGMap = new Map([
+    [FrameScaling.LINEAR, "equations/linear.svg"],
+    [FrameScaling.LOG, "equations/log.svg"],
+    [FrameScaling.SQRT, "equations/sqrt.svg"],
+    [FrameScaling.SQUARE, "equations/gamma.svg"],
+    [FrameScaling.GAMMA, "equations/squared.svg"]
+]);
 
 // This allows us to use a minimal Plotly.js bundle with React-Plotly.js (900k compared to 2.7 MB)
 const Plot = createPlotlyComponent(Plotly);
@@ -285,21 +292,21 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         if (!modifiers.matchesPredicate || !FrameRenderConfig.SCALING_TYPES.has(scaling)) {
             return null;
         }
+        const scalingName = FrameRenderConfig.SCALING_TYPES.get(scaling);
 
-        const scalingType = FrameRenderConfig.SCALING_TYPES.get(scaling);
-
-        const formulaText = (
-            <MathJax.Node inline formula={scalingType.equation}/>
+        const equationDiv = (
+            <div className="equation-div">
+                <img src={equationSVGMap.get(scaling)}/>
+            </div>
         );
-
         return (
             <MenuItem
                 active={modifiers.active}
                 disabled={modifiers.disabled}
-                label={scalingType.name}
+                label={scalingName}
                 key={scaling}
                 onClick={handleClick}
-                text={formulaText}
+                text={equationDiv}
             />
         );
     };
@@ -399,101 +406,96 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         const histogramCutoff = 430;
 
         return (
-            <MathJax.Provider options={{"fast-preview": {disabled: true}, messageStyle: "none", showMathMenu: false, showMathMenuMSIE: false}}>
-                <div className="render-config-container">
-                    <div className="mathjax-dummy">
-                        <MathJax.Node inline formula={"y=x"}/>
+            <div className="render-config-container">
+                {!frame &&
+                <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
+                }
+                {frame && this.state.width > histogramCutoff &&
+                <div className="histogram-container">
+                    {this.state.width > percentileButtonCutoff && percentileButtonsDiv}
+                    {this.state.width <= percentileButtonCutoff && percentileSelectDiv}
+                    <div className="histogram-plot" onClick={this.handleMouseClick} onMouseMove={this.handleMouseMove} onContextMenu={this.handleRightClick}>
+                        <Plot
+                            layout={plotLayout}
+                            data={plotData}
+                            config={plotConfig}
+                            ref={ref => this.plotRef = ref}
+                            onRelayout={this.handlePlotRelayout}
+                            useResizeHandler={true}
+                            style={{width: "100%", height: "100%"}}
+                        />
                     </div>
-                    {!frame &&
-                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
-                    }
-                    {frame && this.state.width > histogramCutoff &&
-                    <div className="histogram-container">
-                        {this.state.width > percentileButtonCutoff && percentileButtonsDiv}
-                        {this.state.width <= percentileButtonCutoff && percentileSelectDiv}
-                        <div className="histogram-plot" onClick={this.handleMouseClick} onMouseMove={this.handleMouseMove} onContextMenu={this.handleRightClick}>
-                            <Plot
-                                layout={plotLayout}
-                                data={plotData}
-                                config={plotConfig}
-                                ref={ref => this.plotRef = ref}
-                                onRelayout={this.handlePlotRelayout}
-                                useResizeHandler={true}
-                                style={{width: "100%", height: "100%"}}
-                            />
-                        </div>
-                    </div>
-                    }
-                    {frame &&
-                    <div className="colormap-config">
-                        <FormGroup label={"Scaling type"} inline={true}>
-                            <ScalingSelect
-                                activeItem={frame.renderConfig.scaling}
-                                popoverProps={{minimal: true, usePortal: false, position: "auto-end"}}
-                                filterable={false}
-                                items={Array.from(FrameRenderConfig.SCALING_TYPES.keys())}
-                                onItemSelect={this.handleScalingChange}
-                                itemRenderer={this.renderScalingSelectItem}
-                            >
-                                <Button text={frame.renderConfig.scalingName} rightIcon="double-caret-vertical"/>
-                            </ScalingSelect>
-                        </FormGroup>
-
-                        <FormGroup label={"Color map"} inline={true}>
-                            <ColorMapSelect
-                                activeItem={frame.renderConfig.colorMapName}
-                                popoverProps={{minimal: true, position: "auto-end"}}
-                                filterable={false}
-                                items={FrameRenderConfig.COLOR_MAPS_ALL}
-                                onItemSelect={this.handleColorMapChange}
-                                itemRenderer={this.renderColormapSelectItem}
-                            >
-                                <Button text={this.renderColormapBlock(frame.renderConfig.colorMapName)} rightIcon="double-caret-vertical"/>
-                            </ColorMapSelect>
-                        </FormGroup>
-                        <FormGroup label={"Bias"} inline={true}>
-                            <NumericInput
-                                style={{width: "60px"}}
-                                min={-1}
-                                max={1}
-                                stepSize={0.1}
-                                minorStepSize={0.01}
-                                majorStepSize={0.5}
-                                value={frame.renderConfig.bias}
-                                onValueChange={this.handleBiasChange}
-                            />
-                        </FormGroup>
-                        <FormGroup label={"Contrast"} inline={true}>
-                            <NumericInput
-                                style={{width: "60px"}}
-                                min={0}
-                                max={5}
-                                stepSize={0.1}
-                                minorStepSize={0.01}
-                                majorStepSize={0.5}
-                                value={frame.renderConfig.contrast}
-                                onValueChange={this.handleContrastChange}
-                            />
-                        </FormGroup>
-                        <FormGroup label={"Gamma"} inline={true}>
-                            <NumericInput
-                                style={{width: "60px"}}
-                                min={0}
-                                max={2}
-                                stepSize={0.1}
-                                minorStepSize={0.01}
-                                majorStepSize={0.5}
-                                value={frame.renderConfig.gamma}
-                                disabled={frame.renderConfig.scaling !== FrameScaling.GAMMA}
-                                onValueChange={this.handleGammaChange}
-                            />
-                        </FormGroup>
-                        {this.state.width < histogramCutoff && percentileSelectDiv}
-                    </div>
-                    }
-                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
                 </div>
-            </MathJax.Provider>
+                }
+                {frame &&
+                <div className="colormap-config">
+                    <FormGroup label={"Scaling type"} inline={true}>
+                        <ScalingSelect
+                            activeItem={frame.renderConfig.scaling}
+                            popoverProps={{minimal: true, position: "auto-end"}}
+                            filterable={false}
+                            items={Array.from(FrameRenderConfig.SCALING_TYPES.keys())}
+                            onItemSelect={this.handleScalingChange}
+                            itemRenderer={this.renderScalingSelectItem}
+                        >
+                            <Button text={frame.renderConfig.scalingName} rightIcon="double-caret-vertical"/>
+                        </ScalingSelect>
+                    </FormGroup>
+
+                    <FormGroup label={"Color map"} inline={true}>
+                        <ColorMapSelect
+                            activeItem={frame.renderConfig.colorMapName}
+                            popoverProps={{minimal: true, position: "auto-end"}}
+                            filterable={false}
+                            items={FrameRenderConfig.COLOR_MAPS_ALL}
+                            onItemSelect={this.handleColorMapChange}
+                            itemRenderer={this.renderColormapSelectItem}
+                        >
+                            <Button text={this.renderColormapBlock(frame.renderConfig.colorMapName)} rightIcon="double-caret-vertical"/>
+                        </ColorMapSelect>
+                    </FormGroup>
+                    <FormGroup label={"Bias"} inline={true}>
+                        <NumericInput
+                            style={{width: "60px"}}
+                            min={-1}
+                            max={1}
+                            stepSize={0.1}
+                            minorStepSize={0.01}
+                            majorStepSize={0.5}
+                            value={frame.renderConfig.bias}
+                            onValueChange={this.handleBiasChange}
+                        />
+                    </FormGroup>
+                    <FormGroup label={"Contrast"} inline={true}>
+                        <NumericInput
+                            style={{width: "60px"}}
+                            min={0}
+                            max={5}
+                            stepSize={0.1}
+                            minorStepSize={0.01}
+                            majorStepSize={0.5}
+                            value={frame.renderConfig.contrast}
+                            onValueChange={this.handleContrastChange}
+                        />
+                    </FormGroup>
+                    <FormGroup label={"Gamma"} inline={true}>
+                        <NumericInput
+                            style={{width: "60px"}}
+                            min={0}
+                            max={2}
+                            stepSize={0.1}
+                            minorStepSize={0.01}
+                            majorStepSize={0.5}
+                            value={frame.renderConfig.gamma}
+                            disabled={frame.renderConfig.scaling !== FrameScaling.GAMMA}
+                            onValueChange={this.handleGammaChange}
+                        />
+                    </FormGroup>
+                    {this.state.width < histogramCutoff && percentileSelectDiv}
+                </div>
+                }
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+            </div>
         );
     }
 }
