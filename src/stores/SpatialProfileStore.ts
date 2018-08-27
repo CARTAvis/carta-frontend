@@ -1,11 +1,5 @@
-import {observable} from "mobx";
-
-export class SpatialProfileData {
-    start: number;
-    end: number;
-    values: Float32Array;
-    coordinate: string;
-}
+import {action, observable} from "mobx";
+import {CARTA} from "carta-protobuf";
 
 export class SpatialProfileStore {
     @observable regionId: number;
@@ -14,5 +8,19 @@ export class SpatialProfileStore {
     @observable channel: number;
     @observable x: number;
     @observable y: number;
-    @observable profiles: SpatialProfileData[];
+    @observable profiles: Map<string, CARTA.SpatialProfile>;
+
+    constructor(fileId: number = 0, regionId: number = 0) {
+        this.fileId = fileId;
+        this.regionId = regionId;
+        this.profiles = new Map<string, CARTA.SpatialProfile>();
+    }
+
+    @action setProfile(coordinate: string, profile: CARTA.SpatialProfile) {
+        this.profiles.set(coordinate, profile);
+    }
+
+    @action setProfiles(profiles: Map<string, CARTA.SpatialProfile>) {
+        this.profiles = profiles;
+    }
 }

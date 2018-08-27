@@ -83,42 +83,51 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
             setBackground: "transparent"
         };
 
-        if (appStore.spatialProfiles.has(profileConfig.dataSourceId)) {
-            const profileStore = appStore.spatialProfiles.get(profileConfig.dataSourceId);
-            const coordinateData = profileStore.profiles.filter(data => data.coordinate === profileConfig.coordinate);
-            if (coordinateData.length) {
-                // Will eventually need WCS coordinate info
-                let xVals = new Array(coordinateData[0].values.length);
-                let yVals = new Array(coordinateData[0].values.length);
-                for (let i = 0; i < xVals.length; i++) {
-                    xVals[i] = coordinateData[0].start + i;
-                }
+        if (appStore.activeFrame) {
+            let keyStruct = {fileId: profileConfig.fileId, regionId: profileConfig.regionId};
+            // Replace "current file" fileId with active frame's fileId
+            if (profileConfig.fileId === -1) {
+                keyStruct.fileId = appStore.activeFrame.frameInfo.fileId;
+            }
+            const key = `${keyStruct.fileId}-${keyStruct.regionId}`;
+            const profileStore = appStore.spatialProfiles.get(key);
+            if (profileStore) {
+                const coordinateData = profileStore.profiles.get(profileConfig.coordinate);
+                if (coordinateData && coordinateData.values) {
+                    // Will eventually need WCS coordinate info
+                    let xVals = new Array(coordinateData.values.length);
+                    let yVals = new Array(coordinateData.values.length);
+                    for (let i = 0; i < xVals.length; i++) {
+                        xVals[i] = coordinateData.start + i;
+                    }
 
-                plotData.push({
-                    x: xVals,
-                    y: coordinateData[0].values,
-                    type: "scatter",
-                    mode: "lines",
-                    line: {
-                        width: 1.0,
-                        shape: "hv",
-                        color: `${appStore.darkTheme ? Colors.BLUE4 : Colors.BLUE2}`
-                    }
-                });
-                plotLayout.shapes = [{
-                    yref: "paper",
-                    type: "line",
-                    x0: isXProfile ? profileStore.x : profileStore.y,
-                    x1: isXProfile ? profileStore.x : profileStore.y,
-                    y0: 0,
-                    y1: 1,
-                    line: {
-                        color: "red",
-                        width: 1
-                    }
-                }];
+                    plotData.push({
+                        x: xVals,
+                        y: coordinateData.values,
+                        type: "scatter",
+                        mode: "lines",
+                        line: {
+                            width: 1.0,
+                            shape: "hv",
+                            color: `${appStore.darkTheme ? Colors.BLUE4 : Colors.BLUE2}`
+                        }
+                    });
+                    plotLayout.shapes = [{
+                        yref: "paper",
+                        type: "line",
+                        x0: isXProfile ? profileStore.x : profileStore.y,
+                        x1: isXProfile ? profileStore.x : profileStore.y,
+                        y0: 0,
+                        y1: 1,
+                        line: {
+                            color: "red",
+                            width: 1
+                        }
+                    }];
+                }
             }
         }
+
         return (
             <div style={{width: "100%", height: "100%"}}>
                 <Plot layout={plotLayout} data={plotData} config={plotConfig}/>

@@ -14,6 +14,7 @@ import * as AST from "ast_wrapper";
 import * as _ from "lodash";
 import {ImageViewComponent} from "../components/ImageView/ImageViewComponent";
 import {AnimationState, AnimatorStore} from "./AnimatorStore";
+import SpatialProfile = CARTA.SpatialProfile;
 
 export class AppStore {
     // Backend service
@@ -34,8 +35,8 @@ export class AppStore {
     // Cursor information
     @observable cursorInfo: CursorInfo;
     // Spatial profiles
-    @observable spatialProfiles: Map<number, SpatialProfileStore>;
-    @observable spatialProfileWidgets: Map<string, { dataSourceId: number, coordinate: string }>;
+    @observable spatialProfiles: Map<string, SpatialProfileStore>;
+    @observable spatialProfileWidgets: Map<string, { fileId: number, regionId: number, coordinate: string }>;
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
         this.overlayStore.viewWidth = w;
@@ -211,8 +212,8 @@ export class AppStore {
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore);
         this.astReady = false;
-        this.spatialProfiles = new Map<number, SpatialProfileStore>();
-        this.spatialProfileWidgets = new Map<string, { dataSourceId: number, coordinate: string }>();
+        this.spatialProfiles = new Map<string, SpatialProfileStore>();
+        this.spatialProfileWidgets = new Map<string, { fileId: number, regionId: number, coordinate: string }>();
         this.frames = [];
         this.activeFrame = null;
         this.animatorStore = new AnimatorStore(this);
@@ -233,6 +234,11 @@ export class AppStore {
             this.backendService.setChannels(fileId, channel, stokes);
         }, 200);
 
+        const throttledSetCursor = _.throttle((fileId: number, x: number, y: number) => {
+            this.backendService.setCursor(fileId, x, y);
+        }, 100);
+
+        // Update frame view
         autorun(() => {
             if (this.activeFrame) {
                 // Calculate new required frame view (cropped to file size)
@@ -269,6 +275,45 @@ export class AppStore {
                     };
                     throttledSetView(this.activeFrame.frameInfo.fileId, paddedView);
                 }
+            }
+        });
+
+        // Update cursor profiles
+        autorun(() => {
+            if (this.activeFrame && this.cursorInfo && this.cursorInfo.posImageSpace) {
+                const pos = this.cursorInfo.posImageSpace;
+                if (pos.x >= 0 && pos.x <= this.activeFrame.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y < this.activeFrame.frameInfo.fileInfoExtended.height - 1) {
+                    throttledSetCursor(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
+                }
+            }
+        });
+
+        // Set spatial requirements of cursor region on file load
+        autorun(() => {
+            if (this.activeFrame) {
+                this.backendService.setSpatialRequirements(this.activeFrame.frameInfo.fileId, 0, ["x", "y"]);
+            }
+        });
+
+        // Subscribe to the spatial profile data stream
+        this.backendService.getSpatialProfileStream().subscribe(spatialProfileData => {
+            if (this.frames.find(frame => frame.frameInfo.fileId === spatialProfileData.fileId)) {
+                const key = `${spatialProfileData.fileId}-${spatialProfileData.regionId}`;
+                let profileStore = this.spatialProfiles.get(key);
+                if (!profileStore) {
+                    profileStore = new SpatialProfileStore(spatialProfileData.fileId, spatialProfileData.regionId);
+                    this.spatialProfiles.set(key, profileStore);
+                }
+
+                profileStore.channel = spatialProfileData.channel;
+                profileStore.stokes = spatialProfileData.stokes;
+                profileStore.x = spatialProfileData.x;
+                profileStore.y = spatialProfileData.y;
+                const profileMap = new Map<string, CARTA.SpatialProfile>();
+                for (let profile of spatialProfileData.profiles) {
+                    profileMap.set(profile.coordinate, profile as SpatialProfile);
+                }
+                profileStore.setProfiles(profileMap);
             }
         });
 
@@ -312,15 +357,14 @@ export class AppStore {
                 this.logStore.addInfo("AST library loaded", ["ast"]);
             }
         });
-
     }
 
     @computed get zfpReady() {
         return (this.backendService && this.backendService.zfpReady);
     }
 
-    @action addSpatialProfileWidget(id: string, dataSourceId: number, coordinate: string) {
-        this.spatialProfileWidgets.set(id, {dataSourceId, coordinate});
+    @action addSpatialProfileWidget(id: string, fileId: number, regionId: number, coordinate: string) {
+        this.spatialProfileWidgets.set(id, {fileId, regionId, coordinate});
     }
 
     @action setActiveFrame(fileId: number) {
