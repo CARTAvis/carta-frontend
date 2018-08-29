@@ -1,13 +1,15 @@
 import * as React from "react";
+import * as Plotly from "plotly.js/dist/plotly-cartesian";
+import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import {AppStore} from "../../stores/AppStore";
-import * as Plotly from "plotly.js/dist/plotly-cartesian";
 import createPlotlyComponent from "react-plotly.js/factory";
 import ReactResizeDetector from "react-resize-detector";
 import {Config, Data, Layout} from "plotly.js";
 import "./SpatialProfilerComponent.css";
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
 import {Colors, NonIdealState} from "@blueprintjs/core";
+import {number} from "prop-types";
 
 // This allows us to use a minimal Plotly.js bundle with React-Plotly.js (900k compared to 2.7 MB)
 const Plot = createPlotlyComponent(Plotly);
@@ -60,7 +62,8 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
             paper_bgcolor: backgroundColor,
             plot_bgcolor: backgroundColor,
             xaxis: {
-                title: `Image ${profileConfig.coordinate.toUpperCase()}-coordinate`
+                title: `Image ${profileConfig.coordinate.toUpperCase()}-coordinate`,
+                tickmode: "array",
             },
             yaxis: {
                 title: "Value"
@@ -91,14 +94,54 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
             }
             const key = `${keyStruct.fileId}-${keyStruct.regionId}`;
             const profileStore = appStore.spatialProfiles.get(key);
-            if (profileStore) {
+            const frame = appStore.frames.find(f => f.frameInfo.fileId === keyStruct.fileId);
+            if (profileStore && frame) {
                 const coordinateData = profileStore.profiles.get(profileConfig.coordinate);
-                if (coordinateData && coordinateData.values) {
-                    // Will eventually need WCS coordinate info
+                if (coordinateData && coordinateData.values && coordinateData.values.length) {
                     let xVals = new Array(coordinateData.values.length);
-                    let yVals = new Array(coordinateData.values.length);
                     for (let i = 0; i < xVals.length; i++) {
                         xVals[i] = coordinateData.start + i;
+                    }
+
+                    if (frame.unit) {
+                        plotLayout.yaxis.title = `Value (${frame.unit})`;
+                    }
+
+
+                    if (frame.validWcs) {
+                        // Generate tick placement
+                        const numTicks = 5;
+                        const interval = 1.0 / (numTicks+1) * (xVals[xVals.length - 1] - xVals[0]);
+                        let tickVals = new Array<number>(numTicks);
+                        for (let i = 0; i < numTicks; i++) {
+                            tickVals[i] = (i+1) * interval;
+                        }
+                        plotLayout.xaxis.tickvals = tickVals;
+                        const labelAttribute = `Label(${isXProfile?1:2})`;
+                        const astLabel = AST.getString(frame.wcsInfo, labelAttribute);
+
+                        if (astLabel) {
+                            plotLayout.xaxis.title = astLabel;
+                        }
+
+                        // Generate tick text
+                        if (isXProfile) {
+                            plotLayout.xaxis.ticktext = plotLayout.xaxis.tickvals.map(v => {
+                                const pointWCS = AST.pixToWCS(frame.wcsInfo, v, profileStore.y);
+                                const normVals = AST.normalizeCoordinates(frame.wcsInfo, pointWCS.x, pointWCS.y);
+                                const formatStringX = appStore.overlayStore.axis[0].cursorFormat ? appStore.overlayStore.axis[0].cursorFormat : "";
+                                return AST.getFormattedCoordinates(frame.wcsInfo, normVals.x, normVals.y, `Format(1) = ${formatStringX}`).x;
+                            });
+                        }
+                        else {
+                            plotLayout.xaxis.ticktext = plotLayout.xaxis.tickvals.map(v => {
+                                const pointWCS = AST.pixToWCS(frame.wcsInfo, profileStore.x, v);
+                                const normVals = AST.normalizeCoordinates(frame.wcsInfo, pointWCS.x, pointWCS.y);
+                                const formatStringY = appStore.overlayStore.axis[1].cursorFormat ? appStore.overlayStore.axis[1].cursorFormat : "";
+                                return AST.getFormattedCoordinates(frame.wcsInfo, normVals.x, normVals.y, `Format(2) = ${formatStringY}`).y;
+                            });
+                        }
+
                     }
 
                     plotData.push({

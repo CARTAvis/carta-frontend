@@ -90,6 +90,8 @@ Module.setCanvas = function (canvas) {
 };
 
 Module.set = Module.cwrap("set", "number", ["number", "string"]);
+Module.getString = Module.cwrap("getString", "string", ["number", "string"]);
+Module.norm = Module.cwrap("norm", "number", ["number", "number"]);
 Module.format = Module.cwrap("format", "string", ["number", "number", "number"]);
 Module.transform = Module.cwrap("transform", "number", ["number", "number", "number", "number", "number", "number", "number"]);
 
@@ -140,6 +142,13 @@ Module.pixToWCS = function (wcsInfo, xIn, yIn) {
     const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N);
     const yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N);
     return {x: xOut[0], y: yOut[0]};
+};
+
+Module.normalizeCoordinates = function (wcsInfo, xIn, yIn) {
+    Module.HEAPF64.set(new Float64Array([xIn, yIn]), Module.xIn / 8);
+    Module.norm(wcsInfo, Module.xIn);
+    const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xIn, 2);
+    return {x: xOut[0], y: xOut[1]};
 };
 
 Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
