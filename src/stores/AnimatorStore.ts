@@ -16,9 +16,10 @@ export class AnimatorStore {
     @observable frameRate: number;
     @observable maxFrameRate: number;
     @observable minFrameRate: number;
-
     @observable animationMode: AnimationMode;
     @observable animationState: AnimationState;
+    @observable requestQueue: Array<{ channel: number, stokes: number }>;
+
     @action setAnimationMode = (val: AnimationMode) => {
         this.animationMode = val;
     };
@@ -27,15 +28,17 @@ export class AnimatorStore {
     };
     @action startAnimation = () => {
         clearInterval(this.animateHandle);
+        this.requestQueue = [];
         this.animationState = AnimationState.PLAYING;
         this.animate();
         this.animateHandle = setInterval(this.animate, this.frameInterval);
     };
     @action stopAnimation = () => {
         this.animationState = AnimationState.STOPPED;
+        clearInterval(this.animateHandle);
     };
     @action animate = () => {
-        if (this.animationState === AnimationState.PLAYING && this.appStore) {
+        if (this.animationState === AnimationState.PLAYING && this.appStore && this.requestQueue.length < this.frameRate) {
             // Do animation
             switch (this.animationMode) {
                 case AnimationMode.FRAME:
@@ -44,14 +47,22 @@ export class AnimatorStore {
                 case AnimationMode.CHANNEL:
                     this.appStore.activeFrame.incrementChannels(1, 0);
                     this.appStore.backendService.setChannels(this.appStore.activeFrame.frameInfo.fileId, this.appStore.activeFrame.requiredChannel, this.appStore.activeFrame.requiredStokes);
+                    this.requestQueue.push({channel: this.appStore.activeFrame.requiredChannel, stokes: this.appStore.activeFrame.requiredStokes});
                     break;
                 case AnimationMode.STOKES:
                     this.appStore.activeFrame.incrementChannels(0, 1);
                     this.appStore.backendService.setChannels(this.appStore.activeFrame.frameInfo.fileId, this.appStore.activeFrame.requiredChannel, this.appStore.activeFrame.requiredStokes);
+                    this.requestQueue.push({channel: this.appStore.activeFrame.requiredChannel, stokes: this.appStore.activeFrame.requiredStokes});
                     break;
                 default:
                     break;
             }
+        }
+    };
+    @action removeFromRequestQueue = (channel: number, stokes: number) => {
+        const index = this.requestQueue.findIndex(v => v.channel === channel && v.stokes === stokes);
+        if (index >= 0) {
+            this.requestQueue = this.requestQueue.splice(index, 1);
         }
     };
 
@@ -65,6 +76,7 @@ export class AnimatorStore {
         this.animationMode = AnimationMode.CHANNEL;
         this.animationState = AnimationState.STOPPED;
         this.animateHandle = null;
+        this.requestQueue = [];
         this.appStore = appStore;
     }
 

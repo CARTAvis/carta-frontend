@@ -321,6 +321,19 @@ export class AppStore {
             const updatedFrame = this.getFrame(rasterImageData.fileId);
             if (updatedFrame) {
                 updatedFrame.updateFromRasterData(rasterImageData);
+                if (this.animatorStore.animationState === AnimationState.PLAYING) {
+                    this.animatorStore.removeFromRequestQueue(updatedFrame.channel, updatedFrame.stokes);
+                }
+                // if there's a valid channel histogram bundled into the message, update it
+                if (rasterImageData.channelHistogramData) {
+                    // Update channel histograms
+                    if (rasterImageData.channelHistogramData.regionId === -1) {
+                        const channelHist = rasterImageData.channelHistogramData.histograms.find(hist => hist.channel === updatedFrame.requiredChannel);
+                        if (channelHist) {
+                            updatedFrame.updateChannelHistogram(channelHist as CARTA.Histogram);
+                        }
+                    }
+                }
             }
         });
 
@@ -331,9 +344,9 @@ export class AppStore {
             const updatedFrame = this.getFrame(regionHistogramData.fileId);
             // Update channel histograms
             if (updatedFrame && regionHistogramData.regionId === -1 && regionHistogramData.stokes === updatedFrame.requiredStokes) {
-                const channelHist = regionHistogramData.histograms.filter(hist => hist.channel === updatedFrame.requiredChannel);
-                if (channelHist.length) {
-                    updatedFrame.updateChannelHistogram(channelHist[0] as CARTA.Histogram);
+                const channelHist = regionHistogramData.histograms.find(hist => hist.channel === updatedFrame.requiredChannel);
+                if (channelHist) {
+                    updatedFrame.updateChannelHistogram(channelHist as CARTA.Histogram);
                 }
             }
         });
