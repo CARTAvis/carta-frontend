@@ -107,17 +107,28 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
                         plotLayout.yaxis.title = `Value (${frame.unit})`;
                     }
 
+                    let lowerBound: number;
+                    let upperBound: number;
+                    if (isXProfile) {
+                        lowerBound = Math.max(0, Math.min(frame.requiredFrameView.xMin, frame.frameInfo.fileInfoExtended.width));
+                        upperBound = Math.max(0, Math.min(frame.requiredFrameView.xMax, frame.frameInfo.fileInfoExtended.width));
+                    }
+                    else {
+                        lowerBound = Math.max(0, Math.min(frame.requiredFrameView.yMin, frame.frameInfo.fileInfoExtended.height));
+                        upperBound = Math.max(0, Math.min(frame.requiredFrameView.yMax, frame.frameInfo.fileInfoExtended.height));
+                    }
+                    plotLayout.xaxis.range = [lowerBound, upperBound];
 
                     if (frame.validWcs) {
                         // Generate tick placement
                         const numTicks = 5;
-                        const interval = 1.0 / (numTicks+1) * (xVals[xVals.length - 1] - xVals[0]);
+                        const interval = 1.0 / (numTicks + 1) * (upperBound - lowerBound);
                         let tickVals = new Array<number>(numTicks);
                         for (let i = 0; i < numTicks; i++) {
-                            tickVals[i] = (i+1) * interval;
+                            tickVals[i] = lowerBound + (i + 1) * interval;
                         }
                         plotLayout.xaxis.tickvals = tickVals;
-                        const labelAttribute = `Label(${isXProfile?1:2})`;
+                        const labelAttribute = `Label(${isXProfile ? 1 : 2})`;
                         const astLabel = AST.getString(frame.wcsInfo, labelAttribute);
 
                         if (astLabel) {
@@ -141,7 +152,6 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
                                 return AST.getFormattedCoordinates(frame.wcsInfo, normVals.x, normVals.y, `Format(2) = ${formatStringY}`).y;
                             });
                         }
-
                     }
 
                     plotData.push({
