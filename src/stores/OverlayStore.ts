@@ -395,24 +395,32 @@ export class OverlayStore {
         // Default settings
         this.system = SystemType.Native;
         this.labelType = LabelType.Exterior;
-        this.border.visible = true;
         this.color = 4;
         this.width = 1;
         this.tolerance = 0.02;
+        
         this.title.visible = false;
         this.title.gap = 0.02;
         this.title.color = 4;
+        this.title.font = 2;
         this.title.fontSize = 24;
         this.title.text = "A custom AST plot";
+        
         this.grid.visible = true;
         this.grid.color = 4;
-        this.title.font = 2;
+        
+        this.border.visible = true;
+        
         this.axes.labelFontSize = 15;
         this.axes.labelFont = 1;
         this.axes.numberFontSize = 10;
         this.axes.customConfig = true;
-//         this.axis[0].customConfig = false;
-//         this.axis[1].customConfig = false;
+        this.axes.visible = false;
+        
+        this.axis[0].customConfig = false;
+        this.axis[0].visible = false;
+        this.axis[1].customConfig = false;
+        this.axis[1].visible = false;
     }
 
     @computed get styleString() {
@@ -489,8 +497,6 @@ export class OverlayStore {
                 stringList.push(axis.styleString);
             }
         }
-//         stringList.push(this.axis[0].styleString);
-//         stringList.push(this.axis[1].styleString);
         stringList.push(this.ticks.styleString);
 
         if (this.extra !== undefined) {

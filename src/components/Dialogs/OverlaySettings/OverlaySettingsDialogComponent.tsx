@@ -166,7 +166,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     <NumericInput
                         style={{width: "60px"}}
                         placeholder="Width"
-                        min={0}
+                        min={0.001}
                         value={axis.width}
                         disabled={!axis.visible}
                         onValueChange={(value: number) => axis.setWidth(value)}
@@ -176,7 +176,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     <NumericInput
                         style={{width: "60px"}}
                         placeholder="Gap"
-                        min={0}
+                        min={0.001}
                         stepSize={0.01}
                         minorStepSize={0.001}
                         majorStepSize={0.1}
