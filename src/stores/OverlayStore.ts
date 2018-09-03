@@ -52,6 +52,15 @@ export class OverlayTitleSettings {
         }
         return stringList.join(", ");
     }
+    
+    constructor() {
+        this.visible = false;
+        this.gap = 0.02;
+        this.color = 4;
+        this.font = 2;
+        this.fontSize = 24;
+        this.text = "A custom AST plot";
+    }
 
     @action setVisible(visible: boolean = true) {
         this.visible = visible;
@@ -218,6 +227,12 @@ export class OverlayAxisSettings {
 
     constructor(axisIndex: number) {
         this.axisIndex = axisIndex;
+        
+        this.visible = false;
+        this.numberVisible = false;
+        this.labelVisible = false;
+        
+        this.customConfig = !axisIndex;
     }
 
     @computed get styleString() {
@@ -399,12 +414,7 @@ export class OverlayStore {
         this.width = 1;
         this.tolerance = 0.02;
         
-        this.title.visible = false;
-        this.title.gap = 0.02;
-        this.title.color = 4;
-        this.title.font = 2;
-        this.title.fontSize = 24;
-        this.title.text = "A custom AST plot";
+
         
         this.grid.visible = true;
         this.grid.color = 4;
@@ -414,13 +424,6 @@ export class OverlayStore {
         this.axes.labelFontSize = 15;
         this.axes.labelFont = 1;
         this.axes.numberFontSize = 10;
-        this.axes.customConfig = true;
-        this.axes.visible = false;
-        
-        this.axis[0].customConfig = false;
-        this.axis[0].visible = false;
-        this.axis[1].customConfig = false;
-        this.axis[1].visible = false;
     }
 
     @computed get styleString() {
