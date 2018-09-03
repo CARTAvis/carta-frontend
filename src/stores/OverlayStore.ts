@@ -433,7 +433,7 @@ export class OverlayStore {
     @computed get padding(): Padding {
         const displayTitle = this.title.visible;
         const displayLabelText = this.axis.map((axis) => {
-            if (axis.labelVisible !== undefined) {
+            if (axis.customConfig && axis.labelVisible !== undefined) {
                 return axis.labelVisible;
             }
             return this.axes.labelVisible !== false;
@@ -442,7 +442,7 @@ export class OverlayStore {
             if (this.labelType === LabelType.Interior) {
                 return false;
             }
-            if (axis.numberVisible !== undefined) {
+            if (axis.customConfig && axis.numberVisible !== undefined) {
                 return axis.numberVisible;
             }
             return this.axes.numberVisible !== false;
