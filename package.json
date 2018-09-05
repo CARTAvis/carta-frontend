@@ -29,7 +29,7 @@
         "source-map-explorer": "^1.6.0"
     },
     "scripts": {
-        "git-info": "echo export default {logMessage: \\\"$(git log -1 --oneline)\\\"}  > src/static/gitInfo.ts",
+        "git-info": "echo export default {logMessage: \\\"$(git log -1 --oneline)\\\"}\\;  > src/static/gitInfo.ts",
         "analyze": "source-map-explorer build/static/js/main.*",
         "build-css": "node-sass-chokidar -q src/ -o src/",
         "watch-css": "npm run build-css && node-sass-chokidar -q src/ -o src/ --watch --recursive",
