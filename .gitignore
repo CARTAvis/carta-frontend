@@ -178,5 +178,7 @@ public/zfp_wrapper.wasm
 # Protocol buffers
 protobuf/build/*
 
+# Git info text
+src/static/gitInfo.ts
 # NPM package lock (ignored while in active development)
 /package-lock.json

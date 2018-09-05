@@ -238,7 +238,7 @@ export class AnimatorComponent extends React.Component<CubeControlsComponentProp
         // Channel Control
         if (numChannels > 1) {
             const numLabels = 10;
-            const channelStep = this.roundToClosestPreferredStep(numChannels / numLabels);
+            const channelStep = Math.max(1, this.roundToClosestPreferredStep(numChannels / numLabels));
             channelSlider = (
                 <div className="animator-slider">
                     <Radio value={AnimationMode.CHANNEL} checked={appStore.animatorStore.animationMode === AnimationMode.CHANNEL} onChange={this.onAnimationModeChanged} label="Channel"/>
