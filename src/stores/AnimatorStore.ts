@@ -64,10 +64,6 @@ export class AnimatorStore {
         if (index >= 0) {
             this.requestQueue = this.requestQueue.splice(index, 1);
         }
-        else {
-            console.log(`Can't find image with channel=${channel} and stokes=${stokes} in the request queue`);
-            console.log(this.requestQueue);
-        }
     };
 
     private readonly appStore: AppStore;
