@@ -31,6 +31,19 @@ export class FrameView {
 }
 
 export class FrameRenderConfig {
+    static readonly SCALING_TYPES = new Map<FrameScaling, string>([
+        [FrameScaling.LINEAR, "Linear"],
+        [FrameScaling.LOG, "Log"],
+        [FrameScaling.SQRT, "Square root"],
+        [FrameScaling.SQUARE, "Squared"],
+        [FrameScaling.GAMMA, "Gamma"]
+    ]);
+    static readonly COLOR_MAPS_ALL = ["accent", "afmhot", "autumn", "binary", "Blues", "bone", "BrBG", "brg", "BuGn", "BuPu", "bwr", "CMRmap", "cool", "coolwarm",
+        "copper", "cubehelix", "dark2", "flag", "gist_earth", "gist_gray", "gist_heat", "gist_ncar", "gist_rainbow", "gist_stern", "gist_yarg",
+        "GnBu", "gnuplot", "gnuplot2", "gray", "greens", "greys", "hot", "hsv", "inferno", "jet", "magma", "nipy_spectral", "ocean", "oranges",
+        "OrRd", "paired", "pastel1", "pastel2", "pink", "PiYG", "plasma", "PRGn", "prism", "PuBu", "PuBuGn", "PuOr", "PuRd", "purples", "rainbow",
+        "RdBu", "RdGy", "RdPu", "RdYlBu", "RdYlGn", "reds", "seismic", "set1", "set2", "set3", "spectral", "spring", "summer", "tab10", "tab20",
+        "tab20b", "tab20c", "terrain", "viridis", "winter", "Wistia", "YlGn", "YlGnBu", "YlOrBr", "YlOrRd"];
     @observable scaling: FrameScaling;
     @observable colorMap: number;
     @observable scaleMin: number;
@@ -39,29 +52,12 @@ export class FrameRenderConfig {
     @observable bias: number;
     @observable gamma: number;
 
-    @action setColorMapIndex(index: number) {
-        this.colorMap = Math.max(0, Math.min(index, FrameRenderConfig.COLOR_MAPS_ALL.length - 1));
-    }
-
-    @action setColorMap(colormap: string) {
-        const index = FrameRenderConfig.COLOR_MAPS_ALL.indexOf(colormap);
-        if (index >= 0) {
-            this.setColorMapIndex(index);
-        }
-    }
-
     @computed get colorMapName() {
         if (this.colorMap > 0 && this.colorMap < FrameRenderConfig.COLOR_MAPS_ALL.length - 1) {
             return FrameRenderConfig.COLOR_MAPS_ALL[this.colorMap];
         }
         else {
             return "Unknown";
-        }
-    }
-
-    @action setScaling(newScaling: FrameScaling) {
-        if (FrameRenderConfig.SCALING_TYPES.has(newScaling)) {
-            this.scaling = newScaling;
         }
     }
 
@@ -75,20 +71,22 @@ export class FrameRenderConfig {
         }
     }
 
-    static readonly SCALING_TYPES = new Map<FrameScaling, string>([
-        [FrameScaling.LINEAR, "Linear"],
-        [FrameScaling.LOG, "Log"],
-        [FrameScaling.SQRT, "Square root"],
-        [FrameScaling.SQUARE, "Squared"],
-        [FrameScaling.GAMMA, "Gamma"]
-    ]);
+    @action setColorMapIndex(index: number) {
+        this.colorMap = Math.max(0, Math.min(index, FrameRenderConfig.COLOR_MAPS_ALL.length - 1));
+    }
 
-    static readonly COLOR_MAPS_ALL = ["accent", "afmhot", "autumn", "binary", "Blues", "bone", "BrBG", "brg", "BuGn", "BuPu", "bwr", "CMRmap", "cool", "coolwarm",
-        "copper", "cubehelix", "dark2", "flag", "gist_earth", "gist_gray", "gist_heat", "gist_ncar", "gist_rainbow", "gist_stern", "gist_yarg",
-        "GnBu", "gnuplot", "gnuplot2", "gray", "greens", "greys", "hot", "hsv", "inferno", "jet", "magma", "nipy_spectral", "ocean", "oranges",
-        "OrRd", "paired", "pastel1", "pastel2", "pink", "PiYG", "plasma", "PRGn", "prism", "PuBu", "PuBuGn", "PuOr", "PuRd", "purples", "rainbow",
-        "RdBu", "RdGy", "RdPu", "RdYlBu", "RdYlGn", "reds", "seismic", "set1", "set2", "set3", "spectral", "spring", "summer", "tab10", "tab20",
-        "tab20b", "tab20c", "terrain", "viridis", "winter", "Wistia", "YlGn", "YlGnBu", "YlOrBr", "YlOrRd"];
+    @action setColorMap(colormap: string) {
+        const index = FrameRenderConfig.COLOR_MAPS_ALL.indexOf(colormap);
+        if (index >= 0) {
+            this.setColorMapIndex(index);
+        }
+    }
+
+    @action setScaling(newScaling: FrameScaling) {
+        if (FrameRenderConfig.SCALING_TYPES.has(newScaling)) {
+            this.scaling = newScaling;
+        }
+    }
 }
 
 export class FrameStore {
@@ -310,8 +308,8 @@ export class FrameStore {
     }
 
     @action incrementChannels(deltaChannel: number, deltaStokes: number, wrap: boolean = true) {
-        const depth = this.frameInfo.fileInfoExtended.depth;
-        const numStokes = this.frameInfo.fileInfoExtended.stokes;
+        const depth = Math.max(1, this.frameInfo.fileInfoExtended.depth);
+        const numStokes = Math.max(1, this.frameInfo.fileInfoExtended.stokes);
 
         let newChannel = this.requiredChannel + deltaChannel;
         let newStokes = this.requiredStokes + deltaStokes;

@@ -38,7 +38,7 @@ export class AnimatorStore {
         clearInterval(this.animateHandle);
     };
     @action animate = () => {
-        if (this.animationState === AnimationState.PLAYING && this.appStore && this.requestQueue.length < this.frameRate) {
+        if (this.animationState === AnimationState.PLAYING && this.appStore && this.requestQueue.length <= Math.max(this.frameRate, 2)) {
             // Do animation
             switch (this.animationMode) {
                 case AnimationMode.FRAME:
