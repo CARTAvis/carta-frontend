@@ -38,7 +38,7 @@ export class AnimatorStore {
         clearInterval(this.animateHandle);
     };
     @action animate = () => {
-        if (this.animationState === AnimationState.PLAYING && this.appStore && this.requestQueue.length < this.frameRate) {
+        if (this.animationState === AnimationState.PLAYING && this.appStore && this.requestQueue.length <= Math.max(this.frameRate, 2)) {
             // Do animation
             switch (this.animationMode) {
                 case AnimationMode.FRAME:
@@ -63,6 +63,10 @@ export class AnimatorStore {
         const index = this.requestQueue.findIndex(v => v.channel === channel && v.stokes === stokes);
         if (index >= 0) {
             this.requestQueue = this.requestQueue.splice(index, 1);
+        }
+        else {
+            console.log(`Can't find image with channel=${channel} and stokes=${stokes} in the request queue`);
+            console.log(this.requestQueue);
         }
     };
 
