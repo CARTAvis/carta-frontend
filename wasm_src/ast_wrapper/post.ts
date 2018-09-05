@@ -100,8 +100,8 @@ Module.getFormattedCoordinates = function (wcsInfo, x, y, formatString) {
         Module.set(wcsInfo, formatString);
     }
 
-    const xFormat = Module.format(wcsInfo, 1, x);
-    const yFormat = Module.format(wcsInfo, 2, y);
+    const xFormat = x !== undefined ? Module.format(wcsInfo, 1, x) : undefined;
+    const yFormat = y !== undefined ? Module.format(wcsInfo, 2, y) : undefined;
     return {x: xFormat, y: yFormat};
 };
 

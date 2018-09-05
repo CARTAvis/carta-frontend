@@ -1,18 +1,16 @@
 import * as React from "react";
-import * as Plotly from "plotly.js/dist/plotly-cartesian";
 import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import {AppStore} from "../../stores/AppStore";
-import createPlotlyComponent from "react-plotly.js/factory";
 import ReactResizeDetector from "react-resize-detector";
-import {Config, Data, Layout} from "plotly.js";
 import "./SpatialProfilerComponent.css";
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
 import {Colors, NonIdealState} from "@blueprintjs/core";
-import {number} from "prop-types";
+import {ChartOptions, ChartData, Point} from "chart.js";
+import {Scatter} from "react-chartjs-2";
+//import "chartjs-plugin-annotation";
 
-// This allows us to use a minimal Plotly.js bundle with React-Plotly.js (900k compared to 2.7 MB)
-const Plot = createPlotlyComponent(Plotly);
+const Chart = require("react-chartjs-2").Chart;
 
 class SpatialProfilerComponentProps {
     appStore: AppStore;
@@ -41,8 +39,76 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
         this.state = {width: 0, height: 0};
     }
 
+    static PixelToChartSpace(chart, pixel) {
+        let x = 0;
+        let y = 0;
+
+        for (let scaleName in chart.scales) {
+            let scale = chart.scales[scaleName];
+            if (scale.isHorizontal()) {
+                x = scale.getValueForPixel(pixel.x);
+            }
+            else {
+                y = scale.getValueForPixel(pixel.y);
+            }
+        }
+        return {x, y};
+    }
+
+    static ChartToPixelSpace(chart, point) {
+        let x = 0;
+        let y = 0;
+
+        for (let scaleName in chart.scales) {
+            let scale = chart.scales[scaleName];
+            if (scale.isHorizontal()) {
+                x = scale.getPixelForValue(point.x);
+            }
+            else {
+                y = scale.getPixelForValue(point.y);
+            }
+        }
+        return {x, y};
+    }
+
+    componentWillMount() {
+        const ChartAnnotation = require("chartjs-plugin-annotation");
+        Chart.pluginService.register(ChartAnnotation);
+    }
+
     onResize = (width: number, height: number) => {
         this.setState({width, height});
+    };
+
+    annotationDraw = (chart) => {
+        const appStore = this.props.appStore;
+        const profileConfig = appStore.spatialProfileWidgets.get(this.props.id);
+        const isXProfile = profileConfig.coordinate.indexOf("x") >= 0;
+
+        if (appStore.activeFrame) {
+            let keyStruct = {fileId: profileConfig.fileId, regionId: profileConfig.regionId};
+            // Replace "current file" fileId with active frame's fileId
+            if (profileConfig.fileId === -1) {
+                keyStruct.fileId = appStore.activeFrame.frameInfo.fileId;
+            }
+            const key = `${keyStruct.fileId}-${keyStruct.regionId}`;
+            const profileStore = appStore.spatialProfiles.get(key);
+            const frame = appStore.frames.find(f => f.frameInfo.fileId === keyStruct.fileId);
+            if (profileStore && frame) {
+                const scaledX = Math.floor(chart.scales["x-axis-0"].getPixelForValue(isXProfile ? profileStore.x : profileStore.y)) + 0.5;
+                if (scaledX < chart.chartArea.left || scaledX > chart.chartArea.right) {
+                    return;
+                }
+                chart.chart.ctx.restore();
+                chart.chart.ctx.beginPath();
+                chart.chart.ctx.strokeStyle = `${appStore.darkTheme ? Colors.RED4 : Colors.RED2}`;
+                chart.chart.ctx.lineWidth = 1;
+                chart.chart.ctx.setLineDash([5, 5]);
+                chart.chart.ctx.moveTo(scaledX, chart.chartArea.bottom);
+                chart.chart.ctx.lineTo(scaledX, chart.chartArea.top);
+                chart.chart.ctx.stroke();
+            }
+        }
     };
 
     render() {
@@ -56,35 +122,54 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
         const backgroundColor = appStore.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
         const isXProfile = profileConfig.coordinate.indexOf("x") >= 0;
 
-        let plotLayout: Partial<Layout> = {
-            width: this.state.width,
-            height: this.state.height,
-            paper_bgcolor: backgroundColor,
-            plot_bgcolor: backgroundColor,
-            xaxis: {
-                title: `Image ${profileConfig.coordinate.toUpperCase()}-coordinate`,
-                tickmode: "array",
+        let plotOptions: ChartOptions = {
+            maintainAspectRatio: false,
+            legend: {
+                display: false
             },
-            yaxis: {
-                title: "Value"
+            scales: {
+                xAxes: [{
+                    id: "x-axis-0",
+                    scaleLabel: {
+                        display: true,
+                        labelString: `${isXProfile ? "X" : "Y"} coordinate`
+                    },
+                    ticks: {
+                        maxRotation: 0
+                    }
+                }
+                ],
+                yAxes: [{
+                    id: "y-axis-0",
+                    scaleLabel: {
+                        display: true,
+                        labelString: "Value"
+                    },
+                    ticks: {}
+                }]
             },
-            margin: {
-                t: 10,
-                r: 10,
-                l: 60,
-                b: 60,
-            },
-            font: {
-                color: appStore.darkTheme ? Colors.LIGHT_GRAY3 : Colors.DARK_GRAY4
+            animation: {
+                duration: 0
             }
         };
 
-        let plotData: Partial<Data[]> = [];
-        let plotConfig: Partial<Config> = {
-            displaylogo: false,
-            modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "toggleHover", "toggleSpikelines", "hoverClosestCartesian", "hoverCompareCartesian"],
-            setBackground: "transparent"
+        let plotData: Partial<ChartData> = {
+            datasets: [
+                {
+                    label: "Profile",
+                    data: [],
+                    type: "line",
+                    fill: false,
+                    pointRadius: 0,
+                    showLine: true,
+                    steppedLine: true,
+                    borderWidth: 1,
+                    borderColor: `${appStore.darkTheme ? Colors.BLUE4 : Colors.BLUE2}`
+                }
+            ]
         };
+
+        let plugins = [];
 
         if (appStore.activeFrame) {
             let keyStruct = {fileId: profileConfig.fileId, regionId: profileConfig.regionId};
@@ -98,13 +183,15 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
             if (profileStore && frame) {
                 const coordinateData = profileStore.profiles.get(profileConfig.coordinate);
                 if (coordinateData && coordinateData.values && coordinateData.values.length) {
-                    let xVals = new Array(coordinateData.values.length);
-                    for (let i = 0; i < xVals.length; i++) {
-                        xVals[i] = coordinateData.start + i;
+                    if (frame.unit) {
+                        plotOptions.scales.yAxes[0].scaleLabel.labelString = `Value (${frame.unit})`;
                     }
 
-                    if (frame.unit) {
-                        plotLayout.yaxis.title = `Value (${frame.unit})`;
+                    const labelAttribute = `Label(${isXProfile ? 1 : 2})`;
+                    const astLabel = AST.getString(frame.wcsInfo, labelAttribute);
+
+                    if (astLabel) {
+                        plotOptions.scales.xAxes[0].scaleLabel.labelString = astLabel;
                     }
 
                     let lowerBound: number;
@@ -117,73 +204,50 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
                         lowerBound = Math.max(0, Math.min(frame.requiredFrameView.yMin, frame.frameInfo.fileInfoExtended.height));
                         upperBound = Math.max(0, Math.min(frame.requiredFrameView.yMax, frame.frameInfo.fileInfoExtended.height));
                     }
-                    plotLayout.xaxis.range = [lowerBound, upperBound];
+
+                    lowerBound = Math.floor(lowerBound);
+                    upperBound = Math.floor(upperBound);
+
+                    const N = Math.floor(Math.min(upperBound - lowerBound, coordinateData.values.length));
+                    let vals = new Array(N);
+                    for (let i = 0; i < N; i++) {
+                        vals[i] = {x: coordinateData.start + i + lowerBound, y: coordinateData.values[i + lowerBound]};
+                    }
 
                     if (frame.validWcs) {
-                        // Generate tick placement
-                        const numTicks = 5;
-                        const interval = 1.0 / (numTicks + 1) * (upperBound - lowerBound);
-                        let tickVals = new Array<number>(numTicks);
-                        for (let i = 0; i < numTicks; i++) {
-                            tickVals[i] = lowerBound + (i + 1) * interval;
-                        }
-                        plotLayout.xaxis.tickvals = tickVals;
-                        const labelAttribute = `Label(${isXProfile ? 1 : 2})`;
-                        const astLabel = AST.getString(frame.wcsInfo, labelAttribute);
-
-                        if (astLabel) {
-                            plotLayout.xaxis.title = astLabel;
-                        }
-
-                        // Generate tick text
                         if (isXProfile) {
-                            plotLayout.xaxis.ticktext = plotLayout.xaxis.tickvals.map(v => {
+                            plotOptions.scales.xAxes[0].ticks.callback = (v) => {
                                 const pointWCS = AST.pixToWCS(frame.wcsInfo, v, profileStore.y);
                                 const normVals = AST.normalizeCoordinates(frame.wcsInfo, pointWCS.x, pointWCS.y);
-                                const formatStringX = appStore.overlayStore.axis[0].cursorFormat ? appStore.overlayStore.axis[0].cursorFormat : "";
-                                return AST.getFormattedCoordinates(frame.wcsInfo, normVals.x, normVals.y, `Format(1) = ${formatStringX}`).x;
-                            });
+                                return AST.getFormattedCoordinates(frame.wcsInfo, normVals.x, undefined).x;
+                            };
                         }
                         else {
-                            plotLayout.xaxis.ticktext = plotLayout.xaxis.tickvals.map(v => {
+                            plotOptions.scales.xAxes[0].ticks.callback = (v) => {
                                 const pointWCS = AST.pixToWCS(frame.wcsInfo, profileStore.x, v);
                                 const normVals = AST.normalizeCoordinates(frame.wcsInfo, pointWCS.x, pointWCS.y);
-                                const formatStringY = appStore.overlayStore.axis[1].cursorFormat ? appStore.overlayStore.axis[1].cursorFormat : "";
-                                return AST.getFormattedCoordinates(frame.wcsInfo, normVals.x, normVals.y, `Format(2) = ${formatStringY}`).y;
-                            });
+                                return AST.getFormattedCoordinates(frame.wcsInfo, undefined, normVals.y).y;
+                            };
                         }
                     }
 
-                    plotData.push({
-                        x: xVals,
-                        y: coordinateData.values,
-                        type: "scatter",
-                        mode: "lines",
-                        line: {
-                            width: 1.0,
-                            shape: "hv",
-                            color: `${appStore.darkTheme ? Colors.BLUE4 : Colors.BLUE2}`
-                        }
-                    });
-                    plotLayout.shapes = [{
-                        yref: "paper",
-                        type: "line",
-                        x0: isXProfile ? profileStore.x : profileStore.y,
-                        x1: isXProfile ? profileStore.x : profileStore.y,
-                        y0: 0,
-                        y1: 1,
-                        line: {
-                            color: "red",
-                            width: 1
-                        }
-                    }];
+                    plotOptions.scales.xAxes[0].ticks.min = lowerBound;
+                    plotOptions.scales.xAxes[0].ticks.max = upperBound;
+                    plotData.datasets[0].data = vals;
                 }
             }
         }
 
+
+        let plugins2 = [{
+            afterDraw: this.annotationDraw
+        }
+        ];
+
         return (
             <div style={{width: "100%", height: "100%"}}>
-                <Plot layout={plotLayout} data={plotData} config={plotConfig}/>
+                <Scatter data={plotData} width={this.state.width} height={this.state.height} options={plotOptions} plugins={plugins2}/>
+                {/*<Plot layout={plotLayout} data={plotData} config={plotConfig}/>*/}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
         );
