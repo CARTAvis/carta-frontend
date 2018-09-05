@@ -1,24 +1,29 @@
 import * as React from "react";
+import ReactResizeDetector from "react-resize-detector";
 import {observer} from "mobx-react";
-import {AppStore} from "../../stores/AppStore";
 import * as Plotly from "plotly.js/dist/plotly-cartesian";
 import createPlotlyComponent from "react-plotly.js/factory";
-import ReactResizeDetector from "react-resize-detector";
 import {Config, Data, Layout} from "plotly.js";
-import "./RenderConfigComponent.css";
-import {FrameScaling, FrameStore} from "../../stores/FrameStore";
-import {FormGroup, HTMLSelect, NonIdealState, NumericInput, Tooltip, Position, ButtonGroup, Button, Colors} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, NonIdealState, NumericInput, ButtonGroup, Button, Colors, MenuItem} from "@blueprintjs/core";
+import {Select} from "@blueprintjs/select";
+import {AppStore} from "../../stores/AppStore";
+import {FrameRenderConfig, FrameScaling, FrameStore} from "../../stores/FrameStore";
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
+import "./RenderConfigComponent.css";
+
+const equationSVGMap = new Map([
+    [FrameScaling.LINEAR, "equations/linear.svg"],
+    [FrameScaling.LOG, "equations/log.svg"],
+    [FrameScaling.SQRT, "equations/sqrt.svg"],
+    [FrameScaling.SQUARE, "equations/gamma.svg"],
+    [FrameScaling.GAMMA, "equations/squared.svg"]
+]);
 
 // This allows us to use a minimal Plotly.js bundle with React-Plotly.js (900k compared to 2.7 MB)
 const Plot = createPlotlyComponent(Plotly);
 
-const COLOR_MAPS_ALL = ["accent", "afmhot", "autumn", "binary", "Blues", "bone", "BrBG", "brg", "BuGn", "BuPu", "bwr", "CMRmap", "cool", "coolwarm",
-    "copper", "cubehelix", "dark2", "flag", "gist_earth", "gist_gray", "gist_heat", "gist_ncar", "gist_rainbow", "gist_stern", "gist_yarg",
-    "GnBu", "gnuplot", "gnuplot2", "gray", "greens", "greys", "hot", "hsv", "inferno", "jet", "magma", "nipy_spectral", "ocean", "oranges",
-    "OrRd", "paired", "pastel1", "pastel2", "pink", "PiYG", "plasma", "PRGn", "prism", "PuBu", "PuBuGn", "PuOr", "PuRd", "purples", "rainbow",
-    "RdBu", "RdGy", "RdPu", "RdYlBu", "RdYlGn", "reds", "seismic", "set1", "set2", "set3", "spectral", "spring", "summer", "tab10", "tab20",
-    "tab20b", "tab20c", "terrain", "viridis", "winter", "Wistia", "YlGn", "YlGnBu", "YlOrBr", "YlOrRd"];
+const ColorMapSelect = Select.ofType<string>();
+const ScalingSelect = Select.ofType<FrameScaling>();
 
 class RenderConfigComponentProps {
     appStore: AppStore;
@@ -170,14 +175,12 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         }
     };
 
-    handleColorMapChange = (ev: React.ChangeEvent<HTMLSelectElement>) => {
-        const newColorMap = parseInt(ev.target.value);
-        this.props.appStore.activeFrame.renderConfig.colorMap = newColorMap;
+    handleColorMapChange = (newColorMap: string) => {
+        this.props.appStore.activeFrame.renderConfig.setColorMap(newColorMap);
     };
 
-    handleScalingChange = (ev: React.ChangeEvent<HTMLSelectElement>) => {
-        const newScaling = parseInt(ev.target.value);
-        this.props.appStore.activeFrame.renderConfig.scaling = newScaling;
+    handleScalingChange = (scaling: FrameScaling) => {
+        this.props.appStore.activeFrame.renderConfig.setScaling(scaling);
     };
 
     handleBiasChange = (value: number) => {
@@ -257,6 +260,56 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                 return "Unknown";
         }
     }
+
+    renderColormapBlock = (colormap: string) => {
+        let className = "colormap-block";
+        if (this.props.appStore.darkTheme) {
+            className += " bp3-dark";
+        }
+        return (
+            <div className={className} style={{backgroundImage: `url("./cmaps/${colormap.toLowerCase()}.png")`}}/>
+
+        );
+    };
+
+    renderColormapSelectItem = (colormap: string, {handleClick, modifiers, query}) => {
+        if (!modifiers.matchesPredicate) {
+            return null;
+        }
+        return (
+            <MenuItem
+                active={modifiers.active}
+                disabled={modifiers.disabled}
+                label={colormap}
+                key={colormap}
+                onClick={handleClick}
+                text={this.renderColormapBlock(colormap)}
+            />
+        );
+    };
+
+    renderScalingSelectItem = (scaling: FrameScaling, {handleClick, modifiers, query}) => {
+        if (!modifiers.matchesPredicate || !FrameRenderConfig.SCALING_TYPES.has(scaling)) {
+            return null;
+        }
+        const scalingName = FrameRenderConfig.SCALING_TYPES.get(scaling);
+
+        const equationDiv = (
+            <div className="equation-div">
+                <img src={equationSVGMap.get(scaling)}/>
+            </div>
+        );
+        return (
+            <MenuItem
+                active={modifiers.active}
+                disabled={modifiers.disabled}
+                label={scalingName}
+                key={scaling}
+                onClick={handleClick}
+                text={equationDiv}
+            />
+        );
+    };
 
     render() {
         const appStore = this.props.appStore;
@@ -377,21 +430,29 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                 {frame &&
                 <div className="colormap-config">
                     <FormGroup label={"Scaling type"} inline={true}>
-                        <Tooltip content={this.getTooltipText(frame.renderConfig.scaling)} position={Position.BOTTOM} autoFocus={false}>
-                            <HTMLSelect value={frame.renderConfig.scaling} onChange={this.handleScalingChange}>
-                                <option value={FrameScaling.LINEAR}>Linear</option>
-                                <option value={FrameScaling.LOG}>Logarithmic</option>
-                                <option value={FrameScaling.SQRT}>Square root</option>
-                                <option value={FrameScaling.SQUARE}>Squared</option>
-                                <option value={FrameScaling.POWER}>Power</option>
-                                <option value={FrameScaling.GAMMA}>Gamma</option>
-                            </HTMLSelect>
-                        </Tooltip>
+                        <ScalingSelect
+                            activeItem={frame.renderConfig.scaling}
+                            popoverProps={{minimal: true, position: "auto-end"}}
+                            filterable={false}
+                            items={Array.from(FrameRenderConfig.SCALING_TYPES.keys())}
+                            onItemSelect={this.handleScalingChange}
+                            itemRenderer={this.renderScalingSelectItem}
+                        >
+                            <Button text={frame.renderConfig.scalingName} rightIcon="double-caret-vertical"/>
+                        </ScalingSelect>
                     </FormGroup>
+
                     <FormGroup label={"Color map"} inline={true}>
-                        <HTMLSelect value={frame.renderConfig.colorMap} onChange={this.handleColorMapChange}>
-                            {COLOR_MAPS_ALL.map((name, index) => <option key={index} value={index}>{name}</option>)}
-                        </HTMLSelect>
+                        <ColorMapSelect
+                            activeItem={frame.renderConfig.colorMapName}
+                            popoverProps={{minimal: true, position: "auto-end"}}
+                            filterable={false}
+                            items={FrameRenderConfig.COLOR_MAPS_ALL}
+                            onItemSelect={this.handleColorMapChange}
+                            itemRenderer={this.renderColormapSelectItem}
+                        >
+                            <Button text={this.renderColormapBlock(frame.renderConfig.colorMapName)} rightIcon="double-caret-vertical"/>
+                        </ColorMapSelect>
                     </FormGroup>
                     <FormGroup label={"Bias"} inline={true}>
                         <NumericInput
