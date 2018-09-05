@@ -23,7 +23,7 @@
         "react-flexbox-grid": "^2.1.2",
         "react-konva": "^1.7.14",
         "react-plotly.js": "^2.2.0",
-        "react-resize-detector": "^3.1.1",
+        "react-resize-detector": "^3.1.2",
         "react-rnd": "^9.0.2",
         "react-scripts-ts": "^2.17.0",
         "react-scroll-to-bottom": "^1.1.0",
@@ -32,15 +32,16 @@
         "source-map-explorer": "^1.6.0"
     },
     "scripts": {
+        "git-info": "echo export default {logMessage: \\\"$(git log -1 --oneline)\\\"}\\;  > src/static/gitInfo.ts",
         "analyze": "source-map-explorer build/static/js/main.*",
         "build-css": "node-sass-chokidar -q src/ -o src/",
         "watch-css": "npm run build-css && node-sass-chokidar -q src/ -o src/ --watch --recursive",
         "build-wrappers": "./wasm_src/build_wrappers.sh",
         "build-protobuf": "./protobuf/build_proto.sh",
         "start-js": "react-scripts-ts start",
-        "start": "npm-run-all -p watch-css start-js",
+        "start": "npm run git-info; npm-run-all -p watch-css start-js",
         "build-js": "react-scripts-ts build",
-        "build": "npm-run-all build-wrappers build-protobuf build-css build-js",
+        "build": "npm run git-info; npm-run-all build-wrappers build-protobuf build-css build-js",
         "test": "react-scripts-ts test --env=jsdom",
         "eject": "react-scripts-ts eject"
     },
