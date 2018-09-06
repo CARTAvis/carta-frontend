@@ -3,10 +3,9 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {OverlayStore} from "../../../stores/OverlayStore";
 import "./RasterViewComponent.css";
-import {color} from "d3-color";
+import allMaps from "../../../static/allmaps.png";
 
 const vertShader = require("!raw-loader!./GLSL/vert.glsl");
-const pixelShader = require("!raw-loader!./GLSL/pixel_float.glsl");
 const pixelShaderSimple = require("!raw-loader!./GLSL/pixel_simple.glsl");
 
 export class RasterViewComponentProps {
@@ -67,7 +66,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             }
             this.initShaders();
             this.initBuffers();
-            this.loadImageTexture("allmaps.png", WebGLRenderingContext.TEXTURE1).then(texture => {
+            this.loadImageTexture(allMaps, WebGLRenderingContext.TEXTURE1).then(texture => {
                 this.cmapTexture = texture;
                 this.updateCanvas();
             });

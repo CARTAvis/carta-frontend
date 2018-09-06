@@ -11,12 +11,21 @@ import {FrameRenderConfig, FrameScaling, FrameStore} from "../../stores/FrameSto
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
 import "./RenderConfigComponent.css";
 
+// Static assets
+import allMaps from "../../static/allmaps.png";
+// Equation SVG images
+import linearSvg from "../../static/equations/linear.svg";
+import logSvg from "../../static/equations/log.svg";
+import sqrtSvg from "../../static/equations/sqrt.svg";
+import squaredSvg from "../../static/equations/squared.svg";
+import gammaSvg from "../../static/equations/gamma.svg";
+
 const equationSVGMap = new Map([
-    [FrameScaling.LINEAR, "equations/linear.svg"],
-    [FrameScaling.LOG, "equations/log.svg"],
-    [FrameScaling.SQRT, "equations/sqrt.svg"],
-    [FrameScaling.SQUARE, "equations/gamma.svg"],
-    [FrameScaling.GAMMA, "equations/squared.svg"]
+    [FrameScaling.LINEAR, linearSvg],
+    [FrameScaling.LOG, logSvg],
+    [FrameScaling.SQRT, sqrtSvg],
+    [FrameScaling.SQUARE, squaredSvg],
+    [FrameScaling.GAMMA, gammaSvg]
 ]);
 
 // This allows us to use a minimal Plotly.js bundle with React-Plotly.js (900k compared to 2.7 MB)
@@ -244,30 +253,20 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         return markers;
     }
 
-    private getTooltipText(scalingMode: FrameScaling) {
-        switch (scalingMode) {
-            case FrameScaling.LINEAR:
-                return "y=x";
-            case FrameScaling.SQUARE:
-                return "y=x\u00b2";
-            case FrameScaling.SQRT:
-                return "y=\u221ax";
-            case FrameScaling.GAMMA:
-                return "y=x^\u03B3";
-            case FrameScaling.LOG:
-                return "y=log(x)";
-            default:
-                return "Unknown";
-        }
-    }
-
     renderColormapBlock = (colormap: string) => {
         let className = "colormap-block";
         if (this.props.appStore.darkTheme) {
             className += " bp3-dark";
         }
         return (
-            <div className={className} style={{backgroundImage: `url("./cmaps/${colormap.toLowerCase()}.png")`}}/>
+            <div
+                className={className}
+                style={{
+                    backgroundImage: `url(${allMaps})`,
+                    backgroundSize: `100% calc(100% * ${FrameRenderConfig.COLOR_MAPS_ALL.length})`,
+                    backgroundPosition: `0 calc(100% * -${FrameRenderConfig.COLOR_MAPS_ALL.indexOf(colormap)})`,
+                }}
+            />
 
         );
     };

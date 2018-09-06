@@ -9,9 +9,22 @@ import "./layout-base.css";
 import registerServiceWorker from "./registerServiceWorker";
 import {AppStore} from "./stores/AppStore";
 
+// Pre-load static assets
+import allMaps from "./static/allmaps.png";
+import linearSvg from "./static/equations/linear.svg";
+import logSvg from "./static/equations/log.svg";
+import sqrtSvg from "./static/equations/sqrt.svg";
+import squaredSvg from "./static/equations/squared.svg";
+import gammaSvg from "./static/equations/gamma.svg";
+
+for (const val of [allMaps, linearSvg, logSvg, sqrtSvg, squaredSvg, gammaSvg]) {
+    new Image().src = val;
+}
+
 // GoldenLayout requires these in the global namespace
 window["React"] = React; // tslint:disable-line
 window["ReactDOM"] = ReactDOM; // tslint:disable-line
+
 
 const appStore = new AppStore();
 
