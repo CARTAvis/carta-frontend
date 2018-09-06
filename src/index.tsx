@@ -25,7 +25,6 @@ for (const val of [allMaps, linearSvg, logSvg, sqrtSvg, squaredSvg, gammaSvg]) {
 window["React"] = React; // tslint:disable-line
 window["ReactDOM"] = ReactDOM; // tslint:disable-line
 
-
 const appStore = new AppStore();
 
 ReactDOM.render(
