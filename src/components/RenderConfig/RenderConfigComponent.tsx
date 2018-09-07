@@ -258,9 +258,6 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         if (this.props.appStore.darkTheme) {
             className += " bp3-dark";
         }
-
-        console.log(`Rendering ${colormap}`);
-
         const blockHeight = 15;
         const N = FrameRenderConfig.COLOR_MAPS_ALL.length;
         const i = FrameRenderConfig.COLOR_MAPS_ALL.indexOf(colormap);
