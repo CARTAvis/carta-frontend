@@ -54,9 +54,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     };
 
     handleScroll = (ev: React.WheelEvent<HTMLCanvasElement>) => {
+        const lineHeight = 15;
+        const delta = ev.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? ev.deltaY : ev.deltaY * lineHeight;
         const cursorPosCanvasSpace = {x: ev.nativeEvent.offsetX, y: ev.nativeEvent.offsetY};
         if (this.props.frame.wcsInfo && this.props.onZoomed) {
-            this.props.onZoomed(this.getCursorInfo(cursorPosCanvasSpace), -ev.deltaY);
+            this.props.onZoomed(this.getCursorInfo(cursorPosCanvasSpace), -delta);
         }
     };
 
