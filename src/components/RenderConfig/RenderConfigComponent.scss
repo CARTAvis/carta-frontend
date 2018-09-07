@@ -25,7 +25,8 @@
 .colormap-block {
     width: 75px;
     height: 15px;
-    background-size: 100%;
+    image-rendering: pixelated;
+    -moz-image-rendering: crisp-edges;
     border-radius: $pt-border-radius;
     border: 1px solid $gray4;
     &.bp3-dark {
