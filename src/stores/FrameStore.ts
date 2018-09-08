@@ -53,7 +53,7 @@ export class FrameRenderConfig {
     @observable gamma: number;
 
     @computed get colorMapName() {
-        if (this.colorMap > 0 && this.colorMap < FrameRenderConfig.COLOR_MAPS_ALL.length - 1) {
+        if (this.colorMap >= 0 && this.colorMap <= FrameRenderConfig.COLOR_MAPS_ALL.length - 1) {
             return FrameRenderConfig.COLOR_MAPS_ALL[this.colorMap];
         }
         else {
