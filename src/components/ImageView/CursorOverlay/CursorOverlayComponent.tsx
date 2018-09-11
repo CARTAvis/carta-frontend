@@ -35,12 +35,12 @@ export class CursorOverlayComponent extends React.PureComponent<CursorOverlayPro
             infoStrings.push(`Image: (${cursorInfo.posImageSpace.x.toFixed(0)}, ${cursorInfo.posImageSpace.y.toFixed(0)})`);
         }
         if (this.props.showValue && this.props.cursorInfo.value !== undefined) {
-            let valueString = `Value: ${this.expo(this.props.cursorInfo.value, 2)}`;
-            if (this.props.unit && this.props.unit.length) {
-                valueString += ` ${this.props.unit}`;
-            }
+            let valueString = `Value: ${this.expo(this.props.cursorInfo.value, 5, this.props.unit, true, true)}`;
             if (this.props.mip > 1) {
                 valueString += ` [${this.props.mip}\u00D7${this.props.mip} average]`;
+            }
+            if (isNaN(this.props.cursorInfo.value)) {
+                valueString = "NaN";
             }
             infoStrings.push(valueString);
         }

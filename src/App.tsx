@@ -23,6 +23,7 @@ import {AnimatorComponent} from "./components/Animator/AnimatorComponent";
 import {FileBrowserStore} from "./stores/FileBrowserStore";
 import {SpatialProfileStore} from "./stores/SpatialProfileStore";
 import {AppStore} from "./stores/AppStore";
+import GitCommit from "./static/gitInfo";
 
 @HotkeysTarget @observer
 export class App extends React.Component<{ appStore: AppStore }> {
@@ -78,12 +79,14 @@ export class App extends React.Component<{ appStore: AppStore }> {
         appStore.backendService.loggingEnabled = true;
         appStore.fileBrowserStore = new FileBrowserStore(appStore.backendService);
 
-        let wsURL;
-        if (process.env.NODE_ENV === "development" && process.env.REACT_APP_DEFAULT_ADDRESS) {
-            wsURL = process.env.REACT_APP_DEFAULT_ADDRESS;
+        // Log the frontend git commit hash
+        appStore.logStore.addDebug(`Current frontend version: ${GitCommit.logMessage}`, ["version"]);
+        let wsURL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}/socket`;
+        if (process.env.NODE_ENV === "development") {
+            wsURL = process.env.REACT_APP_DEFAULT_ADDRESS ? process.env.REACT_APP_DEFAULT_ADDRESS : wsURL;
         }
         else {
-            wsURL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}/socket`;
+            wsURL = process.env.REACT_APP_DEFAULT_ADDRESS_PROD ? process.env.REACT_APP_DEFAULT_ADDRESS_PROD : wsURL;
         }
 
         console.log(`Connecting to defaullt URL: ${wsURL}`);
