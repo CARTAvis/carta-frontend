@@ -372,7 +372,7 @@ export class OverlayStore {
         this.overlaySettingsDialogVisible = false;
     };
     
-    @observable overlaySettingsActiveTab = "title";
+    @observable overlaySettingsActiveTab = "global";
     
     @action setOverlaySettingsActiveTab(tabId: string) {
         this.overlaySettingsActiveTab = tabId;
@@ -388,10 +388,38 @@ export class OverlayStore {
 
         // Default settings
         this.system = SystemType.Native;
-        this.labelType = LabelType.Interior;
+        this.labelType = LabelType.Exterior;
         this.color = 4;
         this.width = 1;
         this.tolerance = 0.02;
+    }
+
+    @action setColor = (color: number) => {
+        this.color = color;
+    };
+
+    @action setWidth(width: number) {
+        this.width = width;
+    }
+
+    @action setFont = (font: number) => {
+        this.font = font;
+    };
+
+    @action setFontSize(fontSize: number) {
+        this.fontSize = fontSize;
+    }
+
+    @action setTolerance(tolerance: number) {
+        this.tolerance = tolerance;
+    }
+    
+    @action setLabelType(labelType: LabelType) {
+        this.labelType = labelType;
+    }
+    
+    @action setSystem(system: SystemType) {
+        this.system = system;
     }
 
     @computed get styleString() {
@@ -445,6 +473,7 @@ export class OverlayStore {
         astString.add("Width", this.width, (this.width > 0));
         astString.add("Font", this.font);
         astString.add("Size", this.fontSize);
+        astString.add("Tol", this.tolerance);
         astString.add("System", this.system, (this.system !== SystemType.Native));
         
         astString.addSection(this.grid.styleString);

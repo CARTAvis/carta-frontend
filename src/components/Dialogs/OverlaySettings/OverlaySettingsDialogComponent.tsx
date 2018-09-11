@@ -1,8 +1,9 @@
 import * as React from "react";
 import {AppStore} from "../../../stores/AppStore";
+import {LabelType, SystemType} from "../../../stores/OverlayStore";
 import {observer} from "mobx-react";
 import "./OverlaySettingsDialogComponent.css";
-import {Button, Switch, Dialog, IDialogProps, Intent, Tab, Tabs, NumericInput, FormGroup, MenuItem} from "@blueprintjs/core";
+import {Button, Switch, Dialog, IDialogProps, Intent, Tab, Tabs, NumericInput, FormGroup, MenuItem, HTMLSelect} from "@blueprintjs/core";
 import {Select, ItemRenderer} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
 import {DraggableDialogComponent} from "../DraggableDialog/DraggableDialogComponent";
@@ -306,6 +307,62 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         const axes = overlayStore.axes;
         const axis = overlayStore.axis;
         
+        const globalPanel = (
+            <div className="panel-container">
+                <FormGroup label="Font">
+                    {this.fontSelect(true, overlayStore.font, overlayStore.setFont)}
+                    <NumericInput
+                        style={{width: "60px"}}
+                        min={7}
+                        placeholder="Font size"
+                        value={overlayStore.fontSize}
+                        onValueChange={(value: number) => overlayStore.setFontSize(value)}
+                    />
+                </FormGroup>
+                <FormGroup label="Color">
+                    {this.colorSelect(true, overlayStore.color, overlayStore.setColor)}
+                </FormGroup>
+                <FormGroup label="Width">
+                    <NumericInput
+                        style={{width: "60px"}}
+                        placeholder="Width"
+                        min={0.001}
+                        value={overlayStore.width}
+                        stepSize={0.1}
+                        minorStepSize={0.01}
+                        majorStepSize={1}
+                        onValueChange={(value: number) => overlayStore.setWidth(value)}
+                    />
+                </FormGroup>
+                <FormGroup label="Tolerance">
+                    <NumericInput
+                        style={{width: "60px"}}
+                        placeholder="Tolerance"
+                        min={0}
+                        value={overlayStore.tolerance}
+                        stepSize={0.01}
+                        minorStepSize={0.001}
+                        majorStepSize={0.1}
+                        onValueChange={(value: number) => overlayStore.setTolerance(value)}
+                    />
+                </FormGroup>
+                <FormGroup label="Labelling">
+                    <HTMLSelect
+                        options={Object.keys(LabelType).map((key) => ({label: key, value: LabelType[key]}))}
+                        value={overlayStore.labelType}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => overlayStore.setLabelType(event.currentTarget.value as LabelType)}
+                    />
+                </FormGroup>
+                <FormGroup label="Coordinate system">
+                    <HTMLSelect
+                        options={Object.keys(SystemType).map((key) => ({label: key, value: SystemType[key]}))}
+                        value={overlayStore.system}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => overlayStore.setSystem(event.currentTarget.value as SystemType)}
+                    />
+                </FormGroup>
+            </div>
+        );
+        
         const titlePanel = (
             <div className="panel-container">
                 <Switch 
@@ -483,6 +540,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         selectedTabId={overlayStore.overlaySettingsActiveTab}
                         onChange={(tabId) => overlayStore.setOverlaySettingsActiveTab(String(tabId))}
                     >
+                        <Tab id="global" title="Global" panel={globalPanel}/>
                         <Tab id="title" title="Title" panel={titlePanel}/>
                         <Tab id="ticks" title="Ticks" panel={ticksPanel}/>
                         <Tab id="grid" title="Grid" panel={gridPanel}/>
