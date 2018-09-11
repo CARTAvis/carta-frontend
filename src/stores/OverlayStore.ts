@@ -22,6 +22,31 @@ export class Padding {
     bottom: number;
 }
 
+export class ASTSettingsString {
+    stringList: Array<string>;
+    
+    constructor () {
+        this.stringList = [];
+    }
+    
+    add(name: string, value: any, storeIf: boolean = true) {
+        if (value !== undefined && storeIf) {
+            let storedValue = (typeof value === "boolean" ? (value ? 1 : 0) : value);
+            this.stringList.push(`${name}=${storedValue}`);
+        }
+    }
+    
+    addSection(section: string) {
+        if (section !== undefined) {
+            this.stringList.push(section);
+        }
+    }
+    
+    toString() {
+        return this.stringList.filter(str => str.length > 0).join(", ");
+    }
+}
+
 export class OverlayTitleSettings {
     @observable visible?: boolean;
     @observable font?: number;
@@ -31,26 +56,14 @@ export class OverlayTitleSettings {
     @observable text: string;
 
     @computed get styleString() {
-        let stringList = [];
-        if (this.visible !== undefined) {
-            stringList.push(`DrawTitle=${this.visible ? 1 : 0}`);
-        }
-        if (this.font !== undefined) {
-            stringList.push(`Font(Title)=${this.font}`);
-        }
-        if (this.fontSize !== undefined) {
-            stringList.push(`Size(Title)=${this.fontSize}`);
-        }
-        if (this.gap !== undefined) {
-            stringList.push(`TitleGap=${this.gap}`);
-        }
-        if (this.color !== undefined) {
-            stringList.push(`Color(Title)=${this.color}`);
-        }
-        if (this.text !== undefined) {
-            stringList.push(`Title(1)=${this.text}`);
-        }
-        return stringList.join(", ");
+        let astString = new ASTSettingsString();
+        astString.add("DrawTitle", this.visible);
+        astString.add("Font(Title)", this.font);
+        astString.add("Size(Title)", this.fontSize);
+        astString.add("TitleGap", this.gap);
+        astString.add("Color(Title)", this.color);
+        astString.add("Title(1)", this.text);
+        return astString.toString();
     }
     
     constructor() {
@@ -93,17 +106,16 @@ export class OverlayGridSettings {
     @observable width?: number;
 
     @computed get styleString() {
-        let stringList = [];
-        if (this.visible !== undefined) {
-            stringList.push(`Grid=${this.visible ? 1 : 0}`);
-        }
-        if (this.color !== undefined) {
-            stringList.push(`Color(Grid)=${this.color}`);
-        }
-        if (this.width !== undefined && this.width > 0) {
-            stringList.push(`Width(Grid)=${this.width}`);
-        }
-        return stringList.join(", ");
+        let astString = new ASTSettingsString();
+        astString.add("Grid", this.visible);
+        astString.add("Color(Grid)", this.color);
+        astString.add("Width(Grid)", this.width, (this.width > 0));
+        return astString.toString();
+    }
+    
+    constructor() {
+        this.visible = true;
+        this.color = 4;
     }
 
     @action setVisible(visible: boolean = true) {
@@ -126,18 +138,15 @@ export class OverlayBorderSettings {
     @observable width?: number;
 
     @computed get styleString() {
-        let stringList = [];
-        if (this.visible !== undefined) {
-            stringList.push(`Border=${this.visible ? 1 : 0}`);
-        }
-        if (this.color !== undefined) {
-            stringList.push(`Color(Border)=${this.color}`);
-        }
-        if (this.width !== undefined && this.width > 0) {
-            stringList.push(`Width(Border)=${this.width}`);
-        }
-
-        return stringList.join(", ");
+        let astString = new ASTSettingsString();
+        astString.add("Border", this.visible);
+        astString.add("Color(Border)", this.color);
+        astString.add("Width(Border)", this.width, (this.width > 0));
+        return astString.toString();
+    }
+    
+    constructor() {
+        this.visible = true;
     }
 
     @action setVisible(visible: boolean = true) {
@@ -161,24 +170,13 @@ export class OverlayTickSettings {
     @observable majorLength?: number;
 
     @computed get styleString() {
-        let stringList = [];
-        if (this.density !== undefined) {
-            stringList.push(`MinTick=${this.density}`);
-        }
-        if (this.color !== undefined) {
-            stringList.push(`Color(Ticks)=${this.color}`);
-        }
-        if (this.width !== undefined && this.width > 0) {
-            stringList.push(`Width(Ticks)=${this.width}`);
-        }
-        if (this.length !== undefined) {
-            stringList.push(`MinTickLen=${this.length}`);
-        }
-        if (this.majorLength !== undefined) {
-            stringList.push(`MajTickLen=${this.majorLength}`);
-        }
-
-        return stringList.join(", ");
+        let astString = new ASTSettingsString();
+        astString.add("MinTick", this.density);
+        astString.add("Color(Ticks)", this.color);
+        astString.add("Width(Ticks)", this.width, (this.width > 0));
+        astString.add("MinTickLen", this.length);
+        astString.add("MajTickLen", this.majorLength);
+        return astString.toString();
     }
 
     @action setDensity(density: number) {
@@ -232,62 +230,43 @@ export class OverlayAxisSettings {
         this.numberVisible = false;
         this.labelVisible = false;
         
+        this.labelFontSize = 15;
+        this.labelFont = 1;
+        
+        this.numberFontSize = 10;
+        this.numberFont = 1;
+        
         this.customConfig = !axisIndex;
     }
 
     @computed get styleString() {
         const indexStringBrackets = (this.axisIndex > 0) ? `(${this.axisIndex})` : "";
         const indexString = (this.axisIndex > 0) ? `${this.axisIndex}` : "";
-        let stringList = [];
-        if (this.visible !== undefined) {
-            stringList.push(`DrawAxes${indexStringBrackets}=${this.visible ? 1 : 0}`);
-        }
-        if (this.color !== undefined) {
-            stringList.push(`Color(Axes${indexString})=${this.color}`);
-        }
-        if (this.width !== undefined) {
-            stringList.push(`Width(Axes${indexString})=${this.width}`);
-        }
-        if (this.gap !== undefined) {
-            stringList.push(`Gap${indexStringBrackets}=${this.gap}`);
-        }
+        
+        let astString = new ASTSettingsString();
 
-        if (this.numberVisible !== undefined) {
-            stringList.push(`NumLab${indexStringBrackets}=${this.numberVisible ? 1 : 0}`);
-        }
-        if (this.numberFont !== undefined) {
-            stringList.push(`Font(NumLab${indexString})=${this.numberFont}`);
-        }
-        if (this.numberFontSize !== undefined) {
-            stringList.push(`Size(NumLab${indexString})=${this.numberFontSize}`);
-        }
-        if (this.numberColor !== undefined) {
-            stringList.push(`Color(NumLab${indexString})=${this.numberColor}`);
-        }
-        if (this.numberFormat !== undefined && this.numberFormat.length) {
-            stringList.push(`Format${indexStringBrackets}=${this.numberFormat}`);
-        }
+        // Axes settings
+        astString.add(`DrawAxes${indexStringBrackets}`, this.visible);
+        astString.add(`Color(Axes${indexString})`, this.color);
+        astString.add(`Width(Axes${indexString})`, this.width, (this.width > 0));
+        astString.add(`Gap${indexStringBrackets}`, this.gap);
+        
+        // Number settings
+        astString.add(`NumLab${indexStringBrackets}`, this.numberVisible);
+        astString.add(`Font(NumLab${indexString})`, this.numberFont);
+        astString.add(`Size(NumLab${indexString})`, this.numberFontSize);
+        astString.add(`Color(NumLab${indexString})`, this.numberColor);
+        astString.add(`Format${indexStringBrackets}`, this.numberFormat, (this.numberFormat && this.numberFormat.length > 0));
+        
+        // Label settings
+        astString.add(`TextLab${indexStringBrackets}`, this.labelVisible);
+        astString.add(`Font(TextLab${indexString})`, this.labelFont);
+        astString.add(`Size(TextLab${indexString})`, this.labelFontSize);
+        astString.add(`Color(TextLab${indexString})`, this.labelColor);
+        astString.add(`TextLabGap${indexStringBrackets}`, this.labelGap);
+        astString.add(`Label${indexStringBrackets}`, this.labelText);
 
-        if (this.labelVisible !== undefined) {
-            stringList.push(`TextLab${indexStringBrackets}=${this.labelVisible ? 1 : 0}`);
-        }
-        if (this.labelFont !== undefined) {
-            stringList.push(`Font(TextLab${indexString})=${this.labelFont}`);
-        }
-        if (this.labelFontSize !== undefined) {
-            stringList.push(`Size(TextLab${indexString})=${this.labelFontSize}`);
-        }
-        if (this.labelColor !== undefined) {
-            stringList.push(`Color(TextLab${indexString})=${this.labelColor}`);
-        }
-        if (this.labelGap !== undefined) {
-            stringList.push(`TextLabGap${indexStringBrackets}=${this.labelGap}`);
-        }
-        if (this.labelText !== undefined) {
-            stringList.push(`Label${indexStringBrackets}=${this.labelText}`);
-        }
-
-        return stringList.join(", ");
+        return astString.toString();
     }
 
     @action setVisible(visible: boolean = true) {
@@ -409,21 +388,10 @@ export class OverlayStore {
 
         // Default settings
         this.system = SystemType.Native;
-        this.labelType = LabelType.Exterior;
+        this.labelType = LabelType.Interior;
         this.color = 4;
         this.width = 1;
         this.tolerance = 0.02;
-        
-
-        
-        this.grid.visible = true;
-        this.grid.color = 4;
-        
-        this.border.visible = true;
-        
-        this.axes.labelFontSize = 15;
-        this.axes.labelFont = 1;
-        this.axes.numberFontSize = 10;
     }
 
     @computed get styleString() {
@@ -471,42 +439,27 @@ export class OverlayStore {
     }
 
     private stringify() {
-        let stringList = [];
-        if (this.labelType !== undefined) {
-            stringList.push(`Labelling=${this.labelType}`);
-        }
-        if (this.color !== undefined) {
-            stringList.push(`Color=${this.color}`);
-        }
-        if (this.width !== undefined) {
-            stringList.push(`Width=${this.width}`);
-        }
-        if (this.font !== undefined) {
-            stringList.push(`Font=${this.font}`);
-        }
-        if (this.fontSize !== undefined) {
-            stringList.push(`Size=${this.fontSize}`);
-        }
-        if (this.system !== undefined && this.system !== SystemType.Native) {
-            stringList.push(`System=${this.system}`);
-        }
-
-        stringList.push(this.grid.styleString);
-        stringList.push(this.title.styleString);
-        stringList.push(this.border.styleString);
-        stringList.push(this.axes.styleString);
+        let astString = new ASTSettingsString();
+        astString.add("Labelling", this.labelType);
+        astString.add("Color", this.color);
+        astString.add("Width", this.width, (this.width > 0));
+        astString.add("Font", this.font);
+        astString.add("Size", this.fontSize);
+        astString.add("System", this.system, (this.system !== SystemType.Native));
+        
+        astString.addSection(this.grid.styleString);
+        astString.addSection(this.title.styleString);
+        astString.addSection(this.border.styleString);
+        astString.addSection(this.axes.styleString);
         for (let axis of this.axis) {
             if (axis.customConfig) {
-                stringList.push(axis.styleString);
+                astString.addSection(axis.styleString);
             }
         }
-        stringList.push(this.ticks.styleString);
+        astString.addSection(this.ticks.styleString);
+        
+        astString.addSection(this.extra);
 
-        if (this.extra !== undefined) {
-            stringList.push(this.extra);
-        }
-
-        stringList = stringList.filter(str => str.length > 0);
-        return stringList.join(", ");
+        return astString.toString();
     }
 }
