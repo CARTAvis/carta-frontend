@@ -296,8 +296,8 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         ];
         
         if (tabGroupSelected) {
-            axisTabs.push(<Tab key={`${tabId}Numbers`} id={`${tabId}Numbers`} title="&#8227; Numbers" disabled={!axis.visible} panel={axisNumbersPanel}/>);
-            axisTabs.push(<Tab key={`${tabId}Labels`} id={`${tabId}Labels`} title="&#8227; Labels" disabled={!axis.visible} panel={axisLabelsPanel}/>);
+            axisTabs.push(<Tab key={`${tabId}Numbers`} id={`${tabId}Numbers`} title="&#8227; Numbers" panel={axisNumbersPanel}/>);
+            axisTabs.push(<Tab key={`${tabId}Labels`} id={`${tabId}Labels`} title="&#8227; Labels"  panel={axisLabelsPanel}/>);
         }
     
         return axisTabs;
