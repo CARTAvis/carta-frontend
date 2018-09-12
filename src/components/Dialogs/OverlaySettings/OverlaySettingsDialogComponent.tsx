@@ -19,8 +19,6 @@ export class Color {
     }
 }
 
-const astColors: Color[] = AST.colors.map((x, i) => ({name: x, id: i}));
-
 const ColorSelect = Select.ofType<Color>();
 
 export const renderColor: ItemRenderer<Color> = (color, { handleClick, modifiers, query }) => {
@@ -88,6 +86,9 @@ export const renderFont: ItemRenderer<Font> = (font, { handleClick, modifiers, q
 export class OverlaySettingsDialogComponent extends React.Component<{ appStore: AppStore }> {
 
     private colorSelect(visible: boolean, currentColorId: number, colorSetter: Function) {
+    
+        const astColors: Color[] = AST.colors.map((x, i) => ({name: x, id: i}));
+    
         var currentColor: Color = astColors[currentColorId];
         if (typeof currentColor === "undefined") {
             currentColor = astColors[0];
