@@ -130,9 +130,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             ]);
 
             AST.setCanvas(this.canvas);
-            
-            console.log(settings.styleString);
-            
+
             AST.plot(
                 frame.wcsInfo,
                 frame.requiredFrameView.xMin, frame.requiredFrameView.xMax,
