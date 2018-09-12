@@ -165,7 +165,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <FormGroup label="Width" disabled={!axis.visible}>
                     <NumericInput
-                        style={{width: "60px"}}
+                        style={{width: "110px"}}
                         placeholder="Width"
                         min={0.001}
                         value={axis.width}
@@ -175,7 +175,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <FormGroup label="Gap" disabled={!axis.visible}>
                     <NumericInput
-                        style={{width: "60px"}}
+                        style={{width: "110px"}}
                         placeholder="Gap"
                         min={0.001}
                         stepSize={0.01}
@@ -215,7 +215,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup label="Font" disabled={!axis.numberVisible}>
                     {this.fontSelect(axis.numberVisible, axis.numberFont, axis.setNumberFont)}
                     <NumericInput
-                        style={{width: "60px"}}
+                        style={{width: "110px"}}
                         min={7}
                         placeholder="Font size"
                         value={axis.numberFontSize}
@@ -259,7 +259,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup label="Font" disabled={!axis.labelVisible}>
                     {this.fontSelect(axis.labelVisible, axis.labelFont, axis.setLabelFont)}
                     <NumericInput
-                        style={{width: "60px"}}
+                        style={{width: "110px"}}
                         min={7}
                         placeholder="Font size"
                         value={axis.labelFontSize}
@@ -269,7 +269,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <FormGroup label="Gap" disabled={!axis.labelVisible}>
                     <NumericInput
-                        style={{width: "60px"}}
+                        style={{width: "110px"}}
                         placeholder="Gap"
                         min={0}
                         stepSize={0.01}
@@ -312,7 +312,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup label="Font">
                     {this.fontSelect(true, overlayStore.font, overlayStore.setFont)}
                     <NumericInput
-                        style={{width: "60px"}}
+                        style={{width: "110px"}}
                         min={7}
                         placeholder="Font size"
                         value={overlayStore.fontSize}
@@ -324,7 +324,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <FormGroup label="Width">
                     <NumericInput
-                        style={{width: "60px"}}
+                        style={{width: "110px"}}
                         placeholder="Width"
                         min={0.001}
                         value={overlayStore.width}
@@ -336,7 +336,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <FormGroup label="Tolerance">
                     <NumericInput
-                        style={{width: "60px"}}
+                        style={{width: "110px"}}
                         placeholder="Tolerance"
                         min={0}
                         value={overlayStore.tolerance}
@@ -383,7 +383,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup label="Font" disabled={!title.visible}>
                     {this.fontSelect(title.visible, title.font, title.setFont)}
                     <NumericInput
-                        style={{width: "60px"}}
+                        style={{width: "110px"}}
                         min={7}
                         placeholder="Font size"
                         value={title.fontSize}
@@ -393,7 +393,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <FormGroup label="Gap" disabled={!title.visible}>
                     <NumericInput
-                        style={{width: "60px"}}
+                        style={{width: "110px"}}
                         placeholder="Gap"
                         min={0}
                         stepSize={0.01}
@@ -414,7 +414,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
             <div className="panel-container">
                 <FormGroup label="Density">
                     <NumericInput
-                        style={{width: "60px"}}
+                        style={{width: "110px"}}
                         placeholder="Density"
                         min={0}
                         value={ticks.density}
@@ -426,7 +426,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <FormGroup label="Width">
                     <NumericInput
-                        style={{width: "60px"}}
+                        style={{width: "110px"}}
                         placeholder="Width"
                         min={0.001}
                         value={ticks.width}
@@ -438,7 +438,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <FormGroup label="Length">
                     <NumericInput
-                        style={{width: "60px"}}
+                        style={{width: "110px"}}
                         placeholder="Length"
                         min={0}
                         value={ticks.length}
@@ -450,7 +450,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <FormGroup label="Major length">
                     <NumericInput
-                        style={{width: "60px"}}
+                        style={{width: "110px"}}
                         placeholder="Major length"
                         min={0}
                         value={ticks.majorLength}
@@ -475,7 +475,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <FormGroup label="Width" disabled={!grid.visible}>
                     <NumericInput
-                        style={{width: "60px"}}
+                        style={{width: "110px"}}
                         placeholder="Width"
                         min={0.001}
                         value={grid.width}
@@ -501,7 +501,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <FormGroup label="Width" disabled={!border.visible}>
                     <NumericInput
-                        style={{width: "60px"}}
+                        style={{width: "110px"}}
                         placeholder="Width"
                         min={0.001}
                         value={border.width}
