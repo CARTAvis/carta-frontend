@@ -256,7 +256,6 @@ export class OverlayAxisSettings {
         astString.add(`Font(NumLab${indexString})`, this.numberFont);
         astString.add(`Size(NumLab${indexString})`, this.numberFontSize);
         astString.add(`Color(NumLab${indexString})`, this.numberColor);
-        astString.add(`Format${indexStringBrackets}`, this.numberFormat, (this.numberFormat && this.numberFormat.length > 0));
         
         // Label settings
         astString.add(`TextLab${indexStringBrackets}`, this.labelVisible);
@@ -265,8 +264,10 @@ export class OverlayAxisSettings {
         astString.add(`Color(TextLab${indexString})`, this.labelColor);
         astString.add(`TextLabGap${indexStringBrackets}`, this.labelGap);
         
+        // Settings which are per-axis only
         if (this.axisIndex > 0) {
             astString.add(`Label${indexStringBrackets}`, this.labelText);
+            astString.add(`Format${indexStringBrackets}`, this.numberFormat, (this.numberFormat && this.numberFormat.length > 0));
         }
         
         return astString.toString();

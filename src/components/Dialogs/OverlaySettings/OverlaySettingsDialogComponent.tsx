@@ -226,6 +226,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup label="Color" disabled={!axis.numberVisible}>
                     {this.colorSelect(axis.numberVisible, axis.numberColor, axis.setNumberColor)}
                 </FormGroup>
+                { id !== 0 &&
                 <FormGroup label="Format" disabled={!axis.numberVisible}>
                     <input
                         className="bp3-input"
@@ -236,6 +237,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => axis.setNumberFormat(ev.currentTarget.value)}
                     />
                 </FormGroup>
+                }
             </div>
         );
         
