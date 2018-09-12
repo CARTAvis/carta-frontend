@@ -34,9 +34,11 @@ export class AppStore {
 
     // Cursor information
     @observable cursorInfo: CursorInfo;
+    @observable cursorFrozen: boolean;
     // Spatial profiles
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
     @observable spatialProfileWidgets: Map<string, { fileId: number, regionId: number, coordinate: string }>;
+
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
         this.overlayStore.viewWidth = w;
@@ -204,8 +206,20 @@ export class AppStore {
         this.darkTheme = true;
     };
 
-    @action setLightTheme = () => {
+    @action setLightTheme =  () => {
         this.darkTheme = false;
+    };
+
+    @action setCursorInfo = (cursorInfo: CursorInfo) => {
+        this.cursorInfo = cursorInfo;
+    };
+
+    @action setCursorFrozen = (frozen: boolean) => {
+        this.cursorFrozen = frozen;
+    };
+
+    @action toggleCursorFrozen = () => {
+        this.cursorFrozen = !this.cursorFrozen;
     };
 
     constructor() {

@@ -6,9 +6,8 @@ import ReactResizeDetector from "react-resize-detector";
 import "./SpatialProfilerComponent.css";
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
 import {Colors, NonIdealState} from "@blueprintjs/core";
-import {ChartOptions, ChartData, Point} from "chart.js";
+import {ChartOptions, ChartData} from "chart.js";
 import {Scatter} from "react-chartjs-2";
-//import "chartjs-plugin-annotation";
 
 const Chart = require("react-chartjs-2").Chart;
 
@@ -37,38 +36,6 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
     constructor(props: SpatialProfilerComponentProps) {
         super(props);
         this.state = {width: 0, height: 0};
-    }
-
-    static PixelToChartSpace(chart, pixel) {
-        let x = 0;
-        let y = 0;
-
-        for (let scaleName in chart.scales) {
-            let scale = chart.scales[scaleName];
-            if (scale.isHorizontal()) {
-                x = scale.getValueForPixel(pixel.x);
-            }
-            else {
-                y = scale.getValueForPixel(pixel.y);
-            }
-        }
-        return {x, y};
-    }
-
-    static ChartToPixelSpace(chart, point) {
-        let x = 0;
-        let y = 0;
-
-        for (let scaleName in chart.scales) {
-            let scale = chart.scales[scaleName];
-            if (scale.isHorizontal()) {
-                x = scale.getPixelForValue(point.x);
-            }
-            else {
-                y = scale.getPixelForValue(point.y);
-            }
-        }
-        return {x, y};
     }
 
     componentWillMount() {
@@ -209,9 +176,9 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
                     }
                 }
                 else {
-                    //plotOptions.scales.xAxes[0].ticks.callback = undefined;
+                    // Use tick values directly
+                    plotOptions.scales.xAxes[0].ticks.callback = (v) => v;
                 }
-
 
                 // Use cached frame data for an approximate profile
                 if (profileStore.approximate) {
@@ -252,11 +219,9 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
                         plotOptions.scales.xAxes[0].ticks.max = upperBound;
                         plotData.datasets[0].data = vals;
                     }
-                    else {
-                        console.log(`Out of bounds profile request: (${profileStore.x}, ${profileStore.y}`);
+                    else if (profileStore.x !== undefined && profileStore.y !== undefined) {
+                        console.log(`Out of bounds profile request: (${profileStore.x}, ${profileStore.y})`);
                     }
-
-
                 }
                 else {
                     // Use accurate profiles from server-sent data

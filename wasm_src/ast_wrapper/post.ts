@@ -95,12 +95,12 @@ Module.norm = Module.cwrap("norm", "number", ["number", "number"]);
 Module.format = Module.cwrap("format", "string", ["number", "number", "number"]);
 Module.transform = Module.cwrap("transform", "number", ["number", "number", "number", "number", "number", "number", "number"]);
 
-Module.currentFormatStrings = new Map<number, string>();
+Module.currentFormatStrings = [];
 
 Module.getFormattedCoordinates = function (wcsInfo: number, x: number, y: number, formatString: string) {
-    if (formatString && Module.currentFormatStrings.get(wcsInfo) !== formatString) {
+    if (formatString && Module.currentFormatStrings[wcsInfo] !== formatString) {
         Module.set(wcsInfo, formatString);
-        Module.currentFormatStrings.set(wcsInfo, formatString)
+        Module.currentFormatStrings[wcsInfo] = formatString;
     }
 
     let xFormat, yFormat;

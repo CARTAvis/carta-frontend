@@ -322,6 +322,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 {animatorHotkeys}
                 {fileHotkeys}
                 <Hotkey group="Appearance" global={true} combo="shift + d" label="Toggle dark theme" onKeyDown={this.toggleDarkTheme}/>
+                <Hotkey group="Cursor" global={true} combo="shift + space" label="Toggle frozen cursor" onKeyDown={appStore.toggleCursorFrozen}/>
             </Hotkeys>
         );
     }
