@@ -1,3 +1,5 @@
+@import "../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+
 .bp3-tab-panel {
     height: 20em;
     overflow: auto;
@@ -14,6 +16,16 @@
     padding: 0;
 }
 
-.bp3-select-popover.colorselect .bp3-menu {
+.bp3-select-popover.colorselect .bp3-menu, .bp3-button.colorselect .bp3-button-text {
     min-width: 100px;
+}
+
+.dropdown-color {
+    border: solid 1px black;
+    width: 100%;
+    border-radius: $pt-border-radius;
+}
+
+.bp3-numeric-input input {
+    width: 110px ! important;
 }
