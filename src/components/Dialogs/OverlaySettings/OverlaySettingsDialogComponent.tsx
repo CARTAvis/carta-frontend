@@ -246,6 +246,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     label="Visible"
                     onChange={(ev) => axis.setLabelVisible(ev.currentTarget.checked)}
                 />
+                { id !== 0 &&
                 <FormGroup label="Text" disabled={!axis.labelVisible}>
                     <input
                         className="bp3-input"
@@ -256,6 +257,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => axis.setLabelText(ev.currentTarget.value)}
                     />
                 </FormGroup>
+                }
                 <FormGroup label="Font" disabled={!axis.labelVisible}>
                     {this.fontSelect(axis.labelVisible, axis.labelFont, axis.setLabelFont)}
                     <NumericInput

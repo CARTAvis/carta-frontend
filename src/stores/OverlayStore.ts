@@ -264,8 +264,11 @@ export class OverlayAxisSettings {
         astString.add(`Size(TextLab${indexString})`, this.labelFontSize);
         astString.add(`Color(TextLab${indexString})`, this.labelColor);
         astString.add(`TextLabGap${indexStringBrackets}`, this.labelGap);
-        astString.add(`Label${indexStringBrackets}`, this.labelText);
-
+        
+        if (this.axisIndex > 0) {
+            astString.add(`Label${indexStringBrackets}`, this.labelText);
+        }
+        
         return astString.toString();
     }
 
