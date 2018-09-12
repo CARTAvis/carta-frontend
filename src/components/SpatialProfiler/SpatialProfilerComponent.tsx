@@ -181,72 +181,122 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
             const profileStore = appStore.spatialProfiles.get(key);
             const frame = appStore.frames.find(f => f.frameInfo.fileId === keyStruct.fileId);
             if (profileStore && frame) {
-                const coordinateData = profileStore.profiles.get(profileConfig.coordinate);
-                if (coordinateData && coordinateData.values && coordinateData.values.length) {
-                    if (frame.unit) {
-                        plotOptions.scales.yAxes[0].scaleLabel.labelString = `Value (${frame.unit})`;
-                    }
+                if (frame.unit) {
+                    plotOptions.scales.yAxes[0].scaleLabel.labelString = `Value (${frame.unit})`;
+                }
 
-                    const labelAttribute = `Label(${isXProfile ? 1 : 2})`;
-                    const astLabel = AST.getString(frame.wcsInfo, labelAttribute);
+                const labelAttribute = `Label(${isXProfile ? 1 : 2})`;
+                const astLabel = AST.getString(frame.wcsInfo, labelAttribute);
 
-                    if (astLabel) {
-                        plotOptions.scales.xAxes[0].scaleLabel.labelString = astLabel;
-                    }
+                if (astLabel) {
+                    plotOptions.scales.xAxes[0].scaleLabel.labelString = astLabel;
+                }
 
-                    let lowerBound: number;
-                    let upperBound: number;
+                if (frame.validWcs) {
                     if (isXProfile) {
-                        lowerBound = Math.max(0, Math.min(frame.requiredFrameView.xMin, frame.frameInfo.fileInfoExtended.width));
-                        upperBound = Math.max(0, Math.min(frame.requiredFrameView.xMax, frame.frameInfo.fileInfoExtended.width));
+                        plotOptions.scales.xAxes[0].ticks.callback = (v) => {
+                            const pointWCS = AST.pixToWCS(frame.wcsInfo, v, profileStore.y);
+                            const normVals = AST.normalizeCoordinates(frame.wcsInfo, pointWCS.x, pointWCS.y);
+                            return AST.getFormattedCoordinates(frame.wcsInfo, normVals.x, undefined).x;
+                        };
                     }
                     else {
-                        lowerBound = Math.max(0, Math.min(frame.requiredFrameView.yMin, frame.frameInfo.fileInfoExtended.height));
-                        upperBound = Math.max(0, Math.min(frame.requiredFrameView.yMax, frame.frameInfo.fileInfoExtended.height));
+                        plotOptions.scales.xAxes[0].ticks.callback = (v) => {
+                            const pointWCS = AST.pixToWCS(frame.wcsInfo, profileStore.x, v);
+                            const normVals = AST.normalizeCoordinates(frame.wcsInfo, pointWCS.x, pointWCS.y);
+                            return AST.getFormattedCoordinates(frame.wcsInfo, undefined, normVals.y).y;
+                        };
                     }
+                }
+                else {
+                    //plotOptions.scales.xAxes[0].ticks.callback = undefined;
+                }
 
-                    lowerBound = Math.floor(lowerBound);
-                    upperBound = Math.floor(upperBound);
 
-                    const N = Math.floor(Math.min(upperBound - lowerBound, coordinateData.values.length));
-                    let vals = new Array(N);
-                    for (let i = 0; i < N; i++) {
-                        vals[i] = {x: coordinateData.start + i + lowerBound, y: coordinateData.values[i + lowerBound]};
-                    }
-
-                    if (frame.validWcs) {
+                // Use cached frame data for an approximate profile
+                if (profileStore.approximate) {
+                    // Check if frame data can be used to approximate profile
+                    if (profileStore.x >= frame.currentFrameView.xMin && profileStore.x <= frame.currentFrameView.xMax && profileStore.y >= frame.currentFrameView.yMin && profileStore.y <= frame.currentFrameView.yMax) {
+                        const w = Math.floor((frame.currentFrameView.xMax - frame.currentFrameView.xMin) / frame.currentFrameView.mip);
+                        const h = Math.floor((frame.currentFrameView.yMax - frame.currentFrameView.yMin) / frame.currentFrameView.mip);
+                        const yOffset = Math.floor((profileStore.y - frame.currentFrameView.yMin) / frame.currentFrameView.mip);
+                        const xOffset = Math.floor((profileStore.x - frame.currentFrameView.xMin) / frame.currentFrameView.mip);
+                        let vals: { x: number, y: number }[];
                         if (isXProfile) {
-                            plotOptions.scales.xAxes[0].ticks.callback = (v) => {
-                                const pointWCS = AST.pixToWCS(frame.wcsInfo, v, profileStore.y);
-                                const normVals = AST.normalizeCoordinates(frame.wcsInfo, pointWCS.x, pointWCS.y);
-                                return AST.getFormattedCoordinates(frame.wcsInfo, normVals.x, undefined).x;
-                            };
+                            vals = new Array(w);
+                            for (let i = 0; i < w; i++) {
+                                vals[i] = {x: frame.currentFrameView.xMin + frame.currentFrameView.mip * i, y: frame.rasterData[yOffset * w + i]};
+                            }
                         }
                         else {
-                            plotOptions.scales.xAxes[0].ticks.callback = (v) => {
-                                const pointWCS = AST.pixToWCS(frame.wcsInfo, profileStore.x, v);
-                                const normVals = AST.normalizeCoordinates(frame.wcsInfo, pointWCS.x, pointWCS.y);
-                                return AST.getFormattedCoordinates(frame.wcsInfo, undefined, normVals.y).y;
-                            };
+                            vals = new Array(h);
+                            for (let i = 0; i < h; i++) {
+                                vals[i] = {x: frame.currentFrameView.yMin + frame.currentFrameView.mip * i, y: frame.rasterData[i * w + xOffset]};
+                            }
                         }
+
+                        let lowerBound: number;
+                        let upperBound: number;
+                        if (isXProfile) {
+                            lowerBound = Math.max(0, Math.min(frame.requiredFrameView.xMin, frame.frameInfo.fileInfoExtended.width));
+                            upperBound = Math.max(0, Math.min(frame.requiredFrameView.xMax, frame.frameInfo.fileInfoExtended.width));
+                        }
+                        else {
+                            lowerBound = Math.max(0, Math.min(frame.requiredFrameView.yMin, frame.frameInfo.fileInfoExtended.height));
+                            upperBound = Math.max(0, Math.min(frame.requiredFrameView.yMax, frame.frameInfo.fileInfoExtended.height));
+                        }
+
+                        lowerBound = Math.floor(lowerBound);
+                        upperBound = Math.floor(upperBound);
+                        plotOptions.scales.xAxes[0].ticks.min = lowerBound;
+                        plotOptions.scales.xAxes[0].ticks.max = upperBound;
+                        plotData.datasets[0].data = vals;
+                    }
+                    else {
+                        console.log(`Out of bounds profile request: (${profileStore.x}, ${profileStore.y}`);
                     }
 
-                    plotOptions.scales.xAxes[0].ticks.min = lowerBound;
-                    plotOptions.scales.xAxes[0].ticks.max = upperBound;
-                    plotData.datasets[0].data = vals;
+
+                }
+                else {
+                    // Use accurate profiles from server-sent data
+                    const coordinateData = profileStore.profiles.get(profileConfig.coordinate);
+                    if (coordinateData && coordinateData.values && coordinateData.values.length) {
+                        let lowerBound: number;
+                        let upperBound: number;
+                        if (isXProfile) {
+                            lowerBound = Math.max(0, Math.min(frame.requiredFrameView.xMin, frame.frameInfo.fileInfoExtended.width));
+                            upperBound = Math.max(0, Math.min(frame.requiredFrameView.xMax, frame.frameInfo.fileInfoExtended.width));
+                        }
+                        else {
+                            lowerBound = Math.max(0, Math.min(frame.requiredFrameView.yMin, frame.frameInfo.fileInfoExtended.height));
+                            upperBound = Math.max(0, Math.min(frame.requiredFrameView.yMax, frame.frameInfo.fileInfoExtended.height));
+                        }
+
+                        lowerBound = Math.floor(lowerBound);
+                        upperBound = Math.floor(upperBound);
+
+                        const N = Math.floor(Math.min(upperBound - lowerBound, coordinateData.values.length));
+                        let vals = new Array(N);
+                        for (let i = 0; i < N; i++) {
+                            vals[i] = {x: coordinateData.start + i + lowerBound, y: coordinateData.values[i + lowerBound]};
+                        }
+
+                        plotOptions.scales.xAxes[0].ticks.min = lowerBound;
+                        plotOptions.scales.xAxes[0].ticks.max = upperBound;
+                        plotData.datasets[0].data = vals;
+                    }
                 }
             }
         }
 
-
-        let plugins2 = [{
+        plugins.push({
             afterDraw: this.annotationDraw
-        }
-        ];
+        });
 
         return (
             <div style={{width: "100%", height: "100%"}}>
-                <Scatter data={plotData} width={this.state.width} height={this.state.height} options={plotOptions} plugins={plugins2}/>
+                <Scatter data={plotData} width={this.state.width} height={this.state.height} options={plotOptions} plugins={plugins}/>
                 {/*<Plot layout={plotLayout} data={plotData} config={plotConfig}/>*/}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>

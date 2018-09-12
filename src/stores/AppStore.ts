@@ -234,9 +234,9 @@ export class AppStore {
             this.backendService.setChannels(fileId, channel, stokes);
         }, 200);
 
-        const throttledSetCursor = _.throttle((fileId: number, x: number, y: number) => {
+        const debouncedSetCursor = _.debounce((fileId: number, x: number, y: number) => {
             this.backendService.setCursor(fileId, x, y);
-        }, 100);
+        }, 200);
 
         // Update frame view
         autorun(() => {
@@ -283,10 +283,19 @@ export class AppStore {
             if (this.activeFrame && this.cursorInfo && this.cursorInfo.posImageSpace) {
                 const pos = this.cursorInfo.posImageSpace;
                 if (pos.x >= 0 && pos.x <= this.activeFrame.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y < this.activeFrame.frameInfo.fileInfoExtended.height - 1) {
-                    throttledSetCursor(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
+                    debouncedSetCursor(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
+
+                    let keyStruct = {fileId: this.activeFrame.frameInfo.fileId, regionId: 0};
+                    const key = `${keyStruct.fileId}-${keyStruct.regionId}`;
+                    const profileStore = this.spatialProfiles.get(key);
+                    if (profileStore) {
+                        profileStore.x = pos.x;
+                        profileStore.y = pos.y;
+                        profileStore.approximate = true;
+                    }
                 }
             }
-        });
+        }, {delay: 33});
 
         // Set spatial requirements of cursor region on file load
         autorun(() => {
@@ -309,6 +318,7 @@ export class AppStore {
                 profileStore.stokes = spatialProfileData.stokes;
                 profileStore.x = spatialProfileData.x;
                 profileStore.y = spatialProfileData.y;
+                profileStore.approximate = false;
                 const profileMap = new Map<string, CARTA.SpatialProfile>();
                 for (let profile of spatialProfileData.profiles) {
                     profileMap.set(profile.coordinate, profile as SpatialProfile);

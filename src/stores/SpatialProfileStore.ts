@@ -8,11 +8,13 @@ export class SpatialProfileStore {
     @observable channel: number;
     @observable x: number;
     @observable y: number;
+    @observable approximate: boolean;
     @observable profiles: Map<string, CARTA.SpatialProfile>;
 
     constructor(fileId: number = 0, regionId: number = 0) {
         this.fileId = fileId;
         this.regionId = regionId;
+        this.approximate = true;
         this.profiles = new Map<string, CARTA.SpatialProfile>();
     }
 
