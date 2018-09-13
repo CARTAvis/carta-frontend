@@ -245,34 +245,45 @@ export class OverlayAxisSettings {
     }
 
     @computed get styleString() {
-        const indexStringBrackets = (this.axisIndex > 0) ? `(${this.axisIndex})` : "";
-        const indexString = (this.axisIndex > 0) ? `${this.axisIndex}` : "";
+        var i: string; //  nothing, 1 or 2
+        var ib: string; // nothing, (1) or (2)
+        var axis: string; // Axes, Axis1 or Axis2
+        
+        if (this.axisIndex > 0) {
+            i = `${this.axisIndex}`;
+            ib = `(${this.axisIndex})`;
+            axis = `Axis${this.axisIndex}`;
+        } else {
+            i = "";
+            ib = "";
+            axis = `Axes`;
+        }
         
         let astString = new ASTSettingsString();
 
         // Axes settings
-        astString.add(`DrawAxes${indexStringBrackets}`, this.visible);
-        astString.add(`Color(Axis${indexString})`, this.color);
-        astString.add(`Width(Axis${indexString})`, this.width, (this.width > 0));
-        astString.add(`Gap${indexStringBrackets}`, this.gap);
+        astString.add(`DrawAxes${ib}`, this.visible);
+        astString.add(`Color(${axis})`, this.color);
+        astString.add(`Width(${axis})`, this.width, (this.width > 0));
+        astString.add(`Gap${ib}`, this.gap);
         
         // Number settings
-        astString.add(`NumLab${indexStringBrackets}`, this.numberVisible);
-        astString.add(`Font(NumLab${indexString})`, this.numberFont);
-        astString.add(`Size(NumLab${indexString})`, this.numberFontSize);
-        astString.add(`Color(NumLab${indexString})`, this.numberColor);
+        astString.add(`NumLab${ib}`, this.numberVisible);
+        astString.add(`Font(NumLab${i})`, this.numberFont);
+        astString.add(`Size(NumLab${i})`, this.numberFontSize);
+        astString.add(`Color(NumLab${i})`, this.numberColor);
         
         // Label settings
-        astString.add(`TextLab${indexStringBrackets}`, this.labelVisible);
-        astString.add(`Font(TextLab${indexString})`, this.labelFont);
-        astString.add(`Size(TextLab${indexString})`, this.labelFontSize);
-        astString.add(`Color(TextLab${indexString})`, this.labelColor);
-        astString.add(`TextLabGap${indexStringBrackets}`, this.labelGap);
+        astString.add(`TextLab${ib}`, this.labelVisible);
+        astString.add(`Font(TextLab${i})`, this.labelFont);
+        astString.add(`Size(TextLab${i})`, this.labelFontSize);
+        astString.add(`Color(TextLab${i})`, this.labelColor);
+        astString.add(`TextLabGap${ib}`, this.labelGap);
         
         // Settings which are per-axis only
         if (this.axisIndex > 0) {
-            astString.add(`Label${indexStringBrackets}`, this.labelText);
-            astString.add(`Format${indexStringBrackets}`, this.numberFormat, (this.numberFormat && this.numberFormat.length > 0));
+            astString.add(`Label${ib}`, this.labelText);
+            astString.add(`Format${ib}`, this.numberFormat, (this.numberFormat && this.numberFormat.length > 0));
         }
         
         return astString.toString();
