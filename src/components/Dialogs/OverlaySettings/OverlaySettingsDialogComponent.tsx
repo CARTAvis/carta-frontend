@@ -173,7 +173,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => axis.setWidth(value)}
                     />
                 </FormGroup>
-                <FormGroup label="Gap" disabled={!axis.visible}>
+                <FormGroup label="Gap">
                     <NumericInput
                         placeholder="Gap"
                         min={0.001}
@@ -181,7 +181,6 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         minorStepSize={0.001}
                         majorStepSize={0.1}
                         value={axis.gap}
-                        disabled={!axis.visible}
                         onValueChange={(value: number) => axis.setGap(value)}
                     />
                 </FormGroup>
