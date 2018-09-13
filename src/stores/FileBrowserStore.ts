@@ -16,6 +16,8 @@ export class FileBrowserStore {
     @observable selectedTab: TabId = "fileInfo";
     @observable loadingList = false;
     @observable loadingInfo = false;
+    @observable fileInfoResp = false;
+    @observable respErrmsg: string = "";
 
     @action showFileBrowser = (append = false) => {
         this.appendingFrame = append;
@@ -45,10 +47,14 @@ export class FileBrowserStore {
     @action getFileInfo = (directory: string, file: string, hdu: string) => {
         this.loadingInfo = true;
         this.backendService.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
+            this.fileInfoResp = true;
             this.fileInfoExtended = res.fileInfoExtended as FileInfoExtended;
             this.loadingInfo = false;
         }, err => {
             console.log(err);
+            this.fileInfoResp = false;
+            this.respErrmsg = err;
+            this.fileInfoExtended = null;
             this.loadingInfo = false;
         });
     };

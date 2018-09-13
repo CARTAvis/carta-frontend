@@ -39,6 +39,21 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             title: "File Browser",
         };
 
+        let infoPanel;
+        if (fileBrowserStore.selectedFile) {
+            if (fileBrowserStore.fileInfoResp) {
+                if ("fileInfo" === fileBrowserStore.selectedTab) {
+                    infoPanel = <Pre className="file-info-pre">{fileInfo}</Pre>;
+                } else if ("header" === fileBrowserStore.selectedTab) {
+                    infoPanel = <Pre className="file-info-pre">{headers}</Pre>;
+                } // probably more tabs will be added in the future
+            } else {
+                infoPanel = <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={fileBrowserStore.respErrmsg + " Select another file from the list on the left"}/>;
+            }
+        } else {
+            infoPanel = <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected" description="Select a file from the list on the left"/>;
+        }
+
         return (
             <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={800} defaultHeight={450} enableResizing={true}>
                 <div className="bp3-dialog-body" style={{display: "flex"}}>
@@ -57,15 +72,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                             <Tab id="fileInfo" title="File Information" />
                             <Tab id="header" title="Header" />
                         </Tabs>
-                        {!fileBrowserStore.fileInfoExtended &&
-                        <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected" description="Select a file from the list on the left"/>
-                        }
-                        {fileBrowserStore.fileInfoExtended && ("fileInfo" === fileBrowserStore.selectedTab) &&
-                        <Pre className="file-info-pre">{fileInfo}</Pre>
-                        }
-                        {fileBrowserStore.fileInfoExtended && ("header" === fileBrowserStore.selectedTab) &&
-                        <Pre className="file-info-pre">{headers}</Pre>
-                        }
+                        {infoPanel}
                     </div>
                 </div>
                 <div className="bp3-dialog-footer">
@@ -73,11 +80,11 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         <AnchorButton intent={Intent.NONE} onClick={fileBrowserStore.hideFileBrowser} text="Close"/>
                         {fileBrowserStore.appendingFrame ? (
                             <Tooltip content={"Append this file as a new frame"}>
-                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserStore.selectedFile} onClick={this.loadSelectedFile} text="Load as frame"/>
+                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp} onClick={this.loadSelectedFile} text="Load as frame"/>
                             </Tooltip>
                         ) : (
                             <Tooltip content={"Close any existing frames and load this file"}>
-                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserStore.selectedFile} onClick={this.loadSelectedFile} text="Load"/>
+                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp} onClick={this.loadSelectedFile} text="Load"/>
                             </Tooltip>
                         )}
                     </div>
