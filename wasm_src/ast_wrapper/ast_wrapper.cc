@@ -65,19 +65,19 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame() {
     return astFrameSet(frame, "");
 }
 
-EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, int imageX1, int imageX2, int imageY1, int imageY2, int width, int height,
-                                        int paddingLeft, int paddingRight, int paddingTop, int paddingBottom, const char* args)
+EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double imageX2, double imageY1, double imageY2, double width, double height,
+                                        double paddingLeft, double paddingRight, double paddingTop, double paddingBottom, const char* args)
 {
  if (!wcsinfo)
     {
         return 1;
     }
 	AstPlot* plot;
-	float hi = 1, lo = -1, scale, x1 = paddingLeft, x2 = width - paddingRight, xleft, xright, xscale;
-	float y1 = paddingBottom, y2 = height - paddingTop, ybottom, yscale, ytop;
+	double hi = 1, lo = -1, scale, x1 = paddingLeft, x2 = width - paddingRight, xleft, xright, xscale;
+	double y1 = paddingBottom, y2 = height - paddingTop, ybottom, yscale, ytop;
 
-	int nx = imageX2 - imageX1;
-	int ny = imageY2 - imageY1;
+	double nx = imageX2 - imageX1;
+	double ny = imageY2 - imageY1;
 
 	xscale = (x2 - x1) / nx;
 	yscale = (y2 - y1) / ny;
@@ -87,8 +87,8 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, int imageX1, int imageX2
 	ybottom = 0.5f * (y1 + y2 - ny * scale);
 	ytop = 0.5f * (y1 + y2 + ny * scale);
 
-	float gbox[] = {xleft, ybottom, xright, ytop};
-	double pbox[] = {(double)imageX1, (double)imageY1, (double)imageX2, (double)imageY2};
+	float gbox[] = {(float)xleft, (float)ybottom, (float)xright, (float)ytop};
+	double pbox[] = {imageX1, imageY1, imageX2, imageY2};
 	plot = astPlot(wcsinfo, gbox, pbox, args);
 	astBBuf(plot);
     astGrid(plot);
