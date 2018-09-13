@@ -55,7 +55,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         }
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={800} defaultHeight={450} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
                 <div className="bp3-dialog-body" style={{display: "flex"}}>
                     <div className="file-list-pane">
                         <FileListComponent
