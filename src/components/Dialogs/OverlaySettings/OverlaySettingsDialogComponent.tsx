@@ -164,11 +164,14 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup label="Color" disabled={!axis.visible}>
                     {this.colorSelect(axis.visible, axis.color, axis.setColor)}
                 </FormGroup>
-                <FormGroup label="Width" disabled={!axis.visible}>
+                <FormGroup label="Width (px)" disabled={!axis.visible}>
                     <NumericInput
                         placeholder="Width"
                         min={0.001}
                         value={axis.width}
+                        stepSize={0.1}
+                        minorStepSize={0.01}
+                        majorStepSize={1}
                         disabled={!axis.visible}
                         onValueChange={(value: number) => axis.setWidth(value)}
                     />
@@ -320,7 +323,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup label="Color">
                     {this.colorSelect(true, overlayStore.color, overlayStore.setColor)}
                 </FormGroup>
-                <FormGroup label="Width">
+                <FormGroup label="Width (px)">
                     <NumericInput
                         placeholder="Width"
                         min={0.001}
@@ -331,14 +334,14 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => overlayStore.setWidth(value)}
                     />
                 </FormGroup>
-                <FormGroup label="Tolerance">
+                <FormGroup label="Tolerance (%)">
                     <NumericInput
                         placeholder="Tolerance"
-                        min={0}
+                        min={0.1}
                         value={overlayStore.tolerance}
-                        stepSize={0.01}
-                        minorStepSize={0.001}
-                        majorStepSize={0.1}
+                        stepSize={1}
+                        minorStepSize={null}
+                        majorStepSize={10}
                         onValueChange={(value: number) => overlayStore.setTolerance(value)}
                     />
                 </FormGroup>
@@ -417,7 +420,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup label="Color">
                     {this.colorSelect(true, ticks.color, ticks.setColor)}
                 </FormGroup>
-                <FormGroup label="Width">
+                <FormGroup label="Width (px)">
                     <NumericInput
                         placeholder="Width"
                         min={0.001}
@@ -465,7 +468,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup label="Color" disabled={!grid.visible}>
                     {this.colorSelect(grid.visible, grid.color, grid.setColor)}
                 </FormGroup>
-                <FormGroup label="Width" disabled={!grid.visible}>
+                <FormGroup label="Width (px)" disabled={!grid.visible}>
                     <NumericInput
                         placeholder="Width"
                         min={0.001}
@@ -490,7 +493,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup label="Color" disabled={!border.visible}>
                     {this.colorSelect(border.visible, border.color, border.setColor)}
                 </FormGroup>
-                <FormGroup label="Width" disabled={!border.visible}>
+                <FormGroup label="Width (px)" disabled={!border.visible}>
                     <NumericInput
                         placeholder="Width"
                         min={0.001}

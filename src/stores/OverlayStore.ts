@@ -365,7 +365,7 @@ export class OverlayStore {
     @observable width?: number;
     @observable font?: number;
     @observable fontSize?: number;
-    @observable tolerance?: number;
+    @observable tolerance?: number; // percentage
     @observable system?: SystemType;
 
     // Individual settings
@@ -411,7 +411,7 @@ export class OverlayStore {
         this.labelType = LabelType.Exterior;
         this.color = 4;
         this.width = 1;
-        this.tolerance = 0.02;
+        this.tolerance = 1; // percentage
     }
 
     @action setColor = (color: number) => {
@@ -493,7 +493,7 @@ export class OverlayStore {
         astString.add("Width", this.width, (this.width > 0));
         astString.add("Font", this.font);
         astString.add("Size", this.fontSize);
-        astString.add("Tol", this.tolerance);
+        astString.add("Tol", (this.tolerance / 100).toFixed(2), (this.tolerance >= 0.001)); // convert to fraction
         astString.add("System", this.system, (this.system !== SystemType.Native));
         
         astString.addSection(this.grid.styleString);
