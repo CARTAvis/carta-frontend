@@ -428,25 +428,27 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => ticks.setWidth(value)}
                     />
                 </FormGroup>
-                <FormGroup label="Length">
+                <FormGroup label="Minor length (%)">
                     <NumericInput
                         placeholder="Length"
                         min={0}
+                        max={100}
                         value={ticks.length}
-                        stepSize={0.01}
-                        minorStepSize={0.001}
-                        majorStepSize={0.1}
+                        stepSize={1}
+                        minorStepSize={null}
+                        majorStepSize={10}
                         onValueChange={(value: number) => ticks.setLength(value)}
                     />
                 </FormGroup>
-                <FormGroup label="Major length">
+                <FormGroup label="Major length (%)">
                     <NumericInput
-                        placeholder="Major length"
+                        placeholder="Length"
                         min={0}
+                        max={100}
                         value={ticks.majorLength}
-                        stepSize={0.01}
-                        minorStepSize={0.001}
-                        majorStepSize={0.1}
+                        stepSize={1}
+                        minorStepSize={null}
+                        majorStepSize={10}
                         onValueChange={(value: number) => ticks.setMajorLength(value)}
                     />
                 </FormGroup>

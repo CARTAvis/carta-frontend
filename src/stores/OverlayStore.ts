@@ -166,17 +166,22 @@ export class OverlayTickSettings {
     @observable density?: number;
     @observable color?: number;
     @observable width?: number;
-    @observable length?: number;
-    @observable majorLength?: number;
+    @observable length?: number; // percentage
+    @observable majorLength?: number; // percentage
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
         astString.add("MinTick", this.density);
         astString.add("Color(Ticks)", this.color);
         astString.add("Width(Ticks)", this.width, (this.width > 0));
-        astString.add("MinTickLen", this.length);
-        astString.add("MajTickLen", this.majorLength);
+        astString.add("MinTickLen", (this.length / 100).toFixed(2)); // convert to fraction
+        astString.add("MajTickLen", (this.majorLength / 100).toFixed(2)); // convert to fraction
         return astString.toString();
+    }
+    
+    constructor() {
+        this.length = 1; // percentage
+        this.majorLength = 2; // percentage
     }
 
     @action setDensity(density: number) {
