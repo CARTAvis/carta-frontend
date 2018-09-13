@@ -31,6 +31,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
     if (!fitschan)
     {
         cout << "astFitsChan returned null :(" << endl;
+        astClearStatus;
         return nullptr;
     }
     if (!header)
@@ -45,6 +46,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
     if (!astOK)
     {
         cout << "Some AST LIB error, check logs." << endl;
+        astClearStatus;
         return nullptr;
     }
     else if (wcsinfo == AST__NULL)
@@ -94,6 +96,11 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double i
     astGrid(plot);
     astEBuf(plot);
     astAnnul(plot);
+    if (!astOK)
+    {
+        astClearStatus;
+        return 1;
+    }
     return 0;
 }
 
@@ -104,7 +111,13 @@ EMSCRIPTEN_KEEPALIVE const char* format(AstFrameSet* wcsinfo, int axis, double v
         return nullptr;
     }
 
-    return astFormat(wcsinfo, axis, value);
+    const char* formattedVal = astFormat(wcsinfo, axis, value);
+    if (!astOK)
+    {
+        astClearStatus;
+        return nullptr;
+    }
+    return formattedVal;
 }
 
 EMSCRIPTEN_KEEPALIVE int set(AstFrameSet* wcsinfo, const char* attrib)
@@ -115,6 +128,11 @@ EMSCRIPTEN_KEEPALIVE int set(AstFrameSet* wcsinfo, const char* attrib)
     }
 
     astSet(wcsinfo, attrib);
+    if (!astOK)
+    {
+        astClearStatus;
+        return 1;
+    }
     return 0;
 }
 
@@ -126,6 +144,11 @@ EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const doubl
     }
 
     astTran2(wcsinfo, npoint, xin, yin, forward, xout, yout);
+    if (!astOK)
+    {
+        astClearStatus;
+        return 1;
+    }
     return 0;
 }
 }
