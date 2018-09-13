@@ -247,8 +247,8 @@ export class OverlayAxisSettings {
 
         // Axes settings
         astString.add(`DrawAxes${indexStringBrackets}`, this.visible);
-        astString.add(`Color(Axes${indexString})`, this.color);
-        astString.add(`Width(Axes${indexString})`, this.width, (this.width > 0));
+        astString.add(`Color(Axis${indexString})`, this.color);
+        astString.add(`Width(Axis${indexString})`, this.width, (this.width > 0));
         astString.add(`Gap${indexStringBrackets}`, this.gap);
         
         // Number settings
