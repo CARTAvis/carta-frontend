@@ -7,6 +7,8 @@
         "@blueprintjs/core": "^3.5.1",
         "@blueprintjs/icons": "^3.1.0",
         "@blueprintjs/select": "^3.1.0",
+        "chart.js": "^2.7.2",
+        "chartjs-plugin-annotation": "^0.5.7",
         "glslify-loader": "^1.0.2",
         "golden-layout": "^1.5.9",
         "konva": "^2.3.0",
@@ -17,6 +19,7 @@
         "raw-loader": "^0.5.1",
         "react": "^16.5.0",
         "react-dom": "^16.5.0",
+        "react-chartjs-2": "^2.7.4",
         "react-flexbox-grid": "^2.1.2",
         "react-konva": "^1.7.14",
         "react-plotly.js": "^2.2.0",
@@ -43,6 +46,7 @@
         "eject": "react-scripts-ts eject"
     },
     "devDependencies": {
+        "@types/chart.js": "^2.7.31",
         "@types/jest": "^23.3.1",
         "@types/jquery": "^3.3.6",
         "@types/lodash": "^4.14.116",

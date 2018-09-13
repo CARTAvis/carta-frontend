@@ -39,12 +39,14 @@ export class ImageViewComponent extends React.Component<ImageViewComponentProps>
     };
 
     onCursorMoved = (cursorInfo: CursorInfo) => {
-        this.props.appStore.cursorInfo = cursorInfo;
+        if (!this.props.appStore.cursorFrozen) {
+            this.props.appStore.setCursorInfo(cursorInfo);
+        }
     };
 
     onClicked = (cursorInfo: CursorInfo) => {
         const appStore = this.props.appStore;
-        if (appStore.activeFrame 
+        if (appStore.activeFrame
             && 0 < cursorInfo.posImageSpace.x && cursorInfo.posImageSpace.x < appStore.activeFrame.frameInfo.fileInfoExtended.width
             && 0 < cursorInfo.posImageSpace.y && cursorInfo.posImageSpace.y < appStore.activeFrame.frameInfo.fileInfoExtended.height
         ) {

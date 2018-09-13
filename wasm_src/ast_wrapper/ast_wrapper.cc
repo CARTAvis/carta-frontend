@@ -136,6 +136,26 @@ EMSCRIPTEN_KEEPALIVE int set(AstFrameSet* wcsinfo, const char* attrib)
     return 0;
 }
 
+
+EMSCRIPTEN_KEEPALIVE const char* getString(AstFrameSet* wcsinfo, const char* attribute)
+{
+    if (!wcsinfo)
+    {
+        return nullptr;
+    }
+    return astGetC(wcsinfo, attribute);
+}
+
+EMSCRIPTEN_KEEPALIVE int norm(AstFrameSet* wcsinfo, double inout[])
+{
+    if (!wcsinfo)
+    {
+        return 1;
+    }
+    astNorm(wcsinfo, inout);
+    return 0;
+}
+
 EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const double xin[], const double yin[], int forward, double xout[], double yout[])
 {
     if (!wcsinfo)

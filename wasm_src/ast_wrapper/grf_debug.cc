@@ -78,7 +78,7 @@ int astGLine(int n, const float* x, const float* y)
 
     for (int i = 0; i < n; i++)
     {
-        EM_ASM_({Module.gridContext.lineTo($0, $1);}, x[i], y[i]);
+        EM_ASM_({Module.gridContext.lineTo(Math.floor($0)+0.5, Math.floor($1)+0.5);}, x[i], y[i]);
     }
     EM_ASM(Module.gridContext.stroke(););
     return 1;

@@ -1,6 +1,7 @@
 import * as React from "react";
 import {Colors} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
+import * as _ from "lodash";
 import {LabelType, OverlayStore} from "../../../stores/OverlayStore";
 import {observer} from "mobx-react";
 import {CursorInfo} from "../../../models/CursorInfo";
@@ -39,11 +40,14 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         }
     }
 
-    handleMouseMove = (ev: React.MouseEvent<HTMLCanvasElement>) => {
-        const cursorPosCanvasSpace = {x: ev.nativeEvent.offsetX, y: ev.nativeEvent.offsetY};
+    updateCursorPos = _.throttle((x: number, y: number) => {
         if (this.props.frame.wcsInfo && this.props.onCursorMoved) {
-            this.props.onCursorMoved(this.getCursorInfo(cursorPosCanvasSpace));
+            this.props.onCursorMoved(this.getCursorInfo({x, y}));
         }
+    }, 100);
+
+    handleMouseMove = (ev: React.MouseEvent<HTMLCanvasElement>) => {
+        this.updateCursorPos(ev.nativeEvent.offsetX, ev.nativeEvent.offsetY);
     };
 
     handleClick = (ev: React.MouseEvent<HTMLCanvasElement>) => {

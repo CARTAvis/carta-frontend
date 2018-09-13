@@ -1,16 +1,15 @@
 import * as React from "react";
+import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import {AppStore} from "../../stores/AppStore";
-import * as Plotly from "plotly.js/dist/plotly-cartesian";
-import createPlotlyComponent from "react-plotly.js/factory";
 import ReactResizeDetector from "react-resize-detector";
-import {Config, Data, Layout} from "plotly.js";
 import "./SpatialProfilerComponent.css";
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
 import {Colors, NonIdealState} from "@blueprintjs/core";
+import {ChartOptions, ChartData} from "chart.js";
+import {Scatter} from "react-chartjs-2";
 
-// This allows us to use a minimal Plotly.js bundle with React-Plotly.js (900k compared to 2.7 MB)
-const Plot = createPlotlyComponent(Plotly);
+const Chart = require("react-chartjs-2").Chart;
 
 class SpatialProfilerComponentProps {
     appStore: AppStore;
@@ -39,8 +38,44 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
         this.state = {width: 0, height: 0};
     }
 
+    componentWillMount() {
+        const ChartAnnotation = require("chartjs-plugin-annotation");
+        Chart.pluginService.register(ChartAnnotation);
+    }
+
     onResize = (width: number, height: number) => {
         this.setState({width, height});
+    };
+
+    annotationDraw = (chart) => {
+        const appStore = this.props.appStore;
+        const profileConfig = appStore.spatialProfileWidgets.get(this.props.id);
+        const isXProfile = profileConfig.coordinate.indexOf("x") >= 0;
+
+        if (appStore.activeFrame) {
+            let keyStruct = {fileId: profileConfig.fileId, regionId: profileConfig.regionId};
+            // Replace "current file" fileId with active frame's fileId
+            if (profileConfig.fileId === -1) {
+                keyStruct.fileId = appStore.activeFrame.frameInfo.fileId;
+            }
+            const key = `${keyStruct.fileId}-${keyStruct.regionId}`;
+            const profileStore = appStore.spatialProfiles.get(key);
+            const frame = appStore.frames.find(f => f.frameInfo.fileId === keyStruct.fileId);
+            if (profileStore && frame) {
+                const scaledX = Math.floor(chart.scales["x-axis-0"].getPixelForValue(isXProfile ? profileStore.x : profileStore.y)) + 0.5;
+                if (scaledX < chart.chartArea.left || scaledX > chart.chartArea.right) {
+                    return;
+                }
+                chart.chart.ctx.restore();
+                chart.chart.ctx.beginPath();
+                chart.chart.ctx.strokeStyle = `${appStore.darkTheme ? Colors.RED4 : Colors.RED2}`;
+                chart.chart.ctx.lineWidth = 1;
+                chart.chart.ctx.setLineDash([5, 5]);
+                chart.chart.ctx.moveTo(scaledX, chart.chartArea.bottom);
+                chart.chart.ctx.lineTo(scaledX, chart.chartArea.top);
+                chart.chart.ctx.stroke();
+            }
+        }
     };
 
     render() {
@@ -54,74 +89,180 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
         const backgroundColor = appStore.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
         const isXProfile = profileConfig.coordinate.indexOf("x") >= 0;
 
-        let plotLayout: Partial<Layout> = {
-            width: this.state.width,
-            height: this.state.height,
-            paper_bgcolor: backgroundColor,
-            plot_bgcolor: backgroundColor,
-            xaxis: {
-                title: `Image ${profileConfig.coordinate.toUpperCase()}-coordinate`
+        let plotOptions: ChartOptions = {
+            maintainAspectRatio: false,
+            legend: {
+                display: false
             },
-            yaxis: {
-                title: "Value"
+            scales: {
+                xAxes: [{
+                    id: "x-axis-0",
+                    scaleLabel: {
+                        display: true,
+                        labelString: `${isXProfile ? "X" : "Y"} coordinate`
+                    },
+                    ticks: {
+                        maxRotation: 0
+                    }
+                }
+                ],
+                yAxes: [{
+                    id: "y-axis-0",
+                    scaleLabel: {
+                        display: true,
+                        labelString: "Value"
+                    },
+                    ticks: {}
+                }]
             },
-            margin: {
-                t: 10,
-                r: 10,
-                l: 60,
-                b: 60,
-            },
-            font: {
-                color: appStore.darkTheme ? Colors.LIGHT_GRAY3 : Colors.DARK_GRAY4
+            animation: {
+                duration: 0
             }
         };
 
-        let plotData: Partial<Data[]> = [];
-        let plotConfig: Partial<Config> = {
-            displaylogo: false,
-            modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "toggleHover", "toggleSpikelines", "hoverClosestCartesian", "hoverCompareCartesian"],
-            setBackground: "transparent"
+        let plotData: Partial<ChartData> = {
+            datasets: [
+                {
+                    label: "Profile",
+                    data: [],
+                    type: "line",
+                    fill: false,
+                    pointRadius: 0,
+                    showLine: true,
+                    steppedLine: true,
+                    borderWidth: 1,
+                    borderColor: `${appStore.darkTheme ? Colors.BLUE4 : Colors.BLUE2}`
+                }
+            ]
         };
 
-        if (appStore.spatialProfiles.has(profileConfig.dataSourceId)) {
-            const profileStore = appStore.spatialProfiles.get(profileConfig.dataSourceId);
-            const coordinateData = profileStore.profiles.filter(data => data.coordinate === profileConfig.coordinate);
-            if (coordinateData.length) {
-                // Will eventually need WCS coordinate info
-                let xVals = new Array(coordinateData[0].values.length);
-                let yVals = new Array(coordinateData[0].values.length);
-                for (let i = 0; i < xVals.length; i++) {
-                    xVals[i] = coordinateData[0].start + i;
+        let plugins = [];
+
+        if (appStore.activeFrame) {
+            let keyStruct = {fileId: profileConfig.fileId, regionId: profileConfig.regionId};
+            // Replace "current file" fileId with active frame's fileId
+            if (profileConfig.fileId === -1) {
+                keyStruct.fileId = appStore.activeFrame.frameInfo.fileId;
+            }
+            const key = `${keyStruct.fileId}-${keyStruct.regionId}`;
+            const profileStore = appStore.spatialProfiles.get(key);
+            const frame = appStore.frames.find(f => f.frameInfo.fileId === keyStruct.fileId);
+            if (profileStore && frame) {
+                if (frame.unit) {
+                    plotOptions.scales.yAxes[0].scaleLabel.labelString = `Value (${frame.unit})`;
                 }
 
-                plotData.push({
-                    x: xVals,
-                    y: coordinateData[0].values,
-                    type: "scatter",
-                    mode: "lines",
-                    line: {
-                        width: 1.0,
-                        shape: "hv",
-                        color: `${appStore.darkTheme ? Colors.BLUE4 : Colors.BLUE2}`
+                const labelAttribute = `Label(${isXProfile ? 1 : 2})`;
+                const astLabel = AST.getString(frame.wcsInfo, labelAttribute);
+
+                if (astLabel) {
+                    plotOptions.scales.xAxes[0].scaleLabel.labelString = astLabel;
+                }
+
+                if (frame.validWcs) {
+                    if (isXProfile) {
+                        plotOptions.scales.xAxes[0].ticks.callback = (v) => {
+                            const pointWCS = AST.pixToWCS(frame.wcsInfo, v, profileStore.y);
+                            const normVals = AST.normalizeCoordinates(frame.wcsInfo, pointWCS.x, pointWCS.y);
+                            return AST.getFormattedCoordinates(frame.wcsInfo, normVals.x, undefined).x;
+                        };
                     }
-                });
-                plotLayout.shapes = [{
-                    yref: "paper",
-                    type: "line",
-                    x0: isXProfile ? profileStore.x : profileStore.y,
-                    x1: isXProfile ? profileStore.x : profileStore.y,
-                    y0: 0,
-                    y1: 1,
-                    line: {
-                        color: "red",
-                        width: 1
+                    else {
+                        plotOptions.scales.xAxes[0].ticks.callback = (v) => {
+                            const pointWCS = AST.pixToWCS(frame.wcsInfo, profileStore.x, v);
+                            const normVals = AST.normalizeCoordinates(frame.wcsInfo, pointWCS.x, pointWCS.y);
+                            return AST.getFormattedCoordinates(frame.wcsInfo, undefined, normVals.y).y;
+                        };
                     }
-                }];
+                }
+                else {
+                    // Use tick values directly
+                    plotOptions.scales.xAxes[0].ticks.callback = (v) => v;
+                }
+
+                // Use cached frame data for an approximate profile
+                if (profileStore.approximate) {
+                    // Check if frame data can be used to approximate profile
+                    if (profileStore.x >= frame.currentFrameView.xMin && profileStore.x <= frame.currentFrameView.xMax && profileStore.y >= frame.currentFrameView.yMin && profileStore.y <= frame.currentFrameView.yMax) {
+                        const w = Math.floor((frame.currentFrameView.xMax - frame.currentFrameView.xMin) / frame.currentFrameView.mip);
+                        const h = Math.floor((frame.currentFrameView.yMax - frame.currentFrameView.yMin) / frame.currentFrameView.mip);
+                        const yOffset = Math.floor((profileStore.y - frame.currentFrameView.yMin) / frame.currentFrameView.mip);
+                        const xOffset = Math.floor((profileStore.x - frame.currentFrameView.xMin) / frame.currentFrameView.mip);
+                        let vals: { x: number, y: number }[];
+                        if (isXProfile) {
+                            vals = new Array(w);
+                            for (let i = 0; i < w; i++) {
+                                vals[i] = {x: frame.currentFrameView.xMin + frame.currentFrameView.mip * i, y: frame.rasterData[yOffset * w + i]};
+                            }
+                        }
+                        else {
+                            vals = new Array(h);
+                            for (let i = 0; i < h; i++) {
+                                vals[i] = {x: frame.currentFrameView.yMin + frame.currentFrameView.mip * i, y: frame.rasterData[i * w + xOffset]};
+                            }
+                        }
+
+                        let lowerBound: number;
+                        let upperBound: number;
+                        if (isXProfile) {
+                            lowerBound = Math.max(0, Math.min(frame.requiredFrameView.xMin, frame.frameInfo.fileInfoExtended.width));
+                            upperBound = Math.max(0, Math.min(frame.requiredFrameView.xMax, frame.frameInfo.fileInfoExtended.width));
+                        }
+                        else {
+                            lowerBound = Math.max(0, Math.min(frame.requiredFrameView.yMin, frame.frameInfo.fileInfoExtended.height));
+                            upperBound = Math.max(0, Math.min(frame.requiredFrameView.yMax, frame.frameInfo.fileInfoExtended.height));
+                        }
+
+                        lowerBound = Math.floor(lowerBound);
+                        upperBound = Math.floor(upperBound);
+                        plotOptions.scales.xAxes[0].ticks.min = lowerBound;
+                        plotOptions.scales.xAxes[0].ticks.max = upperBound;
+                        plotData.datasets[0].data = vals;
+                    }
+                    else if (profileStore.x !== undefined && profileStore.y !== undefined) {
+                        console.log(`Out of bounds profile request: (${profileStore.x}, ${profileStore.y})`);
+                    }
+                }
+                else {
+                    // Use accurate profiles from server-sent data
+                    const coordinateData = profileStore.profiles.get(profileConfig.coordinate);
+                    if (coordinateData && coordinateData.values && coordinateData.values.length) {
+                        let lowerBound: number;
+                        let upperBound: number;
+                        if (isXProfile) {
+                            lowerBound = Math.max(0, Math.min(frame.requiredFrameView.xMin, frame.frameInfo.fileInfoExtended.width));
+                            upperBound = Math.max(0, Math.min(frame.requiredFrameView.xMax, frame.frameInfo.fileInfoExtended.width));
+                        }
+                        else {
+                            lowerBound = Math.max(0, Math.min(frame.requiredFrameView.yMin, frame.frameInfo.fileInfoExtended.height));
+                            upperBound = Math.max(0, Math.min(frame.requiredFrameView.yMax, frame.frameInfo.fileInfoExtended.height));
+                        }
+
+                        lowerBound = Math.floor(lowerBound);
+                        upperBound = Math.floor(upperBound);
+
+                        const N = Math.floor(Math.min(upperBound - lowerBound, coordinateData.values.length));
+                        let vals = new Array(N);
+                        for (let i = 0; i < N; i++) {
+                            vals[i] = {x: coordinateData.start + i + lowerBound, y: coordinateData.values[i + lowerBound]};
+                        }
+
+                        plotOptions.scales.xAxes[0].ticks.min = lowerBound;
+                        plotOptions.scales.xAxes[0].ticks.max = upperBound;
+                        plotData.datasets[0].data = vals;
+                    }
+                }
             }
         }
+
+        plugins.push({
+            afterDraw: this.annotationDraw
+        });
+
         return (
             <div style={{width: "100%", height: "100%"}}>
-                <Plot layout={plotLayout} data={plotData} config={plotConfig}/>
+                <Scatter data={plotData} width={this.state.width} height={this.state.height} options={plotOptions} plugins={plugins}/>
+                {/*<Plot layout={plotLayout} data={plotData} config={plotConfig}/>*/}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
         );
