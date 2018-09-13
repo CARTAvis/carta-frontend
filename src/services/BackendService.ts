@@ -21,6 +21,7 @@ export class BackendService {
     private readonly rasterStream: Subject<CARTA.RasterImageData>;
     private readonly histogramStream: Subject<CARTA.RegionHistogramData>;
     private readonly errorStream: Subject<CARTA.ErrorData>;
+    private readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
     private readonly logEventList: string[];
     private readonly decompressionServce: DecompressionService;
     private readonly subsetsRequired: number;
@@ -35,6 +36,7 @@ export class BackendService {
         this.rasterStream = new Subject<CARTA.RasterImageData>();
         this.histogramStream = new Subject<CARTA.RegionHistogramData>();
         this.errorStream = new Subject<CARTA.ErrorData>();
+        this.spatialProfileStream = new Subject<CARTA.SpatialProfileData>();
         this.subsetsRequired = Math.min(navigator.hardwareConcurrency || 4, 4);
         this.decompressionServce = new DecompressionService(this.subsetsRequired);
         this.totalDecompressionTime = 0;
@@ -42,12 +44,8 @@ export class BackendService {
         this.logEventList = [
             "REGISTER_VIEWER",
             "REGISTER_VIEWER_ACK",
-            // "SET_IMAGE_VIEW",
-            // "SET_IMAGE_CHANNELS",
-            // "RASTER_IMAGE_DATA",
             "OPEN_FILE",
             "OPEN_FILE_ACK",
-            // "REGION_HISTOGRAM_DATA"
         ];
 
         // Check local storage for a list of events to log to console
@@ -86,6 +84,10 @@ export class BackendService {
 
     getErrorStream() {
         return this.errorStream;
+    }
+
+    getSpatialProfileStream() {
+        return this.spatialProfileStream;
     }
 
     @action("connect")
@@ -232,6 +234,30 @@ export class BackendService {
         return false;
     }
 
+    @action("set cursor")
+    setCursor(fileId: number, x: number, y: number): boolean {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            const message = CARTA.SetCursor.create({fileId, point: {x, y}});
+            this.logEvent("SET_CURSOR", message, false);
+            if (this.sendEvent("SET_CURSOR", 0, CARTA.SetCursor.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @action("set spatial requirements")
+    setSpatialRequirements(fileId: number, regionId: number, spatialProfiles: string[]) {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            const message = CARTA.SetSpatialRequirements.create({fileId, regionId, spatialProfiles});
+            this.logEvent("SET_SPATIAL_REQUIREMENTS", message, false);
+            if (this.sendEvent("SET_SPATIAL_REQUIREMENTS", 0, CARTA.SetSpatialRequirements.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private messageHandler(event: MessageEvent) {
         if (event.data.byteLength < 40) {
             console.log("Unknown event format");
@@ -271,6 +297,10 @@ export class BackendService {
             else if (eventName === "ERROR_DATA") {
                 parsedMessage = CARTA.ErrorData.decode(eventData);
                 this.onStreamedErrorData(parsedMessage);
+            }
+            else if (eventName === "SPATIAL_PROFILE_DATA") {
+                parsedMessage = CARTA.SpatialProfileData.decode(eventData);
+                this.onStreamedSpatialProfileData(parsedMessage);
             }
             else {
                 console.log(`Unsupported event response ${eventName}`);
@@ -359,6 +389,10 @@ export class BackendService {
 
     private onStreamedErrorData(errorData: CARTA.ErrorData) {
         this.errorStream.next(errorData);
+    }
+
+    onStreamedSpatialProfileData(spatialProfileData: CARTA.SpatialProfileData) {
+        this.spatialProfileStream.next(spatialProfileData);
     }
 
     private sendEvent(eventName: string, eventId: number, payload: Uint8Array): boolean {
