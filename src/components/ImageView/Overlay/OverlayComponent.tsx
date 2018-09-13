@@ -121,12 +121,12 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 Colors.BLACK,        // 0
                 Colors.WHITE,        // 1
                 Colors.RED4,         // 2
-                Colors.GREEN4,      // 3
-                Colors.BLUE4,        // 4
-                Colors.TURQUOISE4,   // 5
-                Colors.VERMILION4,   // 6
-                Colors.GOLD4,        // 7
-                Colors.LIGHT_GRAY4   // 8
+                Colors.FOREST3,      // 3
+                Colors.BLUE1,        // 4
+                Colors.TURQUOISE5,   // 5
+                Colors.VIOLET4,   // 6
+                Colors.GOLD5,        // 7
+                Colors.GRAY4   // 8
             ]);
 
             AST.setCanvas(this.canvas);
