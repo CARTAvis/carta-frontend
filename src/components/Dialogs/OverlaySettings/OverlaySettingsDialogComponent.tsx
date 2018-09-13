@@ -169,8 +169,8 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         placeholder="Width"
                         min={0.001}
                         value={axis.width}
-                        stepSize={0.1}
-                        minorStepSize={0.01}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
                         majorStepSize={1}
                         disabled={!axis.visible}
                         onValueChange={(value: number) => axis.setWidth(value)}
@@ -328,8 +328,8 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         placeholder="Width"
                         min={0.001}
                         value={overlayStore.width}
-                        stepSize={0.1}
-                        minorStepSize={0.01}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
                         majorStepSize={1}
                         onValueChange={(value: number) => overlayStore.setWidth(value)}
                     />
@@ -425,8 +425,8 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         placeholder="Width"
                         min={0.001}
                         value={ticks.width}
-                        stepSize={0.1}
-                        minorStepSize={0.01}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
                         majorStepSize={1}
                         onValueChange={(value: number) => ticks.setWidth(value)}
                     />
@@ -473,8 +473,8 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         placeholder="Width"
                         min={0.001}
                         value={grid.width}
-                        stepSize={0.1}
-                        minorStepSize={0.01}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
                         majorStepSize={1}
                         disabled={!grid.visible}
                         onValueChange={(value: number) => grid.setWidth(value)}
@@ -498,8 +498,8 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         placeholder="Width"
                         min={0.001}
                         value={border.width}
-                        stepSize={0.1}
-                        minorStepSize={0.01}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
                         majorStepSize={1}
                         disabled={!border.visible}
                         onValueChange={(value: number) => border.setWidth(value)}

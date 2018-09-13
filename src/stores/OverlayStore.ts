@@ -116,6 +116,7 @@ export class OverlayGridSettings {
     constructor() {
         this.visible = true;
         this.color = 4;
+        this.width = 1;
     }
 
     @action setVisible(visible: boolean = true) {
@@ -147,6 +148,8 @@ export class OverlayBorderSettings {
     
     constructor() {
         this.visible = true;
+        this.color = 4;
+        this.width = 1;
     }
 
     @action setVisible(visible: boolean = true) {
@@ -180,6 +183,8 @@ export class OverlayTickSettings {
     }
     
     constructor() {
+        this.color = 4;
+        this.width = 1;
         this.length = 1; // percentage
         this.majorLength = 2; // percentage
     }
@@ -230,6 +235,9 @@ export class OverlayAxisSettings {
 
     constructor(axisIndex: number) {
         this.axisIndex = axisIndex;
+        
+        this.color = 4;
+        this.width = 1;
         
         this.visible = false;
         this.numberVisible = false;
