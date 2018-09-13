@@ -169,8 +169,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const adjustedXMax = current.xMin + Math.floor((current.xMax - current.xMin) / current.mip) * current.mip;
         const adjustedYMax = current.yMin + Math.floor((current.yMax - current.yMin) / current.mip) * current.mip;
 
-        const LT = {x: (current.xMin - full.xMin) / fullWidth, y: (current.yMin - full.yMin) / fullHeight};
-        const RB = {x: (adjustedXMax - full.xMin) / fullWidth, y: (adjustedYMax - full.yMin) / fullHeight};
+        const LT = {x: (0.5 + current.xMin - full.xMin) / fullWidth, y: (0.5 + current.yMin - full.yMin) / fullHeight};
+        const RB = {x: (0.5 + adjustedXMax - full.xMin) / fullWidth, y: (0.5 + adjustedYMax - full.yMin) / fullHeight};
 
         // Vertices are mapped from [0-1] -> [-1, 1]
         const vertices = new Float32Array([
@@ -191,8 +191,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         if (frame.overviewRasterData) {
             const adjustedWidth = Math.floor(frame.frameInfo.fileInfoExtended.width / frame.overviewRasterView.mip) * frame.overviewRasterView.mip;
             const adjustedHeight = Math.floor(frame.frameInfo.fileInfoExtended.height / frame.overviewRasterView.mip) * frame.overviewRasterView.mip;
-            const overviewLT = {x: (0 - full.xMin) / fullWidth, y: (0 - full.yMin) / fullHeight};
-            const overviewRB = {x: (adjustedWidth - full.xMin) / fullWidth, y: (adjustedHeight - full.yMin) / fullHeight};
+            const overviewLT = {x: (0.5 - full.xMin) / fullWidth, y: (0.5 - full.yMin) / fullHeight};
+            const overviewRB = {x: (0.5 + adjustedWidth - full.xMin) / fullWidth, y: (0.5 + adjustedHeight - full.yMin) / fullHeight};
 
             const overviewVertices = new Float32Array([
                 overviewLT.x, overviewLT.y, 0.5,
