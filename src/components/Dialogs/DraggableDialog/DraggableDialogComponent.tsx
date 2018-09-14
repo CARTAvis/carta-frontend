@@ -35,7 +35,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
         };
 
         return (
-            <div className={"resizable-dialog"}>
+            <div className={"draggable-dialog"}>
                 {this.props.dialogProps.isOpen &&
                 <Rnd
                     enableResizing={resizeSettings}

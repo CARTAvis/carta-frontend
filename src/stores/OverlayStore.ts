@@ -253,9 +253,9 @@ export class OverlayAxisSettings {
     }
 
     @computed get styleString() {
-        var i: string; //  nothing, 1 or 2
-        var ib: string; // nothing, (1) or (2)
-        var axis: string; // Axes, Axis1 or Axis2
+        let i: string; //  nothing, 1 or 2
+        let ib: string; // nothing, (1) or (2)
+        let axis: string; // Axes, Axis1 or Axis2
         
         if (this.axisIndex > 0) {
             i = `${this.axisIndex}`;
@@ -478,11 +478,12 @@ export class OverlayStore {
         if (minSize < scalingStartSize) {
             paddingSize = Math.max(15, minSize / scalingStartSize * paddingSize);
         }
+        const minimumPaddingRatio = 0.05;
         const paddingRatios = [
-            Math.max(0.2, (displayLabelText[1] ? 0.5 : 0) + (displayNumText[1] ? 0.6 : 0)),
-            0.2,
-            (displayTitle ? 1.0 : 0.2),
-            Math.max(0.2, (displayLabelText[0] ? 0.4 : 0) + (displayNumText[0] ? 0.6 : 0))
+            Math.max(minimumPaddingRatio, (displayLabelText[1] ? 0.5 : 0) + (displayNumText[1] ? 0.6 : 0)),
+            minimumPaddingRatio,
+            (displayTitle ? 1.0 : minimumPaddingRatio),
+            Math.max(minimumPaddingRatio, (displayLabelText[0] ? 0.4 : 0) + (displayNumText[0] ? 0.6 : 0))
         ];
 
         const paddingValues = paddingRatios.map(r => r * paddingSize);

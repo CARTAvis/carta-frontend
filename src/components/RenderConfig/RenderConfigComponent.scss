@@ -1,25 +1,22 @@
 @import "../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
-.modebar {
-    background: rgba($blue3, 0.05) !important;
-    border-bottom-left-radius: 5px;
-}
-
 .equation-div {
     height: 20px;
     position: relative;
     img {
-        position:absolute;
-        top:0;
-        bottom:0;
-        margin:auto;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        margin: auto;
     }
 }
 
-.bp3-select-popover .bp3-menu {
-    max-height: 300px;
-    overflow: auto;
-    padding: 0;
+.colormap-select-popover {
+    .bp3-menu {
+        max-height: 300px;
+        overflow: auto;
+        padding: 0;
+    }
 }
 
 .colormap-block {
@@ -38,6 +35,11 @@
     display: flex;
     width: 100%;
     height: 100%;
+
+    .modebar {
+        background: rgba($blue3, 0.05) !important;
+        border-bottom-left-radius: 5px;
+    }
 
     .colormap-config {
         flex: 1 1 220px;

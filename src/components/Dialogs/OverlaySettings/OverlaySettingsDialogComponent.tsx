@@ -46,7 +46,7 @@ export class Font {
         this.name = name.replace("{size} ", "");
         this.id = id;
         
-        var family = this.name;
+        let family = this.name;
         
         if (family.indexOf("bold") === 0) {
             family = family.replace("bold ", "");
@@ -89,7 +89,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
     
         const astColors: Color[] = AST.colors.map((x, i) => ({name: x, id: i}));
     
-        var currentColor: Color = astColors[currentColorId];
+        let currentColor: Color = astColors[currentColorId];
         if (typeof currentColor === "undefined") {
             currentColor = astColors[0];
         }
@@ -110,7 +110,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
     }
 
     private fontSelect(visible: boolean, currentFontId: number, fontSetter: Function) {
-        var currentFont: Font = astFonts[currentFontId];
+        let currentFont: Font = astFonts[currentFontId];
         if (typeof currentFont === "undefined") {
             currentFont = astFonts[0];
         }
@@ -133,10 +133,10 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
     private axisTabGroup(id: number) {
         const overlayStore = this.props.appStore.overlayStore;
         
-        var tabId;
-        var tabTitle;
-        var axis;
-        var perAxisComponent;
+        let tabId;
+        let tabTitle;
+        let axis;
+        let perAxisComponent;
         
         if (id === 0) {
             tabId = "axes";
@@ -288,7 +288,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
             </div>
         );
         
-        var axisTabs = [
+        let axisTabs = [
             <Tab key={tabId} id={tabId} title={tabTitle} panel={axisPanel}/>
         ];
         
