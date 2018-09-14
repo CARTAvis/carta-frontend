@@ -1,31 +1,35 @@
 @import "../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
-.bp3-tab-panel {
-    height: 20em;
-    overflow: auto;
-    width: 100%;
-}
+.overlay-settings-dialog {
 
-.bp3-tab-list {
-    width: 10em;
-}
+    .bp3-tab-panel {
+        height: 20em;
+        overflow: auto;
+        width: 100%;
+    }
 
-.bp3-select-popover .bp3-menu {
-    max-height: 300px;
-    overflow: auto;
-    padding: 0;
-}
+    .bp3-tab-list {
+        width: 10em;
+    }
 
-.bp3-select-popover.colorselect .bp3-menu, .bp3-button.colorselect .bp3-button-text {
-    min-width: 100px;
-}
+    .bp3-select-popover .bp3-menu {
+        max-height: 300px;
+        overflow: auto;
+        padding: 0;
+    }
 
-.dropdown-color {
-    border: solid 1px black;
-    width: 100%;
-    border-radius: $pt-border-radius;
-}
+    .bp3-select-popover.colorselect .bp3-menu, .bp3-button.colorselect .bp3-button-text {
+        min-width: 100px;
+    }
 
-.bp3-numeric-input input {
-    width: 100px ! important;
+    .dropdown-color {
+        border: solid 1px black;
+        width: 100%;
+        border-radius: $pt-border-radius;
+    }
+
+    .bp3-numeric-input input {
+        width: 100px ! important;
+    }
+    
 }
