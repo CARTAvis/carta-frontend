@@ -302,6 +302,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
 
     public render() {
         const overlayStore = this.props.appStore.overlayStore;
+        const global = overlayStore.global;
         const title = overlayStore.title;
         const grid = overlayStore.grid;
         const border = overlayStore.border;
@@ -312,51 +313,51 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         const globalPanel = (
             <div className="panel-container">
                 <FormGroup label="Font">
-                    {this.fontSelect(true, overlayStore.font, overlayStore.setFont)}
+                    {this.fontSelect(true, global.font, global.setFont)}
                     <NumericInput
                         min={7}
                         placeholder="Font size"
-                        value={overlayStore.fontSize}
-                        onValueChange={(value: number) => overlayStore.setFontSize(value)}
+                        value={global.fontSize}
+                        onValueChange={(value: number) => global.setFontSize(value)}
                     />
                 </FormGroup>
                 <FormGroup label="Color">
-                    {this.colorSelect(true, overlayStore.color, overlayStore.setColor)}
+                    {this.colorSelect(true, global.color, global.setColor)}
                 </FormGroup>
                 <FormGroup label="Width (px)">
                     <NumericInput
                         placeholder="Width"
                         min={0.001}
-                        value={overlayStore.width}
+                        value={global.width}
                         stepSize={0.5}
                         minorStepSize={0.1}
                         majorStepSize={1}
-                        onValueChange={(value: number) => overlayStore.setWidth(value)}
+                        onValueChange={(value: number) => global.setWidth(value)}
                     />
                 </FormGroup>
                 <FormGroup label="Tolerance (%)">
                     <NumericInput
                         placeholder="Tolerance"
                         min={0.1}
-                        value={overlayStore.tolerance}
+                        value={global.tolerance}
                         stepSize={1}
                         minorStepSize={null}
                         majorStepSize={10}
-                        onValueChange={(value: number) => overlayStore.setTolerance(value)}
+                        onValueChange={(value: number) => global.setTolerance(value)}
                     />
                 </FormGroup>
                 <FormGroup label="Labelling">
                     <HTMLSelect
                         options={Object.keys(LabelType).map((key) => ({label: key, value: LabelType[key]}))}
-                        value={overlayStore.labelType}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => overlayStore.setLabelType(event.currentTarget.value as LabelType)}
+                        value={global.labelType}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => global.setLabelType(event.currentTarget.value as LabelType)}
                     />
                 </FormGroup>
                 <FormGroup label="Coordinate system">
                     <HTMLSelect
                         options={Object.keys(SystemType).map((key) => ({label: key, value: SystemType[key]}))}
-                        value={overlayStore.system}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => overlayStore.setSystem(event.currentTarget.value as SystemType)}
+                        value={global.system}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => global.setSystem(event.currentTarget.value as SystemType)}
                     />
                 </FormGroup>
             </div>

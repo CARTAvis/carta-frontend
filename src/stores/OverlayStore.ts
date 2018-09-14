@@ -47,6 +47,64 @@ export class ASTSettingsString {
     }
 }
 
+export class OverlayGlobalSettings {
+    @observable labelType?: LabelType;
+    @observable color?: number;
+    @observable width?: number;
+    @observable font?: number;
+    @observable fontSize?: number;
+    @observable tolerance?: number; // percentage
+    @observable system?: SystemType;
+
+    @computed get styleString() {
+        let astString = new ASTSettingsString();
+        astString.add("Labelling", this.labelType);
+        astString.add("Color", this.color);
+        astString.add("Width", this.width, (this.width > 0));
+        astString.add("Font", this.font);
+        astString.add("Size", this.fontSize);
+        astString.add("Tol", (this.tolerance / 100).toFixed(2), (this.tolerance >= 0.001)); // convert to fraction
+        astString.add("System", this.system, (this.system !== SystemType.Native));
+        return astString.toString();
+    }
+    
+    constructor() {
+        this.system = SystemType.Native;
+        this.labelType = LabelType.Exterior;
+        this.color = 4;
+        this.width = 1;
+        this.tolerance = 1; // percentage
+    }
+    
+    @action setColor = (color: number) => {
+        this.color = color;
+    };
+
+    @action setWidth(width: number) {
+        this.width = width;
+    }
+
+    @action setFont = (font: number) => {
+        this.font = font;
+    };
+
+    @action setFontSize(fontSize: number) {
+        this.fontSize = fontSize;
+    }
+
+    @action setTolerance(tolerance: number) {
+        this.tolerance = tolerance;
+    }
+    
+    @action setLabelType(labelType: LabelType) {
+        this.labelType = labelType;
+    }
+    
+    @action setSystem(system: SystemType) {
+        this.system = system;
+    }
+}
+
 export class OverlayTitleSettings {
     @observable visible?: boolean;
     @observable font?: number;
@@ -367,16 +425,9 @@ export class OverlayStore {
     // View size options
     @observable viewWidth: number;
     @observable viewHeight: number;
-    // Global options
-    @observable labelType?: LabelType;
-    @observable color?: number;
-    @observable width?: number;
-    @observable font?: number;
-    @observable fontSize?: number;
-    @observable tolerance?: number; // percentage
-    @observable system?: SystemType;
 
     // Individual settings
+    @observable global: OverlayGlobalSettings;
     @observable grid: OverlayGridSettings;
     @observable title: OverlayTitleSettings;
     @observable border: OverlayBorderSettings;
@@ -384,7 +435,7 @@ export class OverlayStore {
     @observable axis: Array<OverlayAxisSettings>;
     @observable ticks: OverlayTickSettings;
     
-    // Title settings
+    // Extra settings
     
     @observable extra?: string;
     
@@ -407,47 +458,13 @@ export class OverlayStore {
     }
 
     constructor() {
+        this.global = new OverlayGlobalSettings();
         this.grid = new OverlayGridSettings();
         this.title = new OverlayTitleSettings();
         this.border = new OverlayBorderSettings();
         this.axes = new OverlayAxisSettings(0);
         this.axis = [new OverlayAxisSettings(1), new OverlayAxisSettings(2)];
         this.ticks = new OverlayTickSettings();
-
-        // Default settings
-        this.system = SystemType.Native;
-        this.labelType = LabelType.Exterior;
-        this.color = 4;
-        this.width = 1;
-        this.tolerance = 1; // percentage
-    }
-
-    @action setColor = (color: number) => {
-        this.color = color;
-    };
-
-    @action setWidth(width: number) {
-        this.width = width;
-    }
-
-    @action setFont = (font: number) => {
-        this.font = font;
-    };
-
-    @action setFontSize(fontSize: number) {
-        this.fontSize = fontSize;
-    }
-
-    @action setTolerance(tolerance: number) {
-        this.tolerance = tolerance;
-    }
-    
-    @action setLabelType(labelType: LabelType) {
-        this.labelType = labelType;
-    }
-    
-    @action setSystem(system: SystemType) {
-        this.system = system;
     }
 
     @computed get styleString() {
@@ -463,7 +480,7 @@ export class OverlayStore {
             return this.axes.labelVisible !== false;
         });
         const displayNumText = this.axis.map((axis) => {
-            if (this.labelType === LabelType.Interior) {
+            if (this.global.labelType === LabelType.Interior) {
                 return false;
             }
             if (axis.customConfig && axis.numberVisible !== undefined) {
@@ -496,15 +513,9 @@ export class OverlayStore {
 
     private stringify() {
         let astString = new ASTSettingsString();
-        astString.add("Labelling", this.labelType);
-        astString.add("Color", this.color);
-        astString.add("Width", this.width, (this.width > 0));
-        astString.add("Font", this.font);
-        astString.add("Size", this.fontSize);
-        astString.add("Tol", (this.tolerance / 100).toFixed(2), (this.tolerance >= 0.001)); // convert to fraction
-        astString.add("System", this.system, (this.system !== SystemType.Native));
-        
+
         astString.addSection(this.grid.styleString);
+        astString.addSection(this.global.styleString);
         astString.addSection(this.title.styleString);
         astString.addSection(this.border.styleString);
         astString.addSection(this.axes.styleString);
