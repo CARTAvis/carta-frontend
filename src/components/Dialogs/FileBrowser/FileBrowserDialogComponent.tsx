@@ -84,11 +84,11 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         <AnchorButton intent={Intent.NONE} onClick={fileBrowserStore.hideFileBrowser} text="Close"/>
                         {fileBrowserStore.appendingFrame ? (
                             <Tooltip content={"Append this file as a new frame"}>
-                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp} onClick={this.loadSelectedFile} text="Load as frame"/>
+                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo} onClick={this.loadSelectedFile} text="Load as frame"/>
                             </Tooltip>
                         ) : (
                             <Tooltip content={"Close any existing frames and load this file"}>
-                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp} onClick={this.loadSelectedFile} text="Load"/>
+                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo} onClick={this.loadSelectedFile} text="Load"/>
                             </Tooltip>
                         )}
                     </div>
