@@ -162,12 +162,14 @@ export class OverlayGridSettings {
     @observable visible?: boolean;
     @observable color?: number;
     @observable width?: number;
+    @observable gap?: number;
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
         astString.add("Grid", this.visible);
         astString.add("Color(Grid)", this.color);
         astString.add("Width(Grid)", this.width, (this.width > 0));
+        astString.add("Gap", this.gap); // TODO move to Grid
         return astString.toString();
     }
     
@@ -187,6 +189,10 @@ export class OverlayGridSettings {
 
     @action setWidth(width: number) {
         this.width = width;
+    }
+
+    @action setGap(gap: number) {
+        this.gap = gap;
     }
     
 }
@@ -268,88 +274,190 @@ export class OverlayTickSettings {
     }
 }
 
+export class OverlayNumberSettings {
+    @observable visible?: boolean;
+    @observable font?: number;
+    @observable fontSize?: number;
+    @observable color?: number;
+    @observable format?: string;
+    
+    // Custom settings for individual axes
+    @observable axis: Array<OverlayNumberSettings>;
+    axisIndex: number;
+
+    constructor(axisIndex: number = 0) {
+        this.axisIndex = axisIndex;
+        
+        this.visible = false;
+        this.fontSize = 10;
+        this.font = 1;
+        
+        if (axisIndex === 0 ) {
+            this.axis = [new OverlayNumberSettings(1), new OverlayNumberSettings(2)];
+        }
+    }
+
+    @computed get styleString() {
+        let astString = new ASTSettingsString();
+        
+        if (this.axisIndex === 0) {
+            astString.add("NumLab", this.visible);
+            astString.add("Font(NumLab)", this.font);
+            astString.add("Size(NumLab)", this.fontSize);
+            astString.add("Color(NumLab)", this.color);
+            
+            // Add settings for individual axes
+            astString.addSection(this.axis[0].styleString);
+            astString.addSection(this.axis[1].styleString);
+        } else {
+            const i = `${this.axisIndex}`;
+            
+            astString.add(`NumLab(${i})`, this.visible);
+            astString.add(`Font(NumLab${i})`, this.font);
+            astString.add(`Size(NumLab${i})`, this.fontSize);
+            astString.add(`Color(NumLab${i})`, this.color);
+            
+            // Settings which are per-axis only
+            astString.add(`Format(${i})`, this.format, (this.format.length > 0));
+        }
+        
+        return astString.toString();
+    }
+
+    @action setVisible(visible: boolean = true) {
+        this.visible = visible;
+    }
+
+    @action setFont = (font: number) => {
+        this.font = font;
+    };
+
+    @action setFontSize(fontSize: number) {
+        this.fontSize = fontSize;
+    }
+
+    @action setColor = (color: number) => {
+        this.color = color;
+    };
+    
+    @action setFormat(format: string) {
+        this.format = format;
+    }
+}
+
+export class OverlayLabelSettings {
+    @observable visible?: boolean;
+    @observable color?: number;
+    @observable gap?: number;
+    @observable font?: number;
+    @observable fontSize?: number;
+    @observable text?: string;
+    
+    // Custom settings for individual axes
+    @observable axis: Array<OverlayLabelSettings>;
+    axisIndex: number;
+
+    constructor(axisIndex: number = 0) {
+        this.axisIndex = axisIndex;
+        
+        this.visible = false;
+        this.fontSize = 15;
+        this.font = 1;
+        
+        if (axisIndex === 0 ) {
+            this.axis = [new OverlayLabelSettings(1), new OverlayLabelSettings(2)];
+        }
+    }
+
+    @computed get styleString() {
+        let astString = new ASTSettingsString();
+        
+        if (this.axisIndex === 0) {
+            astString.add("TextLab", this.visible);
+            astString.add("Font(TextLab)", this.font);
+            astString.add("Size(TextLab)", this.fontSize);
+            astString.add("Color(TextLab)", this.color);
+            astString.add("TextLabGap", this.gap);
+            
+            // Add settings for individual axes
+            astString.addSection(this.axis[0].styleString);
+            astString.addSection(this.axis[1].styleString);
+        } else {
+            const i = `${this.axisIndex}`;
+            
+            astString.add(`TextLab(${i})`, this.visible);
+            astString.add(`Font(TextLab${i})`, this.font);
+            astString.add(`Size(TextLab${i})`, this.fontSize);
+            astString.add(`Color(TextLab${i})`, this.color);
+            astString.add(`TextLabGap(${i})`, this.gap);
+        
+            // Settings which are per-axis only
+            astString.add(`Label(${i})`, this.text);
+        }
+        
+        return astString.toString();
+    }
+
+    @action setVisible(visible: boolean = true) {
+        this.visible = visible;
+    }
+
+    @action setColor = (color: number) => {
+        this.color = color;
+    };
+
+    @action setGap(gap: number) {
+        this.gap = gap;
+    }
+
+    @action setFont = (font: number) => {
+        this.font = font;
+    };
+
+    @action setFontSize(fontSize: number) {
+        this.fontSize = fontSize;
+    }
+
+    @action setText(text: string) {
+        this.text = text;
+    }
+}
+
 export class OverlayAxisSettings {
     @observable visible?: boolean;
     @observable color?: number;
     @observable width?: number;
-    @observable gap?: number;
 
-    @observable numberVisible?: boolean;
-    @observable numberFont?: number;
-    @observable numberFontSize?: number;
-    @observable numberColor?: number;
-    @observable numberFormat?: string;
-
-    @observable labelVisible?: boolean;
-    @observable labelColor?: number;
-    @observable labelGap?: number;
-    @observable labelFont?: number;
-    @observable labelFontSize?: number;
-    @observable labelText?: string;
-
-    @observable customConfig?: boolean;
+    // Custom settings for individual axes
+    @observable axis: Array<OverlayAxisSettings>;
     
     axisIndex: number;
 
-    constructor(axisIndex: number) {
+    constructor(axisIndex: number = 0) {
         this.axisIndex = axisIndex;
         
+        this.visible = false;
         this.color = 4;
         this.width = 1;
         
-        this.visible = false;
-        this.numberVisible = false;
-        this.labelVisible = false;
-        
-        this.labelFontSize = 15;
-        this.labelFont = 1;
-        
-        this.numberFontSize = 10;
-        this.numberFont = 1;
-        
-        this.customConfig = !axisIndex;
+        if (axisIndex === 0 ) {
+            this.axis = [new OverlayAxisSettings(1), new OverlayAxisSettings(2)];   
+        }
     }
 
     @computed get styleString() {
-        let i: string; //  nothing, 1 or 2
-        let ib: string; // nothing, (1) or (2)
-        let axis: string; // Axes, Axis1 or Axis2
-        
-        if (this.axisIndex > 0) {
-            i = `${this.axisIndex}`;
-            ib = `(${this.axisIndex})`;
-            axis = `Axis${this.axisIndex}`;
-        } else {
-            i = "";
-            ib = "";
-            axis = `Axes`;
-        }
-        
         let astString = new ASTSettingsString();
 
-        // Axes settings
-        astString.add(`DrawAxes${ib}`, this.visible);
-        astString.add(`Color(${axis})`, this.color);
-        astString.add(`Width(${axis})`, this.width, (this.width > 0));
-        astString.add(`Gap${ib}`, this.gap);
-        
-        // Number settings
-        astString.add(`NumLab${ib}`, this.numberVisible);
-        astString.add(`Font(NumLab${i})`, this.numberFont);
-        astString.add(`Size(NumLab${i})`, this.numberFontSize);
-        astString.add(`Color(NumLab${i})`, this.numberColor);
-        
-        // Label settings
-        astString.add(`TextLab${ib}`, this.labelVisible);
-        astString.add(`Font(TextLab${i})`, this.labelFont);
-        astString.add(`Size(TextLab${i})`, this.labelFontSize);
-        astString.add(`Color(TextLab${i})`, this.labelColor);
-        astString.add(`TextLabGap${ib}`, this.labelGap);
-        
-        // Settings which are per-axis only
-        if (this.axisIndex > 0) {
-            astString.add(`Label${ib}`, this.labelText);
-            astString.add(`Format${ib}`, this.numberFormat, (this.numberFormat && this.numberFormat.length > 0));
+        if (this.axisIndex === 0) {
+            astString.add("DrawAxes", this.visible);
+            astString.add("Color(Axes)", this.color);
+            astString.add("Width(Axes)", this.width, (this.width > 0));
+        } else {
+            const i = `${this.axisIndex}`;
+
+            astString.add(`DrawAxes(${i})`, this.visible);
+            astString.add(`Color(Axis${i})`, this.color);
+            astString.add(`Width(Axis${i})`, this.width, (this.width > 0));
         }
         
         return astString.toString();
@@ -366,59 +474,6 @@ export class OverlayAxisSettings {
     @action setWidth(width: number) {
         this.width = width;
     }
-
-    @action setGap(gap: number) {
-        this.gap = gap;
-    }
-
-    @action setNumberVisible(visible: boolean = true) {
-        this.numberVisible = visible;
-    }
-
-    @action setNumberFont = (font: number) => {
-        this.numberFont = font;
-    };
-
-    @action setNumberFontSize(fontSize: number) {
-        this.numberFontSize = fontSize;
-    }
-
-    @action setNumberColor = (color: number) => {
-        this.numberColor = color;
-    };
-    
-    @action setNumberFormat(format: string) {
-        this.numberFormat = format;
-    }
-
-    @action setLabelVisible(visible: boolean = true) {
-        this.labelVisible = visible;
-    }
-
-    @action setLabelColor = (color: number) => {
-        this.labelColor = color;
-    };
-
-    @action setLabelGap(gap: number) {
-        this.labelGap = gap;
-    }
-
-    @action setLabelFont = (font: number) => {
-        this.labelFont = font;
-    };
-
-    @action setLabelFontSize(fontSize: number) {
-        this.labelFontSize = fontSize;
-    }
-
-    @action setLabelText(text: string) {
-        this.labelText = text;
-    }
-    
-    @action setCustomConfig(customConfig: boolean = true) {
-        this.customConfig = customConfig;
-    }
-
 }
 
 export class OverlayStore {
@@ -432,7 +487,8 @@ export class OverlayStore {
     @observable title: OverlayTitleSettings;
     @observable border: OverlayBorderSettings;
     @observable axes: OverlayAxisSettings;
-    @observable axis: Array<OverlayAxisSettings>;
+    @observable numbers: OverlayNumberSettings;
+    @observable labels: OverlayLabelSettings;
     @observable ticks: OverlayTickSettings;
     
     // Extra settings
@@ -462,8 +518,9 @@ export class OverlayStore {
         this.grid = new OverlayGridSettings();
         this.title = new OverlayTitleSettings();
         this.border = new OverlayBorderSettings();
-        this.axes = new OverlayAxisSettings(0);
-        this.axis = [new OverlayAxisSettings(1), new OverlayAxisSettings(2)];
+        this.axes = new OverlayAxisSettings();
+        this.numbers = new OverlayNumberSettings();
+        this.labels = new OverlayLabelSettings();
         this.ticks = new OverlayTickSettings();
     }
 
@@ -473,20 +530,21 @@ export class OverlayStore {
 
     @computed get padding(): Padding {
         const displayTitle = this.title.visible;
-        const displayLabelText = this.axis.map((axis) => {
-            if (axis.customConfig && axis.labelVisible !== undefined) {
-                return axis.labelVisible;
+        const displayLabelText = this.labels.axis.map((axis) => {
+            if (axis.visible !== undefined) {
+                return axis.visible;
             }
-            return this.axes.labelVisible !== false;
+            return this.labels.visible !== false;
         });
-        const displayNumText = this.axis.map((axis) => {
+        
+        const displayNumText = this.numbers.axis.map((axis) => {
             if (this.global.labelType === LabelType.Interior) {
                 return false;
             }
-            if (axis.customConfig && axis.numberVisible !== undefined) {
-                return axis.numberVisible;
+            if (axis.visible !== undefined) {
+                return axis.visible;
             }
-            return this.axes.numberVisible !== false;
+            return this.numbers.visible !== false;
         });
 
         let paddingSize = 65;
@@ -514,17 +572,14 @@ export class OverlayStore {
     private stringify() {
         let astString = new ASTSettingsString();
 
-        astString.addSection(this.grid.styleString);
         astString.addSection(this.global.styleString);
         astString.addSection(this.title.styleString);
+        astString.addSection(this.grid.styleString);
         astString.addSection(this.border.styleString);
-        astString.addSection(this.axes.styleString);
-        for (let axis of this.axis) {
-            if (axis.customConfig) {
-                astString.addSection(axis.styleString);
-            }
-        }
         astString.addSection(this.ticks.styleString);
+        astString.addSection(this.axes.styleString);
+        astString.addSection(this.numbers.styleString);
+        astString.addSection(this.labels.styleString);
         
         astString.addSection(this.extra);
 

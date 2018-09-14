@@ -171,15 +171,15 @@ export class AppStore {
             this.logStore.addWarning(`Problem processing WCS info in file ${frame.frameInfo.fileInfo.name}`, ["ast"]);
             frame.wcsInfo = AST.initDummyFrame();
             // Clear formatting for labels and cursor, to use image coordinates
-            this.overlayStore.axis[0].numberFormat = "";
-            this.overlayStore.axis[1].numberFormat = "";
+            this.overlayStore.numbers.axis[0].format = "";
+            this.overlayStore.numbers.axis[1].format = "";
         }
         else {
             frame.wcsInfo = initResult;
             frame.validWcs = true;
             // Specify degrees and single decimals for WCS info
-            this.overlayStore.axis[0].numberFormat = "d.1";
-            this.overlayStore.axis[1].numberFormat = "d.1";
+            this.overlayStore.numbers.axis[0].format = "d.1";
+            this.overlayStore.numbers.axis[1].format = "d.1";
             console.log("Initialised WCS info from frame");
         }
     };
