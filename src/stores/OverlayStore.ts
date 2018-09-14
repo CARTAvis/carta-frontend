@@ -253,9 +253,9 @@ export class OverlayAxisSettings {
     }
 
     @computed get styleString() {
-        var i: string; //  nothing, 1 or 2
-        var ib: string; // nothing, (1) or (2)
-        var axis: string; // Axes, Axis1 or Axis2
+        let i: string; //  nothing, 1 or 2
+        let ib: string; // nothing, (1) or (2)
+        let axis: string; // Axes, Axis1 or Axis2
         
         if (this.axisIndex > 0) {
             i = `${this.axisIndex}`;
