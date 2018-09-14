@@ -1,6 +1,7 @@
 import * as React from "react";
 import {Colors} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
+import * as _ from "lodash";
 import {LabelType, OverlayStore} from "../../../stores/OverlayStore";
 import {observer} from "mobx-react";
 import {CursorInfo} from "../../../models/CursorInfo";
@@ -39,11 +40,14 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         }
     }
 
-    handleMouseMove = (ev: React.MouseEvent<HTMLCanvasElement>) => {
-        const cursorPosCanvasSpace = {x: ev.nativeEvent.offsetX, y: ev.nativeEvent.offsetY};
+    updateCursorPos = _.throttle((x: number, y: number) => {
         if (this.props.frame.wcsInfo && this.props.onCursorMoved) {
-            this.props.onCursorMoved(this.getCursorInfo(cursorPosCanvasSpace));
+            this.props.onCursorMoved(this.getCursorInfo({x, y}));
         }
+    }, 100);
+
+    handleMouseMove = (ev: React.MouseEvent<HTMLCanvasElement>) => {
+        this.updateCursorPos(ev.nativeEvent.offsetX, ev.nativeEvent.offsetY);
     };
 
     handleClick = (ev: React.MouseEvent<HTMLCanvasElement>) => {
@@ -93,8 +97,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         let cursorPosWCS, cursorPosFormatted;
         if (this.props.frame.validWcs) {
             cursorPosWCS = AST.pixToWCS(this.props.frame.wcsInfo, cursorPosImageSpace.x, cursorPosImageSpace.y);
-            const formatStringX = this.props.overlaySettings.axis[0].cursorFormat ? this.props.overlaySettings.axis[0].cursorFormat : "";
-            const formatStringY = this.props.overlaySettings.axis[1].cursorFormat ? this.props.overlaySettings.axis[1].cursorFormat : "";
+            const formatStringX = this.props.overlaySettings.axis[0].numberFormat ? this.props.overlaySettings.axis[0].numberFormat : "";
+            const formatStringY = this.props.overlaySettings.axis[1].numberFormat ? this.props.overlaySettings.axis[1].numberFormat : "";
             cursorPosFormatted = AST.getFormattedCoordinates(this.props.frame.wcsInfo, cursorPosWCS.x, cursorPosWCS.y, `Format(1) = ${formatStringX}, Format(2) = ${formatStringY}`);
         }
         return {
@@ -121,15 +125,16 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 Colors.BLACK,        // 0
                 Colors.WHITE,        // 1
                 Colors.RED4,         // 2
-                Colors.GREEN4,      // 3
-                Colors.BLUE4,        // 4
-                Colors.TURQUOISE4,   // 5
-                Colors.VERMILION4,   // 6
-                Colors.GOLD4,        // 7
-                Colors.LIGHT_GRAY4   // 8
+                Colors.FOREST3,      // 3
+                Colors.BLUE1,        // 4
+                Colors.TURQUOISE5,   // 5
+                Colors.VIOLET4,   // 6
+                Colors.GOLD5,        // 7
+                Colors.GRAY4   // 8
             ]);
 
             AST.setCanvas(this.canvas);
+
             AST.plot(
                 frame.wcsInfo,
                 frame.requiredFrameView.xMin, frame.requiredFrameView.xMax,

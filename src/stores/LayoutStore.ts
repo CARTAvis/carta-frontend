@@ -78,19 +78,20 @@ export class LayoutStore {
         this.layoutConfig = config;
     };
 
-    addStateWatch = autorun(() => {
-        if (!this.layout) {
-            return;
-        }
-
-        this.layout.on("stateChanged", () => {
-            if (this.layout.isInitialised) {
-                const newConfig = this.layout.toConfig();
-                this.addLayoutConfigToHistory(newConfig);
-                this.layoutConfig = newConfig;
-            }
-        });
-    });
+    // The state watch seems to be triggereing on far too many changes, so this is disabled for now.
+    // addStateWatch = autorun(() => {
+    //     if (!this.layout) {
+    //         return;
+    //     }
+    //
+    //     this.layout.on("stateChanged", () => {
+    //         if (this.layout.isInitialised) {
+    //             const newConfig = this.layout.toConfig();
+    //             this.addLayoutConfigToHistory(newConfig);
+    //             this.layoutConfig = newConfig;
+    //         }
+    //     });
+    // });
 
     @action clearLayoutHistory = () => {
         if (!this._layoutHistory) {
