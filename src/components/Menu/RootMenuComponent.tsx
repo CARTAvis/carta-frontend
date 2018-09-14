@@ -136,24 +136,24 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         );
 
         return (
-            <div className="Root-menu">
+            <div className="root-menu">
                 <Popover autoFocus={false} minimal={true} content={fileMenu} position={Position.BOTTOM_LEFT}>
-                    <Menu className="Root-menu-entry">
+                    <Menu className="root-menu-entry">
                         <Menu.Item text="File"/>
                     </Menu>
                 </Popover>
                 <Popover autoFocus={false} minimal={true} content={viewMenu} position={Position.BOTTOM_LEFT}>
-                    <Menu className="Root-menu-entry">
+                    <Menu className="root-menu-entry">
                         <Menu.Item text="View"/>
                     </Menu>
                 </Popover>
                 <Popover autoFocus={false} minimal={true} content={panelMenu} position={Position.BOTTOM_LEFT}>
-                    <Menu className="Root-menu-entry">
+                    <Menu className="root-menu-entry">
                         <Menu.Item text="Layout"/>
                     </Menu>
                 </Popover>
                 <Popover autoFocus={false} minimal={true} content={helpMenu} position={Position.BOTTOM_LEFT}>
-                    <Menu className="Root-menu-entry">
+                    <Menu className="root-menu-entry">
                         <Menu.Item text="Help"/>
                     </Menu>
                 </Popover>

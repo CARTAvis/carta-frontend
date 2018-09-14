@@ -4,6 +4,7 @@ import {CARTA} from "carta-protobuf";
 import FileInfoExtended = CARTA.FileInfoExtended;
 import FileInfo = CARTA.FileInfo;
 import FileListResponse = CARTA.FileListResponse;
+import {TabId} from "@blueprintjs/core";
 
 export class FileBrowserStore {
     @observable fileBrowserDialogVisible = false;
@@ -12,12 +13,16 @@ export class FileBrowserStore {
     @observable selectedFile: FileInfo;
     @observable selectedHDU: string;
     @observable fileInfoExtended: FileInfoExtended;
+    @observable selectedTab: TabId = "fileInfo";
     @observable loadingList = false;
     @observable loadingInfo = false;
+    @observable fileInfoResp = false;
+    @observable respErrmsg: string = "";
 
     @action showFileBrowser = (append = false) => {
         this.appendingFrame = append;
         this.fileBrowserDialogVisible = true;
+        this.selectedTab = "fileInfo";
         this.getFileList("");
     };
 
@@ -41,11 +46,19 @@ export class FileBrowserStore {
 
     @action getFileInfo = (directory: string, file: string, hdu: string) => {
         this.loadingInfo = true;
+        this.fileInfoResp = false;
+        this.fileInfoExtended = null;
         this.backendService.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
-            this.fileInfoExtended = res.fileInfoExtended as FileInfoExtended;
-            this.loadingInfo = false;
+            if (res.fileInfo.name === this.selectedFile.name) {
+                this.fileInfoExtended = res.fileInfoExtended as FileInfoExtended;
+                this.loadingInfo = false;
+            }
+            this.fileInfoResp = true;
         }, err => {
             console.log(err);
+            this.respErrmsg = err;
+            this.fileInfoResp = false;
+            this.fileInfoExtended = null;
             this.loadingInfo = false;
         });
     };
@@ -74,6 +87,10 @@ export class FileBrowserStore {
         if (this.fileList && this.fileList.parent) {
             this.getFileList(this.fileList.parent);
         }
+    }
+
+    @action setSelectedTab(newId: TabId) {
+        this.selectedTab = newId;
     }
 
     private backendService: BackendService;

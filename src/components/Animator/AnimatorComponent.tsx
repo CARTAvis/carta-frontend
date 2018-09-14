@@ -339,7 +339,7 @@ export class AnimatorComponent extends React.Component<CubeControlsComponentProp
         );
 
         return (
-            <div className="animator-container">
+            <div className="animator-widget">
                 {!activeFrame &&
                 <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
                 }
