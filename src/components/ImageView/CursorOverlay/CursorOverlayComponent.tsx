@@ -10,6 +10,8 @@ class CursorOverlayProps {
     width: number;
     top?: number;
     bottom?: number;
+    left?: number;
+    right?: number;
     height?: number;
     unit?: string;
 
@@ -49,22 +51,29 @@ export class CursorOverlayComponent extends React.PureComponent<CursorOverlayPro
         let top = 0;
 
         let styleProps: CSSProperties = {
-            height: height + "px",
+            height: height,
             lineHeight: height + "px"
         };
 
+        if (this.props.left > 0 || this.props.right > 0) {
+            styleProps.width = this.props.width - this.props.left - this.props.right;
+        }
+
         if (this.props.top !== undefined) {
-            styleProps.top = this.props.top + "px";
+            styleProps.top = this.props.top;
         }
         else if (this.props.bottom !== undefined) {
-            styleProps.bottom = this.props.bottom + "px";
+            styleProps.bottom = this.props.bottom;
+        }
+
+        if (this.props.left !== undefined) {
+            styleProps.left = this.props.left;
         }
 
         let className = "cursor-overlay-div";
         if (this.props.docked) {
             className += " docked";
         }
-
         return (
             <div className={className} style={styleProps}>
                 {infoStrings.join("; ")}

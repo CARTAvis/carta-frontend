@@ -89,9 +89,11 @@ export class ImageViewComponent extends React.Component<ImageViewComponentProps>
                     cursorInfo={appStore.cursorInfo}
                     mip={appStore.activeFrame.currentFrameView.mip}
                     width={appStore.overlayStore.viewWidth}
+                    left={appStore.overlayStore.padding.left}
+                    right={appStore.overlayStore.padding.right}
                     docked={this.props.docked}
                     unit={appStore.activeFrame.unit}
-                    bottom={0}
+                    top={appStore.overlayStore.padding.top}
                     showImage={true}
                     showWCS={true}
                     showValue={true}
