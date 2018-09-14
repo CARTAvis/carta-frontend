@@ -1,5 +1,36 @@
 @import "../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
+.equation-div {
+    height: 20px;
+    position: relative;
+    img {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        margin: auto;
+    }
+}
+
+.colormap-select-popover {
+    .bp3-menu {
+        max-height: 300px;
+        overflow: auto;
+        padding: 0;
+    }
+}
+
+.colormap-block {
+    width: 75px;
+    height: 15px;
+    image-rendering: pixelated;
+    -moz-image-rendering: crisp-edges;
+    border-radius: $pt-border-radius;
+    border: 1px solid $gray4;
+    &.bp3-dark {
+        border: 1px solid $gray2;
+    }
+}
+
 .render-config-container {
     display: flex;
     width: 100%;
@@ -8,35 +39,6 @@
     .modebar {
         background: rgba($blue3, 0.05) !important;
         border-bottom-left-radius: 5px;
-    }
-
-    .equation-div {
-        height: 20px;
-        position: relative;
-        img {
-            position:absolute;
-            top:0;
-            bottom:0;
-            margin:auto;
-        }
-    }
-
-    .bp3-select-popover .bp3-menu {
-        max-height: 300px;
-        overflow: auto;
-        padding: 0;
-    }
-
-    .colormap-block {
-        width: 75px;
-        height: 15px;
-        image-rendering: pixelated;
-        -moz-image-rendering: crisp-edges;
-        border-radius: $pt-border-radius;
-        border: 1px solid $gray4;
-        &.bp3-dark {
-            border: 1px solid $gray2;
-        }
     }
 
     .colormap-config {

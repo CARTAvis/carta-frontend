@@ -448,7 +448,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                     <FormGroup label={"Color map"} inline={true}>
                         <ColorMapSelect
                             activeItem={frame.renderConfig.colorMapName}
-                            popoverProps={{minimal: true, position: "auto-end"}}
+                            popoverProps={{minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"}}
                             filterable={false}
                             items={FrameRenderConfig.COLOR_MAPS_ALL}
                             onItemSelect={this.handleColorMapChange}
