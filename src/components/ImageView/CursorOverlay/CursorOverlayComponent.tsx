@@ -60,8 +60,13 @@ export class CursorOverlayComponent extends React.PureComponent<CursorOverlayPro
             styleProps.bottom = this.props.bottom + "px";
         }
 
+        let className = "cursor-overlay-div";
+        if (this.props.docked) {
+            className += " docked";
+        }
+
         return (
-            <div className={"cursor-overlay-div"} style={styleProps}>
+            <div className={className} style={styleProps}>
                 {infoStrings.join("; ")}
             </div>
         );
