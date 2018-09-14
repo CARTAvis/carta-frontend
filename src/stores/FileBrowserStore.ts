@@ -48,13 +48,17 @@ export class FileBrowserStore {
         this.loadingInfo = true;
         this.fileInfoResp = false;
         this.backendService.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
-            this.fileInfoResp = true;
-            this.fileInfoExtended = res.fileInfoExtended as FileInfoExtended;
+            if (res.fileInfo.name === this.selectedFile.name) {
+                this.fileInfoExtended = res.fileInfoExtended as FileInfoExtended;
+            } else {
+                this.fileInfoExtended = null;
+            }
             this.loadingInfo = false;
+            this.fileInfoResp = true;
         }, err => {
             console.log(err);
-            this.fileInfoResp = false;
             this.respErrmsg = err;
+            this.fileInfoResp = false;
             this.fileInfoExtended = null;
             this.loadingInfo = false;
         });
