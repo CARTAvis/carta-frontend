@@ -45,14 +45,14 @@ export class FileListComponent extends React.Component<{
             let sortedFiles;
             switch (this.state.sortColumn) {
                 case "name":
-                    sortedFiles = fileList.files.sort((a, b) => this.state.sortDirection * (a.name > b.name ? -1 : 1));
+                    sortedFiles = fileList.files.sort((a, b) => this.state.sortDirection * (a.name < b.name ? -1 : 1));
                     break;
                 case "type":
                     sortedFiles = fileList.files.sort((a, b) => this.state.sortDirection * (a.type > b.type ? -1 : 1));
                     break;
                 case "size":
                 default:
-                    sortedFiles = fileList.files.sort((a, b) => this.state.sortDirection * (a.size > b.size ? -1 : 1));
+                    sortedFiles = fileList.files.sort((a, b) => this.state.sortDirection * (a.size < b.size ? -1 : 1));
                     break;
             }
             fileEntries.push(sortedFiles.map((file: CARTA.FileInfo) => {
