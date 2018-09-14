@@ -1,12 +1,12 @@
-.raster-canvas {
-    position: absolute;
-    z-index: -1;
-}
-
 .raster-div {
     position: absolute;
     left: 0;
     &.docked {
         z-index: 1;
+    }
+
+    .raster-canvas {
+        position: absolute;
+        z-index: -1;
     }
 }

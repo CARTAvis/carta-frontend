@@ -1,8 +1,8 @@
-.Root-menu {
+.root-menu {
     text-align: left;
     display: flex;
-}
 
-.Root-menu-entry {
-    min-width: 0 !important;
+    .root-menu-entry {
+        min-width: 0 !important;
+    }
 }
