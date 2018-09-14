@@ -46,6 +46,7 @@ export class FileBrowserStore {
 
     @action getFileInfo = (directory: string, file: string, hdu: string) => {
         this.loadingInfo = true;
+        this.fileInfoResp = false;
         this.backendService.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
             this.fileInfoResp = true;
             this.fileInfoExtended = res.fileInfoExtended as FileInfoExtended;

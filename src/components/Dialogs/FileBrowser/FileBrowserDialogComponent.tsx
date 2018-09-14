@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, IDialogProps, Intent, NonIdealState, Pre, Tooltip, Tabs, Tab, TabId} from "@blueprintjs/core";
+import {AnchorButton, IDialogProps, Intent, NonIdealState, Pre, Tooltip, Tabs, Tab, TabId, Spinner} from "@blueprintjs/core";
 import "./FileBrowserDialogComponent.css";
 import {CARTA} from "carta-protobuf";
 import FileInfo = CARTA.FileInfo;
@@ -40,17 +40,21 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         };
 
         let infoPanel;
-        if (fileBrowserStore.selectedFile) {
-            if (fileBrowserStore.fileInfoResp) {
-                if ("fileInfo" === fileBrowserStore.selectedTab) {
-                    infoPanel = <Pre className="file-info-pre">{fileInfo}</Pre>;
-                } else if ("header" === fileBrowserStore.selectedTab) {
-                    infoPanel = <Pre className="file-info-pre">{headers}</Pre>;
-                } // probably more tabs will be added in the future
-            } else {
-                infoPanel = <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={fileBrowserStore.respErrmsg + " Select another file from the list on the left"}/>;
+        if (fileBrowserStore.selectedFile) { // select a file
+            if (fileBrowserStore.loadingInfo) { // loading the file
+                infoPanel = <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner"/>} title="Loading file info..."/>;
+            } else { // file loaded
+                if (fileBrowserStore.fileInfoResp) { // fileInfoResp return success
+                    if ("fileInfo" === fileBrowserStore.selectedTab) {
+                        infoPanel = <Pre className="file-info-pre">{fileInfo}</Pre>;
+                    } else if ("header" === fileBrowserStore.selectedTab) {
+                        infoPanel = <Pre className="file-info-pre">{headers}</Pre>;
+                    } // probably more tabs will be added in the future
+                } else { // fileInfoResp return failed
+                    infoPanel = <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={fileBrowserStore.respErrmsg + " Select another file from the list on the left"}/>;
+                }
             }
-        } else {
+        } else { // no file selected
             infoPanel = <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected" description="Select a file from the list on the left"/>;
         }
 
