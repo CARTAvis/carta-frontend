@@ -19,6 +19,8 @@ import logSvg from "../../static/equations/log.svg";
 import sqrtSvg from "../../static/equations/sqrt.svg";
 import squaredSvg from "../../static/equations/squared.svg";
 import gammaSvg from "../../static/equations/gamma.svg";
+import {ChartData, ChartOptions} from "chart.js";
+import {Scatter} from "react-chartjs-2";
 
 const equationSVGMap = new Map([
     [FrameScaling.LINEAR, linearSvg],
@@ -329,58 +331,66 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             unitString = ` (${frame.unit})`;
         }
 
-        let plotLayout: Partial<Layout> = {
-            autosize: true,
-            paper_bgcolor: backgroundColor,
-            plot_bgcolor: backgroundColor,
-            xaxis: {
-                title: `Value${unitString}`,
-                range: this.state.xRange
+        // ChartJS plot
+        let plotOptions: ChartOptions = {
+            maintainAspectRatio: false,
+            legend: {
+                display: false
             },
-            yaxis: {
-                type: "log",
-                showticklabels: false,
-                range: this.state.yRange
+            scales: {
+                xAxes: [{
+                    id: "x-axis-0",
+                    scaleLabel: {
+                        display: true,
+                        labelString: `Value${unitString}`
+                    },
+                    ticks: {
+                        maxRotation: 0
+                    }
+                }
+                ],
+                yAxes: [{
+                    id: "y-axis-0",
+                    scaleLabel: {
+                        display: true,
+                        labelString: "Count"
+                    },
+                    ticks: {
+                        display: false
+                    },
+                    type: "logarithmic"
+                }]
             },
-            margin: {
-                t: 10,
-                r: 10,
-                l: 10,
-                b: 35,
-            },
-            font: {
-                color: appStore.darkTheme ? Colors.LIGHT_GRAY3 : Colors.DARK_GRAY4
-            },
-            shapes: scaleMarkers
+            animation: {
+                duration: 0
+            }
         };
 
-        let plotData: Partial<Data[]> = [];
-        let plotConfig: Partial<Config> = {
-            displaylogo: false,
-            modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "toggleHover", "toggleSpikelines", "hoverClosestCartesian", "hoverCompareCartesian"],
-            setBackground: "transparent",
-            doubleClick: false,
+        let plotData: Partial<ChartData> = {
+            datasets: [
+                {
+                    label: "Histogram",
+                    data: [],
+                    type: "line",
+                    fill: false,
+                    pointRadius: 0,
+                    showLine: true,
+                    steppedLine: true,
+                    borderWidth: 1,
+                    borderColor: `${appStore.darkTheme ? Colors.BLUE4 : Colors.BLUE2}`
+                }
+            ]
         };
+
+        let plugins = [];
 
         if (frame && frame.channelHistogram && frame.channelHistogram.bins) {
             const histogram = frame.channelHistogram;
-            let xVals = new Array(histogram.bins.length);
-            for (let i = 0; i < xVals.length; i++) {
-                xVals[i] = histogram.firstBinCenter + histogram.binWidth * i;
+            let vals = new Array(histogram.bins.length);
+            for (let i = 0; i < vals.length; i++) {
+                vals[i] = {X: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
             }
-
-            plotData.push({
-                x: xVals,
-                y: histogram.bins,
-                type: "scatter",
-                hoverinfo: "x",
-                mode: "lines",
-                line: {
-                    width: 1.0,
-                    shape: "hv",
-                    color: Colors.BLUE2
-                }
-            });
+            plotData.datasets[0].data = vals;
         }
         const percentileRanks = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
         const percentileRankbuttons = percentileRanks.map(rank => <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)}>{`${rank}%`}</Button>);
@@ -417,16 +427,8 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                 <div className="histogram-container">
                     {this.state.width > percentileButtonCutoff && percentileButtonsDiv}
                     {this.state.width <= percentileButtonCutoff && percentileSelectDiv}
-                    <div className="histogram-plot" onClick={this.handleMouseClick} onMouseMove={this.handleMouseMove} onContextMenu={this.handleRightClick}>
-                        <Plot
-                            layout={plotLayout}
-                            data={plotData}
-                            config={plotConfig}
-                            ref={ref => this.plotRef = ref}
-                            onRelayout={this.handlePlotRelayout}
-                            useResizeHandler={true}
-                            style={{width: "100%", height: "100%"}}
-                        />
+                    <div className="histogram-plot">
+                        <Scatter data={plotData} width={this.state.width} height={this.state.height} options={plotOptions} plugins={plugins}/>
                     </div>
                 </div>
                 }
