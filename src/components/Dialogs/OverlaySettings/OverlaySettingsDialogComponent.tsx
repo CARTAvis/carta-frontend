@@ -3,7 +3,7 @@ import {AppStore} from "../../../stores/AppStore";
 import {LabelType, SystemType} from "../../../stores/OverlayStore";
 import {observer} from "mobx-react";
 import "./OverlaySettingsDialogComponent.css";
-import {Button, Switch, Dialog, IDialogProps, Intent, Tab, Tabs, NumericInput, FormGroup, MenuItem, HTMLSelect} from "@blueprintjs/core";
+import {Button, Switch, Dialog, IDialogProps, Intent, Tab, Tabs, NumericInput, FormGroup, MenuItem, HTMLSelect, Collapse} from "@blueprintjs/core";
 import {Select, ItemRenderer} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
 import {DraggableDialogComponent} from "../DraggableDialog/DraggableDialogComponent";
@@ -143,7 +143,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         
         const globalPanel = (
             <div className="panel-container">
-                <FormGroup label="Font">
+                <FormGroup inline={true} label="Font">
                     {this.fontSelect(true, global.font, global.setFont)}
                     <NumericInput
                         min={7}
@@ -152,10 +152,10 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => global.setFontSize(value)}
                     />
                 </FormGroup>
-                <FormGroup label="Color">
+                <FormGroup inline={true} label="Color">
                     {this.colorSelect(true, global.color, global.setColor)}
                 </FormGroup>
-                <FormGroup label="Width (px)">
+                <FormGroup inline={true} label="Width" labelInfo="(px)">
                     <NumericInput
                         placeholder="Width"
                         min={0.001}
@@ -166,7 +166,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => global.setWidth(value)}
                     />
                 </FormGroup>
-                <FormGroup label="Tolerance (%)">
+                <FormGroup inline={true} label="Tolerance" labelInfo="(%)">
                     <NumericInput
                         placeholder="Tolerance"
                         min={0.1}
@@ -177,14 +177,14 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => global.setTolerance(value)}
                     />
                 </FormGroup>
-                <FormGroup label="Labelling">
+                <FormGroup inline={true} label="Labelling">
                     <HTMLSelect
                         options={Object.keys(LabelType).map((key) => ({label: key, value: LabelType[key]}))}
                         value={global.labelType}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => global.setLabelType(event.currentTarget.value as LabelType)}
                     />
                 </FormGroup>
-                <FormGroup label="Coordinate system">
+                <FormGroup inline={true} label="Coordinate system">
                     <HTMLSelect
                         options={Object.keys(SystemType).map((key) => ({label: key, value: SystemType[key]}))}
                         value={global.system}
@@ -196,12 +196,13 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         
         const titlePanel = (
             <div className="panel-container">
-                <Switch 
-                    checked={title.visible}
-                    label="Visible"
-                    onChange={(ev) => title.setVisible(ev.currentTarget.checked)}
-                />
-                <FormGroup label="Text" disabled={!title.visible}>
+                <FormGroup inline={true} label="Visible">
+                    <Switch 
+                        checked={title.visible}
+                        onChange={(ev) => title.setVisible(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Text" disabled={!title.visible}>
                     <input
                         className="bp3-input"
                         type="text"
@@ -211,7 +212,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => title.setText(ev.currentTarget.value)}
                     />
                 </FormGroup>
-                <FormGroup label="Font" disabled={!title.visible}>
+                <FormGroup inline={true} label="Font" disabled={!title.visible}>
                     {this.fontSelect(title.visible, title.font, title.setFont)}
                     <NumericInput
                         min={7}
@@ -221,7 +222,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => title.setFontSize(value)}
                     />
                 </FormGroup>
-                <FormGroup label="Gap" disabled={!title.visible}>
+                <FormGroup inline={true} label="Gap" disabled={!title.visible}>
                     <NumericInput
                         placeholder="Gap"
                         min={0}
@@ -233,7 +234,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => title.setGap(value)}
                     />
                 </FormGroup>
-                <FormGroup label="Color" disabled={!title.visible}>
+                <FormGroup inline={true} label="Color" disabled={!title.visible}>
                     {this.colorSelect(title.visible, title.color, title.setColor)}
                 </FormGroup>
             </div>
@@ -241,7 +242,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         
         const ticksPanel = (
             <div className="panel-container">
-                <FormGroup label="Density">
+                <FormGroup inline={true} label="Density">
                     <NumericInput
                         placeholder="Density"
                         min={0}
@@ -249,10 +250,10 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => ticks.setDensity(value)}
                     />
                 </FormGroup>
-                <FormGroup label="Color">
+                <FormGroup inline={true} label="Color">
                     {this.colorSelect(true, ticks.color, ticks.setColor)}
                 </FormGroup>
-                <FormGroup label="Width (px)">
+                <FormGroup inline={true} label="Width" labelInfo="(px)">
                     <NumericInput
                         placeholder="Width"
                         min={0.001}
@@ -263,7 +264,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => ticks.setWidth(value)}
                     />
                 </FormGroup>
-                <FormGroup label="Minor length (%)">
+                <FormGroup inline={true} label="Minor length" labelInfo="(%)">
                     <NumericInput
                         placeholder="Length"
                         min={0}
@@ -275,7 +276,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => ticks.setLength(value)}
                     />
                 </FormGroup>
-                <FormGroup label="Major length (%)">
+                <FormGroup inline={true} label="Major length" labelInfo="(%)">
                     <NumericInput
                         placeholder="Length"
                         min={0}
@@ -292,15 +293,16 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         
         const gridPanel = (
             <div className="panel-container">
-                <Switch
-                    checked={grid.visible}
-                    label="Visible"
-                    onChange={(ev) => grid.setVisible(ev.currentTarget.checked)}
-                />
-                <FormGroup label="Color" disabled={!grid.visible}>
+                <FormGroup inline={true} label="Visible">
+                    <Switch
+                        checked={grid.visible}
+                        onChange={(ev) => grid.setVisible(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Color" disabled={!grid.visible}>
                     {this.colorSelect(grid.visible, grid.color, grid.setColor)}
                 </FormGroup>
-                <FormGroup label="Width (px)" disabled={!grid.visible}>
+                <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!grid.visible}>
                     <NumericInput
                         placeholder="Width"
                         min={0.001}
@@ -312,7 +314,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => grid.setWidth(value)}
                     />
                 </FormGroup>
-                <FormGroup label="Gap">
+                <FormGroup inline={true} label="Gap">
                     <NumericInput
                         placeholder="Gap"
                         min={0.001}
@@ -328,15 +330,16 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         
         const borderPanel = (
             <div className="panel-container">
-                <Switch
-                    checked={border.visible}
-                    label="Visible"
-                    onChange={(ev) => border.setVisible(ev.currentTarget.checked)}
-                />
-                <FormGroup label="Color" disabled={!border.visible}>
+                <FormGroup inline={true} label="Visible">
+                    <Switch
+                        checked={border.visible}
+                        onChange={(ev) => border.setVisible(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Color" disabled={!border.visible}>
                     {this.colorSelect(border.visible, border.color, border.setColor)}
                 </FormGroup>
-                <FormGroup label="Width (px)" disabled={!border.visible}>
+                <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!border.visible}>
                     <NumericInput
                         placeholder="Width"
                         min={0.001}
@@ -351,39 +354,67 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
             </div>
         );
         
+        let axisSettings = (axis) => {
+            return (
+                <React.Fragment>
+                    <FormGroup inline={true} label="Visible">
+                        <Switch
+                            checked={axis.visible}
+                            onChange={(ev) => axis.setVisible(ev.currentTarget.checked)}
+                        />
+                    </FormGroup>
+                    <FormGroup inline={true} label="Color" disabled={!axis.visible}>
+                        {this.colorSelect(axis.visible, axis.color, axis.setColor)}
+                    </FormGroup>
+                    <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!axis.visible}>
+                        <NumericInput
+                            placeholder="Width"
+                            min={0.001}
+                            value={axis.width}
+                            stepSize={0.5}
+                            minorStepSize={0.1}
+                            majorStepSize={1}
+                            disabled={!axis.visible}
+                            onValueChange={(value: number) => axis.setWidth(value)}
+                        />
+                    </FormGroup>
+                </React.Fragment>
+            );
+        };
+        
         const axesPanel = (
             <div className="panel-container">
-                <Switch
-                    checked={axes.visible}
-                    label="Visible"
-                    onChange={(ev) => axes.setVisible(ev.currentTarget.checked)}
-                />
-                <FormGroup label="Color" disabled={!axes.visible}>
-                    {this.colorSelect(axes.visible, axes.color, axes.setColor)}
-                </FormGroup>
-                <FormGroup label="Width (px)" disabled={!axes.visible}>
-                    <NumericInput
-                        placeholder="Width"
-                        min={0.001}
-                        value={axes.width}
-                        stepSize={0.5}
-                        minorStepSize={0.1}
-                        majorStepSize={1}
-                        disabled={!axes.visible}
-                        onValueChange={(value: number) => axes.setWidth(value)}
+                {axisSettings(axes)}
+                <FormGroup inline={true} label="Custom axis X">
+                    <Switch
+                        checked={axes.axis[0].customConfig}
+                        onChange={(ev) => axes.axis[0].setCustomConfig(ev.currentTarget.checked)}
                     />
                 </FormGroup>
+                <Collapse isOpen={axes.axis[0].customConfig}>
+                    {axisSettings(axes.axis[0])}
+                </Collapse>
+                <FormGroup inline={true} label="Custom axis Y">
+                    <Switch
+                        checked={axes.axis[1].customConfig}
+                        onChange={(ev) => axes.axis[1].setCustomConfig(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <Collapse isOpen={axes.axis[1].customConfig}>
+                    {axisSettings(axes.axis[1])}
+                </Collapse>
             </div>
         );
         
         const numbersPanel = (
             <div className="panel-container">
-                <Switch
-                    checked={numbers.visible}
-                    label="Visible"
-                    onChange={(ev) => numbers.setVisible(ev.currentTarget.checked)}
-                />
-                <FormGroup label="Font" disabled={!numbers.visible}>
+                <FormGroup inline={true} label="Visible">
+                    <Switch
+                        checked={numbers.visible}
+                        onChange={(ev) => numbers.setVisible(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Font" disabled={!numbers.visible}>
                     {this.fontSelect(numbers.visible, numbers.font, numbers.setFont)}
                     <NumericInput
                         min={7}
@@ -393,26 +424,26 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => numbers.setFontSize(value)}
                     />
                 </FormGroup>
-                <FormGroup label="Color" disabled={!numbers.visible}>
+                <FormGroup inline={true} label="Color" disabled={!numbers.visible}>
                     {this.colorSelect(numbers.visible, numbers.color, numbers.setColor)}
                 </FormGroup>
-                <FormGroup label="Axis 1 format" disabled={!numbers.axis[0].visible}>
+                <FormGroup inline={true} label="Format" labelInfo="X" disabled={!numbers.visible}>
                     <input
                         className="bp3-input"
                         type="text"
                         placeholder="Format"
                         value={numbers.axis[0].format}
-                        disabled={!numbers.axis[0].visible}
+                        disabled={!numbers.visible}
                         onChange={(ev) => numbers.axis[0].setFormat(ev.currentTarget.value)}
                     />
                 </FormGroup>
-                <FormGroup label="Axis 2 format" disabled={!numbers.axis[1].visible}>
+                <FormGroup inline={true} label="Format" labelInfo="Y" disabled={!numbers.visible}>
                     <input
                         className="bp3-input"
                         type="text"
                         placeholder="Format"
                         value={numbers.axis[1].format}
-                        disabled={!numbers.axis[1].visible}
+                        disabled={!numbers.visible}
                         onChange={(ev) => numbers.axis[1].setFormat(ev.currentTarget.value)}
                     />
                 </FormGroup>
@@ -421,32 +452,33 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         
         const labelsPanel = (
             <div className="panel-container">
-                <Switch
-                    checked={labels.visible}
-                    label="Visible"
-                    onChange={(ev) => labels.setVisible(ev.currentTarget.checked)}
-                />
-                <FormGroup label="Axis 1 text" disabled={!labels.axis[0].visible}>
+                <FormGroup inline={true} label="Visible">
+                    <Switch
+                        checked={labels.visible}
+                        onChange={(ev) => labels.setVisible(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Text" labelInfo="X" disabled={!labels.visible}>
                     <input
                         className="bp3-input"
                         type="text"
                         placeholder="Text"
                         value={labels.axis[0].text}
-                        disabled={!labels.axis[0].visible}
+                        disabled={!labels.visible}
                         onChange={(ev) => labels.axis[0].setText(ev.currentTarget.value)}
                     />
                 </FormGroup>
-                <FormGroup label="Axis 2 text" disabled={!labels.axis[1].visible}>
+                <FormGroup inline={true} label="Text" labelInfo="Y" disabled={!labels.visible}>
                     <input
                         className="bp3-input"
                         type="text"
                         placeholder="Text"
                         value={labels.axis[1].text}
-                        disabled={!labels.axis[1].visible}
+                        disabled={!labels.visible}
                         onChange={(ev) => labels.axis[1].setText(ev.currentTarget.value)}
                     />
                 </FormGroup>
-                <FormGroup label="Font" disabled={!labels.visible}>
+                <FormGroup inline={true} label="Font" disabled={!labels.visible}>
                     {this.fontSelect(labels.visible, labels.font, labels.setFont)}
                     <NumericInput
                         min={7}
@@ -456,7 +488,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => labels.setFontSize(value)}
                     />
                 </FormGroup>
-                <FormGroup label="Gap" disabled={!labels.visible}>
+                <FormGroup inline={true} label="Gap" disabled={!labels.visible}>
                     <NumericInput
                         placeholder="Gap"
                         min={0}
@@ -468,7 +500,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => labels.setGap(value)}
                     />
                 </FormGroup>
-                <FormGroup label="Color" disabled={!labels.visible}>
+                <FormGroup inline={true} label="Color" disabled={!labels.visible}>
                     {this.colorSelect(labels.visible, labels.color, labels.setColor)}
                 </FormGroup>
             </div>

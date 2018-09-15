@@ -274,6 +274,88 @@ export class OverlayTickSettings {
     }
 }
 
+export class OverlayAxisSettings {
+    @observable visible?: boolean;
+    @observable color?: number;
+    @observable width?: number;
+    
+    constructor() {
+        this.visible = false;
+        this.color = 4;
+        this.width = 1;
+    }
+
+    @computed get styleString() {
+        return "";
+    }
+
+    @action setVisible(visible: boolean = true) {
+        this.visible = visible;
+    }
+
+    @action setColor = (color: number) => {
+        this.color = color;
+    };
+
+    @action setWidth(width: number) {
+        this.width = width;
+    }
+}
+
+export class OverlaySingleAxisSettings extends OverlayAxisSettings {
+    axisIndex: number;
+    @observable customConfig: boolean;
+
+    constructor(axisIndex: number = 0) {
+        super();
+        
+        this.axisIndex = axisIndex;
+        this.customConfig = false;
+    }
+
+    @computed get styleString() {        
+        let astString = new ASTSettingsString();
+
+        if (this.customConfig) {
+            const i = `${this.axisIndex}`;
+
+            astString.add(`DrawAxes(${i})`, this.visible);
+            astString.add(`Color(Axis${i})`, this.color);
+            astString.add(`Width(Axis${i})`, this.width, (this.width > 0));
+        }
+        
+        return astString.toString();
+    }
+
+    @action setCustomConfig(customConfig: boolean) {
+        this.customConfig = customConfig;
+    }
+}
+
+export class OverlayAllAxesSettings extends OverlayAxisSettings {
+    @observable axis: Array<OverlaySingleAxisSettings>;
+
+    constructor() {
+        super();
+        
+        this.axis = [new OverlaySingleAxisSettings(1), new OverlaySingleAxisSettings(2)];   
+    }
+
+    @computed get styleString() {        
+        let astString = new ASTSettingsString();
+
+        astString.add("DrawAxes", this.visible);
+        astString.add("Color(Axes)", this.color);
+        astString.add("Width(Axes)", this.width, (this.width > 0));
+                
+        // Add settings for individual axes
+        astString.addSection(this.axis[0].styleString);
+        astString.addSection(this.axis[1].styleString);
+
+        return astString.toString();
+    }
+}
+
 export class OverlayNumberSettings {
     @observable visible?: boolean;
     @observable font?: number;
@@ -284,15 +366,16 @@ export class OverlayNumberSettings {
     // Custom settings for individual axes
     @observable axis: Array<OverlayNumberSettings>;
     axisIndex: number;
+    @observable customConfig: boolean;
 
     constructor(axisIndex: number = 0) {
         this.axisIndex = axisIndex;
         
-        this.visible = false;
-        this.fontSize = 10;
-        this.font = 1;
-        
         if (axisIndex === 0 ) {
+            this.visible = false;
+            this.fontSize = 10;
+            this.font = 1;
+            
             this.axis = [new OverlayNumberSettings(1), new OverlayNumberSettings(2)];
         }
     }
@@ -356,15 +439,16 @@ export class OverlayLabelSettings {
     // Custom settings for individual axes
     @observable axis: Array<OverlayLabelSettings>;
     axisIndex: number;
+    @observable customConfig: boolean;
 
     constructor(axisIndex: number = 0) {
         this.axisIndex = axisIndex;
         
-        this.visible = false;
-        this.fontSize = 15;
-        this.font = 1;
-        
         if (axisIndex === 0 ) {
+            this.visible = false;
+            this.fontSize = 15;
+            this.font = 1;
+        
             this.axis = [new OverlayLabelSettings(1), new OverlayLabelSettings(2)];
         }
     }
@@ -423,59 +507,6 @@ export class OverlayLabelSettings {
     }
 }
 
-export class OverlayAxisSettings {
-    @observable visible?: boolean;
-    @observable color?: number;
-    @observable width?: number;
-
-    // Custom settings for individual axes
-    @observable axis: Array<OverlayAxisSettings>;
-    
-    axisIndex: number;
-
-    constructor(axisIndex: number = 0) {
-        this.axisIndex = axisIndex;
-        
-        this.visible = false;
-        this.color = 4;
-        this.width = 1;
-        
-        if (axisIndex === 0 ) {
-            this.axis = [new OverlayAxisSettings(1), new OverlayAxisSettings(2)];   
-        }
-    }
-
-    @computed get styleString() {
-        let astString = new ASTSettingsString();
-
-        if (this.axisIndex === 0) {
-            astString.add("DrawAxes", this.visible);
-            astString.add("Color(Axes)", this.color);
-            astString.add("Width(Axes)", this.width, (this.width > 0));
-        } else {
-            const i = `${this.axisIndex}`;
-
-            astString.add(`DrawAxes(${i})`, this.visible);
-            astString.add(`Color(Axis${i})`, this.color);
-            astString.add(`Width(Axis${i})`, this.width, (this.width > 0));
-        }
-        
-        return astString.toString();
-    }
-
-    @action setVisible(visible: boolean = true) {
-        this.visible = visible;
-    }
-
-    @action setColor = (color: number) => {
-        this.color = color;
-    };
-
-    @action setWidth(width: number) {
-        this.width = width;
-    }
-}
-
 export class OverlayStore {
     // View size options
     @observable viewWidth: number;
@@ -486,7 +517,7 @@ export class OverlayStore {
     @observable grid: OverlayGridSettings;
     @observable title: OverlayTitleSettings;
     @observable border: OverlayBorderSettings;
-    @observable axes: OverlayAxisSettings;
+    @observable axes: OverlayAllAxesSettings;
     @observable numbers: OverlayNumberSettings;
     @observable labels: OverlayLabelSettings;
     @observable ticks: OverlayTickSettings;
@@ -518,7 +549,7 @@ export class OverlayStore {
         this.grid = new OverlayGridSettings();
         this.title = new OverlayTitleSettings();
         this.border = new OverlayBorderSettings();
-        this.axes = new OverlayAxisSettings();
+        this.axes = new OverlayAllAxesSettings();
         this.numbers = new OverlayNumberSettings();
         this.labels = new OverlayLabelSettings();
         this.ticks = new OverlayTickSettings();
