@@ -47,6 +47,26 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
         this.setState({width, height});
     };
 
+    filterTicks = (scaleInstance) => {
+        // Get inter-tick distance
+        if (scaleInstance.ticksAsNumbers.length >= 4) {
+            const interTickDist = Math.abs(scaleInstance.ticksAsNumbers[2] - scaleInstance.ticksAsNumbers[1]);
+            const initialDist = Math.abs(scaleInstance.ticksAsNumbers[1] - scaleInstance.ticksAsNumbers[0]);
+            const finalDist = Math.abs(scaleInstance.ticksAsNumbers[scaleInstance.ticks.length - 1] - scaleInstance.ticksAsNumbers[scaleInstance.ticks.length - 2]);
+
+            // Perform tick removal if the initial tick is too close
+            if (initialDist < interTickDist * 0.75) {
+                scaleInstance.ticks[0] = null;
+                scaleInstance.ticksAsNumbers[0] = null;
+            }
+            // Perform tick removal if the final tick is too close
+            if (finalDist < interTickDist * 0.75) {
+                scaleInstance.ticks[scaleInstance.ticks.length - 1] = null;
+                scaleInstance.ticksAsNumbers[scaleInstance.ticksAsNumbers.length - 1] = null;
+            }
+        }
+    };
+
     annotationDraw = (chart) => {
         const appStore = this.props.appStore;
         const profileConfig = appStore.spatialProfileWidgets.get(this.props.id);
@@ -101,6 +121,8 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
                         display: true,
                         labelString: `${isXProfile ? "X" : "Y"} coordinate`
                     },
+                    afterTickToLabelConversion: this.filterTicks
+                    ,
                     ticks: {
                         maxRotation: 0
                     }
@@ -112,6 +134,7 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
                         display: true,
                         labelString: "Value"
                     },
+                    afterTickToLabelConversion: this.filterTicks,
                     ticks: {}
                 }]
             },
@@ -230,9 +253,10 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
                         }
 
                         if (yMin !== Number.MAX_VALUE) {
-                            plotOptions.scales.yAxes[0].ticks["suggestedMin"] = yMin;
-                            plotOptions.scales.yAxes[0].ticks["suggestedMax"] = yMax;
+                            plotOptions.scales.yAxes[0].ticks.min = yMin;
+                            plotOptions.scales.yAxes[0].ticks.max = yMax;
                         }
+
                         plotOptions.scales.xAxes[0].ticks.min = lowerBound;
                         plotOptions.scales.xAxes[0].ticks.max = upperBound;
                         plotData.datasets[0].data = vals;
@@ -263,6 +287,23 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
                         let vals = new Array(N);
                         for (let i = 0; i < N; i++) {
                             vals[i] = {x: coordinateData.start + i + lowerBound, y: coordinateData.values[i + lowerBound]};
+                        }
+
+                        let yMin = Number.MAX_VALUE;
+                        let yMax = -Number.MAX_VALUE;
+                        for (let i = 0; i < vals.length; i++) {
+                            if (vals[i].x >= lowerBound && !isNaN(vals[i].y)) {
+                                yMin = Math.min(yMin, vals[i].y);
+                                yMax = Math.max(yMax, vals[i].y);
+                            }
+                            if (vals[i].x > upperBound) {
+                                break;
+                            }
+                        }
+
+                        if (yMin !== Number.MAX_VALUE) {
+                            plotOptions.scales.yAxes[0].ticks.min = yMin;
+                            plotOptions.scales.yAxes[0].ticks.max = yMax;
                         }
 
                         plotOptions.scales.xAxes[0].ticks.min = lowerBound;
