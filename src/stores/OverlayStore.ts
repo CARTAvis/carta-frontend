@@ -169,7 +169,7 @@ export class OverlayGridSettings {
         astString.add("Grid", this.visible);
         astString.add("Color(Grid)", this.color);
         astString.add("Width(Grid)", this.width, (this.width > 0));
-        astString.add("Gap", this.gap); // TODO move to Grid
+        astString.add("Gap", this.gap);
         return astString.toString();
     }
     
