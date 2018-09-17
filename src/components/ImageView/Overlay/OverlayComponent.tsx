@@ -73,23 +73,23 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const LT = {x: settings.padding.left, y: settings.padding.top};
         const RB = {x: settings.viewWidth - settings.padding.right, y: settings.viewHeight - settings.padding.bottom};
         const cursorPosImageSpace = {
-            x: ((cursorPosCanvasSpace.x - LT.x) / (RB.x - LT.x)) * (frameView.xMax - frameView.xMin) + frameView.xMin,
+            x: ((cursorPosCanvasSpace.x - LT.x) / (RB.x - LT.x)) * (frameView.xMax - frameView.xMin) + frameView.xMin - 1,
             // y coordinate is flipped in image space
-            y: ((cursorPosCanvasSpace.y - LT.y) / (RB.y - LT.y)) * (frameView.yMin - frameView.yMax) + frameView.yMax
+            y: ((cursorPosCanvasSpace.y - LT.y) / (RB.y - LT.y)) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
         };
 
         const currentView = this.props.frame.currentFrameView;
 
         const cursorPosLocalImage = {
-            x: Math.floor((cursorPosImageSpace.x - currentView.xMin) / currentView.mip),
-            y: Math.floor((cursorPosImageSpace.y - currentView.yMin) / currentView.mip)
+            x: Math.round((cursorPosImageSpace.x - currentView.xMin) / currentView.mip),
+            y: Math.round((cursorPosImageSpace.y - currentView.yMin) / currentView.mip)
         };
 
         const textureWidth = Math.floor((currentView.xMax - currentView.xMin) / currentView.mip);
         const textureHeight = Math.floor((currentView.yMax - currentView.yMin) / currentView.mip);
 
         let value = undefined;
-        if (cursorPosLocalImage.x >= 0 && cursorPosLocalImage.x <= textureWidth && cursorPosLocalImage.y >= 0 && cursorPosLocalImage.y < textureHeight) {
+        if (cursorPosLocalImage.x >= 0 && cursorPosLocalImage.x < textureWidth && cursorPosLocalImage.y >= 0 && cursorPosLocalImage.y < textureHeight) {
             const index = (cursorPosLocalImage.y * textureWidth + cursorPosLocalImage.x);
             value = this.props.frame.rasterData[index];
         }
