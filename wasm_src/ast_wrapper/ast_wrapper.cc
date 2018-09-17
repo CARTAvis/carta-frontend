@@ -63,8 +63,10 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
 }
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame() {
-    AstFrame* frame = astFrame(2, "");
-    return astFrameSet(frame, "");
+    double offsets[] = {-1, -1};
+    AstFrameSet* frameSet = astFrameSet(astFrame(2, ""), "");
+    astAddFrame(frameSet, 1, astShiftMap(2, offsets, ""), astFrame(2, "Label(1)=X Coordinate,Label(2)=Y Coordinate,Domain=PIXEL"));
+    return frameSet;
 }
 
 EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double imageX2, double imageY1, double imageY2, double width, double height,
