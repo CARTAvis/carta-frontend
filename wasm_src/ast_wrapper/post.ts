@@ -22,7 +22,7 @@ Module.SYS_FK4 = 1;
 Module.SYS_FK5 = 2;
 Module.SYS_GALACTIC = 3;
 Module.SYS_ICRS = 4;
-Module.SYS_J200 = 5;
+Module.SYS_J2000 = 5;
 
 Module.fonts = [
     "{size} sans-serif",
