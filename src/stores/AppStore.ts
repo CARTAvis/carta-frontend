@@ -180,6 +180,8 @@ export class AppStore {
             // Specify degrees and single decimals for WCS info
             this.overlayStore.numbers.axis[0].format = "d.1";
             this.overlayStore.numbers.axis[1].format = "d.1";
+            this.overlayStore.labels.axis[0].text = AST.getString(frame.wcsInfo, "Label(1)");
+            this.overlayStore.labels.axis[1].text = AST.getString(frame.wcsInfo, "Label(2)");
             console.log("Initialised WCS info from frame");
         }
     };
