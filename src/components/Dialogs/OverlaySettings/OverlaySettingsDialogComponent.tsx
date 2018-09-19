@@ -491,23 +491,30 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => labels.setVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Text" labelInfo="(X)" disabled={!labels.visible}>
+                <FormGroup inline={true} label="Set text automatically" disabled={!labels.visible}>
+                    <Switch 
+                        checked={labels.dynamicText}
+                        disabled={!labels.visible}
+                        onChange={(ev) => labels.setDynamicText(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Text" labelInfo="(X)" disabled={!labels.visible || labels.dynamicText}>
                     <input
                         className="bp3-input"
                         type="text"
                         placeholder="Text"
                         value={labels.textX}
-                        disabled={!labels.visible}
+                        disabled={!labels.visible || labels.dynamicText}
                         onChange={(ev) => labels.setTextX(ev.currentTarget.value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Text" labelInfo="(Y)" disabled={!labels.visible}>
+                <FormGroup inline={true} label="Text" labelInfo="(Y)" disabled={!labels.visible || labels.dynamicText}>
                     <input
                         className="bp3-input"
                         type="text"
                         placeholder="Text"
                         value={labels.textY}
-                        disabled={!labels.visible}
+                        disabled={!labels.visible || labels.dynamicText}
                         onChange={(ev) => labels.setTextY(ev.currentTarget.value)}
                     />
                 </FormGroup>

@@ -400,6 +400,7 @@ export class OverlayLabelSettings {
     @observable gap?: number;
     @observable font?: number;
     @observable fontSize?: number;
+    @observable dynamicText?: boolean;
     @observable textX?: string;
     @observable textY?: string;
 
@@ -408,6 +409,7 @@ export class OverlayLabelSettings {
         this.fontSize = 15;
         this.font = 1;
         this.color = 4;
+        this.dynamicText = true;
     }
 
     @computed get styleString() {
@@ -420,8 +422,8 @@ export class OverlayLabelSettings {
         astString.add("TextLabGap", this.gap);
         
         // Add settings for individual axes
-        astString.add(`Label(1)`, this.textX);
-        astString.add(`Label(2)`, this.textY);
+        astString.add(`Label(1)`, this.textX, !this.dynamicText);
+        astString.add(`Label(2)`, this.textY, !this.dynamicText);
         
         return astString.toString();
     }
@@ -444,6 +446,10 @@ export class OverlayLabelSettings {
 
     @action setFontSize(fontSize: number) {
         this.fontSize = fontSize;
+    }
+
+    @action setDynamicText(dynamicText: boolean) {
+        this.dynamicText = dynamicText;
     }
 
     @action setTextX(text: string) {
