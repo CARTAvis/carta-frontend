@@ -47,6 +47,64 @@ export class ASTSettingsString {
     }
 }
 
+export class OverlayGlobalSettings {
+    @observable labelType?: LabelType;
+    @observable color?: number;
+    @observable width?: number;
+    @observable font?: number;
+    @observable fontSize?: number;
+    @observable tolerance?: number; // percentage
+    @observable system?: SystemType;
+
+    @computed get styleString() {
+        let astString = new ASTSettingsString();
+        astString.add("Labelling", this.labelType);
+        astString.add("Color", this.color);
+        astString.add("Width", this.width, (this.width > 0));
+        astString.add("Font", this.font);
+        astString.add("Size", this.fontSize);
+        astString.add("Tol", (this.tolerance / 100).toFixed(2), (this.tolerance >= 0.001)); // convert to fraction
+        astString.add("System", this.system, (this.system !== SystemType.Native));
+        return astString.toString();
+    }
+    
+    constructor() {
+        this.system = SystemType.Native;
+        this.labelType = LabelType.Exterior;
+        this.color = 4;
+        this.width = 1;
+        this.tolerance = 1; // percentage
+    }
+    
+    @action setColor = (color: number) => {
+        this.color = color;
+    };
+
+    @action setWidth(width: number) {
+        this.width = width;
+    }
+
+    @action setFont = (font: number) => {
+        this.font = font;
+    };
+
+    @action setFontSize(fontSize: number) {
+        this.fontSize = fontSize;
+    }
+
+    @action setTolerance(tolerance: number) {
+        this.tolerance = tolerance;
+    }
+    
+    @action setLabelType(labelType: LabelType) {
+        this.labelType = labelType;
+    }
+    
+    @action setSystem(system: SystemType) {
+        this.system = system;
+    }
+}
+
 export class OverlayTitleSettings {
     @observable visible?: boolean;
     @observable font?: number;
@@ -104,12 +162,17 @@ export class OverlayGridSettings {
     @observable visible?: boolean;
     @observable color?: number;
     @observable width?: number;
+    @observable dynamicGap?: boolean;
+    @observable gapX?: number;
+    @observable gapY?: number;
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
         astString.add("Grid", this.visible);
         astString.add("Color(Grid)", this.color);
         astString.add("Width(Grid)", this.width, (this.width > 0));
+        astString.add("Gap(1)", this.gapX, !this.dynamicGap);
+        astString.add("Gap(2)", this.gapY, !this.dynamicGap);
         return astString.toString();
     }
     
@@ -117,6 +180,9 @@ export class OverlayGridSettings {
         this.visible = true;
         this.color = 4;
         this.width = 1;
+        this.dynamicGap = true;
+        this.gapX = 0.2;
+        this.gapY = 0.2;
     }
 
     @action setVisible(visible: boolean = true) {
@@ -129,6 +195,18 @@ export class OverlayGridSettings {
 
     @action setWidth(width: number) {
         this.width = width;
+    }
+
+    @action setDynamicGap(dynamicGap: boolean = true) {
+        this.dynamicGap = dynamicGap;
+    }
+
+    @action setGapX(gap: number) {
+        this.gapX = gap;
+    }
+
+    @action setGapY(gap: number) {
+        this.gapY = gap;
     }
     
 }
@@ -166,7 +244,10 @@ export class OverlayBorderSettings {
 }
 
 export class OverlayTickSettings {
-    @observable density?: number;
+    @observable drawAll?: boolean;
+    @observable densityX?: number;
+    @observable densityY?: number;
+    @observable dynamicDensity?: boolean;
     @observable color?: number;
     @observable width?: number;
     @observable length?: number; // percentage
@@ -174,7 +255,9 @@ export class OverlayTickSettings {
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
-        astString.add("MinTick", this.density);
+        astString.add("TickAll", this.drawAll);
+        astString.add("MinTick(1)", this.densityX, !this.dynamicDensity);
+        astString.add("MinTick(2)", this.densityY, !this.dynamicDensity);
         astString.add("Color(Ticks)", this.color);
         astString.add("Width(Ticks)", this.width, (this.width > 0));
         astString.add("MinTickLen", (this.length / 100).toFixed(2)); // convert to fraction
@@ -183,14 +266,30 @@ export class OverlayTickSettings {
     }
     
     constructor() {
+        this.drawAll = true;
+        this.dynamicDensity = true;
+        this.densityX = 4;
+        this.densityY = 4;
         this.color = 4;
         this.width = 1;
         this.length = 1; // percentage
         this.majorLength = 2; // percentage
     }
 
-    @action setDensity(density: number) {
-        this.density = density;
+    @action setDrawAll(drawAll: boolean = true) {
+        this.drawAll = drawAll;
+    }
+
+    @action setDynamicDensity(dynamicDensity: boolean = true) {
+        this.dynamicDensity = dynamicDensity;
+    }
+
+    @action setDensityX(density: number) {
+        this.densityX = density;
+    }
+
+    @action setDensityY(density: number) {
+        this.densityY = density;
     }
 
     @action setColor = (color: number) => {
@@ -214,86 +313,20 @@ export class OverlayAxisSettings {
     @observable visible?: boolean;
     @observable color?: number;
     @observable width?: number;
-    @observable gap?: number;
-
-    @observable numberVisible?: boolean;
-    @observable numberFont?: number;
-    @observable numberFontSize?: number;
-    @observable numberColor?: number;
-    @observable numberFormat?: string;
-
-    @observable labelVisible?: boolean;
-    @observable labelColor?: number;
-    @observable labelGap?: number;
-    @observable labelFont?: number;
-    @observable labelFontSize?: number;
-    @observable labelText?: string;
-
-    @observable customConfig?: boolean;
     
-    axisIndex: number;
-
-    constructor(axisIndex: number) {
-        this.axisIndex = axisIndex;
-        
+    constructor() {
+        this.visible = false;
         this.color = 4;
         this.width = 1;
-        
-        this.visible = false;
-        this.numberVisible = false;
-        this.labelVisible = false;
-        
-        this.labelFontSize = 15;
-        this.labelFont = 1;
-        
-        this.numberFontSize = 10;
-        this.numberFont = 1;
-        
-        this.customConfig = !axisIndex;
     }
 
-    @computed get styleString() {
-        let i: string; //  nothing, 1 or 2
-        let ib: string; // nothing, (1) or (2)
-        let axis: string; // Axes, Axis1 or Axis2
-        
-        if (this.axisIndex > 0) {
-            i = `${this.axisIndex}`;
-            ib = `(${this.axisIndex})`;
-            axis = `Axis${this.axisIndex}`;
-        } else {
-            i = "";
-            ib = "";
-            axis = `Axes`;
-        }
-        
+    @computed get styleString() {        
         let astString = new ASTSettingsString();
 
-        // Axes settings
-        astString.add(`DrawAxes${ib}`, this.visible);
-        astString.add(`Color(${axis})`, this.color);
-        astString.add(`Width(${axis})`, this.width, (this.width > 0));
-        astString.add(`Gap${ib}`, this.gap);
-        
-        // Number settings
-        astString.add(`NumLab${ib}`, this.numberVisible);
-        astString.add(`Font(NumLab${i})`, this.numberFont);
-        astString.add(`Size(NumLab${i})`, this.numberFontSize);
-        astString.add(`Color(NumLab${i})`, this.numberColor);
-        
-        // Label settings
-        astString.add(`TextLab${ib}`, this.labelVisible);
-        astString.add(`Font(TextLab${i})`, this.labelFont);
-        astString.add(`Size(TextLab${i})`, this.labelFontSize);
-        astString.add(`Color(TextLab${i})`, this.labelColor);
-        astString.add(`TextLabGap${ib}`, this.labelGap);
-        
-        // Settings which are per-axis only
-        if (this.axisIndex > 0) {
-            astString.add(`Label${ib}`, this.labelText);
-            astString.add(`Format${ib}`, this.numberFormat, (this.numberFormat && this.numberFormat.length > 0));
-        }
-        
+        astString.add("DrawAxes", this.visible);
+        astString.add("Color(Axes)", this.color);
+        astString.add("Width(Axes)", this.width, (this.width > 0));
+
         return astString.toString();
     }
 
@@ -308,83 +341,142 @@ export class OverlayAxisSettings {
     @action setWidth(width: number) {
         this.width = width;
     }
+}
+
+export class OverlayNumberSettings {
+    @observable visible?: boolean;
+    @observable font?: number;
+    @observable fontSize?: number;
+    @observable color?: number;
+    @observable format?: string;
+
+    constructor() {
+        this.visible = true;
+        this.fontSize = 10;
+        this.font = 1;
+        this.color = 4;
+        this.format = "d.1";
+    }
+
+    @computed get styleString() {
+        let astString = new ASTSettingsString();
+        
+        astString.add("NumLab", this.visible);
+        astString.add("Font(NumLab)", this.font);
+        astString.add("Size(NumLab)", this.fontSize);
+        astString.add("Color(NumLab)", this.color);
+        
+        // Add settings for individual axes
+        astString.add(`Format(1)`, this.format, (this.format.length > 0));
+        astString.add(`Format(2)`, this.format, (this.format.length > 0));
+        
+        return astString.toString();
+    }
+
+    @action setVisible(visible: boolean = true) {
+        this.visible = visible;
+    }
+
+    @action setFont = (font: number) => {
+        this.font = font;
+    };
+
+    @action setFontSize(fontSize: number) {
+        this.fontSize = fontSize;
+    }
+
+    @action setColor = (color: number) => {
+        this.color = color;
+    };
+
+    @action setFormat(format: string) {
+        this.format = format;
+    }
+}
+
+export class OverlayLabelSettings {
+    @observable visible?: boolean;
+    @observable color?: number;
+    @observable gap?: number;
+    @observable font?: number;
+    @observable fontSize?: number;
+    @observable dynamicText?: boolean;
+    @observable textX?: string;
+    @observable textY?: string;
+
+    constructor() {
+        this.visible = true;
+        this.fontSize = 15;
+        this.font = 1;
+        this.color = 4;
+        this.dynamicText = true;
+    }
+
+    @computed get styleString() {
+        let astString = new ASTSettingsString();
+
+        astString.add("TextLab", this.visible);
+        astString.add("Font(TextLab)", this.font);
+        astString.add("Size(TextLab)", this.fontSize);
+        astString.add("Color(TextLab)", this.color);
+        astString.add("TextLabGap", this.gap);
+        
+        // Add settings for individual axes
+        astString.add(`Label(1)`, this.textX, !this.dynamicText);
+        astString.add(`Label(2)`, this.textY, !this.dynamicText);
+        
+        return astString.toString();
+    }
+
+    @action setVisible(visible: boolean = true) {
+        this.visible = visible;
+    }
+
+    @action setColor = (color: number) => {
+        this.color = color;
+    };
 
     @action setGap(gap: number) {
         this.gap = gap;
     }
 
-    @action setNumberVisible(visible: boolean = true) {
-        this.numberVisible = visible;
-    }
-
-    @action setNumberFont = (font: number) => {
-        this.numberFont = font;
+    @action setFont = (font: number) => {
+        this.font = font;
     };
 
-    @action setNumberFontSize(fontSize: number) {
-        this.numberFontSize = fontSize;
+    @action setFontSize(fontSize: number) {
+        this.fontSize = fontSize;
     }
 
-    @action setNumberColor = (color: number) => {
-        this.numberColor = color;
-    };
-    
-    @action setNumberFormat(format: string) {
-        this.numberFormat = format;
+    @action setDynamicText(dynamicText: boolean) {
+        this.dynamicText = dynamicText;
     }
 
-    @action setLabelVisible(visible: boolean = true) {
-        this.labelVisible = visible;
+    @action setTextX(text: string) {
+        this.textX = text;
     }
 
-    @action setLabelColor = (color: number) => {
-        this.labelColor = color;
-    };
-
-    @action setLabelGap(gap: number) {
-        this.labelGap = gap;
+    @action setTextY(text: string) {
+        this.textY = text;
     }
-
-    @action setLabelFont = (font: number) => {
-        this.labelFont = font;
-    };
-
-    @action setLabelFontSize(fontSize: number) {
-        this.labelFontSize = fontSize;
-    }
-
-    @action setLabelText(text: string) {
-        this.labelText = text;
-    }
-    
-    @action setCustomConfig(customConfig: boolean = true) {
-        this.customConfig = customConfig;
-    }
-
 }
 
 export class OverlayStore {
     // View size options
     @observable viewWidth: number;
     @observable viewHeight: number;
-    // Global options
-    @observable labelType?: LabelType;
-    @observable color?: number;
-    @observable width?: number;
-    @observable font?: number;
-    @observable fontSize?: number;
-    @observable tolerance?: number; // percentage
-    @observable system?: SystemType;
 
     // Individual settings
+    @observable global: OverlayGlobalSettings;
     @observable grid: OverlayGridSettings;
     @observable title: OverlayTitleSettings;
     @observable border: OverlayBorderSettings;
     @observable axes: OverlayAxisSettings;
-    @observable axis: Array<OverlayAxisSettings>;
+    @observable numbers: OverlayNumberSettings;
+    @observable labels: OverlayLabelSettings;
     @observable ticks: OverlayTickSettings;
     
-    // Title settings
+    // Extra settings
     
     @observable extra?: string;
     
@@ -407,47 +499,14 @@ export class OverlayStore {
     }
 
     constructor() {
+        this.global = new OverlayGlobalSettings();
         this.grid = new OverlayGridSettings();
         this.title = new OverlayTitleSettings();
         this.border = new OverlayBorderSettings();
-        this.axes = new OverlayAxisSettings(0);
-        this.axis = [new OverlayAxisSettings(1), new OverlayAxisSettings(2)];
+        this.axes = new OverlayAxisSettings();
+        this.numbers = new OverlayNumberSettings();
+        this.labels = new OverlayLabelSettings();
         this.ticks = new OverlayTickSettings();
-
-        // Default settings
-        this.system = SystemType.Native;
-        this.labelType = LabelType.Exterior;
-        this.color = 4;
-        this.width = 1;
-        this.tolerance = 1; // percentage
-    }
-
-    @action setColor = (color: number) => {
-        this.color = color;
-    };
-
-    @action setWidth(width: number) {
-        this.width = width;
-    }
-
-    @action setFont = (font: number) => {
-        this.font = font;
-    };
-
-    @action setFontSize(fontSize: number) {
-        this.fontSize = fontSize;
-    }
-
-    @action setTolerance(tolerance: number) {
-        this.tolerance = tolerance;
-    }
-    
-    @action setLabelType(labelType: LabelType) {
-        this.labelType = labelType;
-    }
-    
-    @action setSystem(system: SystemType) {
-        this.system = system;
     }
 
     @computed get styleString() {
@@ -456,21 +515,8 @@ export class OverlayStore {
 
     @computed get padding(): Padding {
         const displayTitle = this.title.visible;
-        const displayLabelText = this.axis.map((axis) => {
-            if (axis.customConfig && axis.labelVisible !== undefined) {
-                return axis.labelVisible;
-            }
-            return this.axes.labelVisible !== false;
-        });
-        const displayNumText = this.axis.map((axis) => {
-            if (this.labelType === LabelType.Interior) {
-                return false;
-            }
-            if (axis.customConfig && axis.numberVisible !== undefined) {
-                return axis.numberVisible;
-            }
-            return this.axes.numberVisible !== false;
-        });
+        const displayLabelText = this.labels.visible;        
+        const displayNumText = this.numbers.visible;
 
         let paddingSize = 65;
         const minSize = Math.min(this.viewWidth, this.viewHeight);
@@ -480,10 +526,10 @@ export class OverlayStore {
         }
         const minimumPaddingRatio = 0.05;
         const paddingRatios = [
-            Math.max(minimumPaddingRatio, (displayLabelText[1] ? 0.5 : 0) + (displayNumText[1] ? 0.6 : 0)),
+            Math.max(minimumPaddingRatio, (displayLabelText ? 0.5 : 0) + (displayNumText ? 0.6 : 0)),
             minimumPaddingRatio,
             (displayTitle ? 1.0 : minimumPaddingRatio),
-            Math.max(minimumPaddingRatio, (displayLabelText[0] ? 0.4 : 0) + (displayNumText[0] ? 0.6 : 0))
+            Math.max(minimumPaddingRatio, (displayLabelText ? 0.4 : 0) + (displayNumText ? 0.6 : 0))
         ];
 
         const paddingValues = paddingRatios.map(r => r * paddingSize);
@@ -497,24 +543,15 @@ export class OverlayStore {
 
     private stringify() {
         let astString = new ASTSettingsString();
-        astString.add("Labelling", this.labelType);
-        astString.add("Color", this.color);
-        astString.add("Width", this.width, (this.width > 0));
-        astString.add("Font", this.font);
-        astString.add("Size", this.fontSize);
-        astString.add("Tol", (this.tolerance / 100).toFixed(2), (this.tolerance >= 0.001)); // convert to fraction
-        astString.add("System", this.system, (this.system !== SystemType.Native));
-        
-        astString.addSection(this.grid.styleString);
+
+        astString.addSection(this.global.styleString);
         astString.addSection(this.title.styleString);
+        astString.addSection(this.grid.styleString);
         astString.addSection(this.border.styleString);
-        astString.addSection(this.axes.styleString);
-        for (let axis of this.axis) {
-            if (axis.customConfig) {
-                astString.addSection(axis.styleString);
-            }
-        }
         astString.addSection(this.ticks.styleString);
+        astString.addSection(this.axes.styleString);
+        astString.addSection(this.numbers.styleString);
+        astString.addSection(this.labels.styleString);
         
         astString.addSection(this.extra);
 
