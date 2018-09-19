@@ -19,7 +19,11 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                 fileInfo += `${header.name} = ${header.value}\n`;
             });
             fileBrowserStore.fileInfoExtended.headerEntries.forEach(header => {
-                headers += `${header.name} = ${header.value}\n`;
+                if (header.name === "END") {
+                    headers += `${header.name}\n`;
+                } else {
+                    headers += `${header.name} = ${header.value}\n`;
+                }
             });
         }
 
