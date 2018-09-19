@@ -2,12 +2,13 @@
 
 .cursor-overlay-div {
     position: absolute;
-    background-color: rgba($blue3, 0.05);
+    background-color: rgba($gray1, 0.6);
     padding-left: 5px;
     width: 100%;
     vertical-align: middle;
     font-family: monospace;
     font-size: 12px;
+    color: $light-gray5;
     &.docked {
         z-index: 2;
     }

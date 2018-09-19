@@ -518,11 +518,12 @@ export class OverlayStore {
         if (minSize < scalingStartSize) {
             paddingSize = Math.max(15, minSize / scalingStartSize * paddingSize);
         }
+        const minimumPaddingRatio = 0.05;
         const paddingRatios = [
-            Math.max(0.2, (displayLabelText ? 0.5 : 0) + (displayNumText ? 0.6 : 0)),
-            0.2,
-            (displayTitle ? 1.0 : 0.2),
-            Math.max(0.2, (displayLabelText ? 0.4 : 0) + (displayNumText ? 0.6 : 0))
+            Math.max(minimumPaddingRatio, (displayLabelText ? 0.5 : 0) + (displayNumText ? 0.6 : 0)),
+            minimumPaddingRatio,
+            (displayTitle ? 1.0 : minimumPaddingRatio),
+            Math.max(minimumPaddingRatio, (displayLabelText ? 0.4 : 0) + (displayNumText ? 0.6 : 0))
         ];
 
         const paddingValues = paddingRatios.map(r => r * paddingSize);
