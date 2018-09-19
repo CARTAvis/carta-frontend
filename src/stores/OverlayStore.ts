@@ -230,6 +230,7 @@ export class OverlayBorderSettings {
 }
 
 export class OverlayTickSettings {
+    @observable drawAll?: boolean;
     @observable density?: number;
     @observable color?: number;
     @observable width?: number;
@@ -238,6 +239,7 @@ export class OverlayTickSettings {
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
+        astString.add("TickAll", this.drawAll);
         astString.add("MinTick", this.density);
         astString.add("Color(Ticks)", this.color);
         astString.add("Width(Ticks)", this.width, (this.width > 0));
@@ -247,10 +249,15 @@ export class OverlayTickSettings {
     }
     
     constructor() {
+        this.drawAll = true;
         this.color = 4;
         this.width = 1;
         this.length = 1; // percentage
         this.majorLength = 2; // percentage
+    }
+
+    @action setDrawAll(drawAll: boolean = true) {
+        this.drawAll = drawAll;
     }
 
     @action setDensity(density: number) {

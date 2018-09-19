@@ -141,6 +141,11 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         const numbers = overlayStore.numbers;
         const labels = overlayStore.labels;
         
+        const interior: boolean = (global.labelType === LabelType.Interior);
+        
+        const disabledIfInterior = (interior && "Does not apply to interior labelling.");
+        const disabledIfExterior = (!interior && "Does not apply to exterior labelling.");
+        
         const globalPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Font">
@@ -242,6 +247,18 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         
         const ticksPanel = (
             <div className="panel-container">
+                <FormGroup 
+                    inline={true}
+                    label="Draw on all edges"
+                    disabled={interior}
+                    helperText={disabledIfInterior}
+                >
+                    <Switch 
+                        checked={ticks.drawAll}
+                        disabled={interior}
+                        onChange={(ev) => ticks.setDrawAll(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
                 <FormGroup inline={true} label="Density">
                     <NumericInput
                         placeholder="Density"
@@ -359,9 +376,15 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <div className="panel-container">
                     {settingsFunction(axesObj)}
                     <Divider/>
-                    <FormGroup inline={true} label="Custom X axis">
+                    <FormGroup
+                        inline={true}
+                        label="Custom X axis"
+                        disabled={!interior}
+                        helperText={disabledIfExterior}
+                    >
                         <Switch
                             checked={axesObj.axis[0].customConfig}
+                            disabled={!interior}
                             onChange={(ev) => axesObj.axis[0].setCustomConfig(ev.currentTarget.checked)}
                         />
                     </FormGroup>
@@ -369,9 +392,15 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         {settingsFunction(axesObj.axis[0])}
                     </Collapse>
                     <Divider/>
-                    <FormGroup inline={true} label="Custom Y axis">
+                    <FormGroup
+                        inline={true}
+                        label="Custom Y axis"
+                        disabled={!interior}
+                        helperText={disabledIfExterior}
+                    >
                         <Switch
                             checked={axesObj.axis[1].customConfig}
+                            disabled={!interior}
                             onChange={(ev) => axesObj.axis[1].setCustomConfig(ev.currentTarget.checked)}
                         />
                     </FormGroup>
@@ -385,16 +414,33 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         const axisSettings = (axis) => {
             return (
                 <React.Fragment>
-                    <FormGroup inline={true} label="Visible">
+                    <FormGroup
+                        inline={true}
+                        label="Visible"
+                        disabled={!interior}
+                        helperText={disabledIfExterior}
+                    >
                         <Switch
                             checked={axis.visible}
+                            disabled={!interior}
                             onChange={(ev) => axis.setVisible(ev.currentTarget.checked)}
                         />
                     </FormGroup>
-                    <FormGroup inline={true} label="Color" disabled={!axis.visible}>
-                        {this.colorSelect(axis.visible, axis.color, axis.setColor)}
+                    <FormGroup
+                        inline={true}
+                        label="Color"
+                        disabled={!interior || !axis.visible}
+                        helperText={disabledIfExterior}
+                    >
+                        {this.colorSelect(interior && axis.visible, axis.color, axis.setColor)}
                     </FormGroup>
-                    <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!axis.visible}>
+                    <FormGroup
+                        inline={true}
+                        label="Width"
+                        labelInfo="(px)"
+                        disabled={!interior || !axis.visible}
+                        helperText={disabledIfExterior}
+                    >
                         <NumericInput
                             placeholder="Width"
                             min={0.001}
@@ -402,7 +448,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                             stepSize={0.5}
                             minorStepSize={0.1}
                             majorStepSize={1}
-                            disabled={!axis.visible}
+                            disabled={!interior || !axis.visible}
                             onValueChange={(value: number) => axis.setWidth(value)}
                         />
                     </FormGroup>
