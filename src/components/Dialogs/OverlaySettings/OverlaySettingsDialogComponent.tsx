@@ -265,13 +265,22 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => ticks.setDynamicDensity(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Density">
+                <FormGroup inline={true} label="Density" labelInfo="(X)" disabled={ticks.dynamicDensity}>
                     <NumericInput
                         placeholder="Density"
                         min={0}
-                        value={ticks.density}
+                        value={ticks.densityX}
                         disabled={ticks.dynamicDensity}
-                        onValueChange={(value: number) => ticks.setDensity(value)}
+                        onValueChange={(value: number) => ticks.setDensityX(value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Density" labelInfo="(Y)" disabled={ticks.dynamicDensity}>
+                    <NumericInput
+                        placeholder="Density"
+                        min={0}
+                        value={ticks.densityY}
+                        disabled={ticks.dynamicDensity}
+                        onValueChange={(value: number) => ticks.setDensityY(value)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Color">
@@ -344,16 +353,28 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => grid.setDynamicGap(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Gap">
+                <FormGroup inline={true} label="Gap" labelInfo="(X)" disabled={grid.dynamicGap}>
                     <NumericInput
                         placeholder="Gap"
                         min={0.001}
                         stepSize={0.01}
                         minorStepSize={0.001}
                         majorStepSize={0.1}
-                        value={grid.gap}
+                        value={grid.gapX}
                         disabled={grid.dynamicGap}
-                        onValueChange={(value: number) => grid.setGap(value)}
+                        onValueChange={(value: number) => grid.setGapX(value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Gap" labelInfo="(Y)" disabled={grid.dynamicGap}>
+                    <NumericInput
+                        placeholder="Gap"
+                        min={0.001}
+                        stepSize={0.01}
+                        minorStepSize={0.001}
+                        majorStepSize={0.1}
+                        value={grid.gapY}
+                        disabled={grid.dynamicGap}
+                        onValueChange={(value: number) => grid.setGapY(value)}
                     />
                 </FormGroup>
             </div>
@@ -385,182 +406,138 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
             </div>
         );
         
-        const multiAxisPanel = (axesObj, settingsFunction) => {
-            return (
-                <div className="panel-container">
-                    {settingsFunction(axesObj)}
-                    <Divider/>
-                    <FormGroup
-                        inline={true}
-                        label="Custom X axis"
+        const axesPanel = (
+            <div className="panel-container">
+                <FormGroup
+                    inline={true}
+                    label="Visible"
+                    disabled={!interior}
+                    helperText={disabledIfExterior}
+                >
+                    <Switch
+                        checked={axes.visible}
                         disabled={!interior}
-                        helperText={disabledIfExterior}
-                    >
-                        <Switch
-                            checked={axesObj.axis[0].customConfig}
-                            disabled={!interior}
-                            onChange={(ev) => axesObj.axis[0].setCustomConfig(ev.currentTarget.checked)}
-                        />
-                    </FormGroup>
-                    <Collapse isOpen={axesObj.axis[0].customConfig}>
-                        {settingsFunction(axesObj.axis[0])}
-                    </Collapse>
-                    <Divider/>
-                    <FormGroup
-                        inline={true}
-                        label="Custom Y axis"
-                        disabled={!interior}
-                        helperText={disabledIfExterior}
-                    >
-                        <Switch
-                            checked={axesObj.axis[1].customConfig}
-                            disabled={!interior}
-                            onChange={(ev) => axesObj.axis[1].setCustomConfig(ev.currentTarget.checked)}
-                        />
-                    </FormGroup>
-                    <Collapse isOpen={axesObj.axis[1].customConfig}>
-                        {settingsFunction(axesObj.axis[1])}
-                    </Collapse>
-                </div>
-            );
-        };
+                        onChange={(ev) => axes.setVisible(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup
+                    inline={true}
+                    label="Color"
+                    disabled={!interior || !axes.visible}
+                    helperText={disabledIfExterior}
+                >
+                    {this.colorSelect(interior && axes.visible, axes.color, axes.setColor)}
+                </FormGroup>
+                <FormGroup
+                    inline={true}
+                    label="Width"
+                    labelInfo="(px)"
+                    disabled={!interior || !axes.visible}
+                    helperText={disabledIfExterior}
+                >
+                    <NumericInput
+                        placeholder="Width"
+                        min={0.001}
+                        value={axes.width}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
+                        majorStepSize={1}
+                        disabled={!interior || !axes.visible}
+                        onValueChange={(value: number) => axes.setWidth(value)}
+                    />
+                </FormGroup>
+            </div>
+        );
         
-        const axisSettings = (axis) => {
-            return (
-                <React.Fragment>
-                    <FormGroup
-                        inline={true}
-                        label="Visible"
-                        disabled={!interior}
-                        helperText={disabledIfExterior}
-                    >
-                        <Switch
-                            checked={axis.visible}
-                            disabled={!interior}
-                            onChange={(ev) => axis.setVisible(ev.currentTarget.checked)}
-                        />
-                    </FormGroup>
-                    <FormGroup
-                        inline={true}
-                        label="Color"
-                        disabled={!interior || !axis.visible}
-                        helperText={disabledIfExterior}
-                    >
-                        {this.colorSelect(interior && axis.visible, axis.color, axis.setColor)}
-                    </FormGroup>
-                    <FormGroup
-                        inline={true}
-                        label="Width"
-                        labelInfo="(px)"
-                        disabled={!interior || !axis.visible}
-                        helperText={disabledIfExterior}
-                    >
-                        <NumericInput
-                            placeholder="Width"
-                            min={0.001}
-                            value={axis.width}
-                            stepSize={0.5}
-                            minorStepSize={0.1}
-                            majorStepSize={1}
-                            disabled={!interior || !axis.visible}
-                            onValueChange={(value: number) => axis.setWidth(value)}
-                        />
-                    </FormGroup>
-                </React.Fragment>
-            );
-        };
-        
-        const numberSettings = (axis) => {
-            return (
-                <React.Fragment>
-                    <FormGroup inline={true} label="Visible">
-                        <Switch
-                            checked={axis.visible}
-                            onChange={(ev) => axis.setVisible(ev.currentTarget.checked)}
-                        />
-                    </FormGroup>
-                    <FormGroup inline={true} label="Font" disabled={!axis.visible}>
-                        {this.fontSelect(axis.visible, axis.font, axis.setFont)}
-                        <NumericInput
-                            min={7}
-                            placeholder="Font size"
-                            value={axis.fontSize}
-                            disabled={!axis.visible}
-                            onValueChange={(value: number) => axis.setFontSize(value)}
-                        />
-                    </FormGroup>
-                    <FormGroup inline={true} label="Color" disabled={!axis.visible}>
-                        {this.colorSelect(axis.visible, axis.color, axis.setColor)}
-                    </FormGroup>
-                    { "axisIndex" in axis && 
-                    <FormGroup inline={true} label="Format" disabled={!axis.visible}>
-                        <input
-                            className="bp3-input"
-                            type="text"
-                            placeholder="Format"
-                            value={axis.format}
-                            disabled={!axis.visible}
-                            onChange={(ev) => axis.setFormat(ev.currentTarget.value)}
-                        />
-                    </FormGroup>
-                    }
-                </React.Fragment>
-            );
-        };
+        const numbersPanel = (
+            <div className="panel-container">
+                <FormGroup inline={true} label="Visible">
+                    <Switch
+                        checked={numbers.visible}
+                        onChange={(ev) => numbers.setVisible(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Font" disabled={!numbers.visible}>
+                    {this.fontSelect(numbers.visible, numbers.font, numbers.setFont)}
+                    <NumericInput
+                        min={7}
+                        placeholder="Font size"
+                        value={numbers.fontSize}
+                        disabled={!numbers.visible}
+                        onValueChange={(value: number) => numbers.setFontSize(value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Color" disabled={!numbers.visible}>
+                    {this.colorSelect(numbers.visible, numbers.color, numbers.setColor)}
+                </FormGroup>
+                <FormGroup inline={true} label="Format" disabled={!numbers.visible}>
+                    <input
+                        className="bp3-input"
+                        type="text"
+                        placeholder="Format"
+                        value={numbers.format}
+                        disabled={!numbers.visible}
+                        onChange={(ev) => numbers.setFormat(ev.currentTarget.value)}
+                    />
+                </FormGroup>
+            </div>
+        );
 
-        const labelSettings = (axis) => {
-            return (
-                <React.Fragment>
-                    <FormGroup inline={true} label="Visible">
-                        <Switch
-                            checked={axis.visible}
-                            onChange={(ev) => axis.setVisible(ev.currentTarget.checked)}
-                        />
-                    </FormGroup>
-                    { "axisIndex" in axis && 
-                    <FormGroup inline={true} label="Text" disabled={!axis.visible}>
-                        <input
-                            className="bp3-input"
-                            type="text"
-                            placeholder="Text"
-                            value={axis.text}
-                            disabled={!axis.visible}
-                            onChange={(ev) => axis.setText(ev.currentTarget.value)}
-                        />
-                    </FormGroup>
-                    }
-                    <FormGroup inline={true} label="Font" disabled={!axis.visible}>
-                        {this.fontSelect(axis.visible, axis.font, axis.setFont)}
-                        <NumericInput
-                            min={7}
-                            placeholder="Font size"
-                            value={axis.fontSize}
-                            disabled={!axis.visible}
-                            onValueChange={(value: number) => axis.setFontSize(value)}
-                        />
-                    </FormGroup>
-                    <FormGroup inline={true} label="Gap" disabled={!axis.visible}>
-                        <NumericInput
-                            placeholder="Gap"
-                            min={0}
-                            stepSize={0.01}
-                            minorStepSize={0.001}
-                            majorStepSize={0.1}
-                            value={axis.gap}
-                            disabled={!axis.visible}
-                            onValueChange={(value: number) => axis.setGap(value)}
-                        />
-                    </FormGroup>
-                    <FormGroup inline={true} label="Color" disabled={!axis.visible}>
-                        {this.colorSelect(axis.visible, axis.color, axis.setColor)}
-                    </FormGroup>
-                </React.Fragment>
-            );
-        };
-        
-        const axesPanel = multiAxisPanel(axes, axisSettings);
-        const numbersPanel = multiAxisPanel(numbers, numberSettings);
-        const labelsPanel = multiAxisPanel(labels, labelSettings);
+        const labelsPanel = (
+            <div className="panel-container">
+                <FormGroup inline={true} label="Visible">
+                    <Switch
+                        checked={labels.visible}
+                        onChange={(ev) => labels.setVisible(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Text" labelInfo="(X)" disabled={!labels.visible}>
+                    <input
+                        className="bp3-input"
+                        type="text"
+                        placeholder="Text"
+                        value={labels.textX}
+                        disabled={!labels.visible}
+                        onChange={(ev) => labels.setTextX(ev.currentTarget.value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Text" labelInfo="(Y)" disabled={!labels.visible}>
+                    <input
+                        className="bp3-input"
+                        type="text"
+                        placeholder="Text"
+                        value={labels.textY}
+                        disabled={!labels.visible}
+                        onChange={(ev) => labels.setTextY(ev.currentTarget.value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Font" disabled={!labels.visible}>
+                    {this.fontSelect(labels.visible, labels.font, labels.setFont)}
+                    <NumericInput
+                        min={7}
+                        placeholder="Font size"
+                        value={labels.fontSize}
+                        disabled={!labels.visible}
+                        onValueChange={(value: number) => labels.setFontSize(value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Gap" disabled={!labels.visible}>
+                    <NumericInput
+                        placeholder="Gap"
+                        min={0}
+                        stepSize={0.01}
+                        minorStepSize={0.001}
+                        majorStepSize={0.1}
+                        value={labels.gap}
+                        disabled={!labels.visible}
+                        onValueChange={(value: number) => labels.setGap(value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Color" disabled={!labels.visible}>
+                    {this.colorSelect(labels.visible, labels.color, labels.setColor)}
+                </FormGroup>
+            </div>
+        );
 
         let className = "overlay-settings-dialog";
         if (this.props.appStore.darkTheme) {
