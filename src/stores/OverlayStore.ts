@@ -162,6 +162,7 @@ export class OverlayGridSettings {
     @observable visible?: boolean;
     @observable color?: number;
     @observable width?: number;
+    @observable dynamicGap?: boolean;
     @observable gap?: number;
 
     @computed get styleString() {
@@ -169,7 +170,7 @@ export class OverlayGridSettings {
         astString.add("Grid", this.visible);
         astString.add("Color(Grid)", this.color);
         astString.add("Width(Grid)", this.width, (this.width > 0));
-        astString.add("Gap", this.gap);
+        astString.add("Gap", this.gap, !this.dynamicGap);
         return astString.toString();
     }
     
@@ -177,6 +178,8 @@ export class OverlayGridSettings {
         this.visible = true;
         this.color = 4;
         this.width = 1;
+        this.dynamicGap = true;
+        this.gap = 0.2;
     }
 
     @action setVisible(visible: boolean = true) {
@@ -189,6 +192,10 @@ export class OverlayGridSettings {
 
     @action setWidth(width: number) {
         this.width = width;
+    }
+
+    @action setDynamicGap(dynamicGap: boolean = true) {
+        this.dynamicGap = dynamicGap;
     }
 
     @action setGap(gap: number) {
@@ -232,6 +239,7 @@ export class OverlayBorderSettings {
 export class OverlayTickSettings {
     @observable drawAll?: boolean;
     @observable density?: number;
+    @observable dynamicDensity?: boolean;
     @observable color?: number;
     @observable width?: number;
     @observable length?: number; // percentage
@@ -240,7 +248,7 @@ export class OverlayTickSettings {
     @computed get styleString() {
         let astString = new ASTSettingsString();
         astString.add("TickAll", this.drawAll);
-        astString.add("MinTick", this.density);
+        astString.add("MinTick", this.density, !this.dynamicDensity);
         astString.add("Color(Ticks)", this.color);
         astString.add("Width(Ticks)", this.width, (this.width > 0));
         astString.add("MinTickLen", (this.length / 100).toFixed(2)); // convert to fraction
@@ -250,6 +258,8 @@ export class OverlayTickSettings {
     
     constructor() {
         this.drawAll = true;
+        this.dynamicDensity = true;
+        this.density = 4;
         this.color = 4;
         this.width = 1;
         this.length = 1; // percentage
@@ -262,6 +272,10 @@ export class OverlayTickSettings {
 
     @action setDensity(density: number) {
         this.density = density;
+    }
+
+    @action setDynamicDensity(dynamicDensity: boolean = true) {
+        this.dynamicDensity = dynamicDensity;
     }
 
     @action setColor = (color: number) => {

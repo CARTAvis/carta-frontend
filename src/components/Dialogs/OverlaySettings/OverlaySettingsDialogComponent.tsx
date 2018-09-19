@@ -259,11 +259,18 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => ticks.setDrawAll(ev.currentTarget.checked)}
                     />
                 </FormGroup>
+                <FormGroup inline={true} label="Set density automatically">
+                    <Switch 
+                        checked={ticks.dynamicDensity}
+                        onChange={(ev) => ticks.setDynamicDensity(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
                 <FormGroup inline={true} label="Density">
                     <NumericInput
                         placeholder="Density"
                         min={0}
                         value={ticks.density}
+                        disabled={ticks.dynamicDensity}
                         onValueChange={(value: number) => ticks.setDensity(value)}
                     />
                 </FormGroup>
@@ -331,6 +338,12 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => grid.setWidth(value)}
                     />
                 </FormGroup>
+                <FormGroup inline={true} label="Set gap automatically">
+                    <Switch 
+                        checked={grid.dynamicGap}
+                        onChange={(ev) => grid.setDynamicGap(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
                 <FormGroup inline={true} label="Gap">
                     <NumericInput
                         placeholder="Gap"
@@ -339,6 +352,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         minorStepSize={0.001}
                         majorStepSize={0.1}
                         value={grid.gap}
+                        disabled={grid.dynamicGap}
                         onValueChange={(value: number) => grid.setGap(value)}
                     />
                 </FormGroup>
