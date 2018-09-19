@@ -2,7 +2,6 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, observable} from "mobx";
 import {OverlayStore} from "./OverlayStore";
 import {Point2D} from "../models/Point2D";
-import {Frame} from "plotly.js";
 
 export enum FrameScaling {
     LINEAR = 0,
@@ -108,6 +107,7 @@ export class FrameStore {
     @observable overviewRasterView: FrameView;
     @observable channelHistogram: CARTA.Histogram;
     @observable percentileRanks: Array<number>;
+    @observable selectedPercentile: number;
     @observable valid: boolean;
 
     private overlayStore: OverlayStore;

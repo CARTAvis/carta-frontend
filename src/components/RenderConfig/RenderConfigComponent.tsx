@@ -1,11 +1,10 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
 import {observer} from "mobx-react";
-import * as Plotly from "plotly.js/dist/plotly-cartesian";
-import createPlotlyComponent from "react-plotly.js/factory";
-import {Config, Data, Layout} from "plotly.js";
 import {FormGroup, HTMLSelect, NonIdealState, NumericInput, ButtonGroup, Button, Colors, MenuItem} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
+import {ChartData, ChartOptions} from "chart.js";
+import {Scatter} from "react-chartjs-2";
 import {AppStore} from "../../stores/AppStore";
 import {FrameRenderConfig, FrameScaling, FrameStore} from "../../stores/FrameStore";
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
@@ -19,8 +18,6 @@ import logSvg from "../../static/equations/log.svg";
 import sqrtSvg from "../../static/equations/sqrt.svg";
 import squaredSvg from "../../static/equations/squared.svg";
 import gammaSvg from "../../static/equations/gamma.svg";
-import {ChartData, ChartOptions} from "chart.js";
-import {Scatter} from "react-chartjs-2";
 
 const equationSVGMap = new Map([
     [FrameScaling.LINEAR, linearSvg],
@@ -29,9 +26,6 @@ const equationSVGMap = new Map([
     [FrameScaling.SQUARE, squaredSvg],
     [FrameScaling.GAMMA, gammaSvg]
 ]);
-
-// This allows us to use a minimal Plotly.js bundle with React-Plotly.js (900k compared to 2.7 MB)
-const Plot = createPlotlyComponent(Plotly);
 
 const ColorMapSelect = Select.ofType<string>();
 const ScalingSelect = Select.ofType<FrameScaling>();
@@ -213,47 +207,39 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         }
     };
 
-    private getScaleMarkers(position: number, hovering: boolean, moving: boolean) {
-        // By default, a single horizontal line marker is returned
-        let markers: any[] = [{
-            type: "line",
-            yref: "paper",
-            y0: 0,
-            y1: 1,
-            x0: position,
-            x1: position,
-            line: {
-                color: Colors.RED2,
-                width: 1
-            }
-        }];
+    setCustomPercentileRank = () => {
 
-        // If the marker is being hovered over, then we add a rectangle as well
-        if (hovering) {
-            // split the line into two lines above and below the rectangle, so that the line doesn't show through the semi-transparent rectangle
-            markers.push({...markers[0]});
-            markers[0].y1 = 0.33;
-            markers[1].y0 = 0.66;
-            // add the rectangle
-            markers.push({
-                type: "rect",
-                yref: "paper",
-                y0: 0.33,
-                y1: 0.66,
-                xsizemode: "pixel",
-                xanchor: position,
-                x0: -3,
-                x1: +3,
-                // Using bp3 RED2 but applying opacity
-                fillcolor: `rgba(194, 48, 48, ${moving ? 0.7 : 0.5})`,
-                line: {
-                    width: 1,
-                    color: Colors.RED2
-                }
-            });
+    };
+
+    drawVerticalLine = (chart, x, color) => {
+        if (x < chart.chartArea.left || x > chart.chartArea.right) {
+            return;
         }
-        return markers;
-    }
+
+        chart.chart.ctx.restore();
+        chart.chart.ctx.beginPath();
+        chart.chart.ctx.strokeStyle = color;
+        chart.chart.ctx.lineWidth = 1;
+        chart.chart.ctx.setLineDash([5, 5]);
+        chart.chart.ctx.moveTo(x, chart.chartArea.bottom);
+        chart.chart.ctx.lineTo(x, chart.chartArea.top);
+        chart.chart.ctx.stroke();
+    };
+
+    annotationDraw = (chart) => {
+        const appStore = this.props.appStore;
+        const frame = appStore.activeFrame;
+        const scale = chart.scales["x-axis-0"];
+        if (scale && frame && frame.renderConfig) {
+            const minVal = frame.renderConfig.scaleMin;
+            const maxVal = frame.renderConfig.scaleMax;
+            const minValPixSpace = Math.floor(scale.getPixelForValue(minVal)) + 0.5;
+            const maxValPixSpace = Math.floor(scale.getPixelForValue(maxVal)) + 0.5;
+            const color = `${appStore.darkTheme ? Colors.RED4 : Colors.RED2}`;
+            this.drawVerticalLine(chart, minValPixSpace, color);
+            this.drawVerticalLine(chart, maxValPixSpace, color);
+        }
+    };
 
     renderColormapBlock = (colormap: string) => {
         let className = "colormap-block";
@@ -320,11 +306,6 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         const appStore = this.props.appStore;
         const backgroundColor = appStore.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
         const frame = appStore.activeFrame;
-        let scaleMarkers = [];
-        if (frame) {
-            scaleMarkers = this.getScaleMarkers(frame.renderConfig.scaleMin, this.state.hoveringScaleMin, this.movingScaleMin);
-            scaleMarkers = scaleMarkers.concat(this.getScaleMarkers(frame.renderConfig.scaleMax, this.state.hoveringScaleMax, this.movingScaleMax));
-        }
 
         let unitString = "";
         if (frame && frame.unit) {
@@ -346,9 +327,11 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                     },
                     ticks: {
                         maxRotation: 0
+                    },
+                    afterBuildTicks: axis => {
+                        axis.ticks = axis.ticks.slice(1, -1);
                     }
-                }
-                ],
+                }],
                 yAxes: [{
                     id: "y-axis-0",
                     scaleLabel: {
@@ -356,7 +339,12 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                         labelString: "Count"
                     },
                     ticks: {
-                        display: false
+                        display: true,
+                        min: 0.5
+                    },
+                    afterBuildTicks: (axis) => {
+                        // Limit log axis ticks to power of 10 values
+                        axis.ticks = axis.ticks.filter(v => Math.abs(Math.log10(v) % 1.0) < 0.001);
                     },
                     type: "logarithmic"
                 }]
@@ -382,19 +370,31 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             ]
         };
 
-        let plugins = [];
+        const plugins = [{
+            afterDraw: this.annotationDraw
+        }];
 
         if (frame && frame.channelHistogram && frame.channelHistogram.bins) {
             const histogram = frame.channelHistogram;
             let vals = new Array(histogram.bins.length);
             for (let i = 0; i < vals.length; i++) {
-                vals[i] = {X: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
+                vals[i] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
             }
             plotData.datasets[0].data = vals;
+            plotOptions.scales.xAxes[0].ticks.min = vals[0].x;
+            plotOptions.scales.xAxes[0].ticks.max = vals[vals.length - 1].x;
         }
+
+        if (frame && frame.renderConfig) {
+            const annotationMin = frame.renderConfig.scaleMin;
+            const annotationMax = frame.renderConfig.scaleMax;
+        }
+
         const percentileRanks = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
         const percentileRankbuttons = percentileRanks.map(rank => <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)}>{`${rank}%`}</Button>);
+        percentileRankbuttons.push(<Button small={true} key={-1} onClick={this.setCustomPercentileRank}>Custom</Button>);
         const percentileRankOptions = percentileRanks.map(rank => <option key={rank} value={rank}>{`${rank}%`}</option>);
+        percentileRankOptions.push(<option key={-1} value={-1}>Custom</option>);
 
         const percentileButtonsDiv = (
             <div className="percentile-buttons">
@@ -410,7 +410,6 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                     <HTMLSelect>
                         {percentileRankOptions}
                     </HTMLSelect>
-                    <Button>Apply</Button>
                 </FormGroup>
             </div>
         );
@@ -428,7 +427,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                     {this.state.width > percentileButtonCutoff && percentileButtonsDiv}
                     {this.state.width <= percentileButtonCutoff && percentileSelectDiv}
                     <div className="histogram-plot">
-                        <Scatter data={plotData} width={this.state.width} height={this.state.height} options={plotOptions} plugins={plugins}/>
+                        <Scatter data={plotData} width={this.state.width} height={this.state.height} redraw={true} options={plotOptions} plugins={plugins}/>
                     </div>
                 </div>
                 }
