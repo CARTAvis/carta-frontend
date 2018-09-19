@@ -351,7 +351,7 @@ export class OverlayNumberSettings {
     @observable format?: string;
 
     constructor() {
-        this.visible = false;
+        this.visible = true;
         this.fontSize = 10;
         this.font = 1;
         this.color = 4;
@@ -405,7 +405,7 @@ export class OverlayLabelSettings {
     @observable textY?: string;
 
     constructor() {
-        this.visible = false;
+        this.visible = true;
         this.fontSize = 15;
         this.font = 1;
         this.color = 4;
