@@ -108,6 +108,14 @@ export class FrameStore {
         this.stokes = rasterImageData.stokes;
         this.channel = rasterImageData.channel;
 
+        // if there's a valid channel histogram bundled into the message, update it
+        if (rasterImageData.channelHistogramData) {
+            // Update channel histograms
+            if (rasterImageData.channelHistogramData.regionId === -1 && rasterImageData.channelHistogramData.histograms.length) {
+                this.renderConfig.updateChannelHistogram(rasterImageData.channelHistogramData.histograms[0] as CARTA.Histogram);
+            }
+        }
+
         this.currentFrameView = {
             xMin: rasterImageData.imageBounds.xMin,
             xMax: rasterImageData.imageBounds.xMax,
