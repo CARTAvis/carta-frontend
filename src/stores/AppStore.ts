@@ -350,7 +350,7 @@ export class AppStore {
                     if (rasterImageData.channelHistogramData.regionId === -1) {
                         const channelHist = rasterImageData.channelHistogramData.histograms.find(hist => hist.channel === updatedFrame.requiredChannel);
                         if (channelHist) {
-                            updatedFrame.updateChannelHistogram(channelHist as CARTA.Histogram);
+                            updatedFrame.renderConfig.updateChannelHistogram(channelHist as CARTA.Histogram);
                         }
                     }
                 }
@@ -366,7 +366,7 @@ export class AppStore {
             if (updatedFrame && regionHistogramData.regionId === -1 && regionHistogramData.stokes === updatedFrame.requiredStokes) {
                 const channelHist = regionHistogramData.histograms.find(hist => hist.channel === updatedFrame.requiredChannel);
                 if (channelHist) {
-                    updatedFrame.updateChannelHistogram(channelHist as CARTA.Histogram);
+                    updatedFrame.renderConfig.updateChannelHistogram(channelHist as CARTA.Histogram);
                 }
             }
         });

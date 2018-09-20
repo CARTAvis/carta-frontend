@@ -6,7 +6,8 @@ import {Select} from "@blueprintjs/select";
 import {ChartData, ChartOptions} from "chart.js";
 import {Scatter} from "react-chartjs-2";
 import {AppStore} from "../../stores/AppStore";
-import {FrameRenderConfig, FrameScaling, FrameStore} from "../../stores/FrameStore";
+import {FrameStore} from "../../stores/FrameStore";
+import {RenderConfigStore, FrameScaling} from "../../stores/RenderConfigStore";
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
 import "./RenderConfigComponent.css";
 
@@ -132,7 +133,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                         this.setState({hoveringScaleMax: true, hoveringScaleMin: false});
                     }
                     else {
-                        frame.renderConfig.scaleMin = Math.max(cursorVal, frame.histogramMin);
+                        frame.renderConfig.scaleMin = Math.max(cursorVal, frame.renderConfig.histogramMin);
                     }
                 }
                 else if (this.movingScaleMax) {
@@ -143,7 +144,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                         this.setState({hoveringScaleMin: true, hoveringScaleMax: false});
                     }
                     else {
-                        frame.renderConfig.scaleMax = Math.min(cursorVal, frame.histogramMax);
+                        frame.renderConfig.scaleMax = Math.min(cursorVal, frame.renderConfig.histogramMax);
                     }
                 }
                 else if (Math.abs(ev.nativeEvent.offsetX - posScaleMin) < pixelThreshold) {
@@ -201,22 +202,23 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
     };
 
     handlePercentileRankClick = (value: number) => {
-        if (!this.props.appStore.activeFrame.setPercentileRank(value)) {
+        if (!this.props.appStore.activeFrame.renderConfig.setPercentileRank(value)) {
             this.props.appStore.alertStore.showAlert(`Couldn't set percentile of rank ${value}%`);
             this.props.appStore.logStore.addError(`Couldn't set percentile of rank ${value}%`, ["render"]);
         }
     };
 
     handlePercentileRankSelectChanged = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        this.props.appStore.activeFrame.setPercentileRank(+event.currentTarget.value);
+        this.props.appStore.activeFrame.renderConfig.setPercentileRank(+event.currentTarget.value);
     };
 
     setCustomPercentileRank = () => {
-        this.props.appStore.activeFrame.setPercentileRank(-1);
+        this.props.appStore.activeFrame.renderConfig.setPercentileRank(-1);
     };
 
     drawVerticalLine = (chart, x, color) => {
-        if (x < chart.chartArea.left || x > chart.chartArea.right) {
+        if (Math.ceil(x) < chart.chartArea.left || Math.floor(x) > chart.chartArea.right) {
+            console.log(`Attempting to draw line at ${x}. Chart area: ${JSON.stringify(chart.chartArea)}`);
             return;
         }
 
@@ -251,8 +253,8 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             className += " bp3-dark";
         }
         const blockHeight = 15;
-        const N = FrameRenderConfig.COLOR_MAPS_ALL.length;
-        const i = FrameRenderConfig.COLOR_MAPS_ALL.indexOf(colormap);
+        const N = RenderConfigStore.COLOR_MAPS_ALL.length;
+        const i = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
         return (
             <div
                 className={className}
@@ -284,10 +286,10 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
     };
 
     renderScalingSelectItem = (scaling: FrameScaling, {handleClick, modifiers, query}) => {
-        if (!modifiers.matchesPredicate || !FrameRenderConfig.SCALING_TYPES.has(scaling)) {
+        if (!modifiers.matchesPredicate || !RenderConfigStore.SCALING_TYPES.has(scaling)) {
             return null;
         }
-        const scalingName = FrameRenderConfig.SCALING_TYPES.get(scaling);
+        const scalingName = RenderConfigStore.SCALING_TYPES.get(scaling);
 
         const equationDiv = (
             <div className="equation-div">
@@ -385,8 +387,8 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             afterDraw: this.annotationDraw
         }];
 
-        if (frame && frame.channelHistogram && frame.channelHistogram.bins) {
-            const histogram = frame.channelHistogram;
+        if (frame && frame.renderConfig.channelHistogram && frame.renderConfig.channelHistogram.bins) {
+            const histogram = frame.renderConfig.channelHistogram;
             let vals = new Array(histogram.bins.length);
             for (let i = 0; i < vals.length; i++) {
                 vals[i] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
@@ -410,12 +412,12 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         let percentileButtonsDiv, percentileSelectDiv;
         if (displayRankButtons) {
             const percentileRankbuttons = percentileRanks.map(rank => (
-                <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.selectedPercentile === rank}>
+                <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentile === rank}>
                     {`${rank}%`}
                 </Button>
             ));
             percentileRankbuttons.push(
-                <Button small={true} key={-1} onClick={this.setCustomPercentileRank} active={frame.selectedPercentile === -1}>
+                <Button small={true} key={-1} onClick={this.setCustomPercentileRank} active={frame.renderConfig.selectedPercentile === -1}>
                     Custom
                 </Button>
             );
@@ -433,7 +435,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             percentileSelectDiv = (
                 <div className="percentile-select">
                     <FormGroup label="Limits" inline={true}>
-                        <HTMLSelect options={percentileRankOptions} value={frame.selectedPercentile} onChange={this.handlePercentileRankSelectChanged}/>
+                        <HTMLSelect options={percentileRankOptions} value={frame.renderConfig.selectedPercentile} onChange={this.handlePercentileRankSelectChanged}/>
                     </FormGroup>
                 </div>
             );
@@ -455,7 +457,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                             activeItem={frame.renderConfig.scaling}
                             popoverProps={{minimal: true, position: "auto-end"}}
                             filterable={false}
-                            items={Array.from(FrameRenderConfig.SCALING_TYPES.keys())}
+                            items={Array.from(RenderConfigStore.SCALING_TYPES.keys())}
                             onItemSelect={this.handleScalingChange}
                             itemRenderer={this.renderScalingSelectItem}
                         >
@@ -468,7 +470,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                             activeItem={frame.renderConfig.colorMapName}
                             popoverProps={{minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"}}
                             filterable={false}
-                            items={FrameRenderConfig.COLOR_MAPS_ALL}
+                            items={RenderConfigStore.COLOR_MAPS_ALL}
                             onItemSelect={this.handleColorMapChange}
                             itemRenderer={this.renderColormapSelectItem}
                         >
