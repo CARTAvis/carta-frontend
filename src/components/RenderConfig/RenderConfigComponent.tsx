@@ -1,7 +1,7 @@
 import * as React from "react";
 import ReactResizeDetector from "react-resize-detector";
 import {observer} from "mobx-react";
-import {FormGroup, HTMLSelect, NonIdealState, NumericInput, ButtonGroup, Button, Colors, MenuItem} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, NonIdealState, NumericInput, ButtonGroup, Button, Colors, MenuItem, IOptionProps} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {ChartData, ChartOptions} from "chart.js";
 import {Scatter} from "react-chartjs-2";
@@ -201,14 +201,18 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
     };
 
     handlePercentileRankClick = (value: number) => {
-        if (!this.props.appStore.activeFrame.setFromPercentileRank(value)) {
+        if (!this.props.appStore.activeFrame.setPercentileRank(value)) {
             this.props.appStore.alertStore.showAlert(`Couldn't set percentile of rank ${value}%`);
             this.props.appStore.logStore.addError(`Couldn't set percentile of rank ${value}%`, ["render"]);
         }
     };
 
-    setCustomPercentileRank = () => {
+    handlePercentileRankSelectChanged = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        this.props.appStore.activeFrame.setPercentileRank(+event.currentTarget.value);
+    };
 
+    setCustomPercentileRank = () => {
+        this.props.appStore.activeFrame.setPercentileRank(-1);
     };
 
     drawVerticalLine = (chart, x, color) => {
@@ -304,8 +308,15 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
 
     render() {
         const appStore = this.props.appStore;
-        const backgroundColor = appStore.darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
         const frame = appStore.activeFrame;
+
+        if (!frame) {
+            return (
+                <div className="render-config-container">
+                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
+                </div>
+            );
+        }
 
         let unitString = "";
         if (frame && frame.unit) {
@@ -386,52 +397,58 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         }
 
         if (frame && frame.renderConfig) {
+            // Dummy use of scale min/max to trigger re-render when they change
             const annotationMin = frame.renderConfig.scaleMin;
             const annotationMax = frame.renderConfig.scaleMax;
         }
 
-        const percentileRanks = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
-        const percentileRankbuttons = percentileRanks.map(rank => <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)}>{`${rank}%`}</Button>);
-        percentileRankbuttons.push(<Button small={true} key={-1} onClick={this.setCustomPercentileRank}>Custom</Button>);
-        const percentileRankOptions = percentileRanks.map(rank => <option key={rank} value={rank}>{`${rank}%`}</option>);
-        percentileRankOptions.push(<option key={-1} value={-1}>Custom</option>);
-
-        const percentileButtonsDiv = (
-            <div className="percentile-buttons">
-                <ButtonGroup fill={true}>
-                    {percentileRankbuttons}
-                </ButtonGroup>
-            </div>
-        );
-
-        const percentileSelectDiv = (
-            <div className="percentile-select">
-                <FormGroup label="Limits" inline={true}>
-                    <HTMLSelect>
-                        {percentileRankOptions}
-                    </HTMLSelect>
-                </FormGroup>
-            </div>
-        );
-
         const percentileButtonCutoff = 600;
         const histogramCutoff = 430;
+        const displayRankButtons = this.state.width > percentileButtonCutoff;
+        const percentileRanks = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
+
+        let percentileButtonsDiv, percentileSelectDiv;
+        if (displayRankButtons) {
+            const percentileRankbuttons = percentileRanks.map(rank => (
+                <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.selectedPercentile === rank}>
+                    {`${rank}%`}
+                </Button>
+            ));
+            percentileRankbuttons.push(
+                <Button small={true} key={-1} onClick={this.setCustomPercentileRank} active={frame.selectedPercentile === -1}>
+                    Custom
+                </Button>
+            );
+            percentileButtonsDiv = (
+                <div className="percentile-buttons">
+                    <ButtonGroup fill={true}>
+                        {percentileRankbuttons}
+                    </ButtonGroup>
+                </div>
+            );
+        }
+        else {
+            const percentileRankOptions: IOptionProps [] = percentileRanks.map(rank => ({label: `${rank}%`, value: rank}));
+            percentileRankOptions.push({label: "Custom", value: -1});
+            percentileSelectDiv = (
+                <div className="percentile-select">
+                    <FormGroup label="Limits" inline={true}>
+                        <HTMLSelect options={percentileRankOptions} value={frame.selectedPercentile} onChange={this.handlePercentileRankSelectChanged}/>
+                    </FormGroup>
+                </div>
+            );
+        }
 
         return (
             <div className="render-config-container">
-                {!frame &&
-                <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
-                }
-                {frame && this.state.width > histogramCutoff &&
+                {this.state.width > histogramCutoff &&
                 <div className="histogram-container">
-                    {this.state.width > percentileButtonCutoff && percentileButtonsDiv}
-                    {this.state.width <= percentileButtonCutoff && percentileSelectDiv}
+                    {displayRankButtons ? percentileButtonsDiv : percentileSelectDiv}
                     <div className="histogram-plot">
                         <Scatter data={plotData} width={this.state.width} height={this.state.height} redraw={true} options={plotOptions} plugins={plugins}/>
                     </div>
                 </div>
                 }
-                {frame &&
                 <div className="colormap-config">
                     <FormGroup label={"Scaling type"} inline={true}>
                         <ScalingSelect
@@ -497,7 +514,6 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                     </FormGroup>
                     {this.state.width < histogramCutoff && percentileSelectDiv}
                 </div>
-                }
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
         );

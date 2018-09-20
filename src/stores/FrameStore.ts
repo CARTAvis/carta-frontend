@@ -106,7 +106,6 @@ export class FrameStore {
     @observable overviewRasterData: Float32Array;
     @observable overviewRasterView: FrameView;
     @observable channelHistogram: CARTA.Histogram;
-    @observable percentileRanks: Array<number>;
     @observable selectedPercentile: number;
     @observable valid: boolean;
 
@@ -120,7 +119,7 @@ export class FrameStore {
         this.channel = 0;
         this.requiredStokes = 0;
         this.requiredChannel = 0;
-        this.percentileRanks = [0.01, 0.05, 0.1, 0.5, 1, 2, 5, 10, 25, 50, 75, 90, 95, 98, 99, 99.5, 99.9, 99.95, 99.99];
+        this.selectedPercentile = 99.9;
 
         this.renderConfig = new FrameRenderConfig();
         this.renderConfig.bias = 0;
@@ -168,45 +167,6 @@ export class FrameStore {
         return this.overlayStore.viewHeight - this.overlayStore.padding.top - this.overlayStore.padding.bottom;
     }
 
-    @computed get percentiles(): Array<number> {
-        if (!this.percentileRanks || !this.percentileRanks || !this.channelHistogram || !this.channelHistogram.bins.length) {
-            return [];
-        }
-
-        const minVal = this.channelHistogram.firstBinCenter - this.channelHistogram.binWidth / 2.0;
-        const dx = this.channelHistogram.binWidth;
-        const vals = this.channelHistogram.bins;
-        let remainingRanks = this.percentileRanks.slice();
-        let cumulativeSum = 0;
-
-        let totalSum = 0;
-        for (let i = 0; i < vals.length; i++) {
-            totalSum += vals[i];
-        }
-
-        if (totalSum === 0) {
-            return [];
-        }
-
-        let calculatedPercentiles = [];
-
-        for (let i = 0; i < vals.length && remainingRanks.length; i++) {
-            const currentFraction = cumulativeSum / totalSum;
-            const nextFraction = (cumulativeSum + vals[i]) / totalSum;
-            let nextRank = remainingRanks[0] / 100.0;
-            while (nextFraction >= nextRank && remainingRanks.length) {
-                // Assumes a locally uniform distribution between bins
-                const portion = (nextRank - currentFraction) / (nextFraction - currentFraction);
-                calculatedPercentiles.push(minVal + dx * (i + portion));
-                // Move to next rank
-                remainingRanks.shift();
-                nextRank = remainingRanks[0] / 100.0;
-            }
-            cumulativeSum += vals[i];
-        }
-        return calculatedPercentiles;
-    }
-
     @computed get histogramMin() {
         if (!this.channelHistogram) {
             return undefined;
@@ -236,7 +196,8 @@ export class FrameStore {
         }
     }
 
-    @action setFromPercentileRank(rank: number) {
+    @action setPercentileRank(rank: number) {
+        this.selectedPercentile = rank;
         // Find max and min if the rank is 100%
         if (rank === 100) {
             this.renderConfig.scaleMin = this.histogramMin;
@@ -244,25 +205,20 @@ export class FrameStore {
             return true;
         }
 
-        // Look for the appropriate percentile and its complement
-        const indexRank = this.percentileRanks.findIndex(value => Math.abs(rank - value) < 1e-5);
-        const indexRankComplement = this.percentileRanks.findIndex(value => Math.abs((100 - rank) - value) < 1e-5);
-        if (indexRank === -1 || indexRankComplement === -1 || this.percentileRanks.length !== this.percentiles.length) {
+        if (rank < 0 || rank > 100) {
             return false;
         }
 
-        this.renderConfig.scaleMin = this.percentiles[indexRankComplement];
-        this.renderConfig.scaleMax = this.percentiles[indexRank];
+        const rankComplement = 100 - rank;
+        this.renderConfig.scaleMin = this.getPercentile(rankComplement);
+        this.renderConfig.scaleMax = this.getPercentile(rank);
         return true;
     }
 
     @action updateChannelHistogram(histogram: CARTA.Histogram) {
         this.channelHistogram = histogram;
-        // TODO: check if there is an existing (valid) histogram and set of percentiles, and use that by default
-        const i = 3;
-        if (this.percentiles.length > i * 2 && this.percentiles.length === this.percentileRanks.length) {
-            this.renderConfig.scaleMin = this.percentiles[i];
-            this.renderConfig.scaleMax = this.percentiles[this.percentiles.length - 1 - i];
+        if (this.selectedPercentile > 0) {
+            this.setPercentileRank(this.selectedPercentile);
         }
     }
 
@@ -383,6 +339,39 @@ export class FrameStore {
             return 1.0;
         }
         return this.renderHeight * pixelRatio / imageHeight;
+    }
+
+    private getPercentile(rank: number): number {
+        if (!this.channelHistogram || !this.channelHistogram.bins.length) {
+            return undefined;
+        }
+
+        const minVal = this.channelHistogram.firstBinCenter - this.channelHistogram.binWidth / 2.0;
+        const dx = this.channelHistogram.binWidth;
+        const binVals = this.channelHistogram.bins;
+        const fraction = rank / 100.0;
+        let cumulativeSum = 0;
+
+        let totalSum = 0;
+        for (let i = 0; i < binVals.length; i++) {
+            totalSum += binVals[i];
+        }
+
+        if (totalSum === 0) {
+            return undefined;
+        }
+
+        for (let i = 0; i < binVals.length; i++) {
+            const currentFraction = cumulativeSum / totalSum;
+            const nextFraction = (cumulativeSum + binVals[i]) / totalSum;
+            if (nextFraction >= fraction) {
+                // Assumes a locally uniform distribution between bins
+                const portion = (fraction - currentFraction) / (nextFraction - currentFraction);
+                return minVal + dx * (i + portion);
+            }
+            cumulativeSum += binVals[i];
+        }
+        return undefined;
     }
 
 }
