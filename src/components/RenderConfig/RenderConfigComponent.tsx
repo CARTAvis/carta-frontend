@@ -1,9 +1,10 @@
 import * as React from "react";
+import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
 import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect, NonIdealState, NumericInput, ButtonGroup, Button, Colors, MenuItem, IOptionProps} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
-import {ChartData, ChartOptions} from "chart.js";
+import {ChartData, ChartOptions, Chart, ChartArea} from "chart.js";
 import {Scatter} from "react-chartjs-2";
 import {AppStore} from "../../stores/AppStore";
 import {FrameStore} from "../../stores/FrameStore";
@@ -19,6 +20,7 @@ import logSvg from "../../static/equations/log.svg";
 import sqrtSvg from "../../static/equations/sqrt.svg";
 import squaredSvg from "../../static/equations/squared.svg";
 import gammaSvg from "../../static/equations/gamma.svg";
+import {LinePlotComponent, LinePlotComponentProps} from "../Shared/LinePlot/LinePlotComponent";
 
 const equationSVGMap = new Map([
     [FrameScaling.LINEAR, linearSvg],
@@ -44,11 +46,11 @@ class RenderConfigComponentState {
     hoveringScaleMax: boolean;
     xRange: number[];
     yRange: number[];
+    chartArea: ChartArea;
 }
 
 @observer
 export class RenderConfigComponent extends React.Component<RenderConfigComponentProps, RenderConfigComponentState> {
-    private plotRef: any;
     private movingScaleMax: boolean;
     private movingScaleMin: boolean;
     private cachedFrame: FrameStore;
@@ -68,7 +70,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
 
     constructor(props: RenderConfigComponentProps) {
         super(props);
-        this.state = {width: 0, height: 0, hoveringScaleMin: false, hoveringScaleMax: false, xRange: undefined, yRange: undefined};
+        this.state = {width: 0, height: 0, hoveringScaleMin: false, hoveringScaleMax: false, xRange: undefined, yRange: undefined, chartArea: undefined};
     }
 
     componentDidUpdate() {
@@ -82,104 +84,104 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         this.setState({width, height});
     };
 
-    handleRightClick = (ev: React.MouseEvent<HTMLDivElement>) => {
-        ev.preventDefault();
-        this.handleMouseClick(ev);
-    };
-
-    handleMouseClick = (ev: React.MouseEvent<HTMLDivElement>) => {
-        if (this.movingScaleMin || this.movingScaleMax) {
-            this.movingScaleMax = false;
-            this.movingScaleMin = false;
-            return;
-        }
-
-        const frame = this.props.appStore.activeFrame;
-        const pixelThreshold = 5;
-        if (this.plotRef && frame) {
-            const xAxis = this.plotRef.el._fullLayout.xaxis;
-            if (xAxis && xAxis.p2c) {
-                const leftMargin = this.plotRef.el._fullLayout.margin.l;
-                const posScaleMin = xAxis.c2p(frame.renderConfig.scaleMin) + leftMargin;
-                const posScaleMax = xAxis.c2p(frame.renderConfig.scaleMax) + leftMargin;
-                if (Math.abs(ev.nativeEvent.offsetX - posScaleMin) < pixelThreshold) {
-                    this.movingScaleMin = true;
-                    ev.preventDefault();
-                }
-                else if (Math.abs(ev.nativeEvent.offsetX - posScaleMax) < pixelThreshold) {
-                    this.movingScaleMax = true;
-                    ev.preventDefault();
-                }
-            }
-        }
-    };
-
-    handleMouseMove = (ev: React.MouseEvent<HTMLDivElement>) => {
-        const frame = this.props.appStore.activeFrame;
-        const pixelThreshold = 5;
-        if (this.plotRef && frame) {
-            const xAxis = this.plotRef.el._fullLayout.xaxis;
-            if (xAxis && xAxis.p2c) {
-                const leftMargin = this.plotRef.el._fullLayout.margin.l;
-                const cursorVal = xAxis.p2c(ev.nativeEvent.offsetX - leftMargin);
-                const posScaleMin = xAxis.c2p(frame.renderConfig.scaleMin) + leftMargin;
-                const posScaleMax = xAxis.c2p(frame.renderConfig.scaleMax) + leftMargin;
-
-                if (this.movingScaleMin) {
-                    // Handle switchover (from moving min to moving max)
-                    if (cursorVal >= frame.renderConfig.scaleMax) {
-                        this.movingScaleMin = false;
-                        this.movingScaleMax = true;
-                        this.setState({hoveringScaleMax: true, hoveringScaleMin: false});
-                    }
-                    else {
-                        frame.renderConfig.scaleMin = Math.max(cursorVal, frame.renderConfig.histogramMin);
-                    }
-                }
-                else if (this.movingScaleMax) {
-                    // Handle switchover (from moving max to moving min)
-                    if (cursorVal <= frame.renderConfig.scaleMin) {
-                        this.movingScaleMax = false;
-                        this.movingScaleMin = true;
-                        this.setState({hoveringScaleMin: true, hoveringScaleMax: false});
-                    }
-                    else {
-                        frame.renderConfig.scaleMax = Math.min(cursorVal, frame.renderConfig.histogramMax);
-                    }
-                }
-                else if (Math.abs(ev.nativeEvent.offsetX - posScaleMin) < pixelThreshold) {
-                    this.setState({hoveringScaleMin: true, hoveringScaleMax: false});
-                }
-                else if (Math.abs(ev.nativeEvent.offsetX - posScaleMax) < pixelThreshold) {
-                    this.setState({hoveringScaleMax: true, hoveringScaleMin: false});
-                }
-                else if (this.state.hoveringScaleMin || this.state.hoveringScaleMax) {
-                    this.setState({hoveringScaleMax: false, hoveringScaleMin: false});
-                }
-            }
-        }
-    };
-
-    handleMouseUp = (ev: React.MouseEvent<HTMLDivElement>) => {
-        this.movingScaleMin = false;
-        this.movingScaleMax = false;
-    };
-
-    handlePlotRelayout = (ev) => {
-        if (ev["xaxis.range[0]"] !== undefined) {
-            this.setState({xRange: [ev["xaxis.range[0]"], ev["xaxis.range[1]"]]});
-        }
-        else if (ev["xaxis.autorange"]) {
-            this.setState({xRange: undefined});
-        }
-
-        if (ev["yaxis.range[0]"] !== undefined) {
-            this.setState({yRange: [ev["yaxis.range[0]"], ev["yaxis.range[1]"]]});
-        }
-        else if (ev["yaxis.autorange"]) {
-            this.setState({yRange: undefined});
-        }
-    };
+    // handleRightClick = (ev: React.MouseEvent<HTMLDivElement>) => {
+    //     ev.preventDefault();
+    //     this.handleMouseClick(ev);
+    // };
+    //
+    // handleMouseClick = (ev: React.MouseEvent<HTMLDivElement>) => {
+    //     if (this.movingScaleMin || this.movingScaleMax) {
+    //         this.movingScaleMax = false;
+    //         this.movingScaleMin = false;
+    //         return;
+    //     }
+    //
+    //     const frame = this.props.appStore.activeFrame;
+    //     const pixelThreshold = 5;
+    //     if (this.plotRef && frame) {
+    //         const xAxis = this.plotRef.el._fullLayout.xaxis;
+    //         if (xAxis && xAxis.p2c) {
+    //             const leftMargin = this.plotRef.el._fullLayout.margin.l;
+    //             const posScaleMin = xAxis.c2p(frame.renderConfig.scaleMin) + leftMargin;
+    //             const posScaleMax = xAxis.c2p(frame.renderConfig.scaleMax) + leftMargin;
+    //             if (Math.abs(ev.nativeEvent.offsetX - posScaleMin) < pixelThreshold) {
+    //                 this.movingScaleMin = true;
+    //                 ev.preventDefault();
+    //             }
+    //             else if (Math.abs(ev.nativeEvent.offsetX - posScaleMax) < pixelThreshold) {
+    //                 this.movingScaleMax = true;
+    //                 ev.preventDefault();
+    //             }
+    //         }
+    //     }
+    // };
+    //
+    // handleMouseMove = (ev: React.MouseEvent<HTMLDivElement>) => {
+    //     const frame = this.props.appStore.activeFrame;
+    //     const pixelThreshold = 5;
+    //     if (this.plotRef && frame) {
+    //         const xAxis = this.plotRef.el._fullLayout.xaxis;
+    //         if (xAxis && xAxis.p2c) {
+    //             const leftMargin = this.plotRef.el._fullLayout.margin.l;
+    //             const cursorVal = xAxis.p2c(ev.nativeEvent.offsetX - leftMargin);
+    //             const posScaleMin = xAxis.c2p(frame.renderConfig.scaleMin) + leftMargin;
+    //             const posScaleMax = xAxis.c2p(frame.renderConfig.scaleMax) + leftMargin;
+    //
+    //             if (this.movingScaleMin) {
+    //                 // Handle switchover (from moving min to moving max)
+    //                 if (cursorVal >= frame.renderConfig.scaleMax) {
+    //                     this.movingScaleMin = false;
+    //                     this.movingScaleMax = true;
+    //                     this.setState({hoveringScaleMax: true, hoveringScaleMin: false});
+    //                 }
+    //                 else {
+    //                     frame.renderConfig.scaleMin = Math.max(cursorVal, frame.renderConfig.histogramMin);
+    //                 }
+    //             }
+    //             else if (this.movingScaleMax) {
+    //                 // Handle switchover (from moving max to moving min)
+    //                 if (cursorVal <= frame.renderConfig.scaleMin) {
+    //                     this.movingScaleMax = false;
+    //                     this.movingScaleMin = true;
+    //                     this.setState({hoveringScaleMin: true, hoveringScaleMax: false});
+    //                 }
+    //                 else {
+    //                     frame.renderConfig.scaleMax = Math.min(cursorVal, frame.renderConfig.histogramMax);
+    //                 }
+    //             }
+    //             else if (Math.abs(ev.nativeEvent.offsetX - posScaleMin) < pixelThreshold) {
+    //                 this.setState({hoveringScaleMin: true, hoveringScaleMax: false});
+    //             }
+    //             else if (Math.abs(ev.nativeEvent.offsetX - posScaleMax) < pixelThreshold) {
+    //                 this.setState({hoveringScaleMax: true, hoveringScaleMin: false});
+    //             }
+    //             else if (this.state.hoveringScaleMin || this.state.hoveringScaleMax) {
+    //                 this.setState({hoveringScaleMax: false, hoveringScaleMin: false});
+    //             }
+    //         }
+    //     }
+    // };
+    //
+    // handleMouseUp = (ev: React.MouseEvent<HTMLDivElement>) => {
+    //     this.movingScaleMin = false;
+    //     this.movingScaleMax = false;
+    // };
+    //
+    // handlePlotRelayout = (ev) => {
+    //     if (ev["xaxis.range[0]"] !== undefined) {
+    //         this.setState({xRange: [ev["xaxis.range[0]"], ev["xaxis.range[1]"]]});
+    //     }
+    //     else if (ev["xaxis.autorange"]) {
+    //         this.setState({xRange: undefined});
+    //     }
+    //
+    //     if (ev["yaxis.range[0]"] !== undefined) {
+    //         this.setState({yRange: [ev["yaxis.range[0]"], ev["yaxis.range[1]"]]});
+    //     }
+    //     else if (ev["yaxis.autorange"]) {
+    //         this.setState({yRange: undefined});
+    //     }
+    // };
 
     handleColorMapChange = (newColorMap: string) => {
         this.props.appStore.activeFrame.renderConfig.setColorMap(newColorMap);
@@ -214,37 +216,6 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
 
     setCustomPercentileRank = () => {
         this.props.appStore.activeFrame.renderConfig.setPercentileRank(-1);
-    };
-
-    drawVerticalLine = (chart, x, color) => {
-        if (Math.ceil(x) < chart.chartArea.left || Math.floor(x) > chart.chartArea.right) {
-            console.log(`Attempting to draw line at ${x}. Chart area: ${JSON.stringify(chart.chartArea)}`);
-            return;
-        }
-
-        chart.chart.ctx.restore();
-        chart.chart.ctx.beginPath();
-        chart.chart.ctx.strokeStyle = color;
-        chart.chart.ctx.lineWidth = 1;
-        chart.chart.ctx.setLineDash([5, 5]);
-        chart.chart.ctx.moveTo(x, chart.chartArea.bottom);
-        chart.chart.ctx.lineTo(x, chart.chartArea.top);
-        chart.chart.ctx.stroke();
-    };
-
-    annotationDraw = (chart) => {
-        const appStore = this.props.appStore;
-        const frame = appStore.activeFrame;
-        const scale = chart.scales["x-axis-0"];
-        if (scale && frame && frame.renderConfig) {
-            const minVal = frame.renderConfig.scaleMin;
-            const maxVal = frame.renderConfig.scaleMax;
-            const minValPixSpace = Math.floor(scale.getPixelForValue(minVal)) + 0.5;
-            const maxValPixSpace = Math.floor(scale.getPixelForValue(maxVal)) + 0.5;
-            const color = `${appStore.darkTheme ? Colors.RED4 : Colors.RED2}`;
-            this.drawVerticalLine(chart, minValPixSpace, color);
-            this.drawVerticalLine(chart, maxValPixSpace, color);
-        }
     };
 
     renderColormapBlock = (colormap: string) => {
@@ -320,72 +291,17 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             );
         }
 
-        let unitString = "";
+        let unitString = "Value";
         if (frame && frame.unit) {
-            unitString = ` (${frame.unit})`;
+            unitString = `Value (${frame.unit})`;
         }
 
-        // ChartJS plot
-        let plotOptions: ChartOptions = {
-            maintainAspectRatio: false,
-            legend: {
-                display: false
-            },
-            scales: {
-                xAxes: [{
-                    id: "x-axis-0",
-                    scaleLabel: {
-                        display: true,
-                        labelString: `Value${unitString}`
-                    },
-                    ticks: {
-                        maxRotation: 0
-                    },
-                    afterBuildTicks: axis => {
-                        axis.ticks = axis.ticks.slice(1, -1);
-                    }
-                }],
-                yAxes: [{
-                    id: "y-axis-0",
-                    scaleLabel: {
-                        display: true,
-                        labelString: "Count"
-                    },
-                    ticks: {
-                        display: true,
-                        min: 0.5
-                    },
-                    afterBuildTicks: (axis) => {
-                        // Limit log axis ticks to power of 10 values
-                        axis.ticks = axis.ticks.filter(v => Math.abs(Math.log10(v) % 1.0) < 0.001);
-                    },
-                    type: "logarithmic"
-                }]
-            },
-            animation: {
-                duration: 0
-            }
+        let linePlotProps: LinePlotComponentProps = {
+            xLabel: unitString,
+            yLabel: "Count",
+            lineColor: `${appStore.darkTheme ? Colors.BLUE4 : Colors.BLUE2}`,
+            logY: true
         };
-
-        let plotData: Partial<ChartData> = {
-            datasets: [
-                {
-                    label: "Histogram",
-                    data: [],
-                    type: "line",
-                    fill: false,
-                    pointRadius: 0,
-                    showLine: true,
-                    steppedLine: true,
-                    borderWidth: 1,
-                    borderColor: `${appStore.darkTheme ? Colors.BLUE4 : Colors.BLUE2}`
-                }
-            ]
-        };
-
-        const plugins = [{
-            afterDraw: this.annotationDraw
-        }];
 
         if (frame && frame.renderConfig.channelHistogram && frame.renderConfig.channelHistogram.bins) {
             const histogram = frame.renderConfig.channelHistogram;
@@ -393,15 +309,19 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             for (let i = 0; i < vals.length; i++) {
                 vals[i] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
             }
-            plotData.datasets[0].data = vals;
-            plotOptions.scales.xAxes[0].ticks.min = vals[0].x;
-            plotOptions.scales.xAxes[0].ticks.max = vals[vals.length - 1].x;
+            linePlotProps.data = vals;
+            linePlotProps.xMin = vals[0].x;
+            linePlotProps.xMax = vals[vals.length - 1].x;
         }
 
         if (frame && frame.renderConfig) {
-            // Dummy use of scale min/max to trigger re-render when they change
-            const annotationMin = frame.renderConfig.scaleMin;
-            const annotationMax = frame.renderConfig.scaleMax;
+            linePlotProps.markers = [{
+                value: frame.renderConfig.scaleMin,
+                color: "red",
+            }, {
+                value: frame.renderConfig.scaleMax,
+                color: "red"
+            }];
         }
 
         const percentileButtonCutoff = 600;
@@ -447,7 +367,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                 <div className="histogram-container">
                     {displayRankButtons ? percentileButtonsDiv : percentileSelectDiv}
                     <div className="histogram-plot">
-                        <Scatter data={plotData} width={this.state.width} height={this.state.height} redraw={true} options={plotOptions} plugins={plugins}/>
+                        <LinePlotComponent {...linePlotProps}/>
                     </div>
                 </div>
                 }
