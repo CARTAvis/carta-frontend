@@ -279,6 +279,25 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         );
     };
 
+    onMinMoved = (x: number) => {
+        const frame = this.props.appStore.activeFrame;
+        if (frame && frame.renderConfig) {
+            frame.renderConfig.setCustomScale(x, frame.renderConfig.scaleMax);
+            frame.renderConfig.scaleMin = x;
+        }
+    };
+
+    onMaxMoved = (x: number) => {
+        const frame = this.props.appStore.activeFrame;
+        if (frame && frame.renderConfig) {
+            frame.renderConfig.setCustomScale(frame.renderConfig.scaleMin, x);
+        }
+    };
+
+    onGraphZoomed = (xMin: number, xMax: number) => {
+        this.setState({xRange: [xMin, xMax]});
+    };
+
     render() {
         const appStore = this.props.appStore;
         const frame = appStore.activeFrame;
@@ -300,7 +319,11 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             xLabel: unitString,
             yLabel: "Count",
             lineColor: `${appStore.darkTheme ? Colors.BLUE4 : Colors.BLUE2}`,
-            logY: true
+            logY: true,
+            graphClicked: this.onMinMoved,
+            graphRightClicked: this.onMaxMoved,
+            graphZoomed: this.onGraphZoomed,
+            scrollZoom: true
         };
 
         if (frame && frame.renderConfig.channelHistogram && frame.renderConfig.channelHistogram.bins) {
@@ -310,16 +333,28 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                 vals[i] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
             }
             linePlotProps.data = vals;
-            linePlotProps.xMin = vals[0].x;
-            linePlotProps.xMax = vals[vals.length - 1].x;
+            if (!this.state.xRange || this.state.xRange.length < 2) {
+                linePlotProps.xMin = vals[0].x;
+                linePlotProps.xMax = vals[vals.length - 1].x;
+            }
+            else {
+                linePlotProps.xMin = this.state.xRange[0];
+                linePlotProps.xMax = this.state.xRange[1];
+            }
         }
 
         if (frame && frame.renderConfig) {
             linePlotProps.markers = [{
                 value: frame.renderConfig.scaleMin,
+                id: "marker-min",
+                draggable: true,
+                dragMove: this.onMinMoved,
                 color: "red",
             }, {
                 value: frame.renderConfig.scaleMax,
+                id: "marker-max",
+                draggable: true,
+                dragMove: this.onMaxMoved,
                 color: "red"
             }];
         }

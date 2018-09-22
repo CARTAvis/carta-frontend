@@ -36,6 +36,15 @@ export class RenderConfigStore {
     @observable channelHistogram: CARTA.Histogram;
     @observable selectedPercentile: number;
 
+    constructor() {
+        this.selectedPercentile = 99.9;
+        this.bias = 0;
+        this.contrast = 1;
+        this.gamma = 1;
+        this.scaling = FrameScaling.LINEAR;
+        this.setColorMap("inferno");
+    }
+
     @computed get colorMapName() {
         if (this.colorMap >= 0 && this.colorMap <= RenderConfigStore.COLOR_MAPS_ALL.length - 1) {
             return RenderConfigStore.COLOR_MAPS_ALL[this.colorMap];
@@ -95,6 +104,12 @@ export class RenderConfigStore {
         }
     }
 
+    @action setCustomScale(minVal: number, maxVal: number) {
+        this.scaleMin = minVal;
+        this.scaleMax = maxVal;
+        this.selectedPercentile = -1;
+    }
+
     @action setColorMapIndex(index: number) {
         this.colorMap = Math.max(0, Math.min(index, RenderConfigStore.COLOR_MAPS_ALL.length - 1));
     }
@@ -110,15 +125,6 @@ export class RenderConfigStore {
         if (RenderConfigStore.SCALING_TYPES.has(newScaling)) {
             this.scaling = newScaling;
         }
-    }
-
-    constructor() {
-        this.selectedPercentile = 99.9;
-        this.bias = 0;
-        this.contrast = 1;
-        this.gamma = 1;
-        this.scaling = FrameScaling.LINEAR;
-        this.setColorMap("inferno");
     }
 
     private getPercentile(rank: number): number {

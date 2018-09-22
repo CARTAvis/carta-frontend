@@ -1,13 +1,16 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {ChartData, ChartOptions, Chart, ChartArea} from "chart.js";
-import {Scatter} from "react-chartjs-2";
-import {Colors} from "@blueprintjs/core";
+import {Chart, ChartArea} from "chart.js";
+import {PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
+import {Group, Layer, Line, Rect, Stage} from "react-konva";
+import ReactResizeDetector from "react-resize-detector";
 
 export interface Marker {
     value: number;
+    id: string;
     color: string;
     draggable?: boolean;
+    dragMove?: (x: number) => void;
 }
 
 export class LinePlotComponentProps {
@@ -21,145 +24,246 @@ export class LinePlotComponentProps {
     logY?: boolean;
     lineColor?: string;
     markers?: Marker[];
+    graphClicked?: (x: number) => void;
+    graphRightClicked?: (x: number) => void;
+    graphZoomed?: (xMin: number, xMax: number) => void;
+    scrollZoom?: boolean;
 }
 
 interface LinePlotComponentState {
     chartArea: ChartArea;
+    hoveredMarker: Marker;
+    width: number;
+    height: number;
+    selecting: boolean;
+    selectionBoxStart: number;
+    selectionBoxEnd: number;
 }
 
 export class LinePlotComponent extends React.Component<LinePlotComponentProps, LinePlotComponentState> {
-    private hoveredMarker: Marker;
-    private skipRender = false;
     private plotRef;
+    private scaleX;
+    private scaleY;
+    private stageClickStartX: number;
+    private stageClickStartY: number;
 
     constructor(props: LinePlotComponentProps) {
         super(props);
-        this.state = {chartArea: undefined};
+        this.state = {chartArea: undefined, hoveredMarker: undefined, width: 0, height: 0, selecting: false, selectionBoxStart: 0, selectionBoxEnd: 0};
     }
 
-    private afterChartLayout = (chart: Chart) => {
-        const updatedArea = chart.chartArea;
-        const currentArea = this.state.chartArea;
+    onPlotRefUpdated = (plotRef) => {
+        this.plotRef = plotRef;
+    };
 
-        if (!_.isEqual(updatedArea, currentArea)) {
-            this.setState({chartArea: updatedArea});
-            this.skipRender = true;
-            return false;
+    onChartAreaUpdated = (chartArea: ChartArea) => {
+        if (!_.isEqual(chartArea, this.state.chartArea)) {
+            this.setState({chartArea});
         }
-        this.skipRender = false;
-        return true;
     };
 
-    private beforeDatasetUpdate = () => {
-        return !this.skipRender;
+    onChartScalesUpdated = (scaleX, scaleY) => {
+        this.scaleX = scaleX;
+        this.scaleY = scaleY;
     };
 
-    private beforeChartRender = () => {
-        if (this.skipRender) {
-            this.skipRender = false;
-            return false;
+    onResize = (w, h) => {
+        if (w !== this.state.width || h !== this.state.height) {
+            this.setState({width: w, height: h});
         }
-        return true;
     };
 
-    private beforeChartEvent = (chart, event) => {
-        console.log(event);
-    };
-
-    drawMarkersToCanvas = (chart) => {
-        const scale = chart.scales["x-axis-0"];
-        if (scale && this.props.markers && this.props.markers.length) {
-            for (let marker of this.props.markers) {
-                const x = Math.floor(scale.getPixelForValue(marker.value)) + 0.5;
-                chart.chart.ctx.restore();
-                chart.chart.ctx.beginPath();
-                chart.chart.ctx.strokeStyle = marker.color;
-                chart.chart.ctx.lineWidth = 1;
-                chart.chart.ctx.setLineDash([5, 5]);
-                chart.chart.ctx.moveTo(x, chart.chartArea.bottom);
-                chart.chart.ctx.lineTo(x, chart.chartArea.top);
-                chart.chart.ctx.stroke();
+    onMarkerDragged = (ev, marker: Marker) => {
+        if (this.scaleX && this.props.markers) {
+            if (marker && marker.dragMove) {
+                const newPostionCanvasSpace = ev.evt.offsetX;
+                // Prevent dragging out of canvas space
+                if (newPostionCanvasSpace < this.state.chartArea.left || newPostionCanvasSpace > this.state.chartArea.right) {
+                    return;
+                }
+                const newPositionDataSpace = this.scaleX.getValueForPixel(newPostionCanvasSpace);
+                marker.dragMove(newPositionDataSpace);
             }
+        }
+    };
+
+    setHoveredMarker(marker: Marker) {
+        if (this.state.hoveredMarker !== marker) {
+            this.setState({hoveredMarker: marker});
+        }
+    }
+
+    onStageMouseDown = (ev) => {
+        const mouseEvent: MouseEvent = ev.evt;
+        this.stageClickStartX = mouseEvent.offsetX;
+        this.stageClickStartY = mouseEvent.offsetY;
+        if (this.state.hoveredMarker === undefined) {
+            this.setState({selecting: true, selectionBoxStart: mouseEvent.offsetX, selectionBoxEnd: mouseEvent.offsetX});
+        }
+    };
+
+    onStageMouseUp = (ev) => {
+        const mouseEvent: MouseEvent = ev.evt;
+
+        // Redirect clicks
+        const mouseMoveDist = {x: Math.abs(mouseEvent.offsetX - this.stageClickStartX), y: Math.abs(mouseEvent.offsetY - this.stageClickStartY)};
+        if (mouseMoveDist.x < 1 && mouseMoveDist.y < 1) {
+            this.onStageClick(ev);
+        }
+        else {
+            this.stageClickStartX = undefined;
+            this.stageClickStartY = undefined;
+            if (this.state.selecting && this.props.graphZoomed && this.scaleX) {
+                const minCanvasSpace = Math.min(this.state.selectionBoxStart, this.state.selectionBoxEnd);
+                const maxCanvasSpace = Math.max(this.state.selectionBoxStart, this.state.selectionBoxEnd);
+                const minGraphSpace = this.scaleX.getValueForPixel(minCanvasSpace);
+                const maxGraphSpace = this.scaleX.getValueForPixel(maxCanvasSpace);
+                this.props.graphZoomed(minGraphSpace, maxGraphSpace);
+            }
+        }
+        this.setState({selecting: false});
+    };
+
+    onStageMouseMove = (ev) => {
+        const mouseEvent: MouseEvent = ev.evt;
+        if (this.state.selecting) {
+            this.setState({selectionBoxEnd: mouseEvent.offsetX});
+        }
+
+    };
+
+    onStageClick = (ev) => {
+        const mouseEvent: MouseEvent = ev.evt;
+        // Ignore click-drags for click handling
+        console.log(mouseEvent);
+        const mouseMoveDist = {x: Math.abs(mouseEvent.offsetX - this.stageClickStartX), y: Math.abs(mouseEvent.offsetY - this.stageClickStartY)};
+        if (mouseMoveDist.x > 1 || mouseMoveDist.y > 1) {
+            return;
+        }
+        // // Do left-click callback if it exists
+        // if (this.props.graphClicked && mouseEvent.button === 0 && this.scaleX) {
+        //     const xCanvasSpace = mouseEvent.offsetX / devicePixelRatio;
+        //     const xGraphSpace = this.scaleX.getValueForPixel(xCanvasSpace);
+        //     this.props.graphClicked(xGraphSpace);
+        // }
+        // // Do right-click callback if it exists
+        // else if (this.props.graphRightClicked && mouseEvent.button === 2 && this.scaleX) {
+        //     const xCanvasSpace = mouseEvent.offsetX / devicePixelRatio;
+        //     const xGraphSpace = this.scaleX.getValueForPixel(xCanvasSpace);
+        //     this.props.graphRightClicked(xGraphSpace);
+        // }
+    };
+
+    onStageRightClick = (ev) => {
+        // block default handling if we have a right-click handler
+        if (this.props.graphRightClicked) {
+            ev.evt.preventDefault();
+        }
+    };
+
+    onStageDoubleClick = (ev) => {
+        console.log(ev);
+    };
+
+    onStageWheel = (ev) => {
+        if (this.props.scrollZoom && this.props.graphZoomed) {
+            const wheelEvent: WheelEvent = ev.evt;
+            const lineHeight = 15;
+            const zoomSpeed = 0.001;
+            const delta = wheelEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? wheelEvent.deltaY : wheelEvent.deltaY * lineHeight;
+            const currentRange = this.props.xMax - this.props.xMin;
+            const midPoint = (this.props.xMax + this.props.xMin) / 2.0;
+            const newRange = currentRange + zoomSpeed * delta * currentRange;
+            this.props.graphZoomed(midPoint - newRange / 2.0, midPoint + newRange / 2.0);
         }
     };
 
     render() {
-        // ChartJS plot
-        let plotOptions: ChartOptions = {
-            maintainAspectRatio: false,
-            events: ["mousedown", "mouseup", "mousemove", "dblclick"],
-            legend: {
-                display: false
-            },
-            scales: {
-                xAxes: [{
-                    id: "x-axis-0",
-                    scaleLabel: {
-                        display: true,
-                        labelString: this.props.xLabel
-                    },
-                    ticks: {
-                        maxRotation: 0,
-                        min: this.props.xMin,
-                        max: this.props.xMax
-                    },
-                    afterBuildTicks: axis => {
-                        axis.ticks = axis.ticks.slice(1, -1);
-                    }
-                }],
-                yAxes: [{
-                    id: "y-axis-0",
-                    scaleLabel: {
-                        display: true,
-                        labelString: this.props.yLabel
-                    },
-                    ticks: {
-                        display: true,
-                        min: 0.5
-                    }
-                }]
-            },
-            animation: {
-                duration: 0
+        const chartArea = this.state.chartArea;
+        const isHovering = this.state.hoveredMarker !== undefined && !this.state.selecting;
+
+        let lines = [];
+        if (this.props.markers && this.props.markers.length && chartArea && this.scaleX) {
+            const markerHitBoxWidth = 10;
+            const lineHeight = chartArea.bottom - chartArea.top;
+            const markerHoverBoxHeight = 0.6 * lineHeight;
+            const markerHoverBoxOffset = (lineHeight - markerHoverBoxHeight) / 2.0;
+            for (let i = 0; i < this.props.markers.length; i++) {
+                const marker = this.props.markers[i];
+                const xVal = this.scaleX.getPixelForValue(marker.value);
+                lines.push(
+                    <Group key={i} x={xVal} y={0}>
+                        <Rect
+                            dragBoundFunc={pos => ({x: pos.x, y: chartArea.top})}
+                            x={-markerHitBoxWidth / 2.0}
+                            y={chartArea.top}
+                            width={markerHitBoxWidth}
+                            height={lineHeight}
+                            strokeEnabled={false}
+                            draggable={marker.draggable}
+                            onDragMove={ev => this.onMarkerDragged(ev, marker)}
+                            onMouseEnter={() => this.setHoveredMarker(marker)}
+                            onMouseLeave={() => this.setHoveredMarker(undefined)}
+                        />
+                        <Rect
+                            hitFunc={() => false}
+                            x={-markerHitBoxWidth / 2.0}
+                            y={chartArea.top + markerHoverBoxOffset}
+                            width={markerHitBoxWidth}
+                            height={markerHoverBoxHeight}
+                            visible={isHovering && this.state.hoveredMarker.id === marker.id}
+                            fill={marker.color}
+                            opacity={0.5}
+                            strokeWidth={1}
+                            stroke={marker.color}
+                        />
+                        <Line
+                            points={[0, chartArea.top, 0, chartArea.bottom]}
+                            strokeWidth={1}
+                            stroke={marker.color}
+                        />
+                    </Group>
+                );
             }
-        };
-
-        if (this.props.logY) {
-            plotOptions.scales.yAxes[0].afterBuildTicks = (axis) => {
-                // Limit log axis ticks to power of 10 values
-                axis.ticks = axis.ticks.filter(v => Math.abs(Math.log10(v) % 1.0) < 0.001);
-            };
-            plotOptions.scales.yAxes[0].type = "logarithmic";
-        }
-        else {
-            plotOptions.scales.yAxes[0].afterBuildTicks = (axis) => axis;
-            plotOptions.scales.yAxes[0].type = "linear";
         }
 
-        let plotData: Partial<ChartData> = {
-            datasets: [
-                {
-                    label: "LineGraph",
-                    data: this.props.data,
-                    type: "line",
-                    fill: false,
-                    pointRadius: 0,
-                    showLine: true,
-                    steppedLine: true,
-                    borderWidth: 1,
-                    borderColor: this.props.lineColor
-                }
-            ]
-        };
+        let selectionRect;
+        const w = this.state.selectionBoxEnd - this.state.selectionBoxStart;
+        if (this.state.selecting && Math.abs(w) > 0 && chartArea) {
+            const h = chartArea.bottom - chartArea.top;
+            const x = this.state.selectionBoxStart;
+            selectionRect = <Rect fill={"grey"} opacity={0.2} x={x} y={chartArea.top} width={w} height={h}/>;
+        }
 
-        const plugins = [{
-            afterDraw: this.drawMarkersToCanvas,
-            afterLayout: this.afterChartLayout,
-            beforeDatasetUpdate: this.beforeDatasetUpdate,
-            beforeRender: this.beforeChartRender,
-            beforeEvent: this.beforeChartEvent
-        }];
+        return (
+            <div style={{width: "100%", height: "100%", cursor: isHovering ? "move" : "crosshair"}}>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <PlotContainerComponent
+                    {...this.props}
+                    plotRefUpdated={this.onPlotRefUpdated}
+                    chartAreaUpdated={this.onChartAreaUpdated}
+                    scalesUpdated={this.onChartScalesUpdated}
+                    width={this.state.width}
+                    height={this.state.height}
+                />;
+                <Stage
+                    width={this.state.width}
+                    height={this.state.height}
+                    style={{position: "absolute", top: 0}}
+                    onMouseDown={this.onStageMouseDown}
+                    onMouseUp={this.onStageMouseUp}
+                    onContextMenu={this.onStageRightClick}
+                    onMouseMove={this.onStageMouseMove}
+                    onWheel={this.onStageWheel}
+                >
+                    <Layer>
+                        {lines}
+                        {selectionRect}
+                    </Layer>
+                </Stage>
+            </div>
 
-        return <Scatter data={plotData} options={plotOptions} plugins={plugins} ref={ref => this.plotRef = ref}/>;
+        );
+
     }
 }
