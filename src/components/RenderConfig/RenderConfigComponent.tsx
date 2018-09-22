@@ -2,36 +2,15 @@ import * as React from "react";
 import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
 import {observer} from "mobx-react";
-import {FormGroup, HTMLSelect, NonIdealState, NumericInput, ButtonGroup, Button, Colors, MenuItem, IOptionProps} from "@blueprintjs/core";
-import {Select} from "@blueprintjs/select";
-import {ChartData, ChartOptions, Chart, ChartArea} from "chart.js";
-import {Scatter} from "react-chartjs-2";
+import {FormGroup, HTMLSelect, NonIdealState, ButtonGroup, Button, Colors, IOptionProps} from "@blueprintjs/core";
+import {Chart, ChartArea} from "chart.js";
+import {LinePlotComponent, LinePlotComponentProps} from "../Shared/LinePlot/LinePlotComponent";
 import {AppStore} from "../../stores/AppStore";
 import {FrameStore} from "../../stores/FrameStore";
-import {RenderConfigStore, FrameScaling} from "../../stores/RenderConfigStore";
+import {FrameScaling} from "../../stores/RenderConfigStore";
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
 import "./RenderConfigComponent.css";
-
-// Static assets
-import allMaps from "../../static/allmaps.png";
-// Equation SVG images
-import linearSvg from "../../static/equations/linear.svg";
-import logSvg from "../../static/equations/log.svg";
-import sqrtSvg from "../../static/equations/sqrt.svg";
-import squaredSvg from "../../static/equations/squared.svg";
-import gammaSvg from "../../static/equations/gamma.svg";
-import {LinePlotComponent, LinePlotComponentProps} from "../Shared/LinePlot/LinePlotComponent";
-
-const equationSVGMap = new Map([
-    [FrameScaling.LINEAR, linearSvg],
-    [FrameScaling.LOG, logSvg],
-    [FrameScaling.SQRT, sqrtSvg],
-    [FrameScaling.SQUARE, squaredSvg],
-    [FrameScaling.GAMMA, gammaSvg]
-]);
-
-const ColorMapSelect = Select.ofType<string>();
-const ScalingSelect = Select.ofType<FrameScaling>();
+import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
 
 class RenderConfigComponentProps {
     appStore: AppStore;
@@ -42,18 +21,17 @@ class RenderConfigComponentProps {
 class RenderConfigComponentState {
     width: number;
     height: number;
-    hoveringScaleMin: boolean;
-    hoveringScaleMax: boolean;
-    xRange: number[];
+    xMin: number;
+    xMax: number;
     yRange: number[];
     chartArea: ChartArea;
+    cursorX: number;
 }
 
 @observer
 export class RenderConfigComponent extends React.Component<RenderConfigComponentProps, RenderConfigComponentState> {
-    private movingScaleMax: boolean;
-    private movingScaleMin: boolean;
     private cachedFrame: FrameStore;
+    private cachedData: number[];
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -70,118 +48,16 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
 
     constructor(props: RenderConfigComponentProps) {
         super(props);
-        this.state = {width: 0, height: 0, hoveringScaleMin: false, hoveringScaleMax: false, xRange: undefined, yRange: undefined, chartArea: undefined};
+        this.state = {width: 0, height: 0, xMin: undefined, xMax: undefined, yRange: undefined, chartArea: undefined, cursorX: undefined};
     }
 
     componentDidUpdate() {
-        if (this.props.appStore.activeFrame !== this.cachedFrame) {
-            this.cachedFrame = this.props.appStore.activeFrame;
-            this.setState({xRange: undefined, yRange: undefined});
+        const frame = this.props.appStore.activeFrame;
+        if (frame !== this.cachedFrame) {
+            this.cachedFrame = frame;
+            this.setState({xMin: undefined, xMax: undefined, yRange: undefined});
         }
     }
-
-    onResize = (width: number, height: number) => {
-        this.setState({width, height});
-    };
-
-    // handleRightClick = (ev: React.MouseEvent<HTMLDivElement>) => {
-    //     ev.preventDefault();
-    //     this.handleMouseClick(ev);
-    // };
-    //
-    // handleMouseClick = (ev: React.MouseEvent<HTMLDivElement>) => {
-    //     if (this.movingScaleMin || this.movingScaleMax) {
-    //         this.movingScaleMax = false;
-    //         this.movingScaleMin = false;
-    //         return;
-    //     }
-    //
-    //     const frame = this.props.appStore.activeFrame;
-    //     const pixelThreshold = 5;
-    //     if (this.plotRef && frame) {
-    //         const xAxis = this.plotRef.el._fullLayout.xaxis;
-    //         if (xAxis && xAxis.p2c) {
-    //             const leftMargin = this.plotRef.el._fullLayout.margin.l;
-    //             const posScaleMin = xAxis.c2p(frame.renderConfig.scaleMin) + leftMargin;
-    //             const posScaleMax = xAxis.c2p(frame.renderConfig.scaleMax) + leftMargin;
-    //             if (Math.abs(ev.nativeEvent.offsetX - posScaleMin) < pixelThreshold) {
-    //                 this.movingScaleMin = true;
-    //                 ev.preventDefault();
-    //             }
-    //             else if (Math.abs(ev.nativeEvent.offsetX - posScaleMax) < pixelThreshold) {
-    //                 this.movingScaleMax = true;
-    //                 ev.preventDefault();
-    //             }
-    //         }
-    //     }
-    // };
-    //
-    // handleMouseMove = (ev: React.MouseEvent<HTMLDivElement>) => {
-    //     const frame = this.props.appStore.activeFrame;
-    //     const pixelThreshold = 5;
-    //     if (this.plotRef && frame) {
-    //         const xAxis = this.plotRef.el._fullLayout.xaxis;
-    //         if (xAxis && xAxis.p2c) {
-    //             const leftMargin = this.plotRef.el._fullLayout.margin.l;
-    //             const cursorVal = xAxis.p2c(ev.nativeEvent.offsetX - leftMargin);
-    //             const posScaleMin = xAxis.c2p(frame.renderConfig.scaleMin) + leftMargin;
-    //             const posScaleMax = xAxis.c2p(frame.renderConfig.scaleMax) + leftMargin;
-    //
-    //             if (this.movingScaleMin) {
-    //                 // Handle switchover (from moving min to moving max)
-    //                 if (cursorVal >= frame.renderConfig.scaleMax) {
-    //                     this.movingScaleMin = false;
-    //                     this.movingScaleMax = true;
-    //                     this.setState({hoveringScaleMax: true, hoveringScaleMin: false});
-    //                 }
-    //                 else {
-    //                     frame.renderConfig.scaleMin = Math.max(cursorVal, frame.renderConfig.histogramMin);
-    //                 }
-    //             }
-    //             else if (this.movingScaleMax) {
-    //                 // Handle switchover (from moving max to moving min)
-    //                 if (cursorVal <= frame.renderConfig.scaleMin) {
-    //                     this.movingScaleMax = false;
-    //                     this.movingScaleMin = true;
-    //                     this.setState({hoveringScaleMin: true, hoveringScaleMax: false});
-    //                 }
-    //                 else {
-    //                     frame.renderConfig.scaleMax = Math.min(cursorVal, frame.renderConfig.histogramMax);
-    //                 }
-    //             }
-    //             else if (Math.abs(ev.nativeEvent.offsetX - posScaleMin) < pixelThreshold) {
-    //                 this.setState({hoveringScaleMin: true, hoveringScaleMax: false});
-    //             }
-    //             else if (Math.abs(ev.nativeEvent.offsetX - posScaleMax) < pixelThreshold) {
-    //                 this.setState({hoveringScaleMax: true, hoveringScaleMin: false});
-    //             }
-    //             else if (this.state.hoveringScaleMin || this.state.hoveringScaleMax) {
-    //                 this.setState({hoveringScaleMax: false, hoveringScaleMin: false});
-    //             }
-    //         }
-    //     }
-    // };
-    //
-    // handleMouseUp = (ev: React.MouseEvent<HTMLDivElement>) => {
-    //     this.movingScaleMin = false;
-    //     this.movingScaleMax = false;
-    // };
-    //
-    // handlePlotRelayout = (ev) => {
-    //     if (ev["xaxis.range[0]"] !== undefined) {
-    //         this.setState({xRange: [ev["xaxis.range[0]"], ev["xaxis.range[1]"]]});
-    //     }
-    //     else if (ev["xaxis.autorange"]) {
-    //         this.setState({xRange: undefined});
-    //     }
-    //
-    //     if (ev["yaxis.range[0]"] !== undefined) {
-    //         this.setState({yRange: [ev["yaxis.range[0]"], ev["yaxis.range[1]"]]});
-    //     }
-    //     else if (ev["yaxis.autorange"]) {
-    //         this.setState({yRange: undefined});
-    //     }
-    // };
 
     handleColorMapChange = (newColorMap: string) => {
         this.props.appStore.activeFrame.renderConfig.setColorMap(newColorMap);
@@ -203,6 +79,10 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         this.props.appStore.activeFrame.renderConfig.gamma = value;
     };
 
+    onResize = (width: number, height: number) => {
+        this.setState({width, height});
+    };
+
     handlePercentileRankClick = (value: number) => {
         if (!this.props.appStore.activeFrame.renderConfig.setPercentileRank(value)) {
             this.props.appStore.alertStore.showAlert(`Couldn't set percentile of rank ${value}%`);
@@ -218,70 +98,10 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         this.props.appStore.activeFrame.renderConfig.setPercentileRank(-1);
     };
 
-    renderColormapBlock = (colormap: string) => {
-        let className = "colormap-block";
-        if (this.props.appStore.darkTheme) {
-            className += " bp3-dark";
-        }
-        const blockHeight = 15;
-        const N = RenderConfigStore.COLOR_MAPS_ALL.length;
-        const i = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
-        return (
-            <div
-                className={className}
-                style={{
-                    height: `${blockHeight}px`,
-                    backgroundImage: `url(${allMaps})`,
-                    backgroundSize: `100% calc(300% * ${N})`,
-                    backgroundPosition: `0 calc(300% * -${i} - ${blockHeight}px)`,
-                }}
-            />
-
-        );
-    };
-
-    renderColormapSelectItem = (colormap: string, {handleClick, modifiers, query}) => {
-        if (!modifiers.matchesPredicate) {
-            return null;
-        }
-        return (
-            <MenuItem
-                active={modifiers.active}
-                disabled={modifiers.disabled}
-                label={colormap}
-                key={colormap}
-                onClick={handleClick}
-                text={this.renderColormapBlock(colormap)}
-            />
-        );
-    };
-
-    renderScalingSelectItem = (scaling: FrameScaling, {handleClick, modifiers, query}) => {
-        if (!modifiers.matchesPredicate || !RenderConfigStore.SCALING_TYPES.has(scaling)) {
-            return null;
-        }
-        const scalingName = RenderConfigStore.SCALING_TYPES.get(scaling);
-
-        const equationDiv = (
-            <div className="equation-div">
-                <img src={equationSVGMap.get(scaling)}/>
-            </div>
-        );
-        return (
-            <MenuItem
-                active={modifiers.active}
-                disabled={modifiers.disabled}
-                label={scalingName}
-                key={scaling}
-                onClick={handleClick}
-                text={equationDiv}
-            />
-        );
-    };
-
     onMinMoved = (x: number) => {
         const frame = this.props.appStore.activeFrame;
-        if (frame && frame.renderConfig) {
+        // Check bounds first, to make sure the max isn't being moved below the min
+        if (frame && frame.renderConfig && x < frame.renderConfig.scaleMax) {
             frame.renderConfig.setCustomScale(x, frame.renderConfig.scaleMax);
             frame.renderConfig.scaleMin = x;
         }
@@ -289,13 +109,22 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
 
     onMaxMoved = (x: number) => {
         const frame = this.props.appStore.activeFrame;
-        if (frame && frame.renderConfig) {
+        // Check bounds first, to make sure the max isn't being moved below the min
+        if (frame && frame.renderConfig && x > frame.renderConfig.scaleMin) {
             frame.renderConfig.setCustomScale(frame.renderConfig.scaleMin, x);
         }
     };
 
     onGraphZoomed = (xMin: number, xMax: number) => {
-        this.setState({xRange: [xMin, xMax]});
+        this.setState({xMin, xMax});
+    };
+
+    onGraphZoomReset = () => {
+        this.setState({xMin: undefined, xMax: undefined});
+    };
+
+    onGraphCursorMoved = (x) => {
+        this.setState({cursorX: x});
     };
 
     render() {
@@ -323,23 +152,43 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             graphClicked: this.onMinMoved,
             graphRightClicked: this.onMaxMoved,
             graphZoomed: this.onGraphZoomed,
+            graphZoomReset: this.onGraphZoomReset,
+            graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true
         };
 
-        if (frame && frame.renderConfig.channelHistogram && frame.renderConfig.channelHistogram.bins) {
+        if (frame && frame.renderConfig.channelHistogram && frame.renderConfig.channelHistogram.bins && frame.renderConfig.channelHistogram.bins.length) {
             const histogram = frame.renderConfig.channelHistogram;
-            let vals = new Array(histogram.bins.length);
-            for (let i = 0; i < vals.length; i++) {
-                vals[i] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
+            let minIndex = 0;
+            let maxIndex = histogram.bins.length - 1;
+
+            // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
+            if (this.state.xMin !== undefined && this.state.xMax !== undefined) {
+                minIndex = Math.floor((this.state.xMin - histogram.firstBinCenter) / histogram.binWidth);
+                minIndex = Math.max(0, Math.min(histogram.bins.length, minIndex));
+                maxIndex = Math.ceil((this.state.xMax - histogram.firstBinCenter) / histogram.binWidth);
+                maxIndex = Math.max(0, Math.min(histogram.bins.length, maxIndex));
             }
-            linePlotProps.data = vals;
-            if (!this.state.xRange || this.state.xRange.length < 2) {
-                linePlotProps.xMin = vals[0].x;
-                linePlotProps.xMax = vals[vals.length - 1].x;
-            }
-            else {
-                linePlotProps.xMin = this.state.xRange[0];
-                linePlotProps.xMax = this.state.xRange[1];
+            const N = maxIndex - minIndex;
+            if (N > 0 && !isNaN(N)) {
+                const plotVals = new Array(maxIndex - minIndex);
+
+                for (let i = minIndex; i <= maxIndex; i++) {
+                    plotVals[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
+                    // Sanitize zero values to prevent scaling issues with log graphs
+                    if (plotVals[i - minIndex].y < 0.1) {
+                        plotVals[i - minIndex].y = undefined;
+                    }
+                }
+                linePlotProps.data = plotVals;
+                if (this.state.xMin === undefined && this.state.xMax === undefined) {
+                    linePlotProps.xMin = plotVals[0].x;
+                    linePlotProps.xMax = plotVals[plotVals.length - 1].x;
+                }
+                else {
+                    linePlotProps.xMin = this.state.xMin;
+                    linePlotProps.xMax = this.state.xMax;
+                }
             }
         }
 
@@ -396,6 +245,24 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             );
         }
 
+        let cursorInfoDiv;
+        if (this.state.width >= histogramCutoff && this.state.cursorX !== undefined) {
+            let numberString;
+            // Switch between standard and scientific notation
+            if (this.state.cursorX < 1e-2) {
+                numberString = this.state.cursorX.toExponential(2);
+            }
+            else {
+                numberString = this.state.cursorX.toFixed(2);
+            }
+
+            cursorInfoDiv = (
+                <div className="cursor-display">
+                    <pre>{`Cursor: ${numberString} ${frame.unit}`}</pre>
+                </div>
+            );
+        }
+
         return (
             <div className="render-config-container">
                 {this.state.width > histogramCutoff &&
@@ -407,69 +274,8 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                 </div>
                 }
                 <div className="colormap-config">
-                    <FormGroup label={"Scaling type"} inline={true}>
-                        <ScalingSelect
-                            activeItem={frame.renderConfig.scaling}
-                            popoverProps={{minimal: true, position: "auto-end"}}
-                            filterable={false}
-                            items={Array.from(RenderConfigStore.SCALING_TYPES.keys())}
-                            onItemSelect={this.handleScalingChange}
-                            itemRenderer={this.renderScalingSelectItem}
-                        >
-                            <Button text={frame.renderConfig.scalingName} rightIcon="double-caret-vertical"/>
-                        </ScalingSelect>
-                    </FormGroup>
-
-                    <FormGroup label={"Color map"} inline={true}>
-                        <ColorMapSelect
-                            activeItem={frame.renderConfig.colorMapName}
-                            popoverProps={{minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"}}
-                            filterable={false}
-                            items={RenderConfigStore.COLOR_MAPS_ALL}
-                            onItemSelect={this.handleColorMapChange}
-                            itemRenderer={this.renderColormapSelectItem}
-                        >
-                            <Button text={this.renderColormapBlock(frame.renderConfig.colorMapName)} rightIcon="double-caret-vertical"/>
-                        </ColorMapSelect>
-                    </FormGroup>
-                    <FormGroup label={"Bias"} inline={true}>
-                        <NumericInput
-                            style={{width: "60px"}}
-                            min={-1}
-                            max={1}
-                            stepSize={0.1}
-                            minorStepSize={0.01}
-                            majorStepSize={0.5}
-                            value={frame.renderConfig.bias}
-                            onValueChange={this.handleBiasChange}
-                        />
-                    </FormGroup>
-                    <FormGroup label={"Contrast"} inline={true}>
-                        <NumericInput
-                            style={{width: "60px"}}
-                            min={0}
-                            max={5}
-                            stepSize={0.1}
-                            minorStepSize={0.01}
-                            majorStepSize={0.5}
-                            value={frame.renderConfig.contrast}
-                            onValueChange={this.handleContrastChange}
-                        />
-                    </FormGroup>
-                    <FormGroup label={"Gamma"} inline={true}>
-                        <NumericInput
-                            style={{width: "60px"}}
-                            min={0}
-                            max={2}
-                            stepSize={0.1}
-                            minorStepSize={0.01}
-                            majorStepSize={0.5}
-                            value={frame.renderConfig.gamma}
-                            disabled={frame.renderConfig.scaling !== FrameScaling.GAMMA}
-                            onValueChange={this.handleGammaChange}
-                        />
-                    </FormGroup>
-                    {this.state.width < histogramCutoff && percentileSelectDiv}
+                    <ColormapConfigComponent darkTheme={appStore.darkTheme} renderConfig={frame.renderConfig}/>
+                    {this.state.width < histogramCutoff ? percentileSelectDiv : cursorInfoDiv}
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>

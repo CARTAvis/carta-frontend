@@ -56,13 +56,15 @@
         .percentile-select {
             margin-right: 0;
         }
-        .bp3-numeric-input {
-            //width: 80px;
-        }
 
         .bp3-form-group {
             float: right;
             margin-bottom: 5px;
+        }
+        .cursor-display {
+            pre {
+                font-size: x-small;
+            }
         }
     }
 

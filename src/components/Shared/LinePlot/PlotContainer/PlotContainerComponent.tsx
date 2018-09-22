@@ -118,7 +118,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     },
                     ticks: {
                         display: true,
-                        min: 0.5
                     }
                 }]
             },
@@ -133,27 +132,27 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 axis.ticks = axis.ticks.filter(v => Math.abs(Math.log10(v) % 1.0) < 0.001);
             };
             plotOptions.scales.yAxes[0].type = "logarithmic";
+            // plotOptions.scales.yAxes[0].ticks.min = 0.5;
         }
         else {
             plotOptions.scales.yAxes[0].afterBuildTicks = (axis) => axis;
             plotOptions.scales.yAxes[0].type = "linear";
         }
 
-        let plotData: Partial<ChartData> = {
-            datasets: [
-                {
-                    label: "LineGraph",
-                    data: this.props.data,
-                    type: "line",
-                    fill: false,
-                    pointRadius: 0,
-                    showLine: true,
-                    steppedLine: true,
-                    borderWidth: 1,
-                    borderColor: this.props.lineColor
-                }
-            ]
-        };
+        let plotData: Partial<ChartData> = {datasets: []};
+        if (this.props.data && this.props.data.length) {
+            plotData.datasets.push({
+                label: "LineGraph",
+                type: "line",
+                data: this.props.data,
+                fill: false,
+                pointRadius: 0,
+                showLine: true,
+                steppedLine: true,
+                borderWidth: 1,
+                borderColor: this.props.lineColor
+            });
+        }
 
         const plugins = [{
             afterLayout: this.afterChartLayout,

@@ -92,9 +92,15 @@ export class RenderConfigStore {
         }
 
         const rankComplement = 100 - rank;
-        this.scaleMin = this.getPercentile(rankComplement);
-        this.scaleMax = this.getPercentile(rank);
-        return true;
+        const percentiles = this.getPercentiles([rankComplement, rank]);
+        if (percentiles.length === 2) {
+            this.scaleMin = percentiles[0];
+            this.scaleMax = percentiles[1];
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     @action updateChannelHistogram(histogram: CARTA.Histogram) {
@@ -127,36 +133,42 @@ export class RenderConfigStore {
         }
     }
 
-    private getPercentile(rank: number): number {
-        if (!this.channelHistogram || !this.channelHistogram.bins.length) {
-            return undefined;
+    private getPercentiles(ranks: number[]): number[] {
+        if (!ranks || !ranks.length || !this.channelHistogram || !this.channelHistogram.bins.length) {
+            return [];
         }
 
         const minVal = this.channelHistogram.firstBinCenter - this.channelHistogram.binWidth / 2.0;
         const dx = this.channelHistogram.binWidth;
-        const binVals = this.channelHistogram.bins;
-        const fraction = rank / 100.0;
+        const vals = this.channelHistogram.bins;
+        let remainingRanks = ranks.slice();
         let cumulativeSum = 0;
 
         let totalSum = 0;
-        for (let i = 0; i < binVals.length; i++) {
-            totalSum += binVals[i];
+        for (let i = 0; i < vals.length; i++) {
+            totalSum += vals[i];
         }
 
         if (totalSum === 0) {
-            return undefined;
+            return [];
         }
 
-        for (let i = 0; i < binVals.length; i++) {
+        let calculatedPercentiles = [];
+
+        for (let i = 0; i < vals.length && remainingRanks.length; i++) {
             const currentFraction = cumulativeSum / totalSum;
-            const nextFraction = (cumulativeSum + binVals[i]) / totalSum;
-            if (nextFraction >= fraction) {
+            const nextFraction = (cumulativeSum + vals[i]) / totalSum;
+            let nextRank = remainingRanks[0] / 100.0;
+            while (nextFraction >= nextRank && remainingRanks.length) {
                 // Assumes a locally uniform distribution between bins
-                const portion = (fraction - currentFraction) / (nextFraction - currentFraction);
-                return minVal + dx * (i + portion);
+                const portion = (nextRank - currentFraction) / (nextFraction - currentFraction);
+                calculatedPercentiles.push(minVal + dx * (i + portion));
+                // Move to next rank
+                remainingRanks.shift();
+                nextRank = remainingRanks[0] / 100.0;
             }
-            cumulativeSum += binVals[i];
+            cumulativeSum += vals[i];
         }
-        return undefined;
+        return calculatedPercentiles;
     }
 }
