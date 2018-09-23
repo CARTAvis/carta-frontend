@@ -15,7 +15,6 @@ export class PlotContainerProps {
     lineColor?: string;
     chartAreaUpdated?: (chartArea: ChartArea) => void;
     plotRefUpdated?: (plotRef: Scatter) => void;
-    scalesUpdated?: (scaleX: any, scaleY: any) => void;
 }
 
 export class PlotContainerComponent extends React.Component<PlotContainerProps> {
@@ -28,9 +27,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             if (this.props.chartAreaUpdated) {
                 this.props.chartAreaUpdated(this.chartArea);
             }
-        }
-        if (this.props.scalesUpdated) {
-            this.props.scalesUpdated(chart.scales["x-axis-0"], chart.scales["y-axis-0"]);
         }
     };
 

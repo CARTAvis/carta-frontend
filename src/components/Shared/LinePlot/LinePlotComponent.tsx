@@ -56,8 +56,6 @@ const DRAG_THRESHOLD = 3;
 export class LinePlotComponent extends React.Component<LinePlotComponentProps, LinePlotComponentState> {
     private plotRef;
     private stageRef;
-    private scaleX;
-    private scaleY;
     private stageClickStartX: number;
     private stageClickStartY: number;
     private panPrevious: number;
@@ -69,6 +67,22 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
         this.state = {chartArea: undefined, hoveredMarker: undefined, width: 0, height: 0, selecting: false, selectionBoxStart: 0, selectionBoxEnd: 0, panning: false, panStart: 0};
     }
 
+    private getValueForPixel(pixel: number) {
+        if (!this.state.chartArea) {
+            return undefined;
+        }
+        const fraction = (pixel - this.state.chartArea.left) / (this.state.chartArea.right - this.state.chartArea.left);
+        return fraction * (this.props.xMax - this.props.xMin) + this.props.xMin;
+    }
+
+    private getPixelForValue(value: number) {
+        if (!this.state.chartArea) {
+            return undefined;
+        }
+        const fraction = (value - this.props.xMin) / (this.props.xMax - this.props.xMin);
+        return fraction * (this.state.chartArea.right - this.state.chartArea.left) + this.state.chartArea.left;
+    }
+
     onPlotRefUpdated = (plotRef) => {
         this.plotRef = plotRef;
     };
@@ -77,11 +91,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
         if (!_.isEqual(chartArea, this.state.chartArea)) {
             this.setState({chartArea});
         }
-    };
-
-    onChartScalesUpdated = (scaleX, scaleY) => {
-        this.scaleX = scaleX;
-        this.scaleY = scaleY;
     };
 
     onResize = (w, h) => {
@@ -96,20 +105,20 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
     };
 
     onMarkerDragged = (ev, marker: Marker) => {
-        if (this.scaleX && this.props.markers) {
+        if (this.props.markers) {
             if (marker && marker.dragMove) {
                 const newPositionCanvasSpace = ev.evt.offsetX;
                 // Prevent dragging out of canvas space
                 if (newPositionCanvasSpace < this.state.chartArea.left || newPositionCanvasSpace > this.state.chartArea.right) {
                     return;
                 }
-                const newPositionDataSpace = this.scaleX.getValueForPixel(newPositionCanvasSpace);
+                const newPositionDataSpace = this.getValueForPixel(newPositionCanvasSpace);
                 marker.dragMove(newPositionDataSpace);
             }
         }
         // Cursor move updates
-        if (this.props.graphCursorMoved && this.scaleX) {
-            const cursorPosGraphSpace = this.scaleX.getValueForPixel(ev.evt.offsetX);
+        if (this.props.graphCursorMoved) {
+            const cursorPosGraphSpace = this.getValueForPixel(ev.evt.offsetX);
             this.props.graphCursorMoved(cursorPosGraphSpace);
         }
     };
@@ -145,11 +154,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
         else {
             this.stageClickStartX = undefined;
             this.stageClickStartY = undefined;
-            if (this.state.selecting && this.props.graphZoomed && this.scaleX) {
+            if (this.state.selecting && this.props.graphZoomed) {
                 const minCanvasSpace = Math.min(this.state.selectionBoxStart, this.state.selectionBoxEnd);
                 const maxCanvasSpace = Math.max(this.state.selectionBoxStart, this.state.selectionBoxEnd);
-                const minGraphSpace = this.scaleX.getValueForPixel(minCanvasSpace);
-                const maxGraphSpace = this.scaleX.getValueForPixel(maxCanvasSpace);
+                const minGraphSpace = this.getValueForPixel(minCanvasSpace);
+                const maxGraphSpace = this.getValueForPixel(maxCanvasSpace);
                 this.props.graphZoomed(minGraphSpace, maxGraphSpace);
             }
         }
@@ -161,18 +170,18 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
         if (this.state.selecting) {
             this.setState({selectionBoxEnd: mouseEvent.offsetX});
         }
-        else if (this.state.panning && this.scaleX && this.props.graphZoomed) {
+        else if (this.state.panning && this.props.graphZoomed) {
             const currentPan = mouseEvent.offsetX;
-            const prevPanGraphSpace = this.scaleX.getValueForPixel(this.panPrevious);
-            const currentPanGraphSpace = this.scaleX.getValueForPixel(currentPan);
+            const prevPanGraphSpace = this.getValueForPixel(this.panPrevious);
+            const currentPanGraphSpace = this.getValueForPixel(currentPan);
             const delta = (currentPanGraphSpace - prevPanGraphSpace);
             this.panPrevious = currentPan;
             // Shift zoom to counteract drag's delta
             this.props.graphZoomed(this.props.xMin - delta, this.props.xMax - delta);
         }
         // Cursor move updates
-        if (this.props.graphCursorMoved && this.scaleX) {
-            const cursorPosGraphSpace = this.scaleX.getValueForPixel(mouseEvent.offsetX);
+        if (this.props.graphCursorMoved) {
+            const cursorPosGraphSpace = this.getValueForPixel(mouseEvent.offsetX);
             this.props.graphCursorMoved(cursorPosGraphSpace);
         }
     };
@@ -196,15 +205,19 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
                     return;
                 }
                 // Do left-click callback if it exists
-                if (this.props.graphClicked && mouseEvent.button === 0 && this.scaleX) {
+                if (this.props.graphClicked && mouseEvent.button === 0) {
                     const xCanvasSpace = mouseEvent.offsetX / devicePixelRatio;
-                    const xGraphSpace = this.scaleX.getValueForPixel(xCanvasSpace);
+                    const xGraphSpace = this.getValueForPixel(xCanvasSpace);
+                    console.log(xGraphSpace);
+                    const xFrac = (xCanvasSpace - this.state.chartArea.left) / (this.state.chartArea.right - this.state.chartArea.left);
+                    const xGraphSpaceAlt = xFrac * (this.props.xMax - this.props.xMin) + this.props.xMin;
+                    console.log(xGraphSpaceAlt);
                     this.props.graphClicked(xGraphSpace);
                 }
                 // Do right-click callback if it exists
-                else if (this.props.graphRightClicked && mouseEvent.button === 2 && this.scaleX) {
+                else if (this.props.graphRightClicked && mouseEvent.button === 2) {
                     const xCanvasSpace = mouseEvent.offsetX / devicePixelRatio;
-                    const xGraphSpace = this.scaleX.getValueForPixel(xCanvasSpace);
+                    const xGraphSpace = this.getValueForPixel(xCanvasSpace);
                     this.props.graphRightClicked(xGraphSpace);
                 }
             }, DOUBLE_CLICK_THRESHOLD);
@@ -248,13 +261,13 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
         const isHovering = this.state.hoveredMarker !== undefined && !this.state.selecting;
 
         let lines = [];
-        if (this.props.markers && this.props.markers.length && chartArea && this.scaleX) {
+        if (this.props.markers && this.props.markers.length && chartArea) {
             const markerHitBoxWidth = 16;
             const lineHeight = chartArea.bottom - chartArea.top;
             for (let i = 0; i < this.props.markers.length; i++) {
                 const marker = this.props.markers[i];
                 // Calculate canvas space location. Rounded to single pixel and shifted by 0.5 for crisp rendering
-                const xVal = Math.floor(this.scaleX.getPixelForValue(marker.value)) + 0.5;
+                const xVal = Math.floor(this.getPixelForValue(marker.value)) + 0.5;
                 // Skip points out of range
                 if (xVal < Math.floor(this.state.chartArea.left) || xVal > Math.ceil(this.state.chartArea.right) || isNaN(xVal)) {
                     continue;
@@ -312,7 +325,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
                     {...this.props}
                     plotRefUpdated={this.onPlotRefUpdated}
                     chartAreaUpdated={this.onChartAreaUpdated}
-                    scalesUpdated={this.onChartScalesUpdated}
                     width={this.state.width}
                     height={this.state.height}
                 />;
