@@ -187,36 +187,34 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
     };
 
     onStageClick = (ev) => {
-        const mouseEvent: MouseEvent = ev.evt;
+        // Store event details for later callback use
+        const mousePoint: Point2D = {x: ev.evt.offsetX, y: ev.evt.offsetY};
+        const mouseButton = ev.evt.button;
         // Handle double-clicks
         const currentTime = performance.now();
         const delta = currentTime - this.previousClickTime;
         this.previousClickTime = currentTime;
         if (delta < DOUBLE_CLICK_THRESHOLD) {
             this.onStageDoubleClick(ev);
-            clearInterval(this.pendingClickHandle);
+            clearTimeout(this.pendingClickHandle);
             return;
         }
         else {
             this.pendingClickHandle = setTimeout(() => {
                 // Ignore click-drags for click handling
-                const mouseMoveDist = {x: Math.abs(mouseEvent.offsetX - this.stageClickStartX), y: Math.abs(mouseEvent.offsetY - this.stageClickStartY)};
+                const mouseMoveDist = {x: Math.abs(mousePoint.x - this.stageClickStartX), y: Math.abs(mousePoint.y - this.stageClickStartY)};
                 if (mouseMoveDist.x > 1 || mouseMoveDist.y > 1) {
                     return;
                 }
                 // Do left-click callback if it exists
-                if (this.props.graphClicked && mouseEvent.button === 0) {
-                    const xCanvasSpace = mouseEvent.offsetX / devicePixelRatio;
+                if (this.props.graphClicked && mouseButton === 0) {
+                    const xCanvasSpace = mousePoint.x / devicePixelRatio;
                     const xGraphSpace = this.getValueForPixel(xCanvasSpace);
-                    console.log(xGraphSpace);
-                    const xFrac = (xCanvasSpace - this.state.chartArea.left) / (this.state.chartArea.right - this.state.chartArea.left);
-                    const xGraphSpaceAlt = xFrac * (this.props.xMax - this.props.xMin) + this.props.xMin;
-                    console.log(xGraphSpaceAlt);
                     this.props.graphClicked(xGraphSpace);
                 }
                 // Do right-click callback if it exists
-                else if (this.props.graphRightClicked && mouseEvent.button === 2) {
-                    const xCanvasSpace = mouseEvent.offsetX / devicePixelRatio;
+                else if (this.props.graphRightClicked && mouseButton === 2) {
+                    const xCanvasSpace = mousePoint.x / devicePixelRatio;
                     const xGraphSpace = this.getValueForPixel(xCanvasSpace);
                     this.props.graphRightClicked(xGraphSpace);
                 }
@@ -269,7 +267,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
                 // Calculate canvas space location. Rounded to single pixel and shifted by 0.5 for crisp rendering
                 const xVal = Math.floor(this.getPixelForValue(marker.value)) + 0.5;
                 // Skip points out of range
-                if (xVal < Math.floor(this.state.chartArea.left) || xVal > Math.ceil(this.state.chartArea.right) || isNaN(xVal)) {
+                if (xVal < Math.floor(this.state.chartArea.left - 1) || xVal > Math.ceil(this.state.chartArea.right + 1) || isNaN(xVal)) {
                     continue;
                 }
 
@@ -319,7 +317,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
         }
 
         return (
-            <div style={{width: "100%", height: "100%", cursor: isHovering ? "move" : "crosshair"}} onKeyDown={this.onKeyDown} tabIndex={0}>
+            <div style={{width: "100%", height: "100%", cursor: this.state.panning || isHovering ? "move" : "crosshair"}} onKeyDown={this.onKeyDown} tabIndex={0}>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
                 <PlotContainerComponent
                     {...this.props}
