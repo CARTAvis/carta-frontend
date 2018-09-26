@@ -320,8 +320,7 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
 
         return (
             <div className={"spatial-profiler-widget"}>
-                <Scatter data={plotData} width={this.state.width} height={this.state.height} options={plotOptions} plugins={plugins}/>
-                {/*<Plot layout={plotLayout} data={plotData} config={plotConfig}/>*/}
+                <Scatter data={plotData} options={plotOptions} plugins={plugins}/>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
         );

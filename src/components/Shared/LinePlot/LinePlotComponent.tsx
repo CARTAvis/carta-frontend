@@ -7,6 +7,7 @@ import {PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
 import {Arrow, Group, Layer, Line, Rect, Stage} from "react-konva";
 import ReactResizeDetector from "react-resize-detector";
 import {Point2D} from "../../../models/Point2D";
+import "./LinePlotComponent.css";
 
 export interface Marker {
     value: number;
@@ -317,7 +318,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
         }
 
         return (
-            <div style={{width: "100%", height: "100%", cursor: this.state.panning || isHovering ? "move" : "crosshair"}} onKeyDown={this.onKeyDown} tabIndex={0}>
+            <div className={"line-plot-component"} style={{cursor: this.state.panning || isHovering ? "move" : "crosshair"}} onKeyDown={this.onKeyDown} tabIndex={0}>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
                 <PlotContainerComponent
                     {...this.props}
