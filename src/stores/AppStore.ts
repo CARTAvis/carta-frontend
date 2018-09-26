@@ -344,16 +344,6 @@ export class AppStore {
                 if (this.animatorStore.animationState === AnimationState.PLAYING) {
                     this.animatorStore.removeFromRequestQueue(updatedFrame.channel, updatedFrame.stokes);
                 }
-                // if there's a valid channel histogram bundled into the message, update it
-                if (rasterImageData.channelHistogramData) {
-                    // Update channel histograms
-                    if (rasterImageData.channelHistogramData.regionId === -1) {
-                        const channelHist = rasterImageData.channelHistogramData.histograms.find(hist => hist.channel === updatedFrame.requiredChannel);
-                        if (channelHist) {
-                            updatedFrame.updateChannelHistogram(channelHist as CARTA.Histogram);
-                        }
-                    }
-                }
             }
         });
 
@@ -366,7 +356,7 @@ export class AppStore {
             if (updatedFrame && regionHistogramData.regionId === -1 && regionHistogramData.stokes === updatedFrame.requiredStokes) {
                 const channelHist = regionHistogramData.histograms.find(hist => hist.channel === updatedFrame.requiredChannel);
                 if (channelHist) {
-                    updatedFrame.updateChannelHistogram(channelHist as CARTA.Histogram);
+                    updatedFrame.renderConfig.updateChannelHistogram(channelHist as CARTA.Histogram);
                 }
             }
         });
