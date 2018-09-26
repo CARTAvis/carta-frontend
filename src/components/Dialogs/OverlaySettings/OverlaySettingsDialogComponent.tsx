@@ -122,7 +122,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 items={astFonts}
                 disabled={!visible}
                 filterable={false}
-                popoverProps={{minimal: true, position: "auto-end"}}
+                popoverProps={{minimal: true, position: "auto-end", popoverClassName: "fontselect"}}
                 onItemSelect={(font) => fontSetter(font.id)}
             >
                 <Button text={(<span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>)} disabled={!visible} rightIcon="double-caret-vertical" />
@@ -148,7 +148,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         
         const globalPanel = (
             <div className="panel-container">
-                <FormGroup inline={true} label="Font">
+                <FormGroup inline={true} className="font-group" label="Font">
                     {this.fontSelect(true, global.font, global.setFont)}
                     <NumericInput
                         min={7}
@@ -217,7 +217,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => title.setText(ev.currentTarget.value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Font" disabled={!title.visible}>
+                <FormGroup inline={true} className="font-group" label="Font" disabled={!title.visible}>
                     {this.fontSelect(title.visible, title.font, title.setFont)}
                     <NumericInput
                         min={7}
@@ -457,7 +457,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => numbers.setVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Font" disabled={!numbers.visible}>
+                <FormGroup inline={true} className="font-group" label="Font" disabled={!numbers.visible}>
                     {this.fontSelect(numbers.visible, numbers.font, numbers.setFont)}
                     <NumericInput
                         min={7}
@@ -518,7 +518,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => labels.setTextY(ev.currentTarget.value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Font" disabled={!labels.visible}>
+                <FormGroup inline={true} className="font-group" label="Font" disabled={!labels.visible}>
                     {this.fontSelect(labels.visible, labels.font, labels.setFont)}
                     <NumericInput
                         min={7}
