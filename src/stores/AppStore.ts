@@ -177,7 +177,8 @@ export class AppStore {
             frame.wcsInfo = initResult;
             frame.validWcs = true;
             // Specify degrees and single decimals for WCS info
-            this.overlayStore.numbers.format = "d.1";
+            this.overlayStore.numbers.format = "d";
+            this.overlayStore.numbers.formatPrecision = 1;
             this.overlayStore.labels.textX = AST.getString(frame.wcsInfo, "Label(1)");
             this.overlayStore.labels.textY = AST.getString(frame.wcsInfo, "Label(2)");
             console.log("Initialised WCS info from frame");

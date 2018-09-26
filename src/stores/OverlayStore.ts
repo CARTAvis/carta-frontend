@@ -349,13 +349,15 @@ export class OverlayNumberSettings {
     @observable fontSize?: number;
     @observable color?: number;
     @observable format?: string;
+    @observable formatPrecision?: number;
 
     constructor() {
         this.visible = true;
         this.fontSize = 10;
         this.font = 1;
         this.color = 4;
-        this.format = "d.1";
+        this.format = "d";
+        this.formatPrecision = 1;
     }
 
     @computed get styleString() {
@@ -367,8 +369,8 @@ export class OverlayNumberSettings {
         astString.add("Color(NumLab)", this.color);
         
         // Add settings for individual axes
-        astString.add(`Format(1)`, this.format, (this.format.length > 0));
-        astString.add(`Format(2)`, this.format, (this.format.length > 0));
+        astString.add("Format(1)", `${this.format}.${this.formatPrecision}`, (this.format.length > 0));
+        astString.add("Format(2)", `${this.format}.${this.formatPrecision}`, (this.format.length > 0));
         
         return astString.toString();
     }
@@ -392,6 +394,10 @@ export class OverlayNumberSettings {
     @action setFormat(format: string) {
         this.format = format;
     }
+
+    @action setFormatPrecision = (formatPrecision: number) => {
+        this.formatPrecision = formatPrecision;
+    };
 }
 
 export class OverlayLabelSettings {

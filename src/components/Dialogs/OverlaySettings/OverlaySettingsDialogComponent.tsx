@@ -3,7 +3,7 @@ import {AppStore} from "../../../stores/AppStore";
 import {LabelType, SystemType} from "../../../stores/OverlayStore";
 import {observer} from "mobx-react";
 import "./OverlaySettingsDialogComponent.css";
-import {Button, Switch, Dialog, IDialogProps, Intent, Tab, Tabs, NumericInput, FormGroup, MenuItem, HTMLSelect, Collapse, Divider} from "@blueprintjs/core";
+import {Button, Switch, Dialog, IDialogProps, Intent, Tab, Tabs, NumericInput, FormGroup, MenuItem, HTMLSelect, Collapse, Divider, Tooltip} from "@blueprintjs/core";
 import {Select, ItemRenderer} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
 import {DraggableDialogComponent} from "../DraggableDialog/DraggableDialogComponent";
@@ -470,15 +470,21 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup inline={true} label="Color" disabled={!numbers.visible}>
                     {this.colorSelect(numbers.visible, numbers.color, numbers.setColor)}
                 </FormGroup>
-                <FormGroup inline={true} label="Format" disabled={!numbers.visible}>
-                    <input
-                        className="bp3-input"
-                        type="text"
-                        placeholder="Format"
+                <FormGroup inline={true} className="format-group" label="Format" disabled={!numbers.visible}>
+                    <HTMLSelect
+                        options={[{label: "Hours, minutes, seconds", value: "hms"}, {label: "Degrees", value: "d"}]}
                         value={numbers.format}
-                        disabled={!numbers.visible}
-                        onChange={(ev) => numbers.setFormat(ev.currentTarget.value)}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => numbers.setFormat(event.currentTarget.value)}
                     />
+                    <Tooltip content="Precision" position="bottom">
+                    <NumericInput
+                        min={0}
+                        placeholder="Precision"
+                        value={numbers.formatPrecision}
+                        disabled={!numbers.visible}
+                        onValueChange={(value: number) => numbers.setFormatPrecision(value)}
+                    />
+                    </Tooltip>
                 </FormGroup>
             </div>
         );
