@@ -86,7 +86,7 @@ export class DecompressionService {
                 reject("Mismatched subset counts");
             }
 
-            if (message.compressionType !== CARTA.CompressionType.ZFP || message.compressionQuality <= 0 || message.compressionQuality >= 31) {
+            if (message.compressionType !== CARTA.CompressionType.ZFP || message.compressionQuality <= 0 || message.compressionQuality > 31) {
                 reject("Unsupported compression type");
             }
 

@@ -232,7 +232,7 @@ export class AppStore {
         this.layoutSettings = new LayoutStore();
         this.floatingWidgetStore = new FloatingWidgetStore();
         this.urlConnectDialogVisible = false;
-        this.compressionQuality = 11;
+        this.compressionQuality = 21;
         this.darkTheme = false;
 
         const throttledSetView = _.throttle((fileId: number, view: FrameView) => {
