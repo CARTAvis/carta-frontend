@@ -15,6 +15,7 @@ import * as _ from "lodash";
 import {ImageViewComponent} from "../components/ImageView/ImageViewComponent";
 import {AnimationState, AnimatorStore} from "./AnimatorStore";
 import SpatialProfile = CARTA.SpatialProfile;
+import {smoothStepOffset} from "../util/math";
 
 export class AppStore {
     // Backend service
@@ -202,7 +203,7 @@ export class AppStore {
         this.darkTheme = true;
     };
 
-    @action setLightTheme =  () => {
+    @action setLightTheme = () => {
         this.darkTheme = false;
     };
 
@@ -232,11 +233,10 @@ export class AppStore {
         this.layoutSettings = new LayoutStore();
         this.floatingWidgetStore = new FloatingWidgetStore();
         this.urlConnectDialogVisible = false;
-        this.compressionQuality = 21;
+        this.compressionQuality = 11;
         this.darkTheme = false;
 
-        const throttledSetView = _.throttle((fileId: number, view: FrameView) => {
-            const quality = this.compressionQuality;
+        const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
             this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
         }, 200);
 
@@ -263,6 +263,9 @@ export class AppStore {
                     mip: reqView.mip
                 };
 
+                let adjustedQuality = smoothStepOffset(this.activeFrame.zoomLevel, 0.9, 4, 11, 21);
+                adjustedQuality = Math.round(adjustedQuality);
+
                 // Calculate if new data is required
                 const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
                 // Don't auto-update when animation is playing
@@ -271,7 +274,8 @@ export class AppStore {
                 }
 
                 const updateRequiredView = (croppedReq.mip < currentView.mip) || (croppedReq.xMin < currentView.xMin || croppedReq.xMax > currentView.xMax || croppedReq.yMin < currentView.yMin || croppedReq.yMax > currentView.yMax);
-                if (updateRequiredView) {
+                const updateCompressionQuality = (adjustedQuality > this.activeFrame.currentCompressionQuality);
+                if (updateRequiredView || updateCompressionQuality) {
                     const reqWidth = reqView.xMax - reqView.xMin;
                     const reqHeight = reqView.yMax - reqView.yMin;
                     // Add an extra padding on either side to avoid spamming backend
@@ -283,7 +287,7 @@ export class AppStore {
                         yMax: Math.min(reqView.yMax + padFraction * reqHeight, this.activeFrame.frameInfo.fileInfoExtended.height),
                         mip: reqView.mip
                     };
-                    throttledSetView(this.activeFrame.frameInfo.fileId, paddedView);
+                    throttledSetView(this.activeFrame.frameInfo.fileId, paddedView, adjustedQuality);
                 }
             }
         });
