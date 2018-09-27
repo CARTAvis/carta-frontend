@@ -60,7 +60,30 @@
         .bp3-form-group {
             float: right;
             margin-bottom: 5px;
+            .bp3-button {
+                width: 120px;
+            }
         }
+
+        .bp3-numeric-input {
+            .bp3-input-group {
+                input {
+                    width: 90px;
+                }
+            }
+        }
+
+        .bp3-input-group {
+            input {
+                width: 120px;
+            }
+        }
+
+        select {
+            width: 120px;
+            direction: rtl;
+        }
+
         .cursor-display {
             pre {
                 font-size: x-small;
