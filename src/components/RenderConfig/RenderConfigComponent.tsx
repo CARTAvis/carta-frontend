@@ -11,6 +11,7 @@ import {FrameScaling} from "../../stores/RenderConfigStore";
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
 import "./RenderConfigComponent.css";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
+import {clamp} from "../../util/math";
 
 class RenderConfigComponentProps {
     appStore: AppStore;
@@ -165,9 +166,9 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
             if (this.state.xMin !== undefined && this.state.xMax !== undefined) {
                 minIndex = Math.floor((this.state.xMin - histogram.firstBinCenter) / histogram.binWidth);
-                minIndex = Math.max(0, Math.min(histogram.bins.length, minIndex));
+                minIndex = clamp(minIndex, 0, histogram.bins.length);
                 maxIndex = Math.ceil((this.state.xMax - histogram.firstBinCenter) / histogram.binWidth);
-                maxIndex = Math.max(0, Math.min(histogram.bins.length, maxIndex));
+                maxIndex = clamp(maxIndex, 0, histogram.bins.length);
             }
             const N = maxIndex - minIndex;
             if (N > 0 && !isNaN(N)) {

@@ -3,6 +3,7 @@ import {action, computed, observable} from "mobx";
 import {OverlayStore} from "./OverlayStore";
 import {RenderConfigStore} from "./RenderConfigStore";
 import {Point2D} from "../models/Point2D";
+import {clamp} from "../util/math";
 
 export class FrameInfo {
     fileId: number;
@@ -27,11 +28,12 @@ export class FrameStore {
     @observable center: Point2D;
     @observable centerY: number;
     @observable zoomLevel: number;
-    @observable stokes;
-    @observable channel;
-    @observable requiredStokes;
-    @observable requiredChannel;
+    @observable stokes: number;
+    @observable channel: number;
+    @observable requiredStokes: number;
+    @observable requiredChannel: number;
     @observable currentFrameView: FrameView;
+    @observable currentCompressionQuality: number;
     @observable renderConfig: RenderConfigStore;
     @observable rasterData: Float32Array;
     @observable overviewRasterData: Float32Array;
@@ -107,7 +109,8 @@ export class FrameStore {
     @action updateFromRasterData(rasterImageData: CARTA.RasterImageData) {
         this.stokes = rasterImageData.stokes;
         this.channel = rasterImageData.channel;
-
+        this.currentCompressionQuality = rasterImageData.compressionQuality;
+        console.log(this.currentCompressionQuality);
         // if there's a valid channel histogram bundled into the message, update it
         if (rasterImageData.channelHistogramData) {
             // Update channel histograms
@@ -164,8 +167,8 @@ export class FrameStore {
             newStokes = (newStokes + numStokes) % numStokes;
         }
         else {
-            newChannel = Math.max(0, Math.min(depth - 1, newChannel));
-            newStokes = Math.max(0, Math.min(numStokes - 1, newStokes));
+            newChannel = clamp(newChannel, 0, depth - 1);
+            newStokes = clamp(newStokes, 0, numStokes - 1);
         }
         this.setChannels(newChannel, newStokes);
     }

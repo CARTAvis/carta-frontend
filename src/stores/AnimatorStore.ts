@@ -1,5 +1,6 @@
 import {action, computed, observable} from "mobx";
 import {AppStore} from "./AppStore";
+import {clamp} from "../util/math";
 
 export enum AnimationMode {
     CHANNEL = 0,
@@ -81,6 +82,6 @@ export class AnimatorStore {
     }
 
     @computed get frameInterval() {
-        return 1000.0 / Math.min(this.maxFrameRate, Math.max(this.minFrameRate, this.frameRate));
+        return 1000.0 / clamp(this.frameRate, this.minFrameRate, this.maxFrameRate);
     }
 }

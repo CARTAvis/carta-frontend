@@ -8,6 +8,7 @@ import {WidgetConfig} from "../../stores/FloatingWidgetStore";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import {ChartOptions, ChartData} from "chart.js";
 import {Scatter} from "react-chartjs-2";
+import {clamp} from "../../util/math";
 
 const Chart = require("react-chartjs-2").Chart;
 
@@ -215,12 +216,12 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
                         let lowerBound: number;
                         let upperBound: number;
                         if (isXProfile) {
-                            lowerBound = Math.max(0, Math.min(frame.requiredFrameView.xMin, frame.frameInfo.fileInfoExtended.width));
-                            upperBound = Math.max(0, Math.min(frame.requiredFrameView.xMax, frame.frameInfo.fileInfoExtended.width));
+                            lowerBound = clamp(frame.requiredFrameView.xMin, 0, frame.frameInfo.fileInfoExtended.width);
+                            upperBound = clamp(frame.requiredFrameView.xMax, 0, frame.frameInfo.fileInfoExtended.width);
                         }
                         else {
-                            lowerBound = Math.max(0, Math.min(frame.requiredFrameView.yMin, frame.frameInfo.fileInfoExtended.height));
-                            upperBound = Math.max(0, Math.min(frame.requiredFrameView.yMax, frame.frameInfo.fileInfoExtended.height));
+                            lowerBound = clamp(frame.requiredFrameView.yMin, 0, frame.frameInfo.fileInfoExtended.height);
+                            upperBound = clamp(frame.requiredFrameView.yMax, 0, frame.frameInfo.fileInfoExtended.height);
                         }
 
                         lowerBound = Math.floor(lowerBound);
@@ -272,12 +273,12 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
                         let lowerBound: number;
                         let upperBound: number;
                         if (isXProfile) {
-                            lowerBound = Math.max(0, Math.min(frame.requiredFrameView.xMin, frame.frameInfo.fileInfoExtended.width));
-                            upperBound = Math.max(0, Math.min(frame.requiredFrameView.xMax, frame.frameInfo.fileInfoExtended.width));
+                            lowerBound = clamp(frame.requiredFrameView.xMin, 0, frame.frameInfo.fileInfoExtended.width);
+                            upperBound = clamp(frame.requiredFrameView.xMax, 0, frame.frameInfo.fileInfoExtended.width);
                         }
                         else {
-                            lowerBound = Math.max(0, Math.min(frame.requiredFrameView.yMin, frame.frameInfo.fileInfoExtended.height));
-                            upperBound = Math.max(0, Math.min(frame.requiredFrameView.yMax, frame.frameInfo.fileInfoExtended.height));
+                            lowerBound = clamp(frame.requiredFrameView.yMin, 0, frame.frameInfo.fileInfoExtended.height);
+                            upperBound = clamp(frame.requiredFrameView.yMax, 0, frame.frameInfo.fileInfoExtended.height);
                         }
 
                         lowerBound = Math.floor(lowerBound);
