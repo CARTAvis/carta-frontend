@@ -8,6 +8,7 @@ import {Arrow, Group, Layer, Line, Rect, Stage} from "react-konva";
 import ReactResizeDetector from "react-resize-detector";
 import {Point2D} from "../../../models/Point2D";
 import "./LinePlotComponent.css";
+import {clamp} from "../../../util/math";
 
 export interface Marker {
     value: number;
@@ -102,7 +103,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
 
     dragBoundsFunc = (pos: Point2D) => {
         const chartArea = this.state.chartArea;
-        return {x: Math.min(chartArea.right, Math.max(chartArea.left, pos.x)), y: chartArea.top};
+        return {x: clamp(pos.x, chartArea.left, chartArea.right), y: chartArea.top};
     };
 
     onMarkerDragged = (ev, marker: Marker) => {

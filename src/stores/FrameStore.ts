@@ -3,6 +3,7 @@ import {action, computed, observable} from "mobx";
 import {OverlayStore} from "./OverlayStore";
 import {RenderConfigStore} from "./RenderConfigStore";
 import {Point2D} from "../models/Point2D";
+import {clamp} from "../util/math";
 
 export class FrameInfo {
     fileId: number;
@@ -164,8 +165,8 @@ export class FrameStore {
             newStokes = (newStokes + numStokes) % numStokes;
         }
         else {
-            newChannel = Math.max(0, Math.min(depth - 1, newChannel));
-            newStokes = Math.max(0, Math.min(numStokes - 1, newStokes));
+            newChannel = clamp(newChannel, 0, depth - 1);
+            newStokes = clamp(newStokes, 0, numStokes - 1);
         }
         this.setChannels(newChannel, newStokes);
     }

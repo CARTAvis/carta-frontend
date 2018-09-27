@@ -1,5 +1,6 @@
 import {action, computed, observable} from "mobx";
 import {CARTA} from "../../protobuf/build";
+import {clamp} from "../util/math";
 
 export enum FrameScaling {
     LINEAR = 0,
@@ -117,7 +118,7 @@ export class RenderConfigStore {
     }
 
     @action setColorMapIndex(index: number) {
-        this.colorMap = Math.max(0, Math.min(index, RenderConfigStore.COLOR_MAPS_ALL.length - 1));
+        this.colorMap = clamp(index, 0, RenderConfigStore.COLOR_MAPS_ALL.length - 1);
     }
 
     @action setColorMap(colormap: string) {
