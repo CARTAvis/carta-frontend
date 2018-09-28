@@ -110,6 +110,7 @@ export class OverlayTitleSettings {
     @observable font?: number;
     @observable fontSize?: number;
     @observable gap?: number;
+    @observable customColor?: boolean;
     @observable color?: number;
     @observable text: string;
 
@@ -119,7 +120,7 @@ export class OverlayTitleSettings {
         astString.add("Font(Title)", this.font);
         astString.add("Size(Title)", this.fontSize);
         astString.add("TitleGap", this.gap);
-        astString.add("Color(Title)", this.color);
+        astString.add("Color(Title)", this.color, this.customColor);
         astString.add("Title(1)", this.text);
         return astString.toString();
     }
@@ -127,6 +128,7 @@ export class OverlayTitleSettings {
     constructor() {
         this.visible = false;
         this.gap = 0.02;
+        this.customColor = false;
         this.color = 4;
         this.font = 2;
         this.fontSize = 24;
@@ -153,6 +155,10 @@ export class OverlayTitleSettings {
         this.gap = gap;
     }
 
+    @action setCustomColor(customColor: boolean) {
+        this.customColor = customColor;
+    }
+
     @action setColor = (color: number) => {
         this.color = color;
     };
@@ -160,6 +166,7 @@ export class OverlayTitleSettings {
 
 export class OverlayGridSettings {
     @observable visible?: boolean;
+    @observable customColor?: boolean;
     @observable color?: number;
     @observable width?: number;
     @observable dynamicGap?: boolean;
@@ -169,7 +176,7 @@ export class OverlayGridSettings {
     @computed get styleString() {
         let astString = new ASTSettingsString();
         astString.add("Grid", this.visible);
-        astString.add("Color(Grid)", this.color);
+        astString.add("Color(Grid)", this.color, this.customColor);
         astString.add("Width(Grid)", this.width, (this.width > 0));
         astString.add("Gap(1)", this.gapX, !this.dynamicGap);
         astString.add("Gap(2)", this.gapY, !this.dynamicGap);
@@ -178,6 +185,7 @@ export class OverlayGridSettings {
     
     constructor() {
         this.visible = true;
+        this.customColor = false;
         this.color = 4;
         this.width = 1;
         this.dynamicGap = true;
@@ -187,6 +195,10 @@ export class OverlayGridSettings {
 
     @action setVisible(visible: boolean = true) {
         this.visible = visible;
+    }
+
+    @action setCustomColor(customColor: boolean) {
+        this.customColor = customColor;
     }
 
     @action setColor = (color: number) => {
@@ -213,25 +225,31 @@ export class OverlayGridSettings {
 
 export class OverlayBorderSettings {
     @observable visible?: boolean;
+    @observable customColor?: boolean;
     @observable color?: number;
     @observable width?: number;
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
         astString.add("Border", this.visible);
-        astString.add("Color(Border)", this.color);
+        astString.add("Color(Border)", this.color, this.customColor);
         astString.add("Width(Border)", this.width, (this.width > 0));
         return astString.toString();
     }
     
     constructor() {
         this.visible = true;
+        this.customColor = false;
         this.color = 4;
         this.width = 1;
     }
 
     @action setVisible(visible: boolean = true) {
         this.visible = visible;
+    }
+
+    @action setCustomColor(customColor: boolean) {
+        this.customColor = customColor;
     }
 
     @action setColor = (color: number) => {
@@ -248,6 +266,7 @@ export class OverlayTickSettings {
     @observable densityX?: number;
     @observable densityY?: number;
     @observable dynamicDensity?: boolean;
+    @observable customColor?: boolean;
     @observable color?: number;
     @observable width?: number;
     @observable length?: number; // percentage
@@ -258,7 +277,7 @@ export class OverlayTickSettings {
         astString.add("TickAll", this.drawAll);
         astString.add("MinTick(1)", this.densityX, !this.dynamicDensity);
         astString.add("MinTick(2)", this.densityY, !this.dynamicDensity);
-        astString.add("Color(Ticks)", this.color);
+        astString.add("Color(Ticks)", this.color, this.customColor);
         astString.add("Width(Ticks)", this.width, (this.width > 0));
         astString.add("MinTickLen", (this.length / 100).toFixed(2)); // convert to fraction
         astString.add("MajTickLen", (this.majorLength / 100).toFixed(2)); // convert to fraction
@@ -270,6 +289,7 @@ export class OverlayTickSettings {
         this.dynamicDensity = true;
         this.densityX = 4;
         this.densityY = 4;
+        this.customColor = false;
         this.color = 4;
         this.width = 1;
         this.length = 1; // percentage
@@ -292,6 +312,10 @@ export class OverlayTickSettings {
         this.densityY = density;
     }
 
+    @action setCustomColor(customColor: boolean) {
+        this.customColor = customColor;
+    }
+
     @action setColor = (color: number) => {
         this.color = color;
     };
@@ -311,11 +335,13 @@ export class OverlayTickSettings {
 
 export class OverlayAxisSettings {
     @observable visible?: boolean;
+    @observable customColor?: boolean;
     @observable color?: number;
     @observable width?: number;
     
     constructor() {
         this.visible = false;
+        this.customColor = false;
         this.color = 4;
         this.width = 1;
     }
@@ -324,7 +350,7 @@ export class OverlayAxisSettings {
         let astString = new ASTSettingsString();
 
         astString.add("DrawAxes", this.visible);
-        astString.add("Color(Axes)", this.color);
+        astString.add("Color(Axes)", this.color, this.customColor);
         astString.add("Width(Axes)", this.width, (this.width > 0));
 
         return astString.toString();
@@ -332,6 +358,10 @@ export class OverlayAxisSettings {
 
     @action setVisible(visible: boolean = true) {
         this.visible = visible;
+    }
+
+    @action setCustomColor(customColor: boolean) {
+        this.customColor = customColor;
     }
 
     @action setColor = (color: number) => {
@@ -347,6 +377,7 @@ export class OverlayNumberSettings {
     @observable visible?: boolean;
     @observable font?: number;
     @observable fontSize?: number;
+    @observable customColor?: boolean;
     @observable color?: number;
     @observable format?: string;
     @observable dynamicPrecision?: boolean;
@@ -356,6 +387,7 @@ export class OverlayNumberSettings {
         this.visible = true;
         this.fontSize = 10;
         this.font = 1;
+        this.customColor = false;
         this.color = 4;
         this.format = "d";
         this.dynamicPrecision = true;
@@ -372,7 +404,7 @@ export class OverlayNumberSettings {
         astString.add("NumLab", this.visible);
         astString.add("Font(NumLab)", this.font);
         astString.add("Size(NumLab)", this.fontSize);
-        astString.add("Color(NumLab)", this.color);
+        astString.add("Color(NumLab)", this.color, this.customColor);
                 
         // Add settings for individual axes
         astString.add("Format(1)", this.formatString);
@@ -391,6 +423,10 @@ export class OverlayNumberSettings {
 
     @action setFontSize(fontSize: number) {
         this.fontSize = fontSize;
+    }
+
+    @action setCustomColor(customColor: boolean) {
+        this.customColor = customColor;
     }
 
     @action setColor = (color: number) => {
@@ -412,6 +448,7 @@ export class OverlayNumberSettings {
 
 export class OverlayLabelSettings {
     @observable visible?: boolean;
+    @observable customColor?: boolean;
     @observable color?: number;
     @observable gap?: number;
     @observable font?: number;
@@ -424,6 +461,7 @@ export class OverlayLabelSettings {
         this.visible = true;
         this.fontSize = 15;
         this.font = 1;
+        this.customColor = false;
         this.color = 4;
         this.dynamicText = true;
     }
@@ -434,7 +472,7 @@ export class OverlayLabelSettings {
         astString.add("TextLab", this.visible);
         astString.add("Font(TextLab)", this.font);
         astString.add("Size(TextLab)", this.fontSize);
-        astString.add("Color(TextLab)", this.color);
+        astString.add("Color(TextLab)", this.color, this.customColor);
         astString.add("TextLabGap", this.gap);
         
         // Add settings for individual axes
@@ -446,6 +484,10 @@ export class OverlayLabelSettings {
 
     @action setVisible(visible: boolean = true) {
         this.visible = visible;
+    }
+
+    @action setCustomColor(customColor: boolean) {
+        this.customColor = customColor;
     }
 
     @action setColor = (color: number) => {
