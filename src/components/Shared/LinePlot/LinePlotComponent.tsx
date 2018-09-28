@@ -327,12 +327,12 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
                     chartAreaUpdated={this.onChartAreaUpdated}
                     width={this.state.width}
                     height={this.state.height}
-                />;
+                />
                 <Stage
+                    className={"annotation-stage"}
                     ref={ref => this.stageRef = ref}
                     width={this.state.width}
                     height={this.state.height}
-                    style={{position: "absolute", top: 0}}
                     onMouseDown={this.onStageMouseDown}
                     onMouseUp={this.onStageMouseUp}
                     onContextMenu={this.onStageRightClick}

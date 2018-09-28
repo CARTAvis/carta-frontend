@@ -2,16 +2,16 @@ import * as React from "react";
 import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
 import {observer} from "mobx-react";
-import {FormGroup, HTMLSelect, NonIdealState, ButtonGroup, Button, Colors, IOptionProps} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, NonIdealState, ButtonGroup, Button, Colors, IOptionProps, NumericInput} from "@blueprintjs/core";
 import {Chart, ChartArea} from "chart.js";
 import {LinePlotComponent, LinePlotComponentProps} from "../Shared/LinePlot/LinePlotComponent";
 import {AppStore} from "../../stores/AppStore";
 import {FrameStore} from "../../stores/FrameStore";
 import {FrameScaling} from "../../stores/RenderConfigStore";
 import {WidgetConfig} from "../../stores/FloatingWidgetStore";
-import "./RenderConfigComponent.css";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
 import {clamp} from "../../util/math";
+import "./RenderConfigComponent.css";
 
 class RenderConfigComponentProps {
     appStore: AppStore;
@@ -68,16 +68,16 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         this.props.appStore.activeFrame.renderConfig.setScaling(scaling);
     };
 
-    handleBiasChange = (value: number) => {
-        this.props.appStore.activeFrame.renderConfig.bias = value;
+    handleScaleMinChange = (val: number) => {
+        if (isFinite(val)) {
+            this.props.appStore.activeFrame.renderConfig.setCustomScale(val, this.props.appStore.activeFrame.renderConfig.scaleMax);
+        }
     };
 
-    handleContrastChange = (value: number) => {
-        this.props.appStore.activeFrame.renderConfig.contrast = value;
-    };
-
-    handleGammaChange = (value: number) => {
-        this.props.appStore.activeFrame.renderConfig.gamma = value;
+    handleScaleMaxChange = (val: number) => {
+        if (isFinite(val)) {
+            this.props.appStore.activeFrame.renderConfig.setCustomScale(this.props.appStore.activeFrame.renderConfig.scaleMin, val);
+        }
     };
 
     onResize = (width: number, height: number) => {
@@ -257,9 +257,13 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                 numberString = this.state.cursorX.toFixed(2);
             }
 
+            if (frame.unit) {
+                numberString += ` ${frame.unit}`;
+            }
+
             cursorInfoDiv = (
                 <div className="cursor-display">
-                    <pre>{`Cursor: ${numberString} ${frame.unit}`}</pre>
+                    <pre>{`Cursor: ${numberString}`}</pre>
                 </div>
             );
         }
@@ -276,6 +280,23 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                 }
                 <div className="colormap-config">
                     <ColormapConfigComponent darkTheme={appStore.darkTheme} renderConfig={frame.renderConfig}/>
+                    <FormGroup label={"Min"} inline={true}>
+                        <NumericInput
+                            value={frame.renderConfig.scaleMin}
+                            selectAllOnFocus={true}
+                            buttonPosition={"none"}
+                            allowNumericCharactersOnly={false}
+                            onValueChange={this.handleScaleMinChange}
+                        />
+                    </FormGroup>
+                    <FormGroup label={"Max"} inline={true}>
+                        <NumericInput
+                            value={frame.renderConfig.scaleMax}
+                            selectAllOnFocus={true}
+                            buttonPosition={"none"}
+                            onValueChange={this.handleScaleMaxChange}
+                        />
+                    </FormGroup>
                     {this.state.width < histogramCutoff ? percentileSelectDiv : cursorInfoDiv}
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>

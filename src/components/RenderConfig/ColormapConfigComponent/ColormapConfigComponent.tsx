@@ -3,7 +3,6 @@ import {observer} from "mobx-react";
 import {Button, FormGroup, IPopoverProps, MenuItem, NumericInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {FrameScaling, RenderConfigStore} from "../../../stores/RenderConfigStore";
-
 // Static assets
 import allMaps from "../../../static/allmaps.png";
 // Equation SVG images
@@ -124,7 +123,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         const renderConfig = this.props.renderConfig;
         return (
             <React.Fragment>
-                <FormGroup label={"Scaling type"} inline={true}>
+                <FormGroup label={"Scaling"} inline={true}>
                     <ScalingSelect
                         activeItem={renderConfig.scaling}
                         popoverProps={SCALING_POPOVER_PROPS}
@@ -133,7 +132,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         onItemSelect={this.handleScalingChange}
                         itemRenderer={this.renderScalingSelectItem}
                     >
-                        <Button text={renderConfig.scalingName} rightIcon="double-caret-vertical"/>
+                        <Button text={renderConfig.scalingName} rightIcon="double-caret-vertical" alignText={"right"}/>
                     </ScalingSelect>
                 </FormGroup>
 
@@ -149,43 +148,19 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         <Button text={this.renderColormapBlock(renderConfig.colorMapName)} rightIcon="double-caret-vertical"/>
                     </ColorMapSelect>
                 </FormGroup>
-                <FormGroup label={"Bias"} inline={true}>
-                    <NumericInput
-                        style={{width: "60px"}}
-                        min={-1}
-                        max={1}
-                        stepSize={0.1}
-                        minorStepSize={0.01}
-                        majorStepSize={0.5}
-                        value={renderConfig.bias}
-                        onValueChange={this.handleBiasChange}
-                    />
-                </FormGroup>
-                <FormGroup label={"Contrast"} inline={true}>
-                    <NumericInput
-                        style={{width: "60px"}}
-                        min={0}
-                        max={5}
-                        stepSize={0.1}
-                        minorStepSize={0.01}
-                        majorStepSize={0.5}
-                        value={renderConfig.contrast}
-                        onValueChange={this.handleContrastChange}
-                    />
-                </FormGroup>
+                {renderConfig.scaling === FrameScaling.GAMMA &&
                 <FormGroup label={"Gamma"} inline={true}>
                     <NumericInput
-                        style={{width: "60px"}}
                         min={0}
                         max={2}
                         stepSize={0.1}
                         minorStepSize={0.01}
                         majorStepSize={0.5}
                         value={renderConfig.gamma}
-                        disabled={renderConfig.scaling !== FrameScaling.GAMMA}
                         onValueChange={this.handleGammaChange}
                     />
                 </FormGroup>
+                }
             </React.Fragment>
         );
     }
