@@ -49,23 +49,6 @@
         }
     }
     
-    .format-group {
-        .bp3-form-content {
-            display: flex;
-        }
-        
-        select {
-            width: 190px;
-            margin-right: 5px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        input {
-            width: 40px ! important;
-        }
-    }
-    
 }
 
 .dropdown-color {

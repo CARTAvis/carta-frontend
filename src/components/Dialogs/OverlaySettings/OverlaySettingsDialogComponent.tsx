@@ -470,21 +470,27 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup inline={true} label="Color" disabled={!numbers.visible}>
                     {this.colorSelect(numbers.visible, numbers.color, numbers.setColor)}
                 </FormGroup>
-                <FormGroup inline={true} className="format-group" label="Format" disabled={!numbers.visible}>
+                <FormGroup inline={true} label="Format" disabled={!numbers.visible}>
                     <HTMLSelect
-                        options={[{label: "Hours, minutes, seconds", value: "hms"}, {label: "Degrees", value: "d"}]}
+                        options={[{label: "Sexagesimal", value: "hms"}, {label: "Degrees", value: "d"}]}
                         value={numbers.format}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => numbers.setFormat(event.currentTarget.value)}
                     />
-                    <Tooltip content="Precision" position="bottom">
-                    <NumericInput
-                        min={0}
-                        placeholder="Precision"
-                        value={numbers.formatPrecision}
-                        disabled={!numbers.visible}
-                        onValueChange={(value: number) => numbers.setFormatPrecision(value)}
+                </FormGroup>
+                <FormGroup inline={true} label="Set precision automatically">
+                    <Switch 
+                        checked={numbers.dynamicPrecision}
+                        onChange={(ev) => numbers.setDynamicPrecision(ev.currentTarget.checked)}
                     />
-                    </Tooltip>
+                </FormGroup>
+                <FormGroup inline={true} label="Precision" disabled={numbers.dynamicPrecision}>
+                    <NumericInput
+                        placeholder="Precision"
+                        min={0}
+                        value={numbers.precision}
+                        disabled={numbers.dynamicPrecision}
+                        onValueChange={(value: number) => numbers.setPrecision(value)}
+                    />
                 </FormGroup>
             </div>
         );

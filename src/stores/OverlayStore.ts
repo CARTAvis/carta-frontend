@@ -349,7 +349,8 @@ export class OverlayNumberSettings {
     @observable fontSize?: number;
     @observable color?: number;
     @observable format?: string;
-    @observable formatPrecision?: number;
+    @observable dynamicPrecision?: boolean;
+    @observable precision?: number;
 
     constructor() {
         this.visible = true;
@@ -357,7 +358,12 @@ export class OverlayNumberSettings {
         this.font = 1;
         this.color = 4;
         this.format = "d";
-        this.formatPrecision = 1;
+        this.dynamicPrecision = true;
+        this.precision = 3;
+    }
+    
+    @computed get formatString() {
+        return (this.dynamicPrecision ? `${this.format}.*` : `${this.format}.${this.precision}`);
     }
 
     @computed get styleString() {
@@ -367,10 +373,10 @@ export class OverlayNumberSettings {
         astString.add("Font(NumLab)", this.font);
         astString.add("Size(NumLab)", this.fontSize);
         astString.add("Color(NumLab)", this.color);
-        
+                
         // Add settings for individual axes
-        astString.add("Format(1)", `${this.format}.${this.formatPrecision}`, (this.format.length > 0));
-        astString.add("Format(2)", `${this.format}.${this.formatPrecision}`, (this.format.length > 0));
+        astString.add("Format(1)", this.formatString);
+        astString.add("Format(2)", this.formatString);
         
         return astString.toString();
     }
@@ -395,9 +401,13 @@ export class OverlayNumberSettings {
         this.format = format;
     }
 
-    @action setFormatPrecision = (formatPrecision: number) => {
-        this.formatPrecision = formatPrecision;
-    };
+    @action setDynamicPrecision(dynamicPrecision: boolean) {
+        this.dynamicPrecision = dynamicPrecision;
+    }
+
+    @action setPrecision(precision: number) {
+        this.precision = precision;
+    }
 }
 
 export class OverlayLabelSettings {
