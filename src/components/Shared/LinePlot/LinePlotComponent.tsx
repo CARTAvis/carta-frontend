@@ -446,8 +446,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
             const y = chartArea.top + h / 2.0;
             selectionRect = [
                 <Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={x} y={chartArea.top} width={selectionWidth} height={h}/>,
-                <Line stroke={Colors.RED4} key={1} x={x} y={y} points={[0, -XY_ZOOM_THRESHOLD, 0, XY_ZOOM_THRESHOLD]} strokeWidth={3}/>,
-                <Line stroke={Colors.RED4} key={2} x={x + selectionWidth} y={y} points={[0, -XY_ZOOM_THRESHOLD, 0, XY_ZOOM_THRESHOLD]} strokeWidth={3}/>
+                <Line stroke={Colors.GRAY3} key={1} x={x} y={y} points={[0, -XY_ZOOM_THRESHOLD, 0, XY_ZOOM_THRESHOLD]} strokeWidth={3}/>,
+                <Line stroke={Colors.GRAY3} key={2} x={x + selectionWidth} y={y} points={[0, -XY_ZOOM_THRESHOLD, 0, XY_ZOOM_THRESHOLD]} strokeWidth={3}/>
             ];
         }
 
