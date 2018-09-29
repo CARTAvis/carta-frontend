@@ -5,7 +5,7 @@ import {AppStore} from "../../../stores/AppStore";
 import {Button, Tooltip} from "@blueprintjs/core";
 import {RenderConfigComponent} from "../../RenderConfig/RenderConfigComponent";
 import {LogComponent} from "../../Log/LogComponent";
-import {WidgetConfig} from "../../../stores/FloatingWidgetStore";
+import {WidgetConfig} from "../../../stores/widgets/FloatingWidgetStore";
 import {AnimatorComponent} from "../../Animator/AnimatorComponent";
 import "./ToolbarMenuComponent.css";
 

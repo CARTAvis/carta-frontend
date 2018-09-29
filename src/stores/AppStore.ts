@@ -6,7 +6,7 @@ import {FileBrowserStore} from "./FileBrowserStore";
 import {FrameInfo, FrameStore, FrameView} from "./FrameStore";
 import {AlertStore} from "./AlertStore";
 import {LogEntry, LogStore} from "./LogStore";
-import {FloatingWidgetStore} from "./FloatingWidgetStore";
+import {FloatingWidgetStore} from "./widgets/FloatingWidgetStore";
 import {BackendService} from "../services/BackendService";
 import {CursorInfo} from "../models/CursorInfo";
 import {CARTA} from "carta-protobuf";
@@ -16,6 +16,7 @@ import {ImageViewComponent} from "../components/ImageView/ImageViewComponent";
 import {AnimationState, AnimatorStore} from "./AnimatorStore";
 import SpatialProfile = CARTA.SpatialProfile;
 import {smoothStepOffset} from "../util/math";
+import {RenderConfigWidgetStore} from "./widgets/RenderConfigWidgetStore";
 
 export class AppStore {
     // Backend service
@@ -61,6 +62,9 @@ export class AppStore {
     };
     // Floating Widgets
     @observable floatingWidgetStore: FloatingWidgetStore;
+    // Widget Stores
+    @observable renderConfigWidgetStore = new RenderConfigWidgetStore();
+
     // Dark theme
     @observable darkTheme: boolean;
 

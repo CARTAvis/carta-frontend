@@ -21,7 +21,6 @@ import {LogComponent} from "./components/Log/LogComponent";
 import {FloatingWidgetManagerComponent} from "./components/FloatingWidgetManager/FloatingWidgetManagerComponent";
 import {AnimatorComponent} from "./components/Animator/AnimatorComponent";
 import {FileBrowserStore} from "./stores/FileBrowserStore";
-import {SpatialProfileStore} from "./stores/SpatialProfileStore";
 import {AppStore} from "./stores/AppStore";
 import GitCommit from "./static/gitInfo";
 
@@ -207,7 +206,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         return (
             <div className={className}>
-                <DevTools/>
+                {/*<DevTools/>*/}
                 <RootMenuComponent appStore={appStore}/>
                 <OverlaySettingsDialogComponent appStore={appStore}/>
                 <URLConnectDialogComponent appStore={appStore}/>

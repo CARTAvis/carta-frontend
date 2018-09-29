@@ -1,7 +1,8 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {Chart, ChartArea, ChartData, ChartOptions} from "chart.js";
+import {Chart, ChartArea, ChartData, ChartDataSets, ChartOptions} from "chart.js";
 import {Scatter} from "react-chartjs-2";
+import {Colors} from "@blueprintjs/core";
 
 export class PlotContainerProps {
     width?: number;
@@ -9,10 +10,15 @@ export class PlotContainerProps {
     data?: { x: number, y: number }[];
     xMin?: number;
     xMax?: number;
+    yMin?: number;
+    yMax?: number;
     xLabel?: string;
     yLabel?: string;
     logY?: boolean;
     lineColor?: string;
+    labelColor?: string;
+    gridColor?: string;
+    usePointSymbols?: boolean;
     chartAreaUpdated?: (chartArea: ChartArea) => void;
     plotRefUpdated?: (plotRef: Scatter) => void;
 }
@@ -52,6 +58,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         else if (props.lineColor !== nextProps.lineColor) {
             return true;
         }
+        else if (props.labelColor !== nextProps.labelColor) {
+            return true;
+        }
+        else if (props.gridColor !== nextProps.gridColor) {
+            return true;
+        }
         else if (props.logY !== nextProps.logY) {
             return true;
         }
@@ -62,6 +74,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         }
         else if (props.xMax !== nextProps.xMax) {
+            return true;
+        }
+        else if (props.yMin !== nextProps.yMin) {
+            return true;
+        }
+        else if (props.yMax !== nextProps.yMax) {
             return true;
         }
         else if (props.yLabel !== nextProps.yLabel) {
@@ -84,7 +102,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
     render() {
         // ChartJS plot
-        let plotOptions: ChartOptions = {
+        let plotOptions: any = {
             maintainAspectRatio: false,
             events: ["mousedown", "mouseup", "mousemove", "dblclick"],
             legend: {
@@ -94,26 +112,47 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 xAxes: [{
                     id: "x-axis-0",
                     scaleLabel: {
+                        fontColor: this.props.labelColor,
                         display: true,
                         labelString: this.props.xLabel
                     },
                     ticks: {
+                        minor: {
+                            fontColor: this.props.labelColor,
+                        },
                         maxRotation: 0,
                         min: this.props.xMin,
                         max: this.props.xMax
                     },
                     afterBuildTicks: axis => {
                         axis.ticks = axis.ticks.slice(1, -1);
+                    },
+                    gridLines: {
+                        drawBorder: false,
+                        color: this.props.gridColor,
+                        zeroLineColor: this.props.gridColor
                     }
                 }],
                 yAxes: [{
                     id: "y-axis-0",
+                    drawBorder: false,
                     scaleLabel: {
+                        fontColor: this.props.labelColor,
                         display: true,
                         labelString: this.props.yLabel
                     },
                     ticks: {
+                        minor: {
+                            fontColor: this.props.labelColor,
+                        },
                         display: true,
+                        min: this.props.yMin,
+                        max: this.props.yMax
+                    },
+                    gridLines: {
+                        drawBorder: false,
+                        color: this.props.gridColor,
+                        zeroLineColor: this.props.gridColor
                     }
                 }]
             },
@@ -137,17 +176,26 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
         let plotData: Partial<ChartData> = {datasets: []};
         if (this.props.data && this.props.data.length) {
-            plotData.datasets.push({
+            const datasetConfig: ChartDataSets = {
                 label: "LineGraph",
                 type: "line",
                 data: this.props.data,
                 fill: false,
-                pointRadius: 0,
-                showLine: true,
-                steppedLine: true,
-                borderWidth: 1,
-                borderColor: this.props.lineColor
-            });
+            };
+
+            if (this.props.usePointSymbols) {
+                datasetConfig.showLine = false;
+                datasetConfig.pointRadius = 1;
+                datasetConfig.pointBackgroundColor = this.props.lineColor;
+            }
+            else {
+                datasetConfig.pointRadius = 0;
+                datasetConfig.showLine = true;
+                datasetConfig.steppedLine = true;
+                datasetConfig.borderWidth = 1;
+                datasetConfig.borderColor = this.props.lineColor;
+            }
+            plotData.datasets.push(datasetConfig);
         }
 
         const plugins = [{

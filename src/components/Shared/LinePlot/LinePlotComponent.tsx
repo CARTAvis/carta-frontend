@@ -4,18 +4,21 @@ import * as _ from "lodash";
 import {ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
 import {ChartArea} from "chart.js";
 import {PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
-import {Arrow, Group, Layer, Line, Rect, Stage} from "react-konva";
+import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
 import ReactResizeDetector from "react-resize-detector";
 import {Point2D} from "../../../models/Point2D";
 import "./LinePlotComponent.css";
 import {clamp} from "../../../util/math";
+import {Colors} from "@blueprintjs/core";
 
-export interface Marker {
+export interface LineMarker {
     value: number;
     id: string;
     color: string;
+    label?: string;
+    horizontal: boolean;
     draggable?: boolean;
-    dragMove?: (x: number) => void;
+    dragMove?: (val: number) => void;
 }
 
 export class LinePlotComponentProps {
@@ -24,11 +27,16 @@ export class LinePlotComponentProps {
     data?: { x: number, y: number }[];
     xMin?: number;
     xMax?: number;
+    yMin?: number;
+    yMax?: number;
     xLabel?: string;
     yLabel?: string;
     logY?: boolean;
     lineColor?: string;
-    markers?: Marker[];
+    labelColor?: string;
+    gridColor?: string;
+    usePointSymbols?: boolean;
+    markers?: LineMarker[];
     graphClicked?: (x: number) => void;
     graphRightClicked?: (x: number) => void;
     graphZoomed?: (xMin: number, xMax: number) => void;
@@ -39,7 +47,7 @@ export class LinePlotComponentProps {
 
 interface LinePlotComponentState {
     chartArea: ChartArea;
-    hoveredMarker: Marker;
+    hoveredMarker: LineMarker;
     width: number;
     height: number;
     selecting: boolean;
@@ -69,7 +77,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
         this.state = {chartArea: undefined, hoveredMarker: undefined, width: 0, height: 0, selecting: false, selectionBoxStart: 0, selectionBoxEnd: 0, panning: false, panStart: 0};
     }
 
-    private getValueForPixel(pixel: number) {
+    private getValueForPixelX(pixel: number) {
         if (!this.state.chartArea) {
             return undefined;
         }
@@ -77,12 +85,43 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
         return fraction * (this.props.xMax - this.props.xMin) + this.props.xMin;
     }
 
-    private getPixelForValue(value: number) {
+    private getValueForPixelY(pixel: number, logScale: boolean = false) {
+        if (!this.state.chartArea) {
+            return undefined;
+        }
+        if (logScale) {
+            let value = this.state.chartArea.bottom - pixel;
+            value /= this.state.chartArea.bottom - this.state.chartArea.top;
+            value *= Math.log10(this.props.yMax / this.props.yMin);
+            return Math.pow(10, Math.log10(this.props.yMin) + value);
+        }
+        else {
+            const fraction = (this.state.chartArea.bottom - pixel) / (this.state.chartArea.bottom - this.state.chartArea.top);
+            return fraction * (this.props.yMax - this.props.yMin) + this.props.yMin;
+        }
+
+    }
+
+    private getPixelForValueX(value: number) {
         if (!this.state.chartArea) {
             return undefined;
         }
         const fraction = (value - this.props.xMin) / (this.props.xMax - this.props.xMin);
         return fraction * (this.state.chartArea.right - this.state.chartArea.left) + this.state.chartArea.left;
+    }
+
+    private getPixelForValueY(value: number, logScale: boolean = false) {
+        if (!this.state.chartArea) {
+            return undefined;
+        }
+        let fraction;
+        if (logScale) {
+            fraction = (Math.log(this.props.yMax) - Math.log(value)) / (Math.log(this.props.yMax) - Math.log(this.props.yMin));
+        }
+        else {
+            fraction = (this.props.yMax - value) / (this.props.yMax - this.props.yMin);
+        }
+        return fraction * (this.state.chartArea.bottom - this.state.chartArea.top) + this.state.chartArea.top;
     }
 
     onPlotRefUpdated = (plotRef) => {
@@ -101,31 +140,47 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
         }
     };
 
-    dragBoundsFunc = (pos: Point2D) => {
+    dragBoundsFuncVertical = (pos: Point2D) => {
         const chartArea = this.state.chartArea;
         return {x: clamp(pos.x, chartArea.left, chartArea.right), y: chartArea.top};
     };
 
-    onMarkerDragged = (ev, marker: Marker) => {
+    dragBoundsFuncHorizontal = (pos: Point2D) => {
+        const chartArea = this.state.chartArea;
+        return {x: chartArea.left, y: clamp(pos.y, chartArea.top, chartArea.bottom)};
+    };
+
+    onMarkerDragged = (ev, marker: LineMarker) => {
         if (this.props.markers) {
             if (marker && marker.dragMove) {
-                const newPositionCanvasSpace = ev.evt.offsetX;
-                // Prevent dragging out of canvas space
-                if (newPositionCanvasSpace < this.state.chartArea.left || newPositionCanvasSpace > this.state.chartArea.right) {
-                    return;
+                let newPositionDataSpace;
+                if (marker.horizontal) {
+                    const newPositionCanvasSpace = ev.evt.offsetY;
+                    // Prevent dragging out of canvas space
+                    if (newPositionCanvasSpace < this.state.chartArea.top || newPositionCanvasSpace > this.state.chartArea.bottom) {
+                        return;
+                    }
+                    newPositionDataSpace = this.getValueForPixelY(newPositionCanvasSpace, this.props.logY);
                 }
-                const newPositionDataSpace = this.getValueForPixel(newPositionCanvasSpace);
+                else {
+                    const newPositionCanvasSpace = ev.evt.offsetX;
+                    // Prevent dragging out of canvas space
+                    if (newPositionCanvasSpace < this.state.chartArea.left || newPositionCanvasSpace > this.state.chartArea.right) {
+                        return;
+                    }
+                    newPositionDataSpace = this.getValueForPixelX(newPositionCanvasSpace);
+                }
                 marker.dragMove(newPositionDataSpace);
             }
         }
         // Cursor move updates
         if (this.props.graphCursorMoved) {
-            const cursorPosGraphSpace = this.getValueForPixel(ev.evt.offsetX);
+            const cursorPosGraphSpace = this.getValueForPixelX(ev.evt.offsetX);
             this.props.graphCursorMoved(cursorPosGraphSpace);
         }
     };
 
-    setHoveredMarker(marker: Marker) {
+    setHoveredMarker(marker: LineMarker) {
         if (this.state.hoveredMarker !== marker) {
             this.setState({hoveredMarker: marker});
         }
@@ -159,8 +214,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
             if (this.state.selecting && this.props.graphZoomed) {
                 const minCanvasSpace = Math.min(this.state.selectionBoxStart, this.state.selectionBoxEnd);
                 const maxCanvasSpace = Math.max(this.state.selectionBoxStart, this.state.selectionBoxEnd);
-                const minGraphSpace = this.getValueForPixel(minCanvasSpace);
-                const maxGraphSpace = this.getValueForPixel(maxCanvasSpace);
+                const minGraphSpace = this.getValueForPixelX(minCanvasSpace);
+                const maxGraphSpace = this.getValueForPixelX(maxCanvasSpace);
                 this.props.graphZoomed(minGraphSpace, maxGraphSpace);
             }
         }
@@ -174,8 +229,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
         }
         else if (this.state.panning && this.props.graphZoomed) {
             const currentPan = mouseEvent.offsetX;
-            const prevPanGraphSpace = this.getValueForPixel(this.panPrevious);
-            const currentPanGraphSpace = this.getValueForPixel(currentPan);
+            const prevPanGraphSpace = this.getValueForPixelX(this.panPrevious);
+            const currentPanGraphSpace = this.getValueForPixelX(currentPan);
             const delta = (currentPanGraphSpace - prevPanGraphSpace);
             this.panPrevious = currentPan;
             // Shift zoom to counteract drag's delta
@@ -183,7 +238,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
         }
         // Cursor move updates
         if (this.props.graphCursorMoved) {
-            const cursorPosGraphSpace = this.getValueForPixel(mouseEvent.offsetX);
+            const cursorPosGraphSpace = this.getValueForPixelX(mouseEvent.offsetX);
             this.props.graphCursorMoved(cursorPosGraphSpace);
         }
     };
@@ -211,13 +266,13 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
                 // Do left-click callback if it exists
                 if (this.props.graphClicked && mouseButton === 0) {
                     const xCanvasSpace = mousePoint.x / devicePixelRatio;
-                    const xGraphSpace = this.getValueForPixel(xCanvasSpace);
+                    const xGraphSpace = this.getValueForPixelX(xCanvasSpace);
                     this.props.graphClicked(xGraphSpace);
                 }
                 // Do right-click callback if it exists
                 else if (this.props.graphRightClicked && mouseButton === 2) {
                     const xCanvasSpace = mousePoint.x / devicePixelRatio;
-                    const xGraphSpace = this.getValueForPixel(xCanvasSpace);
+                    const xGraphSpace = this.getValueForPixelX(xCanvasSpace);
                     this.props.graphRightClicked(xGraphSpace);
                 }
             }, DOUBLE_CLICK_THRESHOLD);
@@ -262,60 +317,138 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
 
         let lines = [];
         if (this.props.markers && this.props.markers.length && chartArea) {
-            const markerHitBoxWidth = 16;
+            const markerHitBoxThickness = 16;
             const lineHeight = chartArea.bottom - chartArea.top;
+            const lineWidth = chartArea.right - chartArea.left;
             for (let i = 0; i < this.props.markers.length; i++) {
                 const marker = this.props.markers[i];
-                // Calculate canvas space location. Rounded to single pixel and shifted by 0.5 for crisp rendering
-                const xVal = Math.floor(this.getPixelForValue(marker.value)) + 0.5;
-                // Skip points out of range
-                if (xVal < Math.floor(this.state.chartArea.left - 1) || xVal > Math.ceil(this.state.chartArea.right + 1) || isNaN(xVal)) {
-                    continue;
-                }
 
-                const isHoverMarker = isHovering && this.state.hoveredMarker.id === marker.id;
-                let lineSegments;
-                // Add hover markers
-                if (isHoverMarker) {
-                    const arrowSize = markerHitBoxWidth / 1.5;
-                    const midPoint = (chartArea.top + chartArea.bottom) / 2.0;
-                    const arrowStart = 3;
-                    lineSegments = [
-                        <Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={marker.color}/>,
-                        <Arrow listening={false} key={1} x={0} y={midPoint} points={[-arrowStart, 0, -arrowStart - arrowSize, 0]} pointerLength={arrowSize} pointerWidth={arrowSize} fill={marker.color}/>,
-                        <Arrow listening={false} key={2} x={0} y={midPoint} points={[arrowStart, 0, arrowStart + arrowSize, 0]} pointerLength={arrowSize} pointerWidth={arrowSize} fill={marker.color}/>
-                    ];
+                // Separate configuration for horizontal markers
+                if (marker.horizontal) {
+                    let valueCanvasSpace = Math.floor(this.getPixelForValueY(marker.value, this.props.logY)) + 0.5 * devicePixelRatio;
+                    if (valueCanvasSpace < Math.floor(chartArea.top - 1) || valueCanvasSpace > Math.ceil(chartArea.bottom + 1) || isNaN(valueCanvasSpace)) {
+                        continue;
+                    }
+                    const isHoverMarker = isHovering && this.state.hoveredMarker.id === marker.id;
+                    const midPoint = (chartArea.left + chartArea.right) / 2.0;
+
+                    let lineSegments;
+                    let interactionRect;
+                    // Add hover markers
+                    if (isHoverMarker) {
+                        // TODO: hover markers
+                        const arrowSize = markerHitBoxThickness / 1.5;
+                        const arrowStart = 3;
+                        lineSegments = [
+                            <Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={marker.color}/>,
+                            <Arrow listening={false} key={1} x={midPoint} y={0} points={[0, -arrowStart, 0, -arrowStart - arrowSize]} pointerLength={arrowSize} pointerWidth={arrowSize} fill={marker.color}/>,
+                            <Arrow listening={false} key={2} x={midPoint} y={0} points={[0, arrowStart, 0, arrowStart + arrowSize]} pointerLength={arrowSize} pointerWidth={arrowSize} fill={marker.color}/>
+                        ];
+                    }
+                    else {
+                        lineSegments = [<Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={marker.color}/>];
+                    }
+                    if (marker.label) {
+                        lineSegments.push(<Text align={"left"} fill={marker.color} key={lineSegments.length} text={marker.label} x={chartArea.left} y={0}/>);
+                    }
+
+                    if (marker.draggable) {
+                        // TODO: Drag rect for horizontal
+                        interactionRect = (
+                            <Rect
+                                dragBoundFunc={this.dragBoundsFuncHorizontal}
+                                x={chartArea.left}
+                                y={-markerHitBoxThickness / 2.0}
+                                width={lineWidth}
+                                height={markerHitBoxThickness}
+                                draggable={true}
+                                onDragMove={ev => this.onMarkerDragged(ev, marker)}
+                                onMouseEnter={() => this.setHoveredMarker(marker)}
+                                onMouseLeave={() => this.setHoveredMarker(undefined)}
+                            />
+                        );
+                    }
+                    lines.push(
+                        <Group key={marker.id} x={0} y={valueCanvasSpace}>
+                            {interactionRect}
+                            {lineSegments}
+                        </Group>
+                    );
                 }
                 else {
-                    lineSegments = <Line listening={false} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={marker.color}/>;
-                }
+                    let valueCanvasSpace = Math.floor(this.getPixelForValueX(marker.value)) + 0.5 * devicePixelRatio;
+                    if (valueCanvasSpace < Math.floor(chartArea.left - 1) || valueCanvasSpace > Math.ceil(chartArea.right + 1) || isNaN(valueCanvasSpace)) {
+                        continue;
+                    }
+                    const isHoverMarker = isHovering && this.state.hoveredMarker.id === marker.id;
+                    const midPoint = (chartArea.top + chartArea.bottom) / 2.0;
+                    let lineSegments;
+                    let interactionRect;
+                    // Add hover markers
+                    if (isHoverMarker) {
+                        const arrowSize = markerHitBoxThickness / 1.5;
+                        const arrowStart = 3;
+                        lineSegments = [
+                            <Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={marker.color}/>,
+                            <Arrow listening={false} key={1} x={0} y={midPoint} points={[-arrowStart, 0, -arrowStart - arrowSize, 0]} pointerLength={arrowSize} pointerWidth={arrowSize} fill={marker.color}/>,
+                            <Arrow listening={false} key={2} x={0} y={midPoint} points={[arrowStart, 0, arrowStart + arrowSize, 0]} pointerLength={arrowSize} pointerWidth={arrowSize} fill={marker.color}/>
+                        ];
+                    }
+                    else {
+                        lineSegments = [<Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={marker.color}/>];
+                    }
+                    if (marker.label) {
+                        lineSegments.push(<Text align={"left"} fill={marker.color} key={lineSegments.length} text={marker.label} rotation={-90} x={0} y={chartArea.bottom}/>);
+                    }
 
-                lines.push(
-                    <Group key={marker.id} x={xVal} y={0}>
-                        <Rect
-                            dragBoundFunc={this.dragBoundsFunc}
-                            x={-markerHitBoxWidth / 2.0}
-                            y={chartArea.top}
-                            width={markerHitBoxWidth}
-                            height={lineHeight}
-                            strokeEnabled={false}
-                            draggable={marker.draggable}
-                            onDragMove={ev => this.onMarkerDragged(ev, marker)}
-                            onMouseEnter={() => this.setHoveredMarker(marker)}
-                            onMouseLeave={() => this.setHoveredMarker(undefined)}
-                        />
-                        {lineSegments}
-                    </Group>
-                );
+                    if (marker.draggable) {
+                        interactionRect = (
+                            <Rect
+                                dragBoundFunc={this.dragBoundsFuncVertical}
+                                x={-markerHitBoxThickness / 2.0}
+                                y={chartArea.top}
+                                width={markerHitBoxThickness}
+                                height={lineHeight}
+                                strokeEnabled={false}
+                                draggable={true}
+                                onDragMove={ev => this.onMarkerDragged(ev, marker)}
+                                onMouseEnter={() => this.setHoveredMarker(marker)}
+                                onMouseLeave={() => this.setHoveredMarker(undefined)}
+                            />
+                        );
+                    }
+                    lines.push(
+                        <Group key={marker.id} x={valueCanvasSpace} y={0}>
+                            {interactionRect}
+                            {lineSegments}
+                        </Group>
+                    );
+                }
             }
         }
 
         let selectionRect;
-        const w = this.state.selectionBoxEnd - this.state.selectionBoxStart;
-        if (this.state.selecting && Math.abs(w) > DRAG_THRESHOLD && chartArea) {
+        const selectionWidth = this.state.selectionBoxEnd - this.state.selectionBoxStart;
+        if (this.state.selecting && Math.abs(selectionWidth) > DRAG_THRESHOLD && chartArea) {
             const h = chartArea.bottom - chartArea.top;
             const x = this.state.selectionBoxStart;
-            selectionRect = <Rect fill={"grey"} opacity={0.2} x={x} y={chartArea.top} width={w} height={h}/>;
+            selectionRect = <Rect fill={Colors.LIGHT_GRAY5} opacity={0.2} x={x} y={chartArea.top} width={selectionWidth} height={h}/>;
+        }
+
+        let borderRect;
+        if (chartArea) {
+            borderRect = (
+                // Shift by half a pixel for sharp 1px lines
+                <Rect
+                    x={Math.floor(chartArea.left) - 0.5 * devicePixelRatio}
+                    y={Math.floor(chartArea.top) - 0.5 * devicePixelRatio}
+                    width={Math.ceil(chartArea.right - chartArea.left + 1)}
+                    height={Math.ceil(chartArea.bottom - chartArea.top + 1)}
+                    listening={false}
+                    stroke={this.props.gridColor}
+                    strokeWidth={1}
+                />
+            );
         }
 
         return (
@@ -342,6 +475,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
                     <Layer>
                         {lines}
                         {selectionRect}
+                        {borderRect}
                     </Layer>
                 </Stage>
             </div>
