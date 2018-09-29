@@ -29,7 +29,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
     @observable height: number;
     @observable chartArea: ChartArea;
 
-    @computed get plotData(): { data: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number } {
+    @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number } {
         const frame = this.props.appStore.activeFrame;
         const widgetStore = this.props.appStore.renderConfigWidgetStore;
         if (frame && frame.renderConfig.channelHistogram && frame.renderConfig.channelHistogram.bins && frame.renderConfig.channelHistogram.bins.length) {
@@ -63,7 +63,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                         plotVals[i - minIndex].y = undefined;
                     }
                 }
-                return {data: plotVals, xMin, xMax, yMin, yMax};
+                return {values: plotVals, xMin, xMax, yMin, yMax};
             }
         }
 
@@ -201,8 +201,8 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
 
         if (frame && frame.renderConfig.channelHistogram && frame.renderConfig.channelHistogram.bins && frame.renderConfig.channelHistogram.bins.length) {
             const currentPlotData = this.plotData;
-            if (currentPlotData.data.length) {
-                linePlotProps.data = currentPlotData.data;
+            if (currentPlotData && currentPlotData.values && currentPlotData.values.length) {
+                linePlotProps.data = currentPlotData.values;
                 if (widgetStore.isAutoScaled) {
                     linePlotProps.xMin = currentPlotData.xMin;
                     linePlotProps.xMax = currentPlotData.xMax;
