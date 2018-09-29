@@ -7,7 +7,6 @@ export class RenderConfigWidgetStore {
     @observable logScaleY: boolean;
     @observable usePoints: boolean;
     @observable settingsPanelVisible: boolean;
-    @observable dummyMarker: number;
     @observable markerTextVisible: boolean;
 
     @action setBounds = (minVal: number, maxVal: number) => {
@@ -26,6 +25,10 @@ export class RenderConfigWidgetStore {
 
     @action hideSettingsPanel = () => {
         this.settingsPanelVisible = false;
+    };
+
+    @action setMarkerTextVisible = (val: boolean) => {
+        this.markerTextVisible = val;
     };
 
     @action setLogScale = (logScale: boolean) => {
@@ -48,7 +51,6 @@ export class RenderConfigWidgetStore {
         this.usePoints = false;
         this.settingsPanelVisible = false;
         this.markerTextVisible = true;
-        this.dummyMarker = 1000;
     }
 
     @computed get isAutoScaled() {

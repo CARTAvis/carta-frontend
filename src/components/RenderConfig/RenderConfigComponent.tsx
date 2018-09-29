@@ -163,9 +163,9 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         this.props.appStore.renderConfigWidgetStore.clearBounds();
     };
 
-    onGraphCursorMoved = (x) => {
+    onGraphCursorMoved = _.throttle((x) => {
         this.props.appStore.renderConfigWidgetStore.setCursor(x);
-    };
+    }, 100);
 
     render() {
         const appStore = this.props.appStore;
@@ -188,9 +188,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         let linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
             yLabel: "Count",
-            lineColor: appStore.darkTheme ? Colors.BLUE4 : Colors.BLUE2,
-            labelColor: appStore.darkTheme ? Colors.LIGHT_GRAY4 : Colors.GRAY1,
-            gridColor: appStore.darkTheme ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1,
+            darkMode: appStore.darkTheme,
             logY: widgetStore.logScaleY,
             usePointSymbols: widgetStore.usePoints,
             graphClicked: this.onMinMoved,
@@ -228,27 +226,17 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             linePlotProps.markers = [{
                 value: frame.renderConfig.scaleMin,
                 id: "marker-min",
-                label: "Min",
+                label: widgetStore.markerTextVisible ? "Min" : undefined,
                 draggable: true,
                 dragMove: this.onMinMoved,
                 horizontal: false,
-                color: appStore.darkTheme ? Colors.RED4 : Colors.RED2
             }, {
                 value: frame.renderConfig.scaleMax,
                 id: "marker-max",
-                label: "Max",
+                label: widgetStore.markerTextVisible ? "Max" : undefined,
                 draggable: true,
                 dragMove: this.onMaxMoved,
                 horizontal: false,
-                color: appStore.darkTheme ? Colors.RED4 : Colors.RED2
-            }, {
-                value: widgetStore.dummyMarker,
-                dragMove: v => widgetStore.dummyMarker = v,
-                id: "marker-placeholder",
-                label: "placeholder",
-                draggable: true,
-                horizontal: true,
-                color: "blue",
             }];
         }
 

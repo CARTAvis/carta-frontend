@@ -16,8 +16,7 @@ export class PlotContainerProps {
     yLabel?: string;
     logY?: boolean;
     lineColor?: string;
-    labelColor?: string;
-    gridColor?: string;
+    darkMode?: boolean;
     usePointSymbols?: boolean;
     chartAreaUpdated?: (chartArea: ChartArea) => void;
     plotRefUpdated?: (plotRef: Scatter) => void;
@@ -58,10 +57,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         else if (props.lineColor !== nextProps.lineColor) {
             return true;
         }
-        else if (props.labelColor !== nextProps.labelColor) {
-            return true;
-        }
-        else if (props.gridColor !== nextProps.gridColor) {
+        else if (props.darkMode !== nextProps.darkMode) {
             return true;
         }
         else if (props.logY !== nextProps.logY) {
@@ -101,6 +97,9 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
     }
 
     render() {
+        const labelColor = this.props.darkMode ? Colors.LIGHT_GRAY4 : Colors.GRAY1;
+        const gridColor = this.props.darkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1;
+        const lineColor = this.props.lineColor || (this.props.darkMode ? Colors.BLUE4 : Colors.BLUE2);
         // ChartJS plot
         let plotOptions: any = {
             maintainAspectRatio: false,
@@ -112,13 +111,13 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 xAxes: [{
                     id: "x-axis-0",
                     scaleLabel: {
-                        fontColor: this.props.labelColor,
+                        fontColor: labelColor,
                         display: true,
                         labelString: this.props.xLabel
                     },
                     ticks: {
                         minor: {
-                            fontColor: this.props.labelColor,
+                            fontColor: labelColor,
                         },
                         maxRotation: 0,
                         min: this.props.xMin,
@@ -129,21 +128,21 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     },
                     gridLines: {
                         drawBorder: false,
-                        color: this.props.gridColor,
-                        zeroLineColor: this.props.gridColor
+                        color: gridColor,
+                        zeroLineColor: gridColor
                     }
                 }],
                 yAxes: [{
                     id: "y-axis-0",
                     drawBorder: false,
                     scaleLabel: {
-                        fontColor: this.props.labelColor,
+                        fontColor: labelColor,
                         display: true,
                         labelString: this.props.yLabel
                     },
                     ticks: {
                         minor: {
-                            fontColor: this.props.labelColor,
+                            fontColor: labelColor,
                         },
                         display: true,
                         min: this.props.yMin,
@@ -151,8 +150,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     },
                     gridLines: {
                         drawBorder: false,
-                        color: this.props.gridColor,
-                        zeroLineColor: this.props.gridColor
+                        color: gridColor,
+                        zeroLineColor: gridColor
                     }
                 }]
             },
@@ -186,14 +185,14 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             if (this.props.usePointSymbols) {
                 datasetConfig.showLine = false;
                 datasetConfig.pointRadius = 1;
-                datasetConfig.pointBackgroundColor = this.props.lineColor;
+                datasetConfig.pointBackgroundColor = lineColor;
             }
             else {
                 datasetConfig.pointRadius = 0;
                 datasetConfig.showLine = true;
                 datasetConfig.steppedLine = true;
                 datasetConfig.borderWidth = 1;
-                datasetConfig.borderColor = this.props.lineColor;
+                datasetConfig.borderColor = lineColor;
             }
             plotData.datasets.push(datasetConfig);
         }
