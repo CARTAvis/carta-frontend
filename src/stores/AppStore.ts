@@ -174,8 +174,9 @@ export class AppStore {
         else {
             frame.wcsInfo = initResult;
             frame.validWcs = true;
-            this.overlayStore.labels.textX = AST.getString(frame.wcsInfo, "Label(1)");
-            this.overlayStore.labels.textY = AST.getString(frame.wcsInfo, "Label(2)");
+            this.overlayStore.setDefaultsFromAST(frame);
+//             this.overlayStore.labels.textX = AST.getString(frame.wcsInfo, "Label(1)");
+//             this.overlayStore.labels.textY = AST.getString(frame.wcsInfo, "Label(2)");
             console.log("Initialised WCS info from frame");
         }
     };

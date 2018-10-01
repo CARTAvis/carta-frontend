@@ -138,10 +138,17 @@ EMSCRIPTEN_KEEPALIVE int set(AstFrameSet* wcsinfo, const char* attrib)
     return 0;
 }
 
+EMSCRIPTEN_KEEPALIVE void dump(AstFrameSet* wcsinfo)
+{
+    if (wcsinfo)
+    {
+        astShow(wcsinfo);
+    }
+}
 
 EMSCRIPTEN_KEEPALIVE const char* getString(AstFrameSet* wcsinfo, const char* attribute)
 {
-    if (!wcsinfo)
+    if (!wcsinfo || !astHasAttribute(wcsinfo, attribute))
     {
         return nullptr;
     }

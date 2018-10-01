@@ -1,4 +1,6 @@
 import {action, computed, observable} from "mobx";
+import * as AST from "ast_wrapper";
+import {FrameStore} from "./FrameStore";
 
 export enum LabelType {
     Interior = "Interior",
@@ -12,7 +14,7 @@ export enum SystemType {
     FK5 = "FK5",
     Galactic = "GALACTIC",
     ICRS = "ICRS",
-    J2000 = "J2000"
+//     J2000 = "J2000"
 }
 
 export class Padding {
@@ -379,7 +381,9 @@ export class OverlayNumberSettings {
     @observable fontSize?: number;
     @observable customColor?: boolean;
     @observable color?: number;
-    @observable format?: string;
+    @observable dynamicFormat?: boolean;
+    @observable formatX?: string;
+    @observable formatY?: string;
     @observable dynamicPrecision?: boolean;
     @observable precision?: number;
     @observable cursorPrecision?: number;
@@ -390,18 +394,28 @@ export class OverlayNumberSettings {
         this.font = 1;
         this.customColor = false;
         this.color = 4;
-        this.format = "d";
+        this.dynamicFormat = true;
+        this.formatX = "d";
+        this.formatY = "d";
         this.dynamicPrecision = true;
         this.precision = 3;
         this.cursorPrecision = 4;
     }
     
-    @computed get formatString() {
-        return (this.dynamicPrecision ? `${this.format}.*` : `${this.format}.${this.precision}`);
+    @computed get formatStringX() {
+        return (this.dynamicPrecision ? `${this.formatX}.*` : `${this.formatX}.${this.precision}`);
     }
     
-    @computed get cursorFormatString() {
-        return `${this.format}.${this.cursorPrecision}`;
+    @computed get formatStringY() {
+        return (this.dynamicPrecision ? `${this.formatY}.*` : `${this.formatY}.${this.precision}`);
+    }
+    
+    @computed get cursorFormatStringX() {
+        return `${this.formatX}.${this.cursorPrecision}`;
+    }
+    
+    @computed get cursorFormatStringY() {
+        return `${this.formatY}.${this.cursorPrecision}`;
     }
 
     @computed get styleString() {
@@ -413,8 +427,8 @@ export class OverlayNumberSettings {
         astString.add("Color(NumLab)", this.color, this.customColor);
                 
         // Add settings for individual axes
-        astString.add("Format(1)", this.formatString);
-        astString.add("Format(2)", this.formatString);
+        astString.add("Format(1)", this.formatStringX);
+        astString.add("Format(2)", this.formatStringY);
         
         return astString.toString();
     }
@@ -439,8 +453,16 @@ export class OverlayNumberSettings {
         this.color = color;
     };
 
-    @action setFormat(format: string) {
-        this.format = format;
+    @action setDynamicFormat(dynamicFormat: boolean) {
+        this.dynamicFormat = dynamicFormat;
+    }
+
+    @action setFormatX(format: string) {
+        this.formatX = format;
+    }
+
+    @action setFormatY(format: string) {
+        this.formatY = format;
     }
 
     @action setDynamicPrecision(dynamicPrecision: boolean) {
@@ -575,6 +597,34 @@ export class OverlayStore {
         this.numbers = new OverlayNumberSettings();
         this.labels = new OverlayLabelSettings();
         this.ticks = new OverlayTickSettings();
+    }
+    
+    private formatFromUnit(unit: string) {
+        if (/^d+:m+:s+/.test(unit)) {
+            return "dms";
+        } else if (/^h+:m+:s+/.test(unit)) {
+            return "hms";
+        }
+        return "d";
+    }
+    
+    @action setDefaultsFromAST(frame: FrameStore) {        
+        this.global.setSystem(AST.getString(frame.wcsInfo, "System"));
+        
+        this.labels.setTextX(AST.getString(frame.wcsInfo, "Label(1)"));
+        this.labels.setTextY(AST.getString(frame.wcsInfo, "Label(2)"));
+                
+        let formatFromUnit = (unit: string) => {
+            if (/^d+:m+:s+/.test(unit)) {
+                return "dms";
+            } else if (/^h+:m+:s+/.test(unit)) {
+                return "hms";
+            }
+            return "d";
+        };
+        
+        this.numbers.setFormatX(formatFromUnit(AST.getString(frame.wcsInfo, "Unit(1)")));
+        this.numbers.setFormatY(formatFromUnit(AST.getString(frame.wcsInfo, "Unit(2)")));
     }
 
     @computed get styleString() {

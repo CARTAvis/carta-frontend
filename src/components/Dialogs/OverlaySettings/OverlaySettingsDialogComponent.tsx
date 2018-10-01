@@ -526,13 +526,28 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         {this.colorSelect(numbers.visible, numbers.color, numbers.setColor)}
                     </FormGroup>
                 </Collapse>
-                <FormGroup inline={true} label="Format">
-                    <HTMLSelect
-                        options={[{label: "Sexagesimal", value: "hms"}, {label: "Degrees", value: "d"}]}
-                        value={numbers.format}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => numbers.setFormat(event.currentTarget.value)}
+                <FormGroup inline={true} label="Set format automatically">
+                    <Switch 
+                        checked={numbers.dynamicFormat}
+                        onChange={(ev) => numbers.setDynamicFormat(ev.currentTarget.checked)}
                     />
                 </FormGroup>
+                <Collapse isOpen={!numbers.dynamicFormat}>
+                    <FormGroup inline={true} label="Format" labelInfo="(X)">
+                        <HTMLSelect
+                            options={[{label: "H:M:S", value: "hms"}, {label: "D:M:S", value: "dms"},{label: "Degrees", value: "d"}]}
+                            value={numbers.formatX}
+                            onChange={(event: React.FormEvent<HTMLSelectElement>) => numbers.setFormatX(event.currentTarget.value)}
+                        />
+                    </FormGroup>
+                    <FormGroup inline={true} label="Format" labelInfo="(Y)">
+                        <HTMLSelect
+                            options={[{label: "H:M:S", value: "hms"}, {label: "D:M:S", value: "dms"},{label: "Degrees", value: "d"}]}
+                            value={numbers.formatY}
+                            onChange={(event: React.FormEvent<HTMLSelectElement>) => numbers.setFormatY(event.currentTarget.value)}
+                        />
+                    </FormGroup>
+                </Collapse>
                 <FormGroup inline={true} label="Set precision automatically">
                     <Switch 
                         checked={numbers.dynamicPrecision}
