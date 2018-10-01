@@ -14,12 +14,16 @@ import {clamp} from "../../util/math";
 import "./RenderConfigComponent.css";
 import {computed, observable} from "mobx";
 import {Point2D} from "../../models/Point2D";
+import {PopoverSettingsComponent} from "../Shared/PopoverSettings/PopoverSettingsComponent";
 
 class RenderConfigComponentProps {
     appStore: AppStore;
     id: string;
     docked: boolean;
 }
+
+// The fixed size of the settings panel popover (excluding the show/hide button)
+const PANEL_CONTENT_WIDTH = 200;
 
 @observer
 export class RenderConfigComponent extends React.Component<RenderConfigComponentProps> {
@@ -28,6 +32,11 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
     @observable width: number;
     @observable height: number;
     @observable chartArea: ChartArea;
+
+    @computed get settingsPanelWidth(): number {
+        const widgetStore = this.props.appStore.renderConfigWidgetStore;
+        return 20 + (widgetStore.settingsPanelVisible ? PANEL_CONTENT_WIDTH : 0);
+    }
 
     @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number } {
         const frame = this.props.appStore.activeFrame;
@@ -240,8 +249,8 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             }];
         }
 
-        const percentileButtonCutoff = 600;
-        const histogramCutoff = 430;
+        const percentileButtonCutoff = 600 + this.settingsPanelWidth;
+        const histogramCutoff = 430 + this.settingsPanelWidth;
         const displayRankButtons = this.width > percentileButtonCutoff;
         const percentileRanks = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
 
@@ -330,7 +339,13 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                     </FormGroup>
                     {this.width < histogramCutoff ? percentileSelectDiv : cursorInfoDiv}
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <PopoverSettingsComponent
+                    isOpen={widgetStore.settingsPanelVisible}
+                    onShowClicked={widgetStore.showSettingsPanel}
+                    onHideClicked={widgetStore.hideSettingsPanel}
+                    contentWidth={PANEL_CONTENT_WIDTH}
+                />
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}/>
             </div>
         );
     }
