@@ -549,6 +549,14 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         />
                     </FormGroup>
                 </Collapse>
+                <FormGroup inline={true} label="Cursor precision">
+                    <NumericInput
+                        placeholder="Precision"
+                        min={0}
+                        value={numbers.cursorPrecision}
+                        onValueChange={(value: number) => numbers.setCursorPrecision(value)}
+                    />
+                </FormGroup>
             </div>
         );
 

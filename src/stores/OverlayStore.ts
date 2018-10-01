@@ -382,6 +382,7 @@ export class OverlayNumberSettings {
     @observable format?: string;
     @observable dynamicPrecision?: boolean;
     @observable precision?: number;
+    @observable cursorPrecision?: number;
 
     constructor() {
         this.visible = true;
@@ -392,10 +393,15 @@ export class OverlayNumberSettings {
         this.format = "d";
         this.dynamicPrecision = true;
         this.precision = 3;
+        this.cursorPrecision = 4;
     }
     
     @computed get formatString() {
         return (this.dynamicPrecision ? `${this.format}.*` : `${this.format}.${this.precision}`);
+    }
+    
+    @computed get cursorFormatString() {
+        return `${this.format}.${this.cursorPrecision}`;
     }
 
     @computed get styleString() {
@@ -443,6 +449,10 @@ export class OverlayNumberSettings {
 
     @action setPrecision(precision: number) {
         this.precision = precision;
+    }
+
+    @action setCursorPrecision(precision: number) {
+        this.cursorPrecision = precision;
     }
 }
 
