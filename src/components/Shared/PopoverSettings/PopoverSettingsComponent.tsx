@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Button, NonIdealState} from "@blueprintjs/core";
+import {Button, Divider, NonIdealState} from "@blueprintjs/core";
 import "./PopoverSettingsComponent.css";
 
 export interface PopoverSettingsComponentProps {
@@ -13,6 +13,7 @@ export class PopoverSettingsComponent extends React.Component<PopoverSettingsCom
     render() {
         return (
             <div className={"popover-settings-container"}>
+                <Divider/>
                 {this.props.isOpen &&
                 <Button className="popover-settings-button" icon={"caret-right"} minimal={true} onClick={this.props.onHideClicked}/>
                 }

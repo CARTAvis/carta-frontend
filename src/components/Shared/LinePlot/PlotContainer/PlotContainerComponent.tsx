@@ -57,6 +57,9 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         else if (props.lineColor !== nextProps.lineColor) {
             return true;
         }
+        else if (props.usePointSymbols !== nextProps.usePointSymbols) {
+            return true;
+        }
         else if (props.darkMode !== nextProps.darkMode) {
             return true;
         }

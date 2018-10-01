@@ -2,7 +2,7 @@ import * as React from "react";
 import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
 import {observer} from "mobx-react";
-import {FormGroup, HTMLSelect, NonIdealState, ButtonGroup, Button, Colors, IOptionProps, NumericInput} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, NonIdealState, ButtonGroup, Button, IOptionProps, NumericInput} from "@blueprintjs/core";
 import {Chart, ChartArea} from "chart.js";
 import {LinePlotComponent, LinePlotComponentProps} from "../Shared/LinePlot/LinePlotComponent";
 import {AppStore} from "../../stores/AppStore";
@@ -24,7 +24,7 @@ class RenderConfigComponentProps {
 }
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
-const PANEL_CONTENT_WIDTH = 200;
+const PANEL_CONTENT_WIDTH = 140;
 
 @observer
 export class RenderConfigComponent extends React.Component<RenderConfigComponentProps> {

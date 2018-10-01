@@ -42,14 +42,6 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         this.props.renderConfig.setScaling(scaling);
     };
 
-    handleBiasChange = (value: number) => {
-        this.props.renderConfig.bias = value;
-    };
-
-    handleContrastChange = (value: number) => {
-        this.props.renderConfig.contrast = value;
-    };
-
     handleGammaChange = (value: number) => {
         this.props.renderConfig.gamma = value;
     };
