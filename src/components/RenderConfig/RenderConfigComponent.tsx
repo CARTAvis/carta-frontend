@@ -15,6 +15,7 @@ import "./RenderConfigComponent.css";
 import {computed, observable} from "mobx";
 import {Point2D} from "../../models/Point2D";
 import {PopoverSettingsComponent} from "../Shared/PopoverSettings/PopoverSettingsComponent";
+import {RenderConfigSettingsPanelComponent} from "./RenderConfigSettingsPanelComponent/RenderConfigSettingsPanelComponent";
 
 class RenderConfigComponentProps {
     appStore: AppStore;
@@ -344,7 +345,9 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                     onShowClicked={widgetStore.showSettingsPanel}
                     onHideClicked={widgetStore.hideSettingsPanel}
                     contentWidth={PANEL_CONTENT_WIDTH}
-                />
+                >
+                    <RenderConfigSettingsPanelComponent widgetStore={widgetStore}/>
+                </PopoverSettingsComponent>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}/>
             </div>
         );
