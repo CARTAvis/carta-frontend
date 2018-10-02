@@ -268,13 +268,13 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => ticks.setDrawAll(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Set density automatically">
+                <FormGroup inline={true} label="Custom density">
                     <Switch 
-                        checked={ticks.dynamicDensity}
-                        onChange={(ev) => ticks.setDynamicDensity(ev.currentTarget.checked)}
+                        checked={ticks.customDensity}
+                        onChange={(ev) => ticks.setCustomDensity(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <Collapse isOpen={!ticks.dynamicDensity}>
+                <Collapse isOpen={ticks.customDensity}>
                     <FormGroup inline={true} label="Density" labelInfo="(X)">
                         <NumericInput
                             placeholder="Density"
@@ -373,14 +373,14 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => grid.setWidth(value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Set gap automatically" disabled={!grid.visible}>
+                <FormGroup inline={true} label="Custom gap" disabled={!grid.visible}>
                     <Switch 
-                        checked={grid.dynamicGap}
+                        checked={grid.customGap}
                         disabled={!grid.visible}
-                        onChange={(ev) => grid.setDynamicGap(ev.currentTarget.checked)}
+                        onChange={(ev) => grid.setCustomGap(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <Collapse isOpen={!grid.dynamicGap}>
+                <Collapse isOpen={grid.customGap}>
                     <FormGroup inline={true} label="Gap" labelInfo="(X)" disabled={!grid.visible}>
                         <NumericInput
                             placeholder="Gap"
@@ -526,35 +526,35 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         {this.colorSelect(numbers.visible, numbers.color, numbers.setColor)}
                     </FormGroup>
                 </Collapse>
-                <FormGroup inline={true} label="Set format automatically">
+                <FormGroup inline={true} label="Custom format">
                     <Switch 
-                        checked={numbers.dynamicFormat}
-                        onChange={(ev) => numbers.setDynamicFormat(ev.currentTarget.checked)}
+                        checked={numbers.customFormat}
+                        onChange={(ev) => numbers.setCustomFormat(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <Collapse isOpen={!numbers.dynamicFormat}>
+                <Collapse isOpen={numbers.customFormat}>
                     <FormGroup inline={true} label="Format" labelInfo="(X)">
                         <HTMLSelect
-                            options={[{label: "H:M:S", value: "hms"}, {label: "D:M:S", value: "dms"},{label: "Degrees", value: "d"}]}
+                            options={[{label: "H:M:S", value: "hms"}, {label: "D:M:S", value: "dms"}, {label: "Degrees", value: "d"}]}
                             value={numbers.formatX}
                             onChange={(event: React.FormEvent<HTMLSelectElement>) => numbers.setFormatX(event.currentTarget.value)}
                         />
                     </FormGroup>
                     <FormGroup inline={true} label="Format" labelInfo="(Y)">
                         <HTMLSelect
-                            options={[{label: "H:M:S", value: "hms"}, {label: "D:M:S", value: "dms"},{label: "Degrees", value: "d"}]}
+                            options={[{label: "H:M:S", value: "hms"}, {label: "D:M:S", value: "dms"}, {label: "Degrees", value: "d"}]}
                             value={numbers.formatY}
                             onChange={(event: React.FormEvent<HTMLSelectElement>) => numbers.setFormatY(event.currentTarget.value)}
                         />
                     </FormGroup>
                 </Collapse>
-                <FormGroup inline={true} label="Set precision automatically">
+                <FormGroup inline={true} label="Custom precision">
                     <Switch 
-                        checked={numbers.dynamicPrecision}
-                        onChange={(ev) => numbers.setDynamicPrecision(ev.currentTarget.checked)}
+                        checked={numbers.customPrecision}
+                        onChange={(ev) => numbers.setCustomPrecision(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <Collapse isOpen={!numbers.dynamicPrecision}>
+                <Collapse isOpen={numbers.customPrecision}>
                     <FormGroup inline={true} label="Precision">
                         <NumericInput
                             placeholder="Precision"
@@ -583,14 +583,14 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => labels.setVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Set text automatically" disabled={!labels.visible}>
+                <FormGroup inline={true} label="Custom text" disabled={!labels.visible}>
                     <Switch 
-                        checked={labels.dynamicText}
+                        checked={labels.customText}
                         disabled={!labels.visible}
-                        onChange={(ev) => labels.setDynamicText(ev.currentTarget.checked)}
+                        onChange={(ev) => labels.setCustomText(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <Collapse isOpen={!labels.dynamicText}>
+                <Collapse isOpen={labels.customText}>
                     <FormGroup inline={true} label="Text" labelInfo="(X)" disabled={!labels.visible}>
                         <input
                             className="bp3-input"

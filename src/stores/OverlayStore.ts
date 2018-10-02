@@ -171,7 +171,7 @@ export class OverlayGridSettings {
     @observable customColor?: boolean;
     @observable color?: number;
     @observable width?: number;
-    @observable dynamicGap?: boolean;
+    @observable customGap?: boolean;
     @observable gapX?: number;
     @observable gapY?: number;
 
@@ -180,8 +180,8 @@ export class OverlayGridSettings {
         astString.add("Grid", this.visible);
         astString.add("Color(Grid)", this.color, this.customColor);
         astString.add("Width(Grid)", this.width, (this.width > 0));
-        astString.add("Gap(1)", this.gapX, !this.dynamicGap);
-        astString.add("Gap(2)", this.gapY, !this.dynamicGap);
+        astString.add("Gap(1)", this.gapX, this.customGap);
+        astString.add("Gap(2)", this.gapY, this.customGap);
         return astString.toString();
     }
     
@@ -190,7 +190,7 @@ export class OverlayGridSettings {
         this.customColor = false;
         this.color = 4;
         this.width = 1;
-        this.dynamicGap = true;
+        this.customGap = false;
         this.gapX = 0.2;
         this.gapY = 0.2;
     }
@@ -211,8 +211,8 @@ export class OverlayGridSettings {
         this.width = width;
     }
 
-    @action setDynamicGap(dynamicGap: boolean = true) {
-        this.dynamicGap = dynamicGap;
+    @action setCustomGap(customGap: boolean = true) {
+        this.customGap = customGap;
     }
 
     @action setGapX(gap: number) {
@@ -267,7 +267,7 @@ export class OverlayTickSettings {
     @observable drawAll?: boolean;
     @observable densityX?: number;
     @observable densityY?: number;
-    @observable dynamicDensity?: boolean;
+    @observable customDensity?: boolean;
     @observable customColor?: boolean;
     @observable color?: number;
     @observable width?: number;
@@ -277,8 +277,8 @@ export class OverlayTickSettings {
     @computed get styleString() {
         let astString = new ASTSettingsString();
         astString.add("TickAll", this.drawAll);
-        astString.add("MinTick(1)", this.densityX, !this.dynamicDensity);
-        astString.add("MinTick(2)", this.densityY, !this.dynamicDensity);
+        astString.add("MinTick(1)", this.densityX, this.customDensity);
+        astString.add("MinTick(2)", this.densityY, this.customDensity);
         astString.add("Color(Ticks)", this.color, this.customColor);
         astString.add("Width(Ticks)", this.width, (this.width > 0));
         astString.add("MinTickLen", (this.length / 100).toFixed(2)); // convert to fraction
@@ -288,7 +288,7 @@ export class OverlayTickSettings {
     
     constructor() {
         this.drawAll = true;
-        this.dynamicDensity = true;
+        this.customDensity = false;
         this.densityX = 4;
         this.densityY = 4;
         this.customColor = false;
@@ -302,8 +302,8 @@ export class OverlayTickSettings {
         this.drawAll = drawAll;
     }
 
-    @action setDynamicDensity(dynamicDensity: boolean = true) {
-        this.dynamicDensity = dynamicDensity;
+    @action setCustomDensity(customDensity: boolean = true) {
+        this.customDensity = customDensity;
     }
 
     @action setDensityX(density: number) {
@@ -381,12 +381,18 @@ export class OverlayNumberSettings {
     @observable fontSize?: number;
     @observable customColor?: boolean;
     @observable color?: number;
-    @observable dynamicFormat?: boolean;
+    @observable customFormat?: boolean;
     @observable formatX?: string;
     @observable formatY?: string;
-    @observable dynamicPrecision?: boolean;
+    @observable customPrecision?: boolean;
     @observable precision?: number;
     @observable cursorPrecision?: number;
+    
+    // Unlike most default values, we calculate and set these explicitly, instead of
+    // leaving them unset and letting AST pick a default. We have to save these so that
+    // we can revert to default values after setting custom values.
+    defaultFormatX: string;
+    defaultFormatY: string;
 
     constructor() {
         this.visible = true;
@@ -394,28 +400,36 @@ export class OverlayNumberSettings {
         this.font = 1;
         this.customColor = false;
         this.color = 4;
-        this.dynamicFormat = true;
+        this.customFormat = false;
+        this.defaultFormatX = "d";
+        this.defaultFormatY = "d";
         this.formatX = "d";
         this.formatY = "d";
-        this.dynamicPrecision = true;
+        this.customPrecision = false;
         this.precision = 3;
         this.cursorPrecision = 4;
     }
     
     @computed get formatStringX() {
-        return (this.dynamicPrecision ? `${this.formatX}.*` : `${this.formatX}.${this.precision}`);
+        let format = (this.customFormat ? this.formatX : this.defaultFormatX);
+        let precision = (this.customPrecision ? this.precision : "*");
+        return `${format}.${precision}`;
     }
     
     @computed get formatStringY() {
-        return (this.dynamicPrecision ? `${this.formatY}.*` : `${this.formatY}.${this.precision}`);
+        let format = (this.customFormat ? this.formatY : this.defaultFormatY);
+        let precision = (this.customPrecision ? this.precision : "*");
+        return `${format}.${precision}`;
     }
     
     @computed get cursorFormatStringX() {
-        return `${this.formatX}.${this.cursorPrecision}`;
+        let format = (this.customFormat ? this.formatX : this.defaultFormatX);
+        return `${format}.${this.cursorPrecision}`;
     }
     
     @computed get cursorFormatStringY() {
-        return `${this.formatY}.${this.cursorPrecision}`;
+        let format = (this.customFormat ? this.formatY : this.defaultFormatY);
+        return `${format}.${this.cursorPrecision}`;
     }
 
     @computed get styleString() {
@@ -453,8 +467,8 @@ export class OverlayNumberSettings {
         this.color = color;
     };
 
-    @action setDynamicFormat(dynamicFormat: boolean) {
-        this.dynamicFormat = dynamicFormat;
+    @action setCustomFormat(customFormat: boolean) {
+        this.customFormat = customFormat;
     }
 
     @action setFormatX(format: string) {
@@ -465,8 +479,8 @@ export class OverlayNumberSettings {
         this.formatY = format;
     }
 
-    @action setDynamicPrecision(dynamicPrecision: boolean) {
-        this.dynamicPrecision = dynamicPrecision;
+    @action setCustomPrecision(customPrecision: boolean) {
+        this.customPrecision = customPrecision;
     }
 
     @action setPrecision(precision: number) {
@@ -485,7 +499,7 @@ export class OverlayLabelSettings {
     @observable gap?: number;
     @observable font?: number;
     @observable fontSize?: number;
-    @observable dynamicText?: boolean;
+    @observable customText?: boolean;
     @observable textX?: string;
     @observable textY?: string;
 
@@ -495,7 +509,7 @@ export class OverlayLabelSettings {
         this.font = 1;
         this.customColor = false;
         this.color = 4;
-        this.dynamicText = true;
+        this.customText = false;
     }
 
     @computed get styleString() {
@@ -508,8 +522,8 @@ export class OverlayLabelSettings {
         astString.add("TextLabGap", this.gap);
         
         // Add settings for individual axes
-        astString.add(`Label(1)`, this.textX, !this.dynamicText);
-        astString.add(`Label(2)`, this.textY, !this.dynamicText);
+        astString.add(`Label(1)`, this.textX, this.customText);
+        astString.add(`Label(2)`, this.textY, this.customText);
         
         return astString.toString();
     }
@@ -538,8 +552,8 @@ export class OverlayLabelSettings {
         this.fontSize = fontSize;
     }
 
-    @action setDynamicText(dynamicText: boolean) {
-        this.dynamicText = dynamicText;
+    @action setCustomText(customText: boolean) {
+        this.customText = customText;
     }
 
     @action setTextX(text: string) {
@@ -622,6 +636,9 @@ export class OverlayStore {
             }
             return "d";
         };
+        
+        this.numbers.defaultFormatX = formatFromUnit(AST.getString(frame.wcsInfo, "Unit(1)"));
+        this.numbers.defaultFormatY = formatFromUnit(AST.getString(frame.wcsInfo, "Unit(2)"));
         
         this.numbers.setFormatX(formatFromUnit(AST.getString(frame.wcsInfo, "Unit(1)")));
         this.numbers.setFormatY(formatFromUnit(AST.getString(frame.wcsInfo, "Unit(2)")));
