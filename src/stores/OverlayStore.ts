@@ -50,13 +50,13 @@ export class ASTSettingsString {
 }
 
 export class OverlayGlobalSettings {
-    @observable labelType?: LabelType;
-    @observable color?: number;
-    @observable width?: number;
-    @observable font?: number;
-    @observable fontSize?: number;
-    @observable tolerance?: number; // percentage
-    @observable system?: SystemType;
+    @observable labelType: LabelType;
+    @observable color: number;
+    @observable width: number;
+    @observable font: number;
+    @observable fontSize: number;
+    @observable tolerance: number; // percentage
+    @observable system: SystemType;
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
@@ -108,12 +108,12 @@ export class OverlayGlobalSettings {
 }
 
 export class OverlayTitleSettings {
-    @observable visible?: boolean;
-    @observable font?: number;
-    @observable fontSize?: number;
-    @observable gap?: number;
-    @observable customColor?: boolean;
-    @observable color?: number;
+    @observable visible: boolean;
+    @observable font: number;
+    @observable fontSize: number;
+    @observable gap: number;
+    @observable customColor: boolean;
+    @observable color: number;
     @observable text: string;
 
     @computed get styleString() {
@@ -167,13 +167,13 @@ export class OverlayTitleSettings {
 }
 
 export class OverlayGridSettings {
-    @observable visible?: boolean;
-    @observable customColor?: boolean;
-    @observable color?: number;
-    @observable width?: number;
-    @observable customGap?: boolean;
-    @observable gapX?: number;
-    @observable gapY?: number;
+    @observable visible: boolean;
+    @observable customColor: boolean;
+    @observable color: number;
+    @observable width: number;
+    @observable customGap: boolean;
+    @observable gapX: number;
+    @observable gapY: number;
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
@@ -226,10 +226,10 @@ export class OverlayGridSettings {
 }
 
 export class OverlayBorderSettings {
-    @observable visible?: boolean;
-    @observable customColor?: boolean;
-    @observable color?: number;
-    @observable width?: number;
+    @observable visible: boolean;
+    @observable customColor: boolean;
+    @observable color: number;
+    @observable width: number;
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
@@ -264,15 +264,15 @@ export class OverlayBorderSettings {
 }
 
 export class OverlayTickSettings {
-    @observable drawAll?: boolean;
-    @observable densityX?: number;
-    @observable densityY?: number;
-    @observable customDensity?: boolean;
-    @observable customColor?: boolean;
-    @observable color?: number;
-    @observable width?: number;
-    @observable length?: number; // percentage
-    @observable majorLength?: number; // percentage
+    @observable drawAll: boolean;
+    @observable densityX: number;
+    @observable densityY: number;
+    @observable customDensity: boolean;
+    @observable customColor: boolean;
+    @observable color: number;
+    @observable width: number;
+    @observable length: number; // percentage
+    @observable majorLength: number; // percentage
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
@@ -336,10 +336,10 @@ export class OverlayTickSettings {
 }
 
 export class OverlayAxisSettings {
-    @observable visible?: boolean;
-    @observable customColor?: boolean;
-    @observable color?: number;
-    @observable width?: number;
+    @observable visible: boolean;
+    @observable customColor: boolean;
+    @observable color: number;
+    @observable width: number;
     
     constructor() {
         this.visible = false;
@@ -376,17 +376,17 @@ export class OverlayAxisSettings {
 }
 
 export class OverlayNumberSettings {
-    @observable visible?: boolean;
-    @observable font?: number;
-    @observable fontSize?: number;
-    @observable customColor?: boolean;
-    @observable color?: number;
-    @observable customFormat?: boolean;
-    @observable formatX?: string;
-    @observable formatY?: string;
-    @observable customPrecision?: boolean;
-    @observable precision?: number;
-    @observable cursorPrecision?: number;
+    @observable visible: boolean;
+    @observable font: number;
+    @observable fontSize: number;
+    @observable customColor: boolean;
+    @observable color: number;
+    @observable customFormat: boolean;
+    @observable formatX: string;
+    @observable formatY: string;
+    @observable customPrecision: boolean;
+    @observable precision: number;
+    @observable cursorPrecision: number;
     
     // Unlike most default values, we calculate and set these explicitly, instead of
     // leaving them unset and letting AST pick a default. We have to save these so that
@@ -493,15 +493,15 @@ export class OverlayNumberSettings {
 }
 
 export class OverlayLabelSettings {
-    @observable visible?: boolean;
-    @observable customColor?: boolean;
-    @observable color?: number;
-    @observable gap?: number;
-    @observable font?: number;
-    @observable fontSize?: number;
-    @observable customText?: boolean;
-    @observable textX?: string;
-    @observable textY?: string;
+    @observable visible: boolean;
+    @observable customColor: boolean;
+    @observable color: number;
+    @observable gap: number;
+    @observable font: number;
+    @observable fontSize: number;
+    @observable customText: boolean;
+    @observable textX: string;
+    @observable textY: string;
 
     constructor() {
         this.visible = true;
@@ -579,10 +579,6 @@ export class OverlayStore {
     @observable numbers: OverlayNumberSettings;
     @observable labels: OverlayLabelSettings;
     @observable ticks: OverlayTickSettings;
-    
-    // Extra settings
-    
-    @observable extra?: string;
     
     // Dialog
     
@@ -688,8 +684,6 @@ export class OverlayStore {
         astString.addSection(this.numbers.styleString);
         astString.addSection(this.labels.styleString);
         
-        astString.addSection(this.extra);
-
         return astString.toString();
     }
 }
