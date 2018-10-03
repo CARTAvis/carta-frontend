@@ -25,7 +25,7 @@ export class PopoverSettingsComponent extends React.Component<PopoverSettingsCom
                 </div>
                 }
                 {!this.props.isOpen &&
-                <Button className="popover-settings-button" icon={"caret-left"} minimal={true} onClick={this.props.onShowClicked}/>
+                <Button className="popover-settings-button" icon={"cog"} minimal={true} onClick={this.props.onShowClicked}/>
                 }
             </div>
         );
