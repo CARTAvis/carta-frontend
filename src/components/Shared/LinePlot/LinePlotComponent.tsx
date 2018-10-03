@@ -10,7 +10,19 @@ import {Point2D} from "../../../models/Point2D";
 import "./LinePlotComponent.css";
 import {clamp} from "../../../util/math";
 import {Colors} from "@blueprintjs/core";
-import {Col} from "react-flexbox-grid";
+import {action, computed, observable} from "mobx";
+
+enum ZoomMode {
+    X,
+    Y,
+    XY
+}
+
+enum InteractionMode {
+    NONE,
+    SELECTING,
+    PANNING
+}
 
 export interface LineMarker {
     value: number;
@@ -45,18 +57,6 @@ export class LinePlotComponentProps {
     scrollZoom?: boolean;
 }
 
-interface LinePlotComponentState {
-    chartArea: ChartArea;
-    hoveredMarker: LineMarker;
-    width: number;
-    height: number;
-    selecting: boolean;
-    panning: boolean;
-    panStart: number;
-    selectionBoxStart: number;
-    selectionBoxEnd: number;
-}
-
 // Maximum time between double clicks
 const DOUBLE_CLICK_THRESHOLD = 300;
 // Minimum pixel distance before turning a click into a drag event
@@ -67,7 +67,7 @@ const MARKER_HITBOX_THICKNESS = 16;
 const XY_ZOOM_THRESHOLD = 20;
 
 @observer
-export class LinePlotComponent extends React.Component<LinePlotComponentProps, LinePlotComponentState> {
+export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     private plotRef;
     private stageRef;
     private stageClickStartX: number;
@@ -76,46 +76,68 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
     private previousClickTime: number;
     private pendingClickHandle;
 
-    constructor(props: LinePlotComponentProps) {
-        super(props);
-        this.state = {chartArea: undefined, hoveredMarker: undefined, width: 0, height: 0, selecting: false, selectionBoxStart: 0, selectionBoxEnd: 0, panning: false, panStart: 0};
+    @observable chartArea: ChartArea;
+    @observable hoveredMarker: LineMarker;
+    @observable width = 0;
+    @observable height = 0;
+    @observable interactionMode = InteractionMode.NONE;
+    @observable panStart = 0;
+    @observable selectionBoxStart = {x: 0, y: 0};
+    @observable selectionBoxEnd = {x: 0, y: 0};
+
+    @computed get isSelecting() {
+        return this.interactionMode === InteractionMode.SELECTING;
+    }
+
+    @computed get isPanning() {
+        return this.interactionMode === InteractionMode.PANNING;
+    }
+
+    @computed get zoomMode(): ZoomMode {
+        const absDelta = {x: Math.abs(this.selectionBoxEnd.x - this.selectionBoxStart.x), y: Math.abs(this.selectionBoxEnd.y - this.selectionBoxStart.y)};
+        if (absDelta.x > XY_ZOOM_THRESHOLD && absDelta.y > XY_ZOOM_THRESHOLD) {
+            return ZoomMode.XY;
+        }
+        else {
+            return absDelta.x > absDelta.y ? ZoomMode.X : ZoomMode.Y;
+        }
     }
 
     private getValueForPixelX(pixel: number) {
-        if (!this.state.chartArea) {
+        if (!this.chartArea) {
             return undefined;
         }
-        const fraction = (pixel - this.state.chartArea.left) / (this.state.chartArea.right - this.state.chartArea.left);
+        const fraction = (pixel - this.chartArea.left) / (this.chartArea.right - this.chartArea.left);
         return fraction * (this.props.xMax - this.props.xMin) + this.props.xMin;
     }
 
     private getValueForPixelY(pixel: number, logScale: boolean = false) {
-        if (!this.state.chartArea) {
+        if (!this.chartArea) {
             return undefined;
         }
         if (logScale) {
-            let value = this.state.chartArea.bottom - pixel;
-            value /= this.state.chartArea.bottom - this.state.chartArea.top;
+            let value = this.chartArea.bottom - pixel;
+            value /= this.chartArea.bottom - this.chartArea.top;
             value *= Math.log10(this.props.yMax / this.props.yMin);
             return Math.pow(10, Math.log10(this.props.yMin) + value);
         }
         else {
-            const fraction = (this.state.chartArea.bottom - pixel) / (this.state.chartArea.bottom - this.state.chartArea.top);
+            const fraction = (this.chartArea.bottom - pixel) / (this.chartArea.bottom - this.chartArea.top);
             return fraction * (this.props.yMax - this.props.yMin) + this.props.yMin;
         }
 
     }
 
     private getPixelForValueX(value: number) {
-        if (!this.state.chartArea) {
+        if (!this.chartArea) {
             return undefined;
         }
         const fraction = (value - this.props.xMin) / (this.props.xMax - this.props.xMin);
-        return fraction * (this.state.chartArea.right - this.state.chartArea.left) + this.state.chartArea.left;
+        return fraction * (this.chartArea.right - this.chartArea.left) + this.chartArea.left;
     }
 
     private getPixelForValueY(value: number, logScale: boolean = false) {
-        if (!this.state.chartArea) {
+        if (!this.chartArea) {
             return undefined;
         }
         let fraction;
@@ -125,32 +147,29 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
         else {
             fraction = (this.props.yMax - value) / (this.props.yMax - this.props.yMin);
         }
-        return fraction * (this.state.chartArea.bottom - this.state.chartArea.top) + this.state.chartArea.top;
+        return fraction * (this.chartArea.bottom - this.chartArea.top) + this.chartArea.top;
     }
 
     onPlotRefUpdated = (plotRef) => {
         this.plotRef = plotRef;
     };
 
-    onChartAreaUpdated = (chartArea: ChartArea) => {
-        if (!_.isEqual(chartArea, this.state.chartArea)) {
-            this.setState({chartArea});
-        }
+    @action updateChart = (chartArea: ChartArea) => {
+        this.chartArea = chartArea;
     };
 
-    onResize = (w, h) => {
-        if (w !== this.state.width || h !== this.state.height) {
-            this.setState({width: w, height: h});
-        }
+    @action resize = (w, h) => {
+        this.width = w;
+        this.height = h;
     };
 
     dragBoundsFuncVertical = (pos: Point2D) => {
-        const chartArea = this.state.chartArea;
+        const chartArea = this.chartArea;
         return {x: clamp(pos.x, chartArea.left, chartArea.right), y: chartArea.top};
     };
 
     dragBoundsFuncHorizontal = (pos: Point2D) => {
-        const chartArea = this.state.chartArea;
+        const chartArea = this.chartArea;
         return {x: chartArea.left, y: clamp(pos.y, chartArea.top, chartArea.bottom)};
     };
 
@@ -159,20 +178,12 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
             if (marker && marker.dragMove) {
                 let newPositionDataSpace;
                 if (marker.horizontal) {
-                    const newPositionCanvasSpace = ev.evt.offsetY;
                     // Prevent dragging out of canvas space
-                    if (newPositionCanvasSpace < this.state.chartArea.top || newPositionCanvasSpace > this.state.chartArea.bottom) {
-                        return;
-                    }
-                    newPositionDataSpace = this.getValueForPixelY(newPositionCanvasSpace, this.props.logY);
+                    newPositionDataSpace = this.getValueForPixelY(clamp(ev.evt.offsetY, this.chartArea.top, this.chartArea.bottom), this.props.logY);
                 }
                 else {
-                    const newPositionCanvasSpace = ev.evt.offsetX;
                     // Prevent dragging out of canvas space
-                    if (newPositionCanvasSpace < this.state.chartArea.left || newPositionCanvasSpace > this.state.chartArea.right) {
-                        return;
-                    }
-                    newPositionDataSpace = this.getValueForPixelX(newPositionCanvasSpace);
+                    newPositionDataSpace = this.getValueForPixelX(clamp(ev.evt.offsetX, this.chartArea.left, this.chartArea.right));
                 }
                 marker.dragMove(newPositionDataSpace);
             }
@@ -184,10 +195,19 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
         }
     };
 
-    setHoveredMarker(marker: LineMarker) {
-        if (this.state.hoveredMarker !== marker) {
-            this.setState({hoveredMarker: marker});
-        }
+    @action setHoveredMarker(marker: LineMarker) {
+        this.hoveredMarker = marker;
+    }
+
+    @action startSelection(x: number, y: number) {
+        this.interactionMode = InteractionMode.SELECTING;
+        this.selectionBoxStart = {x, y};
+        this.selectionBoxEnd = {x, y};
+    }
+
+    @action startPanning(x: number) {
+        this.interactionMode = InteractionMode.PANNING;
+        this.panPrevious = x;
     }
 
     onStageMouseDown = (ev) => {
@@ -195,14 +215,17 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
         this.stageClickStartX = mouseEvent.offsetX;
         this.stageClickStartY = mouseEvent.offsetY;
         const modifierPressed = mouseEvent.ctrlKey || mouseEvent.shiftKey || mouseEvent.altKey;
-        if (this.state.hoveredMarker === undefined && !modifierPressed) {
-            this.setState({selecting: true, selectionBoxStart: mouseEvent.offsetX, selectionBoxEnd: mouseEvent.offsetX});
+        if (this.hoveredMarker === undefined && !modifierPressed) {
+            this.startSelection(mouseEvent.offsetX, mouseEvent.offsetY);
         }
         else if (modifierPressed) {
-            this.setState({panning: true});
-            this.panPrevious = mouseEvent.offsetX;
+            this.startPanning(mouseEvent.offsetX);
         }
     };
+
+    @action endInteractions() {
+        this.interactionMode = InteractionMode.NONE;
+    }
 
     onStageMouseUp = (ev) => {
         const mouseEvent: MouseEvent = ev.evt;
@@ -215,39 +238,45 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
         else {
             this.stageClickStartX = undefined;
             this.stageClickStartY = undefined;
-            if (this.state.selecting && this.props.graphZoomed) {
-                const minCanvasSpace = Math.min(this.state.selectionBoxStart, this.state.selectionBoxEnd);
-                const maxCanvasSpace = Math.max(this.state.selectionBoxStart, this.state.selectionBoxEnd);
+            if (this.isSelecting && this.props.graphZoomed) {
+                const minCanvasSpace = Math.min(this.selectionBoxStart.x, this.selectionBoxEnd.x);
+                const maxCanvasSpace = Math.max(this.selectionBoxStart.x, this.selectionBoxEnd.x);
                 const minGraphSpace = this.getValueForPixelX(minCanvasSpace);
                 const maxGraphSpace = this.getValueForPixelX(maxCanvasSpace);
                 this.props.graphZoomed(minGraphSpace, maxGraphSpace);
             }
         }
-        this.setState({selecting: false, panning: false});
+        this.endInteractions();
     };
+
+    @action updateSelection(x: number, y: number) {
+        this.selectionBoxEnd = {x, y};
+    }
+
+    @action updatePan(x: number) {
+        this.panPrevious = x;
+    }
 
     onStageMouseMove = (ev) => {
         const mouseEvent: MouseEvent = ev.evt;
-        const chartArea = this.state.chartArea;
-        if (mouseEvent.offsetX > chartArea.right || mouseEvent.offsetX < chartArea.left) {
-            return;
+        const chartArea = this.chartArea;
+        let mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
+        let mousePosY = clamp(mouseEvent.offsetY, chartArea.top - 1, chartArea.bottom + 1);
+        if (this.isSelecting) {
+            this.updateSelection(mousePosX, mousePosY);
         }
-
-        if (this.state.selecting) {
-            this.setState({selectionBoxEnd: mouseEvent.offsetX});
-        }
-        else if (this.state.panning && this.props.graphZoomed) {
-            const currentPan = mouseEvent.offsetX;
+        else if (this.isPanning && this.props.graphZoomed) {
+            const currentPan = mousePosX;
             const prevPanGraphSpace = this.getValueForPixelX(this.panPrevious);
             const currentPanGraphSpace = this.getValueForPixelX(currentPan);
             const delta = (currentPanGraphSpace - prevPanGraphSpace);
-            this.panPrevious = currentPan;
+            this.updatePan(currentPan);
             // Shift zoom to counteract drag's delta
             this.props.graphZoomed(this.props.xMin - delta, this.props.xMax - delta);
         }
         // Cursor move updates
-        if (this.props.graphCursorMoved) {
-            const cursorPosGraphSpace = this.getValueForPixelX(mouseEvent.offsetX);
+        if (this.interactionMode == InteractionMode.NONE && this.props.graphCursorMoved) {
+            const cursorPosGraphSpace = this.getValueForPixelX(mousePosX);
             this.props.graphCursorMoved(cursorPosGraphSpace);
         }
     };
@@ -302,9 +331,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
     };
 
     onStageWheel = (ev) => {
-        if (this.props.scrollZoom && this.props.graphZoomed && this.state.chartArea) {
+        if (this.props.scrollZoom && this.props.graphZoomed && this.chartArea) {
             const wheelEvent: WheelEvent = ev.evt;
-            const chartArea = this.state.chartArea;
+            const chartArea = this.chartArea;
             const lineHeight = 15;
             const zoomSpeed = 0.001;
 
@@ -320,14 +349,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
     };
 
     onKeyDown = (ev: React.KeyboardEvent) => {
-        if (this.state.selecting && ev.keyCode === ESCAPE) {
-            this.setState({selecting: false});
+        if (this.isSelecting && ev.keyCode === ESCAPE) {
+            this.endInteractions();
         }
     };
 
     render() {
-        const chartArea = this.state.chartArea;
-        const isHovering = this.state.hoveredMarker !== undefined && !this.state.selecting;
+        const chartArea = this.chartArea;
+        const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
         let lines = [];
         if (this.props.markers && this.props.markers.length && chartArea) {
             const lineHeight = chartArea.bottom - chartArea.top;
@@ -342,7 +371,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
                     if (valueCanvasSpace < Math.floor(chartArea.top - 1) || valueCanvasSpace > Math.ceil(chartArea.bottom + 1) || isNaN(valueCanvasSpace)) {
                         continue;
                     }
-                    const isHoverMarker = isHovering && this.state.hoveredMarker.id === marker.id;
+                    const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
                     const midPoint = (chartArea.left + chartArea.right) / 2.0;
 
                     let lineSegments;
@@ -391,7 +420,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
                     if (valueCanvasSpace < Math.floor(chartArea.left - 1) || valueCanvasSpace > Math.ceil(chartArea.right + 1) || isNaN(valueCanvasSpace)) {
                         continue;
                     }
-                    const isHoverMarker = isHovering && this.state.hoveredMarker.id === marker.id;
+                    const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
                     const midPoint = (chartArea.top + chartArea.bottom) / 2.0;
                     let lineSegments;
                     let interactionRect;
@@ -439,16 +468,59 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
         }
 
         let selectionRect;
-        const selectionWidth = this.state.selectionBoxEnd - this.state.selectionBoxStart;
-        if (this.state.selecting && Math.abs(selectionWidth) > DRAG_THRESHOLD && chartArea) {
+        const start = this.selectionBoxStart;
+        const end = this.selectionBoxEnd;
+        const delta = {x: end.x - start.x, y: end.y - start.y};
+        const absDelta = {x: Math.abs(delta.x), y: Math.abs(delta.y)};
+
+        if (this.isSelecting && (absDelta.x > DRAG_THRESHOLD || absDelta.y > DRAG_THRESHOLD) && chartArea) {
+            const w = chartArea.right - chartArea.left;
             const h = chartArea.bottom - chartArea.top;
-            const x = this.state.selectionBoxStart;
-            const y = chartArea.top + h / 2.0;
-            selectionRect = [
-                <Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={x} y={chartArea.top} width={selectionWidth} height={h}/>,
-                <Line stroke={Colors.GRAY3} key={1} x={x} y={y} points={[0, -XY_ZOOM_THRESHOLD, 0, XY_ZOOM_THRESHOLD]} strokeWidth={3}/>,
-                <Line stroke={Colors.GRAY3} key={2} x={x + selectionWidth} y={y} points={[0, -XY_ZOOM_THRESHOLD, 0, XY_ZOOM_THRESHOLD]} strokeWidth={3}/>
-            ];
+
+            // Determine which zoom mode we're in
+            let zoomMode: ZoomMode;
+            if (absDelta.x > XY_ZOOM_THRESHOLD && absDelta.y > XY_ZOOM_THRESHOLD) {
+                zoomMode = ZoomMode.XY;
+            }
+            else {
+                zoomMode = absDelta.x > absDelta.y ? ZoomMode.X : ZoomMode.Y;
+            }
+
+            if (zoomMode == ZoomMode.X) {
+                // Determine appropriate bounds for the zoom markers, so that they don't extend past the chart area
+                const heightAbove = clamp(XY_ZOOM_THRESHOLD, 0, start.y - chartArea.top);
+                const heightBelow = clamp(XY_ZOOM_THRESHOLD, 0, chartArea.bottom - start.y);
+                // Selection rectangle consists of a filled rectangle with vertical drag handles on either side
+                selectionRect = [
+                    <Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={start.x} y={chartArea.top} width={delta.x} height={h}/>,
+                    <Line stroke={Colors.GRAY3} key={1} x={start.x} y={start.y} points={[0, -heightAbove, 0, heightBelow]} strokeWidth={3}/>,
+                    <Line stroke={Colors.GRAY3} key={2} x={end.x} y={start.y} points={[0, -heightAbove, 0, heightBelow]} strokeWidth={3}/>
+                ];
+            }
+            else if (zoomMode == ZoomMode.Y) {
+                // Determine appropriate bounds for the zoom markers, so that they don't extend past the chart area
+                const widthLeft = clamp(XY_ZOOM_THRESHOLD, 0, start.x - chartArea.left);
+                const widthRight = clamp(XY_ZOOM_THRESHOLD, 0, chartArea.right - start.x);
+                // Selection rectangle consists of a filled rectangle with horizontal drag handles on either side
+                selectionRect = [
+                    <Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={chartArea.left} y={start.y} width={w} height={delta.y}/>,
+                    <Line stroke={Colors.GRAY3} key={1} x={start.x} y={start.y} points={[-widthLeft, 0, widthRight, 0]} strokeWidth={3}/>,
+                    <Line stroke={Colors.GRAY3} key={2} x={start.x} y={end.y} points={[-widthLeft, 0, widthRight, 0]} strokeWidth={3}/>
+                ];
+            }
+            else {
+                // Selection rectangle consists of a filled rectangle with drag corners
+                selectionRect = [
+                    <Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={start.x} y={start.y} width={delta.x} height={delta.y}/>,
+                    <Group key={1}>
+                        <Line stroke={Colors.GRAY3} x={start.x} y={start.y} points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>
+                        <Line stroke={Colors.GRAY3} x={end.x} y={start.y} points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>
+                        <Line stroke={Colors.GRAY3} x={start.x} y={end.y} points={[0, -XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>
+                        <Line stroke={Colors.GRAY3} x={end.x} y={end.y} points={[-XY_ZOOM_THRESHOLD / 2.0, 0, 0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>
+                    </Group>
+
+                ];
+            }
         }
 
         let borderRect;
@@ -468,20 +540,20 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps, L
         }
 
         return (
-            <div className={"line-plot-component"} style={{cursor: this.state.panning || isHovering ? "move" : "crosshair"}} onKeyDown={this.onKeyDown} tabIndex={0}>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+            <div className={"line-plot-component"} style={{cursor: this.isPanning || isHovering ? "move" : "crosshair"}} onKeyDown={this.onKeyDown} tabIndex={0}>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}/>
                 <PlotContainerComponent
                     {...this.props}
                     plotRefUpdated={this.onPlotRefUpdated}
-                    chartAreaUpdated={this.onChartAreaUpdated}
-                    width={this.state.width}
-                    height={this.state.height}
+                    chartAreaUpdated={this.updateChart}
+                    width={this.width}
+                    height={this.height}
                 />
                 <Stage
                     className={"annotation-stage"}
                     ref={ref => this.stageRef = ref}
-                    width={this.state.width}
-                    height={this.state.height}
+                    width={this.width}
+                    height={this.height}
                     onMouseDown={this.onStageMouseDown}
                     onMouseUp={this.onStageMouseUp}
                     onContextMenu={this.onStageRightClick}
