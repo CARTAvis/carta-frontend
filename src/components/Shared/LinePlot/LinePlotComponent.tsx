@@ -275,7 +275,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             this.props.graphZoomed(this.props.xMin - delta, this.props.xMax - delta);
         }
         // Cursor move updates
-        if (this.interactionMode == InteractionMode.NONE && this.props.graphCursorMoved) {
+        if (this.interactionMode === InteractionMode.NONE && this.props.graphCursorMoved) {
             const cursorPosGraphSpace = this.getValueForPixelX(mousePosX);
             this.props.graphCursorMoved(cursorPosGraphSpace);
         }
@@ -486,7 +486,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 zoomMode = absDelta.x > absDelta.y ? ZoomMode.X : ZoomMode.Y;
             }
 
-            if (zoomMode == ZoomMode.X) {
+            if (zoomMode === ZoomMode.X) {
                 // Determine appropriate bounds for the zoom markers, so that they don't extend past the chart area
                 const heightAbove = clamp(XY_ZOOM_THRESHOLD, 0, start.y - chartArea.top);
                 const heightBelow = clamp(XY_ZOOM_THRESHOLD, 0, chartArea.bottom - start.y);
@@ -497,7 +497,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     <Line stroke={Colors.GRAY3} key={2} x={end.x} y={start.y} points={[0, -heightAbove, 0, heightBelow]} strokeWidth={3}/>
                 ];
             }
-            else if (zoomMode == ZoomMode.Y) {
+            else if (zoomMode === ZoomMode.Y) {
                 // Determine appropriate bounds for the zoom markers, so that they don't extend past the chart area
                 const widthLeft = clamp(XY_ZOOM_THRESHOLD, 0, start.x - chartArea.left);
                 const widthRight = clamp(XY_ZOOM_THRESHOLD, 0, chartArea.right - start.x);
@@ -512,13 +512,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 // Selection rectangle consists of a filled rectangle with drag corners
                 selectionRect = [
                     <Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={start.x} y={start.y} width={delta.x} height={delta.y}/>,
-                    <Group key={1}>
-                        <Line stroke={Colors.GRAY3} x={start.x} y={start.y} points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>
-                        <Line stroke={Colors.GRAY3} x={end.x} y={start.y} points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>
-                        <Line stroke={Colors.GRAY3} x={start.x} y={end.y} points={[0, -XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>
-                        <Line stroke={Colors.GRAY3} x={end.x} y={end.y} points={[-XY_ZOOM_THRESHOLD / 2.0, 0, 0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>
-                    </Group>
-
+                    <Line stroke={Colors.GRAY3} key={1} x={start.x} y={start.y} points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>,
+                    <Line stroke={Colors.GRAY3} key={2} x={end.x} y={start.y} points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>,
+                    <Line stroke={Colors.GRAY3} key={3} x={start.x} y={end.y} points={[0, -XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>,
+                    <Line stroke={Colors.GRAY3} key={4} x={end.x} y={end.y} points={[-XY_ZOOM_THRESHOLD / 2.0, 0, 0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>
                 ];
             }
         }

@@ -27,7 +27,7 @@ export class RenderConfigSettingsPanelComponent extends React.Component<{ widget
                         <Switch label={"Log Scale"} checked={this.props.widgetStore.logScaleY} onChange={this.handleLogScaleChanged}/>
                         <Switch label={"Show Labels"} checked={this.props.widgetStore.markerTextVisible} onChange={this.handleMarkerTextChanged}/>
                         <Switch label={this.props.widgetStore.usePoints ? "Points" : "Lines"} checked={this.props.widgetStore.usePoints} onChange={this.handlePointsChanged}/>
-                        <Button icon={"zoom-to-fit"}small={true} disabled={this.props.widgetStore.isAutoScaled} onClick={this.props.widgetStore.clearBounds}>Reset Range</Button>
+                        <Button icon={"zoom-to-fit"}small={true} disabled={this.props.widgetStore.isAutoScaled} onClick={this.props.widgetStore.clearXBounds}>Reset Range</Button>
                     </ControlGroup>
                 </FormGroup>
             </React.Fragment>

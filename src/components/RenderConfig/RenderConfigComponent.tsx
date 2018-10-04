@@ -69,10 +69,13 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                     yMin = Math.min(yMin, histogram.bins[i]);
                     yMax = Math.max(yMax, histogram.bins[i]);
                     // Sanitize zero values to prevent scaling issues with log graphs
-                    if (plotVals[i - minIndex].y < 0.1) {
-                        plotVals[i - minIndex].y = undefined;
-                    }
+                    // if (widgetStore.logScaleY && plotVals[i - minIndex].y < 0.1) {
+                    //     plotVals[i - minIndex].y = undefined;
+                    // }
                 }
+                // if (widgetStore.logScaleY) {
+                //     yMin = Math.max(0.5, yMin);
+                // }
                 return {values: plotVals, xMin, xMax, yMin, yMax};
             }
         }
@@ -104,7 +107,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
 
         if (frame !== this.cachedFrame) {
             this.cachedFrame = frame;
-            widgetStore.clearBounds();
+            widgetStore.clearXBounds();
         }
     }
 
@@ -165,12 +168,12 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         }
     };
 
-    onGraphZoomed = (xMin: number, xMax: number) => {
-        this.props.appStore.renderConfigWidgetStore.setBounds(xMin, xMax);
+    onGraphZoomedX = (xMin: number, xMax: number) => {
+        this.props.appStore.renderConfigWidgetStore.setXBounds(xMin, xMax);
     };
 
     onGraphZoomReset = () => {
-        this.props.appStore.renderConfigWidgetStore.clearBounds();
+        this.props.appStore.renderConfigWidgetStore.clearXBounds();
     };
 
     onGraphCursorMoved = _.throttle((x) => {
@@ -203,7 +206,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             usePointSymbols: widgetStore.usePoints,
             graphClicked: this.onMinMoved,
             graphRightClicked: this.onMaxMoved,
-            graphZoomed: this.onGraphZoomed,
+            graphZoomed: this.onGraphZoomedX,
             graphZoomReset: this.onGraphZoomReset,
             graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true

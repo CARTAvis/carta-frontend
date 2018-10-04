@@ -3,20 +3,46 @@ import {action, computed, observable} from "mobx";
 export class RenderConfigWidgetStore {
     @observable minX: number;
     @observable maxX: number;
+    @observable minY: number;
+    @observable maxY: number;
     @observable cursorX: number;
     @observable logScaleY: boolean;
     @observable usePoints: boolean;
     @observable settingsPanelVisible: boolean;
     @observable markerTextVisible: boolean;
 
-    @action setBounds = (minVal: number, maxVal: number) => {
+    @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
         this.maxX = maxVal;
     };
 
-    @action clearBounds = () => {
+    @action clearXBounds = () => {
         this.minX = undefined;
         this.maxX = undefined;
+    };
+
+    @action setYBounds = (minVal: number, maxVal: number) => {
+        this.minX = minVal;
+        this.maxX = maxVal;
+    };
+
+    @action clearYBounds = () => {
+        this.minX = undefined;
+        this.maxX = undefined;
+    };
+
+    @action setXYBounds = (minX: number, maxX: number, minY: number, maxY: number) => {
+        this.minX = minX;
+        this.maxX = maxX;
+        this.minY = minY;
+        this.maxY = maxY;
+    };
+
+    @action clearXYBounds = () => {
+        this.minX = undefined;
+        this.maxX = undefined;
+        this.minY = undefined;
+        this.maxY = undefined;
     };
 
     @action showSettingsPanel = () => {

@@ -169,7 +169,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 axis.ticks = axis.ticks.filter(v => Math.abs(Math.log10(v) % 1.0) < 0.001);
             };
             plotOptions.scales.yAxes[0].type = "logarithmic";
-            // plotOptions.scales.yAxes[0].ticks.min = 0.5;
         }
         else {
             plotOptions.scales.yAxes[0].afterBuildTicks = (axis) => axis;
