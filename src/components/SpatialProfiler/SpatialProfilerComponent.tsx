@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {AppStore} from "../../stores/AppStore";
 import ReactResizeDetector from "react-resize-detector";
 import "./SpatialProfilerComponent.css";
-import {WidgetConfig} from "../../stores/FloatingWidgetStore";
+import {WidgetConfig} from "../../stores/widgets/FloatingWidgetStore";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import {ChartOptions, ChartData} from "chart.js";
 import {Scatter} from "react-chartjs-2";

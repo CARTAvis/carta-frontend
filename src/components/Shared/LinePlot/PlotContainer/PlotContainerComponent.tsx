@@ -1,7 +1,8 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {Chart, ChartArea, ChartData, ChartOptions} from "chart.js";
+import {Chart, ChartArea, ChartData, ChartDataSets, ChartOptions} from "chart.js";
 import {Scatter} from "react-chartjs-2";
+import {Colors} from "@blueprintjs/core";
 
 export class PlotContainerProps {
     width?: number;
@@ -9,10 +10,15 @@ export class PlotContainerProps {
     data?: { x: number, y: number }[];
     xMin?: number;
     xMax?: number;
+    yMin?: number;
+    yMax?: number;
     xLabel?: string;
     yLabel?: string;
     logY?: boolean;
     lineColor?: string;
+    darkMode?: boolean;
+    usePointSymbols?: boolean;
+    interpolateLines?: boolean;
     chartAreaUpdated?: (chartArea: ChartArea) => void;
     plotRefUpdated?: (plotRef: Scatter) => void;
 }
@@ -52,6 +58,15 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         else if (props.lineColor !== nextProps.lineColor) {
             return true;
         }
+        else if (props.usePointSymbols !== nextProps.usePointSymbols) {
+            return true;
+        }
+        else if (props.interpolateLines !== nextProps.interpolateLines) {
+            return true;
+        }
+        else if (props.darkMode !== nextProps.darkMode) {
+            return true;
+        }
         else if (props.logY !== nextProps.logY) {
             return true;
         }
@@ -62,6 +77,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         }
         else if (props.xMax !== nextProps.xMax) {
+            return true;
+        }
+        else if (props.yMin !== nextProps.yMin) {
+            return true;
+        }
+        else if (props.yMax !== nextProps.yMax) {
             return true;
         }
         else if (props.yLabel !== nextProps.yLabel) {
@@ -83,8 +104,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
     }
 
     render() {
+        const labelColor = this.props.darkMode ? Colors.LIGHT_GRAY4 : Colors.GRAY1;
+        const gridColor = this.props.darkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1;
+        const lineColor = this.props.lineColor || (this.props.darkMode ? Colors.BLUE4 : Colors.BLUE2);
         // ChartJS plot
-        let plotOptions: ChartOptions = {
+        let plotOptions: any = {
             maintainAspectRatio: false,
             events: ["mousedown", "mouseup", "mousemove", "dblclick"],
             legend: {
@@ -94,26 +118,47 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 xAxes: [{
                     id: "x-axis-0",
                     scaleLabel: {
+                        fontColor: labelColor,
                         display: true,
                         labelString: this.props.xLabel
                     },
                     ticks: {
+                        minor: {
+                            fontColor: labelColor,
+                        },
                         maxRotation: 0,
                         min: this.props.xMin,
                         max: this.props.xMax
                     },
                     afterBuildTicks: axis => {
                         axis.ticks = axis.ticks.slice(1, -1);
+                    },
+                    gridLines: {
+                        drawBorder: false,
+                        color: gridColor,
+                        zeroLineColor: gridColor
                     }
                 }],
                 yAxes: [{
                     id: "y-axis-0",
+                    drawBorder: false,
                     scaleLabel: {
+                        fontColor: labelColor,
                         display: true,
                         labelString: this.props.yLabel
                     },
                     ticks: {
+                        minor: {
+                            fontColor: labelColor,
+                        },
                         display: true,
+                        min: this.props.yMin,
+                        max: this.props.yMax
+                    },
+                    gridLines: {
+                        drawBorder: false,
+                        color: gridColor,
+                        zeroLineColor: gridColor
                     }
                 }]
             },
@@ -128,7 +173,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 axis.ticks = axis.ticks.filter(v => Math.abs(Math.log10(v) % 1.0) < 0.001);
             };
             plotOptions.scales.yAxes[0].type = "logarithmic";
-            // plotOptions.scales.yAxes[0].ticks.min = 0.5;
         }
         else {
             plotOptions.scales.yAxes[0].afterBuildTicks = (axis) => axis;
@@ -137,17 +181,26 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
         let plotData: Partial<ChartData> = {datasets: []};
         if (this.props.data && this.props.data.length) {
-            plotData.datasets.push({
+            const datasetConfig: ChartDataSets = {
                 label: "LineGraph",
                 type: "line",
                 data: this.props.data,
                 fill: false,
-                pointRadius: 0,
-                showLine: true,
-                steppedLine: true,
-                borderWidth: 1,
-                borderColor: this.props.lineColor
-            });
+            };
+
+            if (this.props.usePointSymbols) {
+                datasetConfig.showLine = false;
+                datasetConfig.pointRadius = 1;
+                datasetConfig.pointBackgroundColor = lineColor;
+            }
+            else {
+                datasetConfig.pointRadius = 0;
+                datasetConfig.showLine = true;
+                datasetConfig.steppedLine = !this.props.interpolateLines;
+                datasetConfig.borderWidth = 1;
+                datasetConfig.borderColor = lineColor;
+            }
+            plotData.datasets.push(datasetConfig);
         }
 
         const plugins = [{

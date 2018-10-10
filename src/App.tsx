@@ -3,8 +3,6 @@ import * as GoldenLayout from "golden-layout";
 import * as AST from "ast_wrapper";
 import * as _ from "lodash";
 import * as $ from "jquery";
-import "./App.css";
-import "./layout-theme.css";
 import {observer} from "mobx-react";
 import DevTools from "mobx-react-devtools";
 import ReactResizeDetector from "react-resize-detector";
@@ -21,9 +19,11 @@ import {LogComponent} from "./components/Log/LogComponent";
 import {FloatingWidgetManagerComponent} from "./components/FloatingWidgetManager/FloatingWidgetManagerComponent";
 import {AnimatorComponent} from "./components/Animator/AnimatorComponent";
 import {FileBrowserStore} from "./stores/FileBrowserStore";
-import {SpatialProfileStore} from "./stores/SpatialProfileStore";
 import {AppStore} from "./stores/AppStore";
+import {smoothStepOffset} from "./util/math";
 import GitCommit from "./static/gitInfo";
+import "./App.css";
+import "./layout-theme.css";
 
 @HotkeysTarget @observer
 export class App extends React.Component<{ appStore: AppStore }> {
@@ -58,6 +58,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
     }
 
     componentDidMount() {
+        const defaultImageViewFraction = smoothStepOffset(window.innerHeight, 720, 1080, 65, 75);
         const initialLayout: any[] = [{
             type: "row",
             content: [{
@@ -67,7 +68,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     type: "react-component",
                     component: "image-view",
                     title: "No image loaded",
-                    height: 75,
+                    height: defaultImageViewFraction,
                     id: "image-view",
                     isClosable: false,
                     props: {appStore: this.props.appStore, id: "image-view-docked", docked: true}
@@ -207,7 +208,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         return (
             <div className={className}>
-                <DevTools/>
+                {process.env.NODE_ENV === "development" && <DevTools/>}
                 <RootMenuComponent appStore={appStore}/>
                 <OverlaySettingsDialogComponent appStore={appStore}/>
                 <URLConnectDialogComponent appStore={appStore}/>

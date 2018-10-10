@@ -6,7 +6,7 @@ import {CARTA} from "carta-protobuf";
 import ScrollToBottom from "react-scroll-to-bottom";
 import {Intent} from "@blueprintjs/core/lib/esm/common/intent";
 import {AppStore} from "../../stores/AppStore";
-import {WidgetConfig} from "../../stores/FloatingWidgetStore";
+import {WidgetConfig} from "../../stores/widgets/FloatingWidgetStore";
 
 class LogComponentProps {
     appStore: AppStore;

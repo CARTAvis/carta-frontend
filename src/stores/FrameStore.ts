@@ -110,7 +110,6 @@ export class FrameStore {
         this.stokes = rasterImageData.stokes;
         this.channel = rasterImageData.channel;
         this.currentCompressionQuality = rasterImageData.compressionQuality;
-        console.log(this.currentCompressionQuality);
         // if there's a valid channel histogram bundled into the message, update it
         if (rasterImageData.channelHistogramData) {
             // Update channel histograms

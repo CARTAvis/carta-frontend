@@ -2,16 +2,20 @@ import * as React from "react";
 import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
 import {observer} from "mobx-react";
-import {FormGroup, HTMLSelect, NonIdealState, ButtonGroup, Button, Colors, IOptionProps, NumericInput} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, NonIdealState, ButtonGroup, Button, IOptionProps, NumericInput} from "@blueprintjs/core";
 import {Chart, ChartArea} from "chart.js";
 import {LinePlotComponent, LinePlotComponentProps} from "../Shared/LinePlot/LinePlotComponent";
 import {AppStore} from "../../stores/AppStore";
 import {FrameStore} from "../../stores/FrameStore";
 import {FrameScaling} from "../../stores/RenderConfigStore";
-import {WidgetConfig} from "../../stores/FloatingWidgetStore";
+import {WidgetConfig} from "../../stores/widgets/FloatingWidgetStore";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
 import {clamp} from "../../util/math";
 import "./RenderConfigComponent.css";
+import {computed, observable} from "mobx";
+import {Point2D} from "../../models/Point2D";
+import {PopoverSettingsComponent} from "../Shared/PopoverSettings/PopoverSettingsComponent";
+import {RenderConfigSettingsPanelComponent} from "./RenderConfigSettingsPanelComponent/RenderConfigSettingsPanelComponent";
 
 class RenderConfigComponentProps {
     appStore: AppStore;
@@ -19,20 +23,66 @@ class RenderConfigComponentProps {
     docked: boolean;
 }
 
-class RenderConfigComponentState {
-    width: number;
-    height: number;
-    xMin: number;
-    xMax: number;
-    yRange: number[];
-    chartArea: ChartArea;
-    cursorX: number;
-}
+// The fixed size of the settings panel popover (excluding the show/hide button)
+const PANEL_CONTENT_WIDTH = 140;
 
 @observer
-export class RenderConfigComponent extends React.Component<RenderConfigComponentProps, RenderConfigComponentState> {
+export class RenderConfigComponent extends React.Component<RenderConfigComponentProps> {
     private cachedFrame: FrameStore;
-    private cachedData: number[];
+
+    @observable width: number;
+    @observable height: number;
+    @observable chartArea: ChartArea;
+
+    @computed get settingsPanelWidth(): number {
+        const widgetStore = this.props.appStore.renderConfigWidgetStore;
+        return 20 + (widgetStore.settingsPanelVisible ? PANEL_CONTENT_WIDTH : 0);
+    }
+
+    @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number } {
+        const frame = this.props.appStore.activeFrame;
+        const widgetStore = this.props.appStore.renderConfigWidgetStore;
+        if (frame && frame.renderConfig.channelHistogram && frame.renderConfig.channelHistogram.bins && frame.renderConfig.channelHistogram.bins.length) {
+            const histogram = frame.renderConfig.channelHistogram;
+            let minIndex = 0;
+            let maxIndex = histogram.bins.length - 1;
+
+            // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
+            if (!widgetStore.isAutoScaledX) {
+                minIndex = Math.floor((widgetStore.minX - histogram.firstBinCenter) / histogram.binWidth);
+                minIndex = clamp(minIndex, 0, histogram.bins.length - 1);
+                maxIndex = Math.ceil((widgetStore.maxX - histogram.firstBinCenter) / histogram.binWidth);
+                maxIndex = clamp(maxIndex, 0, histogram.bins.length - 1);
+            }
+
+            let xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
+            let xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
+            let yMin = histogram.bins[minIndex];
+            let yMax = yMin;
+
+            const N = maxIndex - minIndex;
+            if (N > 0 && !isNaN(N)) {
+                const plotVals = new Array(maxIndex - minIndex);
+
+                for (let i = minIndex; i <= maxIndex; i++) {
+                    plotVals[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
+                    yMin = Math.min(yMin, histogram.bins[i]);
+                    yMax = Math.max(yMax, histogram.bins[i]);
+                    // Sanitize zero values to prevent scaling issues with log graphs
+                    // if (widgetStore.logScaleY && plotVals[i - minIndex].y < 0.1) {
+                    //     plotVals[i - minIndex].y = undefined;
+                    // }
+                }
+                // if (widgetStore.logScaleY) {
+                //     yMin = Math.max(0.5, yMin);
+                // }
+                return {values: plotVals, xMin, xMax, yMin, yMax};
+            }
+        }
+
+        return null;
+
+    }
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -49,14 +99,15 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
 
     constructor(props: RenderConfigComponentProps) {
         super(props);
-        this.state = {width: 0, height: 0, xMin: undefined, xMax: undefined, yRange: undefined, chartArea: undefined, cursorX: undefined};
     }
 
     componentDidUpdate() {
         const frame = this.props.appStore.activeFrame;
+        const widgetStore = this.props.appStore.renderConfigWidgetStore;
+
         if (frame !== this.cachedFrame) {
             this.cachedFrame = frame;
-            this.setState({xMin: undefined, xMax: undefined, yRange: undefined});
+            widgetStore.clearXYBounds();
         }
     }
 
@@ -81,7 +132,8 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
     };
 
     onResize = (width: number, height: number) => {
-        this.setState({width, height});
+        this.width = width;
+        this.height = height;
     };
 
     handlePercentileRankClick = (value: number) => {
@@ -116,21 +168,14 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         }
     };
 
-    onGraphZoomed = (xMin: number, xMax: number) => {
-        this.setState({xMin, xMax});
-    };
-
-    onGraphZoomReset = () => {
-        this.setState({xMin: undefined, xMax: undefined});
-    };
-
-    onGraphCursorMoved = (x) => {
-        this.setState({cursorX: x});
-    };
+    onGraphCursorMoved = _.throttle((x) => {
+        this.props.appStore.renderConfigWidgetStore.setCursor(x);
+    }, 100);
 
     render() {
         const appStore = this.props.appStore;
         const frame = appStore.activeFrame;
+        const widgetStore = appStore.renderConfigWidgetStore;
 
         if (!frame) {
             return (
@@ -148,47 +193,45 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         let linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
             yLabel: "Count",
-            lineColor: `${appStore.darkTheme ? Colors.BLUE4 : Colors.BLUE2}`,
-            logY: true,
+            darkMode: appStore.darkTheme,
+            logY: widgetStore.logScaleY,
+            usePointSymbols: widgetStore.usePoints,
+            interpolateLines: widgetStore.interpolateLines,
             graphClicked: this.onMinMoved,
             graphRightClicked: this.onMaxMoved,
-            graphZoomed: this.onGraphZoomed,
-            graphZoomReset: this.onGraphZoomReset,
+            graphZoomedX: this.props.appStore.renderConfigWidgetStore.setXBounds,
+            graphZoomedY: this.props.appStore.renderConfigWidgetStore.setYBounds,
+            graphZoomedXY: this.props.appStore.renderConfigWidgetStore.setXYBounds,
+            graphZoomReset: this.props.appStore.renderConfigWidgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true
         };
 
         if (frame && frame.renderConfig.channelHistogram && frame.renderConfig.channelHistogram.bins && frame.renderConfig.channelHistogram.bins.length) {
-            const histogram = frame.renderConfig.channelHistogram;
-            let minIndex = 0;
-            let maxIndex = histogram.bins.length - 1;
-
-            // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
-            if (this.state.xMin !== undefined && this.state.xMax !== undefined) {
-                minIndex = Math.floor((this.state.xMin - histogram.firstBinCenter) / histogram.binWidth);
-                minIndex = clamp(minIndex, 0, histogram.bins.length);
-                maxIndex = Math.ceil((this.state.xMax - histogram.firstBinCenter) / histogram.binWidth);
-                maxIndex = clamp(maxIndex, 0, histogram.bins.length);
-            }
-            const N = maxIndex - minIndex;
-            if (N > 0 && !isNaN(N)) {
-                const plotVals = new Array(maxIndex - minIndex);
-
-                for (let i = minIndex; i <= maxIndex; i++) {
-                    plotVals[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
-                    // Sanitize zero values to prevent scaling issues with log graphs
-                    if (plotVals[i - minIndex].y < 0.1) {
-                        plotVals[i - minIndex].y = undefined;
-                    }
-                }
-                linePlotProps.data = plotVals;
-                if (this.state.xMin === undefined && this.state.xMax === undefined) {
-                    linePlotProps.xMin = plotVals[0].x;
-                    linePlotProps.xMax = plotVals[plotVals.length - 1].x;
+            const currentPlotData = this.plotData;
+            if (currentPlotData && currentPlotData.values && currentPlotData.values.length) {
+                linePlotProps.data = currentPlotData.values;
+                // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
+                if (widgetStore.isAutoScaledX) {
+                    linePlotProps.xMin = currentPlotData.xMin;
+                    linePlotProps.xMax = currentPlotData.xMax;
                 }
                 else {
-                    linePlotProps.xMin = this.state.xMin;
-                    linePlotProps.xMax = this.state.xMax;
+                    linePlotProps.xMin = widgetStore.minX;
+                    linePlotProps.xMax = widgetStore.maxX;
+                }
+
+                if (widgetStore.isAutoScaledY) {
+                    linePlotProps.yMin = currentPlotData.yMin;
+                    linePlotProps.yMax = currentPlotData.yMax;
+                }
+                else {
+                    linePlotProps.yMin = widgetStore.minY;
+                    linePlotProps.yMax = widgetStore.maxY;
+                }
+                // Fix log plot min bounds for entries with zeros in them
+                if (widgetStore.logScaleY && linePlotProps.yMin <= 0) {
+                    linePlotProps.yMin = 0.5;
                 }
             }
         }
@@ -197,21 +240,23 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             linePlotProps.markers = [{
                 value: frame.renderConfig.scaleMin,
                 id: "marker-min",
+                label: widgetStore.markerTextVisible ? "Min" : undefined,
                 draggable: true,
                 dragMove: this.onMinMoved,
-                color: "red",
+                horizontal: false,
             }, {
                 value: frame.renderConfig.scaleMax,
                 id: "marker-max",
+                label: widgetStore.markerTextVisible ? "Max" : undefined,
                 draggable: true,
                 dragMove: this.onMaxMoved,
-                color: "red"
+                horizontal: false,
             }];
         }
 
-        const percentileButtonCutoff = 600;
-        const histogramCutoff = 430;
-        const displayRankButtons = this.state.width > percentileButtonCutoff;
+        const percentileButtonCutoff = 600 + this.settingsPanelWidth;
+        const histogramCutoff = 430 + this.settingsPanelWidth;
+        const displayRankButtons = this.width > percentileButtonCutoff;
         const percentileRanks = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
 
         let percentileButtonsDiv, percentileSelectDiv;
@@ -247,14 +292,14 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         }
 
         let cursorInfoDiv;
-        if (this.state.width >= histogramCutoff && this.state.cursorX !== undefined) {
+        if (this.width >= histogramCutoff && widgetStore.cursorX !== undefined) {
             let numberString;
             // Switch between standard and scientific notation
-            if (this.state.cursorX < 1e-2) {
-                numberString = this.state.cursorX.toExponential(2);
+            if (widgetStore.cursorX < 1e-2) {
+                numberString = widgetStore.cursorX.toExponential(2);
             }
             else {
-                numberString = this.state.cursorX.toFixed(2);
+                numberString = widgetStore.cursorX.toFixed(2);
             }
 
             if (frame.unit) {
@@ -270,7 +315,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
 
         return (
             <div className="render-config-container">
-                {this.state.width > histogramCutoff &&
+                {this.width > histogramCutoff &&
                 <div className="histogram-container">
                     {displayRankButtons ? percentileButtonsDiv : percentileSelectDiv}
                     <div className="histogram-plot">
@@ -297,9 +342,17 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                             onValueChange={this.handleScaleMaxChange}
                         />
                     </FormGroup>
-                    {this.state.width < histogramCutoff ? percentileSelectDiv : cursorInfoDiv}
+                    {this.width < histogramCutoff ? percentileSelectDiv : cursorInfoDiv}
                 </div>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <PopoverSettingsComponent
+                    isOpen={widgetStore.settingsPanelVisible}
+                    onShowClicked={widgetStore.showSettingsPanel}
+                    onHideClicked={widgetStore.hideSettingsPanel}
+                    contentWidth={PANEL_CONTENT_WIDTH}
+                >
+                    <RenderConfigSettingsPanelComponent widgetStore={widgetStore}/>
+                </PopoverSettingsComponent>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}/>
             </div>
         );
     }

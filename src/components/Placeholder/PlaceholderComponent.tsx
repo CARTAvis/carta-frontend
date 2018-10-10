@@ -1,6 +1,6 @@
 import * as React from "react";
 import "./PlaceholderComponent.css";
-import {WidgetConfig} from "../../stores/FloatingWidgetStore";
+import {WidgetConfig} from "../../stores/widgets/FloatingWidgetStore";
 import {AppStore} from "../../stores/AppStore";
 import {observer} from "mobx-react";
 
