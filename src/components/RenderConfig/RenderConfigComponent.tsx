@@ -48,7 +48,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             let maxIndex = histogram.bins.length - 1;
 
             // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
-            if (!widgetStore.isAutoScaled) {
+            if (!widgetStore.isAutoScaledX) {
                 minIndex = Math.floor((widgetStore.minX - histogram.firstBinCenter) / histogram.binWidth);
                 minIndex = clamp(minIndex, 0, histogram.bins.length - 1);
                 maxIndex = Math.ceil((widgetStore.maxX - histogram.firstBinCenter) / histogram.binWidth);
@@ -107,7 +107,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
 
         if (frame !== this.cachedFrame) {
             this.cachedFrame = frame;
-            widgetStore.clearXBounds();
+            widgetStore.clearXYBounds();
         }
     }
 
@@ -168,14 +168,6 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         }
     };
 
-    onGraphZoomedX = (xMin: number, xMax: number) => {
-        this.props.appStore.renderConfigWidgetStore.setXBounds(xMin, xMax);
-    };
-
-    onGraphZoomReset = () => {
-        this.props.appStore.renderConfigWidgetStore.clearXBounds();
-    };
-
     onGraphCursorMoved = _.throttle((x) => {
         this.props.appStore.renderConfigWidgetStore.setCursor(x);
     }, 100);
@@ -204,10 +196,13 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             darkMode: appStore.darkTheme,
             logY: widgetStore.logScaleY,
             usePointSymbols: widgetStore.usePoints,
+            interpolateLines: widgetStore.interpolateLines,
             graphClicked: this.onMinMoved,
             graphRightClicked: this.onMaxMoved,
-            graphZoomed: this.onGraphZoomedX,
-            graphZoomReset: this.onGraphZoomReset,
+            graphZoomedX: this.props.appStore.renderConfigWidgetStore.setXBounds,
+            graphZoomedY: this.props.appStore.renderConfigWidgetStore.setYBounds,
+            graphZoomedXY: this.props.appStore.renderConfigWidgetStore.setXYBounds,
+            graphZoomReset: this.props.appStore.renderConfigWidgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true
         };
@@ -216,21 +211,27 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             const currentPlotData = this.plotData;
             if (currentPlotData && currentPlotData.values && currentPlotData.values.length) {
                 linePlotProps.data = currentPlotData.values;
-                if (widgetStore.isAutoScaled) {
+                // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
+                if (widgetStore.isAutoScaledX) {
                     linePlotProps.xMin = currentPlotData.xMin;
                     linePlotProps.xMax = currentPlotData.xMax;
-                    linePlotProps.yMin = currentPlotData.yMin;
-                    linePlotProps.yMax = currentPlotData.yMax;
                 }
                 else {
                     linePlotProps.xMin = widgetStore.minX;
                     linePlotProps.xMax = widgetStore.maxX;
+                }
+
+                if (widgetStore.isAutoScaledY) {
                     linePlotProps.yMin = currentPlotData.yMin;
                     linePlotProps.yMax = currentPlotData.yMax;
                 }
+                else {
+                    linePlotProps.yMin = widgetStore.minY;
+                    linePlotProps.yMax = widgetStore.maxY;
+                }
                 // Fix log plot min bounds for entries with zeros in them
-                if (widgetStore.logScaleY) {
-                    linePlotProps.yMin = Math.max(linePlotProps.yMin, 0.5);
+                if (widgetStore.logScaleY && linePlotProps.yMin <= 0) {
+                    linePlotProps.yMin = 0.5;
                 }
             }
         }

@@ -8,6 +8,7 @@ export class RenderConfigWidgetStore {
     @observable cursorX: number;
     @observable logScaleY: boolean;
     @observable usePoints: boolean;
+    @observable interpolateLines: boolean;
     @observable settingsPanelVisible: boolean;
     @observable markerTextVisible: boolean;
 
@@ -22,8 +23,8 @@ export class RenderConfigWidgetStore {
     };
 
     @action setYBounds = (minVal: number, maxVal: number) => {
-        this.minX = minVal;
-        this.maxX = maxVal;
+        this.minY = minVal;
+        this.maxY = maxVal;
     };
 
     @action clearYBounds = () => {
@@ -65,6 +66,10 @@ export class RenderConfigWidgetStore {
         this.usePoints = val;
     };
 
+    @action setInterpolateLines = (val: boolean) => {
+        this.interpolateLines = val;
+    };
+
     @action setCursor = (cursorVal: number) => {
         this.cursorX = cursorVal;
     };
@@ -75,11 +80,16 @@ export class RenderConfigWidgetStore {
         this.cursorX = undefined;
         this.logScaleY = true;
         this.usePoints = false;
+        this.interpolateLines = false;
         this.settingsPanelVisible = false;
         this.markerTextVisible = true;
     }
 
-    @computed get isAutoScaled() {
+    @computed get isAutoScaledX() {
         return (this.minX === undefined || this.maxX === undefined);
+    }
+
+    @computed get isAutoScaledY() {
+        return (this.minY === undefined || this.maxY === undefined);
     }
 }

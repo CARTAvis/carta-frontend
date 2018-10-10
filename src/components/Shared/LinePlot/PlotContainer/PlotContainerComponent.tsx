@@ -18,6 +18,7 @@ export class PlotContainerProps {
     lineColor?: string;
     darkMode?: boolean;
     usePointSymbols?: boolean;
+    interpolateLines?: boolean;
     chartAreaUpdated?: (chartArea: ChartArea) => void;
     plotRefUpdated?: (plotRef: Scatter) => void;
 }
@@ -58,6 +59,9 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         }
         else if (props.usePointSymbols !== nextProps.usePointSymbols) {
+            return true;
+        }
+        else if (props.interpolateLines !== nextProps.interpolateLines) {
             return true;
         }
         else if (props.darkMode !== nextProps.darkMode) {
@@ -192,7 +196,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             else {
                 datasetConfig.pointRadius = 0;
                 datasetConfig.showLine = true;
-                datasetConfig.steppedLine = true;
+                datasetConfig.steppedLine = !this.props.interpolateLines;
                 datasetConfig.borderWidth = 1;
                 datasetConfig.borderColor = lineColor;
             }

@@ -13,6 +13,7 @@ import {Colors} from "@blueprintjs/core";
 import {action, computed, observable} from "mobx";
 
 enum ZoomMode {
+    NONE,
     X,
     Y,
     XY
@@ -48,10 +49,13 @@ export class LinePlotComponentProps {
     lineColor?: string;
     darkMode?: boolean;
     usePointSymbols?: boolean;
+    interpolateLines?: boolean;
     markers?: LineMarker[];
     graphClicked?: (x: number) => void;
     graphRightClicked?: (x: number) => void;
-    graphZoomed?: (xMin: number, xMax: number) => void;
+    graphZoomedX?: (xMin: number, xMax: number) => void;
+    graphZoomedY?: (yMin: number, yMax: number) => void;
+    graphZoomedXY?: (xMin: number, xMax: number, yMin: number, yMax: number) => void;
     graphZoomReset?: () => void;
     graphCursorMoved?: (x: number) => void;
     scrollZoom?: boolean;
@@ -95,11 +99,20 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     @computed get zoomMode(): ZoomMode {
         const absDelta = {x: Math.abs(this.selectionBoxEnd.x - this.selectionBoxStart.x), y: Math.abs(this.selectionBoxEnd.y - this.selectionBoxStart.y)};
-        if (absDelta.x > XY_ZOOM_THRESHOLD && absDelta.y > XY_ZOOM_THRESHOLD) {
+        if (absDelta.x > XY_ZOOM_THRESHOLD && absDelta.y > XY_ZOOM_THRESHOLD && this.props.graphZoomedXY) {
             return ZoomMode.XY;
         }
-        else {
+        else if (this.props.graphZoomedX && this.props.graphZoomedY) {
             return absDelta.x > absDelta.y ? ZoomMode.X : ZoomMode.Y;
+        }
+        else if (this.props.graphZoomedX) {
+            return ZoomMode.X;
+        }
+        else if (this.props.graphZoomedY) {
+            return ZoomMode.Y;
+        }
+        else {
+            return ZoomMode.NONE;
         }
     }
 
@@ -238,12 +251,27 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         else {
             this.stageClickStartX = undefined;
             this.stageClickStartY = undefined;
-            if (this.isSelecting && this.props.graphZoomed) {
-                const minCanvasSpace = Math.min(this.selectionBoxStart.x, this.selectionBoxEnd.x);
-                const maxCanvasSpace = Math.max(this.selectionBoxStart.x, this.selectionBoxEnd.x);
-                const minGraphSpace = this.getValueForPixelX(minCanvasSpace);
-                const maxGraphSpace = this.getValueForPixelX(maxCanvasSpace);
-                this.props.graphZoomed(minGraphSpace, maxGraphSpace);
+            if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
+                let minCanvasSpace = Math.min(this.selectionBoxStart.x, this.selectionBoxEnd.x);
+                let maxCanvasSpace = Math.max(this.selectionBoxStart.x, this.selectionBoxEnd.x);
+                let minX = this.getValueForPixelX(minCanvasSpace);
+                let maxX = this.getValueForPixelX(maxCanvasSpace);
+
+                minCanvasSpace = Math.min(this.selectionBoxStart.y, this.selectionBoxEnd.y);
+                maxCanvasSpace = Math.max(this.selectionBoxStart.y, this.selectionBoxEnd.y);
+                // Canvas space y-axis is inverted, so min/max are switched when transforming to graph space
+                let minY = this.getValueForPixelY(maxCanvasSpace, this.props.logY);
+                let maxY = this.getValueForPixelY(minCanvasSpace, this.props.logY);
+
+                if (this.zoomMode === ZoomMode.X) {
+                    this.props.graphZoomedX(minX, maxX);
+                }
+                if (this.zoomMode === ZoomMode.Y) {
+                    this.props.graphZoomedY(minY, maxY);
+                }
+                else if (this.zoomMode === ZoomMode.XY) {
+                    this.props.graphZoomedXY(minX, maxX, minY, maxY);
+                }
             }
         }
         this.endInteractions();
@@ -265,14 +293,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         if (this.isSelecting) {
             this.updateSelection(mousePosX, mousePosY);
         }
-        else if (this.isPanning && this.props.graphZoomed) {
+        else if (this.isPanning && this.props.graphZoomedX) {
             const currentPan = mousePosX;
             const prevPanGraphSpace = this.getValueForPixelX(this.panPrevious);
             const currentPanGraphSpace = this.getValueForPixelX(currentPan);
             const delta = (currentPanGraphSpace - prevPanGraphSpace);
             this.updatePan(currentPan);
             // Shift zoom to counteract drag's delta
-            this.props.graphZoomed(this.props.xMin - delta, this.props.xMax - delta);
+            this.props.graphZoomedX(this.props.xMin - delta, this.props.xMax - delta);
         }
         // Cursor move updates
         if (this.interactionMode === InteractionMode.NONE && this.props.graphCursorMoved) {
@@ -303,13 +331,13 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 }
                 // Do left-click callback if it exists
                 if (this.props.graphClicked && mouseButton === 0) {
-                    const xCanvasSpace = mousePoint.x / devicePixelRatio;
+                    const xCanvasSpace = mousePoint.x;
                     const xGraphSpace = this.getValueForPixelX(xCanvasSpace);
                     this.props.graphClicked(xGraphSpace);
                 }
                 // Do right-click callback if it exists
                 else if (this.props.graphRightClicked && mouseButton === 2) {
-                    const xCanvasSpace = mousePoint.x / devicePixelRatio;
+                    const xCanvasSpace = mousePoint.x;
                     const xGraphSpace = this.getValueForPixelX(xCanvasSpace);
                     this.props.graphRightClicked(xGraphSpace);
                 }
@@ -331,7 +359,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     onStageWheel = (ev) => {
-        if (this.props.scrollZoom && this.props.graphZoomed && this.chartArea) {
+        if (this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
             const wheelEvent: WheelEvent = ev.evt;
             const chartArea = this.chartArea;
             const lineHeight = 15;
@@ -344,7 +372,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             const currentRange = this.props.xMax - this.props.xMin;
             const fraction = (wheelEvent.offsetX - chartArea.left) / (chartArea.right - chartArea.left);
             const rangeChange = zoomSpeed * delta * currentRange;
-            this.props.graphZoomed(this.props.xMin - rangeChange * fraction, this.props.xMax + rangeChange * (1 - fraction));
+            this.props.graphZoomedX(this.props.xMin - rangeChange * fraction, this.props.xMax + rangeChange * (1 - fraction));
         }
     };
 
@@ -477,16 +505,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             const w = chartArea.right - chartArea.left;
             const h = chartArea.bottom - chartArea.top;
 
-            // Determine which zoom mode we're in
-            let zoomMode: ZoomMode;
-            if (absDelta.x > XY_ZOOM_THRESHOLD && absDelta.y > XY_ZOOM_THRESHOLD) {
-                zoomMode = ZoomMode.XY;
-            }
-            else {
-                zoomMode = absDelta.x > absDelta.y ? ZoomMode.X : ZoomMode.Y;
-            }
-
-            if (zoomMode === ZoomMode.X) {
+            if (this.zoomMode === ZoomMode.X) {
                 // Determine appropriate bounds for the zoom markers, so that they don't extend past the chart area
                 const heightAbove = clamp(XY_ZOOM_THRESHOLD, 0, start.y - chartArea.top);
                 const heightBelow = clamp(XY_ZOOM_THRESHOLD, 0, chartArea.bottom - start.y);
@@ -497,7 +516,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     <Line stroke={Colors.GRAY3} key={2} x={end.x} y={start.y} points={[0, -heightAbove, 0, heightBelow]} strokeWidth={3}/>
                 ];
             }
-            else if (zoomMode === ZoomMode.Y) {
+            else if (this.zoomMode === ZoomMode.Y) {
                 // Determine appropriate bounds for the zoom markers, so that they don't extend past the chart area
                 const widthLeft = clamp(XY_ZOOM_THRESHOLD, 0, start.x - chartArea.left);
                 const widthRight = clamp(XY_ZOOM_THRESHOLD, 0, chartArea.right - start.x);
@@ -508,7 +527,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     <Line stroke={Colors.GRAY3} key={2} x={start.x} y={end.y} points={[-widthLeft, 0, widthRight, 0]} strokeWidth={3}/>
                 ];
             }
-            else {
+            else if (this.zoomMode === ZoomMode.XY) {
                 // Selection rectangle consists of a filled rectangle with drag corners
                 selectionRect = [
                     <Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={start.x} y={start.y} width={delta.x} height={delta.y}/>,

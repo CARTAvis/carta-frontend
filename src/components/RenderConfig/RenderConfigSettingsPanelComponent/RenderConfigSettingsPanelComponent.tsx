@@ -15,6 +15,10 @@ export class RenderConfigSettingsPanelComponent extends React.Component<{ widget
         this.props.widgetStore.setUsePoints(changeEvent.target.checked);
     };
 
+    handleSteppedLinesChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        this.props.widgetStore.setInterpolateLines(changeEvent.target.checked);
+    };
+
     handleMarkerTextChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.props.widgetStore.setMarkerTextVisible(changeEvent.target.checked);
     };
@@ -26,8 +30,9 @@ export class RenderConfigSettingsPanelComponent extends React.Component<{ widget
                     <ControlGroup fill={true} vertical={true}>
                         <Switch label={"Log Scale"} checked={this.props.widgetStore.logScaleY} onChange={this.handleLogScaleChanged}/>
                         <Switch label={"Show Labels"} checked={this.props.widgetStore.markerTextVisible} onChange={this.handleMarkerTextChanged}/>
-                        <Switch label={this.props.widgetStore.usePoints ? "Points" : "Lines"} checked={this.props.widgetStore.usePoints} onChange={this.handlePointsChanged}/>
-                        <Button icon={"zoom-to-fit"}small={true} disabled={this.props.widgetStore.isAutoScaled} onClick={this.props.widgetStore.clearXBounds}>Reset Range</Button>
+                        <Switch label={"Draw as Points"} checked={this.props.widgetStore.usePoints} onChange={this.handlePointsChanged}/>
+                        <Switch label={"Interpolated"} disabled={this.props.widgetStore.usePoints} checked={this.props.widgetStore.interpolateLines} onChange={this.handleSteppedLinesChanged}/>
+                        <Button icon={"zoom-to-fit"} small={true} disabled={this.props.widgetStore.isAutoScaledX && this.props.widgetStore.isAutoScaledY} onClick={this.props.widgetStore.clearXYBounds}>Reset Range</Button>
                     </ControlGroup>
                 </FormGroup>
             </React.Fragment>
