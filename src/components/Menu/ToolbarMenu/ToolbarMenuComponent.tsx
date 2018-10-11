@@ -18,9 +18,9 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
             type: "react-component",
             component: widgetConfig.type,
             title: widgetConfig.title,
-            id: `${widgetConfig.id}-docked`,
+            id: widgetConfig.id,
             isClosable: widgetConfig.isCloseable,
-            props: {appStore: this.props.appStore, id: `${widgetConfig.id}-docked`, docked: true}
+            props: {appStore: this.props.appStore, id: widgetConfig.id, docked: true}
         };
 
         const widgetElement = document.getElementById(elementId);
@@ -44,7 +44,9 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
     }
 
     createRenderWidget = () => {
-        this.createWidget(RenderConfigComponent.WIDGET_CONFIG);
+        let config = RenderConfigComponent.WIDGET_CONFIG;
+        config.id = this.props.appStore.addNewRenderConfigWidget();
+        this.createWidget(config);
     };
 
     createLogWidget = () => {
@@ -57,8 +59,6 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
 
     createWidget = (widgetConfig: WidgetConfig) => {
         const floatingWidgetStore = this.props.appStore.floatingWidgetStore;
-        const existingRenderWidgets = floatingWidgetStore.widgets.filter(w => w.type === widgetConfig.type);
-        widgetConfig.id = `${widgetConfig.id}-${existingRenderWidgets.length}`;
         floatingWidgetStore.addWidget(widgetConfig);
     };
 

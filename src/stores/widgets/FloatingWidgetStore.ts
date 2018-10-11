@@ -1,4 +1,6 @@
 import {action, observable} from "mobx";
+import {RenderConfigComponent} from "../../components/RenderConfig/RenderConfigComponent";
+import {AppStore} from "../AppStore";
 
 export class WidgetConfig {
     id: string;
@@ -16,6 +18,7 @@ export class WidgetConfig {
 export class FloatingWidgetStore {
     @observable widgets: WidgetConfig[];
     @observable defaultOffset: number;
+    private appStore: AppStore;
 
     @action selectWidget = (id: string) => {
         const selectedWidgetIndex = this.widgets.findIndex(w => w.id === id);
@@ -32,14 +35,30 @@ export class FloatingWidgetStore {
         }
     };
 
+    @action changeWidgetId(id: string, newId: string) {
+        const widget = this.widgets.find(w => w.id === id);
+        if (widget) {
+            widget.id = newId;
+        }
+    }
+
     @action addWidget = (widget: WidgetConfig) => {
         this.widgets.push(widget);
         this.defaultOffset += 25;
         this.defaultOffset = (this.defaultOffset - 100) % 300 + 100;
     };
 
-    @action removeWidget = (id: string) => {
-        this.widgets = this.widgets.filter(w => w.id !== id);
+    @action removeWidget = (id: string, preserveConfig: boolean = false) => {
+        const widget = this.widgets.find(w => w.id === id);
+        if (widget) {
+            this.widgets = this.widgets.filter(w => w.id !== id);
+            if (preserveConfig) {
+                return;
+            }
+            if (widget.type === RenderConfigComponent.WIDGET_CONFIG.type) {
+                this.appStore.removeRenderConfigWidget(widget.id);
+            }
+        }
     };
 
     @action setWidgetTitle = (id: string, title: string) => {
@@ -49,7 +68,8 @@ export class FloatingWidgetStore {
         }
     };
 
-    constructor() {
+    constructor(appStore: AppStore) {
+        this.appStore = appStore;
         this.widgets = [];
         this.defaultOffset = 100;
     }

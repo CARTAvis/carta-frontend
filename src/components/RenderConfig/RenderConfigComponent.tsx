@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
+import * as  GoldenLayout from "golden-layout";
 import ReactResizeDetector from "react-resize-detector";
 import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect, NonIdealState, ButtonGroup, Button, IOptionProps, NumericInput} from "@blueprintjs/core";
@@ -16,6 +17,7 @@ import {computed, observable} from "mobx";
 import {Point2D} from "../../models/Point2D";
 import {PopoverSettingsComponent} from "../Shared/PopoverSettings/PopoverSettingsComponent";
 import {RenderConfigSettingsPanelComponent} from "./RenderConfigSettingsPanelComponent/RenderConfigSettingsPanelComponent";
+import {RenderConfigWidgetStore} from "../../stores/widgets/RenderConfigWidgetStore";
 
 class RenderConfigComponentProps {
     appStore: AppStore;
@@ -34,24 +36,33 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
     @observable height: number;
     @observable chartArea: ChartArea;
 
+    @computed get widgetStore(): RenderConfigWidgetStore {
+        if (this.props.appStore && this.props.appStore.renderConfigWidgets) {
+            const widgetStore = this.props.appStore.renderConfigWidgets.get(this.props.id);
+            if (widgetStore) {
+                return widgetStore;
+            }
+        }
+        console.error("can't find store for widget");
+        return new RenderConfigWidgetStore();
+    }
+
     @computed get settingsPanelWidth(): number {
-        const widgetStore = this.props.appStore.renderConfigWidgetStore;
-        return 20 + (widgetStore.settingsPanelVisible ? PANEL_CONTENT_WIDTH : 0);
+        return 20 + (this.widgetStore.settingsPanelVisible ? PANEL_CONTENT_WIDTH : 0);
     }
 
     @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number } {
         const frame = this.props.appStore.activeFrame;
-        const widgetStore = this.props.appStore.renderConfigWidgetStore;
         if (frame && frame.renderConfig.channelHistogram && frame.renderConfig.channelHistogram.bins && frame.renderConfig.channelHistogram.bins.length) {
             const histogram = frame.renderConfig.channelHistogram;
             let minIndex = 0;
             let maxIndex = histogram.bins.length - 1;
 
             // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
-            if (!widgetStore.isAutoScaledX) {
-                minIndex = Math.floor((widgetStore.minX - histogram.firstBinCenter) / histogram.binWidth);
+            if (!this.widgetStore.isAutoScaledX) {
+                minIndex = Math.floor((this.widgetStore.minX - histogram.firstBinCenter) / histogram.binWidth);
                 minIndex = clamp(minIndex, 0, histogram.bins.length - 1);
-                maxIndex = Math.ceil((widgetStore.maxX - histogram.firstBinCenter) / histogram.binWidth);
+                maxIndex = Math.ceil((this.widgetStore.maxX - histogram.firstBinCenter) / histogram.binWidth);
                 maxIndex = clamp(maxIndex, 0, histogram.bins.length - 1);
             }
 
@@ -69,11 +80,11 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                     yMin = Math.min(yMin, histogram.bins[i]);
                     yMax = Math.max(yMax, histogram.bins[i]);
                     // Sanitize zero values to prevent scaling issues with log graphs
-                    // if (widgetStore.logScaleY && plotVals[i - minIndex].y < 0.1) {
+                    // if (this.widgetStore.logScaleY && plotVals[i - minIndex].y < 0.1) {
                     //     plotVals[i - minIndex].y = undefined;
                     // }
                 }
-                // if (widgetStore.logScaleY) {
+                // if (this.widgetStore.logScaleY) {
                 //     yMin = Math.max(0.5, yMin);
                 // }
                 return {values: plotVals, xMin, xMax, yMin, yMax};
@@ -99,15 +110,26 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
 
     constructor(props: RenderConfigComponentProps) {
         super(props);
+        // Check if this widget hasn't been assigned an ID yet
+        if (!props.docked && props.id === RenderConfigComponent.WIDGET_CONFIG.id) {
+            // Assign the next unique ID
+            const id = props.appStore.addNewRenderConfigWidget();
+            props.appStore.floatingWidgetStore.changeWidgetId(props.id, id);
+        }
+        else {
+            if (!this.props.appStore.renderConfigWidgets.has(this.props.id)) {
+                console.error(`can't find store for widget with id=${this.props.id}`);
+                this.props.appStore.renderConfigWidgets.set(this.props.id, new RenderConfigWidgetStore());
+            }
+        }
     }
 
     componentDidUpdate() {
         const frame = this.props.appStore.activeFrame;
-        const widgetStore = this.props.appStore.renderConfigWidgetStore;
 
         if (frame !== this.cachedFrame) {
             this.cachedFrame = frame;
-            widgetStore.clearXYBounds();
+            this.widgetStore.clearXYBounds();
         }
     }
 
@@ -169,15 +191,14 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
     };
 
     onGraphCursorMoved = _.throttle((x) => {
-        this.props.appStore.renderConfigWidgetStore.setCursor(x);
+        this.widgetStore.setCursor(x);
     }, 100);
 
     render() {
         const appStore = this.props.appStore;
         const frame = appStore.activeFrame;
-        const widgetStore = appStore.renderConfigWidgetStore;
 
-        if (!frame) {
+        if (!frame || !this.widgetStore) {
             return (
                 <div className="render-config-container">
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
@@ -194,15 +215,15 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             xLabel: unitString,
             yLabel: "Count",
             darkMode: appStore.darkTheme,
-            logY: widgetStore.logScaleY,
-            usePointSymbols: widgetStore.usePoints,
-            interpolateLines: widgetStore.interpolateLines,
+            logY: this.widgetStore.logScaleY,
+            usePointSymbols: this.widgetStore.usePoints,
+            interpolateLines: this.widgetStore.interpolateLines,
             graphClicked: this.onMinMoved,
             graphRightClicked: this.onMaxMoved,
-            graphZoomedX: this.props.appStore.renderConfigWidgetStore.setXBounds,
-            graphZoomedY: this.props.appStore.renderConfigWidgetStore.setYBounds,
-            graphZoomedXY: this.props.appStore.renderConfigWidgetStore.setXYBounds,
-            graphZoomReset: this.props.appStore.renderConfigWidgetStore.clearXYBounds,
+            graphZoomedX: this.widgetStore.setXBounds,
+            graphZoomedY: this.widgetStore.setYBounds,
+            graphZoomedXY: this.widgetStore.setXYBounds,
+            graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true
         };
@@ -212,25 +233,25 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             if (currentPlotData && currentPlotData.values && currentPlotData.values.length) {
                 linePlotProps.data = currentPlotData.values;
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
-                if (widgetStore.isAutoScaledX) {
+                if (this.widgetStore.isAutoScaledX) {
                     linePlotProps.xMin = currentPlotData.xMin;
                     linePlotProps.xMax = currentPlotData.xMax;
                 }
                 else {
-                    linePlotProps.xMin = widgetStore.minX;
-                    linePlotProps.xMax = widgetStore.maxX;
+                    linePlotProps.xMin = this.widgetStore.minX;
+                    linePlotProps.xMax = this.widgetStore.maxX;
                 }
 
-                if (widgetStore.isAutoScaledY) {
+                if (this.widgetStore.isAutoScaledY) {
                     linePlotProps.yMin = currentPlotData.yMin;
                     linePlotProps.yMax = currentPlotData.yMax;
                 }
                 else {
-                    linePlotProps.yMin = widgetStore.minY;
-                    linePlotProps.yMax = widgetStore.maxY;
+                    linePlotProps.yMin = this.widgetStore.minY;
+                    linePlotProps.yMax = this.widgetStore.maxY;
                 }
                 // Fix log plot min bounds for entries with zeros in them
-                if (widgetStore.logScaleY && linePlotProps.yMin <= 0) {
+                if (this.widgetStore.logScaleY && linePlotProps.yMin <= 0) {
                     linePlotProps.yMin = 0.5;
                 }
             }
@@ -240,14 +261,14 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
             linePlotProps.markers = [{
                 value: frame.renderConfig.scaleMin,
                 id: "marker-min",
-                label: widgetStore.markerTextVisible ? "Min" : undefined,
+                label: this.widgetStore.markerTextVisible ? "Min" : undefined,
                 draggable: true,
                 dragMove: this.onMinMoved,
                 horizontal: false,
             }, {
                 value: frame.renderConfig.scaleMax,
                 id: "marker-max",
-                label: widgetStore.markerTextVisible ? "Max" : undefined,
+                label: this.widgetStore.markerTextVisible ? "Max" : undefined,
                 draggable: true,
                 dragMove: this.onMaxMoved,
                 horizontal: false,
@@ -292,14 +313,14 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         }
 
         let cursorInfoDiv;
-        if (this.width >= histogramCutoff && widgetStore.cursorX !== undefined) {
+        if (this.width >= histogramCutoff && this.widgetStore.cursorX !== undefined) {
             let numberString;
             // Switch between standard and scientific notation
-            if (widgetStore.cursorX < 1e-2) {
-                numberString = widgetStore.cursorX.toExponential(2);
+            if (this.widgetStore.cursorX < 1e-2) {
+                numberString = this.widgetStore.cursorX.toExponential(2);
             }
             else {
-                numberString = widgetStore.cursorX.toFixed(2);
+                numberString = this.widgetStore.cursorX.toFixed(2);
             }
 
             if (frame.unit) {
@@ -345,12 +366,12 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
                     {this.width < histogramCutoff ? percentileSelectDiv : cursorInfoDiv}
                 </div>
                 <PopoverSettingsComponent
-                    isOpen={widgetStore.settingsPanelVisible}
-                    onShowClicked={widgetStore.showSettingsPanel}
-                    onHideClicked={widgetStore.hideSettingsPanel}
+                    isOpen={this.widgetStore.settingsPanelVisible}
+                    onShowClicked={this.widgetStore.showSettingsPanel}
+                    onHideClicked={this.widgetStore.hideSettingsPanel}
                     contentWidth={PANEL_CONTENT_WIDTH}
                 >
-                    <RenderConfigSettingsPanelComponent widgetStore={widgetStore}/>
+                    <RenderConfigSettingsPanelComponent widgetStore={this.widgetStore}/>
                 </PopoverSettingsComponent>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}/>
             </div>

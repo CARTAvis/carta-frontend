@@ -17,6 +17,7 @@ import {AnimationState, AnimatorStore} from "./AnimatorStore";
 import SpatialProfile = CARTA.SpatialProfile;
 import {smoothStepOffset} from "../util/math";
 import {RenderConfigWidgetStore} from "./widgets/RenderConfigWidgetStore";
+import {RenderConfigComponent} from "../components/RenderConfig/RenderConfigComponent";
 
 export class AppStore {
     // Backend service
@@ -63,7 +64,7 @@ export class AppStore {
     // Floating Widgets
     @observable floatingWidgetStore: FloatingWidgetStore;
     // Widget Stores
-    @observable renderConfigWidgetStore = new RenderConfigWidgetStore();
+    @observable renderConfigWidgets: Map<string, RenderConfigWidgetStore>;
 
     // Dark theme
     @observable darkTheme: boolean;
@@ -229,13 +230,14 @@ export class AppStore {
         this.astReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spatialProfileWidgets = new Map<string, { fileId: number, regionId: number, coordinate: string }>();
+        this.renderConfigWidgets = new Map<string, RenderConfigWidgetStore>();
         this.frames = [];
         this.activeFrame = null;
         this.animatorStore = new AnimatorStore(this);
         this.alertStore = new AlertStore();
         this.overlayStore = new OverlayStore();
         this.layoutSettings = new LayoutStore();
-        this.floatingWidgetStore = new FloatingWidgetStore();
+        this.floatingWidgetStore = new FloatingWidgetStore(this);
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
         this.darkTheme = false;
@@ -396,6 +398,28 @@ export class AppStore {
 
     @action addSpatialProfileWidget(id: string, fileId: number, regionId: number, coordinate: string) {
         this.spatialProfileWidgets.set(id, {fileId, regionId, coordinate});
+    }
+
+    @action addNewRenderConfigWidget() {
+        const defaultId = RenderConfigComponent.WIDGET_CONFIG.id;
+        // Find the next appropriate ID
+        let nextIndex = 0;
+        while (true) {
+            const nextId = `${defaultId}-${nextIndex}`;
+            if (!this.renderConfigWidgets.has(nextId)) {
+                this.renderConfigWidgets.set(nextId, new RenderConfigWidgetStore());
+                return nextId;
+            }
+            nextIndex++;
+        }
+    }
+
+    @action addRenderConfigWidget(id: string) {
+        this.renderConfigWidgets.set(id, new RenderConfigWidgetStore());
+    }
+
+    @action removeRenderConfigWidget(id: string) {
+        this.renderConfigWidgets.delete(id);
     }
 
     @action setActiveFrame(fileId: number) {

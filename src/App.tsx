@@ -78,8 +78,8 @@ export class App extends React.Component<{ appStore: AppStore }> {
                         type: "react-component",
                         component: "render-config",
                         title: "Render Configuration",
-                        id: "render-config-docked",
-                        props: {appStore: this.props.appStore, id: "render-config-docked", docked: true}
+                        id: "render-config-0",
+                        props: {appStore: this.props.appStore, id: "render-config-0", docked: true}
                     }, {
                         type: "react-component",
                         component: "log",
@@ -136,6 +136,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         this.props.appStore.addSpatialProfileWidget("spatial-profiler-0", -1, 0, "x");
         this.props.appStore.addSpatialProfileWidget("spatial-profiler-1", -1, 0, "y");
+        this.props.appStore.addRenderConfigWidget("render-config-0");
 
         const layout = new GoldenLayout({
             settings: {
@@ -165,18 +166,31 @@ export class App extends React.Component<{ appStore: AppStore }> {
             stack.header.controlsContainer.prepend(unpinButton);
         });
 
-        layout.on("itemCreated", item => {
-            if (item.config.type === "component") {
+        layout.on("componentCreated", item => {
+            if (item.config.id === RenderConfigComponent.WIDGET_CONFIG.id) {
+                const itemId = this.props.appStore.addNewRenderConfigWidget();
+                item.config.id = itemId;
+                item.config.props.id = itemId;
+            }
+            else {
                 const floatingWidgetStore = this.props.appStore.floatingWidgetStore;
                 if (floatingWidgetStore.widgets.find(w => w.id === item.config.id)) {
-                    floatingWidgetStore.removeWidget(item.config.id);
+                    floatingWidgetStore.removeWidget(item.config.id, true);
                 }
             }
         });
 
         layout.on("itemDestroyed", item => {
             if (item.config.type === "component") {
-                console.log(`itemDestroyed: ${item.config.id}`);
+                if (item.config.component === "floated") {
+                    console.log(`itemFloated: ${item.config.id}`);
+                }
+                else {
+                    console.log(`itemDestroyed: ${item.config.id}`);
+                    if (item.config.component === RenderConfigComponent.WIDGET_CONFIG.type) {
+                        this.props.appStore.removeRenderConfigWidget(item.config.id);
+                    }
+                }
             }
         });
 
@@ -329,6 +343,8 @@ export class App extends React.Component<{ appStore: AppStore }> {
         }
 
         this.props.appStore.floatingWidgetStore.addWidget(widgetConfig);
+        const config = item.config as GoldenLayout.ReactComponentConfig;
+        config.component = "floated";
         item.remove();
     };
 }
