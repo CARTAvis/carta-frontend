@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import "./AnimatorComponent.css";
 import {AppStore} from "../../stores/AppStore";
-import {WidgetConfig} from "../../stores/widgets/FloatingWidgetStore";
+import {WidgetConfig} from "../../stores/WidgetsStore";
 import {Button, ButtonGroup, FormGroup, NonIdealState, NumericInput, Radio, Slider} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {AnimationMode, AnimationState} from "../../stores/AnimatorStore";

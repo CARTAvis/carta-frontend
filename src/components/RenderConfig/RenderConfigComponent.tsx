@@ -9,7 +9,7 @@ import {LinePlotComponent, LinePlotComponentProps} from "../Shared/LinePlot/Line
 import {AppStore} from "../../stores/AppStore";
 import {FrameStore} from "../../stores/FrameStore";
 import {FrameScaling} from "../../stores/RenderConfigStore";
-import {WidgetConfig} from "../../stores/widgets/FloatingWidgetStore";
+import {WidgetConfig} from "../../stores/WidgetsStore";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
 import {clamp} from "../../util/math";
 import {Point2D} from "../../models/Point2D";
@@ -103,7 +103,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         if (!props.docked && props.id === RenderConfigComponent.WIDGET_CONFIG.id) {
             // Assign the next unique ID
             const id = props.appStore.widgetsStore.addNewRenderConfigWidget();
-            props.appStore.widgetsStore.floatingWidgetStore.changeWidgetId(props.id, id);
+            props.appStore.widgetsStore.changeWidgetId(props.id, id);
         }
         else {
             if (!this.props.appStore.widgetsStore.renderConfigWidgets.has(this.props.id)) {

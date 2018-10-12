@@ -1,12 +1,11 @@
 import * as React from "react";
-import "./LogComponent.css";
 import {observer} from "mobx-react";
-import {Button, Code, Colors, FormGroup, HTMLSelect, NonIdealState, Tag} from "@blueprintjs/core";
+import {Button, Code, Colors, FormGroup, HTMLSelect, NonIdealState, Tag, Intent} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import ScrollToBottom from "react-scroll-to-bottom";
-import {Intent} from "@blueprintjs/core/lib/esm/common/intent";
 import {AppStore} from "../../stores/AppStore";
-import {WidgetConfig} from "../../stores/widgets/FloatingWidgetStore";
+import {WidgetConfig} from "../../stores/WidgetsStore";
+import "./LogComponent.css";
 
 class LogComponentProps {
     appStore: AppStore;

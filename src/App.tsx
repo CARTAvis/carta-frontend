@@ -172,9 +172,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 item.config.props.id = itemId;
             }
             else {
-                const floatingWidgetStore = this.props.appStore.widgetsStore.floatingWidgetStore;
-                if (floatingWidgetStore.widgets.find(w => w.id === item.config.id)) {
-                    floatingWidgetStore.removeWidget(item.config.id, true);
+                const widgetsStore = this.props.appStore.widgetsStore;
+                if (widgetsStore.floatingWidgets.find(w => w.id === item.config.id)) {
+                    widgetsStore.removeFloatingWidget(item.config.id, true);
                 }
             }
         });
@@ -341,7 +341,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
             widgetConfig.defaultY = Math.round(el.offsetTop / 25.0) * 25 - 25;
         }
 
-        this.props.appStore.widgetsStore.floatingWidgetStore.addWidget(widgetConfig);
+        this.props.appStore.widgetsStore.addFloatingWidget(widgetConfig);
         const config = item.config as GoldenLayout.ReactComponentConfig;
         config.component = "floated";
         item.remove();

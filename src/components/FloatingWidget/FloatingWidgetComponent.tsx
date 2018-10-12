@@ -1,12 +1,12 @@
 import * as React from "react";
-import "./FloatingWidgetComponent.css";
+import {observer} from "mobx-react";
+import * as GoldenLayout from "golden-layout";
 import {Rnd} from "react-rnd";
 import {Icon} from "@blueprintjs/core";
-import * as GoldenLayout from "golden-layout";
 import {AppStore} from "../../stores/AppStore";
-import {WidgetConfig} from "../../stores/widgets/FloatingWidgetStore";
+import {WidgetConfig} from "../../stores/WidgetsStore";
 import {PlaceholderComponent} from "../Placeholder/PlaceholderComponent";
-import {observer} from "mobx-react";
+import "./FloatingWidgetComponent.css";
 
 class FloatingWidgetComponentProps {
     widgetConfig: WidgetConfig;
@@ -86,8 +86,8 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 style={{zIndex: this.props.zIndex}}
                 default={{
                     // Shift by 5 pixels to compensate for 5px CSS margins
-                    x: widgetConfig.defaultX !== undefined ? widgetConfig.defaultX : widgetsStore.floatingWidgetStore.defaultOffset + 5,
-                    y: widgetConfig.defaultY !== undefined ? widgetConfig.defaultY : widgetsStore.floatingWidgetStore.defaultOffset,
+                    x: widgetConfig.defaultX !== undefined ? widgetConfig.defaultX : widgetsStore.defaultFloatingWidgetOffset + 5,
+                    y: widgetConfig.defaultY !== undefined ? widgetConfig.defaultY : widgetsStore.defaultFloatingWidgetOffset,
                     width: widgetConfig.defaultWidth,
                     height: widgetConfig.defaultHeight + headerHeight,
                 }}

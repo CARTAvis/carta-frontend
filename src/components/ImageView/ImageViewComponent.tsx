@@ -1,15 +1,14 @@
 import * as React from "react";
-import * as _ from "lodash";
-import "./ImageViewComponent.css";
-import {AppStore} from "../../stores/AppStore";
 import {observer} from "mobx-react";
+import {AppStore} from "../../stores/AppStore";
+import {WidgetConfig} from "../../stores/WidgetsStore";
 import ReactResizeDetector from "react-resize-detector";
 import {NonIdealState, Spinner} from "@blueprintjs/core";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
 import {CursorInfo} from "../../models/CursorInfo";
 import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
-import {WidgetConfig} from "../../stores/widgets/FloatingWidgetStore";
+import "./ImageViewComponent.css";
 
 class ImageViewComponentProps {
     appStore: AppStore;

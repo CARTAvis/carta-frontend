@@ -1,11 +1,11 @@
 import * as React from "react";
 import * as GoldenLayout from "golden-layout";
 import {observer} from "mobx-react";
-import {AppStore} from "../../../stores/AppStore";
 import {Button, Tooltip} from "@blueprintjs/core";
+import {AppStore} from "../../../stores/AppStore";
+import {WidgetConfig} from "../../../stores/WidgetsStore";
 import {RenderConfigComponent} from "../../RenderConfig/RenderConfigComponent";
 import {LogComponent} from "../../Log/LogComponent";
-import {WidgetConfig} from "../../../stores/widgets/FloatingWidgetStore";
 import {AnimatorComponent} from "../../Animator/AnimatorComponent";
 import "./ToolbarMenuComponent.css";
 
@@ -46,20 +46,15 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
     createRenderWidget = () => {
         let config = RenderConfigComponent.WIDGET_CONFIG;
         config.id = this.props.appStore.widgetsStore.addNewRenderConfigWidget();
-        this.createWidget(config);
+        this.props.appStore.widgetsStore.addFloatingWidget(config);
     };
 
     createLogWidget = () => {
-        this.createWidget(LogComponent.WIDGET_CONFIG);
+        this.props.appStore.widgetsStore.addFloatingWidget(LogComponent.WIDGET_CONFIG);
     };
 
     createAnimatorWidget = () => {
-        this.createWidget(AnimatorComponent.WIDGET_CONFIG);
-    };
-
-    createWidget = (widgetConfig: WidgetConfig) => {
-        const floatingWidgetStore = this.props.appStore.widgetsStore.floatingWidgetStore;
-        floatingWidgetStore.addWidget(widgetConfig);
+        this.props.appStore.widgetsStore.addFloatingWidget(AnimatorComponent.WIDGET_CONFIG);
     };
 
     public render() {
