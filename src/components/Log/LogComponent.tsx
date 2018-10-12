@@ -1,20 +1,13 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Button, Code, Colors, FormGroup, HTMLSelect, NonIdealState, Tag, Intent} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
 import ScrollToBottom from "react-scroll-to-bottom";
-import {AppStore} from "../../stores/AppStore";
-import {WidgetConfig} from "../../stores/WidgetsStore";
+import {CARTA} from "carta-protobuf";
+import {WidgetConfig, WidgetProps} from "../../stores/WidgetsStore";
 import "./LogComponent.css";
 
-class LogComponentProps {
-    appStore: AppStore;
-    id: string;
-    docked: boolean;
-}
-
 @observer
-export class LogComponent extends React.Component<LogComponentProps> {
+export class LogComponent extends React.Component<WidgetProps> {
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
             id: "log",
