@@ -1,23 +1,19 @@
 import {action, autorun, computed, observable} from "mobx";
 import {OverlayStore} from "./OverlayStore";
-import {LayoutStore} from "./LayoutStore";
 import {SpatialProfileStore} from "./SpatialProfileStore";
 import {FileBrowserStore} from "./FileBrowserStore";
 import {FrameInfo, FrameStore, FrameView} from "./FrameStore";
 import {AlertStore} from "./AlertStore";
 import {LogEntry, LogStore} from "./LogStore";
-import {FloatingWidgetStore} from "./widgets/FloatingWidgetStore";
 import {BackendService} from "../services/BackendService";
 import {CursorInfo} from "../models/CursorInfo";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import * as _ from "lodash";
-import {ImageViewComponent} from "../components/ImageView/ImageViewComponent";
 import {AnimationState, AnimatorStore} from "./AnimatorStore";
 import SpatialProfile = CARTA.SpatialProfile;
 import {smoothStepOffset} from "../util/math";
-import {RenderConfigWidgetStore} from "./widgets/RenderConfigWidgetStore";
-import {RenderConfigComponent} from "../components/RenderConfig/RenderConfigComponent";
+import {WidgetsStore} from "./WidgetsStore";
 
 export class AppStore {
     // Backend service
@@ -40,7 +36,6 @@ export class AppStore {
     @observable cursorFrozen: boolean;
     // Spatial profiles
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
-    @observable spatialProfileWidgets: Map<string, { fileId: number, regionId: number, coordinate: string }>;
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
@@ -49,8 +44,6 @@ export class AppStore {
     };
     // Overlay
     @observable overlayStore: OverlayStore;
-    // Layout
-    @observable layoutSettings: LayoutStore;
     // File Browser
     @observable fileBrowserStore: FileBrowserStore;
     // Additional Dialogs
@@ -61,10 +54,9 @@ export class AppStore {
     @action hideURLConnect = () => {
         this.urlConnectDialogVisible = false;
     };
-    // Floating Widgets
-    @observable floatingWidgetStore: FloatingWidgetStore;
-    // Widget Stores
-    @observable renderConfigWidgets: Map<string, RenderConfigWidgetStore>;
+
+    // Widgets
+    @observable widgetsStore: WidgetsStore;
 
     // Dark theme
     @observable darkTheme: boolean;
@@ -107,7 +99,7 @@ export class AppStore {
             }
             this.activeFrame = newFrame;
 
-            this.updateTitle();
+            this.widgetsStore.updateImageWidgetTitle();
             this.fileBrowserStore.hideFileBrowser();
         }, err => {
             this.alertStore.showAlert(`Error loading file: ${err}`);
@@ -229,15 +221,12 @@ export class AppStore {
         this.backendService = new BackendService(this.logStore);
         this.astReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
-        this.spatialProfileWidgets = new Map<string, { fileId: number, regionId: number, coordinate: string }>();
-        this.renderConfigWidgets = new Map<string, RenderConfigWidgetStore>();
         this.frames = [];
         this.activeFrame = null;
         this.animatorStore = new AnimatorStore(this);
         this.alertStore = new AlertStore();
         this.overlayStore = new OverlayStore();
-        this.layoutSettings = new LayoutStore();
-        this.floatingWidgetStore = new FloatingWidgetStore(this);
+        this.widgetsStore = new WidgetsStore(this);
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
         this.darkTheme = false;
@@ -396,37 +385,11 @@ export class AppStore {
         return (this.backendService && this.backendService.zfpReady);
     }
 
-    @action addSpatialProfileWidget(id: string, fileId: number, regionId: number, coordinate: string) {
-        this.spatialProfileWidgets.set(id, {fileId, regionId, coordinate});
-    }
-
-    @action addNewRenderConfigWidget() {
-        const defaultId = RenderConfigComponent.WIDGET_CONFIG.id;
-        // Find the next appropriate ID
-        let nextIndex = 0;
-        while (true) {
-            const nextId = `${defaultId}-${nextIndex}`;
-            if (!this.renderConfigWidgets.has(nextId)) {
-                this.renderConfigWidgets.set(nextId, new RenderConfigWidgetStore());
-                return nextId;
-            }
-            nextIndex++;
-        }
-    }
-
-    @action addRenderConfigWidget(id: string) {
-        this.renderConfigWidgets.set(id, new RenderConfigWidgetStore());
-    }
-
-    @action removeRenderConfigWidget(id: string) {
-        this.renderConfigWidgets.delete(id);
-    }
-
     @action setActiveFrame(fileId: number) {
         const requiredFrame = this.getFrame(fileId);
         if (requiredFrame) {
             this.activeFrame = requiredFrame;
-            this.updateTitle();
+            this.widgetsStore.updateImageWidgetTitle();
         }
         else {
             console.log(`Can't find required frame ${fileId}`);
@@ -436,36 +399,17 @@ export class AppStore {
     @action setActiveFrameByIndex(index: number) {
         if (index >= 0 && this.frames.length > index) {
             this.activeFrame = this.frames[index];
-            this.updateTitle();
+            this.widgetsStore.updateImageWidgetTitle();
         }
         else {
             console.log(`Invalid frame index ${index}`);
         }
     }
 
-    private getFrame(fileId: number) {
+    getFrame(fileId: number) {
+        if (fileId === -1) {
+            return this.activeFrame;
+        }
         return this.frames.find(f => f.frameInfo.fileId === fileId);
-    }
-
-    private updateTitle() {
-        let newTitle;
-        if (this.activeFrame) {
-            newTitle = this.activeFrame.frameInfo.fileInfo.name;
-        }
-        else {
-            newTitle = "No image loaded";
-        }
-
-        // Update GL title by searching for image-view components
-        const imageViewComponents = this.layoutSettings.layout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
-        if (imageViewComponents.length) {
-            imageViewComponents[0].setTitle(newTitle);
-        }
-
-        // Update floating window title
-        const imageViewWidget = this.floatingWidgetStore.widgets.find(w => w.type === ImageViewComponent.WIDGET_CONFIG.type);
-        if (imageViewWidget) {
-            this.floatingWidgetStore.setWidgetTitle(imageViewWidget.id, newTitle);
-        }
     }
 }

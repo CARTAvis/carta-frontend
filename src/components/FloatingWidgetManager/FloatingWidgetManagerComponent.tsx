@@ -14,11 +14,11 @@ import {AnimatorComponent} from "../Animator/AnimatorComponent";
 export class FloatingWidgetManagerComponent extends React.Component<{ appStore: AppStore }> {
 
     onFloatingWidgetSelected = (widget: WidgetConfig) => {
-        this.props.appStore.floatingWidgetStore.selectWidget(widget.id);
+        this.props.appStore.widgetsStore.floatingWidgetStore.selectWidget(widget.id);
     };
 
     onFloatingWidgetClosed = (widget: WidgetConfig) => {
-        this.props.appStore.floatingWidgetStore.removeWidget(widget.id);
+        this.props.appStore.widgetsStore.floatingWidgetStore.removeWidget(widget.id);
     };
 
     private getWidgetContent(widgetConfig: WidgetConfig) {
@@ -42,7 +42,7 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
 
     public render() {
         const appStore = this.props.appStore;
-        const widgetConfigs = appStore.floatingWidgetStore.widgets;
+        const widgetConfigs = appStore.widgetsStore.floatingWidgetStore.widgets;
 
         return (
             <div>

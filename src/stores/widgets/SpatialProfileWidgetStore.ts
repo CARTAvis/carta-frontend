@@ -1,6 +1,9 @@
 import {action, computed, observable} from "mobx";
 
-export class RenderConfigWidgetStore {
+export class SpatialProfileWidgetStore {
+    @observable fileId: number;
+    @observable regionId: number;
+    @observable coordinate: string;
     @observable minX: number;
     @observable maxX: number;
     @observable minY: number;
@@ -10,7 +13,20 @@ export class RenderConfigWidgetStore {
     @observable usePoints: boolean;
     @observable interpolateLines: boolean;
     @observable settingsPanelVisible: boolean;
+    @observable meanRmsVisible: boolean;
     @observable markerTextVisible: boolean;
+
+    @action setFileId = (fileId: number) => {
+        this.fileId = fileId;
+    };
+
+    @action setRegionId = (regionId: number) => {
+        this.regionId = regionId;
+    };
+
+    @action setCoordinate = (coordinate: string) => {
+        this.coordinate = coordinate;
+    };
 
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
@@ -74,11 +90,18 @@ export class RenderConfigWidgetStore {
         this.cursorX = cursorVal;
     };
 
-    constructor() {
-        this.logScaleY = true;
+    constructor(coordinate: string = "x", fileId: number = -1, regionId: number = -1) {
+        // Describes which data is being visualised
+        this.coordinate = coordinate;
+        this.fileId = fileId;
+        this.regionId = regionId;
+
+        // Describes how the data is visualised
+        this.logScaleY = false;
         this.usePoints = false;
         this.interpolateLines = false;
         this.settingsPanelVisible = false;
+        this.meanRmsVisible = false;
         this.markerTextVisible = true;
     }
 

@@ -116,7 +116,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     props: {appStore: this.props.appStore, id: "placeholder-1", label: "Spectral placeholder"}
                 }, {
                     type: "stack",
-                    height: 33.3,
                     content: [{
                         type: "react-component",
                         component: "placeholder",
@@ -134,9 +133,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
             }]
         }];
 
-        this.props.appStore.addSpatialProfileWidget("spatial-profiler-0", -1, 0, "x");
-        this.props.appStore.addSpatialProfileWidget("spatial-profiler-1", -1, 0, "y");
-        this.props.appStore.addRenderConfigWidget("render-config-0");
+        this.props.appStore.widgetsStore.addSpatialProfileWidget("spatial-profiler-0", -1, 0, "x");
+        this.props.appStore.widgetsStore.addSpatialProfileWidget("spatial-profiler-1", -1, 0, "y");
+        this.props.appStore.widgetsStore.addRenderConfigWidget("render-config-0");
 
         const layout = new GoldenLayout({
             settings: {
@@ -168,12 +167,12 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         layout.on("componentCreated", item => {
             if (item.config.id === RenderConfigComponent.WIDGET_CONFIG.id) {
-                const itemId = this.props.appStore.addNewRenderConfigWidget();
+                const itemId = this.props.appStore.widgetsStore.addNewRenderConfigWidget();
                 item.config.id = itemId;
                 item.config.props.id = itemId;
             }
             else {
-                const floatingWidgetStore = this.props.appStore.floatingWidgetStore;
+                const floatingWidgetStore = this.props.appStore.widgetsStore.floatingWidgetStore;
                 if (floatingWidgetStore.widgets.find(w => w.id === item.config.id)) {
                     floatingWidgetStore.removeWidget(item.config.id, true);
                 }
@@ -188,21 +187,21 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 else {
                     console.log(`itemDestroyed: ${item.config.id}`);
                     if (item.config.component === RenderConfigComponent.WIDGET_CONFIG.type) {
-                        this.props.appStore.removeRenderConfigWidget(item.config.id);
+                        this.props.appStore.widgetsStore.removeRenderConfigWidget(item.config.id);
                     }
                 }
             }
         });
 
-        this.props.appStore.layoutSettings.setLayout(layout);
-        this.props.appStore.layoutSettings.layout.init();
+        this.props.appStore.widgetsStore.setDockedLayout(layout);
+        this.props.appStore.widgetsStore.dockedLayout.init();
     }
 
     // GoldenLayout resize handler
     onContainerResize = (width, height) => {
         const appStore = this.props.appStore;
-        if (appStore.layoutSettings.layout) {
-            appStore.layoutSettings.layout.updateSize(width, height);
+        if (appStore.widgetsStore.dockedLayout) {
+            appStore.widgetsStore.dockedLayout.updateSize(width, height);
         }
     };
 
@@ -342,7 +341,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
             widgetConfig.defaultY = Math.round(el.offsetTop / 25.0) * 25 - 25;
         }
 
-        this.props.appStore.floatingWidgetStore.addWidget(widgetConfig);
+        this.props.appStore.widgetsStore.floatingWidgetStore.addWidget(widgetConfig);
         const config = item.config as GoldenLayout.ReactComponentConfig;
         config.component = "floated";
         item.remove();

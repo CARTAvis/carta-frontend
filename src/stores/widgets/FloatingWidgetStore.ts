@@ -56,7 +56,7 @@ export class FloatingWidgetStore {
                 return;
             }
             if (widget.type === RenderConfigComponent.WIDGET_CONFIG.type) {
-                this.appStore.removeRenderConfigWidget(widget.id);
+                this.appStore.widgetsStore.removeRenderConfigWidget(widget.id);
             }
         }
     };

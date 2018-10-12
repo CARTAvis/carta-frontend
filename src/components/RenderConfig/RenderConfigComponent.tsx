@@ -1,10 +1,10 @@
 import * as React from "react";
 import * as _ from "lodash";
-import * as  GoldenLayout from "golden-layout";
 import ReactResizeDetector from "react-resize-detector";
+import {computed, observable} from "mobx";
 import {observer} from "mobx-react";
+import {Chart} from "chart.js";
 import {FormGroup, HTMLSelect, NonIdealState, ButtonGroup, Button, IOptionProps, NumericInput} from "@blueprintjs/core";
-import {Chart, ChartArea} from "chart.js";
 import {LinePlotComponent, LinePlotComponentProps} from "../Shared/LinePlot/LinePlotComponent";
 import {AppStore} from "../../stores/AppStore";
 import {FrameStore} from "../../stores/FrameStore";
@@ -12,12 +12,11 @@ import {FrameScaling} from "../../stores/RenderConfigStore";
 import {WidgetConfig} from "../../stores/widgets/FloatingWidgetStore";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
 import {clamp} from "../../util/math";
-import "./RenderConfigComponent.css";
-import {computed, observable} from "mobx";
 import {Point2D} from "../../models/Point2D";
 import {PopoverSettingsComponent} from "../Shared/PopoverSettings/PopoverSettingsComponent";
 import {RenderConfigSettingsPanelComponent} from "./RenderConfigSettingsPanelComponent/RenderConfigSettingsPanelComponent";
 import {RenderConfigWidgetStore} from "../../stores/widgets/RenderConfigWidgetStore";
+import "./RenderConfigComponent.css";
 
 class RenderConfigComponentProps {
     appStore: AppStore;
@@ -30,15 +29,27 @@ const PANEL_CONTENT_WIDTH = 140;
 
 @observer
 export class RenderConfigComponent extends React.Component<RenderConfigComponentProps> {
+    public static get WIDGET_CONFIG(): WidgetConfig {
+        return {
+            id: "render-config",
+            type: "render-config",
+            minWidth: 250,
+            minHeight: 225,
+            defaultWidth: 650,
+            defaultHeight: 225,
+            title: "Render Configuration",
+            isCloseable: true
+        };
+    }
+
     private cachedFrame: FrameStore;
 
     @observable width: number;
     @observable height: number;
-    @observable chartArea: ChartArea;
 
     @computed get widgetStore(): RenderConfigWidgetStore {
-        if (this.props.appStore && this.props.appStore.renderConfigWidgets) {
-            const widgetStore = this.props.appStore.renderConfigWidgets.get(this.props.id);
+        if (this.props.appStore && this.props.appStore.widgetsStore.renderConfigWidgets) {
+            const widgetStore = this.props.appStore.widgetsStore.renderConfigWidgets.get(this.props.id);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -73,39 +84,17 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
 
             const N = maxIndex - minIndex;
             if (N > 0 && !isNaN(N)) {
-                const plotVals = new Array(maxIndex - minIndex);
+                const values = new Array(maxIndex - minIndex);
 
                 for (let i = minIndex; i <= maxIndex; i++) {
-                    plotVals[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
+                    values[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
                     yMin = Math.min(yMin, histogram.bins[i]);
                     yMax = Math.max(yMax, histogram.bins[i]);
-                    // Sanitize zero values to prevent scaling issues with log graphs
-                    // if (this.widgetStore.logScaleY && plotVals[i - minIndex].y < 0.1) {
-                    //     plotVals[i - minIndex].y = undefined;
-                    // }
                 }
-                // if (this.widgetStore.logScaleY) {
-                //     yMin = Math.max(0.5, yMin);
-                // }
-                return {values: plotVals, xMin, xMax, yMin, yMax};
+                return {values, xMin, xMax, yMin, yMax};
             }
         }
-
         return null;
-
-    }
-
-    public static get WIDGET_CONFIG(): WidgetConfig {
-        return {
-            id: "render-config",
-            type: "render-config",
-            minWidth: 250,
-            minHeight: 225,
-            defaultWidth: 650,
-            defaultHeight: 225,
-            title: "Render Configuration",
-            isCloseable: true
-        };
     }
 
     constructor(props: RenderConfigComponentProps) {
@@ -113,13 +102,13 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === RenderConfigComponent.WIDGET_CONFIG.id) {
             // Assign the next unique ID
-            const id = props.appStore.addNewRenderConfigWidget();
-            props.appStore.floatingWidgetStore.changeWidgetId(props.id, id);
+            const id = props.appStore.widgetsStore.addNewRenderConfigWidget();
+            props.appStore.widgetsStore.floatingWidgetStore.changeWidgetId(props.id, id);
         }
         else {
-            if (!this.props.appStore.renderConfigWidgets.has(this.props.id)) {
+            if (!this.props.appStore.widgetsStore.renderConfigWidgets.has(this.props.id)) {
                 console.error(`can't find store for widget with id=${this.props.id}`);
-                this.props.appStore.renderConfigWidgets.set(this.props.id, new RenderConfigWidgetStore());
+                this.props.appStore.widgetsStore.renderConfigWidgets.set(this.props.id, new RenderConfigWidgetStore());
             }
         }
     }

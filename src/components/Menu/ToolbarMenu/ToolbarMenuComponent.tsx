@@ -34,7 +34,7 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
             return;
         }
 
-        const layout = this.props.appStore.layoutSettings.layout;
+        const layout = this.props.appStore.widgetsStore.dockedLayout;
         if (layout && !this.createdDragSources) {
             this.createDragSource(layout, RenderConfigComponent.WIDGET_CONFIG, "renderConfigButton");
             this.createDragSource(layout, LogComponent.WIDGET_CONFIG, "logButton");
@@ -45,7 +45,7 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
 
     createRenderWidget = () => {
         let config = RenderConfigComponent.WIDGET_CONFIG;
-        config.id = this.props.appStore.addNewRenderConfigWidget();
+        config.id = this.props.appStore.widgetsStore.addNewRenderConfigWidget();
         this.createWidget(config);
     };
 
@@ -58,7 +58,7 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
     };
 
     createWidget = (widgetConfig: WidgetConfig) => {
-        const floatingWidgetStore = this.props.appStore.floatingWidgetStore;
+        const floatingWidgetStore = this.props.appStore.widgetsStore.floatingWidgetStore;
         floatingWidgetStore.addWidget(widgetConfig);
     };
 
