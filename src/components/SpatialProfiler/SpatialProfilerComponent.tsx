@@ -5,8 +5,7 @@ import {observer} from "mobx-react";
 import {Chart} from "chart.js";
 import {NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {AppStore} from "../../stores/AppStore";
-import {WidgetConfig} from "../../stores/WidgetsStore";
+import {WidgetConfig, WidgetProps} from "../../stores/WidgetsStore";
 import {clamp} from "../../util/math";
 import {Point2D} from "../../models/Point2D";
 import {SpatialProfileWidgetStore} from "../../stores/widgets/SpatialProfileWidgetStore";
@@ -16,17 +15,11 @@ import {PopoverSettingsComponent} from "../Shared/PopoverSettings/PopoverSetting
 import {SpatialProfilerSettingsPanelComponent} from "./SpatialProfilerSettingsPanelComponent/SpatialProfilerSettingsPanelComponent";
 import "./SpatialProfilerComponent.css";
 
-class SpatialProfilerComponentProps {
-    appStore: AppStore;
-    id: string;
-    docked: boolean;
-}
-
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 140;
 
 @observer
-export class SpatialProfilerComponent extends React.Component<SpatialProfilerComponentProps> {
+export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
             id: "spatial-profiler",
@@ -186,7 +179,7 @@ export class SpatialProfilerComponent extends React.Component<SpatialProfilerCom
         return null;
     }
 
-    constructor(props: SpatialProfilerComponentProps) {
+    constructor(props: WidgetProps) {
         super(props);
     }
 

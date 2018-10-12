@@ -1,4 +1,5 @@
 import * as GoldenLayout from "golden-layout";
+import * as $ from "jquery";
 import {action, observable} from "mobx";
 import {AppStore} from "./AppStore";
 import {RenderConfigWidgetStore} from "./widgets/RenderConfigWidgetStore";
@@ -6,6 +7,9 @@ import {SpatialProfileWidgetStore} from "./widgets/SpatialProfileWidgetStore";
 import {SpatialProfilerComponent} from "../components/SpatialProfiler/SpatialProfilerComponent";
 import {RenderConfigComponent} from "../components/RenderConfig/RenderConfigComponent";
 import {ImageViewComponent} from "../components/ImageView/ImageViewComponent";
+import {LogComponent} from "../components/Log/LogComponent";
+import {AnimatorComponent} from "../components/Animator/AnimatorComponent";
+import {PlaceholderComponent} from "../components/Placeholder/PlaceholderComponent";
 
 export class WidgetConfig {
     id: string;
@@ -18,6 +22,12 @@ export class WidgetConfig {
     defaultY?: number;
     isCloseable: boolean;
     @observable title: string;
+}
+
+export class WidgetProps {
+    appStore: AppStore;
+    id: string;
+    docked: boolean;
 }
 
 export class WidgetsStore {
@@ -38,9 +48,108 @@ export class WidgetsStore {
         this.defaultFloatingWidgetOffset = 100;
     }
 
+    private static getDefaultWidgetConfig(type: string) {
+        switch (type) {
+            case ImageViewComponent.WIDGET_CONFIG.type:
+                return ImageViewComponent.WIDGET_CONFIG;
+            case RenderConfigComponent.WIDGET_CONFIG.type:
+                return RenderConfigComponent.WIDGET_CONFIG;
+            case LogComponent.WIDGET_CONFIG.type:
+                return LogComponent.WIDGET_CONFIG;
+            case AnimatorComponent.WIDGET_CONFIG.type:
+                return AnimatorComponent.WIDGET_CONFIG;
+            case SpatialProfilerComponent.WIDGET_CONFIG.type:
+                return SpatialProfilerComponent.WIDGET_CONFIG;
+            default:
+                return PlaceholderComponent.WIDGET_CONFIG;
+        }
+    }
+
+    // region Golden Layout Widgets
+
     @action setDockedLayout(layout: GoldenLayout) {
+        layout.registerComponent("placeholder", PlaceholderComponent);
+        layout.registerComponent("image-view", ImageViewComponent);
+        layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
+        layout.registerComponent("render-config", RenderConfigComponent);
+        layout.registerComponent("log", LogComponent);
+        layout.registerComponent("animator", AnimatorComponent);
+
+        layout.on("stackCreated", (stack) => {
+            let unpinButton = $(`<div class="pin-icon"><span class="bp3-icon-standard bp3-icon-unpin"/></div>`);
+            unpinButton.on("click", () => this.unpinWidget(stack.getActiveContentItem()));
+            stack.header.controlsContainer.prepend(unpinButton);
+        });
+
+        layout.on("componentCreated", this.handleItemCreation);
+        layout.on("itemDestroyed", this.handleItemRemoval);
+
+        layout.init();
         this.dockedLayout = layout;
     }
+
+    @action unpinWidget = (item: GoldenLayout.ContentItem) => {
+        const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
+        const id = itemConfig.id as string;
+        const type = itemConfig.component;
+        const title = itemConfig.title;
+        // Get widget type from config
+        let widgetConfig = WidgetsStore.getDefaultWidgetConfig(type);
+        widgetConfig.id = id;
+        widgetConfig.title = title;
+
+        // Set default size and position from the existing item
+        const container = item["container"] as GoldenLayout.Container;
+        if (container && container.width && container.height) {
+            // Snap size to grid
+            widgetConfig.defaultWidth = Math.round(container.width / 25.0) * 25;
+            widgetConfig.defaultHeight = Math.round(container.height / 25.0) * 25;
+            const el = container["_element"][0] as HTMLElement;
+            // Snap position to grid and adjust for title and container offset
+            widgetConfig.defaultX = Math.round(el.offsetLeft / 25.0) * 25 + 5;
+            widgetConfig.defaultY = Math.round(el.offsetTop / 25.0) * 25 - 25;
+        }
+
+        this.addFloatingWidget(widgetConfig);
+        const config = item.config as GoldenLayout.ReactComponentConfig;
+        config.component = "floated";
+        item.remove();
+    };
+
+    @action handleItemCreation = (item: GoldenLayout.ContentItem) => {
+        const config = item.config as GoldenLayout.ReactComponentConfig;
+        const id = config.id as string;
+
+        // Check if it's an uninitialised widget
+        if (id === RenderConfigComponent.WIDGET_CONFIG.id) {
+            const itemId = this.addNewRenderConfigWidget();
+            config.id = itemId;
+            config.props.id = itemId;
+        }
+        else {
+            // Remove it from the floating widget array, while preserving its store
+            if (this.floatingWidgets.find(w => w.id === id)) {
+                this.removeFloatingWidget(id, true);
+            }
+        }
+    };
+
+    @action handleItemRemoval = (item: GoldenLayout.ContentItem) => {
+        if (item.config.type === "component") {
+            const config = item.config as GoldenLayout.ReactComponentConfig;
+
+            // Clean up removed widget's store (ignoring items that have been floated)
+            if (config.component !== "floated") {
+                const id = config.id as string;
+                console.log(`itemDestroyed: ${id}`);
+                if (config.component === RenderConfigComponent.WIDGET_CONFIG.type) {
+                    this.removeRenderConfigWidget(id);
+                }
+            }
+        }
+    };
+
+    // endregion
 
     @action updateImageWidgetTitle() {
         let newTitle;
@@ -152,11 +261,11 @@ export class WidgetsStore {
     };
 
     // Removes a widget from the floating widget array, optionally removing the widget's associated store
-    @action removeFloatingWidget = (id: string, preserveConfig: boolean = false) => {
+    @action removeFloatingWidget = (id: string, preserveStore: boolean = false) => {
         const widget = this.floatingWidgets.find(w => w.id === id);
         if (widget) {
             this.floatingWidgets = this.floatingWidgets.filter(w => w.id !== id);
-            if (preserveConfig) {
+            if (preserveStore) {
                 return;
             }
             if (widget.type === RenderConfigComponent.WIDGET_CONFIG.type) {

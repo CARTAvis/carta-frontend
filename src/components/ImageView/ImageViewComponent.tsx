@@ -1,7 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AppStore} from "../../stores/AppStore";
-import {WidgetConfig} from "../../stores/WidgetsStore";
+import {WidgetConfig, WidgetProps} from "../../stores/WidgetsStore";
 import ReactResizeDetector from "react-resize-detector";
 import {NonIdealState, Spinner} from "@blueprintjs/core";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
@@ -10,14 +9,8 @@ import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import "./ImageViewComponent.css";
 
-class ImageViewComponentProps {
-    appStore: AppStore;
-    id: string;
-    docked: boolean;
-}
-
 @observer
-export class ImageViewComponent extends React.Component<ImageViewComponentProps> {
+export class ImageViewComponent extends React.Component<WidgetProps> {
     private containerDiv: HTMLDivElement;
 
     public static get WIDGET_CONFIG(): WidgetConfig {

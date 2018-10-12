@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
-import {computed, observable} from "mobx";
+import {action, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Chart} from "chart.js";
 import {FormGroup, HTMLSelect, NonIdealState, ButtonGroup, Button, IOptionProps, NumericInput} from "@blueprintjs/core";
@@ -9,7 +9,7 @@ import {LinePlotComponent, LinePlotComponentProps} from "../Shared/LinePlot/Line
 import {AppStore} from "../../stores/AppStore";
 import {FrameStore} from "../../stores/FrameStore";
 import {FrameScaling} from "../../stores/RenderConfigStore";
-import {WidgetConfig} from "../../stores/WidgetsStore";
+import {WidgetConfig, WidgetProps} from "../../stores/WidgetsStore";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
 import {clamp} from "../../util/math";
 import {Point2D} from "../../models/Point2D";
@@ -18,17 +18,11 @@ import {RenderConfigSettingsPanelComponent} from "./RenderConfigSettingsPanelCom
 import {RenderConfigWidgetStore} from "../../stores/widgets/RenderConfigWidgetStore";
 import "./RenderConfigComponent.css";
 
-class RenderConfigComponentProps {
-    appStore: AppStore;
-    id: string;
-    docked: boolean;
-}
-
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 140;
 
 @observer
-export class RenderConfigComponent extends React.Component<RenderConfigComponentProps> {
+export class RenderConfigComponent extends React.Component<WidgetProps> {
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
             id: "render-config",
@@ -97,7 +91,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         return null;
     }
 
-    constructor(props: RenderConfigComponentProps) {
+    constructor(props: WidgetProps) {
         super(props);
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === RenderConfigComponent.WIDGET_CONFIG.id) {
@@ -142,7 +136,7 @@ export class RenderConfigComponent extends React.Component<RenderConfigComponent
         }
     };
 
-    onResize = (width: number, height: number) => {
+    @action onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
     };

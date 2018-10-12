@@ -1,23 +1,15 @@
 import * as React from "react";
 import * as GoldenLayout from "golden-layout";
 import * as AST from "ast_wrapper";
-import * as _ from "lodash";
-import * as $ from "jquery";
 import {observer} from "mobx-react";
 import DevTools from "mobx-react-devtools";
 import ReactResizeDetector from "react-resize-detector";
 import {Alert, Colors, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
-import {PlaceholderComponent} from "./components/Placeholder/PlaceholderComponent";
 import {RootMenuComponent} from "./components/Menu/RootMenuComponent";
-import {ImageViewComponent} from "./components/ImageView/ImageViewComponent";
 import {OverlaySettingsDialogComponent} from "./components/Dialogs/OverlaySettings/OverlaySettingsDialogComponent";
-import {SpatialProfilerComponent} from "./components/SpatialProfiler/SpatialProfilerComponent";
 import {FileBrowserDialogComponent} from "./components/Dialogs/FileBrowser/FileBrowserDialogComponent";
 import {URLConnectDialogComponent} from "./components/Dialogs/URLConnect/URLConnectDialogComponent";
-import {RenderConfigComponent} from "./components/RenderConfig/RenderConfigComponent";
-import {LogComponent} from "./components/Log/LogComponent";
 import {FloatingWidgetManagerComponent} from "./components/FloatingWidgetManager/FloatingWidgetManagerComponent";
-import {AnimatorComponent} from "./components/Animator/AnimatorComponent";
 import {FileBrowserStore} from "./stores/FileBrowserStore";
 import {AppStore} from "./stores/AppStore";
 import {smoothStepOffset} from "./util/math";
@@ -58,6 +50,8 @@ export class App extends React.Component<{ appStore: AppStore }> {
     }
 
     componentDidMount() {
+        const widgetsStore = this.props.appStore.widgetsStore;
+        // Adjust default image view size based on window height
         const defaultImageViewFraction = smoothStepOffset(window.innerHeight, 720, 1080, 65, 75);
         const initialLayout: any[] = [{
             type: "row",
@@ -133,9 +127,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
             }]
         }];
 
-        this.props.appStore.widgetsStore.addSpatialProfileWidget("spatial-profiler-0", -1, 0, "x");
-        this.props.appStore.widgetsStore.addSpatialProfileWidget("spatial-profiler-1", -1, 0, "y");
-        this.props.appStore.widgetsStore.addRenderConfigWidget("render-config-0");
+        widgetsStore.addSpatialProfileWidget("spatial-profiler-0", -1, 0, "x");
+        widgetsStore.addSpatialProfileWidget("spatial-profiler-1", -1, 0, "y");
+        widgetsStore.addRenderConfigWidget("render-config-0");
 
         const layout = new GoldenLayout({
             settings: {
@@ -151,57 +145,13 @@ export class App extends React.Component<{ appStore: AppStore }> {
             content: initialLayout
         }, this.glContainer);
 
-        layout.registerComponent("placeholder", PlaceholderComponent);
-        layout.registerComponent("image-view", ImageViewComponent);
-        layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
-        layout.registerComponent("render-config", RenderConfigComponent);
-        layout.registerComponent("log", LogComponent);
-        layout.registerComponent("animator", AnimatorComponent);
-
-        layout.on("stackCreated", (stack) => {
-            let unpinButton = $(`<div class="pin-icon"><span class="bp3-icon-standard bp3-icon-unpin"/></div>`);
-            unpinButton.on("click", () => this.onUnpinClicked(stack.getActiveContentItem()));
-
-            stack.header.controlsContainer.prepend(unpinButton);
-        });
-
-        layout.on("componentCreated", item => {
-            if (item.config.id === RenderConfigComponent.WIDGET_CONFIG.id) {
-                const itemId = this.props.appStore.widgetsStore.addNewRenderConfigWidget();
-                item.config.id = itemId;
-                item.config.props.id = itemId;
-            }
-            else {
-                const widgetsStore = this.props.appStore.widgetsStore;
-                if (widgetsStore.floatingWidgets.find(w => w.id === item.config.id)) {
-                    widgetsStore.removeFloatingWidget(item.config.id, true);
-                }
-            }
-        });
-
-        layout.on("itemDestroyed", item => {
-            if (item.config.type === "component") {
-                if (item.config.component === "floated") {
-                    console.log(`itemFloated: ${item.config.id}`);
-                }
-                else {
-                    console.log(`itemDestroyed: ${item.config.id}`);
-                    if (item.config.component === RenderConfigComponent.WIDGET_CONFIG.type) {
-                        this.props.appStore.widgetsStore.removeRenderConfigWidget(item.config.id);
-                    }
-                }
-            }
-        });
-
-        this.props.appStore.widgetsStore.setDockedLayout(layout);
-        this.props.appStore.widgetsStore.dockedLayout.init();
+        widgetsStore.setDockedLayout(layout);
     }
 
     // GoldenLayout resize handler
     onContainerResize = (width, height) => {
-        const appStore = this.props.appStore;
-        if (appStore.widgetsStore.dockedLayout) {
-            appStore.widgetsStore.dockedLayout.updateSize(width, height);
+        if (this.props.appStore.widgetsStore.dockedLayout) {
+            this.props.appStore.widgetsStore.dockedLayout.updateSize(width, height);
         }
     };
 
@@ -301,49 +251,4 @@ export class App extends React.Component<{ appStore: AppStore }> {
             </Hotkeys>
         );
     }
-
-    private getDefaultWidgetConfig(type: string) {
-        switch (type) {
-            case ImageViewComponent.WIDGET_CONFIG.type:
-                return ImageViewComponent.WIDGET_CONFIG;
-            case RenderConfigComponent.WIDGET_CONFIG.type:
-                return RenderConfigComponent.WIDGET_CONFIG;
-            case LogComponent.WIDGET_CONFIG.type:
-                return LogComponent.WIDGET_CONFIG;
-            case AnimatorComponent.WIDGET_CONFIG.type:
-                return AnimatorComponent.WIDGET_CONFIG;
-            case SpatialProfilerComponent.WIDGET_CONFIG.type:
-                return SpatialProfilerComponent.WIDGET_CONFIG;
-            default:
-                return PlaceholderComponent.WIDGET_CONFIG;
-        }
-    }
-
-    onUnpinClicked = (item: GoldenLayout.ContentItem) => {
-        const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
-        const id = itemConfig.id as string;
-        const type = itemConfig.component;
-        const title = itemConfig.title;
-        // Get widget type from config
-        let widgetConfig = this.getDefaultWidgetConfig(type);
-        widgetConfig.id = id;
-        widgetConfig.title = title;
-
-        // Set default size and position from the existing item
-        const container = item["container"] as GoldenLayout.Container;
-        if (container && container.width && container.height) {
-            // Snap size to grid
-            widgetConfig.defaultWidth = Math.round(container.width / 25.0) * 25;
-            widgetConfig.defaultHeight = Math.round(container.height / 25.0) * 25;
-            const el = container["_element"][0] as HTMLElement;
-            // Snap position to grid and adjust for title and container offset
-            widgetConfig.defaultX = Math.round(el.offsetLeft / 25.0) * 25 + 5;
-            widgetConfig.defaultY = Math.round(el.offsetTop / 25.0) * 25 - 25;
-        }
-
-        this.props.appStore.widgetsStore.addFloatingWidget(widgetConfig);
-        const config = item.config as GoldenLayout.ReactComponentConfig;
-        config.component = "floated";
-        item.remove();
-    };
 }
