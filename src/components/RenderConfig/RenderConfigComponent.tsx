@@ -76,17 +76,18 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             let yMin = histogram.bins[minIndex];
             let yMax = yMin;
 
+            let values: Array<{ x: number, y: number }>;
             const N = maxIndex - minIndex;
             if (N > 0 && !isNaN(N)) {
-                const values = new Array(maxIndex - minIndex);
+                values = new Array(maxIndex - minIndex);
 
                 for (let i = minIndex; i <= maxIndex; i++) {
                     values[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
                     yMin = Math.min(yMin, histogram.bins[i]);
                     yMax = Math.max(yMax, histogram.bins[i]);
                 }
-                return {values, xMin, xMax, yMin, yMax};
             }
+            return {values, xMin, xMax, yMin, yMax};
         }
         return null;
     }
@@ -213,7 +214,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
         if (frame && frame.renderConfig.channelHistogram && frame.renderConfig.channelHistogram.bins && frame.renderConfig.channelHistogram.bins.length) {
             const currentPlotData = this.plotData;
-            if (currentPlotData && currentPlotData.values && currentPlotData.values.length) {
+            if (currentPlotData) {
                 linePlotProps.data = currentPlotData.values;
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                 if (this.widgetStore.isAutoScaledX) {

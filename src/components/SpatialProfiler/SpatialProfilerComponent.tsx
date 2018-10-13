@@ -74,50 +74,70 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         if (this.profileStore.approximate) {
             // Check if frame data can be used to approximate profile
             if (this.profileStore.x >= frame.currentFrameView.xMin && this.profileStore.x <= frame.currentFrameView.xMax && this.profileStore.y >= frame.currentFrameView.yMin && this.profileStore.y <= frame.currentFrameView.yMax) {
-                const w = Math.floor((frame.currentFrameView.xMax - frame.currentFrameView.xMin) / frame.currentFrameView.mip);
-                const h = Math.floor((frame.currentFrameView.yMax - frame.currentFrameView.yMin) / frame.currentFrameView.mip);
+                const frameDataWidth = Math.floor((frame.currentFrameView.xMax - frame.currentFrameView.xMin) / frame.currentFrameView.mip);
+                const frameDataHeight = Math.floor((frame.currentFrameView.yMax - frame.currentFrameView.yMin) / frame.currentFrameView.mip);
                 const yOffset = Math.floor((this.profileStore.y - frame.currentFrameView.yMin) / frame.currentFrameView.mip);
                 const xOffset = Math.floor((this.profileStore.x - frame.currentFrameView.xMin) / frame.currentFrameView.mip);
 
-                let xMin: number;
-                let xMax: number;
-                if (isXProfile) {
-                    xMin = clamp(frame.requiredFrameView.xMin, 0, frame.frameInfo.fileInfoExtended.width);
-                    xMax = clamp(frame.requiredFrameView.xMax, 0, frame.frameInfo.fileInfoExtended.width);
-                }
-                else {
-                    xMin = clamp(frame.requiredFrameView.yMin, 0, frame.frameInfo.fileInfoExtended.height);
-                    xMax = clamp(frame.requiredFrameView.yMax, 0, frame.frameInfo.fileInfoExtended.height);
-                }
-
-                xMin = Math.floor(xMin);
-                xMax = Math.floor(xMax);
-
-                let values: { x: number, y: number }[];
-                if (isXProfile) {
-                    values = new Array(w);
-                    for (let i = 0; i < w; i++) {
-                        values[i] = {x: frame.currentFrameView.xMin + frame.currentFrameView.mip * i, y: frame.rasterData[yOffset * w + i]};
+                let localMinX: number;
+                let localMaxX: number;
+                // Determine bounds automatically from the image view
+                if (this.widgetStore.isAutoScaledX) {
+                    if (isXProfile) {
+                        localMinX = clamp(frame.requiredFrameView.xMin, 0, frame.frameInfo.fileInfoExtended.width);
+                        localMaxX = clamp(frame.requiredFrameView.xMax, 0, frame.frameInfo.fileInfoExtended.width);
+                    }
+                    else {
+                        localMinX = clamp(frame.requiredFrameView.yMin, 0, frame.frameInfo.fileInfoExtended.height);
+                        localMaxX = clamp(frame.requiredFrameView.yMax, 0, frame.frameInfo.fileInfoExtended.height);
                     }
                 }
                 else {
-                    values = new Array(h);
-                    for (let i = 0; i < h; i++) {
-                        values[i] = {x: frame.currentFrameView.yMin + frame.currentFrameView.mip * i, y: frame.rasterData[i * w + xOffset]};
+                    localMinX = clamp(this.widgetStore.minX, 0, frame.frameInfo.fileInfoExtended.width);
+                    if (isXProfile) {
+                        localMaxX = clamp(this.widgetStore.maxX, 0, frame.frameInfo.fileInfoExtended.width);
+                    }
+                    else {
+                        localMaxX = clamp(this.widgetStore.maxX, 0, frame.frameInfo.fileInfoExtended.height);
                     }
                 }
 
+                localMinX = Math.floor(localMinX);
+                localMaxX = Math.floor(localMaxX);
                 let yMin = Number.MAX_VALUE;
                 let yMax = -Number.MAX_VALUE;
 
-                // determine local range
-                for (let i = 0; i < values.length; i++) {
-                    if (values[i].x >= xMin && !isNaN(values[i].y)) {
-                        yMin = Math.min(yMin, values[i].y);
-                        yMax = Math.max(yMax, values[i].y);
+                let values: { x: number, y: number }[] = [];
+                if (isXProfile) {
+                    for (let i = 0; i < frameDataWidth; i++) {
+                        const x = frame.currentFrameView.xMin + frame.currentFrameView.mip * i;
+                        if (x > localMaxX) {
+                            break;
+                        }
+                        if (x >= localMinX) {
+                            const y = frame.rasterData[yOffset * frameDataWidth + i];
+                            values.push({x, y});
+                            if (!isNaN(y)) {
+                                yMin = Math.min(yMin, y);
+                                yMax = Math.max(yMax, y);
+                            }
+                        }
                     }
-                    if (values[i].x > xMax) {
-                        break;
+                }
+                else {
+                    for (let i = 0; i < frameDataHeight; i++) {
+                        const x = frame.currentFrameView.yMin + frame.currentFrameView.mip * i;
+                        if (x > localMaxX) {
+                            break;
+                        }
+                        if (x >= localMinX) {
+                            const y = frame.rasterData[i * frameDataWidth + xOffset];
+                            values.push({x, y});
+                            if (!isNaN(y)) {
+                                yMin = Math.min(yMin, y);
+                                yMax = Math.max(yMax, y);
+                            }
+                        }
                     }
                 }
 
@@ -125,8 +145,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     yMin = undefined;
                     yMax = undefined;
                 }
-
-                return {values: values, xMin, xMax, yMin, yMax};
+                return {values: values, xMin: localMinX, xMax: localMaxX, yMin, yMax};
             }
             else if (this.profileStore.x !== undefined && this.profileStore.y !== undefined) {
                 console.log(`Out of bounds profile request: (${this.profileStore.x}, ${this.profileStore.y})`);
@@ -138,33 +157,48 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             if (coordinateData && coordinateData.values && coordinateData.values.length) {
                 let xMin: number;
                 let xMax: number;
-                if (isXProfile) {
-                    xMin = clamp(frame.requiredFrameView.xMin, 0, frame.frameInfo.fileInfoExtended.width);
-                    xMax = clamp(frame.requiredFrameView.xMax, 0, frame.frameInfo.fileInfoExtended.width);
+
+                if (this.widgetStore.isAutoScaledX) {
+                    if (isXProfile) {
+                        xMin = clamp(frame.requiredFrameView.xMin, 0, frame.frameInfo.fileInfoExtended.width);
+                        xMax = clamp(frame.requiredFrameView.xMax, 0, frame.frameInfo.fileInfoExtended.width);
+                    }
+                    else {
+                        xMin = clamp(frame.requiredFrameView.yMin, 0, frame.frameInfo.fileInfoExtended.height);
+                        xMax = clamp(frame.requiredFrameView.yMax, 0, frame.frameInfo.fileInfoExtended.height);
+                    }
                 }
                 else {
-                    xMin = clamp(frame.requiredFrameView.yMin, 0, frame.frameInfo.fileInfoExtended.height);
-                    xMax = clamp(frame.requiredFrameView.yMax, 0, frame.frameInfo.fileInfoExtended.height);
+                    xMin = clamp(this.widgetStore.minX, 0, frame.frameInfo.fileInfoExtended.width);
+                    if (isXProfile) {
+                        xMax = clamp(this.widgetStore.maxX, 0, frame.frameInfo.fileInfoExtended.width);
+                    }
+                    else {
+                        xMax = clamp(this.widgetStore.maxX, 0, frame.frameInfo.fileInfoExtended.height);
+                    }
                 }
 
                 xMin = Math.floor(xMin);
                 xMax = Math.floor(xMax);
-
-                const N = Math.floor(Math.min(xMax - xMin, coordinateData.values.length));
-                let values = new Array(N);
-                for (let i = 0; i < N; i++) {
-                    values[i] = {x: coordinateData.start + i + xMin, y: coordinateData.values[i + xMin]};
-                }
-
                 let yMin = Number.MAX_VALUE;
                 let yMax = -Number.MAX_VALUE;
-                for (let i = 0; i < values.length; i++) {
-                    if (values[i].x >= xMin && !isNaN(values[i].y)) {
-                        yMin = Math.min(yMin, values[i].y);
-                        yMax = Math.max(yMax, values[i].y);
+
+                const N = Math.floor(Math.min(xMax - xMin, coordinateData.values.length));
+                let values: Array<{ x: number, y: number }>;
+                if (N > 0) {
+                    values = new Array(N);
+                    for (let i = 0; i < N; i++) {
+                        values[i] = {x: coordinateData.start + i + xMin, y: coordinateData.values[i + xMin]};
                     }
-                    if (values[i].x > xMax) {
-                        break;
+
+                    for (let i = 0; i < values.length; i++) {
+                        if (values[i].x >= xMin && !isNaN(values[i].y)) {
+                            yMin = Math.min(yMin, values[i].y);
+                            yMax = Math.max(yMax, values[i].y);
+                        }
+                        if (values[i].x > xMax) {
+                            break;
+                        }
                     }
                 }
 
@@ -172,7 +206,6 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     yMin = undefined;
                     yMax = undefined;
                 }
-
                 return {values: values, xMin, xMax, yMin, yMax};
             }
         }
@@ -217,6 +250,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.yLabel = `Value (${frame.unit})`;
                 }
 
+                // TODO: Add additional WCS-based axis with callback
                 const labelAttribute = `Label(${isXProfile ? 1 : 2})`;
                 // const astLabel = AST.getString(frame.wcsInfo, labelAttribute);
                 //
@@ -246,7 +280,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
 
                 const currentPlotData = this.plotData;
-                if (currentPlotData && currentPlotData.values && currentPlotData.values.length) {
+                if (currentPlotData) {
                     linePlotProps.data = currentPlotData.values;
                     // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                     if (this.widgetStore.isAutoScaledX) {
