@@ -15,16 +15,35 @@ export class SpatialProfileWidgetStore {
     @observable meanRmsVisible: boolean;
     @observable markerTextVisible: boolean;
 
+    @computed get validCoordinates() {
+        const validCoordinates = [];
+        for (let coordinate of ["x", "y"]) {
+            for (let stokes of ["", "I", "Q", "U", "V"]) {
+                validCoordinates.push(`${stokes}${coordinate}`);
+            }
+        }
+        return validCoordinates;
+    }
+
     @action setFileId = (fileId: number) => {
+        // Reset zoom when changing between files
+        this.clearXYBounds();
         this.fileId = fileId;
     };
 
     @action setRegionId = (regionId: number) => {
+        // Reset zoom when changing between regions
+        this.clearXYBounds();
         this.regionId = regionId;
     };
 
     @action setCoordinate = (coordinate: string) => {
-        this.coordinate = coordinate;
+        // Check coordinate validity
+        if (this.validCoordinates.indexOf(coordinate) !== -1) {
+            // Reset zoom when changing between coordinates
+            this.clearXYBounds();
+            this.coordinate = coordinate;
+        }
     };
 
     @action setXBounds = (minVal: number, maxVal: number) => {

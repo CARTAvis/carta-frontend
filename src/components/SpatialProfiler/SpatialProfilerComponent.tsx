@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
-import {computed, observable} from "mobx";
+import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Chart} from "chart.js";
 import {Colors, NonIdealState} from "@blueprintjs/core";
@@ -246,6 +246,23 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+
+        // Update widget title when region or coordinate changes
+        autorun(() => {
+            if (this.widgetStore) {
+
+                const coordinate = this.widgetStore.coordinate;
+                const appStore = this.props.appStore;
+                if (appStore && coordinate) {
+                    const coordinateString = `${coordinate.toUpperCase()} Profile`;
+                    const regionString = this.widgetStore.regionId === 0 ? "Cursor" : `Region #${this.widgetStore.regionId}`;
+                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString}`);
+                }
+            }
+            else {
+                this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Spatial Profiler`);
+            }
+        });
     }
 
     onResize = (width: number, height: number) => {

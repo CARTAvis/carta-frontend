@@ -93,13 +93,11 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 content: [{
                     type: "react-component",
                     component: "spatial-profiler",
-                    title: "X Profile: Cursor",
                     id: "spatial-profiler-0",
                     props: {appStore: this.props.appStore, id: "spatial-profiler-0", docked: true}
                 }, {
                     type: "react-component",
                     component: "spatial-profiler",
-                    title: "Y Profile: Cursor",
                     id: "spatial-profiler-1",
                     props: {appStore: this.props.appStore, id: "spatial-profiler-1", docked: true}
                 }, {
