@@ -60,7 +60,9 @@ export class BackendService {
         this.errorStream = new Subject<CARTA.ErrorData>();
         this.spatialProfileStream = new Subject<CARTA.SpatialProfileData>();
         this.subsetsRequired = Math.min(navigator.hardwareConcurrency || 4, 4);
-        this.decompressionServce = new DecompressionService(this.subsetsRequired);
+        if (process.env.NODE_ENV !== "test") {
+            this.decompressionServce = new DecompressionService(this.subsetsRequired);
+        }
         this.totalDecompressionTime = 0;
         this.totalDecompressionMPix = 0;
         this.logEventList = [
@@ -284,6 +286,10 @@ export class BackendService {
         return false;
     }
 
+    onStreamedSpatialProfileData(eventId: number, spatialProfileData: CARTA.SpatialProfileData) {
+        this.spatialProfileStream.next(spatialProfileData);
+    }
+
     private messageHandler(event: MessageEvent) {
         if (event.data.byteLength < 40) {
             console.log("Unknown event format");
@@ -431,10 +437,6 @@ export class BackendService {
 
     private onStreamedErrorData(eventId: number, errorData: CARTA.ErrorData) {
         this.errorStream.next(errorData);
-    }
-
-    onStreamedSpatialProfileData(eventId: number, spatialProfileData: CARTA.SpatialProfileData) {
-        this.spatialProfileStream.next(spatialProfileData);
     }
 
     private sendEvent(eventName: EventNames, payload: Uint8Array): boolean {

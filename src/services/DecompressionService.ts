@@ -1,9 +1,5 @@
 import {observable} from "mobx";
-import {Observable, BehaviorSubject, throwError} from "rxjs";
-import {first} from "rxjs/operators";
 import {CARTA} from "carta-protobuf";
-
-const ZFPWorker = require("worker-loader!zfp_wrapper");
 
 export class DecompressionService {
     @observable zfpReady: boolean;
@@ -17,6 +13,7 @@ export class DecompressionService {
     private isQueueFree: boolean;
 
     constructor(numWorkers: number) {
+        const ZFPWorker = require("worker-loader!zfp_wrapper");
         this.decompressedData = null;
         this.workQueue = [];
         this.workers = new Array<Worker>(numWorkers);
@@ -86,7 +83,7 @@ export class DecompressionService {
                 reject("Mismatched subset counts");
             }
 
-            if (message.compressionType !== CARTA.CompressionType.ZFP || message.compressionQuality <= 0 || message.compressionQuality >= 31) {
+            if (message.compressionType !== CARTA.CompressionType.ZFP || message.compressionQuality <= 0 || message.compressionQuality > 31) {
                 reject("Unsupported compression type");
             }
 

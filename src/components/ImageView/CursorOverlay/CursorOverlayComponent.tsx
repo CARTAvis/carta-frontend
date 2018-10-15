@@ -86,7 +86,7 @@ export class CursorOverlayComponent extends React.PureComponent<CursorOverlayPro
         if (trim) {
             // remove unnecessary trailing decimals
             valString = valString.replace(/0+e/, "e");
-            valString = valString.replace(".e", "0.e");
+            valString = valString.replace(".e", ".0e");
             // strip unnecessary exponential notation
             valString = valString.replace("e+0", "");
         }

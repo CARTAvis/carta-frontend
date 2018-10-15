@@ -6,7 +6,7 @@ import {FileBrowserStore} from "./FileBrowserStore";
 import {FrameInfo, FrameStore, FrameView} from "./FrameStore";
 import {AlertStore} from "./AlertStore";
 import {LogEntry, LogStore} from "./LogStore";
-import {FloatingWidgetStore} from "./FloatingWidgetStore";
+import {FloatingWidgetStore} from "./widgets/FloatingWidgetStore";
 import {BackendService} from "../services/BackendService";
 import {CursorInfo} from "../models/CursorInfo";
 import {CARTA} from "carta-protobuf";
@@ -15,6 +15,8 @@ import * as _ from "lodash";
 import {ImageViewComponent} from "../components/ImageView/ImageViewComponent";
 import {AnimationState, AnimatorStore} from "./AnimatorStore";
 import SpatialProfile = CARTA.SpatialProfile;
+import {smoothStepOffset} from "../util/math";
+import {RenderConfigWidgetStore} from "./widgets/RenderConfigWidgetStore";
 
 export class AppStore {
     // Backend service
@@ -60,6 +62,9 @@ export class AppStore {
     };
     // Floating Widgets
     @observable floatingWidgetStore: FloatingWidgetStore;
+    // Widget Stores
+    @observable renderConfigWidgetStore = new RenderConfigWidgetStore();
+
     // Dark theme
     @observable darkTheme: boolean;
 
@@ -175,8 +180,6 @@ export class AppStore {
             frame.wcsInfo = initResult;
             frame.validWcs = true;
             this.overlayStore.setDefaultsFromAST(frame);
-//             this.overlayStore.labels.textX = AST.getString(frame.wcsInfo, "Label(1)");
-//             this.overlayStore.labels.textY = AST.getString(frame.wcsInfo, "Label(2)");
             console.log("Initialised WCS info from frame");
         }
     };
@@ -199,7 +202,7 @@ export class AppStore {
         this.darkTheme = true;
     };
 
-    @action setLightTheme =  () => {
+    @action setLightTheme = () => {
         this.darkTheme = false;
     };
 
@@ -232,8 +235,7 @@ export class AppStore {
         this.compressionQuality = 11;
         this.darkTheme = false;
 
-        const throttledSetView = _.throttle((fileId: number, view: FrameView) => {
-            const quality = this.compressionQuality;
+        const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
             this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
         }, 200);
 
@@ -260,6 +262,9 @@ export class AppStore {
                     mip: reqView.mip
                 };
 
+                let adjustedQuality = smoothStepOffset(this.activeFrame.zoomLevel, 0.9, 4, 11, 21);
+                adjustedQuality = Math.round(adjustedQuality);
+
                 // Calculate if new data is required
                 const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
                 // Don't auto-update when animation is playing
@@ -268,7 +273,8 @@ export class AppStore {
                 }
 
                 const updateRequiredView = (croppedReq.mip < currentView.mip) || (croppedReq.xMin < currentView.xMin || croppedReq.xMax > currentView.xMax || croppedReq.yMin < currentView.yMin || croppedReq.yMax > currentView.yMax);
-                if (updateRequiredView) {
+                const updateCompressionQuality = (adjustedQuality > this.activeFrame.currentCompressionQuality);
+                if (updateRequiredView || updateCompressionQuality) {
                     const reqWidth = reqView.xMax - reqView.xMin;
                     const reqHeight = reqView.yMax - reqView.yMin;
                     // Add an extra padding on either side to avoid spamming backend
@@ -280,7 +286,7 @@ export class AppStore {
                         yMax: Math.min(reqView.yMax + padFraction * reqHeight, this.activeFrame.frameInfo.fileInfoExtended.height),
                         mip: reqView.mip
                     };
-                    throttledSetView(this.activeFrame.frameInfo.fileId, paddedView);
+                    throttledSetView(this.activeFrame.frameInfo.fileId, paddedView, adjustedQuality);
                 }
             }
         });
@@ -341,16 +347,6 @@ export class AppStore {
                 if (this.animatorStore.animationState === AnimationState.PLAYING) {
                     this.animatorStore.removeFromRequestQueue(updatedFrame.channel, updatedFrame.stokes);
                 }
-                // if there's a valid channel histogram bundled into the message, update it
-                if (rasterImageData.channelHistogramData) {
-                    // Update channel histograms
-                    if (rasterImageData.channelHistogramData.regionId === -1) {
-                        const channelHist = rasterImageData.channelHistogramData.histograms.find(hist => hist.channel === updatedFrame.requiredChannel);
-                        if (channelHist) {
-                            updatedFrame.updateChannelHistogram(channelHist as CARTA.Histogram);
-                        }
-                    }
-                }
             }
         });
 
@@ -363,7 +359,7 @@ export class AppStore {
             if (updatedFrame && regionHistogramData.regionId === -1 && regionHistogramData.stokes === updatedFrame.requiredStokes) {
                 const channelHist = regionHistogramData.histograms.find(hist => hist.channel === updatedFrame.requiredChannel);
                 if (channelHist) {
-                    updatedFrame.updateChannelHistogram(channelHist as CARTA.Histogram);
+                    updatedFrame.renderConfig.updateChannelHistogram(channelHist as CARTA.Histogram);
                 }
             }
         });

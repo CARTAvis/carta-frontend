@@ -56,13 +56,38 @@
         .percentile-select {
             margin-right: 0;
         }
-        .bp3-numeric-input {
-            //width: 80px;
-        }
 
         .bp3-form-group {
             float: right;
             margin-bottom: 5px;
+            .bp3-button {
+                width: 120px;
+            }
+        }
+
+        .bp3-numeric-input {
+            .bp3-input-group {
+                input {
+                    width: 90px;
+                }
+            }
+        }
+
+        .bp3-input-group {
+            input {
+                width: 120px;
+            }
+        }
+
+        select {
+            width: 120px;
+            direction: rtl;
+        }
+
+        .cursor-display {
+            pre {
+                font-size: x-small;
+            }
         }
     }
 
@@ -70,9 +95,9 @@
         flex: 3 3 auto;
         min-width: 0;
         padding-bottom: 5px;
-
         .histogram-plot {
             height: calc(100% - 35px);
+            position: relative;
         }
     }
 }

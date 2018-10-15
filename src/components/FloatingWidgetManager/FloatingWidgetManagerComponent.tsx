@@ -1,6 +1,6 @@
 import * as React from "react";
 import {AppStore} from "../../stores/AppStore";
-import {WidgetConfig} from "../../stores/FloatingWidgetStore";
+import {WidgetConfig} from "../../stores/widgets/FloatingWidgetStore";
 import {FloatingWidgetComponent} from "../FloatingWidget/FloatingWidgetComponent";
 import {RenderConfigComponent} from "../RenderConfig/RenderConfigComponent";
 import {LogComponent} from "../Log/LogComponent";

@@ -4,7 +4,7 @@ import {Rnd} from "react-rnd";
 import {Icon} from "@blueprintjs/core";
 import * as GoldenLayout from "golden-layout";
 import {AppStore} from "../../stores/AppStore";
-import {WidgetConfig} from "../../stores/FloatingWidgetStore";
+import {WidgetConfig} from "../../stores/widgets/FloatingWidgetStore";
 import {PlaceholderComponent} from "../Placeholder/PlaceholderComponent";
 import {observer} from "mobx-react";
 
