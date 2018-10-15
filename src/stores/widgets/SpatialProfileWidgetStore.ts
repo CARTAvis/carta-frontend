@@ -9,7 +9,6 @@ export class SpatialProfileWidgetStore {
     @observable minY: number;
     @observable maxY: number;
     @observable cursorX: number;
-    @observable logScaleY: boolean;
     @observable usePoints: boolean;
     @observable interpolateLines: boolean;
     @observable settingsPanelVisible: boolean;
@@ -74,8 +73,8 @@ export class SpatialProfileWidgetStore {
         this.markerTextVisible = val;
     };
 
-    @action setLogScale = (logScale: boolean) => {
-        this.logScaleY = logScale;
+    @action setMeanRmsVisible = (val: boolean) => {
+        this.meanRmsVisible = val;
     };
 
     @action setUsePoints = (val: boolean) => {
@@ -97,12 +96,11 @@ export class SpatialProfileWidgetStore {
         this.regionId = regionId;
 
         // Describes how the data is visualised
-        this.logScaleY = false;
         this.usePoints = false;
         this.interpolateLines = false;
         this.settingsPanelVisible = false;
         this.meanRmsVisible = false;
-        this.markerTextVisible = true;
+        this.markerTextVisible = false;
     }
 
     @computed get isAutoScaledX() {

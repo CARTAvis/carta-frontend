@@ -202,6 +202,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             logY: this.widgetStore.logScaleY,
             usePointSymbols: this.widgetStore.usePoints,
             interpolateLines: this.widgetStore.interpolateLines,
+            forceScientificNotationTicksY: true,
             graphClicked: this.onMinMoved,
             graphRightClicked: this.onMaxMoved,
             graphZoomedX: this.widgetStore.setXBounds,

@@ -3,7 +3,7 @@ import * as AST from "ast_wrapper";
 import {computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Chart} from "chart.js";
-import {NonIdealState} from "@blueprintjs/core";
+import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {WidgetConfig, WidgetProps} from "../../stores/WidgetsStore";
 import {clamp} from "../../util/math";
@@ -16,7 +16,7 @@ import {SpatialProfilerSettingsPanelComponent} from "./SpatialProfilerSettingsPa
 import "./SpatialProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
-const PANEL_CONTENT_WIDTH = 140;
+const PANEL_CONTENT_WIDTH = 160;
 
 @observer
 export class SpatialProfilerComponent extends React.Component<WidgetProps> {
@@ -64,7 +64,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return 20 + (this.widgetStore.settingsPanelVisible ? PANEL_CONTENT_WIDTH : 0);
     }
 
-    @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number } {
+    @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number } {
         const frame = this.props.appStore.getFrame(this.widgetStore.fileId);
         const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
         if (!frame) {
@@ -106,6 +106,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 localMaxX = Math.floor(localMaxX);
                 let yMin = Number.MAX_VALUE;
                 let yMax = -Number.MAX_VALUE;
+                let yMean;
+                let yRms;
+                // Variables for mean and RMS calculations
+                let ySum = 0;
+                let ySum2 = 0;
+                let yCount = 0;
 
                 let values: { x: number, y: number }[] = [];
                 if (isXProfile) {
@@ -120,6 +126,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             if (!isNaN(y)) {
                                 yMin = Math.min(yMin, y);
                                 yMax = Math.max(yMax, y);
+                                yCount++;
+                                ySum += y;
+                                ySum2 += y * y;
                             }
                         }
                     }
@@ -136,16 +145,24 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             if (!isNaN(y)) {
                                 yMin = Math.min(yMin, y);
                                 yMax = Math.max(yMax, y);
+                                yCount++;
+                                ySum += y;
+                                ySum2 += y * y;
                             }
                         }
                     }
+                }
+
+                if (yCount > 0) {
+                    yMean = ySum / yCount;
+                    yRms = Math.sqrt((ySum2 / yCount) - yMean * yMean);
                 }
 
                 if (yMin === Number.MAX_VALUE) {
                     yMin = undefined;
                     yMax = undefined;
                 }
-                return {values: values, xMin: localMinX, xMax: localMaxX, yMin, yMax};
+                return {values: values, xMin: localMinX, xMax: localMaxX, yMin, yMax, yMean, yRms};
             }
             else if (this.profileStore.x !== undefined && this.profileStore.y !== undefined) {
                 console.log(`Out of bounds profile request: (${this.profileStore.x}, ${this.profileStore.y})`);
@@ -182,6 +199,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 xMax = Math.floor(xMax);
                 let yMin = Number.MAX_VALUE;
                 let yMax = -Number.MAX_VALUE;
+                let yMean;
+                let yRms;
+                // Variables for mean and RMS calculations
+                let ySum = 0;
+                let ySum2 = 0;
+                let yCount = 0;
 
                 const N = Math.floor(Math.min(xMax - xMin, coordinateData.values.length));
                 let values: Array<{ x: number, y: number }>;
@@ -192,21 +215,30 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     }
 
                     for (let i = 0; i < values.length; i++) {
-                        if (values[i].x >= xMin && !isNaN(values[i].y)) {
-                            yMin = Math.min(yMin, values[i].y);
-                            yMax = Math.max(yMax, values[i].y);
-                        }
                         if (values[i].x > xMax) {
                             break;
                         }
+                        const y = values[i].y;
+                        if (values[i].x >= xMin && !isNaN(y)) {
+                            yMin = Math.min(yMin, y);
+                            yMax = Math.max(yMax, y);
+                            yCount++;
+                            ySum += y;
+                            ySum2 += y * y;
+                        }
                     }
+                }
+
+                if (yCount > 0) {
+                    yMean = ySum / yCount;
+                    yRms = Math.sqrt((ySum2 / yCount) - yMean * yMean);
                 }
 
                 if (yMin === Number.MAX_VALUE) {
                     yMin = undefined;
                     yMax = undefined;
                 }
-                return {values: values, xMin, xMax, yMin, yMax};
+                return {values: values, xMin, xMax, yMin, yMax, yMean, yRms};
             }
         }
         return null;
@@ -233,9 +265,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             xLabel: `${isXProfile ? "X" : "Y"} coordinate`,
             yLabel: "Value",
             darkMode: appStore.darkTheme,
-            logY: this.widgetStore.logScaleY,
             usePointSymbols: this.widgetStore.usePoints,
             interpolateLines: this.widgetStore.interpolateLines,
+            forceScientificNotationTicksY: true,
             graphZoomedX: this.widgetStore.setXBounds,
             graphZoomedY: this.widgetStore.setYBounds,
             graphZoomedXY: this.widgetStore.setXYBounds,
@@ -300,10 +332,6 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         linePlotProps.yMin = this.widgetStore.minY;
                         linePlotProps.yMax = this.widgetStore.maxY;
                     }
-                    // Fix log plot min bounds for entries with zeros in them
-                    if (this.widgetStore.logScaleY && linePlotProps.yMin <= 0) {
-                        linePlotProps.yMin = 0.5;
-                    }
                 }
                 const markerValue = isXProfile ? this.profileStore.x : this.profileStore.y;
                 linePlotProps.markers = [{
@@ -312,6 +340,17 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     draggable: false,
                     horizontal: false,
                 }];
+
+                if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean)) {
+                    linePlotProps.markers.push({
+                        value: currentPlotData.yMean,
+                        id: "marker-mean",
+                        draggable: false,
+                        horizontal: true,
+                        label: "Mean Value",
+                        color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                    });
+                }
             }
         }
 

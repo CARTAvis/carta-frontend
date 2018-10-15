@@ -49,6 +49,8 @@ export class LinePlotComponentProps {
     lineColor?: string;
     darkMode?: boolean;
     usePointSymbols?: boolean;
+    forceScientificNotationTicksX?: boolean;
+    forceScientificNotationTicksY?: boolean;
     interpolateLines?: boolean;
     markers?: LineMarker[];
     graphClicked?: (x: number) => void;
