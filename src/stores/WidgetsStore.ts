@@ -126,6 +126,11 @@ export class WidgetsStore {
             config.id = itemId;
             config.props.id = itemId;
         }
+        else if (id === SpatialProfilerComponent.WIDGET_CONFIG.id) {
+            const itemId = this.addNewSpatialProfileWidget();
+            config.id = itemId;
+            config.props.id = itemId;
+        }
         else {
             // Remove it from the floating widget array, while preserving its store
             if (this.floatingWidgets.find(w => w.id === id)) {

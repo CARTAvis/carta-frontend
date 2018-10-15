@@ -8,6 +8,7 @@ import {RenderConfigComponent} from "../../RenderConfig/RenderConfigComponent";
 import {LogComponent} from "../../Log/LogComponent";
 import {AnimatorComponent} from "../../Animator/AnimatorComponent";
 import "./ToolbarMenuComponent.css";
+import {SpatialProfilerComponent} from "../../SpatialProfiler/SpatialProfilerComponent";
 
 @observer
 export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }> {
@@ -39,6 +40,7 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
             this.createDragSource(layout, RenderConfigComponent.WIDGET_CONFIG, "renderConfigButton");
             this.createDragSource(layout, LogComponent.WIDGET_CONFIG, "logButton");
             this.createDragSource(layout, AnimatorComponent.WIDGET_CONFIG, "animatorButton");
+            this.createDragSource(layout, SpatialProfilerComponent.WIDGET_CONFIG, "spatialProfilerButton");
             this.createdDragSources = true;
         }
     }
@@ -57,6 +59,12 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
         this.props.appStore.widgetsStore.addFloatingWidget(AnimatorComponent.WIDGET_CONFIG);
     };
 
+    createSpatialProfilerWidget = () => {
+        let config = SpatialProfilerComponent.WIDGET_CONFIG;
+        config.id = this.props.appStore.widgetsStore.addNewSpatialProfileWidget();
+        this.props.appStore.widgetsStore.addFloatingWidget(config);
+    };
+
     public render() {
         let className = "toolbar-menu";
         if (this.props.appStore.darkTheme) {
@@ -72,6 +80,9 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
                 </Tooltip>
                 <Tooltip content="Animator Widget">
                     <Button icon={"layers"} id="animatorButton" minimal={true} onClick={this.createAnimatorWidget}/>
+                </Tooltip>
+                <Tooltip content="Spatial Profiler">
+                    <Button icon={"step-chart"} id="spatialProfilerButton" minimal={true} onClick={this.createSpatialProfilerWidget}/>
                 </Tooltip>
             </div>
         );

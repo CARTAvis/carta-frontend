@@ -108,7 +108,7 @@ export class SpatialProfileWidgetStore {
         this.cursorX = cursorVal;
     };
 
-    constructor(coordinate: string = "x", fileId: number = -1, regionId: number = -1) {
+    constructor(coordinate: string = "x", fileId: number = -1, regionId: number = 0) {
         // Describes which data is being visualised
         this.coordinate = coordinate;
         this.fileId = fileId;
