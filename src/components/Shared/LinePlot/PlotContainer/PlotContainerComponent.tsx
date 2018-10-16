@@ -21,6 +21,8 @@ export class PlotContainerProps {
     forceScientificNotationTicksX?: boolean;
     forceScientificNotationTicksY?: boolean;
     interpolateLines?: boolean;
+    showTopAxis?: boolean;
+    topAxisTickFormatter?: (value: number, index: number, values: number[]) => void;
     chartAreaUpdated?: (chartArea: ChartArea) => void;
     plotRefUpdated?: (plotRef: Scatter) => void;
 }
@@ -148,6 +150,9 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         else if (props.yLabel !== nextProps.yLabel) {
             return true;
         }
+        else if (props.topAxisTickFormatter !== nextProps.topAxisTickFormatter) {
+            return true;
+        }
 
         // Deep check of arrays (this should be optimised!)
         if (!props.data || !nextProps.data || props.data.length !== nextProps.data.length) {
@@ -176,6 +181,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             scales: {
                 xAxes: [{
                     id: "x-axis-0",
+                    position: "bottom",
                     afterBuildTicks: this.filterLinearTicks,
                     scaleLabel: {
                         fontColor: labelColor,
@@ -195,6 +201,20 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         drawBorder: false,
                         color: gridColor,
                         zeroLineColor: gridColor
+                    }
+                }, {
+                    id: "x-axis-1",
+                    position: "top",
+                    afterBuildTicks: this.filterLinearTicks,
+                    type: "linear",
+                    display: this.props.showTopAxis,
+                    ticks: {
+                        minor: {
+                            fontColor: labelColor,
+                        },
+                        maxRotation: 0,
+                        min: this.props.xMin,
+                        max: this.props.xMax,
                     }
                 }],
                 yAxes: [{
@@ -226,6 +246,10 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             }
         };
 
+        if (this.props.topAxisTickFormatter) {
+            plotOptions.scales.xAxes[1].ticks.callback = this.props.topAxisTickFormatter;
+        }
+
         if (this.props.logY) {
             plotOptions.scales.yAxes[0].afterBuildTicks = this.filterLogTicks;
             plotOptions.scales.yAxes[0].type = "logarithmic";
@@ -241,7 +265,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 label: "LineGraph",
                 type: "line",
                 data: this.props.data,
-                fill: false,
+                fill: false
             };
 
             if (this.props.usePointSymbols) {

@@ -16,7 +16,7 @@ import {SpatialProfilerSettingsPanelComponent} from "./SpatialProfilerSettingsPa
 import "./SpatialProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
-const PANEL_CONTENT_WIDTH = 160;
+const PANEL_CONTENT_WIDTH = 180;
 
 @observer
 export class SpatialProfilerComponent extends React.Component<WidgetProps> {
@@ -280,6 +280,26 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
+    private formatXProfileAst = (v) => {
+        const frame = this.props.appStore.getFrame(this.widgetStore.fileId);
+        if (!frame) {
+            return v;
+        }
+        const pointWCS = AST.pixToWCS(frame.wcsInfo, v, this.profileStore.y);
+        const normVals = AST.normalizeCoordinates(frame.wcsInfo, pointWCS.x, pointWCS.y);
+        return AST.getFormattedCoordinates(frame.wcsInfo, normVals.x, undefined).x;
+    };
+
+    private formatYProfileAst = (v) => {
+        const frame = this.props.appStore.getFrame(this.widgetStore.fileId);
+        if (!frame) {
+            return v;
+        }
+        const pointWCS = AST.pixToWCS(frame.wcsInfo, this.profileStore.x, v);
+        const normVals = AST.normalizeCoordinates(frame.wcsInfo, pointWCS.x, pointWCS.y);
+        return AST.getFormattedCoordinates(frame.wcsInfo, undefined, normVals.y).y;
+    };
+
     render() {
         const appStore = this.props.appStore;
         if (!this.widgetStore) {
@@ -309,33 +329,17 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.yLabel = `Value (${frame.unit})`;
                 }
 
-                // TODO: Add additional WCS-based axis with callback
-                const labelAttribute = `Label(${isXProfile ? 1 : 2})`;
-                // const astLabel = AST.getString(frame.wcsInfo, labelAttribute);
-                //
-                // if (astLabel) {
-                //     linePlotProps.xLabel = astLabel;
-                // }
-
-                if (frame.validWcs) {
-                    // if (isXProfile) {
-                    //     plotOptions.scales.xAxes[0].ticks.callback = (v) => {
-                    //         const pointWCS = AST.pixToWCS(frame.wcsInfo, v, this.profileStore.y);
-                    //         const normVals = AST.normalizeCoordinates(frame.wcsInfo, pointWCS.x, pointWCS.y);
-                    //         return AST.getFormattedCoordinates(frame.wcsInfo, normVals.x, undefined).x;
-                    //     };
-                    // }
-                    // else {
-                    //     plotOptions.scales.xAxes[0].ticks.callback = (v) => {
-                    //         const pointWCS = AST.pixToWCS(frame.wcsInfo, this.profileStore.x, v);
-                    //         const normVals = AST.normalizeCoordinates(frame.wcsInfo, pointWCS.x, pointWCS.y);
-                    //         return AST.getFormattedCoordinates(frame.wcsInfo, undefined, normVals.y).y;
-                    //     };
-                    // }
+                if (frame.validWcs && this.widgetStore.wcsAxisVisible) {
+                    linePlotProps.showTopAxis = true;
+                    if (isXProfile) {
+                        linePlotProps.topAxisTickFormatter = this.formatXProfileAst;
+                    }
+                    else {
+                        linePlotProps.topAxisTickFormatter = this.formatYProfileAst;
+                    }
                 }
                 else {
-                    // Use tick values directly
-                    // plotOptions.scales.xAxes[0].ticks.callback = (v) => v;
+                    linePlotProps.showTopAxis = false;
                 }
 
                 const currentPlotData = this.plotData;
@@ -368,13 +372,23 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     horizontal: false,
                 }];
 
-                if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean)) {
+                if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
                     linePlotProps.markers.push({
                         value: currentPlotData.yMean,
                         id: "marker-mean",
                         draggable: false,
                         horizontal: true,
-                        label: "Mean Value",
+                        color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                        dash: [5]
+                    });
+
+                    linePlotProps.markers.push({
+                        value: currentPlotData.yMean,
+                        id: "marker-rms",
+                        draggable: false,
+                        horizontal: true,
+                        width: currentPlotData.yRms,
+                        opacity: 0.2,
                         color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                     });
                 }

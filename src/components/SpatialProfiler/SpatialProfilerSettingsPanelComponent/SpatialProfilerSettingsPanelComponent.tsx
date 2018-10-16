@@ -7,6 +7,10 @@ import "./SpatialProfilerSettingsPanelComponent.css";
 @observer
 export class SpatialProfilerSettingsPanelComponent extends React.Component<{ widgetStore: SpatialProfileWidgetStore }> {
 
+    handleWcsAxisChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        this.props.widgetStore.setWcsAxisVisible(changeEvent.target.checked);
+    };
+
     handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.props.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
     };
@@ -38,6 +42,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<{ wid
                         <FormGroup label={"Coordinate"} inline={true}>
                             <HTMLSelect value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged}/>
                         </FormGroup>
+                        <Switch label={"Show WCS Axis"} checked={widgetStore.wcsAxisVisible} onChange={this.handleWcsAxisChanged}/>
                         <Switch label={"Show Mean/RMS"} checked={widgetStore.meanRmsVisible} onChange={this.handleMeanRmsChanged}/>
                         <Switch label={"Draw as Points"} checked={widgetStore.usePoints} onChange={this.handlePointsChanged}/>
                         <Switch label={"Interpolated"} disabled={widgetStore.usePoints} checked={this.props.widgetStore.interpolateLines} onChange={this.handleSteppedLinesChanged}/>

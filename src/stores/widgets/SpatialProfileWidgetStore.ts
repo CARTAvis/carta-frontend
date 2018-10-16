@@ -13,6 +13,7 @@ export class SpatialProfileWidgetStore {
     @observable interpolateLines: boolean;
     @observable settingsPanelVisible: boolean;
     @observable meanRmsVisible: boolean;
+    @observable wcsAxisVisible: boolean;
     @observable markerTextVisible: boolean;
 
     @computed get validCoordinates() {
@@ -96,6 +97,10 @@ export class SpatialProfileWidgetStore {
         this.meanRmsVisible = val;
     };
 
+    @action setWcsAxisVisible = (val: boolean) => {
+        this.wcsAxisVisible = val;
+    };
+
     @action setUsePoints = (val: boolean) => {
         this.usePoints = val;
     };
@@ -120,6 +125,7 @@ export class SpatialProfileWidgetStore {
         this.settingsPanelVisible = false;
         this.meanRmsVisible = false;
         this.markerTextVisible = false;
+        this.wcsAxisVisible = true;
     }
 
     @computed get isAutoScaledX() {
