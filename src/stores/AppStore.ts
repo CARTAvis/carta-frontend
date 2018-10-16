@@ -139,12 +139,16 @@ export class AppStore {
             }
 
             // Skip higher dimensions
-            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|NAXIS|CROTA)[3-9]/)) {
+            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
                 continue;
             }
 
             let value = entry.value;
             if (entry.name.toUpperCase() === "NAXIS") {
+                value = "2";
+            }
+
+            if (entry.name.toUpperCase() === "WCSAXES") {
                 value = "2";
             }
 
@@ -163,7 +167,6 @@ export class AppStore {
             }
             headerString += entryString;
         }
-
         const initResult = AST.initFrame(headerString);
         if (!initResult) {
             this.logStore.addWarning(`Problem processing WCS info in file ${frame.frameInfo.fileInfo.name}`, ["ast"]);
