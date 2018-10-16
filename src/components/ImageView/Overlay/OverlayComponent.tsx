@@ -1,5 +1,4 @@
 import * as React from "react";
-import {Colors} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import * as _ from "lodash";
 import {LabelType, OverlayStore} from "../../../stores/OverlayStore";
@@ -8,19 +7,6 @@ import {CursorInfo} from "../../../models/CursorInfo";
 import {FrameStore} from "../../../stores/FrameStore";
 import {Point2D} from "../../../models/Point2D";
 import "./OverlayComponent.css";
-
-// Set default AST palette
-AST.setPalette([         // AST color index:
-    Colors.BLACK,        // 0
-    Colors.WHITE,        // 1
-    Colors.RED4,         // 2
-    Colors.FOREST3,      // 3
-    Colors.BLUE1,        // 4
-    Colors.TURQUOISE5,   // 5
-    Colors.VIOLET4,      // 6
-    Colors.GOLD5,        // 7
-    Colors.GRAY4         // 8
-]);
 
 export class OverlayComponentProps {
     overlaySettings: OverlayStore;
