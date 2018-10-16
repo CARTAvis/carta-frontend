@@ -148,28 +148,8 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         
         const globalPanel = (
             <div className="panel-container">
-                <FormGroup inline={true} className="font-group" label="Font">
-                    {this.fontSelect(true, global.font, global.setFont)}
-                    <NumericInput
-                        min={7}
-                        placeholder="Font size"
-                        value={global.fontSize}
-                        onValueChange={(value: number) => global.setFontSize(value)}
-                    />
-                </FormGroup>
                 <FormGroup inline={true} label="Color">
                     {this.colorSelect(true, global.color, global.setColor)}
-                </FormGroup>
-                <FormGroup inline={true} label="Width" labelInfo="(px)">
-                    <NumericInput
-                        placeholder="Width"
-                        min={0.001}
-                        value={global.width}
-                        stepSize={0.5}
-                        minorStepSize={0.1}
-                        majorStepSize={1}
-                        onValueChange={(value: number) => global.setWidth(value)}
-                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Tolerance" labelInfo="(%)">
                     <NumericInput

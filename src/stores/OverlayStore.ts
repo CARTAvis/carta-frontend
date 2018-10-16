@@ -52,9 +52,6 @@ export class ASTSettingsString {
 export class OverlayGlobalSettings {
     @observable labelType: LabelType;
     @observable color: number;
-    @observable width: number;
-    @observable font: number;
-    @observable fontSize: number;
     @observable tolerance: number; // percentage
     @observable system: SystemType;
 
@@ -62,9 +59,6 @@ export class OverlayGlobalSettings {
         let astString = new ASTSettingsString();
         astString.add("Labelling", this.labelType);
         astString.add("Color", this.color);
-        astString.add("Width", this.width, (this.width > 0));
-        astString.add("Font", this.font);
-        astString.add("Size", this.fontSize);
         astString.add("Tol", (this.tolerance / 100).toFixed(2), (this.tolerance >= 0.001)); // convert to fraction
         astString.add("System", this.system, (this.system !== SystemType.Native));
         return astString.toString();
@@ -74,25 +68,12 @@ export class OverlayGlobalSettings {
         this.system = SystemType.Native;
         this.labelType = LabelType.Exterior;
         this.color = 4;
-        this.width = 1;
         this.tolerance = 1; // percentage
     }
     
     @action setColor = (color: number) => {
         this.color = color;
     };
-
-    @action setWidth(width: number) {
-        this.width = width;
-    }
-
-    @action setFont = (font: number) => {
-        this.font = font;
-    };
-
-    @action setFontSize(fontSize: number) {
-        this.fontSize = fontSize;
-    }
 
     @action setTolerance(tolerance: number) {
         this.tolerance = tolerance;
