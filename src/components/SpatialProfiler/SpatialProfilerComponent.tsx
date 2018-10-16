@@ -14,6 +14,7 @@ import {LinePlotComponent, LinePlotComponentProps} from "../Shared/LinePlot/Line
 import {PopoverSettingsComponent} from "../Shared/PopoverSettings/PopoverSettingsComponent";
 import {SpatialProfilerSettingsPanelComponent} from "./SpatialProfilerSettingsPanelComponent/SpatialProfilerSettingsPanelComponent";
 import "./SpatialProfilerComponent.css";
+import {FrameStore} from "../../stores/FrameStore";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 180;
@@ -60,45 +61,54 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return undefined;
     }
 
+    @computed get frame(): FrameStore {
+        if (this.props.appStore && this.widgetStore) {
+            return this.props.appStore.getFrame(this.widgetStore.fileId);
+        }
+        else {
+            return undefined;
+        }
+    }
+
     @computed get settingsPanelWidth(): number {
         return 20 + (this.widgetStore.settingsPanelVisible ? PANEL_CONTENT_WIDTH : 0);
     }
 
     @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number } {
-        const frame = this.props.appStore.getFrame(this.widgetStore.fileId);
         const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
-        if (!frame) {
+        if (!this.frame) {
             return null;
         }
 
         if (this.profileStore.approximate) {
             // Check if frame data can be used to approximate profile
-            if (this.profileStore.x >= frame.currentFrameView.xMin && this.profileStore.x <= frame.currentFrameView.xMax && this.profileStore.y >= frame.currentFrameView.yMin && this.profileStore.y <= frame.currentFrameView.yMax) {
-                const frameDataWidth = Math.floor((frame.currentFrameView.xMax - frame.currentFrameView.xMin) / frame.currentFrameView.mip);
-                const frameDataHeight = Math.floor((frame.currentFrameView.yMax - frame.currentFrameView.yMin) / frame.currentFrameView.mip);
-                const yOffset = Math.floor((this.profileStore.y - frame.currentFrameView.yMin) / frame.currentFrameView.mip);
-                const xOffset = Math.floor((this.profileStore.x - frame.currentFrameView.xMin) / frame.currentFrameView.mip);
+            if (this.profileStore.x >= this.frame.currentFrameView.xMin && this.profileStore.x <= this.frame.currentFrameView.xMax &&
+                this.profileStore.y >= this.frame.currentFrameView.yMin && this.profileStore.y <= this.frame.currentFrameView.yMax) {
+                const frameDataWidth = Math.floor((this.frame.currentFrameView.xMax - this.frame.currentFrameView.xMin) / this.frame.currentFrameView.mip);
+                const frameDataHeight = Math.floor((this.frame.currentFrameView.yMax - this.frame.currentFrameView.yMin) / this.frame.currentFrameView.mip);
+                const yOffset = Math.floor((this.profileStore.y - this.frame.currentFrameView.yMin) / this.frame.currentFrameView.mip);
+                const xOffset = Math.floor((this.profileStore.x - this.frame.currentFrameView.xMin) / this.frame.currentFrameView.mip);
 
                 let localMinX: number;
                 let localMaxX: number;
                 // Determine bounds automatically from the image view
                 if (this.widgetStore.isAutoScaledX) {
                     if (isXProfile) {
-                        localMinX = clamp(frame.requiredFrameView.xMin, 0, frame.frameInfo.fileInfoExtended.width);
-                        localMaxX = clamp(frame.requiredFrameView.xMax, 0, frame.frameInfo.fileInfoExtended.width);
+                        localMinX = clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width);
+                        localMaxX = clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width);
                     }
                     else {
-                        localMinX = clamp(frame.requiredFrameView.yMin, 0, frame.frameInfo.fileInfoExtended.height);
-                        localMaxX = clamp(frame.requiredFrameView.yMax, 0, frame.frameInfo.fileInfoExtended.height);
+                        localMinX = clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height);
+                        localMaxX = clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height);
                     }
                 }
                 else {
-                    localMinX = clamp(this.widgetStore.minX, 0, frame.frameInfo.fileInfoExtended.width);
+                    localMinX = clamp(this.widgetStore.minX, 0, this.frame.frameInfo.fileInfoExtended.width);
                     if (isXProfile) {
-                        localMaxX = clamp(this.widgetStore.maxX, 0, frame.frameInfo.fileInfoExtended.width);
+                        localMaxX = clamp(this.widgetStore.maxX, 0, this.frame.frameInfo.fileInfoExtended.width);
                     }
                     else {
-                        localMaxX = clamp(this.widgetStore.maxX, 0, frame.frameInfo.fileInfoExtended.height);
+                        localMaxX = clamp(this.widgetStore.maxX, 0, this.frame.frameInfo.fileInfoExtended.height);
                     }
                 }
 
@@ -116,12 +126,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 let values: { x: number, y: number }[] = [];
                 if (isXProfile) {
                     for (let i = 0; i < frameDataWidth; i++) {
-                        const x = frame.currentFrameView.xMin + frame.currentFrameView.mip * i;
+                        const x = this.frame.currentFrameView.xMin + this.frame.currentFrameView.mip * i;
                         if (x > localMaxX) {
                             break;
                         }
                         if (x >= localMinX) {
-                            const y = frame.rasterData[yOffset * frameDataWidth + i];
+                            const y = this.frame.rasterData[yOffset * frameDataWidth + i];
                             values.push({x, y});
                             if (!isNaN(y)) {
                                 yMin = Math.min(yMin, y);
@@ -135,12 +145,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
                 else {
                     for (let i = 0; i < frameDataHeight; i++) {
-                        const x = frame.currentFrameView.yMin + frame.currentFrameView.mip * i;
+                        const x = this.frame.currentFrameView.yMin + this.frame.currentFrameView.mip * i;
                         if (x > localMaxX) {
                             break;
                         }
                         if (x >= localMinX) {
-                            const y = frame.rasterData[i * frameDataWidth + xOffset];
+                            const y = this.frame.rasterData[i * frameDataWidth + xOffset];
                             values.push({x, y});
                             if (!isNaN(y)) {
                                 yMin = Math.min(yMin, y);
@@ -177,21 +187,21 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
                 if (this.widgetStore.isAutoScaledX) {
                     if (isXProfile) {
-                        xMin = clamp(frame.requiredFrameView.xMin, 0, frame.frameInfo.fileInfoExtended.width);
-                        xMax = clamp(frame.requiredFrameView.xMax, 0, frame.frameInfo.fileInfoExtended.width);
+                        xMin = clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width);
+                        xMax = clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width);
                     }
                     else {
-                        xMin = clamp(frame.requiredFrameView.yMin, 0, frame.frameInfo.fileInfoExtended.height);
-                        xMax = clamp(frame.requiredFrameView.yMax, 0, frame.frameInfo.fileInfoExtended.height);
+                        xMin = clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height);
+                        xMax = clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height);
                     }
                 }
                 else {
-                    xMin = clamp(this.widgetStore.minX, 0, frame.frameInfo.fileInfoExtended.width);
+                    xMin = clamp(this.widgetStore.minX, 0, this.frame.frameInfo.fileInfoExtended.width);
                     if (isXProfile) {
-                        xMax = clamp(this.widgetStore.maxX, 0, frame.frameInfo.fileInfoExtended.width);
+                        xMax = clamp(this.widgetStore.maxX, 0, this.frame.frameInfo.fileInfoExtended.width);
                     }
                     else {
-                        xMax = clamp(this.widgetStore.maxX, 0, frame.frameInfo.fileInfoExtended.height);
+                        xMax = clamp(this.widgetStore.maxX, 0, this.frame.frameInfo.fileInfoExtended.height);
                     }
                 }
 
@@ -281,23 +291,21 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private formatXProfileAst = (v) => {
-        const frame = this.props.appStore.getFrame(this.widgetStore.fileId);
-        if (!frame) {
+        if (!this.frame || !this.profileStore) {
             return v;
         }
-        const pointWCS = AST.pixToWCS(frame.wcsInfo, v, this.profileStore.y);
-        const normVals = AST.normalizeCoordinates(frame.wcsInfo, pointWCS.x, pointWCS.y);
-        return AST.getFormattedCoordinates(frame.wcsInfo, normVals.x, undefined).x;
+        const pointWCS = AST.pixToWCS(this.frame.wcsInfo, v, this.profileStore.y);
+        const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
+        return AST.getFormattedCoordinates(this.frame.wcsInfo, normVals.x, undefined).x;
     };
 
     private formatYProfileAst = (v) => {
-        const frame = this.props.appStore.getFrame(this.widgetStore.fileId);
-        if (!frame) {
+        if (!this.frame || !this.profileStore) {
             return v;
         }
-        const pointWCS = AST.pixToWCS(frame.wcsInfo, this.profileStore.x, v);
-        const normVals = AST.normalizeCoordinates(frame.wcsInfo, pointWCS.x, pointWCS.y);
-        return AST.getFormattedCoordinates(frame.wcsInfo, undefined, normVals.y).y;
+        const pointWCS = AST.pixToWCS(this.frame.wcsInfo, this.profileStore.x, v);
+        const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
+        return AST.getFormattedCoordinates(this.frame.wcsInfo, undefined, normVals.y).y;
     };
 
     render() {
@@ -323,13 +331,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         };
 
         if (appStore.activeFrame) {
-            const frame = appStore.getFrame(this.widgetStore.fileId);
-            if (this.profileStore && frame) {
-                if (frame.unit) {
-                    linePlotProps.yLabel = `Value (${frame.unit})`;
+            if (this.profileStore && this.frame) {
+                if (this.frame.unit) {
+                    linePlotProps.yLabel = `Value (${this.frame.unit})`;
                 }
 
-                if (frame.validWcs && this.widgetStore.wcsAxisVisible) {
+                if (this.frame.validWcs && this.widgetStore.wcsAxisVisible) {
                     linePlotProps.showTopAxis = true;
                     if (isXProfile) {
                         linePlotProps.topAxisTickFormatter = this.formatXProfileAst;
