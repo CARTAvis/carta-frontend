@@ -22,7 +22,7 @@ export class PlotContainerProps {
     forceScientificNotationTicksY?: boolean;
     interpolateLines?: boolean;
     showTopAxis?: boolean;
-    topAxisTickFormatter?: (value: number, index: number, values: number[]) => void;
+    topAxisTickFormatter?: (value: number, index: number, values: number[]) => string | number;
     chartAreaUpdated?: (chartArea: ChartArea) => void;
     plotRefUpdated?: (plotRef: Scatter) => void;
 }
@@ -150,6 +150,9 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         else if (props.yLabel !== nextProps.yLabel) {
             return true;
         }
+        else if (props.showTopAxis !== nextProps.showTopAxis) {
+            return true;
+        }
         else if (props.topAxisTickFormatter !== nextProps.topAxisTickFormatter) {
             return true;
         }
@@ -219,7 +222,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 }],
                 yAxes: [{
                     id: "y-axis-0",
-                    drawBorder: false,
                     scaleLabel: {
                         fontColor: labelColor,
                         display: true,

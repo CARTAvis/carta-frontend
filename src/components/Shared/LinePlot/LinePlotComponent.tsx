@@ -57,7 +57,7 @@ export class LinePlotComponentProps {
     interpolateLines?: boolean;
     markers?: LineMarker[];
     showTopAxis?: boolean;
-    topAxisTickFormatter?: (value: number, index: number, values: number[]) => void;
+    topAxisTickFormatter?: (value: number, index: number, values: number[]) => string | number;
     graphClicked?: (x: number) => void;
     graphRightClicked?: (x: number) => void;
     graphZoomedX?: (xMin: number, xMax: number) => void;
