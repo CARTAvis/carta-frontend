@@ -91,6 +91,7 @@ Module.setCanvas = function (canvas) {
 
 Module.set = Module.cwrap("set", "number", ["number", "string"]);
 Module.getString = Module.cwrap("getString", "string", ["number", "string"]);
+Module.dump = Module.cwrap("dump", null, ["number"]);
 Module.norm = Module.cwrap("norm", "number", ["number", "number"]);
 Module.format = Module.cwrap("format", "string", ["number", "number", "number"]);
 Module.transform = Module.cwrap("transform", "number", ["number", "number", "number", "number", "number", "number", "number"]);

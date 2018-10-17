@@ -25,6 +25,29 @@
         text-align: right;
     }
     
+    .font-group {
+    
+        .bp3-form-content {
+            display: flex;
+        }
+        
+        input {
+            width: 40px ! important;
+        }
+        
+        button > span > span {
+            width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: inline-block;
+            white-space: nowrap;
+        }
+        
+        button {
+            width: 190px;
+            margin-right: 5px;
+        }
+    }
 }
 
 .dropdown-color {
