@@ -34,6 +34,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         };
     }
 
+    private cachedFormattedCoordinates: string[];
+
     @observable width: number;
     @observable height: number;
 
@@ -290,22 +292,41 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
-    private formatXProfileAst = (v) => {
-        if (!this.frame || !this.profileStore) {
-            return v;
+    private calculateFormattedValues(values: number[]) {
+        if (!this.cachedFormattedCoordinates || this.cachedFormattedCoordinates.length !== values.length) {
+            this.cachedFormattedCoordinates = new Array(values.length);
         }
-        const pointWCS = AST.pixToWCS(this.frame.wcsInfo, v, this.profileStore.y);
-        const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
-        return AST.getFormattedCoordinates(this.frame.wcsInfo, normVals.x, undefined).x;
-    };
+        if (!this.frame || !this.profileStore || !this.widgetStore) {
+            return;
+        }
+        const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
 
-    private formatYProfileAst = (v) => {
+        if (isXProfile) {
+            for (let i = 0; i < values.length; i++) {
+                const pointWCS = AST.pixToWCS(this.frame.wcsInfo, values[i], this.profileStore.y);
+                const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
+                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, normVals.x, undefined).x;
+            }
+        }
+        else {
+            for (let i = 0; i < values.length; i++) {
+                const pointWCS = AST.pixToWCS(this.frame.wcsInfo, this.profileStore.x, values[i]);
+                const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
+                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, undefined, normVals.y).y;
+            }
+        }
+
+    }
+
+    private formatProfileAst = (v: number, i: number, values: number[]) => {
         if (!this.frame || !this.profileStore) {
             return v;
         }
-        const pointWCS = AST.pixToWCS(this.frame.wcsInfo, this.profileStore.x, v);
-        const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
-        return AST.getFormattedCoordinates(this.frame.wcsInfo, undefined, normVals.y).y;
+
+        if (i === 0) {
+            this.calculateFormattedValues(values);
+        }
+        return this.cachedFormattedCoordinates[i];
     };
 
     render() {
@@ -338,12 +359,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
                 if (this.frame.validWcs && this.widgetStore.wcsAxisVisible) {
                     linePlotProps.showTopAxis = true;
-                    if (isXProfile) {
-                        linePlotProps.topAxisTickFormatter = this.formatXProfileAst;
-                    }
-                    else {
-                        linePlotProps.topAxisTickFormatter = this.formatYProfileAst;
-                    }
+                    linePlotProps.topAxisTickFormatter = this.formatProfileAst;
                 }
                 else {
                     linePlotProps.showTopAxis = false;
