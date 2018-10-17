@@ -138,7 +138,7 @@ export class OverlayTitleSettings {
         this.gap = 0.02;
         this.customColor = false;
         this.color = 4;
-        this.font = 2;
+        this.font = 0;
         this.fontSize = 24;
         this.text = "A custom AST plot";
     }
@@ -403,7 +403,7 @@ export class OverlayNumberSettings {
     constructor() {
         this.visible = true;
         this.fontSize = 10;
-        this.font = 1;
+        this.font = 0;
         this.customColor = false;
         this.color = 4;
         this.customFormat = false;
@@ -512,7 +512,7 @@ export class OverlayLabelSettings {
     constructor() {
         this.visible = true;
         this.fontSize = 15;
-        this.font = 1;
+        this.font = 0;
         this.customColor = false;
         this.color = 4;
         this.customText = false;
