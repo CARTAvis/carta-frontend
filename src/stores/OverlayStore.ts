@@ -635,7 +635,20 @@ export class OverlayStore {
     }
 
     @computed get styleString() {
-        return this.stringify();
+        let astString = new ASTSettingsString();
+
+        astString.addSection(this.global.styleString);
+        astString.addSection(this.title.styleString);
+        astString.addSection(this.grid.styleString);
+        astString.addSection(this.border.styleString);
+        astString.addSection(this.ticks.styleString);
+        astString.addSection(this.axes.styleString);
+        astString.addSection(this.numbers.styleString);
+        astString.addSection(this.labels.styleString);
+        
+        astString.add("LabelUp(2)", "0")
+        
+        return astString.toString();
     }
 
     @computed get padding(): Padding {
@@ -664,20 +677,5 @@ export class OverlayStore {
             top: paddingValues[2],
             bottom: paddingValues[3]
         };
-    }
-
-    private stringify() {
-        let astString = new ASTSettingsString();
-
-        astString.addSection(this.global.styleString);
-        astString.addSection(this.title.styleString);
-        astString.addSection(this.grid.styleString);
-        astString.addSection(this.border.styleString);
-        astString.addSection(this.ticks.styleString);
-        astString.addSection(this.axes.styleString);
-        astString.addSection(this.numbers.styleString);
-        astString.addSection(this.labels.styleString);
-        
-        return astString.toString();
     }
 }
