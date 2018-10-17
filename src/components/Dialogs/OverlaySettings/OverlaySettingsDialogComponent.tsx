@@ -3,7 +3,7 @@ import {AppStore} from "../../../stores/AppStore";
 import {LabelType, SystemType} from "../../../stores/OverlayStore";
 import {observer} from "mobx-react";
 import "./OverlaySettingsDialogComponent.css";
-import {Button, Switch, Dialog, IDialogProps, Intent, Tab, Tabs, NumericInput, FormGroup, MenuItem, HTMLSelect, Collapse, Divider} from "@blueprintjs/core";
+import {Button, Switch, Dialog, IDialogProps, Intent, Tab, Tabs, NumericInput, FormGroup, MenuItem, HTMLSelect, Collapse, Divider, Tooltip} from "@blueprintjs/core";
 import {Select, ItemRenderer} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
 import {DraggableDialogComponent} from "../DraggableDialog/DraggableDialogComponent";
@@ -122,7 +122,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 items={astFonts}
                 disabled={!visible}
                 filterable={false}
-                popoverProps={{minimal: true, position: "auto-end"}}
+                popoverProps={{minimal: true, position: "auto-end", popoverClassName: "fontselect"}}
                 onItemSelect={(font) => fontSetter(font.id)}
             >
                 <Button text={(<span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>)} disabled={!visible} rightIcon="double-caret-vertical" />
@@ -148,28 +148,8 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         
         const globalPanel = (
             <div className="panel-container">
-                <FormGroup inline={true} label="Font">
-                    {this.fontSelect(true, global.font, global.setFont)}
-                    <NumericInput
-                        min={7}
-                        placeholder="Font size"
-                        value={global.fontSize}
-                        onValueChange={(value: number) => global.setFontSize(value)}
-                    />
-                </FormGroup>
                 <FormGroup inline={true} label="Color">
                     {this.colorSelect(true, global.color, global.setColor)}
-                </FormGroup>
-                <FormGroup inline={true} label="Width" labelInfo="(px)">
-                    <NumericInput
-                        placeholder="Width"
-                        min={0.001}
-                        value={global.width}
-                        stepSize={0.5}
-                        minorStepSize={0.1}
-                        majorStepSize={1}
-                        onValueChange={(value: number) => global.setWidth(value)}
-                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Tolerance" labelInfo="(%)">
                     <NumericInput
@@ -217,7 +197,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => title.setText(ev.currentTarget.value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Font" disabled={!title.visible}>
+                <FormGroup inline={true} className="font-group" label="Font" disabled={!title.visible}>
                     {this.fontSelect(title.visible, title.font, title.setFont)}
                     <NumericInput
                         min={7}
@@ -239,9 +219,18 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => title.setGap(value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Color" disabled={!title.visible}>
-                    {this.colorSelect(title.visible, title.color, title.setColor)}
+                <FormGroup inline={true} label="Custom color" disabled={!title.visible}>
+                    <Switch 
+                        checked={title.customColor}
+                        disabled={!title.visible}
+                        onChange={(ev) => title.setCustomColor(ev.currentTarget.checked)}
+                    />
                 </FormGroup>
+                <Collapse isOpen={title.customColor}>
+                    <FormGroup inline={true} label="Color" disabled={!title.visible}>
+                        {this.colorSelect(title.visible, title.color, title.setColor)}
+                    </FormGroup>
+                </Collapse>
             </div>
         );
         
@@ -259,33 +248,41 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => ticks.setDrawAll(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Set density automatically">
+                <FormGroup inline={true} label="Custom density">
                     <Switch 
-                        checked={ticks.dynamicDensity}
-                        onChange={(ev) => ticks.setDynamicDensity(ev.currentTarget.checked)}
+                        checked={ticks.customDensity}
+                        onChange={(ev) => ticks.setCustomDensity(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Density" labelInfo="(X)" disabled={ticks.dynamicDensity}>
-                    <NumericInput
-                        placeholder="Density"
-                        min={0}
-                        value={ticks.densityX}
-                        disabled={ticks.dynamicDensity}
-                        onValueChange={(value: number) => ticks.setDensityX(value)}
+                <Collapse isOpen={ticks.customDensity}>
+                    <FormGroup inline={true} label="Density" labelInfo="(X)">
+                        <NumericInput
+                            placeholder="Density"
+                            min={0}
+                            value={ticks.densityX}
+                            onValueChange={(value: number) => ticks.setDensityX(value)}
+                        />
+                    </FormGroup>
+                    <FormGroup inline={true} label="Density" labelInfo="(Y)">
+                        <NumericInput
+                            placeholder="Density"
+                            min={0}
+                            value={ticks.densityY}
+                            onValueChange={(value: number) => ticks.setDensityY(value)}
+                        />
+                    </FormGroup>
+                </Collapse>
+                <FormGroup inline={true} label="Custom color">
+                    <Switch 
+                        checked={ticks.customColor}
+                        onChange={(ev) => ticks.setCustomColor(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Density" labelInfo="(Y)" disabled={ticks.dynamicDensity}>
-                    <NumericInput
-                        placeholder="Density"
-                        min={0}
-                        value={ticks.densityY}
-                        disabled={ticks.dynamicDensity}
-                        onValueChange={(value: number) => ticks.setDensityY(value)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Color">
-                    {this.colorSelect(true, ticks.color, ticks.setColor)}
-                </FormGroup>
+                <Collapse isOpen={ticks.customColor}>
+                    <FormGroup inline={true} label="Color">
+                        {this.colorSelect(true, ticks.color, ticks.setColor)}
+                    </FormGroup>
+                </Collapse>
                 <FormGroup inline={true} label="Width" labelInfo="(px)">
                     <NumericInput
                         placeholder="Width"
@@ -332,9 +329,18 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => grid.setVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Color" disabled={!grid.visible}>
-                    {this.colorSelect(grid.visible, grid.color, grid.setColor)}
+                <FormGroup inline={true} label="Custom color" disabled={!grid.visible}>
+                    <Switch 
+                        checked={grid.customColor}
+                        disabled={!grid.visible}
+                        onChange={(ev) => grid.setCustomColor(ev.currentTarget.checked)}
+                    />
                 </FormGroup>
+                <Collapse isOpen={grid.customColor}>
+                    <FormGroup inline={true} label="Color" disabled={!grid.visible}>
+                        {this.colorSelect(grid.visible, grid.color, grid.setColor)}
+                    </FormGroup>
+                </Collapse>
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!grid.visible}>
                     <NumericInput
                         placeholder="Width"
@@ -347,36 +353,39 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => grid.setWidth(value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Set gap automatically">
+                <FormGroup inline={true} label="Custom gap" disabled={!grid.visible}>
                     <Switch 
-                        checked={grid.dynamicGap}
-                        onChange={(ev) => grid.setDynamicGap(ev.currentTarget.checked)}
+                        checked={grid.customGap}
+                        disabled={!grid.visible}
+                        onChange={(ev) => grid.setCustomGap(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Gap" labelInfo="(X)" disabled={grid.dynamicGap}>
-                    <NumericInput
-                        placeholder="Gap"
-                        min={0.001}
-                        stepSize={0.01}
-                        minorStepSize={0.001}
-                        majorStepSize={0.1}
-                        value={grid.gapX}
-                        disabled={grid.dynamicGap}
-                        onValueChange={(value: number) => grid.setGapX(value)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Gap" labelInfo="(Y)" disabled={grid.dynamicGap}>
-                    <NumericInput
-                        placeholder="Gap"
-                        min={0.001}
-                        stepSize={0.01}
-                        minorStepSize={0.001}
-                        majorStepSize={0.1}
-                        value={grid.gapY}
-                        disabled={grid.dynamicGap}
-                        onValueChange={(value: number) => grid.setGapY(value)}
-                    />
-                </FormGroup>
+                <Collapse isOpen={grid.customGap}>
+                    <FormGroup inline={true} label="Gap" labelInfo="(X)" disabled={!grid.visible}>
+                        <NumericInput
+                            placeholder="Gap"
+                            min={0.001}
+                            stepSize={0.01}
+                            minorStepSize={0.001}
+                            majorStepSize={0.1}
+                            value={grid.gapX}
+                            disabled={!grid.visible}
+                            onValueChange={(value: number) => grid.setGapX(value)}
+                        />
+                    </FormGroup>
+                    <FormGroup inline={true} label="Gap" labelInfo="(Y)" disabled={!grid.visible}>
+                        <NumericInput
+                            placeholder="Gap"
+                            min={0.001}
+                            stepSize={0.01}
+                            minorStepSize={0.001}
+                            majorStepSize={0.1}
+                            value={grid.gapY}
+                            disabled={!grid.visible}
+                            onValueChange={(value: number) => grid.setGapY(value)}
+                        />
+                    </FormGroup>
+                </Collapse>
             </div>
         );
         
@@ -388,9 +397,18 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => border.setVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Color" disabled={!border.visible}>
-                    {this.colorSelect(border.visible, border.color, border.setColor)}
+                <FormGroup inline={true} label="Custom color" disabled={!border.visible}>
+                    <Switch 
+                        checked={border.customColor}
+                        disabled={!border.visible}
+                        onChange={(ev) => border.setCustomColor(ev.currentTarget.checked)}
+                    />
                 </FormGroup>
+                <Collapse isOpen={border.customColor}>
+                    <FormGroup inline={true} label="Color" disabled={!border.visible}>
+                        {this.colorSelect(border.visible, border.color, border.setColor)}
+                    </FormGroup>
+                </Collapse>
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!border.visible}>
                     <NumericInput
                         placeholder="Width"
@@ -420,14 +438,23 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => axes.setVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup
-                    inline={true}
-                    label="Color"
-                    disabled={!interior || !axes.visible}
-                    helperText={disabledIfExterior}
-                >
-                    {this.colorSelect(interior && axes.visible, axes.color, axes.setColor)}
+                <FormGroup inline={true} label="Custom color" disabled={!interior || !axes.visible}>
+                    <Switch 
+                        checked={axes.customColor}
+                        disabled={!interior || !axes.visible}
+                        onChange={(ev) => axes.setCustomColor(ev.currentTarget.checked)}
+                    />
                 </FormGroup>
+                <Collapse isOpen={axes.customColor}>
+                    <FormGroup
+                        inline={true}
+                        label="Color"
+                        disabled={!interior || !axes.visible}
+                        helperText={disabledIfExterior}
+                    >
+                        {this.colorSelect(interior && axes.visible, axes.color, axes.setColor)}
+                    </FormGroup>
+                </Collapse>
                 <FormGroup
                     inline={true}
                     label="Width"
@@ -457,7 +484,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => numbers.setVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Font" disabled={!numbers.visible}>
+                <FormGroup inline={true} className="font-group" label="Font" disabled={!numbers.visible}>
                     {this.fontSelect(numbers.visible, numbers.font, numbers.setFont)}
                     <NumericInput
                         min={7}
@@ -467,17 +494,62 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => numbers.setFontSize(value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Color" disabled={!numbers.visible}>
-                    {this.colorSelect(numbers.visible, numbers.color, numbers.setColor)}
-                </FormGroup>
-                <FormGroup inline={true} label="Format" disabled={!numbers.visible}>
-                    <input
-                        className="bp3-input"
-                        type="text"
-                        placeholder="Format"
-                        value={numbers.format}
+                <FormGroup inline={true} label="Custom color" disabled={!numbers.visible}>
+                    <Switch 
+                        checked={numbers.customColor}
                         disabled={!numbers.visible}
-                        onChange={(ev) => numbers.setFormat(ev.currentTarget.value)}
+                        onChange={(ev) => numbers.setCustomColor(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <Collapse isOpen={numbers.customColor}>
+                    <FormGroup inline={true} label="Color" disabled={!numbers.visible}>
+                        {this.colorSelect(numbers.visible, numbers.color, numbers.setColor)}
+                    </FormGroup>
+                </Collapse>
+                <FormGroup inline={true} label="Custom format">
+                    <Switch 
+                        checked={numbers.customFormat}
+                        onChange={(ev) => numbers.setCustomFormat(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <Collapse isOpen={numbers.customFormat}>
+                    <FormGroup inline={true} label="Format" labelInfo="(X)">
+                        <HTMLSelect
+                            options={[{label: "H:M:S", value: "hms"}, {label: "D:M:S", value: "dms"}, {label: "Degrees", value: "d"}]}
+                            value={numbers.formatX}
+                            onChange={(event: React.FormEvent<HTMLSelectElement>) => numbers.setFormatX(event.currentTarget.value)}
+                        />
+                    </FormGroup>
+                    <FormGroup inline={true} label="Format" labelInfo="(Y)">
+                        <HTMLSelect
+                            options={[{label: "H:M:S", value: "hms"}, {label: "D:M:S", value: "dms"}, {label: "Degrees", value: "d"}]}
+                            value={numbers.formatY}
+                            onChange={(event: React.FormEvent<HTMLSelectElement>) => numbers.setFormatY(event.currentTarget.value)}
+                        />
+                    </FormGroup>
+                </Collapse>
+                <FormGroup inline={true} label="Custom precision">
+                    <Switch 
+                        checked={numbers.customPrecision}
+                        onChange={(ev) => numbers.setCustomPrecision(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <Collapse isOpen={numbers.customPrecision}>
+                    <FormGroup inline={true} label="Precision">
+                        <NumericInput
+                            placeholder="Precision"
+                            min={0}
+                            value={numbers.precision}
+                            onValueChange={(value: number) => numbers.setPrecision(value)}
+                        />
+                    </FormGroup>
+                </Collapse>
+                <FormGroup inline={true} label="Cursor precision">
+                    <NumericInput
+                        placeholder="Precision"
+                        min={0}
+                        value={numbers.cursorPrecision}
+                        onValueChange={(value: number) => numbers.setCursorPrecision(value)}
                     />
                 </FormGroup>
             </div>
@@ -491,34 +563,36 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => labels.setVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Set text automatically" disabled={!labels.visible}>
+                <FormGroup inline={true} label="Custom text" disabled={!labels.visible}>
                     <Switch 
-                        checked={labels.dynamicText}
+                        checked={labels.customText}
                         disabled={!labels.visible}
-                        onChange={(ev) => labels.setDynamicText(ev.currentTarget.checked)}
+                        onChange={(ev) => labels.setCustomText(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Text" labelInfo="(X)" disabled={!labels.visible || labels.dynamicText}>
-                    <input
-                        className="bp3-input"
-                        type="text"
-                        placeholder="Text"
-                        value={labels.textX}
-                        disabled={!labels.visible || labels.dynamicText}
-                        onChange={(ev) => labels.setTextX(ev.currentTarget.value)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Text" labelInfo="(Y)" disabled={!labels.visible || labels.dynamicText}>
-                    <input
-                        className="bp3-input"
-                        type="text"
-                        placeholder="Text"
-                        value={labels.textY}
-                        disabled={!labels.visible || labels.dynamicText}
-                        onChange={(ev) => labels.setTextY(ev.currentTarget.value)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Font" disabled={!labels.visible}>
+                <Collapse isOpen={labels.customText}>
+                    <FormGroup inline={true} label="Text" labelInfo="(X)" disabled={!labels.visible}>
+                        <input
+                            className="bp3-input"
+                            type="text"
+                            placeholder="Text"
+                            value={labels.textX}
+                            disabled={!labels.visible}
+                            onChange={(ev) => labels.setTextX(ev.currentTarget.value)}
+                        />
+                    </FormGroup>
+                    <FormGroup inline={true} label="Text" labelInfo="(Y)" disabled={!labels.visible}>
+                        <input
+                            className="bp3-input"
+                            type="text"
+                            placeholder="Text"
+                            value={labels.textY}
+                            disabled={!labels.visible}
+                            onChange={(ev) => labels.setTextY(ev.currentTarget.value)}
+                        />
+                    </FormGroup>
+                </Collapse>
+                <FormGroup inline={true} className="font-group" label="Font" disabled={!labels.visible}>
                     {this.fontSelect(labels.visible, labels.font, labels.setFont)}
                     <NumericInput
                         min={7}
@@ -540,9 +614,18 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => labels.setGap(value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Color" disabled={!labels.visible}>
-                    {this.colorSelect(labels.visible, labels.color, labels.setColor)}
+                <FormGroup inline={true} label="Custom color" disabled={!labels.visible}>
+                    <Switch 
+                        checked={labels.customColor}
+                        disabled={!labels.visible}
+                        onChange={(ev) => labels.setCustomColor(ev.currentTarget.checked)}
+                    />
                 </FormGroup>
+                <Collapse isOpen={labels.customColor}>
+                    <FormGroup inline={true} label="Color" disabled={!labels.visible}>
+                        {this.colorSelect(labels.visible, labels.color, labels.setColor)}
+                    </FormGroup>
+                </Collapse>
             </div>
         );
 
