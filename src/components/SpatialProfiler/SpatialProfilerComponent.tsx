@@ -315,7 +315,53 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, undefined, normVals.y).y;
             }
         }
+        this.trimDecimals();
+    }
 
+    // Trims unnecessary decimals from the list of formatted coordinates
+    private trimDecimals() {
+        if (!this.cachedFormattedCoordinates || !this.cachedFormattedCoordinates.length) {
+            return;
+        }
+        // If the existing tick list has repeats, don't trim
+        if (SpatialProfilerComponent.hasRepeats(this.cachedFormattedCoordinates)) {
+            return;
+        }
+        const decimalIndex = this.cachedFormattedCoordinates[0].indexOf(".");
+        // Skip lists without decimals. This assumes that all ticks have the same number of decimals
+        if (decimalIndex === -1) {
+            return;
+        }
+        const initialTrimLength = this.cachedFormattedCoordinates[0].length - decimalIndex;
+        for (let trim = initialTrimLength; trim > 0; trim--) {
+            let trimmedArray = this.cachedFormattedCoordinates.slice();
+            for (let i = 0; i < trimmedArray.length; i++) {
+                trimmedArray[i] = trimmedArray[i].slice(0, -trim);
+            }
+            if (!SpatialProfilerComponent.hasRepeats(trimmedArray)) {
+                this.cachedFormattedCoordinates = trimmedArray;
+                return;
+            }
+            // Skip an extra character after the first check, because of the decimal indicator
+            if (trim === initialTrimLength) {
+                trim --;
+            }
+        }
+    }
+
+    private static hasRepeats(ticks: string[]): boolean {
+        if (!ticks || ticks.length < 2) {
+            return false;
+        }
+        let prevTick = ticks[0];
+        for (let i = 1; i < ticks.length; i++) {
+            const nextTick = ticks[i];
+            if (prevTick === nextTick) {
+                return true;
+            }
+            prevTick = nextTick;
+        }
+        return false;
     }
 
     private formatProfileAst = (v: number, i: number, values: number[]) => {
@@ -323,6 +369,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             return v;
         }
 
+        // Cache all formatted values
         if (i === 0) {
             this.calculateFormattedValues(values);
         }
