@@ -304,10 +304,12 @@ export class AppStore {
             }
         }, {delay: 33});
 
-        // Set spatial requirements of cursor region on file load
+        // Set spatial and spectral requirements of cursor region on file load
         autorun(() => {
             if (this.activeFrame) {
+                let profileConfig = new CARTA.SetSpectralRequirements.SpectralConfig({coordinate: "z", statsTypes: [CARTA.StatsType.None]});
                 this.backendService.setSpatialRequirements(this.activeFrame.frameInfo.fileId, 0, ["x", "y"]);
+                this.backendService.setSpectralRequirements(this.activeFrame.frameInfo.fileId, 0, [profileConfig]);
             }
         });
 
@@ -332,6 +334,10 @@ export class AppStore {
                 }
                 profileStore.setProfiles(profileMap);
             }
+        });
+
+        this.backendService.getSpectralProfileStream().subscribe(spectralProfileData => {
+            console.log(spectralProfileData);
         });
 
         this.backendService.getRasterStream().subscribe(rasterImageData => {
