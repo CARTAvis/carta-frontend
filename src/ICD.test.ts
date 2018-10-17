@@ -146,4 +146,3 @@ describe("ICD tests", () => {
         }, numTestFiles * fileLoadTimeout);
     });
 });
-

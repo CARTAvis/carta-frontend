@@ -92,7 +92,6 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
 
         const panelMenu = (
             <Menu>
-                <Menu.Item text="Undo layout change" icon={"undo"} disabled={!appStore.layoutSettings.hasLayoutHistory} onClick={appStore.layoutSettings.undoLayoutChange}/>
                 <Menu.Item text="Profiles" icon={"timeline-line-chart"}>
                     <Menu.Item text="X-Profile"/>
                     <Menu.Item text="Y-Profile"/>

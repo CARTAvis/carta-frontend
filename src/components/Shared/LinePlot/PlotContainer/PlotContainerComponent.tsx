@@ -18,7 +18,11 @@ export class PlotContainerProps {
     lineColor?: string;
     darkMode?: boolean;
     usePointSymbols?: boolean;
+    forceScientificNotationTicksX?: boolean;
+    forceScientificNotationTicksY?: boolean;
     interpolateLines?: boolean;
+    showTopAxis?: boolean;
+    topAxisTickFormatter?: (value: number, index: number, values: number[]) => string | number;
     chartAreaUpdated?: (chartArea: ChartArea) => void;
     plotRefUpdated?: (plotRef: Scatter) => void;
 }
@@ -45,6 +49,58 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         }
     };
 
+    private filterLogTicks = (axis) => {
+        if (axis.ticks) {
+            // Limit log axis ticks to integer multiples of power of 10 (i.e 1, 2, 3, 0.8, 0.5)
+            let filteredTicks = axis.ticks.filter(v => {
+                const power = Math.floor(Math.log10(v));
+                const mantissa = v * Math.pow(10, power);
+                return (Math.abs(mantissa % 1.0) < 1e-6);
+            });
+            if (filteredTicks.length > 8) {
+                // Limit log axis ticks to power of 10 values or multiples of 2 of powers of 10 (i.e. 1, 2, 10, 0.1, 0.2)
+                filteredTicks = axis.ticks.filter(v => Math.abs(Math.log10(v) % 1.0) < 0.001 || Math.abs(Math.log10(v / 2.0) % 1.0) < 0.001);
+                if (filteredTicks.length > 8) {
+                    // Limit log axis ticks to power of 10 values
+                    filteredTicks = axis.ticks.filter(v => Math.abs(Math.log10(v) % 1.0) < 0.001);
+                }
+
+            }
+            axis.ticks = filteredTicks;
+        }
+    };
+
+    private filterLinearTicks = (axis) => {
+        let removeFirstTick = false;
+        let removeLastTick = false;
+        // Get inter-tick distance
+        if (axis.ticks && axis.ticks.length >= 4) {
+            const interTickDist = Math.abs(axis.ticks[2] - axis.ticks[1]);
+            const initialDist = Math.abs(axis.ticks[1] - axis.ticks[0]);
+            const finalDist = Math.abs(axis.ticks[axis.ticks.length - 1] - axis.ticks[axis.ticks.length - 2]);
+
+            // Flag initial tick removal if tick is too close to the subsequent tick
+            if (initialDist < interTickDist * 0.999) {
+                removeFirstTick = true;
+            }
+            // Flag final tick removal if tick is too close to the preceding tick
+            if (finalDist < interTickDist * 0.999) {
+                removeLastTick = true;
+            }
+        }
+        // Remove first and last ticks if they've been flagged
+        axis.ticks = axis.ticks.slice(removeFirstTick ? 1 : 0, removeLastTick ? -1 : undefined);
+    };
+
+    private formatTicksScientific = (value: number, index: number, values: number[]) => {
+        return value.toExponential(2);
+    };
+
+    private formatTicksAutomatic = (value: number, index: number, values: number[]) => {
+        // TODO: Work out how to revert to the automatic ChartJS formatting function
+        return value;
+    };
+
     shouldComponentUpdate(nextProps: PlotContainerProps) {
         const props = this.props;
 
@@ -59,6 +115,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         }
         else if (props.usePointSymbols !== nextProps.usePointSymbols) {
+            return true;
+        }
+        else if (props.forceScientificNotationTicksX !== nextProps.forceScientificNotationTicksX) {
+            return true;
+        }
+        else if (props.forceScientificNotationTicksY !== nextProps.forceScientificNotationTicksY) {
             return true;
         }
         else if (props.interpolateLines !== nextProps.interpolateLines) {
@@ -88,6 +150,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         else if (props.yLabel !== nextProps.yLabel) {
             return true;
         }
+        else if (props.showTopAxis !== nextProps.showTopAxis) {
+            return true;
+        }
+        else if (props.topAxisTickFormatter !== nextProps.topAxisTickFormatter) {
+            return true;
+        }
 
         // Deep check of arrays (this should be optimised!)
         if (!props.data || !nextProps.data || props.data.length !== nextProps.data.length) {
@@ -98,7 +166,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 return true;
             }
         }
-
         // Skip any other changes
         return false;
     }
@@ -117,6 +184,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             scales: {
                 xAxes: [{
                     id: "x-axis-0",
+                    position: "bottom",
+                    afterBuildTicks: this.filterLinearTicks,
                     scaleLabel: {
                         fontColor: labelColor,
                         display: true,
@@ -128,20 +197,31 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         },
                         maxRotation: 0,
                         min: this.props.xMin,
-                        max: this.props.xMax
-                    },
-                    afterBuildTicks: axis => {
-                        axis.ticks = axis.ticks.slice(1, -1);
+                        max: this.props.xMax,
+                        callback: this.props.forceScientificNotationTicksX ? this.formatTicksScientific : this.formatTicksAutomatic
                     },
                     gridLines: {
                         drawBorder: false,
                         color: gridColor,
                         zeroLineColor: gridColor
                     }
+                }, {
+                    id: "x-axis-1",
+                    position: "top",
+                    afterBuildTicks: this.filterLinearTicks,
+                    type: "linear",
+                    display: this.props.showTopAxis,
+                    ticks: {
+                        minor: {
+                            fontColor: labelColor,
+                        },
+                        maxRotation: 0,
+                        min: this.props.xMin,
+                        max: this.props.xMax,
+                    }
                 }],
                 yAxes: [{
                     id: "y-axis-0",
-                    drawBorder: false,
                     scaleLabel: {
                         fontColor: labelColor,
                         display: true,
@@ -153,7 +233,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         },
                         display: true,
                         min: this.props.yMin,
-                        max: this.props.yMax
+                        max: this.props.yMax,
+                        callback: this.props.forceScientificNotationTicksY ? this.formatTicksScientific : this.formatTicksAutomatic
                     },
                     gridLines: {
                         drawBorder: false,
@@ -167,15 +248,16 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             }
         };
 
+        if (this.props.topAxisTickFormatter) {
+            plotOptions.scales.xAxes[1].ticks.callback = this.props.topAxisTickFormatter;
+        }
+
         if (this.props.logY) {
-            plotOptions.scales.yAxes[0].afterBuildTicks = (axis) => {
-                // Limit log axis ticks to power of 10 values
-                axis.ticks = axis.ticks.filter(v => Math.abs(Math.log10(v) % 1.0) < 0.001);
-            };
+            plotOptions.scales.yAxes[0].afterBuildTicks = this.filterLogTicks;
             plotOptions.scales.yAxes[0].type = "logarithmic";
         }
         else {
-            plotOptions.scales.yAxes[0].afterBuildTicks = (axis) => axis;
+            plotOptions.scales.yAxes[0].afterBuildTicks = this.filterLinearTicks;
             plotOptions.scales.yAxes[0].type = "linear";
         }
 
@@ -185,7 +267,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 label: "LineGraph",
                 type: "line",
                 data: this.props.data,
-                fill: false,
+                fill: false
             };
 
             if (this.props.usePointSymbols) {

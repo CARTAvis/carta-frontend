@@ -1,10 +1,10 @@
 import * as React from "react";
+import {observer} from "mobx-react";
 import {AppStore} from "../../stores/AppStore";
-import {WidgetConfig} from "../../stores/widgets/FloatingWidgetStore";
+import {WidgetConfig} from "../../stores/WidgetsStore";
 import {FloatingWidgetComponent} from "../FloatingWidget/FloatingWidgetComponent";
 import {RenderConfigComponent} from "../RenderConfig/RenderConfigComponent";
 import {LogComponent} from "../Log/LogComponent";
-import {observer} from "mobx-react";
 import {PlaceholderComponent} from "../Placeholder/PlaceholderComponent";
 import {ImageViewComponent} from "../ImageView/ImageViewComponent";
 import {SpatialProfilerComponent} from "../SpatialProfiler/SpatialProfilerComponent";
@@ -14,11 +14,11 @@ import {AnimatorComponent} from "../Animator/AnimatorComponent";
 export class FloatingWidgetManagerComponent extends React.Component<{ appStore: AppStore }> {
 
     onFloatingWidgetSelected = (widget: WidgetConfig) => {
-        this.props.appStore.floatingWidgetStore.selectWidget(widget.id);
+        this.props.appStore.widgetsStore.selectFloatingWidget(widget.id);
     };
 
     onFloatingWidgetClosed = (widget: WidgetConfig) => {
-        this.props.appStore.floatingWidgetStore.removeWidget(widget.id);
+        this.props.appStore.widgetsStore.removeFloatingWidget(widget.id);
     };
 
     private getWidgetContent(widgetConfig: WidgetConfig) {
@@ -42,7 +42,7 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
 
     public render() {
         const appStore = this.props.appStore;
-        const widgetConfigs = appStore.floatingWidgetStore.widgets;
+        const widgetConfigs = appStore.widgetsStore.floatingWidgets;
 
         return (
             <div>

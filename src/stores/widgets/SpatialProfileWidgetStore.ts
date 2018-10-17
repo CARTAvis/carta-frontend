@@ -1,16 +1,51 @@
 import {action, computed, observable} from "mobx";
 
-export class RenderConfigWidgetStore {
+export class SpatialProfileWidgetStore {
+    @observable fileId: number;
+    @observable regionId: number;
+    @observable coordinate: string;
     @observable minX: number;
     @observable maxX: number;
     @observable minY: number;
     @observable maxY: number;
     @observable cursorX: number;
-    @observable logScaleY: boolean;
     @observable usePoints: boolean;
     @observable interpolateLines: boolean;
     @observable settingsPanelVisible: boolean;
+    @observable meanRmsVisible: boolean;
+    @observable wcsAxisVisible: boolean;
     @observable markerTextVisible: boolean;
+
+    @computed get validCoordinates() {
+        const validCoordinates = [];
+        for (let coordinate of ["x", "y"]) {
+            for (let stokes of ["", "I", "Q", "U", "V"]) {
+                validCoordinates.push(`${stokes}${coordinate}`);
+            }
+        }
+        return validCoordinates;
+    }
+
+    @action setFileId = (fileId: number) => {
+        // Reset zoom when changing between files
+        this.clearXYBounds();
+        this.fileId = fileId;
+    };
+
+    @action setRegionId = (regionId: number) => {
+        // Reset zoom when changing between regions
+        this.clearXYBounds();
+        this.regionId = regionId;
+    };
+
+    @action setCoordinate = (coordinate: string) => {
+        // Check coordinate validity
+        if (this.validCoordinates.indexOf(coordinate) !== -1) {
+            // Reset zoom when changing between coordinates
+            this.clearXYBounds();
+            this.coordinate = coordinate;
+        }
+    };
 
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
@@ -58,8 +93,12 @@ export class RenderConfigWidgetStore {
         this.markerTextVisible = val;
     };
 
-    @action setLogScale = (logScale: boolean) => {
-        this.logScaleY = logScale;
+    @action setMeanRmsVisible = (val: boolean) => {
+        this.meanRmsVisible = val;
+    };
+
+    @action setWcsAxisVisible = (val: boolean) => {
+        this.wcsAxisVisible = val;
     };
 
     @action setUsePoints = (val: boolean) => {
@@ -74,12 +113,19 @@ export class RenderConfigWidgetStore {
         this.cursorX = cursorVal;
     };
 
-    constructor() {
-        this.logScaleY = true;
+    constructor(coordinate: string = "x", fileId: number = -1, regionId: number = 0) {
+        // Describes which data is being visualised
+        this.coordinate = coordinate;
+        this.fileId = fileId;
+        this.regionId = regionId;
+
+        // Describes how the data is visualised
         this.usePoints = false;
         this.interpolateLines = false;
         this.settingsPanelVisible = false;
-        this.markerTextVisible = true;
+        this.meanRmsVisible = false;
+        this.markerTextVisible = false;
+        this.wcsAxisVisible = true;
     }
 
     @computed get isAutoScaledX() {

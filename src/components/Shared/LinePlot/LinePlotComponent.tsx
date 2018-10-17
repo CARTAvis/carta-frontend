@@ -29,8 +29,11 @@ export interface LineMarker {
     value: number;
     id: string;
     color?: string;
+    opacity?: number;
+    dash?: number[];
     label?: string;
     horizontal: boolean;
+    width?: number;
     draggable?: boolean;
     dragMove?: (val: number) => void;
 }
@@ -49,8 +52,12 @@ export class LinePlotComponentProps {
     lineColor?: string;
     darkMode?: boolean;
     usePointSymbols?: boolean;
+    forceScientificNotationTicksX?: boolean;
+    forceScientificNotationTicksY?: boolean;
     interpolateLines?: boolean;
     markers?: LineMarker[];
+    showTopAxis?: boolean;
+    topAxisTickFormatter?: (value: number, index: number, values: number[]) => string | number;
     graphClicked?: (x: number) => void;
     graphRightClicked?: (x: number) => void;
     graphZoomedX?: (xMin: number, xMax: number) => void;
@@ -393,6 +400,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const marker = this.props.markers[i];
                 // Default marker colors if none is given
                 const markerColor = marker.color || (this.props.darkMode ? Colors.RED4 : Colors.RED2);
+                const markerOpacity = marker.opacity || 1;
                 // Separate configuration for horizontal markers
                 if (marker.horizontal) {
                     let valueCanvasSpace = Math.floor(this.getPixelForValueY(marker.value, this.props.logY)) + 0.5 * devicePixelRatio;
@@ -409,13 +417,24 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                         const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
                         const arrowStart = 3;
                         lineSegments = [
-                            <Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor}/>,
-                            <Arrow listening={false} key={1} x={midPoint} y={0} points={[0, -arrowStart, 0, -arrowStart - arrowSize]} pointerLength={arrowSize} pointerWidth={arrowSize} fill={markerColor}/>,
-                            <Arrow listening={false} key={2} x={midPoint} y={0} points={[0, arrowStart, 0, arrowStart + arrowSize]} pointerLength={arrowSize} pointerWidth={arrowSize} fill={markerColor}/>
+                            <Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash}/>,
+                            <Arrow listening={false} key={1} x={midPoint} y={0} points={[0, -arrowStart, 0, -arrowStart - arrowSize]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor}/>,
+                            <Arrow listening={false} key={2} x={midPoint} y={0} points={[0, arrowStart, 0, arrowStart + arrowSize]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor}/>
                         ];
                     }
                     else {
-                        lineSegments = [<Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor}/>];
+                        if (marker.width) {
+                            const thickness = this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.logY) - this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.logY);
+                            let lowerBound = clamp(valueCanvasSpace - thickness, chartArea.top, chartArea.bottom);
+                            let upperBound = clamp(valueCanvasSpace + thickness, chartArea.top, chartArea.bottom);
+                            let croppedThickness = upperBound - lowerBound;
+                            lineSegments = [(
+                                <Rect listening={false} key={0} x={chartArea.left} y={lowerBound - valueCanvasSpace} width={lineWidth} height={croppedThickness} fill={markerColor} opacity={markerOpacity}/>
+                            )];
+                        }
+                        else {
+                            lineSegments = [<Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash}/>];
+                        }
                     }
                     if (marker.label) {
                         lineSegments.push(<Text align={"left"} fill={markerColor} key={lineSegments.length} text={marker.label} x={chartArea.left} y={0}/>);
@@ -457,13 +476,24 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                         const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
                         const arrowStart = 3;
                         lineSegments = [
-                            <Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor}/>,
-                            <Arrow listening={false} key={1} x={0} y={midPoint} points={[-arrowStart, 0, -arrowStart - arrowSize, 0]} pointerLength={arrowSize} pointerWidth={arrowSize} fill={markerColor}/>,
-                            <Arrow listening={false} key={2} x={0} y={midPoint} points={[arrowStart, 0, arrowStart + arrowSize, 0]} pointerLength={arrowSize} pointerWidth={arrowSize} fill={markerColor}/>
+                            <Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity}/>,
+                            <Arrow listening={false} key={1} x={0} y={midPoint} points={[-arrowStart, 0, -arrowStart - arrowSize, 0]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor}/>,
+                            <Arrow listening={false} key={2} x={0} y={midPoint} points={[arrowStart, 0, arrowStart + arrowSize, 0]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor}/>
                         ];
                     }
                     else {
-                        lineSegments = [<Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor}/>];
+                        if (marker.width) {
+                            const thickness = this.getPixelForValueX(marker.value + marker.width / 2.0) - this.getPixelForValueX(marker.value - marker.width / 2.0);
+                            let lowerBound = clamp(valueCanvasSpace - thickness, chartArea.left, chartArea.right);
+                            let upperBound = clamp(valueCanvasSpace + thickness, chartArea.left, chartArea.right);
+                            let croppedThickness = upperBound - lowerBound;
+                            lineSegments = [(
+                                <Rect listening={false} key={0} x={lowerBound - valueCanvasSpace} y={chartArea.top} width={croppedThickness} height={lineHeight} fill={markerColor} opacity={markerOpacity}/>
+                            )];
+                        }
+                        else {
+                            lineSegments = [<Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity}/>];
+                        }
                     }
                     if (marker.label) {
                         lineSegments.push(<Text align={"left"} fill={markerColor} key={lineSegments.length} text={marker.label} rotation={-90} x={0} y={chartArea.bottom}/>);

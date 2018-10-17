@@ -1,12 +1,12 @@
 import * as React from "react";
-import "./FloatingWidgetComponent.css";
+import {observer} from "mobx-react";
+import * as GoldenLayout from "golden-layout";
 import {Rnd} from "react-rnd";
 import {Icon} from "@blueprintjs/core";
-import * as GoldenLayout from "golden-layout";
 import {AppStore} from "../../stores/AppStore";
-import {WidgetConfig} from "../../stores/widgets/FloatingWidgetStore";
+import {WidgetConfig} from "../../stores/WidgetsStore";
 import {PlaceholderComponent} from "../Placeholder/PlaceholderComponent";
-import {observer} from "mobx-react";
+import "./FloatingWidgetComponent.css";
 
 class FloatingWidgetComponentProps {
     widgetConfig: WidgetConfig;
@@ -33,9 +33,9 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
     }
 
     updateDragSource() {
-        if (this.props.appStore.layoutSettings.layout && this.pinElementRef) {
+        if (this.props.appStore.widgetsStore.dockedLayout && this.pinElementRef) {
             // Check for existing drag sources
-            const layout = this.props.appStore.layoutSettings.layout;
+            const layout = this.props.appStore.widgetsStore.dockedLayout;
             const matchingSources = layout["_dragSources"].filter(d => d._itemConfig.id === this.props.widgetConfig.id);
             const existingSource = matchingSources.find(d => d._element[0] === this.pinElementRef);
             if (existingSource) {
@@ -70,10 +70,12 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
 
     public render() {
         const headerHeight = 25;
+        const appStore = this.props.appStore;
+        const widgetsStore = appStore.widgetsStore;
         let className = "floating-widget";
         let titleClass = this.props.isSelected ? "floating-header selected" : "floating-header";
 
-        if (this.props.appStore.darkTheme) {
+        if (appStore.darkTheme) {
             className += " bp3-dark";
             titleClass += " bp3-dark";
         }
@@ -84,8 +86,8 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 style={{zIndex: this.props.zIndex}}
                 default={{
                     // Shift by 5 pixels to compensate for 5px CSS margins
-                    x: widgetConfig.defaultX !== undefined ? widgetConfig.defaultX : this.props.appStore.floatingWidgetStore.defaultOffset + 5,
-                    y: widgetConfig.defaultY !== undefined ? widgetConfig.defaultY : this.props.appStore.floatingWidgetStore.defaultOffset,
+                    x: widgetConfig.defaultX !== undefined ? widgetConfig.defaultX : widgetsStore.defaultFloatingWidgetOffset + 5,
+                    y: widgetConfig.defaultY !== undefined ? widgetConfig.defaultY : widgetsStore.defaultFloatingWidgetOffset,
                     width: widgetConfig.defaultWidth,
                     height: widgetConfig.defaultHeight + headerHeight,
                 }}
