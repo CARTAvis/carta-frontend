@@ -12,7 +12,7 @@ import {URLConnectDialogComponent} from "./components/Dialogs/URLConnect/URLConn
 import {FloatingWidgetManagerComponent} from "./components/FloatingWidgetManager/FloatingWidgetManagerComponent";
 import {FileBrowserStore} from "./stores/FileBrowserStore";
 import {AppStore} from "./stores/AppStore";
-import {colorPalette} from "./stores/OverlayStore";
+import {dayPalette, nightPalette} from "./stores/OverlayStore";
 import {smoothStepOffset} from "./util/math";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
@@ -28,7 +28,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         const appStore = this.props.appStore;
         AST.onReady.then(() => {
-            AST.setPalette(colorPalette);
+            AST.setPalette(appStore.darkTheme ? nightPalette : dayPalette);
             appStore.astReady = true;
         });
         appStore.backendService.loggingEnabled = true;

@@ -3,15 +3,27 @@ import {action, computed, observable} from "mobx";
 import * as AST from "ast_wrapper";
 import {FrameStore} from "./FrameStore";
 
-export const colorPalette = [
+export const dayPalette = [
+    Colors.BLACK,        // 0
+    Colors.WHITE,        // 1
+    Colors.RED2,         // 2
+    Colors.FOREST3,      // 3
+    Colors.BLUE2,        // 4
+    Colors.TURQUOISE2,   // 5
+    Colors.VIOLET2,      // 6
+    Colors.GOLD2,        // 7
+    Colors.GRAY2         // 8
+];
+
+export const nightPalette = [
     Colors.BLACK,        // 0
     Colors.WHITE,        // 1
     Colors.RED4,         // 2
-    Colors.FOREST3,      // 3
-    Colors.BLUE1,        // 4
-    Colors.TURQUOISE5,   // 5
+    Colors.FOREST4,      // 3
+    Colors.BLUE4,        // 4
+    Colors.TURQUOISE4,   // 5
     Colors.VIOLET4,      // 6
-    Colors.GOLD5,        // 7
+    Colors.GOLD4,        // 7
     Colors.GRAY4         // 8
 ];
 
