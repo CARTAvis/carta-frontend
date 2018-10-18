@@ -9,6 +9,7 @@ import {LogComponent} from "../../Log/LogComponent";
 import {AnimatorComponent} from "../../Animator/AnimatorComponent";
 import "./ToolbarMenuComponent.css";
 import {SpatialProfilerComponent} from "../../SpatialProfiler/SpatialProfilerComponent";
+import {SpectralProfilerComponent} from "../../SpectralProfiler/SpectralProfilerComponent";
 
 @observer
 export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }> {
@@ -41,6 +42,7 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
             this.createDragSource(layout, LogComponent.WIDGET_CONFIG, "logButton");
             this.createDragSource(layout, AnimatorComponent.WIDGET_CONFIG, "animatorButton");
             this.createDragSource(layout, SpatialProfilerComponent.WIDGET_CONFIG, "spatialProfilerButton");
+            this.createDragSource(layout, SpectralProfilerComponent.WIDGET_CONFIG, "spectralProfilerButton");
             this.createdDragSources = true;
         }
     }
@@ -65,6 +67,12 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
         this.props.appStore.widgetsStore.addFloatingWidget(config);
     };
 
+    createSpectralProfilerWidget = () => {
+        let config = SpectralProfilerComponent.WIDGET_CONFIG;
+        config.id = this.props.appStore.widgetsStore.addNewSpectralProfileWidget();
+        this.props.appStore.widgetsStore.addFloatingWidget(config);
+    };
+
     public render() {
         let className = "toolbar-menu";
         if (this.props.appStore.darkTheme) {
@@ -82,7 +90,10 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
                     <Button icon={"layers"} id="animatorButton" minimal={true} onClick={this.createAnimatorWidget}/>
                 </Tooltip>
                 <Tooltip content="Spatial Profiler">
-                    <Button icon={"step-chart"} id="spatialProfilerButton" minimal={true} onClick={this.createSpatialProfilerWidget}/>
+                    <Button icon={"timeline-line-chart"} id="spatialProfilerButton" minimal={true} onClick={this.createSpatialProfilerWidget}/>
+                </Tooltip>
+                <Tooltip content="Spectral Profiler">
+                    <Button icon={"step-chart"} id="spectralProfilerButton" minimal={true} onClick={this.createSpectralProfilerWidget}/>
                 </Tooltip>
             </div>
         );

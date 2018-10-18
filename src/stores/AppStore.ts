@@ -14,6 +14,8 @@ import {AnimationState, AnimatorStore} from "./AnimatorStore";
 import SpatialProfile = CARTA.SpatialProfile;
 import {smoothStepOffset} from "../util/math";
 import {WidgetsStore} from "./WidgetsStore";
+import {SpectralProfileStore} from "./SpectralProfileStore";
+import SpectralProfile = CARTA.SpectralProfile;
 
 export class AppStore {
     // Backend service
@@ -34,8 +36,9 @@ export class AppStore {
     // Cursor information
     @observable cursorInfo: CursorInfo;
     @observable cursorFrozen: boolean;
-    // Spatial profiles
+    // Profiles
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
+    @observable spectralProfiles: Map<string, SpectralProfileStore>;
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
@@ -219,6 +222,7 @@ export class AppStore {
         this.backendService = new BackendService(this.logStore);
         this.astReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
+        this.spectralProfiles = new Map<string, SpectralProfileStore>();
         this.frames = [];
         this.activeFrame = null;
         this.animatorStore = new AnimatorStore(this);
@@ -336,8 +340,24 @@ export class AppStore {
             }
         });
 
+        // Subscribe to the spectral profile data stream
         this.backendService.getSpectralProfileStream().subscribe(spectralProfileData => {
-            console.log(spectralProfileData);
+            if (this.frames.find(frame => frame.frameInfo.fileId === spectralProfileData.fileId)) {
+                const key = `${spectralProfileData.fileId}-${spectralProfileData.regionId}`;
+                let profileStore = this.spectralProfiles.get(key);
+                if (!profileStore) {
+                    profileStore = new SpectralProfileStore(spectralProfileData.fileId, spectralProfileData.regionId);
+                    this.spectralProfiles.set(key, profileStore);
+                }
+
+                profileStore.channelValues = spectralProfileData.channelVals;
+                profileStore.stokes = spectralProfileData.stokes;
+                const profileMap = new Map<string, CARTA.SpectralProfile>();
+                for (let profile of spectralProfileData.profiles) {
+                    profileMap.set(profile.coordinate, profile as SpectralProfile);
+                }
+                profileStore.setProfiles(profileMap);
+            }
         });
 
         this.backendService.getRasterStream().subscribe(rasterImageData => {

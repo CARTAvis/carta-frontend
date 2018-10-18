@@ -10,6 +10,8 @@ import {ImageViewComponent} from "../components/ImageView/ImageViewComponent";
 import {LogComponent} from "../components/Log/LogComponent";
 import {AnimatorComponent} from "../components/Animator/AnimatorComponent";
 import {PlaceholderComponent} from "../components/Placeholder/PlaceholderComponent";
+import {SpectralProfileWidgetStore} from "./widgets/SpectralProfileWidgetStore";
+import {SpectralProfilerComponent} from "../components/SpectralProfiler/SpectralProfilerComponent";
 
 export class WidgetConfig {
     id: string;
@@ -37,12 +39,14 @@ export class WidgetsStore {
     // Widget Stores
     @observable renderConfigWidgets: Map<string, RenderConfigWidgetStore>;
     @observable spatialProfileWidgets: Map<string, SpatialProfileWidgetStore>;
+    @observable spectralProfileWidgets: Map<string, SpectralProfileWidgetStore>;
     @observable defaultFloatingWidgetOffset: number;
     private appStore: AppStore;
 
     constructor(appStore: AppStore) {
         this.appStore = appStore;
         this.spatialProfileWidgets = new Map<string, SpatialProfileWidgetStore>();
+        this.spectralProfileWidgets = new Map<string, SpectralProfileWidgetStore>();
         this.renderConfigWidgets = new Map<string, RenderConfigWidgetStore>();
         this.floatingWidgets = [];
         this.defaultFloatingWidgetOffset = 100;
@@ -60,6 +64,8 @@ export class WidgetsStore {
                 return AnimatorComponent.WIDGET_CONFIG;
             case SpatialProfilerComponent.WIDGET_CONFIG.type:
                 return SpatialProfilerComponent.WIDGET_CONFIG;
+            case SpectralProfilerComponent.WIDGET_CONFIG.type:
+                return SpectralProfilerComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -71,6 +77,7 @@ export class WidgetsStore {
         layout.registerComponent("placeholder", PlaceholderComponent);
         layout.registerComponent("image-view", ImageViewComponent);
         layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
+        layout.registerComponent("spectral-profiler", SpectralProfilerComponent);
         layout.registerComponent("render-config", RenderConfigComponent);
         layout.registerComponent("log", LogComponent);
         layout.registerComponent("animator", AnimatorComponent);
@@ -218,6 +225,27 @@ export class WidgetsStore {
 
     // endregion
 
+    // region Spectral Profile Widgets
+    @action addNewSpectralProfileWidget() {
+        const defaultId = SpectralProfilerComponent.WIDGET_CONFIG.id;
+        // Find the next appropriate ID
+        let nextIndex = 0;
+        while (true) {
+            const nextId = `${defaultId}-${nextIndex}`;
+            if (!this.spectralProfileWidgets.has(nextId)) {
+                this.spectralProfileWidgets.set(nextId, new SpectralProfileWidgetStore());
+                return nextId;
+            }
+            nextIndex++;
+        }
+    }
+
+    @action addSpectralProfileWidget(id: string, fileId: number, regionId: number, coordinate: string) {
+        this.spectralProfileWidgets.set(id, new SpectralProfileWidgetStore(coordinate, fileId, regionId));
+    }
+
+    // endregion
+
     // region Render Config Widgets
     @action addNewRenderConfigWidget() {
         const defaultId = RenderConfigComponent.WIDGET_CONFIG.id;
@@ -276,6 +304,7 @@ export class WidgetsStore {
             if (widget.type === RenderConfigComponent.WIDGET_CONFIG.type) {
                 this.appStore.widgetsStore.removeRenderConfigWidget(widget.id);
             }
+            // TODO: Remove spatial and spectral profiles widgets' stores when closing
         }
     };
     // endregion

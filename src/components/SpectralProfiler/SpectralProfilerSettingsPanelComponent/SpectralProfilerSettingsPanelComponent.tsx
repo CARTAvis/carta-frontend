@@ -1,15 +1,11 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Button, ControlGroup, FormGroup, HTMLSelect, Switch} from "@blueprintjs/core";
-import {SpatialProfileWidgetStore} from "../../../stores/widgets/SpatialProfileWidgetStore";
-import "./SpatialProfilerSettingsPanelComponent.css";
+import {SpectralProfileWidgetStore} from "../../../stores/widgets/SpectralProfileWidgetStore";
+import "./SpectralProfilerSettingsPanelComponent.css";
 
 @observer
-export class SpatialProfilerSettingsPanelComponent extends React.Component<{ widgetStore: SpatialProfileWidgetStore }> {
-
-    handleWcsAxisChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.props.widgetStore.setWcsAxisVisible(changeEvent.target.checked);
-    };
+export class SpectralProfilerSettingsPanelComponent extends React.Component<{ widgetStore: SpectralProfileWidgetStore }> {
 
     handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.props.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
@@ -30,19 +26,16 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<{ wid
     render() {
         const widgetStore = this.props.widgetStore;
         const profileCoordinateOptions = [{
-            value: "x", label: "X"
-        }, {
-            value: "y", label: "Y"
+            value: "z", label: "Z"
         }];
 
         return (
             <React.Fragment>
-                <FormGroup className={"spatial-profile-settings-panel-form"}>
+                <FormGroup className={"spectral-profile-settings-panel-form"}>
                     <ControlGroup fill={true} vertical={true}>
                         <FormGroup label={"Coordinate"} inline={true}>
                             <HTMLSelect value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged}/>
                         </FormGroup>
-                        <Switch label={"Show WCS Axis"} checked={widgetStore.wcsAxisVisible} onChange={this.handleWcsAxisChanged}/>
                         <Switch label={"Show Mean/RMS"} checked={widgetStore.meanRmsVisible} onChange={this.handleMeanRmsChanged}/>
                         <Switch label={"Draw as Points"} checked={widgetStore.usePoints} onChange={this.handlePointsChanged}/>
                         <Switch label={"Interpolated"} disabled={widgetStore.usePoints} checked={this.props.widgetStore.interpolateLines} onChange={this.handleSteppedLinesChanged}/>

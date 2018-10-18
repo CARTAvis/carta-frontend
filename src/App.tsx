@@ -104,10 +104,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     props: {appStore: this.props.appStore, id: "spatial-profiler-1", docked: true}
                 }, {
                     type: "react-component",
-                    component: "placeholder",
-                    title: "Z Profile: Cursor",
-                    id: "placeholder-1",
-                    props: {appStore: this.props.appStore, id: "placeholder-1", label: "Spectral placeholder"}
+                    component: "spectral-profiler",
+                    id: "spectral-profiler-0",
+                    props: {appStore: this.props.appStore, id: "spectral-profiler-0", docked: true}
                 }, {
                     type: "stack",
                     content: [{
