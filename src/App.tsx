@@ -134,6 +134,8 @@ export class App extends React.Component<{ appStore: AppStore }> {
         }, this.glContainer);
 
         widgetsStore.setDockedLayout(layout);
+        this.props.appStore.setDarkTheme();
+        this.props.appStore.setLightTheme();
     }
 
     // GoldenLayout resize handler
@@ -150,9 +152,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
         if (appStore.darkTheme) {
             className += " bp3-dark";
             glClassName += " dark-theme";
-        }
-        else {
-            glClassName += " light-theme";
         }
 
         document.body.style.backgroundColor = appStore.darkTheme ? Colors.DARK_GRAY4 : Colors.WHITE;

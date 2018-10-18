@@ -55,12 +55,7 @@ $border-radius-adjustment: 10px;
 .lm_splitter {
     position: relative;
     z-index: 20;
-
-    &:hover, // When hovered by mouse...
-    &.lm_dragging {
-        background: orange;
-    }
-
+    
     &.lm_vertical {
         width: calc(100% - #{$border-radius-adjustment});
         left: $border-radius-adjustment/2;
@@ -124,7 +119,7 @@ $border-radius-adjustment: 10px;
         float: left;
         height: $height2;
         margin-top: 1px;
-        padding: 0px 10px 5px;
+        padding: 0px 10px 4px;
         padding-right: 25px;
         position: relative;
 
