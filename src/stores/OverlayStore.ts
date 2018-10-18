@@ -602,7 +602,6 @@ export class OverlayStore {
     }
 
     @computed get padding(): Padding {
-        const displayTitle = 0;
         const displayLabelText = this.labels.visible;        
         const displayNumText = this.numbers.visible;
 
@@ -616,7 +615,7 @@ export class OverlayStore {
         const paddingRatios = [
             Math.max(minimumPaddingRatio, (displayLabelText ? 0.5 : 0) + (displayNumText ? 0.5 : 0)),
             minimumPaddingRatio,
-            (displayTitle ? 1.0 : minimumPaddingRatio),
+            minimumPaddingRatio,
             Math.max(minimumPaddingRatio, (displayLabelText ? 0.5 : 0) + (displayNumText ? 0.5 : 0))
         ];
 
