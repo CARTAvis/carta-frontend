@@ -82,12 +82,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
                         title: "Log",
                         id: "log-docked",
                         props: {appStore: this.props.appStore, id: "log-docked", docked: true}
-                    }, {
-                        type: "react-component",
-                        component: "animator",
-                        title: "Animator",
-                        id: "animator-0",
-                        props: {appStore: this.props.appStore, id: "animator-0", docked: true}
                     }]
                 }]
             }, {
@@ -111,16 +105,10 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     type: "stack",
                     content: [{
                         type: "react-component",
-                        component: "placeholder",
-                        title: "Histogram: Region #1",
-                        id: "placeholder-2",
-                        props: {appStore: this.props.appStore, id: "placeholder-2", label: "Histogram placeholder"}
-                    }, {
-                        type: "react-component",
-                        component: "placeholder",
-                        title: "Statistics: Region #1",
-                        id: "placeholder-3",
-                        props: {appStore: this.props.appStore, id: "placeholder-3", label: "Statistics placeholder"}
+                        component: "animator",
+                        title: "Animator",
+                        id: "animator-0",
+                        props: {appStore: this.props.appStore, id: "animator-0", docked: true}
                     }]
                 }]
             }]
@@ -128,6 +116,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         widgetsStore.addSpatialProfileWidget("spatial-profiler-0", -1, 0, "x");
         widgetsStore.addSpatialProfileWidget("spatial-profiler-1", -1, 0, "y");
+        widgetsStore.addSpectralProfileWidget("spectral-profiler-0", -1, 0, "z");
         widgetsStore.addRenderConfigWidget("render-config-0");
 
         const layout = new GoldenLayout({
