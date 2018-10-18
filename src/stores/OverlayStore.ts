@@ -113,65 +113,6 @@ export class OverlayGlobalSettings {
     }
 }
 
-export class OverlayTitleSettings {
-    @observable visible: boolean;
-    @observable font: number;
-    @observable fontSize: number;
-    @observable gap: number;
-    @observable customColor: boolean;
-    @observable color: number;
-    @observable text: string;
-
-    @computed get styleString() {
-        let astString = new ASTSettingsString();
-        astString.add("DrawTitle", this.visible);
-        astString.add("Font(Title)", this.font);
-        astString.add("Size(Title)", this.fontSize);
-        astString.add("TitleGap", this.gap);
-        astString.add("Color(Title)", this.color, this.customColor);
-        astString.add("Title(1)", this.text);
-        return astString.toString();
-    }
-    
-    constructor() {
-        this.visible = false;
-        this.gap = 0.02;
-        this.customColor = false;
-        this.color = 4;
-        this.font = 0;
-        this.fontSize = 24;
-        this.text = "A custom AST plot";
-    }
-
-    @action setVisible(visible: boolean = true) {
-        this.visible = visible;
-    }
-
-    @action setText(text: string) {
-        this.text = text;
-    }
-
-    @action setFont = (font: number) => {
-        this.font = font;
-    };
-
-    @action setFontSize(fontSize: number) {
-        this.fontSize = fontSize;
-    }
-
-    @action setGap(gap: number) {
-        this.gap = gap;
-    }
-
-    @action setCustomColor(customColor: boolean) {
-        this.customColor = customColor;
-    }
-
-    @action setColor = (color: number) => {
-        this.color = color;
-    };
-}
-
 export class OverlayGridSettings {
     @observable visible: boolean;
     @observable customColor: boolean;
@@ -579,7 +520,6 @@ export class OverlayStore {
     // Individual settings
     @observable global: OverlayGlobalSettings;
     @observable grid: OverlayGridSettings;
-    @observable title: OverlayTitleSettings;
     @observable border: OverlayBorderSettings;
     @observable axes: OverlayAxisSettings;
     @observable numbers: OverlayNumberSettings;
@@ -607,7 +547,6 @@ export class OverlayStore {
     constructor() {
         this.global = new OverlayGlobalSettings();
         this.grid = new OverlayGridSettings();
-        this.title = new OverlayTitleSettings();
         this.border = new OverlayBorderSettings();
         this.axes = new OverlayAxisSettings();
         this.numbers = new OverlayNumberSettings();
@@ -650,7 +589,6 @@ export class OverlayStore {
         let astString = new ASTSettingsString();
 
         astString.addSection(this.global.styleString);
-        astString.addSection(this.title.styleString);
         astString.addSection(this.grid.styleString);
         astString.addSection(this.border.styleString);
         astString.addSection(this.ticks.styleString);
@@ -664,7 +602,7 @@ export class OverlayStore {
     }
 
     @computed get padding(): Padding {
-        const displayTitle = this.title.visible;
+        const displayTitle = 0;
         const displayLabelText = this.labels.visible;        
         const displayNumText = this.numbers.visible;
 
@@ -676,10 +614,10 @@ export class OverlayStore {
         }
         const minimumPaddingRatio = 0.05;
         const paddingRatios = [
-            Math.max(minimumPaddingRatio, (displayLabelText ? 0.5 : 0) + (displayNumText ? 0.6 : 0)),
+            Math.max(minimumPaddingRatio, (displayLabelText ? 0.5 : 0) + (displayNumText ? 0.5 : 0)),
             minimumPaddingRatio,
             (displayTitle ? 1.0 : minimumPaddingRatio),
-            Math.max(minimumPaddingRatio, (displayLabelText ? 0.4 : 0) + (displayNumText ? 0.6 : 0))
+            Math.max(minimumPaddingRatio, (displayLabelText ? 0.5 : 0) + (displayNumText ? 0.5 : 0))
         ];
 
         const paddingValues = paddingRatios.map(r => r * paddingSize);
