@@ -310,6 +310,13 @@ export class AppStore {
                 this.backendService.setSpatialRequirements(this.activeFrame.frameInfo.fileId, 0, ["x", "y"]);
             }
         });
+        
+        // Set overlay defaults from current frame
+        autorun(() => {
+            if (this.activeFrame) {
+                this.overlayStore.setDefaultsFromAST(this.activeFrame);
+            }
+        });
 
         // Subscribe to the spatial profile data stream
         this.backendService.getSpatialProfileStream().subscribe(spatialProfileData => {
