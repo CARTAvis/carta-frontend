@@ -204,7 +204,21 @@ export class WidgetsStore {
         }
     }
 
+    createFloatingLogWidget = () => {
+        this.addFloatingWidget(LogComponent.WIDGET_CONFIG);
+    };
+
+    createFloatingAnimatorWidget = () => {
+        this.addFloatingWidget(AnimatorComponent.WIDGET_CONFIG);
+    };
+
     // region Spatial Profile Widgets
+    createFloatingSpatialProfilerWidget = () => {
+        let config = SpatialProfilerComponent.WIDGET_CONFIG;
+        config.id = this.addNewSpatialProfileWidget();
+        this.addFloatingWidget(config);
+    };
+
     @action addNewSpatialProfileWidget() {
         const defaultId = SpatialProfilerComponent.WIDGET_CONFIG.id;
         // Find the next appropriate ID
@@ -226,6 +240,12 @@ export class WidgetsStore {
     // endregion
 
     // region Spectral Profile Widgets
+    createFloatingSpectralProfilerWidget = () => {
+        let config = SpectralProfilerComponent.WIDGET_CONFIG;
+        config.id = this.addNewSpectralProfileWidget();
+        this.addFloatingWidget(config);
+    };
+
     @action addNewSpectralProfileWidget() {
         const defaultId = SpectralProfilerComponent.WIDGET_CONFIG.id;
         // Find the next appropriate ID
@@ -247,6 +267,12 @@ export class WidgetsStore {
     // endregion
 
     // region Render Config Widgets
+    createFloatingRenderWidget = () => {
+        let config = RenderConfigComponent.WIDGET_CONFIG;
+        config.id = this.addNewRenderConfigWidget();
+        this.addFloatingWidget(config);
+    };
+
     @action addNewRenderConfigWidget() {
         const defaultId = RenderConfigComponent.WIDGET_CONFIG.id;
         // Find the next appropriate ID
