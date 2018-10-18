@@ -59,14 +59,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     <Menu.Item text="Dark" icon={"moon"} onClick={appStore.setDarkTheme}/>
                 </Menu.Item>
                 <Menu.Item text="Overlay" icon={"widget"}>
-                    <Menu.Item text="DS9 Preset"/>
-                    <Menu.Item text="CASA Preset"/>
-                    <Menu.Divider/>
-                    <Menu.Item text="Custom Preset 1"/>
-                    <Menu.Item text="Custom Preset 2"/>
-                    <Menu.Divider/>
                     <Menu.Item text="Customize..." icon={"style"} onClick={appStore.overlayStore.showOverlaySettings}/>
-                    <Menu.Item text="Save Current as Preset" icon={"floppy-disk"}/>
                 </Menu.Item>
                 <Menu.Item text="Graphs" icon={"timeline-line-chart"}>
                     <Menu.Item text="DS9 Preset"/>
