@@ -11,6 +11,10 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<{ wi
         this.props.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
     };
 
+    handleWcsValuesChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        this.props.widgetStore.setUseWcsValues(changeEvent.target.checked);
+    };
+
     handlePointsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.props.widgetStore.setUsePoints(changeEvent.target.checked);
     };
@@ -36,6 +40,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<{ wi
                         <FormGroup label={"Coordinate"} inline={true}>
                             <HTMLSelect value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged}/>
                         </FormGroup>
+                        <Switch label={"Use WCS Values"} checked={widgetStore.useWcsValues} onChange={this.handleWcsValuesChanged}/>
                         <Switch label={"Show Mean/RMS"} checked={widgetStore.meanRmsVisible} onChange={this.handleMeanRmsChanged}/>
                         <Switch label={"Draw as Points"} checked={widgetStore.usePoints} onChange={this.handlePointsChanged}/>
                         <Switch label={"Interpolated"} disabled={widgetStore.usePoints} checked={this.props.widgetStore.interpolateLines} onChange={this.handleSteppedLinesChanged}/>

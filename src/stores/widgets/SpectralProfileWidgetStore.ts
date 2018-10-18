@@ -13,7 +13,7 @@ export class SpectralProfileWidgetStore {
     @observable interpolateLines: boolean;
     @observable settingsPanelVisible: boolean;
     @observable meanRmsVisible: boolean;
-    @observable wcsAxisVisible: boolean;
+    @observable useWcsValues: boolean;
     @observable markerTextVisible: boolean;
 
     @computed get validCoordinates() {
@@ -95,8 +95,11 @@ export class SpectralProfileWidgetStore {
         this.meanRmsVisible = val;
     };
 
-    @action setWcsAxisVisible = (val: boolean) => {
-        this.wcsAxisVisible = val;
+    @action setUseWcsValues = (val: boolean) => {
+        if (val !== this.useWcsValues) {
+            this.clearXBounds();
+        }
+        this.useWcsValues = val;
     };
 
     @action setUsePoints = (val: boolean) => {
@@ -123,7 +126,7 @@ export class SpectralProfileWidgetStore {
         this.settingsPanelVisible = false;
         this.meanRmsVisible = false;
         this.markerTextVisible = false;
-        this.wcsAxisVisible = true;
+        this.useWcsValues = true;
     }
 
     @computed get isAutoScaledX() {

@@ -81,7 +81,21 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         // Use accurate profiles from server-sent data
         const coordinateData = this.profileStore.profiles.get(this.widgetStore.coordinate);
-        const channelInfo = this.frame.channelInfo;
+        let channelInfo = this.frame.channelInfo;
+
+        // Generate channel info without WCS
+        if (!this.widgetStore.useWcsValues) {
+            channelInfo = {
+                fromWCS: false,
+                channelType: {unit: "", code: "", type: "Channel"},
+                values: new Array<number>(this.frame.frameInfo.fileInfoExtended.depth)
+            };
+
+            for (let i = 0; i < channelInfo.values.length; i++) {
+                channelInfo.values[i] = i;
+            }
+        }
+
         if (coordinateData && channelInfo && coordinateData.vals && coordinateData.vals.length && coordinateData.vals.length === channelInfo.values.length) {
             let xMin = Math.min(channelInfo.values[0], channelInfo.values[channelInfo.values.length - 1]);
             let xMax = Math.max(channelInfo.values[0], channelInfo.values[channelInfo.values.length - 1]);
@@ -227,21 +241,31 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
 
                 const channel = this.frame.channel;
-                const channelInfo = this.frame.channelInfo;
-                if (channelInfo) {
-                    if (channel >= 0 && channel < channelInfo.values.length) {
-                        linePlotProps.markers = [{
-                            value: channelInfo.values[channel],
-                            id: "marker-channel",
-                            draggable: false,
-                            horizontal: false,
-                        }];
+                if (this.widgetStore.useWcsValues) {
+                    const channelInfo = this.frame.channelInfo;
+                    if (channelInfo) {
+                        if (channel >= 0 && channel < channelInfo.values.length) {
+                            linePlotProps.markers = [{
+                                value: channelInfo.values[channel],
+                                id: "marker-channel",
+                                draggable: false,
+                                horizontal: false,
+                            }];
+                        }
+                        let channelLabel = channelInfo.channelType.type;
+                        if (channelInfo.channelType.unit && channelInfo.channelType.unit.length) {
+                            channelLabel += ` (${channelInfo.channelType.unit})`;
+                        }
+                        linePlotProps.xLabel = channelLabel;
                     }
-                    let channelLabel = channelInfo.channelType.type;
-                    if (channelInfo.channelType.unit && channelInfo.channelType.unit.length) {
-                        channelLabel += ` (${channelInfo.channelType.unit})`;
-                    }
-                    linePlotProps.xLabel = channelLabel;
+                }
+                else {
+                    linePlotProps.markers = [{
+                        value: channel,
+                        id: "marker-channel",
+                        draggable: false,
+                        horizontal: false,
+                    }];
                 }
 
                 if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
