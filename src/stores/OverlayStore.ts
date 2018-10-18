@@ -563,9 +563,7 @@ export class OverlayStore {
         return "d";
     }
     
-    @action setDefaultsFromAST(frame: FrameStore) {        
-        this.global.setSystem(AST.getString(frame.wcsInfo, "System"));
-        
+    @action setDefaultsFromAST(frame: FrameStore) {
         this.labels.setTextX(AST.getString(frame.wcsInfo, "Label(1)"));
         this.labels.setTextY(AST.getString(frame.wcsInfo, "Label(2)"));
                 
