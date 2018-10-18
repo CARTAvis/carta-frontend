@@ -438,6 +438,17 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => numbers.setFontSize(value)}
                     />
                 </FormGroup>
+                <FormGroup inline={true} label="Gap" disabled={!numbers.visible}>
+                    <NumericInput
+                        placeholder="Gap"
+                        stepSize={0.01}
+                        minorStepSize={0.001}
+                        majorStepSize={0.1}
+                        value={numbers.gap}
+                        disabled={!numbers.visible}
+                        onValueChange={(value: number) => numbers.setGap(value)}
+                    />
+                </FormGroup>
                 <FormGroup inline={true} label="Custom color" disabled={!numbers.visible}>
                     <Switch 
                         checked={numbers.customColor}
@@ -549,7 +560,6 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup inline={true} label="Gap" disabled={!labels.visible}>
                     <NumericInput
                         placeholder="Gap"
-                        min={0}
                         stepSize={0.01}
                         minorStepSize={0.001}
                         majorStepSize={0.1}

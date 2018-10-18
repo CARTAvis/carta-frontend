@@ -334,6 +334,7 @@ export class OverlayNumberSettings {
     @observable customPrecision: boolean;
     @observable precision: number;
     @observable cursorPrecision: number;
+    @observable gap: number;
     
     // Unlike most default values, we calculate and set these explicitly, instead of
     // leaving them unset and letting AST pick a default. We have to save these so that
@@ -355,6 +356,7 @@ export class OverlayNumberSettings {
         this.customPrecision = false;
         this.precision = 3;
         this.cursorPrecision = 4;
+        this.gap = 0.01;
     }
     
     @computed get formatStringX() {
@@ -386,6 +388,7 @@ export class OverlayNumberSettings {
         astString.add("Font(NumLab)", this.font);
         astString.add("Size(NumLab)", this.fontSize);
         astString.add("Color(NumLab)", this.color, this.customColor);
+        astString.add("NumLabGap", this.gap);
                 
         // Add settings for individual axes
         astString.add("Format(1)", this.formatStringX);
@@ -413,6 +416,10 @@ export class OverlayNumberSettings {
     @action setColor = (color: number) => {
         this.color = color;
     };
+
+    @action setGap(gap: number) {
+        this.gap = gap;
+    }
 
     @action setCustomFormat(customFormat: boolean) {
         this.customFormat = customFormat;
@@ -457,6 +464,7 @@ export class OverlayLabelSettings {
         this.customColor = false;
         this.color = 4;
         this.customText = false;
+        this.gap = 0.01;
     }
 
     @computed get styleString() {
@@ -599,10 +607,11 @@ export class OverlayStore {
         return astString.toString();
     }
 
-    @computed get padding(): Padding {  
-        const numHeight = (this.numbers.visible && this.global.labelType === LabelType.Exterior ? this.numbers.fontSize : 0);
+    @computed get padding(): Padding {
+        const minSize = Math.min(this.viewWidth, this.viewHeight);
         
-        const labelHeight = (this.labels.visible ? this.labels.fontSize : 0);
+        const numHeight = (this.numbers.visible && this.global.labelType === LabelType.Exterior ? Math.max(0, this.numbers.fontSize + this.numbers.gap * minSize * 0.5) : 0);
+        const labelHeight = (this.labels.visible ? Math.max(0, this.labels.fontSize + this.labels.gap * minSize * 0.5) : 0);
         
         return {
             left: 10 + labelHeight + numHeight,
