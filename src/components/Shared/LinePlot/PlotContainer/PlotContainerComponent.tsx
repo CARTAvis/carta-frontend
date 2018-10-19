@@ -175,7 +175,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         const gridColor = this.props.darkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1;
         const lineColor = this.props.lineColor || (this.props.darkMode ? Colors.BLUE4 : Colors.BLUE2);
         // ChartJS plot
-        let plotOptions: any = {
+        let plotOptions: ChartOptions = {
             maintainAspectRatio: false,
             events: ["mousedown", "mouseup", "mousemove", "dblclick"],
             legend: {

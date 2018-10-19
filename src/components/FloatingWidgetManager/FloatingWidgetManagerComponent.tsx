@@ -9,6 +9,7 @@ import {PlaceholderComponent} from "../Placeholder/PlaceholderComponent";
 import {ImageViewComponent} from "../ImageView/ImageViewComponent";
 import {SpatialProfilerComponent} from "../SpatialProfiler/SpatialProfilerComponent";
 import {AnimatorComponent} from "../Animator/AnimatorComponent";
+import {SpectralProfilerComponent} from "../SpectralProfiler/SpectralProfilerComponent";
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component<{ appStore: AppStore }> {
@@ -35,6 +36,8 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
                 return <AnimatorComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
             case SpatialProfilerComponent.WIDGET_CONFIG.type:
                 return <SpatialProfilerComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+            case SpectralProfilerComponent.WIDGET_CONFIG.type:
+                return <SpectralProfilerComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
             default:
                 return <PlaceholderComponent appStore={appStore} id={widgetConfig.id} docked={false} label={widgetConfig.title}/>;
         }

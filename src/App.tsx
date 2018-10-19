@@ -4,7 +4,7 @@ import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import DevTools from "mobx-react-devtools";
 import ReactResizeDetector from "react-resize-detector";
-import {Alert, Colors, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
+import {Alert, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import {RootMenuComponent} from "./components/Menu/RootMenuComponent";
 import {OverlaySettingsDialogComponent} from "./components/Dialogs/OverlaySettings/OverlaySettingsDialogComponent";
 import {FileBrowserDialogComponent} from "./components/Dialogs/FileBrowser/FileBrowserDialogComponent";
@@ -82,12 +82,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
                         title: "Log",
                         id: "log-docked",
                         props: {appStore: this.props.appStore, id: "log-docked", docked: true}
-                    }, {
-                        type: "react-component",
-                        component: "animator",
-                        title: "Animator",
-                        id: "animator-0",
-                        props: {appStore: this.props.appStore, id: "animator-0", docked: true}
                     }]
                 }]
             }, {
@@ -104,24 +98,17 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     props: {appStore: this.props.appStore, id: "spatial-profiler-1", docked: true}
                 }, {
                     type: "react-component",
-                    component: "placeholder",
-                    title: "Z Profile: Cursor",
-                    id: "placeholder-1",
-                    props: {appStore: this.props.appStore, id: "placeholder-1", label: "Spectral placeholder"}
+                    component: "spectral-profiler",
+                    id: "spectral-profiler-0",
+                    props: {appStore: this.props.appStore, id: "spectral-profiler-0", docked: true}
                 }, {
                     type: "stack",
                     content: [{
                         type: "react-component",
-                        component: "placeholder",
-                        title: "Histogram: Region #1",
-                        id: "placeholder-2",
-                        props: {appStore: this.props.appStore, id: "placeholder-2", label: "Histogram placeholder"}
-                    }, {
-                        type: "react-component",
-                        component: "placeholder",
-                        title: "Statistics: Region #1",
-                        id: "placeholder-3",
-                        props: {appStore: this.props.appStore, id: "placeholder-3", label: "Statistics placeholder"}
+                        component: "animator",
+                        title: "Animator",
+                        id: "animator-0",
+                        props: {appStore: this.props.appStore, id: "animator-0", docked: true}
                     }]
                 }]
             }]
@@ -129,6 +116,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         widgetsStore.addSpatialProfileWidget("spatial-profiler-0", -1, 0, "x");
         widgetsStore.addSpatialProfileWidget("spatial-profiler-1", -1, 0, "y");
+        widgetsStore.addSpectralProfileWidget("spectral-profiler-0", -1, 0, "z");
         widgetsStore.addRenderConfigWidget("render-config-0");
 
         const layout = new GoldenLayout({
@@ -146,6 +134,8 @@ export class App extends React.Component<{ appStore: AppStore }> {
         }, this.glContainer);
 
         widgetsStore.setDockedLayout(layout);
+        this.props.appStore.setDarkTheme();
+        this.props.appStore.setLightTheme();
     }
 
     // GoldenLayout resize handler
@@ -162,9 +152,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
         if (appStore.darkTheme) {
             className += " bp3-dark";
             glClassName += " dark-theme";
-        }
-        else {
-            glClassName += " light-theme";
         }
 
         document.body.style.backgroundColor = appStore.darkTheme ? Colors.DARK_GRAY4 : Colors.WHITE;
@@ -183,6 +170,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}/>
                 </div>
                 <FloatingWidgetManagerComponent appStore={appStore}/>
+                <Dialog isOpen={appStore.hotkeyDialogVisible} className={"bp3-hotkey-dialog"} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.hideHotkeyDialog}>
+                    {this.renderHotkeys()}
+                </Dialog>
             </div>
         );
     }

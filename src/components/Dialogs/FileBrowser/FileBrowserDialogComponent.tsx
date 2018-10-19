@@ -77,8 +77,8 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                     </div>
                     <div className="file-info-pane">
                         <Tabs id="info-tabs" onChange={this.handleTabChange} selectedTabId={fileBrowserStore.selectedTab}>
-                            <Tab id="fileInfo" title="File Information" />
-                            <Tab id="header" title="Header" />
+                            <Tab id="fileInfo" title="File Information"/>
+                            <Tab id="header" title="Header"/>
                         </Tabs>
                         {infoPanel}
                     </div>
@@ -88,7 +88,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         <AnchorButton intent={Intent.NONE} onClick={fileBrowserStore.hideFileBrowser} text="Close"/>
                         {fileBrowserStore.appendingFrame ? (
                             <Tooltip content={"Append this file as a new frame"}>
-                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo} onClick={this.loadSelectedFile} text="Load as frame"/>
+                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo} onClick={this.loadSelectedFile} text="Append"/>
                             </Tooltip>
                         ) : (
                             <Tooltip content={"Close any existing frames and load this file"}>

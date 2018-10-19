@@ -331,16 +331,16 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
                 }
                 {activeFrame &&
+                <div className={playbackClass}>
+                    {playbackButtons}
+                    {frameControl}
+                </div>
+                }
+                {activeFrame &&
                 <div className="animator-sliders">
                     {frameSlider}
                     {channelSlider}
                     {stokesSlider}
-                </div>
-                }
-                {activeFrame &&
-                <div className={playbackClass}>
-                    {playbackButtons}
-                    {frameControl}
                 </div>
                 }
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
