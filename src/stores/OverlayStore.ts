@@ -623,7 +623,7 @@ export class OverlayStore {
     @computed get padding(): Padding {        
         const numHeight = (this.numbers.visible && this.global.labelType === LabelType.Exterior ? this.numbers.fontSize : 0);
         const labelHeight = (this.labels.visible ? this.labels.fontSize : 0);
-        const basePadding = (this.numbers.visible ? 20 : 10)
+        const basePadding = (this.numbers.visible ? 20 : 10);
         
         return {
             left: basePadding + labelHeight + numHeight,
