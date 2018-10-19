@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as AST from "ast_wrapper";
 import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Chart} from "chart.js";
@@ -15,6 +14,7 @@ import {PopoverSettingsComponent} from "../Shared/PopoverSettings/PopoverSetting
 import {SpectralProfilerSettingsPanelComponent} from "./SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
 import "./SpectralProfilerComponent.css";
 import {FrameStore} from "../../stores/FrameStore";
+import {PlotType} from "../Shared/PlotTypeSelector/PlotTypeSelectorComponent";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 180;
@@ -201,8 +201,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             xLabel: "Channel",
             yLabel: "Value",
             darkMode: appStore.darkTheme,
-            usePointSymbols: this.widgetStore.usePoints,
-            interpolateLines: this.widgetStore.interpolateLines,
+            usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
+            interpolateLines: this.widgetStore.plotType === PlotType.LINES,
             forceScientificNotationTicksY: true,
             graphZoomedX: this.widgetStore.setXBounds,
             graphZoomedY: this.widgetStore.setYBounds,
