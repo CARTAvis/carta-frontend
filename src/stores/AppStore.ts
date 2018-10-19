@@ -14,6 +14,8 @@ import {AnimationState, AnimatorStore} from "./AnimatorStore";
 import SpatialProfile = CARTA.SpatialProfile;
 import {smoothStepOffset} from "../util/math";
 import {WidgetsStore} from "./WidgetsStore";
+import {SpectralProfileStore} from "./SpectralProfileStore";
+import SpectralProfile = CARTA.SpectralProfile;
 
 export class AppStore {
     // Backend service
@@ -34,8 +36,9 @@ export class AppStore {
     // Cursor information
     @observable cursorInfo: CursorInfo;
     @observable cursorFrozen: boolean;
-    // Spatial profiles
+    // Profiles
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
+    @observable spectralProfiles: Map<string, SpectralProfileStore>;
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
@@ -53,6 +56,13 @@ export class AppStore {
     };
     @action hideURLConnect = () => {
         this.urlConnectDialogVisible = false;
+    };
+    @observable hotkeyDialogVisible: boolean;
+    @action showHotkeyDialog = () => {
+        this.hotkeyDialogVisible = true;
+    };
+    @action hideHotkeyDialog = () => {
+        this.hotkeyDialogVisible = false;
     };
 
     // Widgets
@@ -219,6 +229,7 @@ export class AppStore {
         this.backendService = new BackendService(this.logStore);
         this.astReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
+        this.spectralProfiles = new Map<string, SpectralProfileStore>();
         this.frames = [];
         this.activeFrame = null;
         this.animatorStore = new AnimatorStore(this);
@@ -304,10 +315,12 @@ export class AppStore {
             }
         }, {delay: 33});
 
-        // Set spatial requirements of cursor region on file load
+        // Set spatial and spectral requirements of cursor region on file load
         autorun(() => {
             if (this.activeFrame) {
+                let profileConfig = new CARTA.SetSpectralRequirements.SpectralConfig({coordinate: "z", statsTypes: [CARTA.StatsType.None]});
                 this.backendService.setSpatialRequirements(this.activeFrame.frameInfo.fileId, 0, ["x", "y"]);
+                this.backendService.setSpectralRequirements(this.activeFrame.frameInfo.fileId, 0, [profileConfig]);
             }
         });
 
@@ -329,6 +342,26 @@ export class AppStore {
                 const profileMap = new Map<string, CARTA.SpatialProfile>();
                 for (let profile of spatialProfileData.profiles) {
                     profileMap.set(profile.coordinate, profile as SpatialProfile);
+                }
+                profileStore.setProfiles(profileMap);
+            }
+        });
+
+        // Subscribe to the spectral profile data stream
+        this.backendService.getSpectralProfileStream().subscribe(spectralProfileData => {
+            if (this.frames.find(frame => frame.frameInfo.fileId === spectralProfileData.fileId)) {
+                const key = `${spectralProfileData.fileId}-${spectralProfileData.regionId}`;
+                let profileStore = this.spectralProfiles.get(key);
+                if (!profileStore) {
+                    profileStore = new SpectralProfileStore(spectralProfileData.fileId, spectralProfileData.regionId);
+                    this.spectralProfiles.set(key, profileStore);
+                }
+
+                profileStore.channelValues = spectralProfileData.channelVals;
+                profileStore.stokes = spectralProfileData.stokes;
+                const profileMap = new Map<string, CARTA.SpectralProfile>();
+                for (let profile of spectralProfileData.profiles) {
+                    profileMap.set(profile.coordinate, profile as SpectralProfile);
                 }
                 profileStore.setProfiles(profileMap);
             }

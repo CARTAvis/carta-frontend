@@ -12,7 +12,13 @@ export class FrameInfo {
     renderMode: CARTA.RenderMode;
 }
 
-export class FrameView {
+export interface FrameChannelType {
+    code: string;
+    unit?: string;
+    type: string;
+}
+
+export interface FrameView {
     xMin: number;
     xMax: number;
     yMin: number;
@@ -21,6 +27,20 @@ export class FrameView {
 }
 
 export class FrameStore {
+    // From FITS standard (Table 25 of V4.0 of "Definition of the Flexible Image Transport System")
+    static CHANNEL_TYPES: FrameChannelType[] = [
+        {code: "FREQ", type: "Frequency", unit: "Hz"},
+        {code: "ENER", type: "Energy", unit: "J"},
+        {code: "WAVN", type: "Wavenumber", unit: "1/m"},
+        {code: "VRAD", type: "Radio velocity", unit: "m/s"},
+        {code: "WAVE", type: "Vacuum wavelength", unit: "m"},
+        {code: "VOPT", type: "Optical velocity", unit: "m/s"},
+        {code: "ZOPT", type: "Redshift"},
+        {code: "AWAV", type: "Air wavelength", unit: "m"},
+        {code: "VELO", type: "Apparent radial velocity", unit: "m/s"},
+        {code: "BETA", type: "Beta factor"},
+    ];
+
     @observable frameInfo: FrameInfo;
     @observable renderHiDPI: boolean;
     @observable wcsInfo: number;
@@ -104,6 +124,61 @@ export class FrameStore {
                 return undefined;
             }
         }
+    }
+
+    @computed get channelInfo(): { fromWCS: boolean, channelType: FrameChannelType, values: number[] } {
+        if (!this.frameInfo || !this.frameInfo.fileInfoExtended || this.frameInfo.fileInfoExtended.depth <= 1 || !this.frameInfo.fileInfoExtended.headerEntries) {
+            return undefined;
+        }
+        const N = this.frameInfo.fileInfoExtended.depth;
+        const values = new Array<number>(N);
+
+        // By default, we try to use the WCS information to determine channel info.
+        const channelTypeInfo = FrameStore.FindChannelType(this.frameInfo.fileInfoExtended.headerEntries);
+        if (channelTypeInfo) {
+            const refPixHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${channelTypeInfo.dimension}`) !== -1);
+            const refValHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRVAL${channelTypeInfo.dimension}`) !== -1);
+            const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CDELT${channelTypeInfo.dimension}`) !== -1);
+            const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CUNIT${channelTypeInfo.dimension}`) !== -1);
+
+            if (refPixHeader && refValHeader && deltaHeader) {
+                const refPix = parseFloat(refPixHeader.value);
+                const refVal = parseFloat(refValHeader.value);
+                const delta = parseFloat(deltaHeader.value);
+                const unit = unitHeader ? unitHeader.value.trim() : "";
+                if (isFinite(refPix) && isFinite(refVal) && isFinite(delta)) {
+                    // Override unit if it's specified by a header
+                    if (unit.length) {
+                        channelTypeInfo.type.unit = unit;
+                    }
+
+                    let scalingFactor = 1.0;
+                    // Use km/s by default for m/s values
+                    if (channelTypeInfo.type.unit === "m/s") {
+                        scalingFactor = 1e-3;
+                        channelTypeInfo.type.unit = "km/s";
+                    }
+                    // Use GHz by default for Hz values
+                    if (channelTypeInfo.type.unit === "Hz") {
+                        scalingFactor = 1e-9;
+                        channelTypeInfo.type.unit = "GHz";
+                    }
+
+                    for (let i = 0; i < N; i++) {
+                        // FITS standard uses 1 for the first pixel
+                        const channelOffset = i - 1 - refPix;
+                        values[i] = scalingFactor * (channelOffset * delta + refVal);
+                    }
+                    return {fromWCS: true, channelType: channelTypeInfo.type, values};
+                }
+            }
+        }
+
+        // return channels
+        for (let i = 0; i < N; i++) {
+            values[i] = i;
+        }
+        return {fromWCS: false, channelType: {code: "", type: "Channel"}, values};
     }
 
     @action updateFromRasterData(rasterImageData: CARTA.RasterImageData) {
@@ -231,5 +306,37 @@ export class FrameStore {
             return 1.0;
         }
         return this.renderHeight * pixelRatio / imageHeight;
+    }
+
+    // Tests a list of headers for valid channel information in either 3rd or 4th axis
+    private static FindChannelType(entries: CARTA.IHeaderEntry[]) {
+        if (!entries || !entries.length) {
+            return undefined;
+        }
+
+        const typeHeader3 = entries.find(entry => entry.name.includes("CTYPE3"));
+        const typeHeader4 = entries.find(entry => entry.name.includes("CTYPE4"));
+        if (!typeHeader3 && !typeHeader4) {
+            return undefined;
+        }
+
+        // Test each header entry to see if it has a valid channel type
+        if (typeHeader3) {
+            const headerVal = typeHeader3.value.trim().toUpperCase();
+            const channelType = FrameStore.CHANNEL_TYPES.find(type => headerVal.indexOf(type.code) !== -1);
+            if (channelType) {
+                return {dimension: 3, type: {type: channelType.type, code: channelType.code, unit: channelType.unit}};
+            }
+        }
+
+        if (typeHeader4) {
+            const headerVal = typeHeader4.value.trim().toUpperCase();
+            const channelType = FrameStore.CHANNEL_TYPES.find(type => headerVal.indexOf(type.code) !== -1);
+            if (channelType) {
+                return {dimension: 4, type: {type: channelType.type, code: channelType.code, unit: channelType.unit}};
+            }
+        }
+
+        return undefined;
     }
 }

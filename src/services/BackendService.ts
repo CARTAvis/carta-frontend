@@ -21,6 +21,7 @@ export enum EventNames {
     SetImageChannels = "SET_IMAGE_CHANNELS",
     SetCursor = "SET_CURSOR",
     SetSpatialRequirements = "SET_SPATIAL_REQUIREMENTS",
+    SetSpectralRequirements = "SET_SPECTRAL_REQUIREMENTS",
     RegisterViewerAck = "REGISTER_VIEWER_ACK",
     FileListResponse = "FILE_LIST_RESPONSE",
     FileInfoResponse = "FILE_INFO_RESPONSE",
@@ -28,7 +29,8 @@ export enum EventNames {
     RasterImageData = "RASTER_IMAGE_DATA",
     RegionHistogramData = "REGION_HISTOGRAM_DATA",
     ErrorData = "ERROR_DATA",
-    SpatialProfileData = "SPATIAL_PROFILE_DATA"
+    SpatialProfileData = "SPATIAL_PROFILE_DATA",
+    SpectralProfileData = "SPECTRAL_PROFILE_DATA"
 }
 
 export class BackendService {
@@ -43,6 +45,7 @@ export class BackendService {
     private readonly histogramStream: Subject<CARTA.RegionHistogramData>;
     private readonly errorStream: Subject<CARTA.ErrorData>;
     private readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
+    private readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
     private readonly logEventList: EventNames[];
     private readonly decompressionServce: DecompressionService;
     private readonly subsetsRequired: number;
@@ -59,6 +62,7 @@ export class BackendService {
         this.histogramStream = new Subject<CARTA.RegionHistogramData>();
         this.errorStream = new Subject<CARTA.ErrorData>();
         this.spatialProfileStream = new Subject<CARTA.SpatialProfileData>();
+        this.spectralProfileStream = new Subject<CARTA.SpectralProfileData>();
         this.subsetsRequired = Math.min(navigator.hardwareConcurrency || 4, 4);
         if (process.env.NODE_ENV !== "test") {
             this.decompressionServce = new DecompressionService(this.subsetsRequired);
@@ -112,6 +116,10 @@ export class BackendService {
 
     getSpatialProfileStream() {
         return this.spatialProfileStream;
+    }
+
+    getSpectralProfileStream() {
+        return this.spectralProfileStream;
     }
 
     @action("connect")
@@ -286,8 +294,16 @@ export class BackendService {
         return false;
     }
 
-    onStreamedSpatialProfileData(eventId: number, spatialProfileData: CARTA.SpatialProfileData) {
-        this.spatialProfileStream.next(spatialProfileData);
+    @action("set spectral requirements")
+    setSpectralRequirements(fileId: number, regionId: number, spectralProfiles: CARTA.SetSpectralRequirements.SpectralConfig[]) {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            const message = CARTA.SetSpectralRequirements.create({fileId, regionId, spectralProfiles});
+            this.logEvent(EventNames.SetSpectralRequirements, this.eventCounter, message, false);
+            if (this.sendEvent(EventNames.SetSpectralRequirements, CARTA.SetSpectralRequirements.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private messageHandler(event: MessageEvent) {
@@ -333,6 +349,10 @@ export class BackendService {
             else if (eventName === EventNames.SpatialProfileData) {
                 parsedMessage = CARTA.SpatialProfileData.decode(eventData);
                 this.onStreamedSpatialProfileData(eventId, parsedMessage);
+            }
+            else if (eventName === EventNames.SpectralProfileData) {
+                parsedMessage = CARTA.SpectralProfileData.decode(eventData);
+                this.onStreamedSpectralProfileData(eventId, parsedMessage);
             }
             else {
                 console.log(`Unsupported event response ${eventName}`);
@@ -437,6 +457,14 @@ export class BackendService {
 
     private onStreamedErrorData(eventId: number, errorData: CARTA.ErrorData) {
         this.errorStream.next(errorData);
+    }
+
+    private onStreamedSpatialProfileData(eventId: number, spatialProfileData: CARTA.SpatialProfileData) {
+        this.spatialProfileStream.next(spatialProfileData);
+    }
+
+    private onStreamedSpectralProfileData(eventId: number, spectralProfileData: CARTA.SpectralProfileData) {
+        this.spectralProfileStream.next(spectralProfileData);
     }
 
     private sendEvent(eventName: EventNames, payload: Uint8Array): boolean {
