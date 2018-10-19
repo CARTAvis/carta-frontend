@@ -122,14 +122,25 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         
         if (frame.wcsInfo) {
             AST.setCanvas(this.canvas);
+            
+            const plot = (styleString: string) => {
+                AST.plot(
+                    frame.wcsInfo,
+                    frame.requiredFrameView.xMin, frame.requiredFrameView.xMax,
+                    frame.requiredFrameView.yMin, frame.requiredFrameView.yMax,
+                    settings.viewWidth * pixelRatio, settings.viewHeight * pixelRatio,
+                    settings.padding.left * pixelRatio, settings.padding.right * pixelRatio, settings.padding.top * pixelRatio, settings.padding.bottom * pixelRatio,
+                    styleString);
+            };
 
-            AST.plot(
-                frame.wcsInfo,
-                frame.requiredFrameView.xMin, frame.requiredFrameView.xMax,
-                frame.requiredFrameView.yMin, frame.requiredFrameView.yMax,
-                settings.viewWidth * pixelRatio, settings.viewHeight * pixelRatio,
-                settings.padding.left * pixelRatio, settings.padding.right * pixelRatio, settings.padding.top * pixelRatio, settings.padding.bottom * pixelRatio,
-                settings.styleString);
+            plot(settings.styleString);
+                                    
+            if (/No grid curves can be drawn for axis/.test(AST.getLastErrorMessage())) {
+                // Try to re-plot without the grid
+                plot(settings.styleString.replace(/Gap\(\d\)=[^,]+, ?/g, "").replace("Grid=1", "Grid=0"));
+            }
+            
+            AST.clearLastErrorMessage();
         }
     };
 

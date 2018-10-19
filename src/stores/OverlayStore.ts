@@ -1,17 +1,29 @@
 import {Colors} from "@blueprintjs/core";
-import {action, computed, observable} from "mobx";
+import {action, autorun, computed, observable} from "mobx";
 import * as AST from "ast_wrapper";
 import {FrameStore} from "./FrameStore";
 
-export const colorPalette = [
+export const dayPalette = [
+    Colors.BLACK,        // 0
+    Colors.WHITE,        // 1
+    Colors.RED2,         // 2
+    Colors.FOREST3,      // 3
+    Colors.BLUE2,        // 4
+    Colors.TURQUOISE2,   // 5
+    Colors.VIOLET2,      // 6
+    Colors.GOLD2,        // 7
+    Colors.GRAY2         // 8
+];
+
+export const nightPalette = [
     Colors.BLACK,        // 0
     Colors.WHITE,        // 1
     Colors.RED4,         // 2
-    Colors.FOREST3,      // 3
-    Colors.BLUE1,        // 4
-    Colors.TURQUOISE5,   // 5
+    Colors.FOREST4,      // 3
+    Colors.BLUE4,        // 4
+    Colors.TURQUOISE4,   // 5
     Colors.VIOLET4,      // 6
-    Colors.GOLD5,        // 7
+    Colors.GOLD4,        // 7
     Colors.GRAY4         // 8
 ];
 
@@ -67,6 +79,9 @@ export class OverlayGlobalSettings {
     @observable color: number;
     @observable tolerance: number; // percentage
     @observable system: SystemType;
+    
+    // We need this so that we know what to do if it's set to native
+    @observable defaultSystem: SystemType;
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
@@ -99,65 +114,10 @@ export class OverlayGlobalSettings {
     @action setSystem(system: SystemType) {
         this.system = system;
     }
-}
-
-export class OverlayTitleSettings {
-    @observable visible: boolean;
-    @observable font: number;
-    @observable fontSize: number;
-    @observable gap: number;
-    @observable customColor: boolean;
-    @observable color: number;
-    @observable text: string;
-
-    @computed get styleString() {
-        let astString = new ASTSettingsString();
-        astString.add("DrawTitle", this.visible);
-        astString.add("Font(Title)", this.font);
-        astString.add("Size(Title)", this.fontSize);
-        astString.add("TitleGap", this.gap);
-        astString.add("Color(Title)", this.color, this.customColor);
-        astString.add("Title(1)", this.text);
-        return astString.toString();
-    }
     
-    constructor() {
-        this.visible = false;
-        this.gap = 0.02;
-        this.customColor = false;
-        this.color = 4;
-        this.font = 2;
-        this.fontSize = 24;
-        this.text = "A custom AST plot";
+    @action setDefaultSystem(system: SystemType) {
+        this.defaultSystem = system;
     }
-
-    @action setVisible(visible: boolean = true) {
-        this.visible = visible;
-    }
-
-    @action setText(text: string) {
-        this.text = text;
-    }
-
-    @action setFont = (font: number) => {
-        this.font = font;
-    };
-
-    @action setFontSize(fontSize: number) {
-        this.fontSize = fontSize;
-    }
-
-    @action setGap(gap: number) {
-        this.gap = gap;
-    }
-
-    @action setCustomColor(customColor: boolean) {
-        this.customColor = customColor;
-    }
-
-    @action setColor = (color: number) => {
-        this.color = color;
-    };
 }
 
 export class OverlayGridSettings {
@@ -385,13 +345,13 @@ export class OverlayNumberSettings {
     // Unlike most default values, we calculate and set these explicitly, instead of
     // leaving them unset and letting AST pick a default. We have to save these so that
     // we can revert to default values after setting custom values.
-    defaultFormatX: string;
-    defaultFormatY: string;
+    @observable defaultFormatX: string;
+    @observable defaultFormatY: string;
 
     constructor() {
         this.visible = true;
-        this.fontSize = 10;
-        this.font = 1;
+        this.fontSize = 12;
+        this.font = 0;
         this.customColor = false;
         this.color = 4;
         this.customFormat = false;
@@ -473,6 +433,14 @@ export class OverlayNumberSettings {
         this.formatY = format;
     }
 
+    @action setDefaultFormatX(format: string) {
+        this.defaultFormatX = format;
+    }
+
+    @action setDefaultFormatY(format: string) {
+        this.defaultFormatY = format;
+    }
+
     @action setCustomPrecision(customPrecision: boolean) {
         this.customPrecision = customPrecision;
     }
@@ -490,7 +458,6 @@ export class OverlayLabelSettings {
     @observable visible: boolean;
     @observable customColor: boolean;
     @observable color: number;
-    @observable gap: number;
     @observable font: number;
     @observable fontSize: number;
     @observable customText: boolean;
@@ -500,7 +467,7 @@ export class OverlayLabelSettings {
     constructor() {
         this.visible = true;
         this.fontSize = 15;
-        this.font = 1;
+        this.font = 0;
         this.customColor = false;
         this.color = 4;
         this.customText = false;
@@ -513,7 +480,6 @@ export class OverlayLabelSettings {
         astString.add("Font(TextLab)", this.font);
         astString.add("Size(TextLab)", this.fontSize);
         astString.add("Color(TextLab)", this.color, this.customColor);
-        astString.add("TextLabGap", this.gap);
         
         // Add settings for individual axes
         astString.add(`Label(1)`, this.textX, this.customText);
@@ -533,10 +499,6 @@ export class OverlayLabelSettings {
     @action setColor = (color: number) => {
         this.color = color;
     };
-
-    @action setGap(gap: number) {
-        this.gap = gap;
-    }
 
     @action setFont = (font: number) => {
         this.font = font;
@@ -567,7 +529,6 @@ export class OverlayStore {
     // Individual settings
     @observable global: OverlayGlobalSettings;
     @observable grid: OverlayGridSettings;
-    @observable title: OverlayTitleSettings;
     @observable border: OverlayBorderSettings;
     @observable axes: OverlayAxisSettings;
     @observable numbers: OverlayNumberSettings;
@@ -595,82 +556,57 @@ export class OverlayStore {
     constructor() {
         this.global = new OverlayGlobalSettings();
         this.grid = new OverlayGridSettings();
-        this.title = new OverlayTitleSettings();
         this.border = new OverlayBorderSettings();
         this.axes = new OverlayAxisSettings();
         this.numbers = new OverlayNumberSettings();
         this.labels = new OverlayLabelSettings();
         this.ticks = new OverlayTickSettings();
+        
+        // if the system is manually selected, set new default formats
+        autorun(() => {
+            const _ = this.global.system;
+            this.setFormatsFromSystem();
+        });
     }
-    
-    private formatFromUnit(unit: string) {
-        if (/^d+:m+:s+/.test(unit)) {
-            return "dms";
-        } else if (/^h+:m+:s+/.test(unit)) {
-            return "hms";
+
+    @action setFormatsFromSystem() {
+        const formatsFromSystem = (system: SystemType) => {
+            if (system === SystemType.Ecliptic || system === SystemType.Galactic) {
+                return ["d", "d"];
+            }
+            
+            return ["hms", "dms"];
+        };
+        
+        // Get the current manually overridden system or the default saved from file if system is set to native
+        const currentSystem = (this.global.system === SystemType.Native ? this.global.defaultSystem : this.global.system);
+        
+        // Get the default formats for this system
+        const formats = formatsFromSystem(currentSystem);
+        
+        // Set the default formats (should only be used if format is not overridden)
+        this.numbers.setDefaultFormatX(formats[0]);
+        this.numbers.setDefaultFormatY(formats[1]);
+        
+        // Set starting values for custom format only if format is not already custom
+        if (!this.numbers.customFormat) {
+            this.numbers.setFormatX(formats[0]);
+            this.numbers.setFormatY(formats[1]);
         }
-        return "d";
     }
     
-    @action setDefaultsFromAST(frame: FrameStore) {        
-        this.global.setSystem(AST.getString(frame.wcsInfo, "System"));
+    @action setDefaultsFromAST(frame: FrameStore) {
+        this.global.setDefaultSystem(AST.getString(frame.wcsInfo, "System") as SystemType);
+        this.setFormatsFromSystem();
         
         this.labels.setTextX(AST.getString(frame.wcsInfo, "Label(1)"));
         this.labels.setTextY(AST.getString(frame.wcsInfo, "Label(2)"));
-                
-        let formatFromUnit = (unit: string) => {
-            if (/^d+:m+:s+/.test(unit)) {
-                return "dms";
-            } else if (/^h+:m+:s+/.test(unit)) {
-                return "hms";
-            }
-            return "d";
-        };
-        
-        this.numbers.defaultFormatX = formatFromUnit(AST.getString(frame.wcsInfo, "Unit(1)"));
-        this.numbers.defaultFormatY = formatFromUnit(AST.getString(frame.wcsInfo, "Unit(2)"));
-        
-        this.numbers.setFormatX(formatFromUnit(AST.getString(frame.wcsInfo, "Unit(1)")));
-        this.numbers.setFormatY(formatFromUnit(AST.getString(frame.wcsInfo, "Unit(2)")));
     }
 
     @computed get styleString() {
-        return this.stringify();
-    }
-
-    @computed get padding(): Padding {
-        const displayTitle = this.title.visible;
-        const displayLabelText = this.labels.visible;        
-        const displayNumText = this.numbers.visible;
-
-        let paddingSize = 65;
-        const minSize = Math.min(this.viewWidth, this.viewHeight);
-        const scalingStartSize = 600;
-        if (minSize < scalingStartSize) {
-            paddingSize = Math.max(15, minSize / scalingStartSize * paddingSize);
-        }
-        const minimumPaddingRatio = 0.05;
-        const paddingRatios = [
-            Math.max(minimumPaddingRatio, (displayLabelText ? 0.5 : 0) + (displayNumText ? 0.6 : 0)),
-            minimumPaddingRatio,
-            (displayTitle ? 1.0 : minimumPaddingRatio),
-            Math.max(minimumPaddingRatio, (displayLabelText ? 0.4 : 0) + (displayNumText ? 0.6 : 0))
-        ];
-
-        const paddingValues = paddingRatios.map(r => r * paddingSize);
-        return {
-            left: paddingValues[0],
-            right: paddingValues[1],
-            top: paddingValues[2],
-            bottom: paddingValues[3]
-        };
-    }
-
-    private stringify() {
         let astString = new ASTSettingsString();
 
         astString.addSection(this.global.styleString);
-        astString.addSection(this.title.styleString);
         astString.addSection(this.grid.styleString);
         astString.addSection(this.border.styleString);
         astString.addSection(this.ticks.styleString);
@@ -678,6 +614,22 @@ export class OverlayStore {
         astString.addSection(this.numbers.styleString);
         astString.addSection(this.labels.styleString);
         
+        astString.add("LabelUp(2)", "0");
+        astString.add("DrawTitle", "0");
+        
         return astString.toString();
+    }
+
+    @computed get padding(): Padding {        
+        const numHeight = (this.numbers.visible && this.global.labelType === LabelType.Exterior ? this.numbers.fontSize : 0);
+        const labelHeight = (this.labels.visible ? this.labels.fontSize : 0);
+        const basePadding = (this.numbers.visible ? 20 : 10);
+        
+        return {
+            left: basePadding + labelHeight + numHeight,
+            right: basePadding,
+            top: basePadding,
+            bottom: basePadding + labelHeight + numHeight
+        };
     }
 }
