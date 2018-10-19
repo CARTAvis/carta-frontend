@@ -57,6 +57,13 @@ export class AppStore {
     @action hideURLConnect = () => {
         this.urlConnectDialogVisible = false;
     };
+    @observable hotkeyDialogVisible: boolean;
+    @action showHotkeyDialog = () => {
+        this.hotkeyDialogVisible = true;
+    };
+    @action hideHotkeyDialog = () => {
+        this.hotkeyDialogVisible = false;
+    };
 
     // Widgets
     @observable widgetsStore: WidgetsStore;

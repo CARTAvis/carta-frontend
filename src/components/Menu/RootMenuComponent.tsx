@@ -122,7 +122,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         const helpMenu = (
             <Menu>
                 <Menu.Item text="Getting Started" icon={"help"} label={"F1"} disabled={true}/>
-                <Menu.Item text="Controls and Shortcuts" icon={"info-sign"} disabled={true}/>
+                <Menu.Item text="Controls and Shortcuts" icon={"info-sign"} label={"Shift + ?"} onClick={appStore.showHotkeyDialog}/>
                 <Menu.Item text="Search help" icon={"search"} label={"Shift + Space"} disabled={true}/>
                 <Menu.Item text="About" icon={"info-sign"} disabled={true}/>
             </Menu>

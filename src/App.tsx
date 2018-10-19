@@ -4,7 +4,7 @@ import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import DevTools from "mobx-react-devtools";
 import ReactResizeDetector from "react-resize-detector";
-import {Alert, Colors, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
+import {Alert, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import {RootMenuComponent} from "./components/Menu/RootMenuComponent";
 import {OverlaySettingsDialogComponent} from "./components/Dialogs/OverlaySettings/OverlaySettingsDialogComponent";
 import {FileBrowserDialogComponent} from "./components/Dialogs/FileBrowser/FileBrowserDialogComponent";
@@ -170,6 +170,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}/>
                 </div>
                 <FloatingWidgetManagerComponent appStore={appStore}/>
+                <Dialog isOpen={appStore.hotkeyDialogVisible} className={"bp3-hotkey-dialog"} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.hideHotkeyDialog}>
+                    {this.renderHotkeys()}
+                </Dialog>
             </div>
         );
     }
