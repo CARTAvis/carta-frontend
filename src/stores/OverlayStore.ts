@@ -350,7 +350,7 @@ export class OverlayNumberSettings {
 
     constructor() {
         this.visible = true;
-        this.fontSize = 10;
+        this.fontSize = 12;
         this.font = 0;
         this.customColor = false;
         this.color = 4;
@@ -625,10 +625,10 @@ export class OverlayStore {
         const labelHeight = (this.labels.visible ? this.labels.fontSize : 0);
         
         return {
-            left: 10 + labelHeight + numHeight,
-            right: 10,
-            top: 10,
-            bottom: 10 + labelHeight + numHeight
+            left: 20 + labelHeight + numHeight,
+            right: 20,
+            top: 20,
+            bottom: 20 + labelHeight + numHeight
         };
     }
 }
