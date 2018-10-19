@@ -1,5 +1,5 @@
 import {action, autorun, computed, observable} from "mobx";
-import {OverlayStore} from "./OverlayStore";
+import {OverlayStore, dayPalette, nightPalette} from "./OverlayStore";
 import {SpatialProfileStore} from "./SpatialProfileStore";
 import {FileBrowserStore} from "./FileBrowserStore";
 import {FrameInfo, FrameStore, FrameView} from "./FrameStore";
@@ -329,6 +329,11 @@ export class AppStore {
             if (this.activeFrame) {
                 this.overlayStore.setDefaultsFromAST(this.activeFrame);
             }
+        });
+        
+        // Set palette if theme changes
+        autorun(() => {
+            AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
         });
 
         // Subscribe to the spatial profile data stream
