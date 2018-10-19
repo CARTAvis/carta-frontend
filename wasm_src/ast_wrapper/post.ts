@@ -95,6 +95,8 @@ Module.dump = Module.cwrap("dump", null, ["number"]);
 Module.norm = Module.cwrap("norm", "number", ["number", "number"]);
 Module.format = Module.cwrap("format", "string", ["number", "number", "number"]);
 Module.transform = Module.cwrap("transform", "number", ["number", "number", "number", "number", "number", "number", "number"]);
+Module.getLastErrorMessage = Module.cwrap("getLastErrorMessage", "string");
+Module.clearLastErrorMessage = Module.cwrap("clearLastErrorMessage", null);
 
 Module.currentFormatStrings = [];
 

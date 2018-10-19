@@ -1,9 +1,24 @@
 extern "C" {
 #include "ast.h"
+#include <string.h>
+#include <emscripten.h>
+    
+char lastErrorMessage[256];
+
+EMSCRIPTEN_KEEPALIVE const char * getLastErrorMessage() {
+    return lastErrorMessage;
+}
+
+EMSCRIPTEN_KEEPALIVE void clearLastErrorMessage() {
+    strncpy(lastErrorMessage, "", sizeof(lastErrorMessage));
+}
+
 void astPutErr_(int status_value, const char* message)
 {
 	int* status = astGetStatusPtr;
 	(void) fprintf(stderr, "%s%s\n", astOK ? "!! " : "!  ", message);
+        
+	strncpy(lastErrorMessage, message, sizeof(lastErrorMessage));
 }
 }
 
