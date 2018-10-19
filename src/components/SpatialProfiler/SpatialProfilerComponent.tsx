@@ -15,6 +15,7 @@ import {PopoverSettingsComponent} from "../Shared/PopoverSettings/PopoverSetting
 import {SpatialProfilerSettingsPanelComponent} from "./SpatialProfilerSettingsPanelComponent/SpatialProfilerSettingsPanelComponent";
 import "./SpatialProfilerComponent.css";
 import {FrameStore} from "../../stores/FrameStore";
+import {PlotType} from "../Shared/PlotTypeSelector/PlotTypeSelectorComponent";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 180;
@@ -344,7 +345,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             }
             // Skip an extra character after the first check, because of the decimal indicator
             if (trim === initialTrimLength) {
-                trim --;
+                trim--;
             }
         }
     }
@@ -388,8 +389,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             xLabel: `${isXProfile ? "X" : "Y"} coordinate`,
             yLabel: "Value",
             darkMode: appStore.darkTheme,
-            usePointSymbols: this.widgetStore.usePoints,
-            interpolateLines: this.widgetStore.interpolateLines,
+            usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
+            interpolateLines: this.widgetStore.plotType === PlotType.LINES,
             forceScientificNotationTicksY: true,
             graphZoomedX: this.widgetStore.setXBounds,
             graphZoomedY: this.widgetStore.setYBounds,

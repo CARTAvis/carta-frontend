@@ -1,4 +1,5 @@
 import {action, computed, observable} from "mobx";
+import {PlotType} from "../../components/Shared/PlotTypeSelector/PlotTypeSelectorComponent";
 
 export class RenderConfigWidgetStore {
     @observable minX: number;
@@ -7,8 +8,7 @@ export class RenderConfigWidgetStore {
     @observable maxY: number;
     @observable cursorX: number;
     @observable logScaleY: boolean;
-    @observable usePoints: boolean;
-    @observable interpolateLines: boolean;
+    @observable plotType: PlotType;
     @observable settingsPanelVisible: boolean;
     @observable markerTextVisible: boolean;
 
@@ -62,12 +62,8 @@ export class RenderConfigWidgetStore {
         this.logScaleY = logScale;
     };
 
-    @action setUsePoints = (val: boolean) => {
-        this.usePoints = val;
-    };
-
-    @action setInterpolateLines = (val: boolean) => {
-        this.interpolateLines = val;
+    @action setPlotType = (val: PlotType) => {
+        this.plotType = val;
     };
 
     @action setCursor = (cursorVal: number) => {
@@ -76,8 +72,7 @@ export class RenderConfigWidgetStore {
 
     constructor() {
         this.logScaleY = true;
-        this.usePoints = false;
-        this.interpolateLines = false;
+        this.plotType = PlotType.STEPS;
         this.settingsPanelVisible = false;
         this.markerTextVisible = true;
     }

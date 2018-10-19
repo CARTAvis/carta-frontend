@@ -1,4 +1,5 @@
 import {action, computed, observable} from "mobx";
+import {PlotType} from "../../components/Shared/PlotTypeSelector/PlotTypeSelectorComponent";
 
 export class SpectralProfileWidgetStore {
     @observable fileId: number;
@@ -9,8 +10,7 @@ export class SpectralProfileWidgetStore {
     @observable minY: number;
     @observable maxY: number;
     @observable channel: number;
-    @observable usePoints: boolean;
-    @observable interpolateLines: boolean;
+    @observable plotType: PlotType;
     @observable settingsPanelVisible: boolean;
     @observable meanRmsVisible: boolean;
     @observable useWcsValues: boolean;
@@ -102,12 +102,8 @@ export class SpectralProfileWidgetStore {
         this.useWcsValues = val;
     };
 
-    @action setUsePoints = (val: boolean) => {
-        this.usePoints = val;
-    };
-
-    @action setInterpolateLines = (val: boolean) => {
-        this.interpolateLines = val;
+    @action setPlotType = (val: PlotType) => {
+        this.plotType = val;
     };
 
     @action setChannel = (channel: number) => {
@@ -121,8 +117,7 @@ export class SpectralProfileWidgetStore {
         this.coordinate = coordinate;
 
         // Describes how the data is visualised
-        this.usePoints = false;
-        this.interpolateLines = false;
+        this.plotType = PlotType.STEPS;
         this.settingsPanelVisible = false;
         this.meanRmsVisible = false;
         this.markerTextVisible = false;

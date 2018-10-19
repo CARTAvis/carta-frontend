@@ -3,6 +3,7 @@ import {observer} from "mobx-react";
 import {Button, ControlGroup, FormGroup, HTMLSelect, Switch} from "@blueprintjs/core";
 import {SpectralProfileWidgetStore} from "../../../stores/widgets/SpectralProfileWidgetStore";
 import "./SpectralProfilerSettingsPanelComponent.css";
+import {PlotTypeSelectorComponent} from "../../Shared/PlotTypeSelector/PlotTypeSelectorComponent";
 
 @observer
 export class SpectralProfilerSettingsPanelComponent extends React.Component<{ widgetStore: SpectralProfileWidgetStore }> {
@@ -13,14 +14,6 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<{ wi
 
     handleWcsValuesChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.props.widgetStore.setUseWcsValues(changeEvent.target.checked);
-    };
-
-    handlePointsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.props.widgetStore.setUsePoints(changeEvent.target.checked);
-    };
-
-    handleSteppedLinesChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.props.widgetStore.setInterpolateLines(changeEvent.target.checked);
     };
 
     handleCoordinateChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
@@ -42,8 +35,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<{ wi
                         </FormGroup>
                         <Switch label={"Use WCS Values"} checked={widgetStore.useWcsValues} onChange={this.handleWcsValuesChanged}/>
                         <Switch label={"Show Mean/RMS"} checked={widgetStore.meanRmsVisible} onChange={this.handleMeanRmsChanged}/>
-                        <Switch label={"Draw as Points"} checked={widgetStore.usePoints} onChange={this.handlePointsChanged}/>
-                        <Switch label={"Interpolated"} disabled={widgetStore.usePoints} checked={this.props.widgetStore.interpolateLines} onChange={this.handleSteppedLinesChanged}/>
+                        <PlotTypeSelectorComponent value={widgetStore.plotType} onValueChanged={widgetStore.setPlotType}/>
                         <Button icon={"zoom-to-fit"} small={true} disabled={widgetStore.isAutoScaledX && widgetStore.isAutoScaledY} onClick={widgetStore.clearXYBounds}>Reset Range</Button>
                     </ControlGroup>
                 </FormGroup>
