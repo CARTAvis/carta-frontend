@@ -1,5 +1,5 @@
 import {Colors} from "@blueprintjs/core";
-import {action, computed, observable} from "mobx";
+import {action, autorun, computed, observable} from "mobx";
 import * as AST from "ast_wrapper";
 import {FrameStore} from "./FrameStore";
 
@@ -79,6 +79,9 @@ export class OverlayGlobalSettings {
     @observable color: number;
     @observable tolerance: number; // percentage
     @observable system: SystemType;
+    
+    // We need this so that we know what to do if it's set to native
+    @observable defaultSystem: SystemType;
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
@@ -110,6 +113,10 @@ export class OverlayGlobalSettings {
     
     @action setSystem(system: SystemType) {
         this.system = system;
+    }
+    
+    @action setDefaultSystem(system: SystemType) {
+        this.defaultSystem = system;
     }
 }
 
@@ -338,8 +345,8 @@ export class OverlayNumberSettings {
     // Unlike most default values, we calculate and set these explicitly, instead of
     // leaving them unset and letting AST pick a default. We have to save these so that
     // we can revert to default values after setting custom values.
-    defaultFormatX: string;
-    defaultFormatY: string;
+    @observable defaultFormatX: string;
+    @observable defaultFormatY: string;
 
     constructor() {
         this.visible = true;
@@ -424,6 +431,14 @@ export class OverlayNumberSettings {
 
     @action setFormatY(format: string) {
         this.formatY = format;
+    }
+
+    @action setDefaultFormatX(format: string) {
+        this.defaultFormatX = format;
+    }
+
+    @action setDefaultFormatY(format: string) {
+        this.defaultFormatY = format;
     }
 
     @action setCustomPrecision(customPrecision: boolean) {
@@ -546,35 +561,46 @@ export class OverlayStore {
         this.numbers = new OverlayNumberSettings();
         this.labels = new OverlayLabelSettings();
         this.ticks = new OverlayTickSettings();
+        
+        // if the system is manually selected, set new default formats
+        autorun(() => {
+            const _ = this.global.system;
+            this.setFormatsFromSystem();
+        });
     }
-    
-    private formatFromUnit(unit: string) {
-        if (/^d+:m+:s+/.test(unit)) {
-            return "dms";
-        } else if (/^h+:m+:s+/.test(unit)) {
-            return "hms";
+
+    @action setFormatsFromSystem() {
+        const formatsFromSystem = (system: SystemType) => {
+            if (system === SystemType.Ecliptic || system === SystemType.Galactic) {
+                return ["d", "d"];
+            }
+            
+            return ["hms", "dms"];
+        };
+        
+        // Get the current manually overridden system or the default saved from file if system is set to native
+        const currentSystem = (this.global.system === SystemType.Native ? this.global.defaultSystem : this.global.system);
+        
+        // Get the default formats for this system
+        const formats = formatsFromSystem(currentSystem);
+        
+        // Set the default formats (should only be used if format is not overridden)
+        this.numbers.setDefaultFormatX(formats[0]);
+        this.numbers.setDefaultFormatY(formats[1]);
+        
+        // Set starting values for custom format only if format is not already custom
+        if (!this.numbers.customFormat) {
+            this.numbers.setFormatX(formats[0]);
+            this.numbers.setFormatY(formats[1]);
         }
-        return "d";
     }
     
     @action setDefaultsFromAST(frame: FrameStore) {
+        this.global.setDefaultSystem(AST.getString(frame.wcsInfo, "System") as SystemType);
+        this.setFormatsFromSystem();
+        
         this.labels.setTextX(AST.getString(frame.wcsInfo, "Label(1)"));
         this.labels.setTextY(AST.getString(frame.wcsInfo, "Label(2)"));
-                
-        let formatFromUnit = (unit: string) => {
-            if (/^d+:m+:s+/.test(unit)) {
-                return "dms";
-            } else if (/^h+:m+:s+/.test(unit)) {
-                return "hms";
-            }
-            return "d";
-        };
-        
-        this.numbers.defaultFormatX = formatFromUnit(AST.getString(frame.wcsInfo, "Unit(1)"));
-        this.numbers.defaultFormatY = formatFromUnit(AST.getString(frame.wcsInfo, "Unit(2)"));
-        
-        this.numbers.setFormatX(formatFromUnit(AST.getString(frame.wcsInfo, "Unit(1)")));
-        this.numbers.setFormatY(formatFromUnit(AST.getString(frame.wcsInfo, "Unit(2)")));
     }
 
     @computed get styleString() {
@@ -589,6 +615,7 @@ export class OverlayStore {
         astString.addSection(this.labels.styleString);
         
         astString.add("LabelUp(2)", "0")
+        astString.add("DrawTitle", "0")
         
         return astString.toString();
     }
