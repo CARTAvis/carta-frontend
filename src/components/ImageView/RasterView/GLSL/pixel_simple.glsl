@@ -24,6 +24,7 @@ uniform float uMaxVal;
 uniform float uBias;
 uniform float uContrast;
 uniform float uGamma;
+uniform float uAlpha;
 uniform vec4 uNaNColor;
 
 bool isnan(float val) {
@@ -36,33 +37,30 @@ void main(void) {
 
     // Scaling types
     // LINEAR (Default: uScaleType == LINEAR)
-    float alpha = clamp((rawVal - uMinVal) / range, 0.0, 1.0);
-    // SQUARE
+    float x = clamp((rawVal - uMinVal) / range, 0.0, 1.0);
+    // Other scaling types
     if (uScaleType == SQUARE) {
-        alpha = alpha * alpha;
+        x = x * x;
     }
-    // SQUARE ROOT
     else if (uScaleType == SQRT) {
-        alpha = sqrt(alpha);
+        x = sqrt(x);
     }
-    // LOG
     else if (uScaleType == LOG) {
-        alpha = clamp(log(alpha) / 3.0 + 1.0, 0.0, 1.0);
+        x = clamp(log(uAlpha * x + 1.0) / log(uAlpha), 0.0, 1.0);
     }
-    // POWER
     else if (uScaleType == POWER) {
-        alpha = pow(10.0, range * (alpha - 1.0));
+        x = (pow(uAlpha, x) -1.0)/uAlpha;
     }
     else if (uScaleType == GAMMA) {
-        alpha = pow(alpha, uGamma);
+        x = pow(x, uGamma);
     }
 
     // bias mod
-    alpha = clamp(alpha - uBias, 0.0, 1.0);
+    x = clamp(x - uBias, 0.0, 1.0);
     // contrast mod
-    alpha = clamp((alpha - 0.5) * uContrast + 0.5, 0.0, 1.0);
+    x = clamp((x - 0.5) * uContrast + 0.5, 0.0, 1.0);
 
     float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
-    vec2 cmapCoords = vec2(alpha, cmapYVal);
+    vec2 cmapCoords = vec2(x, cmapYVal);
     gl_FragColor = isnan(rawVal) ? uNaNColor : texture2D(uCmapTexture, cmapCoords);
 }
