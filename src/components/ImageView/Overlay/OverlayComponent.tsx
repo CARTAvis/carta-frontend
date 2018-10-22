@@ -12,6 +12,8 @@ export class OverlayComponentProps {
     overlaySettings: OverlayStore;
     frame: FrameStore;
     docked: boolean;
+    cursorPoint: Point2D;
+    cursorFrozen: boolean;
     onCursorMoved?: (cursorInfo: CursorInfo) => void;
     onClicked?: (cursorInfo: CursorInfo) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
@@ -110,6 +112,23 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         };
     }
 
+    private getCursorCanvasPos(imageX: number, imageY: number): Point2D {
+        const settings = this.props.overlaySettings;
+        const frameView = this.props.frame.requiredFrameView;
+
+        const LT = {x: settings.padding.left, y: settings.padding.top};
+        const RB = {x: settings.viewWidth - settings.padding.right, y: settings.viewHeight - settings.padding.bottom};
+        const posCanvasSpace = {
+            x: Math.floor(LT.x + (imageX + 1 - frameView.xMin) / (frameView.xMax - frameView.xMin) * (RB.x - LT.x)) - 0.5,
+            y: Math.floor(LT.y + (frameView.yMax - imageY - 1) / (frameView.yMax - frameView.yMin) * (RB.y - LT.y)) - 0.5
+        };
+
+        if (posCanvasSpace.x < LT.x || posCanvasSpace.x > RB.x || posCanvasSpace.y < LT.y || posCanvasSpace.y > RB.y) {
+            return null;
+        }
+        return posCanvasSpace;
+    }
+
     updateImageDimensions() {
         this.canvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio;
         this.canvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio;
@@ -119,10 +138,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const settings = this.props.overlaySettings;
         const frame = this.props.frame;
         const pixelRatio = devicePixelRatio;
-        
+
         if (frame.wcsInfo) {
             AST.setCanvas(this.canvas);
-            
+
             const plot = (styleString: string) => {
                 AST.plot(
                     frame.wcsInfo,
@@ -134,13 +153,35 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             };
 
             plot(settings.styleString);
-                                    
+
             if (/No grid curves can be drawn for axis/.test(AST.getLastErrorMessage())) {
                 // Try to re-plot without the grid
                 plot(settings.styleString.replace(/Gap\(\d\)=[^,]+, ?/g, "").replace("Grid=1", "Grid=0"));
             }
-            
+
             AST.clearLastErrorMessage();
+        }
+
+        if (this.props.cursorFrozen && this.props.cursorPoint) {
+            let cursorPosCanvas = this.getCursorCanvasPos(this.props.cursorPoint.x, this.props.cursorPoint.y);
+            cursorPosCanvas = {x: cursorPosCanvas.x * devicePixelRatio, y: cursorPosCanvas.y * devicePixelRatio};
+            if (cursorPosCanvas) {
+                const ctx = this.canvas.getContext("2d");
+                const crosshairLength = 20 * devicePixelRatio;
+                const initialStyle = ctx.strokeStyle;
+                ctx.save();
+                ctx.resetTransform();
+                ctx.fillStyle = "black";
+                ctx.strokeStyle = "white";
+                ctx.fillRect(cursorPosCanvas.x - crosshairLength / 2.0 - 1.5 * devicePixelRatio, cursorPosCanvas.y - 1.5 * devicePixelRatio, crosshairLength + 3 * devicePixelRatio, 3 * devicePixelRatio);
+                ctx.fillRect(cursorPosCanvas.x - 1.5 * devicePixelRatio, cursorPosCanvas.y - crosshairLength / 2.0 - 1.5 * devicePixelRatio, 3 * devicePixelRatio, crosshairLength + 3 * devicePixelRatio);
+                ctx.moveTo(cursorPosCanvas.x - crosshairLength / 2.0 - 0.5 * devicePixelRatio, cursorPosCanvas.y);
+                ctx.lineTo(cursorPosCanvas.x + crosshairLength / 2.0 + 0.5 * devicePixelRatio, cursorPosCanvas.y);
+                ctx.moveTo(cursorPosCanvas.x, cursorPosCanvas.y - crosshairLength / 2.0 - 0.5 * devicePixelRatio);
+                ctx.lineTo(cursorPosCanvas.x, cursorPosCanvas.y + crosshairLength / 2.0 + 0.5 * devicePixelRatio);
+                ctx.stroke();
+                ctx.strokeStyle = initialStyle;
+            }
         }
     };
 
@@ -150,6 +191,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const framePadding = this.props.overlaySettings.padding;
         const w = this.props.overlaySettings.viewWidth;
         const h = this.props.overlaySettings.viewHeight;
+        const frozen = this.props.cursorFrozen;
+        if (this.props.cursorPoint) {
+            const pointX = this.props.cursorPoint.x;
+            const pointY = this.props.cursorPoint.y;
+        }
         let className = "overlay-canvas";
         if (this.props.docked) {
             className += " docked";

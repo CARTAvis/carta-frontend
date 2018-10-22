@@ -67,6 +67,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     onCursorMoved={this.onCursorMoved}
                     onClicked={this.onClicked}
                     onZoomed={this.onZoomed}
+                    cursorFrozen={appStore.cursorFrozen}
+                    cursorPoint={appStore.cursorInfo ? appStore.cursorInfo.posImageSpace : null}
                 />
                 }
                 {appStore.astReady && appStore.activeFrame &&
