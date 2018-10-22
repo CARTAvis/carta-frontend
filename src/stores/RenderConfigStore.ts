@@ -19,7 +19,8 @@ export class RenderConfigStore {
         [FrameScaling.LOG, "Log"],
         [FrameScaling.SQRT, "Square root"],
         [FrameScaling.SQUARE, "Squared"],
-        [FrameScaling.GAMMA, "Gamma"]
+        [FrameScaling.GAMMA, "Gamma"],
+        [FrameScaling.POWER, "Power"]
     ]);
     static readonly COLOR_MAPS_ALL = ["accent", "afmhot", "autumn", "binary", "Blues", "bone", "BrBG", "brg", "BuGn", "BuPu", "bwr", "CMRmap", "cool", "coolwarm",
         "copper", "cubehelix", "dark2", "flag", "gist_earth", "gist_gray", "gist_heat", "gist_ncar", "gist_rainbow", "gist_stern", "gist_yarg",
@@ -34,6 +35,7 @@ export class RenderConfigStore {
     @observable contrast: number;
     @observable bias: number;
     @observable gamma: number;
+    @observable alpha: number;
     @observable channelHistogram: CARTA.Histogram;
     @observable selectedPercentile: number;
 
@@ -42,6 +44,7 @@ export class RenderConfigStore {
         this.bias = 0;
         this.contrast = 1;
         this.gamma = 1;
+        this.alpha = 1000;
         this.scaling = FrameScaling.LINEAR;
         this.setColorMap("inferno");
     }
@@ -79,7 +82,7 @@ export class RenderConfigStore {
         return this.channelHistogram.firstBinCenter + (this.channelHistogram.bins.length + 0.5) * this.channelHistogram.binWidth;
     }
 
-    @action setPercentileRank(rank: number) {
+    @action setPercentileRank = (rank: number) => {
         this.selectedPercentile = rank;
         // Find max and min if the rank is 100%
         if (rank === 100) {
@@ -102,37 +105,45 @@ export class RenderConfigStore {
         else {
             return false;
         }
-    }
+    };
 
-    @action updateChannelHistogram(histogram: CARTA.Histogram) {
+    @action updateChannelHistogram = (histogram: CARTA.Histogram) => {
         this.channelHistogram = histogram;
         if (this.selectedPercentile > 0) {
             this.setPercentileRank(this.selectedPercentile);
         }
-    }
+    };
 
-    @action setCustomScale(minVal: number, maxVal: number) {
+    @action setCustomScale = (minVal: number, maxVal: number) => {
         this.scaleMin = minVal;
         this.scaleMax = maxVal;
         this.selectedPercentile = -1;
-    }
+    };
 
-    @action setColorMapIndex(index: number) {
+    @action setColorMapIndex = (index: number) => {
         this.colorMap = clamp(index, 0, RenderConfigStore.COLOR_MAPS_ALL.length - 1);
-    }
+    };
 
-    @action setColorMap(colormap: string) {
+    @action setColorMap = (colormap: string) => {
         const index = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
         if (index >= 0) {
             this.setColorMapIndex(index);
         }
-    }
+    };
 
-    @action setScaling(newScaling: FrameScaling) {
+    @action setScaling = (newScaling: FrameScaling) => {
         if (RenderConfigStore.SCALING_TYPES.has(newScaling)) {
             this.scaling = newScaling;
         }
-    }
+    };
+
+    @action setGamma = (gamma: number) => {
+        this.gamma = gamma;
+    };
+
+    @action setAlpha = (alpha: number) => {
+        this.alpha = alpha;
+    };
 
     private getPercentiles(ranks: number[]): number[] {
         if (!ranks || !ranks.length || !this.channelHistogram || !this.channelHistogram.bins.length) {

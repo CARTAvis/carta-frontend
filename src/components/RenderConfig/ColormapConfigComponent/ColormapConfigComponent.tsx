@@ -5,19 +5,21 @@ import {Select} from "@blueprintjs/select";
 import {FrameScaling, RenderConfigStore} from "../../../stores/RenderConfigStore";
 // Static assets
 import allMaps from "../../../static/allmaps.png";
-// Equation SVG images
-import linearSvg from "../../../static/equations/linear.svg";
-import logSvg from "../../../static/equations/log.svg";
-import sqrtSvg from "../../../static/equations/sqrt.svg";
-import squaredSvg from "../../../static/equations/squared.svg";
-import gammaSvg from "../../../static/equations/gamma.svg";
+// Equation PNG images
+import linearPng from "../../../static/equations/linear.png";
+import logPng from "../../../static/equations/log.png";
+import sqrtPng from "../../../static/equations/sqrt.png";
+import squaredPng from "../../../static/equations/squared.png";
+import gammaPng from "../../../static/equations/gamma.png";
+import powerPng from "../../../static/equations/power.png";
 
-const equationSVGMap = new Map([
-    [FrameScaling.LINEAR, linearSvg],
-    [FrameScaling.LOG, logSvg],
-    [FrameScaling.SQRT, sqrtSvg],
-    [FrameScaling.SQUARE, squaredSvg],
-    [FrameScaling.GAMMA, gammaSvg]
+const equationPngMap = new Map([
+    [FrameScaling.LINEAR, linearPng],
+    [FrameScaling.LOG, logPng],
+    [FrameScaling.SQRT, sqrtPng],
+    [FrameScaling.SQUARE, squaredPng],
+    [FrameScaling.GAMMA, gammaPng],
+    [FrameScaling.POWER, powerPng]
 ]);
 
 const ColorMapSelect = Select.ofType<string>();
@@ -34,18 +36,6 @@ const COLORMAP_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position:
 
 @observer
 export class ColormapConfigComponent extends React.Component<ColormapConfigProps> {
-    handleColorMapChange = (newColorMap: string) => {
-        this.props.renderConfig.setColorMap(newColorMap);
-    };
-
-    handleScalingChange = (scaling: FrameScaling) => {
-        this.props.renderConfig.setScaling(scaling);
-    };
-
-    handleGammaChange = (value: number) => {
-        this.props.renderConfig.gamma = value;
-    };
-
     renderColormapBlock = (colormap: string) => {
         let className = "colormap-block";
         if (this.props.darkTheme) {
@@ -88,21 +78,14 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         if (!modifiers.matchesPredicate || !RenderConfigStore.SCALING_TYPES.has(scaling)) {
             return null;
         }
-        const scalingName = RenderConfigStore.SCALING_TYPES.get(scaling);
-
-        const equationDiv = (
-            <div className="equation-div">
-                <img src={equationSVGMap.get(scaling)}/>
-            </div>
-        );
         return (
             <MenuItem
                 active={modifiers.active}
                 disabled={modifiers.disabled}
-                label={scalingName}
+                label={RenderConfigStore.SCALING_TYPES.get(scaling)}
                 key={scaling}
                 onClick={handleClick}
-                text={equationDiv}
+                text={<div className="equation-div" style={{backgroundImage: `url(${equationPngMap.get(scaling)}`}}/>}
             />
         );
     };
@@ -121,7 +104,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         popoverProps={SCALING_POPOVER_PROPS}
                         filterable={false}
                         items={SCALING_KEYS}
-                        onItemSelect={this.handleScalingChange}
+                        onItemSelect={this.props.renderConfig.setScaling}
                         itemRenderer={this.renderScalingSelectItem}
                     >
                         <Button text={renderConfig.scalingName} rightIcon="double-caret-vertical" alignText={"right"}/>
@@ -134,7 +117,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         popoverProps={COLORMAP_POPOVER_PROPS}
                         filterable={false}
                         items={RenderConfigStore.COLOR_MAPS_ALL}
-                        onItemSelect={this.handleColorMapChange}
+                        onItemSelect={this.props.renderConfig.setColorMap}
                         itemRenderer={this.renderColormapSelectItem}
                     >
                         <Button text={this.renderColormapBlock(renderConfig.colorMapName)} rightIcon="double-caret-vertical"/>
@@ -149,7 +132,16 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         minorStepSize={0.01}
                         majorStepSize={0.5}
                         value={renderConfig.gamma}
-                        onValueChange={this.handleGammaChange}
+                        onValueChange={this.props.renderConfig.setGamma}
+                    />
+                </FormGroup>
+                }
+                {(renderConfig.scaling === FrameScaling.LOG || renderConfig.scaling === FrameScaling.POWER) &&
+                <FormGroup label={"Alpha"} inline={true}>
+                    <NumericInput
+                        buttonPosition={"none"}
+                        value={renderConfig.alpha}
+                        onValueChange={this.props.renderConfig.setAlpha}
                     />
                 </FormGroup>
                 }
