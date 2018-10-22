@@ -90,6 +90,18 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         );
     };
 
+    handleGammaChange = (value: number) => {
+        if (isFinite(value)) {
+            this.props.renderConfig.setGamma(value);
+        }
+    };
+
+    handleAlphaChange = (value: number) => {
+        if (isFinite(value)) {
+            this.props.renderConfig.setAlpha(value);
+        }
+    };
+
     render() {
         if (!this.props.renderConfig) {
             return null;
@@ -132,7 +144,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         minorStepSize={0.01}
                         majorStepSize={0.5}
                         value={renderConfig.gamma}
-                        onValueChange={this.props.renderConfig.setGamma}
+                        onValueChange={this.handleGammaChange}
                     />
                 </FormGroup>
                 }
@@ -141,7 +153,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                     <NumericInput
                         buttonPosition={"none"}
                         value={renderConfig.alpha}
-                        onValueChange={this.props.renderConfig.setAlpha}
+                        onValueChange={this.handleAlphaChange}
                     />
                 </FormGroup>
                 }
