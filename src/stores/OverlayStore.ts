@@ -614,7 +614,7 @@ export class OverlayStore {
         astString.addSection(this.numbers.styleString);
         astString.addSection(this.labels.styleString);
         
-        astString.add("LabelUp(2)", "0");
+        astString.add("LabelUp", "0");
         astString.add("DrawTitle", "0");
         
         return astString.toString();
