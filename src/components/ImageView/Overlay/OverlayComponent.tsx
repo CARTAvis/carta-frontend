@@ -190,10 +190,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const w = this.props.overlaySettings.viewWidth;
         const h = this.props.overlaySettings.viewHeight;
         const frozen = this.props.cursorFrozen;
-        if (this.props.cursorPoint) {
-            const pointX = this.props.cursorPoint.x;
-            const pointY = this.props.cursorPoint.y;
-        }
+
         let className = "overlay-canvas";
         if (this.props.docked) {
             className += " docked";
