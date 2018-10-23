@@ -107,9 +107,7 @@ export class AppStore {
             else {
                 this.frames.push(newFrame);
             }
-            this.activeFrame = newFrame;
-
-            this.widgetsStore.updateImageWidgetTitle();
+            this.setActiveFrame(newFrame.frameInfo.fileId);
             this.fileBrowserStore.hideFileBrowser();
         }, err => {
             this.alertStore.showAlert(`Error loading file: ${err}`);
@@ -323,14 +321,14 @@ export class AppStore {
                 this.backendService.setSpectralRequirements(this.activeFrame.frameInfo.fileId, 0, [profileConfig]);
             }
         });
-        
+
         // Set overlay defaults from current frame
         autorun(() => {
             if (this.activeFrame) {
                 this.overlayStore.setDefaultsFromAST(this.activeFrame);
             }
         });
-        
+
         // Set palette if theme changes
         autorun(() => {
             AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
@@ -433,6 +431,7 @@ export class AppStore {
         if (requiredFrame) {
             this.activeFrame = requiredFrame;
             this.widgetsStore.updateImageWidgetTitle();
+            this.setCursorFrozen(false);
         }
         else {
             console.log(`Can't find required frame ${fileId}`);
@@ -443,6 +442,7 @@ export class AppStore {
         if (index >= 0 && this.frames.length > index) {
             this.activeFrame = this.frames[index];
             this.widgetsStore.updateImageWidgetTitle();
+            this.setCursorFrozen(false);
         }
         else {
             console.log(`Invalid frame index ${index}`);
