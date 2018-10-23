@@ -4,9 +4,8 @@ import ReactResizeDetector from "react-resize-detector";
 import {action, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Chart} from "chart.js";
-import {FormGroup, HTMLSelect, NonIdealState, ButtonGroup, Button, IOptionProps, NumericInput} from "@blueprintjs/core";
+import {Button, ButtonGroup, FormGroup, HTMLSelect, IOptionProps, NonIdealState, NumericInput} from "@blueprintjs/core";
 import {LinePlotComponent, LinePlotComponentProps} from "../Shared/LinePlot/LinePlotComponent";
-import {AppStore} from "../../stores/AppStore";
 import {FrameStore} from "../../stores/FrameStore";
 import {FrameScaling} from "../../stores/RenderConfigStore";
 import {WidgetConfig, WidgetProps} from "../../stores/WidgetsStore";
@@ -17,9 +16,10 @@ import {PopoverSettingsComponent} from "../Shared/PopoverSettings/PopoverSetting
 import {RenderConfigSettingsPanelComponent} from "./RenderConfigSettingsPanelComponent/RenderConfigSettingsPanelComponent";
 import {RenderConfigWidgetStore} from "../../stores/widgets/RenderConfigWidgetStore";
 import "./RenderConfigComponent.css";
+import {PlotType} from "../Shared/PlotTypeSelector/PlotTypeSelectorComponent";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
-const PANEL_CONTENT_WIDTH = 140;
+const PANEL_CONTENT_WIDTH = 160;
 
 @observer
 export class RenderConfigComponent extends React.Component<WidgetProps> {
@@ -200,8 +200,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             yLabel: "Count",
             darkMode: appStore.darkTheme,
             logY: this.widgetStore.logScaleY,
-            usePointSymbols: this.widgetStore.usePoints,
-            interpolateLines: this.widgetStore.interpolateLines,
+            usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
+            interpolateLines: this.widgetStore.plotType === PlotType.LINES,
             forceScientificNotationTicksY: true,
             graphClicked: this.onMinMoved,
             graphRightClicked: this.onMaxMoved,

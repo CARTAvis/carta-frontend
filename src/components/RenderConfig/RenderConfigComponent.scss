@@ -3,12 +3,8 @@
 .equation-div {
     height: 20px;
     position: relative;
-    img {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        margin: auto;
-    }
+    background-size: auto 18px;
+    background-repeat: no-repeat;
 }
 
 .colormap-select-popover {

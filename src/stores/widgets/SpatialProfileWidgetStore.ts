@@ -1,4 +1,5 @@
 import {action, computed, observable} from "mobx";
+import {PlotType} from "../../components/Shared/PlotTypeSelector/PlotTypeSelectorComponent";
 
 export class SpatialProfileWidgetStore {
     @observable fileId: number;
@@ -9,8 +10,7 @@ export class SpatialProfileWidgetStore {
     @observable minY: number;
     @observable maxY: number;
     @observable cursorX: number;
-    @observable usePoints: boolean;
-    @observable interpolateLines: boolean;
+    @observable plotType: PlotType;
     @observable settingsPanelVisible: boolean;
     @observable meanRmsVisible: boolean;
     @observable wcsAxisVisible: boolean;
@@ -101,12 +101,8 @@ export class SpatialProfileWidgetStore {
         this.wcsAxisVisible = val;
     };
 
-    @action setUsePoints = (val: boolean) => {
-        this.usePoints = val;
-    };
-
-    @action setInterpolateLines = (val: boolean) => {
-        this.interpolateLines = val;
+    @action setPlotType = (val: PlotType) => {
+        this.plotType = val;
     };
 
     @action setCursor = (cursorVal: number) => {
@@ -120,8 +116,7 @@ export class SpatialProfileWidgetStore {
         this.regionId = regionId;
 
         // Describes how the data is visualised
-        this.usePoints = false;
-        this.interpolateLines = false;
+        this.plotType = PlotType.STEPS;
         this.settingsPanelVisible = false;
         this.meanRmsVisible = false;
         this.markerTextVisible = false;
