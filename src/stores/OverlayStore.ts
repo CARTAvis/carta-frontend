@@ -621,16 +621,19 @@ export class OverlayStore {
         return astString.toString();
     }
 
-    @computed get padding(): Padding {        
+    @computed get padding(): Padding {
+        const minSize = Math.min(this.viewWidth, this.viewHeight);
+        
         const numHeight = (this.numbers.visible && this.global.labelType === LabelType.Exterior ? this.numbers.fontSize : 0);
         const labelHeight = (this.labels.visible ? this.labels.fontSize : 0);
         const basePadding = (this.numbers.visible ? 20 : 10);
+        const labelGap = (this.labels.visible? minSize * 0.01 * devicePixelRatio : 0);
         
         return {
-            left: basePadding + labelHeight + numHeight,
+            left: basePadding + labelHeight + numHeight + labelGap,
             right: basePadding,
             top: basePadding,
-            bottom: basePadding + labelHeight + numHeight
+            bottom: basePadding + labelHeight + numHeight + labelGap
         };
     }
 }
