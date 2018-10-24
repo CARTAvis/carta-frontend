@@ -306,14 +306,14 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             for (let i = 0; i < values.length; i++) {
                 const pointWCS = AST.pixToWCS(this.frame.wcsInfo, values[i], this.profileStore.y);
                 const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
-                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, normVals.x, undefined).x;
+                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, normVals.x, undefined, `System = ${this.props.appStore.overlayStore.global.implicitSystem}`).x;
             }
         }
         else {
             for (let i = 0; i < values.length; i++) {
                 const pointWCS = AST.pixToWCS(this.frame.wcsInfo, this.profileStore.x, values[i]);
                 const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
-                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, undefined, normVals.y).y;
+                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, undefined, normVals.y, `System = ${this.props.appStore.overlayStore.global.implicitSystem}`).y;
             }
         }
         this.trimDecimals();
