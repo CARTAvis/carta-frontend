@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
 import * as _ from "lodash";
-import {LabelType, OverlayStore} from "../../../stores/OverlayStore";
+import {LabelType, OverlayStore, ASTSettingsString} from "../../../stores/OverlayStore";
 import {observer} from "mobx-react";
 import {CursorInfo} from "../../../models/CursorInfo";
 import {FrameStore} from "../../../stores/FrameStore";
@@ -99,9 +99,13 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         if (this.props.frame.validWcs) {
             cursorPosWCS = AST.pixToWCS(this.props.frame.wcsInfo, cursorPosImageSpace.x, cursorPosImageSpace.y);
             const normVals = AST.normalizeCoordinates(this.props.frame.wcsInfo, cursorPosWCS.x, cursorPosWCS.y);
-            const formatStringX = this.props.overlaySettings.numbers.cursorFormatStringX;
-            const formatStringY = this.props.overlaySettings.numbers.cursorFormatStringY;
-            cursorPosFormatted = AST.getFormattedCoordinates(this.props.frame.wcsInfo, normVals.x, normVals.y, `Format(1) = ${formatStringX}, Format(2) = ${formatStringY}, System = ${this.props.overlaySettings.global.implicitSystem}`);
+            
+            let astString = new ASTSettingsString();
+            astString.add("Format(1)", this.props.overlaySettings.numbers.cursorFormatStringX);
+            astString.add("Format(2)", this.props.overlaySettings.numbers.cursorFormatStringY);
+            astString.add("System", this.props.overlaySettings.global.implicitSystem);
+            
+            cursorPosFormatted = AST.getFormattedCoordinates(this.props.frame.wcsInfo, normVals.x, normVals.y, astString.toString());
         }
         return {
             posCanvasSpace: cursorPosCanvasSpace,

@@ -15,6 +15,7 @@ import {PopoverSettingsComponent} from "../Shared/PopoverSettings/PopoverSetting
 import {SpatialProfilerSettingsPanelComponent} from "./SpatialProfilerSettingsPanelComponent/SpatialProfilerSettingsPanelComponent";
 import "./SpatialProfilerComponent.css";
 import {FrameStore} from "../../stores/FrameStore";
+import {ASTSettingsString} from "../../stores/OverlayStore";
 import {PlotType} from "../Shared/PlotTypeSelector/PlotTypeSelectorComponent";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -301,19 +302,22 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             return;
         }
         const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
+        
+        let astString = new ASTSettingsString();
+        astString.add("System", this.props.appStore.overlayStore.global.implicitSystem);
 
         if (isXProfile) {
             for (let i = 0; i < values.length; i++) {
                 const pointWCS = AST.pixToWCS(this.frame.wcsInfo, values[i], this.profileStore.y);
                 const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
-                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, normVals.x, undefined, `System = ${this.props.appStore.overlayStore.global.implicitSystem}`).x;
+                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, normVals.x, undefined, astString.toString()).x;
             }
         }
         else {
             for (let i = 0; i < values.length; i++) {
                 const pointWCS = AST.pixToWCS(this.frame.wcsInfo, this.profileStore.x, values[i]);
                 const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
-                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, undefined, normVals.y, `System = ${this.props.appStore.overlayStore.global.implicitSystem}`).y;
+                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, undefined, normVals.y, astString.toString()).y;
             }
         }
         this.trimDecimals();
