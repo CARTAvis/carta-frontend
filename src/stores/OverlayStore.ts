@@ -88,8 +88,18 @@ export class OverlayGlobalSettings {
         astString.add("Labelling", this.labelType);
         astString.add("Color", this.color);
         astString.add("Tol", (this.tolerance / 100).toFixed(2), (this.tolerance >= 0.001)); // convert to fraction
-        astString.add("System", this.system, (this.system !== SystemType.Native));
+        astString.add("System", this.implicitSystem);
         return astString.toString();
+    }
+    
+    // Get the current manually overridden system or nothing if system is set to native
+    @computed get implicitSystem() {
+        return (this.system !== SystemType.Native ? this.system : undefined);
+    }
+    
+    // Get the current manually overridden system or the default saved from file if system is set to native
+    @computed get explicitSystem() {
+        return (this.system !== SystemType.Native ? this.system : this.defaultSystem);
     }
     
     constructor() {
@@ -578,11 +588,8 @@ export class OverlayStore {
             return ["hms", "dms"];
         };
         
-        // Get the current manually overridden system or the default saved from file if system is set to native
-        const currentSystem = (this.global.system === SystemType.Native ? this.global.defaultSystem : this.global.system);
-        
         // Get the default formats for this system
-        const formats = formatsFromSystem(currentSystem);
+        const formats = formatsFromSystem(this.global.explicitSystem);
         
         // Set the default formats (should only be used if format is not overridden)
         this.numbers.setDefaultFormatX(formats[0]);
