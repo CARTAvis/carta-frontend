@@ -634,7 +634,7 @@ export class OverlayStore {
         const numHeight = (this.numbers.visible && this.global.labelType === LabelType.Exterior ? this.numbers.fontSize : 0);
         const labelHeight = (this.labels.visible ? this.labels.fontSize : 0);
         const basePadding = (this.numbers.visible ? 20 : 10);
-        const labelGap = (this.labels.visible? minSize * 0.01 * devicePixelRatio : 0);
+        const labelGap = (this.labels.visible ? minSize * 0.01 * devicePixelRatio : 0);
         
         return {
             left: basePadding + labelHeight + numHeight + labelGap,
