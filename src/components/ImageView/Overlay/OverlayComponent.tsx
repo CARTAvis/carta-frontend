@@ -12,6 +12,8 @@ export class OverlayComponentProps {
     overlaySettings: OverlayStore;
     frame: FrameStore;
     docked: boolean;
+    cursorPoint: Point2D;
+    cursorFrozen: boolean;
     onCursorMoved?: (cursorInfo: CursorInfo) => void;
     onClicked?: (cursorInfo: CursorInfo) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
@@ -110,6 +112,23 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         };
     }
 
+    private getCursorCanvasPos(imageX: number, imageY: number): Point2D {
+        const settings = this.props.overlaySettings;
+        const frameView = this.props.frame.requiredFrameView;
+
+        const LT = {x: settings.padding.left * devicePixelRatio, y: settings.padding.top * devicePixelRatio};
+        const RB = {x: settings.viewWidth * devicePixelRatio - settings.padding.right * devicePixelRatio, y: settings.viewHeight * devicePixelRatio - settings.padding.bottom * devicePixelRatio};
+        const posCanvasSpace = {
+            x: Math.floor(LT.x + (imageX + 1 - frameView.xMin) / (frameView.xMax - frameView.xMin) * (RB.x - LT.x)),
+            y: Math.floor(LT.y + (frameView.yMax - imageY - 1) / (frameView.yMax - frameView.yMin) * (RB.y - LT.y))
+        };
+
+        if (posCanvasSpace.x < LT.x || posCanvasSpace.x > RB.x || posCanvasSpace.y < LT.y || posCanvasSpace.y > RB.y) {
+            return null;
+        }
+        return posCanvasSpace;
+    }
+
     updateImageDimensions() {
         this.canvas.width = this.props.overlaySettings.viewWidth * devicePixelRatio;
         this.canvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio;
@@ -119,10 +138,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const settings = this.props.overlaySettings;
         const frame = this.props.frame;
         const pixelRatio = devicePixelRatio;
-        
+
         if (frame.wcsInfo) {
             AST.setCanvas(this.canvas);
-            
+
             const plot = (styleString: string) => {
                 AST.plot(
                     frame.wcsInfo,
@@ -134,13 +153,33 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             };
 
             plot(settings.styleString);
-                                    
+
             if (/No grid curves can be drawn for axis/.test(AST.getLastErrorMessage())) {
                 // Try to re-plot without the grid
                 plot(settings.styleString.replace(/Gap\(\d\)=[^,]+, ?/g, "").replace("Grid=1", "Grid=0"));
             }
-            
+
             AST.clearLastErrorMessage();
+        }
+
+        // Draw frozen cursor
+        if (this.props.cursorFrozen && this.props.cursorPoint) {
+            let cursorPosCanvas = this.getCursorCanvasPos(this.props.cursorPoint.x, this.props.cursorPoint.y);
+            if (cursorPosCanvas) {
+                const ctx = this.canvas.getContext("2d");
+                const crosshairLength = 20 * devicePixelRatio;
+                const posX = cursorPosCanvas.x + 0.5;
+                const posY = cursorPosCanvas.y + 0.5;
+                ctx.save();
+                ctx.resetTransform();
+                ctx.fillStyle = "black";
+                ctx.fillRect(posX - crosshairLength / 2.0 - 1.5, posY - 1.5, crosshairLength + 3, 3);
+                ctx.fillRect(posX - 1.5, posY - crosshairLength / 2.0 - 1.5, 3, crosshairLength + 3);
+                ctx.fillStyle = "white";
+                ctx.fillRect(posX - crosshairLength / 2.0 - 0.5, posY - 0.5, crosshairLength + 1, 1);
+                ctx.fillRect(posX - 0.5, posY - crosshairLength / 2.0 - 0.5, 1, crosshairLength + 1);
+                ctx.restore();
+            }
         }
     };
 
@@ -150,6 +189,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const framePadding = this.props.overlaySettings.padding;
         const w = this.props.overlaySettings.viewWidth;
         const h = this.props.overlaySettings.viewHeight;
+        const frozen = this.props.cursorFrozen;
+
         let className = "overlay-canvas";
         if (this.props.docked) {
             className += " docked";
