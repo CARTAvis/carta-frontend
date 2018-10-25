@@ -97,14 +97,15 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         let cursorPosWCS, cursorPosFormatted;
         if (this.props.frame.validWcs) {
-            cursorPosWCS = AST.pixToWCS(this.props.frame.wcsInfo, cursorPosImageSpace.x, cursorPosImageSpace.y);
+            // Shift image space coordinates to 1-indexed when passing to AST
+            cursorPosWCS = AST.pixToWCS(this.props.frame.wcsInfo, cursorPosImageSpace.x + 1, cursorPosImageSpace.y + 1);
             const normVals = AST.normalizeCoordinates(this.props.frame.wcsInfo, cursorPosWCS.x, cursorPosWCS.y);
-            
+
             let astString = new ASTSettingsString();
             astString.add("Format(1)", this.props.overlaySettings.numbers.cursorFormatStringX);
             astString.add("Format(2)", this.props.overlaySettings.numbers.cursorFormatStringY);
             astString.add("System", this.props.overlaySettings.global.implicitSystem);
-            
+
             cursorPosFormatted = AST.getFormattedCoordinates(this.props.frame.wcsInfo, normVals.x, normVals.y, astString.toString());
         }
         return {
