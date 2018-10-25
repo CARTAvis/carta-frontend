@@ -39,7 +39,6 @@ export enum SystemType {
     FK5 = "FK5",
     Galactic = "GALACTIC",
     ICRS = "ICRS",
-//     J2000 = "J2000"
 }
 
 export class Padding {
@@ -82,6 +81,7 @@ export class OverlayGlobalSettings {
     
     // We need this so that we know what to do if it's set to native
     @observable defaultSystem: SystemType;
+    @observable validWcs: boolean;
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
@@ -94,12 +94,24 @@ export class OverlayGlobalSettings {
     
     // Get the current manually overridden system or nothing if system is set to native
     @computed get implicitSystem() {
-        return (this.system !== SystemType.Native ? this.system : undefined);
+        if (!this.validWcs || this.system === SystemType.Native) {
+            return undefined;
+        }
+        
+        return this.system;
     }
     
     // Get the current manually overridden system or the default saved from file if system is set to native
     @computed get explicitSystem() {
-        return (this.system !== SystemType.Native ? this.system : this.defaultSystem);
+        if (!this.validWcs) {
+            return undefined;
+        }
+        
+        if (this.system === SystemType.Native) {
+            return this.defaultSystem;
+        }
+        
+        return this.system;
     }
     
     constructor() {
@@ -107,6 +119,9 @@ export class OverlayGlobalSettings {
         this.labelType = LabelType.Exterior;
         this.color = 4;
         this.tolerance = 1; // percentage
+        
+        this.defaultSystem = SystemType.Native;
+        this.validWcs = false;
     }
     
     @action setColor = (color: number) => {
@@ -127,6 +142,10 @@ export class OverlayGlobalSettings {
     
     @action setDefaultSystem(system: SystemType) {
         this.defaultSystem = system;
+    }
+
+    @action setValidWcs(validWcs: boolean) {
+        this.validWcs = validWcs;
     }
 }
 
@@ -357,6 +376,7 @@ export class OverlayNumberSettings {
     // we can revert to default values after setting custom values.
     @observable defaultFormatX: string;
     @observable defaultFormatY: string;
+    @observable validWcs: boolean;
 
     constructor() {
         this.visible = true;
@@ -372,26 +392,43 @@ export class OverlayNumberSettings {
         this.customPrecision = false;
         this.precision = 3;
         this.cursorPrecision = 4;
+        this.validWcs = false;
     }
     
     @computed get formatStringX() {
+        if (!this.validWcs) {
+            return undefined;
+        }
+        
         let format = (this.customFormat ? this.formatX : this.defaultFormatX);
         let precision = (this.customPrecision ? this.precision : "*");
         return `${format}.${precision}`;
     }
     
     @computed get formatStringY() {
+        if (!this.validWcs) {
+            return undefined;
+        }
+        
         let format = (this.customFormat ? this.formatY : this.defaultFormatY);
         let precision = (this.customPrecision ? this.precision : "*");
         return `${format}.${precision}`;
     }
     
     @computed get cursorFormatStringX() {
+        if (!this.validWcs) {
+            return undefined;
+        }
+        
         let format = (this.customFormat ? this.formatX : this.defaultFormatX);
         return `${format}.${this.cursorPrecision}`;
     }
     
     @computed get cursorFormatStringY() {
+        if (!this.validWcs) {
+            return undefined;
+        }
+        
         let format = (this.customFormat ? this.formatY : this.defaultFormatY);
         return `${format}.${this.cursorPrecision}`;
     }
@@ -461,6 +498,10 @@ export class OverlayNumberSettings {
 
     @action setCursorPrecision(precision: number) {
         this.cursorPrecision = precision;
+    }
+
+    @action setValidWcs(validWcs: boolean) {
+        this.validWcs = validWcs;
     }
 }
 
@@ -580,29 +621,33 @@ export class OverlayStore {
     }
 
     @action setFormatsFromSystem() {
-        const formatsFromSystem = (system: SystemType) => {
-            if (system === SystemType.Ecliptic || system === SystemType.Galactic) {
-                return ["d", "d"];
+        
+        if (!this.global.validWcs) {
+            // TODO: check if degrees would work
+            this.numbers.setDefaultFormatX(undefined);
+            this.numbers.setDefaultFormatY(undefined);
+        } else {            
+            if ([SystemType.FK4, SystemType.FK5, SystemType.ICRS].indexOf(this.global.explicitSystem) > -1) {
+                this.numbers.setDefaultFormatX("hms");
+                this.numbers.setDefaultFormatY("dms");
+            } else {
+                // Fall back to degrees by default
+                this.numbers.setDefaultFormatX("d");
+                this.numbers.setDefaultFormatY("d");
             }
-            
-            return ["hms", "dms"];
-        };
-        
-        // Get the default formats for this system
-        const formats = formatsFromSystem(this.global.explicitSystem);
-        
-        // Set the default formats (should only be used if format is not overridden)
-        this.numbers.setDefaultFormatX(formats[0]);
-        this.numbers.setDefaultFormatY(formats[1]);
+        }
         
         // Set starting values for custom format only if format is not already custom
         if (!this.numbers.customFormat) {
-            this.numbers.setFormatX(formats[0]);
-            this.numbers.setFormatY(formats[1]);
+            this.numbers.setFormatX(this.numbers.defaultFormatX);
+            this.numbers.setFormatY(this.numbers.defaultFormatY);
         }
     }
     
     @action setDefaultsFromAST(frame: FrameStore) {
+        this.global.setValidWcs(frame.validWcs);
+        this.numbers.setValidWcs(frame.validWcs);
+        
         this.global.setDefaultSystem(AST.getString(frame.wcsInfo, "System") as SystemType);
         this.setFormatsFromSystem();
         

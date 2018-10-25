@@ -144,6 +144,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         
         const disabledIfInterior = (interior && "Does not apply to interior labelling.");
         const disabledIfExterior = (!interior && "Does not apply to exterior labelling.");
+        const disabledIfNoWcs = (!global.validWcs && "This image has no valid WCS data.");
         
         const globalPanel = (
             <div className="panel-container">
@@ -168,10 +169,16 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => global.setLabelType(event.currentTarget.value as LabelType)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Coordinate system">
+                <FormGroup
+                    inline={true}
+                    label="Coordinate system"
+                    disabled={!global.validWcs} 
+                    helperText={disabledIfNoWcs}
+                >
                     <HTMLSelect
                         options={Object.keys(SystemType).map((key) => ({label: key, value: SystemType[key]}))}
                         value={global.system}
+                        disabled={!global.validWcs}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => global.setSystem(event.currentTarget.value as SystemType)}
                     />
                 </FormGroup>
@@ -450,13 +457,19 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         {this.colorSelect(numbers.visible, numbers.color, numbers.setColor)}
                     </FormGroup>
                 </Collapse>
-                <FormGroup inline={true} label="Custom format">
+                <FormGroup
+                    inline={true} 
+                    label="Custom format"
+                    disabled={!numbers.validWcs}
+                    helperText={disabledIfNoWcs}
+                >
                     <Switch 
                         checked={numbers.customFormat}
+                        disabled={!numbers.validWcs}
                         onChange={(ev) => numbers.setCustomFormat(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <Collapse isOpen={numbers.customFormat}>
+                <Collapse isOpen={numbers.customFormat && numbers.validWcs}>
                     <FormGroup inline={true} label="Format" labelInfo="(X)">
                         <HTMLSelect
                             options={[{label: "H:M:S", value: "hms"}, {label: "D:M:S", value: "dms"}, {label: "Degrees", value: "d"}]}
@@ -472,13 +485,19 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         />
                     </FormGroup>
                 </Collapse>
-                <FormGroup inline={true} label="Custom precision">
+                <FormGroup
+                    inline={true}
+                    label="Custom precision"
+                    disabled={!numbers.validWcs}
+                    helperText={disabledIfNoWcs}
+                >
                     <Switch 
                         checked={numbers.customPrecision}
+                        disabled={!numbers.validWcs}
                         onChange={(ev) => numbers.setCustomPrecision(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <Collapse isOpen={numbers.customPrecision}>
+                <Collapse isOpen={numbers.customPrecision && numbers.validWcs}>
                     <FormGroup inline={true} label="Precision">
                         <NumericInput
                             placeholder="Precision"
@@ -488,11 +507,17 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         />
                     </FormGroup>
                 </Collapse>
-                <FormGroup inline={true} label="Cursor precision">
+                <FormGroup
+                    inline={true}
+                    label="Cursor precision"
+                    disabled={!numbers.validWcs}
+                    helperText={disabledIfNoWcs}
+                >
                     <NumericInput
                         placeholder="Precision"
                         min={0}
                         value={numbers.cursorPrecision}
+                        disabled={!numbers.validWcs}
                         onValueChange={(value: number) => numbers.setCursorPrecision(value)}
                     />
                 </FormGroup>
