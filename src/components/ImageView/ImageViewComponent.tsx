@@ -42,7 +42,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             && 0 < cursorInfo.posImageSpace.x && cursorInfo.posImageSpace.x < appStore.activeFrame.frameInfo.fileInfoExtended.width
             && 0 < cursorInfo.posImageSpace.y && cursorInfo.posImageSpace.y < appStore.activeFrame.frameInfo.fileInfoExtended.height
         ) {
-            appStore.activeFrame.setCenter(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y);
+            // Shift from one-indexed image space position to zero-indexed
+            appStore.activeFrame.setCenter(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1);
         }
     };
 
@@ -51,7 +52,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         if (appStore.activeFrame) {
             const zoomSpeed = 1 + Math.abs(delta / 1000.0);
             const newZoom = appStore.activeFrame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
-            appStore.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x, cursorInfo.posImageSpace.y, newZoom);
+            // Shift from one-indexed image space position to zero-indexed
+            appStore.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom);
         }
     };
 
