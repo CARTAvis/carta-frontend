@@ -1,0 +1,633 @@
+From 14b5882cf54c1f23c085bb16a6f88114919f108a Mon Sep 17 00:00:00 2001
+From: David Berry <d.berry@jach.hawaii.edu>
+Date: Thu, 25 Oct 2018 13:54:05 +0100
+Subject: [PATCH] New attribute TextGapType for the plot class.
+
+The new attribute indicates the reference position from which the gaps
+specified by TextLabGap and TitleGap should be measured. By default, the
+gaps are measured from the nearest edge of the bounding box containing
+all other parts of hte annotated axes (excluding other textual labels).
+This is the past behaviour, so no change by default. If TextGapType is
+set to "plot", then the gaps are measured from the edge of the plotting
+window.
+
+This was requested by Angus Comrie of IDIA (South Africa). Who was
+finding that the lower axis label (e.g. "Right Ascension") was moving up
+and down depending on the size of the Y axis numerical labels (he uses
+LabelUp(2)=0 so that the Y axis numerical labels are drawn with a
+vertical base line and so may extend below the bottom edge of the
+plotting window).
+---
+ ast.news |   5 ++
+ plot.c   | 241 ++++++++++++++++++++++++++++++++++++++++---------------
+ plot.h   |  20 +++++
+ 3 files changed, 203 insertions(+), 63 deletions(-)
+
+diff --git a/ast.news b/ast.news
+index 6f1d3e4..b1a3297 100644
+--- a/ast.news
++++ b/ast.news
+@@ -30,6 +30,11 @@ distortion scheme has been improved.
+ - The astRebinSeq method of the Mapping class can now use a different
+ weight when pasting each separate input data array into the output mosaic.
+ 
++- The Plot class has a new attribute called TextGapType, which controls
++the interpretation of the TextLabGap and TitleGap attributes. It allows
++gaps to be specified with reference to the edge of the plotting area
++rather than the edge of the bounding box.
++
+ Main Changes in V8.6.2
+ ----------------------
+ 
+diff --git a/plot.c b/plot.c
+index 6ed39f4..96815af 100644
+--- a/plot.c
++++ b/plot.c
+@@ -97,6 +97,7 @@ f     AST_CLIP) to limit the extent of any plotting you perform, and
+ *     - NumLabGap(axis): Spacing of numerical axis labels for a Plot
+ *     - Size(element): Character size for a Plot element
+ *     - Style(element): Line style for a Plot element
++*     - TextGapType: Controls interpretation of TextLabGap and TitleGap
+ *     - TextLab(axis): Draw descriptive axis labels for a Plot?
+ *     - TextLabGap(axis): Spacing of descriptive axis labels for a Plot
+ *     - TickAll: Draw tick marks on all edges of a Plot?
+@@ -718,6 +719,8 @@ f     - Title: The Plot title drawn using AST_GRID
+ *     20-APR-2015 (DSB):
+ *        Draw Regions with higher accuracy, because Regions (i.e. Polygons)
+ *        can be very non-smooth.
++*     25-OCT-2018 (DSB):
++*        Added attribute TextGapType for Angus Comrie (IDIA).
+ *class--
+ */
+ 
+@@ -1699,6 +1702,9 @@ static const char *xedge[4] = { "left", "top", "right", "bottom" };
+ /* Text values used to represent Labelling externally. */
+ static const char *xlbling[2] = { "exterior", "interior" };
+ 
++/* Text values used to represent TextGapType externally. */
++static const char *xtgaptype[2] = { "box", "plot" };
++
+ /* Define macros for accessing each item of thread specific global data. */
+ #ifdef THREAD_SAFE
+ 
+@@ -2087,6 +2093,11 @@ static int TestLabelling( AstPlot *, int * );
+ static void ClearLabelling( AstPlot *, int * );
+ static void SetLabelling( AstPlot *, int, int * );
+ 
++static int GetTextGapType( AstPlot *, int * );
++static int TestTextGapType( AstPlot *, int * );
++static void ClearTextGapType( AstPlot *, int * );
++static void SetTextGapType( AstPlot *, int, int * );
++
+ static double GetMajTickLen( AstPlot *, int, int * );
+ static int TestMajTickLen( AstPlot *, int, int * );
+ static void ClearMajTickLen( AstPlot *, int, int * );
+@@ -3559,10 +3570,10 @@ f     coordinate grid (drawn with the AST_GRID routine) by determining
+ *     where the title of a Plot is drawn.
+ *
+ *     Its value gives the spacing between the bottom edge of the title
+-*     and the top edge of a bounding box containing all the other parts
+-*     of the annotated grid. Positive values cause the title to be
+-*     drawn outside the box, while negative values cause it to be drawn
+-*     inside.
++*     and a reference point specified by the TextGapType attribute (by
++*     default, the top edge of a box enclosing all other parts of the
++*     annotated grid). Positive values cause the title to be drawn
++*     outside the box, while negative values cause it to be drawn inside.
+ *
+ *     The TitleGap value should be given as a fraction of the minimum
+ *     dimension of the plotting area, the default value being +0.05.
+@@ -3641,6 +3652,50 @@ MAKE_SET(MinTickLen,double,minticklen,value,0)
+ MAKE_TEST(MinTickLen,( this->minticklen[axis] != AST__BAD ),0)
+ MAKE_GET(MinTickLen,double,0.0,( this->minticklen[axis] == AST__BAD ? 0.007 : this->minticklen[axis]),0)
+ 
++
++
++/* TextGapType. */
++/* ------------ */
++/*
++*att++
++*  Name:
++*     TextGapType
++
++*  Purpose:
++*     Controls the interpretation of attributes TextLabGap and TitleGap
++
++*  Type:
++*     Public attribute.
++
++*  Synopsis:
++*     String.
++
++*  Description:
++*     This attribute controls how the values supplied for attributes
++*     TextLabGap and TitleGap are used. If the TextGapType value is
++*     "box" (the default), then the gaps are measured from the nearest
++*     edge of the bounding box enclosing all other parts of the annotated
++*     grid (excluding other descriptive labels). If the TextGapType value
++*     is "plot", then the gaps are measured from the nearest edge of the
++*     plotting area.
++*
++*     Note, this attribute only affects the position from which the gaps
++*     are measured - the size of the gap should always be given as a
++*     fraction of the minimum dimension of the plotting area.
++
++*  Applicability:
++*     Plot
++*        All Plots have this attribute.
++
++*att--
++*/
++astMAKE_CLEAR(Plot,TextGapType,textgaptype,-9999)
++astMAKE_SET(Plot,TextGapType,int,textgaptype,(value?1:0))
++astMAKE_TEST(Plot,TextGapType,( this->textgaptype != -9999 ))
++astMAKE_GET(Plot,TextGapType,int,0,(this->textgaptype == -9999 ? 0 : this->textgaptype))
++
++
++
+ /* Labelling. */
+ /* ---------- */
+ /*
+@@ -3995,15 +4050,18 @@ f     coordinate grid (drawn with the AST_GRID routine) by determining
+ *     be drawn.
+ *
+ *     For each axis, the TextLabGap value gives the spacing between the
+-*     descriptive label and the edge of a box enclosing all other parts
+-*     of the annotated grid (excluding other descriptive labels). The gap
++*     descriptive label and a reference point specified by the TextGapType
++*     attribute (by default, the edge of a box enclosing all other parts
++*     of the annotated grid, excluding other descriptive labels). The gap
+ *     is measured to the nearest edge of the label (i.e. the top or the
+ *     bottom). Positive values cause the descriptive label to be placed
+ *     outside the bounding box, while negative values cause it to be placed
+ *     inside.
+ *
+ *     The TextLabGap value should be given as a fraction of the minimum
+-*     dimension of the plotting area, the default value being +0.01.
++*     dimension of the plotting area, the default value depends on the
++*     value of attribute TextGapType: if TextGapType is "box", the
++*     default is +0.01, otherwise the default is +0.07.
+ 
+ *  Applicability:
+ *     Plot
+@@ -4021,9 +4079,9 @@ f     coordinate grid (drawn with the AST_GRID routine) by determining
+ *att--
+ */
+ /* Fractional spacing between numeric labels and axes. Has a value of AST__BAD
+-when not set yielding a default value of 0.01. */
++when not set yielding a default value of 0.01 or 0.07. */
+ MAKE_CLEAR(TextLabGap,textlabgap,AST__BAD,0)
+-MAKE_GET(TextLabGap,double,0.0,( this->textlabgap[ axis ] == AST__BAD ? 0.01 : this->textlabgap[axis]),0)
++MAKE_GET(TextLabGap,double,0.0,( this->textlabgap[ axis ] == AST__BAD ? (astGetTextGapType(this)?0.07:0.01):this->textlabgap[axis]),0)
+ MAKE_SET(TextLabGap,double,textlabgap,value,0)
+ MAKE_TEST(TextLabGap,( this->textlabgap[axis] != AST__BAD ),0)
+ 
+@@ -6794,6 +6852,11 @@ static void ClearAttrib( AstObject *this_object, const char *attrib, int *status
+    } else if ( !strcmp( attrib, "labelling" ) ) {
+       astClearLabelling( this );
+ 
++/* TextGapType. */
++/* ------------ */
++   } else if ( !strcmp( attrib, "textgaptype" ) ) {
++      astClearTextGapType( this );
++
+ /* TickAll. */
+ /* -------- */
+    } else if ( !strcmp( attrib, "tickall" ) ) {
+@@ -8961,7 +9024,6 @@ static AstPointSet *DefGap( AstPlot *this, double *gaps, int *ngood,
+ /* Local Variables: */
+    AstPointSet *pset1;        /* Pointer to PointSet holding graphics coords */
+    AstPointSet *pset2;        /* Pointer to PointSet holding physical coords */
+-   double **ptr1;             /* Pointer to graphics axis values */
+    double **ptr2;             /* Pointer to physical axis values */
+    double dran;               /* Dynamic range */
+    double maxv;               /* Maximum axis value */
+@@ -8994,7 +9056,6 @@ static AstPointSet *DefGap( AstPlot *this, double *gaps, int *ngood,
+    *frac = GoodGrid( this, &dim, &pset1, &pset2, method, class, status );
+ 
+ /* Get pointers to the data values in each PointSet. */
+-   ptr1 = astGetPoints( pset1 );
+    ptr2 = astGetPoints( pset2 );
+ 
+ /* Store the number of elements in each PointSet. */
+@@ -10873,7 +10934,6 @@ static int EdgeLabels( AstPlot *this, int ink, TickInfo **grid,
+    const char *text;      /* Pointer to label text */
+    double edgeval;        /* Axis value at the labelled edge */
+    double mindim;         /* Minimum dimension of the plotting area */
+-   double oppval;         /* Axis value on the edge opposite to the labels */
+    double tol;            /* Max. distance between a break and the edge */
+    double txtgap;         /* Absolute gap between labels and edges */
+    float *box;            /* Pointer to array of label bounding boxes */
+@@ -10988,11 +11048,9 @@ static int EdgeLabels( AstPlot *this, int ink, TickInfo **grid,
+    X values at the left hand side of the screen ). */
+          if( !this->xrev ){
+             edgeval = this->xlo;
+-            oppval = this->xhi;
+             xref = (float)( edgeval - txtgap );
+          } else {
+             edgeval = this->xhi;
+-            oppval = this->xlo;
+             xref = (float)( edgeval + txtgap );
+          }
+ 
+@@ -11011,11 +11069,9 @@ static int EdgeLabels( AstPlot *this, int ink, TickInfo **grid,
+ 
+          if( !this->yrev ){
+             edgeval = this->yhi;
+-            oppval = this->ylo;
+             yref = (float)( edgeval + txtgap );
+          } else {
+             edgeval = this->ylo;
+-            oppval = this->yhi;
+             yref = (float)( edgeval - txtgap );
+          }
+ 
+@@ -11036,11 +11092,9 @@ static int EdgeLabels( AstPlot *this, int ink, TickInfo **grid,
+ 
+          if( !this->xrev ){
+             edgeval = this->xhi;
+-            oppval = this->xlo;
+             xref = (float)( edgeval + txtgap );
+          } else {
+             edgeval = this->xlo;
+-            oppval = this->xhi;
+             xref = (float)( edgeval - txtgap );
+          }
+ 
+@@ -11058,11 +11112,9 @@ static int EdgeLabels( AstPlot *this, int ink, TickInfo **grid,
+ 
+          if( !this->yrev ){
+             edgeval = this->ylo;
+-            oppval = this->yhi;
+             yref = (float)( edgeval - txtgap );
+          } else {
+             edgeval = this->yhi;
+-            oppval = this->ylo;
+             yref = (float)( edgeval + txtgap );
+          }
+ 
+@@ -12356,7 +12408,6 @@ static int FindMajTicks( AstMapping *map, AstFrame *frame, int axis,
+    int inc;           /* This times increase in nticks */
+    int k;             /* Tick mark index */
+    int linc;          /* Last times increase in nticks */
+-   int lnfill;        /* Last used value for nfill */
+    int nfill;         /* No of tick marks to extend by at edges of coverage */
+    int nsame;         /* Number of equal inc values there have been */
+    int nticks;        /* Number of major tick marks used */
+@@ -12391,7 +12442,6 @@ static int FindMajTicks( AstMapping *map, AstFrame *frame, int axis,
+ /* Loop round increasing the nfill value until an unreasonably large value
+    of nfill is reached. The loop will exit early via a break statement when
+    all small holes in the axis coverage are filled in. */
+-   lnfill = nfill;
+    linc = -100000;
+    while( nfill < 100 && astOK ){
+ 
+@@ -15479,7 +15529,6 @@ static const char *GetAttrib( AstObject *this_object, const char *attrib, int *s
+    int axis;                     /* Axis number */
+    int ival;                     /* Int attribute value */
+    int len;                      /* Length of attrib string */
+-   int nax;                      /* Number of base Frame axes */
+    int nc;                       /* No. characters read by astSscanf */
+ 
+ /* Initialise. */
+@@ -15497,9 +15546,6 @@ static const char *GetAttrib( AstObject *this_object, const char *attrib, int *s
+ /* Obtain the length of the attrib string. */
+    len = strlen( attrib );
+ 
+-/* Get the number of base Frame axis (2 for a Plot, 3 for a Plot3D). */
+-   nax = astGetNin( this );
+-
+ /* Indicate that the current bound box should not be changed during the
+    execution of this function (this may happen if a grid is drawn to get
+    the default value for an attribute such as Labelling). */
+@@ -16089,6 +16135,14 @@ static const char *GetAttrib( AstObject *this_object, const char *attrib, int *s
+          result = ival ? xlbling[1] : xlbling[0];
+       }
+ 
++/* TextGapType. */
++/* ------------ */
++   } else if ( !strcmp( attrib, "textgaptype" ) ) {
++      ival = astGetTextGapType( this );
++      if ( astOK ) {
++         result = ival ? xtgaptype[1] : xtgaptype[0];
++      }
++
+ /* Edge(axis). */
+ /* ----------- */
+    } else if ( nc = 0,
+@@ -19726,6 +19780,10 @@ void astInitPlotVtab_(  AstPlotVtab *vtab, const char *name, int *status ) {
+    vtab->SetLabelling = SetLabelling;
+    vtab->GetLabelling = GetLabelling;
+    vtab->TestLabelling = TestLabelling;
++   vtab->ClearTextGapType = ClearTextGapType;
++   vtab->SetTextGapType = SetTextGapType;
++   vtab->GetTextGapType = GetTextGapType;
++   vtab->TestTextGapType = TestTextGapType;
+    vtab->ClearMajTickLen = ClearMajTickLen;
+    vtab->SetMajTickLen = SetMajTickLen;
+    vtab->GetMajTickLen = GetMajTickLen;
+@@ -20841,7 +20899,6 @@ static void Labels( AstPlot *this, TickInfo **grid, AstPlotCurveData **cdata,
+    AstMapping *mapping;   /* Pointer to graphics->physical Mapping */
+    AstPointSet *pset1;    /* Pointer to PointSet holding physical coords. */
+    AstPointSet *pset2;    /* Pointer to PointSet holding graphics coords. */
+-   AstPlotCurveData *cdt; /* Pointer to the AstPlotCurveData for the next tick */
+    LabelList *labellist;  /* Pointer to list of labels to be plotted */
+    LabelList *ll;         /* Pointer to next label to be plotted */
+    TickInfo *info;        /* Pointer to the TickInfo for the current axis */
+@@ -20873,7 +20930,6 @@ static void Labels( AstPlot *this, TickInfo **grid, AstPlotCurveData **cdata,
+    int esc;               /* Interpret escape sequences? */
+    int flag;              /* Flag indicating which way the base-vector points */
+    int iused;             /* Index into list of used axis values */
+-   int last;              /* The index of the last tick to use */
+    int logticks;          /* ARe major ticks spaced logarithmically? */
+    int nlab;              /* The number of labels to be plotted */
+    int nused;             /* Number of used axis values */
+@@ -20975,10 +21031,6 @@ static void Labels( AstPlot *this, TickInfo **grid, AstPlotCurveData **cdata,
+    coords, not graphics coords. */
+             txtgap = astGetNumLabGap( this, axis )*mindim;
+ 
+-/* Get a pointer to the structure containing information describing the
+-   breaks in the curve which passes through the first major tick mark. */
+-            cdt = cdata[ axis ];
+-
+ /* Get a pointer to the axis value at the first major tick mark. */
+             value = info->ticks;
+ 
+@@ -21002,7 +21054,6 @@ static void Labels( AstPlot *this, TickInfo **grid, AstPlotCurveData **cdata,
+             tinc = 1;
+ 
+ /* Loop round until all ticks have been done. */
+-            last = info->nmajor - 1;
+             while( (tick += tinc) >= 0 && astOK ){
+ 
+ /* If we have done the highest tick index, start again at the tick just
+@@ -25390,6 +25441,15 @@ static void SetAttrib( AstObject *this_object, const char *setting, int *status
+                                         "astSet", astGetClass( this ), status )
+                       );
+ 
++/* TextGapType. */
++/* ------------ */
++   } else if ( nc = 0,
++               ( 0 == astSscanf( setting, "textgaptype= %n%*s %n", &ival, &nc ) )
++               && ( nc >= len ) ) {
++      astSetTextGapType( this, FullForm( "box plot", setting + ival, setting,
++                                        "astSet", astGetClass( this ), status )
++                      );
++
+ /* If the attribute is still not recognised, pass it on to the parent
+    method for further interpretation. */
+    } else {
+@@ -25831,7 +25891,6 @@ static int TestAttrib( AstObject *this_object, const char *attrib, int *status )
+    char label[21];               /* Graphics item label */
+    int axis;                     /* Axis number */
+    int len;                      /* Length of attrib string */
+-   int nax;                      /* Number of base Frame axes */
+    int nc;                       /* No. characters read by astSscanf */
+    int result;                   /* Result value to return */
+ 
+@@ -25844,9 +25903,6 @@ static int TestAttrib( AstObject *this_object, const char *attrib, int *status )
+ /* Obtain a pointer to the Plot structure. */
+    this = (AstPlot *) this_object;
+ 
+-/* Get the number of base Frame axis (2 for a Plot, 3 for a Plot3D). */
+-   nax = astGetNin( this );
+-
+ /* Obtain the length of the attrib string. */
+    len = strlen( attrib );
+ 
+@@ -26195,6 +26251,11 @@ static int TestAttrib( AstObject *this_object, const char *attrib, int *status )
+    } else if ( !strcmp( attrib, "labelling" ) ) {
+       result = astTestLabelling( this );
+ 
++/* TextGapType. */
++/* ------------ */
++   } else if ( !strcmp( attrib, "textgaptype" ) ) {
++      result = astTestTextGapType( this );
++
+ /* If the attribute is still not recognised, pass it on to the parent
+    method for further interpretation. */
+    } else {
+@@ -26516,19 +26577,37 @@ static void TextLabels( AstPlot *this, int edgeticks, int dounits[2],
+    yrange = this->yhi - this->ylo;
+    mindim = astMIN( xrange, yrange );
+ 
++/* Determine the reference point to use when measuring the gap between
++   the plot and a label. Either the nearest edge of the bounding box
++   containing everything else (0) or the nearest edge of the plotting
++   window (1). */
++   if( astGetTextGapType( this ) ) {
++      xlo = this->xlo;
++      xhi = this->xhi;
++      ylo = this->ylo;
++      yhi = this->yhi;
++
++/* Otherwise, use the bounding box to determine the reference position.
++   Take a copy of the bounding box which encloses all other parts of the
++   annotated grid (this may have been extended by the above code). If
++   nothing has been plotted, use an area 20 % smaller than the plotting
++   area. */
++   } else {
++
+ /* Take a copy of the bounding box which encloses all other parts of the
+    annotated grid. If nothing has been plotted, use an area 20 % smaller
+    than the plotting area. */
+-   if( Box_lbnd[ 0 ] != FLT_MAX ) {
+-      xlo = Box_lbnd[ 0 ];
+-      xhi = Box_ubnd[ 0 ];
+-      ylo = Box_lbnd[ 1 ];
+-      yhi = Box_ubnd[ 1 ];
+-   } else {
+-      xlo = this->xlo + 0.2*xrange;
+-      xhi = this->xhi - 0.2*xrange;
+-      ylo = this->ylo + 0.2*yrange;
+-      yhi = this->yhi - 0.2*yrange;
++      if( Box_lbnd[ 0 ] != FLT_MAX ) {
++         xlo = Box_lbnd[ 0 ];
++         xhi = Box_ubnd[ 0 ];
++         ylo = Box_lbnd[ 1 ];
++         yhi = Box_ubnd[ 1 ];
++      } else {
++         xlo = this->xlo + 0.2*xrange;
++         xhi = this->xhi - 0.2*xrange;
++         ylo = this->ylo + 0.2*yrange;
++         yhi = this->yhi - 0.2*yrange;
++      }
+    }
+ 
+ /* See if escape sequences are to be interpreted within the labels. */
+@@ -26706,20 +26785,33 @@ static void TextLabels( AstPlot *this, int edgeticks, int dounits[2],
+    with the supplied Plot. */
+       astGrfAttrs( this, AST__TITLE_ID, 1, GRF__TEXT, method, class );
+ 
+-/* Take a copy of the bounding box which encloses all other parts of the
++/* Determine the reference point to use when measuring the gap between
++   the plot and the title. Either the nearest edge of the bounding box
++   containing everything else (0) or the nearest edge of the plotting
++   window (1). */
++      if( astGetTextGapType( this ) ) {
++         xlo = this->xlo;
++         xhi = this->xhi;
++         ylo = this->ylo;
++         yhi = this->yhi;
++
++/* Otherwise, use the bounding box to determine the reference position.
++   Take a copy of the bounding box which encloses all other parts of the
+    annotated grid (this may have been extended by the above code). If
+    nothing has been plotted, use an area 20 % smaller than the plotting
+    area. */
+-      if( Box_lbnd[ 0 ] != FLT_MAX ) {
+-         xlo = Box_lbnd[ 0 ];
+-         xhi = Box_ubnd[ 0 ];
+-         ylo = Box_lbnd[ 1 ];
+-         yhi = Box_ubnd[ 1 ];
+       } else {
+-         xlo = this->xlo + 0.2*xrange;
+-         xhi = this->xhi - 0.2*xrange;
+-         ylo = this->ylo + 0.2*yrange;
+-         yhi = this->yhi - 0.2*yrange;
++         if( Box_lbnd[ 0 ] != FLT_MAX ) {
++            xlo = Box_lbnd[ 0 ];
++            xhi = Box_ubnd[ 0 ];
++            ylo = Box_lbnd[ 1 ];
++            yhi = Box_ubnd[ 1 ];
++         } else {
++            xlo = this->xlo + 0.2*xrange;
++            xhi = this->xhi - 0.2*xrange;
++            ylo = this->ylo + 0.2*yrange;
++            yhi = this->yhi - 0.2*yrange;
++         }
+       }
+ 
+ /* Get the graphics coordinates of the bottom centre point of the title.
+@@ -26728,8 +26820,8 @@ static void TextLabels( AstPlot *this, int edgeticks, int dounits[2],
+       xref = 0.5*( astMIN( xhi, this->xhi ) +
+                    astMAX( xlo, this->xlo ) );
+ 
+-/* The Y centre is put a "TitleGap" distance outside the box containing
+-   the everything else. */
++/* The Y centre is put a "TitleGap" distance outside the reference
++   position specified by TextGapType. */
+       if( this->yrev ){
+          yref = ylo - (float)( mindim*astGetTitleGap( this ) );
+       } else {
+@@ -27252,7 +27344,6 @@ static TickInfo *TickMarks( AstPlot *this, int axis, double *cen, double *gap,
+    const char *fmt;    /* Format string actually used */
+    double *ticks;      /* Pointer to major tick mark values */
+    double *minticks;   /* Pointer to minor tick mark values */
+-   double cen0;        /* Supplied value of cen */
+    double junk;        /* Unused value */
+    double refval;      /* Value for other axis to use when normalizing */
+    double used_gap;    /* The gap size actually used */
+@@ -27283,9 +27374,6 @@ static TickInfo *TickMarks( AstPlot *this, int axis, double *cen, double *gap,
+ /* Initialise the returned pointer. */
+    ret = NULL;
+ 
+-/* Store the supplied value of cen. */
+-   cen0 = cen ? *cen : AST__BAD ;
+-
+ /* Get a pointer to the current Frame from the Plot. */
+    frame = astGetFrame( this, AST__CURRENT );
+ 
+@@ -30275,6 +30363,13 @@ static void Dump( AstObject *this_object, AstChannel *channel, int *status ) {
+    comment = "Labelling scheme";
+    astWriteString( channel, "Lbling", set, 0, xlbling[ival], comment );
+ 
++/* TextGapType. */
++/* ------------ */
++   set = TestTextGapType( this, status );
++   ival = set ? GetTextGapType( this, status ) : astGetTextGapType( this );
++   comment = "Text gap reference position";
++   astWriteString( channel, "TGapTyp", set, 0, xtgaptype[ival], comment );
++
+ /* Edge(axis). */
+ /* ----------- */
+    for( axis = 0; axis < nax; axis++ ){
+@@ -30926,6 +31021,13 @@ AstPlot *astInitPlot_( void *mem, size_t size, int init, AstPlotVtab *vtab,
+    default of zero. */
+       new->labelling = -9999;
+ 
++/* A boolean attribute indicating how to offset the title and textual
++   axis labels; zero implies relative to the bounding box containing the
++   rest of the annotated axes (excluding other textual labels), and
++   non-zero implies relative to the plotting area. The unset value of
++   -9999 yields a default of zero. */
++      new->textgaptype = -9999;
++
+ /* Graphics attributes. Default behaviour is to use the current values. */
+       for( id = 0; id < AST__NPID; id++ ){
+          new->style[ id ] = -1;
+@@ -31510,6 +31612,19 @@ AstPlot *astLoadPlot_( void *mem, size_t size,
+       if ( TestLabelling( new, status ) ) SetLabelling( new, new->labelling, status );
+       text = astFree( text );
+ 
++/* TextGapType. */
++/* ---------- */
++      text = astReadString( channel, "tgaptyp", " " );
++      if( astOK && strcmp( text, " " ) ) {
++         new->textgaptype = FindString( 2, xtgaptype, text,
++                                      "the Plot component 'TGapTyp'",
++                                      "astRead", astGetClass( channel ), status );
++      } else {
++         new->textgaptype = -9999;
++      }
++      if ( TestTextGapType( new, status ) ) SetTextGapType( new, new->textgaptype, status );
++      text = astFree( text );
++
+ /* Edge(axis). */
+ /* ----------- */
+       for( axis = 0; axis < nax; axis++ ){
+diff --git a/plot.h b/plot.h
+index 6f702ab..896f2bc 100644
+--- a/plot.h
++++ b/plot.h
+@@ -299,6 +299,7 @@ typedef struct AstPlot {
+    int mintick[ 3 ];
+    int numlab[ 3 ];
+    int style[ AST__NPID ];
++   int textgaptype;
+    int textlab[ 3 ];
+    int tickall;
+    int forceexterior;
+@@ -470,6 +471,11 @@ typedef struct AstPlotVtab {
+    void (* SetLabelling)( AstPlot *, int, int * );
+    void (* ClearLabelling)( AstPlot *, int * );
+ 
++   int (* GetTextGapType)( AstPlot *, int * );
++   int (* TestTextGapType)( AstPlot *, int * );
++   void (* SetTextGapType)( AstPlot *, int, int * );
++   void (* ClearTextGapType)( AstPlot *, int * );
++
+    double (* GetMajTickLen)( AstPlot *, int, int * );
+    int (* TestMajTickLen)( AstPlot *, int, int * );
+    void (* SetMajTickLen)( AstPlot *, int, double, int * );
+@@ -858,6 +864,11 @@ void astInitPlotGlobals_( AstPlotGlobals * );
+    void astSetLabelling_( AstPlot *, int, int * );
+    void astClearLabelling_( AstPlot *, int * );
+ 
++   int astGetTextGapType_( AstPlot *, int * );
++   int astTestTextGapType_( AstPlot *, int * );
++   void astSetTextGapType_( AstPlot *, int, int * );
++   void astClearTextGapType_( AstPlot *, int * );
++
+    double astGetMajTickLen_( AstPlot *, int, int * );
+    int astTestMajTickLen_( AstPlot *, int, int * );
+    void astSetMajTickLen_( AstPlot *, int, double, int * );
+@@ -1283,6 +1294,15 @@ astINVOKE(V,astSetLabelling_(astCheckPlot(this),labelling,STATUS_PTR))
+ #define astTestLabelling(this) \
+ astINVOKE(V,astTestLabelling_(astCheckPlot(this),STATUS_PTR))
+ 
++#define astClearTextGapType(this) \
++astINVOKE(V,astClearTextGapType_(astCheckPlot(this),STATUS_PTR))
++#define astGetTextGapType(this) \
++astINVOKE(V,astGetTextGapType_(astCheckPlot(this),STATUS_PTR))
++#define astSetTextGapType(this,textgaptype) \
++astINVOKE(V,astSetTextGapType_(astCheckPlot(this),textgaptype,STATUS_PTR))
++#define astTestTextGapType(this) \
++astINVOKE(V,astTestTextGapType_(astCheckPlot(this),STATUS_PTR))
++
+ #define astClearEdge(this,axis) \
+ astINVOKE(V,astClearEdge_(astCheckPlot(this),axis,STATUS_PTR))
+ #define astGetEdge(this,axis) \
+-- 
+2.17.1
+
