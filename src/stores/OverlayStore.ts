@@ -663,20 +663,8 @@ export class OverlayStore {
         return (this.numbers.visible && this.global.labelType === LabelType.Exterior);
     }
     
-    @computed get numberHeight() {
-        return this.numbers.fontSize * devicePixelRatio;
-    }
-    
-    @computed get labelHeight() {
-        return this.labels.fontSize * devicePixelRatio;
-    }
-    
-    @computed get titleHeight() {
-        return this.title.fontSize * devicePixelRatio;
-    }
-    
     @computed get defaultGap() {
-        return 5 * devicePixelRatio;
+        return 5;
     }
     
     @computed get titleGap() {
@@ -685,21 +673,21 @@ export class OverlayStore {
     
     @computed get cumulativeLabelGap() {
         const numGap = (this.showNumbers ? this.defaultGap : 0);
-        const numHeight = (this.showNumbers ? this.numberHeight : 0);
+        const numHeight = (this.showNumbers ? this.numbers.fontSize : 0);
         return (numGap + numHeight + this.defaultGap);
     }
 
     @computed get padding(): Padding {
-        const base = 5 * devicePixelRatio;
+        const base = 5;
         
         const numGap = (this.showNumbers ? this.defaultGap : 0);
-        const numHeight = (this.showNumbers ? this.numberHeight : 0);
+        const numHeight = (this.showNumbers ? this.numbers.fontSize : 0);
         
         const labelGap = (this.labels.visible ? this.defaultGap : 0);
-        const labelHeight = (this.labels.visible ? this.labelHeight : 0);
+        const labelHeight = (this.labels.visible ? this.labels.fontSize : 0);
         
         const titleGap = (this.title.visible ? this.titleGap : 0);
-        const titleHeight = (this.title.visible ? this.titleHeight : 0);
+        const titleHeight = (this.title.visible ? this.title.fontSize : 0);
         
         return {
             left: base + numGap + numHeight + labelGap + labelHeight,
