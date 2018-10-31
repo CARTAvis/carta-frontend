@@ -130,6 +130,51 @@ export class OverlayGlobalSettings {
     }
 }
 
+export class OverlayTitleSettings {
+    @observable visible: boolean;
+    @observable font: number;
+    @observable fontSize: number;
+    @observable customColor: boolean;
+    @observable color: number;
+
+    @computed get styleString() {
+        let astString = new ASTSettingsString();
+        astString.add("DrawTitle", this.visible);
+        astString.add("Font(Title)", this.font);
+        astString.add("Size(Title)", this.fontSize);
+        astString.add("Color(Title)", this.color, this.customColor);
+        return astString.toString();
+    }
+    
+    constructor() {
+        this.visible = false;
+        this.customColor = false;
+        this.color = 4;
+        this.font = 2;
+        this.fontSize = 18;
+    }
+
+    @action setVisible(visible: boolean = true) {
+        this.visible = visible;
+    }
+
+    @action setFont = (font: number) => {
+        this.font = font;
+    };
+
+    @action setFontSize(fontSize: number) {
+        this.fontSize = fontSize;
+    }
+
+    @action setCustomColor(customColor: boolean) {
+        this.customColor = customColor;
+    }
+
+    @action setColor = (color: number) => {
+        this.color = color;
+    };
+}
+
 export class OverlayGridSettings {
     @observable visible: boolean;
     @observable customColor: boolean;
@@ -470,9 +515,6 @@ export class OverlayLabelSettings {
     @observable color: number;
     @observable font: number;
     @observable fontSize: number;
-    @observable customText: boolean;
-    @observable textX: string;
-    @observable textY: string;
 
     constructor() {
         this.visible = true;
@@ -480,7 +522,6 @@ export class OverlayLabelSettings {
         this.font = 0;
         this.customColor = false;
         this.color = 4;
-        this.customText = false;
     }
 
     @computed get styleString() {
@@ -490,10 +531,6 @@ export class OverlayLabelSettings {
         astString.add("Font(TextLab)", this.font);
         astString.add("Size(TextLab)", this.fontSize);
         astString.add("Color(TextLab)", this.color, this.customColor);
-        
-        // Add settings for individual axes
-        astString.add(`Label(1)`, this.textX, this.customText);
-        astString.add(`Label(2)`, this.textY, this.customText);
         
         return astString.toString();
     }
@@ -517,18 +554,6 @@ export class OverlayLabelSettings {
     @action setFontSize(fontSize: number) {
         this.fontSize = fontSize;
     }
-
-    @action setCustomText(customText: boolean) {
-        this.customText = customText;
-    }
-
-    @action setTextX(text: string) {
-        this.textX = text;
-    }
-
-    @action setTextY(text: string) {
-        this.textY = text;
-    }
 }
 
 export class OverlayStore {
@@ -538,6 +563,7 @@ export class OverlayStore {
 
     // Individual settings
     @observable global: OverlayGlobalSettings;
+    @observable title: OverlayTitleSettings;
     @observable grid: OverlayGridSettings;
     @observable border: OverlayBorderSettings;
     @observable axes: OverlayAxisSettings;
@@ -565,6 +591,7 @@ export class OverlayStore {
 
     constructor() {
         this.global = new OverlayGlobalSettings();
+        this.title = new OverlayTitleSettings();
         this.grid = new OverlayGridSettings();
         this.border = new OverlayBorderSettings();
         this.axes = new OverlayAxisSettings();
@@ -605,15 +632,13 @@ export class OverlayStore {
     @action setDefaultsFromAST(frame: FrameStore) {
         this.global.setDefaultSystem(AST.getString(frame.wcsInfo, "System") as SystemType);
         this.setFormatsFromSystem();
-        
-        this.labels.setTextX(AST.getString(frame.wcsInfo, "Label(1)"));
-        this.labels.setTextY(AST.getString(frame.wcsInfo, "Label(2)"));
     }
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
 
         astString.addSection(this.global.styleString);
+        astString.addSection(this.title.styleString);
         astString.addSection(this.grid.styleString);
         astString.addSection(this.border.styleString);
         astString.addSection(this.ticks.styleString);
@@ -622,25 +647,66 @@ export class OverlayStore {
         astString.addSection(this.labels.styleString);
         
         astString.add("LabelUp", 0);
-        astString.add("DrawTitle", 0);
-        astString.add("TextLabGap", 0.01 * devicePixelRatio ** 2);
-        
+        astString.add("TitleGap", this.titleGap / this.minSize);
+        astString.add("NumLabGap", this.defaultGap / this.minSize);
+        astString.add("TextLabGap", this.cumulativeLabelGap / this.minSize);
+        astString.add("TextGapType", "plot");
+                
         return astString.toString();
+    }
+    
+    @computed get minSize() {
+        return Math.min(this.viewWidth, this.viewHeight);
+    }
+    
+    @computed get showNumbers() {
+        return (this.numbers.visible && this.global.labelType === LabelType.Exterior);
+    }
+    
+    @computed get numberHeight() {
+        return this.numbers.fontSize * devicePixelRatio;
+    }
+    
+    @computed get labelHeight() {
+        return this.labels.fontSize * devicePixelRatio;
+    }
+    
+    @computed get titleHeight() {
+        return this.title.fontSize * devicePixelRatio;
+    }
+    
+    @computed get defaultGap() {
+        return 5 * devicePixelRatio;
+    }
+    
+    @computed get titleGap() {
+        return this.defaultGap * 2;
+    }
+    
+    @computed get cumulativeLabelGap() {
+        const numGap = (this.showNumbers ? this.defaultGap : 0);
+        const numHeight = (this.showNumbers ? this.numberHeight : 0);
+        return (numGap + numHeight + this.defaultGap);
     }
 
     @computed get padding(): Padding {
-        const minSize = Math.min(this.viewWidth, this.viewHeight);
+        const base = 5 * devicePixelRatio;
         
-        const numHeight = (this.numbers.visible && this.global.labelType === LabelType.Exterior ? this.numbers.fontSize : 0);
-        const labelHeight = (this.labels.visible ? this.labels.fontSize : 0);
-        const basePadding = (this.numbers.visible ? 20 : 10);
-        const labelGap = (this.labels.visible ? minSize * 0.01 * devicePixelRatio : 0);
+        const numGap = (this.showNumbers ? this.defaultGap : 0);
+        const numHeight = (this.showNumbers ? this.numberHeight : 0);
+        
+        const labelGap = (this.labels.visible ? this.defaultGap : 0);
+        const labelHeight = (this.labels.visible ? this.labelHeight : 0);
+        
+        const titleGap = (this.title.visible ? this.titleGap : 0);
+        const titleHeight = (this.title.visible ? this.titleHeight : 0);
         
         return {
-            left: basePadding + labelHeight + numHeight + labelGap,
-            right: basePadding,
-            top: basePadding,
-            bottom: basePadding + labelHeight + numHeight + labelGap
+            left: base + numGap + numHeight + labelGap + labelHeight,
+            right: base,
+            top: base + titleGap + titleHeight,
+            bottom: base + numGap + numHeight + labelGap + labelHeight
         };
+
     }
 }
