@@ -133,6 +133,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
     public render() {
         const overlayStore = this.props.appStore.overlayStore;
         const global = overlayStore.global;
+        const title = overlayStore.title;
         const grid = overlayStore.grid;
         const border = overlayStore.border;
         const ticks = overlayStore.ticks;
@@ -182,6 +183,39 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => global.setSystem(event.currentTarget.value as SystemType)}
                     />
                 </FormGroup>
+            </div>
+        );
+        
+        const titlePanel = (
+            <div className="panel-container">
+                <FormGroup inline={true} label="Visible">
+                    <Switch 
+                        checked={title.visible}
+                        onChange={(ev) => title.setVisible(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} className="font-group" label="Font" disabled={!title.visible}>
+                    {this.fontSelect(title.visible, title.font, title.setFont)}
+                    <NumericInput
+                        min={7}
+                        placeholder="Font size"
+                        value={title.fontSize}
+                        disabled={!title.visible}
+                        onValueChange={(value: number) => title.setFontSize(value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Custom color" disabled={!title.visible}>
+                    <Switch 
+                        checked={title.customColor}
+                        disabled={!title.visible}
+                        onChange={(ev) => title.setCustomColor(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <Collapse isOpen={title.customColor}>
+                    <FormGroup inline={true} label="Color" disabled={!title.visible}>
+                        {this.colorSelect(title.visible, title.color, title.setColor)}
+                    </FormGroup>
+                </Collapse>
             </div>
         );
         
@@ -532,35 +566,6 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(ev) => labels.setVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Custom text" disabled={!labels.visible}>
-                    <Switch 
-                        checked={labels.customText}
-                        disabled={!labels.visible}
-                        onChange={(ev) => labels.setCustomText(ev.currentTarget.checked)}
-                    />
-                </FormGroup>
-                <Collapse isOpen={labels.customText}>
-                    <FormGroup inline={true} label="Text" labelInfo="(X)" disabled={!labels.visible}>
-                        <input
-                            className="bp3-input"
-                            type="text"
-                            placeholder="Text"
-                            value={labels.textX}
-                            disabled={!labels.visible}
-                            onChange={(ev) => labels.setTextX(ev.currentTarget.value)}
-                        />
-                    </FormGroup>
-                    <FormGroup inline={true} label="Text" labelInfo="(Y)" disabled={!labels.visible}>
-                        <input
-                            className="bp3-input"
-                            type="text"
-                            placeholder="Text"
-                            value={labels.textY}
-                            disabled={!labels.visible}
-                            onChange={(ev) => labels.setTextY(ev.currentTarget.value)}
-                        />
-                    </FormGroup>
-                </Collapse>
                 <FormGroup inline={true} className="font-group" label="Font" disabled={!labels.visible}>
                     {this.fontSelect(labels.visible, labels.font, labels.setFont)}
                     <NumericInput
@@ -612,6 +617,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(tabId) => overlayStore.setOverlaySettingsActiveTab(String(tabId))}
                     >
                         <Tab id="global" title="Global" panel={globalPanel}/>
+                        <Tab id="title" title="Title" panel={titlePanel}/>
                         <Tab id="ticks" title="Ticks" panel={ticksPanel}/>
                         <Tab id="grid" title="Grid" panel={gridPanel}/>
                         <Tab id="border" title="Border" panel={borderPanel}/>

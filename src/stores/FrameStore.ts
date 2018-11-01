@@ -271,22 +271,22 @@ export class FrameStore {
 
     @action fitZoomX() {
         this.zoomLevel = this.calculateZoomX();
-        this.center.x = this.frameInfo.fileInfoExtended.width / 2.0;
-        this.center.y = this.frameInfo.fileInfoExtended.height / 2.0;
+        this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + 0.5;
+        this.center.y = this.frameInfo.fileInfoExtended.height / 2.0 + 0.5;
     }
 
     @action fitZoomY() {
         this.zoomLevel = this.calculateZoomY();
-        this.center.x = this.frameInfo.fileInfoExtended.width / 2.0;
-        this.center.y = this.frameInfo.fileInfoExtended.height / 2.0;
+        this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + 0.5;
+        this.center.y = this.frameInfo.fileInfoExtended.height / 2.0 + 0.5;
     }
 
     @action fitZoom() {
         const zoomX = this.calculateZoomX();
         const zoomY = this.calculateZoomY();
         this.zoomLevel = Math.min(zoomX, zoomY);
-        this.center.x = this.frameInfo.fileInfoExtended.width / 2.0;
-        this.center.y = this.frameInfo.fileInfoExtended.height / 2.0;
+        this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + 0.5;
+        this.center.y = this.frameInfo.fileInfoExtended.height / 2.0 + 0.5;
     }
 
     private calculateZoomX() {

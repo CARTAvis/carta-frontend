@@ -114,8 +114,9 @@ export class AppStore {
         });
     };
     @action appendFile = (directory: string, file: string, hdu: string) => {
-        const currentIdList = this.frames.map(frame => frame.frameInfo.fileId).sort();
-        this.addFrame(directory, file, hdu, currentIdList.pop() + 1);
+        const currentIdList = this.frames.map(frame => frame.frameInfo.fileId).sort((a, b) => a - b);
+        const newId = currentIdList.pop() + 1;
+        this.addFrame(directory, file, hdu, newId);
     };
     @action openFile = (directory: string, file: string, hdu: string) => {
         this.removeAllFrames();
