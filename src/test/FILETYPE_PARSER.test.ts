@@ -3,8 +3,8 @@ import * as Utitlity from "./testUtilityFunction";
 
 let WebSocket = require('ws');
 let testServerUrl = "ws://localhost:50505";
-let testSubdirectoryName = "QA";
 let expectRootPath = "/home/user/CARTA/Images";
+let testSubdirectoryName = `${expectRootPath}/QA`;
 let connectTimeoutLocal = 300;
 
 describe("FILETYPE_PARSER tests", () => {   
@@ -72,13 +72,17 @@ describe("FILETYPE_PARSER tests", () => {
                 const eventData = new Uint8Array(event.data, 36);
                 expect(CARTA.FileListResponse.decode(eventData).success).toBe(true);
 
+                // console.log(CARTA.FileListResponse.decode(eventData));
+                console.log(`The root folder on backend is "${CARTA.FileListResponse.decode(eventData).parent}"`);
+                    
+
                 done();
             }
         }
 
     }, connectTimeoutLocal);
 
-    describe(`send EventName: "FILE_LIST_REQUEST" tests on CARTA ${testServerUrl}`, 
+    describe(`send EventName: "FILE_LIST_REQUEST" to CARTA ${testServerUrl}`, 
     () => {
         beforeEach( done => {
             // Preapare the message on a eventData
@@ -126,8 +130,7 @@ describe("FILETYPE_PARSER tests", () => {
                 const eventData = new Uint8Array(event.data, 36);
 
                 expect(CARTA.FileListResponse.decode(eventData).parent).toBe(expectRootPath);
-                console.log(CARTA.FileListResponse.decode(eventData).parent);
-                    
+
                 done();
             }
     
@@ -139,7 +142,6 @@ describe("FILETYPE_PARSER tests", () => {
             Connection.onmessage = (event: MessageEvent) => {
                 const eventName = Utitlity.getEventName(new Uint8Array(event.data, 0, 32));
                 if(eventName == "FILE_LIST_RESPONSE"){
-                    const eventId = new Uint32Array(event.data, 32, 1)[0];
                     const eventData = new Uint8Array(event.data, 36);
 
                     let parsedMessage;
@@ -163,7 +165,6 @@ describe("FILETYPE_PARSER tests", () => {
                         Connection.onmessage = (event: MessageEvent) => {
                             const eventName = Utitlity.getEventName(new Uint8Array(event.data, 0, 32));
                             if(eventName == "FILE_LIST_RESPONSE"){
-                                const eventId = new Uint32Array(event.data, 32, 1)[0];
                                 const eventData = new Uint8Array(event.data, 36);
     
                                 let parsedMessage;
@@ -179,24 +180,23 @@ describe("FILETYPE_PARSER tests", () => {
             )
         });        
         
-        describe(`assert the folder is not existed in "FILE_LIST_RESPONSE.subdirectory"`, () => {
+        describe(`assert the folder is existed in "FILE_LIST_RESPONSE.subdirectory"`, () => {
             [["empty_folder"], ["empty2.miriad"], ["empty2.fits"], ["empty2.image"], [".."]
             ].map(
                 ([folder]) => {
-                    test(`assert the folder "${folder}" is not existed.`, 
+                    test(`assert the folder "${folder}" is existed.`, 
                     done => {
                         // While receive a message from Websocket server
                         Connection.onmessage = (event: MessageEvent) => {
                             const eventName = Utitlity.getEventName(new Uint8Array(event.data, 0, 32));
                             if(eventName == "FILE_LIST_RESPONSE"){
-                                const eventId = new Uint32Array(event.data, 32, 1)[0];
                                 const eventData = new Uint8Array(event.data, 36);
     
                                 let parsedMessage;
                                 parsedMessage = CARTA.FileListResponse.decode(eventData);
     
-                                let folderInfo = parsedMessage.subdirectories.find(f => f.name === folder);
-                                expect(folderInfo).toBeUndefined();
+                                let folderInfo = parsedMessage.subdirectories.find(f => f === folder);
+                                expect(folderInfo).toBeDefined();
                             }
                             done();
                         } 
@@ -218,7 +218,6 @@ describe("FILETYPE_PARSER tests", () => {
                         Connection.onmessage = (event: MessageEvent) => {
                             const eventName = Utitlity.getEventName(new Uint8Array(event.data, 0, 32));
                             if(eventName == "FILE_LIST_RESPONSE"){
-                                const eventId = new Uint32Array(event.data, 32, 1)[0];
                                 const eventData = new Uint8Array(event.data, 36);
     
                                 let parsedMessage;
