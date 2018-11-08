@@ -1,5 +1,5 @@
 import {CARTA} from "carta-protobuf";
-import * as Utitlity from "./testUtilityFunction";
+import * as Utility from "./testUtilityFunction";
 
 let WebSocket = require('ws');
 let testServerUrl = "ws://localhost:50505";
@@ -22,7 +22,7 @@ describe("FILETYPE_PARSER tests", () => {
                 let payload = CARTA.RegisterViewer.encode(message).finish();
                 let eventData = new Uint8Array(32 + 4 + payload.byteLength);
 
-                eventData.set(Utitlity.stringToUint8Array("REGISTER_VIEWER", 32));
+                eventData.set(Utility.stringToUint8Array("REGISTER_VIEWER", 32));
                 eventData.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
                 eventData.set(payload, 36);
 
@@ -38,7 +38,7 @@ describe("FILETYPE_PARSER tests", () => {
     done => {
         // While receive a message in the form of arraybuffer
         Connection.onmessage = (event: MessageEvent) => {
-            const eventName = Utitlity.getEventName(new Uint8Array(event.data, 0, 32));
+            const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
             if(eventName == "REGISTER_VIEWER_ACK"){
                 // Assertion
                 expect(event.data.byteLength).toBeGreaterThan(0);
@@ -50,7 +50,7 @@ describe("FILETYPE_PARSER tests", () => {
                 let payload = CARTA.FileListRequest.encode(message).finish();
                 const eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
     
-                eventDataTx.set(Utitlity.stringToUint8Array("FILE_LIST_REQUEST", 32));
+                eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
                 eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
                 eventDataTx.set(payload, 36);
     
@@ -65,7 +65,7 @@ describe("FILETYPE_PARSER tests", () => {
     done => {
         // While receive a message in the form of arraybuffer
         Connection.onmessage = (event: MessageEvent) => {
-            const eventName = Utitlity.getEventName(new Uint8Array(event.data, 0, 32));
+            const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
             
             if(eventName == "FILE_LIST_RESPONSE"){
                 expect(event.data.byteLength).toBeGreaterThan(0);
@@ -90,7 +90,7 @@ describe("FILETYPE_PARSER tests", () => {
             let payload = CARTA.FileListRequest.encode(message).finish();
             const eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
 
-            eventDataTx.set(Utitlity.stringToUint8Array("FILE_LIST_REQUEST", 32));
+            eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
             eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
             eventDataTx.set(payload, 36);
 
@@ -104,7 +104,7 @@ describe("FILETYPE_PARSER tests", () => {
         done => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
-                const eventName = Utitlity.getEventName(new Uint8Array(event.data, 0, 32));
+                const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
                 expect(event.data.byteLength).toBeGreaterThan(40);
                 expect(eventName).toBe("FILE_LIST_RESPONSE");
 
@@ -140,7 +140,7 @@ describe("FILETYPE_PARSER tests", () => {
         done => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
-                const eventName = Utitlity.getEventName(new Uint8Array(event.data, 0, 32));
+                const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
                 if(eventName == "FILE_LIST_RESPONSE"){
                     const eventData = new Uint8Array(event.data, 36);
 
@@ -163,7 +163,7 @@ describe("FILETYPE_PARSER tests", () => {
                     done => {
                         // While receive a message from Websocket server
                         Connection.onmessage = (event: MessageEvent) => {
-                            const eventName = Utitlity.getEventName(new Uint8Array(event.data, 0, 32));
+                            const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
                             if(eventName == "FILE_LIST_RESPONSE"){
                                 const eventData = new Uint8Array(event.data, 36);
     
@@ -188,7 +188,7 @@ describe("FILETYPE_PARSER tests", () => {
                     done => {
                         // While receive a message from Websocket server
                         Connection.onmessage = (event: MessageEvent) => {
-                            const eventName = Utitlity.getEventName(new Uint8Array(event.data, 0, 32));
+                            const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
                             if(eventName == "FILE_LIST_RESPONSE"){
                                 const eventData = new Uint8Array(event.data, 36);
     
@@ -216,7 +216,7 @@ describe("FILETYPE_PARSER tests", () => {
                     done => {
                         // While receive a message from Websocket server
                         Connection.onmessage = (event: MessageEvent) => {
-                            const eventName = Utitlity.getEventName(new Uint8Array(event.data, 0, 32));
+                            const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
                             if(eventName == "FILE_LIST_RESPONSE"){
                                 const eventData = new Uint8Array(event.data, 36);
     
