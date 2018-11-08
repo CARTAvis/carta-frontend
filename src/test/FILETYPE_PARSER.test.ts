@@ -212,7 +212,7 @@ describe("FILETYPE_PARSER tests", () => {
             ].map(
                 ([file, type, size]) => {
     
-                    test(`assert the file "${file}" is existed, image type is ${type}, size = ${size}.`, 
+                    test(`assert the file "${file}" is existed, image type is ${CARTA.FileType[type]}, size = ${size}.`, 
                     done => {
                         // While receive a message from Websocket server
                         Connection.onmessage = (event: MessageEvent) => {
