@@ -3,7 +3,7 @@ import * as Utitlity from "./testUtilityFunction";
 
 let WebSocket = require('ws');
 let testServerUrl = "ws://localhost:50505";
-let expectRootPath = "/home/user/CARTA/Images";
+let expectRootPath = "/home/acdc/CARTA/Images";
 let testSubdirectoryName = `${expectRootPath}/QA`;
 let connectTimeoutLocal = 300;
 
@@ -72,7 +72,7 @@ describe("FILETYPE_PARSER tests", () => {
                 const eventData = new Uint8Array(event.data, 36);
                 expect(CARTA.FileListResponse.decode(eventData).success).toBe(true);
 
-                // console.log(CARTA.FileListResponse.decode(eventData));
+            //    console.log(CARTA.FileListResponse.decode(eventData));
                 console.log(`The root folder on backend is "${CARTA.FileListResponse.decode(eventData).parent}"`);
                     
 
@@ -181,7 +181,7 @@ describe("FILETYPE_PARSER tests", () => {
         });        
         
         describe(`assert the folder is existed in "FILE_LIST_RESPONSE.subdirectory"`, () => {
-            [["empty_folder"], ["empty2.miriad"], ["empty2.fits"], ["empty2.image"], [".."]
+            [["empty_folder"], ["empty2.miriad"], ["empty2.fits"], ["empty2.image"]
             ].map(
                 ([folder]) => {
                     test(`assert the folder "${folder}" is existed.`, 
