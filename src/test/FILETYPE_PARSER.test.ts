@@ -28,7 +28,7 @@ describe("FILETYPE_PARSER tests", () => {
 
                 Connection.send(eventData);
             } else {
-                console.log(`"FILE_LIST_REQUEST" can not open a connection.`);
+                console.log(`Can not open a connection.`);
             }
             done();
         };
@@ -61,7 +61,7 @@ describe("FILETYPE_PARSER tests", () => {
         };
     }, connectTimeoutLocal);
 
-    test(`send EventName: "FILE_LIST_REQUEST" to CARTA "${testServerUrl}" to access /${testSubdirectoryName}.`, 
+    test(`send EventName: "FILE_LIST_REQUEST" to CARTA "${testServerUrl}" to access ${testSubdirectoryName}.`, 
     done => {
         // While receive a message in the form of arraybuffer
         Connection.onmessage = (event: MessageEvent) => {
@@ -74,8 +74,7 @@ describe("FILETYPE_PARSER tests", () => {
 
             //    console.log(CARTA.FileListResponse.decode(eventData));
                 console.log(`The root folder on backend is "${CARTA.FileListResponse.decode(eventData).parent}"`);
-                    
-
+                
                 done();
             }
         }
