@@ -12,7 +12,9 @@ describe("FILETYPE_PARSER tests", () => {
     let Connection = new WebSocket(testServerUrl);
     Connection.binaryType = "arraybuffer";
 
-    beforeAll( done => {
+    beforeEach( done => {
+        Connection = new WebSocket(testServerUrl);
+        Connection.binaryType = "arraybuffer";
         // While open a Websocket
         Connection.onopen = () => {
             // Checkout if Websocket server is ready
@@ -45,17 +47,6 @@ describe("FILETYPE_PARSER tests", () => {
                 const eventData = new Uint8Array(event.data, 36);
                 expect(CARTA.RegisterViewerAck.decode(eventData).success).toBe(true);
                 
-                // Preapare the message on a eventData
-                const message = CARTA.FileListRequest.create({directory: testSubdirectoryName});
-                let payload = CARTA.FileListRequest.encode(message).finish();
-                const eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
-    
-                eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
-                eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
-                eventDataTx.set(payload, 36);
-    
-                Connection.send(eventDataTx);
-
                 done();
             }
         };
@@ -63,13 +54,24 @@ describe("FILETYPE_PARSER tests", () => {
 
     test(`send EventName: "FILE_LIST_REQUEST" to CARTA "${testServerUrl}" to access ${testSubdirectoryName}.`, 
     done => {
+
+        // Preapare the message on a eventData
+        let message = CARTA.FileListRequest.create({directory: testSubdirectoryName});
+        let payload = CARTA.FileListRequest.encode(message).finish();
+        let eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
+
+        eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
+        eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
+        eventDataTx.set(payload, 36);
+
+        Connection.send(eventDataTx);
+
         // While receive a message in the form of arraybuffer
         Connection.onmessage = (event: MessageEvent) => {
-            const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-            
+            let eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
             if(eventName == "FILE_LIST_RESPONSE"){
                 expect(event.data.byteLength).toBeGreaterThan(0);
-                const eventData = new Uint8Array(event.data, 36);
+                let eventData = new Uint8Array(event.data, 36);
                 expect(CARTA.FileListResponse.decode(eventData).success).toBe(true);
 
             //    console.log(CARTA.FileListResponse.decode(eventData));
@@ -84,19 +86,27 @@ describe("FILETYPE_PARSER tests", () => {
     describe(`send EventName: "FILE_LIST_REQUEST" to CARTA ${testServerUrl}`, 
     () => {
         beforeEach( done => {
-            // Preapare the message on a eventData
-            const message = CARTA.FileListRequest.create({directory: testSubdirectoryName});
-            let payload = CARTA.FileListRequest.encode(message).finish();
-            const eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
+            Connection.onmessage = (event: MessageEvent) => {
+                const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
+                if(eventName == "REGISTER_VIEWER_ACK"){
+                    // Assertion
+                    expect(event.data.byteLength).toBeGreaterThan(0);
+                    const eventData = new Uint8Array(event.data, 36);
+                    expect(CARTA.RegisterViewerAck.decode(eventData).success).toBe(true);
+                    // Preapare the message on a eventData
+                    const message = CARTA.FileListRequest.create({directory: testSubdirectoryName});
+                    let payload = CARTA.FileListRequest.encode(message).finish();
+                    const eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
 
-            eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
-            eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
-            eventDataTx.set(payload, 36);
+                    eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
+                    eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
+                    eventDataTx.set(payload, 36);
 
-            Connection.send(eventDataTx);
+                    Connection.send(eventDataTx);
 
-            done();
-                       
+                    done();
+                }
+            };    
         }, connectTimeoutLocal);        
         
         test(`assert the received EventName is "FILE_LIST_RESPONSE" within ${connectTimeoutLocal * 1e-3} seconds.`, 
@@ -153,6 +163,36 @@ describe("FILETYPE_PARSER tests", () => {
     
         }, connectTimeoutLocal);
 
+        describe(`assert the file is existed`, () => {
+            [["S255_IR_sci.spw25.cube.I.pbcor.fits", CARTA.FileType.FITS, 7048405440],
+             ["SDC335.579-0.292.spw0.line.image", CARTA.FileType.CASA, 1864975311],
+             ["G34mm1.miriad", CARTA.FileType.MIRIAD, 7829305],
+            ].map(
+                ([file, type, size]) => {
+    
+                    test(`assert the file "${file}" is existed, image type is ${CARTA.FileType[type]}, size = ${size}.`, 
+                    done => {
+                        // While receive a message from Websocket server
+                        Connection.onmessage = (event: MessageEvent) => {
+                            const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
+                            if(eventName == "FILE_LIST_RESPONSE"){
+                                const eventData = new Uint8Array(event.data, 36);
+    
+                                let parsedMessage;
+                                parsedMessage = CARTA.FileListResponse.decode(eventData);
+    
+                                let fileInfo = parsedMessage.files.find(f => f.name === file);
+                                expect(fileInfo).toBeDefined();
+                                expect(fileInfo.type).toBe(type);
+                                expect(fileInfo.size.toNumber()).toBe(size);
+                            }
+                            done();
+                        } 
+                    }, connectTimeoutLocal)
+                }
+            )
+        });
+        
         describe(`assert the file is not existed`, () => {
             [["empty2.miriad"], ["empty2.fits"], ["empty2.image"],
             ["empty.txt"], ["empty.miriad"], ["empty.fits"], ["empty.image"],
@@ -204,39 +244,9 @@ describe("FILETYPE_PARSER tests", () => {
             )
         });
 
-        describe(`assert the file is existed`, () => {
-            [["S255_IR_sci.spw25.cube.I.pbcor.fits", CARTA.FileType.FITS, 7048405440],
-             ["SDC335.579-0.292.spw0.line.image", CARTA.FileType.CASA, 1864975311],
-             ["G34mm1.miriad", CARTA.FileType.MIRIAD, 7829305],
-            ].map(
-                ([file, type, size]) => {
-    
-                    test(`assert the file "${file}" is existed, image type is ${CARTA.FileType[type]}, size = ${size}.`, 
-                    done => {
-                        // While receive a message from Websocket server
-                        Connection.onmessage = (event: MessageEvent) => {
-                            const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                            if(eventName == "FILE_LIST_RESPONSE"){
-                                const eventData = new Uint8Array(event.data, 36);
-    
-                                let parsedMessage;
-                                parsedMessage = CARTA.FileListResponse.decode(eventData);
-    
-                                let fileInfo = parsedMessage.files.find(f => f.name === file);
-                                expect(fileInfo).toBeDefined();
-                                expect(fileInfo.type).toBe(type);
-                                expect(fileInfo.size.toNumber()).toBe(size);
-                            }
-                            done();
-                        } 
-                    }, connectTimeoutLocal)
-                }
-            )
-        });
-
     });
 
-    afterAll( done => {
+    afterEach( done => {
         Connection.close();
         done();
     });
