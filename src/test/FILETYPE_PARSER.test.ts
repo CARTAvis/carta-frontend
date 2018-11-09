@@ -137,7 +137,6 @@ describe("FILETYPE_PARSER tests", () => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
                 const eventData = new Uint8Array(event.data, 36);
-
                 expect(CARTA.FileListResponse.decode(eventData).parent).toBe(expectRootPath);
 
                 done();
@@ -163,14 +162,14 @@ describe("FILETYPE_PARSER tests", () => {
     
         }, connectTimeoutLocal);
 
-        describe(`assert the file is existed`, () => {
+        describe(`assert the file exists`, () => {
             [["S255_IR_sci.spw25.cube.I.pbcor.fits", CARTA.FileType.FITS, 7048405440],
              ["SDC335.579-0.292.spw0.line.image", CARTA.FileType.CASA, 1864975311],
              ["G34mm1.miriad", CARTA.FileType.MIRIAD, 7829305],
             ].map(
                 ([file, type, size]) => {
     
-                    test(`assert the file "${file}" is existed, image type is ${CARTA.FileType[type]}, size = ${size}.`, 
+                    test(`assert the file "${file}" exists, image type is ${CARTA.FileType[type]}, and size = ${size}.`, 
                     done => {
                         // While receive a message from Websocket server
                         Connection.onmessage = (event: MessageEvent) => {
@@ -193,12 +192,13 @@ describe("FILETYPE_PARSER tests", () => {
             )
         });
         
-        describe(`assert the file is not existed`, () => {
+        describe(`assert the file does not exist`, () => {
             [["empty2.miriad"], ["empty2.fits"], ["empty2.image"],
-            ["empty.txt"], ["empty.miriad"], ["empty.fits"], ["empty.image"],
+             ["empty.txt"], ["empty.miriad"], ["empty.fits"], 
+             ["empty.image"],
             ].map(
                 ([file]) => {
-                    test(`assert the file "${file}" is not existed.`, 
+                    test(`assert the file "${file}" does not exist.`, 
                     done => {
                         // While receive a message from Websocket server
                         Connection.onmessage = (event: MessageEvent) => {
@@ -219,11 +219,12 @@ describe("FILETYPE_PARSER tests", () => {
             )
         });        
         
-        describe(`assert the folder is existed in "FILE_LIST_RESPONSE.subdirectory"`, () => {
-            [["empty_folder"], ["empty2.miriad"], ["empty2.fits"], ["empty2.image"]
+        describe(`assert the folder exists in "FILE_LIST_RESPONSE.subdirectory"`, () => {
+            [["empty_folder"], ["empty2.miriad"], ["empty2.fits"], 
+             ["empty2.image"],
             ].map(
                 ([folder]) => {
-                    test(`assert the folder "${folder}" is existed.`, 
+                    test(`assert the folder "${folder}" exists.`, 
                     done => {
                         // While receive a message from Websocket server
                         Connection.onmessage = (event: MessageEvent) => {
