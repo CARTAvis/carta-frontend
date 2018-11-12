@@ -1,15 +1,12 @@
 import {CARTA} from "carta-protobuf";
-import {
-    stringToUint8Array, 
-    getEventName
-} from "./testUtilityFunction";
+import * as Utility from "./testUtilityFunction";
 
-let WebSocket = require('ws');
+let WebSocket = require("ws");
 let testServerUrl = "ws://localhost:50505";
 let connectTimeoutLocal = 100;
 let connectTimeoutRemote = 2000;
 let testEventName = "REGISTER_VIEWER";
-let testReturnName = "REGISTER_VIEWER_ACK"
+let testReturnName = "REGISTER_VIEWER_ACK";
 
 describe("Websocket tests", () => {
     let testRemoteWebsocketSite = "wss://echo.websocket.org site";
@@ -49,13 +46,13 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
         Connection.onopen = () => {
             
             // Checkout if Websocket server is ready
-            if (Connection.readyState == WebSocket.OPEN) {
+            if (Connection.readyState === WebSocket.OPEN) {
                 // Preapare the message on a eventData
                 const message = CARTA.RegisterViewer.create({sessionId: "", apiKey: ""});
                 let payload = CARTA.RegisterViewer.encode(message).finish();
                 let eventData = new Uint8Array(32 + 4 + payload.byteLength);
 
-                eventData.set(stringToUint8Array(testEventName, 32));
+                eventData.set(Utility.stringToUint8Array(testEventName, 32));
                 eventData.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
                 eventData.set(payload, 36);
 
@@ -86,13 +83,13 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
         Connection.onopen = () => {
             
             // Checkout if Websocket server is ready
-            if (Connection.readyState == WebSocket.OPEN) {
+            if (Connection.readyState === WebSocket.OPEN) {
                 // Preapare the message on a eventData
                 const message = CARTA.RegisterViewer.create({sessionId: "", apiKey: "1234"});
                 let payload = CARTA.RegisterViewer.encode(message).finish();
                 let eventData = new Uint8Array(32 + 4 + payload.byteLength);
 
-                eventData.set(stringToUint8Array(testEventName, 32));
+                eventData.set(Utility.stringToUint8Array(testEventName, 32));
                 eventData.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
                 eventData.set(payload, 36);
 
@@ -133,7 +130,7 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
                     let payload = CARTA.RegisterViewer.encode(message).finish();
                     let eventData = new Uint8Array(32 + 4 + payload.byteLength);
     
-                    eventData.set(stringToUint8Array(testEventName, 32));
+                    eventData.set(Utility.stringToUint8Array(testEventName, 32));
                     eventData.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
                     eventData.set(payload, 36);
     
@@ -152,19 +149,19 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
             Connection.onmessage = (event: MessageEvent) => {
                 expect(event.data.byteLength).toBeGreaterThan(40);
                 
-                const eventName = getEventName(new Uint8Array(event.data, 0, 32));
+                const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
                 expect(eventName).toBe(testReturnName);
 
                 done();
                 Connection.close();
-            }
+            };
         }, connectTimeoutLocal);
     
         test(`assert the "${testReturnName}.session_id" is not None.`, 
         done => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
-                const eventName = getEventName(new Uint8Array(event.data, 0, 32));
+                const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
                 const eventId = new Uint32Array(event.data, 32, 1)[0];
                 const eventData = new Uint8Array(event.data, 36);
 
@@ -177,7 +174,7 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
 
                 done();                
                 Connection.close();
-            }
+            };
     
         }, connectTimeoutLocal);
     
@@ -190,7 +187,7 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
                 done();
                 
                 Connection.close();
-            }
+            };
         }, connectTimeoutLocal);
     
         test(`assert the "${testReturnName}.session_type" is "CARTA.SessionType.NEW".`, 
@@ -202,7 +199,7 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
                 done();
                     
                 Connection.close();
-            }
+            };
         }, connectTimeoutLocal);
     
     });
