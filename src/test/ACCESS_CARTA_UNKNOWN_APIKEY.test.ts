@@ -5,7 +5,7 @@ let WebSocket = require("ws");
 let testServerUrl = "ws://localhost:50505";
 let connectTimeoutLocal = 200;
 let testEventName = "REGISTER_VIEWER";
-let testReturnName = "REGISTER_VIEWER_ACK"
+let testReturnName = "REGISTER_VIEWER_ACK";
 
 describe("Websocket tests", () => {
     test(`establish a connection to ${testServerUrl}.`, 
@@ -98,7 +98,6 @@ describe("ACCESS_CARTA_UNKNOWN_APIKEY tests", () => {
 
     describe(`receive EventName: "${testReturnName}" tests on CARTA ${testServerUrl}`, 
     () => {
-
         let Connection: WebSocket;
     
         beforeEach( done => {
@@ -143,7 +142,7 @@ describe("ACCESS_CARTA_UNKNOWN_APIKEY tests", () => {
             };
         }, connectTimeoutLocal);
     
-        test.skip(`assert the "${testReturnName}.session_id" is not None.`, 
+        test(`assert the "${testReturnName}.session_id" is not None.`, 
         done => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
@@ -154,9 +153,9 @@ describe("ACCESS_CARTA_UNKNOWN_APIKEY tests", () => {
                 let parsedMessage;
                 if (eventName === testReturnName) {
                     parsedMessage = CARTA.RegisterViewerAck.decode(eventData);
+                    expect(parsedMessage.sessionId).toBeDefined();
+                    console.log(`current session ID is ${parsedMessage.sessionId}`);
                 }
-                expect(parsedMessage.sessionId).toBeDefined();
-                console.log(`current session ID is ${parsedMessage.sessionId}`);
             
                 done();
                 Connection.close();

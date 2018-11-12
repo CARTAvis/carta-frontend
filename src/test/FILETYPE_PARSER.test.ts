@@ -9,7 +9,7 @@ let connectTimeoutLocal = 300;
 
 describe("FILETYPE_PARSER tests", () => {   
     // Establish a websocket connection in the transfermation of binary: arraybuffer 
-    let Connection = new WebSocket(testServerUrl);
+    let Connection: WebSocket;
     Connection.binaryType = "arraybuffer";
 
     beforeEach( done => {
