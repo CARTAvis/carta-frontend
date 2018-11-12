@@ -275,27 +275,6 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
                 done();
             };
         }, connectTimeoutLocal);
-
-        test.skip(`assert the ".." does not exist.`, 
-        done => {
-            // While receive a message from Websocket server
-            Connection.onmessage = (event: MessageEvent) => {
-                const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                if (eventName === "FILE_LIST_RESPONSE") {
-                    const eventId = new Uint32Array(event.data, 32, 1)[0];
-                    const eventData = new Uint8Array(event.data, 36);
-
-                    let parsedMessage;
-                    parsedMessage = CARTA.FileListResponse.decode(eventData);
-
-                    let folderInfo = parsedMessage.subdirectories.find(f => f === "..");
-                    expect(folderInfo).toBeUndefined();
-                }
-
-                Connection.close();
-                done();
-            };
-        }, connectTimeoutLocal);
     
     });
 });
