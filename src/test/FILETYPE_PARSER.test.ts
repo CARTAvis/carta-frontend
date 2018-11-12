@@ -3,14 +3,14 @@ import * as Utility from "./testUtilityFunction";
 
 let WebSocket = require("ws");
 let testServerUrl = "ws://localhost:50505";
-let expectRootPath = "/home/acdc/CARTA/Images";
-let testSubdirectoryName = `${expectRootPath}/QA`;
+let expectRootPath = "/Users/zarda/CARTA/Images"; // Depend on OS
+// let testSubdirectoryName = "QA"; // NRAO bacjend
+let testSubdirectoryName = `${expectRootPath}/QA`; // ASIAA backend
 let connectTimeoutLocal = 300;
 
 describe("FILETYPE_PARSER tests", () => {   
-    // Establish a websocket connection in the transfermation of binary: arraybuffer 
+    // Establish a websocket connection in the transfer form of binary: arraybuffer 
     let Connection: WebSocket;
-    Connection.binaryType = "arraybuffer";
 
     beforeEach( done => {
         Connection = new WebSocket(testServerUrl);

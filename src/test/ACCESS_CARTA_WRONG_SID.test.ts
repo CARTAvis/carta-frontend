@@ -182,7 +182,7 @@ describe("ACCESS_CARTA_WRONG_SID tests", () => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
                 const eventData = new Uint8Array(event.data, 36);
-                expect(CARTA.RegisterViewerAck.decode(eventData).message).toBeUndefined();
+                expect(CARTA.RegisterViewerAck.decode(eventData).message).toBe("");
                 
                 done();                    
                 Connection.close();

@@ -6,10 +6,9 @@ let testServerUrl = "ws://localhost:50505";
 let testFileName = "aJ.fits";
 let fileType = CARTA.FileType.FITS;
 let testSubdirectoryName = "QA";
-// let expectRootPath = "/Users/acdc/CARTA/Images"; // For ASIAA backend
-let expectRootPath = ""; // For NRAO backend
+let expectRootPath = "/Users/zarda/CARTA/Images"; // For ASIAA backend
+// let expectRootPath = ""; // For NRAO backend
 let connectTimeoutLocal = 1000;
-let testEventName = "FILE_LIST_REQUEST";
 let testReturnName = "FILE_LIST_RESPONSE";
 
 describe("Websocket tests", () => {
@@ -50,7 +49,7 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
 
                 Connection.send(eventData);
             } else {
-                console.log(`"${testEventName}" can not open a connection.`);
+                console.log(`Can not open a connection.`);
             }
 
         };
@@ -65,7 +64,7 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
 
     }, connectTimeoutLocal);
 
-    test(`send EventName: "${testReturnName}" to CARTA "${testServerUrl}".`, 
+    test(`send EventName: "FILE_LIST_RESPONSE" to CARTA "${testServerUrl}".`, 
     done => {
         // Construct a Websocket
         let Connection = new WebSocket(testServerUrl);
@@ -87,7 +86,7 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
 
                 Connection.send(eventData);
             } else {
-                console.log(`"${testEventName}" can not open a connection.`);
+                console.log(`Can not open a connection.`);
             }
 
         };
@@ -101,7 +100,7 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
                 let payload = CARTA.FileListRequest.encode(message).finish();
                 const eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
     
-                eventDataTx.set(Utility.stringToUint8Array(testEventName, 32));
+                eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
                 eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
                 eventDataTx.set(payload, 36);
     
@@ -114,7 +113,7 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
 
     }, connectTimeoutLocal);
 
-    describe(`receive EventName: "${testReturnName}" tests on CARTA ${testServerUrl}`, 
+    describe(`receive EventName: "FILE_LIST_RESPONSE" tests on CARTA ${testServerUrl}`, 
     () => {
 
         let Connection: WebSocket;
@@ -140,7 +139,7 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
     
                     Connection.send(eventData);
                 } else {
-                    console.log(`"${testEventName}" can not open a connection.`);
+                    console.log(`Can not open a connection.`);
                     Connection.close();
                 }
             };
@@ -154,7 +153,7 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
                     let payload = CARTA.FileListRequest.encode(message).finish();
                     const eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
         
-                    eventDataTx.set(Utility.stringToUint8Array(testEventName, 32));
+                    eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
                     eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
                     eventDataTx.set(payload, 36);
         
@@ -180,12 +179,12 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
             };
         }, connectTimeoutLocal);
     
-        test(`assert the "${testReturnName}.success" is true.`, 
+        test(`assert the "FILE_LIST_RESPONSE.success" is true.`, 
         done => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
                 const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                if (eventName === testReturnName) {
+                if (eventName === "FILE_LIST_RESPONSE") {
                     const eventData = new Uint8Array(event.data, 36);
                     expect(CARTA.FileListResponse.decode(eventData).success).toBe(true);
                 }
@@ -195,19 +194,17 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
             };
         }, connectTimeoutLocal);  
 
-        test(`assert the "${testReturnName}.parent" is None.`, 
+        test(`assert the "FILE_LIST_RESPONSE.parent" is None.`, 
         done => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
                 const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                if (eventName === testReturnName) {
+                if (eventName === "FILE_LIST_RESPONSE") {
                     const eventId = new Uint32Array(event.data, 32, 1)[0];
                     const eventData = new Uint8Array(event.data, 36);
 
                     let parsedMessage;
-                    if (eventName === testReturnName) {
-                        parsedMessage = CARTA.FileListResponse.decode(eventData);
-                    }
+                    parsedMessage = CARTA.FileListResponse.decode(eventData);
                     expect(parsedMessage.parent).toBe("");
                 }
 
@@ -216,19 +213,17 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
             };    
         }, connectTimeoutLocal);
 
-        test(`assert the "${testReturnName}.directory" is root path "${expectRootPath}".`, 
+        test(`assert the "FILE_LIST_RESPONSE.directory" is root path "${expectRootPath}".`, 
         done => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
                 const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                if (eventName === testReturnName) {
+                if (eventName === "FILE_LIST_RESPONSE") {
                     const eventId = new Uint32Array(event.data, 32, 1)[0];
                     const eventData = new Uint8Array(event.data, 36);
 
                     let parsedMessage;
-                    if (eventName === testReturnName) {
-                        parsedMessage = CARTA.FileListResponse.decode(eventData);
-                    }
+                    parsedMessage = CARTA.FileListResponse.decode(eventData);
                     expect(parsedMessage.directory).toBe(expectRootPath);
                 }
 
@@ -242,14 +237,12 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
                 const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                if (eventName === testReturnName) {
+                if (eventName === "FILE_LIST_RESPONSE") {
                     const eventId = new Uint32Array(event.data, 32, 1)[0];
                     const eventData = new Uint8Array(event.data, 36);
 
                     let parsedMessage;
-                    if (eventName === testReturnName) {
-                        parsedMessage = CARTA.FileListResponse.decode(eventData);
-                    }
+                    parsedMessage = CARTA.FileListResponse.decode(eventData);
 
                     let fileInfo = parsedMessage.files.find(f => f.name === testFileName);
                     expect(fileInfo).toBeDefined();
@@ -267,14 +260,12 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
                 const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                if (eventName === testReturnName) {
+                if (eventName === "FILE_LIST_RESPONSE") {
                     const eventId = new Uint32Array(event.data, 32, 1)[0];
                     const eventData = new Uint8Array(event.data, 36);
 
                     let parsedMessage;
-                    if (eventName === testReturnName) {
-                        parsedMessage = CARTA.FileListResponse.decode(eventData);
-                    }
+                    parsedMessage = CARTA.FileListResponse.decode(eventData);
 
                     let folderInfo = parsedMessage.subdirectories.find(f => f === testSubdirectoryName);
                     expect(folderInfo).toBeDefined();
@@ -290,14 +281,12 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
                 const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                if (eventName === testReturnName) {
+                if (eventName === "FILE_LIST_RESPONSE") {
                     const eventId = new Uint32Array(event.data, 32, 1)[0];
                     const eventData = new Uint8Array(event.data, 36);
 
                     let parsedMessage;
-                    if (eventName === testReturnName) {
-                        parsedMessage = CARTA.FileListResponse.decode(eventData);
-                    }
+                    parsedMessage = CARTA.FileListResponse.decode(eventData);
 
                     let folderInfo = parsedMessage.subdirectories.find(f => f === "..");
                     expect(folderInfo).toBeUndefined();
@@ -335,7 +324,7 @@ describe("GET_FILELIST_UNKNOWNPATH tests", () => {
 
                 Connection.send(eventData);
             } else {
-                console.log(`"${testEventName}" can not open a connection.`);
+                console.log(`Can not open a connection.`);
             }
 
         };
@@ -350,7 +339,7 @@ describe("GET_FILELIST_UNKNOWNPATH tests", () => {
 
     }, connectTimeoutLocal);
 
-    test(`send EventName: "${testReturnName}" to CARTA "${testServerUrl}".`, 
+    test(`send EventName: "FILE_LIST_REQUEST" to CARTA "${testServerUrl}".`, 
     done => {
         // Construct a Websocket
         let Connection = new WebSocket(testServerUrl);
@@ -372,7 +361,7 @@ describe("GET_FILELIST_UNKNOWNPATH tests", () => {
 
                 Connection.send(eventData);
             } else {
-                console.log(`"${testEventName}" can not open a connection.`);
+                console.log(`Can not open a connection.`);
             }
 
         };
@@ -386,7 +375,7 @@ describe("GET_FILELIST_UNKNOWNPATH tests", () => {
                 let payload = CARTA.FileListRequest.encode(message).finish();
                 const eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
     
-                eventDataTx.set(Utility.stringToUint8Array(testEventName, 32));
+                eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
                 eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
                 eventDataTx.set(payload, 36);
     
@@ -399,7 +388,7 @@ describe("GET_FILELIST_UNKNOWNPATH tests", () => {
 
     }, connectTimeoutLocal);
 
-    describe(`receive EventName: "${testReturnName}" tests on CARTA ${testServerUrl}`, 
+    describe(`access "/unknown/path" on CARTA ${testServerUrl}`, 
     () => {
 
         let Connection: WebSocket;
@@ -425,7 +414,7 @@ describe("GET_FILELIST_UNKNOWNPATH tests", () => {
     
                     Connection.send(eventData);
                 } else {
-                    console.log(`"${testEventName}" can not open a connection.`);
+                    console.log(`Can not open a connection.`);
                     Connection.close();
                 }
             };
@@ -439,19 +428,19 @@ describe("GET_FILELIST_UNKNOWNPATH tests", () => {
                     let payload = CARTA.FileListRequest.encode(message).finish();
                     const eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
         
-                    eventDataTx.set(Utility.stringToUint8Array(testEventName, 32));
+                    eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
                     eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
                     eventDataTx.set(payload, 36);
         
                     Connection.send(eventDataTx);
                 }
-                if (eventName === testReturnName) {
+                if (eventName === "FILE_LIST_RESPONSE") {
                     // Preapare the message on a eventData
                     const message = CARTA.FileListRequest.create({directory: "/unknown/path"});
                     let payload = CARTA.FileListRequest.encode(message).finish();
                     const eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
         
-                    eventDataTx.set(Utility.stringToUint8Array(testEventName, 32));
+                    eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
                     eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
                     eventDataTx.set(payload, 36);
         
@@ -461,7 +450,7 @@ describe("GET_FILELIST_UNKNOWNPATH tests", () => {
             };
         }, connectTimeoutLocal);
     
-        test(`assert the received EventName is "${testReturnName}" within ${connectTimeoutLocal * 1e-3} seconds.`, 
+        test(`assert the received EventName is "FILE_LIST_RESPONSE" within ${connectTimeoutLocal * 1e-3} seconds.`, 
         done => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
@@ -491,12 +480,12 @@ describe("GET_FILELIST_UNKNOWNPATH tests", () => {
             };
         }, connectTimeoutLocal); 
 
-        test(`assert the "${testReturnName}.message" is not None.`, 
+        test(`assert the "FILE_LIST_RESPONSE.message" is not None.`, 
         done => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
                 const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                if (eventName === testReturnName) {
+                if (eventName === "FILE_LIST_RESPONSE") {
                     const eventData = new Uint8Array(event.data, 36);
                     expect(CARTA.FileListResponse.decode(eventData).message).toBeDefined();
                     console.log(`As given a unknown path, returned message: "` + CARTA.FileListResponse.decode(eventData).message + `"`);
