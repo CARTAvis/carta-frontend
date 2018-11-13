@@ -12,7 +12,7 @@ describe("FILEINFO tests", () => {
     let Connection: WebSocket;
 
     beforeEach( done => {
-        // Establish a websocket connection in the transfermation of binary: arraybuffer 
+        // Establish a websocket connection in the binary form: arraybuffer 
         Connection = new WebSocket(testServerUrl);
         Connection.binaryType = "arraybuffer";
         // While open a Websocket
@@ -38,7 +38,7 @@ describe("FILEINFO tests", () => {
 
     test(`connect to CARTA "${testServerUrl}" & ...`, 
     done => {
-        // While receive a message in the form of arraybuffer
+        // While receive a message
         Connection.onmessage = (event: MessageEvent) => {
             const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
             if (eventName === "REGISTER_VIEWER_ACK") {
@@ -69,7 +69,7 @@ describe("FILEINFO tests", () => {
             
                     Connection.send(eventDataTx);
             
-                    // While receive a message in the form of arraybuffer
+                    // While receive a message
                     Connection.onmessage = (event: MessageEvent) => {
                         let eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
                         if (eventName === "FILE_LIST_RESPONSE") {
@@ -182,7 +182,7 @@ describe("FILEINFO_EXCEPTIONS tests", () => {
     let Connection: WebSocket;
 
     beforeEach( done => {
-        // Establish a websocket connection in the transfermation of binary: arraybuffer 
+        // Establish a websocket connection in binary form: arraybuffer 
         Connection = new WebSocket(testServerUrl);
         Connection.binaryType = "arraybuffer";
         // While open a Websocket
@@ -208,7 +208,7 @@ describe("FILEINFO_EXCEPTIONS tests", () => {
 
     test(`connect to CARTA "${testServerUrl}" & ...`, 
     done => {
-        // While receive a message in the form of arraybuffer
+        // While receive a message
         Connection.onmessage = (event: MessageEvent) => {
             const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
             if (eventName === "REGISTER_VIEWER_ACK") {
@@ -239,7 +239,7 @@ describe("FILEINFO_EXCEPTIONS tests", () => {
             
                     Connection.send(eventDataTx);
             
-                    // While receive a message in the form of arraybuffer
+                    // While receive a message
                     Connection.onmessage = (event: MessageEvent) => {
                         let eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
                         if (eventName === "FILE_LIST_RESPONSE") {
