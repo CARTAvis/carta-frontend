@@ -6,10 +6,10 @@ let testServerUrl = "ws://localhost:50505";
 let expectRootPath = "/Users/zarda/CARTA/Images";
 // let testSubdirectoryName = "QA"; // for NRAO backend
 let testSubdirectoryName = `${expectRootPath}/QA`; // ASIAA backend
-let connectTimeoutLocal = 1000;
+let connectionTimeout = 1000;
 
 describe("FILEINFO tests", () => {   
-    let Connection: Websocket;
+    let Connection: WebSocket;
 
     beforeEach( done => {
         // Establish a websocket connection in the transfermation of binary: arraybuffer 
@@ -34,7 +34,7 @@ describe("FILEINFO tests", () => {
             }
             done();
         };
-    }, connectTimeoutLocal);
+    }, connectionTimeout);
 
     test(`connect to CARTA "${testServerUrl}" & ...`, 
     done => {
@@ -50,7 +50,7 @@ describe("FILEINFO tests", () => {
                 done();
             }
         };
-    }, connectTimeoutLocal);
+    }, connectionTimeout);
 
     describe(`access directory`, () => {
         [[expectRootPath], [testSubdirectoryName]
@@ -80,7 +80,7 @@ describe("FILEINFO tests", () => {
                             done();
                         }
                     };
-                }, connectTimeoutLocal);
+                }, connectionTimeout);
             }
         );
     });
@@ -110,15 +110,16 @@ describe("FILEINFO tests", () => {
                     done();
                 }                
             };    
-        }, connectTimeoutLocal);       
+        }, connectionTimeout);       
         
         describe(`look for a file`, () => {
-            [["S255_IR_sci.spw25.cube.I.pbcor.fits", [1920, 1920, 478, 1], 4],
-             ["SDC335.579-0.292.spw0.line.image", [336, 350, 3840, 1], 4],
-             ["G34mm1.miriad", [129, 129, 111, 1], 4],
+            [["S255_IR_sci.spw25.cube.I.pbcor.fits",    [1920, 1920, 478, 1],   4],
+             ["SDC335.579-0.292.spw0.line.image",       [336, 350, 3840, 1],    4],
+             ["G34mm1.miriad",                          [129, 129, 111, 1],     4],
             ].map(
-                ([fileName, shape, NAXIS]) => {
-                    test(`assert the file "${fileName}" exists, “Shape = [${shape}]” in file_info, & “NAXIS = ${NAXIS}” in file_info_extended.`, 
+                function([fileName, shape, NAXIS]: [string, number[], number]) {
+                    test(`assert the file "${fileName}" exists, “Shape = [${shape}]” in file_info,
+                          & “NAXIS = ${NAXIS}” in file_info_extended.`, 
                     done => {
                         Connection.onmessage = (eventList: MessageEvent) => {
                             let eventName = Utility.getEventName(new Uint8Array(eventList.data, 0, 32));
@@ -147,8 +148,16 @@ describe("FILEINFO tests", () => {
                                         // console.log(fileInfoMessage.fileInfoExtended);
                                         
                                         expect(fileInfoMessage.success).toBe(true);
-                                        expect(fileInfoMessage.fileInfoExtended.computedEntries.find( f => f.name === "Shape").value.replace("[", "").replace("]", "").split(",").map(Number)).toEqual(shape);
-                                        expect(parseInt(fileInfoMessage.fileInfoExtended.headerEntries.find( f => f.name === "NAXIS").value)).toEqual(NAXIS);
+                                        
+                                        const fileInfoExtComputedShape = 
+                                            fileInfoMessage.fileInfoExtended.computedEntries.find( f => f.name === "Shape").value;
+                                        expect(
+                                            fileInfoExtComputedShape.replace("[", "").replace("]", "").split(",").map(Number)
+                                            ).toEqual(shape);
+
+                                        const fileInfoExtHeaderNAXIS = 
+                                            fileInfoMessage.fileInfoExtended.headerEntries.find( f => f.name === "NAXIS").value;
+                                        expect(parseInt(fileInfoExtHeaderNAXIS)).toEqual(NAXIS);
 
                                         done();
                                     } // if
@@ -156,8 +165,8 @@ describe("FILEINFO tests", () => {
                             } // if
                         }; // onmessage                        
                     } // done
-                    , connectTimeoutLocal); // test
-                } // ([ ])
+                    , connectionTimeout); // test
+                } // function([ ])
             ); // map
         }); // describe
 
@@ -170,7 +179,7 @@ describe("FILEINFO tests", () => {
 });
 
 describe("FILEINFO_EXCEPTIONS tests", () => {   
-    let Connection: Websocket;
+    let Connection: WebSocket;
 
     beforeEach( done => {
         // Establish a websocket connection in the transfermation of binary: arraybuffer 
@@ -195,7 +204,7 @@ describe("FILEINFO_EXCEPTIONS tests", () => {
             }
             done();
         };
-    }, connectTimeoutLocal);
+    }, connectionTimeout);
 
     test(`connect to CARTA "${testServerUrl}" & ...`, 
     done => {
@@ -211,12 +220,12 @@ describe("FILEINFO_EXCEPTIONS tests", () => {
                 done();
             }
         };
-    }, connectTimeoutLocal);
+    }, connectionTimeout);
 
     describe(`access directory`, () => {
         [[expectRootPath], [testSubdirectoryName]
         ].map(
-            ([dir]) => {
+            function([dir]: [string]) {
                 test(`assert the directory "${dir}" opens.`, 
                 done => {
                     // Preapare the message on a eventData
@@ -239,12 +248,12 @@ describe("FILEINFO_EXCEPTIONS tests", () => {
                             expect(CARTA.FileListResponse.decode(eventData).success).toBe(true);
             
                             done();
-                        }
-                    };
-                }, connectTimeoutLocal);
-            }
-        );
-    });
+                        } // if
+                    }; // onmessage
+                }, connectionTimeout); // test
+            } // function ([])
+        ); // map
+    }); // describe
 
     describe(`access the folder ${testSubdirectoryName} and ...`, 
     () => {
@@ -271,13 +280,13 @@ describe("FILEINFO_EXCEPTIONS tests", () => {
                     done();
                 }                
             };    
-        }, connectTimeoutLocal);       
+        }, connectionTimeout);       
         
         describe(`look for a non-existed file`, () => {
             [["no_such_file.image"],
              ["broken_header.miriad"],
             ].map(
-                ([fileName]) => {
+                function([fileName]: [string]) {
                     test(`assert the file "${fileName}" does not exist.`, 
                     done => {
                         Connection.onmessage = (eventList: MessageEvent) => {
@@ -307,7 +316,7 @@ describe("FILEINFO_EXCEPTIONS tests", () => {
                                         expect(fileInfoMessage.success).toBe(false);
                                         expect(fileInfoMessage.message).toBeDefined();
 
-                                    //    console.log(CARTA.FileInfoResponse.decode(eventData));
+                                        //  console.log(CARTA.FileInfoResponse.decode(eventData));
 
                                         done();
                                     } // if
@@ -315,8 +324,8 @@ describe("FILEINFO_EXCEPTIONS tests", () => {
                             } // if
                         }; // onmessage                        
                     } // done
-                    , connectTimeoutLocal); // test
-                } // ([ ])
+                    , connectionTimeout); // test
+                } // function([ ])
             ); // map
         }); // describe
 
@@ -325,5 +334,5 @@ describe("FILEINFO_EXCEPTIONS tests", () => {
     afterEach( done => {
         Connection.close();
         done();
-    });
+    }, connectionTimeout);
 });
