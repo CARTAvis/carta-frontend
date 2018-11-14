@@ -20,10 +20,11 @@ export function getEventName(byteArray: Uint8Array): String {
     }
     return String.fromCharCode.apply(null, byteArray);
 }
-
-export function sleep(miliseconds) {
+/// Temporary cease the process
+export function sleep(miliseconds: number) {
     var currentTime = new Date().getTime();
  
     while (currentTime + miliseconds >= new Date().getTime()) {
+        // Dry run
     }
  }

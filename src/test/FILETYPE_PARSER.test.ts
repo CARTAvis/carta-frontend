@@ -1,16 +1,16 @@
 import {CARTA} from "carta-protobuf";
 import * as Utility from "./testUtilityFunction";
 
-let WebSocket = require('ws');
+let WebSocket = require("ws");
 let testServerUrl = "ws://localhost:50505";
-let expectRootPath = "/home/acdc/CARTA/Images";
-let testSubdirectoryName = `${expectRootPath}/QA`;
+let expectRootPath = "/Users/zarda/CARTA/Images"; // Depend on OS
+// let testSubdirectoryName = "QA"; // NRAO bacjend
+let testSubdirectoryName = `${expectRootPath}/QA`; // ASIAA backend
 let connectTimeoutLocal = 300;
 
 describe("FILETYPE_PARSER tests", () => {   
-    // Establish a websocket connection in the transfermation of binary: arraybuffer 
-    let Connection = new WebSocket(testServerUrl);
-    Connection.binaryType = "arraybuffer";
+    // Establish a websocket connection in the transfer form of binary: arraybuffer 
+    let Connection: WebSocket;
 
     beforeEach( done => {
         Connection = new WebSocket(testServerUrl);
@@ -18,7 +18,7 @@ describe("FILETYPE_PARSER tests", () => {
         // While open a Websocket
         Connection.onopen = () => {
             // Checkout if Websocket server is ready
-            if (Connection.readyState == WebSocket.OPEN) {
+            if (Connection.readyState === WebSocket.OPEN) {
                 // Preapare the message on a eventData
                 const message = CARTA.RegisterViewer.create({sessionId: "", apiKey: "1234"});
                 let payload = CARTA.RegisterViewer.encode(message).finish();
@@ -41,7 +41,7 @@ describe("FILETYPE_PARSER tests", () => {
         // While receive a message in the form of arraybuffer
         Connection.onmessage = (event: MessageEvent) => {
             const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-            if(eventName == "REGISTER_VIEWER_ACK"){
+            if (eventName === "REGISTER_VIEWER_ACK") {
                 // Assertion
                 expect(event.data.byteLength).toBeGreaterThan(0);
                 const eventData = new Uint8Array(event.data, 36);
@@ -69,7 +69,7 @@ describe("FILETYPE_PARSER tests", () => {
         // While receive a message in the form of arraybuffer
         Connection.onmessage = (event: MessageEvent) => {
             let eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-            if(eventName == "FILE_LIST_RESPONSE"){
+            if (eventName === "FILE_LIST_RESPONSE") {
                 expect(event.data.byteLength).toBeGreaterThan(0);
                 let eventData = new Uint8Array(event.data, 36);
                 expect(CARTA.FileListResponse.decode(eventData).success).toBe(true);
@@ -79,7 +79,7 @@ describe("FILETYPE_PARSER tests", () => {
                 
                 done();
             }
-        }
+        };
 
     }, connectTimeoutLocal);
 
@@ -88,7 +88,7 @@ describe("FILETYPE_PARSER tests", () => {
         beforeEach( done => {
             Connection.onmessage = (event: MessageEvent) => {
                 const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                if(eventName == "REGISTER_VIEWER_ACK"){
+                if (eventName === "REGISTER_VIEWER_ACK") {
                     // Assertion
                     expect(event.data.byteLength).toBeGreaterThan(0);
                     const eventData = new Uint8Array(event.data, 36);
@@ -118,7 +118,7 @@ describe("FILETYPE_PARSER tests", () => {
                 expect(eventName).toBe("FILE_LIST_RESPONSE");
 
                 done();
-            }
+            };
         }, connectTimeoutLocal);
     
         test(`assert the "FILE_LIST_RESPONSE.success" is true.`, 
@@ -129,7 +129,7 @@ describe("FILETYPE_PARSER tests", () => {
                 expect(CARTA.FileListResponse.decode(eventData).success).toBe(true);
                 
                 done();
-            }
+            };
         }, connectTimeoutLocal);  
 
         test(`assert the "FILE_LIST_RESPONSE.parent" is "${expectRootPath}".`, 
@@ -140,7 +140,7 @@ describe("FILETYPE_PARSER tests", () => {
                 expect(CARTA.FileListResponse.decode(eventData).parent).toBe(expectRootPath);
 
                 done();
-            }
+            };
     
         }, connectTimeoutLocal);
 
@@ -149,7 +149,7 @@ describe("FILETYPE_PARSER tests", () => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
                 const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                if(eventName == "FILE_LIST_RESPONSE"){
+                if (eventName === "FILE_LIST_RESPONSE") {
                     const eventData = new Uint8Array(event.data, 36);
 
                     let parsedMessage;
@@ -158,7 +158,7 @@ describe("FILETYPE_PARSER tests", () => {
                     expect(parsedMessage.directory).toBe(testSubdirectoryName);
                 }
                 done();
-            }
+            };
     
         }, connectTimeoutLocal);
 
@@ -174,7 +174,7 @@ describe("FILETYPE_PARSER tests", () => {
                         // While receive a message from Websocket server
                         Connection.onmessage = (event: MessageEvent) => {
                             const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                            if(eventName == "FILE_LIST_RESPONSE"){
+                            if (eventName === "FILE_LIST_RESPONSE") {
                                 const eventData = new Uint8Array(event.data, 36);
     
                                 let parsedMessage;
@@ -186,10 +186,10 @@ describe("FILETYPE_PARSER tests", () => {
                                 expect(fileInfo.size.toNumber()).toBe(size);
                             }
                             done();
-                        } 
-                    }, connectTimeoutLocal)
+                        };
+                    }, connectTimeoutLocal);
                 }
-            )
+            );
         });
         
         describe(`assert the file does not exist`, () => {
@@ -203,7 +203,7 @@ describe("FILETYPE_PARSER tests", () => {
                         // While receive a message from Websocket server
                         Connection.onmessage = (event: MessageEvent) => {
                             const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                            if(eventName == "FILE_LIST_RESPONSE"){
+                            if (eventName === "FILE_LIST_RESPONSE") {
                                 const eventData = new Uint8Array(event.data, 36);
     
                                 let parsedMessage;
@@ -213,10 +213,10 @@ describe("FILETYPE_PARSER tests", () => {
                                 expect(fileInfo).toBeUndefined();
                             }
                             done();
-                        } 
-                    }, connectTimeoutLocal)
+                        } ;
+                    }, connectTimeoutLocal);
                 }
-            )
+            );
         });        
         
         describe(`assert the folder exists in "FILE_LIST_RESPONSE.subdirectory"`, () => {
@@ -229,7 +229,7 @@ describe("FILETYPE_PARSER tests", () => {
                         // While receive a message from Websocket server
                         Connection.onmessage = (event: MessageEvent) => {
                             const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                            if(eventName == "FILE_LIST_RESPONSE"){
+                            if (eventName === "FILE_LIST_RESPONSE") {
                                 const eventData = new Uint8Array(event.data, 36);
     
                                 let parsedMessage;
@@ -239,10 +239,10 @@ describe("FILETYPE_PARSER tests", () => {
                                 expect(folderInfo).toBeDefined();
                             }
                             done();
-                        } 
-                    }, connectTimeoutLocal)
+                        };
+                    }, connectTimeoutLocal);
                 }
-            )
+            );
         });
 
     });
