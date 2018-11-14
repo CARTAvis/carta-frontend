@@ -183,6 +183,81 @@ describe("CURSOR_XY_PROFILE tests", () => {
                 } // if
             }; // onmessage "FILE_LIST_RESPONSE"
         }, connectionTimeout); // test
+
+        test(`assert the file "${testFileName}" reads image.`, 
+        done => {
+            // Preapare the message
+            let message = CARTA.FileListRequest.create({directory: testSubdirectoryName});
+            let payload = CARTA.FileListRequest.encode(message).finish();
+            let eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
+    
+            eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
+            eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
+            eventDataTx.set(payload, 36);
+    
+            Connection.send(eventDataTx);
+    
+            // While receive a message
+            Connection.onmessage = (event: MessageEvent) => {
+                let eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
+                if (eventName === "FILE_LIST_RESPONSE") {
+                    let eventData = new Uint8Array(event.data, 36);
+                    expect(CARTA.FileListResponse.decode(eventData).success).toBe(true);
+
+                    // Preapare the message
+                    let messageOpenFile = CARTA.OpenFile.create({
+                        directory: testSubdirectoryName, 
+                        file: testFileName, hdu: "", fileId: 0, 
+                        renderMode: CARTA.RenderMode.RASTER
+                    });
+                    payload = CARTA.OpenFile.encode(messageOpenFile).finish();
+                    eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
+
+                    eventDataTx.set(Utility.stringToUint8Array("OPEN_FILE", 32));
+                    eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
+                    eventDataTx.set(payload, 36);
+
+                    Connection.send(eventDataTx);
+
+                    // While receive a message
+                    Connection.onmessage = (eventOpen: MessageEvent) => {
+                        eventName = Utility.getEventName(new Uint8Array(eventOpen.data, 0, 32));
+                        if (eventName === "OPEN_FILE_ACK") {
+                            eventData = new Uint8Array(eventOpen.data, 36);
+                            let openFileMessage = CARTA.OpenFileAck.decode(eventData);
+                            expect(openFileMessage.success).toBe(true);
+
+                            // Preapare the message
+                            let messageSetImageView = CARTA.SetImageView.create({
+                                fileId: 0, imageBounds: {xMin: 0, xMax: openFileMessage.fileInfoExtended.width, yMin: 0, yMax: openFileMessage.fileInfoExtended.height}, 
+                                mip: 3, compressionType: CARTA.CompressionType.ZFP, 
+                                compressionQuality: 11, numSubsets: 4
+                            });
+                            payload = CARTA.SetImageView.encode(messageSetImageView).finish();
+                            eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
+
+                            eventDataTx.set(Utility.stringToUint8Array("SET_IMAGE_VIEW", 32));
+                            eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
+                            eventDataTx.set(payload, 36);
+
+                            Connection.send(eventDataTx);
+
+                            // While receive a message
+                            Connection.onmessage = (eventRasterImageData: MessageEvent) => {
+                                eventName = Utility.getEventName(new Uint8Array(eventRasterImageData.data, 0, 32));
+                                if (eventName === "RASTER_IMAGE_DATA") {
+                                    eventData = new Uint8Array(eventRasterImageData.data, 36);
+                                    let rasterImageDataMessage = CARTA.RasterImageData.decode(eventData);
+                                    expect(rasterImageDataMessage.imageData.length).toBeGreaterThan(0);
+
+                                    done();
+                                } // if
+                            }; // onmessage "RASTER_IMAGE_DATA"
+                        } // if
+                    }; // onmessage "OPEN_FILE_ACK"
+                } // if
+            }; // onmessage "FILE_LIST_RESPONSE"
+        }, connectionTimeout); // test
     }); // describe
 
     describe(`open the file "${testFileName} and ...`, 
