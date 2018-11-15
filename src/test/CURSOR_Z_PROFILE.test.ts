@@ -230,7 +230,7 @@ describe("CURSOR_Z_PROFILE tests", () => {
                             // Preapare the message
                             let messageSetImageView = CARTA.SetImageView.create({
                                 fileId: 0, imageBounds: {xMin: 0, xMax: openFileMessage.fileInfoExtended.width, yMin: 0, yMax: openFileMessage.fileInfoExtended.height}, 
-                                mip: 3, compressionType: CARTA.CompressionType.ZFP, 
+                                mip: 6, compressionType: CARTA.CompressionType.ZFP, 
                                 compressionQuality: 11, numSubsets: 4
                             });
                             payload = CARTA.SetImageView.encode(messageSetImageView).finish();
@@ -286,7 +286,32 @@ describe("CURSOR_Z_PROFILE tests", () => {
 
                     Connection.send(eventDataTx);
 
-                    done();
+                    // While receive a message
+                    Connection.onmessage = (eventOpen: MessageEvent) => {
+                        eventName = Utility.getEventName(new Uint8Array(eventOpen.data, 0, 32));
+                        if (eventName === "OPEN_FILE_ACK") {
+                            eventData = new Uint8Array(eventOpen.data, 36);
+                            let openFileMessage = CARTA.OpenFileAck.decode(eventData);
+                            expect(openFileMessage.success).toBe(true);
+
+                            // Preapare the message
+                            let messageSetImageView = CARTA.SetImageView.create({
+                                fileId: 0, imageBounds: {xMin: 0, xMax: openFileMessage.fileInfoExtended.width, yMin: 0, yMax: openFileMessage.fileInfoExtended.height}, 
+                                mip: 6, compressionType: CARTA.CompressionType.ZFP, 
+                                compressionQuality: 11, numSubsets: 4
+                            });
+                            payload = CARTA.SetImageView.encode(messageSetImageView).finish();
+                            eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
+
+                            eventDataTx.set(Utility.stringToUint8Array("SET_IMAGE_VIEW", 32));
+                            eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
+                            eventDataTx.set(payload, 36);
+
+                            Connection.send(eventDataTx);
+
+                            done();
+                        } // if
+                    }; // onmessage "OPEN_FILE_ACK"
                 }                
             };    
         }, connectionTimeout);       
@@ -299,12 +324,13 @@ describe("CURSOR_Z_PROFILE tests", () => {
                     test(`assert the fileID "${fileID}" returns: 
                     fileId = ${fileID}, regionId = ${regionID}, stokes = ${stokes}, progress = ${progress},  as acquireing {${point.x}, ${point.y}}.`, 
                     done => {
-                        Connection.onmessage = (eventOpen: MessageEvent) => {
-                            let eventName = Utility.getEventName(new Uint8Array(eventOpen.data, 0, 32));
-                            if (eventName === "OPEN_FILE_ACK") {
-                                let eventData = new Uint8Array(eventOpen.data, 36);
-                                expect(CARTA.OpenFileAck.decode(eventData).success).toBe(true);
-    
+                        Connection.onmessage = (eventRasterImageData: MessageEvent) => {
+                            let eventName = Utility.getEventName(new Uint8Array(eventRasterImageData.data, 0, 32));
+                            if (eventName === "RASTER_IMAGE_DATA") {
+                                let eventData = new Uint8Array(eventRasterImageData.data, 36);
+                                let rasterImageDataMessage = CARTA.RasterImageData.decode(eventData);
+                                expect(rasterImageDataMessage.imageData.length).toBeGreaterThan(0);
+
                                 // Preapare the message
                                 const message = CARTA.SetCursor.create({fileId: fileID, point: point});
                                 let payload = CARTA.SetCursor.encode(message).finish();
