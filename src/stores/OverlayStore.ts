@@ -436,7 +436,7 @@ export class OverlayNumberSettings {
         this.formatY = "d";
         this.customPrecision = false;
         this.precision = 3;
-        this.cursorPrecision = 4;
+        this.cursorPrecision = 10;
         this.validWcs = false;
     }
     

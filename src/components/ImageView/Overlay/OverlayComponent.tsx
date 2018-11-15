@@ -78,6 +78,8 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             // y coordinate is flipped in image space
             y: ((cursorPosCanvasSpace.y - LT.y) / (RB.y - LT.y)) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
         };
+        
+        console.log("cursorPosImageSpace", cursorPosImageSpace);
 
         const currentView = this.props.frame.currentFrameView;
 
@@ -85,6 +87,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             x: Math.round((cursorPosImageSpace.x - currentView.xMin) / currentView.mip),
             y: Math.round((cursorPosImageSpace.y - currentView.yMin) / currentView.mip)
         };
+        
+        console.log("currentView.mip", currentView.mip);
+        console.log("cursorPosLocalImage", cursorPosLocalImage);
 
         const textureWidth = Math.floor((currentView.xMax - currentView.xMin) / currentView.mip);
         const textureHeight = Math.floor((currentView.yMax - currentView.yMin) / currentView.mip);
@@ -97,16 +102,70 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         let cursorPosWCS, cursorPosFormatted;
         if (this.props.frame.validWcs) {
+            // TODO TODO TODO handle edges correctly
+            const offsetBlock = [[0, 0], [-1, -1], [1, 1]];
+            
+            // TODO: what units do these offsets actually represent??
+            
+//             let offsetBlock = [[0, 0]];
+//             
+//             if (cursorPosLocalImage.x >= 1 && cursorPosLocalImage.y >= 1) {
+//                 offsetBlock.push([-1, -1]);
+//             }
+//             
+//             if (cursorPosLocalImage.x < (textureWidth - 1) && cursorPosLocalImage.y < (textureHeight - 1)) {
+//                 offsetBlock.push([1, 1]);
+//             }
+            
+//             console.log("using neighbourhood", offsetBlock);
+            
             // Shift image space coordinates to 1-indexed when passing to AST
-            cursorPosWCS = AST.pixToWCS(this.props.frame.wcsInfo, cursorPosImageSpace.x + 1, cursorPosImageSpace.y + 1);
-            const normVals = AST.normalizeCoordinates(this.props.frame.wcsInfo, cursorPosWCS.x, cursorPosWCS.y);
-
+            const cursorNeighbourhood = offsetBlock.map((offset) => AST.pixToWCS(this.props.frame.wcsInfo, cursorPosImageSpace.x + 1 + offset[0], cursorPosImageSpace.y + 1 + offset[1]));
+            
+            cursorPosWCS = cursorNeighbourhood[0];
+            
+            const normalizedNeighbourhood = cursorNeighbourhood.map((pos) =>  AST.normalizeCoordinates(this.props.frame.wcsInfo, pos.x, pos.y));
+            
             let astString = new ASTSettingsString();
             astString.add("Format(1)", this.props.overlaySettings.numbers.cursorFormatStringX);
             astString.add("Format(2)", this.props.overlaySettings.numbers.cursorFormatStringY);
             astString.add("System", this.props.overlaySettings.global.implicitSystem);
-
-            cursorPosFormatted = AST.getFormattedCoordinates(this.props.frame.wcsInfo, normVals.x, normVals.y, astString.toString());
+            
+            const formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.props.frame.wcsInfo, pos.x, pos.y, astString.toString()));
+            
+            const trim = (coords: Array<string>) => {
+                const pos = coords[0];
+                
+                if (coords.length === 1) {
+                    // TODO actually trim all decimal points
+                    return pos;
+                }
+                                
+                for (let i = 0; i <= pos.length; i++) {
+                    const prefix = pos.slice(0, i);
+                    let unique = true;
+                    
+                    for (let j = 1; j < coords.length; j++) {
+                        if (prefix === coords[j].slice(0, i)) {
+                            unique = false;
+                        }
+                    }
+                    
+                    if (unique) {
+                        return prefix;
+                    }
+                }
+                
+                return pos;
+            };
+            
+            const trimmedX = trim(formattedNeighbourhood.map((pos) => pos.x));
+            const trimmedY = trim(formattedNeighbourhood.map((pos) => pos.y));
+            
+            console.log("BEFORE", formattedNeighbourhood);
+            console.log("AFTER", trimmedX, trimmedY);
+            
+            cursorPosFormatted = {x: trimmedX, y: trimmedY};
         }
         return {
             posCanvasSpace: cursorPosCanvasSpace,
