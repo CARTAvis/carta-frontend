@@ -85,7 +85,7 @@ describe("CURSOR_XY_PROFILE tests", () => {
         );
     });
 
-    describe(`open the file "${testFileName}"`, () => {
+    describe(`prepare the file "${testFileName}"`, () => {
         test(`assert the file "${testFileName}" loads info.`, 
         done => {
             // Preapare the message
