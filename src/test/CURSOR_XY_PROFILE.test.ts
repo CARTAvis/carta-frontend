@@ -304,7 +304,7 @@ describe("CURSOR_XY_PROFILE tests", () => {
             ].map(
                 function([fileID, point, assertPoint, profileLen, value]: 
                         [number, {x: number, y: number}, {x: number, y: number}, {x: number, y: number}, number]) {
-                    test(`assert the fileID "${fileID}" returns: Value=${value}, Profile length={${profileLen.x}, ${profileLen.y}}, Point={${assertPoint.x}, ${assertPoint.y}} as acquireing {${point.x}, ${point.y}}.`, 
+                    test(`assert the fileID "${fileID}" returns: Value=${value}, Profile length={${profileLen.x}, ${profileLen.y}}, Point={${assertPoint.x}, ${assertPoint.y}} as pointing {${point.x}, ${point.y}}.`, 
                     done => {
                         Connection.onmessage = (eventOpen: MessageEvent) => {
                             let eventName = Utility.getEventName(new Uint8Array(eventOpen.data, 0, 32));
@@ -362,8 +362,8 @@ describe("CURSOR_XY_PROFILE tests", () => {
                 function([fileID, point, oddPointX, oddPointY]: 
                         [number, {x: number, y: number}, {idx: number, value: number, others: number}, {idx: number, value: number, others: number}]) {
                     test(`assert the profile in fileID "${fileID}" has: 
-                    the ${oddPointX.idx}th value = ${oddPointX.value} with other values = ${oddPointX.others} on the profile_x & 
-                    the ${oddPointY.idx}th value = ${oddPointY.value} with other values = ${oddPointY.others} on the profile_y as acquireing {${point.x}, ${point.y}}.`, 
+                    the ${oddPointX.idx + 1}th value = ${oddPointX.value} with other values = ${oddPointX.others} on the profile_x & 
+                    the ${oddPointY.idx + 1}th value = ${oddPointY.value} with other values = ${oddPointY.others} on the profile_y as pointing {${point.x}, ${point.y}}.`, 
                     done => {
                         Connection.onmessage = (eventOpen: MessageEvent) => {
                             let eventName = Utility.getEventName(new Uint8Array(eventOpen.data, 0, 32));
@@ -390,29 +390,27 @@ describe("CURSOR_XY_PROFILE tests", () => {
                                         let spatialProfileDataMessage = CARTA.SpatialProfileData.decode(eventData);
                                         // console.log(spatialProfileDataMessage);
 
-                                        // Assert about profile x
-                                        let spatialProfileDataMessageProfileX = 
-                                                spatialProfileDataMessage.profiles.find(f => f.coordinate === "x").values;
-                                        for (let i = 0; i < spatialProfileDataMessageProfileX.length; i++) {
-                                            const testValue = spatialProfileDataMessageProfileX[i];
-                                            if (i === oddPointX.idx) {
-                                                expect(testValue).toEqual(oddPointX.value);
-                                            } else {
-                                                expect(testValue).toEqual(oddPointX.others);
+                                        // Assert profile x
+                                        spatialProfileDataMessage.profiles.find(f => f.coordinate === "x").values.forEach( 
+                                            (value, index) => {
+                                                if (index === oddPointX.idx) {
+                                                    expect(value).toEqual(oddPointX.value);
+                                                } else {
+                                                    expect(value).toEqual(oddPointX.others);
+                                                }
                                             }
-                                        }
+                                        );
 
-                                        // Assert about profile y
-                                        let spatialProfileDataMessageProfileY = 
-                                                spatialProfileDataMessage.profiles.find(f => f.coordinate === "y").values;
-                                        for (let i = 0; i < spatialProfileDataMessageProfileY.length; i++) {
-                                            const testValue = spatialProfileDataMessageProfileY[i];
-                                            if (i === oddPointY.idx) {
-                                                expect(testValue).toEqual(oddPointY.value);
-                                            } else {
-                                                expect(testValue).toEqual(oddPointY.others);
+                                        // Assert profile y
+                                        spatialProfileDataMessage.profiles.find(f => f.coordinate === "y").values.forEach( 
+                                            (value, index) => {
+                                                if (index === oddPointY.idx) {
+                                                    expect(value).toEqual(oddPointY.value);
+                                                } else {
+                                                    expect(value).toEqual(oddPointY.others);
+                                                }
                                             }
-                                        }
+                                        );
 
                                         done();
                                     } // if
