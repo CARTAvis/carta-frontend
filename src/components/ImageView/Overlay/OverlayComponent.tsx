@@ -79,8 +79,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             y: ((cursorPosCanvasSpace.y - LT.y) / (RB.y - LT.y)) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
         };
         
-        console.log("cursorPosImageSpace", cursorPosImageSpace);
-
         const currentView = this.props.frame.currentFrameView;
 
         const cursorPosLocalImage = {
@@ -88,8 +86,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             y: Math.round((cursorPosImageSpace.y - currentView.yMin) / currentView.mip)
         };
         
-        console.log("currentView.mip", currentView.mip);
-        console.log("cursorPosLocalImage", cursorPosLocalImage);
+        const roundedPosImageSpace = {
+            x: cursorPosLocalImage.x * currentView.mip + currentView.xMin,
+            y: cursorPosLocalImage.y * currentView.mip + currentView.yMin
+        };
 
         const textureWidth = Math.floor((currentView.xMax - currentView.xMin) / currentView.mip);
         const textureHeight = Math.floor((currentView.yMax - currentView.yMin) / currentView.mip);
@@ -102,25 +102,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         let cursorPosWCS, cursorPosFormatted;
         if (this.props.frame.validWcs) {
-            // TODO TODO TODO handle edges correctly
+            // TODO: if necessary, we can use more neighbours
             const offsetBlock = [[0, 0], [-1, -1], [1, 1]];
             
-            // TODO: what units do these offsets actually represent??
-            
-//             let offsetBlock = [[0, 0]];
-//             
-//             if (cursorPosLocalImage.x >= 1 && cursorPosLocalImage.y >= 1) {
-//                 offsetBlock.push([-1, -1]);
-//             }
-//             
-//             if (cursorPosLocalImage.x < (textureWidth - 1) && cursorPosLocalImage.y < (textureHeight - 1)) {
-//                 offsetBlock.push([1, 1]);
-//             }
-            
-//             console.log("using neighbourhood", offsetBlock);
-            
             // Shift image space coordinates to 1-indexed when passing to AST
-            const cursorNeighbourhood = offsetBlock.map((offset) => AST.pixToWCS(this.props.frame.wcsInfo, cursorPosImageSpace.x + 1 + offset[0], cursorPosImageSpace.y + 1 + offset[1]));
+            const cursorNeighbourhood = offsetBlock.map((offset) => AST.pixToWCS(this.props.frame.wcsInfo, roundedPosImageSpace.x + 1 + offset[0], roundedPosImageSpace.y + 1 + offset[1]));
             
             cursorPosWCS = cursorNeighbourhood[0];
             
@@ -133,13 +119,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             
             const formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.props.frame.wcsInfo, pos.x, pos.y, astString.toString()));
             
+            // TODO: should we not be rounding rather than truncating?
+            
             const trim = (coords: Array<string>) => {
                 const pos = coords[0];
-                
-                if (coords.length === 1) {
-                    // TODO actually trim all decimal points
-                    return pos;
-                }
                                 
                 for (let i = 0; i <= pos.length; i++) {
                     const prefix = pos.slice(0, i);
@@ -162,14 +145,11 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             const trimmedX = trim(formattedNeighbourhood.map((pos) => pos.x));
             const trimmedY = trim(formattedNeighbourhood.map((pos) => pos.y));
             
-            console.log("BEFORE", formattedNeighbourhood);
-            console.log("AFTER", trimmedX, trimmedY);
-            
             cursorPosFormatted = {x: trimmedX, y: trimmedY};
         }
         return {
             posCanvasSpace: cursorPosCanvasSpace,
-            posImageSpace: cursorPosImageSpace,
+            posImageSpace: roundedPosImageSpace,
             posWCS: cursorPosWCS,
             infoWCS: cursorPosFormatted,
             value: value

@@ -34,7 +34,7 @@ export class CursorOverlayComponent extends React.PureComponent<CursorOverlayPro
             infoStrings.push(`Canvas: (${cursorInfo.posCanvasSpace.x.toFixed(0)}, ${cursorInfo.posCanvasSpace.y.toFixed(0)})`);
         }
         if (this.props.showImage) {
-            infoStrings.push(`Image: (${cursorInfo.posImageSpace.x.toFixed(2)}, ${cursorInfo.posImageSpace.y.toFixed(2)})`);
+            infoStrings.push(`Image: (${cursorInfo.posImageSpace.x.toFixed(0)}, ${cursorInfo.posImageSpace.y.toFixed(0)})`);
         }
         if (this.props.showValue && this.props.cursorInfo.value !== undefined) {
             let valueString = `Value: ${this.expo(this.props.cursorInfo.value, 5, this.props.unit, true, true)}`;
