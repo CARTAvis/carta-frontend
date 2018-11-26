@@ -542,10 +542,6 @@ export class OverlayNumberSettings {
     @action setValidWcs(validWcs: boolean) {
         this.validWcs = validWcs;
     }
-
-    @action setValidWcs(validWcs: boolean) {
-        this.validWcs = validWcs;
-    }
 }
 
 export class OverlayLabelSettings {
