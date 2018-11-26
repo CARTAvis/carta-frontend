@@ -102,8 +102,9 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         let cursorPosWCS, cursorPosFormatted;
         if (this.props.frame.validWcs) {
-            // TODO: if necessary, we can use more neighbours
-            const offsetBlock = [[0, 0], [-1, -1], [1, 1]];
+            // We need to compare X and Y coordinates in both directions
+            // to avoid a confusing drop in precision at rounding threshold
+            const offsetBlock = [[0, 0], [1, 1], [-1, -1]];
             
             // Shift image space coordinates to 1-indexed when passing to AST
             const cursorNeighbourhood = offsetBlock.map((offset) => AST.pixToWCS(this.props.frame.wcsInfo, roundedPosImageSpace.x + 1 + offset[0], roundedPosImageSpace.y + 1 + offset[1]));
@@ -112,41 +113,33 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             
             const normalizedNeighbourhood = cursorNeighbourhood.map((pos) =>  AST.normalizeCoordinates(this.props.frame.wcsInfo, pos.x, pos.y));
             
-            let astString = new ASTSettingsString();
-            astString.add("Format(1)", this.props.overlaySettings.numbers.cursorFormatStringX);
-            astString.add("Format(2)", this.props.overlaySettings.numbers.cursorFormatStringY);
-            astString.add("System", this.props.overlaySettings.global.implicitSystem);
+            let precisionX = 0;
+            let precisionY = 0;
             
-            const formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.props.frame.wcsInfo, pos.x, pos.y, astString.toString()));
-            
-            // TODO: should we not be rounding rather than truncating?
-            
-            const trim = (coords: Array<string>) => {
-                const pos = coords[0];
-                                
-                for (let i = 0; i <= pos.length; i++) {
-                    const prefix = pos.slice(0, i);
-                    let unique = true;
-                    
-                    for (let j = 1; j < coords.length; j++) {
-                        if (prefix === coords[j].slice(0, i)) {
-                            unique = false;
-                        }
-                    }
-                    
-                    if (unique) {
-                        return prefix;
-                    }
+            while (true) {
+                let astString = new ASTSettingsString();
+                astString.add("Format(1)", this.props.overlaySettings.numbers.cursorFormatStringX(precisionX));
+                astString.add("Format(2)", this.props.overlaySettings.numbers.cursorFormatStringY(precisionY));
+                astString.add("System", this.props.overlaySettings.global.implicitSystem);
+                
+                let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.props.frame.wcsInfo, pos.x, pos.y, astString.toString()));
+                let [p, n1, n2] = formattedNeighbourhood;
+                
+                if (p.x !== n1.x && p.x !== n2.x && p.y !== n1.y && p.y !== n2.y) {
+                    cursorPosFormatted = {x: p.x, y: p.y};
+                    break;
                 }
                 
-                return pos;
-            };
-            
-            const trimmedX = trim(formattedNeighbourhood.map((pos) => pos.x));
-            const trimmedY = trim(formattedNeighbourhood.map((pos) => pos.y));
-            
-            cursorPosFormatted = {x: trimmedX, y: trimmedY};
+                if (p.x === n1.x || p.x === n2.x) {
+                    precisionX += 1;
+                }
+                
+                if (p.y === n1.y || p.y === n2.y) {
+                    precisionY += 1;
+                }
+            }
         }
+        
         return {
             posCanvasSpace: cursorPosCanvasSpace,
             posImageSpace: roundedPosImageSpace,

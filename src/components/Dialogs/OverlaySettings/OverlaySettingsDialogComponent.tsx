@@ -541,20 +541,6 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         />
                     </FormGroup>
                 </Collapse>
-                <FormGroup
-                    inline={true}
-                    label="Cursor precision"
-                    disabled={!numbers.validWcs}
-                    helperText={disabledIfNoWcs}
-                >
-                    <NumericInput
-                        placeholder="Precision"
-                        min={0}
-                        value={numbers.cursorPrecision}
-                        disabled={!numbers.validWcs}
-                        onValueChange={(value: number) => numbers.setCursorPrecision(value)}
-                    />
-                </FormGroup>
             </div>
         );
 
