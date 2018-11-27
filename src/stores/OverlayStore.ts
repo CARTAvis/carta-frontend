@@ -414,7 +414,6 @@ export class OverlayNumberSettings {
     @observable formatY: string;
     @observable customPrecision: boolean;
     @observable precision: number;
-    @observable cursorPrecision: number;
     
     // Unlike most default values, we calculate and set these explicitly, instead of
     // leaving them unset and letting AST pick a default. We have to save these so that
@@ -436,7 +435,6 @@ export class OverlayNumberSettings {
         this.formatY = "d";
         this.customPrecision = false;
         this.precision = 3;
-        this.cursorPrecision = 4;
         this.validWcs = false;
     }
     
@@ -460,22 +458,22 @@ export class OverlayNumberSettings {
         return `${format}.${precision}`;
     }
     
-    @computed get cursorFormatStringX() {
+    cursorFormatStringX(precision: number) {
         if (!this.validWcs) {
             return undefined;
         }
         
         let format = (this.customFormat ? this.formatX : this.defaultFormatX);
-        return `${format}.${this.cursorPrecision}`;
+        return `${format}.${precision}`;
     }
     
-    @computed get cursorFormatStringY() {
+    cursorFormatStringY(precision: number) {
         if (!this.validWcs) {
             return undefined;
         }
         
         let format = (this.customFormat ? this.formatY : this.defaultFormatY);
-        return `${format}.${this.cursorPrecision}`;
+        return `${format}.${precision}`;
     }
 
     @computed get styleString() {
@@ -539,10 +537,6 @@ export class OverlayNumberSettings {
 
     @action setPrecision(precision: number) {
         this.precision = precision;
-    }
-
-    @action setCursorPrecision(precision: number) {
-        this.cursorPrecision = precision;
     }
 
     @action setValidWcs(validWcs: boolean) {

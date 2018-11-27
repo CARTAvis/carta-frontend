@@ -78,12 +78,17 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
             // y coordinate is flipped in image space
             y: ((cursorPosCanvasSpace.y - LT.y) / (RB.y - LT.y)) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
         };
-
+        
         const currentView = this.props.frame.currentFrameView;
 
         const cursorPosLocalImage = {
             x: Math.round((cursorPosImageSpace.x - currentView.xMin) / currentView.mip),
             y: Math.round((cursorPosImageSpace.y - currentView.yMin) / currentView.mip)
+        };
+        
+        const roundedPosImageSpace = {
+            x: cursorPosLocalImage.x * currentView.mip + currentView.xMin,
+            y: cursorPosLocalImage.y * currentView.mip + currentView.yMin
         };
 
         const textureWidth = Math.floor((currentView.xMax - currentView.xMin) / currentView.mip);
@@ -97,20 +102,47 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
         let cursorPosWCS, cursorPosFormatted;
         if (this.props.frame.validWcs) {
+            // We need to compare X and Y coordinates in both directions
+            // to avoid a confusing drop in precision at rounding threshold
+            const offsetBlock = [[0, 0], [1, 1], [-1, -1]];
+            
             // Shift image space coordinates to 1-indexed when passing to AST
-            cursorPosWCS = AST.pixToWCS(this.props.frame.wcsInfo, cursorPosImageSpace.x + 1, cursorPosImageSpace.y + 1);
-            const normVals = AST.normalizeCoordinates(this.props.frame.wcsInfo, cursorPosWCS.x, cursorPosWCS.y);
-
-            let astString = new ASTSettingsString();
-            astString.add("Format(1)", this.props.overlaySettings.numbers.cursorFormatStringX);
-            astString.add("Format(2)", this.props.overlaySettings.numbers.cursorFormatStringY);
-            astString.add("System", this.props.overlaySettings.global.implicitSystem);
-
-            cursorPosFormatted = AST.getFormattedCoordinates(this.props.frame.wcsInfo, normVals.x, normVals.y, astString.toString());
+            const cursorNeighbourhood = offsetBlock.map((offset) => AST.pixToWCS(this.props.frame.wcsInfo, roundedPosImageSpace.x + 1 + offset[0], roundedPosImageSpace.y + 1 + offset[1]));
+            
+            cursorPosWCS = cursorNeighbourhood[0];
+            
+            const normalizedNeighbourhood = cursorNeighbourhood.map((pos) =>  AST.normalizeCoordinates(this.props.frame.wcsInfo, pos.x, pos.y));
+            
+            let precisionX = 0;
+            let precisionY = 0;
+            
+            while (true) {
+                let astString = new ASTSettingsString();
+                astString.add("Format(1)", this.props.overlaySettings.numbers.cursorFormatStringX(precisionX));
+                astString.add("Format(2)", this.props.overlaySettings.numbers.cursorFormatStringY(precisionY));
+                astString.add("System", this.props.overlaySettings.global.implicitSystem);
+                
+                let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.props.frame.wcsInfo, pos.x, pos.y, astString.toString()));
+                let [p, n1, n2] = formattedNeighbourhood;
+                
+                if (p.x !== n1.x && p.x !== n2.x && p.y !== n1.y && p.y !== n2.y) {
+                    cursorPosFormatted = {x: p.x, y: p.y};
+                    break;
+                }
+                
+                if (p.x === n1.x || p.x === n2.x) {
+                    precisionX += 1;
+                }
+                
+                if (p.y === n1.y || p.y === n2.y) {
+                    precisionY += 1;
+                }
+            }
         }
+        
         return {
             posCanvasSpace: cursorPosCanvasSpace,
-            posImageSpace: cursorPosImageSpace,
+            posImageSpace: roundedPosImageSpace,
             posWCS: cursorPosWCS,
             infoWCS: cursorPosFormatted,
             value: value
