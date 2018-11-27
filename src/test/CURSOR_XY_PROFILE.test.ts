@@ -304,7 +304,7 @@ describe("CURSOR_XY_PROFILE tests", () => {
             ].map(
                 function([fileID, point, assertPoint, profileLen, value]: 
                         [number, {x: number, y: number}, {x: number, y: number}, {x: number, y: number}, number]) {
-                    test(`assert the fileID "${fileID}" returns: Value=${value}, Profile length={${profileLen.x}, ${profileLen.y}}, Point={${assertPoint.x}, ${assertPoint.y}} as pointing {${point.x}, ${point.y}}.`, 
+                    test(`assert the fileID "${fileID}" returns: Value=${value}, Profile length={${profileLen.x}, ${profileLen.y}}, Point={${assertPoint.x}, ${assertPoint.y}} as {${point.x}, ${point.y}}.`, 
                     done => {
                         Connection.onmessage = (eventOpen: MessageEvent) => {
                             let eventName = Utility.getEventName(new Uint8Array(eventOpen.data, 0, 32));
@@ -363,7 +363,7 @@ describe("CURSOR_XY_PROFILE tests", () => {
                         [number, {x: number, y: number}, {idx: number, value: number, others: number}, {idx: number, value: number, others: number}]) {
                     test(`assert the profile in fileID "${fileID}" has: 
                     the ${oddPointX.idx + 1}th value = ${oddPointX.value} with other values = ${oddPointX.others} on the profile_x & 
-                    the ${oddPointY.idx + 1}th value = ${oddPointY.value} with other values = ${oddPointY.others} on the profile_y as pointing {${point.x}, ${point.y}}.`, 
+                    the ${oddPointY.idx + 1}th value = ${oddPointY.value} with other values = ${oddPointY.others} on the profile_y as {${point.x}, ${point.y}}.`, 
                     done => {
                         Connection.onmessage = (eventOpen: MessageEvent) => {
                             let eventName = Utility.getEventName(new Uint8Array(eventOpen.data, 0, 32));
