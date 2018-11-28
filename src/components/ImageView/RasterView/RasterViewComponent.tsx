@@ -347,6 +347,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             <div className={className}>
                 <canvas
                     className="raster-canvas"
+                    id="raster-canvas"
                     ref={(ref) => this.canvas = ref}
                     style={{
                         top: padding.top,

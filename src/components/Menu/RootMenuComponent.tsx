@@ -5,6 +5,7 @@ import {AppStore} from "../../stores/AppStore";
 import {observer} from "mobx-react";
 import {ConnectionStatus} from "../../services/BackendService";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
+import {exportImage} from "../ImageView/ImageViewComponent";
 
 @observer
 export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
@@ -32,7 +33,13 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 <Menu.Item text="Load region" disabled={true}/>
                 <Menu.Divider/>
                 <Menu.Item text="Export annotations" icon={"floppy-disk"} disabled={true}/>
-                <Menu.Item text="Export image" icon={"media"} label={`${modString}E`} disabled={true}/>
+                <Menu.Item
+                    text="Export image"
+                    icon={"media"}
+                    label={`${modString}E`}
+                    disabled={appStore.backendService.connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame}
+                    onClick={() => exportImage()}
+                />
                 <Menu.Divider/>
                 <Menu.Item text="Preferences" icon={"cog"} label={`${modString}P`} disabled={true}/>
                 <Menu.Item text="Connect to URL" onClick={appStore.showURLConnect}/>

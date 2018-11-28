@@ -9,6 +9,29 @@ import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import "./ImageViewComponent.css";
 
+export const exportImage = () => {
+    const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
+    const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
+    
+    const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
+    composedCanvas.width = rasterCanvas.width;
+    composedCanvas.height = rasterCanvas.height;
+    
+    const ctx = composedCanvas.getContext("2d");
+    ctx.drawImage(rasterCanvas, 0, 0);
+    ctx.drawImage(overlayCanvas, 0, 0);
+    
+    const dataURL = composedCanvas.toDataURL().replace("image/png", "image/octet-stream");
+    
+    const now = new Date();
+    const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
+    
+    const a = document.createElement("a") as HTMLAnchorElement;
+    a.href = dataURL;
+    a.download = `CARTA-exported-image-${timestamp}.png`;
+    a.dispatchEvent(new MouseEvent("click"));
+};
+
 @observer
 export class ImageViewComponent extends React.Component<WidgetProps> {
     private containerDiv: HTMLDivElement;
