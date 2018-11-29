@@ -7,6 +7,7 @@ import {OverlayComponent} from "./Overlay/OverlayComponent";
 import {CursorInfo} from "../../models/CursorInfo";
 import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
+import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import "./ImageViewComponent.css";
 
 export const exportImage = () => {
@@ -116,6 +117,12 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     showImage={true}
                     showWCS={true}
                     showValue={true}
+                />
+                }
+                {appStore.astReady && appStore.activeFrame &&
+                <ToolbarComponent
+                    frame={appStore.activeFrame}
+                    overlaySettings={appStore.overlayStore}
                 />
                 }
                 {!appStore.astReady &&
