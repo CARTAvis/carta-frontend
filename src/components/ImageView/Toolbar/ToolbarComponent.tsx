@@ -1,7 +1,8 @@
 import * as React from "react";
+import {CSSProperties} from "react";
 import {observer} from "mobx-react";
 import "./ToolbarComponent.css";
-import {Button, ButtonGroup} from "@blueprintjs/core";
+import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
 import {OverlayStore} from "../../../stores/OverlayStore";
 import {FrameStore} from "../../../stores/FrameStore";
 import {exportImage} from "../ImageViewComponent";
@@ -16,17 +17,31 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     render() {
         const frame = this.props.frame;
-        const grid = this.props.overlaySettings.grid;
-        const numbers = this.props.overlaySettings.numbers;
+        const overlay = this.props.overlaySettings;
+        const grid = overlay.grid;
         
+        let styleProps: CSSProperties = {
+            bottom: overlay.padding.bottom, 
+            right: overlay.padding.right
+        };
+
         return (
-            <ButtonGroup minimal={true} className="image-toolbar">
-                <Button icon="zoom-to-fit" onClick={() => frame.fitZoom()} />
-                <Button icon="arrows-horizontal" onClick={() => frame.fitZoomX()} />
-                <Button icon="arrows-vertical" onClick={() => frame.fitZoomY()} />
-                <Button icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)} />
-                <Button icon="numerical" active={numbers.visible} onClick={() => numbers.setVisible(!numbers.visible)} />
-                <Button icon="floppy-disk" onClick={() => exportImage()} />
+            <ButtonGroup minimal={true} className="image-toolbar" style={styleProps}>
+                <Tooltip content="Fit width">
+                    <Button icon="arrows-horizontal" onClick={() => frame.fitZoomX()} />
+                </Tooltip>
+                <Tooltip content="Fit height">
+                    <Button icon="arrows-vertical" onClick={() => frame.fitZoomY()} />
+                </Tooltip>
+                <Tooltip content="Toggle grid">
+                    <Button icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)} />
+                </Tooltip>
+                <Tooltip content="Toggle labels">
+                    <Button icon="numerical" active={!overlay.labelsHidden} onClick={() => overlay.toggleLabels()} />
+                </Tooltip>
+                <Tooltip content="Export image">
+                    <Button icon="floppy-disk" onClick={() => exportImage()} />
+                </Tooltip>
             </ButtonGroup>
         );
     }

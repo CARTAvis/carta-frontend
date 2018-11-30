@@ -606,6 +606,12 @@ export class OverlayStore {
     @observable labels: OverlayLabelSettings;
     @observable ticks: OverlayTickSettings;
     
+    // Toggle currently set labels on and off
+    @observable labelsHidden: boolean;
+    @observable savedLabelsVisible: boolean;
+    @observable savedNumbersVisible: boolean;
+    @observable savedTitleVisible: boolean;
+    
     // Dialog
     
     @observable overlaySettingsDialogVisible = false;
@@ -633,6 +639,11 @@ export class OverlayStore {
         this.numbers = new OverlayNumberSettings();
         this.labels = new OverlayLabelSettings();
         this.ticks = new OverlayTickSettings();
+        
+        this.labelsHidden = false;
+        this.savedLabelsVisible = this.labels.visible;
+        this.savedNumbersVisible = this.numbers.visible;
+        this.savedTitleVisible = this.title.visible;
         
         // if the system is manually selected, set new default formats
         autorun(() => {
@@ -671,6 +682,26 @@ export class OverlayStore {
         
         this.global.setDefaultSystem(AST.getString(frame.wcsInfo, "System") as SystemType);
         this.setFormatsFromSystem();
+    }
+    
+    @action toggleLabels() {
+        if (this.labelsHidden) {
+            this.labels.setVisible(this.savedLabelsVisible);
+            this.numbers.setVisible(this.savedNumbersVisible);
+            this.title.setVisible(this.savedTitleVisible);
+            
+            this.labelsHidden = false;
+        } else {
+            this.savedLabelsVisible = this.labels.visible;
+            this.savedNumbersVisible = this.numbers.visible;
+            this.savedTitleVisible = this.title.visible;
+            
+            this.labels.setVisible(false);
+            this.numbers.setVisible(false);
+            this.title.setVisible(false);
+            
+            this.labelsHidden = true;
+        }
     }
 
     @computed get styleString() {
