@@ -155,10 +155,11 @@ export class OverlayTitleSettings {
     @observable fontSize: number;
     @observable customColor: boolean;
     @observable color: number;
+    @observable hidden: boolean;
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
-        astString.add("DrawTitle", this.visible);
+        astString.add("DrawTitle", this.visible, !this.hidden);
         astString.add("Font(Title)", this.font);
         astString.add("Size(Title)", this.fontSize);
         astString.add("Color(Title)", this.color, this.customColor);
@@ -167,6 +168,7 @@ export class OverlayTitleSettings {
     
     constructor() {
         this.visible = false;
+        this.hidden = false;
         this.customColor = false;
         this.color = 4;
         this.font = 2;
@@ -175,6 +177,10 @@ export class OverlayTitleSettings {
 
     @action setVisible(visible: boolean = true) {
         this.visible = visible;
+    }
+
+    @action setHidden(hidden: boolean) {
+        this.hidden = hidden;
     }
 
     @action setFont = (font: number) => {
@@ -405,6 +411,7 @@ export class OverlayAxisSettings {
 
 export class OverlayNumberSettings {
     @observable visible: boolean;
+    @observable hidden: boolean;
     @observable font: number;
     @observable fontSize: number;
     @observable customColor: boolean;
@@ -424,6 +431,7 @@ export class OverlayNumberSettings {
 
     constructor() {
         this.visible = true;
+        this.hidden = false;
         this.fontSize = 12;
         this.font = 0;
         this.customColor = false;
@@ -479,7 +487,7 @@ export class OverlayNumberSettings {
     @computed get styleString() {
         let astString = new ASTSettingsString();
         
-        astString.add("NumLab", this.visible);
+        astString.add("NumLab", this.visible, !this.hidden);
         astString.add("Font(NumLab)", this.font);
         astString.add("Size(NumLab)", this.fontSize);
         astString.add("Color(NumLab)", this.color, this.customColor);
@@ -493,6 +501,10 @@ export class OverlayNumberSettings {
 
     @action setVisible(visible: boolean = true) {
         this.visible = visible;
+    }
+
+    @action setHidden(hidden: boolean) {
+        this.hidden = hidden;
     }
 
     @action setFont = (font: number) => {
@@ -546,6 +558,7 @@ export class OverlayNumberSettings {
 
 export class OverlayLabelSettings {
     @observable visible: boolean;
+    @observable hidden: boolean;
     @observable customColor: boolean;
     @observable color: number;
     @observable font: number;
@@ -553,6 +566,7 @@ export class OverlayLabelSettings {
 
     constructor() {
         this.visible = true;
+        this.hidden = false;
         this.fontSize = 15;
         this.font = 0;
         this.customColor = false;
@@ -562,7 +576,7 @@ export class OverlayLabelSettings {
     @computed get styleString() {
         let astString = new ASTSettingsString();
 
-        astString.add("TextLab", this.visible);
+        astString.add("TextLab", this.visible, !this.hidden);
         astString.add("Font(TextLab)", this.font);
         astString.add("Size(TextLab)", this.fontSize);
         astString.add("Color(TextLab)", this.color, this.customColor);
@@ -572,6 +586,10 @@ export class OverlayLabelSettings {
 
     @action setVisible(visible: boolean = true) {
         this.visible = visible;
+    }
+
+    @action setHidden(hidden: boolean) {
+        this.hidden = hidden;
     }
 
     @action setCustomColor(customColor: boolean) {
@@ -606,12 +624,6 @@ export class OverlayStore {
     @observable labels: OverlayLabelSettings;
     @observable ticks: OverlayTickSettings;
     
-    // Toggle currently set labels on and off
-    @observable labelsHidden: boolean;
-    @observable savedLabelsVisible: boolean;
-    @observable savedNumbersVisible: boolean;
-    @observable savedTitleVisible: boolean;
-    
     // Dialog
     
     @observable overlaySettingsDialogVisible = false;
@@ -641,9 +653,6 @@ export class OverlayStore {
         this.ticks = new OverlayTickSettings();
         
         this.labelsHidden = false;
-        this.savedLabelsVisible = this.labels.visible;
-        this.savedNumbersVisible = this.numbers.visible;
-        this.savedTitleVisible = this.title.visible;
         
         // if the system is manually selected, set new default formats
         autorun(() => {
@@ -685,23 +694,15 @@ export class OverlayStore {
     }
     
     @action toggleLabels() {
-        if (this.labelsHidden) {
-            this.labels.setVisible(this.savedLabelsVisible);
-            this.numbers.setVisible(this.savedNumbersVisible);
-            this.title.setVisible(this.savedTitleVisible);
-            
-            this.labelsHidden = false;
-        } else {
-            this.savedLabelsVisible = this.labels.visible;
-            this.savedNumbersVisible = this.numbers.visible;
-            this.savedTitleVisible = this.title.visible;
-            
-            this.labels.setVisible(false);
-            this.numbers.setVisible(false);
-            this.title.setVisible(false);
-            
-            this.labelsHidden = true;
-        }
+        const newState = !this.labelsHidden;
+
+        this.labels.setHidden(newState);
+        this.numbers.setHidden(newState);
+        this.title.setHidden(newState);
+    }
+    
+    @computed get labelsHidden() {
+        return (this.labels.hidden && this.numbers.hidden && this.title.hidden);
     }
 
     @computed get styleString() {
