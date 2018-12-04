@@ -94,7 +94,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     showImage={true}
                     showWCS={true}
                     showValue={true}
-                    showChannel={true}
+                    showChannel={false}
                     showSpectral={true}
                 />
                 }

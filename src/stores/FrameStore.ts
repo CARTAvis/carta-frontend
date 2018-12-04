@@ -179,18 +179,30 @@ export class FrameStore {
         if (this.frameInfo.fileInfoExtended.depth > 1) {
             const channelInfo = this.channelInfo;
             if (channelInfo.channelType.code) {
+                let specSysValue = "";
+                const specSysHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`SPECSYS`) !== -1);
+                if (specSysHeader && specSysHeader.value) {
+                    specSysValue = specSysHeader.value;
+                }
                 spectralInfo.channelType = channelInfo.channelType;
-                spectralInfo.spectralString = `${channelInfo.channelType.name}:\u00a0${channelInfo.values[this.channel].toFixed(2)}\u00a0${channelInfo.channelType.unit}`;
-            }
+                let spectralName;
+                if (specSysValue) {
+                    spectralName = `${channelInfo.channelType.name}\u00a0(${specSysValue})`;
+                } else {
+                    spectralName = channelInfo.channelType.name;
+                }
+                spectralInfo.spectralString = `${spectralName}:\u00a0${channelInfo.values[this.channel].toFixed(2)}\u00a0${channelInfo.channelType.unit}`;
 
-            const refFreq = this.referenceFrequency;
-            // Add velocity conversion
-            if (channelInfo.channelType.code === "FREQ" && isFinite(refFreq)) {
-                const freqVal = channelInfo.rawValues[this.channel];
-                spectralInfo.velocityString = velocityStringFromFrequency(freqVal, refFreq);
-            } else if (channelInfo.channelType.code === "VRAD") {
-                const velocityVal = channelInfo.rawValues[this.channel];
-                spectralInfo.freqString = frequencyStringFromVelocity(velocityVal, refFreq);
+
+                const refFreq = this.referenceFrequency;
+                // Add velocity conversion
+                if (channelInfo.channelType.code === "FREQ" && isFinite(refFreq)) {
+                    const freqVal = channelInfo.rawValues[this.channel];
+                    spectralInfo.velocityString = velocityStringFromFrequency(freqVal, refFreq);
+                } else if (channelInfo.channelType.code === "VRAD") {
+                    const velocityVal = channelInfo.rawValues[this.channel];
+                    spectralInfo.freqString = frequencyStringFromVelocity(velocityVal, refFreq);
+                }
             }
         }
 

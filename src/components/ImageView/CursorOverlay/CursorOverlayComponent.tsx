@@ -44,7 +44,7 @@ export class CursorOverlayComponent extends React.PureComponent<CursorOverlayPro
         if (this.props.showValue && this.props.cursorInfo.value !== undefined) {
             let valueString = `Value:\u00a0${this.expo(this.props.cursorInfo.value, 5, this.props.unit, true, true)}`;
             if (this.props.mip > 1) {
-                valueString += ` [${this.props.mip}\u00D7${this.props.mip} average]`;
+                valueString += ` [${this.props.mip}\u00D7${this.props.mip}\u00a0average]`;
             }
             if (isNaN(this.props.cursorInfo.value)) {
                 valueString = "NaN";
