@@ -191,7 +191,7 @@ export class FrameStore {
                 } else {
                     spectralName = channelInfo.channelType.name;
                 }
-                spectralInfo.spectralString = `${spectralName}:\u00a0${channelInfo.values[this.channel].toFixed(2)}\u00a0${channelInfo.channelType.unit}`;
+                spectralInfo.spectralString = `${spectralName}:\u00a0${channelInfo.values[this.channel].toFixed(4)}\u00a0${channelInfo.channelType.unit}`;
 
 
                 const refFreq = this.referenceFrequency;
