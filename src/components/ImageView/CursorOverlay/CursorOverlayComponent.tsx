@@ -27,9 +27,6 @@ class CursorOverlayProps {
 export class CursorOverlayComponent extends React.PureComponent<CursorOverlayProps> {
 
     render() {
-
-        console.log(this.props.spectralInfo);
-
         const cursorInfo = this.props.cursorInfo;
         let infoStrings: string[] = [];
         if (this.props.showWCS && cursorInfo.infoWCS) {
