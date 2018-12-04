@@ -152,7 +152,7 @@ export class FrameStore {
 
                     for (let i = 0; i < N; i++) {
                         // FITS standard uses 1 for the first pixel
-                        const channelOffset = i - 1 - refPix;
+                        const channelOffset = i + 1 - refPix;
                         rawValues[i] = (channelOffset * delta + refVal);
                         values[i] = rawValues[i] * scalingFactor;
                     }
