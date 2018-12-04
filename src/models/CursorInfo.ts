@@ -1,6 +1,6 @@
 import {Point2D} from "./Point2D";
 
-export class CursorInfo {
+export interface CursorInfo {
     posCanvasSpace: Point2D;
     posImageSpace: Point2D;
     posWCS: Point2D;

@@ -83,6 +83,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                 {appStore.astReady && appStore.activeFrame && appStore.cursorInfo &&
                 <CursorOverlayComponent
                     cursorInfo={appStore.cursorInfo}
+                    spectralInfo={appStore.activeFrame.spectralInfo}
                     mip={appStore.activeFrame.currentFrameView.mip}
                     width={appStore.overlayStore.viewWidth}
                     left={appStore.overlayStore.padding.left}
@@ -93,6 +94,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     showImage={true}
                     showWCS={true}
                     showValue={true}
+                    showChannel={true}
+                    showSpectral={true}
                 />
                 }
                 {!appStore.astReady &&

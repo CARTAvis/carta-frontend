@@ -2,8 +2,8 @@ import {CARTA} from "carta-protobuf";
 import {action, computed, observable} from "mobx";
 import {OverlayStore} from "./OverlayStore";
 import {RenderConfigStore} from "./RenderConfigStore";
-import {Point2D} from "../models/Point2D";
-import {clamp} from "../util/math";
+import {Point2D, ChannelType, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES} from "../models";
+import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency} from "../util";
 
 export class FrameInfo {
     fileId: number;
@@ -12,35 +12,7 @@ export class FrameInfo {
     renderMode: CARTA.RenderMode;
 }
 
-export interface FrameChannelType {
-    code: string;
-    unit?: string;
-    type: string;
-}
-
-export interface FrameView {
-    xMin: number;
-    xMax: number;
-    yMin: number;
-    yMax: number;
-    mip: number;
-}
-
 export class FrameStore {
-    // From FITS standard (Table 25 of V4.0 of "Definition of the Flexible Image Transport System")
-    static CHANNEL_TYPES: FrameChannelType[] = [
-        {code: "FREQ", type: "Frequency", unit: "Hz"},
-        {code: "ENER", type: "Energy", unit: "J"},
-        {code: "WAVN", type: "Wavenumber", unit: "1/m"},
-        {code: "VRAD", type: "Radio velocity", unit: "m/s"},
-        {code: "WAVE", type: "Vacuum wavelength", unit: "m"},
-        {code: "VOPT", type: "Optical velocity", unit: "m/s"},
-        {code: "ZOPT", type: "Redshift"},
-        {code: "AWAV", type: "Air wavelength", unit: "m"},
-        {code: "VELO", type: "Apparent radial velocity", unit: "m/s"},
-        {code: "BETA", type: "Beta factor"},
-    ];
-
     @observable frameInfo: FrameInfo;
     @observable renderHiDPI: boolean;
     @observable wcsInfo: number;
@@ -114,24 +86,38 @@ export class FrameStore {
     @computed get unit() {
         if (!this.frameInfo || !this.frameInfo.fileInfoExtended || !this.frameInfo.fileInfoExtended.headerEntries) {
             return undefined;
-        }
-        else {
+        } else {
             const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.filter(entry => entry.name === "BUNIT");
             if (unitHeader.length) {
                 return unitHeader[0].value;
-            }
-            else {
+            } else {
                 return undefined;
             }
         }
     }
 
-    @computed get channelInfo(): { fromWCS: boolean, channelType: FrameChannelType, values: number[] } {
+    @computed get referenceFrequency(): number {
+        if (!this.frameInfo || !this.frameInfo.fileInfoExtended || this.frameInfo.fileInfoExtended.depth <= 1 || !this.frameInfo.fileInfoExtended.headerEntries) {
+            return undefined;
+        }
+        const restFreqHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`RESTFRQ`) !== -1);
+        if (restFreqHeader) {
+            const restFreqVal = parseFloat(restFreqHeader.value);
+            if (isFinite(restFreqVal)) {
+                return restFreqVal;
+            }
+        }
+
+        return undefined;
+    }
+
+    @computed get channelInfo(): ChannelInfo {
         if (!this.frameInfo || !this.frameInfo.fileInfoExtended || this.frameInfo.fileInfoExtended.depth <= 1 || !this.frameInfo.fileInfoExtended.headerEntries) {
             return undefined;
         }
         const N = this.frameInfo.fileInfoExtended.depth;
         const values = new Array<number>(N);
+        const rawValues = new Array<number>(N);
 
         // By default, we try to use the WCS information to determine channel info.
         const channelTypeInfo = FrameStore.FindChannelType(this.frameInfo.fileInfoExtended.headerEntries);
@@ -167,9 +153,10 @@ export class FrameStore {
                     for (let i = 0; i < N; i++) {
                         // FITS standard uses 1 for the first pixel
                         const channelOffset = i - 1 - refPix;
-                        values[i] = scalingFactor * (channelOffset * delta + refVal);
+                        rawValues[i] = (channelOffset * delta + refVal);
+                        values[i] = rawValues[i] * scalingFactor;
                     }
-                    return {fromWCS: true, channelType: channelTypeInfo.type, values};
+                    return {fromWCS: true, channelType: channelTypeInfo.type, values, rawValues};
                 }
             }
         }
@@ -177,8 +164,37 @@ export class FrameStore {
         // return channels
         for (let i = 0; i < N; i++) {
             values[i] = i;
+            rawValues[i] = i;
         }
-        return {fromWCS: false, channelType: {code: "", type: "Channel"}, values};
+        return {fromWCS: false, channelType: {code: "", name: "Channel"}, values, rawValues};
+    }
+
+    @computed get spectralInfo(): SpectralInfo {
+        const spectralInfo: SpectralInfo = {
+            channel: this.channel,
+            channelType: {code: "", name: "Channel"},
+            spectralString: ""
+        };
+
+        if (this.frameInfo.fileInfoExtended.depth > 1) {
+            const channelInfo = this.channelInfo;
+            if (channelInfo.channelType.code) {
+                spectralInfo.channelType = channelInfo.channelType;
+                spectralInfo.spectralString = `${channelInfo.channelType.name}:\u00a0${channelInfo.values[this.channel].toFixed(2)}\u00a0${channelInfo.channelType.unit}`;
+            }
+
+            const refFreq = this.referenceFrequency;
+            // Add velocity conversion
+            if (channelInfo.channelType.code === "FREQ" && isFinite(refFreq)) {
+                const freqVal = channelInfo.rawValues[this.channel];
+                spectralInfo.velocityString = velocityStringFromFrequency(freqVal, refFreq);
+            } else if (channelInfo.channelType.code === "VRAD") {
+                const velocityVal = channelInfo.rawValues[this.channel];
+                spectralInfo.freqString = frequencyStringFromVelocity(velocityVal, refFreq);
+            }
+        }
+
+        return spectralInfo;
     }
 
     @action updateFromRasterData(rasterImageData: CARTA.RasterImageData) {
@@ -205,8 +221,7 @@ export class FrameStore {
         // Don't need to copy buffer when dealing with compressed data
         if (rasterImageData.compressionType !== CARTA.CompressionType.NONE) {
             this.rasterData = new Float32Array(rawData.buffer);
-        }
-        else {
+        } else {
             this.rasterData = new Float32Array(rawData.buffer.slice(rawData.byteOffset, rawData.byteOffset + rawData.byteLength));
         }
 
@@ -239,8 +254,7 @@ export class FrameStore {
         if (wrap) {
             newChannel = (newChannel + depth) % depth;
             newStokes = (newStokes + numStokes) % numStokes;
-        }
-        else {
+        } else {
             newChannel = clamp(newChannel, 0, depth - 1);
             newStokes = clamp(newStokes, 0, numStokes - 1);
         }
@@ -323,17 +337,17 @@ export class FrameStore {
         // Test each header entry to see if it has a valid channel type
         if (typeHeader3) {
             const headerVal = typeHeader3.value.trim().toUpperCase();
-            const channelType = FrameStore.CHANNEL_TYPES.find(type => headerVal.indexOf(type.code) !== -1);
+            const channelType = CHANNEL_TYPES.find(type => headerVal.indexOf(type.code) !== -1);
             if (channelType) {
-                return {dimension: 3, type: {type: channelType.type, code: channelType.code, unit: channelType.unit}};
+                return {dimension: 3, type: {name: channelType.name, code: channelType.code, unit: channelType.unit}};
             }
         }
 
         if (typeHeader4) {
             const headerVal = typeHeader4.value.trim().toUpperCase();
-            const channelType = FrameStore.CHANNEL_TYPES.find(type => headerVal.indexOf(type.code) !== -1);
+            const channelType = CHANNEL_TYPES.find(type => headerVal.indexOf(type.code) !== -1);
             if (channelType) {
-                return {dimension: 4, type: {type: channelType.type, code: channelType.code, unit: channelType.unit}};
+                return {dimension: 4, type: {name: channelType.name, code: channelType.code, unit: channelType.unit}};
             }
         }
 

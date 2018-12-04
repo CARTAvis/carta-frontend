@@ -1,21 +1,19 @@
 import {action, autorun, computed, observable} from "mobx";
+import * as AST from "ast_wrapper";
+import * as _ from "lodash";
 import {OverlayStore, dayPalette, nightPalette} from "./OverlayStore";
 import {SpatialProfileStore} from "./SpatialProfileStore";
 import {FileBrowserStore} from "./FileBrowserStore";
-import {FrameInfo, FrameStore, FrameView} from "./FrameStore";
+import {FrameInfo, FrameStore} from "./FrameStore";
 import {AlertStore} from "./AlertStore";
 import {LogEntry, LogStore} from "./LogStore";
 import {BackendService} from "../services/BackendService";
-import {CursorInfo} from "../models/CursorInfo";
+import {CursorInfo, FrameView} from "../models";
 import {CARTA} from "carta-protobuf";
-import * as AST from "ast_wrapper";
-import * as _ from "lodash";
 import {AnimationState, AnimatorStore} from "./AnimatorStore";
-import SpatialProfile = CARTA.SpatialProfile;
-import {smoothStepOffset} from "../util/math";
+import {smoothStepOffset} from "../util";
 import {WidgetsStore} from "./WidgetsStore";
 import {SpectralProfileStore} from "./SpectralProfileStore";
-import SpectralProfile = CARTA.SpectralProfile;
 
 export class AppStore {
     // Backend service
@@ -352,7 +350,7 @@ export class AppStore {
                 profileStore.approximate = false;
                 const profileMap = new Map<string, CARTA.SpatialProfile>();
                 for (let profile of spatialProfileData.profiles) {
-                    profileMap.set(profile.coordinate, profile as SpatialProfile);
+                    profileMap.set(profile.coordinate, profile as CARTA.SpatialProfile);
                 }
                 profileStore.setProfiles(profileMap);
             }
@@ -372,7 +370,7 @@ export class AppStore {
                 profileStore.stokes = spectralProfileData.stokes;
                 const profileMap = new Map<string, CARTA.SpectralProfile>();
                 for (let profile of spectralProfileData.profiles) {
-                    profileMap.set(profile.coordinate, profile as SpectralProfile);
+                    profileMap.set(profile.coordinate, profile as CARTA.SpectralProfile);
                 }
                 profileStore.setProfiles(profileMap);
             }

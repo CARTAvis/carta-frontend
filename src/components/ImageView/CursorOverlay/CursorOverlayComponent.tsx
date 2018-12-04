@@ -1,10 +1,11 @@
 import * as React from "react";
 import "./CursorOverlayComponent.css";
-import {CursorInfo} from "../../../models/CursorInfo";
+import {CursorInfo, SpectralInfo} from "../../../models";
 import {CSSProperties} from "react";
 
 class CursorOverlayProps {
     cursorInfo: CursorInfo;
+    spectralInfo: SpectralInfo;
     docked: boolean;
     mip: number;
     width: number;
@@ -19,25 +20,29 @@ class CursorOverlayProps {
     showImage?: boolean;
     showValue?: boolean;
     showCanvas?: boolean;
-
+    showChannel?: boolean;
+    showSpectral?: boolean;
 }
 
 export class CursorOverlayComponent extends React.PureComponent<CursorOverlayProps> {
 
     render() {
+
+        console.log(this.props.spectralInfo);
+
         const cursorInfo = this.props.cursorInfo;
         let infoStrings: string[] = [];
         if (this.props.showWCS && cursorInfo.infoWCS) {
-            infoStrings.push(`WCS: (${cursorInfo.infoWCS.x}, ${cursorInfo.infoWCS.y})`);
+            infoStrings.push(`WCS:\u00a0(${cursorInfo.infoWCS.x},\u00a0${cursorInfo.infoWCS.y})`);
         }
         if (this.props.showCanvas) {
-            infoStrings.push(`Canvas: (${cursorInfo.posCanvasSpace.x.toFixed(0)}, ${cursorInfo.posCanvasSpace.y.toFixed(0)})`);
+            infoStrings.push(`Canvas:\u00a0(${cursorInfo.posCanvasSpace.x.toFixed(0)},\u00a0${cursorInfo.posCanvasSpace.y.toFixed(0)})`);
         }
         if (this.props.showImage) {
-            infoStrings.push(`Image: (${cursorInfo.posImageSpace.x.toFixed(0)}, ${cursorInfo.posImageSpace.y.toFixed(0)})`);
+            infoStrings.push(`Image:\u00a0(${cursorInfo.posImageSpace.x.toFixed(0)},\u00a0${cursorInfo.posImageSpace.y.toFixed(0)})`);
         }
         if (this.props.showValue && this.props.cursorInfo.value !== undefined) {
-            let valueString = `Value: ${this.expo(this.props.cursorInfo.value, 5, this.props.unit, true, true)}`;
+            let valueString = `Value:\u00a0${this.expo(this.props.cursorInfo.value, 5, this.props.unit, true, true)}`;
             if (this.props.mip > 1) {
                 valueString += ` [${this.props.mip}\u00D7${this.props.mip} average]`;
             }
@@ -46,12 +51,23 @@ export class CursorOverlayComponent extends React.PureComponent<CursorOverlayPro
             }
             infoStrings.push(valueString);
         }
+        if (this.props.showChannel && this.props.spectralInfo.channel !== undefined) {
+            infoStrings.push(`Channel:\u00a0${this.props.spectralInfo.channel}`);
+        }
+        if (this.props.showSpectral && this.props.spectralInfo.spectralString) {
+            infoStrings.push(this.props.spectralInfo.spectralString);
+            if (this.props.spectralInfo.freqString) {
+                infoStrings.push(this.props.spectralInfo.freqString);
+            }
+            if (this.props.spectralInfo.velocityString) {
+                infoStrings.push(this.props.spectralInfo.velocityString);
+            }
+        }
 
         const height = (this.props.height !== undefined && this.props.height >= 0) ? this.props.height : 20;
         let top = 0;
 
         let styleProps: CSSProperties = {
-            height: height,
             lineHeight: height + "px"
         };
 
@@ -61,8 +77,7 @@ export class CursorOverlayComponent extends React.PureComponent<CursorOverlayPro
 
         if (this.props.top !== undefined) {
             styleProps.top = this.props.top;
-        }
-        else if (this.props.bottom !== undefined) {
+        } else if (this.props.bottom !== undefined) {
             styleProps.bottom = this.props.bottom;
         }
 
