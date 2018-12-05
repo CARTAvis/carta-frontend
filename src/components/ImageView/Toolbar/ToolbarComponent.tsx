@@ -5,28 +5,39 @@ import "./ToolbarComponent.css";
 import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
 import {OverlayStore} from "../../../stores/OverlayStore";
 import {FrameStore} from "../../../stores/FrameStore";
+import {AppStore} from "../../../stores/AppStore";
 import {exportImage} from "../ImageViewComponent";
 
 export class ToolbarComponentProps {
-    overlaySettings: OverlayStore;
-    frame: FrameStore;
+    appStore: AppStore;
+    docked: boolean;
 }
 
 @observer
 export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     render() {
-        const frame = this.props.frame;
-        const overlay = this.props.overlaySettings;
+        const frame = this.props.appStore.activeFrame;
+        const overlay = this.props.appStore.overlayStore;
         const grid = overlay.grid;
         
         let styleProps: CSSProperties = {
             bottom: overlay.padding.bottom, 
             right: overlay.padding.right
         };
+        
+        let className = "image-toolbar";
+        
+        if (this.props.appStore.darkTheme) {
+            className += " bp3-dark";
+        }
+        
+        if (this.props.docked) {
+            className += " docked";
+        }
 
         return (
-            <ButtonGroup minimal={true} className="image-toolbar" style={styleProps}>
+            <ButtonGroup minimal={true} className={className} style={styleProps}>
                 <Tooltip content="Fit width">
                     <Button icon="arrows-horizontal" onClick={() => frame.fitZoomX()} />
                 </Tooltip>

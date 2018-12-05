@@ -159,7 +159,7 @@ export class OverlayTitleSettings {
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
-        astString.add("DrawTitle", this.visible, !this.hidden);
+        astString.add("DrawTitle", this.show);
         astString.add("Font(Title)", this.font);
         astString.add("Size(Title)", this.fontSize);
         astString.add("Color(Title)", this.color, this.customColor);
@@ -173,6 +173,10 @@ export class OverlayTitleSettings {
         this.color = 4;
         this.font = 2;
         this.fontSize = 18;
+    }
+    
+    @computed get show() {
+        return this.visible && !this.hidden;
     }
 
     @action setVisible(visible: boolean = true) {
@@ -486,8 +490,8 @@ export class OverlayNumberSettings {
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
-        
-        astString.add("NumLab", this.visible, !this.hidden);
+                
+        astString.add("NumLab", this.show);
         astString.add("Font(NumLab)", this.font);
         astString.add("Size(NumLab)", this.fontSize);
         astString.add("Color(NumLab)", this.color, this.customColor);
@@ -497,6 +501,10 @@ export class OverlayNumberSettings {
         astString.add("Format(2)", this.formatStringY);
         
         return astString.toString();
+    }
+    
+    @computed get show() {
+        return this.visible && !this.hidden;
     }
 
     @action setVisible(visible: boolean = true) {
@@ -576,12 +584,16 @@ export class OverlayLabelSettings {
     @computed get styleString() {
         let astString = new ASTSettingsString();
 
-        astString.add("TextLab", this.visible, !this.hidden);
+        astString.add("TextLab", this.show);
         astString.add("Font(TextLab)", this.font);
         astString.add("Size(TextLab)", this.fontSize);
         astString.add("Color(TextLab)", this.color, this.customColor);
         
         return astString.toString();
+    }
+    
+    @computed get show() {
+        return this.visible && !this.hidden;
     }
 
     @action setVisible(visible: boolean = true) {
@@ -651,9 +663,7 @@ export class OverlayStore {
         this.numbers = new OverlayNumberSettings();
         this.labels = new OverlayLabelSettings();
         this.ticks = new OverlayTickSettings();
-        
-        this.labelsHidden = false;
-        
+                
         // if the system is manually selected, set new default formats
         autorun(() => {
             const _ = this.global.system;
@@ -731,7 +741,7 @@ export class OverlayStore {
     }
     
     @computed get showNumbers() {
-        return (this.numbers.visible && this.global.labelType === LabelType.Exterior);
+        return (this.numbers.show && this.global.labelType === LabelType.Exterior);
     }
     
     @computed get defaultGap() {
@@ -754,11 +764,11 @@ export class OverlayStore {
         const numGap = (this.showNumbers ? this.defaultGap : 0);
         const numHeight = (this.showNumbers ? this.numbers.fontSize : 0);
         
-        const labelGap = (this.labels.visible ? this.defaultGap : 0);
-        const labelHeight = (this.labels.visible ? this.labels.fontSize : 0);
+        const labelGap = (this.labels.show ? this.defaultGap : 0);
+        const labelHeight = (this.labels.show ? this.labels.fontSize : 0);
         
-        const titleGap = (this.title.visible ? this.titleGap : 0);
-        const titleHeight = (this.title.visible ? this.title.fontSize : 0);
+        const titleGap = (this.title.show ? this.titleGap : 0);
+        const titleHeight = (this.title.show ? this.title.fontSize : 0);
         
         return {
             left: base + numGap + numHeight + labelGap + labelHeight,

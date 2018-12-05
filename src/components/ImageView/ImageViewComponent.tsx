@@ -80,11 +80,24 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             appStore.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom);
         }
     };
+    
+    onMouseEnter = () => {
+        this.props.appStore.showImageToolbar();
+    };
+    
+    onMouseLeave = () => {
+        this.props.appStore.hideImageToolbar();
+    };
 
     render() {
         const appStore = this.props.appStore;
         return (
-            <div className="image-view-div" ref={(ref) => this.containerDiv = ref}>
+            <div
+                className="image-view-div"
+                ref={(ref) => this.containerDiv = ref}
+                onMouseEnter={this.onMouseEnter}
+                onMouseLeave={this.onMouseLeave}
+            >
                 {appStore.astReady && appStore.activeFrame && appStore.activeFrame.valid &&
                 <OverlayComponent
                     frame={appStore.activeFrame}
@@ -119,10 +132,10 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     showValue={true}
                 />
                 }
-                {appStore.astReady && appStore.activeFrame &&
+                {appStore.astReady && appStore.activeFrame && appStore.imageToolbarVisible &&
                 <ToolbarComponent
-                    frame={appStore.activeFrame}
-                    overlaySettings={appStore.overlayStore}
+                    appStore={appStore}
+                    docked={this.props.docked}
                 />
                 }
                 {!appStore.astReady &&
