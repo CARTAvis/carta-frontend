@@ -2,10 +2,9 @@ import {CARTA} from "carta-protobuf";
 import * as Utility from "./testUtilityFunction";
 
 let WebSocket = require("ws");
-let testServerUrl = "ws://localhost:50505";
-let expectRootPath = "/Users/zarda/CARTA/Images";
-// let testSubdirectoryName = "QA"; // for NRAO backend
-let testSubdirectoryName = `${expectRootPath}/QA`; // ASIAA backend
+let testServerUrl = "wss://acdc0.asiaa.sinica.edu.tw/socket2";
+let expectRootPath = "";
+let testSubdirectoryName = "set_QA"; // for NRAO backend
 let connectionTimeout = 1000;
 let disconnectionTimeout = 1000;
 let openFileTimeout = 60000; // The larger file, the more required time.
@@ -33,21 +32,44 @@ describe("RASTER_IMAGE_DATA_PERFORMANCE tests", () => {
                 eventData.set(payload, 36);
 
                 Connection.send(eventData);
+
+                // While receive a message in the form of arraybuffer
+                Connection.onmessage = (event: MessageEvent) => {
+                    const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
+                    if (eventName === "REGISTER_VIEWER_ACK") {
+                        expect(event.data.byteLength).toBeGreaterThan(0);
+                        eventData = new Uint8Array(event.data, 36);
+                        expect(CARTA.RegisterViewerAck.decode(eventData).success).toBe(true);
+                        
+                        done();
+                    }
+                };
             } else {
                 console.log(`Can not open a connection.`);
+                done();
             }
-            done();
         };
     }, connectionTimeout);
 
     test(`connect to CARTA "${testServerUrl}" & ...`, 
     done => {
+        // Preapare the message on a eventData
+        const message = CARTA.RegisterViewer.create({sessionId: "", apiKey: "1234"});
+        let payload = CARTA.RegisterViewer.encode(message).finish();
+        let eventData = new Uint8Array(32 + 4 + payload.byteLength);
+
+        eventData.set(Utility.stringToUint8Array("REGISTER_VIEWER", 32));
+        eventData.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
+        eventData.set(payload, 36);
+
+        Connection.send(eventData);
+
         // While receive a message in the form of arraybuffer
         Connection.onmessage = (event: MessageEvent) => {
             const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
             if (eventName === "REGISTER_VIEWER_ACK") {
                 expect(event.data.byteLength).toBeGreaterThan(0);
-                const eventData = new Uint8Array(event.data, 36);
+                eventData = new Uint8Array(event.data, 36);
                 expect(CARTA.RegisterViewerAck.decode(eventData).success).toBe(true);
                 
                 done();
@@ -130,7 +152,7 @@ describe("RASTER_IMAGE_DATA_PERFORMANCE tests", () => {
                             // Preapare the message
                             message = CARTA.OpenFile.create({
                                 directory: testSubdirectoryName, 
-                                file: testFileName, hdu: "", fileId: 0, 
+                                file: testFileName, hdu: "0", fileId: 0, 
                                 renderMode: CARTA.RenderMode.RASTER
                             });
                             payload = CARTA.OpenFile.encode(message).finish();
@@ -172,7 +194,7 @@ describe("RASTER_IMAGE_DATA_PERFORMANCE tests", () => {
                                 // Preapare the message
                                 let message = CARTA.OpenFile.create({
                                     directory: testSubdirectoryName, 
-                                    file: testFileName, hdu: "", fileId: 0, 
+                                    file: testFileName, hdu: "0", fileId: 0, 
                                     renderMode: CARTA.RenderMode.RASTER
                                 });
                                 let payload = CARTA.OpenFile.encode(message).finish();
@@ -220,7 +242,7 @@ describe("RASTER_IMAGE_DATA_PERFORMANCE tests", () => {
                                 // Preapare the message
                                 let messageOpenFile = CARTA.OpenFile.create({
                                     directory: testSubdirectoryName, 
-                                    file: testFileName, hdu: "", fileId: 0, 
+                                    file: testFileName, hdu: "0", fileId: 0, 
                                     renderMode: CARTA.RenderMode.RASTER
                                 });
                                 payload = CARTA.OpenFile.encode(messageOpenFile).finish();
