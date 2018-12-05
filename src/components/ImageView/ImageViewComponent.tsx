@@ -15,11 +15,11 @@ export const exportImage = () => {
     const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
     
     const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
-    composedCanvas.width = rasterCanvas.width;
-    composedCanvas.height = rasterCanvas.height;
+    composedCanvas.width = overlayCanvas.width;
+    composedCanvas.height = overlayCanvas.height;
     
     const ctx = composedCanvas.getContext("2d");
-    ctx.drawImage(rasterCanvas, 0, 0);
+    ctx.drawImage(rasterCanvas, rasterCanvas.offsetLeft, rasterCanvas.offsetTop);
     ctx.drawImage(overlayCanvas, 0, 0);
     
     const dataURL = composedCanvas.toDataURL().replace("image/png", "image/octet-stream");
