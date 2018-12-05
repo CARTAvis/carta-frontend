@@ -17,8 +17,9 @@ export class ToolbarComponentProps {
 export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     render() {
-        const frame = this.props.appStore.activeFrame;
-        const overlay = this.props.appStore.overlayStore;
+        const appStore = this.props.appStore;
+        const frame = appStore.activeFrame;
+        const overlay = appStore.overlayStore;
         const grid = overlay.grid;
         
         let styleProps: CSSProperties = {
@@ -28,7 +29,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         
         let className = "image-toolbar";
         
-        if (this.props.appStore.darkTheme) {
+        if (appStore.darkTheme) {
             className += " bp3-dark";
         }
         
@@ -51,7 +52,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                     <Button icon="numerical" active={!overlay.labelsHidden} onClick={() => overlay.toggleLabels()} />
                 </Tooltip>
                 <Tooltip content="Export image">
-                    <Button icon="floppy-disk" onClick={() => exportImage()} />
+                    <Button icon="floppy-disk" onClick={() => exportImage(overlay.padding, appStore.darkTheme)} />
                 </Tooltip>
             </ButtonGroup>
         );

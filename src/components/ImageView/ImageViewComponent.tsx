@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {WidgetConfig, WidgetProps} from "../../stores/WidgetsStore";
 import ReactResizeDetector from "react-resize-detector";
-import {NonIdealState, Spinner} from "@blueprintjs/core";
+import {NonIdealState, Spinner, Colors} from "@blueprintjs/core";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
 import {CursorInfo} from "../../models/CursorInfo";
 import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
@@ -10,16 +10,18 @@ import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import "./ImageViewComponent.css";
 
-export const exportImage = () => {
+export const exportImage = (padding, darkTheme) => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
     const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
     
     const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
     composedCanvas.width = overlayCanvas.width;
     composedCanvas.height = overlayCanvas.height;
-    
+        
     const ctx = composedCanvas.getContext("2d");
-    ctx.drawImage(rasterCanvas, rasterCanvas.offsetLeft, rasterCanvas.offsetTop);
+    ctx.fillStyle = darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
+    ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
+    ctx.drawImage(rasterCanvas, padding.left, padding.top);
     ctx.drawImage(overlayCanvas, 0, 0);
     
     const dataURL = composedCanvas.toDataURL().replace("image/png", "image/octet-stream");
