@@ -3,7 +3,7 @@ import * as Utility from "./testUtilityFunction";
 
 let WebSocket = require("ws");
 let testServerUrl = "wss://acdc0.asiaa.sinica.edu.tw/socket2";
-let connectTimeoutLocal = 100;
+let connectTimeout = 300;
 let connectTimeoutRemote = 2000;
 let testEventName = "REGISTER_VIEWER";
 let testReturnName = "REGISTER_VIEWER_ACK";
@@ -32,7 +32,7 @@ describe("Websocket tests", () => {
             Connection.close();
             done();     // Return to this test
         };
-    }, connectTimeoutLocal);
+    }, connectTimeout);
 });
 
 describe("ACCESS_CARTA_DEFAULT tests", () => {
@@ -71,7 +71,7 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
             done();
         };
 
-    }, connectTimeoutLocal);
+    }, connectTimeout);
 
     test(`send EventName: "${testEventName}" to CARTA "${testServerUrl}" with no session_id & api_key "1234".`, 
     done => {
@@ -108,7 +108,7 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
             done();
         };
 
-    }, connectTimeoutLocal);
+    }, connectTimeout);
 
     describe(`receive EventName: "${testReturnName}" tests on CARTA ${testServerUrl}`, 
     () => {
@@ -140,9 +140,9 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
                 }
                 done();
             };
-        }, connectTimeoutLocal);
+        }, connectTimeout);
     
-        test(`assert the received EventName is "${testReturnName}" within ${connectTimeoutLocal * 1e-3} seconds.`, 
+        test(`assert the received EventName is "${testReturnName}" within ${connectTimeout * 1e-3} seconds.`, 
         done => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
@@ -153,7 +153,7 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
 
                 done();
             };
-        }, connectTimeoutLocal);
+        }, connectTimeout);
     
         test(`assert the "${testReturnName}.session_id" is not None.`, 
         done => {
@@ -173,7 +173,7 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
                 done();
             };
     
-        }, connectTimeoutLocal);
+        }, connectTimeout);
     
         test(`assert the "${testReturnName}.success" is true.`, 
         done => {
@@ -183,7 +183,7 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
                 expect(CARTA.RegisterViewerAck.decode(eventData).success).toBe(true);
                 done();
             };
-        }, connectTimeoutLocal);
+        }, connectTimeout);
     
         test(`assert the "${testReturnName}.session_type" is "CARTA.SessionType.NEW".`, 
         done => {
@@ -193,12 +193,12 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
                 expect(CARTA.RegisterViewerAck.decode(eventData).sessionType).toBe(CARTA.SessionType.NEW);
                 done();
             };
-        }, connectTimeoutLocal);
+        }, connectTimeout);
 
         afterEach( done => {
             Connection.close();
             done();
-        }, connectTimeoutLocal);
+        }, connectTimeout);
     
     });
 });
