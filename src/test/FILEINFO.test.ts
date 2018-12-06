@@ -98,7 +98,7 @@ describe("FILEINFO tests", () => {
                 done();
             }, connectionTimeout);           
         
-        describe(`look for a file`, () => {
+        describe(`look for a existent file`, () => {
             [["S255_IR_sci.spw25.cube.I.pbcor.fits",    [1920, 1920, 478, 1],   4],
              ["SDC335.579-0.292.spw0.line.image",       [336, 350, 3840, 1],    4],
              ["G34mm1.miriad",                          [129, 129, 111, 1],     4],
@@ -222,7 +222,7 @@ describe("FILEINFO_EXCEPTIONS tests", () => {
                 done();
             }, connectionTimeout);           
         
-        describe(`look for a non-existed file`, () => {
+        describe(`look for a non-existent file`, () => {
             [["no_such_file.image"],
              ["broken_header.miriad"],
             ].map(
