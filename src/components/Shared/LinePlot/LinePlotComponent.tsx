@@ -11,6 +11,7 @@ import "./LinePlotComponent.css";
 import {clamp} from "../../../util/math";
 import {Colors} from "@blueprintjs/core";
 import {action, computed, observable} from "mobx";
+import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 
 enum ZoomMode {
     NONE,
@@ -95,6 +96,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     @observable panStart = 0;
     @observable selectionBoxStart = {x: 0, y: 0};
     @observable selectionBoxEnd = {x: 0, y: 0};
+    @observable toolbarVisible = false;
 
     @computed get isSelecting() {
         return this.interactionMode === InteractionMode.SELECTING;
@@ -181,6 +183,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     @action resize = (w, h) => {
         this.width = w;
         this.height = h;
+    };
+    
+    @action showToolbar = () => {
+        this.toolbarVisible = true;
+    };
+    
+    @action hideToolbar = () => {
+        this.toolbarVisible = false;
     };
 
     dragBoundsFuncVertical = (pos: Point2D) => {
@@ -388,6 +398,23 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             this.endInteractions();
         }
     };
+    
+    onMouseEnter = () => {
+        this.showToolbar();
+    };
+    
+    onMouseLeave = () => {
+        this.hideToolbar();
+    };
+    
+    exportImage = () => {
+        console.log("+++ exportImage called!");
+        console.log(typeof this.plotRef);
+    };
+    
+    exportData = () => {
+        console.log("+++ exportData called!");
+    };
 
     render() {
         const chartArea = this.chartArea;
@@ -586,7 +613,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
 
         return (
-            <div className={"line-plot-component"} style={{cursor: this.isPanning || isHovering ? "move" : "crosshair"}} onKeyDown={this.onKeyDown} tabIndex={0}>
+            <div 
+                className={"line-plot-component"}
+                style={{cursor: this.isPanning || isHovering ? "move" : "crosshair"}}
+                onKeyDown={this.onKeyDown}
+                onMouseEnter={this.onMouseEnter}
+                onMouseLeave={this.onMouseLeave}
+                tabIndex={0}
+            >
                 <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}/>
                 <PlotContainerComponent
                     {...this.props}
@@ -612,6 +646,12 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                         {borderRect}
                     </Layer>
                 </Stage>
+                <ToolbarComponent
+                    darkMode={this.props.darkMode}
+                    visible={this.toolbarVisible}
+                    exportImage={this.exportImage}
+                    exportData={this.exportData}
+                />
             </div>
 
         );
