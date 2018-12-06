@@ -137,10 +137,11 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     showSpectral={true}
                 />
                 }
-                {appStore.astReady && appStore.activeFrame && appStore.imageToolbarVisible &&
+                {appStore.astReady && appStore.activeFrame &&
                 <ToolbarComponent
                     appStore={appStore}
                     docked={this.props.docked}
+                    visible={appStore.imageToolbarVisible}
                 />
                 }
                 {!appStore.astReady &&

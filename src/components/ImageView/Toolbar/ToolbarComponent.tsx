@@ -11,6 +11,7 @@ import {exportImage} from "../ImageViewComponent";
 export class ToolbarComponentProps {
     appStore: AppStore;
     docked: boolean;
+    visible: boolean;
 }
 
 @observer
@@ -21,18 +22,19 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const frame = appStore.activeFrame;
         const overlay = appStore.overlayStore;
         const grid = overlay.grid;
-        
+
         let styleProps: CSSProperties = {
-            bottom: overlay.padding.bottom, 
-            right: overlay.padding.right
+            bottom: overlay.padding.bottom,
+            right: overlay.padding.right,
+            opacity: this.props.visible ? 1 : 0
         };
-        
+
         let className = "image-toolbar";
-        
+
         if (appStore.darkTheme) {
             className += " bp3-dark";
         }
-        
+
         if (this.props.docked) {
             className += " docked";
         }
@@ -40,19 +42,19 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         return (
             <ButtonGroup minimal={true} className={className} style={styleProps}>
                 <Tooltip content="Fit width">
-                    <Button icon="arrows-horizontal" onClick={() => frame.fitZoomX()} />
+                    <Button icon="arrows-horizontal" onClick={() => frame.fitZoomX()}/>
                 </Tooltip>
                 <Tooltip content="Fit height">
-                    <Button icon="arrows-vertical" onClick={() => frame.fitZoomY()} />
+                    <Button icon="arrows-vertical" onClick={() => frame.fitZoomY()}/>
                 </Tooltip>
                 <Tooltip content="Toggle grid">
-                    <Button icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)} />
+                    <Button icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)}/>
                 </Tooltip>
                 <Tooltip content="Toggle labels">
-                    <Button icon="numerical" active={!overlay.labelsHidden} onClick={() => overlay.toggleLabels()} />
+                    <Button icon="numerical" active={!overlay.labelsHidden} onClick={() => overlay.toggleLabels()}/>
                 </Tooltip>
                 <Tooltip content="Export image">
-                    <Button icon="floppy-disk" onClick={() => exportImage(overlay.padding, appStore.darkTheme)} />
+                    <Button icon="floppy-disk" onClick={() => exportImage(overlay.padding, appStore.darkTheme)}/>
                 </Tooltip>
             </ButtonGroup>
         );
