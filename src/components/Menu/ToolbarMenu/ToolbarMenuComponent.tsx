@@ -53,21 +53,22 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
             className += " bp3-dark";
         }
 
+        const commonTooltip = <span><br/><i><small>Drag to place docked widget<br/>Click to place a floating widget</small></i></span>;
         return (
             <ButtonGroup className={className}>
-                <Tooltip content={<span>Render Config Widget<br/>(Drag to place docked widget)</span>}>
+                <Tooltip content={<span>Render Config Widget{commonTooltip}</span>}>
                     <Button icon={"style"} id="renderConfigButton" onClick={this.props.appStore.widgetsStore.createFloatingRenderWidget}/>
                 </Tooltip>
-                <Tooltip content={<span>Log Widget<br/>(Drag to place docked widget)</span>}>
+                <Tooltip content={<span>Log Widget{commonTooltip}</span>}>
                     <Button icon={"application"} id="logButton" onClick={this.props.appStore.widgetsStore.createFloatingLogWidget}/>
                 </Tooltip>
-                <Tooltip content={<span>Animator Widget<br/>(Drag to place docked widget)</span>}>
+                <Tooltip content={<span>Animator Widget{commonTooltip}</span>}>
                     <Button icon={"layers"} id="animatorButton" onClick={this.props.appStore.widgetsStore.createFloatingAnimatorWidget}/>
                 </Tooltip>
-                <Tooltip content={<span>Spatial Profiler<br/>(Drag to place docked widget)</span>}>
+                <Tooltip content={<span>Spatial Profiler{commonTooltip}</span>}>
                     <Button icon={"timeline-line-chart"} id="spatialProfilerButton" onClick={this.props.appStore.widgetsStore.createFloatingSpatialProfilerWidget}/>
                 </Tooltip>
-                <Tooltip content={<span>Spectral Profiler<br/>(Drag to place docked widget)</span>}>
+                <Tooltip content={<span>Spectral Profiler{commonTooltip}</span>}>
                     <Button icon={"step-chart"} id="spectralProfilerButton" onClick={this.props.appStore.widgetsStore.createFloatingSpectralProfilerWidget}/>
                 </Tooltip>
             </ButtonGroup>
