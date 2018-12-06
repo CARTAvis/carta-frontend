@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 import * as Utility from "./testUtilityFunction";
 
 let WebSocket = require("ws");
-let testServerUrl = "ws://localhost:50505";
+let testServerUrl = "wss://acdc0.asiaa.sinica.edu.tw/socket2";
 let connectTimeoutLocal = 100;
 let connectTimeoutRemote = 2000;
 let testEventName = "REGISTER_VIEWER";
