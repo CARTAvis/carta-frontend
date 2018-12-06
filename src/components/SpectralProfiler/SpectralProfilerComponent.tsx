@@ -87,8 +87,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (!this.widgetStore.useWcsValues) {
             channelInfo = {
                 fromWCS: false,
-                channelType: {unit: "", code: "", type: "Channel"},
-                values: new Array<number>(this.frame.frameInfo.fileInfoExtended.depth)
+                channelType: {unit: "", code: "", name: "Channel"},
+                values: new Array<number>(this.frame.frameInfo.fileInfoExtended.depth),
+                rawValues: new Array<number>(this.frame.frameInfo.fileInfoExtended.depth)
             };
 
             for (let i = 0; i < channelInfo.values.length; i++) {
@@ -252,7 +253,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                                 horizontal: false,
                             }];
                         }
-                        let channelLabel = channelInfo.channelType.type;
+                        let channelLabel = channelInfo.channelType.name;
                         if (channelInfo.channelType.unit && channelInfo.channelType.unit.length) {
                             channelLabel += ` (${channelInfo.channelType.unit})`;
                         }
