@@ -232,6 +232,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         if (this.props.docked) {
             className += " docked";
         }
-        return <canvas className={className} key={styleString} ref={(ref) => this.canvas = ref} onWheel={this.handleScroll} onClick={this.handleClick} onMouseMove={this.handleMouseMove}/>;
+        return <canvas className={className} id="overlay-canvas" key={styleString} ref={(ref) => this.canvas = ref} onWheel={this.handleScroll} onClick={this.handleClick} onMouseMove={this.handleMouseMove}/>;
     }
 }

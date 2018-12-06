@@ -43,6 +43,16 @@ export class AppStore {
         this.overlayStore.viewWidth = w;
         this.overlayStore.viewHeight = h;
     };
+    
+    // Image toolbar
+    @observable imageToolbarVisible: boolean;
+    @action showImageToolbar = () => {
+        this.imageToolbarVisible = true;
+    };
+    @action hideImageToolbar = () => {
+        this.imageToolbarVisible = false;
+    };
+    
     // Overlay
     @observable overlayStore: OverlayStore;
     // File Browser
@@ -62,6 +72,8 @@ export class AppStore {
     @action hideHotkeyDialog = () => {
         this.hotkeyDialogVisible = false;
     };
+    
+    
 
     // Widgets
     @observable widgetsStore: WidgetsStore;

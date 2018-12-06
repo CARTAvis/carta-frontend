@@ -45,7 +45,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     componentDidMount() {
         if (this.canvas) {
             try {
-                this.gl = this.canvas.getContext("webgl");
+                this.gl = this.canvas.getContext("webgl", {preserveDrawingBuffer: true});
                 if (!this.gl) {
                     return;
                 }
@@ -347,6 +347,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             <div className={className}>
                 <canvas
                     className="raster-canvas"
+                    id="raster-canvas"
                     ref={(ref) => this.canvas = ref}
                     style={{
                         top: padding.top,

@@ -2,12 +2,38 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {WidgetConfig, WidgetProps} from "../../stores/WidgetsStore";
 import ReactResizeDetector from "react-resize-detector";
-import {NonIdealState, Spinner} from "@blueprintjs/core";
+import {NonIdealState, Spinner, Colors} from "@blueprintjs/core";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
 import {CursorInfo} from "../../models/CursorInfo";
 import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
+import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import "./ImageViewComponent.css";
+
+export const exportImage = (padding, darkTheme) => {
+    const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
+    const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
+    
+    const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
+    composedCanvas.width = overlayCanvas.width;
+    composedCanvas.height = overlayCanvas.height;
+        
+    const ctx = composedCanvas.getContext("2d");
+    ctx.fillStyle = darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
+    ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
+    ctx.drawImage(rasterCanvas, padding.left, padding.top);
+    ctx.drawImage(overlayCanvas, 0, 0);
+    
+    const dataURL = composedCanvas.toDataURL().replace("image/png", "image/octet-stream");
+    
+    const now = new Date();
+    const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
+    
+    const a = document.createElement("a") as HTMLAnchorElement;
+    a.href = dataURL;
+    a.download = `CARTA-exported-image-${timestamp}.png`;
+    a.dispatchEvent(new MouseEvent("click"));
+};
 
 @observer
 export class ImageViewComponent extends React.Component<WidgetProps> {
@@ -56,11 +82,24 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             appStore.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom);
         }
     };
+    
+    onMouseEnter = () => {
+        this.props.appStore.showImageToolbar();
+    };
+    
+    onMouseLeave = () => {
+        this.props.appStore.hideImageToolbar();
+    };
 
     render() {
         const appStore = this.props.appStore;
         return (
-            <div className="image-view-div" ref={(ref) => this.containerDiv = ref}>
+            <div
+                className="image-view-div"
+                ref={(ref) => this.containerDiv = ref}
+                onMouseEnter={this.onMouseEnter}
+                onMouseLeave={this.onMouseLeave}
+            >
                 {appStore.astReady && appStore.activeFrame && appStore.activeFrame.valid &&
                 <OverlayComponent
                     frame={appStore.activeFrame}
@@ -96,6 +135,12 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     showValue={true}
                     showChannel={false}
                     showSpectral={true}
+                />
+                }
+                {appStore.astReady && appStore.activeFrame && appStore.imageToolbarVisible &&
+                <ToolbarComponent
+                    appStore={appStore}
+                    docked={this.props.docked}
                 />
                 }
                 {!appStore.astReady &&
