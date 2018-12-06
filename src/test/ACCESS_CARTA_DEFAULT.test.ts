@@ -137,7 +137,6 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
                     Connection.send(eventData);
                 } else {
                     console.log(`"${testEventName}" can not open a connection.`);
-                    Connection.close();
                 }
                 done();
             };
@@ -153,7 +152,6 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
                 expect(eventName).toBe(testReturnName);
 
                 done();
-                Connection.close();
             };
         }, connectTimeoutLocal);
     
@@ -172,8 +170,7 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
                 expect(parsedMessage.sessionId).toBeDefined();
                 console.log(`current session ID is ${parsedMessage.sessionId}`);
 
-                done();                
-                Connection.close();
+                done();
             };
     
         }, connectTimeoutLocal);
@@ -185,8 +182,6 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
                 const eventData = new Uint8Array(event.data, 36);
                 expect(CARTA.RegisterViewerAck.decode(eventData).success).toBe(true);
                 done();
-                
-                Connection.close();
             };
         }, connectTimeoutLocal);
     
@@ -197,9 +192,12 @@ describe("ACCESS_CARTA_DEFAULT tests", () => {
                 const eventData = new Uint8Array(event.data, 36);
                 expect(CARTA.RegisterViewerAck.decode(eventData).sessionType).toBe(CARTA.SessionType.NEW);
                 done();
-                    
-                Connection.close();
             };
+        }, connectTimeoutLocal);
+
+        afterEach( done => {
+            Connection.close();
+            done();
         }, connectTimeoutLocal);
     
     });
