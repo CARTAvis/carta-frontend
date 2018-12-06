@@ -3,8 +3,8 @@ import * as Utility from "./testUtilityFunction";
 
 let WebSocket = require("ws");
 
-let testServerUrl = "ws://localhost:50505";
-let connectTimeoutLocal = 100;
+let testServerUrl = "wss://acdc0.asiaa.sinica.edu.tw/socket2";
+let connectTimeoutLocal = 300;
 let testEventName = "REGISTER_VIEWER";
 let testReturnName = "REGISTER_VIEWER_ACK";
 
@@ -143,28 +143,7 @@ describe("ACCESS_CARTA_WRONG_SID tests", () => {
                 Connection.close();
             };
         }, connectTimeoutLocal);
-    
-        test.skip(`assert the "${testReturnName}.session_id" is not None.`, 
-        done => {
-            // While receive a message from Websocket server
-            Connection.onmessage = (event: MessageEvent) => {
-                const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                const eventId = new Uint32Array(event.data, 32, 1)[0];
-                const eventData = new Uint8Array(event.data, 36);
-
-                let parsedMessage;
-                if (eventName === testReturnName) {
-                    parsedMessage = CARTA.RegisterViewerAck.decode(eventData);
-                }
-                expect(parsedMessage.sessionId).toBeDefined();
-                console.log(`current session ID is ${parsedMessage.sessionId}`);
-
-                done();
-                Connection.close();
-            };
-    
-        }, connectTimeoutLocal);
-    
+               
         test(`assert the "${testReturnName}.success" is false.`, 
         done => {
             // While receive a message from Websocket server
