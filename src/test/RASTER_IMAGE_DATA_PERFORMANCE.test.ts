@@ -50,66 +50,7 @@ describe("RASTER_IMAGE_DATA_PERFORMANCE tests", () => {
             }
         };
     }, connectionTimeout);
-
-    test(`connect to CARTA "${testServerUrl}" & ...`, 
-    done => {
-        // Preapare the message on a eventData
-        const message = CARTA.RegisterViewer.create({sessionId: "", apiKey: "1234"});
-        let payload = CARTA.RegisterViewer.encode(message).finish();
-        let eventData = new Uint8Array(32 + 4 + payload.byteLength);
-
-        eventData.set(Utility.stringToUint8Array("REGISTER_VIEWER", 32));
-        eventData.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
-        eventData.set(payload, 36);
-
-        Connection.send(eventData);
-
-        // While receive a message in the form of arraybuffer
-        Connection.onmessage = (event: MessageEvent) => {
-            const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-            if (eventName === "REGISTER_VIEWER_ACK") {
-                expect(event.data.byteLength).toBeGreaterThan(0);
-                eventData = new Uint8Array(event.data, 36);
-                expect(CARTA.RegisterViewerAck.decode(eventData).success).toBe(true);
-                
-                done();
-            }
-        };
-    }, connectionTimeout);
-
-    describe(`access directory`, () => {
-        [[expectRootPath], [testSubdirectoryName]
-        ].map(
-            ([dir]) => {
-                test(`assert the directory "${dir}" opens.`, 
-                done => {
-                    // Preapare the message
-                    let message = CARTA.FileListRequest.create({directory: testSubdirectoryName});
-                    let payload = CARTA.FileListRequest.encode(message).finish();
-                    let eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
-            
-                    eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
-                    eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
-                    eventDataTx.set(payload, 36);
-            
-                    Connection.send(eventDataTx);
-            
-                    // While receive a message
-                    Connection.onmessage = (event: MessageEvent) => {
-                        let eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                        if (eventName === "FILE_LIST_RESPONSE") {
-                            expect(event.data.byteLength).toBeGreaterThan(0);
-                            let eventData = new Uint8Array(event.data, 36);
-                            expect(CARTA.FileListResponse.decode(eventData).success).toBe(true);
-            
-                            done();
-                        }
-                    };
-                }, openFileTimeout);
-            }
-        );
-    });
-
+    
     describe(`prepare the files`, () => {
         [ 
          ["cluster_00128.fits", {xMin: 0, xMax:   128, yMin: 0, yMax:   128},  1, CARTA.CompressionType.ZFP, 18, 4],
@@ -129,57 +70,6 @@ describe("RASTER_IMAGE_DATA_PERFORMANCE tests", () => {
             function ([testFileName, imageBounds, mip, compressionType, compressionQuality, numSubsets]: 
                     [string, {xMin: number, xMax: number, yMin: number, yMax: number}, number, CARTA.CompressionType, number, number]) {
                 
-                test(`assert the file "${testFileName}" opens.`, 
-                done => {
-                    // Preapare the message
-                    let message = CARTA.FileListRequest.create({directory: testSubdirectoryName});
-                    let payload = CARTA.FileListRequest.encode(message).finish();
-                    let eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
-            
-                    eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
-                    eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
-                    eventDataTx.set(payload, 36);
-            
-                    Connection.send(eventDataTx);
-            
-                    // While receive a message
-                    Connection.onmessage = (event: MessageEvent) => {
-                        let eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                        if (eventName === "FILE_LIST_RESPONSE") {
-                            let eventData = new Uint8Array(event.data, 36);
-                            expect(CARTA.FileListResponse.decode(eventData).success).toBe(true);
-
-                            // Preapare the message
-                            message = CARTA.OpenFile.create({
-                                directory: testSubdirectoryName, 
-                                file: testFileName, hdu: "0", fileId: 0, 
-                                renderMode: CARTA.RenderMode.RASTER
-                            });
-                            payload = CARTA.OpenFile.encode(message).finish();
-                            eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
-
-                            eventDataTx.set(Utility.stringToUint8Array("OPEN_FILE", 32));
-                            eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
-                            eventDataTx.set(payload, 36);
-
-                            Connection.send(eventDataTx);
-
-                            // While receive a message
-                            Connection.onmessage = (eventOpen: MessageEvent) => {
-                                eventName = Utility.getEventName(new Uint8Array(eventOpen.data, 0, 32));
-                                if (eventName === "OPEN_FILE_ACK") {
-                                    eventData = new Uint8Array(eventOpen.data, 36);
-                                    let openFileMessage = CARTA.OpenFileAck.decode(eventData);
-                                    // console.log(openFileMessage);
-                                    expect(openFileMessage.success).toBe(true);
-
-                                    done();
-                                } // if
-                            }; // onmessage
-                        } // if
-                    }; // onmessage "FILE_LIST_RESPONSE"
-                }, openFileTimeout); // test
-
                 describe(`open the file "${testFileName}" and ...`,
                 () => {
                     beforeEach( 
