@@ -3,15 +3,7 @@
 .image-toolbar {
     position: absolute;
     margin: 5px;
-    border: 1px solid $gray5;
-    border-radius: 3px;
-    background-color: $white;
     transition: opacity 400ms;
-
-    &.bp3-dark {
-        border: 1px solid $black;
-        background-color: $dark-gray4;
-    }
 
     &.docked {
         z-index: 2;

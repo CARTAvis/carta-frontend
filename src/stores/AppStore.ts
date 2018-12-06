@@ -43,7 +43,7 @@ export class AppStore {
         this.overlayStore.viewWidth = w;
         this.overlayStore.viewHeight = h;
     };
-    
+
     // Image toolbar
     @observable imageToolbarVisible: boolean;
     @action showImageToolbar = () => {
@@ -52,7 +52,7 @@ export class AppStore {
     @action hideImageToolbar = () => {
         this.imageToolbarVisible = false;
     };
-    
+
     // Overlay
     @observable overlayStore: OverlayStore;
     // File Browser
@@ -72,8 +72,6 @@ export class AppStore {
     @action hideHotkeyDialog = () => {
         this.hotkeyDialogVisible = false;
     };
-    
-    
 
     // Widgets
     @observable widgetsStore: WidgetsStore;
@@ -113,8 +111,7 @@ export class AppStore {
             const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === fileId);
             if (existingFrameIndex !== -1) {
                 this.frames[existingFrameIndex] = newFrame;
-            }
-            else {
+            } else {
                 this.frames.push(newFrame);
             }
             this.setActiveFrame(newFrame.frameInfo.fileId);
@@ -190,8 +187,7 @@ export class AppStore {
         if (!initResult) {
             this.logStore.addWarning(`Problem processing WCS info in file ${frame.frameInfo.fileInfo.name}`, ["ast"]);
             frame.wcsInfo = AST.initDummyFrame();
-        }
-        else {
+        } else {
             frame.wcsInfo = initResult;
             frame.validWcs = true;
             this.overlayStore.setDefaultsFromAST(frame);
@@ -443,8 +439,7 @@ export class AppStore {
             this.activeFrame = requiredFrame;
             this.widgetsStore.updateImageWidgetTitle();
             this.setCursorFrozen(false);
-        }
-        else {
+        } else {
             console.log(`Can't find required frame ${fileId}`);
         }
     }
@@ -454,8 +449,7 @@ export class AppStore {
             this.activeFrame = this.frames[index];
             this.widgetsStore.updateImageWidgetTitle();
             this.setCursorFrozen(false);
-        }
-        else {
+        } else {
             console.log(`Invalid frame index ${index}`);
         }
     }

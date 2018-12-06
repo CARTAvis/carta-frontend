@@ -193,7 +193,6 @@ export class FrameStore {
                 }
                 spectralInfo.spectralString = `${spectralName}:\u00a0${channelInfo.values[this.channel].toFixed(4)}\u00a0${channelInfo.channelType.unit}`;
 
-
                 const refFreq = this.referenceFrequency;
                 // Add velocity conversion
                 if (channelInfo.channelType.code === "FREQ" && isFinite(refFreq)) {
@@ -295,25 +294,25 @@ export class FrameStore {
 
     }
 
-    @action fitZoomX() {
+    @action fitZoomX = () => {
         this.zoomLevel = this.calculateZoomX();
         this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + 0.5;
         this.center.y = this.frameInfo.fileInfoExtended.height / 2.0 + 0.5;
-    }
+    };
 
-    @action fitZoomY() {
+    @action fitZoomY = () => {
         this.zoomLevel = this.calculateZoomY();
         this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + 0.5;
         this.center.y = this.frameInfo.fileInfoExtended.height / 2.0 + 0.5;
-    }
+    };
 
-    @action fitZoom() {
+    @action fitZoom = () => {
         const zoomX = this.calculateZoomX();
         const zoomY = this.calculateZoomY();
         this.zoomLevel = Math.min(zoomX, zoomY);
         this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + 0.5;
         this.center.y = this.frameInfo.fileInfoExtended.height / 2.0 + 0.5;
-    }
+    };
 
     private calculateZoomX() {
         const imageWidth = this.frameInfo.fileInfoExtended.width;

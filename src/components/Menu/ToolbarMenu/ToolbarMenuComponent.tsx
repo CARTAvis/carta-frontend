@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as GoldenLayout from "golden-layout";
 import {observer} from "mobx-react";
-import {Button, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
 import {AppStore} from "../../../stores/AppStore";
 import {WidgetConfig} from "../../../stores/WidgetsStore";
 import {RenderConfigComponent} from "../../RenderConfig/RenderConfigComponent";
@@ -53,23 +53,23 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
             className += " bp3-dark";
         }
         return (
-            <div className={className}>
+            <ButtonGroup className={className}>
                 <Tooltip content="Render Config Widget">
-                    <Button icon={"style"} id="renderConfigButton" minimal={true} onClick={this.props.appStore.widgetsStore.createFloatingRenderWidget}/>
+                    <Button icon={"style"} id="renderConfigButton" onClick={this.props.appStore.widgetsStore.createFloatingRenderWidget}/>
                 </Tooltip>
                 <Tooltip content="Log Widget">
-                    <Button icon={"application"} id="logButton" minimal={true} onClick={this.props.appStore.widgetsStore.createFloatingLogWidget}/>
+                    <Button icon={"application"} id="logButton" onClick={this.props.appStore.widgetsStore.createFloatingLogWidget}/>
                 </Tooltip>
                 <Tooltip content="Animator Widget">
-                    <Button icon={"layers"} id="animatorButton" minimal={true} onClick={this.props.appStore.widgetsStore.createFloatingAnimatorWidget}/>
+                    <Button icon={"layers"} id="animatorButton" onClick={this.props.appStore.widgetsStore.createFloatingAnimatorWidget}/>
                 </Tooltip>
                 <Tooltip content="Spatial Profiler">
-                    <Button icon={"timeline-line-chart"} id="spatialProfilerButton" minimal={true} onClick={this.props.appStore.widgetsStore.createFloatingSpatialProfilerWidget}/>
+                    <Button icon={"timeline-line-chart"} id="spatialProfilerButton" onClick={this.props.appStore.widgetsStore.createFloatingSpatialProfilerWidget}/>
                 </Tooltip>
                 <Tooltip content="Spectral Profiler">
-                    <Button icon={"step-chart"} id="spectralProfilerButton" minimal={true} onClick={this.props.appStore.widgetsStore.createFloatingSpectralProfilerWidget}/>
+                    <Button icon={"step-chart"} id="spectralProfilerButton" onClick={this.props.appStore.widgetsStore.createFloatingSpectralProfilerWidget}/>
                 </Tooltip>
-            </div>
+            </ButtonGroup>
         );
     }
 }

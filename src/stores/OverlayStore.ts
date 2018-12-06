@@ -50,24 +50,24 @@ export class Padding {
 
 export class ASTSettingsString {
     stringList: Array<string>;
-    
-    constructor () {
+
+    constructor() {
         this.stringList = [];
     }
-    
+
     add(name: string, value: any, storeIf: boolean = true) {
         if (value !== undefined && storeIf) {
             let storedValue = (typeof value === "boolean" ? (value ? 1 : 0) : value);
             this.stringList.push(`${name}=${storedValue}`);
         }
     }
-    
+
     addSection(section: string) {
         if (section !== undefined) {
             this.stringList.push(section);
         }
     }
-    
+
     toString() {
         return this.stringList.filter(str => str.length > 0).join(", ");
     }
@@ -78,7 +78,7 @@ export class OverlayGlobalSettings {
     @observable color: number;
     @observable tolerance: number; // percentage
     @observable system: SystemType;
-    
+
     // We need this so that we know what to do if it's set to native
     @observable defaultSystem: SystemType;
     @observable validWcs: boolean;
@@ -91,39 +91,39 @@ export class OverlayGlobalSettings {
         astString.add("System", this.implicitSystem);
         return astString.toString();
     }
-    
+
     // Get the current manually overridden system or nothing if system is set to native
     @computed get implicitSystem() {
         if (!this.validWcs || this.system === SystemType.Native) {
             return undefined;
         }
-        
+
         return this.system;
     }
-    
+
     // Get the current manually overridden system or the default saved from file if system is set to native
     @computed get explicitSystem() {
         if (!this.validWcs) {
             return undefined;
         }
-        
+
         if (this.system === SystemType.Native) {
             return this.defaultSystem;
         }
-        
+
         return this.system;
     }
-    
+
     constructor() {
         this.system = SystemType.Native;
         this.labelType = LabelType.Exterior;
         this.color = 4;
         this.tolerance = 1; // percentage
-        
+
         this.defaultSystem = SystemType.Native;
         this.validWcs = false;
     }
-    
+
     @action setColor = (color: number) => {
         this.color = color;
     };
@@ -131,15 +131,15 @@ export class OverlayGlobalSettings {
     @action setTolerance(tolerance: number) {
         this.tolerance = tolerance;
     }
-    
+
     @action setLabelType(labelType: LabelType) {
         this.labelType = labelType;
     }
-    
+
     @action setSystem(system: SystemType) {
         this.system = system;
     }
-    
+
     @action setDefaultSystem(system: SystemType) {
         this.defaultSystem = system;
     }
@@ -165,7 +165,7 @@ export class OverlayTitleSettings {
         astString.add("Color(Title)", this.color, this.customColor);
         return astString.toString();
     }
-    
+
     constructor() {
         this.visible = false;
         this.hidden = false;
@@ -174,7 +174,7 @@ export class OverlayTitleSettings {
         this.font = 2;
         this.fontSize = 18;
     }
-    
+
     @computed get show() {
         return this.visible && !this.hidden;
     }
@@ -222,7 +222,7 @@ export class OverlayGridSettings {
         astString.add("Gap(2)", this.gapY, this.customGap);
         return astString.toString();
     }
-    
+
     constructor() {
         this.visible = true;
         this.customColor = false;
@@ -260,7 +260,7 @@ export class OverlayGridSettings {
     @action setGapY(gap: number) {
         this.gapY = gap;
     }
-    
+
 }
 
 export class OverlayBorderSettings {
@@ -276,7 +276,7 @@ export class OverlayBorderSettings {
         astString.add("Width(Border)", this.width, (this.width > 0));
         return astString.toString();
     }
-    
+
     constructor() {
         this.visible = true;
         this.customColor = false;
@@ -323,7 +323,7 @@ export class OverlayTickSettings {
         astString.add("MajTickLen", (this.majorLength / 100).toFixed(2)); // convert to fraction
         return astString.toString();
     }
-    
+
     constructor() {
         this.drawAll = true;
         this.customDensity = false;
@@ -378,7 +378,7 @@ export class OverlayAxisSettings {
     @observable customColor: boolean;
     @observable color: number;
     @observable width: number;
-    
+
     constructor() {
         this.visible = false;
         this.customColor = false;
@@ -386,7 +386,7 @@ export class OverlayAxisSettings {
         this.width = 1;
     }
 
-    @computed get styleString() {        
+    @computed get styleString() {
         let astString = new ASTSettingsString();
 
         astString.add("DrawAxes", this.visible);
@@ -425,7 +425,7 @@ export class OverlayNumberSettings {
     @observable formatY: string;
     @observable customPrecision: boolean;
     @observable precision: number;
-    
+
     // Unlike most default values, we calculate and set these explicitly, instead of
     // leaving them unset and letting AST pick a default. We have to save these so that
     // we can revert to default values after setting custom values.
@@ -449,60 +449,60 @@ export class OverlayNumberSettings {
         this.precision = 3;
         this.validWcs = false;
     }
-    
+
     @computed get formatStringX() {
         if (!this.validWcs) {
             return undefined;
         }
-        
+
         let format = (this.customFormat ? this.formatX : this.defaultFormatX);
         let precision = (this.customPrecision ? this.precision : "*");
         return `${format}.${precision}`;
     }
-    
+
     @computed get formatStringY() {
         if (!this.validWcs) {
             return undefined;
         }
-        
+
         let format = (this.customFormat ? this.formatY : this.defaultFormatY);
         let precision = (this.customPrecision ? this.precision : "*");
         return `${format}.${precision}`;
     }
-    
+
     cursorFormatStringX(precision: number) {
         if (!this.validWcs) {
             return undefined;
         }
-        
+
         let format = (this.customFormat ? this.formatX : this.defaultFormatX);
         return `${format}.${precision}`;
     }
-    
+
     cursorFormatStringY(precision: number) {
         if (!this.validWcs) {
             return undefined;
         }
-        
+
         let format = (this.customFormat ? this.formatY : this.defaultFormatY);
         return `${format}.${precision}`;
     }
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
-                
+
         astString.add("NumLab", this.show);
         astString.add("Font(NumLab)", this.font);
         astString.add("Size(NumLab)", this.fontSize);
         astString.add("Color(NumLab)", this.color, this.customColor);
-                
+
         // Add settings for individual axes
         astString.add("Format(1)", this.formatStringX);
         astString.add("Format(2)", this.formatStringY);
-        
+
         return astString.toString();
     }
-    
+
     @computed get show() {
         return this.visible && !this.hidden;
     }
@@ -588,10 +588,10 @@ export class OverlayLabelSettings {
         astString.add("Font(TextLab)", this.font);
         astString.add("Size(TextLab)", this.fontSize);
         astString.add("Color(TextLab)", this.color, this.customColor);
-        
+
         return astString.toString();
     }
-    
+
     @computed get show() {
         return this.visible && !this.hidden;
     }
@@ -635,21 +635,21 @@ export class OverlayStore {
     @observable numbers: OverlayNumberSettings;
     @observable labels: OverlayLabelSettings;
     @observable ticks: OverlayTickSettings;
-    
+
     // Dialog
-    
+
     @observable overlaySettingsDialogVisible = false;
-    
+
     @action showOverlaySettings = () => {
         this.overlaySettingsDialogVisible = true;
     };
-    
+
     @action hideOverlaySettings = () => {
         this.overlaySettingsDialogVisible = false;
     };
-    
+
     @observable overlaySettingsActiveTab = "global";
-    
+
     @action setOverlaySettingsActiveTab(tabId: string) {
         this.overlaySettingsActiveTab = tabId;
     }
@@ -663,7 +663,7 @@ export class OverlayStore {
         this.numbers = new OverlayNumberSettings();
         this.labels = new OverlayLabelSettings();
         this.ticks = new OverlayTickSettings();
-                
+
         // if the system is manually selected, set new default formats
         autorun(() => {
             const _ = this.global.system;
@@ -672,12 +672,12 @@ export class OverlayStore {
     }
 
     @action setFormatsFromSystem() {
-        
+
         if (!this.global.validWcs) {
             // TODO: check if degrees would work
             this.numbers.setDefaultFormatX(undefined);
             this.numbers.setDefaultFormatY(undefined);
-        } else {            
+        } else {
             if ([SystemType.FK4, SystemType.FK5, SystemType.ICRS].indexOf(this.global.explicitSystem) > -1) {
                 this.numbers.setDefaultFormatX("hms");
                 this.numbers.setDefaultFormatY("dms");
@@ -687,30 +687,30 @@ export class OverlayStore {
                 this.numbers.setDefaultFormatY("d");
             }
         }
-        
+
         // Set starting values for custom format only if format is not already custom
         if (!this.numbers.customFormat) {
             this.numbers.setFormatX(this.numbers.defaultFormatX);
             this.numbers.setFormatY(this.numbers.defaultFormatY);
         }
     }
-    
+
     @action setDefaultsFromAST(frame: FrameStore) {
         this.global.setValidWcs(frame.validWcs);
         this.numbers.setValidWcs(frame.validWcs);
-        
+
         this.global.setDefaultSystem(AST.getString(frame.wcsInfo, "System") as SystemType);
         this.setFormatsFromSystem();
     }
-    
-    @action toggleLabels() {
+
+    @action toggleLabels = () => {
         const newState = !this.labelsHidden;
 
         this.labels.setHidden(newState);
         this.numbers.setHidden(newState);
         this.title.setHidden(newState);
-    }
-    
+    };
+
     @computed get labelsHidden() {
         return (this.labels.hidden && this.numbers.hidden && this.title.hidden);
     }
@@ -726,32 +726,32 @@ export class OverlayStore {
         astString.addSection(this.axes.styleString);
         astString.addSection(this.numbers.styleString);
         astString.addSection(this.labels.styleString);
-        
+
         astString.add("LabelUp", 0);
         astString.add("TitleGap", this.titleGap / this.minSize);
         astString.add("NumLabGap", this.defaultGap / this.minSize);
         astString.add("TextLabGap", this.cumulativeLabelGap / this.minSize);
         astString.add("TextGapType", "plot");
-                
+
         return astString.toString();
     }
-    
+
     @computed get minSize() {
         return Math.min(this.viewWidth, this.viewHeight);
     }
-    
+
     @computed get showNumbers() {
         return (this.numbers.show && this.global.labelType === LabelType.Exterior);
     }
-    
+
     @computed get defaultGap() {
         return 5;
     }
-    
+
     @computed get titleGap() {
         return this.defaultGap * 2;
     }
-    
+
     @computed get cumulativeLabelGap() {
         const numGap = (this.showNumbers ? this.defaultGap : 0);
         const numHeight = (this.showNumbers ? this.numbers.fontSize : 0);
@@ -760,16 +760,16 @@ export class OverlayStore {
 
     @computed get padding(): Padding {
         const base = 5;
-        
+
         const numGap = (this.showNumbers ? this.defaultGap : 0);
         const numHeight = (this.showNumbers ? this.numbers.fontSize : 0);
-        
+
         const labelGap = (this.labels.show ? this.defaultGap : 0);
         const labelHeight = (this.labels.show ? this.labels.fontSize : 0);
-        
+
         const titleGap = (this.title.show ? this.titleGap : 0);
         const titleHeight = (this.title.show ? this.title.fontSize : 0);
-        
+
         return {
             left: base + numGap + numHeight + labelGap + labelHeight,
             right: base,
