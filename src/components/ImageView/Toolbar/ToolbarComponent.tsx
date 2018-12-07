@@ -39,6 +39,9 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         return (
             <ButtonGroup className={className} style={styleProps}>
+                <Tooltip content={`Zoom to 100% (Current: ${(frame.zoomLevel * 100.0).toFixed(0)}%)`}>
+                    <Button onClick={() => frame.setZoom(1.0)} className={"full-zoom-button"}>1:1</Button>
+                </Tooltip>
                 <Tooltip content="Fit width">
                     <Button icon="arrows-horizontal" onClick={frame.fitZoomX}/>
                 </Tooltip>
