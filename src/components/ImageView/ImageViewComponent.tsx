@@ -1,10 +1,11 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {WidgetConfig, WidgetProps} from "../../stores/WidgetsStore";
+import {autorun, observable} from "mobx";
+import {NonIdealState, Spinner, Colors, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {NonIdealState, Spinner, Colors} from "@blueprintjs/core";
+import {WidgetConfig, WidgetProps} from "../../stores/WidgetsStore";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
-import {CursorInfo} from "../../models/CursorInfo";
+import {CursorInfo} from "../../models";
 import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
@@ -41,6 +42,9 @@ export const exportImage = (padding, darkTheme, imageName) => {
 @observer
 export class ImageViewComponent extends React.Component<WidgetProps> {
     private containerDiv: HTMLDivElement;
+    private ratioIndicatorTimeoutHandle;
+
+    @observable showRatioIndicator: boolean;
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -53,6 +57,22 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             title: "Image view",
             isCloseable: false
         };
+    }
+
+    constructor(props: WidgetProps) {
+        super(props);
+
+        autorun(() => {
+            const appStore = this.props.appStore;
+            if (appStore.activeFrame) {
+                console.log({w: appStore.activeFrame.renderWidth, h: appStore.activeFrame.renderHeight});
+                clearTimeout(this.ratioIndicatorTimeoutHandle);
+                this.showRatioIndicator = true;
+                this.ratioIndicatorTimeoutHandle = setTimeout(() => {
+                    this.showRatioIndicator = false;
+                }, 1000);
+            }
+        });
     }
 
     onResize = (width: number, height: number) => {
@@ -97,6 +117,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     render() {
         const appStore = this.props.appStore;
         const beamProfile = appStore.activeFrame ? appStore.activeFrame.beamProperties : null;
+        const imageRatioTagOffset = {x: appStore.overlayStore.padding.left + appStore.overlayStore.viewWidth / 2.0, y: appStore.overlayStore.padding.top + appStore.overlayStore.viewHeight / 2.0};
+
         return (
             <div
                 className="image-view-div"
@@ -161,6 +183,13 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     docked={this.props.docked}
                     visible={appStore.imageToolbarVisible}
                 />
+                }
+                {appStore.activeFrame &&
+                <div style={{opacity: this.showRatioIndicator ? 1 : 0, left: imageRatioTagOffset.x, top: imageRatioTagOffset.y}} className={"tag-image-ratio"}>
+                    <Tag large={true}>
+                        {appStore.activeFrame.renderWidth} x {appStore.activeFrame.renderHeight} ({(appStore.activeFrame.renderWidth / appStore.activeFrame.renderHeight).toFixed(2)})
+                    </Tag>
+                </div>
                 }
                 {!appStore.astReady &&
                 <NonIdealState icon={<Spinner className="astLoadingSpinner"/>} title={"Loading AST Library"}/>

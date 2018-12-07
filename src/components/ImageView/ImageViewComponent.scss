@@ -2,4 +2,15 @@
     width: 100%;
     height: 100%;
     position: relative;
+
+    .tag-image-ratio {
+        transition: opacity 0.5s;
+        position: absolute;
+        z-index: 5;
+        pointer-events: none;
+
+        .bp3-tag {
+            left: -50%;
+        }
+    }
 }
