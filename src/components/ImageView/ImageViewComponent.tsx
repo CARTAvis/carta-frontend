@@ -21,7 +21,9 @@ export const exportImage = (padding, darkTheme) => {
     const ctx = composedCanvas.getContext("2d");
     ctx.fillStyle = darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
+    ctx.scale(devicePixelRatio, devicePixelRatio);
     ctx.drawImage(rasterCanvas, padding.left, padding.top);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(overlayCanvas, 0, 0);
     
     const dataURL = composedCanvas.toDataURL().replace("image/png", "image/octet-stream");
