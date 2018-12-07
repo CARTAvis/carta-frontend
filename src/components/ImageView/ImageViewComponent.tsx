@@ -1,10 +1,11 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {WidgetConfig, WidgetProps} from "../../stores/WidgetsStore";
+import {autorun, observable} from "mobx";
+import {NonIdealState, Spinner, Colors, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {NonIdealState, Spinner, Colors} from "@blueprintjs/core";
+import {WidgetConfig, WidgetProps} from "../../stores/WidgetsStore";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
-import {CursorInfo} from "../../models/CursorInfo";
+import {CursorInfo} from "../../models";
 import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
@@ -13,11 +14,11 @@ import "./ImageViewComponent.css";
 export const exportImage = (padding, darkTheme) => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
     const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
-    
+
     const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
     composedCanvas.width = overlayCanvas.width;
     composedCanvas.height = overlayCanvas.height;
-        
+
     const ctx = composedCanvas.getContext("2d");
     ctx.fillStyle = darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
@@ -25,12 +26,12 @@ export const exportImage = (padding, darkTheme) => {
     ctx.drawImage(rasterCanvas, padding.left, padding.top);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(overlayCanvas, 0, 0);
-    
+
     const dataURL = composedCanvas.toDataURL().replace("image/png", "image/octet-stream");
-    
+
     const now = new Date();
     const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
-    
+
     const a = document.createElement("a") as HTMLAnchorElement;
     a.href = dataURL;
     a.download = `CARTA-exported-image-${timestamp}.png`;
@@ -40,6 +41,9 @@ export const exportImage = (padding, darkTheme) => {
 @observer
 export class ImageViewComponent extends React.Component<WidgetProps> {
     private containerDiv: HTMLDivElement;
+    private ratioIndicatorTimeoutHandle;
+
+    @observable showRatioIndicator: boolean;
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -52,6 +56,22 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             title: "Image view",
             isCloseable: false
         };
+    }
+
+    constructor(props: WidgetProps) {
+        super(props);
+
+        autorun(() => {
+            const appStore = this.props.appStore;
+            if (appStore.activeFrame) {
+                console.log({w: appStore.activeFrame.renderWidth, h: appStore.activeFrame.renderHeight});
+                clearTimeout(this.ratioIndicatorTimeoutHandle);
+                this.showRatioIndicator = true;
+                this.ratioIndicatorTimeoutHandle = setTimeout(() => {
+                    this.showRatioIndicator = false;
+                }, 1000);
+            }
+        });
     }
 
     onResize = (width: number, height: number) => {
@@ -84,17 +104,20 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             appStore.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom);
         }
     };
-    
+
     onMouseEnter = () => {
         this.props.appStore.showImageToolbar();
     };
-    
+
     onMouseLeave = () => {
         this.props.appStore.hideImageToolbar();
     };
 
     render() {
         const appStore = this.props.appStore;
+
+        const imageRatioTagOffset = {x: appStore.overlayStore.padding.left + appStore.overlayStore.viewWidth / 2.0, y: appStore.overlayStore.padding.top + appStore.overlayStore.viewHeight / 2.0};
+
         return (
             <div
                 className="image-view-div"
@@ -145,6 +168,13 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     docked={this.props.docked}
                     visible={appStore.imageToolbarVisible}
                 />
+                }
+                {appStore.activeFrame &&
+                <div style={{opacity: this.showRatioIndicator ? 1 : 0, left: imageRatioTagOffset.x, top: imageRatioTagOffset.y}} className={"tag-image-ratio"}>
+                    <Tag large={true}>
+                        {appStore.activeFrame.renderWidth} x {appStore.activeFrame.renderHeight} ({(appStore.activeFrame.renderWidth / appStore.activeFrame.renderHeight).toFixed(2)})
+                    </Tag>
+                </div>
                 }
                 {!appStore.astReady &&
                 <NonIdealState icon={<Spinner className="astLoadingSpinner"/>} title={"Loading AST Library"}/>
