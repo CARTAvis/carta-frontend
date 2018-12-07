@@ -40,9 +40,11 @@ export class BeamProfileOverlayComponent extends React.PureComponent<BeamProfile
         return (
             <Stage className={className} width={this.props.width} height={this.props.height} style={{left: this.props.left, top: this.props.top}}>
                 <Layer hitGraphEnabled={false}>
-                    <Group x={boundingBox.x / 2.0 + paddingOffset}
-                           y={this.props.height - boundingBox.y / 2.0 - paddingOffset}
-                           rotationDeg={theta * 180.0 / Math.PI}>
+                    <Group
+                        x={boundingBox.x / 2.0 + paddingOffset}
+                        y={this.props.height - boundingBox.y / 2.0 - paddingOffset}
+                        rotationDeg={theta * 180.0 / Math.PI}
+                    >
                         <Ellipse radius={{x: a, y: b}} stroke={renderColor} strokeWidth={1}/>
                         <Line points={[-a, 0, a, 0]} stroke={renderColor} strokeWidth={1}/>
                         <Line points={[0, -b, 0, b]} stroke={renderColor} strokeWidth={1}/>

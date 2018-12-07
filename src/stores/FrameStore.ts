@@ -317,7 +317,7 @@ export class FrameStore {
     }
 
     @action zoomToSelection(xMin: number, xMax: number, yMin: number, yMax: number) {
-
+        // TODO
     }
 
     @action fitZoomX = () => {
