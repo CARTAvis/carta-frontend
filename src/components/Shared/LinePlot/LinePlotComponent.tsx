@@ -409,10 +409,17 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
     
     exportImage = () => {
-        console.log("+++ exportImage called!");
         const scatter = this.plotRef as Scatter;
-        console.log(typeof scatter);
-        // TODO: how to get canvas?!
+        const canvas = scatter.chartInstance.canvas;
+        const dataURL = canvas.toDataURL().replace("image/png", "image/octet-stream");
+        
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
+        
+        const a = document.createElement("a") as HTMLAnchorElement;
+        a.href = dataURL;
+        a.download = `CARTA-exported-profile-${timestamp}.png`;
+        a.dispatchEvent(new MouseEvent("click"));
     };
     
     exportData = () => {
