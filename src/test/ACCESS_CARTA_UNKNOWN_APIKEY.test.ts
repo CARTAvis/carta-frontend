@@ -2,8 +2,8 @@ import {CARTA} from "carta-protobuf";
 import * as Utility from "./testUtilityFunction";
 
 let WebSocket = require("ws");
-let testServerUrl = "ws://localhost:50505";
-let connectTimeoutLocal = 200;
+let testServerUrl = "wss://acdc0.asiaa.sinica.edu.tw/socket2";
+let connectTimeout = 300;
 let testEventName = "REGISTER_VIEWER";
 let testReturnName = "REGISTER_VIEWER_ACK";
 
@@ -18,7 +18,7 @@ describe("Websocket tests", () => {
             Connection.close();
             done();     // Return to this test
         };
-    }, connectTimeoutLocal);
+    }, connectTimeout);
 });
 
 describe("ACCESS_CARTA_UNKNOWN_APIKEY tests", () => {
@@ -57,7 +57,7 @@ describe("ACCESS_CARTA_UNKNOWN_APIKEY tests", () => {
             done();
         };
 
-    }, connectTimeoutLocal);
+    }, connectTimeout);
 
     test(`send EventName: "${testEventName}" to CARTA "${testServerUrl}" with session_id "" & api_key "5678".`, 
     done => {
@@ -94,7 +94,7 @@ describe("ACCESS_CARTA_UNKNOWN_APIKEY tests", () => {
             done();
         };
 
-    }, connectTimeoutLocal);
+    }, connectTimeout);
 
     describe(`receive EventName: "${testReturnName}" tests on CARTA ${testServerUrl}`, 
     () => {
@@ -122,13 +122,12 @@ describe("ACCESS_CARTA_UNKNOWN_APIKEY tests", () => {
                     Connection.send(eventData);
                 } else {
                     console.log(`"${testEventName}" can not open a connection.`);
-                    Connection.close();
                 }
                 done();
             };
-        }, connectTimeoutLocal);
+        }, connectTimeout);
     
-        test(`assert the received EventName is "${testReturnName}" within ${connectTimeoutLocal * 1e-3} seconds.`, 
+        test(`assert the received EventName is "${testReturnName}" within ${connectTimeout * 1e-3} seconds.`, 
         done => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
@@ -138,9 +137,8 @@ describe("ACCESS_CARTA_UNKNOWN_APIKEY tests", () => {
                 expect(eventName).toBe(testReturnName);
 
                 done();
-                Connection.close();
             };
-        }, connectTimeoutLocal);
+        }, connectTimeout);
     
         test(`assert the "${testReturnName}.session_id" is not None.`, 
         done => {
@@ -158,10 +156,9 @@ describe("ACCESS_CARTA_UNKNOWN_APIKEY tests", () => {
                 }
             
                 done();
-                Connection.close();
             };
     
-        }, connectTimeoutLocal);
+        }, connectTimeout);
     
         test(`assert the "${testReturnName}.success" is false.`, 
         done => {
@@ -171,9 +168,8 @@ describe("ACCESS_CARTA_UNKNOWN_APIKEY tests", () => {
                 expect(CARTA.RegisterViewerAck.decode(eventData).success).toBe(false);
                 
                 done();
-                Connection.close();
             };
-        }, connectTimeoutLocal);
+        }, connectTimeout);
     
         test(`assert the "${testReturnName}.message" is None.`, 
         done => {
@@ -183,9 +179,13 @@ describe("ACCESS_CARTA_UNKNOWN_APIKEY tests", () => {
                 expect(CARTA.RegisterViewerAck.decode(eventData).message).toBe("");
                 
                 done();
-                Connection.close();
             };
-        }, connectTimeoutLocal);
+        }, connectTimeout);
+
+        afterEach( done => {
+            Connection.close();
+            done();
+        }, connectTimeout);    
     
     });
 });

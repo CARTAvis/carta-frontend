@@ -2,28 +2,13 @@ import {CARTA} from "carta-protobuf";
 import * as Utility from "./testUtilityFunction";
 
 let WebSocket = require("ws");
-let testServerUrl = "ws://localhost:50505";
+let testServerUrl = "wss://acdc0.asiaa.sinica.edu.tw/socket2";
 let testFileName = "aJ.fits";
 let fileType = CARTA.FileType.FITS;
-let testSubdirectoryName = "QA";
-let expectRootPath = "/Users/zarda/CARTA/Images"; // For ASIAA backend
-// let expectRootPath = ""; // For NRAO backend
-let connectTimeoutLocal = 1000;
+let testSubdirectoryName = "set_QA";
+let expectRootPath = "";
+let connectTimeout = 1000;
 let testReturnName = "FILE_LIST_RESPONSE";
-
-describe("Websocket tests", () => {
-    test(`establish a connection to ${testServerUrl}.`, 
-    done => {
-        // Construct a Websocket
-        let Connection = new WebSocket(testServerUrl);
-
-        // While open a Websocket
-        Connection.onopen = () => {
-            Connection.close();
-            done();     // Return to this test
-        };
-    }, connectTimeoutLocal);
-});
 
 describe("GET_FILELIST_ROOTPATH tests", () => {    
 
@@ -62,7 +47,7 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
             done();
         };
 
-    }, connectTimeoutLocal);
+    }, connectTimeout);
 
     test(`send EventName: "FILE_LIST_RESPONSE" to CARTA "${testServerUrl}".`, 
     done => {
@@ -111,7 +96,7 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
             }
         };
 
-    }, connectTimeoutLocal);
+    }, connectTimeout);
 
     describe(`receive EventName: "FILE_LIST_RESPONSE" tests on CARTA ${testServerUrl}`, 
     () => {
@@ -161,9 +146,9 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
                     done();
                 }
             };
-        }, connectTimeoutLocal);
+        }, connectTimeout);
     
-        test(`assert the received EventName is "${testReturnName}" within ${connectTimeoutLocal * 1e-3} seconds.`, 
+        test(`assert the received EventName is "${testReturnName}" within ${connectTimeout * 1e-3} seconds.`, 
         done => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
@@ -177,7 +162,7 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
                 Connection.close();
                 done();
             };
-        }, connectTimeoutLocal);
+        }, connectTimeout);
     
         test(`assert the "FILE_LIST_RESPONSE.success" is true.`, 
         done => {
@@ -192,7 +177,7 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
                 Connection.close();
                 done();
             };
-        }, connectTimeoutLocal);  
+        }, connectTimeout);  
 
         test(`assert the "FILE_LIST_RESPONSE.parent" is None.`, 
         done => {
@@ -211,7 +196,7 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
                 Connection.close();
                 done();
             };    
-        }, connectTimeoutLocal);
+        }, connectTimeout);
 
         test(`assert the "FILE_LIST_RESPONSE.directory" is root path "${expectRootPath}".`, 
         done => {
@@ -230,7 +215,7 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
                 Connection.close();
                 done();
             };    
-        }, connectTimeoutLocal);
+        }, connectTimeout);
 
         test(`assert the file "${testFileName}" exists.`, 
         done => {
@@ -253,7 +238,7 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
                 Connection.close();
             };
     
-        }, connectTimeoutLocal);
+        }, connectTimeout);
     
         test(`assert the subdirectory "${testSubdirectoryName}" exists.`, 
         done => {
@@ -274,7 +259,7 @@ describe("GET_FILELIST_ROOTPATH tests", () => {
                 Connection.close();
                 done();
             };
-        }, connectTimeoutLocal);
+        }, connectTimeout);
     
     });
 });
@@ -316,7 +301,7 @@ describe("GET_FILELIST_UNKNOWNPATH tests", () => {
             done();
         };
 
-    }, connectTimeoutLocal);
+    }, connectTimeout);
 
     test(`send EventName: "FILE_LIST_REQUEST" to CARTA "${testServerUrl}".`, 
     done => {
@@ -365,7 +350,7 @@ describe("GET_FILELIST_UNKNOWNPATH tests", () => {
             }
         };
 
-    }, connectTimeoutLocal);
+    }, connectTimeout);
 
     describe(`access "/unknown/path" on CARTA ${testServerUrl}`, 
     () => {
@@ -427,9 +412,9 @@ describe("GET_FILELIST_UNKNOWNPATH tests", () => {
                     done();
                 }
             };
-        }, connectTimeoutLocal);
+        }, connectTimeout);
     
-        test(`assert the received EventName is "FILE_LIST_RESPONSE" within ${connectTimeoutLocal * 1e-3} seconds.`, 
+        test(`assert the received EventName is "FILE_LIST_RESPONSE" within ${connectTimeout * 1e-3} seconds.`, 
         done => {
             // While receive a message from Websocket server
             Connection.onmessage = (event: MessageEvent) => {
@@ -442,7 +427,7 @@ describe("GET_FILELIST_UNKNOWNPATH tests", () => {
                 Connection.close();
                 done();
             };
-        }, connectTimeoutLocal);
+        }, connectTimeout);
     
         test(`assert the "${testReturnName}.success" is false.`, 
         done => {
@@ -457,7 +442,7 @@ describe("GET_FILELIST_UNKNOWNPATH tests", () => {
                 Connection.close();
                 done();
             };
-        }, connectTimeoutLocal); 
+        }, connectTimeout); 
 
         test(`assert the "FILE_LIST_RESPONSE.message" is not None.`, 
         done => {
@@ -473,7 +458,7 @@ describe("GET_FILELIST_UNKNOWNPATH tests", () => {
                 Connection.close();
                 done();
             };
-        }, connectTimeoutLocal); 
+        }, connectTimeout); 
 
     });
 });

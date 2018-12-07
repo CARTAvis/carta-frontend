@@ -2,10 +2,10 @@ import {CARTA} from "carta-protobuf";
 import * as Utility from "./testUtilityFunction";
 
 let WebSocket = require("ws");
-let testServerUrl = "ws://localhost:50505";
-let expectRootPath = "/Users/zarda/CARTA/Images"; // Depend on OS
-// let testSubdirectoryName = "QA"; // NRAO bacjend
-let testSubdirectoryName = `${expectRootPath}/QA`; // ASIAA backend
+let testServerUrl = "wss://acdc0.asiaa.sinica.edu.tw/socket2";
+let expectRootPath = "/home"; // Depend on OS
+let testSubdirectoryName = "set_QA"; // NRAO bacjend
+// let testSubdirectoryName = `${expectRootPath}/QA`; // ASIAA backend
 let connectTimeoutLocal = 300;
 
 describe("FILETYPE_PARSER tests", () => {   
@@ -220,8 +220,8 @@ describe("FILETYPE_PARSER tests", () => {
         });        
         
         describe(`assert the folder exists in "FILE_LIST_RESPONSE.subdirectory"`, () => {
-            [["empty_folder"], ["empty2.miriad"], ["empty2.fits"], 
-             ["empty2.image"],
+            [["empty_folder"], ["empty.miriad"], ["empty.fits"], 
+             ["empty.image"],
             ].map(
                 ([folder]) => {
                     test(`assert the folder "${folder}" exists.`, 

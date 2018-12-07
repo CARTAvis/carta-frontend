@@ -2,10 +2,9 @@ import {CARTA} from "carta-protobuf";
 import * as Utility from "./testUtilityFunction";
 
 let WebSocket = require("ws");
-let testServerUrl = "ws://localhost:50505";
-let expectRootPath = "/Users/zarda/CARTA/Images";
-// let testSubdirectoryName = "QA"; // for NRAO backend
-let testSubdirectoryName = `${expectRootPath}/QA`; // ASIAA backend
+let testServerUrl = "wss://acdc0.asiaa.sinica.edu.tw/socket2";
+let expectRootPath = "";
+let testSubdirectoryName = "set_QA";
 let connectionTimeout = 1000;
 
 describe("FILEINFO tests", () => {   
@@ -29,29 +28,25 @@ describe("FILEINFO tests", () => {
                 eventData.set(payload, 36);
 
                 Connection.send(eventData);
+                // While receive a message
+                Connection.onmessage = (event: MessageEvent) => {
+                    const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
+                    if (eventName === "REGISTER_VIEWER_ACK") {
+                        // Assertion
+                        expect(event.data.byteLength).toBeGreaterThan(0);
+                        eventData = new Uint8Array(event.data, 36);
+                        expect(CARTA.RegisterViewerAck.decode(eventData).success).toBe(true);
+                        
+                        done();
+                    }
+                };
             } else {
                 console.log(`Can not open a connection.`);
             }
             done();
         };
     }, connectionTimeout);
-
-    test(`connect to CARTA "${testServerUrl}" & ...`, 
-    done => {
-        // While receive a message
-        Connection.onmessage = (event: MessageEvent) => {
-            const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-            if (eventName === "REGISTER_VIEWER_ACK") {
-                // Assertion
-                expect(event.data.byteLength).toBeGreaterThan(0);
-                const eventData = new Uint8Array(event.data, 36);
-                expect(CARTA.RegisterViewerAck.decode(eventData).success).toBe(true);
-                
-                done();
-            }
-        };
-    }, connectionTimeout);
-
+    
     describe(`access directory`, () => {
         [[expectRootPath], [testSubdirectoryName]
         ].map(
@@ -88,32 +83,24 @@ describe("FILEINFO tests", () => {
     describe(`access the folder ${testSubdirectoryName} and ...`, 
     () => {
         beforeEach( 
-        done => {
-            Connection.onmessage = (event: MessageEvent) => {
-                const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                if (eventName === "REGISTER_VIEWER_ACK") {
-                    // Assertion
-                    const eventData = new Uint8Array(event.data, 36);
-                    expect(CARTA.RegisterViewerAck.decode(eventData).success).toBe(true);
+            done => {
+                // Preapare the message on a eventData
+                const message = CARTA.FileListRequest.create({directory: testSubdirectoryName});
+                let payload = CARTA.FileListRequest.encode(message).finish();
+                const eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
 
-                    // Preapare the message on a eventData
-                    const message = CARTA.FileListRequest.create({directory: testSubdirectoryName});
-                    let payload = CARTA.FileListRequest.encode(message).finish();
-                    const eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
+                eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
+                eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
+                eventDataTx.set(payload, 36);
 
-                    eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
-                    eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
-                    eventDataTx.set(payload, 36);
+                Connection.send(eventDataTx);
 
-                    Connection.send(eventDataTx);
-
-                    done();
-                }                
-            };    
-        }, connectionTimeout);       
+                done();
+            }, connectionTimeout);           
         
-        describe(`look for a file`, () => {
-            [["S255_IR_sci.spw25.cube.I.pbcor.fits",    [1920, 1920, 478, 1],   4],
+        describe(`look for a existent file`, () => {
+            [
+             ["S255_IR_sci.spw25.cube.I.pbcor.fits",    [1920, 1920, 478, 1],   4],
              ["SDC335.579-0.292.spw0.line.image",       [336, 350, 3840, 1],    4],
              ["G34mm1.miriad",                          [129, 129, 111, 1],     4],
             ].map(
@@ -130,7 +117,7 @@ describe("FILEINFO tests", () => {
     
                                 // Preapare the message on a eventData
                                 const message = CARTA.FileInfoRequest.create({
-                                                directory: testSubdirectoryName, file: fileName, hdu: ""});
+                                                directory: testSubdirectoryName, file: fileName, hdu: "0"});
                                 let payload = CARTA.FileInfoRequest.encode(message).finish();
                                 const eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
     
@@ -182,7 +169,7 @@ describe("FILEINFO_EXCEPTIONS tests", () => {
     let Connection: WebSocket;
 
     beforeEach( done => {
-        // Establish a websocket connection in binary form: arraybuffer 
+        // Establish a websocket connection in the binary form: arraybuffer 
         Connection = new WebSocket(testServerUrl);
         Connection.binaryType = "arraybuffer";
         // While open a Websocket
@@ -199,6 +186,18 @@ describe("FILEINFO_EXCEPTIONS tests", () => {
                 eventData.set(payload, 36);
 
                 Connection.send(eventData);
+                // While receive a message
+                Connection.onmessage = (event: MessageEvent) => {
+                    const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
+                    if (eventName === "REGISTER_VIEWER_ACK") {
+                        // Assertion
+                        expect(event.data.byteLength).toBeGreaterThan(0);
+                        eventData = new Uint8Array(event.data, 36);
+                        expect(CARTA.RegisterViewerAck.decode(eventData).success).toBe(true);
+                        
+                        done();
+                    }
+                };
             } else {
                 console.log(`Can not open a connection.`);
             }
@@ -206,83 +205,25 @@ describe("FILEINFO_EXCEPTIONS tests", () => {
         };
     }, connectionTimeout);
 
-    test(`connect to CARTA "${testServerUrl}" & ...`, 
-    done => {
-        // While receive a message
-        Connection.onmessage = (event: MessageEvent) => {
-            const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-            if (eventName === "REGISTER_VIEWER_ACK") {
-                // Assertion
-                expect(event.data.byteLength).toBeGreaterThan(0);
-                const eventData = new Uint8Array(event.data, 36);
-                expect(CARTA.RegisterViewerAck.decode(eventData).success).toBe(true);
-                
-                done();
-            }
-        };
-    }, connectionTimeout);
-
-    describe(`access directory`, () => {
-        [[expectRootPath], [testSubdirectoryName]
-        ].map(
-            function([dir]: [string]) {
-                test(`assert the directory "${dir}" opens.`, 
-                done => {
-                    // Preapare the message on a eventData
-                    let message = CARTA.FileListRequest.create({directory: testSubdirectoryName});
-                    let payload = CARTA.FileListRequest.encode(message).finish();
-                    let eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
-            
-                    eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
-                    eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
-                    eventDataTx.set(payload, 36);
-            
-                    Connection.send(eventDataTx);
-            
-                    // While receive a message
-                    Connection.onmessage = (event: MessageEvent) => {
-                        let eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                        if (eventName === "FILE_LIST_RESPONSE") {
-                            expect(event.data.byteLength).toBeGreaterThan(0);
-                            let eventData = new Uint8Array(event.data, 36);
-                            expect(CARTA.FileListResponse.decode(eventData).success).toBe(true);
-            
-                            done();
-                        } // if
-                    }; // onmessage
-                }, connectionTimeout); // test
-            } // function ([])
-        ); // map
-    }); // describe
-
     describe(`access the folder ${testSubdirectoryName} and ...`, 
-    () => {
+    () => {    
         beforeEach( 
-        done => {
-            Connection.onmessage = (event: MessageEvent) => {
-                const eventName = Utility.getEventName(new Uint8Array(event.data, 0, 32));
-                if (eventName === "REGISTER_VIEWER_ACK") {
-                    // Assertion
-                    const eventData = new Uint8Array(event.data, 36);
-                    expect(CARTA.RegisterViewerAck.decode(eventData).success).toBe(true);
+            done => {
+                // Preapare the message on a eventData
+                const message = CARTA.FileListRequest.create({directory: testSubdirectoryName});
+                let payload = CARTA.FileListRequest.encode(message).finish();
+                const eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
 
-                    // Preapare the message on a eventData
-                    const message = CARTA.FileListRequest.create({directory: testSubdirectoryName});
-                    let payload = CARTA.FileListRequest.encode(message).finish();
-                    const eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
+                eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
+                eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
+                eventDataTx.set(payload, 36);
 
-                    eventDataTx.set(Utility.stringToUint8Array("FILE_LIST_REQUEST", 32));
-                    eventDataTx.set(new Uint8Array(new Uint32Array([1]).buffer), 32);
-                    eventDataTx.set(payload, 36);
+                Connection.send(eventDataTx);
 
-                    Connection.send(eventDataTx);
-
-                    done();
-                }                
-            };    
-        }, connectionTimeout);       
+                done();
+            }, connectionTimeout);           
         
-        describe(`look for a non-existed file`, () => {
+        describe(`look for a non-existent file`, () => {
             [["no_such_file.image"],
              ["broken_header.miriad"],
             ].map(
@@ -298,7 +239,7 @@ describe("FILEINFO_EXCEPTIONS tests", () => {
     
                                 // Preapare the message on a eventData
                                 const message = CARTA.FileInfoRequest.create({
-                                                directory: testSubdirectoryName, file: fileName, hdu: ""});
+                                                directory: testSubdirectoryName, file: fileName, hdu: "0"});
                                 let payload = CARTA.FileInfoRequest.encode(message).finish();
                                 const eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
     

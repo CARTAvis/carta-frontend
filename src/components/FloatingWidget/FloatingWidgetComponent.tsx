@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import * as GoldenLayout from "golden-layout";
 import {Rnd} from "react-rnd";
-import {Icon} from "@blueprintjs/core";
+import {Icon, Position, Tooltip} from "@blueprintjs/core";
 import {AppStore} from "../../stores/AppStore";
 import {WidgetConfig} from "../../stores/WidgetsStore";
 import {PlaceholderComponent} from "../Placeholder/PlaceholderComponent";
@@ -104,8 +104,10 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                         {widgetConfig.title}
                     </div>
                     {this.props.showPinButton &&
-                    <div className="floating-header-button" ref={ref => this.pinElementRef = ref}>
-                        <Icon icon={"pin"}/>
+                    <div className="floating-header-button" ref={ref => this.pinElementRef = ref} onClick={() => console.log("pin!")}>
+                        <Tooltip content="Drag pin to dock this widget" position={Position.BOTTOM_RIGHT}>
+                            <Icon icon={"pin"}/>
+                        </Tooltip>
                     </div>
                     }
                     {widgetConfig.isCloseable &&

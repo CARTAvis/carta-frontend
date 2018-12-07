@@ -52,21 +52,23 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
         if (this.props.appStore.darkTheme) {
             className += " bp3-dark";
         }
+
+        const commonTooltip = <span><br/><i><small>Drag to place docked widget<br/>Click to place a floating widget</small></i></span>;
         return (
             <ButtonGroup className={className}>
-                <Tooltip content="Render Config Widget">
+                <Tooltip content={<span>Render Config Widget{commonTooltip}</span>}>
                     <Button icon={"style"} id="renderConfigButton" onClick={this.props.appStore.widgetsStore.createFloatingRenderWidget}/>
                 </Tooltip>
-                <Tooltip content="Log Widget">
+                <Tooltip content={<span>Log Widget{commonTooltip}</span>}>
                     <Button icon={"application"} id="logButton" onClick={this.props.appStore.widgetsStore.createFloatingLogWidget}/>
                 </Tooltip>
-                <Tooltip content="Animator Widget">
+                <Tooltip content={<span>Animator Widget{commonTooltip}</span>}>
                     <Button icon={"layers"} id="animatorButton" onClick={this.props.appStore.widgetsStore.createFloatingAnimatorWidget}/>
                 </Tooltip>
-                <Tooltip content="Spatial Profiler">
+                <Tooltip content={<span>Spatial Profiler{commonTooltip}</span>}>
                     <Button icon={"timeline-line-chart"} id="spatialProfilerButton" onClick={this.props.appStore.widgetsStore.createFloatingSpatialProfilerWidget}/>
                 </Tooltip>
-                <Tooltip content="Spectral Profiler">
+                <Tooltip content={<span>Spectral Profiler{commonTooltip}</span>}>
                     <Button icon={"step-chart"} id="spectralProfilerButton" onClick={this.props.appStore.widgetsStore.createFloatingSpectralProfilerWidget}/>
                 </Tooltip>
             </ButtonGroup>
