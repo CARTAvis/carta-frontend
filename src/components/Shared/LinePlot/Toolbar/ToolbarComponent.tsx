@@ -7,7 +7,6 @@ import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
 export class ToolbarComponentProps {
     darkMode: boolean;
     visible: boolean;
-    disabled: boolean;
     exportImage: () => void;
     exportData: () => void;
 }
@@ -29,10 +28,10 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         return (
             <ButtonGroup className={className} style={styleProps}>
                 <Tooltip content="Export image">
-                    <Button icon="floppy-disk" disabled={this.props.disabled} onClick={this.props.exportImage}/>
+                    <Button icon="floppy-disk" onClick={this.props.exportImage}/>
                 </Tooltip>
                 <Tooltip content="Export data">
-                    <Button icon="th" disabled={this.props.disabled} onClick={this.props.exportData}/>
+                    <Button icon="th" onClick={this.props.exportData}/>
                 </Tooltip>
             </ButtonGroup>
         );

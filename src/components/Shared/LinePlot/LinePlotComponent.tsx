@@ -697,8 +697,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 </Stage>
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
-                    visible={this.toolbarVisible}
-                    disabled={this.props.data === undefined}
+                    visible={this.toolbarVisible && (this.props.data !== undefined)}
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />
