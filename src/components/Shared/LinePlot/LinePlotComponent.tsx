@@ -3,6 +3,7 @@ import {observer} from "mobx-react";
 import * as _ from "lodash";
 import {ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
 import {ChartArea} from "chart.js";
+import {Scatter} from "react-chartjs-2";
 import {PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
 import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
 import ReactResizeDetector from "react-resize-detector";
@@ -409,7 +410,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     
     exportImage = () => {
         console.log("+++ exportImage called!");
-        console.log(typeof this.plotRef);
+        const scatter = this.plotRef as Scatter;
+        console.log(typeof scatter);
+        // TODO: how to get canvas?!
     };
     
     exportData = () => {
