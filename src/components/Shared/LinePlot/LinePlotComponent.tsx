@@ -408,6 +408,27 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         this.hideToolbar();
     };
     
+    private getTimestamp() {
+        const now = new Date();
+        return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
+    }
+    
+    private getCoordinate() {
+        if (this.props.xLabel.match(/X/)) {
+            return "-X";
+        }
+        
+        if (this.props.xLabel.match(/Y/)) {
+            return "-Y";
+        }
+        
+        if (this.props.xLabel.match(/Channel/)) {
+            return "-Z";
+        }
+        
+        return "";
+    }
+    
     exportImage = () => {
         const scatter = this.plotRef as Scatter;
         const canvas = scatter.chartInstance.canvas;
@@ -423,17 +444,23 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         
         const dataURL = composedCanvas.toDataURL().replace("image/png", "image/octet-stream");
         
-        const now = new Date();
-        const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
-        
         const a = document.createElement("a") as HTMLAnchorElement;
         a.href = dataURL;
-        a.download = `CARTA-exported-profile-${timestamp}.png`;
+        a.download = `CARTA-exported-profile${this.getCoordinate()}-${this.getTimestamp()}.png`;
         a.dispatchEvent(new MouseEvent("click"));
     };
     
     exportData = () => {
-        console.log("+++ exportData called!");
+        const header = "x\ty";
+        const rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+        const tsvData = `data:text/tab-separated-values;charset=utf-8,${header}\n${rows.join("\n")}\n`;
+        
+        const dataURL = encodeURI(tsvData);
+        
+        const a = document.createElement("a") as HTMLAnchorElement;
+        a.href = dataURL;
+        a.download = `CARTA-exported-profile${this.getCoordinate()}-${this.getTimestamp()}.tsv`;
+        a.dispatchEvent(new MouseEvent("click"));
     };
 
     render() {
@@ -669,6 +696,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
                     visible={this.toolbarVisible}
+                    disabled={this.props.data === undefined}
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />
