@@ -411,7 +411,17 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     exportImage = () => {
         const scatter = this.plotRef as Scatter;
         const canvas = scatter.chartInstance.canvas;
-        const dataURL = canvas.toDataURL().replace("image/png", "image/octet-stream");
+        
+        const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
+        composedCanvas.width = canvas.width;
+        composedCanvas.height = canvas.height;
+            
+        const ctx = composedCanvas.getContext("2d");
+        ctx.fillStyle = this.props.darkMode ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
+        ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
+        ctx.drawImage(canvas, 0, 0);
+        
+        const dataURL = composedCanvas.toDataURL().replace("image/png", "image/octet-stream");
         
         const now = new Date();
         const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
