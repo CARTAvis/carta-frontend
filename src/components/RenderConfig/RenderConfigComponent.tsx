@@ -194,11 +194,14 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         if (frame && frame.unit) {
             unitString = `Value (${frame.unit})`;
         }
+        
+        const imageName = (appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfo.name : undefined);
 
         let linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
             yLabel: "Count",
             darkMode: appStore.darkTheme,
+            imageName: imageName,
             logY: this.widgetStore.logScaleY,
             usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
             interpolateLines: this.widgetStore.plotType === PlotType.LINES,

@@ -38,7 +38,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     icon={"media"}
                     label={`${modString}E`}
                     disabled={appStore.backendService.connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame}
-                    onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme)}
+                    onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
                 />
                 <Menu.Divider/>
                 <Menu.Item text="Preferences" icon={"cog"} label={`${modString}P`} disabled={true}/>

@@ -197,11 +197,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (!this.widgetStore) {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
         }
+        
+        const imageName = (appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfo.name : undefined);
 
         let linePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
             darkMode: appStore.darkTheme,
+            imageName: imageName,
             usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
             interpolateLines: this.widgetStore.plotType === PlotType.LINES,
             forceScientificNotationTicksY: true,

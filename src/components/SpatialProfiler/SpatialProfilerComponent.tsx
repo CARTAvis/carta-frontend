@@ -388,11 +388,14 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
 
         const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
+        
+        const imageName = (appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfo.name : undefined);
 
         let linePlotProps: LinePlotComponentProps = {
             xLabel: `${isXProfile ? "X" : "Y"} coordinate`,
             yLabel: "Value",
             darkMode: appStore.darkTheme,
+            imageName: imageName,
             usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
             interpolateLines: this.widgetStore.plotType === PlotType.LINES,
             forceScientificNotationTicksY: true,

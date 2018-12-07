@@ -3,6 +3,7 @@ import {observer} from "mobx-react";
 import * as _ from "lodash";
 import {ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
 import {ChartArea} from "chart.js";
+import {Scatter} from "react-chartjs-2";
 import {PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
 import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
 import ReactResizeDetector from "react-resize-detector";
@@ -11,6 +12,7 @@ import "./LinePlotComponent.css";
 import {clamp} from "../../../util/math";
 import {Colors} from "@blueprintjs/core";
 import {action, computed, observable} from "mobx";
+import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 
 enum ZoomMode {
     NONE,
@@ -51,6 +53,7 @@ export class LinePlotComponentProps {
     logY?: boolean;
     lineColor?: string;
     darkMode?: boolean;
+    imageName?: string;
     usePointSymbols?: boolean;
     forceScientificNotationTicksX?: boolean;
     forceScientificNotationTicksY?: boolean;
@@ -95,6 +98,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     @observable panStart = 0;
     @observable selectionBoxStart = {x: 0, y: 0};
     @observable selectionBoxEnd = {x: 0, y: 0};
+    @observable toolbarVisible = false;
 
     @computed get isSelecting() {
         return this.interactionMode === InteractionMode.SELECTING;
@@ -181,6 +185,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     @action resize = (w, h) => {
         this.width = w;
         this.height = h;
+    };
+    
+    @action showToolbar = () => {
+        this.toolbarVisible = true;
+    };
+    
+    @action hideToolbar = () => {
+        this.toolbarVisible = false;
     };
 
     dragBoundsFuncVertical = (pos: Point2D) => {
@@ -388,6 +400,81 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             this.endInteractions();
         }
     };
+    
+    onMouseEnter = () => {
+        this.showToolbar();
+    };
+    
+    onMouseLeave = () => {
+        this.hideToolbar();
+    };
+    
+    private getTimestamp() {
+        const now = new Date();
+        return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
+    }
+    
+    private getPlotName() {
+        if (this.props.xLabel.match(/X/)) {
+            return "X profile";
+        }
+        
+        if (this.props.xLabel.match(/Y/)) {
+            return "Y profile";
+        }
+        
+        if (this.props.xLabel === "Channel") {
+            return "Z profile";
+        }
+        
+        if (this.props.xLabel === "Value" && this.props.yLabel === "Count") {
+            return "histogram";
+        }
+        
+        return "unknown";
+    }
+    
+    exportImage = () => {
+        const scatter = this.plotRef as Scatter;
+        const canvas = scatter.chartInstance.canvas;
+        
+        const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
+        composedCanvas.width = canvas.width;
+        composedCanvas.height = canvas.height;
+            
+        const ctx = composedCanvas.getContext("2d");
+        ctx.fillStyle = this.props.darkMode ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
+        ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
+        ctx.drawImage(canvas, 0, 0);
+        
+        const dataURL = composedCanvas.toDataURL().replace("image/png", "image/octet-stream");
+        
+        const a = document.createElement("a") as HTMLAnchorElement;
+        a.href = dataURL;
+        a.download = `${this.props.imageName}-${this.getPlotName().replace(" ", "-")}-${this.getTimestamp()}.png`;
+        a.dispatchEvent(new MouseEvent("click"));
+    };
+    
+    exportData = () => {
+        const comment = `# ${this.props.imageName} ${this.getPlotName()}`;
+        const header = "x\ty";
+        
+        let rows;
+        if (this.getPlotName() === "histogram") {
+            rows = this.props.data.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
+        } else {
+            rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+        }
+        
+        const tsvData = `data:text/tab-separated-values;charset=utf-8,${comment}\n${header}\n${rows.join("\n")}\n`;
+        
+        const dataURL = encodeURI(tsvData).replace("#", "%23");
+        
+        const a = document.createElement("a") as HTMLAnchorElement;
+        a.href = dataURL;
+        a.download = `${this.props.imageName}-${this.getPlotName().replace(" ", "-")}-${this.getTimestamp()}.tsv`;
+        a.dispatchEvent(new MouseEvent("click"));
+    };
 
     render() {
         const chartArea = this.chartArea;
@@ -586,7 +673,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
 
         return (
-            <div className={"line-plot-component"} style={{cursor: this.isPanning || isHovering ? "move" : "crosshair"}} onKeyDown={this.onKeyDown} tabIndex={0}>
+            <div 
+                className={"line-plot-component"}
+                style={{cursor: this.isPanning || isHovering ? "move" : "crosshair"}}
+                onKeyDown={this.onKeyDown}
+                onMouseEnter={this.onMouseEnter}
+                onMouseLeave={this.onMouseLeave}
+                tabIndex={0}
+            >
                 <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}/>
                 <PlotContainerComponent
                     {...this.props}
@@ -612,6 +706,12 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                         {borderRect}
                     </Layer>
                 </Stage>
+                <ToolbarComponent
+                    darkMode={this.props.darkMode}
+                    visible={this.toolbarVisible && (this.props.data !== undefined)}
+                    exportImage={this.exportImage}
+                    exportData={this.exportData}
+                />
             </div>
 
         );

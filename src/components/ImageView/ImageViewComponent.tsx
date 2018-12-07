@@ -11,7 +11,7 @@ import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import "./ImageViewComponent.css";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
 
-export const exportImage = (padding, darkTheme) => {
+export const exportImage = (padding, darkTheme, imageName) => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
     const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
 
@@ -34,7 +34,7 @@ export const exportImage = (padding, darkTheme) => {
 
     const a = document.createElement("a") as HTMLAnchorElement;
     a.href = dataURL;
-    a.download = `CARTA-exported-image-${timestamp}.png`;
+    a.download = `${imageName}-image-${timestamp}.png`;
     a.dispatchEvent(new MouseEvent("click"));
 };
 

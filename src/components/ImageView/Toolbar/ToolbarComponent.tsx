@@ -55,7 +55,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                     <Button icon="numerical" active={!overlay.labelsHidden} onClick={overlay.toggleLabels}/>
                 </Tooltip>
                 <Tooltip content="Export image">
-                    <Button icon="floppy-disk" onClick={() => exportImage(overlay.padding, appStore.darkTheme)}/>
+                    <Button icon="floppy-disk" onClick={() => exportImage(overlay.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>
                 </Tooltip>
             </ButtonGroup>
         );
