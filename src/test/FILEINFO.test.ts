@@ -3,8 +3,8 @@ import * as Utility from "./testUtilityFunction";
 
 let WebSocket = require("ws");
 let testServerUrl = "wss://acdc0.asiaa.sinica.edu.tw/socket2";
-let expectRootPath = "/home";
-let testSubdirectoryName = "/home/set_QA";
+let expectRootPath = "";
+let testSubdirectoryName = "set_QA";
 let connectionTimeout = 1000;
 
 describe("FILEINFO tests", () => {   
@@ -99,7 +99,8 @@ describe("FILEINFO tests", () => {
             }, connectionTimeout);           
         
         describe(`look for a existent file`, () => {
-            [["S255_IR_sci.spw25.cube.I.pbcor.fits",    [1920, 1920, 478, 1],   4],
+            [
+             ["S255_IR_sci.spw25.cube.I.pbcor.fits",    [1920, 1920, 478, 1],   4],
              ["SDC335.579-0.292.spw0.line.image",       [336, 350, 3840, 1],    4],
              ["G34mm1.miriad",                          [129, 129, 111, 1],     4],
             ].map(
@@ -116,7 +117,7 @@ describe("FILEINFO tests", () => {
     
                                 // Preapare the message on a eventData
                                 const message = CARTA.FileInfoRequest.create({
-                                                directory: testSubdirectoryName, file: fileName, hdu: ""});
+                                                directory: testSubdirectoryName, file: fileName, hdu: "0"});
                                 let payload = CARTA.FileInfoRequest.encode(message).finish();
                                 const eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
     
@@ -238,7 +239,7 @@ describe("FILEINFO_EXCEPTIONS tests", () => {
     
                                 // Preapare the message on a eventData
                                 const message = CARTA.FileInfoRequest.create({
-                                                directory: testSubdirectoryName, file: fileName, hdu: ""});
+                                                directory: testSubdirectoryName, file: fileName, hdu: "0"});
                                 let payload = CARTA.FileInfoRequest.encode(message).finish();
                                 const eventDataTx = new Uint8Array(32 + 4 + payload.byteLength);
     
