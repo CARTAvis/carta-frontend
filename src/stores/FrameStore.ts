@@ -96,6 +96,32 @@ export class FrameStore {
         }
     }
 
+    @computed get beamProperties(): { x: number, y: number, angle: number } {
+        const bMajHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("BMAJ") !== -1);
+        const bMinHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("BMIN") !== -1);
+        const bpaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("BPA") !== -1);
+        const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CUNIT1") !== -1);
+        const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
+
+        if (bMajHeader && bMinHeader && bpaHeader && unitHeader && deltaHeader) {
+            let bMaj = parseFloat(bMajHeader.value);
+            let bMin = parseFloat(bMinHeader.value);
+            const bpa = parseFloat(bpaHeader.value);
+            const unit = unitHeader.value.trim();
+            const delta = parseFloat(deltaHeader.value);
+
+            if (isFinite(bMaj) && bMaj > 0 && isFinite(bMin) && bMin > 0 && isFinite(bpa) && isFinite(delta) && unit === "deg" || unit === "rad") {
+                return {
+                    x: bMaj / Math.abs(delta),
+                    y: bMin / Math.abs(delta),
+                    angle: bpa
+                };
+            }
+            return null;
+        }
+        return null;
+    }
+
     @computed get referenceFrequency(): number {
         if (!this.frameInfo || !this.frameInfo.fileInfoExtended || this.frameInfo.fileInfoExtended.depth <= 1 || !this.frameInfo.fileInfoExtended.headerEntries) {
             return undefined;

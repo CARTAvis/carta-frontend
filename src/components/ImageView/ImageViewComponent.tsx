@@ -10,6 +10,7 @@ import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import "./ImageViewComponent.css";
+import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
 
 export const exportImage = (padding, darkTheme) => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
@@ -115,7 +116,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
     render() {
         const appStore = this.props.appStore;
-
+        const beamProfile = appStore.activeFrame ? appStore.activeFrame.beamProperties : null;
         const imageRatioTagOffset = {x: appStore.overlayStore.padding.left + appStore.overlayStore.viewWidth / 2.0, y: appStore.overlayStore.padding.top + appStore.overlayStore.viewHeight / 2.0};
 
         return (
@@ -160,6 +161,20 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     showValue={true}
                     showChannel={false}
                     showSpectral={true}
+                />
+                }
+                {appStore.astReady && appStore.activeFrame && beamProfile &&
+                <BeamProfileOverlayComponent
+                    width={appStore.overlayStore.viewWidth - appStore.overlayStore.padding.left - appStore.overlayStore.padding.right}
+                    height={appStore.overlayStore.viewHeight - appStore.overlayStore.padding.top - appStore.overlayStore.padding.bottom}
+                    top={appStore.overlayStore.padding.top}
+                    left={appStore.overlayStore.padding.left}
+                    beamMajor={beamProfile.x}
+                    beamMinor={beamProfile.y}
+                    beamAngle={beamProfile.angle}
+                    zoomLevel={appStore.activeFrame.zoomLevel}
+                    docked={this.props.docked}
+                    padding={10}
                 />
                 }
                 {appStore.astReady && appStore.activeFrame &&
