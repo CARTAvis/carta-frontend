@@ -414,20 +414,24 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
     }
     
-    private getCoordinate() {
+    private getPlotName() {
         if (this.props.xLabel.match(/X/)) {
-            return "-X";
+            return "X profile";
         }
         
         if (this.props.xLabel.match(/Y/)) {
-            return "-Y";
+            return "Y profile";
         }
         
-        if (this.props.xLabel.match(/Channel/)) {
-            return "-Z";
+        if (this.props.xLabel === "Channel") {
+            return "Z profile";
         }
         
-        return "";
+        if (this.props.xLabel === "Value" && this.props.yLabel === "Count") {
+            return "histogram";
+        }
+        
+        return "unknown";
     }
     
     exportImage = () => {
@@ -447,21 +451,28 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         
         const a = document.createElement("a") as HTMLAnchorElement;
         a.href = dataURL;
-        a.download = `${this.props.imageName}-profile${this.getCoordinate()}-${this.getTimestamp()}.png`;
+        a.download = `${this.props.imageName}-${this.getPlotName().replace(" ", "-")}-${this.getTimestamp()}.png`;
         a.dispatchEvent(new MouseEvent("click"));
     };
     
     exportData = () => {
-        const comment = `# ${this.props.imageName} ${this.props.xLabel} profile`;
+        const comment = `# ${this.props.imageName} ${this.getPlotName()}`;
         const header = "x\ty";
-        const rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+        
+        let rows;
+        if (this.getPlotName() === "histogram") {
+            rows = this.props.data.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
+        } else {
+            rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+        }
+        
         const tsvData = `data:text/tab-separated-values;charset=utf-8,${comment}\n${header}\n${rows.join("\n")}\n`;
         
         const dataURL = encodeURI(tsvData).replace("#", "%23");
         
         const a = document.createElement("a") as HTMLAnchorElement;
         a.href = dataURL;
-        a.download = `${this.props.imageName}-profile${this.getCoordinate()}-${this.getTimestamp()}.tsv`;
+        a.download = `${this.props.imageName}-${this.getPlotName().replace(" ", "-")}-${this.getTimestamp()}.tsv`;
         a.dispatchEvent(new MouseEvent("click"));
     };
 
