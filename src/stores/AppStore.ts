@@ -145,6 +145,7 @@ export class AppStore {
             this.frames = [];
         }
     };
+
     @action loadWCS = (frame: FrameStore) => {
         let headerString = "";
 
@@ -194,6 +195,7 @@ export class AppStore {
             console.log("Initialised WCS info from frame");
         }
     };
+
     @action shiftFrame = (delta: number) => {
         if (this.activeFrame && this.frames.length > 1) {
             const frameIds = this.frames.map(f => f.frameInfo.fileId).sort();
@@ -202,11 +204,21 @@ export class AppStore {
             this.setActiveFrame(frameIds[requiredIndex]);
         }
     };
+
     @action nextFrame = () => {
         this.shiftFrame(+1);
     };
+
     @action prevFrame = () => {
         this.shiftFrame(-1);
+    };
+
+    @action requestCubeHistogram = (fileId: number = -1) => {
+        const frame = this.getFrame(fileId);
+        if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
+            const histogram = {channel: -2, numBins: -1} as CARTA.SetHistogramRequirements.HistogramConfig;
+            this.backendService.setHistogramRequirements(frame.frameInfo.fileId, -2, [histogram]);
+        }
     };
 
     @action setDarkTheme = () => {

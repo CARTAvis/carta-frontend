@@ -162,7 +162,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         if (frame && frame.renderConfig) {
             frame.renderConfig.setUseCubeHistogram(true);
             if (frame.renderConfig.cubeHistogramProgress < 1.0) {
-                // TODO: request cube histogram
+                this.props.appStore.requestCubeHistogram();
             }
         }
     };
@@ -361,7 +361,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 </div>
                 <TaskProgressDialogComponent
                     isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}
-                    progress={frame.renderConfig.cubeHistogramProgress + 0.1}
+                    progress={frame.renderConfig.cubeHistogramProgress}
                     cancellable={false}
                     text={"Calculating cube histogram"}
                 />
