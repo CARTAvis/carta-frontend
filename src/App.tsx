@@ -220,23 +220,23 @@ export class App extends React.Component<{ appStore: AppStore }> {
         const animatorHotkeys = [
             <Hotkey key={0} group="Frame controls" global={true} combo={`${modString}]`} label="Next frame" onKeyDown={appStore.nextFrame}/>,
             <Hotkey key={1} group="Frame controls" global={true} combo={`${modString}[`} label="Previous frame" onKeyDown={appStore.prevFrame}/>,
-            <Hotkey key={2} group="Frame controls" global={true} combo={`${modString}pageup`} label="Next channel" onKeyDown={this.nextChannel}/>,
-            <Hotkey key={3} group="Frame controls" global={true} combo={`${modString}pagedown`} label="Previous channel" onKeyDown={this.prevChannel}/>,
-            <Hotkey key={4} group="Frame controls" global={true} combo={`${modString}shift + pageup`} label="Next Stokes cube" onKeyDown={this.nextStokes}/>,
-            <Hotkey key={5} group="Frame controls" global={true} combo={`${modString}shift + pagedown`} label="Previous Stokes cube" onKeyDown={this.prevStokes}/>
+            <Hotkey key={2} group="Frame controls" global={true} combo={`${modString}up`} label="Next channel" onKeyDown={this.nextChannel}/>,
+            <Hotkey key={3} group="Frame controls" global={true} combo={`${modString}down`} label="Previous channel" onKeyDown={this.prevChannel}/>,
+            <Hotkey key={4} group="Frame controls" global={true} combo={`${modString}shift + up`} label="Next Stokes cube" onKeyDown={this.nextStokes}/>,
+            <Hotkey key={5} group="Frame controls" global={true} combo={`${modString}shift + down`} label="Previous Stokes cube" onKeyDown={this.prevStokes}/>
         ];
 
         const fileHotkeys = [
-            <Hotkey key={0} group="File controls" global={true} combo={`${modString}o`} label="Open file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser()}/>,
-            <Hotkey key={1} group="File controls" global={true} combo={`${modString}a`} label="Append file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(true)}/>
+            <Hotkey key={0} group="File controls" global={true} combo={`${modString}O`} label="Open file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser()}/>,
+            <Hotkey key={1} group="File controls" global={true} combo={`${modString}L`} label="Append file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(true)}/>
         ];
 
         return (
             <Hotkeys>
                 {animatorHotkeys}
                 {fileHotkeys}
-                <Hotkey group="Appearance" global={true} combo="shift + d" label="Toggle dark theme" onKeyDown={this.toggleDarkTheme}/>
-                <Hotkey group="Cursor" global={true} combo="f" label="Toggle frozen cursor" onKeyDown={appStore.toggleCursorFrozen}/>
+                <Hotkey group="Appearance" global={true} combo="shift + D" label="Toggle dark theme" onKeyDown={this.toggleDarkTheme}/>
+                <Hotkey group="Cursor" global={true} combo="F" label="Toggle frozen cursor" onKeyDown={appStore.toggleCursorFrozen}/>
             </Hotkeys>
         );
     }

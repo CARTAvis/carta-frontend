@@ -83,7 +83,7 @@ export class AppStore {
         if (process.env.REACT_APP_TARGET === "linux") {
             modString = "ctrl + ";
         } else if (process.env.REACT_APP_TARGET === "darwin") {
-            modString = "⌘";
+            modString = "cmd +";
         }
         return modString;
     }

@@ -23,7 +23,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 />
                 <Menu.Item
                     text="Append image"
-                    label={`${modString}A`}
+                    label={`${modString}L`}
                     disabled={appStore.backendService.connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(true)}
                 />
