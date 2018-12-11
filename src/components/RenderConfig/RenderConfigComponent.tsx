@@ -17,6 +17,7 @@ import {RenderConfigSettingsPanelComponent} from "./RenderConfigSettingsPanelCom
 import {RenderConfigWidgetStore} from "../../stores/widgets/RenderConfigWidgetStore";
 import "./RenderConfigComponent.css";
 import {PlotType} from "../Shared/PlotTypeSelector/PlotTypeSelectorComponent";
+import {TaskProgressDialogComponent} from "../Dialogs/TaskProgressDialog/TaskProgressDialogComponent";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 160;
@@ -99,8 +100,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             // Assign the next unique ID
             const id = props.appStore.widgetsStore.addNewRenderConfigWidget();
             props.appStore.widgetsStore.changeWidgetId(props.id, id);
-        }
-        else {
+        } else {
             if (!this.props.appStore.widgetsStore.renderConfigWidgets.has(this.props.id)) {
                 console.error(`can't find store for widget with id=${this.props.id}`);
                 this.props.appStore.widgetsStore.renderConfigWidgets.set(this.props.id, new RenderConfigWidgetStore());
@@ -157,6 +157,16 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         this.props.appStore.activeFrame.renderConfig.setPercentileRank(-1);
     };
 
+    handleCubeHistogramSelected = () => {
+        const frame = this.props.appStore.activeFrame;
+        if (frame && frame.renderConfig) {
+            frame.renderConfig.setUseCubeHistogram(true);
+            if (frame.renderConfig.cubeHistogramProgress < 1.0) {
+                // TODO: request cube histogram
+            }
+        }
+    };
+
     onMinMoved = (x: number) => {
         const frame = this.props.appStore.activeFrame;
         // Check bounds first, to make sure the max isn't being moved below the min
@@ -194,7 +204,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         if (frame && frame.unit) {
             unitString = `Value (${frame.unit})`;
         }
-        
+
         const imageName = (appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfo.name : undefined);
 
         let linePlotProps: LinePlotComponentProps = {
@@ -224,8 +234,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 if (this.widgetStore.isAutoScaledX) {
                     linePlotProps.xMin = currentPlotData.xMin;
                     linePlotProps.xMax = currentPlotData.xMax;
-                }
-                else {
+                } else {
                     linePlotProps.xMin = this.widgetStore.minX;
                     linePlotProps.xMax = this.widgetStore.maxX;
                 }
@@ -233,8 +242,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 if (this.widgetStore.isAutoScaledY) {
                     linePlotProps.yMin = currentPlotData.yMin;
                     linePlotProps.yMax = currentPlotData.yMax;
-                }
-                else {
+                } else {
                     linePlotProps.yMin = this.widgetStore.minY;
                     linePlotProps.yMax = this.widgetStore.maxY;
                 }
@@ -287,8 +295,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     </ButtonGroup>
                 </div>
             );
-        }
-        else {
+        } else {
             const percentileRankOptions: IOptionProps [] = percentileRanks.map(rank => ({label: `${rank}%`, value: rank}));
             percentileRankOptions.push({label: "Custom", value: -1});
             percentileSelectDiv = (
@@ -306,8 +313,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             // Switch between standard and scientific notation
             if (this.widgetStore.cursorX < 1e-2) {
                 numberString = this.widgetStore.cursorX.toExponential(2);
-            }
-            else {
+            } else {
                 numberString = this.widgetStore.cursorX.toFixed(2);
             }
 
@@ -333,7 +339,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 </div>
                 }
                 <div className="colormap-config">
-                    <ColormapConfigComponent darkTheme={appStore.darkTheme} renderConfig={frame.renderConfig}/>
+                    <ColormapConfigComponent darkTheme={appStore.darkTheme} renderConfig={frame.renderConfig} onCubeHistogramSelected={this.handleCubeHistogramSelected}/>
                     <FormGroup label={"Min"} inline={true}>
                         <NumericInput
                             value={frame.renderConfig.scaleMin}
@@ -353,6 +359,12 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                     {this.width < histogramCutoff ? percentileSelectDiv : cursorInfoDiv}
                 </div>
+                <TaskProgressDialogComponent
+                    isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}
+                    progress={frame.renderConfig.cubeHistogramProgress + 0.1}
+                    cancellable={false}
+                    text={"Calculating cube histogram"}
+                />
                 <PopoverSettingsComponent
                     isOpen={this.widgetStore.settingsPanelVisible}
                     onShowClicked={this.widgetStore.showSettingsPanel}

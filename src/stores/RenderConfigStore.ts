@@ -37,6 +37,9 @@ export class RenderConfigStore {
     @observable gamma: number;
     @observable alpha: number;
     @observable channelHistogram: CARTA.Histogram;
+    @observable cubeHistogram: CARTA.Histogram;
+    @observable useCubeHistogram: boolean;
+    @observable cubeHistogramProgress: number;
     @observable selectedPercentile: number;
 
     constructor() {
@@ -46,14 +49,14 @@ export class RenderConfigStore {
         this.gamma = 1;
         this.alpha = 1000;
         this.scaling = FrameScaling.LINEAR;
+        this.cubeHistogramProgress = 0;
         this.setColorMap("inferno");
     }
 
     @computed get colorMapName() {
         if (this.colorMap >= 0 && this.colorMap <= RenderConfigStore.COLOR_MAPS_ALL.length - 1) {
             return RenderConfigStore.COLOR_MAPS_ALL[this.colorMap];
-        }
-        else {
+        } else {
             return "Unknown";
         }
     }
@@ -62,24 +65,35 @@ export class RenderConfigStore {
         const scalingType = RenderConfigStore.SCALING_TYPES.get(this.scaling);
         if (scalingType) {
             return scalingType;
-        }
-        else {
+        } else {
             return "Unknown";
         }
     }
 
+    @computed get histogram() {
+        if (this.useCubeHistogram && this.cubeHistogram) {
+            return this.cubeHistogram;
+        } else {
+            return this.channelHistogram;
+        }
+    }
+
+    @action setUseCubeHistogram = (val: boolean) => {
+        this.useCubeHistogram = val;
+    };
+
     @computed get histogramMin() {
-        if (!this.channelHistogram) {
+        if (!this.histogram) {
             return undefined;
         }
-        return this.channelHistogram.firstBinCenter - 0.5 * this.channelHistogram.binWidth;
+        return this.histogram.firstBinCenter - 0.5 * this.histogram.binWidth;
     }
 
     @computed get histogramMax() {
-        if (!this.channelHistogram) {
+        if (!this.histogram) {
             return undefined;
         }
-        return this.channelHistogram.firstBinCenter + (this.channelHistogram.bins.length + 0.5) * this.channelHistogram.binWidth;
+        return this.histogram.firstBinCenter + (this.histogram.bins.length + 0.5) * this.histogram.binWidth;
     }
 
     @action setPercentileRank = (rank: number) => {
@@ -101,15 +115,21 @@ export class RenderConfigStore {
             this.scaleMin = percentiles[0];
             this.scaleMax = percentiles[1];
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     };
 
     @action updateChannelHistogram = (histogram: CARTA.Histogram) => {
         this.channelHistogram = histogram;
-        if (this.selectedPercentile > 0) {
+        if (this.selectedPercentile > 0 && !this.useCubeHistogram) {
+            this.setPercentileRank(this.selectedPercentile);
+        }
+    };
+
+    @action updateCubeHistogram = (histogram: CARTA.Histogram) => {
+        this.cubeHistogram = histogram;
+        if (this.selectedPercentile > 0 && this.useCubeHistogram) {
             this.setPercentileRank(this.selectedPercentile);
         }
     };
@@ -146,13 +166,13 @@ export class RenderConfigStore {
     };
 
     private getPercentiles(ranks: number[]): number[] {
-        if (!ranks || !ranks.length || !this.channelHistogram || !this.channelHistogram.bins.length) {
+        if (!ranks || !ranks.length || !this.histogram || !this.histogram.bins.length) {
             return [];
         }
 
-        const minVal = this.channelHistogram.firstBinCenter - this.channelHistogram.binWidth / 2.0;
-        const dx = this.channelHistogram.binWidth;
-        const vals = this.channelHistogram.bins;
+        const minVal = this.histogram.firstBinCenter - this.histogram.binWidth / 2.0;
+        const dx = this.histogram.binWidth;
+        const vals = this.histogram.bins;
         let remainingRanks = ranks.slice();
         let cumulativeSum = 0;
 

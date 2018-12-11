@@ -22,6 +22,7 @@ export enum EventNames {
     SetCursor = "SET_CURSOR",
     SetSpatialRequirements = "SET_SPATIAL_REQUIREMENTS",
     SetSpectralRequirements = "SET_SPECTRAL_REQUIREMENTS",
+    SetHistogramRequirements = "SET_HISTOGRAM_REQUIREMENTS",
     RegisterViewerAck = "REGISTER_VIEWER_ACK",
     FileListResponse = "FILE_LIST_RESPONSE",
     FileInfoResponse = "FILE_INFO_RESPONSE",
@@ -300,6 +301,18 @@ export class BackendService {
             const message = CARTA.SetSpectralRequirements.create({fileId, regionId, spectralProfiles});
             this.logEvent(EventNames.SetSpectralRequirements, this.eventCounter, message, false);
             if (this.sendEvent(EventNames.SetSpectralRequirements, CARTA.SetSpectralRequirements.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @action("set histogram requirements")
+    setHistogramRequirements(fileId: number, regionId: number, histograms: CARTA.SetHistogramRequirements.HistogramConfig[]) {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            const message = CARTA.SetHistogramRequirements.create({fileId, regionId, histograms});
+            this.logEvent(EventNames.SetHistogramRequirements, this.eventCounter, message, false);
+            if (this.sendEvent(EventNames.SetHistogramRequirements, CARTA.SetHistogramRequirements.encode(message).finish())) {
                 return true;
             }
         }

@@ -336,98 +336,113 @@ export class AppStore {
             }
         });
 
+        autorun(() => {
+            if (this.astReady) {
+                this.logStore.addInfo("AST library loaded", ["ast"]);
+            }
+        });
+
         // Set palette if theme changes
         autorun(() => {
             AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
         });
 
-        // Subscribe to the spatial profile data stream
-        this.backendService.getSpatialProfileStream().subscribe(spatialProfileData => {
-            if (this.frames.find(frame => frame.frameInfo.fileId === spatialProfileData.fileId)) {
-                const key = `${spatialProfileData.fileId}-${spatialProfileData.regionId}`;
-                let profileStore = this.spatialProfiles.get(key);
-                if (!profileStore) {
-                    profileStore = new SpatialProfileStore(spatialProfileData.fileId, spatialProfileData.regionId);
-                    this.spatialProfiles.set(key, profileStore);
-                }
+        // Subscribe to frontend streams
+        this.backendService.getSpatialProfileStream().subscribe(this.handleSpatialProfileStream);
+        this.backendService.getSpectralProfileStream().subscribe(this.handleSpectralProfileStream);
+        this.backendService.getRegionHistogramStream().subscribe(this.handleRegionHistogramStream);
+        this.backendService.getRasterStream().subscribe(this.handleRasterImageStream);
+        this.backendService.getErrorStream().subscribe(this.handleErrorStream);
+    }
 
-                profileStore.channel = spatialProfileData.channel;
-                profileStore.stokes = spatialProfileData.stokes;
-                profileStore.x = spatialProfileData.x;
-                profileStore.y = spatialProfileData.y;
-                profileStore.approximate = false;
-                const profileMap = new Map<string, CARTA.SpatialProfile>();
-                for (let profile of spatialProfileData.profiles) {
-                    profileMap.set(profile.coordinate, profile as CARTA.SpatialProfile);
-                }
-                profileStore.setProfiles(profileMap);
+    // region Subscription handlers
+    handleSpatialProfileStream = (spatialProfileData: CARTA.SpatialProfileData) => {
+        if (this.frames.find(frame => frame.frameInfo.fileId === spatialProfileData.fileId)) {
+            const key = `${spatialProfileData.fileId}-${spatialProfileData.regionId}`;
+            let profileStore = this.spatialProfiles.get(key);
+            if (!profileStore) {
+                profileStore = new SpatialProfileStore(spatialProfileData.fileId, spatialProfileData.regionId);
+                this.spatialProfiles.set(key, profileStore);
             }
-        });
 
-        // Subscribe to the spectral profile data stream
-        this.backendService.getSpectralProfileStream().subscribe(spectralProfileData => {
-            if (this.frames.find(frame => frame.frameInfo.fileId === spectralProfileData.fileId)) {
-                const key = `${spectralProfileData.fileId}-${spectralProfileData.regionId}`;
-                let profileStore = this.spectralProfiles.get(key);
-                if (!profileStore) {
-                    profileStore = new SpectralProfileStore(spectralProfileData.fileId, spectralProfileData.regionId);
-                    this.spectralProfiles.set(key, profileStore);
-                }
-
-                profileStore.channelValues = spectralProfileData.channelVals;
-                profileStore.stokes = spectralProfileData.stokes;
-                const profileMap = new Map<string, CARTA.SpectralProfile>();
-                for (let profile of spectralProfileData.profiles) {
-                    profileMap.set(profile.coordinate, profile as CARTA.SpectralProfile);
-                }
-                profileStore.setProfiles(profileMap);
+            profileStore.channel = spatialProfileData.channel;
+            profileStore.stokes = spatialProfileData.stokes;
+            profileStore.x = spatialProfileData.x;
+            profileStore.y = spatialProfileData.y;
+            profileStore.approximate = false;
+            const profileMap = new Map<string, CARTA.SpatialProfile>();
+            for (let profile of spatialProfileData.profiles) {
+                profileMap.set(profile.coordinate, profile as CARTA.SpatialProfile);
             }
-        });
+            profileStore.setProfiles(profileMap);
+        }
+    };
 
-        this.backendService.getRasterStream().subscribe(rasterImageData => {
-            const updatedFrame = this.getFrame(rasterImageData.fileId);
-            if (updatedFrame) {
-                updatedFrame.updateFromRasterData(rasterImageData);
-                if (this.animatorStore.animationState === AnimationState.PLAYING) {
-                    this.animatorStore.removeFromRequestQueue(updatedFrame.channel, updatedFrame.stokes);
-                }
+    handleSpectralProfileStream = (spectralProfileData: CARTA.SpectralProfileData) => {
+        if (this.frames.find(frame => frame.frameInfo.fileId === spectralProfileData.fileId)) {
+            const key = `${spectralProfileData.fileId}-${spectralProfileData.regionId}`;
+            let profileStore = this.spectralProfiles.get(key);
+            if (!profileStore) {
+                profileStore = new SpectralProfileStore(spectralProfileData.fileId, spectralProfileData.regionId);
+                this.spectralProfiles.set(key, profileStore);
             }
-        });
 
-        this.backendService.getRegionHistogramStream().subscribe(regionHistogramData => {
-            if (!regionHistogramData) {
-                return;
+            profileStore.channelValues = spectralProfileData.channelVals;
+            profileStore.stokes = spectralProfileData.stokes;
+            const profileMap = new Map<string, CARTA.SpectralProfile>();
+            for (let profile of spectralProfileData.profiles) {
+                profileMap.set(profile.coordinate, profile as CARTA.SpectralProfile);
             }
-            const updatedFrame = this.getFrame(regionHistogramData.fileId);
-            // Update channel histograms
-            if (updatedFrame && regionHistogramData.regionId === -1 && regionHistogramData.stokes === updatedFrame.requiredStokes) {
+            profileStore.setProfiles(profileMap);
+        }
+    };
+
+    handleRegionHistogramStream = (regionHistogramData: CARTA.RegionHistogramData) => {
+        if (!regionHistogramData) {
+            return;
+        }
+        const updatedFrame = this.getFrame(regionHistogramData.fileId);
+
+        if (updatedFrame && regionHistogramData.stokes === updatedFrame.requiredStokes && regionHistogramData.histograms && regionHistogramData.histograms.length) {
+            if (regionHistogramData.regionId === -1) {
+                // Update channel histograms
                 const channelHist = regionHistogramData.histograms.find(hist => hist.channel === updatedFrame.requiredChannel);
                 if (channelHist) {
                     updatedFrame.renderConfig.updateChannelHistogram(channelHist as CARTA.Histogram);
                 }
+            } else if (regionHistogramData.regionId === -2) {
+                // Update cube histogram
+                const cubeHist = regionHistogramData.histograms[0];
+                if (cubeHist) {
+                    updatedFrame.renderConfig.updateCubeHistogram(cubeHist as CARTA.Histogram);
+                }
             }
-        });
+        }
+    };
 
-        this.backendService.getErrorStream().subscribe(errorData => {
-            if (!errorData) {
-                return;
+    handleRasterImageStream = (rasterImageData: CARTA.RasterImageData) => {
+        const updatedFrame = this.getFrame(rasterImageData.fileId);
+        if (updatedFrame) {
+            updatedFrame.updateFromRasterData(rasterImageData);
+            if (this.animatorStore.animationState === AnimationState.PLAYING) {
+                this.animatorStore.removeFromRequestQueue(updatedFrame.channel, updatedFrame.stokes);
             }
+        }
+    };
+
+    handleErrorStream = (errorData: CARTA.ErrorData) => {
+        if (errorData) {
             const logEntry: LogEntry = {
                 level: errorData.severity,
                 message: errorData.message,
                 tags: errorData.tags.concat(["server-sent"]),
                 title: null
             };
-
             this.logStore.addLog(logEntry);
-        });
+        }
+    };
 
-        autorun(() => {
-            if (this.astReady) {
-                this.logStore.addInfo("AST library loaded", ["ast"]);
-            }
-        });
-    }
+    // endregion
 
     @computed get zfpReady() {
         return (this.backendService && this.backendService.zfpReady);
