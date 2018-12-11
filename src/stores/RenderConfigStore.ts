@@ -79,7 +79,12 @@ export class RenderConfigStore {
     }
 
     @action setUseCubeHistogram = (val: boolean) => {
-        this.useCubeHistogram = val;
+        if (val !== this.useCubeHistogram) {
+            this.useCubeHistogram = val;
+            if (this.selectedPercentile > 0) {
+                this.setPercentileRank(this.selectedPercentile);
+            }
+        }
     };
 
     @computed get histogramMin() {
@@ -127,8 +132,9 @@ export class RenderConfigStore {
         }
     };
 
-    @action updateCubeHistogram = (histogram: CARTA.Histogram) => {
+    @action updateCubeHistogram = (histogram: CARTA.Histogram, progress: number) => {
         this.cubeHistogram = histogram;
+        this.cubeHistogramProgress = progress;
         if (this.selectedPercentile > 0 && this.useCubeHistogram) {
             this.setPercentileRank(this.selectedPercentile);
         }

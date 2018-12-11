@@ -414,7 +414,7 @@ export class AppStore {
             return;
         }
         const updatedFrame = this.getFrame(regionHistogramData.fileId);
-
+        console.log(regionHistogramData);
         if (updatedFrame && regionHistogramData.stokes === updatedFrame.requiredStokes && regionHistogramData.histograms && regionHistogramData.histograms.length) {
             if (regionHistogramData.regionId === -1) {
                 // Update channel histograms
@@ -426,7 +426,7 @@ export class AppStore {
                 // Update cube histogram
                 const cubeHist = regionHistogramData.histograms[0];
                 if (cubeHist) {
-                    updatedFrame.renderConfig.updateCubeHistogram(cubeHist as CARTA.Histogram);
+                    updatedFrame.renderConfig.updateCubeHistogram(cubeHist as CARTA.Histogram, regionHistogramData.progress);
                 }
             }
         }

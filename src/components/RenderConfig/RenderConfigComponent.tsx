@@ -59,8 +59,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number } {
         const frame = this.props.appStore.activeFrame;
-        if (frame && frame.renderConfig.channelHistogram && frame.renderConfig.channelHistogram.bins && frame.renderConfig.channelHistogram.bins.length) {
-            const histogram = frame.renderConfig.channelHistogram;
+        if (frame && frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
+            const histogram = frame.renderConfig.histogram;
             let minIndex = 0;
             let maxIndex = histogram.bins.length - 1;
 
@@ -226,7 +226,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             scrollZoom: true
         };
 
-        if (frame && frame.renderConfig.channelHistogram && frame.renderConfig.channelHistogram.bins && frame.renderConfig.channelHistogram.bins.length) {
+        if (frame && frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
             const currentPlotData = this.plotData;
             if (currentPlotData) {
                 linePlotProps.data = currentPlotData.values;
