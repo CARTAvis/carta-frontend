@@ -142,7 +142,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         
         return {
             posCanvasSpace: cursorPosCanvasSpace,
-            posImageSpace: roundedPosImageSpace,
+            posImageSpace: cursorPosImageSpace,
             posWCS: cursorPosWCS,
             infoWCS: cursorPosFormatted,
             value: value
