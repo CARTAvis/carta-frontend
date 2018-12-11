@@ -414,7 +414,6 @@ export class AppStore {
             return;
         }
         const updatedFrame = this.getFrame(regionHistogramData.fileId);
-        console.log(regionHistogramData);
         if (updatedFrame && regionHistogramData.stokes === updatedFrame.requiredStokes && regionHistogramData.histograms && regionHistogramData.histograms.length) {
             if (regionHistogramData.regionId === -1) {
                 // Update channel histograms
