@@ -278,7 +278,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             else {
                 datasetConfig.pointRadius = 0;
                 datasetConfig.showLine = true;
-                datasetConfig.steppedLine = !this.props.interpolateLines;
+                // @ts-ignore TODO: Remove once Chart.js types are updated
+                datasetConfig.steppedLine = this.props.interpolateLines ? false : "midpoint";
                 datasetConfig.borderWidth = 1;
                 datasetConfig.borderColor = lineColor;
             }
