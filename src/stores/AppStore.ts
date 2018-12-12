@@ -73,6 +73,21 @@ export class AppStore {
         this.hotkeyDialogVisible = false;
     };
 
+    // Keyboard shortcuts
+    @computed get modifierString() {
+        // Modifier string for shortcut keys.
+        // - OSX/iOS use '⌘'
+        // - Windows/Linux uses 'Ctrl + '
+        // - Browser uses 'alt +' for compatibility reasons
+        let modString = "alt + ";
+        if (process.env.REACT_APP_TARGET === "linux") {
+            modString = "ctrl + ";
+        } else if (process.env.REACT_APP_TARGET === "darwin") {
+            modString = "cmd +";
+        }
+        return modString;
+    }
+
     // Widgets
     @observable widgetsStore: WidgetsStore;
 

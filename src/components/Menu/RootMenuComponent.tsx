@@ -11,10 +11,7 @@ import {exportImage} from "../ImageView/ImageViewComponent";
 export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
     render() {
         const appStore = this.props.appStore;
-
-        // Modifier string for shortcut keys. OSX/iOS use '⌘', while Windows uses 'Ctrl + '
-        const modString = "alt + ";
-        // const modString = "⌘";
+        const modString = appStore.modifierString;
 
         const fileMenu = (
             <Menu>
@@ -26,7 +23,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 />
                 <Menu.Item
                     text="Append image"
-                    label={`${modString}A`}
+                    label={`${modString}L`}
                     disabled={appStore.backendService.connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(true)}
                 />
@@ -166,8 +163,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         const appStore = this.props.appStore;
         if (appStore.activeFrame && appStore.activeFrame.frameInfo.fileId === fileId) {
             return;
-        }
-        else {
+        } else {
             appStore.setActiveFrame(fileId);
         }
     };
