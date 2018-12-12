@@ -319,7 +319,7 @@ export class AppStore {
         // Update cursor profiles
         autorun(() => {
             if (this.activeFrame && this.cursorInfo && this.cursorInfo.posImageSpace) {
-                const pos = this.cursorInfo.posImageSpace;
+                const pos = {x: Math.round(this.cursorInfo.posImageSpace.x), y: Math.round(this.cursorInfo.posImageSpace.y)};
                 if (pos.x >= 0 && pos.x <= this.activeFrame.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y < this.activeFrame.frameInfo.fileInfoExtended.height - 1) {
                     debouncedSetCursor(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
 
