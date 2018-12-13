@@ -187,6 +187,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     appStore={appStore}
                     docked={this.props.docked}
                     visible={appStore.imageToolbarVisible}
+                    vertical={false}
                 />
                 }
                 {appStore.activeFrame &&
