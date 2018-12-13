@@ -54,6 +54,7 @@ export class LinePlotComponentProps {
     lineColor?: string;
     darkMode?: boolean;
     imageName?: string;
+    plotName?: string;
     usePointSymbols?: boolean;
     forceScientificNotationTicksX?: boolean;
     forceScientificNotationTicksY?: boolean;
@@ -414,30 +415,32 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
     }
     
-    private getPlotName() {
-        if (this.props.xLabel.match(/X/)) {
-            return "X profile";
-        }
-        
-        if (this.props.xLabel.match(/Y/)) {
-            return "Y profile";
-        }
-        
-        if (this.props.xLabel === "Channel") {
-            return "Z profile";
-        }
-        
-        if (this.props.xLabel === "Value" && this.props.yLabel === "Count") {
-            return "histogram";
-        }
-        
-        return "unknown";
-    }
+    // private getPlotName() {
+    //     if (this.props.xLabel.match(/X/)) {
+    //         return "X profile";
+    //     }
+    //
+    //     if (this.props.xLabel.match(/Y/)) {
+    //         return "Y profile";
+    //     }
+    //
+    //     if (this.props.xLabel === "Channel") {
+    //         return "Z profile";
+    //     }
+    //
+    //     if (this.props.xLabel === "Value" && this.props.yLabel === "Count") {
+    //         return "histogram";
+    //     }
+    //
+    //     return "unknown";
+    // }
     
     exportImage = () => {
         const scatter = this.plotRef as Scatter;
         const canvas = scatter.chartInstance.canvas;
-        
+        const plotName = this.props.plotName || "unknown";
+        const imageName = this.props.imageName || "unknown";
+
         const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
         composedCanvas.width = canvas.width;
         composedCanvas.height = canvas.height;
@@ -451,16 +454,19 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         
         const a = document.createElement("a") as HTMLAnchorElement;
         a.href = dataURL;
-        a.download = `${this.props.imageName}-${this.getPlotName().replace(" ", "-")}-${this.getTimestamp()}.png`;
+        a.download = `${imageName}-${plotName.replace(" ", "-")}-${this.getTimestamp()}.png`;
         a.dispatchEvent(new MouseEvent("click"));
     };
     
     exportData = () => {
-        const comment = `# ${this.props.imageName} ${this.getPlotName()}`;
+        const plotName = this.props.plotName || "unknown";
+        const imageName = this.props.imageName || "unknown";
+
+        const comment = `# ${imageName} ${plotName}`;
         const header = "x\ty";
         
         let rows;
-        if (this.getPlotName() === "histogram") {
+        if (plotName === "histogram") {
             rows = this.props.data.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
         } else {
             rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
@@ -472,7 +478,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         
         const a = document.createElement("a") as HTMLAnchorElement;
         a.href = dataURL;
-        a.download = `${this.props.imageName}-${this.getPlotName().replace(" ", "-")}-${this.getTimestamp()}.tsv`;
+        a.download = `${imageName}-${plotName.replace(" ", "-")}-${this.getTimestamp()}.tsv`;
         a.dispatchEvent(new MouseEvent("click"));
     };
 

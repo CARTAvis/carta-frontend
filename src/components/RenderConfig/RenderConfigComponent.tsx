@@ -99,8 +99,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             // Assign the next unique ID
             const id = props.appStore.widgetsStore.addNewRenderConfigWidget();
             props.appStore.widgetsStore.changeWidgetId(props.id, id);
-        }
-        else {
+        } else {
             if (!this.props.appStore.widgetsStore.renderConfigWidgets.has(this.props.id)) {
                 console.error(`can't find store for widget with id=${this.props.id}`);
                 this.props.appStore.widgetsStore.renderConfigWidgets.set(this.props.id, new RenderConfigWidgetStore());
@@ -194,14 +193,15 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         if (frame && frame.unit) {
             unitString = `Value (${frame.unit})`;
         }
-        
-        const imageName = (appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfo.name : undefined);
 
+        const imageName = frame.frameInfo.fileInfo.name;
+        const plotName = `channel ${frame.channel} histogram`;
         let linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
             yLabel: "Count",
             darkMode: appStore.darkTheme,
             imageName: imageName,
+            plotName: plotName,
             logY: this.widgetStore.logScaleY,
             usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
             interpolateLines: this.widgetStore.plotType === PlotType.LINES,
@@ -216,7 +216,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             scrollZoom: true
         };
 
-        if (frame && frame.renderConfig.channelHistogram && frame.renderConfig.channelHistogram.bins && frame.renderConfig.channelHistogram.bins.length) {
+        if (frame.renderConfig.channelHistogram && frame.renderConfig.channelHistogram.bins && frame.renderConfig.channelHistogram.bins.length) {
             const currentPlotData = this.plotData;
             if (currentPlotData) {
                 linePlotProps.data = currentPlotData.values;
@@ -224,8 +224,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 if (this.widgetStore.isAutoScaledX) {
                     linePlotProps.xMin = currentPlotData.xMin;
                     linePlotProps.xMax = currentPlotData.xMax;
-                }
-                else {
+                } else {
                     linePlotProps.xMin = this.widgetStore.minX;
                     linePlotProps.xMax = this.widgetStore.maxX;
                 }
@@ -233,8 +232,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 if (this.widgetStore.isAutoScaledY) {
                     linePlotProps.yMin = currentPlotData.yMin;
                     linePlotProps.yMax = currentPlotData.yMax;
-                }
-                else {
+                } else {
                     linePlotProps.yMin = this.widgetStore.minY;
                     linePlotProps.yMax = this.widgetStore.maxY;
                 }
@@ -245,7 +243,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             }
         }
 
-        if (frame && frame.renderConfig) {
+        if (frame.renderConfig) {
             linePlotProps.markers = [{
                 value: frame.renderConfig.scaleMin,
                 id: "marker-min",
@@ -287,8 +285,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     </ButtonGroup>
                 </div>
             );
-        }
-        else {
+        } else {
             const percentileRankOptions: IOptionProps [] = percentileRanks.map(rank => ({label: `${rank}%`, value: rank}));
             percentileRankOptions.push({label: "Custom", value: -1});
             percentileSelectDiv = (
@@ -306,8 +303,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             // Switch between standard and scientific notation
             if (this.widgetStore.cursorX < 1e-2) {
                 numberString = this.widgetStore.cursorX.toExponential(2);
-            }
-            else {
+            } else {
                 numberString = this.widgetStore.cursorX.toFixed(2);
             }
 
