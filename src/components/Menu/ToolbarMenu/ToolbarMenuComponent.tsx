@@ -63,13 +63,17 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
                     <Button icon={"application"} id="logButton" onClick={this.props.appStore.widgetsStore.createFloatingLogWidget}/>
                 </Tooltip>
                 <Tooltip content={<span>Animator Widget{commonTooltip}</span>}>
-                    <Button icon={"layers"} id="animatorButton" onClick={this.props.appStore.widgetsStore.createFloatingAnimatorWidget}/>
+                    <Button icon={"video"} id="animatorButton" onClick={this.props.appStore.widgetsStore.createFloatingAnimatorWidget}/>
                 </Tooltip>
                 <Tooltip content={<span>Spatial Profiler{commonTooltip}</span>}>
-                    <Button icon={"timeline-line-chart"} id="spatialProfilerButton" onClick={this.props.appStore.widgetsStore.createFloatingSpatialProfilerWidget}/>
+                    <Button icon={"pulse"} id="spatialProfilerButton" className={"profiler-button"} onClick={this.props.appStore.widgetsStore.createFloatingSpatialProfilerWidget}>
+                        xy
+                    </Button>
                 </Tooltip>
                 <Tooltip content={<span>Spectral Profiler{commonTooltip}</span>}>
-                    <Button icon={"step-chart"} id="spectralProfilerButton" onClick={this.props.appStore.widgetsStore.createFloatingSpectralProfilerWidget}/>
+                    <Button icon={"pulse"} id="spectralProfilerButton" className={"profiler-button"} onClick={this.props.appStore.widgetsStore.createFloatingSpectralProfilerWidget}>
+                        &nbsp;z
+                    </Button>
                 </Tooltip>
             </ButtonGroup>
         );

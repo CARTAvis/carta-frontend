@@ -29,10 +29,9 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 />
                 <Menu.Item text="Load region" disabled={true}/>
                 <Menu.Divider/>
-                <Menu.Item text="Export annotations" icon={"floppy-disk"} disabled={true}/>
                 <Menu.Item
                     text="Export image"
-                    icon={"media"}
+                    icon={"floppy-disk"}
                     label={`${modString}E`}
                     disabled={appStore.backendService.connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame}
                     onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
@@ -125,10 +124,9 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
 
         const helpMenu = (
             <Menu>
-                <Menu.Item text="Getting Started" icon={"help"} label={"F1"} disabled={true}/>
-                <Menu.Item text="Controls and Shortcuts" icon={"info-sign"} label={"Shift + ?"} onClick={appStore.showHotkeyDialog}/>
-                <Menu.Item text="Search help" icon={"search"} label={"Shift + Space"} disabled={true}/>
-                <Menu.Item text="About" icon={"info-sign"} disabled={true}/>
+                <Menu.Item text="Online Manual" icon={"help"} label={"F1"} disabled={true}/>
+                <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={appStore.showHotkeyDialog}/>
+                <Menu.Item text="About" disabled={true} icon={"info-sign"}/>
             </Menu>
         );
 
