@@ -124,9 +124,9 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
 
         const helpMenu = (
             <Menu>
-                <Menu.Item text="Online Manual" icon={"help"} label={"F1"} disabled={true}/>
+                <Menu.Item text="Online Manual" icon={"help"} label={"F1"} href={"https://cartavis.github.io/manual"} target={"_blank"}/>
                 <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={appStore.showHotkeyDialog}/>
-                <Menu.Item text="About" disabled={true} icon={"info-sign"}/>
+                <Menu.Item text="About" icon={"info-sign"} disabled={true}/>
             </Menu>
         );
 
