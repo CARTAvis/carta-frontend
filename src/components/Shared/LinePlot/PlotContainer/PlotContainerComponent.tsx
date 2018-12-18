@@ -267,7 +267,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 label: "LineGraph",
                 type: "line",
                 data: this.props.data,
-                fill: false
+                fill: false,
+                lineTension: 0
             };
 
             if (this.props.usePointSymbols) {
