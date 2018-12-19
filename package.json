@@ -9,6 +9,7 @@
         "@blueprintjs/select": "^3.2.1",
         "chart.js": "veggiesaurus/Chart.js#midpoint_step_interpolation",
         "chartjs-plugin-annotation": "^0.5.7",
+        "electron": "^4.0.0-beta.11",
         "glslify-loader": "^1.0.2",
         "golden-layout": "^1.5.9",
         "konva": "^2.5.1",

@@ -1,14 +1,18 @@
 import * as React from "react";
-import "./RootMenuComponent.css";
-import {Button, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
-import {AppStore} from "../../stores/AppStore";
+import {observable} from "mobx";
 import {observer} from "mobx-react";
+import {Alert, Menu, Popover, Position} from "@blueprintjs/core";
+import {AppStore} from "../../stores/AppStore";
 import {ConnectionStatus} from "../../services/BackendService";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {exportImage} from "../ImageView/ImageViewComponent";
+import "./RootMenuComponent.css";
 
 @observer
 export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
+    @observable documentationAlertVisible: boolean;
+    private documentationAlertTimeoutHandle;
+
     render() {
         const appStore = this.props.appStore;
         const modString = appStore.modifierString;
@@ -124,7 +128,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
 
         const helpMenu = (
             <Menu>
-                <Menu.Item text="Online Manual" icon={"help"} label={"F1"} href={"https://cartavis.github.io/manual"} target={"_blank"}/>
+                <Menu.Item text="Online Manual" icon={"help"} label={"F1"} onClick={this.handleDocumentationClicked}/>
                 <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={appStore.showHotkeyDialog}/>
                 <Menu.Item text="About" icon={"info-sign"} disabled={true}/>
             </Menu>
@@ -153,9 +157,24 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     </Menu>
                 </Popover>
                 <ToolbarMenuComponent appStore={appStore}/>
+                <Alert isOpen={this.documentationAlertVisible} onClose={this.handleAlertDismissed} canEscapeKeyCancel={true} canOutsideClickCancel={true} confirmButtonText={"Dismiss"}>
+                    Documentation will open in a new tab. Please ensure any popup blockers are disabled.
+                </Alert>
             </div>
         );
     }
+
+    handleDocumentationClicked = () => {
+        window.open("https://cartavis.github.io/manual", "_blank");
+        this.documentationAlertVisible = true;
+        clearTimeout(this.documentationAlertTimeoutHandle);
+        this.documentationAlertTimeoutHandle = setTimeout(() => this.documentationAlertVisible = false, 10000);
+
+    };
+
+    handleAlertDismissed = () => {
+        this.documentationAlertVisible = false;
+    };
 
     handleFrameSelect = (fileId: number) => {
         const appStore = this.props.appStore;
