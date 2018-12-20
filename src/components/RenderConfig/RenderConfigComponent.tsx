@@ -17,6 +17,7 @@ import {RenderConfigSettingsPanelComponent} from "./RenderConfigSettingsPanelCom
 import {RenderConfigWidgetStore} from "../../stores/widgets/RenderConfigWidgetStore";
 import "./RenderConfigComponent.css";
 import {PlotType} from "../Shared/PlotTypeSelector/PlotTypeSelectorComponent";
+import {TaskProgressDialogComponent} from "../Dialogs/TaskProgressDialog/TaskProgressDialogComponent";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 160;
@@ -58,8 +59,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number } {
         const frame = this.props.appStore.activeFrame;
-        if (frame && frame.renderConfig.channelHistogram && frame.renderConfig.channelHistogram.bins && frame.renderConfig.channelHistogram.bins.length) {
-            const histogram = frame.renderConfig.channelHistogram;
+        if (frame && frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
+            const histogram = frame.renderConfig.histogram;
             let minIndex = 0;
             let maxIndex = histogram.bins.length - 1;
 
@@ -156,6 +157,16 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         this.props.appStore.activeFrame.renderConfig.setPercentileRank(-1);
     };
 
+    handleCubeHistogramSelected = () => {
+        const frame = this.props.appStore.activeFrame;
+        if (frame && frame.renderConfig) {
+            frame.renderConfig.setUseCubeHistogram(true);
+            if (frame.renderConfig.cubeHistogramProgress < 1.0) {
+                this.props.appStore.requestCubeHistogram();
+            }
+        }
+    };
+
     onMinMoved = (x: number) => {
         const frame = this.props.appStore.activeFrame;
         // Check bounds first, to make sure the max isn't being moved below the min
@@ -216,7 +227,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             scrollZoom: true
         };
 
-        if (frame.renderConfig.channelHistogram && frame.renderConfig.channelHistogram.bins && frame.renderConfig.channelHistogram.bins.length) {
+        if (frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
             const currentPlotData = this.plotData;
             if (currentPlotData) {
                 linePlotProps.data = currentPlotData.values;
@@ -329,7 +340,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 </div>
                 }
                 <div className="colormap-config">
-                    <ColormapConfigComponent darkTheme={appStore.darkTheme} renderConfig={frame.renderConfig}/>
+                    <ColormapConfigComponent darkTheme={appStore.darkTheme} renderConfig={frame.renderConfig} onCubeHistogramSelected={this.handleCubeHistogramSelected}/>
                     <FormGroup label={"Clip Min"} inline={true}>
                         <NumericInput
                             value={frame.renderConfig.scaleMin}
@@ -349,6 +360,12 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                     {this.width < histogramCutoff ? percentileSelectDiv : cursorInfoDiv}
                 </div>
+                <TaskProgressDialogComponent
+                    isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}
+                    progress={frame.renderConfig.cubeHistogramProgress}
+                    cancellable={false}
+                    text={"Calculating cube histogram"}
+                />
                 <PopoverSettingsComponent
                     isOpen={this.widgetStore.settingsPanelVisible}
                     onShowClicked={this.widgetStore.showSettingsPanel}

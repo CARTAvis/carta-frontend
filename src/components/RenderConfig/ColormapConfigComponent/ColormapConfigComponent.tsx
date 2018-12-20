@@ -1,8 +1,10 @@
 import * as React from "react";
+import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {Button, FormGroup, IPopoverProps, MenuItem, NumericInput} from "@blueprintjs/core";
+import {Alert, Button, FormGroup, IPopoverProps, MenuItem, NumericInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {FrameScaling, RenderConfigStore} from "../../../stores/RenderConfigStore";
+import {TaskProgressDialogComponent} from "../../Dialogs/TaskProgressDialog/TaskProgressDialogComponent";
 // Static assets
 import allMaps from "../../../static/allmaps.png";
 // Equation PNG images
@@ -24,9 +26,12 @@ const equationPngMap = new Map([
 
 const ColorMapSelect = Select.ofType<string>();
 const ScalingSelect = Select.ofType<FrameScaling>();
+const HistogramSelect = Select.ofType<boolean>();
 
 interface ColormapConfigProps {
     renderConfig: RenderConfigStore;
+    onCubeHistogramSelected: () => void;
+    onCubeHistogramCancelled?: () => void;
     darkTheme: boolean;
 }
 
@@ -36,6 +41,9 @@ const COLORMAP_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position:
 
 @observer
 export class ColormapConfigComponent extends React.Component<ColormapConfigProps> {
+
+    @observable showCubeHistogramAlert: boolean;
+
     renderColormapBlock = (colormap: string) => {
         let className = "colormap-block";
         if (this.props.darkTheme) {
@@ -90,6 +98,10 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         );
     };
 
+    renderHistogramSelectItem = (isCube: boolean, {handleClick, modifiers, query}) => {
+        return <MenuItem text={isCube ? "Per-Cube" : "Per-Channel"} onClick={handleClick} key={isCube ? "cube" : "channel"}/>;
+    };
+
     handleGammaChange = (value: number) => {
         if (isFinite(value)) {
             this.props.renderConfig.setGamma(value);
@@ -102,6 +114,14 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         }
     };
 
+    handleHistogramChange = (value: boolean) => {
+        if (value && !this.props.renderConfig.cubeHistogram) {
+            this.showCubeHistogramAlert = true;
+        } else {
+            this.props.renderConfig.setUseCubeHistogram(value);
+        }
+    };
+
     render() {
         if (!this.props.renderConfig) {
             return null;
@@ -110,6 +130,19 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         const renderConfig = this.props.renderConfig;
         return (
             <React.Fragment>
+                <FormGroup label={"Histogram"} inline={true}>
+                    <HistogramSelect
+                        activeItem={renderConfig.useCubeHistogram}
+                        popoverProps={SCALING_POPOVER_PROPS}
+                        filterable={false}
+                        items={[true, false]}
+                        onItemSelect={this.handleHistogramChange}
+                        itemRenderer={this.renderHistogramSelectItem}
+                    >
+                        <Button text={renderConfig.useCubeHistogram ? "Per-Cube" : "Per-Channel"} rightIcon="double-caret-vertical" alignText={"right"}/>
+                    </HistogramSelect>
+                </FormGroup>
+
                 <FormGroup label={"Scaling"} inline={true}>
                     <ScalingSelect
                         activeItem={renderConfig.scaling}
@@ -157,7 +190,21 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                     />
                 </FormGroup>
                 }
+                <Alert icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
+                    <p>
+                        Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?
+                    </p>
+                </Alert>
             </React.Fragment>
         );
     }
+
+    private handleAlertConfirm = () => {
+        this.props.onCubeHistogramSelected();
+        this.showCubeHistogramAlert = false;
+    };
+
+    private handleAlertCancel = () => {
+        this.showCubeHistogramAlert = false;
+    };
 }
