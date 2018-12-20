@@ -130,7 +130,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
             <Menu>
                 <Menu.Item text="Online Manual" icon={"help"} label={"F1"} onClick={this.handleDocumentationClicked}/>
                 <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={appStore.showHotkeyDialog}/>
-                <Menu.Item text="About" icon={"info-sign"} disabled={true}/>
+                <Menu.Item text="About" icon={"info-sign"} onClick={appStore.showAboutDialog}/>
             </Menu>
         );
 
@@ -166,10 +166,11 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
 
     handleDocumentationClicked = () => {
         window.open("https://cartavis.github.io/manual", "_blank");
-        this.documentationAlertVisible = true;
-        clearTimeout(this.documentationAlertTimeoutHandle);
-        this.documentationAlertTimeoutHandle = setTimeout(() => this.documentationAlertVisible = false, 10000);
-
+        if (process.env.REACT_APP_TARGET !== "linux" && process.env.REACT_APP_TARGET !== "darwin") {
+            this.documentationAlertVisible = true;
+            clearTimeout(this.documentationAlertTimeoutHandle);
+            this.documentationAlertTimeoutHandle = setTimeout(() => this.documentationAlertVisible = false, 10000);
+        }
     };
 
     handleAlertDismissed = () => {

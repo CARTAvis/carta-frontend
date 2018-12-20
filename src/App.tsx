@@ -17,6 +17,7 @@ import {smoothStepOffset} from "./util";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
 import "./layout-theme.css";
+import {AboutDialogComponent} from "./components/Dialogs/AboutDialog/AboutDialogComponent";
 
 @HotkeysTarget @observer
 export class App extends React.Component<{ appStore: AppStore }> {
@@ -162,6 +163,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 <OverlaySettingsDialogComponent appStore={appStore}/>
                 <URLConnectDialogComponent appStore={appStore}/>
                 <FileBrowserDialogComponent appStore={appStore}/>
+                <AboutDialogComponent appStore={appStore}/>
                 <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>
