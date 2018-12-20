@@ -65,12 +65,21 @@ export class AppStore {
     @action hideURLConnect = () => {
         this.urlConnectDialogVisible = false;
     };
+
     @observable hotkeyDialogVisible: boolean;
     @action showHotkeyDialog = () => {
         this.hotkeyDialogVisible = true;
     };
     @action hideHotkeyDialog = () => {
         this.hotkeyDialogVisible = false;
+    };
+
+    @observable aboutDialogVisible: boolean;
+    @action showAboutDialog = () => {
+        this.aboutDialogVisible = true;
+    };
+    @action hideAboutDialog = () => {
+        this.aboutDialogVisible = false;
     };
 
     // Keyboard shortcuts
