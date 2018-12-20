@@ -83,7 +83,7 @@ export class WidgetsStore {
         layout.registerComponent("animator", AnimatorComponent);
 
         layout.on("stackCreated", (stack) => {
-            let unpinButton = $(`<div class="pin-icon"><span class="bp3-icon-standard bp3-icon-unpin"/></div>`);
+            let unpinButton = $(`<li class="pin-icon"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);
             unpinButton.on("click", () => this.unpinWidget(stack.getActiveContentItem()));
             stack.header.controlsContainer.prepend(unpinButton);
         });
@@ -91,6 +91,7 @@ export class WidgetsStore {
         layout.on("componentCreated", this.handleItemCreation);
         layout.on("itemDestroyed", this.handleItemRemoval);
 
+        layout.on("stateChanged", this.handleStateUpdates);
         layout.init();
         this.dockedLayout = layout;
     }
@@ -132,13 +133,11 @@ export class WidgetsStore {
             const itemId = this.addNewRenderConfigWidget();
             config.id = itemId;
             config.props.id = itemId;
-        }
-        else if (id === SpatialProfilerComponent.WIDGET_CONFIG.id) {
+        } else if (id === SpatialProfilerComponent.WIDGET_CONFIG.id) {
             const itemId = this.addNewSpatialProfileWidget();
             config.id = itemId;
             config.props.id = itemId;
-        }
-        else {
+        } else {
             // Remove it from the floating widget array, while preserving its store
             if (this.floatingWidgets.find(w => w.id === id)) {
                 this.removeFloatingWidget(id, true);
@@ -161,14 +160,29 @@ export class WidgetsStore {
         }
     };
 
+    @action handleStateUpdates = (event: any) => {
+        console.log(event);
+        if (event && event.origin && event.origin.isMaximised && event.origin.header) {
+            const header = event.origin.header as GoldenLayout.Header;
+            if (header.controlsContainer && header.controlsContainer.length) {
+                const controlsElement = header.controlsContainer[0];
+                if (controlsElement.children && controlsElement.children.length) {
+                    const maximiseElement = controlsElement.children[controlsElement.children.length - 1];
+                    if (maximiseElement) {
+                        maximiseElement.setAttribute("title", "restore");
+                    }
+                }
+            }
+        }
+    };
+
     // endregion
 
     @action updateImageWidgetTitle() {
         let newTitle;
         if (this.appStore.activeFrame) {
             newTitle = this.appStore.activeFrame.frameInfo.fileInfo.name;
-        }
-        else {
+        } else {
             newTitle = "No image loaded";
         }
 
