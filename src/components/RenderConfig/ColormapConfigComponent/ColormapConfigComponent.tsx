@@ -192,7 +192,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 }
                 <Alert icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
                     <p>
-                        Calculating a cube histogram may a long time, depending on the size of the file. Are you sure you want to continue?
+                        Calculating a cube histogram may take a long time, depending on the size of the file. Are you sure you want to continue?
                     </p>
                 </Alert>
             </React.Fragment>
