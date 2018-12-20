@@ -44,6 +44,7 @@ export class LinePlotComponentProps {
     width?: number;
     height?: number;
     data?: { x: number, y: number }[];
+    comments?: string[];
     xMin?: number;
     xMax?: number;
     yMin?: number;
@@ -113,17 +114,13 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const absDelta = {x: Math.abs(this.selectionBoxEnd.x - this.selectionBoxStart.x), y: Math.abs(this.selectionBoxEnd.y - this.selectionBoxStart.y)};
         if (absDelta.x > XY_ZOOM_THRESHOLD && absDelta.y > XY_ZOOM_THRESHOLD && this.props.graphZoomedXY) {
             return ZoomMode.XY;
-        }
-        else if (this.props.graphZoomedX && this.props.graphZoomedY) {
+        } else if (this.props.graphZoomedX && this.props.graphZoomedY) {
             return absDelta.x > absDelta.y ? ZoomMode.X : ZoomMode.Y;
-        }
-        else if (this.props.graphZoomedX) {
+        } else if (this.props.graphZoomedX) {
             return ZoomMode.X;
-        }
-        else if (this.props.graphZoomedY) {
+        } else if (this.props.graphZoomedY) {
             return ZoomMode.Y;
-        }
-        else {
+        } else {
             return ZoomMode.NONE;
         }
     }
@@ -145,8 +142,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             value /= this.chartArea.bottom - this.chartArea.top;
             value *= Math.log10(this.props.yMax / this.props.yMin);
             return Math.pow(10, Math.log10(this.props.yMin) + value);
-        }
-        else {
+        } else {
             const fraction = (this.chartArea.bottom - pixel) / (this.chartArea.bottom - this.chartArea.top);
             return fraction * (this.props.yMax - this.props.yMin) + this.props.yMin;
         }
@@ -168,8 +164,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         let fraction;
         if (logScale) {
             fraction = (Math.log(this.props.yMax) - Math.log(value)) / (Math.log(this.props.yMax) - Math.log(this.props.yMin));
-        }
-        else {
+        } else {
             fraction = (this.props.yMax - value) / (this.props.yMax - this.props.yMin);
         }
         return fraction * (this.chartArea.bottom - this.chartArea.top) + this.chartArea.top;
@@ -187,11 +182,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         this.width = w;
         this.height = h;
     };
-    
+
     @action showToolbar = () => {
         this.toolbarVisible = true;
     };
-    
+
     @action hideToolbar = () => {
         this.toolbarVisible = false;
     };
@@ -213,8 +208,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 if (marker.horizontal) {
                     // Prevent dragging out of canvas space
                     newPositionDataSpace = this.getValueForPixelY(clamp(ev.evt.offsetY, this.chartArea.top, this.chartArea.bottom), this.props.logY);
-                }
-                else {
+                } else {
                     // Prevent dragging out of canvas space
                     newPositionDataSpace = this.getValueForPixelX(clamp(ev.evt.offsetX, this.chartArea.left, this.chartArea.right));
                 }
@@ -250,8 +244,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const modifierPressed = mouseEvent.ctrlKey || mouseEvent.shiftKey || mouseEvent.altKey;
         if (this.hoveredMarker === undefined && !modifierPressed) {
             this.startSelection(mouseEvent.offsetX, mouseEvent.offsetY);
-        }
-        else if (modifierPressed) {
+        } else if (modifierPressed) {
             this.startPanning(mouseEvent.offsetX);
         }
     };
@@ -267,8 +260,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const mouseMoveDist = {x: Math.abs(mouseEvent.offsetX - this.stageClickStartX), y: Math.abs(mouseEvent.offsetY - this.stageClickStartY)};
         if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
             this.onStageClick(ev);
-        }
-        else {
+        } else {
             this.stageClickStartX = undefined;
             this.stageClickStartY = undefined;
             if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
@@ -288,8 +280,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 }
                 if (this.zoomMode === ZoomMode.Y) {
                     this.props.graphZoomedY(minY, maxY);
-                }
-                else if (this.zoomMode === ZoomMode.XY) {
+                } else if (this.zoomMode === ZoomMode.XY) {
                     this.props.graphZoomedXY(minX, maxX, minY, maxY);
                 }
             }
@@ -312,8 +303,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         let mousePosY = clamp(mouseEvent.offsetY, chartArea.top - 1, chartArea.bottom + 1);
         if (this.isSelecting) {
             this.updateSelection(mousePosX, mousePosY);
-        }
-        else if (this.isPanning && this.props.graphZoomedX) {
+        } else if (this.isPanning && this.props.graphZoomedX) {
             const currentPan = mousePosX;
             const prevPanGraphSpace = this.getValueForPixelX(this.panPrevious);
             const currentPanGraphSpace = this.getValueForPixelX(currentPan);
@@ -341,8 +331,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             this.onStageDoubleClick(ev);
             clearTimeout(this.pendingClickHandle);
             return;
-        }
-        else {
+        } else {
             this.pendingClickHandle = setTimeout(() => {
                 // Ignore click-drags for click handling
                 const mouseMoveDist = {x: Math.abs(mousePoint.x - this.stageClickStartX), y: Math.abs(mousePoint.y - this.stageClickStartY)};
@@ -401,40 +390,20 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             this.endInteractions();
         }
     };
-    
+
     onMouseEnter = () => {
         this.showToolbar();
     };
-    
+
     onMouseLeave = () => {
         this.hideToolbar();
     };
-    
+
     private getTimestamp() {
         const now = new Date();
         return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
     }
-    
-    // private getPlotName() {
-    //     if (this.props.xLabel.match(/X/)) {
-    //         return "X profile";
-    //     }
-    //
-    //     if (this.props.xLabel.match(/Y/)) {
-    //         return "Y profile";
-    //     }
-    //
-    //     if (this.props.xLabel === "Channel") {
-    //         return "Z profile";
-    //     }
-    //
-    //     if (this.props.xLabel === "Value" && this.props.yLabel === "Count") {
-    //         return "histogram";
-    //     }
-    //
-    //     return "unknown";
-    // }
-    
+
     exportImage = () => {
         const scatter = this.plotRef as Scatter;
         const canvas = scatter.chartInstance.canvas;
@@ -444,38 +413,50 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
         composedCanvas.width = canvas.width;
         composedCanvas.height = canvas.height;
-            
+
         const ctx = composedCanvas.getContext("2d");
         ctx.fillStyle = this.props.darkMode ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
         ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
         ctx.drawImage(canvas, 0, 0);
-        
+
         const dataURL = composedCanvas.toDataURL().replace("image/png", "image/octet-stream");
-        
+
         const a = document.createElement("a") as HTMLAnchorElement;
         a.href = dataURL;
         a.download = `${imageName}-${plotName.replace(" ", "-")}-${this.getTimestamp()}.png`;
         a.dispatchEvent(new MouseEvent("click"));
     };
-    
+
     exportData = () => {
         const plotName = this.props.plotName || "unknown";
         const imageName = this.props.imageName || "unknown";
 
-        const comment = `# ${imageName} ${plotName}`;
-        const header = "x\ty";
-        
+        let comment = `# ${imageName} ${plotName}`;
+        if (this.props.xLabel) {
+            comment += `\n# xLabel: ${this.props.xLabel}`;
+        }
+        if (this.props.yLabel) {
+            comment += `\n# yLabel: ${this.props.yLabel}`;
+        }
+
+        // add comments from properties
+        if (this.props.comments && this.props.comments.length) {
+            comment += "\n" + this.props.comments.map(c => "# " + c).join("\n");
+        }
+
+        const header = "# x\ty";
+
         let rows;
         if (plotName === "histogram") {
             rows = this.props.data.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
         } else {
             rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
         }
-        
+
         const tsvData = `data:text/tab-separated-values;charset=utf-8,${comment}\n${header}\n${rows.join("\n")}\n`;
-        
+
         const dataURL = encodeURI(tsvData).replace("#", "%23");
-        
+
         const a = document.createElement("a") as HTMLAnchorElement;
         a.href = dataURL;
         a.download = `${imageName}-${plotName.replace(" ", "-")}-${this.getTimestamp()}.tsv`;
@@ -514,8 +495,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                             <Arrow listening={false} key={1} x={midPoint} y={0} points={[0, -arrowStart, 0, -arrowStart - arrowSize]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor}/>,
                             <Arrow listening={false} key={2} x={midPoint} y={0} points={[0, arrowStart, 0, arrowStart + arrowSize]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor}/>
                         ];
-                    }
-                    else {
+                    } else {
                         if (marker.width) {
                             const thickness = this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.logY) - this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.logY);
                             let lowerBound = clamp(valueCanvasSpace - thickness, chartArea.top, chartArea.bottom);
@@ -524,8 +504,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                             lineSegments = [(
                                 <Rect listening={false} key={0} x={chartArea.left} y={lowerBound - valueCanvasSpace} width={lineWidth} height={croppedThickness} fill={markerColor} opacity={markerOpacity}/>
                             )];
-                        }
-                        else {
+                        } else {
                             lineSegments = [<Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash}/>];
                         }
                     }
@@ -554,8 +533,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                             {lineSegments}
                         </Group>
                     );
-                }
-                else {
+                } else {
                     let valueCanvasSpace = Math.floor(this.getPixelForValueX(marker.value)) + 0.5 * devicePixelRatio;
                     if (valueCanvasSpace < Math.floor(chartArea.left - 1) || valueCanvasSpace > Math.ceil(chartArea.right + 1) || isNaN(valueCanvasSpace)) {
                         continue;
@@ -573,8 +551,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                             <Arrow listening={false} key={1} x={0} y={midPoint} points={[-arrowStart, 0, -arrowStart - arrowSize, 0]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor}/>,
                             <Arrow listening={false} key={2} x={0} y={midPoint} points={[arrowStart, 0, arrowStart + arrowSize, 0]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor}/>
                         ];
-                    }
-                    else {
+                    } else {
                         if (marker.width) {
                             const thickness = this.getPixelForValueX(marker.value + marker.width / 2.0) - this.getPixelForValueX(marker.value - marker.width / 2.0);
                             let lowerBound = clamp(valueCanvasSpace - thickness, chartArea.left, chartArea.right);
@@ -583,8 +560,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                             lineSegments = [(
                                 <Rect listening={false} key={0} x={lowerBound - valueCanvasSpace} y={chartArea.top} width={croppedThickness} height={lineHeight} fill={markerColor} opacity={markerOpacity}/>
                             )];
-                        }
-                        else {
+                        } else {
                             lineSegments = [<Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity}/>];
                         }
                     }
@@ -638,8 +614,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     <Line stroke={Colors.GRAY3} key={1} x={start.x} y={start.y} points={[0, -heightAbove, 0, heightBelow]} strokeWidth={3}/>,
                     <Line stroke={Colors.GRAY3} key={2} x={end.x} y={start.y} points={[0, -heightAbove, 0, heightBelow]} strokeWidth={3}/>
                 ];
-            }
-            else if (this.zoomMode === ZoomMode.Y) {
+            } else if (this.zoomMode === ZoomMode.Y) {
                 // Determine appropriate bounds for the zoom markers, so that they don't extend past the chart area
                 const widthLeft = clamp(XY_ZOOM_THRESHOLD, 0, start.x - chartArea.left);
                 const widthRight = clamp(XY_ZOOM_THRESHOLD, 0, chartArea.right - start.x);
@@ -649,8 +624,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     <Line stroke={Colors.GRAY3} key={1} x={start.x} y={start.y} points={[-widthLeft, 0, widthRight, 0]} strokeWidth={3}/>,
                     <Line stroke={Colors.GRAY3} key={2} x={start.x} y={end.y} points={[-widthLeft, 0, widthRight, 0]} strokeWidth={3}/>
                 ];
-            }
-            else if (this.zoomMode === ZoomMode.XY) {
+            } else if (this.zoomMode === ZoomMode.XY) {
                 // Selection rectangle consists of a filled rectangle with drag corners
                 selectionRect = [
                     <Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={start.x} y={start.y} width={delta.x} height={delta.y}/>,
@@ -679,7 +653,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
 
         return (
-            <div 
+            <div
                 className={"line-plot-component"}
                 style={{cursor: this.isPanning || isHovering ? "move" : "crosshair"}}
                 onKeyDown={this.onKeyDown}

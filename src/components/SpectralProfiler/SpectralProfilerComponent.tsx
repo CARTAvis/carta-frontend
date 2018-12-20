@@ -64,8 +64,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     @computed get frame(): FrameStore {
         if (this.props.appStore && this.widgetStore) {
             return this.props.appStore.getFrame(this.widgetStore.fileId);
-        }
-        else {
+        } else {
             return undefined;
         }
     }
@@ -126,8 +125,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 if (x < xMin || x > xMax) {
                     if (values.length) {
                         break;
-                    }
-                    else {
+                    } else {
                         continue;
                     }
                 }
@@ -163,8 +161,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             // Assign the next unique ID
             const id = props.appStore.widgetsStore.addNewSpectralProfileWidget();
             props.appStore.widgetsStore.changeWidgetId(props.id, id);
-        }
-        else {
+        } else {
             if (!this.props.appStore.widgetsStore.spectralProfileWidgets.has(this.props.id)) {
                 console.error(`can't find store for widget with id=${this.props.id}`);
                 this.props.appStore.widgetsStore.spectralProfileWidgets.set(this.props.id, new SpectralProfileWidgetStore());
@@ -180,8 +177,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     const regionString = this.widgetStore.regionId === 0 ? "Cursor" : `Region #${this.widgetStore.regionId}`;
                     this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString}`);
                 }
-            }
-            else {
+            } else {
                 this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Z Profile: Cursor`);
             }
         });
@@ -197,7 +193,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (!this.widgetStore) {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
         }
-        
+
         const imageName = (appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfo.name : undefined);
 
         let linePlotProps: LinePlotComponentProps = {
@@ -229,8 +225,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     if (this.widgetStore.isAutoScaledX) {
                         linePlotProps.xMin = currentPlotData.xMin;
                         linePlotProps.xMax = currentPlotData.xMax;
-                    }
-                    else {
+                    } else {
                         linePlotProps.xMin = this.widgetStore.minX;
                         linePlotProps.xMax = this.widgetStore.maxX;
                     }
@@ -238,8 +233,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     if (this.widgetStore.isAutoScaledY) {
                         linePlotProps.yMin = currentPlotData.yMin;
                         linePlotProps.yMax = currentPlotData.yMax;
-                    }
-                    else {
+                    } else {
                         linePlotProps.yMin = this.widgetStore.minY;
                         linePlotProps.yMax = this.widgetStore.maxY;
                     }
@@ -263,8 +257,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         }
                         linePlotProps.xLabel = channelLabel;
                     }
-                }
-                else {
+                } else {
                     linePlotProps.markers = [{
                         value: channel,
                         id: "marker-channel",
@@ -292,6 +285,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         opacity: 0.2,
                         color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                     });
+                }
+                // TODO: Get comments from region info, rather than directly from cursor position
+                if (appStore.cursorInfo) {
+                    const comments: string[] = [];
+                    comments.push(`region (pixel): Point[${appStore.cursorInfo.posImageSpace.x.toFixed(0)}, ${appStore.cursorInfo.posImageSpace.y.toFixed(0)}]`);
+                    comments.push(`region (world): Point[${appStore.cursorInfo.infoWCS.x}, ${appStore.cursorInfo.infoWCS.y}]`);
+                    linePlotProps.comments = comments;
                 }
             }
         }
