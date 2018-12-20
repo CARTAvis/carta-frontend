@@ -4,6 +4,7 @@ import {Button, Classes, Dialog, ProgressBar, Tooltip} from "@blueprintjs/core";
 
 interface TaskProgressDialogComponentProps {
     progress: number;
+    timeRemaining: number;
     isOpen: boolean;
     cancellable: boolean;
     onCancel?: () => void;
@@ -14,6 +15,22 @@ interface TaskProgressDialogComponentProps {
 export class TaskProgressDialogComponent extends React.Component<TaskProgressDialogComponentProps> {
 
     render() {
+        let titleText = this.props.text;
+        let timeRemainingText;
+        if (this.props.timeRemaining) {
+            const numSeconds = this.props.timeRemaining * 1e-3;
+            if (numSeconds > 60) {
+                const numMinutes = Math.floor(numSeconds / 60);
+                const remainingSeconds = Math.floor(numSeconds - numMinutes * 60);
+                const secondsText = remainingSeconds >= 10 ? remainingSeconds.toFixed(0) : `0${remainingSeconds.toFixed(0)}`;
+                timeRemainingText = `${numMinutes}m${secondsText}s`;
+            } else {
+                const remainingSeconds = Math.floor(numSeconds);
+                const secondsText = remainingSeconds >= 10 ? remainingSeconds.toFixed(0) : `0${remainingSeconds.toFixed(0)}`;
+                timeRemainingText = `${secondsText}s`;
+            }
+            titleText = `${this.props.text} (${timeRemainingText} left)`;
+        }
         return (
             <Dialog
                 className={"task-progress-dialog"}
@@ -21,7 +38,7 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
                 canEscapeKeyClose={false}
                 canOutsideClickClose={false}
                 isCloseButtonShown={false}
-                title={this.props.text}
+                title={titleText}
                 isOpen={this.props.isOpen}
             >
                 <div className={Classes.DIALOG_BODY}>

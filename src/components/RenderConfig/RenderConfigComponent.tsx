@@ -363,6 +363,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 <TaskProgressDialogComponent
                     isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}
                     progress={frame.renderConfig.cubeHistogramProgress}
+                    timeRemaining={appStore.estimatedTaskRemainingTime}
                     cancellable={false}
                     text={"Calculating cube histogram"}
                 />
