@@ -161,7 +161,6 @@ export class WidgetsStore {
     };
 
     @action handleStateUpdates = (event: any) => {
-        console.log(event);
         if (event && event.origin && event.origin.isMaximised && event.origin.header) {
             const header = event.origin.header as GoldenLayout.Header;
             if (header.controlsContainer && header.controlsContainer.length) {
