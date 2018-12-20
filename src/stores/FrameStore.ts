@@ -278,6 +278,12 @@ export class FrameStore {
     }
 
     @action setChannels(channel: number, stokes: number) {
+        // Automatically switch to per-channel histograms when Stokes parameter changes
+        if (this.requiredStokes !== stokes) {
+            this.renderConfig.setUseCubeHistogram(false);
+            this.renderConfig.updateCubeHistogram(null, 0);
+        }
+
         this.requiredChannel = channel;
         this.requiredStokes = stokes;
     }
