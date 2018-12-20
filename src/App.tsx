@@ -18,6 +18,7 @@ import GitCommit from "./static/gitInfo";
 import "./App.css";
 import "./layout-theme.css";
 import {AboutDialogComponent} from "./components/Dialogs/AboutDialog/AboutDialogComponent";
+import {exportImage} from "./components/ImageView/ImageViewComponent";
 
 @HotkeysTarget @observer
 export class App extends React.Component<{ appStore: AppStore }> {
@@ -231,16 +232,17 @@ export class App extends React.Component<{ appStore: AppStore }> {
         ];
 
         const fileHotkeys = [
-            <Hotkey key={0} group="File controls" global={true} combo={`${modString}O`} label="Open file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser()}/>,
-            <Hotkey key={1} group="File controls" global={true} combo={`${modString}L`} label="Append file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(true)}/>
+            <Hotkey key={0} group="File controls" global={true} combo={`${modString}O`} label="Open image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser()}/>,
+            <Hotkey key={1} group="File controls" global={true} combo={`${modString}L`} label="Append image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(true)}/>,
+            <Hotkey key={2} group="File controls" global={true} combo={`${modString}E`} label="Export image" onKeyDown={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>
         ];
 
         return (
             <Hotkeys>
                 {animatorHotkeys}
                 {fileHotkeys}
-                <Hotkey group="Appearance" global={true} combo="shift + D" label="Toggle dark theme" onKeyDown={this.toggleDarkTheme}/>
-                <Hotkey group="Cursor" global={true} combo="F" label="Toggle frozen cursor" onKeyDown={appStore.toggleCursorFrozen}/>
+                <Hotkey group="Appearance" global={true} combo="shift + D" label="Toggle light/dark theme" onKeyDown={this.toggleDarkTheme}/>
+                <Hotkey group="Cursor" global={true} combo="F" label="Freeze/unfreeze cursor position" onKeyDown={appStore.toggleCursorFrozen}/>
             </Hotkeys>
         );
     }
