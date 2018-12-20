@@ -40,7 +40,6 @@ export class RenderConfigStore {
     @observable cubeHistogram: CARTA.Histogram;
     @observable useCubeHistogram: boolean;
     @observable cubeHistogramProgress: number;
-    @observable cubeHistogramStartTime: number;
     @observable selectedPercentile: number;
 
     constructor() {
