@@ -205,6 +205,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             yLabel: "Value",
             darkMode: appStore.darkTheme,
             imageName: imageName,
+            plotName: `Z profile`,
             usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
             interpolateLines: this.widgetStore.plotType === PlotType.LINES,
             forceScientificNotationTicksY: true,

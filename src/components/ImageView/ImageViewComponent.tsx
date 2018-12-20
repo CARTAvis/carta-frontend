@@ -1,11 +1,12 @@
 import * as React from "react";
+import * as $ from "jquery";
 import {observer} from "mobx-react";
 import {autorun, observable} from "mobx";
 import {NonIdealState, Spinner, Colors, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {WidgetConfig, WidgetProps} from "../../stores/WidgetsStore";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
-import {CursorInfo} from "../../models";
+import {CursorInfo, Point2D} from "../../models";
 import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
@@ -15,6 +16,11 @@ import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverl
 export const exportImage = (padding, darkTheme, imageName) => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
     const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
+    let beamProfileCanvas: HTMLCanvasElement;
+    const beamProfileQuery = $(".beam-profile-stage").children().children("canvas");
+    if (beamProfileQuery && beamProfileQuery.length) {
+        beamProfileCanvas = beamProfileQuery[0] as HTMLCanvasElement;
+    }
 
     const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
     composedCanvas.width = overlayCanvas.width;
@@ -25,6 +31,9 @@ export const exportImage = (padding, darkTheme, imageName) => {
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
     ctx.scale(devicePixelRatio, devicePixelRatio);
     ctx.drawImage(rasterCanvas, padding.left, padding.top);
+    if (beamProfileCanvas) {
+        ctx.drawImage(beamProfileCanvas, padding.left, padding.top);
+    }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(overlayCanvas, 0, 0);
 
@@ -43,6 +52,7 @@ export const exportImage = (padding, darkTheme, imageName) => {
 export class ImageViewComponent extends React.Component<WidgetProps> {
     private containerDiv: HTMLDivElement;
     private ratioIndicatorTimeoutHandle;
+    private cachedImageSize: Point2D;
 
     @observable showRatioIndicator: boolean;
 
@@ -65,12 +75,16 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         autorun(() => {
             const appStore = this.props.appStore;
             if (appStore.activeFrame) {
-                console.log({w: appStore.activeFrame.renderWidth, h: appStore.activeFrame.renderHeight});
-                clearTimeout(this.ratioIndicatorTimeoutHandle);
-                this.showRatioIndicator = true;
-                this.ratioIndicatorTimeoutHandle = setTimeout(() => {
-                    this.showRatioIndicator = false;
-                }, 1000);
+                const imageSize = {x: appStore.activeFrame.renderWidth, y: appStore.activeFrame.renderHeight};
+                // Compare to cached image size to prevent duplicate events when changing frames
+                if (!this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y) {
+                    this.cachedImageSize = imageSize;
+                    clearTimeout(this.ratioIndicatorTimeoutHandle);
+                    this.showRatioIndicator = true;
+                    this.ratioIndicatorTimeoutHandle = setTimeout(() => {
+                        this.showRatioIndicator = false;
+                    }, 1000);
+                }
             }
         });
     }
@@ -182,6 +196,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     appStore={appStore}
                     docked={this.props.docked}
                     visible={appStore.imageToolbarVisible}
+                    vertical={false}
                 />
                 }
                 {appStore.activeFrame &&

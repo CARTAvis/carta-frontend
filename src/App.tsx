@@ -4,7 +4,7 @@ import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import DevTools from "mobx-react-devtools";
 import ReactResizeDetector from "react-resize-detector";
-import {Alert, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
+import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import {RootMenuComponent} from "./components/Menu/RootMenuComponent";
 import {OverlaySettingsDialogComponent} from "./components/Dialogs/OverlaySettings/OverlaySettingsDialogComponent";
 import {FileBrowserDialogComponent} from "./components/Dialogs/FileBrowser/FileBrowserDialogComponent";
@@ -13,10 +13,11 @@ import {FloatingWidgetManagerComponent} from "./components/FloatingWidgetManager
 import {FileBrowserStore} from "./stores/FileBrowserStore";
 import {AppStore} from "./stores/AppStore";
 import {dayPalette, nightPalette} from "./stores/OverlayStore";
-import {smoothStepOffset} from "./util/math";
+import {smoothStepOffset} from "./util";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
 import "./layout-theme.css";
+import {AboutDialogComponent} from "./components/Dialogs/AboutDialog/AboutDialogComponent";
 
 @HotkeysTarget @observer
 export class App extends React.Component<{ appStore: AppStore }> {
@@ -39,8 +40,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
         let wsURL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}/socket`;
         if (process.env.NODE_ENV === "development") {
             wsURL = process.env.REACT_APP_DEFAULT_ADDRESS ? process.env.REACT_APP_DEFAULT_ADDRESS : wsURL;
-        }
-        else {
+        } else {
             wsURL = process.env.REACT_APP_DEFAULT_ADDRESS_PROD ? process.env.REACT_APP_DEFAULT_ADDRESS_PROD : wsURL;
         }
 
@@ -163,6 +163,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 <OverlaySettingsDialogComponent appStore={appStore}/>
                 <URLConnectDialogComponent appStore={appStore}/>
                 <FileBrowserDialogComponent appStore={appStore}/>
+                <AboutDialogComponent appStore={appStore}/>
                 <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>
@@ -171,7 +172,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 </div>
                 <FloatingWidgetManagerComponent appStore={appStore}/>
                 <Dialog isOpen={appStore.hotkeyDialogVisible} className={"bp3-hotkey-dialog"} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.hideHotkeyDialog}>
-                    {this.renderHotkeys()}
+                    <div className={Classes.DIALOG_BODY}>
+                        {this.renderHotkeys()}
+                    </div>
                 </Dialog>
             </div>
         );
@@ -209,35 +212,35 @@ export class App extends React.Component<{ appStore: AppStore }> {
         const appStore = this.props.appStore;
         if (appStore.darkTheme) {
             appStore.setLightTheme();
-        }
-        else {
+        } else {
             appStore.setDarkTheme();
         }
     };
 
     public renderHotkeys() {
         const appStore = this.props.appStore;
+        const modString = appStore.modifierString;
 
         const animatorHotkeys = [
-            <Hotkey key={0} group="Frame controls" global={true} combo="alt + ]" label="Next frame" onKeyDown={appStore.nextFrame}/>,
-            <Hotkey key={1} group="Frame controls" global={true} combo="alt + [" label="Previous frame" onKeyDown={appStore.prevFrame}/>,
-            <Hotkey key={2} group="Frame controls" global={true} combo="alt + pageup" label="Next channel" onKeyDown={this.nextChannel}/>,
-            <Hotkey key={3} group="Frame controls" global={true} combo="alt + pagedown" label="Previous channel" onKeyDown={this.prevChannel}/>,
-            <Hotkey key={4} group="Frame controls" global={true} combo="alt + shift + pageup" label="Next Stokes cube" onKeyDown={this.nextStokes}/>,
-            <Hotkey key={5} group="Frame controls" global={true} combo="alt + shift + pagedown" label="Previous Stokes cube" onKeyDown={this.prevStokes}/>
+            <Hotkey key={0} group="Frame controls" global={true} combo={`${modString}]`} label="Next frame" onKeyDown={appStore.nextFrame}/>,
+            <Hotkey key={1} group="Frame controls" global={true} combo={`${modString}[`} label="Previous frame" onKeyDown={appStore.prevFrame}/>,
+            <Hotkey key={2} group="Frame controls" global={true} combo={`${modString}up`} label="Next channel" onKeyDown={this.nextChannel}/>,
+            <Hotkey key={3} group="Frame controls" global={true} combo={`${modString}down`} label="Previous channel" onKeyDown={this.prevChannel}/>,
+            <Hotkey key={4} group="Frame controls" global={true} combo={`${modString}shift + up`} label="Next Stokes cube" onKeyDown={this.nextStokes}/>,
+            <Hotkey key={5} group="Frame controls" global={true} combo={`${modString}shift + down`} label="Previous Stokes cube" onKeyDown={this.prevStokes}/>
         ];
 
         const fileHotkeys = [
-            <Hotkey key={0} group="File controls" global={true} combo="alt + o" label="Open file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser()}/>,
-            <Hotkey key={1} group="File controls" global={true} combo="alt + a" label="Append file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(true)}/>
+            <Hotkey key={0} group="File controls" global={true} combo={`${modString}O`} label="Open file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser()}/>,
+            <Hotkey key={1} group="File controls" global={true} combo={`${modString}L`} label="Append file" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(true)}/>
         ];
 
         return (
             <Hotkeys>
                 {animatorHotkeys}
                 {fileHotkeys}
-                <Hotkey group="Appearance" global={true} combo="shift + d" label="Toggle dark theme" onKeyDown={this.toggleDarkTheme}/>
-                <Hotkey group="Cursor" global={true} combo="f" label="Toggle frozen cursor" onKeyDown={appStore.toggleCursorFrozen}/>
+                <Hotkey group="Appearance" global={true} combo="shift + D" label="Toggle dark theme" onKeyDown={this.toggleDarkTheme}/>
+                <Hotkey group="Cursor" global={true} combo="F" label="Toggle frozen cursor" onKeyDown={appStore.toggleCursorFrozen}/>
             </Hotkeys>
         );
     }

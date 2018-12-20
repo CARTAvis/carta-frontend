@@ -205,13 +205,14 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             unitString = `Value (${frame.unit})`;
         }
 
-        const imageName = (appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfo.name : undefined);
-
+        const imageName = frame.frameInfo.fileInfo.name;
+        const plotName = `channel ${frame.channel} histogram`;
         let linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
             yLabel: "Count",
             darkMode: appStore.darkTheme,
             imageName: imageName,
+            plotName: plotName,
             logY: this.widgetStore.logScaleY,
             usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
             interpolateLines: this.widgetStore.plotType === PlotType.LINES,
@@ -226,7 +227,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             scrollZoom: true
         };
 
-        if (frame && frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
+        if (frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
             const currentPlotData = this.plotData;
             if (currentPlotData) {
                 linePlotProps.data = currentPlotData.values;
@@ -253,7 +254,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             }
         }
 
-        if (frame && frame.renderConfig) {
+        if (frame.renderConfig) {
             linePlotProps.markers = [{
                 value: frame.renderConfig.scaleMin,
                 id: "marker-min",

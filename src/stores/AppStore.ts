@@ -65,6 +65,7 @@ export class AppStore {
     @action hideURLConnect = () => {
         this.urlConnectDialogVisible = false;
     };
+
     @observable hotkeyDialogVisible: boolean;
     @action showHotkeyDialog = () => {
         this.hotkeyDialogVisible = true;
@@ -72,6 +73,29 @@ export class AppStore {
     @action hideHotkeyDialog = () => {
         this.hotkeyDialogVisible = false;
     };
+
+    @observable aboutDialogVisible: boolean;
+    @action showAboutDialog = () => {
+        this.aboutDialogVisible = true;
+    };
+    @action hideAboutDialog = () => {
+        this.aboutDialogVisible = false;
+    };
+
+    // Keyboard shortcuts
+    @computed get modifierString() {
+        // Modifier string for shortcut keys.
+        // - OSX/iOS use '⌘'
+        // - Windows/Linux uses 'Ctrl + '
+        // - Browser uses 'alt +' for compatibility reasons
+        let modString = "alt + ";
+        if (process.env.REACT_APP_TARGET === "linux") {
+            modString = "ctrl + ";
+        } else if (process.env.REACT_APP_TARGET === "darwin") {
+            modString = "cmd +";
+        }
+        return modString;
+    }
 
     // Widgets
     @observable widgetsStore: WidgetsStore;
@@ -316,7 +340,7 @@ export class AppStore {
         // Update cursor profiles
         autorun(() => {
             if (this.activeFrame && this.cursorInfo && this.cursorInfo.posImageSpace) {
-                const pos = this.cursorInfo.posImageSpace;
+                const pos = {x: Math.round(this.cursorInfo.posImageSpace.x), y: Math.round(this.cursorInfo.posImageSpace.y)};
                 if (pos.x >= 0 && pos.x <= this.activeFrame.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y < this.activeFrame.frameInfo.fileInfoExtended.height - 1) {
                     debouncedSetCursor(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
 

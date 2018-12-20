@@ -2,7 +2,7 @@ import * as React from "react";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
 import "./ToolbarComponent.css";
-import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, PopoverPosition, Tooltip} from "@blueprintjs/core";
 import {AppStore} from "../../../stores/AppStore";
 import {exportImage} from "../ImageViewComponent";
 
@@ -10,10 +10,23 @@ export class ToolbarComponentProps {
     appStore: AppStore;
     docked: boolean;
     visible: boolean;
+    vertical: boolean;
 }
 
 @observer
 export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
+
+    handleZoomToActualSizeClicked = () => {
+        this.props.appStore.activeFrame.setZoom(1.0);
+    };
+
+    handleZoomInClicked = () => {
+        this.props.appStore.activeFrame.setZoom(this.props.appStore.activeFrame.zoomLevel * 2.0);
+    };
+
+    handleZoomOutClicked = () => {
+        this.props.appStore.activeFrame.setZoom(this.props.appStore.activeFrame.zoomLevel / 2.0);
+    };
 
     render() {
         const appStore = this.props.appStore;
@@ -37,24 +50,29 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             className += " docked";
         }
 
+        const currentZoomSpan = <span><br/><i><small>Current: {frame.zoomLevel.toFixed(2)}x</small></i></span>;
+        const tooltipPosition: PopoverPosition = this.props.vertical ? "left" : "auto";
         return (
-            <ButtonGroup className={className} style={styleProps}>
-                <Tooltip content={`Zoom to 100% (Current: ${(frame.zoomLevel * 100.0).toFixed(0)}%)`}>
-                    <Button onClick={() => frame.setZoom(1.0)} className={"full-zoom-button"}>1:1</Button>
+            <ButtonGroup className={className} style={styleProps} vertical={this.props.vertical}>
+                <Tooltip position={tooltipPosition} content={<span>Zoom in (Scroll wheel up){currentZoomSpan}</span>}>
+                    <Button icon={"zoom-in"} onClick={this.handleZoomInClicked}/>
                 </Tooltip>
-                <Tooltip content="Fit width">
-                    <Button icon="arrows-horizontal" onClick={frame.fitZoomX}/>
+                <Tooltip position={tooltipPosition} content={<span>Zoom out (Scroll wheel down){currentZoomSpan}</span>}>
+                    <Button icon={"zoom-out"} onClick={this.handleZoomOutClicked}/>
                 </Tooltip>
-                <Tooltip content="Fit height">
-                    <Button icon="arrows-vertical" onClick={frame.fitZoomY}/>
+                <Tooltip position={tooltipPosition} content={<span>Zoom to 1.0x{currentZoomSpan}</span>}>
+                    <Button className={"full-zoom-button"} onClick={this.handleZoomToActualSizeClicked}>1.0x</Button>
                 </Tooltip>
-                <Tooltip content="Toggle grid">
+                <Tooltip position={tooltipPosition} content={<span>Zoom to fit{currentZoomSpan}</span>}>
+                    <Button icon="zoom-to-fit" onClick={frame.fitZoom}/>
+                </Tooltip>
+                <Tooltip position={tooltipPosition} content="Toggle grid">
                     <Button icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)}/>
                 </Tooltip>
-                <Tooltip content="Toggle labels">
+                <Tooltip position={tooltipPosition} content="Toggle labels">
                     <Button icon="numerical" active={!overlay.labelsHidden} onClick={overlay.toggleLabels}/>
                 </Tooltip>
-                <Tooltip content="Export image">
+                <Tooltip position={tooltipPosition} content={`Export image (${appStore.modifierString}E)`}>
                     <Button icon="floppy-disk" onClick={() => exportImage(overlay.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>
                 </Tooltip>
             </ButtonGroup>

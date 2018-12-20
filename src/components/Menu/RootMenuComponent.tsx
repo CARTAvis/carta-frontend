@@ -1,20 +1,21 @@
 import * as React from "react";
-import "./RootMenuComponent.css";
-import {Button, Menu, MenuItem, Popover, Position, Tooltip} from "@blueprintjs/core";
-import {AppStore} from "../../stores/AppStore";
+import {observable} from "mobx";
 import {observer} from "mobx-react";
+import {Alert, Menu, Popover, Position} from "@blueprintjs/core";
+import {AppStore} from "../../stores/AppStore";
 import {ConnectionStatus} from "../../services/BackendService";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {exportImage} from "../ImageView/ImageViewComponent";
+import "./RootMenuComponent.css";
 
 @observer
 export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
+    @observable documentationAlertVisible: boolean;
+    private documentationAlertTimeoutHandle;
+
     render() {
         const appStore = this.props.appStore;
-
-        // Modifier string for shortcut keys. OSX/iOS use '⌘', while Windows uses 'Ctrl + '
-        const modString = "alt + ";
-        // const modString = "⌘";
+        const modString = appStore.modifierString;
 
         const fileMenu = (
             <Menu>
@@ -26,16 +27,15 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 />
                 <Menu.Item
                     text="Append image"
-                    label={`${modString}A`}
+                    label={`${modString}L`}
                     disabled={appStore.backendService.connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(true)}
                 />
                 <Menu.Item text="Load region" disabled={true}/>
                 <Menu.Divider/>
-                <Menu.Item text="Export annotations" icon={"floppy-disk"} disabled={true}/>
                 <Menu.Item
                     text="Export image"
-                    icon={"media"}
+                    icon={"floppy-disk"}
                     label={`${modString}E`}
                     disabled={appStore.backendService.connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame}
                     onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
@@ -128,10 +128,9 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
 
         const helpMenu = (
             <Menu>
-                <Menu.Item text="Getting Started" icon={"help"} label={"F1"} disabled={true}/>
-                <Menu.Item text="Controls and Shortcuts" icon={"info-sign"} label={"Shift + ?"} onClick={appStore.showHotkeyDialog}/>
-                <Menu.Item text="Search help" icon={"search"} label={"Shift + Space"} disabled={true}/>
-                <Menu.Item text="About" icon={"info-sign"} disabled={true}/>
+                <Menu.Item text="Online Manual" icon={"help"} label={"F1"} onClick={this.handleDocumentationClicked}/>
+                <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={appStore.showHotkeyDialog}/>
+                <Menu.Item text="About" icon={"info-sign"} onClick={appStore.showAboutDialog}/>
             </Menu>
         );
 
@@ -158,16 +157,31 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     </Menu>
                 </Popover>
                 <ToolbarMenuComponent appStore={appStore}/>
+                <Alert isOpen={this.documentationAlertVisible} onClose={this.handleAlertDismissed} canEscapeKeyCancel={true} canOutsideClickCancel={true} confirmButtonText={"Dismiss"}>
+                    Documentation will open in a new tab. Please ensure any popup blockers are disabled.
+                </Alert>
             </div>
         );
     }
+
+    handleDocumentationClicked = () => {
+        window.open("https://cartavis.github.io/manual", "_blank");
+        if (process.env.REACT_APP_TARGET !== "linux" && process.env.REACT_APP_TARGET !== "darwin") {
+            this.documentationAlertVisible = true;
+            clearTimeout(this.documentationAlertTimeoutHandle);
+            this.documentationAlertTimeoutHandle = setTimeout(() => this.documentationAlertVisible = false, 10000);
+        }
+    };
+
+    handleAlertDismissed = () => {
+        this.documentationAlertVisible = false;
+    };
 
     handleFrameSelect = (fileId: number) => {
         const appStore = this.props.appStore;
         if (appStore.activeFrame && appStore.activeFrame.frameInfo.fileId === fileId) {
             return;
-        }
-        else {
+        } else {
             appStore.setActiveFrame(fileId);
         }
     };

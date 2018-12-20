@@ -43,7 +43,7 @@ export class BeamProfileOverlayComponent extends React.PureComponent<BeamProfile
                     <Group
                         x={boundingBox.x / 2.0 + paddingOffset}
                         y={this.props.height - boundingBox.y / 2.0 - paddingOffset}
-                        rotationDeg={theta * 180.0 / Math.PI}
+                        rotation={theta * 180.0 / Math.PI}
                     >
                         <Ellipse radius={{x: a, y: b}} stroke={renderColor} strokeWidth={1}/>
                         <Line points={[-a, 0, a, 0]} stroke={renderColor} strokeWidth={1}/>

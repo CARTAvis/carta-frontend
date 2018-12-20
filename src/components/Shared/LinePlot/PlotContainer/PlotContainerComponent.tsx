@@ -267,7 +267,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 label: "LineGraph",
                 type: "line",
                 data: this.props.data,
-                fill: false
+                fill: false,
+                lineTension: 0
             };
 
             if (this.props.usePointSymbols) {
@@ -278,7 +279,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             else {
                 datasetConfig.pointRadius = 0;
                 datasetConfig.showLine = true;
-                datasetConfig.steppedLine = !this.props.interpolateLines;
+                // @ts-ignore TODO: Remove once Chart.js types are updated
+                datasetConfig.steppedLine = this.props.interpolateLines ? false : "middle";
                 datasetConfig.borderWidth = 1;
                 datasetConfig.borderColor = lineColor;
             }
