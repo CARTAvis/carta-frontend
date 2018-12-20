@@ -290,7 +290,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             percentileRankOptions.push({label: "Custom", value: -1});
             percentileSelectDiv = (
                 <div className="percentile-select">
-                    <FormGroup label="Limits" inline={true}>
+                    <FormGroup label="Clip Percentile" inline={true}>
                         <HTMLSelect options={percentileRankOptions} value={frame.renderConfig.selectedPercentile} onChange={this.handlePercentileRankSelectChanged}/>
                     </FormGroup>
                 </div>
@@ -330,7 +330,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 }
                 <div className="colormap-config">
                     <ColormapConfigComponent darkTheme={appStore.darkTheme} renderConfig={frame.renderConfig}/>
-                    <FormGroup label={"Min"} inline={true}>
+                    <FormGroup label={"Clip Min"} inline={true}>
                         <NumericInput
                             value={frame.renderConfig.scaleMin}
                             selectAllOnFocus={true}
@@ -339,7 +339,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                             onValueChange={this.handleScaleMinChange}
                         />
                     </FormGroup>
-                    <FormGroup label={"Max"} inline={true}>
+                    <FormGroup label={"Clip Max"} inline={true}>
                         <NumericInput
                             value={frame.renderConfig.scaleMax}
                             selectAllOnFocus={true}
