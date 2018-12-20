@@ -68,8 +68,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     @computed get frame(): FrameStore {
         if (this.props.appStore && this.widgetStore) {
             return this.props.appStore.getFrame(this.widgetStore.fileId);
-        }
-        else {
+        } else {
             return undefined;
         }
     }
@@ -100,18 +99,15 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     if (isXProfile) {
                         localMinX = clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width);
                         localMaxX = clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width);
-                    }
-                    else {
+                    } else {
                         localMinX = clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height);
                         localMaxX = clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height);
                     }
-                }
-                else {
+                } else {
                     localMinX = clamp(this.widgetStore.minX, 0, this.frame.frameInfo.fileInfoExtended.width);
                     if (isXProfile) {
                         localMaxX = clamp(this.widgetStore.maxX, 0, this.frame.frameInfo.fileInfoExtended.width);
-                    }
-                    else {
+                    } else {
                         localMaxX = clamp(this.widgetStore.maxX, 0, this.frame.frameInfo.fileInfoExtended.height);
                     }
                 }
@@ -146,8 +142,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             }
                         }
                     }
-                }
-                else {
+                } else {
                     for (let i = 0; i < frameDataHeight; i++) {
                         const x = this.frame.currentFrameView.yMin + this.frame.currentFrameView.mip * i;
                         if (x > localMaxX) {
@@ -177,12 +172,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     yMax = undefined;
                 }
                 return {values: values, xMin: localMinX, xMax: localMaxX, yMin, yMax, yMean, yRms};
-            }
-            else if (this.profileStore.x !== undefined && this.profileStore.y !== undefined) {
+            } else if (this.profileStore.x !== undefined && this.profileStore.y !== undefined) {
                 console.log(`Out of bounds profile request: (${this.profileStore.x}, ${this.profileStore.y})`);
             }
-        }
-        else {
+        } else {
             // Use accurate profiles from server-sent data
             const coordinateData = this.profileStore.profiles.get(this.widgetStore.coordinate);
             if (coordinateData && coordinateData.values && coordinateData.values.length) {
@@ -193,18 +186,15 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     if (isXProfile) {
                         xMin = clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width);
                         xMax = clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width);
-                    }
-                    else {
+                    } else {
                         xMin = clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height);
                         xMax = clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height);
                     }
-                }
-                else {
+                } else {
                     xMin = clamp(this.widgetStore.minX, 0, this.frame.frameInfo.fileInfoExtended.width);
                     if (isXProfile) {
                         xMax = clamp(this.widgetStore.maxX, 0, this.frame.frameInfo.fileInfoExtended.width);
-                    }
-                    else {
+                    } else {
                         xMax = clamp(this.widgetStore.maxX, 0, this.frame.frameInfo.fileInfoExtended.height);
                     }
                 }
@@ -265,8 +255,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             // Assign the next unique ID
             const id = props.appStore.widgetsStore.addNewSpatialProfileWidget();
             props.appStore.widgetsStore.changeWidgetId(props.id, id);
-        }
-        else {
+        } else {
             if (!this.props.appStore.widgetsStore.spatialProfileWidgets.has(this.props.id)) {
                 console.error(`can't find store for widget with id=${this.props.id}`);
                 this.props.appStore.widgetsStore.spatialProfileWidgets.set(this.props.id, new SpatialProfileWidgetStore());
@@ -282,8 +271,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     const regionString = this.widgetStore.regionId === 0 ? "Cursor" : `Region #${this.widgetStore.regionId}`;
                     this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString}`);
                 }
-            }
-            else {
+            } else {
                 this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `X Profile: Cursor`);
             }
         });
@@ -302,7 +290,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             return;
         }
         const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
-        
+
         let astString = new ASTSettingsString();
         astString.add("System", this.props.appStore.overlayStore.global.implicitSystem);
 
@@ -312,8 +300,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
                 this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, normVals.x, undefined, astString.toString()).x;
             }
-        }
-        else {
+        } else {
             for (let i = 0; i < values.length; i++) {
                 const pointWCS = AST.pixToWCS(this.frame.wcsInfo, this.profileStore.x + 1, values[i] + 1);
                 const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
@@ -388,7 +375,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
 
         const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
-        
+
         const imageName = (appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfo.name : undefined);
 
         let linePlotProps: LinePlotComponentProps = {
@@ -416,8 +403,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 if (this.frame.validWcs && this.widgetStore.wcsAxisVisible) {
                     linePlotProps.showTopAxis = true;
                     linePlotProps.topAxisTickFormatter = this.formatProfileAst;
-                }
-                else {
+                } else {
                     linePlotProps.showTopAxis = false;
                 }
 
@@ -428,8 +414,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     if (this.widgetStore.isAutoScaledX) {
                         linePlotProps.xMin = currentPlotData.xMin;
                         linePlotProps.xMax = currentPlotData.xMax;
-                    }
-                    else {
+                    } else {
                         linePlotProps.xMin = this.widgetStore.minX;
                         linePlotProps.xMax = this.widgetStore.maxX;
                     }
@@ -437,8 +422,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     if (this.widgetStore.isAutoScaledY) {
                         linePlotProps.yMin = currentPlotData.yMin;
                         linePlotProps.yMax = currentPlotData.yMax;
-                    }
-                    else {
+                    } else {
                         linePlotProps.yMin = this.widgetStore.minY;
                         linePlotProps.yMax = this.widgetStore.maxY;
                     }
@@ -470,6 +454,14 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         opacity: 0.2,
                         color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                     });
+                }
+
+                // TODO: Get comments from region info, rather than directly from cursor position
+                if (appStore.cursorInfo) {
+                    const comments: string[] = [];
+                    comments.push(`region (pixel): Point[${appStore.cursorInfo.posImageSpace.x.toFixed(0)}, ${appStore.cursorInfo.posImageSpace.y.toFixed(0)}]`);
+                    comments.push(`region (world): Point[${appStore.cursorInfo.infoWCS.x}, ${appStore.cursorInfo.infoWCS.y}]`);
+                    linePlotProps.comments = comments;
                 }
             }
         }
