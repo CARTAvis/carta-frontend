@@ -102,10 +102,8 @@ export class AppStore {
         if (this.taskProgress <= 0 || this.taskProgress >= 1) {
             return undefined;
         }
-        console.log({currentTime: this.taskCurrentTime, startTime: this.taskStartTime, progress: this.taskProgress});
         const dt = this.taskCurrentTime - this.taskStartTime;
         const estimatedFinishTime = dt / this.taskProgress;
-        console.log({finishTime: estimatedFinishTime});
         return estimatedFinishTime - dt;
     }
 
@@ -270,6 +268,14 @@ export class AppStore {
             const histogram = {channel: -2, numBins: -1} as CARTA.SetHistogramRequirements.HistogramConfig;
             this.backendService.setHistogramRequirements(frame.frameInfo.fileId, -2, [histogram]);
             this.restartTaskProgress();
+        }
+    };
+
+    @action cancelCubeHistogramRequest = (fileId: number = -1) => {
+        const frame = this.getFrame(fileId);
+        if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
+            frame.renderConfig.updateCubeHistogram(null, 0);
+            this.backendService.setHistogramRequirements(frame.frameInfo.fileId, -2, []);
         }
     };
 
@@ -474,9 +480,9 @@ export class AppStore {
                     updatedFrame.renderConfig.updateChannelHistogram(channelHist as CARTA.Histogram);
                 }
             } else if (regionHistogramData.regionId === -2) {
-                // Update cube histogram
+                // Update cube histogram if it is still required
                 const cubeHist = regionHistogramData.histograms[0];
-                if (cubeHist) {
+                if (cubeHist && updatedFrame.renderConfig.useCubeHistogram) {
                     updatedFrame.renderConfig.updateCubeHistogram(cubeHist as CARTA.Histogram, regionHistogramData.progress);
                     this.updateTaskProgress(regionHistogramData.progress);
                 }

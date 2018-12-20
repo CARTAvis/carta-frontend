@@ -168,6 +168,14 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         }
     };
 
+    handleCubeHistogramCancelled = () => {
+        const frame = this.props.appStore.activeFrame;
+        if (frame && frame.renderConfig) {
+            frame.renderConfig.setUseCubeHistogram(false);
+        }
+        this.props.appStore.cancelCubeHistogramRequest();
+    };
+
     onMinMoved = (x: number) => {
         const frame = this.props.appStore.activeFrame;
         // Check bounds first, to make sure the max isn't being moved below the min
@@ -371,7 +379,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}
                     progress={frame.renderConfig.cubeHistogramProgress}
                     timeRemaining={appStore.estimatedTaskRemainingTime}
-                    cancellable={false}
+                    cancellable={true}
+                    onCancel={this.handleCubeHistogramCancelled}
                     text={"Calculating cube histogram"}
                 />
                 <PopoverSettingsComponent
