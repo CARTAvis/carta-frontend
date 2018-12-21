@@ -33,6 +33,8 @@ interface ColormapConfigProps {
     onCubeHistogramSelected: () => void;
     onCubeHistogramCancelled?: () => void;
     darkTheme: boolean;
+    showHistogramSelect: boolean;
+    disableHistogramSelect: boolean;
 }
 
 const SCALING_KEYS = Array.from(RenderConfigStore.SCALING_TYPES.keys());
@@ -62,7 +64,6 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                     backgroundPosition: `0 calc(300% * -${i} - ${blockHeight}px)`,
                 }}
             />
-
         );
     };
 
@@ -130,7 +131,8 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         const renderConfig = this.props.renderConfig;
         return (
             <React.Fragment>
-                <FormGroup label={"Histogram"} inline={true}>
+                {this.props.showHistogramSelect &&
+                <FormGroup label={"Histogram"} inline={true} disabled={this.props.disableHistogramSelect}>
                     <HistogramSelect
                         activeItem={renderConfig.useCubeHistogram}
                         popoverProps={SCALING_POPOVER_PROPS}
@@ -138,11 +140,12 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         items={[true, false]}
                         onItemSelect={this.handleHistogramChange}
                         itemRenderer={this.renderHistogramSelectItem}
+                        disabled={this.props.disableHistogramSelect}
                     >
-                        <Button text={renderConfig.useCubeHistogram ? "Per-Cube" : "Per-Channel"} rightIcon="double-caret-vertical" alignText={"right"}/>
+                        <Button text={renderConfig.useCubeHistogram ? "Per-Cube" : "Per-Channel"} rightIcon="double-caret-vertical" alignText={"right"} disabled={this.props.disableHistogramSelect}/>
                     </HistogramSelect>
                 </FormGroup>
-
+                }
                 <FormGroup label={"Scaling"} inline={true}>
                     <ScalingSelect
                         activeItem={renderConfig.scaling}

@@ -18,6 +18,7 @@ import {RenderConfigWidgetStore} from "../../stores/widgets/RenderConfigWidgetSt
 import "./RenderConfigComponent.css";
 import {PlotType} from "../Shared/PlotTypeSelector/PlotTypeSelectorComponent";
 import {TaskProgressDialogComponent} from "../Dialogs/TaskProgressDialog/TaskProgressDialogComponent";
+import {AnimationState} from "../../stores/AnimatorStore";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 160;
@@ -165,6 +166,14 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 this.props.appStore.requestCubeHistogram();
             }
         }
+    };
+
+    handleCubeHistogramCancelled = () => {
+        const frame = this.props.appStore.activeFrame;
+        if (frame && frame.renderConfig) {
+            frame.renderConfig.setUseCubeHistogram(false);
+        }
+        this.props.appStore.cancelCubeHistogramRequest();
     };
 
     onMinMoved = (x: number) => {
@@ -340,7 +349,13 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 </div>
                 }
                 <div className="colormap-config">
-                    <ColormapConfigComponent darkTheme={appStore.darkTheme} renderConfig={frame.renderConfig} onCubeHistogramSelected={this.handleCubeHistogramSelected}/>
+                    <ColormapConfigComponent
+                        darkTheme={appStore.darkTheme}
+                        renderConfig={frame.renderConfig}
+                        onCubeHistogramSelected={this.handleCubeHistogramSelected}
+                        showHistogramSelect={frame.frameInfo.fileInfoExtended.depth > 1}
+                        disableHistogramSelect={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                    />
                     <FormGroup label={"Clip Min"} inline={true}>
                         <NumericInput
                             value={frame.renderConfig.scaleMin}
@@ -363,7 +378,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 <TaskProgressDialogComponent
                     isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}
                     progress={frame.renderConfig.cubeHistogramProgress}
-                    cancellable={false}
+                    timeRemaining={appStore.estimatedTaskRemainingTime}
+                    cancellable={true}
+                    onCancel={this.handleCubeHistogramCancelled}
                     text={"Calculating cube histogram"}
                 />
                 <PopoverSettingsComponent
