@@ -31,7 +31,18 @@ export class FileListComponent extends React.Component<{
                     </tr>
                 );
             }
-            fileEntries.push(fileList.subdirectories.map(dir => {
+
+            let sortedDirectories: string[];
+            switch (this.state.sortColumn) {
+                case "name":
+                    sortedDirectories = fileList.subdirectories.sort((a, b) => this.state.sortDirection * (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
+                    break;
+                default:
+                    sortedDirectories = fileList.subdirectories.sort((a, b) => (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
+                    break;
+            }
+
+            fileEntries.push(sortedDirectories.map(dir => {
                 return (
                     <tr key={dir} onClick={() => this.props.onFolderClicked(dir)} className="file-table-entry">
                         <td><Icon icon="folder-close"/></td>
@@ -45,7 +56,7 @@ export class FileListComponent extends React.Component<{
             let sortedFiles;
             switch (this.state.sortColumn) {
                 case "name":
-                    sortedFiles = fileList.files.sort((a, b) => this.state.sortDirection * (a.name < b.name ? -1 : 1));
+                    sortedFiles = fileList.files.sort((a, b) => this.state.sortDirection * (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1));
                     break;
                 case "type":
                     sortedFiles = fileList.files.sort((a, b) => this.state.sortDirection * (a.type > b.type ? -1 : 1));
@@ -104,8 +115,7 @@ export class FileListComponent extends React.Component<{
                     </tbody>
                 </HTMLTable>
             );
-        }
-        else {
+        } else {
             return <NonIdealState icon={<Spinner className="fileBrowserLoadingSpinner"/>} title={"Loading files"}/>;
         }
     }
@@ -113,8 +123,7 @@ export class FileListComponent extends React.Component<{
     private setSortColumn(column: string) {
         if (this.state.sortColumn === column) {
             this.setState({sortDirection: this.state.sortDirection * -1});
-        }
-        else {
+        } else {
             this.setState({sortDirection: 1, sortColumn: column});
         }
     }
@@ -122,14 +131,11 @@ export class FileListComponent extends React.Component<{
     private getFileSizeDisplay(sizeInBytes: number): string {
         if (sizeInBytes >= 1e9) {
             return `${(sizeInBytes / 1e9).toFixed(1)} GB`;
-        }
-        else if (sizeInBytes >= 1e6) {
+        } else if (sizeInBytes >= 1e6) {
             return `${(sizeInBytes / 1e6).toFixed(1)} MB`;
-        }
-        else if (sizeInBytes >= 1e3) {
+        } else if (sizeInBytes >= 1e3) {
             return `${(sizeInBytes / 1e3).toFixed(1)} kB`;
-        }
-        else {
+        } else {
             return `${sizeInBytes} B`;
         }
     }
