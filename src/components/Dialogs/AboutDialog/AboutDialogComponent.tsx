@@ -25,14 +25,14 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={600} defaultHeight={660} enableResizing={false}>
+            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={600} defaultHeight={700} enableResizing={false}>
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
-                        <img src={logoPng} width={150}/>
-                        <h2>CARTA Viewer Version 1.0 (20181221)</h2>
+                        <img src={logoPng} width={100}/>
+                        <h3>CARTA Viewer Version 1.0 (20181221)</h3>
                     </div>
 
-                    <h2>Development team:</h2>
+                    <h3>Development team:</h3>
                     <p>The development of the CARTA project is a joint effort from:</p>
                     <ul>
                         <li><a href="https://www.asiaa.sinica.edu.tw/" target="_blank">Academia Sinica, Institute of Astronomy and Astrophysics (ASIAA)</a></li>
@@ -40,12 +40,18 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
                         <li><a href="https://science.nrao.edu/" target="_blank">National Radio Astronomy Observatory (NRAO)</a></li>
                         <li><a href="https://www.ualberta.ca/physics" target="_blank">Department of Physics, University of Alberta</a></li>
                     </ul>
-                    <h2>Useful links:</h2>
+                    <h3>Useful links:</h3>
                     <ul>
                         <li>Source code for CARTA is available on <a href="https://github.com/cartavis" target="_blank">GitHub</a></li>
                         <li>Please report bugs or suggestions to <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw" target="_blank">carta_helpdesk@asiaa.sinica.edu.tw</a></li>
                         <li>Documentation is available <a href="https://cartavis.github.io/manual/index.html" target="_blank">online</a></li>
                     </ul>
+                    <h3>License</h3>
+                    <p>
+                        Copyright (C) 2018-2019 ASIAA, IDIA, and NRAO. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
+                        <a href="http://www.gnu.org/copyleft/gpl.html" target="_blank">GNU General Public License version 3</a>&#160;
+                        as published by the Free Software Foundation.
+                    </p>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
