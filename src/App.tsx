@@ -45,7 +45,16 @@ export class App extends React.Component<{ appStore: AppStore }> {
             wsURL = process.env.REACT_APP_DEFAULT_ADDRESS_PROD ? process.env.REACT_APP_DEFAULT_ADDRESS_PROD : wsURL;
         }
 
-        console.log(`Connecting to defaullt URL: ${wsURL}`);
+        // Check for URL query parameters as a final override
+        const url = new URL(window.location.href);
+        const socketUrl = url.searchParams.get("socketUrl");
+        if (socketUrl) {
+            wsURL = socketUrl;
+            console.log(`Connecting to override URL: ${wsURL}`);
+        } else {
+            console.log(`Connecting to default URL: ${wsURL}`);
+        }
+
         appStore.backendService.connect(wsURL, "1234").subscribe(sessionId => {
             console.log(`Connected with session ID ${sessionId}`);
             this.props.appStore.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
