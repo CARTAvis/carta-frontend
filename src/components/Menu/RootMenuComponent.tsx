@@ -165,7 +165,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
     }
 
     handleDocumentationClicked = () => {
-        window.open("https://cartavis.github.io/manual", "_blank");
+        window.open("https://cartavis.github.io/manual", "_blank", "width=1024");
         if (process.env.REACT_APP_TARGET !== "linux" && process.env.REACT_APP_TARGET !== "darwin") {
             this.documentationAlertVisible = true;
             clearTimeout(this.documentationAlertTimeoutHandle);
