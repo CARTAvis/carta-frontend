@@ -290,7 +290,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 if (appStore.cursorInfo) {
                     const comments: string[] = [];
                     comments.push(`region (pixel): Point[${appStore.cursorInfo.posImageSpace.x.toFixed(0)}, ${appStore.cursorInfo.posImageSpace.y.toFixed(0)}]`);
-                    comments.push(`region (world): Point[${appStore.cursorInfo.infoWCS.x}, ${appStore.cursorInfo.infoWCS.y}]`);
+                    if (appStore.cursorInfo.infoWCS) {
+                        comments.push(`region (world): Point[${appStore.cursorInfo.infoWCS.x}, ${appStore.cursorInfo.infoWCS.y}]`);
+                    }
                     linePlotProps.comments = comments;
                 }
             }
