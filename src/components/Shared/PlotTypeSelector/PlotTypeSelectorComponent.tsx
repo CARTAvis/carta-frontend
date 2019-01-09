@@ -1,5 +1,5 @@
-import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
 import * as React from "react";
+import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
 
 export enum PlotType {
     STEPS = "Steps",

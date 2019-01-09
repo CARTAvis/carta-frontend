@@ -1,18 +1,18 @@
 import * as React from "react";
-import {AppStore} from "../../../stores/AppStore";
-import {LabelType, SystemType} from "../../../stores/OverlayStore";
-import {observer} from "mobx-react";
-import "./OverlaySettingsDialogComponent.css";
-import {Button, Switch, Dialog, IDialogProps, Intent, Tab, Tabs, NumericInput, FormGroup, MenuItem, HTMLSelect, Collapse, Divider, Tooltip} from "@blueprintjs/core";
-import {Select, ItemRenderer} from "@blueprintjs/select";
 import * as AST from "ast_wrapper";
-import {DraggableDialogComponent} from "../DraggableDialog/DraggableDialogComponent";
+import {observer} from "mobx-react";
+import {Select, ItemRenderer} from "@blueprintjs/select";
+import {Button, Switch, IDialogProps, Intent, Tab, Tabs, NumericInput, FormGroup, MenuItem, HTMLSelect, Collapse} from "@blueprintjs/core";
+import {DraggableDialogComponent} from "..";
+import {AppStore} from "../../../stores";
+import {LabelType, SystemType} from "../../../stores";
+import "./OverlaySettingsDialogComponent.css";
 
 // Color selector
 export class Color {
     name: string;
     id: number;
-    
+
     constructor(name: string, id: number) {
         this.name = name;
         this.id = id;
@@ -21,7 +21,7 @@ export class Color {
 
 const ColorSelect = Select.ofType<Color>();
 
-export const renderColor: ItemRenderer<Color> = (color, { handleClick, modifiers, query }) => {
+export const renderColor: ItemRenderer<Color> = (color, {handleClick, modifiers, query}) => {
     return (
         <MenuItem
             active={modifiers.active}
@@ -41,27 +41,27 @@ export class Font {
     style: string;
     weight: number;
     family: string;
-    
+
     constructor(name: string, id: number) {
         this.name = name.replace("{size} ", "");
         this.id = id;
-        
+
         let family = this.name;
-        
+
         if (family.indexOf("bold") === 0) {
             family = family.replace("bold ", "");
             this.weight = 700;
         } else {
             this.weight = 400;
         }
-        
+
         if (family.indexOf("italic") === 0) {
             family = family.replace("italic ", "");
             this.style = "italic";
         } else {
             this.style = "";
         }
-        
+
         this.family = family;
     }
 }
@@ -70,7 +70,7 @@ const astFonts: Font[] = AST.fonts.map((x, i) => (new Font(x, i)));
 
 const FontSelect = Select.ofType<Font>();
 
-export const renderFont: ItemRenderer<Font> = (font, { handleClick, modifiers, query }) => {
+export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, query}) => {
     return (
         <MenuItem
             active={modifiers.active}
@@ -86,14 +86,14 @@ export const renderFont: ItemRenderer<Font> = (font, { handleClick, modifiers, q
 export class OverlaySettingsDialogComponent extends React.Component<{ appStore: AppStore }> {
 
     private colorSelect(visible: boolean, currentColorId: number, colorSetter: Function) {
-    
+
         const astColors: Color[] = AST.colors.map((x, i) => ({name: x, id: i}));
-    
+
         let currentColor: Color = astColors[currentColorId];
         if (typeof currentColor === "undefined") {
             currentColor = astColors[0];
         }
-        
+
         return (
             <ColorSelect
                 activeItem={currentColor}
@@ -104,7 +104,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 popoverProps={{minimal: true, position: "auto-end", popoverClassName: "colorselect"}}
                 onItemSelect={(color) => colorSetter(color.id)}
             >
-                <Button className="colorselect" text={(<div className="dropdown-color" style={{background: currentColor.name}}>&nbsp;</div>)} disabled={!visible} rightIcon="double-caret-vertical" />
+                <Button className="colorselect" text={(<div className="dropdown-color" style={{background: currentColor.name}}>&nbsp;</div>)} disabled={!visible} rightIcon="double-caret-vertical"/>
             </ColorSelect>
         );
     }
@@ -114,7 +114,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         if (typeof currentFont === "undefined") {
             currentFont = astFonts[0];
         }
-        
+
         return (
             <FontSelect
                 activeItem={currentFont}
@@ -125,7 +125,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 popoverProps={{minimal: true, position: "auto-end", popoverClassName: "fontselect"}}
                 onItemSelect={(font) => fontSetter(font.id)}
             >
-                <Button text={(<span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>)} disabled={!visible} rightIcon="double-caret-vertical" />
+                <Button text={(<span style={{fontFamily: currentFont.family, fontWeight: currentFont.weight, fontStyle: currentFont.style}}>{currentFont.name}</span>)} disabled={!visible} rightIcon="double-caret-vertical"/>
             </FontSelect>
         );
     }
@@ -140,13 +140,13 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         const axes = overlayStore.axes;
         const numbers = overlayStore.numbers;
         const labels = overlayStore.labels;
-        
+
         const interior: boolean = (global.labelType === LabelType.Interior);
-        
+
         const disabledIfInterior = (interior && "Does not apply to interior labelling.");
         const disabledIfExterior = (!interior && "Does not apply to exterior labelling.");
         const disabledIfNoWcs = (!global.validWcs && "This image has no valid WCS data.");
-        
+
         const globalPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Color">
@@ -173,7 +173,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup
                     inline={true}
                     label="Coordinate system"
-                    disabled={!global.validWcs} 
+                    disabled={!global.validWcs}
                     helperText={disabledIfNoWcs}
                 >
                     <HTMLSelect
@@ -185,11 +185,11 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
             </div>
         );
-        
+
         const titlePanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Visible">
-                    <Switch 
+                    <Switch
                         checked={title.visible}
                         onChange={(ev) => title.setVisible(ev.currentTarget.checked)}
                     />
@@ -205,7 +205,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom color" disabled={!title.visible}>
-                    <Switch 
+                    <Switch
                         checked={title.customColor}
                         disabled={!title.visible}
                         onChange={(ev) => title.setCustomColor(ev.currentTarget.checked)}
@@ -218,23 +218,23 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </Collapse>
             </div>
         );
-        
+
         const ticksPanel = (
             <div className="panel-container">
-                <FormGroup 
+                <FormGroup
                     inline={true}
                     label="Draw on all edges"
                     disabled={interior}
                     helperText={disabledIfInterior}
                 >
-                    <Switch 
+                    <Switch
                         checked={ticks.drawAll}
                         disabled={interior}
                         onChange={(ev) => ticks.setDrawAll(ev.currentTarget.checked)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom density">
-                    <Switch 
+                    <Switch
                         checked={ticks.customDensity}
                         onChange={(ev) => ticks.setCustomDensity(ev.currentTarget.checked)}
                     />
@@ -258,7 +258,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Custom color">
-                    <Switch 
+                    <Switch
                         checked={ticks.customColor}
                         onChange={(ev) => ticks.setCustomColor(ev.currentTarget.checked)}
                     />
@@ -305,7 +305,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
             </div>
         );
-        
+
         const gridPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Visible">
@@ -315,7 +315,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom color" disabled={!grid.visible}>
-                    <Switch 
+                    <Switch
                         checked={grid.customColor}
                         disabled={!grid.visible}
                         onChange={(ev) => grid.setCustomColor(ev.currentTarget.checked)}
@@ -339,7 +339,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom gap" disabled={!grid.visible}>
-                    <Switch 
+                    <Switch
                         checked={grid.customGap}
                         disabled={!grid.visible}
                         onChange={(ev) => grid.setCustomGap(ev.currentTarget.checked)}
@@ -373,7 +373,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </Collapse>
             </div>
         );
-        
+
         const borderPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Visible">
@@ -383,7 +383,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom color" disabled={!border.visible}>
-                    <Switch 
+                    <Switch
                         checked={border.customColor}
                         disabled={!border.visible}
                         onChange={(ev) => border.setCustomColor(ev.currentTarget.checked)}
@@ -408,7 +408,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
             </div>
         );
-        
+
         const axesPanel = (
             <div className="panel-container">
                 <FormGroup
@@ -424,7 +424,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom color" disabled={!interior || !axes.visible}>
-                    <Switch 
+                    <Switch
                         checked={axes.customColor}
                         disabled={!interior || !axes.visible}
                         onChange={(ev) => axes.setCustomColor(ev.currentTarget.checked)}
@@ -460,7 +460,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
             </div>
         );
-        
+
         const numbersPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Visible">
@@ -480,7 +480,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom color" disabled={!numbers.visible}>
-                    <Switch 
+                    <Switch
                         checked={numbers.customColor}
                         disabled={!numbers.visible}
                         onChange={(ev) => numbers.setCustomColor(ev.currentTarget.checked)}
@@ -492,12 +492,12 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     </FormGroup>
                 </Collapse>
                 <FormGroup
-                    inline={true} 
+                    inline={true}
                     label="Custom format"
                     disabled={!numbers.validWcs}
                     helperText={disabledIfNoWcs}
                 >
-                    <Switch 
+                    <Switch
                         checked={numbers.customFormat}
                         disabled={!numbers.validWcs}
                         onChange={(ev) => numbers.setCustomFormat(ev.currentTarget.checked)}
@@ -525,7 +525,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     disabled={!numbers.validWcs}
                     helperText={disabledIfNoWcs}
                 >
-                    <Switch 
+                    <Switch
                         checked={numbers.customPrecision}
                         disabled={!numbers.validWcs}
                         onChange={(ev) => numbers.setCustomPrecision(ev.currentTarget.checked)}
@@ -563,7 +563,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Custom color" disabled={!labels.visible}>
-                    <Switch 
+                    <Switch
                         checked={labels.customColor}
                         disabled={!labels.visible}
                         onChange={(ev) => labels.setCustomColor(ev.currentTarget.checked)}

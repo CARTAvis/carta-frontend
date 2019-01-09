@@ -1,20 +1,11 @@
-import {action, autorun, computed, observable} from "mobx";
-import * as AST from "ast_wrapper";
 import * as _ from "lodash";
-import {OverlayStore, dayPalette, nightPalette} from "./OverlayStore";
-import {SpatialProfileStore} from "./SpatialProfileStore";
-import {FileBrowserStore} from "./FileBrowserStore";
-import {FrameInfo, FrameStore} from "./FrameStore";
-import {AlertStore} from "./AlertStore";
-import {LogEntry, LogStore} from "./LogStore";
-import {BackendService} from "../services/BackendService";
-import {CursorInfo, FrameView} from "../models";
+import * as AST from "ast_wrapper";
+import {action, autorun, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {AnimationState, AnimatorStore} from "./AnimatorStore";
+import {AlertStore, AnimationState, AnimatorStore, FrameInfo, FrameStore, FileBrowserStore, LogEntry, LogStore, OverlayStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore, dayPalette, nightPalette} from ".";
+import {BackendService} from "../services";
+import {CursorInfo, FrameView} from "../models";
 import {smoothStepOffset} from "../util";
-import {WidgetsStore} from "./WidgetsStore";
-import {SpectralProfileStore} from "./SpectralProfileStore";
-import {Simulate} from "react-dom/test-utils";
 
 export class AppStore {
     // Backend service

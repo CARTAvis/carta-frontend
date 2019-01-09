@@ -1,7 +1,6 @@
-import {FrameStore} from "../../../stores/FrameStore";
 import * as React from "react";
 import {observer} from "mobx-react";
-import {OverlayStore} from "../../../stores/OverlayStore";
+import {FrameStore, OverlayStore} from "../../../stores";
 import "./RasterViewComponent.css";
 import allMaps from "../../../static/allmaps.png";
 

@@ -1,11 +1,9 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
 import * as _ from "lodash";
-import {LabelType, OverlayStore, ASTSettingsString} from "../../../stores/OverlayStore";
 import {observer} from "mobx-react";
-import {CursorInfo} from "../../../models/CursorInfo";
-import {FrameStore} from "../../../stores/FrameStore";
-import {Point2D} from "../../../models/Point2D";
+import {ASTSettingsString, FrameStore, OverlayStore} from "../../../stores";
+import {CursorInfo, Point2D} from "../../../models";
 import "./OverlayComponent.css";
 
 export class OverlayComponentProps {

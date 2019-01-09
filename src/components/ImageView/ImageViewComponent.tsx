@@ -4,14 +4,14 @@ import {observer} from "mobx-react";
 import {autorun, observable} from "mobx";
 import {NonIdealState, Spinner, Colors, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {WidgetConfig, WidgetProps} from "../../stores/WidgetsStore";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
-import {CursorInfo, Point2D} from "../../models";
 import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
-import "./ImageViewComponent.css";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
+import {WidgetConfig, WidgetProps} from "../../stores";
+import {CursorInfo, Point2D} from "../../models";
+import "./ImageViewComponent.css";
 
 export const exportImage = (padding, darkTheme, imageName) => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;

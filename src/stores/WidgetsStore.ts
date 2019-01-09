@@ -1,17 +1,9 @@
 import * as GoldenLayout from "golden-layout";
 import * as $ from "jquery";
 import {action, observable} from "mobx";
+import {AnimatorComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent} from "../components";
 import {AppStore} from "./AppStore";
-import {RenderConfigWidgetStore} from "./widgets/RenderConfigWidgetStore";
-import {SpatialProfileWidgetStore} from "./widgets/SpatialProfileWidgetStore";
-import {SpatialProfilerComponent} from "../components/SpatialProfiler/SpatialProfilerComponent";
-import {RenderConfigComponent} from "../components/RenderConfig/RenderConfigComponent";
-import {ImageViewComponent} from "../components/ImageView/ImageViewComponent";
-import {LogComponent} from "../components/Log/LogComponent";
-import {AnimatorComponent} from "../components/Animator/AnimatorComponent";
-import {PlaceholderComponent} from "../components/Placeholder/PlaceholderComponent";
-import {SpectralProfileWidgetStore} from "./widgets/SpectralProfileWidgetStore";
-import {SpectralProfilerComponent} from "../components/SpectralProfiler/SpectralProfilerComponent";
+import {RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore} from "./widgets";
 
 export class WidgetConfig {
     id: string;

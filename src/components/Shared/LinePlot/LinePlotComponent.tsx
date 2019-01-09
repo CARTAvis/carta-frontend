@@ -1,18 +1,17 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import * as _ from "lodash";
+import {action, computed, observable} from "mobx";
 import {ESCAPE} from "@blueprintjs/core/lib/cjs/common/keys";
+import {Colors} from "@blueprintjs/core";
 import {ChartArea} from "chart.js";
 import {Scatter} from "react-chartjs-2";
-import {PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
-import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
 import ReactResizeDetector from "react-resize-detector";
-import {Point2D} from "../../../models/Point2D";
-import "./LinePlotComponent.css";
-import {clamp} from "../../../util/math";
-import {Colors} from "@blueprintjs/core";
-import {action, computed, observable} from "mobx";
+import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
+import {PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
+import {Point2D} from "../../../models";
+import {clamp} from "../../../util";
+import "./LinePlotComponent.css";
 
 enum ZoomMode {
     NONE,

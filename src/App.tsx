@@ -5,20 +5,13 @@ import {observer} from "mobx-react";
 import DevTools from "mobx-react-devtools";
 import ReactResizeDetector from "react-resize-detector";
 import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
-import {RootMenuComponent} from "./components/Menu/RootMenuComponent";
-import {OverlaySettingsDialogComponent} from "./components/Dialogs/OverlaySettings/OverlaySettingsDialogComponent";
-import {FileBrowserDialogComponent} from "./components/Dialogs/FileBrowser/FileBrowserDialogComponent";
-import {URLConnectDialogComponent} from "./components/Dialogs/URLConnect/URLConnectDialogComponent";
-import {FloatingWidgetManagerComponent} from "./components/FloatingWidgetManager/FloatingWidgetManagerComponent";
-import {FileBrowserStore} from "./stores/FileBrowserStore";
-import {AppStore} from "./stores/AppStore";
-import {dayPalette, nightPalette} from "./stores/OverlayStore";
+import {RootMenuComponent, FloatingWidgetManagerComponent, exportImage} from "./components";
+import {AboutDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, URLConnectDialogComponent} from "./components/Dialogs";
+import {AppStore, FileBrowserStore, dayPalette, nightPalette} from "./stores";
 import {smoothStepOffset} from "./util";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
 import "./layout-theme.css";
-import {AboutDialogComponent} from "./components/Dialogs/AboutDialog/AboutDialogComponent";
-import {exportImage} from "./components/ImageView/ImageViewComponent";
 
 @HotkeysTarget @observer
 export class App extends React.Component<{ appStore: AppStore }> {

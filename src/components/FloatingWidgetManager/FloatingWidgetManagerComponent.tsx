@@ -1,15 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AppStore} from "../../stores/AppStore";
-import {WidgetConfig} from "../../stores/WidgetsStore";
-import {FloatingWidgetComponent} from "../FloatingWidget/FloatingWidgetComponent";
-import {RenderConfigComponent} from "../RenderConfig/RenderConfigComponent";
-import {LogComponent} from "../Log/LogComponent";
-import {PlaceholderComponent} from "../Placeholder/PlaceholderComponent";
-import {ImageViewComponent} from "../ImageView/ImageViewComponent";
-import {SpatialProfilerComponent} from "../SpatialProfiler/SpatialProfilerComponent";
-import {AnimatorComponent} from "../Animator/AnimatorComponent";
-import {SpectralProfilerComponent} from "../SpectralProfiler/SpectralProfilerComponent";
+import {AnimatorComponent, FloatingWidgetComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent} from "..";
+import {AppStore, WidgetConfig} from "../../stores";
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component<{ appStore: AppStore }> {

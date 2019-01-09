@@ -1,5 +1,5 @@
-import {observer} from "mobx-react";
 import * as React from "react";
+import {observer} from "mobx-react";
 import {Button, Classes, Dialog, ProgressBar, Tooltip} from "@blueprintjs/core";
 
 interface TaskProgressDialogComponentProps {

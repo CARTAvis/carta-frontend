@@ -1,18 +1,15 @@
-import {BackendService} from "../services/BackendService";
 import {action, observable} from "mobx";
-import {CARTA} from "carta-protobuf";
-import FileInfoExtended = CARTA.FileInfoExtended;
-import FileInfo = CARTA.FileInfo;
-import FileListResponse = CARTA.FileListResponse;
 import {TabId} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
+import {BackendService} from "../services";
 
 export class FileBrowserStore {
     @observable fileBrowserDialogVisible = false;
     @observable appendingFrame = false;
-    @observable fileList: FileListResponse;
-    @observable selectedFile: FileInfo;
+    @observable fileList: CARTA.FileListResponse;
+    @observable selectedFile: CARTA.FileInfo;
     @observable selectedHDU: string;
-    @observable fileInfoExtended: FileInfoExtended;
+    @observable fileInfoExtended: CARTA.FileInfoExtended;
     @observable selectedTab: TabId = "fileInfo";
     @observable loadingList = false;
     @observable loadingInfo = false;
@@ -50,7 +47,7 @@ export class FileBrowserStore {
         this.fileInfoExtended = null;
         this.backendService.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
-                this.fileInfoExtended = res.fileInfoExtended as FileInfoExtended;
+                this.fileInfoExtended = res.fileInfoExtended as CARTA.FileInfoExtended;
                 this.loadingInfo = false;
             }
             this.fileInfoResp = true;
@@ -63,7 +60,7 @@ export class FileBrowserStore {
         });
     };
 
-    @action selectFile(file: FileInfo, hdu: string) {
+    @action selectFile(file: CARTA.FileInfo, hdu: string) {
         this.selectedFile = file;
         this.selectedHDU = hdu;
         this.getFileInfo(this.fileList.directory, file.name, hdu);

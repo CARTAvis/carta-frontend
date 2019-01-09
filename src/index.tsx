@@ -1,14 +1,13 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-
+import {FocusStyleManager} from "@blueprintjs/core";
 import {App} from "./App";
+import {AppStore} from "./stores";
+import registerServiceWorker from "./registerServiceWorker";
 import "./index.css";
 import "@blueprintjs/core/lib/css/blueprint.css";
 import "@blueprintjs/icons/lib/css/blueprint-icons.css";
-import {FocusStyleManager} from "@blueprintjs/core";
 import "./layout-base.css";
-import registerServiceWorker from "./registerServiceWorker";
-import {AppStore} from "./stores/AppStore";
 
 // Pre-load static assets
 import allMaps from "./static/allmaps.png";

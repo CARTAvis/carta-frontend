@@ -1,11 +1,10 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, observable} from "mobx";
-import "./AnimatorComponent.css";
-import {WidgetConfig, WidgetProps} from "../../stores/WidgetsStore";
 import {Button, ButtonGroup, FormGroup, NonIdealState, NumericInput, Radio, Slider} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {AnimationMode, AnimationState} from "../../stores/AnimatorStore";
+import {WidgetConfig, WidgetProps, AnimationMode, AnimationState} from "../../stores";
+import "./AnimatorComponent.css";
 
 @observer
 export class AnimatorComponent extends React.Component<WidgetProps> {
