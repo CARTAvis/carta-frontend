@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {Button, Code, Colors, FormGroup, HTMLSelect, NonIdealState, Tag, Intent} from "@blueprintjs/core";
 import ScrollToBottom from "react-scroll-to-bottom";
 import {CARTA} from "carta-protobuf";
-import {WidgetConfig, WidgetProps} from "../../stores";
+import {WidgetConfig, WidgetProps} from "stores";
 import "./LogComponent.css";
 
 @observer

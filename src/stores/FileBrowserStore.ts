@@ -1,7 +1,7 @@
 import {action, observable} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {BackendService} from "../services";
+import {BackendService} from "services";
 
 export class FileBrowserStore {
     @observable fileBrowserDialogVisible = false;

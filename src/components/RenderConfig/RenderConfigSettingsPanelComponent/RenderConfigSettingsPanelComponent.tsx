@@ -1,9 +1,9 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Button, ControlGroup, FormGroup, Switch} from "@blueprintjs/core";
-import {RenderConfigWidgetStore} from "../../../stores/widgets/RenderConfigWidgetStore";
+import {RenderConfigWidgetStore} from "stores/widgets/RenderConfigWidgetStore";
 import "./RenderConfigSettingsPanelComponent.css";
-import {PlotType, PlotTypeSelectorComponent} from "../../Shared/PlotTypeSelector/PlotTypeSelectorComponent";
+import {PlotTypeSelectorComponent} from "components/Shared/PlotTypeSelector/PlotTypeSelectorComponent";
 
 @observer
 export class RenderConfigSettingsPanelComponent extends React.Component<{ widgetStore: RenderConfigWidgetStore }> {

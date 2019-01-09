@@ -1,6 +1,6 @@
 import {action, computed, observable} from "mobx";
 import {AppStore} from "./AppStore";
-import {clamp} from "../util";
+import {clamp} from "utilities";
 
 export enum AnimationMode {
     CHANNEL = 0,

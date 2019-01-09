@@ -1,7 +1,7 @@
 import * as GoldenLayout from "golden-layout";
 import * as $ from "jquery";
 import {action, observable} from "mobx";
-import {AnimatorComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent} from "../components";
+import {AnimatorComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent} from "components";
 import {AppStore} from "./AppStore";
 import {RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore} from "./widgets";
 

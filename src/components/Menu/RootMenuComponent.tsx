@@ -3,9 +3,9 @@ import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {Alert, Menu, Popover, Position} from "@blueprintjs/core";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
-import {exportImage} from "..";
-import {AppStore} from "../../stores";
-import {ConnectionStatus} from "../../services";
+import {exportImage} from "components";
+import {AppStore} from "stores";
+import {ConnectionStatus} from "services";
 import "./RootMenuComponent.css";
 
 @observer

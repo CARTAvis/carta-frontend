@@ -9,8 +9,8 @@ import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
-import {WidgetConfig, WidgetProps} from "../../stores";
-import {CursorInfo, Point2D} from "../../models";
+import {WidgetConfig, WidgetProps} from "stores";
+import {CursorInfo, Point2D} from "models";
 import "./ImageViewComponent.css";
 
 export const exportImage = (padding, darkTheme, imageName) => {

@@ -1,5 +1,5 @@
 import {action, computed, observable} from "mobx";
-import {PlotType} from "../../components/Shared";
+import {PlotType} from "components/Shared";
 
 export class SpatialProfileWidgetStore {
     @observable fileId: number;

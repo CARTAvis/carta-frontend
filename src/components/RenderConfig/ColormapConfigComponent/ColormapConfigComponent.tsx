@@ -3,17 +3,17 @@ import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {Alert, Button, FormGroup, IPopoverProps, MenuItem, NumericInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
-import {FrameScaling, RenderConfigStore} from "../../../stores/RenderConfigStore";
-import {TaskProgressDialogComponent} from "../../Dialogs/TaskProgressDialog/TaskProgressDialogComponent";
+import {FrameScaling, RenderConfigStore} from "stores/RenderConfigStore";
+
 // Static assets
-import allMaps from "../../../static/allmaps.png";
+import allMaps from "static/allmaps.png";
 // Equation PNG images
-import linearPng from "../../../static/equations/linear.png";
-import logPng from "../../../static/equations/log.png";
-import sqrtPng from "../../../static/equations/sqrt.png";
-import squaredPng from "../../../static/equations/squared.png";
-import gammaPng from "../../../static/equations/gamma.png";
-import powerPng from "../../../static/equations/power.png";
+import linearPng from "static/equations/linear.png";
+import logPng from "static/equations/log.png";
+import sqrtPng from "static/equations/sqrt.png";
+import squaredPng from "static/equations/squared.png";
+import gammaPng from "static/equations/gamma.png";
+import powerPng from "static/equations/power.png";
 
 const equationPngMap = new Map([
     [FrameScaling.LINEAR, linearPng],

@@ -3,8 +3,8 @@ import * as GoldenLayout from "golden-layout";
 import {observer} from "mobx-react";
 import {Rnd} from "react-rnd";
 import {Icon, Position, Tooltip} from "@blueprintjs/core";
-import {PlaceholderComponent} from "..";
-import {AppStore, WidgetConfig} from "../../stores";
+import {PlaceholderComponent} from "components";
+import {AppStore, WidgetConfig} from "stores";
 import "./FloatingWidgetComponent.css";
 
 class FloatingWidgetComponentProps {

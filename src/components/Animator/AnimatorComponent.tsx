@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {action, observable} from "mobx";
 import {Button, ButtonGroup, FormGroup, NonIdealState, NumericInput, Radio, Slider} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {WidgetConfig, WidgetProps, AnimationMode, AnimationState} from "../../stores";
+import {WidgetConfig, WidgetProps, AnimationMode, AnimationState} from "stores";
 import "./AnimatorComponent.css";
 
 @observer

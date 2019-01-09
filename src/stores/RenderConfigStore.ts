@@ -1,6 +1,6 @@
 import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {clamp} from "../util";
+import {clamp} from "utilities";
 
 export enum FrameScaling {
     LINEAR = 0,

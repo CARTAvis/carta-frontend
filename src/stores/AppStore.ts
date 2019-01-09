@@ -3,9 +3,9 @@ import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AlertStore, AnimationState, AnimatorStore, FrameInfo, FrameStore, FileBrowserStore, LogEntry, LogStore, OverlayStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore, dayPalette, nightPalette} from ".";
-import {BackendService} from "../services";
-import {CursorInfo, FrameView} from "../models";
-import {smoothStepOffset} from "../util";
+import {BackendService} from "services";
+import {CursorInfo, FrameView} from "models";
+import {smoothStepOffset} from "utilities";
 
 export class AppStore {
     // Backend service

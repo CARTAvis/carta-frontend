@@ -1,7 +1,7 @@
 import {action, autorun, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, throwError, Subject} from "rxjs";
-import {LogStore} from "../stores";
+import {LogStore} from "stores";
 import {DecompressionService} from "./DecompressionService";
 
 export enum ConnectionStatus {

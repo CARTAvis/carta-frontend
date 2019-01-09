@@ -1,8 +1,8 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Button, ControlGroup, FormGroup, HTMLSelect, Switch} from "@blueprintjs/core";
-import {PlotTypeSelectorComponent} from "../../Shared";
-import {SpatialProfileWidgetStore} from "../../../stores/widgets";
+import {PlotTypeSelectorComponent} from "components/Shared";
+import {SpatialProfileWidgetStore} from "stores/widgets";
 import "./SpatialProfilerSettingsPanelComponent.css";
 
 @observer

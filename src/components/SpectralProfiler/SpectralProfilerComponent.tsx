@@ -4,12 +4,12 @@ import {observer} from "mobx-react";
 import {Chart} from "chart.js";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {LinePlotComponent, LinePlotComponentProps, PopoverSettingsComponent, PlotType} from "../Shared";
+import {LinePlotComponent, LinePlotComponentProps, PopoverSettingsComponent, PlotType} from "components/Shared";
 import {SpectralProfilerSettingsPanelComponent} from "./SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
-import {FrameStore, SpectralProfileStore, WidgetConfig, WidgetProps} from "../../stores";
-import {SpectralProfileWidgetStore} from "../../stores/widgets";
-import {Point2D} from "../../models";
-import {clamp} from "../../util";
+import {FrameStore, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
+import {SpectralProfileWidgetStore} from "stores/widgets";
+import {Point2D} from "models";
+import {clamp} from "utilities";
 import "./SpectralProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)

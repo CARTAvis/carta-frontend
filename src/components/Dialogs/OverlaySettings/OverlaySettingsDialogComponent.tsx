@@ -3,9 +3,8 @@ import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import {Select, ItemRenderer} from "@blueprintjs/select";
 import {Button, Switch, IDialogProps, Intent, Tab, Tabs, NumericInput, FormGroup, MenuItem, HTMLSelect, Collapse} from "@blueprintjs/core";
-import {DraggableDialogComponent} from "..";
-import {AppStore} from "../../../stores";
-import {LabelType, SystemType} from "../../../stores";
+import {DraggableDialogComponent} from "components/Dialogs";
+import {AppStore, LabelType, SystemType} from "stores";
 import "./OverlaySettingsDialogComponent.css";
 
 // Color selector

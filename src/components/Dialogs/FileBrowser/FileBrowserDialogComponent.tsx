@@ -3,8 +3,8 @@ import {observer} from "mobx-react";
 import {AnchorButton, IDialogProps, Intent, NonIdealState, Pre, Tooltip, Tabs, Tab, TabId, Spinner} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FileListComponent} from "./FileList/FileListComponent";
-import {DraggableDialogComponent} from "..";
-import {AppStore} from "../../../stores";
+import {DraggableDialogComponent} from "components/Dialogs";
+import {AppStore} from "stores";
 import "./FileBrowserDialogComponent.css";
 
 @observer

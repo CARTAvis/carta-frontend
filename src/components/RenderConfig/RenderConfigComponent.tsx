@@ -7,13 +7,12 @@ import {Chart} from "chart.js";
 import {Button, ButtonGroup, FormGroup, HTMLSelect, IOptionProps, NonIdealState, NumericInput} from "@blueprintjs/core";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
 import {RenderConfigSettingsPanelComponent} from "./RenderConfigSettingsPanelComponent/RenderConfigSettingsPanelComponent";
-import {PopoverSettingsComponent, LinePlotComponent, LinePlotComponentProps} from "../Shared";
-import {TaskProgressDialogComponent} from "../Dialogs";
-import {RenderConfigWidgetStore} from "../../stores/widgets";
-import {AnimationState, FrameStore, FrameScaling, WidgetConfig, WidgetProps} from "../../stores";
-import {clamp} from "../../util";
-import {Point2D} from "../../models";
-import {PlotType} from "../Shared";
+import {PopoverSettingsComponent, LinePlotComponent, LinePlotComponentProps, PlotType} from "components/Shared";
+import {TaskProgressDialogComponent} from "components/Dialogs";
+import {RenderConfigWidgetStore} from "stores/widgets";
+import {AnimationState, FrameStore, FrameScaling, WidgetConfig, WidgetProps} from "stores";
+import {clamp} from "utilities";
+import {Point2D} from "models";
 import "./RenderConfigComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)

@@ -1,8 +1,8 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {FrameStore, OverlayStore} from "../../../stores";
+import {FrameStore, OverlayStore} from "stores";
 import "./RasterViewComponent.css";
-import allMaps from "../../../static/allmaps.png";
+import allMaps from "static/allmaps.png";
 
 const vertShader = require("!raw-loader!./GLSL/vert.glsl");
 const pixelShaderSimple = require("!raw-loader!./GLSL/pixel_simple.glsl");

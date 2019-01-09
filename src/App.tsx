@@ -8,7 +8,7 @@ import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@b
 import {RootMenuComponent, FloatingWidgetManagerComponent, exportImage} from "./components";
 import {AboutDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, URLConnectDialogComponent} from "./components/Dialogs";
 import {AppStore, FileBrowserStore, dayPalette, nightPalette} from "./stores";
-import {smoothStepOffset} from "./util";
+import {smoothStepOffset} from "./utilities";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
 import "./layout-theme.css";

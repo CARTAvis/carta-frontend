@@ -2,14 +2,9 @@ import * as React from "react";
 import * as GoldenLayout from "golden-layout";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
-import {AppStore} from "../../../stores/AppStore";
-import {WidgetConfig} from "../../../stores/WidgetsStore";
-import {RenderConfigComponent} from "../../RenderConfig/RenderConfigComponent";
-import {LogComponent} from "../../Log/LogComponent";
-import {AnimatorComponent} from "../../Animator/AnimatorComponent";
+import {AppStore, WidgetConfig} from "stores";
+import {AnimatorComponent, LogComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent} from "components";
 import "./ToolbarMenuComponent.css";
-import {SpatialProfilerComponent} from "../../SpatialProfiler/SpatialProfilerComponent";
-import {SpectralProfilerComponent} from "../../SpectralProfiler/SpectralProfilerComponent";
 
 @observer
 export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }> {

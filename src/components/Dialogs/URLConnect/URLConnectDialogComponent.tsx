@@ -1,8 +1,8 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {AnchorButton, IDialogProps, Intent, Tooltip} from "@blueprintjs/core";
-import {DraggableDialogComponent} from "..";
-import {AppStore} from "../../../stores";
+import {DraggableDialogComponent} from "components/Dialogs";
+import {AppStore} from "stores";
 import "./URLConnectDialogComponent.css";
 
 @observer

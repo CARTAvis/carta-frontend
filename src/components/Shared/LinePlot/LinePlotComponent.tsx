@@ -9,8 +9,8 @@ import ReactResizeDetector from "react-resize-detector";
 import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
 import {PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
-import {Point2D} from "../../../models";
-import {clamp} from "../../../util";
+import {Point2D} from "models";
+import {clamp} from "utilities";
 import "./LinePlotComponent.css";
 
 enum ZoomMode {

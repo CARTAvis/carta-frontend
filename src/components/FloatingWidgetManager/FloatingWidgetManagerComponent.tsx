@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AnimatorComponent, FloatingWidgetComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent} from "..";
-import {AppStore, WidgetConfig} from "../../stores";
+import {AnimatorComponent, FloatingWidgetComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent} from "components";
+import {AppStore, WidgetConfig} from "stores";
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component<{ appStore: AppStore }> {
