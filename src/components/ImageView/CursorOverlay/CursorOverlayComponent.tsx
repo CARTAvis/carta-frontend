@@ -1,7 +1,7 @@
 import * as React from "react";
-import "./CursorOverlayComponent.css";
-import {CursorInfo, SpectralInfo} from "../../../models";
 import {CSSProperties} from "react";
+import {CursorInfo, SpectralInfo} from "models";
+import "./CursorOverlayComponent.css";
 
 class CursorOverlayProps {
     cursorInfo: CursorInfo;

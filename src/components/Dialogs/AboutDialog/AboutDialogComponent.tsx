@@ -1,10 +1,10 @@
-import {observer} from "mobx-react";
 import * as React from "react";
+import {observer} from "mobx-react";
 import {AnchorButton, Classes, IDialogProps, Intent} from "@blueprintjs/core";
+import {DraggableDialogComponent} from "components/Dialogs";
+import {AppStore} from "stores";
 import "./AboutDialogComponent.css";
-import {DraggableDialogComponent} from "../DraggableDialog/DraggableDialogComponent";
-import {AppStore} from "../../../stores/AppStore";
-import * as logoPng from "../../../static/carta_logo.png";
+import * as logoPng from "static/carta_logo.png";
 
 @observer
 export class AboutDialogComponent extends React.Component<{ appStore: AppStore }> {

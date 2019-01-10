@@ -1,12 +1,11 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {AnchorButton, IDialogProps, Intent, NonIdealState, Pre, Tooltip, Tabs, Tab, TabId, Spinner} from "@blueprintjs/core";
-import "./FileBrowserDialogComponent.css";
 import {CARTA} from "carta-protobuf";
-import FileInfo = CARTA.FileInfo;
 import {FileListComponent} from "./FileList/FileListComponent";
-import {AppStore} from "../../../stores/AppStore";
-import {DraggableDialogComponent} from "../DraggableDialog/DraggableDialogComponent";
+import {DraggableDialogComponent} from "components/Dialogs";
+import {AppStore} from "stores";
+import "./FileBrowserDialogComponent.css";
 
 @observer
 export class FileBrowserDialogComponent extends React.Component<{ appStore: AppStore }> {
@@ -70,8 +69,8 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                             files={fileBrowserStore.fileList}
                             selectedFile={fileBrowserStore.selectedFile}
                             selectedHDU={fileBrowserStore.selectedHDU}
-                            onFileClicked={(file: FileInfo, hdu: string) => fileBrowserStore.selectFile(file, hdu)}
-                            onFileDoubleClicked={(file: FileInfo, hdu: string) => this.loadFile(file.name, hdu)}
+                            onFileClicked={(file: CARTA.FileInfo, hdu: string) => fileBrowserStore.selectFile(file, hdu)}
+                            onFileDoubleClicked={(file: CARTA.FileInfo, hdu: string) => this.loadFile(file.name, hdu)}
                             onFolderClicked={(folder: string) => fileBrowserStore.selectFolder(folder)}
                         />
                     </div>

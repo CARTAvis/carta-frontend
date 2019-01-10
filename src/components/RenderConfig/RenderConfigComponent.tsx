@@ -5,20 +5,15 @@ import {action, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Chart} from "chart.js";
 import {Button, ButtonGroup, FormGroup, HTMLSelect, IOptionProps, NonIdealState, NumericInput} from "@blueprintjs/core";
-import {LinePlotComponent, LinePlotComponentProps} from "../Shared/LinePlot/LinePlotComponent";
-import {FrameStore} from "../../stores/FrameStore";
-import {FrameScaling} from "../../stores/RenderConfigStore";
-import {WidgetConfig, WidgetProps} from "../../stores/WidgetsStore";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
-import {clamp} from "../../util/math";
-import {Point2D} from "../../models/Point2D";
-import {PopoverSettingsComponent} from "../Shared/PopoverSettings/PopoverSettingsComponent";
 import {RenderConfigSettingsPanelComponent} from "./RenderConfigSettingsPanelComponent/RenderConfigSettingsPanelComponent";
-import {RenderConfigWidgetStore} from "../../stores/widgets/RenderConfigWidgetStore";
+import {PopoverSettingsComponent, LinePlotComponent, LinePlotComponentProps, PlotType} from "components/Shared";
+import {TaskProgressDialogComponent} from "components/Dialogs";
+import {RenderConfigWidgetStore} from "stores/widgets";
+import {AnimationState, FrameStore, FrameScaling, WidgetConfig, WidgetProps} from "stores";
+import {clamp} from "utilities";
+import {Point2D} from "models";
 import "./RenderConfigComponent.css";
-import {PlotType} from "../Shared/PlotTypeSelector/PlotTypeSelectorComponent";
-import {TaskProgressDialogComponent} from "../Dialogs/TaskProgressDialog/TaskProgressDialogComponent";
-import {AnimationState} from "../../stores/AnimatorStore";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 160;

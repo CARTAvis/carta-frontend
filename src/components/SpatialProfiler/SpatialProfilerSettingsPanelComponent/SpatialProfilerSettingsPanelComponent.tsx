@@ -1,9 +1,9 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Button, ControlGroup, FormGroup, HTMLSelect, Switch} from "@blueprintjs/core";
-import {SpatialProfileWidgetStore} from "../../../stores/widgets/SpatialProfileWidgetStore";
+import {PlotTypeSelectorComponent} from "components/Shared";
+import {SpatialProfileWidgetStore} from "stores/widgets";
 import "./SpatialProfilerSettingsPanelComponent.css";
-import {PlotTypeSelectorComponent} from "../../Shared/PlotTypeSelector/PlotTypeSelectorComponent";
 
 @observer
 export class SpatialProfilerSettingsPanelComponent extends React.Component<{ widgetStore: SpatialProfileWidgetStore }> {

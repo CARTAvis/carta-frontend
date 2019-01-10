@@ -1,9 +1,9 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Button, ControlGroup, FormGroup, HTMLSelect, Switch} from "@blueprintjs/core";
-import {SpectralProfileWidgetStore} from "../../../stores/widgets/SpectralProfileWidgetStore";
+import {PlotTypeSelectorComponent} from "components/Shared";
+import {SpectralProfileWidgetStore} from "stores/widgets";
 import "./SpectralProfilerSettingsPanelComponent.css";
-import {PlotTypeSelectorComponent} from "../../Shared/PlotTypeSelector/PlotTypeSelectorComponent";
 
 @observer
 export class SpectralProfilerSettingsPanelComponent extends React.Component<{ widgetStore: SpectralProfileWidgetStore }> {

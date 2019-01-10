@@ -1,6 +1,6 @@
 import * as React from "react";
-import {CARTA} from "carta-protobuf";
 import {Icon, NonIdealState, Spinner, HTMLTable} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
 import "./FileListComponent.css";
 
 export class FileListComponent extends React.Component<{

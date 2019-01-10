@@ -5,18 +5,13 @@ import {observer} from "mobx-react";
 import {Chart} from "chart.js";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {WidgetConfig, WidgetProps} from "../../stores/WidgetsStore";
-import {clamp} from "../../util/math";
-import {Point2D} from "../../models/Point2D";
-import {SpatialProfileWidgetStore} from "../../stores/widgets/SpatialProfileWidgetStore";
-import {SpatialProfileStore} from "../../stores/SpatialProfileStore";
-import {LinePlotComponent, LinePlotComponentProps} from "../Shared/LinePlot/LinePlotComponent";
-import {PopoverSettingsComponent} from "../Shared/PopoverSettings/PopoverSettingsComponent";
+import {LinePlotComponent, LinePlotComponentProps, PopoverSettingsComponent, PlotType} from "components/Shared";
 import {SpatialProfilerSettingsPanelComponent} from "./SpatialProfilerSettingsPanelComponent/SpatialProfilerSettingsPanelComponent";
+import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps} from "stores";
+import {SpatialProfileWidgetStore} from "stores/widgets";
+import {Point2D} from "models";
+import {clamp} from "utilities";
 import "./SpatialProfilerComponent.css";
-import {FrameStore} from "../../stores/FrameStore";
-import {ASTSettingsString} from "../../stores/OverlayStore";
-import {PlotType} from "../Shared/PlotTypeSelector/PlotTypeSelectorComponent";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 180;

@@ -1,9 +1,9 @@
-import {observer} from "mobx-react";
 import * as React from "react";
-import {AnchorButton, Dialog, IDialogProps, Intent, Tooltip} from "@blueprintjs/core";
+import {observer} from "mobx-react";
+import {AnchorButton, IDialogProps, Intent, Tooltip} from "@blueprintjs/core";
+import {DraggableDialogComponent} from "components/Dialogs";
+import {AppStore} from "stores";
 import "./URLConnectDialogComponent.css";
-import {AppStore} from "../../../stores/AppStore";
-import {DraggableDialogComponent} from "../DraggableDialog/DraggableDialogComponent";
 
 @observer
 export class URLConnectDialogComponent extends React.Component<{ appStore: AppStore }, { errMessage: string, url: string }> {

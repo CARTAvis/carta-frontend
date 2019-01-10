@@ -1,5 +1,5 @@
 import {action, computed, observable} from "mobx";
-import {PlotType} from "../../components/Shared/PlotTypeSelector/PlotTypeSelectorComponent";
+import {PlotType} from "components/Shared";
 
 export class SpectralProfileWidgetStore {
     @observable fileId: number;

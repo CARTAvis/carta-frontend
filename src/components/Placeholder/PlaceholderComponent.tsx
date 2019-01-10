@@ -1,7 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {WidgetConfig} from "../../stores/WidgetsStore";
-import {AppStore} from "../../stores/AppStore";
+import {AppStore, WidgetConfig} from "stores";
 import "./PlaceholderComponent.css";
 
 class PlaceholderComponentProps {

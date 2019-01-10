@@ -1,6 +1,6 @@
+import * as AST from "ast_wrapper";
 import {Colors} from "@blueprintjs/core";
 import {action, autorun, computed, observable} from "mobx";
-import * as AST from "ast_wrapper";
 import {FrameStore} from "./FrameStore";
 
 export const dayPalette = [

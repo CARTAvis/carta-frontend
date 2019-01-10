@@ -1,8 +1,8 @@
 import * as React from "react";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
-import "./ToolbarComponent.css";
 import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
+import "./ToolbarComponent.css";
 
 export class ToolbarComponentProps {
     darkMode: boolean;

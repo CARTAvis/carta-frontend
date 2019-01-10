@@ -1,9 +1,9 @@
-import {CARTA} from "carta-protobuf";
 import {action, computed, observable} from "mobx";
+import {CARTA} from "carta-protobuf";
 import {OverlayStore} from "./OverlayStore";
 import {RenderConfigStore} from "./RenderConfigStore";
-import {Point2D, ChannelType, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES} from "../models";
-import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency} from "../util";
+import {Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES} from "models";
+import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency} from "utilities";
 
 export class FrameInfo {
     fileId: number;

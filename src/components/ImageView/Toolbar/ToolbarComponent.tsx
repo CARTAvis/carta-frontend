@@ -1,10 +1,10 @@
 import * as React from "react";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
-import "./ToolbarComponent.css";
 import {Button, ButtonGroup, PopoverPosition, Tooltip} from "@blueprintjs/core";
-import {AppStore} from "../../../stores/AppStore";
-import {exportImage} from "../ImageViewComponent";
+import {exportImage} from "components";
+import {AppStore} from "stores";
+import "./ToolbarComponent.css";
 
 export class ToolbarComponentProps {
     appStore: AppStore;
