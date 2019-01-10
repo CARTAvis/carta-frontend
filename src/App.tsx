@@ -22,15 +22,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
         super(props);
 
         const appStore = this.props.appStore;
-        AST.onReady.then(() => {
-            AST.setPalette(appStore.darkTheme ? nightPalette : dayPalette);
-            appStore.astReady = true;
-        });
-        appStore.backendService.loggingEnabled = true;
-        appStore.fileBrowserStore = new FileBrowserStore(appStore.backendService);
 
-        // Log the frontend git commit hash
-        appStore.logStore.addDebug(`Current frontend version: ${GitCommit.logMessage}`, ["version"]);
         let wsURL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}/socket`;
         if (process.env.NODE_ENV === "development") {
             wsURL = process.env.REACT_APP_DEFAULT_ADDRESS ? process.env.REACT_APP_DEFAULT_ADDRESS : wsURL;
@@ -41,6 +33,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
         // Check for URL query parameters as a final override
         const url = new URL(window.location.href);
         const socketUrl = url.searchParams.get("socketUrl");
+
         if (socketUrl) {
             wsURL = socketUrl;
             console.log(`Connecting to override URL: ${wsURL}`);
@@ -48,9 +41,35 @@ export class App extends React.Component<{ appStore: AppStore }> {
             console.log(`Connecting to default URL: ${wsURL}`);
         }
 
+        const folderSearchParam = url.searchParams.get("folder");
+        const fileSearchParam = url.searchParams.get("file");
+
+        let connected = false;
+        let autoFileLoaded = false;
+
+        AST.onReady.then(() => {
+            AST.setPalette(appStore.darkTheme ? nightPalette : dayPalette);
+            appStore.astReady = true;
+            if (connected && !autoFileLoaded && fileSearchParam) {
+                    appStore.addFrame(folderSearchParam, fileSearchParam, "", 0);
+            }
+        });
+        appStore.backendService.loggingEnabled = true;
+        appStore.fileBrowserStore = new FileBrowserStore(appStore.backendService);
+
+        // Log the frontend git commit hash
+        appStore.logStore.addDebug(`Current frontend version: ${GitCommit.logMessage}`, ["version"]);
+
         appStore.backendService.connect(wsURL, "1234").subscribe(sessionId => {
             console.log(`Connected with session ID ${sessionId}`);
-            this.props.appStore.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
+            connected = true;
+            appStore.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
+
+            if (appStore.astReady && fileSearchParam) {
+                autoFileLoaded = true;
+                appStore.addFrame(folderSearchParam, fileSearchParam, "", 0);
+            }
+
         }, err => console.log(err));
     }
 
