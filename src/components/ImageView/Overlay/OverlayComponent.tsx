@@ -122,7 +122,12 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                 
                 let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.props.frame.wcsInfo, pos.x, pos.y, astString.toString()));
                 let [p, n1, n2] = formattedNeighbourhood;
-                
+
+                if (!p.x || !p.y || p.x === "<bad>" || p.y === "<bad>") {
+                    cursorPosFormatted = null;
+                    break;
+                }
+
                 if (p.x !== n1.x && p.x !== n2.x && p.y !== n1.y && p.y !== n2.y) {
                     cursorPosFormatted = {x: p.x, y: p.y};
                     break;
