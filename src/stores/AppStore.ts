@@ -2,7 +2,7 @@ import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {AlertStore, AnimationState, AnimatorStore, FrameInfo, FrameStore, FileBrowserStore, LogEntry, LogStore, OverlayStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore, dayPalette, nightPalette} from ".";
+import {AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore, FrameInfo, FrameStore, LogEntry, LogStore, nightPalette, OverlayStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore} from ".";
 import {BackendService} from "services";
 import {CursorInfo, FrameView} from "models";
 import {smoothStepOffset} from "utilities";
@@ -130,21 +130,16 @@ export class AppStore {
                 }
             }
             this.logStore.addInfo(`Loaded file ${ack.fileInfo.name} with dimensions ${dimensionsString}`, ["file"]);
-            let newFrame = new FrameStore(this.overlayStore);
-            newFrame.frameInfo = new FrameInfo();
-            newFrame.frameInfo.fileId = ack.fileId;
-            newFrame.frameInfo.fileInfo = ack.fileInfo as CARTA.FileInfo;
-            newFrame.frameInfo.fileInfoExtended = ack.fileInfoExtended as CARTA.FileInfoExtended;
-            newFrame.frameInfo.renderMode = CARTA.RenderMode.RASTER;
-            newFrame.fitZoom();
-            newFrame.currentFrameView = {
-                xMin: 0,
-                xMax: 0,
-                yMin: 0,
-                yMax: 0,
-                mip: 999
+            const frameInfo: FrameInfo = {
+                fileId: ack.fileId,
+                fileInfo: new CARTA.FileInfo(ack.fileInfo),
+                fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
+                renderMode: CARTA.RenderMode.RASTER
             };
-            newFrame.valid = true;
+
+            let newFrame = new FrameStore(this.overlayStore, frameInfo);
+            newFrame.fitZoom();
+            newFrame.regionSet.addRectangularRegion({x: 10, y: 10}, {x: 110, y: 110});
             this.loadWCS(newFrame);
 
             // Place frame in frame array (replace frame with the same ID if it exists)

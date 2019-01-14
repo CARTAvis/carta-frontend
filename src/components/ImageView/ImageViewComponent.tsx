@@ -12,6 +12,7 @@ import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverl
 import {WidgetConfig, WidgetProps} from "stores";
 import {CursorInfo, Point2D} from "models";
 import "./ImageViewComponent.css";
+import {RegionViewComponent} from "./RegionView/RegionViewComponent";
 
 export const exportImage = (padding, darkTheme, imageName) => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
@@ -189,6 +190,16 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     zoomLevel={appStore.activeFrame.zoomLevel}
                     docked={this.props.docked}
                     padding={10}
+                />
+                }
+                {appStore.astReady && appStore.activeFrame &&
+                <RegionViewComponent
+                    frame={appStore.activeFrame}
+                    width={appStore.overlayStore.viewWidth - appStore.overlayStore.padding.left - appStore.overlayStore.padding.right}
+                    height={appStore.overlayStore.viewHeight - appStore.overlayStore.padding.top - appStore.overlayStore.padding.bottom}
+                    top={appStore.overlayStore.padding.top}
+                    left={appStore.overlayStore.padding.left}
+                    docked={this.props.docked}
                 />
                 }
                 {appStore.astReady && appStore.activeFrame &&
