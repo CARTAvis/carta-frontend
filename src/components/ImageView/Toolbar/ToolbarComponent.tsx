@@ -1,7 +1,7 @@
 import * as React from "react";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
-import {Button, ButtonGroup, PopoverPosition, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
 import {exportImage} from "components";
 import {AppStore} from "stores";
 import "./ToolbarComponent.css";
@@ -52,8 +52,25 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         const currentZoomSpan = <span><br/><i><small>Current: {frame.zoomLevel.toFixed(2)}x</small></i></span>;
         const tooltipPosition: PopoverPosition = this.props.vertical ? "left" : "auto";
+
+        const regionMenu = (
+            <Menu>
+                <MenuItem icon={"square"} text="Rectangle"/>
+                <MenuItem icon={"circle"} text="Ellipse"/>
+                <MenuItem icon={"polygon-filter"} text="Polygon"/>
+            </Menu>
+        );
+
         return (
             <ButtonGroup className={className} style={styleProps} vertical={this.props.vertical}>
+                <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Hold to select region</small></i></span>}>
+                    <Popover content={regionMenu} position={Position.TOP} minimal={true}>
+                        <Button icon={"square"}/>
+                    </Popover>
+                </Tooltip>
+                <Tooltip position={tooltipPosition} content="Select and pan mode">
+                    <Button icon={"hand"}/>
+                </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Zoom in (Scroll wheel up){currentZoomSpan}</span>}>
                     <Button icon={"zoom-in"} onClick={this.handleZoomInClicked}/>
                 </Tooltip>

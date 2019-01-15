@@ -1,11 +1,10 @@
 import * as React from "react";
+import * as Konva from "konva";
 import {observer} from "mobx-react";
 import {observable} from "mobx";
 import {Group, Layer, Rect, Stage, Transformer} from "react-konva";
 import {FrameStore, RegionType} from "stores";
 import "./RegionViewComponent.css";
-import * as Konva from "konva";
-import {Point2D} from "../../../models";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;
@@ -31,36 +30,43 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (evt.currentTarget && evt.currentTarget.node) {
             const anchor = evt.currentTarget.movingResizer as string;
             const node = evt.currentTarget.node() as Konva.Node;
-            console.log({node, anchor});
-            const nodeScale = node.scale();
-            node.setAttr("scaleX", 1);
-            node.setAttr("scaleY", 1);
-
-            if (nodeScale.x <= 0 || nodeScale.y <= 0) {
-                return;
-            }
             const region = this.props.frame.regionSet.regions[0];
-            const lb = region.controlPoints[0];
-            const rt = region.controlPoints[1];
-            const width = rt.x - lb.x;
-            const height = rt.y - lb.y;
-            let newRT = {x: rt.x, y: rt.y};
-            let newLB = {x: lb.x, y: lb.y};
-            // X anchors are switched due to rotation
-            if (anchor.indexOf("left") >= 0) {
-                newRT.x = lb.x + width * nodeScale.x;
-            } else if (anchor.indexOf("right") >= 0) {
-                newLB.x = rt.x - width * nodeScale.x;
+
+            if (anchor.indexOf("rotater") >= 0) {
+                // handle rotation
+                const rotation = node.rotation() - 180;
+                node.setAttr("rotation", 180);
+                region.setRotation(rotation);
+            } else {
+                // handle scaling
+                const nodeScale = node.scale();
+                node.setAttr("scaleX", 1);
+                node.setAttr("scaleY", 1);
+
+                if (nodeScale.x <= 0 || nodeScale.y <= 0) {
+                    return;
+                }
+                const lb = region.controlPoints[0];
+                const rt = region.controlPoints[1];
+                const width = rt.x - lb.x;
+                const height = rt.y - lb.y;
+                let newRT = {x: rt.x, y: rt.y};
+                let newLB = {x: lb.x, y: lb.y};
+                // X anchors are switched due to rotation
+                if (anchor.indexOf("left") >= 0) {
+                    newRT.x = lb.x + width * nodeScale.x;
+                } else if (anchor.indexOf("right") >= 0) {
+                    newLB.x = rt.x - width * nodeScale.x;
+                }
+
+                if (anchor.indexOf("top") >= 0) {
+                    newRT.y = lb.y + height * nodeScale.y;
+                } else if (anchor.indexOf("bottom") >= 0) {
+                    newLB.y = rt.y - height * nodeScale.y;
+                }
+
+                region.setControlPoints([newLB, newRT]);
             }
-
-            if (anchor.indexOf("top") >= 0) {
-                newRT.y = lb.y + height * nodeScale.y;
-            } else if (anchor.indexOf("bottom") >= 0) {
-                newLB.y = rt.y - height * nodeScale.y;
-            }
-
-
-            region.setControlPoints([newLB, newRT]);
         }
     };
 
@@ -90,9 +96,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 const height = Math.floor(Math.abs(rt.y - lb.y));
                 return (
                     <Group key={index}>
-                        <Rect rotation={180} x={rt.x + 0.5} y={rt.y + 0.5} width={width} height={height} key={index} stroke={"white"} strokeWidth={2} draggable={true} fillEnabled={false} ref={this.handleRef}/>
-                        <Rect rotation={180} x={rt.x + 0.5 + 1} y={rt.y + 0.5 + 1} width={width + 2} height={height + 2} stroke={"black"} strokeWidth={1} fillEnabled={false} strokeHitEnabled={false}/>
-                        <Rect rotation={180} x={rt.x + 0.5 - 1} y={rt.y + 0.5 - 1} width={width - 2} height={height - 2} stroke={"black"} strokeWidth={1} fillEnabled={false} strokeHitEnabled={false}/>
+                        <Rect rotation={180 + r.rotation} x={rt.x + 0.5} y={rt.y + 0.5} width={width} height={height} key={index} stroke={"white"} strokeWidth={2} draggable={true} fillEnabled={false} ref={this.handleRef}/>
+                        <Rect rotation={180 + r.rotation} x={rt.x + 0.5 + 1} y={rt.y + 0.5 + 1} width={width + 2} height={height + 2} stroke={"black"} strokeWidth={1} fillEnabled={false} strokeHitEnabled={false}/>
+                        <Rect rotation={180 + r.rotation} x={rt.x + 0.5 - 1} y={rt.y + 0.5 - 1} width={width - 2} height={height - 2} stroke={"black"} strokeWidth={1} fillEnabled={false} strokeHitEnabled={false}/>
                     </Group>
                 );
             });
@@ -102,7 +108,14 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 <Layer scaleY={-1} offsetY={this.props.height}>
                     {regionRects}
                     {this.selectedRegionRef &&
-                    <Transformer node={this.selectedRegionRef} visible={true} onTransform={this.handleTransform} onTransformEnd={() => console.log("transform finished")}/>
+                    <Transformer
+                        node={this.selectedRegionRef}
+                        rotateAnchorOffset={20}
+                        keepRatio={false}
+                        visible={true}
+                        onTransform={this.handleTransform}
+                        onTransformEnd={() => console.log("transform finished")}
+                    />
                     }
                 </Layer>
             </Stage>

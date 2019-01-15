@@ -15,6 +15,7 @@ export class RegionStore {
     @observable channelMax: number;
     @observable stokesValues: number[];
     @observable controlPoints: Point2D[];
+    @observable rotation: number;
 
     @computed get isValid() {
         // All regions require at least one control point
@@ -35,7 +36,7 @@ export class RegionStore {
         }
     }
 
-    constructor(fileId: number, controlPoints: Point2D[], regionType: RegionType, channelMin: number = -1, channelMax: number = -1, stokesValues: number[] = [], regionId: number = -1) {
+    constructor(fileId: number, controlPoints: Point2D[], regionType: RegionType, rotation: number = 0, channelMin: number = -1, channelMax: number = -1, stokesValues: number[] = [], regionId: number = -1) {
         this.fileId = fileId;
         this.controlPoints = controlPoints;
         this.regionType = regionType;
@@ -43,15 +44,20 @@ export class RegionStore {
         this.channelMin = channelMin;
         this.channelMax = channelMax;
         this.stokesValues = stokesValues;
+        this.rotation = rotation;
     }
 
-    @action setControlPoint(index: number, p: Point2D) {
+    @action setControlPoint = (index: number, p: Point2D) => {
         if (index > 0 && index < this.controlPoints.length) {
             this.controlPoints[index] = p;
         }
-    }
+    };
 
-    @action setControlPoints(points: Point2D[]) {
+    @action setControlPoints = (points: Point2D[]) => {
         this.controlPoints = points;
-    }
+    };
+
+    @action setRotation = (angle: number) => {
+        this.rotation = angle;
+    };
 }
