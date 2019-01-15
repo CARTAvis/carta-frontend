@@ -1,7 +1,7 @@
 .region-stage {
     position: absolute;
-    z-index: -1;
+    z-index: 1;
     &.docked {
-        z-index: 1;
+        z-index: 3;
     }
 }

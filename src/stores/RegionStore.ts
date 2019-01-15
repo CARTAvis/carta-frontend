@@ -50,4 +50,8 @@ export class RegionStore {
             this.controlPoints[index] = p;
         }
     }
+
+    @action setControlPoints(points: Point2D[]) {
+        this.controlPoints = points;
+    }
 }
