@@ -139,7 +139,7 @@ export class AppStore {
 
             let newFrame = new FrameStore(this.overlayStore, frameInfo);
             newFrame.fitZoom();
-            newFrame.regionSet.addRectangularRegion({x: 10, y: 10}, {x: 110, y: 110});
+            newFrame.regionSet.addRectangularRegion({x: 200, y: 200}, 100, 400);
             this.loadWCS(newFrame);
 
             // Place frame in frame array (replace frame with the same ID if it exists)

@@ -11,8 +11,8 @@ export class RegionSetStore {
         this.regions = [];
     }
 
-    @action addRectangularRegion = (lb: Point2D, rt: Point2D) => {
-        const region = new RegionStore(this.frame.frameInfo.fileId, [lb, rt], RegionType.RECTANGLE);
+    @action addRectangularRegion = (center: Point2D, width: number, height: number) => {
+        const region = new RegionStore(this.frame.frameInfo.fileId, [center, {x: width, y: height}], RegionType.RECTANGLE);
         this.regions.push(region);
     };
 }

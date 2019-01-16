@@ -4,7 +4,8 @@ import {Point2D} from "models";
 export enum RegionType {
     POINT = 0,
     RECTANGLE = 3,
-    ELLIPSE = 4
+    ELLIPSE = 4,
+    POLYGON = 6
 }
 
 export class RegionStore {
