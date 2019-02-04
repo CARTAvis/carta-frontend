@@ -9,7 +9,6 @@ import "./RegionViewComponent.css";
 export interface RegionViewComponentProps {
     frame: FrameStore;
     docked: boolean;
-    centeredScaling: boolean;
     width: number;
     height: number;
     left: number;
@@ -19,6 +18,7 @@ export interface RegionViewComponentProps {
 @observer
 export class RegionViewComponent extends React.Component<RegionViewComponentProps> {
     @observable selectedRegionRef;
+    @observable centeredScaling;
 
     handleRef = (ref) => {
         console.log(ref);
@@ -27,16 +27,31 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    handleTransform = (evt) => {
-        if (evt.currentTarget && evt.currentTarget.node) {
-            const anchor = evt.currentTarget.movingResizer as string;
-            const node = evt.currentTarget.node() as Konva.Node;
+    handleTransformStart = (konvaEvent) => {
+        this.centeredScaling = konvaEvent.evt.evt.ctrlKey;
+        const node = konvaEvent.currentTarget.node() as Konva.Node;
+        // TODO: determine region from node
+        const region = this.props.frame.regionSet.regions[0];
+        region.beginEditing();
+    };
+
+    handleTransformEnd = (konvaEvent) => {
+        const node = konvaEvent.currentTarget.node() as Konva.Node;
+        // TODO: determine region from node
+        const region = this.props.frame.regionSet.regions[0];
+        region.endEditing();
+    };
+
+    handleTransform = (konvaEvent) => {
+        if (konvaEvent.currentTarget && konvaEvent.currentTarget.node) {
+            const anchor = konvaEvent.currentTarget.movingResizer as string;
+            const node = konvaEvent.currentTarget.node() as Konva.Node;
+            // TODO: determine region from node
             const region = this.props.frame.regionSet.regions[0];
 
             if (anchor.indexOf("rotater") >= 0) {
                 // handle rotation
                 const rotation = node.rotation();
-                node.setAttr("rotation", 0);
                 region.setRotation(rotation);
             } else {
                 // handle scaling
@@ -48,29 +63,33 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                     return;
                 }
 
-                if (this.props.centeredScaling) {
+                if (this.centeredScaling) {
                     const newWidth = region.controlPoints[1].x * nodeScale.x;
                     const newHeight = region.controlPoints[1].y * nodeScale.y;
                     region.setControlPoint(1, {x: newWidth, y: newHeight});
                 } else {
-                    console.log({anchor, node, target: evt.currentTarget});
                     const newWidth = region.controlPoints[1].x * nodeScale.x;
                     const newHeight = region.controlPoints[1].y * nodeScale.y;
                     const deltaWidth = newWidth - region.controlPoints[1].x;
                     const deltaHeight = newHeight - region.controlPoints[1].y;
                     let center = {x: region.controlPoints[0].x, y: region.controlPoints[0].y};
+                    const cosX = Math.cos(region.rotation * Math.PI / 180.0);
+                    const sinX = Math.sin(region.rotation * Math.PI / 180.0);
                     if (anchor.indexOf("left") >= 0) {
-                        center.x -= deltaWidth / 2.0;
+                        center.x -= cosX * deltaWidth / 2.0;
+                        center.y += sinX * deltaWidth / 2.0;
                     } else if (anchor.indexOf("right") >= 0) {
-                        center.x += deltaWidth / 2.0;
+                        center.x += cosX * deltaWidth / 2.0;
+                        center.y -= sinX * deltaWidth / 2.0;
                     }
 
                     if (anchor.indexOf("top") >= 0) {
-                        center.y += deltaHeight / 2.0;
+                        center.y += cosX * deltaHeight / 2.0;
+                        center.x += sinX * deltaHeight / 2.0;
                     } else if (anchor.indexOf("bottom") >= 0) {
-                        center.y -= deltaHeight / 2.0;
+                        center.y -= cosX * deltaHeight / 2.0;
+                        center.x -= sinX * deltaHeight / 2.0;
                     }
-
 
                     region.setControlPoints([center, {x: newWidth, y: newHeight}]);
                 }
@@ -78,19 +97,33 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
-    handleDrag = (evt) => {
-        if (evt.target) {
-            const node = evt.target as Konva.Node;
+    handleDragStart = (konvaEvent) => {
+        // TODO: determine region from node
+        const region = this.props.frame.regionSet.regions[0];
+        region.beginEditing();
+    };
+
+    handleDragEnd = (konvaEvent) => {
+        // TODO: determine region from node
+        const region = this.props.frame.regionSet.regions[0];
+        region.endEditing();
+    };
+
+    handleDrag = (konvaEvent) => {
+        if (konvaEvent.target) {
+            const node = konvaEvent.target as Konva.Node;
             const region = this.props.frame.regionSet.regions[0];
             const frame = this.props.frame;
             const currentView = frame.requiredFrameView;
             const centerImageSpace = region.controlPoints[0];
             const viewWidth = currentView.xMax - currentView.xMin;
             const viewHeight = currentView.yMax - currentView.yMin;
-            const currentCenterPixelSpace = {x: Math.floor((centerImageSpace.x - currentView.xMin) / viewWidth * this.props.width), y: this.props.height - Math.ceil((centerImageSpace.y - currentView.yMin) / viewHeight * this.props.height)};
+            const currentCenterPixelSpace = {x: ((centerImageSpace.x - currentView.xMin) / viewWidth * this.props.width), y: this.props.height - ((centerImageSpace.y - currentView.yMin) / viewHeight * this.props.height)};
             const newCenterPixelSpace = node.position();
-            const deltaPositionImageSpace = {x: (newCenterPixelSpace.x - currentCenterPixelSpace.x) / frame.zoomLevel, y: (newCenterPixelSpace.y - currentCenterPixelSpace.y) / frame.zoomLevel};
-            region.setControlPoint(0, {x: centerImageSpace.x + deltaPositionImageSpace.x, y: centerImageSpace.y + deltaPositionImageSpace.y});
+            const deltaPositionImageSpace = {x: (newCenterPixelSpace.x - currentCenterPixelSpace.x) / frame.zoomLevel, y: -(newCenterPixelSpace.y - currentCenterPixelSpace.y) / frame.zoomLevel};
+            // region.setControlPoint(0, {x: centerImageSpace.x + deltaPositionImageSpace.x, y: centerImageSpace.y + deltaPositionImageSpace.y});
+            const newPosition = {x: centerImageSpace.x + deltaPositionImageSpace.x, y: centerImageSpace.y + deltaPositionImageSpace.y};
+            region.setControlPoint(0, newPosition);
         }
     };
 
@@ -114,9 +147,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 const viewWidth = currentView.xMax - currentView.xMin;
                 const viewHeight = currentView.yMax - currentView.yMin;
 
-                const centerPixelSpace = {x: Math.floor((centerImageSpace.x - currentView.xMin) / viewWidth * this.props.width), y: this.props.height - Math.ceil((centerImageSpace.y - currentView.yMin) / viewHeight * this.props.height)};
-                const width = Math.floor(r.controlPoints[1].x * frame.zoomLevel);
-                const height = Math.floor(r.controlPoints[1].y * frame.zoomLevel);
+                const centerPixelSpace = {x: ((centerImageSpace.x - currentView.xMin) / viewWidth * this.props.width), y: this.props.height - ((centerImageSpace.y - currentView.yMin) / viewHeight * this.props.height)};
+                const width = (r.controlPoints[1].x * frame.zoomLevel);
+                const height = (r.controlPoints[1].y * frame.zoomLevel);
                 return (
                     <Group key={index}>
                         <Rect
@@ -128,9 +161,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                             offsetX={width / 2.0}
                             offsetY={height / 2.0}
                             key={index}
-                            stroke={"white"}
+                            stroke={r.editing ? "green" : "orange"}
                             strokeWidth={3}
                             draggable={true}
+                            onDragStart={this.handleDragStart}
+                            onDragEnd={this.handleDragEnd}
                             onDragMove={this.handleDrag}
                             fillEnabled={true}
                             ref={this.handleRef}
@@ -149,11 +184,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                         node={this.selectedRegionRef}
                         rotateAnchorOffset={20}
                         keepRatio={false}
-                        centeredScaling={this.props.centeredScaling}
+                        centeredScaling={this.centeredScaling}
                         draggable={false}
                         borderEnabled={false}
+                        onTransformStart={this.handleTransformStart}
                         onTransform={this.handleTransform}
-                        onTransformEnd={() => console.log("transform finished")}
+                        onTransformEnd={this.handleTransformEnd}
                     />
                     }
                 </Layer>

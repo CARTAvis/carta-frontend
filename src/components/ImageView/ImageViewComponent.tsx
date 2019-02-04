@@ -200,7 +200,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     top={appStore.overlayStore.padding.top}
                     left={appStore.overlayStore.padding.left}
                     docked={this.props.docked}
-                    centeredScaling={false}
                 />
                 }
                 {appStore.astReady && appStore.activeFrame &&
