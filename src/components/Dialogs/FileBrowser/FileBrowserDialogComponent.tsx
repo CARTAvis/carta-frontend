@@ -118,5 +118,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         else {
             this.props.appStore.appendFile(fileBrowserStore.fileList.directory, file, hdu);
         }
+        
+        fileBrowserStore.saveStartingDirectory();
     }
 }

@@ -15,12 +15,13 @@ export class FileBrowserStore {
     @observable loadingInfo = false;
     @observable fileInfoResp = false;
     @observable respErrmsg: string = "";
+    @observable startingDirectory: string = ""; // change to $DEFAULT once backend knows how to use that
 
     @action showFileBrowser = (append = false) => {
         this.appendingFrame = append;
         this.fileBrowserDialogVisible = true;
         this.selectedTab = "fileInfo";
-        this.getFileList("");
+        this.getFileList(this.startingDirectory);
     };
 
     @action hideFileBrowser = () => {
@@ -88,6 +89,10 @@ export class FileBrowserStore {
 
     @action setSelectedTab(newId: TabId) {
         this.selectedTab = newId;
+    }
+    
+    @action saveStartingDirectory() {
+        this.startingDirectory = this.fileList.directory;
     }
 
     private backendService: BackendService;
