@@ -38,7 +38,7 @@ export class RegionStore {
         }
     }
 
-    constructor(fileId: number, controlPoints: Point2D[], regionType: RegionType, rotation: number = 0, channelMin: number = -1, channelMax: number = -1, stokesValues: number[] = [], regionId: number = -1) {
+    constructor(fileId: number, controlPoints: Point2D[], regionType: RegionType, regionId: number = -1, rotation: number = 0, channelMin: number = -1, channelMax: number = -1, stokesValues: number[] = []) {
         this.fileId = fileId;
         this.controlPoints = controlPoints;
         this.regionType = regionType;
