@@ -15,7 +15,7 @@ export class FileBrowserStore {
     @observable loadingInfo = false;
     @observable fileInfoResp = false;
     @observable respErrmsg: string = "";
-    @observable startingDirectory: string = ""; // change to $DEFAULT once backend knows how to use that
+    @observable startingDirectory: string = "$BASE";
 
     @action showFileBrowser = (append = false) => {
         this.appendingFrame = append;
