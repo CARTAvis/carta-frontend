@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
@@ -363,6 +364,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return this.cachedFormattedCoordinates[i];
     };
 
+    onGraphCursorMoved = _.throttle((x) => {
+        this.widgetStore.setCursor(x);
+    }, 100);
+
     render() {
         const appStore = this.props.appStore;
         if (!this.widgetStore) {
@@ -386,6 +391,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             graphZoomedY: this.widgetStore.setYBounds,
             graphZoomedXY: this.widgetStore.setXYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
+            graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true
         };
 

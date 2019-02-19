@@ -9,6 +9,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
 import {PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
+import {CursorInfoComponent} from "./CursorInfo/CursorInfoComponent";
 import {Point2D} from "models";
 import {clamp} from "utilities";
 import "./LinePlotComponent.css";
@@ -690,6 +691,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     visible={this.toolbarVisible && (this.props.data !== undefined)}
                     exportImage={this.exportImage}
                     exportData={this.exportData}
+                />
+                <CursorInfoComponent
+                    darkMode={this.props.darkMode}
+                    visible={this.props.data !== undefined}
                 />
             </div>
 
