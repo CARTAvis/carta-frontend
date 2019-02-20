@@ -1,6 +1,6 @@
 declare var Module: any;
 declare var addOnPostRun: any;
-declare var Promise: any;
+declare var Promise: PromiseConstructor;
 
 addOnPostRun(function () {
     Module.numArrayCoordinates = 1;
