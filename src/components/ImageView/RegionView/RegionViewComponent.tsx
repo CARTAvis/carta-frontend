@@ -1,30 +1,163 @@
 import * as React from "react";
+import * as _ from "lodash";
+import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
-import {Layer, Stage, Text} from "react-konva";
-import {FrameStore, RegionStore, RegionType} from "stores";
+import {Group, Layer, Line, Rect, Stage, Text} from "react-konva";
+import {ASTSettingsString, FrameStore, OverlayStore, RegionStore, RegionType} from "stores";
 import "./RegionViewComponent.css";
 import {RectangularRegionComponent} from "./RectangularRegionComponent";
-import * as Konva from "konva";
+import {CursorInfo, Point2D} from "../../../models";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;
+    overlaySettings: OverlayStore;
     docked: boolean;
     width: number;
     height: number;
     left: number;
     top: number;
+    cursorFrozen: boolean;
+    cursorPoint?: Point2D;
+    onCursorMoved?: (cursorInfo: CursorInfo) => void;
+    onClicked?: (cursorInfo: CursorInfo) => void;
+    onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
 }
 
 @observer
 export class RegionViewComponent extends React.Component<RegionViewComponentProps> {
 
+    updateCursorPos = _.throttle((x: number, y: number) => {
+        if (this.props.frame.wcsInfo && this.props.onCursorMoved) {
+            this.props.onCursorMoved(this.getCursorInfo({x, y}));
+        }
+    }, 100);
+
+    private getCursorInfo(cursorPosCanvasSpace: Point2D) {
+        const frameView = this.props.frame.requiredFrameView;
+
+        const width = this.props.width;
+        const height = this.props.height;
+
+        const cursorPosImageSpace = {
+            x: (cursorPosCanvasSpace.x / width) * (frameView.xMax - frameView.xMin) + frameView.xMin - 1,
+            // y coordinate is flipped in image space
+            y: (cursorPosCanvasSpace.y / height) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
+        };
+
+        const currentView = this.props.frame.currentFrameView;
+
+        const cursorPosLocalImage = {
+            x: Math.round((cursorPosImageSpace.x - currentView.xMin) / currentView.mip),
+            y: Math.round((cursorPosImageSpace.y - currentView.yMin) / currentView.mip)
+        };
+
+        const roundedPosImageSpace = {
+            x: cursorPosLocalImage.x * currentView.mip + currentView.xMin,
+            y: cursorPosLocalImage.y * currentView.mip + currentView.yMin
+        };
+
+        const textureWidth = Math.floor((currentView.xMax - currentView.xMin) / currentView.mip);
+        const textureHeight = Math.floor((currentView.yMax - currentView.yMin) / currentView.mip);
+
+        let value = undefined;
+        if (cursorPosLocalImage.x >= 0 && cursorPosLocalImage.x < textureWidth && cursorPosLocalImage.y >= 0 && cursorPosLocalImage.y < textureHeight) {
+            const index = (cursorPosLocalImage.y * textureWidth + cursorPosLocalImage.x);
+            value = this.props.frame.rasterData[index];
+        }
+
+        let cursorPosWCS, cursorPosFormatted;
+        if (this.props.frame.validWcs) {
+            // We need to compare X and Y coordinates in both directions
+            // to avoid a confusing drop in precision at rounding threshold
+            const offsetBlock = [[0, 0], [1, 1], [-1, -1]];
+
+            // Shift image space coordinates to 1-indexed when passing to AST
+            const cursorNeighbourhood = offsetBlock.map((offset) => AST.pixToWCS(this.props.frame.wcsInfo, roundedPosImageSpace.x + 1 + offset[0], roundedPosImageSpace.y + 1 + offset[1]));
+
+            cursorPosWCS = cursorNeighbourhood[0];
+
+            const normalizedNeighbourhood = cursorNeighbourhood.map((pos) => AST.normalizeCoordinates(this.props.frame.wcsInfo, pos.x, pos.y));
+
+            let precisionX = 0;
+            let precisionY = 0;
+
+            while (true) {
+                let astString = new ASTSettingsString();
+                astString.add("Format(1)", this.props.overlaySettings.numbers.cursorFormatStringX(precisionX));
+                astString.add("Format(2)", this.props.overlaySettings.numbers.cursorFormatStringY(precisionY));
+                astString.add("System", this.props.overlaySettings.global.implicitSystem);
+
+                let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.props.frame.wcsInfo, pos.x, pos.y, astString.toString()));
+                let [p, n1, n2] = formattedNeighbourhood;
+
+                if (!p.x || !p.y || p.x === "<bad>" || p.y === "<bad>") {
+                    cursorPosFormatted = null;
+                    break;
+                }
+
+                if (p.x !== n1.x && p.x !== n2.x && p.y !== n1.y && p.y !== n2.y) {
+                    cursorPosFormatted = {x: p.x, y: p.y};
+                    break;
+                }
+
+                if (p.x === n1.x || p.x === n2.x) {
+                    precisionX += 1;
+                }
+
+                if (p.y === n1.y || p.y === n2.y) {
+                    precisionY += 1;
+                }
+            }
+        }
+
+        return {
+            posCanvasSpace: cursorPosCanvasSpace,
+            posImageSpace: cursorPosImageSpace,
+            posWCS: cursorPosWCS,
+            infoWCS: cursorPosFormatted,
+            value: value
+        };
+    }
+
+    private getCursorCanvasPos(imageX: number, imageY: number): Point2D {
+        const frameView = this.props.frame.requiredFrameView;
+        const width = this.props.width;
+        const height = this.props.height;
+        const posCanvasSpace = {
+            x: Math.floor((imageX + 1 - frameView.xMin) / (frameView.xMax - frameView.xMin) * width),
+            y: Math.floor((frameView.yMax - imageY - 1) / (frameView.yMax - frameView.yMin) * height)
+        };
+
+        if (posCanvasSpace.x < 0 || posCanvasSpace.x > width || posCanvasSpace.y < 0 || posCanvasSpace.y > height) {
+            return null;
+        }
+        return posCanvasSpace;
+    }
+
     handleClick = (konvaEvent) => {
         if (konvaEvent.target.nodeType !== "Stage" && (konvaEvent.evt.button === 0 || konvaEvent.evt.button === 2)) {
-            console.log("ignoring handled event");
             return;
         }
 
-        console.log("stage click event");
+        const cursorPosCanvasSpace = {x: konvaEvent.evt.offsetX, y: konvaEvent.evt.offsetY};
+        if (this.props.frame.wcsInfo && this.props.onClicked) {
+            this.props.onClicked(this.getCursorInfo(cursorPosCanvasSpace));
+        }
+    };
+
+    handleWheel = (konvaEvent) => {
+        const lineHeight = 15;
+        const delta = konvaEvent.evt.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? konvaEvent.evt.deltaY : konvaEvent.evt.deltaY * lineHeight;
+        const cursorPosCanvasSpace = {x: konvaEvent.evt.offsetX, y: konvaEvent.evt.offsetY};
+        if (this.props.frame.wcsInfo && this.props.onZoomed) {
+            this.props.onZoomed(this.getCursorInfo(cursorPosCanvasSpace), -delta);
+        }
+    };
+
+    handleMove = (konvaEvent) => {
+        if (!this.props.cursorFrozen) {
+            this.updateCursorPos(konvaEvent.evt.offsetX, konvaEvent.evt.offsetY);
+        }
     };
 
     render() {
@@ -44,12 +177,38 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 r => <RectangularRegionComponent key={r.regionId} region={r} frame={frame} layerWidth={this.props.width} layerHeight={this.props.height} selected={r === regionSet.selectedRegion} onSelect={regionSet.selectRegion}/>
             );
         }
-        return (
-            <Stage className={className} width={this.props.width} height={this.props.height} style={{left: this.props.left, top: this.props.top}} onClick={this.handleClick}>
-                <Layer>
-                    <Text x={300} y={300} text={"Testing text"} fill={"red"}/>
-                    {regionRects}
 
+        let cursorMarker = null;
+
+        if (this.props.cursorFrozen && this.props.cursorPoint) {
+            let cursorPosCanvas = this.getCursorCanvasPos(this.props.cursorPoint.x, this.props.cursorPoint.y);
+            if (cursorPosCanvas) {
+                const crosshairLength = 20 * devicePixelRatio;
+                const crosshairThicknessWide = 3;
+                const crosshairThicknessNarrow = 1;
+                const crosshairGap = 7;
+                cursorMarker = (
+                    <Group x={Math.floor(cursorPosCanvas.x) + 0.5} y={Math.floor(cursorPosCanvas.y) + 0.5}>
+                        <Line strokeHitEnabled={false} points={[-crosshairLength / 2 - crosshairThicknessWide / 2, 0, -crosshairGap / 2, 0]} strokeWidth={crosshairThicknessWide} stroke="black"/>
+                        <Line strokeHitEnabled={false} points={[crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessWide / 2, 0]} strokeWidth={crosshairThicknessWide} stroke="black"/>
+                        <Line strokeHitEnabled={false} points={[0, -crosshairLength / 2 - crosshairThicknessWide / 2, 0, -crosshairGap / 2]} strokeWidth={crosshairThicknessWide} stroke="black"/>
+                        <Line strokeHitEnabled={false} points={[0, crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessWide / 2]} strokeWidth={crosshairThicknessWide} stroke="black"/>
+
+                        <Line strokeHitEnabled={false} points={[-crosshairLength / 2 - crosshairThicknessNarrow / 2, 0, -crosshairGap / 2, 0]} strokeWidth={crosshairThicknessNarrow} stroke="white"/>
+                        <Line strokeHitEnabled={false} points={[crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessNarrow / 2, 0]} strokeWidth={crosshairThicknessNarrow} stroke="white"/>
+                        <Line strokeHitEnabled={false} points={[0, -crosshairLength / 2 - crosshairThicknessNarrow / 2, 0, -crosshairGap / 2]} strokeWidth={crosshairThicknessNarrow} stroke="white"/>
+                        <Line strokeHitEnabled={false} points={[0, crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessNarrow / 2]} strokeWidth={crosshairThicknessNarrow} stroke="white"/>
+                        <Rect strokeHitEnabled={false} width={crosshairGap - 1} height={crosshairGap - 1} offsetX={crosshairGap / 2 - 0.5} offsetY={crosshairGap / 2 - 0.5} strokeWidth={1} stroke="black"/>
+                    </Group>
+                );
+            }
+        }
+
+        return (
+            <Stage className={className} width={this.props.width} height={this.props.height} style={{left: this.props.left, top: this.props.top}} onClick={this.handleClick} onWheel={this.handleWheel} onMouseMove={this.handleMove}>
+                <Layer>
+                    {regionRects}
+                    {cursorMarker}
                 </Layer>
             </Stage>
         );

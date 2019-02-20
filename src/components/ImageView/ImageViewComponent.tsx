@@ -146,11 +146,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     frame={appStore.activeFrame}
                     overlaySettings={appStore.overlayStore}
                     docked={this.props.docked}
-                    onCursorMoved={this.onCursorMoved}
-                    onClicked={this.onClicked}
-                    onZoomed={this.onZoomed}
-                    cursorFrozen={appStore.cursorFrozen}
-                    cursorPoint={appStore.cursorInfo ? appStore.cursorInfo.posImageSpace : null}
                 />
                 }
                 {appStore.astReady && appStore.activeFrame &&
@@ -199,6 +194,12 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     height={appStore.overlayStore.viewHeight - appStore.overlayStore.padding.top - appStore.overlayStore.padding.bottom}
                     top={appStore.overlayStore.padding.top}
                     left={appStore.overlayStore.padding.left}
+                    onCursorMoved={this.onCursorMoved}
+                    onClicked={this.onClicked}
+                    onZoomed={this.onZoomed}
+                    overlaySettings={appStore.overlayStore}
+                    cursorFrozen={appStore.cursorFrozen}
+                    cursorPoint={appStore.cursorInfo ? appStore.cursorInfo.posImageSpace : null}
                     docked={this.props.docked}
                 />
                 }
