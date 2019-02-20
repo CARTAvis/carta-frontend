@@ -2,11 +2,20 @@
     position: absolute;
     bottom: 0;
     left: 0;
-    margin: 0 5px 0 5px;
+    margin: 0 0 0 0;
 
     .cursor-display {
+        th {
+            text-align: left;
+        }
+
+        td {
+            width: 45px;
+        }
+
         pre {
             font-size: x-small;
+            margin: 0 0 0 0;
         }
     }
 }

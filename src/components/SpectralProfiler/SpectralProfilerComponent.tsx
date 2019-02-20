@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as _ from "lodash";
 import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Chart} from "chart.js";
@@ -184,6 +185,33 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
+    private findNearestPointByX = (array: Array<Point2D>, x: number): Point2D => {
+        if (x < array[0].x)
+            return array[0];
+
+         if (x > array[array.length - 1].x)
+            return array[array.length - 1];
+
+         // binary search for the nearest point by x
+        let start = 0;
+        let end = array.length - 1;
+
+         while(start <= end) {
+            let middle = Math.floor((start + end) / 2);
+            if (x < array[middle].x)
+                end = middle - 1;
+            else if (x > array[middle].x)
+                start = middle + 1;
+            else
+                return array[middle];
+        }
+        return ((array[start].x - x) < (x - array[end].x)) ? array[start] : array[end];
+    };
+
+    onGraphCursorMoved = _.throttle((x) => {
+        this.widgetStore.setCursor(x);
+    }, 100);
+
     render() {
         const appStore = this.props.appStore;
         if (!this.widgetStore) {
@@ -205,6 +233,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             graphZoomedY: this.widgetStore.setYBounds,
             graphZoomedXY: this.widgetStore.setXYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
+            graphCursorMoved: this.onGraphCursorMoved,
+            cursorInfo: {cursorX: undefined, cursorY: undefined, rms: undefined, mean: undefined},
             scrollZoom: true,
             markers: []
         };
@@ -282,6 +312,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                     });
                 }
+
+                if (currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
+                    linePlotProps.cursorInfo.rms = currentPlotData.yRms;
+                    linePlotProps.cursorInfo.mean = currentPlotData.yMean;
+                }
+
                 // TODO: Get comments from region info, rather than directly from cursor position
                 if (appStore.cursorInfo) {
                     const comments: string[] = [];

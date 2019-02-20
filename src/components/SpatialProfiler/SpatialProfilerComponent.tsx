@@ -364,6 +364,29 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return this.cachedFormattedCoordinates[i];
     };
 
+    private findNearestPointByX = (array: Array<Point2D>, x: number): Point2D => {
+        if (x < array[0].x)
+            return array[0];
+
+         if (x > array[array.length - 1].x)
+            return array[array.length - 1];
+
+         // binary search for the nearest point by x
+        let start = 0;
+        let end = array.length - 1;
+
+         while(start <= end) {
+            let middle = Math.floor((start + end) / 2);
+            if (x < array[middle].x)
+                end = middle - 1;
+            else if (x > array[middle].x)
+                start = middle + 1;
+            else
+                return array[middle];
+        }
+        return ((array[start].x - x) < (x - array[end].x)) ? array[start] : array[end];
+    };
+
     onGraphCursorMoved = _.throttle((x) => {
         this.widgetStore.setCursor(x);
     }, 100);
@@ -392,6 +415,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             graphZoomedXY: this.widgetStore.setXYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
+            cursorInfo: {cursorX: undefined, cursorY: undefined, rms: undefined, mean: undefined},
             scrollZoom: true
         };
 
@@ -431,10 +455,16 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 const markerValue = isXProfile ? this.profileStore.x : this.profileStore.y;
                 linePlotProps.markers = [{
                     value: markerValue,
-                    id: "marker-min",
+                    id: "marker-image-cursor",
                     draggable: false,
                     horizontal: false,
                 }];
+
+                // get x position and y value of cursor in image
+                linePlotProps.cursorInfo.cursorX = markerValue;
+                if (currentPlotData) {
+                    linePlotProps.cursorInfo.cursorY = (this.findNearestPointByX(currentPlotData.values, markerValue)).y;
+                }
 
                 if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
                     linePlotProps.markers.push({
@@ -455,6 +485,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         opacity: 0.2,
                         color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                     });
+                }
+
+                if (currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
+                    linePlotProps.cursorInfo.rms = currentPlotData.yRms;
+                    linePlotProps.cursorInfo.mean = currentPlotData.yMean;
                 }
 
                 // TODO: Get comments from region info, rather than directly from cursor position

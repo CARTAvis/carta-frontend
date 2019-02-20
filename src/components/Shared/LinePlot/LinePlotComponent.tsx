@@ -62,6 +62,7 @@ export class LinePlotComponentProps {
     interpolateLines?: boolean;
     markers?: LineMarker[];
     showTopAxis?: boolean;
+    cursorInfo?: {cursorX: number, cursorY: number, rms: number, mean: number};
     topAxisTickFormatter?: (value: number, index: number, values: number[]) => string | number;
     graphClicked?: (x: number) => void;
     graphRightClicked?: (x: number) => void;
@@ -694,7 +695,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 />
                 <CursorInfoComponent
                     darkMode={this.props.darkMode}
-                    visible={this.props.data !== undefined}
+                    visible={this.props.cursorInfo !== undefined}
+                    cursorInfo={this.props.cursorInfo}
                 />
             </div>
 
