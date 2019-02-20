@@ -39,6 +39,7 @@ export class BackendService {
     @observable loggingEnabled: boolean;
     @observable sessionId: string;
     @observable apiKey: string;
+
     private connection: WebSocket;
     private observerRequestMap: Map<number, Observer<any>>;
     private eventCounter: number;
@@ -86,8 +87,7 @@ export class BackendService {
                     this.logEventList = eventList;
                     console.log("Overriding event log list from local storage");
                 }
-            }
-            catch (e) {
+            } catch (e) {
                 console.log("Invalid event list read from local storage");
             }
         }
@@ -134,6 +134,7 @@ export class BackendService {
         this.connection.binaryType = "arraybuffer";
         this.connection.onmessage = this.messageHandler.bind(this);
         this.connection.onclose = (ev: CloseEvent) => {
+            this.connectionStatus = ConnectionStatus.CLOSED;
             // Reconnect to the same URL if Websocket is closed
             if (!ev.wasClean) {
                 setTimeout(() => {
@@ -152,14 +153,18 @@ export class BackendService {
 
         const obs = new Observable<string>(observer => {
             this.connection.onopen = () => {
-                this.connectionStatus = ConnectionStatus.ACTIVE;
+                // Until session resuming is handled correctly, re-connections will be considered "dropped" connections, to indicate that errors may occur
+                if (this.connectionStatus === ConnectionStatus.CLOSED) {
+                    this.connectionStatus = ConnectionStatus.DROPPED;
+                } else {
+                    this.connectionStatus = ConnectionStatus.ACTIVE;
+                }
                 const message = CARTA.RegisterViewer.create({sessionId: "", apiKey: apiKey});
                 const requestId = this.eventCounter;
                 this.logEvent(EventNames.RegisterViewer, requestId, message, false);
                 if (this.sendEvent(EventNames.RegisterViewer, CARTA.RegisterViewer.encode(message).finish())) {
                     this.observerRequestMap.set(requestId, observer);
-                }
-                else {
+                } else {
                     observer.error("Could not connect");
                 }
             };
@@ -179,8 +184,7 @@ export class BackendService {
     getFileList(directory: string): Observable<CARTA.FileListResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
-        }
-        else {
+        } else {
             const message = CARTA.FileListRequest.create({directory});
             const requestId = this.eventCounter;
             this.logEvent(EventNames.FileListRequest, requestId, message, false);
@@ -188,8 +192,7 @@ export class BackendService {
                 return new Observable<CARTA.FileListResponse>(observer => {
                     this.observerRequestMap.set(requestId, observer);
                 });
-            }
-            else {
+            } else {
                 return throwError(new Error("Could not send event"));
             }
         }
@@ -199,8 +202,7 @@ export class BackendService {
     getFileInfo(directory: string, file: string, hdu: string): Observable<CARTA.FileInfoResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
-        }
-        else {
+        } else {
             const message = CARTA.FileInfoRequest.create({directory, file, hdu});
             const requestId = this.eventCounter;
             this.logEvent(EventNames.FileInfoRequest, requestId, message, false);
@@ -208,8 +210,7 @@ export class BackendService {
                 return new Observable<CARTA.FileInfoResponse>(observer => {
                     this.observerRequestMap.set(requestId, observer);
                 });
-            }
-            else {
+            } else {
                 return throwError(new Error("Could not send event"));
             }
         }
@@ -219,8 +220,7 @@ export class BackendService {
     loadFile(directory: string, file: string, hdu: string, fileId: number, renderMode: CARTA.RenderMode): Observable<CARTA.OpenFileAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
-        }
-        else {
+        } else {
             const message = CARTA.OpenFile.create({directory, file, hdu, fileId, renderMode});
             const requestId = this.eventCounter;
             this.logEvent(EventNames.OpenFile, requestId, message, false);
@@ -228,8 +228,7 @@ export class BackendService {
                 return new Observable<CARTA.OpenFileAck>(observer => {
                     this.observerRequestMap.set(requestId, observer);
                 });
-            }
-            else {
+            } else {
                 return throwError(new Error("Could not send event"));
             }
         }
@@ -334,40 +333,31 @@ export class BackendService {
             if (eventName === EventNames.RegisterViewerAck) {
                 parsedMessage = CARTA.RegisterViewerAck.decode(eventData);
                 this.onRegisterViewerAck(eventId, parsedMessage);
-            }
-            else if (eventName === EventNames.FileListResponse) {
+            } else if (eventName === EventNames.FileListResponse) {
                 parsedMessage = CARTA.FileListResponse.decode(eventData);
                 this.onFileListResponse(eventId, parsedMessage);
-            }
-            else if (eventName === EventNames.FileInfoResponse) {
+            } else if (eventName === EventNames.FileInfoResponse) {
                 parsedMessage = CARTA.FileInfoResponse.decode(eventData);
                 this.onFileInfoResponse(eventId, parsedMessage);
-            }
-            else if (eventName === EventNames.OpenFileAck) {
+            } else if (eventName === EventNames.OpenFileAck) {
                 parsedMessage = CARTA.OpenFileAck.decode(eventData);
                 this.onFileOpenAck(eventId, parsedMessage);
-            }
-            else if (eventName === EventNames.RasterImageData) {
+            } else if (eventName === EventNames.RasterImageData) {
                 parsedMessage = CARTA.RasterImageData.decode(eventData);
                 this.onStreamedRasterImageData(eventId, parsedMessage);
-            }
-            else if (eventName === EventNames.RegionHistogramData) {
+            } else if (eventName === EventNames.RegionHistogramData) {
                 parsedMessage = CARTA.RegionHistogramData.decode(eventData);
                 this.onStreamedRegionHistogramData(eventId, parsedMessage);
-            }
-            else if (eventName === EventNames.ErrorData) {
+            } else if (eventName === EventNames.ErrorData) {
                 parsedMessage = CARTA.ErrorData.decode(eventData);
                 this.onStreamedErrorData(eventId, parsedMessage);
-            }
-            else if (eventName === EventNames.SpatialProfileData) {
+            } else if (eventName === EventNames.SpatialProfileData) {
                 parsedMessage = CARTA.SpatialProfileData.decode(eventData);
                 this.onStreamedSpatialProfileData(eventId, parsedMessage);
-            }
-            else if (eventName === EventNames.SpectralProfileData) {
+            } else if (eventName === EventNames.SpectralProfileData) {
                 parsedMessage = CARTA.SpectralProfileData.decode(eventData);
                 this.onStreamedSpectralProfileData(eventId, parsedMessage);
-            }
-            else {
+            } else {
                 console.log(`Unsupported event response ${eventName}`);
             }
             this.logEvent(eventName, eventId, parsedMessage);
@@ -382,13 +372,11 @@ export class BackendService {
         if (observer) {
             if (response.success) {
                 observer.next(response.sessionId);
-            }
-            else {
+            } else {
                 observer.error(response.message);
                 this.observerRequestMap.delete(eventId);
             }
-        }
-        else {
+        } else {
             console.log(`Can't find observable for request ${eventId}`);
         }
     }
@@ -398,14 +386,12 @@ export class BackendService {
         if (observer) {
             if (response.success) {
                 observer.next(response);
-            }
-            else {
+            } else {
                 observer.error(response.message);
             }
             observer.complete();
             this.observerRequestMap.delete(eventId);
-        }
-        else {
+        } else {
             console.log(`Can't find observable for request ${eventId}`);
         }
     }
@@ -415,14 +401,12 @@ export class BackendService {
         if (observer) {
             if (response.success) {
                 observer.next(response);
-            }
-            else {
+            } else {
                 observer.error(response.message);
             }
             observer.complete();
             this.observerRequestMap.delete(eventId);
-        }
-        else {
+        } else {
             console.log(`Can't find observable for request ${eventId}`);
         }
     }
@@ -432,14 +416,12 @@ export class BackendService {
         if (observer) {
             if (ack.success) {
                 observer.next(ack);
-            }
-            else {
+            } else {
                 observer.error(ack.message);
             }
             observer.complete();
             this.observerRequestMap.delete(eventId);
-        }
-        else {
+        } else {
             console.log(`Can't find observable for request ${eventId}`);
         }
     }
@@ -447,8 +429,7 @@ export class BackendService {
     private onStreamedRasterImageData(eventId: number, rasterImageData: CARTA.RasterImageData) {
         if (rasterImageData.compressionType === CARTA.CompressionType.NONE) {
             this.rasterStream.next(rasterImageData);
-        }
-        else {
+        } else {
             const t0 = performance.now();
             this.decompressionServce.decompressRasterData(rasterImageData).then(decompressedMessage => {
                 const t1 = performance.now();
@@ -490,8 +471,7 @@ export class BackendService {
             this.connection.send(eventData);
             this.eventCounter++;
             return true;
-        }
-        else {
+        } else {
             console.log("Error sending event");
             this.eventCounter++;
             return false;
@@ -523,12 +503,10 @@ export class BackendService {
             if (incoming) {
                 if (eventId === 0) {
                     console.log(`<== ${eventName} [Stream]`);
-                }
-                else {
+                } else {
                     console.log(`<== ${eventName} [${eventId}]`);
                 }
-            }
-            else {
+            } else {
                 console.log(`${eventName} [${eventId}] ==>`);
             }
             console.log(message);

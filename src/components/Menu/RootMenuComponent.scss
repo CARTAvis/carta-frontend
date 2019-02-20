@@ -1,8 +1,24 @@
+@import "../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+
 .root-menu {
     text-align: left;
     display: flex;
 
     .root-menu-entry {
         min-width: 0 !important;
+    }
+
+    .connectivity-icon {
+        padding-right: 8px;
+        padding-top: 8px;
+        &.online {
+            color: $green1;
+        }
+        &.warning {
+            color: $orange1;
+        }
+        &.offline {
+            color: $red1;
+        }
     }
 }

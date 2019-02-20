@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, Menu, Popover, Position} from "@blueprintjs/core";
+import {Alert, Icon, Menu, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {exportImage} from "components";
 import {AppStore} from "stores";
@@ -16,19 +16,20 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
     render() {
         const appStore = this.props.appStore;
         const modString = appStore.modifierString;
+        const connectionStatus = appStore.backendService.connectionStatus;
 
         const fileMenu = (
             <Menu>
                 <Menu.Item
                     text="Open image"
                     label={`${modString}O`}
-                    disabled={appStore.backendService.connectionStatus !== ConnectionStatus.ACTIVE}
+                    disabled={connectionStatus !== ConnectionStatus.ACTIVE}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(false)}
                 />
                 <Menu.Item
                     text="Append image"
                     label={`${modString}L`}
-                    disabled={appStore.backendService.connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame}
+                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(true)}
                 />
                 <Menu.Item text="Load region" disabled={true}/>
@@ -37,7 +38,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     text="Export image"
                     icon={"floppy-disk"}
                     label={`${modString}E`}
-                    disabled={appStore.backendService.connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame}
+                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame}
                     onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
                 />
                 <Menu.Divider/>
@@ -134,6 +135,29 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
             </Menu>
         );
 
+        let connectivityClass = "connectivity-icon";
+        let tooltip = "";
+        switch (connectionStatus) {
+            case ConnectionStatus.PENDING:
+                tooltip = "Connecting to server";
+                connectivityClass += " warning";
+                break;
+            case ConnectionStatus.ACTIVE:
+                tooltip = "Connected to server";
+                connectivityClass += " online";
+                break;
+            case ConnectionStatus.DROPPED:
+                tooltip = "Reconnected to server after disconnect. Some errors may occur";
+                connectivityClass += " warning";
+                break;
+            case ConnectionStatus.CLOSED:
+                tooltip = "Disconnected from server";
+                connectivityClass += " offline";
+                break;
+
+        }
+        connectivityClass += " online";
+
         return (
             <div className="root-menu">
                 <Popover autoFocus={false} minimal={true} content={fileMenu} position={Position.BOTTOM_LEFT}>
@@ -160,6 +184,9 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 <Alert isOpen={this.documentationAlertVisible} onClose={this.handleAlertDismissed} canEscapeKeyCancel={true} canOutsideClickCancel={true} confirmButtonText={"Dismiss"}>
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
+                <Tooltip content={tooltip}>
+                    <Icon icon={"symbol-circle"} className={connectivityClass}/>
+                </Tooltip>
             </div>
         );
     }
