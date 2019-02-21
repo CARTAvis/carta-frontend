@@ -695,11 +695,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 />
                 <CursorInfoComponent
                     darkMode={this.props.darkMode}
-                    visible={this.props.cursorInfo !== undefined}
                     cursorInfo={this.props.cursorInfo}
                 />
             </div>
-
         );
 
     }
