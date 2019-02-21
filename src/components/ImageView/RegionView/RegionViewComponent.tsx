@@ -173,8 +173,18 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         let regionRects = null;
 
         if (regionSet && regionSet.regions.length) {
-            regionRects = regionSet.regions.filter(r => r.regionType === RegionType.RECTANGLE && r.isValid).map(
-                r => <RectangularRegionComponent key={r.regionId} region={r} frame={frame} layerWidth={this.props.width} layerHeight={this.props.height} selected={r === regionSet.selectedRegion} onSelect={regionSet.selectRegion}/>
+            regionRects = regionSet.regions.filter(r => (r.regionType === RegionType.RECTANGLE || r.regionType === RegionType.ELLIPSE) && r.isValid).map(
+                r => (
+                    <RectangularRegionComponent
+                        key={r.regionId}
+                        region={r}
+                        frame={frame}
+                        layerWidth={this.props.width}
+                        layerHeight={this.props.height}
+                        selected={r === regionSet.selectedRegion}
+                        onSelect={regionSet.selectRegion}
+                    />
+                )
             );
         }
 
@@ -189,16 +199,16 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 const crosshairGap = 7;
                 cursorMarker = (
                     <Group x={Math.floor(cursorPosCanvas.x) + 0.5} y={Math.floor(cursorPosCanvas.y) + 0.5}>
-                        <Line strokeHitEnabled={false} points={[-crosshairLength / 2 - crosshairThicknessWide / 2, 0, -crosshairGap / 2, 0]} strokeWidth={crosshairThicknessWide} stroke="black"/>
-                        <Line strokeHitEnabled={false} points={[crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessWide / 2, 0]} strokeWidth={crosshairThicknessWide} stroke="black"/>
-                        <Line strokeHitEnabled={false} points={[0, -crosshairLength / 2 - crosshairThicknessWide / 2, 0, -crosshairGap / 2]} strokeWidth={crosshairThicknessWide} stroke="black"/>
-                        <Line strokeHitEnabled={false} points={[0, crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessWide / 2]} strokeWidth={crosshairThicknessWide} stroke="black"/>
+                        <Line listening={false} points={[-crosshairLength / 2 - crosshairThicknessWide / 2, 0, -crosshairGap / 2, 0]} strokeWidth={crosshairThicknessWide} stroke="black"/>
+                        <Line listening={false} points={[crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessWide / 2, 0]} strokeWidth={crosshairThicknessWide} stroke="black"/>
+                        <Line listening={false} points={[0, -crosshairLength / 2 - crosshairThicknessWide / 2, 0, -crosshairGap / 2]} strokeWidth={crosshairThicknessWide} stroke="black"/>
+                        <Line listening={false} points={[0, crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessWide / 2]} strokeWidth={crosshairThicknessWide} stroke="black"/>
+                        <Rect listening={false} width={crosshairGap - 1} height={crosshairGap - 1} offsetX={crosshairGap / 2 - 0.5} offsetY={crosshairGap / 2 - 0.5} strokeWidth={1} stroke="black"/>
 
-                        <Line strokeHitEnabled={false} points={[-crosshairLength / 2 - crosshairThicknessNarrow / 2, 0, -crosshairGap / 2, 0]} strokeWidth={crosshairThicknessNarrow} stroke="white"/>
-                        <Line strokeHitEnabled={false} points={[crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessNarrow / 2, 0]} strokeWidth={crosshairThicknessNarrow} stroke="white"/>
-                        <Line strokeHitEnabled={false} points={[0, -crosshairLength / 2 - crosshairThicknessNarrow / 2, 0, -crosshairGap / 2]} strokeWidth={crosshairThicknessNarrow} stroke="white"/>
-                        <Line strokeHitEnabled={false} points={[0, crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessNarrow / 2]} strokeWidth={crosshairThicknessNarrow} stroke="white"/>
-                        <Rect strokeHitEnabled={false} width={crosshairGap - 1} height={crosshairGap - 1} offsetX={crosshairGap / 2 - 0.5} offsetY={crosshairGap / 2 - 0.5} strokeWidth={1} stroke="black"/>
+                        <Line listening={false} points={[-crosshairLength / 2 - crosshairThicknessNarrow / 2, 0, -crosshairGap / 2, 0]} strokeWidth={crosshairThicknessNarrow} stroke="white"/>
+                        <Line listening={false} points={[crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessNarrow / 2, 0]} strokeWidth={crosshairThicknessNarrow} stroke="white"/>
+                        <Line listening={false} points={[0, -crosshairLength / 2 - crosshairThicknessNarrow / 2, 0, -crosshairGap / 2]} strokeWidth={crosshairThicknessNarrow} stroke="white"/>
+                        <Line listening={false} points={[0, crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessNarrow / 2]} strokeWidth={crosshairThicknessNarrow} stroke="white"/>
                     </Group>
                 );
             }

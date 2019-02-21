@@ -2,8 +2,8 @@ import * as React from "react";
 import * as Konva from "konva";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {Group, Rect, Transformer} from "react-konva";
-import {FrameStore, RegionStore} from "../../../stores";
+import {Ellipse, Group, Rect, Transformer} from "react-konva";
+import {FrameStore, RegionStore, RegionType} from "../../../stores";
 
 export interface RectangularRegionComponentProps {
     region: RegionStore;
@@ -43,12 +43,10 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
 
     handleTransformStart = (konvaEvent) => {
         this.centeredScaling = konvaEvent.evt.evt.ctrlKey;
-        const node = konvaEvent.currentTarget.node() as Konva.Node;
         this.props.region.beginEditing();
     };
 
-    handleTransformEnd = (konvaEvent) => {
-        const node = konvaEvent.currentTarget.node() as Konva.Node;
+    handleTransformEnd = () => {
         this.props.region.endEditing();
     };
 
@@ -57,14 +55,13 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
             const anchor = konvaEvent.currentTarget.movingResizer as string;
             const node = konvaEvent.currentTarget.node() as Konva.Node;
             const region = this.props.region;
-
             if (anchor.indexOf("rotater") >= 0) {
                 // handle rotation
                 const rotation = node.rotation();
                 region.setRotation(rotation);
             } else {
                 // handle scaling
-                const nodeScale = node.scale();
+                let nodeScale = node.scale();
                 node.setAttr("scaleX", 1);
                 node.setAttr("scaleY", 1);
 
@@ -72,15 +69,13 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
                     return;
                 }
 
+                const newWidth = Math.max(1e-3, region.controlPoints[1].x * nodeScale.x);
+                const newHeight = Math.max(1e-3, region.controlPoints[1].y * nodeScale.y);
                 if (this.centeredScaling) {
-                    const newWidth = region.controlPoints[1].x * nodeScale.x;
-                    const newHeight = region.controlPoints[1].y * nodeScale.y;
                     region.setControlPoint(1, {x: newWidth, y: newHeight});
                 } else {
-                    const newWidth = region.controlPoints[1].x * nodeScale.x;
-                    const newHeight = region.controlPoints[1].y * nodeScale.y;
-                    const deltaWidth = newWidth - region.controlPoints[1].x;
-                    const deltaHeight = newHeight - region.controlPoints[1].y;
+                    const deltaWidth = (newWidth - region.controlPoints[1].x) * (region.regionType === RegionType.ELLIPSE ? 2 : 1);
+                    const deltaHeight = (newHeight - region.controlPoints[1].y) * (region.regionType === RegionType.ELLIPSE ? 2 : 1);
                     let center = {x: region.controlPoints[0].x, y: region.controlPoints[0].y};
                     const cosX = Math.cos(region.rotation * Math.PI / 180.0);
                     const sinX = Math.sin(region.rotation * Math.PI / 180.0);
@@ -146,8 +141,13 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
         const centerPixelSpace = {x: ((centerImageSpace.x - currentView.xMin) / viewWidth * this.props.layerWidth), y: this.props.layerHeight - ((centerImageSpace.y - currentView.yMin) / viewHeight * this.props.layerHeight)};
         const width = (region.controlPoints[1].x * frame.zoomLevel);
         const height = (region.controlPoints[1].y * frame.zoomLevel);
+
+        // Border should only be dashed for ellipses. Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
+        const borderDash = region.regionType === RegionType.ELLIPSE ? [(width + height) * 4 / 100.0] : null;
+
         return (
             <Group>
+                {region.regionType === RegionType.RECTANGLE &&
                 <Rect
                     rotation={region.rotation}
                     x={centerPixelSpace.x + 0.5}
@@ -164,14 +164,35 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
                     onDragMove={this.handleDrag}
                     onClick={this.handleClick}
                     fillEnabled={true}
+                    perfectDrawEnabled={false}
                     ref={this.handleRef}
                 />
+                }
+                {region.regionType === RegionType.ELLIPSE &&
+                <Ellipse
+                    rotation={region.rotation}
+                    x={centerPixelSpace.x + 0.5}
+                    y={centerPixelSpace.y + 0.5}
+                    radius={{x: width, y: height}}
+                    stroke={region.editing ? "green" : "orange"}
+                    strokeWidth={1}
+                    draggable={true}
+                    onDragStart={this.handleDragStart}
+                    onDragEnd={this.handleDragEnd}
+                    onDragMove={this.handleDrag}
+                    onClick={this.handleClick}
+                    fillEnabled={true}
+                    perfectDrawEnabled={false}
+                    ref={this.handleRef}
+                />
+                }
                 {this.selectedRegionRef && this.props.selected &&
                 <Transformer
                     node={this.selectedRegionRef}
                     rotateAnchorOffset={15}
-                    anchorSize={8}
+                    anchorSize={6}
                     borderStroke={region.editing ? "green" : "orange"}
+                    borderDash={borderDash}
                     keepRatio={false}
                     centeredScaling={this.centeredScaling}
                     draggable={false}
