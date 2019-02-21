@@ -1,18 +1,19 @@
 import * as React from "react";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
+import {Point2D} from "models";
 import "./CursorInfoComponent.css";
 
 export class CursorInfoComponentProps {
     darkMode: boolean;
     visible: boolean;
-    cursorInfo: {cursorX: number, cursorY: number, rms: number, mean: number};
+    cursorInfo: {nearesPoint: Point2D, rms: number, mean: number};
 }
 
 @observer
 export class CursorInfoComponent extends React.Component<CursorInfoComponentProps> {
 
-    private getFormattedX = (value: number): string => {
+    private getFormatted = (value: number): string => {
         if (value === undefined) {
             return "";
         }
@@ -31,7 +32,6 @@ export class CursorInfoComponent extends React.Component<CursorInfoComponentProp
         };
 
         let className = "profiler-cursorinfo";
-
         if (this.props.darkMode) {
             className += " bp3-dark";
         }
@@ -41,16 +41,39 @@ export class CursorInfoComponent extends React.Component<CursorInfoComponentProp
                 <div className="cursor-display">
                     <table>
                         <tr>
-                            <th><pre>Cursor:</pre></th>
-                            <td><pre>{this.props.cursorInfo ? this.getFormattedX(this.props.cursorInfo.cursorX)+" px" : ""}</pre></td>
-                            <th><pre>Value:</pre></th>
-                            <td><pre>{this.props.cursorInfo ? this.getFormattedX(this.props.cursorInfo.cursorY) : ""}</pre></td>
+                            <th><pre>Cursor: </pre></th>
+                            <td>
+                                <pre>
+                                    {(this.props.cursorInfo && this.props.cursorInfo.nearesPoint) ?
+                                    this.getFormatted(this.props.cursorInfo.nearesPoint.x) + " px" :
+                                    ""}
+                                </pre>
+                            </td>
+                            <th><pre>,</pre></th>
+                            <td>
+                                <pre>
+                                    {(this.props.cursorInfo && this.props.cursorInfo.nearesPoint) ?
+                                    this.getFormatted(this.props.cursorInfo.nearesPoint.y) :
+                                    ""}
+                                </pre>
+                            </td>
                         </tr>
                         <tr>
                             <th><pre>Mean:</pre></th>
-                            <td><pre>{this.props.cursorInfo ? this.getFormattedX(this.props.cursorInfo.mean) : ""}</pre></td>
+                            <td>
+                                <pre>
+                                    {(this.props.cursorInfo && this.props.cursorInfo.mean) ?
+                                    this.getFormatted(this.props.cursorInfo.mean) :
+                                    ""}
+                                </pre>
+                            </td>
                             <th><pre>RMS:</pre></th>
-                            <td><pre>{this.props.cursorInfo ? this.getFormattedX(this.props.cursorInfo.rms) : ""}</pre></td>
+                            <td><pre>
+                                    {(this.props.cursorInfo && this.props.cursorInfo.rms) ?
+                                    this.getFormatted(this.props.cursorInfo.rms) :
+                                    ""}
+                                </pre>
+                            </td>
                         </tr>
                     </table>
                 </div>

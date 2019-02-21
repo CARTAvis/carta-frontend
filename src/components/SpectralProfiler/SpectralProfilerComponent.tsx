@@ -234,7 +234,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             graphZoomedXY: this.widgetStore.setXYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
-            cursorInfo: {cursorX: undefined, cursorY: undefined, rms: undefined, mean: undefined},
+            cursorInfo: {nearesPoint: undefined, rms: undefined, mean: undefined},
             scrollZoom: true,
             markers: []
         };
@@ -311,9 +311,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         opacity: 0.2,
                         color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                     });
-                }
 
-                if (currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
                     linePlotProps.cursorInfo.rms = currentPlotData.yRms;
                     linePlotProps.cursorInfo.mean = currentPlotData.yMean;
                 }

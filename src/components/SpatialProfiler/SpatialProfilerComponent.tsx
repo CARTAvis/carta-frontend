@@ -36,6 +36,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
+    @observable isMouseEntered = false;
 
     @computed get widgetStore(): SpatialProfileWidgetStore {
         if (this.props.appStore && this.props.appStore.widgetsStore.spatialProfileWidgets) {
@@ -365,17 +366,20 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private findNearestPointByX = (array: Array<Point2D>, x: number): Point2D => {
+        if (array === undefined || x === undefined)
+            return undefined;
+
         if (x < array[0].x)
             return array[0];
 
-         if (x > array[array.length - 1].x)
+        if (x > array[array.length - 1].x)
             return array[array.length - 1];
 
-         // binary search for the nearest point by x
+        // binary search for the nearest point by x
         let start = 0;
         let end = array.length - 1;
 
-         while(start <= end) {
+        while(start <= end) {
             let middle = Math.floor((start + end) / 2);
             if (x < array[middle].x)
                 end = middle - 1;
@@ -390,6 +394,14 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     onGraphCursorMoved = _.throttle((x) => {
         this.widgetStore.setCursor(x);
     }, 100);
+
+    onMouseEnter = () => {
+        this.isMouseEntered = true;
+    };
+
+    onMouseLeave = () => {
+        this.isMouseEntered = false;
+    };
 
     render() {
         const appStore = this.props.appStore;
@@ -415,7 +427,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             graphZoomedXY: this.widgetStore.setXYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
-            cursorInfo: {cursorX: undefined, cursorY: undefined, rms: undefined, mean: undefined},
+            cursorInfo: {nearesPoint: undefined, rms: undefined, mean: undefined},
             scrollZoom: true
         };
 
@@ -451,19 +463,32 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         linePlotProps.yMin = this.widgetStore.minY;
                         linePlotProps.yMax = this.widgetStore.maxY;
                     }
+
+                    if (this.isMouseEntered) {
+                        linePlotProps.cursorInfo.nearesPoint = this.findNearestPointByX(linePlotProps.data,
+                                                                        this.widgetStore.cursorX);
+                    } else {
+                        linePlotProps.cursorInfo.nearesPoint = this.findNearestPointByX(linePlotProps.data,
+                                                                        isXProfile ? this.profileStore.x : this.profileStore.y);
+                    }
                 }
-                const markerValue = isXProfile ? this.profileStore.x : this.profileStore.y;
+
                 linePlotProps.markers = [{
-                    value: markerValue,
+                    value: isXProfile ? this.profileStore.x : this.profileStore.y,
                     id: "marker-image-cursor",
                     draggable: false,
                     horizontal: false,
                 }];
 
-                // get x position and y value of cursor in image
-                linePlotProps.cursorInfo.cursorX = markerValue;
-                if (currentPlotData) {
-                    linePlotProps.cursorInfo.cursorY = (this.findNearestPointByX(currentPlotData.values, markerValue)).y;
+                if (this.isMouseEntered) {
+                    linePlotProps.markers.push({
+                        value: this.widgetStore.cursorX,
+                        id: "marker-profile-cursor",
+                        draggable: false,
+                        horizontal: false,
+                        color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                        opacity: 0.8,
+                    });
                 }
 
                 if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
@@ -485,9 +510,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         opacity: 0.2,
                         color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                     });
-                }
 
-                if (currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
                     linePlotProps.cursorInfo.rms = currentPlotData.yRms;
                     linePlotProps.cursorInfo.mean = currentPlotData.yMean;
                 }
@@ -505,7 +528,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         }
 
         return (
-            <div className={"spatial-profiler-widget"}>
+            <div
+                className={"spatial-profiler-widget"}
+                onMouseEnter={this.onMouseEnter}
+                onMouseLeave={this.onMouseLeave}
+            >
                 <div className="profile-container">
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps}/>
