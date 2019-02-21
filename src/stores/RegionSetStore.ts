@@ -41,4 +41,13 @@ export class RegionSetStore {
     @action deselectRegion = () => {
         this.selectedRegion = null;
     };
+
+    @action deleteRegion = (region: RegionStore) => {
+        if (region && this.regions.length) {
+            if (region === this.selectedRegion) {
+                this.selectedRegion = null;
+            }
+            this.regions = this.regions.filter(r => r !== region);
+        }
+    };
 }

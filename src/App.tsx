@@ -51,7 +51,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
             AST.setPalette(appStore.darkTheme ? nightPalette : dayPalette);
             appStore.astReady = true;
             if (connected && !autoFileLoaded && fileSearchParam) {
-                    appStore.addFrame(folderSearchParam, fileSearchParam, "", 0);
+                appStore.addFrame(folderSearchParam, fileSearchParam, "", 0);
             }
         });
         appStore.backendService.loggingEnabled = true;
@@ -239,6 +239,13 @@ export class App extends React.Component<{ appStore: AppStore }> {
         }
     };
 
+    deleteSelectedRegion = () => {
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame) {
+            appStore.activeFrame.regionSet.deleteRegion(appStore.activeFrame.regionSet.selectedRegion);
+        }
+    };
+
     public renderHotkeys() {
         const appStore = this.props.appStore;
         const modString = appStore.modifierString;
@@ -264,6 +271,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 {fileHotkeys}
                 <Hotkey group="Appearance" global={true} combo="shift + D" label="Toggle light/dark theme" onKeyDown={this.toggleDarkTheme}/>
                 <Hotkey group="Cursor" global={true} combo="F" label="Freeze/unfreeze cursor position" onKeyDown={appStore.toggleCursorFrozen}/>
+                <Hotkey group="Regions" global={true} combo="del" label="Delete selected region" onKeyDown={this.deleteSelectedRegion}/>
             </Hotkeys>
         );
     }

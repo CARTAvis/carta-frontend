@@ -215,7 +215,15 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         return (
-            <Stage className={className} width={this.props.width} height={this.props.height} style={{left: this.props.left, top: this.props.top}} onClick={this.handleClick} onWheel={this.handleWheel} onMouseMove={this.handleMove}>
+            <Stage
+                className={className}
+                width={this.props.width}
+                height={this.props.height}
+                style={{left: this.props.left, top: this.props.top}}
+                onClick={this.handleClick}
+                onWheel={this.handleWheel}
+                onMouseMove={this.handleMove}
+            >
                 <Layer>
                     {regionRects}
                     {cursorMarker}
