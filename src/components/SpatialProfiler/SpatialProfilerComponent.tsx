@@ -366,7 +366,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private findNearestPointByX = (array: Array<Point2D>, x: number): Point2D => {
-        if (array === undefined || x === undefined)
+        if (array === undefined || array.length === 0 || x === undefined)
             return undefined;
 
         if (x < array[0].x)
@@ -511,8 +511,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                     });
 
-                    linePlotProps.cursorInfo.rms = currentPlotData.yRms;
                     linePlotProps.cursorInfo.mean = currentPlotData.yMean;
+                    linePlotProps.cursorInfo.rms = currentPlotData.yRms;
                 }
 
                 // TODO: Get comments from region info, rather than directly from cursor position
