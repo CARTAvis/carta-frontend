@@ -482,7 +482,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         this.findNearestPointByX(linePlotProps.data, isXProfile ? this.profileStore.x : this.profileStore.y);
                     if (nearest) {
                         linePlotProps.cursorInfo.cursorX = this.formattedNotation(nearest.x) + " px";
-                        linePlotProps.cursorInfo.cursorY = this.formattedNotation(nearest.y);
+                        linePlotProps.cursorInfo.cursorY = nearest.y.toExponential(2);
                     }
                 }
 

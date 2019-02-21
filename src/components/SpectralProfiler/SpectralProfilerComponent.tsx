@@ -115,9 +115,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             let yCount = 0;
 
             let values: Array<{ x: number, y: number }> = [];
+            let isIncremental = true;
+            if (channelInfo.values[0] > channelInfo.values[channelInfo.values.length-1]) {
+                isIncremental = false;
+            }
+
             for (let i = 0; i < channelInfo.values.length; i++) {
-                const x = channelInfo.values[i];
-                const y = coordinateData.vals[i];
+                let index = isIncremental ? i : channelInfo.values.length - 1 - i;
+                const x = channelInfo.values[index];
+                const y = coordinateData.vals[index];
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
                 if (x < xMin || x > xMax) {
@@ -311,33 +317,33 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         linePlotProps.yMin = this.widgetStore.minY;
                         linePlotProps.yMax = this.widgetStore.maxY;
                     }
+
+                    let nearest = this.isMouseEntered ?
+                        this.findNearestPointByX(linePlotProps.data, this.widgetStore.cursorX) :
+                        this.findNearestPointByX(linePlotProps.data, this.getChannelValue());
+                    if (nearest) {
+                        linePlotProps.cursorInfo.cursorX = this.formattedNotation(nearest.x);
+                        linePlotProps.cursorInfo.cursorY = nearest.y.toExponential(2);
+                    }
                 }
 
-                const channel = this.frame.channel;
-                if (this.widgetStore.useWcsValues) {
-                    const channelInfo = this.frame.channelInfo;
-                    if (channelInfo) {
-                        if (channel >= 0 && channel < channelInfo.values.length) {
-                            linePlotProps.markers = [{
-                                value: channelInfo.values[channel],
-                                id: "marker-channel",
-                                draggable: false,
-                                horizontal: false,
-                            }];
-                        }
-                        let channelLabel = channelInfo.channelType.name;
-                        if (channelInfo.channelType.unit && channelInfo.channelType.unit.length) {
-                            channelLabel += ` (${channelInfo.channelType.unit})`;
-                        }
-                        linePlotProps.xLabel = channelLabel;
-                    }
-                } else {
-                    linePlotProps.markers = [{
-                        value: channel,
-                        id: "marker-channel",
+                linePlotProps.xLabel = this.getChannelLabel();
+                linePlotProps.markers = [{
+                    value: this.getChannelValue(),
+                    id: "marker-channel",
+                    draggable: false,
+                    horizontal: false,
+                }];
+
+                if (this.isMouseEntered) {
+                    linePlotProps.markers.push({
+                        value: this.widgetStore.cursorX,
+                        id: "marker-profile-cursor",
                         draggable: false,
                         horizontal: false,
-                    }];
+                        color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                        opacity: 0.8,
+                    });
                 }
 
                 if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
