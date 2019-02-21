@@ -62,7 +62,7 @@ export class LinePlotComponentProps {
     interpolateLines?: boolean;
     markers?: LineMarker[];
     showTopAxis?: boolean;
-    cursorInfo?: {nearesPoint: Point2D, rms: number, mean: number};
+    cursorInfo?: {cursorX: string, cursorY: string, rms: number, mean: number};
     topAxisTickFormatter?: (value: number, index: number, values: number[]) => string | number;
     graphClicked?: (x: number) => void;
     graphRightClicked?: (x: number) => void;

@@ -5,7 +5,7 @@ import "./CursorInfoComponent.css";
 
 export class CursorInfoComponentProps {
     darkMode: boolean;
-    cursorInfo: {nearesPoint: Point2D, rms: number, mean: number};
+    cursorInfo: {cursorX: string, cursorY: string, rms: number, mean: number};
 }
 
 @observer
@@ -30,11 +30,11 @@ export class CursorInfoComponent extends React.Component<CursorInfoComponentProp
             className += " bp3-dark";
         }
 
-        let cursorInfo = (this.props.cursorInfo && this.props.cursorInfo.nearesPoint) ? (
+        let cursorInfo = (this.props.cursorInfo && this.props.cursorInfo.cursorX && this.props.cursorInfo.cursorY) ? (
             <tr>
                 <th><pre>Cursor: </pre></th>
                 <td>
-                    <pre>{this.getFormatted(this.props.cursorInfo.nearesPoint.x) + " px, " + this.getFormatted(this.props.cursorInfo.nearesPoint.y)}</pre>
+                    <pre>{"(" + this.props.cursorInfo.cursorX + ", " + this.props.cursorInfo.cursorY + ")"}</pre>
                 </td>
             </tr>
         ) : "";

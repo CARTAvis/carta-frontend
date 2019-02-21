@@ -33,6 +33,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
+    @observable isMouseEntered = false;
 
     @computed get widgetStore(): SpectralProfileWidgetStore {
         if (this.props.appStore && this.props.appStore.widgetsStore.spectralProfileWidgets) {
@@ -186,17 +187,20 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private findNearestPointByX = (array: Array<Point2D>, x: number): Point2D => {
+        if (array === undefined || array.length === 0 || x === undefined)
+            return undefined;
+
         if (x < array[0].x)
             return array[0];
 
-         if (x > array[array.length - 1].x)
+        if (x > array[array.length - 1].x)
             return array[array.length - 1];
 
-         // binary search for the nearest point by x
+        // binary search for the nearest point by x
         let start = 0;
         let end = array.length - 1;
 
-         while(start <= end) {
+        while(start <= end) {
             let middle = Math.floor((start + end) / 2);
             if (x < array[middle].x)
                 end = middle - 1;
@@ -208,9 +212,53 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return ((array[start].x - x) < (x - array[end].x)) ? array[start] : array[end];
     };
 
+    private formattedNotation = (value: number): string => {
+        if (value === undefined) {
+            return "";
+        }
+
+        // Switch between standard and scientific notation
+        if (value < 1e-2) {
+            return value.toExponential(2);
+        }
+
+        return value.toFixed(2);
+    };
+
+    private getChannelValue = ():number => {
+        const channel = this.frame.channel;
+        if (this.widgetStore.useWcsValues && this.frame.channelInfo) {
+            const channelInfo = this.frame.channelInfo;
+            if (channel >= 0 && channel < channelInfo.values.length) {
+                return channelInfo.values[channel];
+            }
+        }
+        return channel;
+    };
+
+    private getChannelLabel = ():string => {
+        if (this.widgetStore.useWcsValues && this.frame.channelInfo) {
+            const channelInfo = this.frame.channelInfo;
+            let channelLabel = channelInfo.channelType.name;
+            if (channelInfo.channelType.unit && channelInfo.channelType.unit.length) {
+                channelLabel += ` (${channelInfo.channelType.unit})`;
+            }
+            return channelLabel;
+        }
+        return "";
+    };
+
     onGraphCursorMoved = _.throttle((x) => {
         this.widgetStore.setCursor(x);
     }, 100);
+
+    onMouseEnter = () => {
+        this.isMouseEntered = true;
+    };
+
+    onMouseLeave = () => {
+        this.isMouseEntered = false;
+    };
 
     render() {
         const appStore = this.props.appStore;
@@ -234,7 +282,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             graphZoomedXY: this.widgetStore.setXYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
-            cursorInfo: {nearesPoint: undefined, rms: undefined, mean: undefined},
+            cursorInfo: {cursorX: undefined, cursorY: undefined, rms: undefined, mean: undefined},
             scrollZoom: true,
             markers: []
         };
@@ -312,8 +360,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                     });
 
-                    linePlotProps.cursorInfo.rms = currentPlotData.yRms;
                     linePlotProps.cursorInfo.mean = currentPlotData.yMean;
+                    linePlotProps.cursorInfo.rms = currentPlotData.yRms;
                 }
 
                 // TODO: Get comments from region info, rather than directly from cursor position
@@ -329,7 +377,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         return (
-            <div className={"spectral-profiler-widget"}>
+            <div
+                className={"spectral-profiler-widget"}
+                onMouseEnter={this.onMouseEnter}
+                onMouseLeave={this.onMouseLeave}
+            >
                 <div className="profile-container">
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps}/>

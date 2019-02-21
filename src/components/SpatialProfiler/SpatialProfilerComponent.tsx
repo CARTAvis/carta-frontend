@@ -391,6 +391,19 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return ((array[start].x - x) < (x - array[end].x)) ? array[start] : array[end];
     };
 
+    private formattedNotation = (value: number): string => {
+        if (value === undefined) {
+            return "";
+        }
+
+        // Switch between standard and scientific notation
+        if (value < 1e-2) {
+            return value.toExponential(2);
+        }
+
+        return value.toFixed(2);
+    };
+
     onGraphCursorMoved = _.throttle((x) => {
         this.widgetStore.setCursor(x);
     }, 100);
@@ -427,7 +440,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             graphZoomedXY: this.widgetStore.setXYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
-            cursorInfo: {nearesPoint: undefined, rms: undefined, mean: undefined},
+            cursorInfo: {cursorX: undefined, cursorY: undefined, rms: undefined, mean: undefined},
             scrollZoom: true
         };
 
@@ -464,12 +477,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         linePlotProps.yMax = this.widgetStore.maxY;
                     }
 
-                    if (this.isMouseEntered) {
-                        linePlotProps.cursorInfo.nearesPoint = this.findNearestPointByX(linePlotProps.data,
-                                                                        this.widgetStore.cursorX);
-                    } else {
-                        linePlotProps.cursorInfo.nearesPoint = this.findNearestPointByX(linePlotProps.data,
-                                                                        isXProfile ? this.profileStore.x : this.profileStore.y);
+                    let nearest = this.isMouseEntered ?
+                        this.findNearestPointByX(linePlotProps.data, this.widgetStore.cursorX) :
+                        this.findNearestPointByX(linePlotProps.data, isXProfile ? this.profileStore.x : this.profileStore.y);
+                    if (nearest) {
+                        linePlotProps.cursorInfo.cursorX = this.formattedNotation(nearest.x) + " px";
+                        linePlotProps.cursorInfo.cursorY = this.formattedNotation(nearest.y);
                     }
                 }
 
