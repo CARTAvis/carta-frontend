@@ -9,7 +9,8 @@ git submodule init
 git submodule update
 git checkout master
 ```
-Prerequisite `npm` packages can be installed using `npm install`. The WebAssembly library build process requires `wget`.
+Prerequisite `npm` packages can be installed using `npm install`. The WebAssembly library build process requires `wget`. Some WebAssembly libraries require `cmake` as well.
+
 ## Build process:
 There are four steps in the build process. Some are more automated than others.
 * **Building statically linked WebAssembly libraries of dependencies**, such as [AST](https://github.com/Starlink/ast), [ZFP](https://github.com/LLNL/zfp) and [SZ](https://github.com/disheng222/SZ).
