@@ -220,13 +220,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (value === undefined) {
             return "";
         }
-
-        // Switch between standard and scientific notation
-        if (value < 1e-2) {
-            return value.toExponential(2);
-        }
-
-        return value.toFixed(2);
+        return value < 1e-2 ? value.toExponential(2) : value.toFixed(2);
     };
 
     private getChannelValue = ():number => {
