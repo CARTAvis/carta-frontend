@@ -42,7 +42,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     }
 
     renderCanvas = () => {
-        console.log("AST render");
         const settings = this.props.overlaySettings;
         const frame = this.props.frame;
         const pixelRatio = devicePixelRatio;

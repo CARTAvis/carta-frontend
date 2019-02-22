@@ -4,12 +4,14 @@ import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {Ellipse, Group, Rect, Transformer} from "react-konva";
 import {FrameStore, RegionStore, RegionType} from "../../../stores";
+import {Colors} from "@blueprintjs/core";
 
 export interface RectangularRegionComponentProps {
     region: RegionStore;
     frame: FrameStore;
     layerWidth: number;
     layerHeight: number;
+    listening: boolean;
     selected: boolean;
     onSelect?: (region: RegionStore) => void;
     onPanClick?: () => void;
@@ -42,7 +44,7 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
     };
 
     handleTransformStart = (konvaEvent) => {
-        this.centeredScaling = konvaEvent.evt.evt.ctrlKey;
+        this.centeredScaling = !konvaEvent.evt.evt.ctrlKey;
         this.props.region.beginEditing();
     };
 
@@ -117,11 +119,9 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
             const node = konvaEvent.target as Konva.Node;
             const region = this.props.region;
             const frame = this.props.frame;
-            const currentView = frame.requiredFrameView;
             const centerImageSpace = region.controlPoints[0];
-            const viewWidth = currentView.xMax - currentView.xMin;
-            const viewHeight = currentView.yMax - currentView.yMin;
-            const currentCenterPixelSpace = {x: ((centerImageSpace.x - currentView.xMin) / viewWidth * this.props.layerWidth), y: this.props.layerHeight - ((centerImageSpace.y - currentView.yMin) / viewHeight * this.props.layerHeight)};
+
+            const currentCenterPixelSpace = this.getCanvasPos(centerImageSpace.x, centerImageSpace.y);
             const newCenterPixelSpace = node.position();
             const deltaPositionImageSpace = {x: (newCenterPixelSpace.x - currentCenterPixelSpace.x) / frame.zoomLevel, y: -(newCenterPixelSpace.y - currentCenterPixelSpace.y) / frame.zoomLevel};
             // region.setControlPoint(0, {x: centerImageSpace.x + deltaPositionImageSpace.x, y: centerImageSpace.y + deltaPositionImageSpace.y});
@@ -130,20 +130,27 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
         }
     };
 
+    private getCanvasPos(imageX: number, imageY: number) {
+        const currentView = this.props.frame.requiredFrameView;
+        const viewWidth = currentView.xMax - currentView.xMin;
+        const viewHeight = currentView.yMax - currentView.yMin;
+        return {
+            x: ((imageX + 1 - currentView.xMin) / viewWidth * this.props.layerWidth),
+            y: this.props.layerHeight - ((imageY + 1 - currentView.yMin) / viewHeight * this.props.layerHeight)
+        };
+    }
+
     render() {
         const region = this.props.region;
         const frame = this.props.frame;
-        const currentView = frame.requiredFrameView;
         const centerImageSpace = region.controlPoints[0];
-        const viewWidth = currentView.xMax - currentView.xMin;
-        const viewHeight = currentView.yMax - currentView.yMin;
 
-        const centerPixelSpace = {x: ((centerImageSpace.x - currentView.xMin) / viewWidth * this.props.layerWidth), y: this.props.layerHeight - ((centerImageSpace.y - currentView.yMin) / viewHeight * this.props.layerHeight)};
+        const centerPixelSpace = this.getCanvasPos(centerImageSpace.x, centerImageSpace.y);
         const width = (region.controlPoints[1].x * frame.zoomLevel);
         const height = (region.controlPoints[1].y * frame.zoomLevel);
 
-        // Border should only be dashed for ellipses. Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
-        const borderDash = region.regionType === RegionType.ELLIPSE ? [(width + height) * 4 / 100.0] : null;
+        // Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
+        const borderDash = [(width + height) * 4 / 100.0];
 
         return (
             <Group>
@@ -156,9 +163,11 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
                     height={height}
                     offsetX={width / 2.0}
                     offsetY={height / 2.0}
-                    stroke={region.editing ? "green" : "orange"}
+                    stroke={Colors.GREEN4}
                     strokeWidth={1}
+                    dash={region.creating ? borderDash : null}
                     draggable={true}
+                    listening={this.props.listening}
                     onDragStart={this.handleDragStart}
                     onDragEnd={this.handleDragEnd}
                     onDragMove={this.handleDrag}
@@ -174,9 +183,11 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
                     x={centerPixelSpace.x + 0.5}
                     y={centerPixelSpace.y + 0.5}
                     radius={{x: width, y: height}}
-                    stroke={region.editing ? "green" : "orange"}
+                    stroke={Colors.GREEN4}
                     strokeWidth={1}
+                    dash={region.creating ? borderDash : null}
                     draggable={true}
+                    listening={this.props.listening}
                     onDragStart={this.handleDragStart}
                     onDragEnd={this.handleDragEnd}
                     onDragMove={this.handleDrag}
@@ -186,13 +197,13 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
                     ref={this.handleRef}
                 />
                 }
-                {this.selectedRegionRef && this.props.selected &&
+                {this.selectedRegionRef && this.props.selected && this.props.listening &&
                 <Transformer
                     node={this.selectedRegionRef}
                     rotateAnchorOffset={15}
                     anchorSize={6}
-                    borderStroke={region.editing ? "green" : "orange"}
-                    borderDash={borderDash}
+                    borderStroke={Colors.GREEN4}
+                    borderDash={region.regionType === RegionType.ELLIPSE ? borderDash : null}
                     keepRatio={false}
                     centeredScaling={this.centeredScaling}
                     draggable={false}

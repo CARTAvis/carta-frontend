@@ -114,7 +114,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     onZoomed = (cursorInfo: CursorInfo, delta: number) => {
         const appStore = this.props.appStore;
         if (appStore.activeFrame) {
-            const zoomSpeed = 1 + Math.abs(delta / 1000.0);
+            const zoomSpeed = 1 + Math.abs(delta / 750.0);
             const newZoom = appStore.activeFrame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
             // Shift from one-indexed image space position to zero-indexed
             appStore.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom);

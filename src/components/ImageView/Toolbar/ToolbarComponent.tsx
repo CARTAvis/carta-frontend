@@ -1,10 +1,11 @@
 import * as React from "react";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
-import {Button, ButtonGroup, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
 import {exportImage} from "components";
-import {AppStore} from "stores";
+import {AppStore, RegionMode, RegionType} from "stores";
 import "./ToolbarComponent.css";
+import {observable} from "mobx";
 
 export class ToolbarComponentProps {
     appStore: AppStore;
@@ -26,6 +27,11 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     handleZoomOutClicked = () => {
         this.props.appStore.activeFrame.setZoom(this.props.appStore.activeFrame.zoomLevel / 2.0);
+    };
+
+    handleRegionTypeClicked = (type: RegionType) => {
+        this.props.appStore.activeFrame.regionSet.setNewRegionType(type);
+        this.props.appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
     };
 
     render() {
@@ -51,25 +57,45 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         }
 
         const currentZoomSpan = <span><br/><i><small>Current: {frame.zoomLevel.toFixed(2)}x</small></i></span>;
-        const tooltipPosition: PopoverPosition = this.props.vertical ? "left" : "auto";
+        const tooltipPosition: PopoverPosition = this.props.vertical ? "left" : "bottom";
 
         const regionMenu = (
             <Menu>
-                <MenuItem icon={"square"} text="Rectangle"/>
-                <MenuItem icon={"circle"} text="Ellipse"/>
-                <MenuItem icon={"polygon-filter"} text="Polygon"/>
+                <MenuItem icon={"square"} text="Rectangle" onClick={() => this.handleRegionTypeClicked(RegionType.RECTANGLE)}/>
+                <MenuItem icon={"circle"} text="Ellipse" onClick={() => this.handleRegionTypeClicked(RegionType.ELLIPSE)}/>
+                <MenuItem disabled={true} icon={"polygon-filter"} text="Polygon"/>
             </Menu>
         );
 
+        let regionIcon: IconName;
+        switch (frame.regionSet.newRegionType) {
+            case RegionType.RECTANGLE:
+                regionIcon = "square";
+                break;
+            case RegionType.ELLIPSE:
+                regionIcon = "circle";
+                break;
+            default:
+                regionIcon = "error";
+        }
+
         return (
             <ButtonGroup className={className} style={styleProps} vertical={this.props.vertical}>
-                <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Hold to select region</small></i></span>}>
+
+                {frame.regionSet.mode === RegionMode.CREATING &&
+                <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Click to select region type</small></i></span>}>
                     <Popover content={regionMenu} position={Position.TOP} minimal={true}>
-                        <Button icon={"square"}/>
+                        <Button icon={regionIcon} active={true}/>
                     </Popover>
                 </Tooltip>
+                }
+                {frame.regionSet.mode === RegionMode.MOVING &&
+                <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Double-click to select region type</small></i></span>}>
+                    <Button icon={regionIcon} onClick={() => this.props.appStore.activeFrame.regionSet.setMode(RegionMode.CREATING)}/>
+                </Tooltip>
+                }
                 <Tooltip position={tooltipPosition} content="Select and pan mode">
-                    <Button icon={"hand"}/>
+                    <Button icon={"hand"} onClick={() => frame.regionSet.setMode(RegionMode.MOVING)} active={frame.regionSet.mode === RegionMode.MOVING}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Zoom in (Scroll wheel up){currentZoomSpan}</span>}>
                     <Button icon={"zoom-in"} onClick={this.handleZoomInClicked}/>

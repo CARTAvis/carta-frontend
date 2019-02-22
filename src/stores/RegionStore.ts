@@ -18,6 +18,7 @@ export class RegionStore {
     @observable controlPoints: Point2D[];
     @observable rotation: number;
     @observable editing: boolean;
+    @observable creating: boolean;
 
     @computed get isValid() {
         // All regions require at least one control point
@@ -30,9 +31,8 @@ export class RegionStore {
             case RegionType.POINT:
                 return this.controlPoints.length === 1;
             case RegionType.RECTANGLE:
-                return this.controlPoints.length === 2;
             case RegionType.ELLIPSE:
-                return this.controlPoints.length === 2;
+                return this.controlPoints.length === 2 && this.controlPoints[1].x > 0 && this.controlPoints[1].y > 0;
             default:
                 return false;
         }
@@ -61,6 +61,16 @@ export class RegionStore {
 
     @action setRotation = (angle: number) => {
         this.rotation = angle;
+    };
+
+    @action beginCreating = () => {
+        this.creating = true;
+        this.editing = true;
+    };
+
+    @action endCreating = () => {
+        this.creating = false;
+        this.editing = false;
     };
 
     @action beginEditing = () => {
