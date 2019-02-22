@@ -11,7 +11,7 @@ import {SpatialProfilerSettingsPanelComponent} from "./SpatialProfilerSettingsPa
 import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {clamp} from "utilities";
+import {clamp, formattedNotation} from "utilities";
 import "./SpatialProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -391,13 +391,6 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return ((array[start].x - x) < (x - array[end].x)) ? array[start] : array[end];
     };
 
-    private formattedNotation = (value: number): string => {
-        if (value === undefined) {
-            return "";
-        }
-        return value < 1e-2 ? value.toExponential(2) : value.toFixed(2);
-    };
-
     onGraphCursorMoved = _.throttle((x) => {
         this.widgetStore.setCursor(x);
     }, 100);
@@ -475,7 +468,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         this.findNearestPointByX(linePlotProps.data, this.widgetStore.cursorX) :
                         this.findNearestPointByX(linePlotProps.data, isXProfile ? this.profileStore.x : this.profileStore.y);
                     if (nearest) {
-                        linePlotProps.cursorInfo.cursorX = this.formattedNotation(nearest.x) + " px";
+                        linePlotProps.cursorInfo.cursorX = formattedNotation(nearest.x) + " px";
                         linePlotProps.cursorInfo.cursorY = nearest.y.toExponential(2);
                     }
                 }

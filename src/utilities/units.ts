@@ -23,3 +23,10 @@ export function frequencyStringFromVelocity(velocity: number, refFreq: number): 
     }
     return null;
 }
+
+export function formattedNotation(value: number): string {
+    if (value === undefined) {
+        return null;
+    }
+    return value < 1e-2 ? value.toExponential(2) : value.toFixed(2);
+}
