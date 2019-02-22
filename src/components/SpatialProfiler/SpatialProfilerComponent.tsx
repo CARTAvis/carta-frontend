@@ -11,7 +11,7 @@ import {SpatialProfilerSettingsPanelComponent} from "./SpatialProfilerSettingsPa
 import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {clamp, formattedNotation} from "utilities";
+import {clamp, formattedNotation, binarySearchByX} from "utilities";
 import "./SpatialProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -365,32 +365,6 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return this.cachedFormattedCoordinates[i];
     };
 
-    private findNearestPointByX = (array: Array<Point2D>, x: number): Point2D => {
-        if (array === undefined || array.length === 0 || x === undefined)
-            return undefined;
-
-        if (x < array[0].x)
-            return array[0];
-
-        if (x > array[array.length - 1].x)
-            return array[array.length - 1];
-
-        // binary search for the nearest point by x
-        let start = 0;
-        let end = array.length - 1;
-
-        while(start <= end) {
-            let middle = Math.floor((start + end) / 2);
-            if (x < array[middle].x)
-                end = middle - 1;
-            else if (x > array[middle].x)
-                start = middle + 1;
-            else
-                return array[middle];
-        }
-        return ((array[start].x - x) < (x - array[end].x)) ? array[start] : array[end];
-    };
-
     onGraphCursorMoved = _.throttle((x) => {
         this.widgetStore.setCursor(x);
     }, 100);
@@ -465,8 +439,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     }
 
                     let nearest = this.isMouseEntered ?
-                        this.findNearestPointByX(linePlotProps.data, this.widgetStore.cursorX) :
-                        this.findNearestPointByX(linePlotProps.data, isXProfile ? this.profileStore.x : this.profileStore.y);
+                        binarySearchByX(linePlotProps.data, this.widgetStore.cursorX) :
+                        binarySearchByX(linePlotProps.data, isXProfile ? this.profileStore.x : this.profileStore.y);
                     if (nearest) {
                         linePlotProps.cursorInfo.cursorX = formattedNotation(nearest.x) + " px";
                         linePlotProps.cursorInfo.cursorY = nearest.y.toExponential(2);

@@ -10,7 +10,7 @@ import {SpectralProfilerSettingsPanelComponent} from "./SpectralProfilerSettings
 import {FrameStore, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {clamp, formattedNotation} from "utilities";
+import {clamp, formattedNotation, binarySearchByX} from "utilities";
 import "./SpectralProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -190,32 +190,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
-    private findNearestPointByX = (array: Array<Point2D>, x: number): Point2D => {
-        if (array === undefined || array.length === 0 || x === undefined)
-            return undefined;
-
-        if (x < array[0].x)
-            return array[0];
-
-        if (x > array[array.length - 1].x)
-            return array[array.length - 1];
-
-        // binary search for the nearest point by x
-        let start = 0;
-        let end = array.length - 1;
-
-        while(start <= end) {
-            let middle = Math.floor((start + end) / 2);
-            if (x < array[middle].x)
-                end = middle - 1;
-            else if (x > array[middle].x)
-                start = middle + 1;
-            else
-                return array[middle];
-        }
-        return ((array[start].x - x) < (x - array[end].x)) ? array[start] : array[end];
-    };
-
     private getChannelValue = ():number => {
         const channel = this.frame.channel;
         if (this.widgetStore.useWcsValues && this.frame.channelInfo) {
@@ -304,8 +278,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     }
 
                     let nearest = this.isMouseEntered ?
-                        this.findNearestPointByX(linePlotProps.data, this.widgetStore.cursorX) :
-                        this.findNearestPointByX(linePlotProps.data, this.getChannelValue());
+                        binarySearchByX(linePlotProps.data, this.widgetStore.cursorX) :
+                        binarySearchByX(linePlotProps.data, this.getChannelValue());
                     if (nearest) {
                         linePlotProps.cursorInfo.cursorX = formattedNotation(nearest.x);
                         linePlotProps.cursorInfo.cursorY = nearest.y.toExponential(2);
