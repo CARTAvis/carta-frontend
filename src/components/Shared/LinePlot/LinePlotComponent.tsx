@@ -11,7 +11,7 @@ import {PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {CursorInfoComponent} from "./CursorInfo/CursorInfoComponent";
 import {Point2D} from "models";
-import {clamp} from "utilities";
+import {clamp, formattedNotation, binarySearchByX} from "utilities";
 import "./LinePlotComponent.css";
 
 enum ZoomMode {
@@ -38,12 +38,15 @@ export interface LineMarker {
     width?: number;
     draggable?: boolean;
     dragMove?: (val: number) => void;
+    isTemp?: boolean;
 }
 
 export class LinePlotComponentProps {
     width?: number;
     height?: number;
     data?: { x: number, y: number }[];
+    dataStat?: {mean: number, rms: number};
+    cursorX?: {profiler: number, image: number};
     comments?: string[];
     xMin?: number;
     xMax?: number;
@@ -62,7 +65,6 @@ export class LinePlotComponentProps {
     interpolateLines?: boolean;
     markers?: LineMarker[];
     showTopAxis?: boolean;
-    cursorInfo?: {cursorX: string, cursorY: string, rms: number, mean: number};
     topAxisTickFormatter?: (value: number, index: number, values: number[]) => string | number;
     graphClicked?: (x: number) => void;
     graphRightClicked?: (x: number) => void;
@@ -101,7 +103,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     @observable panStart = 0;
     @observable selectionBoxStart = {x: 0, y: 0};
     @observable selectionBoxEnd = {x: 0, y: 0};
-    @observable toolbarVisible = false;
+    @observable isMouseEntered = false;
 
     @computed get isSelecting() {
         return this.interactionMode === InteractionMode.SELECTING;
@@ -184,12 +186,12 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         this.height = h;
     };
 
-    @action showToolbar = () => {
-        this.toolbarVisible = true;
+    @action showMouseEnterWidget = () => {
+        this.isMouseEntered = true;
     };
 
-    @action hideToolbar = () => {
-        this.toolbarVisible = false;
+    @action hideMouseEnterWidget = () => {
+        this.isMouseEntered = false;
     };
 
     dragBoundsFuncVertical = (pos: Point2D) => {
@@ -393,11 +395,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     onMouseEnter = () => {
-        this.showToolbar();
+        this.showMouseEnterWidget();
     };
 
     onMouseLeave = () => {
-        this.hideToolbar();
+        this.hideMouseEnterWidget();
     };
 
     private getTimestamp() {
@@ -475,7 +477,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const marker = this.props.markers[i];
                 // Default marker colors if none is given
                 const markerColor = marker.color || (this.props.darkMode ? Colors.RED4 : Colors.RED2);
-                const markerOpacity = marker.opacity || 1;
+                const markerOpacity = (marker.isTemp && !this.isMouseEntered) ? 0 : (marker.opacity || 1);
                 // Separate configuration for horizontal markers
                 if (marker.horizontal) {
                     let valueCanvasSpace = Math.floor(this.getPixelForValueY(marker.value, this.props.logY)) + 0.5 * devicePixelRatio;
@@ -653,6 +655,15 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             );
         }
 
+        let cursorInfo = null;
+        if (this.props.data && this.props.cursorX) {
+            let x = this.isMouseEntered ? this.props.cursorX.profiler : this.props.cursorX.image;
+            let nearest = binarySearchByX(this.props.data, x);
+            if (nearest) {
+                cursorInfo = {cursorX: formattedNotation(nearest.x) + " px", cursorY: nearest.y.toExponential(2)};
+            }
+        }
+
         return (
             <div
                 className={"line-plot-component"}
@@ -689,13 +700,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 </Stage>
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
-                    visible={this.toolbarVisible && (this.props.data !== undefined)}
+                    visible={this.isMouseEntered && (this.props.data !== undefined)}
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />
                 <CursorInfoComponent
                     darkMode={this.props.darkMode}
-                    cursorInfo={this.props.cursorInfo}
+                    cursorInfo={cursorInfo}
+                    statInfo={this.props.dataStat}
                 />
             </div>
         );

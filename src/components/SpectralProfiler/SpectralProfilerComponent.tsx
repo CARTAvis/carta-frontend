@@ -2,7 +2,6 @@ import * as React from "react";
 import * as _ from "lodash";
 import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Chart} from "chart.js";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {LinePlotComponent, LinePlotComponentProps, PopoverSettingsComponent, PlotType} from "components/Shared";
@@ -10,7 +9,7 @@ import {SpectralProfilerSettingsPanelComponent} from "./SpectralProfilerSettings
 import {FrameStore, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {clamp, formattedNotation, binarySearchByX} from "utilities";
+import {clamp} from "utilities";
 import "./SpectralProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -33,7 +32,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
-    @observable isMouseEntered = false;
 
     @computed get widgetStore(): SpectralProfileWidgetStore {
         if (this.props.appStore && this.props.appStore.widgetsStore.spectralProfileWidgets) {
@@ -117,7 +115,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             // values are needed to be sorted in incremental order for binary search
             let values: Array<{ x: number, y: number }> = [];
             let isIncremental =
-                channelInfo.values[0] <= channelInfo.values[channelInfo.values.length-1] ? true : false;
+                channelInfo.values[0] <= channelInfo.values[channelInfo.values.length - 1] ? true : false;
             for (let i = 0; i < channelInfo.values.length; i++) {
                 let index = isIncremental ? i : channelInfo.values.length - 1 - i;
                 const x = channelInfo.values[index];
@@ -190,7 +188,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
-    private getChannelValue = ():number => {
+    private getChannelValue = (): number => {
         const channel = this.frame.channel;
         if (this.widgetStore.useWcsValues && this.frame.channelInfo) {
             const channelInfo = this.frame.channelInfo;
@@ -201,7 +199,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return channel;
     };
 
-    private getChannelLabel = ():string => {
+    private getChannelLabel = (): string => {
         if (this.widgetStore.useWcsValues && this.frame.channelInfo) {
             const channelInfo = this.frame.channelInfo;
             let channelLabel = channelInfo.channelType.name;
@@ -210,20 +208,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
             return channelLabel;
         }
-        return "";
+        return null;
     };
 
     onGraphCursorMoved = _.throttle((x) => {
         this.widgetStore.setCursor(x);
     }, 100);
-
-    onMouseEnter = () => {
-        this.isMouseEntered = true;
-    };
-
-    onMouseLeave = () => {
-        this.isMouseEntered = false;
-    };
 
     render() {
         const appStore = this.props.appStore;
@@ -247,7 +237,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             graphZoomedXY: this.widgetStore.setXYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
-            cursorInfo: {cursorX: undefined, cursorY: undefined, rms: undefined, mean: undefined},
             scrollZoom: true,
             markers: []
         };
@@ -276,34 +265,27 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         linePlotProps.yMin = this.widgetStore.minY;
                         linePlotProps.yMax = this.widgetStore.maxY;
                     }
-
-                    let nearest = this.isMouseEntered ?
-                        binarySearchByX(linePlotProps.data, this.widgetStore.cursorX) :
-                        binarySearchByX(linePlotProps.data, this.getChannelValue());
-                    if (nearest) {
-                        linePlotProps.cursorInfo.cursorX = formattedNotation(nearest.x);
-                        linePlotProps.cursorInfo.cursorY = nearest.y.toExponential(2);
-                    }
                 }
 
                 linePlotProps.xLabel = this.getChannelLabel();
+                linePlotProps.cursorX = {profiler: this.widgetStore.cursorX, image: this.getChannelValue()};
+
                 linePlotProps.markers = [{
-                    value: this.getChannelValue(),
+                    value: linePlotProps.cursorX.image,
                     id: "marker-channel",
                     draggable: false,
                     horizontal: false,
                 }];
 
-                if (this.isMouseEntered) {
-                    linePlotProps.markers.push({
-                        value: this.widgetStore.cursorX,
-                        id: "marker-profile-cursor",
-                        draggable: false,
-                        horizontal: false,
-                        color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
-                        opacity: 0.8,
-                    });
-                }
+                linePlotProps.markers.push({
+                    value: linePlotProps.cursorX.profiler,
+                    id: "marker-profile-cursor",
+                    draggable: false,
+                    horizontal: false,
+                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                    opacity: 0.8,
+                    isTemp: true,
+                });
 
                 if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
                     linePlotProps.markers.push({
@@ -325,8 +307,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                     });
 
-                    linePlotProps.cursorInfo.mean = currentPlotData.yMean;
-                    linePlotProps.cursorInfo.rms = currentPlotData.yRms;
+                    linePlotProps.dataStat = {mean: currentPlotData.yMean, rms: currentPlotData.yRms};
                 }
 
                 // TODO: Get comments from region info, rather than directly from cursor position
@@ -342,11 +323,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         return (
-            <div
-                className={"spectral-profiler-widget"}
-                onMouseEnter={this.onMouseEnter}
-                onMouseLeave={this.onMouseLeave}
-            >
+            <div className={"spectral-profiler-widget"}>
                 <div className="profile-container">
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps}/>

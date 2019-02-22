@@ -5,7 +5,8 @@ import "./CursorInfoComponent.css";
 
 export class CursorInfoComponentProps {
     darkMode: boolean;
-    cursorInfo: {cursorX: string, cursorY: string, rms: number, mean: number};
+    cursorInfo: {cursorX: string, cursorY: string};
+    statInfo: {rms: number, mean: number};
 }
 
 @observer
@@ -25,11 +26,11 @@ export class CursorInfoComponent extends React.Component<CursorInfoComponentProp
             </tr>
         ) : null;
 
-        let statInfo = (this.props.cursorInfo && this.props.cursorInfo.rms && this.props.cursorInfo.mean) ? (
+        let statInfo = (this.props.statInfo && this.props.statInfo.rms && this.props.statInfo.mean) ? (
             <tr>
                 <th><pre>Mean/RMS: </pre></th>
                 <td>
-                    <pre>{formattedNotation(this.props.cursorInfo.mean) + " / " + formattedNotation(this.props.cursorInfo.rms)}</pre>
+                    <pre>{formattedNotation(this.props.statInfo.mean) + " / " + formattedNotation(this.props.statInfo.rms)}</pre>
                 </td>
             </tr>
         ) : null;
