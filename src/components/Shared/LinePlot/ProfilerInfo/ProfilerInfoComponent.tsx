@@ -19,7 +19,7 @@ export class ProfilerInfoComponent extends React.Component<ProfilerInfoComponent
 
         let cursorInfo = (this.props.cursorInfo && this.props.cursorInfo.label && this.props.cursorInfo.cursorX && this.props.cursorInfo.cursorY) ? (
             <tr>
-                <th><pre>{this.props.cursorInfo.label}</pre></th>
+                <td><pre>{this.props.cursorInfo.label}</pre></td>
                 <td>
                     <pre>{"(" + this.props.cursorInfo.cursorX + ", " + this.props.cursorInfo.cursorY + ")"}</pre>
                 </td>
@@ -28,7 +28,7 @@ export class ProfilerInfoComponent extends React.Component<ProfilerInfoComponent
 
         let statInfo = (this.props.statInfo && this.props.statInfo.rms && this.props.statInfo.mean) ? (
             <tr>
-                <th><pre>Mean/RMS: </pre></th>
+                <td><pre>Mean/RMS: </pre></td>
                 <td>
                     <pre>{formattedNotation(this.props.statInfo.mean) + " / " + formattedNotation(this.props.statInfo.rms)}</pre>
                 </td>
