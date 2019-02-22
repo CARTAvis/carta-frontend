@@ -12,13 +12,13 @@
         padding-right: 8px;
         padding-top: 8px;
         &.online {
-            color: $green1;
+            color: $green4;
         }
         &.warning {
-            color: $orange1;
+            color: $orange4;
         }
         &.offline {
-            color: $red1;
+            color: $red4;
         }
     }
 }
