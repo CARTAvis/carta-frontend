@@ -166,7 +166,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             if (this.creatingRegion.isValid) {
                 this.creatingRegion.endCreating();
                 this.props.frame.regionSet.selectRegion(this.creatingRegion);
-                console.log(this.creatingRegion.controlPoints[0]);
                 this.creatingRegion = null;
             } else {
                 this.props.frame.regionSet.deleteRegion(this.creatingRegion);

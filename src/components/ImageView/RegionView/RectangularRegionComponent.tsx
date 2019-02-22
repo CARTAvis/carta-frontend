@@ -153,47 +153,76 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
         return (
             <Group>
                 {region.regionType === RegionType.RECTANGLE &&
-                <Rect
-                    rotation={region.rotation}
-                    x={centerPixelSpace.x + 0.5}
-                    y={centerPixelSpace.y + 0.5}
-                    width={width}
-                    height={height}
-                    offsetX={width / 2.0}
-                    offsetY={height / 2.0}
-                    stroke={Colors.GREEN4}
-                    strokeWidth={1}
-                    dash={region.creating ? borderDash : null}
-                    draggable={true}
-                    listening={this.props.listening}
-                    onDragStart={this.handleDragStart}
-                    onDragEnd={this.handleDragEnd}
-                    onDragMove={this.handleDrag}
-                    onClick={this.handleClick}
-                    fillEnabled={true}
-                    perfectDrawEnabled={false}
-                    ref={this.handleRef}
-                />
+                <Group>
+                    <Rect
+                        rotation={region.rotation}
+                        x={centerPixelSpace.x + 0.5}
+                        y={centerPixelSpace.y + 0.5}
+                        width={width}
+                        height={height}
+                        offsetX={width / 2.0}
+                        offsetY={height / 2.0}
+                        stroke={Colors.WHITE}
+                        dash={region.creating ? borderDash : null}
+                        strokeWidth={3}
+                        listening={false}
+                        perfectDrawEnabled={false}
+                    />
+                    <Rect
+                        rotation={region.rotation}
+                        x={centerPixelSpace.x + 0.5}
+                        y={centerPixelSpace.y + 0.5}
+                        width={width}
+                        height={height}
+                        offsetX={width / 2.0}
+                        offsetY={height / 2.0}
+                        stroke={Colors.BLACK}
+                        strokeWidth={1}
+                        dash={region.creating ? borderDash : null}
+                        draggable={true}
+                        listening={this.props.listening}
+                        onDragStart={this.handleDragStart}
+                        onDragEnd={this.handleDragEnd}
+                        onDragMove={this.handleDrag}
+                        onClick={this.handleClick}
+                        perfectDrawEnabled={false}
+                        ref={this.handleRef}
+                    />
+
+                </Group>
                 }
                 {region.regionType === RegionType.ELLIPSE &&
-                <Ellipse
-                    rotation={region.rotation}
-                    x={centerPixelSpace.x + 0.5}
-                    y={centerPixelSpace.y + 0.5}
-                    radius={{x: width, y: height}}
-                    stroke={Colors.GREEN4}
-                    strokeWidth={1}
-                    dash={region.creating ? borderDash : null}
-                    draggable={true}
-                    listening={this.props.listening}
-                    onDragStart={this.handleDragStart}
-                    onDragEnd={this.handleDragEnd}
-                    onDragMove={this.handleDrag}
-                    onClick={this.handleClick}
-                    fillEnabled={true}
-                    perfectDrawEnabled={false}
-                    ref={this.handleRef}
-                />
+                <Group>
+                    <Ellipse
+                        rotation={region.rotation}
+                        x={centerPixelSpace.x + 0.5}
+                        y={centerPixelSpace.y + 0.5}
+                        radius={{x: width, y: height}}
+                        stroke={Colors.WHITE}
+                        strokeWidth={3}
+                        dash={region.creating ? borderDash : null}
+                        listening={false}
+                        perfectDrawEnabled={false}
+                    />
+                    <Ellipse
+                        rotation={region.rotation}
+                        x={centerPixelSpace.x + 0.5}
+                        y={centerPixelSpace.y + 0.5}
+                        radius={{x: width, y: height}}
+                        stroke={Colors.BLACK}
+                        strokeWidth={1}
+                        dash={region.creating ? borderDash : null}
+                        draggable={true}
+                        listening={this.props.listening}
+                        onDragStart={this.handleDragStart}
+                        onDragEnd={this.handleDragEnd}
+                        onDragMove={this.handleDrag}
+                        onClick={this.handleClick}
+                        fillEnabled={true}
+                        perfectDrawEnabled={false}
+                        ref={this.handleRef}
+                    />
+                </Group>
                 }
                 {this.selectedRegionRef && this.props.selected && this.props.listening &&
                 <Transformer
@@ -205,7 +234,7 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
                     keepRatio={false}
                     centeredScaling={this.centeredScaling}
                     draggable={false}
-                    borderEnabled={true}
+                    borderEnabled={false}
                     onTransformStart={this.handleTransformStart}
                     onTransform={this.handleTransform}
                     onTransformEnd={this.handleTransformEnd}

@@ -70,7 +70,6 @@ export class RegionSetStore {
     };
 
     @action setNewRegionType = (type: RegionType) => {
-        console.log({type});
         this.newRegionType = type;
     };
 
