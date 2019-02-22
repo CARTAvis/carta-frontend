@@ -5,7 +5,7 @@ import "./ProfilerInfoComponent.css";
 
 export class ProfilerInfoComponentProps {
     darkMode: boolean;
-    cursorInfo: {cursorX: string, cursorY: string};
+    cursorInfo: {label: string, cursorX: string, cursorY: string};
     statInfo: {rms: number, mean: number};
 }
 
@@ -17,9 +17,9 @@ export class ProfilerInfoComponent extends React.Component<ProfilerInfoComponent
             className += " bp3-dark";
         }
 
-        let cursorInfo = (this.props.cursorInfo && this.props.cursorInfo.cursorX && this.props.cursorInfo.cursorY) ? (
+        let cursorInfo = (this.props.cursorInfo && this.props.cursorInfo.label && this.props.cursorInfo.cursorX && this.props.cursorInfo.cursorY) ? (
             <tr>
-                <th><pre>Cursor: </pre></th>
+                <th><pre>{this.props.cursorInfo.label}</pre></th>
                 <td>
                     <pre>{"(" + this.props.cursorInfo.cursorX + ", " + this.props.cursorInfo.cursorY + ")"}</pre>
                 </td>
