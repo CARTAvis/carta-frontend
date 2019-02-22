@@ -33,7 +33,6 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
 
         if (mouseEvent.button === 0) {
             // Select click
-            console.log("select click");
             if (this.props.onSelect) {
                 this.props.onSelect(this.props.region);
             }
@@ -124,7 +123,6 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
             const currentCenterPixelSpace = this.getCanvasPos(centerImageSpace.x, centerImageSpace.y);
             const newCenterPixelSpace = node.position();
             const deltaPositionImageSpace = {x: (newCenterPixelSpace.x - currentCenterPixelSpace.x) / frame.zoomLevel, y: -(newCenterPixelSpace.y - currentCenterPixelSpace.y) / frame.zoomLevel};
-            // region.setControlPoint(0, {x: centerImageSpace.x + deltaPositionImageSpace.x, y: centerImageSpace.y + deltaPositionImageSpace.y});
             const newPosition = {x: centerImageSpace.x + deltaPositionImageSpace.x, y: centerImageSpace.y + deltaPositionImageSpace.y};
             region.setControlPoint(0, newPosition);
         }
