@@ -9,7 +9,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
 import {PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
-import {CursorInfoComponent} from "./CursorInfo/CursorInfoComponent";
+import {ProfilerInfoComponent} from "./ProfilerInfo/ProfilerInfoComponent";
 import {Point2D} from "models";
 import {clamp, formattedNotation, binarySearchByX} from "utilities";
 import "./LinePlotComponent.css";
@@ -704,7 +704,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />
-                <CursorInfoComponent
+                <ProfilerInfoComponent
                     darkMode={this.props.darkMode}
                     cursorInfo={cursorInfo}
                     statInfo={this.props.dataStat}

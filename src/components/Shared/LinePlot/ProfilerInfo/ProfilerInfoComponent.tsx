@@ -1,18 +1,18 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {formattedNotation} from "utilities";
-import "./CursorInfoComponent.css";
+import "./ProfilerInfoComponent.css";
 
-export class CursorInfoComponentProps {
+export class ProfilerInfoComponentProps {
     darkMode: boolean;
     cursorInfo: {cursorX: string, cursorY: string};
     statInfo: {rms: number, mean: number};
 }
 
 @observer
-export class CursorInfoComponent extends React.Component<CursorInfoComponentProps> {
+export class ProfilerInfoComponent extends React.Component<ProfilerInfoComponentProps> {
     render() {
-        let className = "profiler-cursorinfo";
+        let className = "profiler-info";
         if (this.props.darkMode) {
             className += " bp3-dark";
         }
@@ -37,7 +37,7 @@ export class CursorInfoComponent extends React.Component<CursorInfoComponentProp
 
         return (
             <div className={className}>
-                <table className="cursor-display">
+                <table className="info-display">
                     <tbody>
                         {cursorInfo}
                         {statInfo}
