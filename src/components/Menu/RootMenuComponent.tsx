@@ -151,10 +151,10 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 connectivityClass += " warning";
                 break;
             case ConnectionStatus.CLOSED:
+            default:
                 tooltip = "Disconnected from server";
                 connectivityClass += " offline";
                 break;
-
         }
         connectivityClass += " online";
 
