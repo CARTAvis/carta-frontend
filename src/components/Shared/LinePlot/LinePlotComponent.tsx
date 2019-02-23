@@ -661,7 +661,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             let nearest = binarySearchByX(this.props.data, x);
             if (nearest) {
                 cursorInfo = {
-                    label: this.isMouseEntered ? "Cursor: " : "Data: ",
+                    label: this.isMouseEntered ? "Cursor:" : "Data:",
                     cursorX: formattedNotation(nearest.x) + " px",
                     cursorY: nearest.y.toExponential(2)
                 };

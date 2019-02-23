@@ -28,7 +28,7 @@ export class ProfilerInfoComponent extends React.Component<ProfilerInfoComponent
 
         let statInfo = (this.props.statInfo && this.props.statInfo.rms && this.props.statInfo.mean) ? (
             <tr>
-                <td><pre>Mean/RMS: </pre></td>
+                <td><pre>Mean/RMS:</pre></td>
                 <td>
                     <pre>{formattedNotation(this.props.statInfo.mean) + " / " + formattedNotation(this.props.statInfo.rms)}</pre>
                 </td>
