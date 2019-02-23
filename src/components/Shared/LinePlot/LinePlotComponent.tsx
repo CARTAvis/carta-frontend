@@ -38,7 +38,7 @@ export interface LineMarker {
     width?: number;
     draggable?: boolean;
     dragMove?: (val: number) => void;
-    isTemp?: boolean;
+    isMouseMove?: boolean;
 }
 
 export class LinePlotComponentProps {
@@ -477,7 +477,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const marker = this.props.markers[i];
                 // Default marker colors if none is given
                 const markerColor = marker.color || (this.props.darkMode ? Colors.RED4 : Colors.RED2);
-                const markerOpacity = (marker.isTemp && !this.isMouseEntered) ? 0 : (marker.opacity || 1);
+                const markerOpacity = (marker.isMouseMove && !this.isMouseEntered) ? 0 : (marker.opacity || 1);
                 // Separate configuration for horizontal markers
                 if (marker.horizontal) {
                     let valueCanvasSpace = Math.floor(this.getPixelForValueY(marker.value, this.props.logY)) + 0.5 * devicePixelRatio;

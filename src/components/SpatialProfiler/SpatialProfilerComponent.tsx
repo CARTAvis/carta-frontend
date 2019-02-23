@@ -440,12 +440,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
                 linePlotProps.markers.push({
                     value: linePlotProps.cursorX.profiler,
-                    id: "marker-profile-cursor",
+                    id: "marker-profiler-cursor",
                     draggable: false,
                     horizontal: false,
                     color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
                     opacity: 0.8,
-                    isTemp: true,
+                    isMouseMove: true,
                 });
 
                 if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
