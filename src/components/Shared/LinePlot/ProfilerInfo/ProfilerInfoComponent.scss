@@ -1,12 +1,16 @@
 .profiler-info {
     position: absolute;
     bottom: 0;
-    left: 0;
+    left: 5px;
     margin: 0 0 0 0;
 
     .info-display {
-        th {
+        td {
             text-align: left;
+        }
+
+        .td-label {
+            width: 50px;
         }
 
         pre {
