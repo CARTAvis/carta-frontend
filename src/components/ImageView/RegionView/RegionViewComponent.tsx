@@ -27,6 +27,7 @@ export interface RegionViewComponentProps {
 @observer
 export class RegionViewComponent extends React.Component<RegionViewComponentProps> {
     @observable creatingRegion: RegionStore;
+    private regionStartPoint: Point2D;
 
     updateCursorPos = _.throttle((x: number, y: number) => {
         if (this.props.frame.wcsInfo && this.props.onCursorMoved) {
@@ -144,9 +145,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const regionType = frame.regionSet.newRegionType;
 
         const cursorPosImageSpace = this.getImagePos(konvaEvent.evt.offsetX, konvaEvent.evt.offsetY);
-        // Shift back to zero-based
-        //cursorPosImageSpace.x += 1;
-        //cursorPosImageSpace.y += 1;
         switch (regionType) {
             case RegionType.RECTANGLE:
                 this.creatingRegion = frame.regionSet.addRectangularRegion(cursorPosImageSpace, 0, 0);
@@ -157,7 +155,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             default:
                 return;
         }
-
+        this.regionStartPoint = cursorPosImageSpace;
         this.creatingRegion.beginCreating();
     };
 
@@ -202,17 +200,37 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     handleMove = (konvaEvent) => {
         if (this.props.frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion) {
             const cursorPosImageSpace = this.getImagePos(konvaEvent.evt.offsetX, konvaEvent.evt.offsetY);
-            const dx = this.creatingRegion.controlPoints[0].x - cursorPosImageSpace.x;
-            const dy = this.creatingRegion.controlPoints[0].y - cursorPosImageSpace.y;
-            switch (this.creatingRegion.regionType) {
-                case RegionType.RECTANGLE:
-                    this.creatingRegion.setControlPoint(1, {x: 2 * Math.abs(dx), y: 2 * Math.abs(dy)});
-                    break;
-                case RegionType.ELLIPSE:
-                    this.creatingRegion.setControlPoint(1, {x: Math.abs(dx), y: Math.abs(dy)});
-                    break;
-                default:
-                    break;
+            let dx = (cursorPosImageSpace.x - this.regionStartPoint.x);
+            let dy = (cursorPosImageSpace.y - this.regionStartPoint.y);
+            if (konvaEvent.evt.shiftKey) {
+                const maxDiff = Math.max(Math.abs(dx), Math.abs(dy));
+                dx = Math.sign(dx) * maxDiff;
+                dy = Math.sign(dy) * maxDiff;
+            }
+            if (konvaEvent.evt.ctrlKey) {
+                const endPoint = {x: this.regionStartPoint.x + dx, y: this.regionStartPoint.y + dy};
+                const center = {x: (this.regionStartPoint.x + endPoint.x) / 2.0, y: (this.regionStartPoint.y + endPoint.y) / 2.0};
+                switch (this.creatingRegion.regionType) {
+                    case RegionType.RECTANGLE:
+                        this.creatingRegion.setControlPoints([center, {x: Math.abs(dx), y: Math.abs(dy)}]);
+                        break;
+                    case RegionType.ELLIPSE:
+                        this.creatingRegion.setControlPoints([center, {x: Math.abs(dx) / 2.0, y: Math.abs(dy) / 2.0}]);
+                        break;
+                    default:
+                        break;
+                }
+            } else {
+                switch (this.creatingRegion.regionType) {
+                    case RegionType.RECTANGLE:
+                        this.creatingRegion.setControlPoints([this.regionStartPoint, {x: 2 * Math.abs(dx), y: 2 * Math.abs(dy)}]);
+                        break;
+                    case RegionType.ELLIPSE:
+                        this.creatingRegion.setControlPoints([this.regionStartPoint, {x: Math.abs(dx), y: Math.abs(dy)}]);
+                        break;
+                    default:
+                        break;
+                }
             }
         } else if (!this.props.cursorFrozen) {
             this.updateCursorPos(konvaEvent.evt.offsetX, konvaEvent.evt.offsetY);
@@ -278,7 +296,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 className={className}
                 width={this.props.width}
                 height={this.props.height}
-                style={{left: this.props.left, top: this.props.top}}
+                style={{left: this.props.left, top: this.props.top, cursor: frame.regionSet.mode === RegionMode.CREATING ? "crosshair" : null}}
                 onClick={this.handleClick}
                 onWheel={this.handleWheel}
                 onMouseMove={this.handleMove}
