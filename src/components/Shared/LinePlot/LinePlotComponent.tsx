@@ -367,7 +367,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     onStageWheel = (ev) => {
-        if (this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
+        if (this.props.data && this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
             const wheelEvent: WheelEvent = ev.evt;
             const chartArea = this.chartArea;
             const lineHeight = 15;
