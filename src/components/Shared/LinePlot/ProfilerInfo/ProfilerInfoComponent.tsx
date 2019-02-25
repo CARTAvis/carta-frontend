@@ -19,7 +19,9 @@ export class ProfilerInfoComponent extends React.Component<ProfilerInfoComponent
 
         let cursorInfo = (this.props.cursorInfo && this.props.cursorInfo.label && this.props.cursorInfo.cursorX && this.props.cursorInfo.cursorY) ? (
             <tr>
-                <td className = "td-label"><pre>{this.props.cursorInfo.label}</pre></td>
+                <td className="td-label">
+                    <pre>{this.props.cursorInfo.label}</pre>
+                </td>
                 <td>
                     <pre>{"(" + this.props.cursorInfo.cursorX + ", " + this.props.cursorInfo.cursorY + ")"}</pre>
                 </td>

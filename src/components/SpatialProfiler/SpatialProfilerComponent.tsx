@@ -365,7 +365,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
     onGraphCursorMoved = _.throttle((x) => {
         this.widgetStore.setCursor(x);
-    }, 100);
+    }, 33);
 
     render() {
         const appStore = this.props.appStore;
