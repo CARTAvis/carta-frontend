@@ -267,7 +267,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     }
                 }
 
-                linePlotProps.xLabel = this.getChannelLabel();
+                const wcsLabel = this.getChannelLabel();
+                if (wcsLabel) {
+                    linePlotProps.xLabel = this.getChannelLabel();
+                }
                 linePlotProps.cursorX = {profiler: this.widgetStore.cursorX, image: this.getChannelValue()};
 
                 linePlotProps.markers = [{
