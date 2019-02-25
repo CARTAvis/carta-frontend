@@ -46,7 +46,7 @@ export class LinePlotComponentProps {
     height?: number;
     data?: { x: number, y: number }[];
     dataStat?: {mean: number, rms: number};
-    cursorX?: {profiler: number, image: number};
+    cursorX?: {profiler: number, image: number, unit: string};
     comments?: string[];
     xMin?: number;
     xMax?: number;
@@ -241,14 +241,16 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     onStageMouseDown = (ev) => {
-        const mouseEvent: MouseEvent = ev.evt;
-        this.stageClickStartX = mouseEvent.offsetX;
-        this.stageClickStartY = mouseEvent.offsetY;
-        const modifierPressed = mouseEvent.ctrlKey || mouseEvent.shiftKey || mouseEvent.altKey;
-        if (this.hoveredMarker === undefined && !modifierPressed) {
-            this.startSelection(mouseEvent.offsetX, mouseEvent.offsetY);
-        } else if (modifierPressed) {
-            this.startPanning(mouseEvent.offsetX);
+        if (this.props.data) {
+            const mouseEvent: MouseEvent = ev.evt;
+            this.stageClickStartX = mouseEvent.offsetX;
+            this.stageClickStartY = mouseEvent.offsetY;
+            const modifierPressed = mouseEvent.ctrlKey || mouseEvent.shiftKey || mouseEvent.altKey;
+            if (this.hoveredMarker === undefined && !modifierPressed) {
+                this.startSelection(mouseEvent.offsetX, mouseEvent.offsetY);
+            } else if (modifierPressed) {
+                this.startPanning(mouseEvent.offsetX);
+            }
         }
     };
 
@@ -257,38 +259,40 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     onStageMouseUp = (ev) => {
-        const mouseEvent: MouseEvent = ev.evt;
+        if (this.props.data) {
+            const mouseEvent: MouseEvent = ev.evt;
 
-        // Redirect clicks
-        const mouseMoveDist = {x: Math.abs(mouseEvent.offsetX - this.stageClickStartX), y: Math.abs(mouseEvent.offsetY - this.stageClickStartY)};
-        if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
-            this.onStageClick(ev);
-        } else {
-            this.stageClickStartX = undefined;
-            this.stageClickStartY = undefined;
-            if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
-                let minCanvasSpace = Math.min(this.selectionBoxStart.x, this.selectionBoxEnd.x);
-                let maxCanvasSpace = Math.max(this.selectionBoxStart.x, this.selectionBoxEnd.x);
-                let minX = this.getValueForPixelX(minCanvasSpace);
-                let maxX = this.getValueForPixelX(maxCanvasSpace);
+            // Redirect clicks
+            const mouseMoveDist = {x: Math.abs(mouseEvent.offsetX - this.stageClickStartX), y: Math.abs(mouseEvent.offsetY - this.stageClickStartY)};
+            if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
+                this.onStageClick(ev);
+            } else {
+                this.stageClickStartX = undefined;
+                this.stageClickStartY = undefined;
+                if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
+                    let minCanvasSpace = Math.min(this.selectionBoxStart.x, this.selectionBoxEnd.x);
+                    let maxCanvasSpace = Math.max(this.selectionBoxStart.x, this.selectionBoxEnd.x);
+                    let minX = this.getValueForPixelX(minCanvasSpace);
+                    let maxX = this.getValueForPixelX(maxCanvasSpace);
 
-                minCanvasSpace = Math.min(this.selectionBoxStart.y, this.selectionBoxEnd.y);
-                maxCanvasSpace = Math.max(this.selectionBoxStart.y, this.selectionBoxEnd.y);
-                // Canvas space y-axis is inverted, so min/max are switched when transforming to graph space
-                let minY = this.getValueForPixelY(maxCanvasSpace, this.props.logY);
-                let maxY = this.getValueForPixelY(minCanvasSpace, this.props.logY);
+                    minCanvasSpace = Math.min(this.selectionBoxStart.y, this.selectionBoxEnd.y);
+                    maxCanvasSpace = Math.max(this.selectionBoxStart.y, this.selectionBoxEnd.y);
+                    // Canvas space y-axis is inverted, so min/max are switched when transforming to graph space
+                    let minY = this.getValueForPixelY(maxCanvasSpace, this.props.logY);
+                    let maxY = this.getValueForPixelY(minCanvasSpace, this.props.logY);
 
-                if (this.zoomMode === ZoomMode.X) {
-                    this.props.graphZoomedX(minX, maxX);
-                }
-                if (this.zoomMode === ZoomMode.Y) {
-                    this.props.graphZoomedY(minY, maxY);
-                } else if (this.zoomMode === ZoomMode.XY) {
-                    this.props.graphZoomedXY(minX, maxX, minY, maxY);
+                    if (this.zoomMode === ZoomMode.X) {
+                        this.props.graphZoomedX(minX, maxX);
+                    }
+                    if (this.zoomMode === ZoomMode.Y) {
+                        this.props.graphZoomedY(minY, maxY);
+                    } else if (this.zoomMode === ZoomMode.XY) {
+                        this.props.graphZoomedXY(minX, maxX, minY, maxY);
+                    }
                 }
             }
+            this.endInteractions();
         }
-        this.endInteractions();
     };
 
     @action updateSelection(x: number, y: number) {
@@ -300,25 +304,27 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     onStageMouseMove = (ev) => {
-        const mouseEvent: MouseEvent = ev.evt;
-        const chartArea = this.chartArea;
-        let mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
-        let mousePosY = clamp(mouseEvent.offsetY, chartArea.top - 1, chartArea.bottom + 1);
-        if (this.isSelecting) {
-            this.updateSelection(mousePosX, mousePosY);
-        } else if (this.isPanning && this.props.graphZoomedX) {
-            const currentPan = mousePosX;
-            const prevPanGraphSpace = this.getValueForPixelX(this.panPrevious);
-            const currentPanGraphSpace = this.getValueForPixelX(currentPan);
-            const delta = (currentPanGraphSpace - prevPanGraphSpace);
-            this.updatePan(currentPan);
-            // Shift zoom to counteract drag's delta
-            this.props.graphZoomedX(this.props.xMin - delta, this.props.xMax - delta);
-        }
-        // Cursor move updates
-        if (this.interactionMode === InteractionMode.NONE && this.props.graphCursorMoved) {
-            const cursorPosGraphSpace = this.getValueForPixelX(mousePosX);
-            this.props.graphCursorMoved(cursorPosGraphSpace);
+        if (this.props.data) {
+            const mouseEvent: MouseEvent = ev.evt;
+            const chartArea = this.chartArea;
+            let mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
+            let mousePosY = clamp(mouseEvent.offsetY, chartArea.top - 1, chartArea.bottom + 1);
+            if (this.isSelecting) {
+                this.updateSelection(mousePosX, mousePosY);
+            } else if (this.isPanning && this.props.graphZoomedX) {
+                const currentPan = mousePosX;
+                const prevPanGraphSpace = this.getValueForPixelX(this.panPrevious);
+                const currentPanGraphSpace = this.getValueForPixelX(currentPan);
+                const delta = (currentPanGraphSpace - prevPanGraphSpace);
+                this.updatePan(currentPan);
+                // Shift zoom to counteract drag's delta
+                this.props.graphZoomedX(this.props.xMin - delta, this.props.xMax - delta);
+            }
+            // Cursor move updates
+            if (this.interactionMode === InteractionMode.NONE && this.props.graphCursorMoved) {
+                const cursorPosGraphSpace = this.getValueForPixelX(mousePosX);
+                this.props.graphCursorMoved(cursorPosGraphSpace);
+            }
         }
     };
 
@@ -371,7 +377,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     onStageWheel = (ev) => {
-        if (this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
+        if (this.props.data && this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
             const wheelEvent: WheelEvent = ev.evt;
             const chartArea = this.chartArea;
             const lineHeight = 15;
@@ -662,7 +668,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             if (nearest) {
                 cursorInfo = {
                     label: this.isMouseEntered ? "Cursor:" : "Data:",
-                    cursorX: formattedNotation(nearest.x) + " px",
+                    cursorX: formattedNotation(nearest.x) + " " + this.props.cursorX.unit,
                     cursorY: nearest.y.toExponential(2)
                 };
             }
