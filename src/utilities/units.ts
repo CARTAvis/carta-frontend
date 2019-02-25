@@ -1,3 +1,5 @@
+import {Point2D} from "models";
+
 export function velocityFromFrequency(freq: number, refFreq: number): number {
     const c = 299792458;
     return c * (1.0 - freq / refFreq);
@@ -22,4 +24,11 @@ export function frequencyStringFromVelocity(velocity: number, refFreq: number): 
         return `Frequency:\u00a0${(frequencyVal * 1e-9).toFixed(4)}\u00a0GHz`;
     }
     return null;
+}
+
+export function formattedNotation(value: number): string {
+    if (value === undefined) {
+        return null;
+    }
+    return value < 1e-2 ? value.toExponential(2) : value.toFixed(2);
 }

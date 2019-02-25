@@ -1,8 +1,8 @@
 import * as React from "react";
+import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Chart} from "chart.js";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {LinePlotComponent, LinePlotComponentProps, PopoverSettingsComponent, PlotType} from "components/Shared";
@@ -363,6 +363,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return this.cachedFormattedCoordinates[i];
     };
 
+    onGraphCursorMoved = _.throttle((x) => {
+        this.widgetStore.setCursor(x);
+    }, 33);
+
     render() {
         const appStore = this.props.appStore;
         if (!this.widgetStore) {
@@ -386,6 +390,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             graphZoomedY: this.widgetStore.setYBounds,
             graphZoomedXY: this.widgetStore.setXYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
+            graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true
         };
 
@@ -422,13 +427,26 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         linePlotProps.yMax = this.widgetStore.maxY;
                     }
                 }
-                const markerValue = isXProfile ? this.profileStore.x : this.profileStore.y;
+
+                linePlotProps.cursorX = {profiler: this.widgetStore.cursorX,
+                    image: isXProfile ? this.profileStore.x : this.profileStore.y};
+
                 linePlotProps.markers = [{
-                    value: markerValue,
-                    id: "marker-min",
+                    value: linePlotProps.cursorX.image,
+                    id: "marker-image-cursor",
                     draggable: false,
                     horizontal: false,
                 }];
+
+                linePlotProps.markers.push({
+                    value: linePlotProps.cursorX.profiler,
+                    id: "marker-profiler-cursor",
+                    draggable: false,
+                    horizontal: false,
+                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                    opacity: 0.8,
+                    isMouseMove: true,
+                });
 
                 if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
                     linePlotProps.markers.push({
@@ -449,6 +467,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         opacity: 0.2,
                         color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                     });
+
+                    linePlotProps.dataStat = {mean: currentPlotData.yMean, rms: currentPlotData.yRms};
                 }
 
                 // TODO: Get comments from region info, rather than directly from cursor position
