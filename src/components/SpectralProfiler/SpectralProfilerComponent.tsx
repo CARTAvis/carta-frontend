@@ -1,7 +1,7 @@
 import * as React from "react";
+import * as _ from "lodash";
 import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Chart} from "chart.js";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {LinePlotComponent, LinePlotComponentProps, PopoverSettingsComponent, PlotType} from "components/Shared";
@@ -112,10 +112,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             let ySum2 = 0;
             let yCount = 0;
 
+            // values are needed to be sorted in incremental order for binary search
             let values: Array<{ x: number, y: number }> = [];
+            let isIncremental =
+                channelInfo.values[0] <= channelInfo.values[channelInfo.values.length - 1] ? true : false;
             for (let i = 0; i < channelInfo.values.length; i++) {
-                const x = channelInfo.values[i];
-                const y = coordinateData.vals[i];
+                let index = isIncremental ? i : channelInfo.values.length - 1 - i;
+                const x = channelInfo.values[index];
+                const y = coordinateData.vals[index];
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
                 if (x < xMin || x > xMax) {
@@ -184,6 +188,33 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
+    private getChannelValue = (): number => {
+        const channel = this.frame.channel;
+        if (this.widgetStore.useWcsValues && this.frame.channelInfo) {
+            const channelInfo = this.frame.channelInfo;
+            if (channel >= 0 && channel < channelInfo.values.length) {
+                return channelInfo.values[channel];
+            }
+        }
+        return channel;
+    };
+
+    private getChannelLabel = (): string => {
+        if (this.widgetStore.useWcsValues && this.frame.channelInfo) {
+            const channelInfo = this.frame.channelInfo;
+            let channelLabel = channelInfo.channelType.name;
+            if (channelInfo.channelType.unit && channelInfo.channelType.unit.length) {
+                channelLabel += ` (${channelInfo.channelType.unit})`;
+            }
+            return channelLabel;
+        }
+        return null;
+    };
+
+    onGraphCursorMoved = _.throttle((x) => {
+        this.widgetStore.setCursor(x);
+    }, 100);
+
     render() {
         const appStore = this.props.appStore;
         if (!this.widgetStore) {
@@ -205,6 +236,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             graphZoomedY: this.widgetStore.setYBounds,
             graphZoomedXY: this.widgetStore.setXYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
+            graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true,
             markers: []
         };
@@ -235,32 +267,25 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     }
                 }
 
-                const channel = this.frame.channel;
-                if (this.widgetStore.useWcsValues) {
-                    const channelInfo = this.frame.channelInfo;
-                    if (channelInfo) {
-                        if (channel >= 0 && channel < channelInfo.values.length) {
-                            linePlotProps.markers = [{
-                                value: channelInfo.values[channel],
-                                id: "marker-channel",
-                                draggable: false,
-                                horizontal: false,
-                            }];
-                        }
-                        let channelLabel = channelInfo.channelType.name;
-                        if (channelInfo.channelType.unit && channelInfo.channelType.unit.length) {
-                            channelLabel += ` (${channelInfo.channelType.unit})`;
-                        }
-                        linePlotProps.xLabel = channelLabel;
-                    }
-                } else {
-                    linePlotProps.markers = [{
-                        value: channel,
-                        id: "marker-channel",
-                        draggable: false,
-                        horizontal: false,
-                    }];
-                }
+                linePlotProps.xLabel = this.getChannelLabel();
+                linePlotProps.cursorX = {profiler: this.widgetStore.cursorX, image: this.getChannelValue()};
+
+                linePlotProps.markers = [{
+                    value: linePlotProps.cursorX.image,
+                    id: "marker-channel",
+                    draggable: false,
+                    horizontal: false,
+                }];
+
+                linePlotProps.markers.push({
+                    value: linePlotProps.cursorX.profiler,
+                    id: "marker-profiler-cursor",
+                    draggable: false,
+                    horizontal: false,
+                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                    opacity: 0.8,
+                    isMouseMove: true,
+                });
 
                 if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
                     linePlotProps.markers.push({
@@ -281,7 +306,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         opacity: 0.2,
                         color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                     });
+
+                    linePlotProps.dataStat = {mean: currentPlotData.yMean, rms: currentPlotData.yRms};
                 }
+
                 // TODO: Get comments from region info, rather than directly from cursor position
                 if (appStore.cursorInfo) {
                     const comments: string[] = [];

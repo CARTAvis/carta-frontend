@@ -9,6 +9,7 @@ export class SpectralProfileWidgetStore {
     @observable maxX: number;
     @observable minY: number;
     @observable maxY: number;
+    @observable cursorX: number;
     @observable channel: number;
     @observable plotType: PlotType;
     @observable settingsPanelVisible: boolean;
@@ -108,6 +109,10 @@ export class SpectralProfileWidgetStore {
 
     @action setChannel = (channel: number) => {
         this.channel = channel;
+    };
+
+    @action setCursor = (cursorVal: number) => {
+        this.cursorX = cursorVal;
     };
 
     constructor(coordinate: string = "z", fileId: number = -1, regionId: number = 0) {
