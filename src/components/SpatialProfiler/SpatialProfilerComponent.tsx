@@ -428,8 +428,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     }
                 }
 
-                linePlotProps.cursorX = {profiler: this.widgetStore.cursorX,
-                    image: isXProfile ? this.profileStore.x : this.profileStore.y};
+                linePlotProps.cursorX = {
+                    profiler: this.widgetStore.cursorX,
+                    image: isXProfile ? this.profileStore.x : this.profileStore.y,
+                    unit: "px"
+                };
 
                 linePlotProps.markers = [{
                     value: linePlotProps.cursorX.image,

@@ -211,6 +211,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return null;
     };
 
+    private getChannelUnit = (): string => {
+        if (this.widgetStore.useWcsValues && this.frame.channelInfo &&
+            this.frame.channelInfo.channelType.unit && this.frame.channelInfo.channelType.unit.length) {
+                return this.frame.channelInfo.channelType.unit;
+        }
+        return null;
+    };
+
     onGraphCursorMoved = _.throttle((x) => {
         this.widgetStore.setCursor(x);
     }, 100);
@@ -271,7 +279,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 if (wcsLabel) {
                     linePlotProps.xLabel = this.getChannelLabel();
                 }
-                linePlotProps.cursorX = {profiler: this.widgetStore.cursorX, image: this.getChannelValue()};
+                linePlotProps.cursorX = {
+                    profiler: this.widgetStore.cursorX,
+                    image: this.getChannelValue(),
+                    unit: this.getChannelUnit()
+                };
 
                 linePlotProps.markers = [{
                     value: linePlotProps.cursorX.image,

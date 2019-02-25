@@ -46,7 +46,7 @@ export class LinePlotComponentProps {
     height?: number;
     data?: { x: number, y: number }[];
     dataStat?: {mean: number, rms: number};
-    cursorX?: {profiler: number, image: number};
+    cursorX?: {profiler: number, image: number, unit: string};
     comments?: string[];
     xMin?: number;
     xMax?: number;
@@ -668,7 +668,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             if (nearest) {
                 cursorInfo = {
                     label: this.isMouseEntered ? "Cursor:" : "Data:",
-                    cursorX: formattedNotation(nearest.x) + " px",
+                    cursorX: formattedNotation(nearest.x) + " " + this.props.cursorX.unit,
                     cursorY: nearest.y.toExponential(2)
                 };
             }
