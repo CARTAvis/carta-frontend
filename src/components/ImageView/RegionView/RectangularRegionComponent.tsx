@@ -23,7 +23,6 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
     @observable selectedRegionRef;
 
     private editAnchor: string;
-    private editStartAnchorPoint: Point2D;
     private editOppositeAnchorPoint: Point2D;
     private editStartCenterPoint: Point2D;
 
@@ -52,28 +51,37 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
         const controlPoints = this.props.region.controlPoints;
 
         this.editStartCenterPoint = {x: controlPoints[0].x, y: controlPoints[0].y};
-        this.editStartAnchorPoint = {x: controlPoints[0].x, y: controlPoints[0].y};
         this.editOppositeAnchorPoint = {x: controlPoints[0].x, y: controlPoints[0].y};
 
+        const relativeOppositeAnchorPointUnrotated = {x: 0, y: 0};
+
+        // Ellipse control points are radii, not diameter
         const sizeFactor = this.props.region.regionType === RegionType.RECTANGLE ? 0.5 : 1.0;
 
         if (this.editAnchor.indexOf("left") >= 0) {
-            this.editStartAnchorPoint.x = controlPoints[0].x - controlPoints[1].x * sizeFactor;
+            relativeOppositeAnchorPointUnrotated.x = +controlPoints[1].x * sizeFactor;
         } else if (this.editAnchor.indexOf("right") >= 0) {
-            this.editStartAnchorPoint.x = controlPoints[0].x + controlPoints[1].x * sizeFactor;
+            relativeOppositeAnchorPointUnrotated.x = -controlPoints[1].x * sizeFactor;
         }
 
         if (this.editAnchor.indexOf("top") >= 0) {
-            this.editStartAnchorPoint.y = controlPoints[0].y + controlPoints[1].y * sizeFactor;
+            relativeOppositeAnchorPointUnrotated.y = -controlPoints[1].y * sizeFactor;
         } else if (this.editAnchor.indexOf("bottom") >= 0) {
-            this.editStartAnchorPoint.y = controlPoints[0].y - controlPoints[1].y * sizeFactor;
+            relativeOppositeAnchorPointUnrotated.y = +controlPoints[1].y * sizeFactor;
         }
 
-        this.editOppositeAnchorPoint = {
-            x: 2 * this.editStartCenterPoint.x - this.editStartAnchorPoint.x,
-            y: 2 * this.editStartCenterPoint.y - this.editStartAnchorPoint.y,
+        const cosX = Math.cos(this.props.region.rotation * Math.PI / 180.0);
+        const sinX = Math.sin(this.props.region.rotation * Math.PI / 180.0);
+
+        const relativeOppositeAnchorPoint = {
+            x: cosX * relativeOppositeAnchorPointUnrotated.x - sinX * relativeOppositeAnchorPointUnrotated.y,
+            y: sinX * relativeOppositeAnchorPointUnrotated.x + cosX * relativeOppositeAnchorPointUnrotated.y
         };
 
+        this.editOppositeAnchorPoint = {
+            x: this.editStartCenterPoint.x + relativeOppositeAnchorPoint.x,
+            y: this.editStartCenterPoint.y + relativeOppositeAnchorPoint.y,
+        };
         this.props.region.beginEditing();
     };
 
@@ -87,29 +95,23 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
             const node = konvaEvent.currentTarget.node() as Konva.Node;
             const region = this.props.region;
             if (anchor.indexOf("rotater") >= 0) {
-                // handle rotation
+                // handle rotation (canvas rotation is clockwise, CASA rotation is anti-clockwise
                 const rotation = node.rotation();
-                region.setRotation(rotation);
+                region.setRotation(-rotation);
             } else {
-                // handle scaling
-                let nodeScale = node.scale();
+                // revert node scaling and position before adjusting region control points
                 const centerCanvasPos = this.getCanvasPos(region.controlPoints[0].x, region.controlPoints[0].y);
                 node.x(centerCanvasPos.x);
                 node.y(centerCanvasPos.y);
                 node.scaleX(1);
                 node.scaleY(1);
 
-                // alternative anchor handling:
                 const newAnchorPoint = this.getImagePos(konvaEvent.evt.offsetX, konvaEvent.evt.offsetY);
                 const centerPoint = region.controlPoints[0];
 
-                const deltaAnchorPoint = {x: newAnchorPoint.x - centerPoint.x, y: newAnchorPoint.y - centerPoint.y};
+                // Rotation matrix elements
                 const cosX = Math.cos(region.rotation * Math.PI / 180.0);
                 const sinX = Math.sin(region.rotation * Math.PI / 180.0);
-
-                const deltaAnchorPointRotated = {x: cosX * deltaAnchorPoint.x - sinX * deltaAnchorPoint.y, y: sinX * deltaAnchorPoint.x + cosX * deltaAnchorPoint.y};
-                const anchorPointRotated = {x: centerPoint.x + deltaAnchorPointRotated.x, y: centerPoint.y + deltaAnchorPointRotated.y};
-
 
                 const cornerScaling = konvaEvent.evt.ctrlKey;
 
@@ -118,28 +120,43 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
                     let h = region.controlPoints[1].y;
                     const sizeFactor = region.regionType === RegionType.RECTANGLE ? 1.0 : 0.5;
 
-                    let newCenter = {x: region.controlPoints[0].x, y: region.controlPoints[0].y};
+                    const deltaAnchors = {x: newAnchorPoint.x - this.editOppositeAnchorPoint.x, y: newAnchorPoint.y - this.editOppositeAnchorPoint.y};
+                    // Apply inverse rotation to get difference between anchors without rotation
+                    const deltaAnchorsUnrotated = {x: cosX * deltaAnchors.x + sinX * deltaAnchors.y, y: -sinX * deltaAnchors.x + cosX * deltaAnchors.y};
 
                     if (anchor.indexOf("left") >= 0 || anchor.indexOf("right") >= 0) {
-                        w = Math.abs(this.editOppositeAnchorPoint.x - anchorPointRotated.x) * sizeFactor;
-                        newCenter.x = (anchorPointRotated.x + this.editOppositeAnchorPoint.x) / 2.0;
+                        w = Math.abs(deltaAnchorsUnrotated.x) * sizeFactor;
+                    } else {
+                        // anchors without "left" or "right" are purely vertical, so they are clamped in x
+                        deltaAnchorsUnrotated.x = 0;
                     }
                     if (anchor.indexOf("top") >= 0 || anchor.indexOf("bottom") >= 0) {
-                        h = Math.abs(this.editOppositeAnchorPoint.y - anchorPointRotated.y) * sizeFactor;
-                        newCenter.y = cosX * (anchorPointRotated.y + this.editOppositeAnchorPoint.y) / 2.0;
-                        newCenter.y = cosX * (anchorPointRotated.y + this.editOppositeAnchorPoint.y) / 2.0;
+                        // anchors without "top" or "bottom" are purely horizontal, so they are clamped in y
+                        h = Math.abs(deltaAnchorsUnrotated.y) * sizeFactor;
+                    } else {
+                        deltaAnchorsUnrotated.y = 0;
                     }
+
+                    // re-rotate after clamping the anchor bounds to get the correct position of the anchor point
+                    deltaAnchors.x = cosX * deltaAnchorsUnrotated.x - sinX * deltaAnchorsUnrotated.y;
+                    deltaAnchors.y = sinX * deltaAnchorsUnrotated.x + cosX * deltaAnchorsUnrotated.y;
+                    let newCenter = {x: this.editOppositeAnchorPoint.x + deltaAnchors.x / 2.0, y: this.editOppositeAnchorPoint.y + deltaAnchors.y / 2.0};
+
                     region.setControlPoints([newCenter, {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}]);
                 } else {
                     let w = region.controlPoints[1].x;
                     let h = region.controlPoints[1].y;
+
+                    const deltaAnchorPoint = {x: newAnchorPoint.x - centerPoint.x, y: newAnchorPoint.y - centerPoint.y};
+                    // Apply inverse rotation to get difference between anchor and center without rotation
+                    const deltaAnchorPointUnrotated = {x: cosX * deltaAnchorPoint.x + sinX * deltaAnchorPoint.y, y: -sinX * deltaAnchorPoint.x + cosX * deltaAnchorPoint.y};
                     const sizeFactor = region.regionType === RegionType.RECTANGLE ? 2.0 : 1.0;
 
                     if (anchor.indexOf("left") >= 0 || anchor.indexOf("right") >= 0) {
-                        w = Math.abs(this.editStartCenterPoint.x - anchorPointRotated.x) * sizeFactor;
+                        w = Math.abs(deltaAnchorPointUnrotated.x) * sizeFactor;
                     }
                     if (anchor.indexOf("top") >= 0 || anchor.indexOf("bottom") >= 0) {
-                        h = Math.abs(this.editStartCenterPoint.y - anchorPointRotated.y) * sizeFactor;
+                        h = Math.abs(deltaAnchorPointUnrotated.y) * sizeFactor;
                     }
 
                     if (konvaEvent.evt.shiftKey) {
@@ -150,35 +167,6 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
 
                     region.setControlPoints([this.editStartCenterPoint, {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}]);
                 }
-
-                // const newWidth = region.controlPoints[1].x * Math.abs(nodeScale.x);
-                // const newHeight = region.controlPoints[1].y * Math.abs(nodeScale.y);
-                // if (this.centeredScaling) {
-                //     region.setControlPoint(1, {x: newWidth, y: newHeight});
-                // } else {
-                //     const deltaWidth = (newWidth - region.controlPoints[1].x) * (region.regionType === RegionType.ELLIPSE ? 2 : 1);
-                //     const deltaHeight = (newHeight - region.controlPoints[1].y) * (region.regionType === RegionType.ELLIPSE ? 2 : 1);
-                //     let center = {x: region.controlPoints[0].x, y: region.controlPoints[0].y};
-                //     const cosX = Math.cos(region.rotation * Math.PI / 180.0);
-                //     const sinX = Math.sin(region.rotation * Math.PI / 180.0);
-                //     if (anchor.indexOf("left") >= 0) {
-                //         center.x -= cosX * deltaWidth / 2.0;
-                //         center.y += sinX * deltaWidth / 2.0;
-                //     } else if (anchor.indexOf("right") >= 0) {
-                //         center.x += cosX * deltaWidth / 2.0;
-                //         center.y -= sinX * deltaWidth / 2.0;
-                //     }
-                //
-                //     if (anchor.indexOf("top") >= 0) {
-                //         center.y += cosX * deltaHeight / 2.0;
-                //         center.x += sinX * deltaHeight / 2.0;
-                //     } else if (anchor.indexOf("bottom") >= 0) {
-                //         center.y -= cosX * deltaHeight / 2.0;
-                //         center.x -= sinX * deltaHeight / 2.0;
-                //     }
-                //
-                //     region.setControlPoints([center, {x: newWidth, y: newHeight}]);
-                // }
             }
         }
     };
@@ -244,7 +232,7 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
             <Group>
                 {region.regionType === RegionType.RECTANGLE &&
                 <Rect
-                    rotation={region.rotation}
+                    rotation={-region.rotation}
                     x={centerPixelSpace.x}
                     y={centerPixelSpace.y}
                     width={width}
@@ -266,7 +254,7 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
                 }
                 {region.regionType === RegionType.ELLIPSE &&
                 <Ellipse
-                    rotation={region.rotation}
+                    rotation={-region.rotation}
                     x={centerPixelSpace.x}
                     y={centerPixelSpace.y}
                     radius={{x: width, y: height}}
