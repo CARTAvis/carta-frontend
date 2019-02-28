@@ -155,8 +155,7 @@ export class FrameStore {
             if (ceil < 0 || ceil > N - 1 || floor < 0 || floor > N - 1) {
                 return null;
             }
-            const nearest = (ceil - value) < (value - floor) ? ceil : floor;
-            return nearest;
+            return (ceil - value) < (value - floor) ? ceil : floor;
         };
 
         // By default, we try to use the WCS information to determine channel info.
@@ -213,9 +212,7 @@ export class FrameStore {
                             if (ceil < 0 || ceil > values.length - 1 || floor < 0 || floor > values.length - 1) {
                                 return null;
                             }
-                            const nearest = Math.abs(values[ceil] - value) < Math.abs(value - values[floor]) ?
-                                            ceil : floor;
-                            return values[nearest];
+                            return Math.abs(values[ceil] - value) < Math.abs(value - values[floor]) ? ceil : floor;
                         },
                         getChannelIndexSimple: getChannelIndexSimple
                     };

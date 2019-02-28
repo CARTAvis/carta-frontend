@@ -176,11 +176,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     onChannelChanged = (x: number) => {
         if (this.props.appStore.activeFrame && this.frame.channelInfo) {
             let channelInfo = this.frame.channelInfo;
-            let nearest = (this.widgetStore.useWcsValues && channelInfo.getChannelIndexWCS) ?
+            let nearestIndex = (this.widgetStore.useWcsValues && channelInfo.getChannelIndexWCS) ?
                             channelInfo.getChannelIndexWCS(x) :
                             channelInfo.getChannelIndexSimple(x);
-            if (nearest) {
-                this.props.appStore.activeFrame.setChannels(nearest, this.props.appStore.activeFrame.requiredStokes);
+            if (nearestIndex) {
+                this.props.appStore.activeFrame.setChannels(nearestIndex, this.props.appStore.activeFrame.requiredStokes);
             }
         }
     }
@@ -289,16 +289,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     dragMove: this.onChannelChanged,
                     horizontal: false,
                 }];
-
-                linePlotProps.markers.push({
-                    value: linePlotProps.cursorX.profiler,
-                    id: "marker-profiler-cursor",
-                    draggable: false,
-                    horizontal: false,
-                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
-                    opacity: 0.8,
-                    isMouseMove: true,
-                });
 
                 if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
                     linePlotProps.markers.push({
