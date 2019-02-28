@@ -176,7 +176,6 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         // Check bounds first, to make sure the max isn't being moved below the min
         if (frame && frame.renderConfig && x < frame.renderConfig.scaleMax) {
             frame.renderConfig.setCustomScale(x, frame.renderConfig.scaleMax);
-            frame.renderConfig.scaleMin = x;
         }
     };
 
