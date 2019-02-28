@@ -29,7 +29,7 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
                         <img src={logoPng} width={100}/>
-                        <h3>CARTA Viewer Version 1.0 (20181221)</h3>
+                        <h3>CARTA Viewer Version 1.0.1 (20190228)</h3>
                     </div>
 
                     <h3>Development team:</h3>
