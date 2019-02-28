@@ -207,7 +207,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 dx = Math.sign(dx) * maxDiff;
                 dy = Math.sign(dy) * maxDiff;
             }
-            if (konvaEvent.evt.ctrlKey) {
+            if (konvaEvent.evt.ctrlKey || konvaEvent.evt.metaKey) {
                 const endPoint = {x: this.regionStartPoint.x + dx, y: this.regionStartPoint.y + dy};
                 const center = {x: (this.regionStartPoint.x + endPoint.x) / 2.0, y: (this.regionStartPoint.y + endPoint.y) / 2.0};
                 switch (this.creatingRegion.regionType) {

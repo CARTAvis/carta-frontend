@@ -113,7 +113,7 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
                 const cosX = Math.cos(region.rotation * Math.PI / 180.0);
                 const sinX = Math.sin(region.rotation * Math.PI / 180.0);
 
-                const cornerScaling = konvaEvent.evt.ctrlKey;
+                const cornerScaling = konvaEvent.evt.ctrlKey || konvaEvent.evt.metaKey;
 
                 if (cornerScaling) {
                     let w = region.controlPoints[1].x;
