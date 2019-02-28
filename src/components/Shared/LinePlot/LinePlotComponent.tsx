@@ -526,19 +526,20 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                             <Rect
                                 dragBoundFunc={this.dragBoundsFuncHorizontal}
                                 x={chartArea.left}
-                                y={-MARKER_HITBOX_THICKNESS / 2.0}
+                                y={valueCanvasSpace - MARKER_HITBOX_THICKNESS / 2.0}
                                 width={lineWidth}
                                 height={MARKER_HITBOX_THICKNESS}
                                 draggable={true}
+                                key={marker.id + "-dragrect"}
                                 onDragMove={ev => this.onMarkerDragged(ev, marker)}
                                 onMouseEnter={() => this.setHoveredMarker(marker)}
                                 onMouseLeave={() => this.setHoveredMarker(undefined)}
                             />
                         );
+                        lines.push(interactionRect);
                     }
                     lines.push(
                         <Group key={marker.id} x={0} y={valueCanvasSpace}>
-                            {interactionRect}
                             {lineSegments}
                         </Group>
                     );
