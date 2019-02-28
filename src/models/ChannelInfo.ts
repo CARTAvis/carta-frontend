@@ -5,4 +5,6 @@ export interface ChannelInfo {
     channelType: ChannelType;
     values: number[];
     rawValues: number[];
+    getChannelIndexWCS: (x: number) => number;
+    getChannelIndexSimple: (x: number) => number;
 }

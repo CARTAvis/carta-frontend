@@ -145,6 +145,19 @@ export class FrameStore {
         const values = new Array<number>(N);
         const rawValues = new Array<number>(N);
 
+        let getChannelIndexSimple =  (value: number): number => {
+            if (!value) {
+                return null;
+            }
+            const ceil = Math.ceil(value);
+            const floor = Math.floor(value);
+            if (ceil < 0 || ceil > N - 1 || floor < 0 || floor > N - 1) {
+                return null;
+            }
+            const nearest = (ceil - value) < (value - floor) ? ceil : floor;
+            return nearest;
+        };
+
         // By default, we try to use the WCS information to determine channel info.
         const channelTypeInfo = FrameStore.FindChannelType(this.frameInfo.fileInfoExtended.headerEntries);
         if (channelTypeInfo) {
@@ -182,7 +195,27 @@ export class FrameStore {
                         rawValues[i] = (channelOffset * delta + refVal);
                         values[i] = rawValues[i] * scalingFactor;
                     }
-                    return {fromWCS: true, channelType: channelTypeInfo.type, values, rawValues};
+                    return {
+                        fromWCS: true,
+                        channelType: channelTypeInfo.type,
+                        values,
+                        rawValues,
+                        getChannelIndexWCS: (value: number): number => {
+                            if (!value) {
+                                return null;
+                            }
+                            const index = (value / scalingFactor - refVal) / delta + refPix - 1;
+                            const ceil = Math.ceil(index);
+                            const floor = Math.floor(index);
+                            if (ceil < 0 || ceil > values.length - 1 || floor < 0 || floor > values.length - 1) {
+                                return null;
+                            }
+                            const nearest = Math.abs(values[ceil] - value) < Math.abs(value - values[floor]) ?
+                                            ceil : floor;
+                            return values[nearest];
+                        },
+                        getChannelIndexSimple: getChannelIndexSimple
+                    };
                 }
             }
         }
@@ -192,7 +225,8 @@ export class FrameStore {
             values[i] = i;
             rawValues[i] = i;
         }
-        return {fromWCS: false, channelType: {code: "", name: "Channel"}, values, rawValues};
+        return {fromWCS: false, channelType: {code: "", name: "Channel"}, values, rawValues,
+                getChannelIndexWCS: null, getChannelIndexSimple: getChannelIndexSimple};
     }
 
     @computed get spectralInfo(): SpectralInfo {

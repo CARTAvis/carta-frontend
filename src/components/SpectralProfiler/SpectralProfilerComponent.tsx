@@ -84,7 +84,21 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 fromWCS: false,
                 channelType: {unit: "", code: "", name: "Channel"},
                 values: new Array<number>(this.frame.frameInfo.fileInfoExtended.depth),
-                rawValues: new Array<number>(this.frame.frameInfo.fileInfoExtended.depth)
+                rawValues: new Array<number>(this.frame.frameInfo.fileInfoExtended.depth),
+                getChannelIndexWCS: null,
+                getChannelIndexSimple: (value: number): number => {
+                    if (!value) {
+                        return null;
+                    }
+                    const ceil = Math.ceil(value);
+                    const floor = Math.floor(value);
+                    if (ceil < 0 || ceil > this.frame.frameInfo.fileInfoExtended.depth - 1 ||
+                        floor < 0 || floor > this.frame.frameInfo.fileInfoExtended.depth - 1) {
+                        return null;
+                    }
+                    const nearest = (ceil - value) < (value - floor) ? ceil : floor;
+                    return nearest;
+                }
             };
 
             for (let i = 0; i < channelInfo.values.length; i++) {
@@ -188,6 +202,18 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
+    onChannelChanged = (x: number) => {
+        if (this.props.appStore.activeFrame && this.frame.channelInfo) {
+            let channelInfo = this.frame.channelInfo;
+            let nearest = (this.widgetStore.useWcsValues && channelInfo.getChannelIndexWCS) ?
+                            channelInfo.getChannelIndexWCS(x) :
+                            channelInfo.getChannelIndexSimple(x);
+            if (nearest) {
+                this.props.appStore.activeFrame.setChannels(nearest, this.props.appStore.activeFrame.requiredStokes);
+            }
+        }
+    }
+
     private getChannelValue = (): number => {
         const channel = this.frame.channel;
         if (this.widgetStore.useWcsValues && this.frame.channelInfo) {
@@ -221,7 +247,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     onGraphCursorMoved = _.throttle((x) => {
         this.widgetStore.setCursor(x);
-    }, 100);
+    }, 33);
 
     render() {
         const appStore = this.props.appStore;
@@ -288,7 +314,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.markers = [{
                     value: linePlotProps.cursorX.image,
                     id: "marker-channel",
-                    draggable: false,
+                    draggable: true,
+                    dragMove: this.onChannelChanged,
                     horizontal: false,
                 }];
 
