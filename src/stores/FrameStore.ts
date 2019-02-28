@@ -142,6 +142,7 @@ export class FrameStore {
             return undefined;
         }
         const N = this.frameInfo.fileInfoExtended.depth;
+        const indexes = new Array<number>(N);
         const values = new Array<number>(N);
         const rawValues = new Array<number>(N);
 
@@ -192,12 +193,14 @@ export class FrameStore {
                     for (let i = 0; i < N; i++) {
                         // FITS standard uses 1 for the first pixel
                         const channelOffset = i + 1 - refPix;
+                        indexes[i] = i;
                         rawValues[i] = (channelOffset * delta + refVal);
                         values[i] = rawValues[i] * scalingFactor;
                     }
                     return {
                         fromWCS: true,
                         channelType: channelTypeInfo.type,
+                        indexes,
                         values,
                         rawValues,
                         getChannelIndexWCS: (value: number): number => {
@@ -222,10 +225,11 @@ export class FrameStore {
 
         // return channels
         for (let i = 0; i < N; i++) {
+            indexes[i] = i;
             values[i] = i;
             rawValues[i] = i;
         }
-        return {fromWCS: false, channelType: {code: "", name: "Channel"}, values, rawValues,
+        return {fromWCS: false, channelType: {code: "", name: "Channel"}, indexes, values, rawValues,
                 getChannelIndexWCS: null, getChannelIndexSimple: getChannelIndexSimple};
     }
 

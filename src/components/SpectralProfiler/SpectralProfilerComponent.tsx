@@ -77,38 +77,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         // Use accurate profiles from server-sent data
         const coordinateData = this.profileStore.profiles.get(this.widgetStore.coordinate);
         let channelInfo = this.frame.channelInfo;
-
-        // Generate channel info without WCS
-        if (!this.widgetStore.useWcsValues) {
-            channelInfo = {
-                fromWCS: false,
-                channelType: {unit: "", code: "", name: "Channel"},
-                values: new Array<number>(this.frame.frameInfo.fileInfoExtended.depth),
-                rawValues: new Array<number>(this.frame.frameInfo.fileInfoExtended.depth),
-                getChannelIndexWCS: null,
-                getChannelIndexSimple: (value: number): number => {
-                    if (!value) {
-                        return null;
-                    }
-                    const ceil = Math.ceil(value);
-                    const floor = Math.floor(value);
-                    if (ceil < 0 || ceil > this.frame.frameInfo.fileInfoExtended.depth - 1 ||
-                        floor < 0 || floor > this.frame.frameInfo.fileInfoExtended.depth - 1) {
-                        return null;
-                    }
-                    const nearest = (ceil - value) < (value - floor) ? ceil : floor;
-                    return nearest;
-                }
-            };
-
-            for (let i = 0; i < channelInfo.values.length; i++) {
-                channelInfo.values[i] = i;
-            }
-        }
-
+        let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
         if (coordinateData && channelInfo && coordinateData.vals && coordinateData.vals.length && coordinateData.vals.length === channelInfo.values.length) {
-            let xMin = Math.min(channelInfo.values[0], channelInfo.values[channelInfo.values.length - 1]);
-            let xMax = Math.max(channelInfo.values[0], channelInfo.values[channelInfo.values.length - 1]);
+            let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
+            let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1]);
 
             if (!this.widgetStore.isAutoScaledX) {
                 const localXMin = clamp(this.widgetStore.minX, xMin, xMax);
@@ -128,11 +100,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
             // values are needed to be sorted in incremental order for binary search
             let values: Array<{ x: number, y: number }> = [];
-            let isIncremental =
-                channelInfo.values[0] <= channelInfo.values[channelInfo.values.length - 1] ? true : false;
-            for (let i = 0; i < channelInfo.values.length; i++) {
-                let index = isIncremental ? i : channelInfo.values.length - 1 - i;
-                const x = channelInfo.values[index];
+            let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
+            for (let i = 0; i < channelValues.length; i++) {
+                let index = isIncremental ? i : channelValues.length - 1 - i;
+                const x = channelValues[index];
                 const y = coordinateData.vals[index];
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
