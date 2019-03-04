@@ -290,6 +290,16 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     horizontal: false,
                 }];
 
+                linePlotProps.markers.push({
+                    value: linePlotProps.cursorX.profiler,
+                    id: "marker-profiler-cursor",
+                    draggable: false,
+                    horizontal: false,
+                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                    opacity: 0.8,
+                    isMouseMove: true,
+                });
+
                 if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
                     linePlotProps.markers.push({
                         value: currentPlotData.yMean,
