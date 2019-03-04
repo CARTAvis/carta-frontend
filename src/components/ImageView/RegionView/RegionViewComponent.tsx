@@ -1,13 +1,14 @@
 import * as React from "react";
 import * as _ from "lodash";
 import * as AST from "ast_wrapper";
+import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {Group, Layer, Line, Rect, Stage} from "react-konva";
-import {ASTSettingsString, FrameStore, OverlayStore, RegionMode, RegionStore, RegionType} from "stores";
-import "./RegionViewComponent.css";
+import {CARTA} from "carta-protobuf";
+import {ASTSettingsString, FrameStore, OverlayStore, RegionMode, RegionStore} from "stores";
 import {RectangularRegionComponent} from "./RectangularRegionComponent";
 import {CursorInfo, Point2D} from "../../../models";
-import {observable} from "mobx";
+import "./RegionViewComponent.css";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;
@@ -146,11 +147,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         const cursorPosImageSpace = this.getImagePos(konvaEvent.evt.offsetX, konvaEvent.evt.offsetY);
         switch (regionType) {
-            case RegionType.RECTANGLE:
-                this.creatingRegion = frame.regionSet.addRectangularRegion(cursorPosImageSpace, 0, 0);
+            case CARTA.RegionType.RECTANGLE:
+                this.creatingRegion = frame.regionSet.addRectangularRegion(cursorPosImageSpace, 0, 0, true);
                 break;
-            case RegionType.ELLIPSE:
-                this.creatingRegion = frame.regionSet.addEllipticalRegion(cursorPosImageSpace, 0, 0);
+            case CARTA.RegionType.ELLIPSE:
+                this.creatingRegion = frame.regionSet.addEllipticalRegion(cursorPosImageSpace, 0, 0, true);
                 break;
             default:
                 return;
@@ -211,10 +212,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 const endPoint = {x: this.regionStartPoint.x + dx, y: this.regionStartPoint.y + dy};
                 const center = {x: (this.regionStartPoint.x + endPoint.x) / 2.0, y: (this.regionStartPoint.y + endPoint.y) / 2.0};
                 switch (this.creatingRegion.regionType) {
-                    case RegionType.RECTANGLE:
+                    case CARTA.RegionType.RECTANGLE:
                         this.creatingRegion.setControlPoints([center, {x: Math.abs(dx), y: Math.abs(dy)}]);
                         break;
-                    case RegionType.ELLIPSE:
+                    case CARTA.RegionType.ELLIPSE:
                         this.creatingRegion.setControlPoints([center, {x: Math.abs(dx) / 2.0, y: Math.abs(dy) / 2.0}]);
                         break;
                     default:
@@ -222,10 +223,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 }
             } else {
                 switch (this.creatingRegion.regionType) {
-                    case RegionType.RECTANGLE:
+                    case CARTA.RegionType.RECTANGLE:
                         this.creatingRegion.setControlPoints([this.regionStartPoint, {x: 2 * Math.abs(dx), y: 2 * Math.abs(dy)}]);
                         break;
-                    case RegionType.ELLIPSE:
+                    case CARTA.RegionType.ELLIPSE:
                         this.creatingRegion.setControlPoints([this.regionStartPoint, {x: Math.abs(dx), y: Math.abs(dy)}]);
                         break;
                     default:
@@ -249,7 +250,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         let regionRects = null;
 
         if (regionSet && regionSet.regions.length) {
-            regionRects = regionSet.regions.filter(r => (r.regionType === RegionType.RECTANGLE || r.regionType === RegionType.ELLIPSE) && r.isValid).map(
+            regionRects = regionSet.regions.filter(r => (r.regionType === CARTA.RegionType.RECTANGLE || r.regionType === CARTA.RegionType.ELLIPSE) && r.isValid).map(
                 r => (
                     <RectangularRegionComponent
                         key={r.regionId}

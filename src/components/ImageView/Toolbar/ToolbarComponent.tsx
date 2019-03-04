@@ -2,10 +2,10 @@ import * as React from "react";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
 import {exportImage} from "components";
-import {AppStore, RegionMode, RegionType} from "stores";
+import {AppStore, RegionMode} from "stores";
 import "./ToolbarComponent.css";
-import {observable} from "mobx";
 
 export class ToolbarComponentProps {
     appStore: AppStore;
@@ -29,7 +29,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         this.props.appStore.activeFrame.setZoom(this.props.appStore.activeFrame.zoomLevel / 2.0);
     };
 
-    handleRegionTypeClicked = (type: RegionType) => {
+    handleRegionTypeClicked = (type: CARTA.RegionType) => {
         this.props.appStore.activeFrame.regionSet.setNewRegionType(type);
         this.props.appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
     };
@@ -61,18 +61,18 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         const regionMenu = (
             <Menu>
-                <MenuItem icon={"square"} text="Rectangle" onClick={() => this.handleRegionTypeClicked(RegionType.RECTANGLE)}/>
-                <MenuItem icon={"circle"} text="Ellipse" onClick={() => this.handleRegionTypeClicked(RegionType.ELLIPSE)}/>
+                <MenuItem icon={"square"} text="Rectangle" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)}/>
+                <MenuItem icon={"circle"} text="Ellipse" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)}/>
                 <MenuItem disabled={true} icon={"polygon-filter"} text="Polygon"/>
             </Menu>
         );
 
         let regionIcon: IconName;
         switch (frame.regionSet.newRegionType) {
-            case RegionType.RECTANGLE:
+            case CARTA.RegionType.RECTANGLE:
                 regionIcon = "square";
                 break;
-            case RegionType.ELLIPSE:
+            case CARTA.RegionType.ELLIPSE:
                 regionIcon = "circle";
                 break;
             default:

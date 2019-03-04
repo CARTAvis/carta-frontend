@@ -137,7 +137,7 @@ export class AppStore {
                 renderMode: CARTA.RenderMode.RASTER
             };
 
-            let newFrame = new FrameStore(this.overlayStore, frameInfo);
+            let newFrame = new FrameStore(this.overlayStore, frameInfo, this.backendService);
             newFrame.fitZoom();
             this.loadWCS(newFrame);
 

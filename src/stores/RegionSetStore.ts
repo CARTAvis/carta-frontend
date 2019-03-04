@@ -1,6 +1,8 @@
 import {action, observable} from "mobx";
-import {FrameStore, RegionStore, RegionType} from "stores";
+import {CARTA} from "carta-protobuf";
+import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
+import {BackendService} from "../services";
 
 export enum RegionMode {
     MOVING,
@@ -8,45 +10,79 @@ export enum RegionMode {
 }
 
 export class RegionSetStore {
-    private frame: FrameStore;
     @observable regions: RegionStore[];
     @observable selectedRegion: RegionStore;
     @observable mode: RegionMode;
-    @observable newRegionType: RegionType;
+    @observable newRegionType: CARTA.RegionType;
 
-    constructor(frame: FrameStore) {
+    private frame: FrameStore;
+    private readonly backendService: BackendService;
+
+    constructor(frame: FrameStore, backendService: BackendService) {
         this.frame = frame;
+        this.backendService = backendService;
         this.regions = [];
         this.selectedRegion = null;
-        this.newRegionType = RegionType.RECTANGLE;
+        this.newRegionType = CARTA.RegionType.RECTANGLE;
         this.mode = RegionMode.MOVING;
-        this.addPointRegion({x: 0, y: 0});
+        this.addPointRegion({x: 0, y: 0}, true);
     }
 
-    private getNextRegionId = () => {
-        let regionId = 0;
+    // temporary region IDs are < 0 and used
+    private getTempRegionId = () => {
+        let regionId = -1;
         if (this.regions.length) {
-            let maxRegionId = Math.max(...this.regions.map(r => r.regionId));
-            regionId = maxRegionId + 1;
+            let minRegionId = Math.min(...this.regions.map(r => r.regionId));
+            regionId = Math.min(regionId, minRegionId - 1);
         }
         return regionId;
     };
 
-    @action addPointRegion = (center: Point2D) => {
-        const region = new RegionStore(this.frame.frameInfo.fileId, [center], RegionType.POINT, this.getNextRegionId());
+    @action addPointRegion = (center: Point2D, cursorRegion = false) => {
+        let regionId;
+        if (cursorRegion) {
+            regionId = 0;
+        } else {
+            regionId = this.getTempRegionId();
+        }
+
+        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center], CARTA.RegionType.POINT, regionId);
         this.regions.push(region);
+        if (!cursorRegion) {
+            this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
+                if (ack.success) {
+                    region.setRegionId(ack.regionId);
+                }
+            });
+        }
         return region;
     };
 
-    @action addRectangularRegion = (center: Point2D, width: number, height: number) => {
-        const region = new RegionStore(this.frame.frameInfo.fileId, [center, {x: width, y: height}], RegionType.RECTANGLE, this.getNextRegionId());
+    @action addRectangularRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
+        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center, {x: width, y: height}], CARTA.RegionType.RECTANGLE, this.getTempRegionId());
         this.regions.push(region);
+        if (!temporary) {
+            this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
+                if (ack.success) {
+                    console.log(`Updating regionID from ${region.regionId} to ${ack.regionId}`);
+                    region.setRegionId(ack.regionId);
+                }
+            });
+        }
         return region;
     };
 
-    @action addEllipticalRegion = (center: Point2D, semiMajor: number, semiMinor: number) => {
-        const region = new RegionStore(this.frame.frameInfo.fileId, [center, {x: semiMajor, y: semiMinor}], RegionType.ELLIPSE, this.getNextRegionId());
+    @action addEllipticalRegion = (center: Point2D, semiMajor: number, semiMinor: number, temporary: boolean = false) => {
+        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center, {x: semiMajor, y: semiMinor}], CARTA.RegionType.ELLIPSE, this.getTempRegionId());
         this.regions.push(region);
+        if (!temporary) {
+            this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
+                if (ack.success) {
+                    console.log(`Updating regionID from ${region.regionId} to ${ack.regionId}`);
+                    region.setRegionId(ack.regionId);
+                }
+            });
+        }
         return region;
     };
 
@@ -66,10 +102,11 @@ export class RegionSetStore {
                 this.selectedRegion = null;
             }
             this.regions = this.regions.filter(r => r !== region);
+            this.backendService.removeRegion(region.regionId);
         }
     };
 
-    @action setNewRegionType = (type: RegionType) => {
+    @action setNewRegionType = (type: CARTA.RegionType) => {
         this.newRegionType = type;
     };
 

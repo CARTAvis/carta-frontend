@@ -3,6 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {OverlayStore, RegionSetStore, RenderConfigStore} from "stores";
 import {Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES} from "models";
 import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency} from "utilities";
+import {BackendService} from "../services";
 
 export interface FrameInfo {
     fileId: number;
@@ -32,10 +33,12 @@ export class FrameStore {
     @observable valid: boolean;
     @observable regionSet: RegionSetStore;
 
-    private overlayStore: OverlayStore;
+    private readonly overlayStore: OverlayStore;
+    private readonly backendService: BackendService;
 
-    constructor(overlay: OverlayStore, frameInfo: FrameInfo) {
+    constructor(overlay: OverlayStore, frameInfo: FrameInfo, backendService: BackendService) {
         this.overlayStore = overlay;
+        this.backendService = backendService;
         this.frameInfo = frameInfo;
         this.renderHiDPI = false;
         this.center = {x: 0, y: 0};
@@ -44,7 +47,7 @@ export class FrameStore {
         this.requiredStokes = 0;
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore();
-        this.regionSet = new RegionSetStore(this);
+        this.regionSet = new RegionSetStore(this, backendService);
         this.valid = true;
         this.currentFrameView = {
             xMin: 0,

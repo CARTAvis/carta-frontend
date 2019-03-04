@@ -1,10 +1,11 @@
 import * as React from "react";
 import * as Konva from "konva";
+import {Colors} from "@blueprintjs/core";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {Ellipse, Group, Rect, Transformer} from "react-konva";
-import {FrameStore, RegionStore, RegionType} from "../../../stores";
-import {Colors} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
+import {FrameStore, RegionStore} from "../../../stores";
 import {Point2D} from "../../../models";
 
 export interface RectangularRegionComponentProps {
@@ -56,7 +57,7 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
         const relativeOppositeAnchorPointUnrotated = {x: 0, y: 0};
 
         // Ellipse control points are radii, not diameter
-        const sizeFactor = this.props.region.regionType === RegionType.RECTANGLE ? 0.5 : 1.0;
+        const sizeFactor = this.props.region.regionType === CARTA.RegionType.RECTANGLE ? 0.5 : 1.0;
 
         if (this.editAnchor.indexOf("left") >= 0) {
             relativeOppositeAnchorPointUnrotated.x = +controlPoints[1].x * sizeFactor;
@@ -118,7 +119,7 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
                 if (cornerScaling) {
                     let w = region.controlPoints[1].x;
                     let h = region.controlPoints[1].y;
-                    const sizeFactor = region.regionType === RegionType.RECTANGLE ? 1.0 : 0.5;
+                    const sizeFactor = region.regionType === CARTA.RegionType.RECTANGLE ? 1.0 : 0.5;
 
                     const deltaAnchors = {x: newAnchorPoint.x - this.editOppositeAnchorPoint.x, y: newAnchorPoint.y - this.editOppositeAnchorPoint.y};
                     // Apply inverse rotation to get difference between anchors without rotation
@@ -150,7 +151,7 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
                     const deltaAnchorPoint = {x: newAnchorPoint.x - centerPoint.x, y: newAnchorPoint.y - centerPoint.y};
                     // Apply inverse rotation to get difference between anchor and center without rotation
                     const deltaAnchorPointUnrotated = {x: cosX * deltaAnchorPoint.x + sinX * deltaAnchorPoint.y, y: -sinX * deltaAnchorPoint.x + cosX * deltaAnchorPoint.y};
-                    const sizeFactor = region.regionType === RegionType.RECTANGLE ? 2.0 : 1.0;
+                    const sizeFactor = region.regionType === CARTA.RegionType.RECTANGLE ? 2.0 : 1.0;
 
                     if (anchor.indexOf("left") >= 0 || anchor.indexOf("right") >= 0) {
                         w = Math.abs(deltaAnchorPointUnrotated.x) * sizeFactor;
@@ -230,7 +231,7 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
 
         return (
             <Group>
-                {region.regionType === RegionType.RECTANGLE &&
+                {region.regionType === CARTA.RegionType.RECTANGLE &&
                 <Rect
                     rotation={-region.rotation}
                     x={centerPixelSpace.x}
@@ -241,7 +242,7 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
                     offsetY={height / 2.0}
                     stroke={Colors.TURQUOISE5}
                     strokeWidth={3}
-                    dash={region.creating ? borderDash : null}
+                    dash={region.isTemporary ? borderDash : null}
                     draggable={true}
                     listening={this.props.listening}
                     onDragStart={this.handleDragStart}
@@ -252,7 +253,7 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
                     ref={this.handleRef}
                 />
                 }
-                {region.regionType === RegionType.ELLIPSE &&
+                {region.regionType === CARTA.RegionType.ELLIPSE &&
                 <Ellipse
                     rotation={-region.rotation}
                     x={centerPixelSpace.x}
@@ -260,7 +261,7 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
                     radius={{x: width, y: height}}
                     stroke={Colors.TURQUOISE5}
                     strokeWidth={3}
-                    dash={region.creating ? borderDash : null}
+                    dash={region.isTemporary ? borderDash : null}
                     draggable={true}
                     listening={this.props.listening}
                     onDragStart={this.handleDragStart}
@@ -277,7 +278,7 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
                     rotateAnchorOffset={15}
                     anchorSize={6}
                     borderStroke={Colors.TURQUOISE5}
-                    borderDash={region.regionType === RegionType.ELLIPSE ? borderDash : null}
+                    borderDash={region.regionType === CARTA.RegionType.ELLIPSE ? borderDash : null}
                     keepRatio={false}
                     centeredScaling={true}
                     draggable={false}

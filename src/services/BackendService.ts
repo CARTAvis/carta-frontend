@@ -1,7 +1,7 @@
 import {action, autorun, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, throwError, Subject} from "rxjs";
-import {LogStore} from "stores";
+import {LogStore, RegionStore} from "stores";
 import {DecompressionService} from "./DecompressionService";
 
 export enum ConnectionStatus {
@@ -20,6 +20,9 @@ export enum EventNames {
     SetImageView = "SET_IMAGE_VIEW",
     SetImageChannels = "SET_IMAGE_CHANNELS",
     SetCursor = "SET_CURSOR",
+    SetRegion = "SET_REGION",
+    SetRegionAck = "SET_REGION_ACK",
+    RemoveRegion = "REMOVE_REGION",
     SetSpatialRequirements = "SET_SPATIAL_REQUIREMENTS",
     SetSpectralRequirements = "SET_SPECTRAL_REQUIREMENTS",
     SetHistogramRequirements = "SET_HISTOGRAM_REQUIREMENTS",
@@ -76,6 +79,9 @@ export class BackendService {
             EventNames.RegisterViewerAck,
             EventNames.OpenFile,
             EventNames.OpenFileAck,
+            EventNames.SetRegion,
+            EventNames.SetRegionAck,
+            EventNames.RemoveRegion
         ];
 
         // Check local storage for a list of events to log to console
@@ -282,6 +288,46 @@ export class BackendService {
         return false;
     }
 
+    @action("set region")
+    setRegion(fileId: number, regionId: number, region: RegionStore): Observable<CARTA.SetRegionAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.SetRegion.create({
+                fileId,
+                regionId,
+                regionType: region.regionType,
+                channelMin: region.channelMin,
+                channelMax: region.channelMax,
+                stokes: region.stokesValues,
+                controlPoints: region.controlPoints.map(point => ({x: point.x, y: point.y})),
+                rotation: region.rotation
+            });
+
+            const requestId = this.eventCounter;
+            this.logEvent(EventNames.SetRegion, requestId, message, false);
+            if (this.sendEvent(EventNames.SetRegion, CARTA.SetRegion.encode(message).finish())) {
+                return new Observable<CARTA.SetRegionAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("remove region")
+    removeRegion(regionId: number) {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            const message = CARTA.RemoveRegion.create({regionId});
+            this.logEvent(EventNames.RemoveRegion, this.eventCounter, message, false);
+            if (this.sendEvent(EventNames.RemoveRegion, CARTA.RemoveRegion.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @action("set spatial requirements")
     setSpatialRequirements(fileId: number, regionId: number, spatialProfiles: string[]) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
@@ -342,6 +388,9 @@ export class BackendService {
             } else if (eventName === EventNames.OpenFileAck) {
                 parsedMessage = CARTA.OpenFileAck.decode(eventData);
                 this.onFileOpenAck(eventId, parsedMessage);
+            } else if (eventName === EventNames.SetRegionAck) {
+                parsedMessage = CARTA.SetRegionAck.decode(eventData);
+                this.onSetRegionAck(eventId, parsedMessage);
             } else if (eventName === EventNames.RasterImageData) {
                 parsedMessage = CARTA.RasterImageData.decode(eventData);
                 this.onStreamedRasterImageData(eventId, parsedMessage);
@@ -412,6 +461,21 @@ export class BackendService {
     }
 
     private onFileOpenAck(eventId: number, ack: CARTA.OpenFileAck) {
+        const observer = this.observerRequestMap.get(eventId);
+        if (observer) {
+            if (ack.success) {
+                observer.next(ack);
+            } else {
+                observer.error(ack.message);
+            }
+            observer.complete();
+            this.observerRequestMap.delete(eventId);
+        } else {
+            console.log(`Can't find observable for request ${eventId}`);
+        }
+    }
+
+    private onSetRegionAck(eventId: number, ack: CARTA.SetRegionAck) {
         const observer = this.observerRequestMap.get(eventId);
         if (observer) {
             if (ack.success) {
