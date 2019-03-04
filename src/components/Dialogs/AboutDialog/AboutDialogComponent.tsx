@@ -29,7 +29,7 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
                         <img src={logoPng} width={100}/>
-                        <h3>CARTA Viewer Version 1.0 (20181221)</h3>
+                        <h3>CARTA Viewer Version 1.0.1 (20190228)</h3>
                     </div>
 
                     <h3>Development team:</h3>
@@ -44,7 +44,7 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
                     <ul>
                         <li>Source code for CARTA is available on <a href="https://github.com/cartavis" target="_blank">GitHub</a></li>
                         <li>Please report bugs or suggestions to <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw" target="_blank">carta_helpdesk@asiaa.sinica.edu.tw</a></li>
-                        <li>Documentation is available <a href="https://cartavis.github.io/manual/index.html" target="_blank">online</a></li>
+                        <li>Documentation is available <a href="https://carta.readthedocs.io/en/latest" target="_blank">online</a></li>
                     </ul>
                     <h3>License</h3>
                     <p>
