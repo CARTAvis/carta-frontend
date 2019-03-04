@@ -154,8 +154,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private clearCanvas() {
         const frame = this.props.frame;
         // Resize and/or clear the canvas
-        this.canvas.width = frame.renderWidth;
-        this.canvas.height = frame.renderHeight;
+        this.canvas.width = frame.renderWidth * devicePixelRatio;
+        this.canvas.height = frame.renderHeight * devicePixelRatio;
     }
 
     private renderCanvas() {
@@ -181,7 +181,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             RB.x, RB.y, 0
         ].map(v => -1 + 2 * v));
 
-        this.gl.viewport(0, 0, frame.renderWidth, frame.renderHeight);
+        this.gl.viewport(0, 0, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
         this.gl.enable(WebGLRenderingContext.DEPTH_TEST);
         this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexUVBuffer);

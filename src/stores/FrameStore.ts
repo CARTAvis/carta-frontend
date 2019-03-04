@@ -36,7 +36,7 @@ export class FrameStore {
 
     constructor(overlay: OverlayStore) {
         this.overlayStore = overlay;
-        this.renderHiDPI = false;
+        this.renderHiDPI = true;
         this.center = {x: 0, y: 0};
         this.stokes = 0;
         this.channel = 0;
