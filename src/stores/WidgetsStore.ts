@@ -178,9 +178,11 @@ export class WidgetsStore {
         }
 
         // Update GL title by searching for image-view components
-        const imageViewComponents = this.dockedLayout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
-        if (imageViewComponents.length) {
-            imageViewComponents[0].setTitle(newTitle);
+        if (this.dockedLayout && this.dockedLayout.root) {
+            const imageViewComponents = this.dockedLayout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
+            if (imageViewComponents.length) {
+                imageViewComponents[0].setTitle(newTitle);
+            }
         }
 
         // Update floating window title
