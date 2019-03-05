@@ -536,7 +536,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                                     y={-MARKER_HITBOX_THICKNESS / 2.0}
                                     width={lineWidth}
                                     height={MARKER_HITBOX_THICKNESS}
-                                    key={marker.id + "-dragrect"}
                                     onMouseEnter={() => this.setHoveredMarker(marker)}
                                     onMouseLeave={() => this.setHoveredMarker(undefined)}
                                 />
@@ -599,9 +598,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                                     y={chartArea.top}
                                     width={MARKER_HITBOX_THICKNESS}
                                     height={lineHeight}
-                                    strokeEnabled={true}
-                                    stroke={"black"}
-                                    strokeWidth={1}
                                     onMouseEnter={() => this.setHoveredMarker(marker)}
                                     onMouseLeave={() => this.setHoveredMarker(undefined)}
                                 />
