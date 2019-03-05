@@ -340,11 +340,10 @@ export class BackendService {
     }
 
     @action("set spectral requirements")
-    setSpectralRequirements(fileId: number, regionId: number, spectralProfiles: CARTA.SetSpectralRequirements.SpectralConfig[]) {
+    setSpectralRequirements(requirementsMessage: CARTA.SetSpectralRequirements) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.SetSpectralRequirements.create({fileId, regionId, spectralProfiles});
-            this.logEvent(EventNames.SetSpectralRequirements, this.eventCounter, message, false);
-            if (this.sendEvent(EventNames.SetSpectralRequirements, CARTA.SetSpectralRequirements.encode(message).finish())) {
+            this.logEvent(EventNames.SetSpectralRequirements, this.eventCounter, requirementsMessage, false);
+            if (this.sendEvent(EventNames.SetSpectralRequirements, CARTA.SetSpectralRequirements.encode(requirementsMessage).finish())) {
                 return true;
             }
         }

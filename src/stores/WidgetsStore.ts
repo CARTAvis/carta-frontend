@@ -147,6 +147,8 @@ export class WidgetsStore {
                 console.log(`itemDestroyed: ${id}`);
                 if (config.component === RenderConfigComponent.WIDGET_CONFIG.type) {
                     this.removeRenderConfigWidget(id);
+                } else if (config.component === SpectralProfilerComponent.WIDGET_CONFIG.type) {
+                    this.removeSpectralProfileWidget(id);
                 }
             }
         }
@@ -271,6 +273,10 @@ export class WidgetsStore {
         this.spectralProfileWidgets.set(id, new SpectralProfileWidgetStore(coordinate, fileId, regionId));
     }
 
+    @action removeSpectralProfileWidget(id: string) {
+        this.spectralProfileWidgets.delete(id);
+    }
+
     // endregion
 
     // region Render Config Widgets
@@ -336,8 +342,10 @@ export class WidgetsStore {
             }
             if (widget.type === RenderConfigComponent.WIDGET_CONFIG.type) {
                 this.appStore.widgetsStore.removeRenderConfigWidget(widget.id);
+            } else if (widget.type === SpectralProfilerComponent.WIDGET_CONFIG.type) {
+                this.appStore.widgetsStore.removeSpectralProfileWidget(widget.id);
             }
-            // TODO: Remove spatial and spectral profiles widgets' stores when closing
+            // TODO: Remove spatial profiles widgets' stores when closing
         }
     };
     // endregion

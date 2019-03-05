@@ -30,7 +30,6 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<{ ap
         this.props.widgetStore.setStatsType(parseInt(changeEvent.target.value));
     };
 
-
     render() {
         const widgetStore = this.props.widgetStore;
         const appStore = this.props.appStore;
@@ -44,7 +43,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<{ ap
             profileRegionOptions = this.props.appStore.activeFrame.regionSet.regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT)).map(r => {
                 return {
                     value: r.regionId,
-                    label: r.regionId == 0 ? "Cursor" : `Region #${r.regionId}`
+                    label: r.regionId === 0 ? "Cursor" : `Region #${r.regionId}`
                 };
             });
         }
@@ -65,7 +64,6 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<{ ap
             {value: CARTA.StatsType.Min, label: "Min"},
             {value: CARTA.StatsType.Max, label: "Max"},
         ];
-
 
         return (
             <React.Fragment>

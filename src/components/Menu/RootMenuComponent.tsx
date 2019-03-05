@@ -129,7 +129,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
 
         const debugMenu = (
             <Menu>
-                <Menu.Item disabled={!appStore.activeFrame} text="Log spectral requirements" icon={"print"} onClick={appStore.printSpectralRequirements}/>
+                <Menu.Item disabled={!appStore.activeFrame} text="Log spectral requirements" icon={"print"} onClick={appStore.recalculateSpectralRequirements}/>
             </Menu>
         );
 

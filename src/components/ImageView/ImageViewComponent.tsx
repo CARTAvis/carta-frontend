@@ -214,7 +214,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                 {appStore.activeFrame &&
                 <div style={{opacity: this.showRatioIndicator ? 1 : 0, left: imageRatioTagOffset.x, top: imageRatioTagOffset.y}} className={"tag-image-ratio"}>
                     <Tag large={true}>
-                        {appStore.activeFrame.renderWidth * (appStore.activeFrame.renderHiDPI? devicePixelRatio : 1)} x {appStore.activeFrame.renderHeight * (appStore.activeFrame.renderHiDPI? devicePixelRatio : 1)} ({(appStore.activeFrame.renderWidth / appStore.activeFrame.renderHeight).toFixed(2)})
+                        {appStore.activeFrame.renderWidth * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1)} x {appStore.activeFrame.renderHeight * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1)} ({(appStore.activeFrame.renderWidth / appStore.activeFrame.renderHeight).toFixed(2)})
                     </Tag>
                 </div>
                 }

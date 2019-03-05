@@ -38,8 +38,9 @@ export class SpectralProfileWidgetStore {
     };
 
     @action setStatsType = (statsType: CARTA.StatsType) => {
-        if (SpectralProfileWidgetStore.ValidStatsTypes.indexOf(statsType) !== -1)
+        if (SpectralProfileWidgetStore.ValidStatsTypes.indexOf(statsType) !== -1) {
             this.statsType = statsType;
+        }
     };
 
     @action setCoordinate = (coordinate: string) => {
