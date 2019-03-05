@@ -10,7 +10,7 @@ import {RenderConfigSettingsPanelComponent} from "./RenderConfigSettingsPanelCom
 import {PopoverSettingsComponent, LinePlotComponent, LinePlotComponentProps, PlotType} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
-import {AnimationState, FrameStore, FrameScaling, WidgetConfig, WidgetProps} from "stores";
+import {AnimationState, FrameStore, FrameScaling, WidgetConfig, WidgetProps, RenderConfigStore} from "stores";
 import {clamp} from "utilities";
 import {Point2D} from "models";
 import "./RenderConfigComponent.css";
@@ -37,7 +37,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
-
+ 
+   
+    
     @computed get widgetStore(): RenderConfigWidgetStore {
         if (this.props.appStore && this.props.appStore.widgetsStore.renderConfigWidgets) {
             const widgetStore = this.props.appStore.widgetsStore.renderConfigWidgets.get(this.props.id);
@@ -124,12 +126,18 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     handleScaleMinChange = (val: number) => {
         if (isFinite(val)) {
             this.props.appStore.activeFrame.renderConfig.setCustomScale(val, this.props.appStore.activeFrame.renderConfig.scaleMax);
+	    console.log("Min change");
+	    /* Update Stokes scale min array here - figure out how to read off Stokes channel */
+	    
         }
     };
 
     handleScaleMaxChange = (val: number) => {
         if (isFinite(val)) {
             this.props.appStore.activeFrame.renderConfig.setCustomScale(this.props.appStore.activeFrame.renderConfig.scaleMin, val);
+	    console.log("max change");
+	    /* Update Stokes scale max array here */
+	   
         }
     };
 
@@ -368,6 +376,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                             onValueChange={this.handleScaleMaxChange}
                         />
                     </FormGroup>
+		   
+		    
                     {this.width < histogramCutoff ? percentileSelectDiv : cursorInfoDiv}
                 </div>
                 <TaskProgressDialogComponent

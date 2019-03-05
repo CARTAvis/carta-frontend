@@ -28,6 +28,7 @@ export class RenderConfigStore {
         "OrRd", "paired", "pastel1", "pastel2", "pink", "PiYG", "plasma", "PRGn", "prism", "PuBu", "PuBuGn", "PuOr", "PuRd", "purples", "rainbow",
         "RdBu", "RdGy", "RdPu", "RdYlBu", "RdYlGn", "reds", "seismic", "set1", "set2", "set3", "spectral", "spring", "summer", "tab10", "tab20",
         "tab20b", "tab20c", "terrain", "viridis", "winter", "Wistia", "YlGn", "YlGnBu", "YlOrBr", "YlOrRd"];
+    
     @observable scaling: FrameScaling;
     @observable colorMap: number;
     @observable scaleMin: number;
@@ -41,7 +42,10 @@ export class RenderConfigStore {
     @observable useCubeHistogram: boolean;
     @observable cubeHistogramProgress: number;
     @observable selectedPercentile: number;
-
+    @observable stokesScaleMin: number[];
+    @observable stokesScaleMax: number[];
+    @observable stokesPercentile: number[];
+    
     constructor() {
         this.selectedPercentile = 99.9;
         this.bias = 0;
@@ -53,7 +57,7 @@ export class RenderConfigStore {
         this.setColorMap("inferno");
     }
 
-    @computed get colorMapName() {
+   @computed get colorMapName() {
         if (this.colorMap >= 0 && this.colorMap <= RenderConfigStore.COLOR_MAPS_ALL.length - 1) {
             return RenderConfigStore.COLOR_MAPS_ALL[this.colorMap];
         } else {
@@ -78,6 +82,30 @@ export class RenderConfigStore {
         }
     }
 
+    @computed get stokesScaleMin() {
+        return this.stokesScaleMin;
+    }
+ 
+    @computed get stokesScaleMax() {
+    	return this.stokesScaleMax;
+    }
+
+    @computed get stokesScalePercentile() {
+        return this.stokesScalePercentile;
+    }
+
+    @action setStokesScaleMin = (stokesChannel: num, scaleMin: num) => {
+        this.stokesScaleMin[stokesChannel] = scaleMin;
+    };
+
+    @action setStokesScaleMax = (stokesChannel: num, scaleMax: num) => {
+        this.stokesScaleMax[stokesChannel] = scaleMax;
+    };
+
+    @action setStokesScalePercentile = (stokesChannel: num, selectedPercentile: num) => {
+        this.stokesScalePercentile[stokesChannel] = selectedPercentil;
+    };
+
     @action setUseCubeHistogram = (val: boolean) => {
         if (val !== this.useCubeHistogram) {
             this.useCubeHistogram = val;
@@ -100,7 +128,7 @@ export class RenderConfigStore {
         }
         return this.histogram.firstBinCenter + (this.histogram.bins.length + 0.5) * this.histogram.binWidth;
     }
-
+    
     @action setPercentileRank = (rank: number) => {
         this.selectedPercentile = rank;
         // Find max and min if the rank is 100%
