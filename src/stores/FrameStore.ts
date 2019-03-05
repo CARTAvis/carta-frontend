@@ -150,11 +150,15 @@ export class FrameStore {
             if (!value) {
                 return null;
             }
+
+            if (value < 0) {
+                return 0;
+            } else if (value > N - 1) {
+                return N - 1;
+            }
+
             const ceil = Math.ceil(value);
             const floor = Math.floor(value);
-            if (ceil < 0 || ceil > N - 1 || floor < 0 || floor > N - 1) {
-                return null;
-            }
             return (ceil - value) < (value - floor) ? ceil : floor;
         };
 
@@ -206,12 +210,16 @@ export class FrameStore {
                             if (!value) {
                                 return null;
                             }
+
                             const index = (value / scalingFactor - refVal) / delta + refPix - 1;
+                            if (index < 0) {
+                                return 0;
+                            } else if (index > values.length - 1) {
+                                return values.length - 1;
+                            }
+
                             const ceil = Math.ceil(index);
                             const floor = Math.floor(index);
-                            if (ceil < 0 || ceil > values.length - 1 || floor < 0 || floor > values.length - 1) {
-                                return null;
-                            }
                             return Math.abs(values[ceil] - value) < Math.abs(value - values[floor]) ? ceil : floor;
                         },
                         getChannelIndexSimple: getChannelIndexSimple

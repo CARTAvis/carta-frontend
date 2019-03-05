@@ -196,7 +196,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     dragBoundsFuncVertical = (pos: Point2D) => {
         const chartArea = this.chartArea;
-        return {x: clamp(pos.x, chartArea.left, chartArea.right - MARKER_HITBOX_THICKNESS), y: chartArea.top};
+        return {x: clamp(pos.x, chartArea.left, chartArea.right - MARKER_HITBOX_THICKNESS), y: 0};
     };
 
     dragBoundsFuncHorizontal = (pos: Point2D) => {
@@ -551,7 +551,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
                     const midPoint = (chartArea.top + chartArea.bottom) / 2.0;
                     let lineSegments;
-                    let interactionRect;
                     // Add hover markers
                     if (isHoverMarker) {
                         const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
@@ -579,29 +578,36 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     }
 
                     if (marker.draggable) {
-                        interactionRect = (
-                            <Rect
-                                dragBoundFunc={this.dragBoundsFuncVertical}
-                                x={valueCanvasSpace - MARKER_HITBOX_THICKNESS / 2.0}
-                                y={chartArea.top}
-                                width={MARKER_HITBOX_THICKNESS}
-                                height={lineHeight}
-                                strokeEnabled={false}
+                        lines.push(
+                            <Group
+                                key={marker.id + "-draggable"}
+                                x={valueCanvasSpace}
+                                y={0}
                                 draggable={true}
-                                key={marker.id + "-dragrect"}
+                                dragBoundFunc={this.dragBoundsFuncVertical}
                                 onDragMove={ev => this.onMarkerDragged(ev, marker)}
-                                onMouseEnter={() => this.setHoveredMarker(marker)}
-                                onMouseLeave={() => this.setHoveredMarker(undefined)}
-                            />
+                            >
+                                <Rect
+                                    x={-MARKER_HITBOX_THICKNESS / 2.0}
+                                    y={chartArea.top}
+                                    width={MARKER_HITBOX_THICKNESS}
+                                    height={lineHeight}
+                                    strokeEnabled={true}
+                                    stroke={"black"}
+                                    strokeWidth={1}
+                                    onMouseEnter={() => this.setHoveredMarker(marker)}
+                                    onMouseLeave={() => this.setHoveredMarker(undefined)}
+                                />
+                                {lineSegments}
+                            </Group>
                         );
-                        lines.push(interactionRect);
+                    } else {
+                        lines.push(
+                            <Group key={marker.id} x={valueCanvasSpace} y={0}>
+                                {lineSegments}
+                            </Group>
+                        );
                     }
-
-                    lines.push(
-                        <Group key={marker.id} x={valueCanvasSpace} y={0}>
-                            {lineSegments}
-                        </Group>
-                    );
                 }
             }
         }
