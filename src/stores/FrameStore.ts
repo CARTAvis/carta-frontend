@@ -40,7 +40,7 @@ export class FrameStore {
         this.overlayStore = overlay;
         this.backendService = backendService;
         this.frameInfo = frameInfo;
-        this.renderHiDPI = false;
+        this.renderHiDPI = true;
         this.center = {x: 0, y: 0};
         this.stokes = 0;
         this.channel = 0;
