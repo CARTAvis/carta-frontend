@@ -536,8 +536,49 @@ export class AppStore {
         if (!this.activeFrame) {
             console.log("No frame");
         }
+        const requirementsMap = new Map<number, Map<number, Map<string, CARTA.StatsType[]>>>();
         this.widgetsStore.spectralProfileWidgets.forEach(v => {
-            console.log(`Spectral profile widget: File: ${v.fileId}; Coordinate: ${v.coordinate}; RegionID: ${v.regionId}; StatsType: ${v.statsType}`);
+            const frame = this.getFrame(v.fileId);
+            const regionId = v.regionId;
+            const fileId = frame.frameInfo.fileId;
+            const coordinate = v.coordinate;
+            const statsType = v.statsType;
+
+            if (frame.regionSet && frame.regionSet.regions.find(r => r.regionId === regionId)) {
+                let frameRequirementsMap = requirementsMap.get(fileId);
+                if (!frameRequirementsMap) {
+                    requirementsMap.set(fileId, new Map<number, Map<string, CARTA.StatsType[]>>());
+                    frameRequirementsMap = requirementsMap.get(fileId);
+                }
+
+                let regionRequirementsMap = frameRequirementsMap.get(regionId);
+                if (!regionRequirementsMap){
+                    frameRequirementsMap.set(regionId, new Map<string, CARTA.StatsType[]>());
+                    regionRequirementsMap = frameRequirementsMap.get(regionId);
+                }
+
+                let coordinateRequirementsArray = regionRequirementsMap.get(coordinate);
+                if (!coordinateRequirementsArray) {
+                    regionRequirementsMap.set(coordinate, []);
+                    coordinateRequirementsArray = regionRequirementsMap.get(coordinate);
+                }
+                if (coordinateRequirementsArray.indexOf(statsType) == -1) {
+                    coordinateRequirementsArray.push(statsType);
+                }
+            }
         });
+
+        requirementsMap.forEach((fileRequirementsMap, fileId)=> {
+            fileRequirementsMap.forEach((regionRequirementsMap, regionId)=> {
+                let spectralRequirements = new CARTA.SetSpectralRequirements();
+                spectralRequirements.fileId = fileId;
+                spectralRequirements.regionId = regionId;
+                regionRequirementsMap.forEach((statsTypes, coordinate)=>{
+                   spectralRequirements.spectralProfiles.push({coordinate})
+                });
+            });
+        });
+
+        console.log(requirementsMap);
     };
 }
