@@ -174,7 +174,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     onChannelChanged = (x: number) => {
-        console.log("x=" + x);
         if (this.props.appStore.activeFrame && this.frame.channelInfo) {
             let channelInfo = this.frame.channelInfo;
             let nearestIndex = (this.widgetStore.useWcsValues && channelInfo.getChannelIndexWCS) ?
