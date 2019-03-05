@@ -196,12 +196,12 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     dragBoundsFuncVertical = (pos: Point2D) => {
         const chartArea = this.chartArea;
-        return {x: clamp(pos.x, chartArea.left, chartArea.right - MARKER_HITBOX_THICKNESS), y: 0};
+        return {x: clamp(pos.x, chartArea.left, chartArea.right), y: 0};
     };
 
     dragBoundsFuncHorizontal = (pos: Point2D) => {
         const chartArea = this.chartArea;
-        return {x: 0, y: clamp(pos.y, chartArea.top, chartArea.bottom - MARKER_HITBOX_THICKNESS)};
+        return {x: 0, y: clamp(pos.y, chartArea.top, chartArea.bottom)};
     };
 
     onMarkerDragged = (ev, marker: LineMarker) => {
