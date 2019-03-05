@@ -350,7 +350,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     onHideClicked={this.widgetStore.hideSettingsPanel}
                     contentWidth={PANEL_CONTENT_WIDTH}
                 >
-                    <SpectralProfilerSettingsPanelComponent widgetStore={this.widgetStore}/>
+                    <SpectralProfilerSettingsPanelComponent widgetStore={this.widgetStore} appStore={appStore}/>
                 </PopoverSettingsComponent>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>

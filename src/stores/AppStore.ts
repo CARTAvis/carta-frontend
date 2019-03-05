@@ -530,4 +530,14 @@ export class AppStore {
         }
         return this.frames.find(f => f.frameInfo.fileId === fileId);
     }
+
+    // Requirements
+    printSpectralRequirements = () => {
+        if (!this.activeFrame) {
+            console.log("No frame");
+        }
+        this.widgetsStore.spectralProfileWidgets.forEach(v => {
+            console.log(`Spectral profile widget: File: ${v.fileId}; Coordinate: ${v.coordinate}; RegionID: ${v.regionId}; StatsType: ${v.statsType}`);
+        });
+    };
 }

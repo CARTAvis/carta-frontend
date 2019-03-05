@@ -21,6 +21,18 @@ export class RegionStore {
         return this.regionId < 0;
     }
 
+    @computed get isClosedRegion() {
+        switch (this.regionType) {
+            case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.POLYGON:
+            case CARTA.RegionType.ANNULUS:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     @computed get isValid() {
         // All regions require at least one control point
         if (!this.controlPoints || !this.controlPoints.length) {
