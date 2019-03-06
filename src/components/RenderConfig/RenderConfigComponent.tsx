@@ -36,8 +36,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     private cachedFrame: FrameStore;
 
     @observable width: number;
-    @observable height: number;
- 
+    @observable height: number; 
    
     
     @computed get widgetStore(): RenderConfigWidgetStore {
@@ -185,6 +184,12 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         if (frame && frame.renderConfig && x < frame.renderConfig.scaleMax) {
             frame.renderConfig.setCustomScale(x, frame.renderConfig.scaleMax);
             frame.renderConfig.scaleMin = x;
+	    console.log("onMinMoved");
+	    const stokes = this.props.appStore.activeFrame.requiredStokes;
+	    console.log("Stokes " + stokes);
+	    const scaleMin = this.props.appStore.activeFrame.renderConfig.scaleMin;
+	    console.log("Scale min: " + scaleMin);
+	    frame.renderConfig.setStokesScaleMin(stokes, scaleMin);
         }
     };
 
@@ -193,6 +198,12 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         // Check bounds first, to make sure the max isn't being moved below the min
         if (frame && frame.renderConfig && x > frame.renderConfig.scaleMin) {
             frame.renderConfig.setCustomScale(frame.renderConfig.scaleMin, x);
+	    console.log("onMaxMoved");
+	    const stokes = this.props.appStore.activeFrame.requiredStokes;
+	    console.log("Stokes " + stokes);
+	    const scaleMax = this.props.appStore.activeFrame.renderConfig.scaleMax;
+	    console.log("Scale max: " + scaleMax);
+	    frame.renderConfig.setStokesScaleMax(stokes, scaleMax);
         }
     };
 
