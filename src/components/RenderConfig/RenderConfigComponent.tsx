@@ -119,24 +119,21 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     };
 
     handleScalingChange = (scaling: FrameScaling) => {
+        console.log("handleScalingChange");
         this.props.appStore.activeFrame.renderConfig.setScaling(scaling);
     };
 
     handleScaleMinChange = (val: number) => {
+        console.log("handleScaleMinChange");
         if (isFinite(val)) {
             this.props.appStore.activeFrame.renderConfig.setCustomScale(val, this.props.appStore.activeFrame.renderConfig.scaleMax);
-	    console.log("Min change");
-	    /* Update Stokes scale min array here - figure out how to read off Stokes channel */
-	    
         }
     };
 
-    handleScaleMaxChange = (val: number) => {
+    handleScaleMaxChange = (val: number) =>{
+        console.log("handleScaleMaxChange");
         if (isFinite(val)) {
             this.props.appStore.activeFrame.renderConfig.setCustomScale(this.props.appStore.activeFrame.renderConfig.scaleMin, val);
-	    console.log("max change");
-	    /* Update Stokes scale max array here */
-	   
         }
     };
 
