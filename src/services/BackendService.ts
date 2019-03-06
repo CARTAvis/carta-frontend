@@ -80,7 +80,9 @@ export class BackendService {
             EventNames.OpenFile,
             EventNames.OpenFileAck,
             EventNames.SetSpectralRequirements,
-            EventNames.SetSpatialRequirements
+            EventNames.SetSpatialRequirements,
+            EventNames.SetRegion,
+            EventNames.SpectralProfileData
         ];
 
         // Check local storage for a list of events to log to console
