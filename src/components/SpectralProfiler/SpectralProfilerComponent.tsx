@@ -77,8 +77,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         // Use accurate profiles from server-sent data
         const coordinateData = this.profileStore.profiles.get(this.widgetStore.coordinate);
         let channelInfo = this.frame.channelInfo;
-        let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
         if (coordinateData && channelInfo && coordinateData.vals && coordinateData.vals.length && coordinateData.vals.length === channelInfo.values.length) {
+            let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
             let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
             let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1]);
 
