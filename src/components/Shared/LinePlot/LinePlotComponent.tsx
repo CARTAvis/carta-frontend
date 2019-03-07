@@ -174,6 +174,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return fraction * (this.chartArea.bottom - this.chartArea.top) + this.chartArea.top;
     }
 
+    private getCanvasSpaceX(x: number) {
+        return Math.floor(this.getPixelForValueX(x)) + 0.5 * devicePixelRatio;
+    }
+
+    private getCanvasSpaceY(y: number) {
+        return Math.floor(this.getPixelForValueY(y, this.props.logY)) + 0.5 * devicePixelRatio;
+    }
+
     onPlotRefUpdated = (plotRef) => {
         this.plotRef = plotRef;
     };
@@ -199,10 +207,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         let xMin = this.chartArea.left;
         let xMax = this.chartArea.right;
         if (marker.dragCustomBoundary && marker.dragCustomBoundary.xMin) {
-            xMin = Math.floor(this.getPixelForValueX(marker.dragCustomBoundary.xMin)) + 0.5 * devicePixelRatio;
+            xMin = this.getCanvasSpaceX(marker.dragCustomBoundary.xMin);
         }
         if (marker.dragCustomBoundary && marker.dragCustomBoundary.xMax) {
-            xMax = Math.floor(this.getPixelForValueX(marker.dragCustomBoundary.xMax)) + 0.5 * devicePixelRatio;
+            xMax = this.getCanvasSpaceX(marker.dragCustomBoundary.xMax);
         }
         return {x: clamp(pos.x, xMin, xMax), y: 0};
     };
@@ -211,10 +219,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         let yMin = this.chartArea.top;
         let yMax = this.chartArea.bottom;
         if (marker.dragCustomBoundary && marker.dragCustomBoundary.yMin) {
-            yMin = Math.floor(this.getPixelForValueY(marker.dragCustomBoundary.yMin, this.props.logY)) + 0.5 * devicePixelRatio;
+            yMin = this.getCanvasSpaceY(marker.dragCustomBoundary.yMin);
         }
         if (marker.dragCustomBoundary && marker.dragCustomBoundary.yMax) {
-            yMax = Math.floor(this.getPixelForValueY(marker.dragCustomBoundary.yMax, this.props.logY)) + 0.5 * devicePixelRatio;
+            yMax = this.getCanvasSpaceY(marker.dragCustomBoundary.yMax);
         }
         return {x: 0, y: clamp(pos.y, yMin, yMax)};
     };
@@ -501,7 +509,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const markerOpacity = (marker.isMouseMove && !this.isMouseEntered) ? 0 : (marker.opacity || 1);
                 // Separate configuration for horizontal markers
                 if (marker.horizontal) {
-                    let valueCanvasSpace = Math.floor(this.getPixelForValueY(marker.value, this.props.logY)) + 0.5 * devicePixelRatio;
+                    let valueCanvasSpace = this.getCanvasSpaceY(marker.value);
                     if (valueCanvasSpace < Math.floor(chartArea.top - 1) || valueCanvasSpace > Math.ceil(chartArea.bottom + 1) || isNaN(valueCanvasSpace)) {
                         continue;
                     }
@@ -565,7 +573,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                         );
                     }
                 } else {
-                    let valueCanvasSpace = Math.floor(this.getPixelForValueX(marker.value)) + 0.5 * devicePixelRatio;
+                    let valueCanvasSpace = this.getCanvasSpaceX(marker.value);
                     if (valueCanvasSpace < Math.floor(chartArea.left - 1) || valueCanvasSpace > Math.ceil(chartArea.right + 1) || isNaN(valueCanvasSpace)) {
                         continue;
                     }
