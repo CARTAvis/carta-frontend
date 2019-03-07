@@ -37,6 +37,7 @@ export interface LineMarker {
     horizontal: boolean;
     width?: number;
     draggable?: boolean;
+    dragCustomBoundary?: {xMin?: number, xMax?: number, yMin?: number, yMax?: number};
     dragMove?: (val: number) => void;
     isMouseMove?: boolean;
 }
@@ -173,6 +174,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return fraction * (this.chartArea.bottom - this.chartArea.top) + this.chartArea.top;
     }
 
+    private getCanvasSpaceX(x: number) {
+        return Math.floor(this.getPixelForValueX(x)) + 0.5 * devicePixelRatio;
+    }
+
+    private getCanvasSpaceY(y: number) {
+        return Math.floor(this.getPixelForValueY(y, this.props.logY)) + 0.5 * devicePixelRatio;
+    }
+
     onPlotRefUpdated = (plotRef) => {
         this.plotRef = plotRef;
     };
@@ -194,14 +203,28 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         this.isMouseEntered = false;
     };
 
-    dragBoundsFuncVertical = (pos: Point2D) => {
-        const chartArea = this.chartArea;
-        return {x: clamp(pos.x, chartArea.left, chartArea.right), y: chartArea.top};
+    dragBoundsFuncVertical = (pos: Point2D, marker: LineMarker) => {
+        let xMin = this.chartArea.left;
+        let xMax = this.chartArea.right;
+        if (marker.dragCustomBoundary && marker.dragCustomBoundary.xMin) {
+            xMin = this.getCanvasSpaceX(marker.dragCustomBoundary.xMin);
+        }
+        if (marker.dragCustomBoundary && marker.dragCustomBoundary.xMax) {
+            xMax = this.getCanvasSpaceX(marker.dragCustomBoundary.xMax);
+        }
+        return {x: clamp(pos.x, xMin, xMax), y: 0};
     };
 
-    dragBoundsFuncHorizontal = (pos: Point2D) => {
-        const chartArea = this.chartArea;
-        return {x: chartArea.left, y: clamp(pos.y, chartArea.top, chartArea.bottom)};
+    dragBoundsFuncHorizontal = (pos: Point2D, marker: LineMarker) => {
+        let yMin = this.chartArea.top;
+        let yMax = this.chartArea.bottom;
+        if (marker.dragCustomBoundary && marker.dragCustomBoundary.yMin) {
+            yMin = this.getCanvasSpaceY(marker.dragCustomBoundary.yMin);
+        }
+        if (marker.dragCustomBoundary && marker.dragCustomBoundary.yMax) {
+            yMax = this.getCanvasSpaceY(marker.dragCustomBoundary.yMax);
+        }
+        return {x: 0, y: clamp(pos.y, yMin, yMax)};
     };
 
     onMarkerDragged = (ev, marker: LineMarker) => {
@@ -486,7 +509,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const markerOpacity = (marker.isMouseMove && !this.isMouseEntered) ? 0 : (marker.opacity || 1);
                 // Separate configuration for horizontal markers
                 if (marker.horizontal) {
-                    let valueCanvasSpace = Math.floor(this.getPixelForValueY(marker.value, this.props.logY)) + 0.5 * devicePixelRatio;
+                    let valueCanvasSpace = this.getCanvasSpaceY(marker.value);
                     if (valueCanvasSpace < Math.floor(chartArea.top - 1) || valueCanvasSpace > Math.ceil(chartArea.bottom + 1) || isNaN(valueCanvasSpace)) {
                         continue;
                     }
@@ -522,35 +545,41 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     }
 
                     if (marker.draggable) {
-                        interactionRect = (
-                            <Rect
-                                dragBoundFunc={this.dragBoundsFuncHorizontal}
-                                x={chartArea.left}
-                                y={-MARKER_HITBOX_THICKNESS / 2.0}
-                                width={lineWidth}
-                                height={MARKER_HITBOX_THICKNESS}
+                        lines.push(
+                            <Group
+                                key={marker.id + "-draggable"}
+                                x={0}
+                                y={valueCanvasSpace}
                                 draggable={true}
+                                dragBoundFunc={pos => this.dragBoundsFuncHorizontal(pos, marker)}
                                 onDragMove={ev => this.onMarkerDragged(ev, marker)}
-                                onMouseEnter={() => this.setHoveredMarker(marker)}
-                                onMouseLeave={() => this.setHoveredMarker(undefined)}
-                            />
+                            >
+                                <Rect
+                                    x={chartArea.left}
+                                    y={-MARKER_HITBOX_THICKNESS / 2.0}
+                                    width={lineWidth}
+                                    height={MARKER_HITBOX_THICKNESS}
+                                    onMouseEnter={() => this.setHoveredMarker(marker)}
+                                    onMouseLeave={() => this.setHoveredMarker(undefined)}
+                                />
+                                {lineSegments}
+                            </Group>
+                        );
+                    } else {
+                        lines.push(
+                            <Group key={marker.id} x={0} y={valueCanvasSpace}>
+                                {lineSegments}
+                            </Group>
                         );
                     }
-                    lines.push(
-                        <Group key={marker.id} x={0} y={valueCanvasSpace}>
-                            {interactionRect}
-                            {lineSegments}
-                        </Group>
-                    );
                 } else {
-                    let valueCanvasSpace = Math.floor(this.getPixelForValueX(marker.value)) + 0.5 * devicePixelRatio;
+                    let valueCanvasSpace = this.getCanvasSpaceX(marker.value);
                     if (valueCanvasSpace < Math.floor(chartArea.left - 1) || valueCanvasSpace > Math.ceil(chartArea.right + 1) || isNaN(valueCanvasSpace)) {
                         continue;
                     }
                     const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
                     const midPoint = (chartArea.top + chartArea.bottom) / 2.0;
                     let lineSegments;
-                    let interactionRect;
                     // Add hover markers
                     if (isHoverMarker) {
                         const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
@@ -578,29 +607,33 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     }
 
                     if (marker.draggable) {
-                        interactionRect = (
-                            <Rect
-                                dragBoundFunc={this.dragBoundsFuncVertical}
-                                x={valueCanvasSpace - MARKER_HITBOX_THICKNESS / 2.0}
-                                y={chartArea.top}
-                                width={MARKER_HITBOX_THICKNESS}
-                                height={lineHeight}
-                                strokeEnabled={false}
+                        lines.push(
+                            <Group
+                                key={marker.id + "-draggable"}
+                                x={valueCanvasSpace}
+                                y={0}
                                 draggable={true}
-                                key={marker.id + "-dragrect"}
+                                dragBoundFunc={pos => this.dragBoundsFuncVertical(pos, marker)}
                                 onDragMove={ev => this.onMarkerDragged(ev, marker)}
-                                onMouseEnter={() => this.setHoveredMarker(marker)}
-                                onMouseLeave={() => this.setHoveredMarker(undefined)}
-                            />
+                            >
+                                <Rect
+                                    x={-MARKER_HITBOX_THICKNESS / 2.0}
+                                    y={chartArea.top}
+                                    width={MARKER_HITBOX_THICKNESS}
+                                    height={lineHeight}
+                                    onMouseEnter={() => this.setHoveredMarker(marker)}
+                                    onMouseLeave={() => this.setHoveredMarker(undefined)}
+                                />
+                                {lineSegments}
+                            </Group>
                         );
-                        lines.push(interactionRect);
+                    } else {
+                        lines.push(
+                            <Group key={marker.id} x={valueCanvasSpace} y={0}>
+                                {lineSegments}
+                            </Group>
+                        );
                     }
-
-                    lines.push(
-                        <Group key={marker.id} x={valueCanvasSpace} y={0}>
-                            {lineSegments}
-                        </Group>
-                    );
                 }
             }
         }

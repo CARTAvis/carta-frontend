@@ -77,24 +77,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         // Use accurate profiles from server-sent data
         const coordinateData = this.profileStore.profiles.get(this.widgetStore.coordinate);
         let channelInfo = this.frame.channelInfo;
-
-        // Generate channel info without WCS
-        if (!this.widgetStore.useWcsValues) {
-            channelInfo = {
-                fromWCS: false,
-                channelType: {unit: "", code: "", name: "Channel"},
-                values: new Array<number>(this.frame.frameInfo.fileInfoExtended.depth),
-                rawValues: new Array<number>(this.frame.frameInfo.fileInfoExtended.depth)
-            };
-
-            for (let i = 0; i < channelInfo.values.length; i++) {
-                channelInfo.values[i] = i;
-            }
-        }
-
         if (coordinateData && channelInfo && coordinateData.vals && coordinateData.vals.length && coordinateData.vals.length === channelInfo.values.length) {
-            let xMin = Math.min(channelInfo.values[0], channelInfo.values[channelInfo.values.length - 1]);
-            let xMax = Math.max(channelInfo.values[0], channelInfo.values[channelInfo.values.length - 1]);
+            let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
+            let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
+            let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1]);
 
             if (!this.widgetStore.isAutoScaledX) {
                 const localXMin = clamp(this.widgetStore.minX, xMin, xMax);
@@ -114,11 +100,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
             // values are needed to be sorted in incremental order for binary search
             let values: Array<{ x: number, y: number }> = [];
-            let isIncremental =
-                channelInfo.values[0] <= channelInfo.values[channelInfo.values.length - 1] ? true : false;
-            for (let i = 0; i < channelInfo.values.length; i++) {
-                let index = isIncremental ? i : channelInfo.values.length - 1 - i;
-                const x = channelInfo.values[index];
+            let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
+            for (let i = 0; i < channelValues.length; i++) {
+                let index = isIncremental ? i : channelValues.length - 1 - i;
+                const x = channelValues[index];
                 const y = coordinateData.vals[index];
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
@@ -188,6 +173,18 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
+    onChannelChanged = (x: number) => {
+        if (this.props.appStore.activeFrame && this.frame.channelInfo) {
+            let channelInfo = this.frame.channelInfo;
+            let nearestIndex = (this.widgetStore.useWcsValues && channelInfo.getChannelIndexWCS) ?
+                            channelInfo.getChannelIndexWCS(x) :
+                            channelInfo.getChannelIndexSimple(x);
+            if (nearestIndex !== null && nearestIndex !== undefined) {
+                this.props.appStore.activeFrame.setChannels(nearestIndex, this.props.appStore.activeFrame.requiredStokes);
+            }
+        }
+    }
+
     private getChannelValue = (): number => {
         const channel = this.frame.channel;
         if (this.widgetStore.useWcsValues && this.frame.channelInfo) {
@@ -221,7 +218,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     onGraphCursorMoved = _.throttle((x) => {
         this.widgetStore.setCursor(x);
-    }, 100);
+    }, 33);
 
     render() {
         const appStore = this.props.appStore;
@@ -240,6 +237,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
             interpolateLines: this.widgetStore.plotType === PlotType.LINES,
             forceScientificNotationTicksY: true,
+            graphClicked: this.onChannelChanged,
             graphZoomedX: this.widgetStore.setXBounds,
             graphZoomedY: this.widgetStore.setYBounds,
             graphZoomedXY: this.widgetStore.setXYBounds,
@@ -288,7 +286,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.markers = [{
                     value: linePlotProps.cursorX.image,
                     id: "marker-channel",
-                    draggable: false,
+                    draggable: true,
+                    dragMove: this.onChannelChanged,
                     horizontal: false,
                 }];
 
