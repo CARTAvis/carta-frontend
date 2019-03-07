@@ -37,6 +37,7 @@ export interface LineMarker {
     horizontal: boolean;
     width?: number;
     draggable?: boolean;
+    dragCustomBoundary?: {xMin?: number, xMax?: number, yMin?: number, yMax?: number};
     dragMove?: (val: number) => void;
     isMouseMove?: boolean;
 }
@@ -194,14 +195,28 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         this.isMouseEntered = false;
     };
 
-    dragBoundsFuncVertical = (pos: Point2D) => {
-        const chartArea = this.chartArea;
-        return {x: clamp(pos.x, chartArea.left, chartArea.right), y: 0};
+    dragBoundsFuncVertical = (pos: Point2D, marker: LineMarker) => {
+        let xMin = this.chartArea.left;
+        let xMax = this.chartArea.right;
+        if (marker.dragCustomBoundary && marker.dragCustomBoundary.xMin) {
+            xMin = Math.floor(this.getPixelForValueX(marker.dragCustomBoundary.xMin)) + 0.5 * devicePixelRatio;
+        }
+        if (marker.dragCustomBoundary && marker.dragCustomBoundary.xMax) {
+            xMax = Math.floor(this.getPixelForValueX(marker.dragCustomBoundary.xMax)) + 0.5 * devicePixelRatio;
+        }
+        return {x: clamp(pos.x, xMin, xMax), y: 0};
     };
 
-    dragBoundsFuncHorizontal = (pos: Point2D) => {
-        const chartArea = this.chartArea;
-        return {x: 0, y: clamp(pos.y, chartArea.top, chartArea.bottom)};
+    dragBoundsFuncHorizontal = (pos: Point2D, marker: LineMarker) => {
+        let yMin = this.chartArea.top;
+        let yMax = this.chartArea.bottom;
+        if (marker.dragCustomBoundary && marker.dragCustomBoundary.yMin) {
+            yMin = Math.floor(this.getPixelForValueY(marker.dragCustomBoundary.yMin, this.props.logY)) + 0.5 * devicePixelRatio;
+        }
+        if (marker.dragCustomBoundary && marker.dragCustomBoundary.yMax) {
+            yMax = Math.floor(this.getPixelForValueY(marker.dragCustomBoundary.yMax, this.props.logY)) + 0.5 * devicePixelRatio;
+        }
+        return {x: 0, y: clamp(pos.y, yMin, yMax)};
     };
 
     onMarkerDragged = (ev, marker: LineMarker) => {
@@ -528,7 +543,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                                 x={0}
                                 y={valueCanvasSpace}
                                 draggable={true}
-                                dragBoundFunc={this.dragBoundsFuncHorizontal}
+                                dragBoundFunc={pos => this.dragBoundsFuncHorizontal(pos, marker)}
                                 onDragMove={ev => this.onMarkerDragged(ev, marker)}
                             >
                                 <Rect
@@ -590,7 +605,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                                 x={valueCanvasSpace}
                                 y={0}
                                 draggable={true}
-                                dragBoundFunc={this.dragBoundsFuncVertical}
+                                dragBoundFunc={pos => this.dragBoundsFuncVertical(pos, marker)}
                                 onDragMove={ev => this.onMarkerDragged(ev, marker)}
                             >
                                 <Rect
