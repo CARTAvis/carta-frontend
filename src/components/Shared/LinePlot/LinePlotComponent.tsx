@@ -427,6 +427,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         this.showMouseEnterWidget();
     };
 
+    onMouseMove = () => {
+        this.showMouseEnterWidget();
+    };
+
     onMouseLeave = () => {
         this.hideMouseEnterWidget();
     };
@@ -715,6 +719,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 style={{cursor: this.isPanning || isHovering ? "move" : "crosshair"}}
                 onKeyDown={this.onKeyDown}
                 onMouseEnter={this.onMouseEnter}
+                onMouseMove={this.onMouseMove}
                 onMouseLeave={this.onMouseLeave}
                 tabIndex={0}
             >
