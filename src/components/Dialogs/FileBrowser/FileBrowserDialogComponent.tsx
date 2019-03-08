@@ -84,14 +84,23 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
-                        <AnchorButton intent={Intent.NONE} onClick={fileBrowserStore.hideFileBrowser} text="Close"/>
+                        <AnchorButton intent={Intent.NONE} onClick={fileBrowserStore.hideFileBrowser} disabled={this.props.appStore.fileLoading} text="Close"/>
                         {fileBrowserStore.appendingFrame ? (
                             <Tooltip content={"Append this file as a new frame"}>
-                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo} onClick={this.loadSelectedFile} text="Append"/>
+                                <AnchorButton
+                                    intent={Intent.PRIMARY}
+                                    disabled={this.props.appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                                    onClick={this.loadSelectedFile} text="Append"
+                                />
                             </Tooltip>
                         ) : (
                             <Tooltip content={"Close any existing frames and load this file"}>
-                                <AnchorButton intent={Intent.PRIMARY} disabled={!fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo} onClick={this.loadSelectedFile} text="Load"/>
+                                <AnchorButton
+                                    intent={Intent.PRIMARY}
+                                    disabled={this.props.appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                                    onClick={this.loadSelectedFile}
+                                    text="Load"
+                                />
                             </Tooltip>
                         )}
                     </div>
@@ -114,11 +123,10 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         const frames = this.props.appStore.frames;
         if (!fileBrowserStore.appendingFrame || !frames.length) {
             this.props.appStore.openFile(fileBrowserStore.fileList.directory, file, hdu);
-        }
-        else {
+        } else {
             this.props.appStore.appendFile(fileBrowserStore.fileList.directory, file, hdu);
         }
-        
+
         fileBrowserStore.saveStartingDirectory();
     }
 }
