@@ -5,9 +5,9 @@ import {observer} from "mobx-react";
 import DevTools from "mobx-react-devtools";
 import ReactResizeDetector from "react-resize-detector";
 import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
-import {RootMenuComponent, FloatingWidgetManagerComponent, exportImage} from "./components";
+import {exportImage, FloatingWidgetManagerComponent, RootMenuComponent} from "./components";
 import {AboutDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, URLConnectDialogComponent} from "./components/Dialogs";
-import {AppStore, FileBrowserStore, dayPalette, nightPalette} from "./stores";
+import {AppStore, dayPalette, FileBrowserStore, nightPalette, RegionMode} from "./stores";
 import {smoothStepOffset} from "./utilities";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
@@ -51,7 +51,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
             AST.setPalette(appStore.darkTheme ? nightPalette : dayPalette);
             appStore.astReady = true;
             if (connected && !autoFileLoaded && fileSearchParam) {
-                    appStore.addFrame(folderSearchParam, fileSearchParam, "", 0);
+                appStore.addFrame(folderSearchParam, fileSearchParam, "", 0);
             }
         });
         appStore.backendService.loggingEnabled = true;
@@ -239,6 +239,27 @@ export class App extends React.Component<{ appStore: AppStore }> {
         }
     };
 
+    deleteSelectedRegion = () => {
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame) {
+            appStore.activeFrame.regionSet.deleteRegion(appStore.activeFrame.regionSet.selectedRegion);
+        }
+    };
+
+    toggleCreateMode = () => {
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame) {
+            appStore.activeFrame.regionSet.toggleMode();
+        }
+    };
+
+    exitCreateMode = () => {
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame && appStore.activeFrame.regionSet.mode !== RegionMode.MOVING) {
+            appStore.activeFrame.regionSet.setMode(RegionMode.MOVING);
+        }
+    };
+
     public renderHotkeys() {
         const appStore = this.props.appStore;
         const modString = appStore.modifierString;
@@ -264,6 +285,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 {fileHotkeys}
                 <Hotkey group="Appearance" global={true} combo="shift + D" label="Toggle light/dark theme" onKeyDown={this.toggleDarkTheme}/>
                 <Hotkey group="Cursor" global={true} combo="F" label="Freeze/unfreeze cursor position" onKeyDown={appStore.toggleCursorFrozen}/>
+                <Hotkey group="Regions" global={true} combo="del" label="Delete selected region" onKeyDown={this.deleteSelectedRegion}/>
+                <Hotkey group="Regions" global={true} combo="backspace" label="Delete selected region" onKeyDown={this.deleteSelectedRegion}/>
+                <Hotkey group="Regions" global={true} combo="c" label="Toggle region creation mode" onKeyDown={this.toggleCreateMode}/>
             </Hotkeys>
         );
     }

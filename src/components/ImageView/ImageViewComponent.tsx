@@ -12,6 +12,7 @@ import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverl
 import {WidgetConfig, WidgetProps} from "stores";
 import {CursorInfo, Point2D} from "models";
 import "./ImageViewComponent.css";
+import {RegionViewComponent} from "./RegionView/RegionViewComponent";
 
 export const exportImage = (padding, darkTheme, imageName) => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
@@ -113,7 +114,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     onZoomed = (cursorInfo: CursorInfo, delta: number) => {
         const appStore = this.props.appStore;
         if (appStore.activeFrame) {
-            const zoomSpeed = 1 + Math.abs(delta / 1000.0);
+            const zoomSpeed = 1 + Math.abs(delta / 750.0);
             const newZoom = appStore.activeFrame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
             // Shift from one-indexed image space position to zero-indexed
             appStore.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom);
@@ -133,85 +134,93 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         const beamProfile = appStore.activeFrame ? appStore.activeFrame.beamProperties : null;
         const imageRatioTagOffset = {x: appStore.overlayStore.padding.left + appStore.overlayStore.viewWidth / 2.0, y: appStore.overlayStore.padding.top + appStore.overlayStore.viewHeight / 2.0};
 
+        let divContents;
+        if (appStore.activeFrame && appStore.astReady) {
+            const effectiveWidth = appStore.activeFrame.renderWidth * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
+            const effectiveHeight = appStore.activeFrame.renderHeight * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
+
+            divContents = (
+                <React.Fragment>
+                    {appStore.activeFrame.valid &&
+                    <OverlayComponent
+                        frame={appStore.activeFrame}
+                        overlaySettings={appStore.overlayStore}
+                        docked={this.props.docked}
+                    />
+                    }
+                    < RasterViewComponent
+                        frame={appStore.activeFrame}
+                        docked={this.props.docked}
+                        overlaySettings={appStore.overlayStore}
+                    />
+                    {appStore.cursorInfo &&
+                    <CursorOverlayComponent
+                        cursorInfo={appStore.cursorInfo}
+                        spectralInfo={appStore.activeFrame.spectralInfo}
+                        mip={appStore.activeFrame.currentFrameView.mip}
+                        width={appStore.overlayStore.viewWidth}
+                        left={appStore.overlayStore.padding.left}
+                        right={appStore.overlayStore.padding.right}
+                        docked={this.props.docked}
+                        unit={appStore.activeFrame.unit}
+                        top={appStore.overlayStore.padding.top}
+                        showImage={true}
+                        showWCS={true}
+                        showValue={true}
+                        showChannel={false}
+                        showSpectral={true}
+                    />
+                    }
+                    {beamProfile &&
+                    <BeamProfileOverlayComponent
+                        width={appStore.overlayStore.viewWidth - appStore.overlayStore.padding.left - appStore.overlayStore.padding.right}
+                        height={appStore.overlayStore.viewHeight - appStore.overlayStore.padding.top - appStore.overlayStore.padding.bottom}
+                        top={appStore.overlayStore.padding.top}
+                        left={appStore.overlayStore.padding.left}
+                        beamMajor={beamProfile.x}
+                        beamMinor={beamProfile.y}
+                        beamAngle={beamProfile.angle}
+                        zoomLevel={appStore.activeFrame.zoomLevel}
+                        docked={this.props.docked}
+                        padding={10}
+                    />
+                    }
+                    <RegionViewComponent
+                        frame={appStore.activeFrame}
+                        width={appStore.overlayStore.viewWidth - appStore.overlayStore.padding.left - appStore.overlayStore.padding.right}
+                        height={appStore.overlayStore.viewHeight - appStore.overlayStore.padding.top - appStore.overlayStore.padding.bottom}
+                        top={appStore.overlayStore.padding.top}
+                        left={appStore.overlayStore.padding.left}
+                        onCursorMoved={this.onCursorMoved}
+                        onClicked={this.onClicked}
+                        onZoomed={this.onZoomed}
+                        overlaySettings={appStore.overlayStore}
+                        cursorFrozen={appStore.cursorFrozen}
+                        cursorPoint={appStore.cursorInfo ? appStore.cursorInfo.posImageSpace : null}
+                        docked={this.props.docked}
+                    />
+                    <ToolbarComponent
+                        appStore={appStore}
+                        docked={this.props.docked}
+                        visible={appStore.imageToolbarVisible}
+                        vertical={false}
+                    />
+                    <div style={{opacity: this.showRatioIndicator ? 1 : 0, left: imageRatioTagOffset.x, top: imageRatioTagOffset.y}} className={"tag-image-ratio"}>
+                        <Tag large={true}>
+                            {effectiveWidth} x {effectiveHeight} ({(effectiveWidth / effectiveHeight).toFixed(2)})
+                        </Tag>
+                    </div>
+                </React.Fragment>
+            );
+        } else if (!appStore.astReady) {
+            divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner"/>} title={"Loading AST Library"}/>;
+        } else {
+            divContents = <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>;
+        }
+
         return (
-            <div
-                className="image-view-div"
-                ref={(ref) => this.containerDiv = ref}
-                onMouseEnter={this.onMouseEnter}
-                onMouseLeave={this.onMouseLeave}
-            >
-                {appStore.astReady && appStore.activeFrame && appStore.activeFrame.valid &&
-                <OverlayComponent
-                    frame={appStore.activeFrame}
-                    overlaySettings={appStore.overlayStore}
-                    docked={this.props.docked}
-                    onCursorMoved={this.onCursorMoved}
-                    onClicked={this.onClicked}
-                    onZoomed={this.onZoomed}
-                    cursorFrozen={appStore.cursorFrozen}
-                    cursorPoint={appStore.cursorInfo ? appStore.cursorInfo.posImageSpace : null}
-                />
-                }
-                {appStore.astReady && appStore.activeFrame &&
-                < RasterViewComponent
-                    frame={appStore.activeFrame}
-                    docked={this.props.docked}
-                    overlaySettings={appStore.overlayStore}
-                />
-                }
-                {appStore.astReady && appStore.activeFrame && appStore.cursorInfo &&
-                <CursorOverlayComponent
-                    cursorInfo={appStore.cursorInfo}
-                    spectralInfo={appStore.activeFrame.spectralInfo}
-                    mip={appStore.activeFrame.currentFrameView.mip}
-                    width={appStore.overlayStore.viewWidth}
-                    left={appStore.overlayStore.padding.left}
-                    right={appStore.overlayStore.padding.right}
-                    docked={this.props.docked}
-                    unit={appStore.activeFrame.unit}
-                    top={appStore.overlayStore.padding.top}
-                    showImage={true}
-                    showWCS={true}
-                    showValue={true}
-                    showChannel={false}
-                    showSpectral={true}
-                />
-                }
-                {appStore.astReady && appStore.activeFrame && beamProfile &&
-                <BeamProfileOverlayComponent
-                    width={appStore.overlayStore.viewWidth - appStore.overlayStore.padding.left - appStore.overlayStore.padding.right}
-                    height={appStore.overlayStore.viewHeight - appStore.overlayStore.padding.top - appStore.overlayStore.padding.bottom}
-                    top={appStore.overlayStore.padding.top}
-                    left={appStore.overlayStore.padding.left}
-                    beamMajor={beamProfile.x}
-                    beamMinor={beamProfile.y}
-                    beamAngle={beamProfile.angle}
-                    zoomLevel={appStore.activeFrame.zoomLevel}
-                    docked={this.props.docked}
-                    padding={10}
-                />
-                }
-                {appStore.astReady && appStore.activeFrame &&
-                <ToolbarComponent
-                    appStore={appStore}
-                    docked={this.props.docked}
-                    visible={appStore.imageToolbarVisible}
-                    vertical={false}
-                />
-                }
-                {appStore.activeFrame &&
-                <div style={{opacity: this.showRatioIndicator ? 1 : 0, left: imageRatioTagOffset.x, top: imageRatioTagOffset.y}} className={"tag-image-ratio"}>
-                    <Tag large={true}>
-                        {appStore.activeFrame.renderWidth * (appStore.activeFrame.renderHiDPI? devicePixelRatio : 1)} x {appStore.activeFrame.renderHeight * (appStore.activeFrame.renderHiDPI? devicePixelRatio : 1)} ({(appStore.activeFrame.renderWidth / appStore.activeFrame.renderHeight).toFixed(2)})
-                    </Tag>
-                </div>
-                }
-                {!appStore.astReady &&
-                <NonIdealState icon={<Spinner className="astLoadingSpinner"/>} title={"Loading AST Library"}/>
-                }
-                {!appStore.activeFrame &&
-                <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
-                }
+            <div className="image-view-div" ref={(ref) => this.containerDiv = ref} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+                {divContents}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
         );

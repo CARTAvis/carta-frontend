@@ -1,10 +1,12 @@
 import {action, computed, observable} from "mobx";
+import {CARTA} from "carta-protobuf";
 import {PlotType} from "components/Shared";
 
 export class SpectralProfileWidgetStore {
     @observable fileId: number;
     @observable regionId: number;
     @observable coordinate: string;
+    @observable statsType: CARTA.StatsType;
     @observable minX: number;
     @observable maxX: number;
     @observable minY: number;
@@ -17,13 +19,11 @@ export class SpectralProfileWidgetStore {
     @observable useWcsValues: boolean;
     @observable markerTextVisible: boolean;
 
-    @computed get validCoordinates() {
-        const validCoordinates = [];
-        for (let stokes of ["", "I", "Q", "U", "V"]) {
-            validCoordinates.push(`${stokes}z`);
-        }
-        return validCoordinates;
-    }
+    private static ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
+
+    private static ValidStatsTypes = [
+        CARTA.StatsType.None, CARTA.StatsType.Sum, CARTA.StatsType.FluxDensity, CARTA.StatsType.Mean, CARTA.StatsType.RMS,
+        CARTA.StatsType.Sigma, CARTA.StatsType.SumSq, CARTA.StatsType.Min, CARTA.StatsType.Max];
 
     @action setFileId = (fileId: number) => {
         // Reset zoom when changing between files
@@ -37,9 +37,15 @@ export class SpectralProfileWidgetStore {
         this.regionId = regionId;
     };
 
+    @action setStatsType = (statsType: CARTA.StatsType) => {
+        if (SpectralProfileWidgetStore.ValidStatsTypes.indexOf(statsType) !== -1) {
+            this.statsType = statsType;
+        }
+    };
+
     @action setCoordinate = (coordinate: string) => {
         // Check coordinate validity
-        if (this.validCoordinates.indexOf(coordinate) !== -1) {
+        if (SpectralProfileWidgetStore.ValidCoordinates.indexOf(coordinate) !== -1) {
             // Reset zoom when changing between coordinates
             this.clearXYBounds();
             this.coordinate = coordinate;
@@ -120,6 +126,7 @@ export class SpectralProfileWidgetStore {
         this.fileId = fileId;
         this.regionId = regionId;
         this.coordinate = coordinate;
+        this.statsType = CARTA.StatsType.Sum;
 
         // Describes how the data is visualised
         this.plotType = PlotType.STEPS;

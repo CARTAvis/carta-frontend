@@ -1,11 +1,11 @@
 import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {OverlayStore} from "./OverlayStore";
-import {RenderConfigStore} from "./RenderConfigStore";
+import {OverlayStore, RegionSetStore, RenderConfigStore} from "stores";
 import {Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES} from "models";
 import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency} from "utilities";
+import {BackendService} from "../services";
 
-export class FrameInfo {
+export interface FrameInfo {
     fileId: number;
     fileInfo: CARTA.FileInfo;
     fileInfoExtended: CARTA.FileInfoExtended;
@@ -31,11 +31,15 @@ export class FrameStore {
     @observable overviewRasterData: Float32Array;
     @observable overviewRasterView: FrameView;
     @observable valid: boolean;
+    @observable regionSet: RegionSetStore;
 
-    private overlayStore: OverlayStore;
+    private readonly overlayStore: OverlayStore;
+    private readonly backendService: BackendService;
 
-    constructor(overlay: OverlayStore) {
+    constructor(overlay: OverlayStore, frameInfo: FrameInfo, backendService: BackendService) {
         this.overlayStore = overlay;
+        this.backendService = backendService;
+        this.frameInfo = frameInfo;
         this.renderHiDPI = true;
         this.center = {x: 0, y: 0};
         this.stokes = 0;
@@ -43,6 +47,15 @@ export class FrameStore {
         this.requiredStokes = 0;
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore();
+        this.regionSet = new RegionSetStore(this, backendService);
+        this.valid = true;
+        this.currentFrameView = {
+            xMin: 0,
+            xMax: 0,
+            yMin: 0,
+            yMax: 0,
+            mip: 999
+        };
     }
 
     @computed get requiredFrameView(): FrameView {
