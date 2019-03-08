@@ -11,7 +11,7 @@ import {PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {ProfilerInfoComponent} from "./ProfilerInfo/ProfilerInfoComponent";
 import {Point2D} from "models";
-import {clamp, formattedNotation, binarySearchByX} from "utilities";
+import {clamp, binarySearchByX} from "utilities";
 import "./LinePlotComponent.css";
 
 enum ZoomMode {
@@ -702,13 +702,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         let cursorInfo = null;
         if (this.props.data && this.props.cursorX) {
-            let x = this.isMouseEntered ? this.props.cursorX.profiler : this.props.cursorX.image;
-            let nearest = binarySearchByX(this.props.data, x);
+            let nearest = binarySearchByX(this.props.data,
+                            this.isMouseEntered ? this.props.cursorX.profiler : this.props.cursorX.image);
             if (nearest) {
                 cursorInfo = {
-                    label: this.isMouseEntered ? "Cursor:" : "Data:",
-                    cursorX: formattedNotation(nearest.x) + " " + this.props.cursorX.unit,
-                    cursorY: nearest.y.toExponential(2)
+                    isMouseEntered: this.isMouseEntered,
+                    cursorX: nearest.x,
+                    cursorY: nearest.y,
+                    xUnit: this.props.cursorX.unit,
                 };
             }
         }
