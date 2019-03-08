@@ -90,7 +90,8 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                                 <AnchorButton
                                     intent={Intent.PRIMARY}
                                     disabled={this.props.appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                                    onClick={this.loadSelectedFile} text="Append"
+                                    onClick={this.loadSelectedFile}
+                                    text="Append"
                                 />
                             </Tooltip>
                         ) : (
