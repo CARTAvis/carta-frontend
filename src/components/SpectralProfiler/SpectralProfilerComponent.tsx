@@ -209,11 +209,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private getChannelUnit = (): string => {
-        if (this.widgetStore.useWcsValues && this.frame.channelInfo &&
-            this.frame.channelInfo.channelType.unit && this.frame.channelInfo.channelType.unit.length) {
+        if (this.widgetStore.useWcsValues && this.frame.channelInfo && this.frame.channelInfo.channelType.unit) {
             return this.frame.channelInfo.channelType.unit;
         }
-        return null;
+        return "Channel";
     };
 
     onGraphCursorMoved = _.throttle((x) => {
