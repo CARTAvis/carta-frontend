@@ -31,8 +31,8 @@ export class RenderConfigStore {
     
     @observable scaling: FrameScaling;
     @observable colorMap: number;
-    @observable scaleMin: number;
-    @observable scaleMax: number;
+    //@observable scaleMin: number;
+    //@observable scaleMax: number;
     @observable contrast: number;
     @observable bias: number;
     @observable gamma: number;
@@ -42,6 +42,7 @@ export class RenderConfigStore {
     @observable useCubeHistogram: boolean;
     @observable cubeHistogramProgress: number;
     @observable selectedPercentile: number;
+    @observable stokes: number;
     @observable stokesScaleMin: number[];    
     @observable stokesScaleMax: number[];
     @observable stokesPercentile: number[];
@@ -55,7 +56,7 @@ export class RenderConfigStore {
         this.scaling = FrameScaling.LINEAR;
         this.cubeHistogramProgress = 0;
         this.setColorMap("inferno");
-	
+        this.stokes = 0;	
 	this.stokesScaleMin = [0, 0, 0];
 	this.stokesScaleMax = [1, 1, 1];
     }
@@ -85,26 +86,31 @@ export class RenderConfigStore {
         }
     }
 
-    @computed get stokesScaleMinVal() {
-    	return this.stokesScaleMin;
+    @computed get scaleMin() {
+    	return this.stokesScaleMin[this.stokes];
     }
  
-    @computed get stokesScaleMaxVal() {
-    	return this.stokesScaleMax;
+    @computed get scaleMax() {
+    	return this.stokesScaleMax[this.stokes];
     }
 
     @computed get stokesScalePercentileVal() {
-        return this.stokesPercentile;
+        return this.stokesPercentile[this.stokes];
     }
 
-    @action setStokesScaleMin = (stokesChannel: number, scaleMin: number) => {
-        this.stokesScaleMin[stokesChannel] = scaleMin;
-	console.log("Scale min set: " + scaleMin);
+    @action setStokes = (val: number) => {
+	this.stokes = val;
+	console.log("Updated current Stokes" + this.stokes);
+    }
+
+    @action setStokesScaleMin = (scaleMin: number) => {
+        this.stokesScaleMin[this.stokes] = scaleMin;
+	console.log("Scale min set: " + scaleMin + " for Stokes " + this.stokes);
     };
 
-    @action setStokesScaleMax = (stokesChannel: number, scaleMax: number) => {
-        this.stokesScaleMax[stokesChannel] = scaleMax;
-	console.log("Scale max set: " + scaleMax);
+    @action setStokesScaleMax = (scaleMax: number) => {
+        this.stokesScaleMax[this.stokes] = scaleMax;
+	console.log("Scale max set: " + scaleMax + " for Stokes " + this.stokes);
     };
 
     @action setStokesScalePercentile = (stokesChannel: number, selectedPercentile: number) => {
@@ -138,8 +144,8 @@ export class RenderConfigStore {
         this.selectedPercentile = rank;
         // Find max and min if the rank is 100%
         if (rank === 100) {
-            this.scaleMin = this.histogramMin;
-            this.scaleMax = this.histogramMax;
+            this.scaleMin[this.stokes] = this.histogramMin;
+            this.scaleMax[this.stokes] = this.histogramMax;
             return true;
         }
 
@@ -150,8 +156,8 @@ export class RenderConfigStore {
         const rankComplement = 100 - rank;
         const percentiles = this.getPercentiles([rankComplement, rank]);
         if (percentiles.length === 2) {
-            this.scaleMin = percentiles[0];
-            this.scaleMax = percentiles[1];
+            this.scaleMin[this.stokes] = percentiles[0];
+            this.scaleMax[this.stokes] = percentiles[1];
             return true;
         } else {
             return false;
@@ -174,8 +180,8 @@ export class RenderConfigStore {
     };
 
     @action setCustomScale = (minVal: number, maxVal: number) => {
-        this.scaleMin = minVal;
-        this.scaleMax = maxVal;
+        this.scaleMin[this.stokes] = minVal;
+        this.scaleMax[this.stokes] = maxVal;
         this.selectedPercentile = -1;
     };
 

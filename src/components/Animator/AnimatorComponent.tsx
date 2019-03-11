@@ -51,7 +51,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 val = 0;
             }
             this.props.appStore.activeFrame.setChannels(this.props.appStore.activeFrame.requiredChannel, val);
-	    
+            this.props.appStore.activeFrame.renderConfig.setStokes(val);	    
         }
     };
 
