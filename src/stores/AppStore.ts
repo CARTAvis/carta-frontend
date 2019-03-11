@@ -78,6 +78,7 @@ export class AppStore {
     @observable taskProgress: number;
     @observable taskStartTime: number;
     @observable taskCurrentTime: number;
+    @observable fileLoading: boolean;
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -121,7 +122,9 @@ export class AppStore {
 
     // Frame actions
     @action addFrame = (directory: string, file: string, hdu: string, fileId: number) => {
+        this.fileLoading = true;
         this.backendService.loadFile(directory, file, hdu, fileId, CARTA.RenderMode.RASTER).subscribe(ack => {
+            this.fileLoading = false;
             let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
             if (ack.fileInfoExtended.dimensions > 2) {
                 dimensionsString += `\u00D7${ack.fileInfoExtended.depth}`;

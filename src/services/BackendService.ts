@@ -42,8 +42,11 @@ export class BackendService {
     @observable loggingEnabled: boolean;
     @observable sessionId: string;
     @observable apiKey: string;
+    @observable endToEndPing: number;
 
     private connection: WebSocket;
+    private lastPingTime: number;
+    private lastPongTime: number;
     private observerRequestMap: Map<number, Observer<any>>;
     private eventCounter: number;
     private readonly rasterStream: Subject<CARTA.RasterImageData>;
@@ -62,6 +65,7 @@ export class BackendService {
         this.logStore = logStore;
         this.observerRequestMap = new Map<number, Observer<any>>();
         this.eventCounter = 1;
+        this.endToEndPing = NaN;
         this.connectionStatus = ConnectionStatus.CLOSED;
         this.rasterStream = new Subject<CARTA.RasterImageData>();
         this.histogramStream = new Subject<CARTA.RegionHistogramData>();
@@ -104,6 +108,9 @@ export class BackendService {
                 this.logStore.addInfo(`ZFP loaded with ${this.subsetsRequired} workers`, ["zfp"]);
             }
         });
+
+        // check ping every 5 seconds
+        setInterval(this.sendPing, 5000);
     }
 
     @computed get zfpReady() {
@@ -166,6 +173,7 @@ export class BackendService {
                 } else {
                     this.connectionStatus = ConnectionStatus.ACTIVE;
                 }
+
                 const message = CARTA.RegisterViewer.create({sessionId: "", apiKey: apiKey});
                 const requestId = this.eventCounter;
                 this.logEvent(EventNames.RegisterViewer, requestId, message, false);
@@ -186,6 +194,17 @@ export class BackendService {
 
         return obs;
     }
+
+    sendPing = () => {
+        if (this.connection && this.connectionStatus === ConnectionStatus.ACTIVE || this.connectionStatus === ConnectionStatus.DROPPED) {
+            this.lastPingTime = performance.now();
+            this.connection.send("PING");
+        }
+    };
+
+    @action updateEndToEndPing = () => {
+        this.endToEndPing = this.lastPongTime - this.lastPingTime;
+    };
 
     @action("file list")
     getFileList(directory: string): Observable<CARTA.FileListResponse> {
@@ -365,7 +384,11 @@ export class BackendService {
     }
 
     private messageHandler(event: MessageEvent) {
-        if (event.data.byteLength < 40) {
+        if (event.data === "PONG") {
+            this.lastPongTime = performance.now();
+            this.updateEndToEndPing();
+            return;
+        } else if (event.data.byteLength < 40) {
             console.log("Unknown event format");
             return;
         }

@@ -23,13 +23,13 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 <Menu.Item
                     text="Open image"
                     label={`${modString}O`}
-                    disabled={connectionStatus !== ConnectionStatus.ACTIVE}
+                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || appStore.fileLoading}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(false)}
                 />
                 <Menu.Item
                     text="Append image"
                     label={`${modString}L`}
-                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame}
+                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(true)}
                 />
                 <Menu.Item text="Load region" disabled={true}/>
@@ -143,22 +143,23 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
 
         let connectivityClass = "connectivity-icon";
         let tooltip = "";
+        const latencyString = isFinite(appStore.backendService.endToEndPing) ? `${appStore.backendService.endToEndPing.toFixed(1)} ms` : "Unknown";
         switch (connectionStatus) {
             case ConnectionStatus.PENDING:
                 tooltip = "Connecting to server";
                 connectivityClass += " warning";
                 break;
             case ConnectionStatus.ACTIVE:
-                tooltip = "Connected to server";
+                tooltip = `Connected to server. Latency: ${latencyString}`;
                 connectivityClass += " online";
                 break;
             case ConnectionStatus.DROPPED:
-                tooltip = "Reconnected to server after disconnect. Some errors may occur";
+                tooltip = `Reconnected to server after disconnect. Some errors may occur. Latency: ${latencyString}`;
                 connectivityClass += " warning";
                 break;
             case ConnectionStatus.CLOSED:
             default:
-                tooltip = "Disconnected from server";
+                tooltip = `Disconnected from server. Latency: ${latencyString}`;
                 connectivityClass += " offline";
                 break;
         }
