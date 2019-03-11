@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 import {Group, Layer, Line, Rect, Stage} from "react-konva";
 import {CARTA} from "carta-protobuf";
 import {ASTSettingsString, FrameStore, OverlayStore, RegionMode, RegionStore} from "stores";
-import {RectangularRegionComponent} from "./RectangularRegionComponent";
+import {RegionComponent} from "./RegionComponent";
 import {CursorInfo, Point2D} from "../../../models";
 import "./RegionViewComponent.css";
 
@@ -252,7 +252,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (regionSet && regionSet.regions.length) {
             regionRects = regionSet.regions.filter(r => (r.regionType === CARTA.RegionType.RECTANGLE || r.regionType === CARTA.RegionType.ELLIPSE) && r.isValid).map(
                 r => (
-                    <RectangularRegionComponent
+                    <RegionComponent
                         key={r.regionId}
                         region={r}
                         frame={frame}
@@ -292,12 +292,20 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             }
         }
 
+        let cursor: string;
+
+        if (frame.regionSet.mode === RegionMode.CREATING) {
+            cursor = "crosshair";
+        } else if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.editing) {
+            cursor = "move";
+        }
+
         return (
             <Stage
                 className={className}
                 width={this.props.width}
                 height={this.props.height}
-                style={{left: this.props.left, top: this.props.top, cursor: frame.regionSet.mode === RegionMode.CREATING ? "crosshair" : null}}
+                style={{left: this.props.left, top: this.props.top, cursor}}
                 onClick={this.handleClick}
                 onWheel={this.handleWheel}
                 onMouseMove={this.handleMove}
