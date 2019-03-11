@@ -127,12 +127,6 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
             </Menu>
         );
 
-        const debugMenu = (
-            <Menu>
-                <Menu.Item disabled={!appStore.activeFrame} text="Log spectral requirements" icon={"print"} onClick={appStore.recalculateSpectralRequirements}/>
-            </Menu>
-        );
-
         const helpMenu = (
             <Menu>
                 <Menu.Item text="Online Manual" icon={"help"} onClick={this.handleDocumentationClicked}/>
@@ -180,11 +174,6 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 <Popover autoFocus={false} minimal={true} content={panelMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="root-menu-entry">
                         <Menu.Item text="Layout"/>
-                    </Menu>
-                </Popover>
-                <Popover autoFocus={false} minimal={true} content={debugMenu} position={Position.BOTTOM_LEFT}>
-                    <Menu className="root-menu-entry">
-                        <Menu.Item text="Debug"/>
                     </Menu>
                 </Popover>
                 <Popover autoFocus={false} minimal={true} content={helpMenu} position={Position.BOTTOM_LEFT}>
