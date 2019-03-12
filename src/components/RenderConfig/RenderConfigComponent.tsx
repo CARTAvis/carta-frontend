@@ -298,16 +298,16 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         const histogramCutoff = 430 + this.settingsPanelWidth;
         const displayRankButtons = this.width > percentileButtonCutoff;
         const percentileRanks = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
-
+        const stokes = frame.renderConfig.stokes;
         let percentileButtonsDiv, percentileSelectDiv;
         if (displayRankButtons) {
             const percentileRankbuttons = percentileRanks.map(rank => (
-                <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentile === rank}>
+                <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentile[stokes] === rank}>
                     {`${rank}%`}
                 </Button>
             ));
             percentileRankbuttons.push(
-                <Button small={true} key={-1} onClick={this.setCustomPercentileRank} active={frame.renderConfig.selectedPercentile === -1}>
+                <Button small={true} key={-1} onClick={this.setCustomPercentileRank} active={frame.renderConfig.selectedPercentile[stokes] === -1}>
                     Custom
                 </Button>
             );
@@ -324,7 +324,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             percentileSelectDiv = (
                 <div className="percentile-select">
                     <FormGroup label="Clip Percentile" inline={true}>
-                        <HTMLSelect options={percentileRankOptions} value={frame.renderConfig.selectedPercentile} onChange={this.handlePercentileRankSelectChanged}/>
+                        <HTMLSelect options={percentileRankOptions} value={frame.renderConfig.selectedPercentile[stokes]} onChange={this.handlePercentileRankSelectChanged}/>
                     </FormGroup>
                 </div>
             );

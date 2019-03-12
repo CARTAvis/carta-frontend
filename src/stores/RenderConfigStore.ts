@@ -41,13 +41,13 @@ export class RenderConfigStore {
     @observable cubeHistogram: CARTA.Histogram;
     @observable useCubeHistogram: boolean;
     @observable cubeHistogramProgress: number;
-    @observable selectedPercentile: number;
+    @observable selectedPercentile: number[];
     @observable stokes: number;
     @observable scaleMin: number[];    
     @observable scaleMax: number[];
     
     constructor() {
-        this.selectedPercentile = 99.9;
+        this.selectedPercentile = [99.9, 99.9, 99.9, 99.9];
         this.bias = 0;
         this.contrast = 1;
         this.gamma = 1;
@@ -111,8 +111,8 @@ export class RenderConfigStore {
     @action setUseCubeHistogram = (val: boolean) => {
         if (val !== this.useCubeHistogram) {
             this.useCubeHistogram = val;
-            if (this.selectedPercentile > 0) {
-                this.setPercentileRank(this.selectedPercentile);
+            if (this.selectedPercentile[this.stokes] > 0) {
+                this.setPercentileRank(this.selectedPercentile[this.stokes]);
             }
         }
     };
@@ -132,7 +132,7 @@ export class RenderConfigStore {
     }
     
     @action setPercentileRank = (rank: number) => {
-        this.selectedPercentile = rank;
+        this.selectedPercentile[this.stokes] = rank;
         // Find max and min if the rank is 100%
         if (rank === 100) {
             this.scaleMin[this.stokes] = this.histogramMin;
@@ -157,23 +157,23 @@ export class RenderConfigStore {
 
     @action updateChannelHistogram = (histogram: CARTA.Histogram) => {
         this.channelHistogram = histogram;
-        if (this.selectedPercentile > 0 && !this.useCubeHistogram) {
-            this.setPercentileRank(this.selectedPercentile);
+        if (this.selectedPercentile[this.stokes] > 0 && !this.useCubeHistogram) {
+            this.setPercentileRank(this.selectedPercentile[this.stokes]);
         }
     };
 
     @action updateCubeHistogram = (histogram: CARTA.Histogram, progress: number) => {
         this.cubeHistogram = histogram;
         this.cubeHistogramProgress = progress;
-        if (this.selectedPercentile > 0 && this.useCubeHistogram) {
-            this.setPercentileRank(this.selectedPercentile);
+        if (this.selectedPercentile[this.stokes] > 0 && this.useCubeHistogram) {
+            this.setPercentileRank(this.selectedPercentile[this.stokes]);
         }
     };
 
     @action setCustomScale = (minVal: number, maxVal: number) => {
         this.scaleMin[this.stokes] = minVal;
         this.scaleMax[this.stokes] = maxVal;
-        this.selectedPercentile = -1;
+        this.selectedPercentile[this.stokes] = -1;
     };
 
     @action setColorMapIndex = (index: number) => {
