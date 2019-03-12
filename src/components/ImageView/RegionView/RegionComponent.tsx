@@ -8,7 +8,7 @@ import {CARTA} from "carta-protobuf";
 import {FrameStore, RegionStore} from "../../../stores";
 import {Point2D} from "../../../models";
 
-export interface RectangularRegionComponentProps {
+export interface RegionComponentProps {
     region: RegionStore;
     frame: FrameStore;
     layerWidth: number;
@@ -20,7 +20,7 @@ export interface RectangularRegionComponentProps {
 }
 
 @observer
-export class RectangularRegionComponent extends React.Component<RectangularRegionComponentProps> {
+export class RegionComponent extends React.Component<RegionComponentProps> {
     @observable selectedRegionRef;
 
     private editAnchor: string;
@@ -107,69 +107,79 @@ export class RectangularRegionComponent extends React.Component<RectangularRegio
                 node.scaleX(1);
                 node.scaleY(1);
 
-                const newAnchorPoint = this.getImagePos(konvaEvent.evt.offsetX, konvaEvent.evt.offsetY);
-                const centerPoint = region.controlPoints[0];
-
-                // Rotation matrix elements
-                const cosX = Math.cos(region.rotation * Math.PI / 180.0);
-                const sinX = Math.sin(region.rotation * Math.PI / 180.0);
-
-                const cornerScaling = konvaEvent.evt.ctrlKey || konvaEvent.evt.metaKey;
-
-                if (cornerScaling) {
-                    let w = region.controlPoints[1].x;
-                    let h = region.controlPoints[1].y;
-                    const sizeFactor = region.regionType === CARTA.RegionType.RECTANGLE ? 1.0 : 0.5;
-
-                    const deltaAnchors = {x: newAnchorPoint.x - this.editOppositeAnchorPoint.x, y: newAnchorPoint.y - this.editOppositeAnchorPoint.y};
-                    // Apply inverse rotation to get difference between anchors without rotation
-                    const deltaAnchorsUnrotated = {x: cosX * deltaAnchors.x + sinX * deltaAnchors.y, y: -sinX * deltaAnchors.x + cosX * deltaAnchors.y};
-
-                    if (anchor.indexOf("left") >= 0 || anchor.indexOf("right") >= 0) {
-                        w = Math.abs(deltaAnchorsUnrotated.x) * sizeFactor;
-                    } else {
-                        // anchors without "left" or "right" are purely vertical, so they are clamped in x
-                        deltaAnchorsUnrotated.x = 0;
-                    }
-                    if (anchor.indexOf("top") >= 0 || anchor.indexOf("bottom") >= 0) {
-                        // anchors without "top" or "bottom" are purely horizontal, so they are clamped in y
-                        h = Math.abs(deltaAnchorsUnrotated.y) * sizeFactor;
-                    } else {
-                        deltaAnchorsUnrotated.y = 0;
-                    }
-
-                    // re-rotate after clamping the anchor bounds to get the correct position of the anchor point
-                    deltaAnchors.x = cosX * deltaAnchorsUnrotated.x - sinX * deltaAnchorsUnrotated.y;
-                    deltaAnchors.y = sinX * deltaAnchorsUnrotated.x + cosX * deltaAnchorsUnrotated.y;
-                    let newCenter = {x: this.editOppositeAnchorPoint.x + deltaAnchors.x / 2.0, y: this.editOppositeAnchorPoint.y + deltaAnchors.y / 2.0};
-
-                    region.setControlPoints([newCenter, {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}]);
+                if (konvaEvent.evt.ctrlKey || konvaEvent.evt.metaKey) {
+                    this.applyCornerScaling(region, konvaEvent.evt.offsetX, konvaEvent.evt.offsetY, anchor);
                 } else {
-                    let w = region.controlPoints[1].x;
-                    let h = region.controlPoints[1].y;
-
-                    const deltaAnchorPoint = {x: newAnchorPoint.x - centerPoint.x, y: newAnchorPoint.y - centerPoint.y};
-                    // Apply inverse rotation to get difference between anchor and center without rotation
-                    const deltaAnchorPointUnrotated = {x: cosX * deltaAnchorPoint.x + sinX * deltaAnchorPoint.y, y: -sinX * deltaAnchorPoint.x + cosX * deltaAnchorPoint.y};
-                    const sizeFactor = region.regionType === CARTA.RegionType.RECTANGLE ? 2.0 : 1.0;
-
-                    if (anchor.indexOf("left") >= 0 || anchor.indexOf("right") >= 0) {
-                        w = Math.abs(deltaAnchorPointUnrotated.x) * sizeFactor;
-                    }
-                    if (anchor.indexOf("top") >= 0 || anchor.indexOf("bottom") >= 0) {
-                        h = Math.abs(deltaAnchorPointUnrotated.y) * sizeFactor;
-                    }
-
-                    if (konvaEvent.evt.shiftKey) {
-                        const maxSide = Math.max(w, h);
-                        w = maxSide;
-                        h = maxSide;
-                    }
-
-                    region.setControlPoints([this.editStartCenterPoint, {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}]);
+                    this.applyCenterScaling(region, konvaEvent.evt.offsetX, konvaEvent.evt.offsetY, anchor, konvaEvent.evt.shiftKey);
                 }
             }
         }
+    };
+
+    applyCornerScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string) => {
+        const newAnchorPoint = this.getImagePos(canvasX, canvasY);
+        let w = region.controlPoints[1].x;
+        let h = region.controlPoints[1].y;
+        // Rotation matrix elements
+        const cosX = Math.cos(region.rotation * Math.PI / 180.0);
+        const sinX = Math.sin(region.rotation * Math.PI / 180.0);
+
+        const sizeFactor = region.regionType === CARTA.RegionType.RECTANGLE ? 1.0 : 0.5;
+
+        const deltaAnchors = {x: newAnchorPoint.x - this.editOppositeAnchorPoint.x, y: newAnchorPoint.y - this.editOppositeAnchorPoint.y};
+        // Apply inverse rotation to get difference between anchors without rotation
+        const deltaAnchorsUnrotated = {x: cosX * deltaAnchors.x + sinX * deltaAnchors.y, y: -sinX * deltaAnchors.x + cosX * deltaAnchors.y};
+
+        if (anchor.indexOf("left") >= 0 || anchor.indexOf("right") >= 0) {
+            w = Math.abs(deltaAnchorsUnrotated.x) * sizeFactor;
+        } else {
+            // anchors without "left" or "right" are purely vertical, so they are clamped in x
+            deltaAnchorsUnrotated.x = 0;
+        }
+        if (anchor.indexOf("top") >= 0 || anchor.indexOf("bottom") >= 0) {
+            // anchors without "top" or "bottom" are purely horizontal, so they are clamped in y
+            h = Math.abs(deltaAnchorsUnrotated.y) * sizeFactor;
+        } else {
+            deltaAnchorsUnrotated.y = 0;
+        }
+
+        // re-rotate after clamping the anchor bounds to get the correct position of the anchor point
+        deltaAnchors.x = cosX * deltaAnchorsUnrotated.x - sinX * deltaAnchorsUnrotated.y;
+        deltaAnchors.y = sinX * deltaAnchorsUnrotated.x + cosX * deltaAnchorsUnrotated.y;
+        let newCenter = {x: this.editOppositeAnchorPoint.x + deltaAnchors.x / 2.0, y: this.editOppositeAnchorPoint.y + deltaAnchors.y / 2.0};
+
+        region.setControlPoints([newCenter, {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}]);
+    };
+
+    applyCenterScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, keepAspect: boolean) => {
+        const newAnchorPoint = this.getImagePos(canvasX, canvasY);
+        const centerPoint = region.controlPoints[0];
+
+        let w = region.controlPoints[1].x;
+        let h = region.controlPoints[1].y;
+        // Rotation matrix elements
+        const cosX = Math.cos(region.rotation * Math.PI / 180.0);
+        const sinX = Math.sin(region.rotation * Math.PI / 180.0);
+
+        const deltaAnchorPoint = {x: newAnchorPoint.x - centerPoint.x, y: newAnchorPoint.y - centerPoint.y};
+        // Apply inverse rotation to get difference between anchor and center without rotation
+        const deltaAnchorPointUnrotated = {x: cosX * deltaAnchorPoint.x + sinX * deltaAnchorPoint.y, y: -sinX * deltaAnchorPoint.x + cosX * deltaAnchorPoint.y};
+        const sizeFactor = region.regionType === CARTA.RegionType.RECTANGLE ? 2.0 : 1.0;
+
+        if (anchor.indexOf("left") >= 0 || anchor.indexOf("right") >= 0) {
+            w = Math.abs(deltaAnchorPointUnrotated.x) * sizeFactor;
+        }
+        if (anchor.indexOf("top") >= 0 || anchor.indexOf("bottom") >= 0) {
+            h = Math.abs(deltaAnchorPointUnrotated.y) * sizeFactor;
+        }
+
+        if (keepAspect) {
+            const maxSide = Math.max(w, h);
+            w = maxSide;
+            h = maxSide;
+        }
+
+        region.setControlPoints([this.editStartCenterPoint, {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}]);
     };
 
     handleDragStart = () => {
