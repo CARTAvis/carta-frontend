@@ -186,14 +186,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }
 
     private getChannelValue = (): number => {
-        const channel = this.frame.channel;
-        if (this.widgetStore.useWcsValues && this.frame.channelInfo) {
-            const channelInfo = this.frame.channelInfo;
-            if (channel >= 0 && channel < channelInfo.values.length) {
-                return channelInfo.values[channel];
+        if (this.props.appStore.activeFrame) {
+            const channel = this.props.appStore.activeFrame.requiredChannel;
+            if (this.widgetStore.useWcsValues && this.frame.channelInfo &&
+                channel >= 0 && channel < this.frame.channelInfo.values.length) {
+                return this.frame.channelInfo.values[channel];
             }
+            return channel;
         }
-        return channel;
+        return null;
     };
 
     private getChannelLabel = (): string => {
