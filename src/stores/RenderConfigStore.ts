@@ -43,9 +43,8 @@ export class RenderConfigStore {
     @observable cubeHistogramProgress: number;
     @observable selectedPercentile: number;
     @observable stokes: number;
-    @observable stokesScaleMin: number[];    
-    @observable stokesScaleMax: number[];
-    @observable stokesPercentile: number[];
+    @observable scaleMin: number[];    
+    @observable scaleMax: number[];
     
     constructor() {
         this.selectedPercentile = 99.9;
@@ -57,8 +56,8 @@ export class RenderConfigStore {
         this.cubeHistogramProgress = 0;
         this.setColorMap("inferno");
         this.stokes = 0;	
-	this.stokesScaleMin = [0, 0, 0];
-	this.stokesScaleMax = [1, 1, 1];
+	this.scaleMin = [0, 0, 0, 0];
+	this.scaleMax = [1, 1, 1, 1];
     }
 
    @computed get colorMapName() {
@@ -86,16 +85,12 @@ export class RenderConfigStore {
         }
     }
 
-    @computed get scaleMin() {
-    	return this.stokesScaleMin[this.stokes];
+    @computed get scaleMinVal() {
+    	return this.scaleMin[this.stokes];
     }
  
-    @computed get scaleMax() {
-    	return this.stokesScaleMax[this.stokes];
-    }
-
-    @computed get stokesScalePercentileVal() {
-        return this.stokesPercentile[this.stokes];
+    @computed get scaleMaxVal() {
+    	return this.scaleMax[this.stokes];
     }
 
     @action setStokes = (val: number) => {
@@ -104,17 +99,13 @@ export class RenderConfigStore {
     }
 
     @action setStokesScaleMin = (scaleMin: number) => {
-        this.stokesScaleMin[this.stokes] = scaleMin;
+        this.scaleMin[this.stokes] = scaleMin;
 	console.log("Scale min set: " + scaleMin + " for Stokes " + this.stokes);
     };
 
     @action setStokesScaleMax = (scaleMax: number) => {
-        this.stokesScaleMax[this.stokes] = scaleMax;
+        this.scaleMax[this.stokes] = scaleMax;
 	console.log("Scale max set: " + scaleMax + " for Stokes " + this.stokes);
-    };
-
-    @action setStokesScalePercentile = (stokesChannel: number, selectedPercentile: number) => {
-        this.stokesPercentile[stokesChannel] = selectedPercentile;
     };
 
     @action setUseCubeHistogram = (val: boolean) => {

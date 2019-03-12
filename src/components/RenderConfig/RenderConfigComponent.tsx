@@ -126,14 +126,16 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     handleScaleMinChange = (val: number) => {
         console.log("handleScaleMinChange");
         if (isFinite(val)) {
-            this.props.appStore.activeFrame.renderConfig.setCustomScale(val, this.props.appStore.activeFrame.renderConfig.scaleMax);
+	    const stokes = this.props.appStore.activeFrame.renderConfig.stokes;
+            this.props.appStore.activeFrame.renderConfig.setCustomScale(val, this.props.appStore.activeFrame.renderConfig.scaleMax[stokes]);
         }
     };
 
     handleScaleMaxChange = (val: number) =>{
         console.log("handleScaleMaxChange");
         if (isFinite(val)) {
-            this.props.appStore.activeFrame.renderConfig.setCustomScale(this.props.appStore.activeFrame.renderConfig.scaleMin, val);
+	    const stokes = this.props.appStore.activeFrame.renderConfig.stokes;
+            this.props.appStore.activeFrame.renderConfig.setCustomScale(this.props.appStore.activeFrame.renderConfig.scaleMin[stokes], val);
         }
     };
 
@@ -178,29 +180,29 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     onMinMoved = (x: number) => {
         const frame = this.props.appStore.activeFrame;
         // Check bounds first, to make sure the max isn't being moved below the min
-        if (frame && frame.renderConfig && x < frame.renderConfig.scaleMax) {
-            //frame.renderConfig.setCustomScale(x, frame.renderConfig.scaleMax);
+        if (frame && frame.renderConfig && x < frame.renderConfig.scaleMax[frame.stokes]) {
+            //frame.renderConfig.setCustomScale(x, frame.renderConfig.scaleMax[frame.stokes]);
             //frame.renderConfig.scaleMin = x;
 	    console.log("onMinMoved");
 	    const stokes = frame.requiredStokes;
 	    console.log("Stokes " + stokes);
-	    const scaleMin = this.props.appStore.activeFrame.renderConfig.scaleMin;
+	    const scaleMin = this.props.appStore.activeFrame.renderConfig.scaleMin[frame.stokes];
 	    console.log("Scale min: " + scaleMin);
-	    frame.renderConfig.setStokesScaleMin(scaleMin);
+	    frame.renderConfig.setStokesScaleMin(x);
         }
     };
 
     onMaxMoved = (x: number) => {
         const frame = this.props.appStore.activeFrame;
         // Check bounds first, to make sure the max isn't being moved below the min
-        if (frame && frame.renderConfig && x > frame.renderConfig.scaleMin) {
+        if (frame && frame.renderConfig && x > frame.renderConfig.scaleMin[frame.stokes]) {
             //frame.renderConfig.setCustomScale(frame.renderConfig.scaleMin, x);
 	    console.log("onMaxMoved");
 	    const stokes = this.props.appStore.activeFrame.requiredStokes;
 	    console.log("Stokes " + stokes);
-	    const scaleMax = frame.renderConfig.scaleMax;
+	    const scaleMax = frame.renderConfig.scaleMax[frame.stokes];
 	    console.log("Scale max: " + scaleMax);
-	    frame.renderConfig.setStokesScaleMax(scaleMax);
+	    frame.renderConfig.setStokesScaleMax(x);
         }
     };
 
@@ -276,14 +278,14 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
         if (frame.renderConfig) {
             linePlotProps.markers = [{
-                value: frame.renderConfig.scaleMin,
+                value: frame.renderConfig.scaleMin[frame.stokes],
                 id: "marker-min",
                 label: this.widgetStore.markerTextVisible ? "Min" : undefined,
                 draggable: true,
                 dragMove: this.onMinMoved,
                 horizontal: false,
             }, {
-                value: frame.renderConfig.scaleMax,
+                value: frame.renderConfig.scaleMax[frame.stokes],
                 id: "marker-max",
                 label: this.widgetStore.markerTextVisible ? "Max" : undefined,
                 draggable: true,
@@ -369,7 +371,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     />
                     <FormGroup label={"Clip Min"} inline={true}>
                         <NumericInput
-                            value={frame.renderConfig.scaleMin}
+                            value={frame.renderConfig.scaleMin[frame.stokes]}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
                             allowNumericCharactersOnly={false}
@@ -378,7 +380,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                     <FormGroup label={"Clip Max"} inline={true}>
                         <NumericInput
-                            value={frame.renderConfig.scaleMax}
+                            value={frame.renderConfig.scaleMax[frame.stokes]}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
                             onValueChange={this.handleScaleMaxChange}
