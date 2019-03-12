@@ -283,23 +283,28 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     unit: this.getChannelUnit()
                 };
 
-                linePlotProps.markers = [{
-                    value: linePlotProps.cursorX.image,
-                    id: "marker-channel",
-                    draggable: true,
-                    dragMove: this.onChannelChanged,
-                    horizontal: false,
-                }];
+                linePlotProps.markers = [];
+                if (linePlotProps.cursorX.profiler !== null) {
+                    linePlotProps.markers.push({
+                        value: linePlotProps.cursorX.profiler,
+                        id: "marker-profiler-cursor",
+                        draggable: false,
+                        horizontal: false,
+                        color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                        opacity: 0.8,
+                        isMouseMove: true,
+                    });
+                }
 
-                linePlotProps.markers.push({
-                    value: linePlotProps.cursorX.profiler,
-                    id: "marker-profiler-cursor",
-                    draggable: false,
-                    horizontal: false,
-                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
-                    opacity: 0.8,
-                    isMouseMove: true,
-                });
+                if (linePlotProps.cursorX.image !== null) {
+                    linePlotProps.markers.push({
+                        value: linePlotProps.cursorX.image,
+                        id: "marker-channel",
+                        draggable: true,
+                        dragMove: this.onChannelChanged,
+                        horizontal: false,
+                    });
+                }
 
                 if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
                     linePlotProps.markers.push({
