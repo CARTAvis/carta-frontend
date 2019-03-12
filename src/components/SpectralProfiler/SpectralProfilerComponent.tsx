@@ -174,20 +174,32 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     onChannelChanged = (x: number) => {
-        if (this.props.appStore.activeFrame && this.frame.channelInfo) {
+        if (this.frame && this.frame.channelInfo) {
             let channelInfo = this.frame.channelInfo;
             let nearestIndex = (this.widgetStore.useWcsValues && channelInfo.getChannelIndexWCS) ?
                             channelInfo.getChannelIndexWCS(x) :
                             channelInfo.getChannelIndexSimple(x);
             if (nearestIndex !== null && nearestIndex !== undefined) {
-                this.props.appStore.activeFrame.setChannels(nearestIndex, this.props.appStore.activeFrame.requiredStokes);
+                this.frame.setChannels(nearestIndex, this.frame.requiredStokes);
             }
         }
-    }
+    };
 
-    private getChannelValue = (): number => {
-        if (this.props.appStore.activeFrame) {
-            const channel = this.props.appStore.activeFrame.requiredChannel;
+    private getRequiredChannelValue = (): number => {
+        if (this.frame) {
+            const channel = this.frame.requiredChannel;
+            if (this.widgetStore.useWcsValues && this.frame.channelInfo &&
+                channel >= 0 && channel < this.frame.channelInfo.values.length) {
+                return this.frame.channelInfo.values[channel];
+            }
+            return channel;
+        }
+        return null;
+    };
+
+    private getCurrentChannelValue = (): number => {
+        if (this.frame) {
+            const channel = this.frame.channel;
             if (this.widgetStore.useWcsValues && this.frame.channelInfo &&
                 channel >= 0 && channel < this.frame.channelInfo.values.length) {
                 return this.frame.channelInfo.values[channel];
@@ -226,7 +238,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
         }
 
-        const imageName = (appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfo.name : undefined);
+        const imageName = (this.frame ? this.frame.frameInfo.fileInfo.name : undefined);
 
         let linePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
@@ -279,7 +291,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
                 linePlotProps.cursorX = {
                     profiler: this.widgetStore.cursorX,
-                    image: this.getChannelValue(),
+                    image: this.getRequiredChannelValue(),
                     unit: this.getChannelUnit()
                 };
 
@@ -298,8 +310,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
                 if (linePlotProps.cursorX.image !== null) {
                     linePlotProps.markers.push({
+                        value: this.getCurrentChannelValue(),
+                        id: "marker-channel-current",
+                        opacity: 0.4,
+                        draggable: false,
+                        horizontal: false,
+                    });
+                    linePlotProps.markers.push({
                         value: linePlotProps.cursorX.image,
-                        id: "marker-channel",
+                        id: "marker-channel-required",
                         draggable: true,
                         dragMove: this.onChannelChanged,
                         horizontal: false,
