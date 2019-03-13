@@ -385,8 +385,9 @@ export class AppStore {
         autorun(() => {
             if (this.activeFrame) {
                 let profileConfig = new CARTA.SetSpectralRequirements.SpectralConfig({coordinate: "z", statsTypes: [CARTA.StatsType.None]});
+                let requirementsMessage = new CARTA.SetSpectralRequirements({fileId: this.activeFrame.frameInfo.fileId, regionId: 0, spectralProfiles: [profileConfig]});
                 this.backendService.setSpatialRequirements(this.activeFrame.frameInfo.fileId, 0, ["x", "y"]);
-                // this.backendService.setSpectralRequirements(this.activeFrame.frameInfo.fileId, 0, [profileConfig]);
+                this.backendService.setSpectralRequirements(requirementsMessage);
             }
         });
 
