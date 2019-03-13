@@ -31,8 +31,6 @@ export class RenderConfigStore {
     
     @observable scaling: FrameScaling;
     @observable colorMap: number;
-    //@observable scaleMin: number;
-    //@observable scaleMax: number;
     @observable contrast: number;
     @observable bias: number;
     @observable gamma: number;
@@ -56,8 +54,8 @@ export class RenderConfigStore {
         this.cubeHistogramProgress = 0;
         this.setColorMap("inferno");
         this.stokes = 0;	
-	this.scaleMin = [0, 0, 0, 0];
-	this.scaleMax = [1, 1, 1, 1];
+        this.scaleMin = [0, 0, 0, 0];
+        this.scaleMax = [1, 1, 1, 1];
     }
 
    @computed get colorMapName() {
@@ -86,26 +84,26 @@ export class RenderConfigStore {
     }
 
     @computed get scaleMinVal() {
-    	return this.scaleMin[this.stokes];
+        return this.scaleMin[this.stokes];
     }
  
     @computed get scaleMaxVal() {
-    	return this.scaleMax[this.stokes];
+        return this.scaleMax[this.stokes];
     }
 
     @action setStokes = (val: number) => {
-	this.stokes = val;
-	console.log("Updated current Stokes" + this.stokes);
+        this.stokes = val;
+        console.log("Updated current Stokes" + this.stokes);
     }
 
     @action setStokesScaleMin = (scaleMin: number) => {
         this.scaleMin[this.stokes] = scaleMin;
-	console.log("Scale min set: " + scaleMin + " for Stokes " + this.stokes);
+        console.log("Scale min set: " + scaleMin + " for Stokes " + this.stokes);
     };
 
     @action setStokesScaleMax = (scaleMax: number) => {
         this.scaleMax[this.stokes] = scaleMax;
-	console.log("Scale max set: " + scaleMax + " for Stokes " + this.stokes);
+        console.log("Scale max set: " + scaleMax + " for Stokes " + this.stokes);
     };
 
     @action setUseCubeHistogram = (val: boolean) => {
