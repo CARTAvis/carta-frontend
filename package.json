@@ -7,7 +7,7 @@
         "@blueprintjs/core": "^3.13.0",
         "@blueprintjs/icons": "^3.6.0",
         "@blueprintjs/select": "^3.6.1",
-        "chart.js": "github:veggiesaurus/Chart.js#midpoint_step_interpolation",
+        "chart.js": "^2.8.0-rc.1",
         "chartjs-plugin-annotation": "^0.5.7",
         "electron": "^4.0.6",
         "golden-layout": "^1.5.9",
