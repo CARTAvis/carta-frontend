@@ -387,9 +387,7 @@ export class AppStore {
         // Set spatial and spectral requirements of cursor region on file load
         autorun(() => {
             if (this.activeFrame) {
-                let profileConfig = new CARTA.SetSpectralRequirements.SpectralConfig({coordinate: "z", statsTypes: [CARTA.StatsType.None]});
                 this.backendService.setSpatialRequirements(this.activeFrame.frameInfo.fileId, 0, ["x", "y"]);
-                // this.backendService.setSpectralRequirements(this.activeFrame.frameInfo.fileId, 0, [profileConfig]);
             }
         });
 
