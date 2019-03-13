@@ -4,9 +4,10 @@
     "private": true,
     "homepage": "./",
     "dependencies": {
-        "@blueprintjs/core": "^3.13.0",
+        "@blueprintjs/core": "^3.14.1",
         "@blueprintjs/icons": "^3.6.0",
-        "@blueprintjs/select": "^3.6.1",
+        "@blueprintjs/select": "^3.7.0",
+        "@blueprintjs/table": "^3.4.1",
         "chart.js": "^2.8.0-rc.1",
         "chartjs-plugin-annotation": "^0.5.7",
         "electron": "^4.0.6",

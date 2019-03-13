@@ -318,7 +318,11 @@ export class AppStore {
         }, 200);
 
         const debouncedSetCursor = _.debounce((fileId: number, x: number, y: number) => {
-            this.backendService.setCursor(fileId, x, y);
+            const frame = this.getFrame(fileId);
+            if (frame && frame.regionSet.regions[0]) {
+                frame.regionSet.regions[0].setControlPoint(0, {x, y});
+                this.backendService.setCursor(fileId, x, y);
+            }
         }, 200);
 
         // Update frame view

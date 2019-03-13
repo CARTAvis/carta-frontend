@@ -92,14 +92,21 @@ export class RegionSetStore {
         }
     };
 
+    @action selectRegionByIndex = (index: number) => {
+        if (index >= 0 && index < this.regions.length) {
+            this.selectedRegion = this.regions[index];
+        }
+    };
+
     @action deselectRegion = () => {
         this.selectedRegion = null;
     };
 
     @action deleteRegion = (region: RegionStore) => {
-        if (region && this.regions.length) {
+        // Cursor region cannot be deleted
+        if (region && region.regionId !== 0 && this.regions.length) {
             if (region === this.selectedRegion) {
-                this.selectedRegion = null;
+                this.selectedRegion = this.regions[0];
             }
             this.regions = this.regions.filter(r => r !== region);
             this.backendService.removeRegion(region.regionId);

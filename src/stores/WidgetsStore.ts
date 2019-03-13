@@ -1,7 +1,7 @@
 import * as GoldenLayout from "golden-layout";
 import * as $ from "jquery";
 import {action, observable} from "mobx";
-import {AnimatorComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent} from "components";
+import {AnimatorComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent} from "components";
 import {AppStore} from "./AppStore";
 import {RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore} from "./widgets";
 
@@ -58,6 +58,8 @@ export class WidgetsStore {
                 return SpatialProfilerComponent.WIDGET_CONFIG;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:
                 return SpectralProfilerComponent.WIDGET_CONFIG;
+            case RegionListComponent.WIDGET_CONFIG.type:
+                return RegionListComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -71,6 +73,7 @@ export class WidgetsStore {
         layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
         layout.registerComponent("spectral-profiler", SpectralProfilerComponent);
         layout.registerComponent("render-config", RenderConfigComponent);
+        layout.registerComponent("region-list", RegionListComponent);
         layout.registerComponent("log", LogComponent);
         layout.registerComponent("animator", AnimatorComponent);
 
@@ -219,6 +222,10 @@ export class WidgetsStore {
 
     createFloatingAnimatorWidget = () => {
         this.addFloatingWidget(AnimatorComponent.WIDGET_CONFIG);
+    };
+
+    createFloatingRegionListWidget = () => {
+        this.addFloatingWidget(RegionListComponent.WIDGET_CONFIG);
     };
 
     // region Spatial Profile Widgets
