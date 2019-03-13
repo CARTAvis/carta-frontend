@@ -291,7 +291,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
                 linePlotProps.cursorX = {
                     profiler: this.widgetStore.cursorX,
-                    image: this.getRequiredChannelValue(),
+                    image: this.getCurrentChannelValue(),
                     unit: this.getChannelUnit()
                 };
 
@@ -310,14 +310,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
                 if (linePlotProps.cursorX.image !== null) {
                     linePlotProps.markers.push({
-                        value: this.getCurrentChannelValue(),
+                        value: linePlotProps.cursorX.image,
                         id: "marker-channel-current",
                         opacity: 0.4,
                         draggable: false,
                         horizontal: false,
                     });
                     linePlotProps.markers.push({
-                        value: linePlotProps.cursorX.image,
+                        value: this.getRequiredChannelValue(),
                         id: "marker-channel-required",
                         draggable: true,
                         dragMove: this.onChannelChanged,
