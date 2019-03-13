@@ -144,6 +144,9 @@ export class AppStore {
             newFrame.fitZoom();
             this.loadWCS(newFrame);
 
+            // clear existing spectral requirements for the frame
+            this.existingRequirementsMap.delete(ack.fileId);
+
             // Place frame in frame array (replace frame with the same ID if it exists)
             const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === fileId);
             if (existingFrameIndex !== -1) {
@@ -384,9 +387,7 @@ export class AppStore {
         // Set spatial and spectral requirements of cursor region on file load
         autorun(() => {
             if (this.activeFrame) {
-                let profileConfig = new CARTA.SetSpectralRequirements.SpectralConfig({coordinate: "z", statsTypes: [CARTA.StatsType.None]});
                 this.backendService.setSpatialRequirements(this.activeFrame.frameInfo.fileId, 0, ["x", "y"]);
-                // this.backendService.setSpectralRequirements(this.activeFrame.frameInfo.fileId, 0, [profileConfig]);
             }
         });
 
