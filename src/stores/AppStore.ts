@@ -144,6 +144,9 @@ export class AppStore {
             newFrame.fitZoom();
             this.loadWCS(newFrame);
 
+            // clear existing spectral requirements for the frame
+            this.existingRequirementsMap.delete(ack.fileId);
+
             // Place frame in frame array (replace frame with the same ID if it exists)
             const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === fileId);
             if (existingFrameIndex !== -1) {
