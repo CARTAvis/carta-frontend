@@ -100,12 +100,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
                         props: {appStore: this.props.appStore, id: "render-config-0", docked: true}
                     }, {
                         type: "react-component",
-                        component: "region-list",
-                        title: "Region List",
-                        id: "region-list-docked",
-                        props: {appStore: this.props.appStore, id: "region-list-docked", docked: true}
-                    }, {
-                        type: "react-component",
                         component: "log",
                         title: "Log",
                         id: "log-docked",
@@ -137,7 +131,13 @@ export class App extends React.Component<{ appStore: AppStore }> {
                         title: "Animator",
                         id: "animator-0",
                         props: {appStore: this.props.appStore, id: "animator-0", docked: true}
-                    }]
+                    }, {
+                        type: "react-component",
+                        component: "region-list",
+                        title: "Region List",
+                        id: "region-list-docked",
+                        props: {appStore: this.props.appStore, id: "region-list-docked", docked: true}
+                    },]
                 }]
             }]
         }];
