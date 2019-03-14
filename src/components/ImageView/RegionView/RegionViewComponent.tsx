@@ -250,20 +250,22 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         let regionRects = null;
 
         if (regionSet && regionSet.regions.length) {
-            regionRects = regionSet.regions.filter(r => (r.regionType === CARTA.RegionType.RECTANGLE || r.regionType === CARTA.RegionType.ELLIPSE) && r.isValid).map(
-                r => (
-                    <RegionComponent
-                        key={r.regionId}
-                        region={r}
-                        frame={frame}
-                        layerWidth={this.props.width}
-                        layerHeight={this.props.height}
-                        selected={r === regionSet.selectedRegion}
-                        onSelect={regionSet.selectRegion}
-                        listening={regionSet.mode !== RegionMode.CREATING}
-                    />
-                )
-            );
+            regionRects = regionSet.regions.filter(r => (r.regionType === CARTA.RegionType.RECTANGLE || r.regionType === CARTA.RegionType.ELLIPSE) && r.isValid)
+                .sort((a, b) => a.boundingBoxArea > b.boundingBoxArea ? -1 : 1)
+                .map(
+                    r => (
+                        <RegionComponent
+                            key={r.regionId}
+                            region={r}
+                            frame={frame}
+                            layerWidth={this.props.width}
+                            layerHeight={this.props.height}
+                            selected={r === regionSet.selectedRegion}
+                            onSelect={regionSet.selectRegion}
+                            listening={regionSet.mode !== RegionMode.CREATING}
+                        />
+                    )
+                );
         }
 
         let cursorMarker = null;

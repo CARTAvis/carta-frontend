@@ -34,6 +34,20 @@ export class RegionStore {
         return this.regionId < 0;
     }
 
+    @computed get boundingBoxArea(): number {
+        if (!this.isValid) {
+            return 0;
+        }
+        switch (this.regionType) {
+            case CARTA.RegionType.RECTANGLE:
+                return this.controlPoints[1].x * this.controlPoints[1].y;
+            case CARTA.RegionType.ELLIPSE:
+                return 4 * this.controlPoints[1].x * this.controlPoints[1].y;
+            default:
+                return 0;
+        }
+    }
+
     @computed get isClosedRegion() {
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
