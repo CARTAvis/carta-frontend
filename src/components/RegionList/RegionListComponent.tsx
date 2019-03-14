@@ -3,9 +3,9 @@ import {computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {HTMLTable, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
+import {CARTA} from "carta-protobuf";
 import {RegionStore, WidgetConfig, WidgetProps} from "stores";
 import "./RegionListComponent.css";
-import {min} from "rxjs/operators";
 
 @observer
 export class RegionListComponent extends React.Component<WidgetProps> {
@@ -50,12 +50,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const tableHeight = Math.min(requiredTableHeight, this.height);
 
         let nameWidth = 160;
-        const typeWidth = 100;
+        const typeWidth = 90;
         const centerWidth = 120;
+        const sizeWidth = 160;
         const rotationWidth = 80;
 
         const availableWidth = this.width - 2 * padding;
-        const fixedWidth = typeWidth + centerWidth + rotationWidth;
+        const fixedWidth = typeWidth + centerWidth + sizeWidth + rotationWidth;
         nameWidth = availableWidth - fixedWidth;
         const selectedRegion = frame.regionSet.selectedRegion;
 
@@ -67,15 +68,28 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             } else {
                 pixelCenterEntry = <td style={{width: centerWidth}}>Invalid</td>;
             }
+
+            let pixelSizeEntry;
+            const sizePoint = region.controlPoints[0];
+            if (region.regionType === CARTA.RegionType.RECTANGLE) {
+                pixelSizeEntry = <td style={{width: sizeWidth}}>{`(${sizePoint.x.toFixed(0)} \u00D7 ${sizePoint.y.toFixed(0)})`}</td>;
+            } else if (region.regionType === CARTA.RegionType.ELLIPSE) {
+                pixelSizeEntry = <td style={{width: sizeWidth}}>{`maj: ${sizePoint.x.toFixed(0)}; min: ${sizePoint.y.toFixed(0)}`}</td>;
+            } else {
+                pixelSizeEntry = <td style={{width: sizeWidth}}/>;
+            }
+
             return (
                 <tr
                     className={(selectedRegion && selectedRegion.regionId === region.regionId) ? "selected" : ""}
                     key={region.regionId}
                     onClick={() => frame.regionSet.selectRegion(region)}
+                    onDoubleClick={this.props.appStore.showRegionDialog}
                 >
                     <td style={{width: nameWidth}}>{region.regionId === 0 ? "Cursor" : `Region ${region.regionId}`}</td>
                     <td style={{width: typeWidth}}>{RegionStore.RegionTypeString(region.regionType)}</td>
                     {pixelCenterEntry}
+                    {pixelSizeEntry}
                     <td style={{width: rotationWidth}}>{region.rotation.toFixed(1)}</td>
                 </tr>
             );
@@ -84,11 +98,12 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         return (
             <div className="region-list-widget">
                 <HTMLTable style={{height: tableHeight}}>
-                    <thead>
+                    <thead className={this.props.appStore.darkTheme ? "dark-theme" : ""}>
                     <tr>
                         <th style={{width: nameWidth}}>Name</th>
                         <th style={{width: typeWidth}}>Type</th>
                         <th style={{width: centerWidth}}>Pixel Center</th>
+                        <th style={{width: sizeWidth}}>Size</th>
                         <th style={{width: rotationWidth}}>Rotation</th>
                     </tr>
                     </thead>

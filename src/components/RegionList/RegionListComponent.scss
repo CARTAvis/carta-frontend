@@ -11,7 +11,22 @@
         padding: 5px;
         overflow: auto;
         display: block;
+
         thead {
+            &.dark-theme {
+                tr {
+                    th {
+                        border-top: 1px solid $dark-gray4;
+                        border-bottom: 1px solid $dark-gray5;
+                        border-left: 1px solid $dark-gray4;
+
+                        &:last-of-type {
+                            border-right: 1px solid $dark-gray4;
+                        }
+                    }
+                }
+            }
+
             tr {
                 display: block;
 
@@ -19,7 +34,7 @@
                     padding: 5px;
                     cursor: default;
                     border-top: 1px solid $gray5;
-                    border-bottom: 1px solid $gray5;
+                    border-bottom: 1px solid $gray4;
                     border-left: 1px solid $gray5;
 
                     &:last-of-type {
@@ -32,6 +47,7 @@
         tbody {
             display: block;
             background: $white;
+
             &.dark-theme {
                 background: $dark-gray2;
 
@@ -43,6 +59,10 @@
                         &:last-of-type {
                             border-right: 1px solid $dark-gray3;
                         }
+                    }
+
+                    &.selected {
+                        background: $blue2;
                     }
                 }
             }

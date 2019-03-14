@@ -6,7 +6,7 @@ import DevTools from "mobx-react-devtools";
 import ReactResizeDetector from "react-resize-detector";
 import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import {exportImage, FloatingWidgetManagerComponent, RootMenuComponent} from "./components";
-import {AboutDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, URLConnectDialogComponent} from "./components/Dialogs";
+import {AboutDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, RegionDialogComponent, URLConnectDialogComponent} from "./components/Dialogs";
 import {AppStore, dayPalette, FileBrowserStore, nightPalette, RegionMode} from "./stores";
 import {smoothStepOffset} from "./utilities";
 import GitCommit from "./static/gitInfo";
@@ -137,7 +137,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                         title: "Region List",
                         id: "region-list-docked",
                         props: {appStore: this.props.appStore, id: "region-list-docked", docked: true}
-                    },]
+                    }]
                 }]
             }]
         }];
@@ -191,6 +191,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 <URLConnectDialogComponent appStore={appStore}/>
                 <FileBrowserDialogComponent appStore={appStore}/>
                 <AboutDialogComponent appStore={appStore}/>
+                <RegionDialogComponent appStore={appStore}/>
                 <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>

@@ -45,6 +45,16 @@ export class AppStore {
         this.imageToolbarVisible = false;
     };
 
+    // Region dialog
+    @observable regionDialogVisible: boolean;
+    @action showRegionDialog = () => {
+        console.log(`Showing dialog for ${this.activeFrame.regionSet.selectedRegion}`);
+        this.regionDialogVisible = true;
+    };
+    @action hideRegionDialog = () => {
+        this.regionDialogVisible = false;
+    };
+
     // Overlay
     @observable overlayStore: OverlayStore;
     // File Browser
