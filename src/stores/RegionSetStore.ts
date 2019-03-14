@@ -22,10 +22,10 @@ export class RegionSetStore {
         this.frame = frame;
         this.backendService = backendService;
         this.regions = [];
-        this.selectedRegion = null;
         this.newRegionType = CARTA.RegionType.RECTANGLE;
         this.mode = RegionMode.MOVING;
         this.addPointRegion({x: 0, y: 0}, true);
+        this.selectedRegion = this.regions[0];
     }
 
     // temporary region IDs are < 0 and used
