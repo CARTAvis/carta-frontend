@@ -369,7 +369,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const delta = currentTime - this.previousClickTime;
         this.previousClickTime = currentTime;
         if (delta < DOUBLE_CLICK_THRESHOLD) {
-            this.onStageDoubleClick(ev);
+            this.onStageDoubleClick();
             clearTimeout(this.pendingClickHandle);
             return;
         } else {
@@ -402,7 +402,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
     };
 
-    onStageDoubleClick = (ev) => {
+    onStageDoubleClick = () => {
         if (this.props.graphZoomReset) {
             this.props.graphZoomReset();
         }
@@ -531,7 +531,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     const midPoint = (chartArea.left + chartArea.right) / 2.0;
 
                     let lineSegments;
-                    let interactionRect;
                     // Add hover markers
                     if (isHoverMarker) {
                         const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
