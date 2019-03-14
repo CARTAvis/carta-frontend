@@ -186,7 +186,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         return (
             <div className={className}>
-                {process.env.NODE_ENV === "development" && <DevTools/>}
                 <RootMenuComponent appStore={appStore}/>
                 <OverlaySettingsDialogComponent appStore={appStore}/>
                 <URLConnectDialogComponent appStore={appStore}/>

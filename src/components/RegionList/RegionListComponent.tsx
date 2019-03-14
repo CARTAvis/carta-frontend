@@ -1,10 +1,11 @@
 import * as React from "react";
-import {computed} from "mobx";
+import {computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {NonIdealState} from "@blueprintjs/core";
-import {Cell, Column, IRegion, RenderMode, SelectionModes, Table} from "@blueprintjs/table";
+import {HTMLTable, NonIdealState} from "@blueprintjs/core";
+import ReactResizeDetector from "react-resize-detector";
 import {RegionStore, WidgetConfig, WidgetProps} from "stores";
 import "./RegionListComponent.css";
+import {min} from "rxjs/operators";
 
 @observer
 export class RegionListComponent extends React.Component<WidgetProps> {
@@ -15,14 +16,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         return [];
     }
 
-    @computed get selectedRow(): IRegion[] {
-        const frame = this.props.appStore.activeFrame;
-        if (frame && frame.regionSet.selectedRegion) {
-            const index = frame.regionSet.regions.indexOf(frame.regionSet.selectedRegion);
-            return [{rows: [index, index]}];
-        }
-        return [];
-    }
+    @observable width: number;
+    @observable height: number;
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -37,37 +32,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         };
     }
 
-    private renderName = (rowIndex: number) => {
-        const region = this.validRegions[rowIndex];
-        return <Cell className={region.editing ? "region-editing" : ""}>{region.regionId === 0 ? "Cursor" : `Region ${region.regionId}`}</Cell>;
-    };
-
-    private renderType = (rowIndex: number) => {
-        const region = this.validRegions[rowIndex];
-        return <Cell className={region.editing ? "region-editing" : ""}>{RegionStore.RegionTypeString(region.regionType)}</Cell>;
-    };
-
-    private renderCenter = (rowIndex: number) => {
-        const region = this.validRegions[rowIndex];
-        if (region.controlPoints.length) {
-            const point = region.controlPoints[0];
-            if (isFinite(point.x) && isFinite(point.y)) {
-                return <Cell className={region.editing ? "region-editing" : ""}>{`(${point.x.toFixed(0)}, ${point.y.toFixed(0)})`}</Cell>;
-            }
-        }
-        return <Cell>Invalid</Cell>;
-    };
-
-    private renderRotation = (rowIndex: number) => {
-        const region = this.validRegions[rowIndex];
-        return <Cell className={region.editing ? "region-editing" : ""}>{region.rotation.toFixed(1)}</Cell>;
-    };
-
-    private handleSelection = (selectedRegions: IRegion[]) => {
-        const frame = this.props.appStore.activeFrame;
-        if (frame && frame.regionSet.regions.length && selectedRegions.length) {
-            frame.regionSet.selectRegionByIndex(selectedRegions[0].rows[0]);
-        }
+    private onResize = (width: number, height: number) => {
+        this.width = width;
+        this.height = height;
     };
 
     render() {
@@ -77,27 +44,59 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             return <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>;
         }
 
-        // dummy
-        const x = this.validRegions.map(r => r.controlPoints.length);
-        const y = this.validRegions.map(r => r.rotation);
+        const padding = 5;
+        const rowSize = 41;
+        const requiredTableHeight = 1 + padding * 2 + rowSize * (this.validRegions.length + 1);
+        const tableHeight = Math.min(requiredTableHeight, this.height);
+
+        let nameWidth = 160;
+        const typeWidth = 100;
+        const centerWidth = 120;
+        const rotationWidth = 80;
+
+        const availableWidth = this.width - 2 * padding;
+        const fixedWidth = typeWidth + centerWidth + rotationWidth;
+        nameWidth = availableWidth - fixedWidth;
+        const selectedRegion = frame.regionSet.selectedRegion;
+
+        const rows = this.validRegions.map(region => {
+            const point = region.controlPoints[0];
+            let pixelCenterEntry;
+            if (isFinite(point.x) && isFinite(point.y)) {
+                pixelCenterEntry = <td style={{width: centerWidth}}>{`(${point.x.toFixed(0)}, ${point.y.toFixed(0)})`}</td>;
+            } else {
+                pixelCenterEntry = <td style={{width: centerWidth}}>Invalid</td>;
+            }
+            return (
+                <tr
+                    className={(selectedRegion && selectedRegion.regionId === region.regionId) ? "selected" : ""}
+                    key={region.regionId}
+                    onClick={() => frame.regionSet.selectRegion(region)}
+                >
+                    <td style={{width: nameWidth}}>{region.regionId === 0 ? "Cursor" : `Region ${region.regionId}`}</td>
+                    <td style={{width: typeWidth}}>{RegionStore.RegionTypeString(region.regionType)}</td>
+                    {pixelCenterEntry}
+                    <td style={{width: rotationWidth}}>{region.rotation.toFixed(1)}</td>
+                </tr>
+            );
+        });
 
         return (
             <div className="region-list-widget">
-                <Table
-                    numRows={this.validRegions.length}
-                    defaultRowHeight={25}
-                    selectionModes={SelectionModes.ROWS_AND_CELLS}
-                    onSelection={this.handleSelection}
-                    selectedRegions={this.selectedRow}
-                    enableMultipleSelection={false}
-                    enableRowHeader={false}
-                    renderMode={RenderMode.NONE}
-                >
-                    <Column name="Name" cellRenderer={this.renderName}/>
-                    <Column name="Type" cellRenderer={this.renderType}/>
-                    <Column name="Pixel Center" cellRenderer={this.renderCenter}/>
-                    <Column name="Rotation (Deg)" cellRenderer={this.renderRotation}/>
-                </Table>
+                <HTMLTable style={{height: tableHeight}}>
+                    <thead>
+                    <tr>
+                        <th style={{width: nameWidth}}>Name</th>
+                        <th style={{width: typeWidth}}>Type</th>
+                        <th style={{width: centerWidth}}>Pixel Center</th>
+                        <th style={{width: rotationWidth}}>Rotation</th>
+                    </tr>
+                    </thead>
+                    <tbody className={this.props.appStore.darkTheme ? "dark-theme" : ""}>
+                    {rows}
+                    </tbody>
+                </HTMLTable>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
             </div>
         );
     }
