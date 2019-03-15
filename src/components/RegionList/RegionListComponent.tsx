@@ -77,7 +77,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             }
 
             let pixelSizeEntry;
-            const sizePoint = region.controlPoints[0];
+            const sizePoint = region.controlPoints[1];
             if (region.regionType === CARTA.RegionType.RECTANGLE) {
                 pixelSizeEntry = <td style={{width: sizeWidth}}>{`(${sizePoint.x.toFixed(0)} \u00D7 ${sizePoint.y.toFixed(0)})`}</td>;
             } else if (region.regionType === CARTA.RegionType.ELLIPSE) {
