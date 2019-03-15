@@ -22,12 +22,31 @@ export class RenderConfigStore {
         [FrameScaling.GAMMA, "Gamma"],
         [FrameScaling.POWER, "Power"]
     ]);
-    static readonly COLOR_MAPS_ALL = ["accent", "afmhot", "autumn", "binary", "Blues", "bone", "BrBG", "brg", "BuGn", "BuPu", "bwr", "CMRmap", "cool", "coolwarm",
-        "copper", "cubehelix", "dark2", "flag", "gist_earth", "gist_gray", "gist_heat", "gist_ncar", "gist_rainbow", "gist_stern", "gist_yarg",
-        "GnBu", "gnuplot", "gnuplot2", "gray", "greens", "greys", "hot", "hsv", "inferno", "jet", "magma", "nipy_spectral", "ocean", "oranges",
-        "OrRd", "paired", "pastel1", "pastel2", "pink", "PiYG", "plasma", "PRGn", "prism", "PuBu", "PuBuGn", "PuOr", "PuRd", "purples", "rainbow",
-        "RdBu", "RdGy", "RdPu", "RdYlBu", "RdYlGn", "reds", "seismic", "set1", "set2", "set3", "spectral", "spring", "summer", "tab10", "tab20",
-        "tab20b", "tab20c", "terrain", "viridis", "winter", "Wistia", "YlGn", "YlGnBu", "YlOrBr", "YlOrRd"];
+    static readonly COLOR_MAPS_ALL = [
+        "accent", "afmhot", "autumn", "binary", "Blues",
+        "bone", "BrBG", "brg", "BuGn", "BuPu",
+        "bwr", "CMRmap", "cool", "coolwarm", "copper",
+        "cubehelix", "dark2", "flag", "gist_earth", "gist_gray",
+        "gist_heat", "gist_ncar", "gist_rainbow", "gist_stern", "gist_yarg",
+        "GnBu", "gnuplot", "gnuplot2", "gray", "greens",
+        "greys", "hot", "hsv", "inferno", "jet",
+        "magma", "nipy_spectral", "ocean", "oranges", "OrRd",
+        "paired", "pastel1", "pastel2", "pink", "PiYG",
+        "plasma", "PRGn", "prism", "PuBu", "PuBuGn",
+        "PuOr", "PuRd", "purples", "rainbow", "RdBu",
+        "RdGy", "RdPu", "RdYlBu", "RdYlGn", "reds",
+        "seismic", "set1", "set2", "set3", "spectral",
+        "spring", "summer", "tab10", "tab20", "tab20b",
+        "tab20c", "terrain", "viridis", "winter", "Wistia",
+        "YlGn", "YlGnBu", "YlOrBr", "YlOrRd"
+    ];
+    static readonly COLOR_MAPS_SELECTED = [
+        "afmhot", "Blues", "coolwarm", "cubehelix", "gist_heat",
+        "gist_stern", "gnuplot", "gnuplot2", "gray", "greens",
+        "greys", "hot", "inferno", "jet", "magma",
+        "nipy_spectral", "plasma", "rainbow", "RdBu", "RdGy",
+        "reds", "seismic", "spectral", "tab10", "viridis"
+    ];
     @observable scaling: FrameScaling;
     @observable colorMap: number;
     @observable scaleMin: number;

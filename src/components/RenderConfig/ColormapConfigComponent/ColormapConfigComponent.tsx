@@ -164,7 +164,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         activeItem={renderConfig.colorMapName}
                         popoverProps={COLORMAP_POPOVER_PROPS}
                         filterable={false}
-                        items={RenderConfigStore.COLOR_MAPS_ALL}
+                        items={RenderConfigStore.COLOR_MAPS_SELECTED}
                         onItemSelect={this.props.renderConfig.setColorMap}
                         itemRenderer={this.renderColormapSelectItem}
                     >
