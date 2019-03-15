@@ -61,10 +61,32 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const rotationWidth = 70;
 
         const availableWidth = this.width - 2 * padding;
-        const fixedWidth = typeWidth + centerWidth + sizeWidth + rotationWidth;
-        if (availableWidth > fixedWidth) {
-            nameWidth = availableWidth - fixedWidth;
+        let fixedWidth = typeWidth + centerWidth + sizeWidth + rotationWidth;
+        nameWidth = availableWidth - fixedWidth;
+
+        let showSizeColumn = true;
+        let showRotationColumn = true;
+
+        // Dynamically hide size column if name size is too short
+        if (nameWidth < 50) {
+            showSizeColumn = false;
+            fixedWidth -= sizeWidth;
+            if (availableWidth > fixedWidth) {
+                nameWidth = availableWidth - fixedWidth;
+            }
+
+            // If its still too short, hide the rotation column as well
+            if (nameWidth < 50) {
+                showRotationColumn = false;
+                fixedWidth -= rotationWidth;
+                if (availableWidth > fixedWidth) {
+                    nameWidth = availableWidth - fixedWidth;
+                } else {
+                    nameWidth = 50;
+                }
+            }
         }
+
         const selectedRegion = frame.regionSet.selectedRegion;
 
         const rows = this.validRegions.map(region => {
@@ -77,14 +99,16 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             }
 
             let pixelSizeEntry;
-            if (region.regionType === CARTA.RegionType.RECTANGLE) {
-                const sizePoint = region.controlPoints[1];
-                pixelSizeEntry = <td style={{width: sizeWidth}}>{`(${sizePoint.x.toFixed(1)} \u00D7 ${sizePoint.y.toFixed(1)})`}</td>;
-            } else if (region.regionType === CARTA.RegionType.ELLIPSE) {
-                const sizePoint = region.controlPoints[1];
-                pixelSizeEntry = <td style={{width: sizeWidth}}>{`maj: ${sizePoint.x.toFixed(1)}; min: ${sizePoint.y.toFixed(1)}`}</td>;
-            } else {
-                pixelSizeEntry = <td style={{width: sizeWidth}}/>;
+            if (showSizeColumn) {
+                if (region.regionType === CARTA.RegionType.RECTANGLE) {
+                    const sizePoint = region.controlPoints[1];
+                    pixelSizeEntry = <td style={{width: sizeWidth}}>{`(${sizePoint.x.toFixed(1)} \u00D7 ${sizePoint.y.toFixed(1)})`}</td>;
+                } else if (region.regionType === CARTA.RegionType.ELLIPSE) {
+                    const sizePoint = region.controlPoints[1];
+                    pixelSizeEntry = <td style={{width: sizeWidth}}>{`maj: ${sizePoint.x.toFixed(1)}; min: ${sizePoint.y.toFixed(1)}`}</td>;
+                } else {
+                    pixelSizeEntry = <td style={{width: sizeWidth}}/>;
+                }
             }
 
             return (
@@ -97,8 +121,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <td style={{width: nameWidth}}>{region.regionId === 0 ? "Cursor" : `Region ${region.regionId}`}</td>
                     <td style={{width: typeWidth}}>{RegionStore.RegionTypeString(region.regionType)}</td>
                     {pixelCenterEntry}
-                    {pixelSizeEntry}
-                    <td style={{width: rotationWidth}}>{region.rotation.toFixed(1)}</td>
+                    {showSizeColumn && pixelSizeEntry}
+                    {showRotationColumn && <td style={{width: rotationWidth}}>{region.rotation.toFixed(1)}</td>}
                 </tr>
             );
         });
@@ -111,8 +135,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         <th style={{width: nameWidth}}>Name</th>
                         <th style={{width: typeWidth}}>Type</th>
                         <th style={{width: centerWidth}}>Pixel Center</th>
-                        <th style={{width: sizeWidth}}>Size</th>
-                        <th style={{width: rotationWidth}}>Rotation</th>
+                        {showSizeColumn && <th style={{width: sizeWidth}}>Size</th>}
+                        {showRotationColumn && <th style={{width: rotationWidth}}>Rotation</th>}
                     </tr>
                     </thead>
                     <tbody className={this.props.appStore.darkTheme ? "dark-theme" : ""}>
