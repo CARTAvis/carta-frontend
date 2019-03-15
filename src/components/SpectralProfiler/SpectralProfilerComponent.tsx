@@ -172,7 +172,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         autorun(() => {
             const appStore = this.props.appStore;
-            const linkedToSelectedRegion = appStore.activeFrame.regionSet.selectedRegion && this.widgetStore.regionId === appStore.activeFrame.regionSet.selectedRegion.regionId;
+            const linkedToSelectedRegion = appStore.activeFrame && appStore.activeFrame.regionSet.selectedRegion && this.widgetStore.regionId === appStore.activeFrame.regionSet.selectedRegion.regionId;
             if (linkedToSelectedRegion) {
                 clearTimeout(this.highlightHandle);
                 this.highlightHandle = setTimeout(() => this.showHighlight = false, 2000);

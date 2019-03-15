@@ -41,13 +41,18 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const frame = this.props.appStore.activeFrame;
 
         if (!frame) {
-            return <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>;
+            return (
+                <div className="region-list-widget">
+                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>;
+                    <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
+                </div>
+            );
         }
 
         const padding = 5;
         const rowSize = 41;
         const requiredTableHeight = 1 + padding * 2 + rowSize * (this.validRegions.length + 1);
-        const tableHeight = Math.min(requiredTableHeight, this.height);
+        const tableHeight = isFinite(this.height) ? Math.min(requiredTableHeight, this.height) : requiredTableHeight;
 
         let nameWidth = 160;
         const typeWidth = 90;
@@ -57,7 +62,9 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         const availableWidth = this.width - 2 * padding;
         const fixedWidth = typeWidth + centerWidth + sizeWidth + rotationWidth;
-        nameWidth = availableWidth - fixedWidth;
+        if (availableWidth > fixedWidth) {
+            nameWidth = availableWidth - fixedWidth;
+        }
         const selectedRegion = frame.regionSet.selectedRegion;
 
         const rows = this.validRegions.map(region => {
