@@ -12,6 +12,11 @@ export class ProfilerInfoComponentProps {
 @observer
 export class ProfilerInfoComponent extends React.Component<ProfilerInfoComponentProps> {
     private getCursorInforLabel = () => {
+        if (this.props.cursorInfo.cursorX === null || this.props.cursorInfo.cursorY === null ||
+            isNaN(this.props.cursorInfo.cursorX) || isNaN(this.props.cursorInfo.cursorY)) {
+            return null;
+        }
+
         let xLabel = this.props.cursorInfo.xUnit === "Channel" ?
                     "Channel " + this.props.cursorInfo.cursorX.toFixed(0) :
                     formattedNotation(this.props.cursorInfo.cursorX) + " " + this.props.cursorInfo.xUnit;
