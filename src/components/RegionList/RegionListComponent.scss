@@ -31,7 +31,8 @@
                 display: block;
 
                 th {
-                    padding: 5px;
+                    padding: 3px;
+                    font-size: 13px;
                     cursor: default;
                     border-top: 1px solid $gray5;
                     border-bottom: 1px solid $gray4;
@@ -73,7 +74,8 @@
                 }
 
                 td {
-                    padding: 5px;
+                    padding: 3px;
+                    font-size: 12px;
                     cursor: pointer;
                     border-left: 1px solid $gray5;
                     border-bottom: 1px solid $gray4;

@@ -55,10 +55,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const tableHeight = isFinite(this.height) ? Math.min(requiredTableHeight, this.height) : requiredTableHeight;
 
         let nameWidth = 160;
-        const typeWidth = 90;
+        const typeWidth = 65;
         const centerWidth = 120;
         const sizeWidth = 160;
-        const rotationWidth = 80;
+        const rotationWidth = 70;
 
         const availableWidth = this.width - 2 * padding;
         const fixedWidth = typeWidth + centerWidth + sizeWidth + rotationWidth;
@@ -71,7 +71,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             const point = region.controlPoints[0];
             let pixelCenterEntry;
             if (isFinite(point.x) && isFinite(point.y)) {
-                pixelCenterEntry = <td style={{width: centerWidth}}>{`(${point.x.toFixed(0)}, ${point.y.toFixed(0)})`}</td>;
+                pixelCenterEntry = <td style={{width: centerWidth}}>{`(${point.x.toFixed(1)}, ${point.y.toFixed(1)})`}</td>;
             } else {
                 pixelCenterEntry = <td style={{width: centerWidth}}>Invalid</td>;
             }
@@ -79,10 +79,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             let pixelSizeEntry;
             if (region.regionType === CARTA.RegionType.RECTANGLE) {
                 const sizePoint = region.controlPoints[1];
-                pixelSizeEntry = <td style={{width: sizeWidth}}>{`(${sizePoint.x.toFixed(0)} \u00D7 ${sizePoint.y.toFixed(0)})`}</td>;
+                pixelSizeEntry = <td style={{width: sizeWidth}}>{`(${sizePoint.x.toFixed(1)} \u00D7 ${sizePoint.y.toFixed(1)})`}</td>;
             } else if (region.regionType === CARTA.RegionType.ELLIPSE) {
                 const sizePoint = region.controlPoints[1];
-                pixelSizeEntry = <td style={{width: sizeWidth}}>{`maj: ${sizePoint.x.toFixed(0)}; min: ${sizePoint.y.toFixed(0)}`}</td>;
+                pixelSizeEntry = <td style={{width: sizeWidth}}>{`maj: ${sizePoint.x.toFixed(1)}; min: ${sizePoint.y.toFixed(1)}`}</td>;
             } else {
                 pixelSizeEntry = <td style={{width: sizeWidth}}/>;
             }
