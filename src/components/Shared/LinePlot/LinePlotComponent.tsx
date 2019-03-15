@@ -105,6 +105,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     @observable selectionBoxStart = {x: 0, y: 0};
     @observable selectionBoxEnd = {x: 0, y: 0};
     @observable isMouseEntered = false;
+    @observable isMarkerDragging = false;
 
     @computed get isSelecting() {
         return this.interactionMode === InteractionMode.SELECTING;
@@ -225,6 +226,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             yMax = this.getCanvasSpaceY(marker.dragCustomBoundary.yMax);
         }
         return {x: 0, y: clamp(pos.y, yMin, yMax)};
+    };
+
+    @action onMarkerDragStart = () => {
+        this.isMarkerDragging = true;
+    };
+
+    @action onMarkerDragEnd = () => {
+        this.isMarkerDragging = false;
     };
 
     onMarkerDragged = (ev, marker: LineMarker) => {
@@ -360,7 +369,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const delta = currentTime - this.previousClickTime;
         this.previousClickTime = currentTime;
         if (delta < DOUBLE_CLICK_THRESHOLD) {
-            this.onStageDoubleClick(ev);
+            this.onStageDoubleClick();
             clearTimeout(this.pendingClickHandle);
             return;
         } else {
@@ -393,7 +402,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
     };
 
-    onStageDoubleClick = (ev) => {
+    onStageDoubleClick = () => {
         if (this.props.graphZoomReset) {
             this.props.graphZoomReset();
         }
@@ -510,7 +519,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const marker = this.props.markers[i];
                 // Default marker colors if none is given
                 const markerColor = marker.color || (this.props.darkMode ? Colors.RED4 : Colors.RED2);
-                const markerOpacity = (marker.isMouseMove && !this.isMouseEntered) ? 0 : (marker.opacity || 1);
+                const markerOpacity = (marker.isMouseMove && (!this.isMouseEntered || this.isMarkerDragging)) ?
+                                        0 : (marker.opacity || 1);
                 // Separate configuration for horizontal markers
                 if (marker.horizontal) {
                     let valueCanvasSpace = this.getCanvasSpaceY(marker.value);
@@ -521,7 +531,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     const midPoint = (chartArea.left + chartArea.right) / 2.0;
 
                     let lineSegments;
-                    let interactionRect;
                     // Add hover markers
                     if (isHoverMarker) {
                         const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
@@ -618,6 +627,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                                 y={0}
                                 draggable={true}
                                 dragBoundFunc={pos => this.dragBoundsFuncVertical(pos, marker)}
+                                onDragStart={this.onMarkerDragStart}
+                                onDragEnd={this.onMarkerDragEnd}
                                 onDragMove={ev => this.onMarkerDragged(ev, marker)}
                             >
                                 <Rect

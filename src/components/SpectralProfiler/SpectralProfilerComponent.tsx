@@ -6,7 +6,7 @@ import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {LinePlotComponent, LinePlotComponentProps, PopoverSettingsComponent, PlotType} from "components/Shared";
 import {SpectralProfilerSettingsPanelComponent} from "./SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
-import {FrameStore, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
+import {FrameStore, SpectralProfileStore, WidgetConfig, WidgetProps, AnimationState} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp} from "utilities";
@@ -187,6 +187,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     onChannelChanged = (x: number) => {
+        if (this.props.appStore.animatorStore.animationState === AnimationState.PLAYING) {
+            return;
+        }
+
         if (this.frame && this.frame.channelInfo) {
             let channelInfo = this.frame.channelInfo;
             let nearestIndex = (this.widgetStore.useWcsValues && channelInfo.getChannelIndexWCS) ?
@@ -332,7 +336,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.markers.push({
                         value: this.getRequiredChannelValue(),
                         id: "marker-channel-required",
-                        draggable: true,
+                        draggable: appStore.animatorStore.animationState === AnimationState.PLAYING ? false : true,
                         dragMove: this.onChannelChanged,
                         horizontal: false,
                     });
