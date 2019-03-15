@@ -32,6 +32,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
+    @observable showHighlight: boolean;
+
+    private highlightHandle;
 
     @computed get widgetStore(): SpectralProfileWidgetStore {
         if (this.props.appStore && this.props.appStore.widgetsStore.spectralProfileWidgets) {
@@ -166,6 +169,16 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Z Profile: Cursor`);
             }
         });
+
+        autorun(() => {
+            const appStore = this.props.appStore;
+            const linkedToSelectedRegion = appStore.activeFrame && appStore.activeFrame.regionSet.selectedRegion && this.widgetStore.regionId === appStore.activeFrame.regionSet.selectedRegion.regionId;
+            if (linkedToSelectedRegion) {
+                clearTimeout(this.highlightHandle);
+                this.highlightHandle = setTimeout(() => this.showHighlight = false, 2000);
+                this.showHighlight = true;
+            }
+        });
     }
 
     onResize = (width: number, height: number) => {
@@ -177,8 +190,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (this.frame && this.frame.channelInfo) {
             let channelInfo = this.frame.channelInfo;
             let nearestIndex = (this.widgetStore.useWcsValues && channelInfo.getChannelIndexWCS) ?
-                            channelInfo.getChannelIndexWCS(x) :
-                            channelInfo.getChannelIndexSimple(x);
+                channelInfo.getChannelIndexWCS(x) :
+                channelInfo.getChannelIndexSimple(x);
             if (nearestIndex !== null && nearestIndex !== undefined) {
                 this.frame.setChannels(nearestIndex, this.frame.requiredStokes);
             }
@@ -360,8 +373,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
         }
 
+        let className = "spectral-profiler-widget";
+        if (this.showHighlight) {
+            className += " linked-to-selected";
+        }
+
         return (
-            <div className={"spectral-profiler-widget"}>
+            <div className={className}>
                 <div className="profile-container">
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps}/>

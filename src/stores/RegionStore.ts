@@ -17,8 +17,35 @@ export class RegionStore {
 
     private readonly backendService: BackendService;
 
+    public static RegionTypeString(regionType: CARTA.RegionType): string {
+        switch (regionType) {
+            case CARTA.RegionType.POINT:
+                return "Point";
+            case CARTA.RegionType.RECTANGLE:
+                return "Rectangle";
+            case CARTA.RegionType.ELLIPSE:
+                return "Ellipse";
+            default:
+                return "Not Implemented";
+        }
+    }
+
     @computed get isTemporary() {
         return this.regionId < 0;
+    }
+
+    @computed get boundingBoxArea(): number {
+        if (!this.isValid) {
+            return 0;
+        }
+        switch (this.regionType) {
+            case CARTA.RegionType.RECTANGLE:
+                return this.controlPoints[1].x * this.controlPoints[1].y;
+            case CARTA.RegionType.ELLIPSE:
+                return 4 * this.controlPoints[1].x * this.controlPoints[1].y;
+            default:
+                return 0;
+        }
     }
 
     @computed get isClosedRegion() {
@@ -82,7 +109,7 @@ export class RegionStore {
     };
 
     @action setRotation = (angle: number) => {
-        this.rotation = angle;
+        this.rotation = (angle + 360) % 360;
         if (!this.editing) {
             this.updateRegion();
         }

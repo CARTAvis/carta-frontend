@@ -3,7 +3,7 @@ import * as GoldenLayout from "golden-layout";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
 import {AppStore, WidgetConfig} from "stores";
-import {AnimatorComponent, LogComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent} from "components";
+import {AnimatorComponent, LogComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent} from "components";
 import "./ToolbarMenuComponent.css";
 
 @observer
@@ -36,6 +36,7 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
             this.createDragSource(layout, RenderConfigComponent.WIDGET_CONFIG, "renderConfigButton");
             this.createDragSource(layout, LogComponent.WIDGET_CONFIG, "logButton");
             this.createDragSource(layout, AnimatorComponent.WIDGET_CONFIG, "animatorButton");
+            this.createDragSource(layout, RegionListComponent.WIDGET_CONFIG, "regionListButton");
             this.createDragSource(layout, SpatialProfilerComponent.WIDGET_CONFIG, "spatialProfilerButton");
             this.createDragSource(layout, SpectralProfilerComponent.WIDGET_CONFIG, "spectralProfilerButton");
             this.createdDragSources = true;
@@ -59,6 +60,9 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
                 </Tooltip>
                 <Tooltip content={<span>Animator Widget{commonTooltip}</span>}>
                     <Button icon={"video"} id="animatorButton" onClick={this.props.appStore.widgetsStore.createFloatingAnimatorWidget}/>
+                </Tooltip>
+                <Tooltip content={<span>Region List Widget{commonTooltip}</span>}>
+                    <Button icon={"th-list"} id="regionListButton" onClick={this.props.appStore.widgetsStore.createFloatingRegionListWidget}/>
                 </Tooltip>
                 <Tooltip content={<span>Spatial Profiler{commonTooltip}</span>}>
                     <Button icon={"pulse"} id="spatialProfilerButton" className={"profiler-button"} onClick={this.props.appStore.widgetsStore.createFloatingSpatialProfilerWidget}>
