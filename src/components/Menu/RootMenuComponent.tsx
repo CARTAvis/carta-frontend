@@ -43,6 +43,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 />
                 <Menu.Divider/>
                 <Menu.Item text="Preferences" icon={"cog"} label={`${modString}P`} disabled={true}/>
+                <Menu.Item text="Enter API Key" icon={"key"} onClick={appStore.showApiKeyDialog}/>
                 <Menu.Item text="Connect to URL" onClick={appStore.showURLConnect}/>
             </Menu>
         );
