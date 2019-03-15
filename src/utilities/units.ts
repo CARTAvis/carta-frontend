@@ -27,7 +27,7 @@ export function frequencyStringFromVelocity(velocity: number, refFreq: number): 
 }
 
 export function formattedNotation(value: number): string {
-    if (value === undefined) {
+    if (value === null || isNaN(value)) {
         return null;
     }
     return value < 1e-2 ? value.toExponential(2) : value.toFixed(2);
