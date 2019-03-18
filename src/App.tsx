@@ -12,6 +12,7 @@ import {smoothStepOffset} from "./utilities";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
 import "./layout-theme.css";
+import {ApiKeyDialogComponent} from "./components/Dialogs/ApiKeyDialog/ApiKeyDialogComponent";
 
 @HotkeysTarget @observer
 export class App extends React.Component<{ appStore: AppStore }> {
@@ -60,7 +61,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
         // Log the frontend git commit hash
         appStore.logStore.addDebug(`Current frontend version: ${GitCommit.logMessage}`, ["version"]);
 
-        appStore.backendService.connect(wsURL, "1234").subscribe(sessionId => {
+        appStore.backendService.connect(wsURL, appStore.apiKey).subscribe(sessionId => {
             console.log(`Connected with session ID ${sessionId}`);
             connected = true;
             appStore.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
@@ -189,6 +190,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 <RootMenuComponent appStore={appStore}/>
                 <OverlaySettingsDialogComponent appStore={appStore}/>
                 <URLConnectDialogComponent appStore={appStore}/>
+                <ApiKeyDialogComponent appStore={appStore}/>
                 <FileBrowserDialogComponent appStore={appStore}/>
                 <AboutDialogComponent appStore={appStore}/>
                 <RegionDialogComponent appStore={appStore}/>

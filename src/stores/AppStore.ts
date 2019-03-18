@@ -84,6 +84,26 @@ export class AppStore {
         this.aboutDialogVisible = false;
     };
 
+    @observable apiKey;
+    @action applyApiKey = (newKey: string, forceReload: boolean = true) => {
+        if (newKey) {
+            localStorage.setItem("API_KEY", newKey);
+            this.apiKey = newKey;
+        } else {
+            localStorage.removeItem("API_KEY");
+        }
+        if (forceReload) {
+            location.reload();
+        }
+    };
+    @observable apiKeyDialogVisible: boolean;
+    @action showApiKeyDialog = () => {
+        this.apiKeyDialogVisible = true;
+    };
+    @action hideApiKeyDialog = () => {
+        this.apiKeyDialogVisible = false;
+    };
+
     // Tasks
     @observable taskProgress: number;
     @observable taskStartTime: number;
@@ -303,6 +323,11 @@ export class AppStore {
     private existingRequirementsMap: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
 
     constructor() {
+        const existingKey = localStorage.getItem("API_KEY");
+        if (existingKey) {
+            this.apiKey = existingKey;
+        }
+
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore);
         this.astReady = false;
