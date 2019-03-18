@@ -38,7 +38,7 @@ interface ColormapConfigProps {
 }
 
 const SCALING_KEYS = Array.from(RenderConfigStore.SCALING_TYPES.keys());
-const SCALING_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end"};
+const SCALING_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 const COLORMAP_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 
 @observer
@@ -168,7 +168,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         onItemSelect={this.props.renderConfig.setColorMap}
                         itemRenderer={this.renderColormapSelectItem}
                     >
-                        <Button text={this.renderColormapBlock(renderConfig.colorMapName)} rightIcon="double-caret-vertical"/>
+                        <Button text={this.renderColormapBlock(renderConfig.colorMapName)} rightIcon="double-caret-vertical" alignText={"right"}/>
                     </ColorMapSelect>
                 </FormGroup>
                 {renderConfig.scaling === FrameScaling.GAMMA &&
