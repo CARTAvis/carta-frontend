@@ -103,8 +103,8 @@ export class App extends React.Component<{ appStore: AppStore }> {
                         type: "react-component",
                         component: "log",
                         title: "Log",
-                        id: "log-docked",
-                        props: {appStore: this.props.appStore, id: "log-docked", docked: true}
+                        id: "log-0",
+                        props: {appStore: this.props.appStore, id: "log-0", docked: true}
                     }]
                 }]
             }, {
@@ -136,17 +136,20 @@ export class App extends React.Component<{ appStore: AppStore }> {
                         type: "react-component",
                         component: "region-list",
                         title: "Region List",
-                        id: "region-list-docked",
-                        props: {appStore: this.props.appStore, id: "region-list-docked", docked: true}
+                        id: "region-list-0",
+                        props: {appStore: this.props.appStore, id: "region-list-0", docked: true}
                     }]
                 }]
             }]
         }];
 
-        widgetsStore.addSpatialProfileWidget("spatial-profiler-0", -1, 0, "x");
-        widgetsStore.addSpatialProfileWidget("spatial-profiler-1", -1, 0, "y");
-        widgetsStore.addSpectralProfileWidget("spectral-profiler-0", -1, 0, "z");
+        widgetsStore.addSpatialProfileWidget("spatial-profiler-0", "x", -1, 0);
+        widgetsStore.addSpatialProfileWidget("spatial-profiler-1", "y", -1, 0);
+        widgetsStore.addSpectralProfileWidget("spectral-profiler-0", "z", -1, 0);
         widgetsStore.addRenderConfigWidget("render-config-0");
+        widgetsStore.addAnimatorWidget("animator-0");
+        widgetsStore.addRegionListWidget("region-list-0");
+        widgetsStore.addLogWidget("log-0");
 
         const layout = new GoldenLayout({
             settings: {

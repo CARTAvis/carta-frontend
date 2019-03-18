@@ -48,7 +48,7 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
                         <FloatingWidgetComponent
                             isSelected={index === widgetConfigs.length - 1}
                             appStore={appStore}
-                            key={`${w.type}-${w.id}-${index}`}
+                            key={w.id}
                             widgetConfig={w}
                             zIndex={index}
                             showPinButton={true}
