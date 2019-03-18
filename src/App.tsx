@@ -154,7 +154,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 showCloseIcon: false
             },
             dimensions: {
-                minItemWidth: 200,
+                minItemWidth: 250,
                 minItemHeight: 200,
                 dragProxyWidth: 600,
                 dragProxyHeight: 270,
