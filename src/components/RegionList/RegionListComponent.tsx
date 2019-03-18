@@ -19,6 +19,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable width: number;
     @observable height: number;
 
+    private static readonly NAME_COLUMN_MIN_WIDTH = 50;
+    private static readonly NAME_COLUMN_DEFAULT_WIDTH = 160;
+    private static readonly TYPE_COLUMN_DEFAULT_WIDTH = 65;
+    private static readonly CENTER_COLUMN_DEFAULT_WIDTH = 120;
+    private static readonly SIZE_COLUMN_DEFAULT_WIDTH = 160;
+    private static readonly ROTATION_COLUMN_DEFAULT_WIDTH = 70;
+
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
             id: "region-list",
@@ -54,35 +61,30 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const requiredTableHeight = 1 + padding * 2 + rowSize * (this.validRegions.length + 1);
         const tableHeight = isFinite(this.height) ? Math.min(requiredTableHeight, this.height) : requiredTableHeight;
 
-        let nameWidth = 160;
-        const typeWidth = 65;
-        const centerWidth = 120;
-        const sizeWidth = 160;
-        const rotationWidth = 70;
-
+        let nameWidth = RegionListComponent.NAME_COLUMN_DEFAULT_WIDTH;
         const availableWidth = this.width - 2 * padding;
-        let fixedWidth = typeWidth + centerWidth + sizeWidth + rotationWidth;
+        let fixedWidth = RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH + RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH + RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH + RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH;
         nameWidth = availableWidth - fixedWidth;
 
         let showSizeColumn = true;
         let showRotationColumn = true;
 
         // Dynamically hide size column if name size is too short
-        if (nameWidth < 50) {
+        if (nameWidth < RegionListComponent.NAME_COLUMN_MIN_WIDTH) {
             showSizeColumn = false;
-            fixedWidth -= sizeWidth;
+            fixedWidth -= RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH;
             if (availableWidth > fixedWidth) {
                 nameWidth = availableWidth - fixedWidth;
             }
 
             // If its still too short, hide the rotation column as well
-            if (nameWidth < 50) {
+            if (nameWidth < RegionListComponent.NAME_COLUMN_MIN_WIDTH) {
                 showRotationColumn = false;
-                fixedWidth -= rotationWidth;
+                fixedWidth -= RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH;
                 if (availableWidth > fixedWidth) {
                     nameWidth = availableWidth - fixedWidth;
                 } else {
-                    nameWidth = 50;
+                    nameWidth = RegionListComponent.NAME_COLUMN_MIN_WIDTH;
                 }
             }
         }
@@ -93,21 +95,21 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             const point = region.controlPoints[0];
             let pixelCenterEntry;
             if (isFinite(point.x) && isFinite(point.y)) {
-                pixelCenterEntry = <td style={{width: centerWidth}}>{`(${point.x.toFixed(1)}, ${point.y.toFixed(1)})`}</td>;
+                pixelCenterEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>{`(${point.x.toFixed(1)}, ${point.y.toFixed(1)})`}</td>;
             } else {
-                pixelCenterEntry = <td style={{width: centerWidth}}>Invalid</td>;
+                pixelCenterEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>Invalid</td>;
             }
 
             let pixelSizeEntry;
             if (showSizeColumn) {
                 if (region.regionType === CARTA.RegionType.RECTANGLE) {
                     const sizePoint = region.controlPoints[1];
-                    pixelSizeEntry = <td style={{width: sizeWidth}}>{`(${sizePoint.x.toFixed(1)} \u00D7 ${sizePoint.y.toFixed(1)})`}</td>;
+                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>{`(${sizePoint.x.toFixed(1)} \u00D7 ${sizePoint.y.toFixed(1)})`}</td>;
                 } else if (region.regionType === CARTA.RegionType.ELLIPSE) {
                     const sizePoint = region.controlPoints[1];
-                    pixelSizeEntry = <td style={{width: sizeWidth}}>{`maj: ${sizePoint.x.toFixed(1)}; min: ${sizePoint.y.toFixed(1)}`}</td>;
+                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>{`maj: ${sizePoint.x.toFixed(1)}; min: ${sizePoint.y.toFixed(1)}`}</td>;
                 } else {
-                    pixelSizeEntry = <td style={{width: sizeWidth}}/>;
+                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}/>;
                 }
             }
 
@@ -119,10 +121,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     onDoubleClick={this.props.appStore.showRegionDialog}
                 >
                     <td style={{width: nameWidth}}>{region.regionId === 0 ? "Cursor" : `Region ${region.regionId}`}</td>
-                    <td style={{width: typeWidth}}>{RegionStore.RegionTypeString(region.regionType)}</td>
+                    <td style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>{RegionStore.RegionTypeString(region.regionType)}</td>
                     {pixelCenterEntry}
                     {showSizeColumn && pixelSizeEntry}
-                    {showRotationColumn && <td style={{width: rotationWidth}}>{region.rotation.toFixed(1)}</td>}
+                    {showRotationColumn && <td style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}}>{region.rotation.toFixed(1)}</td>}
                 </tr>
             );
         });
@@ -133,10 +135,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <thead className={this.props.appStore.darkTheme ? "dark-theme" : ""}>
                     <tr>
                         <th style={{width: nameWidth}}>Name</th>
-                        <th style={{width: typeWidth}}>Type</th>
-                        <th style={{width: centerWidth}}>Pixel Center</th>
-                        {showSizeColumn && <th style={{width: sizeWidth}}>Size</th>}
-                        {showRotationColumn && <th style={{width: rotationWidth}}>Rotation</th>}
+                        <th style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>Type</th>
+                        <th style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>Pixel Center</th>
+                        {showSizeColumn && <th style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>Size</th>}
+                        {showRotationColumn && <th style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}}>Rotation</th>}
                     </tr>
                     </thead>
                     <tbody className={this.props.appStore.darkTheme ? "dark-theme" : ""}>
