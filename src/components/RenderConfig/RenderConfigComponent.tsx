@@ -92,7 +92,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === RenderConfigComponent.WIDGET_CONFIG.id) {
+        if (!props.docked && props.id === RenderConfigComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
             const id = props.appStore.widgetsStore.addNewRenderConfigWidget();
             props.appStore.widgetsStore.changeWidgetId(props.id, id);
