@@ -100,7 +100,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
             >
                 <div className={titleClass}>
                     <div className={"floating-title"}>
-                        {widgetConfig.title}
+                        {`${widgetConfig.title}: id='${widgetConfig.id}' type='${widgetConfig.type}'`}
                     </div>
                     {this.props.showPinButton &&
                     <div className="floating-header-button" ref={ref => this.pinElementRef = ref} onClick={() => console.log("pin!")}>

@@ -217,15 +217,32 @@ export class WidgetsStore {
     }
 
     createFloatingLogWidget = () => {
-        this.addFloatingWidget(LogComponent.WIDGET_CONFIG);
+        const config = LogComponent.WIDGET_CONFIG;
+        config.id = this.getNextId(config.id);
+        this.addFloatingWidget(config);
     };
 
     createFloatingAnimatorWidget = () => {
-        this.addFloatingWidget(AnimatorComponent.WIDGET_CONFIG);
+        const config = AnimatorComponent.WIDGET_CONFIG;
+        config.id = this.getNextId(config.id);
+        this.addFloatingWidget(config);
     };
 
     createFloatingRegionListWidget = () => {
-        this.addFloatingWidget(RegionListComponent.WIDGET_CONFIG);
+        const config = RegionListComponent.WIDGET_CONFIG;
+        config.id = this.getNextId(config.id);
+        this.addFloatingWidget(config);
+    };
+
+    private getNextId = (defaultId: string) => {
+        let nextIndex = 0;
+        while (true) {
+            const nextId = `${defaultId}-${nextIndex}`;
+            if (!this.floatingWidgets.find(w=>w.id === nextId)) {
+                return nextId;
+            }
+            nextIndex++;
+        }
     };
 
     // region Spatial Profile Widgets
