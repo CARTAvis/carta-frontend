@@ -43,7 +43,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 return widgetStore;
             }
         }
-        console.error("can't find store for widget");
+        console.log("can't find store for widget");
         return new SpectralProfileWidgetStore();
     }
 
@@ -145,14 +145,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === SpectralProfilerComponent.WIDGET_CONFIG.id) {
+        if (!props.docked && props.id === SpectralProfilerComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
-            const id = props.appStore.widgetsStore.addNewSpectralProfileWidget();
+            const id = props.appStore.widgetsStore.addSpectralProfileWidget();
             props.appStore.widgetsStore.changeWidgetId(props.id, id);
         } else {
             if (!this.props.appStore.widgetsStore.spectralProfileWidgets.has(this.props.id)) {
-                console.error(`can't find store for widget with id=${this.props.id}`);
-                this.props.appStore.widgetsStore.spectralProfileWidgets.set(this.props.id, new SpectralProfileWidgetStore());
+                console.log(`can't find store for widget with id=${this.props.id}`);
+                this.props.appStore.widgetsStore.addSpectralProfileWidget(this.props.id);
             }
         }
         // Update widget title when region or coordinate changes

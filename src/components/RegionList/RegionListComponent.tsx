@@ -16,8 +16,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         return [];
     }
 
-    @observable width: number;
-    @observable height: number;
+    @observable width: number = 0;
+    @observable height: number = 0;
 
     private static readonly NAME_COLUMN_MIN_WIDTH = 50;
     private static readonly NAME_COLUMN_DEFAULT_WIDTH = 160;
