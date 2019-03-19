@@ -216,7 +216,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                         this.creatingRegion.setControlPoints([center, {x: Math.abs(dx), y: Math.abs(dy)}]);
                         break;
                     case CARTA.RegionType.ELLIPSE:
-                        this.creatingRegion.setControlPoints([center, {x: Math.abs(dx) / 2.0, y: Math.abs(dy) / 2.0}]);
+                        this.creatingRegion.setControlPoints([center, {y: Math.abs(dx) / 2.0, x: Math.abs(dy) / 2.0}]);
                         break;
                     default:
                         break;
@@ -227,7 +227,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                         this.creatingRegion.setControlPoints([this.regionStartPoint, {x: 2 * Math.abs(dx), y: 2 * Math.abs(dy)}]);
                         break;
                     case CARTA.RegionType.ELLIPSE:
-                        this.creatingRegion.setControlPoints([this.regionStartPoint, {x: Math.abs(dx), y: Math.abs(dy)}]);
+                        this.creatingRegion.setControlPoints([this.regionStartPoint, {y: Math.abs(dx), x: Math.abs(dy)}]);
                         break;
                     default:
                         break;

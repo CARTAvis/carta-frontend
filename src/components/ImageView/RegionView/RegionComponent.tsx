@@ -51,6 +51,16 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         this.editAnchor = konvaEvent.currentTarget.movingResizer;
         const controlPoints = this.props.region.controlPoints;
 
+        let w: number, h: number;
+        if (this.props.region.regionType === CARTA.RegionType.RECTANGLE) {
+            w = controlPoints[1].x;
+            h = controlPoints[1].y;
+        }
+        else {
+            w = controlPoints[1].y;
+            h = controlPoints[1].x;
+        }
+
         this.editStartCenterPoint = {x: controlPoints[0].x, y: controlPoints[0].y};
         this.editOppositeAnchorPoint = {x: controlPoints[0].x, y: controlPoints[0].y};
 
@@ -60,15 +70,15 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         const sizeFactor = this.props.region.regionType === CARTA.RegionType.RECTANGLE ? 0.5 : 1.0;
 
         if (this.editAnchor.indexOf("left") >= 0) {
-            relativeOppositeAnchorPointUnrotated.x = +controlPoints[1].x * sizeFactor;
+            relativeOppositeAnchorPointUnrotated.x = +w * sizeFactor;
         } else if (this.editAnchor.indexOf("right") >= 0) {
-            relativeOppositeAnchorPointUnrotated.x = -controlPoints[1].x * sizeFactor;
+            relativeOppositeAnchorPointUnrotated.x = -w * sizeFactor;
         }
 
         if (this.editAnchor.indexOf("top") >= 0) {
-            relativeOppositeAnchorPointUnrotated.y = -controlPoints[1].y * sizeFactor;
+            relativeOppositeAnchorPointUnrotated.y = -h * sizeFactor;
         } else if (this.editAnchor.indexOf("bottom") >= 0) {
-            relativeOppositeAnchorPointUnrotated.y = +controlPoints[1].y * sizeFactor;
+            relativeOppositeAnchorPointUnrotated.y = +h * sizeFactor;
         }
 
         const cosX = Math.cos(this.props.region.rotation * Math.PI / 180.0);
@@ -118,13 +128,23 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
 
     applyCornerScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string) => {
         const newAnchorPoint = this.getImagePos(canvasX, canvasY);
-        let w = region.controlPoints[1].x;
-        let h = region.controlPoints[1].y;
+
+        let w: number, h: number;
+        let sizeFactor: number;
+        if (region.regionType === CARTA.RegionType.RECTANGLE) {
+            sizeFactor = 1.0;
+            w = region.controlPoints[1].x;
+            h = region.controlPoints[1].y;
+        }
+        else {
+            sizeFactor = 0.5;
+            w = region.controlPoints[1].y;
+            h = region.controlPoints[1].x;
+        }
+
         // Rotation matrix elements
         const cosX = Math.cos(region.rotation * Math.PI / 180.0);
         const sinX = Math.sin(region.rotation * Math.PI / 180.0);
-
-        const sizeFactor = region.regionType === CARTA.RegionType.RECTANGLE ? 1.0 : 0.5;
 
         const deltaAnchors = {x: newAnchorPoint.x - this.editOppositeAnchorPoint.x, y: newAnchorPoint.y - this.editOppositeAnchorPoint.y};
         // Apply inverse rotation to get difference between anchors without rotation
@@ -148,15 +168,31 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         deltaAnchors.y = sinX * deltaAnchorsUnrotated.x + cosX * deltaAnchorsUnrotated.y;
         let newCenter = {x: this.editOppositeAnchorPoint.x + deltaAnchors.x / 2.0, y: this.editOppositeAnchorPoint.y + deltaAnchors.y / 2.0};
 
-        region.setControlPoints([newCenter, {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}]);
+        if (region.regionType === CARTA.RegionType.RECTANGLE) {
+            region.setControlPoints([newCenter, {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}]);
+        }
+        else {
+            region.setControlPoints([newCenter, {y: Math.max(1e-3, w), x: Math.max(1e-3, h)}]);
+        }
     };
 
     applyCenterScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, keepAspect: boolean) => {
         const newAnchorPoint = this.getImagePos(canvasX, canvasY);
         const centerPoint = region.controlPoints[0];
 
-        let w = region.controlPoints[1].x;
-        let h = region.controlPoints[1].y;
+        let w: number, h: number;
+        let sizeFactor: number;
+        if (region.regionType === CARTA.RegionType.RECTANGLE) {
+            sizeFactor = 2.0;
+            w = region.controlPoints[1].x;
+            h = region.controlPoints[1].y;
+        }
+        else {
+            sizeFactor = 1.0;
+            w = region.controlPoints[1].y;
+            h = region.controlPoints[1].x;
+        }
+
         // Rotation matrix elements
         const cosX = Math.cos(region.rotation * Math.PI / 180.0);
         const sinX = Math.sin(region.rotation * Math.PI / 180.0);
@@ -164,7 +200,6 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         const deltaAnchorPoint = {x: newAnchorPoint.x - centerPoint.x, y: newAnchorPoint.y - centerPoint.y};
         // Apply inverse rotation to get difference between anchor and center without rotation
         const deltaAnchorPointUnrotated = {x: cosX * deltaAnchorPoint.x + sinX * deltaAnchorPoint.y, y: -sinX * deltaAnchorPoint.x + cosX * deltaAnchorPoint.y};
-        const sizeFactor = region.regionType === CARTA.RegionType.RECTANGLE ? 2.0 : 1.0;
 
         if (anchor.indexOf("left") >= 0 || anchor.indexOf("right") >= 0) {
             w = Math.abs(deltaAnchorPointUnrotated.x) * sizeFactor;
@@ -178,8 +213,12 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
             w = maxSide;
             h = maxSide;
         }
-
-        region.setControlPoints([this.editStartCenterPoint, {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}]);
+        if (region.regionType === CARTA.RegionType.RECTANGLE) {
+            region.setControlPoints([this.editStartCenterPoint, {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}]);
+        }
+        else {
+            region.setControlPoints([this.editStartCenterPoint, {y: Math.max(1e-3, w), x: Math.max(1e-3, h)}]);
+        }
     };
 
     handleDragStart = () => {
@@ -268,7 +307,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                     rotation={-region.rotation}
                     x={centerPixelSpace.x}
                     y={centerPixelSpace.y}
-                    radius={{x: width, y: height}}
+                    radius={{y: width, x: height}}
                     stroke={Colors.TURQUOISE5}
                     strokeWidth={3}
                     dash={region.isTemporary ? borderDash : null}
