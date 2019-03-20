@@ -18,13 +18,11 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         }
 
         return (
-            <FormGroup
-                label="Region Name"
-                labelFor="name-text-input"
-                labelInfo="(optional)"
-            >
-                <InputGroup id="name-text-input" placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange}/>
-            </FormGroup>
+            <div className="rectangular-region-form">
+                <FormGroup label="Region Name" labelInfo="(optional)">
+                    <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange}/>
+                </FormGroup>
+            </div>
         );
     }
 }
