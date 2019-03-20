@@ -1,29 +1,82 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {observable} from "mobx";
+import {autorun, computed, observable} from "mobx";
 import {AnchorButton, Classes, IDialogProps, Intent, NonIdealState} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
+import {PointRegionForm} from "./PointRegionForm/PointRegionForm";
 import {AppStore, RegionStore} from "stores";
-import {Point2D} from "../../../models";
 import "./RegionDialogComponent.css";
+import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionForm";
+import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
 
 @observer
 export class RegionDialogComponent extends React.Component<{ appStore: AppStore }> {
 
     @observable selectedRegion: RegionStore;
-    @observable controlPoints: Point2D[];
-    @observable regionName: string;
+    @observable regionCopy: RegionStore;
 
-    constructor(props) {
+    @computed get canApplyChanges() {
+        // Can't apply changes to invalid objects
+        if (!this.selectedRegion || !this.regionCopy || !this.selectedRegion.isValid || !this.regionCopy.isValid) {
+            return false;
+        }
+
+        // Shallow check for changed values
+        if (this.selectedRegion.name !== this.regionCopy.name || this.selectedRegion.channelMin !== this.regionCopy.channelMin || this.selectedRegion.channelMax !== this.regionCopy.channelMax ||
+            this.selectedRegion.rotation !== this.regionCopy.rotation) {
+            return true;
+        }
+
+        // Check array lengths
+        if (this.selectedRegion.controlPoints.length !== this.regionCopy.controlPoints.length || this.selectedRegion.stokesValues.length !== this.regionCopy.stokesValues.length) {
+            return true;
+        }
+
+        // Check array content
+        for (let i = 0; i < this.selectedRegion.controlPoints.length; i++) {
+            const a = this.selectedRegion.controlPoints[i];
+            const b = this.regionCopy.controlPoints[i];
+            if (a.x !== b.x || a.y !== b.y) {
+                return true;
+            }
+        }
+
+        for (let i = 0; i < this.selectedRegion.stokesValues.length; i++) {
+            if (this.selectedRegion.stokesValues[i] !== this.regionCopy.stokesValues[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    constructor(props: any) {
         super(props);
 
-        this.regionName = "";
-        this.selectedRegion = null;
-        this.controlPoints = [];
+        autorun(() => {
+            if (this.props.appStore.activeFrame && this.props.appStore.regionDialogVisible) {
+                this.selectedRegion = this.props.appStore.activeFrame.regionSet.selectedRegion;
+                if (this.selectedRegion) {
+                    console.log("Creating a copy of selected region for editing");
+                    this.regionCopy = this.selectedRegion.getCopy();
+                } else {
+                    this.regionCopy = null;
+
+                }
+            } else {
+                this.selectedRegion = null;
+                this.regionCopy = null;
+            }
+        });
     }
 
     private applyChanges = () => {
-
+        if (this.selectedRegion && this.regionCopy) {
+            this.selectedRegion.beginEditing();
+            this.selectedRegion.applyUpdate(this.regionCopy);
+            this.selectedRegion.endEditing();
+        }
+        this.props.appStore.hideRegionDialog();
     };
 
     public render() {
@@ -48,7 +101,23 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
         } else {
             const region = appStore.activeFrame.regionSet.selectedRegion;
             dialogProps.title = region.regionId === 0 ? "Editing Cursor" : `Editing Region ${region.regionId}`;
-            bodyContent = <h1>Placeholder</h1>;
+            if (region) {
+                switch (region.regionType) {
+                    case CARTA.RegionType.POINT:
+                        bodyContent = <PointRegionForm region={region}/>;
+                        break;
+                    case CARTA.RegionType.RECTANGLE:
+                        bodyContent = <RectangularRegionForm region={region}/>;
+                        break;
+                    case CARTA.RegionType.ELLIPSE:
+                        bodyContent = <EllipticalRegionForm region={region}/>;
+                        break;
+                    default:
+                        bodyContent = <h1>Placeholder</h1>;
+                }
+            } else {
+                bodyContent = <h1>Placeholder</h1>;
+            }
         }
 
         return (
@@ -58,7 +127,7 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.SUCCESS} onClick={appStore.hideRegionDialog} text="Apply"/>
+                        <AnchorButton intent={Intent.SUCCESS} onClick={this.applyChanges} text="Apply"/>
                         <AnchorButton intent={Intent.NONE} onClick={appStore.hideRegionDialog} text="Close"/>
                     </div>
                 </div>

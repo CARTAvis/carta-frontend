@@ -6,6 +6,7 @@ import {BackendService} from "../services";
 export class RegionStore {
     @observable fileId: number;
     @observable regionId: number;
+    @observable name: string;
     @observable regionType: CARTA.RegionType;
     @observable channelMin: number;
     @observable channelMax: number;
@@ -78,14 +79,15 @@ export class RegionStore {
         }
     }
 
-    constructor(backendService: BackendService, fileId: number, controlPoints: Point2D[], regionType: CARTA.RegionType,
-                regionId: number = -1, rotation: number = 0, channelMin: number = -1, channelMax: number = -1, stokesValues: number[] = []) {
+    constructor(backendService: BackendService, fileId: number, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1,
+                rotation: number = 0, channelMin: number = -1, channelMax: number = -1, name: string = "", stokesValues: number[] = []) {
         this.fileId = fileId;
         this.controlPoints = controlPoints;
         this.regionType = regionType;
         this.regionId = regionId;
         this.channelMin = channelMin;
         this.channelMax = channelMax;
+        this.name = name;
         this.stokesValues = stokesValues;
         this.rotation = rotation;
         this.backendService = backendService;
@@ -138,6 +140,23 @@ export class RegionStore {
     @action endEditing = () => {
         this.editing = false;
         this.updateRegion();
+    };
+
+    getCopy = (): RegionStore => {
+        // Deep copy the control points array and stokes values
+        const controlPointCopy: Point2D[] = this.controlPoints.map(v => ({x: v.x, y: v.y}));
+        const stokesCopy = this.stokesValues.slice();
+        return new RegionStore(this.backendService, this.fileId, controlPointCopy, this.regionType, this.regionId, this.rotation, this.channelMin, this.channelMax, this.name, stokesCopy);
+    };
+
+    @action applyUpdate = (copy: RegionStore) => {
+        this.fileId = copy.fileId;
+        this.name = copy.name;
+        this.channelMin = copy.channelMin;
+        this.channelMax = copy.channelMax;
+        this.rotation = copy.rotation;
+        this.stokesValues = copy.stokesValues;
+        this.controlPoints = copy.controlPoints;
     };
 
     // Update the region with the backend
