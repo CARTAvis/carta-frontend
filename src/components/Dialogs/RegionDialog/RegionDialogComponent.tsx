@@ -1,12 +1,30 @@
 import * as React from "react";
 import {observer} from "mobx-react";
+import {observable} from "mobx";
 import {AnchorButton, Classes, IDialogProps, Intent, NonIdealState} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore} from "stores";
+import {AppStore, RegionStore} from "stores";
+import {Point2D} from "../../../models";
 import "./RegionDialogComponent.css";
 
 @observer
 export class RegionDialogComponent extends React.Component<{ appStore: AppStore }> {
+
+    @observable selectedRegion: RegionStore;
+    @observable controlPoints: Point2D[];
+    @observable regionName: string;
+
+    constructor(props) {
+        super(props);
+
+        this.regionName = "";
+        this.selectedRegion = null;
+        this.controlPoints = [];
+    }
+
+    private applyChanges = () => {
+
+    };
 
     public render() {
         const appStore = this.props.appStore;
