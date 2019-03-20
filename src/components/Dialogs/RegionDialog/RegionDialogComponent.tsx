@@ -57,8 +57,11 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
             if (this.props.appStore.activeFrame && this.props.appStore.regionDialogVisible) {
                 this.selectedRegion = this.props.appStore.activeFrame.regionSet.selectedRegion;
                 if (this.selectedRegion) {
-                    console.log("Creating a copy of selected region for editing");
-                    this.regionCopy = this.selectedRegion.getCopy();
+                    if (!this.regionCopy || this.selectedRegion.regionId !== this.regionCopy.regionId) {
+                        console.log("Creating a copy of selected region for editing");
+                        this.regionCopy = this.selectedRegion.getCopy();
+                        this.regionCopy.beginEditing();
+                    }
                 } else {
                     this.regionCopy = null;
 
@@ -99,9 +102,9 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
         if (!appStore.activeFrame || !appStore.activeFrame.regionSet.selectedRegion) {
             bodyContent = <NonIdealState icon={"folder-open"} title={"No region selected"} description={"Select a region using the list or image view"}/>;
         } else {
-            const region = appStore.activeFrame.regionSet.selectedRegion;
-            dialogProps.title = region.regionId === 0 ? "Editing Cursor" : `Editing Region ${region.regionId}`;
+            const region = this.regionCopy;
             if (region) {
+                dialogProps.title = `Editing ${region.nameString}`;
                 switch (region.regionType) {
                     case CARTA.RegionType.POINT:
                         bodyContent = <PointRegionForm region={region}/>;

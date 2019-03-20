@@ -120,7 +120,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     onClick={() => frame.regionSet.selectRegion(region)}
                     onDoubleClick={this.props.appStore.showRegionDialog}
                 >
-                    <td style={{width: nameWidth}}>{region.regionId === 0 ? "Cursor" : `Region ${region.regionId}`}</td>
+                    <td style={{width: nameWidth}}>{region.nameString}</td>
                     <td style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>{RegionStore.RegionTypeString(region.regionType)}</td>
                     {pixelCenterEntry}
                     {showSizeColumn && pixelSizeEntry}

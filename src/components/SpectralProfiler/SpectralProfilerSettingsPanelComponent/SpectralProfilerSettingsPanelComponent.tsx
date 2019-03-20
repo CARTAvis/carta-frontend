@@ -43,7 +43,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<{ ap
             profileRegionOptions = this.props.appStore.activeFrame.regionSet.regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT)).map(r => {
                 return {
                     value: r.regionId,
-                    label: r.regionId === 0 ? "Cursor" : `Region #${r.regionId}`
+                    label: r.nameString
                 };
             });
         }

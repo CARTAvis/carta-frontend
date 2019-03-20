@@ -79,6 +79,16 @@ export class RegionStore {
         }
     }
 
+    @computed get nameString() {
+        if (this.regionId === 0) {
+            return "Cursor";
+        } else if (this.name) {
+            return this.name;
+        } else {
+            return `Region ${this.regionId}`;
+        }
+    }
+
     constructor(backendService: BackendService, fileId: number, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1,
                 rotation: number = 0, channelMin: number = -1, channelMax: number = -1, name: string = "", stokesValues: number[] = []) {
         this.fileId = fileId;
@@ -112,6 +122,13 @@ export class RegionStore {
 
     @action setRotation = (angle: number) => {
         this.rotation = (angle + 360) % 360;
+        if (!this.editing) {
+            this.updateRegion();
+        }
+    };
+
+    @action setName = (name: string) => {
+        this.name = name;
         if (!this.editing) {
             this.updateRegion();
         }
