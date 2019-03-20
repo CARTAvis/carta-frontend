@@ -73,7 +73,7 @@ export class RegionSetStore {
     };
 
     @action addEllipticalRegion = (center: Point2D, semiMajor: number, semiMinor: number, temporary: boolean = false) => {
-        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center, {x: semiMajor, y: semiMinor}], CARTA.RegionType.ELLIPSE, this.getTempRegionId());
+        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center, {x: semiMinor, y: semiMajor}], CARTA.RegionType.ELLIPSE, this.getTempRegionId());
         this.regions.push(region);
         if (!temporary) {
             this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
