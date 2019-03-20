@@ -273,16 +273,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     onStageMouseDown = (ev) => {
-        if (this.props.data) {
-            const mouseEvent: MouseEvent = ev.evt;
-            this.stageClickStartX = mouseEvent.offsetX;
-            this.stageClickStartY = mouseEvent.offsetY;
-            const modifierPressed = mouseEvent.ctrlKey || mouseEvent.shiftKey || mouseEvent.altKey;
-            if (this.hoveredMarker === undefined && !modifierPressed) {
-                this.startSelection(mouseEvent.offsetX, mouseEvent.offsetY);
-            } else if (modifierPressed) {
-                this.startPanning(mouseEvent.offsetX);
-            }
+        const mouseEvent: MouseEvent = ev.evt;
+        this.stageClickStartX = mouseEvent.offsetX;
+        this.stageClickStartY = mouseEvent.offsetY;
+        const modifierPressed = mouseEvent.ctrlKey || mouseEvent.shiftKey || mouseEvent.altKey;
+        if (this.hoveredMarker === undefined && !modifierPressed) {
+            this.startSelection(mouseEvent.offsetX, mouseEvent.offsetY);
+        } else if (modifierPressed) {
+            this.startPanning(mouseEvent.offsetX);
         }
     };
 
@@ -291,14 +289,13 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     onStageMouseUp = (ev) => {
-        if (this.props.data) {
-            const mouseEvent: MouseEvent = ev.evt;
-
-            // Redirect clicks
-            const mouseMoveDist = {x: Math.abs(mouseEvent.offsetX - this.stageClickStartX), y: Math.abs(mouseEvent.offsetY - this.stageClickStartY)};
-            if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
-                this.onStageClick(ev);
-            } else {
+        const mouseEvent: MouseEvent = ev.evt;
+        // Redirect clicks
+        const mouseMoveDist = {x: Math.abs(mouseEvent.offsetX - this.stageClickStartX), y: Math.abs(mouseEvent.offsetY - this.stageClickStartY)};
+        if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
+            this.onStageClick(ev);
+        } else {
+            if (this.props.data) {
                 this.stageClickStartX = undefined;
                 this.stageClickStartY = undefined;
                 if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
@@ -323,8 +320,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     }
                 }
             }
-            this.endInteractions();
         }
+        this.endInteractions();
     };
 
     @action updateSelection(x: number, y: number) {
