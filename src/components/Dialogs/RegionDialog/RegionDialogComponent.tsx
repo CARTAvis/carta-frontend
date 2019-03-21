@@ -98,18 +98,19 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
         };
 
         let bodyContent;
-
-        if (!appStore.activeFrame || !appStore.activeFrame.regionSet.selectedRegion || !this.regionCopy) {
+        if (!appStore.activeFrame || !appStore.activeFrame.regionSet.selectedRegion || !this.regionCopy || !appStore.getFrame(this.regionCopy.fileId)) {
             bodyContent = <NonIdealState icon={"folder-open"} title={"No region selected"} description={"Select a region using the list or image view"}/>;
         } else {
             const region = this.regionCopy;
+            const frame = appStore.getFrame(region.fileId);
+
             dialogProps.title = `Editing ${region.nameString}`;
             switch (region.regionType) {
                 case CARTA.RegionType.RECTANGLE:
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={this.selectedRegion} darkTheme={appStore.darkTheme}/>
-                            <RectangularRegionForm region={region}/>
+                            <RectangularRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
                         </React.Fragment>
                     );
                     break;
