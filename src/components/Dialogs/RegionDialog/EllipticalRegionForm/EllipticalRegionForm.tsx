@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {observable} from "mobx";
-import {Callout, FormGroup, InputGroup, NonIdealState} from "@blueprintjs/core";
+import {FormGroup, H5, InputGroup} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {RegionStore} from "stores";
 import "./EllipticalRegionForm.css";
@@ -17,15 +17,16 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore 
     public render() {
         const region = this.props.region;
         if (!region || !region.isValid || region.regionType !== CARTA.RegionType.ELLIPSE) {
-            return <NonIdealState icon={"error"} title={"Missing region"} description={"Region not found or invalid"}/>;
+            return null;
         }
 
         return (
-            <Callout title="Properties" className="elliptical-region-form">
+            <div className="form-section elliptical-region-form">
+                <H5>Properties</H5>
                 <FormGroup label="Region Name" inline={true}>
                     <InputGroup placeholder="Enter a region name" value={region.name} onChange={this.handleNameChange}/>
                 </FormGroup>
-            </Callout>
+            </div>
         );
     }
 }

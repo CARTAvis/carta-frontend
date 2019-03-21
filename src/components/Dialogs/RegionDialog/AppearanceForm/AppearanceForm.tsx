@@ -3,12 +3,12 @@ import * as _ from "lodash";
 import {observer} from "mobx-react";
 import {observable} from "mobx";
 import {SketchPicker, ColorResult} from "react-color";
-import {AnchorButton, Callout, Colors, FormGroup, NonIdealState, NumericInput, Popover, PopoverPosition} from "@blueprintjs/core";
+import {AnchorButton, Colors, FormGroup, H5, NumericInput, Popover, PopoverPosition} from "@blueprintjs/core";
 import {RegionStore} from "stores";
 import "./AppearanceForm.css";
 
 @observer
-export class AppearanceForm extends React.Component<{ region: RegionStore, darkTheme: boolean}> {
+export class AppearanceForm extends React.Component<{ region: RegionStore, darkTheme: boolean }> {
     @observable displayColorPicker: boolean;
 
     private static readonly APPEARANCE_CHANGE_DELAY = 100;
@@ -67,7 +67,7 @@ export class AppearanceForm extends React.Component<{ region: RegionStore, darkT
     public render() {
         const region = this.props.region;
         if (!region || !region.isValid) {
-            return <NonIdealState icon={"error"} title={"Missing region"} description={"Region not found"}/>;
+            return null;
         }
 
         let popoverClassName = "appearance-picker-popup";
@@ -76,7 +76,8 @@ export class AppearanceForm extends React.Component<{ region: RegionStore, darkT
         }
 
         return (
-            <Callout title="Appearance" className="appearance-form">
+            <div className="form-section appearance-form">
+                <H5>Appearance</H5>
                 <div className="form-contents">
                     <FormGroup label="Line Color" inline={true}>
                         <Popover isOpen={this.displayColorPicker} onClose={this.handleColorClose} position={PopoverPosition.RIGHT} popoverClassName={popoverClassName}>
@@ -107,7 +108,7 @@ export class AppearanceForm extends React.Component<{ region: RegionStore, darkT
                         />
                     </FormGroup>
                 </div>
-            </Callout>
+            </div>
         );
     }
 }

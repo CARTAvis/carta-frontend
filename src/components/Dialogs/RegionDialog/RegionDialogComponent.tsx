@@ -4,7 +4,6 @@ import {autorun, computed, observable} from "mobx";
 import {AnchorButton, Classes, IDialogProps, Intent, NonIdealState} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {PointRegionForm} from "./PointRegionForm/PointRegionForm";
 import {AppStore, RegionStore} from "stores";
 import "./RegionDialogComponent.css";
 import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionForm";
@@ -100,34 +99,36 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
 
         let bodyContent;
 
-        if (!appStore.activeFrame || !appStore.activeFrame.regionSet.selectedRegion) {
+        if (!appStore.activeFrame || !appStore.activeFrame.regionSet.selectedRegion || !this.regionCopy) {
             bodyContent = <NonIdealState icon={"folder-open"} title={"No region selected"} description={"Select a region using the list or image view"}/>;
         } else {
             const region = this.regionCopy;
-            if (region) {
-                dialogProps.title = `Editing ${region.nameString}`;
-                switch (region.regionType) {
-                    case CARTA.RegionType.POINT:
-                        bodyContent = <PointRegionForm region={region}/>;
-                        break;
-                    case CARTA.RegionType.RECTANGLE:
-                        bodyContent = <RectangularRegionForm region={region}/>;
-                        break;
-                    case CARTA.RegionType.ELLIPSE:
-                        bodyContent = <EllipticalRegionForm region={region}/>;
-                        break;
-                    default:
-                        bodyContent = <h1>Placeholder</h1>;
-                }
-            } else {
-                bodyContent = <h1>Placeholder</h1>;
+            dialogProps.title = `Editing ${region.nameString}`;
+            switch (region.regionType) {
+                case CARTA.RegionType.RECTANGLE:
+                    bodyContent = (
+                        <React.Fragment>
+                            <AppearanceForm region={this.selectedRegion} darkTheme={appStore.darkTheme}/>
+                            <RectangularRegionForm region={region}/>
+                        </React.Fragment>
+                    );
+                    break;
+                case CARTA.RegionType.ELLIPSE:
+                    bodyContent = (
+                        <React.Fragment>
+                            <AppearanceForm region={this.selectedRegion} darkTheme={appStore.darkTheme}/>
+                            <EllipticalRegionForm region={region}/>
+                        </React.Fragment>
+                    );
+                    break;
+                default:
+                    bodyContent = <NonIdealState icon={"error"} title={"Region not supported"} description={"The selected region does not have any editable properties"}/>;
             }
         }
 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={600} defaultHeight={400} minHeight={300} minWidth={400} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
-                    <AppearanceForm region={this.selectedRegion} darkTheme={appStore.darkTheme}/>
                     {bodyContent}
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
