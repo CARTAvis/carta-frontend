@@ -38,6 +38,28 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         }
     };
 
+    private handleWidthChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== 13) {
+            return;
+        }
+        const valueString = ev.currentTarget.value;
+        const value = parseFloat(valueString);
+        if (isFinite(value)) {
+            this.props.region.setControlPoint(1, {x: value, y: this.props.region.controlPoints[1].y});
+        }
+    };
+
+    private handleHeightChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== 13) {
+            return;
+        }
+        const valueString = ev.currentTarget.value;
+        const value = parseFloat(valueString);
+        if (isFinite(value)) {
+            this.props.region.setControlPoint(1, {x: this.props.region.controlPoints[1].x, y: value});
+        }
+    };
+
     private handleLeftChange = (ev) => {
         if (ev.type === "keydown" && ev.keyCode !== 13) {
             return;
@@ -182,6 +204,8 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                                     buttonPosition={"none"}
                                     allowNumericCharactersOnly={true}
                                     selectAllOnFocus={true}
+                                    onBlur={this.handleWidthChange}
+                                    onKeyDown={this.handleWidthChange}
                                 />
                             </td>
                             <td>
@@ -191,6 +215,8 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                                     buttonPosition={"none"}
                                     allowNumericCharactersOnly={true}
                                     selectAllOnFocus={true}
+                                    onBlur={this.handleHeightChange}
+                                    onKeyDown={this.handleHeightChange}
                                 />
                             </td>
                         </tr>
