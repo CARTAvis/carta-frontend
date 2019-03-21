@@ -118,12 +118,10 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     };
 
     handleScalingChange = (scaling: FrameScaling) => {
-        console.log("handleScalingChange");
         this.props.appStore.activeFrame.renderConfig.setScaling(scaling);
     };
 
     handleScaleMinChange = (val: number) => {
-        console.log("handleScaleMinChange");
         if (isFinite(val)) {
             const stokes = this.props.appStore.activeFrame.renderConfig.stokes;
             this.props.appStore.activeFrame.renderConfig.setCustomScale(val, this.props.appStore.activeFrame.renderConfig.scaleMaxVal);
@@ -131,7 +129,6 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     };
 
     handleScaleMaxChange = (val: number) => {
-        console.log("handleScaleMaxChange");
         if (isFinite(val)) {
             const stokes = this.props.appStore.activeFrame.renderConfig.stokes;
             this.props.appStore.activeFrame.renderConfig.setCustomScale(this.props.appStore.activeFrame.renderConfig.scaleMinVal, val);
@@ -180,11 +177,6 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         const frame = this.props.appStore.activeFrame;
         // Check bounds first, to make sure the max isn't being moved below the min
         if (frame && frame.renderConfig && x < frame.renderConfig.scaleMaxVal) {
-            console.log("onMinMoved");
-            const stokes = frame.requiredStokes;
-            console.log("Stokes " + stokes);
-            const scaleMin = this.props.appStore.activeFrame.renderConfig.scaleMinVal;
-            console.log("Scale min: " + scaleMin);
             frame.renderConfig.setStokesScaleMin(x);
         }
     };
@@ -193,11 +185,6 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         const frame = this.props.appStore.activeFrame;
         // Check bounds first, to make sure the max isn't being moved below the min
         if (frame && frame.renderConfig && x > frame.renderConfig.scaleMinVal) {
-            console.log("onMaxMoved");
-            const stokes = this.props.appStore.activeFrame.requiredStokes;
-            console.log("Stokes " + stokes);
-            const scaleMax = frame.renderConfig.scaleMaxVal;
-            console.log("Scale max: " + scaleMax);
             frame.renderConfig.setStokesScaleMax(x);
         }
     };

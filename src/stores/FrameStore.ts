@@ -279,7 +279,6 @@ export class FrameStore {
 
     @action setChannels(channel: number, stokes: number) {
         // Automatically switch to per-channel histograms when Stokes parameter changes
-        console.log("in setChannels");
         this.renderConfig.setStokes(stokes);
         if (this.requiredStokes !== stokes) {
             this.renderConfig.setUseCubeHistogram(false);

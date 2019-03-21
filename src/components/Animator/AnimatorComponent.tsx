@@ -42,7 +42,6 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
     };
 
     onStokesChanged = (val: number) => {
-        console.log("onStokesChanged");
         if (this.props.appStore.activeFrame) {
             if (val < 0) {
                 val += this.props.appStore.activeFrame.frameInfo.fileInfoExtended.stokes;

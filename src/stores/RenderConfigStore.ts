@@ -93,17 +93,14 @@ export class RenderConfigStore {
 
     @action setStokes = (val: number) => {
         this.stokes = val;
-        console.log("Updated current Stokes" + this.stokes);
     }
 
     @action setStokesScaleMin = (scaleMin: number) => {
         this.scaleMin[this.stokes] = scaleMin;
-        console.log("Scale min set: " + scaleMin + " for Stokes " + this.stokes);
     };
 
     @action setStokesScaleMax = (scaleMax: number) => {
         this.scaleMax[this.stokes] = scaleMax;
-        console.log("Scale max set: " + scaleMax + " for Stokes " + this.stokes);
     };
 
     @action setUseCubeHistogram = (val: boolean) => {
