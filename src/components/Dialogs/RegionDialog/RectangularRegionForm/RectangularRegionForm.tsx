@@ -154,6 +154,11 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         const wcsStringLeft = this.getFormattedString(this.props.wcsInfo, bottomLeftPoint);
         const wcsStringRight = this.getFormattedString(this.props.wcsInfo, topRightPoint);
 
+        const commonProps = {
+            selectAllOnFocus: true,
+            allowNumericCharactersOnly: true
+        };
+
         const pxUnitSpan = <span className={Classes.TEXT_MUTED}>(px)</span>;
         return (
             <div className="form-section rectangular-region-form">
@@ -170,26 +175,10 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                         <tr>
                             <td>Center {pxUnitSpan}</td>
                             <td>
-                                <NumericInput
-                                    placeholder="X Coordinate"
-                                    value={centerPoint.x}
-                                    buttonPosition={"none"}
-                                    allowNumericCharactersOnly={true}
-                                    selectAllOnFocus={true}
-                                    onBlur={this.handleCenterXChange}
-                                    onKeyDown={this.handleCenterXChange}
-                                />
+                                <NumericInput {...commonProps} buttonPosition="none" placeholder="X Coordinate" value={centerPoint.x} onBlur={this.handleCenterXChange} onKeyDown={this.handleCenterXChange}/>
                             </td>
                             <td>
-                                <NumericInput
-                                    placeholder="Y Coordinate"
-                                    value={centerPoint.y}
-                                    buttonPosition={"none"}
-                                    allowNumericCharactersOnly={true}
-                                    selectAllOnFocus={true}
-                                    onBlur={this.handleCenterYChange}
-                                    onKeyDown={this.handleCenterYChange}
-                                />
+                                <NumericInput {...commonProps} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>
                             </td>
                             <td>
                                 <span className="wcs-string">{wcsStringCenter}</span>
@@ -198,77 +187,29 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                         <tr>
                             <td>Size {pxUnitSpan}</td>
                             <td>
-                                <NumericInput
-                                    placeholder="Width"
-                                    value={sizeDims.x}
-                                    buttonPosition={"none"}
-                                    allowNumericCharactersOnly={true}
-                                    selectAllOnFocus={true}
-                                    onBlur={this.handleWidthChange}
-                                    onKeyDown={this.handleWidthChange}
-                                />
+                                <NumericInput {...commonProps} buttonPosition="none" placeholder="Width" value={sizeDims.x} onBlur={this.handleWidthChange} onKeyDown={this.handleWidthChange}/>
                             </td>
                             <td>
-                                <NumericInput
-                                    placeholder="Height"
-                                    value={sizeDims.y}
-                                    buttonPosition={"none"}
-                                    allowNumericCharactersOnly={true}
-                                    selectAllOnFocus={true}
-                                    onBlur={this.handleHeightChange}
-                                    onKeyDown={this.handleHeightChange}
-                                />
+                                <NumericInput{...commonProps} buttonPosition="none" placeholder="Height" value={sizeDims.y} onBlur={this.handleHeightChange} onKeyDown={this.handleHeightChange}/>
                             </td>
                         </tr>
                         <tr>
                             <td>Bottom Left {pxUnitSpan}</td>
                             <td>
-                                <NumericInput
-                                    placeholder="X Coordinate"
-                                    value={bottomLeftPoint.x}
-                                    buttonPosition={"none"}
-                                    allowNumericCharactersOnly={true}
-                                    selectAllOnFocus={true}
-                                    onBlur={this.handleLeftChange}
-                                    onKeyDown={this.handleLeftChange}
-                                />
+                                <NumericInput {...commonProps} buttonPosition="none" placeholder="X Coordinate" value={bottomLeftPoint.x} onBlur={this.handleLeftChange} onKeyDown={this.handleLeftChange}/>
                             </td>
                             <td>
-                                <NumericInput
-                                    placeholder="Y Coordinate"
-                                    value={bottomLeftPoint.y}
-                                    buttonPosition={"none"}
-                                    allowNumericCharactersOnly={true}
-                                    selectAllOnFocus={true}
-                                    onBlur={this.handleBottomChange}
-                                    onKeyDown={this.handleBottomChange}
-                                />
+                                <NumericInput {...commonProps} buttonPosition="none" placeholder="Y Coordinate" value={bottomLeftPoint.y} onBlur={this.handleBottomChange} onKeyDown={this.handleBottomChange}/>
                             </td>
                             <td><span className="wcs-string">{wcsStringLeft}</span></td>
                         </tr>
                         <tr>
                             <td>Top Right {pxUnitSpan}</td>
                             <td>
-                                <NumericInput
-                                    placeholder="X Coordinate"
-                                    value={topRightPoint.x}
-                                    buttonPosition={"none"}
-                                    allowNumericCharactersOnly={true}
-                                    selectAllOnFocus={true}
-                                    onBlur={this.handleRightChange}
-                                    onKeyDown={this.handleRightChange}
-                                />
+                                <NumericInput {...commonProps} buttonPosition="none" placeholder="X Coordinate" value={topRightPoint.x} onBlur={this.handleRightChange} onKeyDown={this.handleRightChange}/>
                             </td>
                             <td>
-                                <NumericInput
-                                    placeholder="Y Coordinate"
-                                    value={topRightPoint.y}
-                                    buttonPosition={"none"}
-                                    allowNumericCharactersOnly={true}
-                                    selectAllOnFocus={true}
-                                    onBlur={this.handleTopChange}
-                                    onKeyDown={this.handleTopChange}
-                                />
+                                <NumericInput {...commonProps} buttonPosition="none" placeholder="Y Coordinate" value={topRightPoint.y} onBlur={this.handleTopChange} onKeyDown={this.handleTopChange}/>
                             </td>
                             <td><span className="wcs-string">{wcsStringRight}</span></td>
                         </tr>
