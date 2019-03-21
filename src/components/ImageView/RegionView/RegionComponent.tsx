@@ -49,7 +49,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
     handleClick = (konvaEvent) => {
         const mouseEvent = konvaEvent.evt as MouseEvent;
 
-        if (mouseEvent.button === 0) {
+        if (mouseEvent.button === 0 && !(mouseEvent.ctrlKey || mouseEvent.metaKey)) {
             // Select click
             if (this.props.onSelect) {
                 this.props.onSelect(this.props.region);
