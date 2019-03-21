@@ -5,8 +5,9 @@ import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {Ellipse, Group, Rect, Transformer} from "react-konva";
 import {CARTA} from "carta-protobuf";
-import {FrameStore, RegionStore} from "../../../stores";
+import {AppStore, FrameStore, RegionStore} from "../../../stores";
 import {Point2D} from "../../../models";
+import {RectConfig} from "konva";
 
 export interface RegionComponentProps {
     region: RegionStore;
@@ -16,6 +17,7 @@ export interface RegionComponentProps {
     listening: boolean;
     selected: boolean;
     onSelect?: (region: RegionStore) => void;
+    onDoubleClick?: (region: RegionStore) => void;
     onPanClick?: () => void;
 }
 
@@ -33,6 +35,17 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         }
     };
 
+    handleContextMenu = (konvaEvent) => {
+        konvaEvent.evt.preventDefault();
+        console.log("context click!");
+    };
+
+    handleDoubleClick = () => {
+        if (this.props.onDoubleClick) {
+            this.props.onDoubleClick(this.props.region);
+        }
+    };
+
     handleClick = (konvaEvent) => {
         const mouseEvent = konvaEvent.evt as MouseEvent;
 
@@ -41,9 +54,6 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
             if (this.props.onSelect) {
                 this.props.onSelect(this.props.region);
             }
-        } else if (mouseEvent.button === 2) {
-            // Context click
-            console.log("context click!");
         }
     };
 
@@ -55,8 +65,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         if (this.props.region.regionType === CARTA.RegionType.RECTANGLE) {
             w = controlPoints[1].x;
             h = controlPoints[1].y;
-        }
-        else {
+        } else {
             w = controlPoints[1].y;
             h = controlPoints[1].x;
         }
@@ -135,8 +144,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
             sizeFactor = 1.0;
             w = region.controlPoints[1].x;
             h = region.controlPoints[1].y;
-        }
-        else {
+        } else {
             sizeFactor = 0.5;
             w = region.controlPoints[1].y;
             h = region.controlPoints[1].x;
@@ -170,8 +178,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
 
         if (region.regionType === CARTA.RegionType.RECTANGLE) {
             region.setControlPoints([newCenter, {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}]);
-        }
-        else {
+        } else {
             region.setControlPoints([newCenter, {y: Math.max(1e-3, w), x: Math.max(1e-3, h)}]);
         }
     };
@@ -186,8 +193,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
             sizeFactor = 2.0;
             w = region.controlPoints[1].x;
             h = region.controlPoints[1].y;
-        }
-        else {
+        } else {
             sizeFactor = 1.0;
             w = region.controlPoints[1].y;
             h = region.controlPoints[1].x;
@@ -215,8 +221,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         }
         if (region.regionType === CARTA.RegionType.RECTANGLE) {
             region.setControlPoints([this.editStartCenterPoint, {x: Math.max(1e-3, w), y: Math.max(1e-3, h)}]);
-        }
-        else {
+        } else {
             region.setControlPoints([this.editStartCenterPoint, {y: Math.max(1e-3, w), x: Math.max(1e-3, h)}]);
         }
     };
@@ -278,47 +283,41 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         // Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
         const borderDash = [(width + height) * 4 / 100.0];
 
+        const commonProps = {
+            rotation: -region.rotation,
+            x: centerPixelSpace.x,
+            y: centerPixelSpace.y,
+            stroke: region.color,
+            strokeWidth: region.lineWidth,
+            opacity: region.isTemporary ? 0.5 : 1.0,
+            dash: [region.dashLength],
+            draggable: true,
+            listening: this.props.listening,
+            onDragStart: this.handleDragStart,
+            onDragEnd: this.handleDragEnd,
+            onDragMove: this.handleDrag,
+            onClick: this.handleClick,
+            onDblClick: this.handleDoubleClick,
+            onContextMenu: this.handleContextMenu,
+            perfectDrawEnabled: false,
+            ref: this.handleRef
+        };
+
         return (
             <Group>
                 {region.regionType === CARTA.RegionType.RECTANGLE &&
                 <Rect
-                    rotation={-region.rotation}
-                    x={centerPixelSpace.x}
-                    y={centerPixelSpace.y}
+                    {...commonProps}
                     width={width}
                     height={height}
                     offsetX={width / 2.0}
                     offsetY={height / 2.0}
-                    stroke={Colors.TURQUOISE5}
-                    strokeWidth={3}
-                    dash={region.isTemporary ? borderDash : null}
-                    draggable={true}
-                    listening={this.props.listening}
-                    onDragStart={this.handleDragStart}
-                    onDragEnd={this.handleDragEnd}
-                    onDragMove={this.handleDrag}
-                    onClick={this.handleClick}
-                    perfectDrawEnabled={false}
-                    ref={this.handleRef}
                 />
                 }
                 {region.regionType === CARTA.RegionType.ELLIPSE &&
                 <Ellipse
-                    rotation={-region.rotation}
-                    x={centerPixelSpace.x}
-                    y={centerPixelSpace.y}
+                    {...commonProps}
                     radius={{y: width, x: height}}
-                    stroke={Colors.TURQUOISE5}
-                    strokeWidth={3}
-                    dash={region.isTemporary ? borderDash : null}
-                    draggable={true}
-                    listening={this.props.listening}
-                    onDragStart={this.handleDragStart}
-                    onDragEnd={this.handleDragEnd}
-                    onDragMove={this.handleDrag}
-                    onClick={this.handleClick}
-                    fillEnabled={true}
-                    ref={this.handleRef}
                 />
                 }
                 {this.selectedRegionRef && this.props.selected && this.props.listening &&

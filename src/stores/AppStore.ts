@@ -328,6 +328,9 @@ export class AppStore {
             this.apiKey = existingKey;
         }
 
+        // temp for testing
+        this.regionDialogVisible = true;
+
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore);
         this.astReady = false;

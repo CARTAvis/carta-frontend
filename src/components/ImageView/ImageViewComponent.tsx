@@ -9,7 +9,7 @@ import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
-import {WidgetConfig, WidgetProps} from "stores";
+import {RegionStore, WidgetConfig, WidgetProps} from "stores";
 import {CursorInfo, Point2D} from "models";
 import "./ImageViewComponent.css";
 import {RegionViewComponent} from "./RegionView/RegionViewComponent";
@@ -129,6 +129,17 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         this.props.appStore.hideImageToolbar();
     };
 
+    private handleRegionDoubleClicked = (region: RegionStore) => {
+        const appStore = this.props.appStore;
+        if (region) {
+            const frame = appStore.getFrame(region.fileId);
+            if (frame) {
+                frame.regionSet.selectRegion(region);
+                appStore.showRegionDialog();
+            }
+        }
+    };
+
     render() {
         const appStore = this.props.appStore;
         const beamProfile = appStore.activeFrame ? appStore.activeFrame.beamProperties : null;
@@ -193,6 +204,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         left={appStore.overlayStore.padding.left}
                         onCursorMoved={this.onCursorMoved}
                         onClicked={this.onClicked}
+                        onRegionDoubleClicked={this.handleRegionDoubleClicked}
                         onZoomed={this.onZoomed}
                         overlaySettings={appStore.overlayStore}
                         cursorFrozen={appStore.cursorFrozen}

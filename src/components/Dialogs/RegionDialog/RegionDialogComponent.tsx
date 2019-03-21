@@ -9,6 +9,7 @@ import {AppStore, RegionStore} from "stores";
 import "./RegionDialogComponent.css";
 import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionForm";
 import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
+import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
 
 @observer
 export class RegionDialogComponent extends React.Component<{ appStore: AppStore }> {
@@ -78,8 +79,8 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
             this.selectedRegion.beginEditing();
             this.selectedRegion.applyUpdate(this.regionCopy);
             this.selectedRegion.endEditing();
+            this.regionCopy = this.selectedRegion.getCopy();
         }
-        this.props.appStore.hideRegionDialog();
     };
 
     public render() {
@@ -126,11 +127,12 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={600} defaultHeight={400} minHeight={300} minWidth={400} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
+                    <AppearanceForm region={this.selectedRegion} darkTheme={appStore.darkTheme}/>
                     {bodyContent}
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.SUCCESS} onClick={this.applyChanges} text="Apply"/>
+                        <AnchorButton intent={Intent.SUCCESS} onClick={this.applyChanges} disabled={!this.canApplyChanges} text="Apply"/>
                         <AnchorButton intent={Intent.NONE} onClick={appStore.hideRegionDialog} text="Close"/>
                     </div>
                 </div>

@@ -22,6 +22,7 @@ export interface RegionViewComponentProps {
     cursorPoint?: Point2D;
     onCursorMoved?: (cursorInfo: CursorInfo) => void;
     onClicked?: (cursorInfo: CursorInfo) => void;
+    onRegionDoubleClicked?: (region: RegionStore) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
 }
 
@@ -238,6 +239,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
+    private handleRegionDoubleClick = (region: RegionStore) => {
+        if (this.props.onRegionDoubleClicked) {
+            this.props.onRegionDoubleClicked(region);
+        }
+    };
+
     render() {
         const frame = this.props.frame;
         const regionSet = frame.regionSet;
@@ -262,6 +269,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                             layerHeight={this.props.height}
                             selected={r === regionSet.selectedRegion}
                             onSelect={regionSet.selectRegion}
+                            onDoubleClick={this.handleRegionDoubleClick}
                             listening={regionSet.mode !== RegionMode.CREATING}
                         />
                     )

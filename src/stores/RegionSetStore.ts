@@ -25,7 +25,10 @@ export class RegionSetStore {
         this.newRegionType = CARTA.RegionType.RECTANGLE;
         this.mode = RegionMode.MOVING;
         this.addPointRegion({x: 0, y: 0}, true);
-        this.selectedRegion = this.regions[0];
+        // temp for testing
+        this.addRectangularRegion({x: 100, y: 100}, 100, 100, false);
+        this.selectedRegion = this.regions[1];
+        // this.selectedRegion = this.regions[0];
     }
 
     // temporary region IDs are < 0 and used

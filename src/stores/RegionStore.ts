@@ -2,11 +2,15 @@ import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Point2D} from "models";
 import {BackendService} from "../services";
+import {Colors} from "@blueprintjs/core";
 
 export class RegionStore {
     @observable fileId: number;
     @observable regionId: number;
     @observable name: string;
+    @observable color: string;
+    @observable lineWidth: number;
+    @observable dashLength: number;
     @observable regionType: CARTA.RegionType;
     @observable channelMin: number;
     @observable channelMax: number;
@@ -89,8 +93,8 @@ export class RegionStore {
         }
     }
 
-    constructor(backendService: BackendService, fileId: number, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1,
-                rotation: number = 0, channelMin: number = -1, channelMax: number = -1, name: string = "", stokesValues: number[] = []) {
+    constructor(backendService: BackendService, fileId: number, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1, rotation: number = 0, channelMin: number = -1,
+                channelMax: number = -1, name: string = "", color: string = Colors.TURQUOISE5, lineWidth: number = 2, dashLength: number = 0, stokesValues: number[] = []) {
         this.fileId = fileId;
         this.controlPoints = controlPoints;
         this.regionType = regionType;
@@ -98,6 +102,9 @@ export class RegionStore {
         this.channelMin = channelMin;
         this.channelMax = channelMax;
         this.name = name;
+        this.color = color;
+        this.lineWidth = lineWidth;
+        this.dashLength = dashLength;
         this.stokesValues = stokesValues;
         this.rotation = rotation;
         this.backendService = backendService;
@@ -134,6 +141,19 @@ export class RegionStore {
         }
     };
 
+    // Appearance properties don't need to be sync'd with the backend
+    @action setColor = (color: string) => {
+        this.color = color;
+    };
+
+    @action setLineWidth = (lineWidth: number) => {
+        this.lineWidth = lineWidth;
+    };
+
+    @action setDashLength = (dashLength: number) => {
+        this.dashLength = dashLength;
+    };
+
     @action beginCreating = () => {
         this.creating = true;
         this.editing = true;
@@ -163,10 +183,12 @@ export class RegionStore {
         // Deep copy the control points array and stokes values
         const controlPointCopy: Point2D[] = this.controlPoints.map(v => ({x: v.x, y: v.y}));
         const stokesCopy = this.stokesValues.slice();
-        return new RegionStore(this.backendService, this.fileId, controlPointCopy, this.regionType, this.regionId, this.rotation, this.channelMin, this.channelMax, this.name, stokesCopy);
+        return new RegionStore(this.backendService, this.fileId, controlPointCopy, this.regionType, this.regionId, this.rotation,
+            this.channelMin, this.channelMax, this.name, this.color, this.lineWidth, this.dashLength, stokesCopy);
     };
 
     @action applyUpdate = (copy: RegionStore) => {
+        // Applies updates, but skips appearance parameters
         this.fileId = copy.fileId;
         this.name = copy.name;
         this.channelMin = copy.channelMin;
