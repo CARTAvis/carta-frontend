@@ -9,6 +9,27 @@ import "./FileBrowserDialogComponent.css";
 
 @observer
 export class FileBrowserDialogComponent extends React.Component<{ appStore: AppStore }> {
+    private handleTabChange = (newId: TabId) => {
+        this.props.appStore.fileBrowserStore.setSelectedTab(newId);
+    };
+
+    private loadSelectedFile = () => {
+        const fileBrowserStore = this.props.appStore.fileBrowserStore;
+        this.loadFile(fileBrowserStore.selectedFile.name, fileBrowserStore.selectedHDU);
+    };
+
+    private loadFile = (file: string, hdu: string) => {
+        const fileBrowserStore = this.props.appStore.fileBrowserStore;
+        const frames = this.props.appStore.frames;
+        if (!fileBrowserStore.appendingFrame || !frames.length) {
+            this.props.appStore.openFile(fileBrowserStore.fileList.directory, file, hdu);
+        } else {
+            this.props.appStore.appendFile(fileBrowserStore.fileList.directory, file, hdu);
+        }
+
+        fileBrowserStore.saveStartingDirectory();
+    };
+
     public render() {
         const fileBrowserStore = this.props.appStore.fileBrowserStore;
         let fileInfo = "";
@@ -108,26 +129,5 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                 </div>
             </DraggableDialogComponent>
         );
-    }
-
-    handleTabChange = (newId: TabId) => {
-        this.props.appStore.fileBrowserStore.setSelectedTab(newId);
-    };
-
-    loadSelectedFile = () => {
-        const fileBrowserStore = this.props.appStore.fileBrowserStore;
-        this.loadFile(fileBrowserStore.selectedFile.name, fileBrowserStore.selectedHDU);
-    };
-
-    loadFile(file: string, hdu: string) {
-        const fileBrowserStore = this.props.appStore.fileBrowserStore;
-        const frames = this.props.appStore.frames;
-        if (!fileBrowserStore.appendingFrame || !frames.length) {
-            this.props.appStore.openFile(fileBrowserStore.fileList.directory, file, hdu);
-        } else {
-            this.props.appStore.appendFile(fileBrowserStore.fileList.directory, file, hdu);
-        }
-
-        fileBrowserStore.saveStartingDirectory();
     }
 }
