@@ -4,7 +4,7 @@ import {AnchorButton, IDialogProps, Intent, NonIdealState, Pre, Tooltip, Tabs, T
 import {CARTA} from "carta-protobuf";
 import {FileListComponent} from "./FileList/FileListComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore} from "stores";
+import {AppStore, FileInfoTabs} from "stores";
 import "./FileBrowserDialogComponent.css";
 
 @observer
@@ -37,9 +37,9 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                 return <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner"/>} title="Loading file info..."/>;
             } else {
                 if (fileBrowserStore.fileInfoResp) {
-                    if ("fileInfo" === fileBrowserStore.selectedTab) {
+                    if (fileBrowserStore.selectedTab === FileInfoTabs.FileInfo) {
                         return <Pre className="file-info-pre">{fileBrowserStore.fileInfo}</Pre>;
-                    } else if ("header" === fileBrowserStore.selectedTab) {
+                    } else if (fileBrowserStore.selectedTab === FileInfoTabs.FileHeader) {
                         return <Pre className="file-info-pre">{fileBrowserStore.headers}</Pre>;
                     } // probably more tabs will be added in the future
                 } else {
@@ -83,8 +83,8 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                     </div>
                     <div className="file-info-pane">
                         <Tabs id="info-tabs" onChange={this.handleTabChange} selectedTabId={fileBrowserStore.selectedTab}>
-                            <Tab id="fileInfo" title="File Information"/>
-                            <Tab id="header" title="Header"/>
+                            <Tab id={FileInfoTabs.FileInfo} title="File Information"/>
+                            <Tab id={FileInfoTabs.FileHeader} title="Header"/>
                         </Tabs>
                         {this.loadInfoPanel()}
                     </div>

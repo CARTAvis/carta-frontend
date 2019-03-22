@@ -3,6 +3,11 @@ import {TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
 
+export enum FileInfoTabs {
+    FileInfo = "fileInfo",
+    FileHeader = "fileHeader"
+}
+
 export class FileBrowserStore {
     @observable fileBrowserDialogVisible = false;
     @observable appendingFrame = false;
@@ -10,7 +15,7 @@ export class FileBrowserStore {
     @observable selectedFile: CARTA.FileInfo;
     @observable selectedHDU: string;
     @observable fileInfoExtended: CARTA.FileInfoExtended;
-    @observable selectedTab: TabId = "fileInfo";
+    @observable selectedTab: TabId = FileInfoTabs.FileInfo;
     @observable loadingList = false;
     @observable loadingInfo = false;
     @observable fileInfoResp = false;
@@ -20,7 +25,7 @@ export class FileBrowserStore {
     @action showFileBrowser = (append = false) => {
         this.appendingFrame = append;
         this.fileBrowserDialogVisible = true;
-        this.selectedTab = "fileInfo";
+        this.selectedTab = FileInfoTabs.FileInfo;
         this.getFileList(this.startingDirectory);
     };
 
