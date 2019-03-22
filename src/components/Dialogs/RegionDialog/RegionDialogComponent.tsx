@@ -110,7 +110,7 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={this.selectedRegion} darkTheme={appStore.darkTheme}/>
-                            <RectangularRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
+                            <RectangularRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0} overlaySettings={appStore.overlayStore}/>
                         </React.Fragment>
                     );
                     break;
@@ -128,7 +128,7 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
         }
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={600} defaultHeight={400} minHeight={300} minWidth={400} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={600} defaultHeight={450} minHeight={300} minWidth={400} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     {bodyContent}
                 </div>

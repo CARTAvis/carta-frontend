@@ -5,9 +5,8 @@ import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {Ellipse, Group, Rect, Transformer} from "react-konva";
 import {CARTA} from "carta-protobuf";
-import {AppStore, FrameStore, RegionStore} from "../../../stores";
+import {FrameStore, RegionStore} from "../../../stores";
 import {Point2D} from "../../../models";
-import {RectConfig} from "konva";
 
 export interface RegionComponentProps {
     region: RegionStore;

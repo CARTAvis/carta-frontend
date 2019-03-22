@@ -4,12 +4,12 @@ import {observer} from "mobx-react";
 import {observable} from "mobx";
 import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {RegionStore} from "stores";
+import {ASTSettingsString, OverlayStore, RegionStore} from "stores";
 import "./RectangularRegionForm.css";
 import {Point2D} from "../../../../models";
 
 @observer
-export class RectangularRegionForm extends React.Component<{ region: RegionStore, wcsInfo: number }> {
+export class RectangularRegionForm extends React.Component<{ region: RegionStore, wcsInfo: number, overlaySettings: OverlayStore }> {
     @observable displayColorPicker: boolean;
 
     private handleNameChange = (ev) => {
@@ -128,14 +128,42 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         }
     };
 
+    private handleRotationChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== 13) {
+            return;
+        }
+        const valueString = ev.currentTarget.value;
+        const value = parseFloat(valueString);
+        if (isFinite(value)) {
+            this.props.region.setRotation(value);
+        }
+    };
+
     private getFormattedString(wcsInfo: number, pixelCoords: Point2D) {
         if (wcsInfo) {
+            let astString = new ASTSettingsString();
+            astString.add("Format(1)", this.props.overlaySettings.numbers.formatStringX);
+            astString.add("Format(2)", this.props.overlaySettings.numbers.formatStringY);
+            astString.add("System", this.props.overlaySettings.global.implicitSystem);
             const pointWCS = AST.pixToWCS(this.props.wcsInfo, pixelCoords.x, pixelCoords.y);
             const normVals = AST.normalizeCoordinates(this.props.wcsInfo, pointWCS.x, pointWCS.y);
-            const wcsCoords = AST.getFormattedCoordinates(this.props.wcsInfo, normVals.x, normVals.y);
+            const wcsCoords = AST.getFormattedCoordinates(this.props.wcsInfo, normVals.x, normVals.y, astString.toString());
             if (wcsCoords) {
                 return `WCS: (${wcsCoords.x}, ${wcsCoords.y})`;
             }
+        }
+        return null;
+    }
+
+    private getSizeString(wcsInfo: number, centerPixel: Point2D, cornerPixel: Point2D) {
+        if (wcsInfo) {
+            const centerWCS = AST.pixToWCS(this.props.wcsInfo, centerPixel.x, centerPixel.y);
+            const horizontalEdgeWCS = AST.pixToWCS(this.props.wcsInfo, cornerPixel.x, centerPixel.y);
+            const verticalEdgeWCS = AST.pixToWCS(this.props.wcsInfo, centerPixel.x, cornerPixel.y);
+            const hDist = Math.abs(2 * AST.axDistance(this.props.wcsInfo, 1, centerWCS.x, horizontalEdgeWCS.x));
+            const vDist = Math.abs(2 * AST.axDistance(this.props.wcsInfo, 2, centerWCS.y, verticalEdgeWCS.y));
+            const wcsDistStrings = AST.getFormattedCoordinates(this.props.wcsInfo, hDist, vDist, "Format(1)=m.5, Format(2)=m.5", true);
+            return `${wcsDistStrings.x}' \u00D7 ${wcsDistStrings.y}'`;
         }
         return null;
     }
@@ -153,6 +181,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
         const wcsStringCenter = this.getFormattedString(this.props.wcsInfo, centerPoint);
         const wcsStringLeft = this.getFormattedString(this.props.wcsInfo, bottomLeftPoint);
         const wcsStringRight = this.getFormattedString(this.props.wcsInfo, topRightPoint);
+        const wcsStringSize = this.getSizeString(this.props.wcsInfo, centerPoint, topRightPoint);
 
         const commonProps = {
             selectAllOnFocus: true,
@@ -192,6 +221,9 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                             <td>
                                 <NumericInput{...commonProps} buttonPosition="none" placeholder="Height" value={sizeDims.y} onBlur={this.handleHeightChange} onKeyDown={this.handleHeightChange}/>
                             </td>
+                            <td>
+                                <span className="wcs-string">{wcsStringSize}</span>
+                            </td>
                         </tr>
                         <tr>
                             <td>Bottom Left {pxUnitSpan}</td>
@@ -212,6 +244,12 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                                 <NumericInput {...commonProps} buttonPosition="none" placeholder="Y Coordinate" value={topRightPoint.y} onBlur={this.handleTopChange} onKeyDown={this.handleTopChange}/>
                             </td>
                             <td><span className="wcs-string">{wcsStringRight}</span></td>
+                        </tr>
+                        <tr>
+                            <td>Rotation <span className={Classes.TEXT_MUTED}>(deg)</span></td>
+                            <td>
+                                <NumericInput {...commonProps} buttonPosition="none" placeholder="Rotation" value={region.rotation} onBlur={this.handleRotationChange} onKeyDown={this.handleRotationChange}/>
+                            </td>
                         </tr>
                         </tbody>
                     </table>
