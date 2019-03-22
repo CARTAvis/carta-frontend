@@ -30,6 +30,40 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         fileBrowserStore.saveStartingDirectory();
     };
 
+    private loadInfoPanel = () => {
+        const fileBrowserStore = this.props.appStore.fileBrowserStore;
+        if (fileBrowserStore.selectedFile) {
+            if (fileBrowserStore.loadingInfo) {
+                return <NonIdealState
+                            className="non-ideal-state-file"
+                            icon={<Spinner className="astLoadingSpinner"/>}
+                            title="Loading file info..."
+                        />;
+            } else {
+                if (fileBrowserStore.fileInfoResp) {
+                    if ("fileInfo" === fileBrowserStore.selectedTab) {
+                        return <Pre className="file-info-pre">{fileBrowserStore.fileInfo}</Pre>;
+                    } else if ("header" === fileBrowserStore.selectedTab) {
+                        return <Pre className="file-info-pre">{fileBrowserStore.headers}</Pre>;
+                    } // probably more tabs will be added in the future
+                } else {
+                    return <NonIdealState
+                                className="non-ideal-state-file"
+                                icon="document"
+                                title="Cannot open file!"
+                                description={fileBrowserStore.respErrmsg + " Select another file from the list on the left"}
+                            />;
+                }
+            }
+        }
+        return <NonIdealState
+                    className="non-ideal-state-file"
+                    icon="document"
+                    title="No file selected"
+                    description="Select a file from the list on the left"
+                />;
+    };
+
     public render() {
         let className = "file-browser-dialog";
         if (this.props.appStore.darkTheme) {
@@ -47,25 +81,6 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             onClose: fileBrowserStore.hideFileBrowser,
             title: "File Browser",
         };
-
-        let infoPanel;
-        if (fileBrowserStore.selectedFile) {
-            if (fileBrowserStore.loadingInfo) {
-                infoPanel = <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner"/>} title="Loading file info..."/>;
-            } else {
-                if (fileBrowserStore.fileInfoResp) {
-                    if ("fileInfo" === fileBrowserStore.selectedTab) {
-                        infoPanel = <Pre className="file-info-pre">{fileBrowserStore.fileInfo}</Pre>;
-                    } else if ("header" === fileBrowserStore.selectedTab) {
-                        infoPanel = <Pre className="file-info-pre">{fileBrowserStore.headers}</Pre>;
-                    } // probably more tabs will be added in the future
-                } else {
-                    infoPanel = <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={fileBrowserStore.respErrmsg + " Select another file from the list on the left"}/>;
-                }
-            }
-        } else {
-            infoPanel = <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected" description="Select a file from the list on the left"/>;
-        }
 
         return (
             <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
@@ -85,7 +100,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                             <Tab id="fileInfo" title="File Information"/>
                             <Tab id="header" title="Header"/>
                         </Tabs>
-                        {infoPanel}
+                        {this.loadInfoPanel()}
                     </div>
                 </div>
                 <div className="bp3-dialog-footer">
