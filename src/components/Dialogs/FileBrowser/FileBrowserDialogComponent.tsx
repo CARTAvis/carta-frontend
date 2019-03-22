@@ -31,27 +31,12 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
     };
 
     public render() {
-        const fileBrowserStore = this.props.appStore.fileBrowserStore;
-        let fileInfo = "";
-        let headers = "";
-        if (fileBrowserStore.fileInfoExtended) {
-            fileBrowserStore.fileInfoExtended.computedEntries.forEach(header => {
-                fileInfo += `${header.name} = ${header.value}\n`;
-            });
-            fileBrowserStore.fileInfoExtended.headerEntries.forEach(header => {
-                if (header.name === "END") {
-                    headers += `${header.name}\n`;
-                } else {
-                    headers += `${header.name} = ${header.value}\n`;
-                }
-            });
-        }
-
         let className = "file-browser-dialog";
         if (this.props.appStore.darkTheme) {
             className += " bp3-dark";
         }
 
+        const fileBrowserStore = this.props.appStore.fileBrowserStore;
         const dialogProps: IDialogProps = {
             icon: "folder-open",
             className: className,
@@ -70,9 +55,9 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             } else { // file loaded
                 if (fileBrowserStore.fileInfoResp) { // fileInfoResp return success
                     if ("fileInfo" === fileBrowserStore.selectedTab) {
-                        infoPanel = <Pre className="file-info-pre">{fileInfo}</Pre>;
+                        infoPanel = <Pre className="file-info-pre">{fileBrowserStore.fileInfo}</Pre>;
                     } else if ("header" === fileBrowserStore.selectedTab) {
-                        infoPanel = <Pre className="file-info-pre">{headers}</Pre>;
+                        infoPanel = <Pre className="file-info-pre">{fileBrowserStore.headers}</Pre>;
                     } // probably more tabs will be added in the future
                 } else { // fileInfoResp return failed
                     infoPanel = <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={fileBrowserStore.respErrmsg + " Select another file from the list on the left"}/>;
