@@ -34,11 +34,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         const fileBrowserStore = this.props.appStore.fileBrowserStore;
         if (fileBrowserStore.selectedFile) {
             if (fileBrowserStore.loadingInfo) {
-                return <NonIdealState
-                            className="non-ideal-state-file"
-                            icon={<Spinner className="astLoadingSpinner"/>}
-                            title="Loading file info..."
-                        />;
+                return <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner"/>} title="Loading file info..."/>;
             } else {
                 if (fileBrowserStore.fileInfoResp) {
                     if ("fileInfo" === fileBrowserStore.selectedTab) {
@@ -47,21 +43,11 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         return <Pre className="file-info-pre">{fileBrowserStore.headers}</Pre>;
                     } // probably more tabs will be added in the future
                 } else {
-                    return <NonIdealState
-                                className="non-ideal-state-file"
-                                icon="document"
-                                title="Cannot open file!"
-                                description={fileBrowserStore.respErrmsg + " Select another file from the list on the left"}
-                            />;
+                    return <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={fileBrowserStore.respErrmsg + " Select another file from the list on the left"}/>;
                 }
             }
         }
-        return <NonIdealState
-                    className="non-ideal-state-file"
-                    icon="document"
-                    title="No file selected"
-                    description="Select a file from the list on the left"
-                />;
+        return <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected" description="Select a file from the list on the left"/>;
     };
 
     public render() {
