@@ -4,8 +4,8 @@ import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
 
 export enum FileInfoTabs {
-    FileInfo = "fileInfo",
-    FileHeader = "fileHeader"
+    INFO = "tab-info",
+    HEADER = "tab-header"
 }
 
 export class FileBrowserStore {
@@ -15,7 +15,7 @@ export class FileBrowserStore {
     @observable selectedFile: CARTA.FileInfo;
     @observable selectedHDU: string;
     @observable fileInfoExtended: CARTA.FileInfoExtended;
-    @observable selectedTab: TabId = FileInfoTabs.FileInfo;
+    @observable selectedTab: TabId = FileInfoTabs.INFO;
     @observable loadingList = false;
     @observable loadingInfo = false;
     @observable fileInfoResp = false;
@@ -25,7 +25,7 @@ export class FileBrowserStore {
     @action showFileBrowser = (append = false) => {
         this.appendingFrame = append;
         this.fileBrowserDialogVisible = true;
-        this.selectedTab = FileInfoTabs.FileInfo;
+        this.selectedTab = FileInfoTabs.INFO;
         this.getFileList(this.startingDirectory);
     };
 
