@@ -110,7 +110,7 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={this.selectedRegion} darkTheme={appStore.darkTheme}/>
-                            <RectangularRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0} overlaySettings={appStore.overlayStore}/>
+                            <RectangularRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
                         </React.Fragment>
                     );
                     break;
@@ -118,7 +118,7 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
                     bodyContent = (
                         <React.Fragment>
                             <AppearanceForm region={this.selectedRegion} darkTheme={appStore.darkTheme}/>
-                            <EllipticalRegionForm region={region}/>
+                            <EllipticalRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
                         </React.Fragment>
                     );
                     break;

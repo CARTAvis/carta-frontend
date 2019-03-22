@@ -4,12 +4,12 @@ import {observer} from "mobx-react";
 import {observable} from "mobx";
 import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {ASTSettingsString, OverlayStore, RegionStore} from "stores";
+import {RegionStore} from "stores";
+import {Point2D} from "models";
 import "./RectangularRegionForm.css";
-import {Point2D} from "../../../../models";
 
 @observer
-export class RectangularRegionForm extends React.Component<{ region: RegionStore, wcsInfo: number, overlaySettings: OverlayStore }> {
+export class RectangularRegionForm extends React.Component<{ region: RegionStore, wcsInfo: number }> {
     @observable displayColorPicker: boolean;
 
     private handleNameChange = (ev) => {
@@ -141,13 +141,9 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
 
     private getFormattedString(wcsInfo: number, pixelCoords: Point2D) {
         if (wcsInfo) {
-            let astString = new ASTSettingsString();
-            astString.add("Format(1)", this.props.overlaySettings.numbers.formatStringX);
-            astString.add("Format(2)", this.props.overlaySettings.numbers.formatStringY);
-            astString.add("System", this.props.overlaySettings.global.implicitSystem);
             const pointWCS = AST.pixToWCS(this.props.wcsInfo, pixelCoords.x, pixelCoords.y);
             const normVals = AST.normalizeCoordinates(this.props.wcsInfo, pointWCS.x, pointWCS.y);
-            const wcsCoords = AST.getFormattedCoordinates(this.props.wcsInfo, normVals.x, normVals.y, astString.toString());
+            const wcsCoords = AST.getFormattedCoordinates(this.props.wcsInfo, normVals.x, normVals.y);
             if (wcsCoords) {
                 return `WCS: (${wcsCoords.x}, ${wcsCoords.y})`;
             }
@@ -170,7 +166,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
 
     public render() {
         const region = this.props.region;
-        if (!region || !region.isValid || region.regionType !== CARTA.RegionType.RECTANGLE) {
+        if (!region || region.controlPoints.length !== 2 || region.regionType !== CARTA.RegionType.RECTANGLE) {
             return null;
         }
 
