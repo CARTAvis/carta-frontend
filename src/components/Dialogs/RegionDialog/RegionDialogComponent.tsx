@@ -23,13 +23,12 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
         }
 
         // Shallow check for changed values
-        if (this.selectedRegion.name !== this.regionCopy.name || this.selectedRegion.channelMin !== this.regionCopy.channelMin || this.selectedRegion.channelMax !== this.regionCopy.channelMax ||
-            this.selectedRegion.rotation !== this.regionCopy.rotation) {
+        if (this.selectedRegion.name !== this.regionCopy.name || this.selectedRegion.rotation !== this.regionCopy.rotation) {
             return true;
         }
 
         // Check array lengths
-        if (this.selectedRegion.controlPoints.length !== this.regionCopy.controlPoints.length || this.selectedRegion.stokesValues.length !== this.regionCopy.stokesValues.length) {
+        if (this.selectedRegion.controlPoints.length !== this.regionCopy.controlPoints.length) {
             return true;
         }
 
@@ -42,11 +41,6 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
             }
         }
 
-        for (let i = 0; i < this.selectedRegion.stokesValues.length; i++) {
-            if (this.selectedRegion.stokesValues[i] !== this.regionCopy.stokesValues[i]) {
-                return true;
-            }
-        }
         return false;
     }
 
