@@ -317,9 +317,6 @@ export class BackendService {
                 fileId,
                 regionId,
                 regionType: region.regionType,
-                channelMin: region.channelMin,
-                channelMax: region.channelMax,
-                stokes: region.stokesValues,
                 regionName: region.name,
                 controlPoints: region.controlPoints.map(point => ({x: point.x, y: point.y})),
                 rotation: region.rotation

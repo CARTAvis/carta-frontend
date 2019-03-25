@@ -12,9 +12,6 @@ export class RegionStore {
     @observable lineWidth: number;
     @observable dashLength: number;
     @observable regionType: CARTA.RegionType;
-    @observable channelMin: number;
-    @observable channelMax: number;
-    @observable stokesValues: number[];
     @observable controlPoints: Point2D[];
     @observable rotation: number;
     @observable editing: boolean;
@@ -93,19 +90,15 @@ export class RegionStore {
         }
     }
 
-    constructor(backendService: BackendService, fileId: number, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1, rotation: number = 0, channelMin: number = -1,
-                channelMax: number = -1, name: string = "", color: string = Colors.TURQUOISE5, lineWidth: number = 2, dashLength: number = 0, stokesValues: number[] = []) {
+    constructor(backendService: BackendService, fileId: number, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1, rotation: number = 0, name: string = "", color: string = Colors.TURQUOISE5, lineWidth: number = 2, dashLength: number = 0) {
         this.fileId = fileId;
         this.controlPoints = controlPoints;
         this.regionType = regionType;
         this.regionId = regionId;
-        this.channelMin = channelMin;
-        this.channelMax = channelMax;
         this.name = name;
         this.color = color;
         this.lineWidth = lineWidth;
         this.dashLength = dashLength;
-        this.stokesValues = stokesValues;
         this.rotation = rotation;
         this.backendService = backendService;
     }
@@ -180,21 +173,16 @@ export class RegionStore {
     };
 
     getCopy = (): RegionStore => {
-        // Deep copy the control points array and stokes values
+        // Deep copy the control points array
         const controlPointCopy: Point2D[] = this.controlPoints.map(v => ({x: v.x, y: v.y}));
-        const stokesCopy = this.stokesValues.slice();
-        return new RegionStore(this.backendService, this.fileId, controlPointCopy, this.regionType, this.regionId, this.rotation,
-            this.channelMin, this.channelMax, this.name, this.color, this.lineWidth, this.dashLength, stokesCopy);
+        return new RegionStore(this.backendService, this.fileId, controlPointCopy, this.regionType, this.regionId, this.rotation, this.name, this.color, this.lineWidth, this.dashLength);
     };
 
     @action applyUpdate = (copy: RegionStore) => {
         // Applies updates, but skips appearance parameters
         this.fileId = copy.fileId;
         this.name = copy.name;
-        this.channelMin = copy.channelMin;
-        this.channelMax = copy.channelMax;
         this.rotation = copy.rotation;
-        this.stokesValues = copy.stokesValues;
         this.controlPoints = copy.controlPoints;
     };
 
