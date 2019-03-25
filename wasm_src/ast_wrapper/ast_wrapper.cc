@@ -195,4 +195,9 @@ EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const doubl
     }
     return 0;
 }
+
+EMSCRIPTEN_KEEPALIVE double axDistance(AstFrameSet* wcsinfo, int axis, double v1, double v2)
+{
+    return astAxDistance(wcsinfo, axis, v1, v2);
+}
 }

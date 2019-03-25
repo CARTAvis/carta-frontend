@@ -93,6 +93,7 @@ Module.set = Module.cwrap("set", "number", ["number", "string"]);
 Module.getString = Module.cwrap("getString", "string", ["number", "string"]);
 Module.dump = Module.cwrap("dump", null, ["number"]);
 Module.norm = Module.cwrap("norm", "number", ["number", "number"]);
+Module.axDistance = Module.cwrap("axDistance", "number", ["number", "number", "number", "number"]);
 Module.format = Module.cwrap("format", "string", ["number", "number", "number"]);
 Module.transform = Module.cwrap("transform", "number", ["number", "number", "number", "number", "number", "number", "number"]);
 Module.getLastErrorMessage = Module.cwrap("getLastErrorMessage", "string");
@@ -100,8 +101,13 @@ Module.clearLastErrorMessage = Module.cwrap("clearLastErrorMessage", null);
 
 Module.currentFormatStrings = [];
 
-Module.getFormattedCoordinates = function (wcsInfo: number, x: number, y: number, formatString: string) {
-    if (formatString && Module.currentFormatStrings[wcsInfo] !== formatString) {
+Module.getFormattedCoordinates = function (wcsInfo: number, x: number, y: number, formatString: string, tempFormat: boolean) {
+    let prevString;
+    if (tempFormat) {
+        prevString = Module.currentFormatStrings[wcsInfo];
+        Module.set(wcsInfo, formatString);
+    }
+    else if (formatString && Module.currentFormatStrings[wcsInfo] !== formatString) {
         Module.set(wcsInfo, formatString);
         Module.currentFormatStrings[wcsInfo] = formatString;
     }
@@ -112,7 +118,9 @@ Module.getFormattedCoordinates = function (wcsInfo: number, x: number, y: number
     }
     if (y !== undefined) {
         yFormat = Module.format(wcsInfo, 2, y);
-
+    }
+    if (tempFormat) {
+        Module.set(wcsInfo, prevString);
     }
     return {x: xFormat, y: yFormat};
 };
