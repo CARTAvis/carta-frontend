@@ -1,6 +1,6 @@
 import {action, autorun, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {Observable, Observer, throwError, Subject} from "rxjs";
+import {Observable, Observer, Subject, throwError} from "rxjs";
 import {LogStore, RegionStore} from "stores";
 import {DecompressionService} from "./DecompressionService";
 
@@ -25,6 +25,7 @@ export enum EventNames {
     RemoveRegion = "REMOVE_REGION",
     SetSpatialRequirements = "SET_SPATIAL_REQUIREMENTS",
     SetSpectralRequirements = "SET_SPECTRAL_REQUIREMENTS",
+    SetStatsRequirements = "SET_STATS_REQUIREMENTS",
     SetHistogramRequirements = "SET_HISTOGRAM_REQUIREMENTS",
     RegisterViewerAck = "REGISTER_VIEWER_ACK",
     FileListResponse = "FILE_LIST_RESPONSE",
@@ -34,7 +35,8 @@ export enum EventNames {
     RegionHistogramData = "REGION_HISTOGRAM_DATA",
     ErrorData = "ERROR_DATA",
     SpatialProfileData = "SPATIAL_PROFILE_DATA",
-    SpectralProfileData = "SPECTRAL_PROFILE_DATA"
+    SpectralProfileData = "SPECTRAL_PROFILE_DATA",
+    RegionStatsData = "REGION_STATS_DATA"
 }
 
 export class BackendService {
@@ -44,6 +46,7 @@ export class BackendService {
     @observable apiKey: string;
     @observable endToEndPing: number;
 
+    private static readonly DEFAULT_STATS_TYPES = [CARTA.StatsType.Sum, CARTA.StatsType.Mean, CARTA.StatsType.RMS, CARTA.StatsType.Sigma, CARTA.StatsType.SumSq, CARTA.StatsType.Min, CARTA.StatsType.Max];
     private connection: WebSocket;
     private lastPingTime: number;
     private lastPongTime: number;
@@ -54,6 +57,7 @@ export class BackendService {
     private readonly errorStream: Subject<CARTA.ErrorData>;
     private readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
     private readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
+    private readonly statsStream: Subject<CARTA.RegionStatsData>;
     private readonly logEventList: EventNames[];
     private readonly decompressionServce: DecompressionService;
     private readonly subsetsRequired: number;
@@ -72,6 +76,7 @@ export class BackendService {
         this.errorStream = new Subject<CARTA.ErrorData>();
         this.spatialProfileStream = new Subject<CARTA.SpatialProfileData>();
         this.spectralProfileStream = new Subject<CARTA.SpectralProfileData>();
+        this.statsStream = new Subject<CARTA.RegionStatsData>();
         this.subsetsRequired = Math.min(navigator.hardwareConcurrency || 4, 4);
         if (process.env.NODE_ENV !== "test") {
             this.decompressionServce = new DecompressionService(this.subsetsRequired);
@@ -83,10 +88,8 @@ export class BackendService {
             EventNames.RegisterViewerAck,
             EventNames.OpenFile,
             EventNames.OpenFileAck,
-            EventNames.SetSpectralRequirements,
-            EventNames.SetSpatialRequirements,
-            EventNames.SetRegion,
-            EventNames.SpectralProfileData
+            EventNames.SetStatsRequirements,
+            EventNames.RegionStatsData
         ];
 
         // Check local storage for a list of events to log to console
@@ -135,6 +138,10 @@ export class BackendService {
 
     getSpectralProfileStream() {
         return this.spectralProfileStream;
+    }
+
+    getRegionStatsStream() {
+        return this.statsStream;
     }
 
     @action("connect")
@@ -363,6 +370,17 @@ export class BackendService {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             this.logEvent(EventNames.SetSpectralRequirements, this.eventCounter, requirementsMessage, false);
             if (this.sendEvent(EventNames.SetSpectralRequirements, CARTA.SetSpectralRequirements.encode(requirementsMessage).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @action("set stats requirements")
+    setStatsRequirements(requirementsMessage: CARTA.SetStatsRequirements) {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            this.logEvent(EventNames.SetStatsRequirements, this.eventCounter, requirementsMessage, false);
+            if (this.sendEvent(EventNames.SetStatsRequirements, CARTA.SetStatsRequirements.encode(requirementsMessage).finish())) {
                 return true;
             }
         }

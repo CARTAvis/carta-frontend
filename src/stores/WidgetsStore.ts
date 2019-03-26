@@ -1,9 +1,9 @@
 import * as GoldenLayout from "golden-layout";
 import * as $ from "jquery";
 import {action, observable} from "mobx";
-import {AnimatorComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent} from "components";
+import {AnimatorComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent, StatsComponent} from "components";
 import {AppStore} from "./AppStore";
-import {EmptyWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore} from "./widgets";
+import {EmptyWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
 
 export class WidgetConfig {
     id: string;
@@ -34,6 +34,7 @@ export class WidgetsStore {
     @observable renderConfigWidgets: Map<string, RenderConfigWidgetStore>;
     @observable spatialProfileWidgets: Map<string, SpatialProfileWidgetStore>;
     @observable spectralProfileWidgets: Map<string, SpectralProfileWidgetStore>;
+    @observable statsWidgets: Map<string, StatsWidgetStore>;
     @observable logWidgets: Map<string, EmptyWidgetStore>;
     @observable regionListWidgets: Map<string, EmptyWidgetStore>;
     @observable animatorWidgets: Map<string, EmptyWidgetStore>;
@@ -45,6 +46,7 @@ export class WidgetsStore {
         this.appStore = appStore;
         this.spatialProfileWidgets = new Map<string, SpatialProfileWidgetStore>();
         this.spectralProfileWidgets = new Map<string, SpectralProfileWidgetStore>();
+        this.statsWidgets = new Map<string, StatsWidgetStore>();
         this.renderConfigWidgets = new Map<string, RenderConfigWidgetStore>();
         this.animatorWidgets = new Map<string, EmptyWidgetStore>();
         this.logWidgets = new Map<string, EmptyWidgetStore>();
@@ -53,6 +55,7 @@ export class WidgetsStore {
         this.widgetsMap = new Map<string, Map<string, any>>([
             [SpatialProfilerComponent.WIDGET_CONFIG.type, this.spatialProfileWidgets],
             [SpectralProfilerComponent.WIDGET_CONFIG.type, this.spectralProfileWidgets],
+            [StatsComponent.WIDGET_CONFIG.type, this.statsWidgets],
             [RenderConfigComponent.WIDGET_CONFIG.type, this.renderConfigWidgets],
             [AnimatorComponent.WIDGET_CONFIG.type, this.animatorWidgets],
             [LogComponent.WIDGET_CONFIG.type, this.logWidgets],
@@ -77,6 +80,8 @@ export class WidgetsStore {
                 return SpatialProfilerComponent.WIDGET_CONFIG;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:
                 return SpectralProfilerComponent.WIDGET_CONFIG;
+            case StatsComponent.WIDGET_CONFIG.type:
+                return StatsComponent.WIDGET_CONFIG;
             case RegionListComponent.WIDGET_CONFIG.type:
                 return RegionListComponent.WIDGET_CONFIG;
             default:
@@ -115,6 +120,7 @@ export class WidgetsStore {
         layout.registerComponent("image-view", ImageViewComponent);
         layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
         layout.registerComponent("spectral-profiler", SpectralProfilerComponent);
+        layout.registerComponent("stats", StatsComponent);
         layout.registerComponent("render-config", RenderConfigComponent);
         layout.registerComponent("region-list", RegionListComponent);
         layout.registerComponent("log", LogComponent);
@@ -177,6 +183,9 @@ export class WidgetsStore {
                 break;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:
                 itemId = this.addSpectralProfileWidget();
+                break;
+            case StatsComponent.WIDGET_CONFIG.type:
+                itemId = this.addStatsWidget();
                 break;
             case AnimatorComponent.WIDGET_CONFIG.type:
                 itemId = this.addAnimatorWidget();
@@ -308,6 +317,27 @@ export class WidgetsStore {
 
         if (id) {
             this.spectralProfileWidgets.set(id, new SpectralProfileWidgetStore(coordinate, fileId, regionId));
+        }
+        return id;
+    }
+
+    // endregion
+
+    // region Stats Widgets
+    createFloatingStatsWidget = () => {
+        let config = StatsComponent.WIDGET_CONFIG;
+        config.id = this.addStatsWidget();
+        this.addFloatingWidget(config);
+    };
+
+    @action addStatsWidget(id: string = null, fileId: number = -1, regionId: number = -1) {
+        // Generate new id if none passed in
+        if (!id) {
+            id = this.getNextId(StatsComponent.WIDGET_CONFIG.type);
+        }
+
+        if (id) {
+            this.statsWidgets.set(id, new StatsWidgetStore(fileId, regionId));
         }
         return id;
     }

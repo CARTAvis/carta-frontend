@@ -29,6 +29,7 @@ export class AppStore {
     // Profiles
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
     @observable spectralProfiles: Map<string, SpectralProfileStore>;
+    @observable regionStats: Map<number, Map<number, CARTA.RegionStatsData>>;
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
@@ -175,7 +176,7 @@ export class AppStore {
             this.loadWCS(newFrame);
 
             // clear existing spectral requirements for the frame
-            this.existingRequirementsMap.delete(ack.fileId);
+            this.existingSpectralRequirementsMap.delete(ack.fileId);
 
             // Place frame in frame array (replace frame with the same ID if it exists)
             const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === fileId);
@@ -320,7 +321,8 @@ export class AppStore {
         this.cursorFrozen = !this.cursorFrozen;
     };
 
-    private existingRequirementsMap: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
+    private existingSpectralRequirementsMap: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
+    private existingStatsRequirementsMap: Map<number, Map<number, boolean>>;
 
     constructor() {
         const existingKey = localStorage.getItem("API_KEY");
@@ -333,6 +335,7 @@ export class AppStore {
         this.astReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<string, SpectralProfileStore>();
+        this.regionStats = new Map<number, Map<number, CARTA.RegionStatsData>>();
         this.frames = [];
         this.activeFrame = null;
         this.animatorStore = new AnimatorStore(this);
@@ -342,7 +345,8 @@ export class AppStore {
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
         this.darkTheme = false;
-        this.existingRequirementsMap = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
+        this.existingSpectralRequirementsMap = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
+        this.existingStatsRequirementsMap = new Map<number, Map<number, boolean>>();
 
         const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
             this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
@@ -450,6 +454,7 @@ export class AppStore {
 
         // Update requirements every 200 ms
         setInterval(this.recalculateSpectralRequirements, 200);
+        setInterval(this.recalculateStatsRequirements, 200);
 
         // Subscribe to frontend streams
         this.backendService.getSpatialProfileStream().subscribe(this.handleSpatialProfileStream);
@@ -457,6 +462,7 @@ export class AppStore {
         this.backendService.getRegionHistogramStream().subscribe(this.handleRegionHistogramStream);
         this.backendService.getRasterStream().subscribe(this.handleRasterImageStream);
         this.backendService.getErrorStream().subscribe(this.handleErrorStream);
+        this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
     }
 
     // region Subscription handlers
@@ -524,6 +530,21 @@ export class AppStore {
         }
     };
 
+    handleRegionStatsStream = (regionStatsData: CARTA.RegionStatsData) => {
+        if (!regionStatsData) {
+            return;
+        }
+
+        let frameStatsMap = this.regionStats.get(regionStatsData.fileId);
+        if (!frameStatsMap) {
+            frameStatsMap = new Map<number, CARTA.RegionStatsData>();
+            this.regionStats.set(regionStatsData.fileId, frameStatsMap);
+        }
+
+        // TODO: does this work? Are nested maps observables?
+        frameStatsMap.set(regionStatsData.regionId, regionStatsData);
+    };
+
     handleRasterImageStream = (rasterImageData: CARTA.RasterImageData) => {
         const updatedFrame = this.getFrame(rasterImageData.fileId);
         if (updatedFrame) {
@@ -580,21 +601,57 @@ export class AppStore {
         return this.frames.find(f => f.frameInfo.fileId === fileId);
     }
 
+    recalculateStatsRequirements = () => {
+        if (!this.activeFrame) {
+            return;
+        }
+
+        const requirementsMap = new Map<number, Map<number, boolean>>();
+        this.widgetsStore.statsWidgets.forEach(widgetStore => {
+            const frame = this.getFrame(widgetStore.fileId);
+            const regionId = widgetStore.regionId;
+            const fileId = frame.frameInfo.fileId;
+            if (!frame.regionSet) {
+                return;
+            }
+            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+            if (regionId === -1 || region && region.isClosedRegion) {
+                let frameRequirementsMap = requirementsMap.get(fileId);
+                if (!frameRequirementsMap) {
+                    frameRequirementsMap = new Map<number, boolean>();
+                    requirementsMap.set(fileId, frameRequirementsMap);
+                }
+                frameRequirementsMap.set(regionId, true);
+            }
+        });
+
+        const diffList = this.diffStatsRequirements(requirementsMap);
+        this.existingStatsRequirementsMap = requirementsMap;
+
+        if (diffList.length) {
+            diffList.forEach(requirements => this.backendService.setStatsRequirements(requirements));
+        }
+    };
+
+    private diffStatsRequirements = (updatedRequirementsMap: Map<number, Map<number, boolean>>) => {
+        const diffList: CARTA.SetStatsRequirements[] = [];
+        // TODO: calculate diff properly
+        return diffList;
+    };
+
     // Requirements
     recalculateSpectralRequirements = () => {
         if (!this.activeFrame) {
             return;
         }
 
-        const tStart = performance.now();
-
         const requirementsMap = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
-        this.widgetsStore.spectralProfileWidgets.forEach(v => {
-            const frame = this.getFrame(v.fileId);
-            const regionId = v.regionId;
+        this.widgetsStore.spectralProfileWidgets.forEach(widgetStore => {
+            const frame = this.getFrame(widgetStore.fileId);
+            const regionId = widgetStore.regionId;
             const fileId = frame.frameInfo.fileId;
-            const coordinate = v.coordinate;
-            let statsType = v.statsType;
+            const coordinate = widgetStore.coordinate;
+            let statsType = widgetStore.statsType;
 
             if (!frame.regionSet) {
                 return;
@@ -634,12 +691,9 @@ export class AppStore {
         });
 
         const diffList = this.diffRequirementsMap(requirementsMap);
-        this.existingRequirementsMap = requirementsMap;
+        this.existingSpectralRequirementsMap = requirementsMap;
 
-        const tEnd = performance.now();
-        const dt = tEnd - tStart;
         if (diffList.length) {
-            console.log(`Spectral requirements calculated and diffed in ${dt} ms`);
             diffList.forEach(requirements => this.backendService.setSpectralRequirements(requirements));
         }
     };
@@ -654,7 +708,7 @@ export class AppStore {
         const diffList: CARTA.SetSpectralRequirements[] = [];
 
         // Fill updated requirements with missing entries
-        this.existingRequirementsMap.forEach((fileRequirements, fileId) => {
+        this.existingSpectralRequirementsMap.forEach((fileRequirements, fileId) => {
             let updatedFileRequirements = updatedRequirementsMap.get(fileId);
             if (!updatedFileRequirements) {
                 updatedFileRequirements = new Map<number, CARTA.SetSpectralRequirements>();
@@ -671,7 +725,7 @@ export class AppStore {
 
         // Go through updated requirements entries and find differences
         updatedRequirementsMap.forEach((fileRequirements, fileId) => {
-            let existingFileRequirements = this.existingRequirementsMap.get(fileId);
+            let existingFileRequirements = this.existingSpectralRequirementsMap.get(fileId);
             if (!existingFileRequirements) {
                 // If there are no existing requirements for this fileId, all entries for this file are new
                 fileRequirements.forEach(regionRequirements => diffList.push(regionRequirements));

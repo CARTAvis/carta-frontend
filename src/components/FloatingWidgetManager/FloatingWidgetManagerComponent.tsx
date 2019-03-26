@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AnimatorComponent, FloatingWidgetComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent} from "components";
+import {AnimatorComponent, FloatingWidgetComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent, StatsComponent} from "components";
 import {AppStore, WidgetConfig} from "stores";
 
 @observer
@@ -30,6 +30,8 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
                 return <SpatialProfilerComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:
                 return <SpectralProfilerComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+            case StatsComponent.WIDGET_CONFIG.type:
+                return <StatsComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
             case RegionListComponent.WIDGET_CONFIG.type:
                 return <RegionListComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
             default:
