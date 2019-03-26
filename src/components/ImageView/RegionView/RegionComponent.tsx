@@ -1,9 +1,9 @@
 import * as React from "react";
-import * as Konva from "konva";
 import {Colors} from "@blueprintjs/core";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {Ellipse, Group, Rect, Transformer} from "react-konva";
+import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {FrameStore, RegionStore} from "../../../stores";
 import {Point2D} from "../../../models";
@@ -316,7 +316,8 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                 {region.regionType === CARTA.RegionType.ELLIPSE &&
                 <Ellipse
                     {...commonProps}
-                    radius={{y: width, x: height}}
+                    radiusY={width}
+                    radiusX={height}
                 />
                 }
                 {this.selectedRegionRef && this.props.selected && this.props.listening &&
