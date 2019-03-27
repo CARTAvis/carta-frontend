@@ -1,6 +1,6 @@
 import * as _ from "lodash";
 import * as AST from "ast_wrapper";
-import {action, autorun, computed, observable} from "mobx";
+import {action, autorun, computed, observable, ObservableMap} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore, FrameInfo, FrameStore, LogEntry, LogStore, nightPalette, OverlayStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore} from ".";
 import {BackendService} from "services";
@@ -29,7 +29,7 @@ export class AppStore {
     // Profiles
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
     @observable spectralProfiles: Map<string, SpectralProfileStore>;
-    @observable regionStats: Map<number, Map<number, CARTA.RegionStatsData>>;
+    @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
@@ -336,7 +336,7 @@ export class AppStore {
         this.astReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<string, SpectralProfileStore>();
-        this.regionStats = new Map<number, Map<number, CARTA.RegionStatsData>>();
+        this.regionStats = new Map<number, ObservableMap<number, CARTA.RegionStatsData>>();
         this.frames = [];
         this.activeFrame = null;
         this.animatorStore = new AnimatorStore(this);
@@ -538,11 +538,10 @@ export class AppStore {
 
         let frameStatsMap = this.regionStats.get(regionStatsData.fileId);
         if (!frameStatsMap) {
-            frameStatsMap = new Map<number, CARTA.RegionStatsData>();
+            frameStatsMap = new ObservableMap<number, CARTA.RegionStatsData>();
             this.regionStats.set(regionStatsData.fileId, frameStatsMap);
         }
 
-        // TODO: does this work? Are nested maps observables?
         frameStatsMap.set(regionStatsData.regionId, regionStatsData);
     };
 
@@ -622,7 +621,7 @@ export class AppStore {
                     frameRequirementsArray = [];
                     requirementsMap.set(fileId, frameRequirementsArray);
                 }
-                if (frameRequirementsArray.indexOf(regionId) == -1) {
+                if (frameRequirementsArray.indexOf(regionId) === -1) {
                     frameRequirementsArray.push(regionId);
                 }
             }

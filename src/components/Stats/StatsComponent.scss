@@ -1,4 +1,92 @@
+@import "../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+
 .stats-widget {
     width: 100%;
     height: 100%;
+
+    .bp3-control-group {
+        padding: 5px;
+
+        .bp3-form-group {
+            margin: 0;
+        }
+    }
+
+    .stats-display {
+        height: calc(100% - 40px);
+
+        table {
+            height: 100%;
+            overflow-y: auto;
+            padding: 5px;
+            display: block;
+
+            thead {
+                &.dark-theme {
+                    tr {
+                        th {
+                            border-top: 1px solid $dark-gray4;
+                            border-bottom: 1px solid $dark-gray5;
+                            border-left: 1px solid $dark-gray4;
+
+                            &:last-of-type {
+                                border-right: 1px solid $dark-gray4;
+                            }
+                        }
+                    }
+                }
+
+                tr {
+                    display: block;
+
+                    th {
+                        padding: 3px;
+                        font-size: 13px;
+                        cursor: default;
+                        border-top: 1px solid $gray5;
+                        border-bottom: 1px solid $gray4;
+                        border-left: 1px solid $gray5;
+
+                        &:last-of-type {
+                            border-right: 1px solid $gray5;
+                        }
+                    }
+                }
+            }
+
+            tbody {
+                display: block;
+                background: $white;
+
+                &.dark-theme {
+                    background: $dark-gray2;
+
+                    tr {
+                        td {
+                            border-left: 1px solid $dark-gray3;
+                            border-bottom: 1px solid $dark-gray5;
+
+                            &:last-of-type {
+                                border-right: 1px solid $dark-gray3;
+                            }
+                        }
+                    }
+                }
+
+                tr {
+                    td {
+                        padding: 3px;
+                        font-size: 12px;
+                        cursor: pointer;
+                        border-left: 1px solid $gray5;
+                        border-bottom: 1px solid $gray4;
+
+                        &:last-of-type {
+                            border-right: 1px solid $gray5;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
