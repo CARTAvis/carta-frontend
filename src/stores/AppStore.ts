@@ -1,6 +1,6 @@
 import * as _ from "lodash";
 import * as AST from "ast_wrapper";
-import {action, autorun, computed, observable} from "mobx";
+import {action, autorun, computed, observable, ObservableMap} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore, FrameInfo, FrameStore, LogEntry, LogStore, nightPalette, OverlayStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore} from ".";
 import {BackendService} from "services";
@@ -29,6 +29,7 @@ export class AppStore {
     // Profiles
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
     @observable spectralProfiles: Map<string, SpectralProfileStore>;
+    @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
@@ -175,7 +176,7 @@ export class AppStore {
             this.loadWCS(newFrame);
 
             // clear existing spectral requirements for the frame
-            this.existingRequirementsMap.delete(ack.fileId);
+            this.existingSpectralRequirementsMap.delete(ack.fileId);
 
             // Place frame in frame array (replace frame with the same ID if it exists)
             const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === fileId);
@@ -320,7 +321,9 @@ export class AppStore {
         this.cursorFrozen = !this.cursorFrozen;
     };
 
-    private existingRequirementsMap: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
+    private existingSpectralRequirementsMap: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
+    private existingStatsRequirementsMap: Map<number, Array<number>>;
+    private static readonly DEFAULT_STATS_TYPES = [CARTA.StatsType.Sum, CARTA.StatsType.Mean, CARTA.StatsType.RMS, CARTA.StatsType.Sigma, CARTA.StatsType.SumSq, CARTA.StatsType.Min, CARTA.StatsType.Max];
 
     constructor() {
         const existingKey = localStorage.getItem("API_KEY");
@@ -333,6 +336,7 @@ export class AppStore {
         this.astReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<string, SpectralProfileStore>();
+        this.regionStats = new Map<number, ObservableMap<number, CARTA.RegionStatsData>>();
         this.frames = [];
         this.activeFrame = null;
         this.animatorStore = new AnimatorStore(this);
@@ -342,7 +346,8 @@ export class AppStore {
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
         this.darkTheme = false;
-        this.existingRequirementsMap = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
+        this.existingSpectralRequirementsMap = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
+        this.existingStatsRequirementsMap = new Map<number, Array<number>>();
 
         const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
             this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
@@ -450,6 +455,7 @@ export class AppStore {
 
         // Update requirements every 200 ms
         setInterval(this.recalculateSpectralRequirements, 200);
+        setInterval(this.recalculateStatsRequirements, 200);
 
         // Subscribe to frontend streams
         this.backendService.getSpatialProfileStream().subscribe(this.handleSpatialProfileStream);
@@ -457,6 +463,7 @@ export class AppStore {
         this.backendService.getRegionHistogramStream().subscribe(this.handleRegionHistogramStream);
         this.backendService.getRasterStream().subscribe(this.handleRasterImageStream);
         this.backendService.getErrorStream().subscribe(this.handleErrorStream);
+        this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
     }
 
     // region Subscription handlers
@@ -524,6 +531,20 @@ export class AppStore {
         }
     };
 
+    handleRegionStatsStream = (regionStatsData: CARTA.RegionStatsData) => {
+        if (!regionStatsData) {
+            return;
+        }
+
+        let frameStatsMap = this.regionStats.get(regionStatsData.fileId);
+        if (!frameStatsMap) {
+            frameStatsMap = new ObservableMap<number, CARTA.RegionStatsData>();
+            this.regionStats.set(regionStatsData.fileId, frameStatsMap);
+        }
+
+        frameStatsMap.set(regionStatsData.regionId, regionStatsData);
+    };
+
     handleRasterImageStream = (rasterImageData: CARTA.RasterImageData) => {
         const updatedFrame = this.getFrame(rasterImageData.fileId);
         if (updatedFrame) {
@@ -580,21 +601,100 @@ export class AppStore {
         return this.frames.find(f => f.frameInfo.fileId === fileId);
     }
 
+    recalculateStatsRequirements = () => {
+        if (!this.activeFrame) {
+            return;
+        }
+
+        const requirementsMap = new Map<number, Array<number>>();
+        this.widgetsStore.statsWidgets.forEach(widgetStore => {
+            const frame = this.getFrame(widgetStore.fileId);
+            const regionId = widgetStore.regionId;
+            const fileId = frame.frameInfo.fileId;
+            if (!frame.regionSet) {
+                return;
+            }
+            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+            if (regionId === -1 || region && region.isClosedRegion) {
+                let frameRequirementsArray = requirementsMap.get(fileId);
+                if (!frameRequirementsArray) {
+                    frameRequirementsArray = [];
+                    requirementsMap.set(fileId, frameRequirementsArray);
+                }
+                if (frameRequirementsArray.indexOf(regionId) === -1) {
+                    frameRequirementsArray.push(regionId);
+                }
+            }
+        });
+
+        const diffList = this.diffStatsRequirements(requirementsMap);
+        this.existingStatsRequirementsMap = requirementsMap;
+
+        if (diffList.length) {
+            for (const requirements of diffList) {
+                this.backendService.setStatsRequirements(requirements);
+            }
+        }
+    };
+
+    private diffStatsRequirements = (updatedRequirementsMap: Map<number, Array<number>>) => {
+        const diffList: CARTA.SetStatsRequirements[] = [];
+
+        // Three possible scenarios:
+        // 1. Existing array, no new array => diff should be empty stats requirements for each element of existing array
+        // 2. No existing array, new array => diff should be full stats requirements for each element of new array
+        // 3. Existing array and new array => diff should be empty stats for those missing in new array, full stats for those missing in old array
+
+        // (1) & (3) handled first
+        this.existingStatsRequirementsMap.forEach((existingArray, fileId) => {
+            const newArray = updatedRequirementsMap.get(fileId);
+            // If there's no new array, remove requirements for all existing regions
+            if (!newArray) {
+                for (const regionId of existingArray) {
+                    diffList.push(CARTA.SetStatsRequirements.create({fileId, regionId, stats: []}));
+                }
+            } else {
+                // If regions in the new array are missing, remove requirements for those regions
+                for (const regionId of existingArray) {
+                    if (newArray.indexOf(regionId) === -1) {
+                        diffList.push(CARTA.SetStatsRequirements.create({fileId, regionId, stats: []}));
+                    }
+                }
+                // If regions in the existing array are missing, add requirements for those regions
+                for (const regionId of newArray) {
+                    if (existingArray.indexOf(regionId) === -1) {
+                        diffList.push(CARTA.SetStatsRequirements.create({fileId, regionId, stats: AppStore.DEFAULT_STATS_TYPES}));
+                    }
+                }
+            }
+        });
+
+        updatedRequirementsMap.forEach((newArray, fileId) => {
+            const existingArray = this.existingStatsRequirementsMap.get(fileId);
+            // If there's no existing array, add requirements for all new regions
+            if (!existingArray) {
+                for (const regionId of newArray) {
+                    diffList.push(CARTA.SetStatsRequirements.create({fileId, regionId, stats: AppStore.DEFAULT_STATS_TYPES}));
+                }
+            }
+        });
+
+        return diffList;
+    };
+
     // Requirements
     recalculateSpectralRequirements = () => {
         if (!this.activeFrame) {
             return;
         }
 
-        const tStart = performance.now();
-
         const requirementsMap = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
-        this.widgetsStore.spectralProfileWidgets.forEach(v => {
-            const frame = this.getFrame(v.fileId);
-            const regionId = v.regionId;
+        this.widgetsStore.spectralProfileWidgets.forEach(widgetStore => {
+            const frame = this.getFrame(widgetStore.fileId);
+            const regionId = widgetStore.regionId;
             const fileId = frame.frameInfo.fileId;
-            const coordinate = v.coordinate;
-            let statsType = v.statsType;
+            const coordinate = widgetStore.coordinate;
+            let statsType = widgetStore.statsType;
 
             if (!frame.regionSet) {
                 return;
@@ -634,12 +734,9 @@ export class AppStore {
         });
 
         const diffList = this.diffRequirementsMap(requirementsMap);
-        this.existingRequirementsMap = requirementsMap;
+        this.existingSpectralRequirementsMap = requirementsMap;
 
-        const tEnd = performance.now();
-        const dt = tEnd - tStart;
         if (diffList.length) {
-            console.log(`Spectral requirements calculated and diffed in ${dt} ms`);
             diffList.forEach(requirements => this.backendService.setSpectralRequirements(requirements));
         }
     };
@@ -654,7 +751,7 @@ export class AppStore {
         const diffList: CARTA.SetSpectralRequirements[] = [];
 
         // Fill updated requirements with missing entries
-        this.existingRequirementsMap.forEach((fileRequirements, fileId) => {
+        this.existingSpectralRequirementsMap.forEach((fileRequirements, fileId) => {
             let updatedFileRequirements = updatedRequirementsMap.get(fileId);
             if (!updatedFileRequirements) {
                 updatedFileRequirements = new Map<number, CARTA.SetSpectralRequirements>();
@@ -671,7 +768,7 @@ export class AppStore {
 
         // Go through updated requirements entries and find differences
         updatedRequirementsMap.forEach((fileRequirements, fileId) => {
-            let existingFileRequirements = this.existingRequirementsMap.get(fileId);
+            let existingFileRequirements = this.existingSpectralRequirementsMap.get(fileId);
             if (!existingFileRequirements) {
                 // If there are no existing requirements for this fileId, all entries for this file are new
                 fileRequirements.forEach(regionRequirements => diffList.push(regionRequirements));
