@@ -63,6 +63,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
     }
 
     private static readonly STATS_NAME_MAP = new Map<CARTA.StatsType, string>([
+        [CARTA.StatsType.NumPixels, "NumPixels"],
         [CARTA.StatsType.Sum, "Sum"],
         [CARTA.StatsType.Mean, "Mean"],
         [CARTA.StatsType.RMS, "RMS"],

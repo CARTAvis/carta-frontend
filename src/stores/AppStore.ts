@@ -323,7 +323,7 @@ export class AppStore {
 
     private existingSpectralRequirementsMap: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
     private existingStatsRequirementsMap: Map<number, Array<number>>;
-    private static readonly DEFAULT_STATS_TYPES = [CARTA.StatsType.Sum, CARTA.StatsType.Mean, CARTA.StatsType.RMS, CARTA.StatsType.Sigma, CARTA.StatsType.SumSq, CARTA.StatsType.Min, CARTA.StatsType.Max];
+    private static readonly DEFAULT_STATS_TYPES = [CARTA.StatsType.NumPixels, CARTA.StatsType.Sum, CARTA.StatsType.Mean, CARTA.StatsType.RMS, CARTA.StatsType.Sigma, CARTA.StatsType.SumSq, CARTA.StatsType.Min, CARTA.StatsType.Max];
 
     constructor() {
         const existingKey = localStorage.getItem("API_KEY");
