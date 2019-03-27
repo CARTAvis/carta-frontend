@@ -46,7 +46,6 @@ export class BackendService {
     @observable apiKey: string;
     @observable endToEndPing: number;
 
-    private static readonly DEFAULT_STATS_TYPES = [CARTA.StatsType.Sum, CARTA.StatsType.Mean, CARTA.StatsType.RMS, CARTA.StatsType.Sigma, CARTA.StatsType.SumSq, CARTA.StatsType.Min, CARTA.StatsType.Max];
     private connection: WebSocket;
     private lastPingTime: number;
     private lastPongTime: number;
@@ -445,6 +444,9 @@ export class BackendService {
             } else if (eventName === EventNames.SpectralProfileData) {
                 parsedMessage = CARTA.SpectralProfileData.decode(eventData);
                 this.onStreamedSpectralProfileData(eventId, parsedMessage);
+            } else if (eventName === EventNames.RegionStatsData) {
+                parsedMessage = CARTA.RegionStatsData.decode(eventData);
+                this.onStreamedRegionStatsData(eventId, parsedMessage);
             } else {
                 console.log(`Unsupported event response ${eventName}`);
             }
@@ -562,6 +564,10 @@ export class BackendService {
 
     private onStreamedSpectralProfileData(eventId: number, spectralProfileData: CARTA.SpectralProfileData) {
         this.spectralProfileStream.next(spectralProfileData);
+    }
+
+    private onStreamedRegionStatsData(eventId: number, regionStatsData: CARTA.RegionStatsData) {
+        this.statsStream.next(regionStatsData);
     }
 
     private sendEvent(eventName: EventNames, payload: Uint8Array): boolean {

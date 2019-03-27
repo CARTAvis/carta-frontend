@@ -322,7 +322,8 @@ export class AppStore {
     };
 
     private existingSpectralRequirementsMap: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
-    private existingStatsRequirementsMap: Map<number, Map<number, boolean>>;
+    private existingStatsRequirementsMap: Map<number, Array<number>>;
+    private static readonly DEFAULT_STATS_TYPES = [CARTA.StatsType.Sum, CARTA.StatsType.Mean, CARTA.StatsType.RMS, CARTA.StatsType.Sigma, CARTA.StatsType.SumSq, CARTA.StatsType.Min, CARTA.StatsType.Max];
 
     constructor() {
         const existingKey = localStorage.getItem("API_KEY");
@@ -346,7 +347,7 @@ export class AppStore {
         this.compressionQuality = 11;
         this.darkTheme = false;
         this.existingSpectralRequirementsMap = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
-        this.existingStatsRequirementsMap = new Map<number, Map<number, boolean>>();
+        this.existingStatsRequirementsMap = new Map<number, Array<number>>();
 
         const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
             this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
@@ -606,7 +607,7 @@ export class AppStore {
             return;
         }
 
-        const requirementsMap = new Map<number, Map<number, boolean>>();
+        const requirementsMap = new Map<number, Array<number>>();
         this.widgetsStore.statsWidgets.forEach(widgetStore => {
             const frame = this.getFrame(widgetStore.fileId);
             const regionId = widgetStore.regionId;
@@ -616,12 +617,14 @@ export class AppStore {
             }
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (regionId === -1 || region && region.isClosedRegion) {
-                let frameRequirementsMap = requirementsMap.get(fileId);
-                if (!frameRequirementsMap) {
-                    frameRequirementsMap = new Map<number, boolean>();
-                    requirementsMap.set(fileId, frameRequirementsMap);
+                let frameRequirementsArray = requirementsMap.get(fileId);
+                if (!frameRequirementsArray) {
+                    frameRequirementsArray = [];
+                    requirementsMap.set(fileId, frameRequirementsArray);
                 }
-                frameRequirementsMap.set(regionId, true);
+                if (frameRequirementsArray.indexOf(regionId) == -1) {
+                    frameRequirementsArray.push(regionId);
+                }
             }
         });
 
@@ -629,13 +632,54 @@ export class AppStore {
         this.existingStatsRequirementsMap = requirementsMap;
 
         if (diffList.length) {
-            diffList.forEach(requirements => this.backendService.setStatsRequirements(requirements));
+            for (const requirements of diffList) {
+                this.backendService.setStatsRequirements(requirements);
+            }
         }
     };
 
-    private diffStatsRequirements = (updatedRequirementsMap: Map<number, Map<number, boolean>>) => {
+    private diffStatsRequirements = (updatedRequirementsMap: Map<number, Array<number>>) => {
         const diffList: CARTA.SetStatsRequirements[] = [];
-        // TODO: calculate diff properly
+
+        // Three possible scenarios:
+        // 1. Existing array, no new array => diff should be empty stats requirements for each element of existing array
+        // 2. No existing array, new array => diff should be full stats requirements for each element of new array
+        // 3. Existing array and new array => diff should be empty stats for those missing in new array, full stats for those missing in old array
+
+        // (1) & (3) handled first
+        this.existingStatsRequirementsMap.forEach((existingArray, fileId) => {
+            const newArray = updatedRequirementsMap.get(fileId);
+            // If there's no new array, remove requirements for all existing regions
+            if (!newArray) {
+                for (const regionId of existingArray) {
+                    diffList.push(CARTA.SetStatsRequirements.create({fileId, regionId, stats: []}));
+                }
+            } else {
+                // If regions in the new array are missing, remove requirements for those regions
+                for (const regionId of existingArray) {
+                    if (newArray.indexOf(regionId) === -1) {
+                        diffList.push(CARTA.SetStatsRequirements.create({fileId, regionId, stats: []}));
+                    }
+                }
+                // If regions in the existing array are missing, add requirements for those regions
+                for (const regionId of newArray) {
+                    if (existingArray.indexOf(regionId) === -1) {
+                        diffList.push(CARTA.SetStatsRequirements.create({fileId, regionId, stats: AppStore.DEFAULT_STATS_TYPES}));
+                    }
+                }
+            }
+        });
+
+        updatedRequirementsMap.forEach((newArray, fileId) => {
+            const existingArray = this.existingStatsRequirementsMap.get(fileId);
+            // If there's no existing array, add requirements for all new regions
+            if (!existingArray) {
+                for (const regionId of newArray) {
+                    diffList.push(CARTA.SetStatsRequirements.create({fileId, regionId, stats: AppStore.DEFAULT_STATS_TYPES}));
+                }
+            }
+        });
+
         return diffList;
     };
 
