@@ -133,9 +133,6 @@ export class RegionStore {
 
     @action setName = (name: string) => {
         this.name = name;
-        if (!this.editing) {
-            this.updateRegion();
-        }
     };
 
     // Appearance properties don't need to be sync'd with the backend
@@ -178,12 +175,16 @@ export class RegionStore {
 
     // Update the region with the backend
     private updateRegion = () => {
-        this.backendService.setRegion(this.fileId, this.regionId, this).subscribe(ack => {
-            if (ack.success) {
-                console.log(`Region updated`);
-            } else {
-                console.log(ack.message);
-            }
-        });
+        if (this.regionId === 0 && this.regionType === CARTA.RegionType.POINT && this.isValid) {
+            this.backendService.setCursor(this.fileId, this.controlPoints[0].x, this.controlPoints[0].y);
+        } else {
+            this.backendService.setRegion(this.fileId, this.regionId, this).subscribe(ack => {
+                if (ack.success) {
+                    console.log(`Region updated`);
+                } else {
+                    console.log(ack.message);
+                }
+            });
+        }
     };
 }
