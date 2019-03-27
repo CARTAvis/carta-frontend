@@ -91,6 +91,10 @@ export class RenderConfigStore {
         return this.scaleMax[this.stokes];
     }
 
+    @computed get selectedPercentileVal() {
+        return this.selectedPercentile[this.stokes];
+    }
+
     @action setStokes = (val: number) => {
         this.stokes = val;
     }

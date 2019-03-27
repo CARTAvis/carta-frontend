@@ -123,14 +123,12 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     handleScaleMinChange = (val: number) => {
         if (isFinite(val)) {
-            const stokes = this.props.appStore.activeFrame.renderConfig.stokes;
             this.props.appStore.activeFrame.renderConfig.setCustomScale(val, this.props.appStore.activeFrame.renderConfig.scaleMaxVal);
         }
     };
 
     handleScaleMaxChange = (val: number) => {
         if (isFinite(val)) {
-            const stokes = this.props.appStore.activeFrame.renderConfig.stokes;
             this.props.appStore.activeFrame.renderConfig.setCustomScale(this.props.appStore.activeFrame.renderConfig.scaleMinVal, val);
         }
     };
@@ -285,12 +283,12 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         let percentileButtonsDiv, percentileSelectDiv;
         if (displayRankButtons) {
             const percentileRankbuttons = percentileRanks.map(rank => (
-                <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentile[stokes] === rank}>
+                <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentileVal === rank}>
                     {`${rank}%`}
                 </Button>
             ));
             percentileRankbuttons.push(
-                <Button small={true} key={-1} onClick={this.setCustomPercentileRank} active={frame.renderConfig.selectedPercentile[stokes] === -1}>
+                <Button small={true} key={-1} onClick={this.setCustomPercentileRank} active={frame.renderConfig.selectedPercentileVal === -1}>
                     Custom
                 </Button>
             );
@@ -307,7 +305,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             percentileSelectDiv = (
                 <div className="percentile-select">
                     <FormGroup label="Clip Percentile" inline={true}>
-                        <HTMLSelect options={percentileRankOptions} value={frame.renderConfig.selectedPercentile[stokes]} onChange={this.handlePercentileRankSelectChanged}/>
+                        <HTMLSelect options={percentileRankOptions} value={frame.renderConfig.selectedPercentileVal} onChange={this.handlePercentileRankSelectChanged}/>
                     </FormGroup>
                 </div>
             );
