@@ -6,11 +6,14 @@ import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {RegionStore} from "stores";
 import {Point2D} from "models";
+import {closeTo} from "utilities";
 import "./EllipticalRegionForm.css";
 
 @observer
 export class EllipticalRegionForm extends React.Component<{ region: RegionStore, wcsInfo: number }> {
     @observable displayColorPicker: boolean;
+
+    private static readonly REGION_PIXEL_EPS = 1.0e-3;
 
     private handleNameChange = (ev) => {
         this.props.region.setName(ev.currentTarget.value);
@@ -22,9 +25,14 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         }
         const valueString = ev.currentTarget.value;
         const value = parseFloat(valueString);
-        if (isFinite(value)) {
+        const existingValue = this.props.region.controlPoints[0].x;
+
+        if (isFinite(value) && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setControlPoint(0, {x: value, y: this.props.region.controlPoints[0].y});
+            return;
         }
+
+        ev.currentTarget.value = existingValue;
     };
 
     private handleCenterYChange = (ev) => {
@@ -33,9 +41,14 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         }
         const valueString = ev.currentTarget.value;
         const value = parseFloat(valueString);
-        if (isFinite(value)) {
+        const existingValue = this.props.region.controlPoints[0].y;
+
+        if (isFinite(value) && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setControlPoint(0, {x: this.props.region.controlPoints[0].x, y: value});
+            return;
         }
+
+        ev.currentTarget.value = existingValue;
     };
 
     private handleMajorAxisChange = (ev) => {
@@ -44,9 +57,14 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         }
         const valueString = ev.currentTarget.value;
         const value = parseFloat(valueString);
-        if (isFinite(value)) {
+        const existingValue = this.props.region.controlPoints[1].x;
+
+        if (isFinite(value) && value > 0 && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setControlPoint(1, {x: value, y: this.props.region.controlPoints[1].y});
+            return;
         }
+
+        ev.currentTarget.value = existingValue;
     };
 
     private handleMinorAxisChange = (ev) => {
@@ -55,9 +73,14 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         }
         const valueString = ev.currentTarget.value;
         const value = parseFloat(valueString);
-        if (isFinite(value)) {
+        const existingValue = this.props.region.controlPoints[1].y;
+
+        if (isFinite(value) && value > 0 && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setControlPoint(1, {x: this.props.region.controlPoints[1].x, y: value});
+            return;
         }
+
+        ev.currentTarget.value = existingValue;
     };
 
     private handleRotationChange = (ev) => {
@@ -66,9 +89,14 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
         }
         const valueString = ev.currentTarget.value;
         const value = parseFloat(valueString);
-        if (isFinite(value)) {
+        const existingValue = this.props.region.rotation;
+
+        if (isFinite(value) && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
             this.props.region.setRotation(value);
+            return;
         }
+
+        ev.currentTarget.value = existingValue;
     };
 
     private getFormattedString(wcsInfo: number, pixelCoords: Point2D) {

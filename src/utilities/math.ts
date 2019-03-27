@@ -14,3 +14,7 @@ export function smoothStep(val: number, edge0: number, edge1: number) {
 export function clamp(val: number, minVal: number, maxVal: number) {
     return Math.min(maxVal, Math.max(minVal, val));
 }
+
+export function closeTo(a: number, b: number, limit: number = 1.0e-6) {
+    return Math.abs(a - b) < limit;
+}

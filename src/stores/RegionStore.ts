@@ -90,7 +90,8 @@ export class RegionStore {
         }
     }
 
-    constructor(backendService: BackendService, fileId: number, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1, rotation: number = 0, name: string = "", color: string = Colors.TURQUOISE5, lineWidth: number = 2, dashLength: number = 0) {
+    constructor(backendService: BackendService, fileId: number, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1, rotation: number = 0,
+                name: string = "", color: string = Colors.TURQUOISE5, lineWidth: number = 2, dashLength: number = 0) {
         this.fileId = fileId;
         this.controlPoints = controlPoints;
         this.regionType = regionType;
@@ -110,6 +111,9 @@ export class RegionStore {
     @action setControlPoint = (index: number, p: Point2D) => {
         if (index >= 0 && index < this.controlPoints.length) {
             this.controlPoints[index] = p;
+            if (!this.editing) {
+                this.updateRegion();
+            }
         }
     };
 
@@ -170,20 +174,6 @@ export class RegionStore {
     @action endEditing = () => {
         this.editing = false;
         this.updateRegion();
-    };
-
-    getCopy = (): RegionStore => {
-        // Deep copy the control points array
-        const controlPointCopy: Point2D[] = this.controlPoints.map(v => ({x: v.x, y: v.y}));
-        return new RegionStore(this.backendService, this.fileId, controlPointCopy, this.regionType, this.regionId, this.rotation, this.name, this.color, this.lineWidth, this.dashLength);
-    };
-
-    @action applyUpdate = (copy: RegionStore) => {
-        // Applies updates, but skips appearance parameters
-        this.fileId = copy.fileId;
-        this.name = copy.name;
-        this.rotation = copy.rotation;
-        this.controlPoints = copy.controlPoints;
     };
 
     // Update the region with the backend
