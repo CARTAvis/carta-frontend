@@ -30,7 +30,7 @@ export class AppStore {
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
     @observable spectralProfiles: Map<string, SpectralProfileStore>;
     @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
-    @observable regionHistograms: Map<number, ObservableMap<number, CARTA.RegionHistogramData>>;
+    @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
@@ -179,7 +179,7 @@ export class AppStore {
             // clear existing requirements for the frame
             this.spectralRequirements.delete(ack.fileId);
             this.statsRequirements.delete(ack.fileId);
-            this.existingHistogramRequirementsMap.delete(ack.fileId);
+            this.histogramRequirements.delete(ack.fileId);
 
             // Place frame in frame array (replace frame with the same ID if it exists)
             const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === fileId);
@@ -290,8 +290,7 @@ export class AppStore {
     @action requestCubeHistogram = (fileId: number = -1) => {
         const frame = this.getFrame(fileId);
         if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
-            const histogram = {channel: -2, numBins: -1} as CARTA.SetHistogramRequirements.HistogramConfig;
-            this.backendService.setHistogramRequirements(frame.frameInfo.fileId, -2, [histogram]);
+            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: -2, histograms: [{channel: -2, numBins: -1}]});
             this.restartTaskProgress();
         }
     };
@@ -300,7 +299,7 @@ export class AppStore {
         const frame = this.getFrame(fileId);
         if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
             frame.renderConfig.updateCubeHistogram(null, 0);
-            this.backendService.setHistogramRequirements(frame.frameInfo.fileId, -2, []);
+            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: -2, histograms: []});
         }
     };
 
@@ -326,7 +325,7 @@ export class AppStore {
 
     private spectralRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
     private statsRequirements: Map<number, Array<number>>;
-    private existingHistogramRequirementsMap: Map<number, Array<number>>;
+    private histogramRequirements: Map<number, Array<number>>;
     private static readonly DEFAULT_STATS_TYPES = [CARTA.StatsType.NumPixels, CARTA.StatsType.Sum, CARTA.StatsType.Mean, CARTA.StatsType.RMS, CARTA.StatsType.Sigma, CARTA.StatsType.SumSq, CARTA.StatsType.Min, CARTA.StatsType.Max];
 
     constructor() {
@@ -341,6 +340,7 @@ export class AppStore {
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<string, SpectralProfileStore>();
         this.regionStats = new Map<number, ObservableMap<number, CARTA.RegionStatsData>>();
+        this.regionHistograms = new Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>();
         this.frames = [];
         this.activeFrame = null;
         this.animatorStore = new AnimatorStore(this);
@@ -352,7 +352,7 @@ export class AppStore {
         this.darkTheme = false;
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         this.statsRequirements = new Map<number, Array<number>>();
-        this.existingHistogramRequirementsMap = new Map<number, Array<number>>();
+        this.histogramRequirements = new Map<number, Array<number>>();
 
         const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
             this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
@@ -461,6 +461,7 @@ export class AppStore {
         // Update requirements every 200 ms
         setInterval(this.recalculateSpectralRequirements, 200);
         setInterval(this.recalculateStatsRequirements, 200);
+        setInterval(this.recalculateHistogramRequirements, 200);
 
         // Subscribe to frontend streams
         this.backendService.getSpatialProfileStream().subscribe(this.handleSpatialProfileStream);
@@ -517,6 +518,15 @@ export class AppStore {
         if (!regionHistogramData) {
             return;
         }
+
+        let frameHistogramMap = this.regionHistograms.get(regionHistogramData.fileId);
+        if (!frameHistogramMap) {
+            frameHistogramMap = new ObservableMap<number, CARTA.IRegionHistogramData>();
+            this.regionHistograms.set(regionHistogramData.fileId, frameHistogramMap);
+        }
+
+        frameHistogramMap.set(regionHistogramData.regionId, regionHistogramData);
+
         const updatedFrame = this.getFrame(regionHistogramData.fileId);
         if (updatedFrame && regionHistogramData.stokes === updatedFrame.requiredStokes && regionHistogramData.histograms && regionHistogramData.histograms.length) {
             if (regionHistogramData.regionId === -1) {
@@ -606,6 +616,8 @@ export class AppStore {
         return this.frames.find(f => f.frameInfo.fileId === fileId);
     }
 
+    // region requirements calculations
+
     recalculateStatsRequirements = () => {
         if (!this.activeFrame) {
             return;
@@ -687,7 +699,87 @@ export class AppStore {
         return diffList;
     };
 
-    // Requirements
+    recalculateHistogramRequirements = () => {
+        if (!this.activeFrame) {
+            return;
+        }
+
+        const updatedRequirements = new Map<number, Array<number>>();
+        this.widgetsStore.histogramWidgets.forEach(widgetStore => {
+            const frame = this.getFrame(widgetStore.fileId);
+            const regionId = widgetStore.regionId;
+            const fileId = frame.frameInfo.fileId;
+            if (!frame.regionSet) {
+                return;
+            }
+            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+            if (regionId === -1 || region && region.isClosedRegion) {
+                let frameRequirementsArray = updatedRequirements.get(fileId);
+                if (!frameRequirementsArray) {
+                    frameRequirementsArray = [];
+                    updatedRequirements.set(fileId, frameRequirementsArray);
+                }
+                if (frameRequirementsArray.indexOf(regionId) === -1) {
+                    frameRequirementsArray.push(regionId);
+                }
+            }
+        });
+
+        const diffList = this.diffHistogramRequirements(updatedRequirements);
+        this.histogramRequirements = updatedRequirements;
+
+        if (diffList.length) {
+            for (const requirements of diffList) {
+                this.backendService.setHistogramRequirements(requirements);
+            }
+        }
+    };
+
+    private diffHistogramRequirements = (updatedRequirements: Map<number, Array<number>>) => {
+        const diffList: CARTA.ISetHistogramRequirements[] = [];
+
+        // Three possible scenarios:
+        // 1. Existing array, no new array => diff should be empty stats requirements for each element of existing array
+        // 2. No existing array, new array => diff should be full stats requirements for each element of new array
+        // 3. Existing array and new array => diff should be empty stats for those missing in new array, full stats for those missing in old array
+
+        // (1) & (3) handled first
+        this.histogramRequirements.forEach((statsArray, fileId) => {
+            const updatedStatsArray = updatedRequirements.get(fileId);
+            // If there's no new array, remove requirements for all existing regions
+            if (!updatedStatsArray) {
+                for (const regionId of statsArray) {
+                    diffList.push({fileId, regionId, histograms: []});
+                }
+            } else {
+                // If regions in the new array are missing, remove requirements for those regions
+                for (const regionId of statsArray) {
+                    if (updatedStatsArray.indexOf(regionId) === -1) {
+                        diffList.push({fileId, regionId, histograms: []});
+                    }
+                }
+                // If regions in the existing array are missing, add requirements for those regions
+                for (const regionId of updatedStatsArray) {
+                    if (statsArray.indexOf(regionId) === -1) {
+                        diffList.push({fileId, regionId, histograms: [{channel: -1, numBins: -1}]});
+                    }
+                }
+            }
+        });
+
+        updatedRequirements.forEach((updatedStatsArray, fileId) => {
+            const statsArray = this.histogramRequirements.get(fileId);
+            // If there's no existing array, add requirements for all new regions
+            if (!statsArray) {
+                for (const regionId of updatedStatsArray) {
+                    diffList.push({fileId, regionId, histograms: [{channel: -1, numBins: -1}]});
+                }
+            }
+        });
+
+        return diffList;
+    };
+
     recalculateSpectralRequirements = () => {
         if (!this.activeFrame) {
             return;
@@ -836,4 +928,6 @@ export class AppStore {
         // Sort list so that requirements clearing occurs first
         return diffList.sort((a, b) => a.spectralProfiles.length > b.spectralProfiles.length ? 1 : -1);
     };
+
+    // endregion
 }
