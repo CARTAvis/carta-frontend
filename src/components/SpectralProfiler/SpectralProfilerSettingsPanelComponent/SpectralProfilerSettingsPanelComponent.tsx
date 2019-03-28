@@ -33,9 +33,13 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<{ ap
     render() {
         const widgetStore = this.props.widgetStore;
         const appStore = this.props.appStore;
-        const profileCoordinateOptions = [{
-            value: "z", label: "Z"
-        }];
+        const profileCoordinateOptions = [
+            {value: "z", label: "Current"},
+            {value: "Iz", label: "I"},
+            {value: "Qz", label: "Q"},
+            {value: "Uz", label: "U"},
+            {value: "Vz", label: "V"}
+        ];
 
         // Fill region select options with all non-temporary regions that are closed or point type
         let profileRegionOptions: IOptionProps[];
@@ -69,7 +73,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<{ ap
             <React.Fragment>
                 <FormGroup className={"spectral-profile-settings-panel-form"}>
                     <ControlGroup fill={true} vertical={true}>
-                        <FormGroup label={"Coordinate"} inline={true}>
+                        <FormGroup label={"Stokes"} inline={true}>
                             <HTMLSelect value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged}/>
                         </FormGroup>
                         <FormGroup label={"Region"} inline={true}>
