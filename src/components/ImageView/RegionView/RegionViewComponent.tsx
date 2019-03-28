@@ -22,6 +22,7 @@ export interface RegionViewComponentProps {
     cursorPoint?: Point2D;
     onCursorMoved?: (cursorInfo: CursorInfo) => void;
     onClicked?: (cursorInfo: CursorInfo) => void;
+    onRegionDoubleClicked?: (region: RegionStore) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
 }
 
@@ -142,10 +143,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             return;
         }
 
+        const mouseEvent = konvaEvent.evt as MouseEvent;
         const frame = this.props.frame;
         const regionType = frame.regionSet.newRegionType;
 
-        const cursorPosImageSpace = this.getImagePos(konvaEvent.evt.offsetX, konvaEvent.evt.offsetY);
+        const cursorPosImageSpace = this.getImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
         switch (regionType) {
             case CARTA.RegionType.RECTANGLE:
                 this.creatingRegion = frame.regionSet.addRectangularRegion(cursorPosImageSpace, 0, 0, true);
@@ -175,40 +177,43 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     handleClick = (konvaEvent) => {
-        if (konvaEvent.target.nodeType !== "Stage" && (konvaEvent.evt.button === 0 || konvaEvent.evt.button === 2)) {
+        const mouseEvent = konvaEvent.evt as MouseEvent;
+        if (konvaEvent.target.nodeType !== "Stage" && ((mouseEvent.button === 0 && !(mouseEvent.ctrlKey  || mouseEvent.metaKey)) || mouseEvent.button === 2)) {
             return;
         }
 
-        if (this.props.frame.regionSet.mode === RegionMode.CREATING && konvaEvent.evt.button === 0) {
+        if (this.props.frame.regionSet.mode === RegionMode.CREATING && mouseEvent.button === 0) {
             return;
         }
 
-        const cursorPosCanvasSpace = {x: konvaEvent.evt.offsetX, y: konvaEvent.evt.offsetY};
+        const cursorPosCanvasSpace = {x: mouseEvent.offsetX, y: mouseEvent.offsetY};
         if (this.props.frame.wcsInfo && this.props.onClicked) {
             this.props.onClicked(this.getCursorInfo(cursorPosCanvasSpace));
         }
     };
 
     handleWheel = (konvaEvent) => {
+        const mouseEvent = konvaEvent.evt as WheelEvent;
         const lineHeight = 15;
-        const delta = konvaEvent.evt.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? konvaEvent.evt.deltaY : konvaEvent.evt.deltaY * lineHeight;
-        const cursorPosCanvasSpace = {x: konvaEvent.evt.offsetX, y: konvaEvent.evt.offsetY};
+        const delta = mouseEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? mouseEvent.deltaY : mouseEvent.deltaY * lineHeight;
+        const cursorPosCanvasSpace = {x: mouseEvent.offsetX, y: mouseEvent.offsetY};
         if (this.props.frame.wcsInfo && this.props.onZoomed) {
             this.props.onZoomed(this.getCursorInfo(cursorPosCanvasSpace), -delta);
         }
     };
 
     handleMove = (konvaEvent) => {
+        const mouseEvent = konvaEvent.evt as MouseEvent;
         if (this.props.frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion) {
-            const cursorPosImageSpace = this.getImagePos(konvaEvent.evt.offsetX, konvaEvent.evt.offsetY);
+            const cursorPosImageSpace = this.getImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
             let dx = (cursorPosImageSpace.x - this.regionStartPoint.x);
             let dy = (cursorPosImageSpace.y - this.regionStartPoint.y);
-            if (konvaEvent.evt.shiftKey) {
+            if (mouseEvent.shiftKey) {
                 const maxDiff = Math.max(Math.abs(dx), Math.abs(dy));
                 dx = Math.sign(dx) * maxDiff;
                 dy = Math.sign(dy) * maxDiff;
             }
-            if (konvaEvent.evt.ctrlKey || konvaEvent.evt.metaKey) {
+            if (mouseEvent.ctrlKey || mouseEvent.metaKey) {
                 const endPoint = {x: this.regionStartPoint.x + dx, y: this.regionStartPoint.y + dy};
                 const center = {x: (this.regionStartPoint.x + endPoint.x) / 2.0, y: (this.regionStartPoint.y + endPoint.y) / 2.0};
                 switch (this.creatingRegion.regionType) {
@@ -234,7 +239,13 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 }
             }
         } else if (!this.props.cursorFrozen) {
-            this.updateCursorPos(konvaEvent.evt.offsetX, konvaEvent.evt.offsetY);
+            this.updateCursorPos(mouseEvent.offsetX, mouseEvent.offsetY);
+        }
+    };
+
+    private handleRegionDoubleClick = (region: RegionStore) => {
+        if (this.props.onRegionDoubleClicked) {
+            this.props.onRegionDoubleClicked(region);
         }
     };
 
@@ -262,6 +273,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                             layerHeight={this.props.height}
                             selected={r === regionSet.selectedRegion}
                             onSelect={regionSet.selectRegion}
+                            onDoubleClick={this.handleRegionDoubleClick}
                             listening={regionSet.mode !== RegionMode.CREATING}
                         />
                     )

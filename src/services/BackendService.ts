@@ -1,6 +1,6 @@
 import {action, autorun, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {Observable, Observer, throwError, Subject} from "rxjs";
+import {Observable, Observer, Subject, throwError} from "rxjs";
 import {LogStore, RegionStore} from "stores";
 import {DecompressionService} from "./DecompressionService";
 
@@ -25,6 +25,7 @@ export enum EventNames {
     RemoveRegion = "REMOVE_REGION",
     SetSpatialRequirements = "SET_SPATIAL_REQUIREMENTS",
     SetSpectralRequirements = "SET_SPECTRAL_REQUIREMENTS",
+    SetStatsRequirements = "SET_STATS_REQUIREMENTS",
     SetHistogramRequirements = "SET_HISTOGRAM_REQUIREMENTS",
     RegisterViewerAck = "REGISTER_VIEWER_ACK",
     FileListResponse = "FILE_LIST_RESPONSE",
@@ -34,7 +35,8 @@ export enum EventNames {
     RegionHistogramData = "REGION_HISTOGRAM_DATA",
     ErrorData = "ERROR_DATA",
     SpatialProfileData = "SPATIAL_PROFILE_DATA",
-    SpectralProfileData = "SPECTRAL_PROFILE_DATA"
+    SpectralProfileData = "SPECTRAL_PROFILE_DATA",
+    RegionStatsData = "REGION_STATS_DATA"
 }
 
 export class BackendService {
@@ -54,6 +56,7 @@ export class BackendService {
     private readonly errorStream: Subject<CARTA.ErrorData>;
     private readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
     private readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
+    private readonly statsStream: Subject<CARTA.RegionStatsData>;
     private readonly logEventList: EventNames[];
     private readonly decompressionServce: DecompressionService;
     private readonly subsetsRequired: number;
@@ -72,6 +75,7 @@ export class BackendService {
         this.errorStream = new Subject<CARTA.ErrorData>();
         this.spatialProfileStream = new Subject<CARTA.SpatialProfileData>();
         this.spectralProfileStream = new Subject<CARTA.SpectralProfileData>();
+        this.statsStream = new Subject<CARTA.RegionStatsData>();
         this.subsetsRequired = Math.min(navigator.hardwareConcurrency || 4, 4);
         if (process.env.NODE_ENV !== "test") {
             this.decompressionServce = new DecompressionService(this.subsetsRequired);
@@ -83,10 +87,8 @@ export class BackendService {
             EventNames.RegisterViewerAck,
             EventNames.OpenFile,
             EventNames.OpenFileAck,
-            EventNames.SetSpectralRequirements,
-            EventNames.SetSpatialRequirements,
-            EventNames.SetRegion,
-            EventNames.SpectralProfileData
+            EventNames.SetStatsRequirements,
+            EventNames.RegionStatsData
         ];
 
         // Check local storage for a list of events to log to console
@@ -135,6 +137,10 @@ export class BackendService {
 
     getSpectralProfileStream() {
         return this.spectralProfileStream;
+    }
+
+    getRegionStatsStream() {
+        return this.statsStream;
     }
 
     @action("connect")
@@ -317,9 +323,7 @@ export class BackendService {
                 fileId,
                 regionId,
                 regionType: region.regionType,
-                channelMin: region.channelMin,
-                channelMax: region.channelMax,
-                stokes: region.stokesValues,
+                regionName: region.name,
                 controlPoints: region.controlPoints.map(point => ({x: point.x, y: point.y})),
                 rotation: region.rotation
             });
@@ -365,6 +369,17 @@ export class BackendService {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             this.logEvent(EventNames.SetSpectralRequirements, this.eventCounter, requirementsMessage, false);
             if (this.sendEvent(EventNames.SetSpectralRequirements, CARTA.SetSpectralRequirements.encode(requirementsMessage).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @action("set stats requirements")
+    setStatsRequirements(requirementsMessage: CARTA.SetStatsRequirements) {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            this.logEvent(EventNames.SetStatsRequirements, this.eventCounter, requirementsMessage, false);
+            if (this.sendEvent(EventNames.SetStatsRequirements, CARTA.SetStatsRequirements.encode(requirementsMessage).finish())) {
                 return true;
             }
         }
@@ -429,6 +444,9 @@ export class BackendService {
             } else if (eventName === EventNames.SpectralProfileData) {
                 parsedMessage = CARTA.SpectralProfileData.decode(eventData);
                 this.onStreamedSpectralProfileData(eventId, parsedMessage);
+            } else if (eventName === EventNames.RegionStatsData) {
+                parsedMessage = CARTA.RegionStatsData.decode(eventData);
+                this.onStreamedRegionStatsData(eventId, parsedMessage);
             } else {
                 console.log(`Unsupported event response ${eventName}`);
             }
@@ -546,6 +564,10 @@ export class BackendService {
 
     private onStreamedSpectralProfileData(eventId: number, spectralProfileData: CARTA.SpectralProfileData) {
         this.spectralProfileStream.next(spectralProfileData);
+    }
+
+    private onStreamedRegionStatsData(eventId: number, regionStatsData: CARTA.RegionStatsData) {
+        this.statsStream.next(regionStatsData);
     }
 
     private sendEvent(eventName: EventNames, payload: Uint8Array): boolean {

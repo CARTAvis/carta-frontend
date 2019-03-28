@@ -2,14 +2,16 @@ import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Point2D} from "models";
 import {BackendService} from "../services";
+import {Colors} from "@blueprintjs/core";
 
 export class RegionStore {
     @observable fileId: number;
     @observable regionId: number;
+    @observable name: string;
+    @observable color: string;
+    @observable lineWidth: number;
+    @observable dashLength: number;
     @observable regionType: CARTA.RegionType;
-    @observable channelMin: number;
-    @observable channelMax: number;
-    @observable stokesValues: number[];
     @observable controlPoints: Point2D[];
     @observable rotation: number;
     @observable editing: boolean;
@@ -78,15 +80,26 @@ export class RegionStore {
         }
     }
 
-    constructor(backendService: BackendService, fileId: number, controlPoints: Point2D[], regionType: CARTA.RegionType,
-                regionId: number = -1, rotation: number = 0, channelMin: number = -1, channelMax: number = -1, stokesValues: number[] = []) {
+    @computed get nameString() {
+        if (this.regionId === 0) {
+            return "Cursor";
+        } else if (this.name) {
+            return this.name;
+        } else {
+            return `Region ${this.regionId}`;
+        }
+    }
+
+    constructor(backendService: BackendService, fileId: number, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1, rotation: number = 0,
+                name: string = "", color: string = Colors.TURQUOISE5, lineWidth: number = 2, dashLength: number = 0) {
         this.fileId = fileId;
         this.controlPoints = controlPoints;
         this.regionType = regionType;
         this.regionId = regionId;
-        this.channelMin = channelMin;
-        this.channelMax = channelMax;
-        this.stokesValues = stokesValues;
+        this.name = name;
+        this.color = color;
+        this.lineWidth = lineWidth;
+        this.dashLength = dashLength;
         this.rotation = rotation;
         this.backendService = backendService;
     }
@@ -98,6 +111,9 @@ export class RegionStore {
     @action setControlPoint = (index: number, p: Point2D) => {
         if (index >= 0 && index < this.controlPoints.length) {
             this.controlPoints[index] = p;
+            if (!this.editing) {
+                this.updateRegion();
+            }
         }
     };
 
@@ -113,6 +129,23 @@ export class RegionStore {
         if (!this.editing) {
             this.updateRegion();
         }
+    };
+
+    @action setName = (name: string) => {
+        this.name = name;
+    };
+
+    // Appearance properties don't need to be sync'd with the backend
+    @action setColor = (color: string) => {
+        this.color = color;
+    };
+
+    @action setLineWidth = (lineWidth: number) => {
+        this.lineWidth = lineWidth;
+    };
+
+    @action setDashLength = (dashLength: number) => {
+        this.dashLength = dashLength;
     };
 
     @action beginCreating = () => {
@@ -142,12 +175,16 @@ export class RegionStore {
 
     // Update the region with the backend
     private updateRegion = () => {
-        this.backendService.setRegion(this.fileId, this.regionId, this).subscribe(ack => {
-            if (ack.success) {
-                console.log(`Region updated`);
-            } else {
-                console.log(ack.message);
-            }
-        });
+        if (this.regionId === 0 && this.regionType === CARTA.RegionType.POINT && this.isValid) {
+            this.backendService.setCursor(this.fileId, this.controlPoints[0].x, this.controlPoints[0].y);
+        } else {
+            this.backendService.setRegion(this.fileId, this.regionId, this).subscribe(ack => {
+                if (ack.success) {
+                    console.log(`Region updated`);
+                } else {
+                    console.log(ack.message);
+                }
+            });
+        }
     };
 }

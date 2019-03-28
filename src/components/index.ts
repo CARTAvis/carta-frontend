@@ -9,3 +9,4 @@ export * from "./RenderConfig/RenderConfigComponent";
 export * from "./RegionList/RegionListComponent";
 export * from "./SpatialProfiler/SpatialProfilerComponent";
 export * from "./SpectralProfiler/SpectralProfilerComponent";
+export * from "./Stats/StatsComponent";
