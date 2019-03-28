@@ -49,15 +49,18 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     @computed get profileStore(): SpectralProfileStore {
         if (this.props.appStore && this.props.appStore.activeFrame) {
-            let keyStruct = {fileId: this.widgetStore.fileId, regionId: this.widgetStore.regionId};
+            let fileId = this.widgetStore.fileId;
+            const regionId = this.widgetStore.regionId;
             // Replace "current file" fileId with active frame's fileId
             if (this.widgetStore.fileId === -1) {
-                keyStruct.fileId = this.props.appStore.activeFrame.frameInfo.fileId;
+                fileId = this.props.appStore.activeFrame.frameInfo.fileId;
             }
-            const key = `${keyStruct.fileId}-${keyStruct.regionId}`;
-            return this.props.appStore.spectralProfiles.get(key);
+            const frameMap = this.props.appStore.spectralProfiles.get(fileId);
+            if (frameMap) {
+                return frameMap.get(regionId);
+            }
         }
-        return undefined;
+        return null;
     }
 
     @computed get frame(): FrameStore {
@@ -78,7 +81,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         // Use accurate profiles from server-sent data
-        const coordinateData = this.profileStore.profiles.get(this.widgetStore.coordinate);
+        const coordinateData = this.profileStore.getProfile(this.widgetStore.coordinate, this.widgetStore.statsType);
         let channelInfo = this.frame.channelInfo;
         if (coordinateData && channelInfo && coordinateData.vals && coordinateData.vals.length && coordinateData.vals.length === channelInfo.values.length) {
             let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;

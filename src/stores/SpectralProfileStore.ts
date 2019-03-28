@@ -1,4 +1,4 @@
-import {action, observable} from "mobx";
+import {action, observable, ObservableMap} from "mobx";
 import {CARTA} from "carta-protobuf";
 
 export class SpectralProfileStore {
@@ -8,23 +8,36 @@ export class SpectralProfileStore {
     @observable x: number;
     @observable y: number;
     @observable channelValues: number[];
-    @observable profiles: Map<string, CARTA.SpectralProfile>;
+    @observable profiles: Map<string, ObservableMap<CARTA.StatsType, CARTA.ISpectralProfile>>;
 
     constructor(fileId: number = 0, regionId: number = 0) {
         this.fileId = fileId;
         this.regionId = regionId;
-        this.profiles = new Map<string, CARTA.SpectralProfile>();
+        this.profiles = new Map<string, ObservableMap<CARTA.StatsType, CARTA.ISpectralProfile>>();
+    }
+
+    getProfile(coordinate: string, statsType: CARTA.StatsType) {
+        let coordinateMap = this.profiles.get(coordinate);
+        if (coordinateMap) {
+            return coordinateMap.get(statsType);
+        }
+        return null;
     }
 
     @action setChannelValues(values: number[]) {
         this.channelValues = values;
     }
 
-    @action setProfile(coordinate: string, profile: CARTA.SpectralProfile) {
-        this.profiles.set(coordinate, profile);
+    @action clearProfiles() {
+        this.profiles = new Map<string, ObservableMap<CARTA.StatsType, CARTA.ISpectralProfile>>();
     }
 
-    @action setProfiles(profiles: Map<string, CARTA.SpectralProfile>) {
-        this.profiles = profiles;
+    @action setProfile(profile: CARTA.ISpectralProfile) {
+        let coordinateMap = this.profiles.get(profile.coordinate);
+        if (!coordinateMap) {
+            coordinateMap = new ObservableMap<CARTA.StatsType, CARTA.ISpectralProfile>();
+            this.profiles.set(profile.coordinate, coordinateMap);
+        }
+        coordinateMap.set(profile.statsType, profile);
     }
 }

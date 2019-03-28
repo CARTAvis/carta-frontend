@@ -28,7 +28,7 @@ export class AppStore {
     @observable cursorFrozen: boolean;
     // Profiles
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
-    @observable spectralProfiles: Map<string, SpectralProfileStore>;
+    @observable spectralProfiles: Map<number, ObservableMap<number, SpectralProfileStore>>;
     @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
 
     // Image view
@@ -335,7 +335,7 @@ export class AppStore {
         this.backendService = new BackendService(this.logStore);
         this.astReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
-        this.spectralProfiles = new Map<string, SpectralProfileStore>();
+        this.spectralProfiles = new Map<number, ObservableMap<number, SpectralProfileStore>>();
         this.regionStats = new Map<number, ObservableMap<number, CARTA.RegionStatsData>>();
         this.frames = [];
         this.activeFrame = null;
@@ -491,20 +491,22 @@ export class AppStore {
 
     handleSpectralProfileStream = (spectralProfileData: CARTA.SpectralProfileData) => {
         if (this.frames.find(frame => frame.frameInfo.fileId === spectralProfileData.fileId)) {
-            const key = `${spectralProfileData.fileId}-${spectralProfileData.regionId}`;
-            let profileStore = this.spectralProfiles.get(key);
+            let frameMap = this.spectralProfiles.get(spectralProfileData.fileId);
+            if (!frameMap) {
+                frameMap = new ObservableMap<number, SpectralProfileStore>();
+                this.spectralProfiles.set(spectralProfileData.fileId, frameMap);
+            }
+            let profileStore = frameMap.get(spectralProfileData.regionId);
             if (!profileStore) {
                 profileStore = new SpectralProfileStore(spectralProfileData.fileId, spectralProfileData.regionId);
-                this.spectralProfiles.set(key, profileStore);
+                frameMap.set(spectralProfileData.regionId, profileStore);
             }
 
             profileStore.channelValues = spectralProfileData.channelVals;
             profileStore.stokes = spectralProfileData.stokes;
-            const profileMap = new Map<string, CARTA.SpectralProfile>();
             for (let profile of spectralProfileData.profiles) {
-                profileMap.set(profile.coordinate, profile as CARTA.SpectralProfile);
+                profileStore.setProfile(profile);
             }
-            profileStore.setProfiles(profileMap);
         }
     };
 
