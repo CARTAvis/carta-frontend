@@ -1,7 +1,7 @@
 import {action, autorun, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, throwError, Subject} from "rxjs";
-import {LogStore} from "stores";
+import {LogStore, RegionStore} from "stores";
 import {DecompressionService} from "./DecompressionService";
 
 export enum ConnectionStatus {
@@ -20,6 +20,9 @@ export enum EventNames {
     SetImageView = "SET_IMAGE_VIEW",
     SetImageChannels = "SET_IMAGE_CHANNELS",
     SetCursor = "SET_CURSOR",
+    SetRegion = "SET_REGION",
+    SetRegionAck = "SET_REGION_ACK",
+    RemoveRegion = "REMOVE_REGION",
     SetSpatialRequirements = "SET_SPATIAL_REQUIREMENTS",
     SetSpectralRequirements = "SET_SPECTRAL_REQUIREMENTS",
     SetHistogramRequirements = "SET_HISTOGRAM_REQUIREMENTS",
@@ -39,8 +42,11 @@ export class BackendService {
     @observable loggingEnabled: boolean;
     @observable sessionId: string;
     @observable apiKey: string;
+    @observable endToEndPing: number;
 
     private connection: WebSocket;
+    private lastPingTime: number;
+    private lastPongTime: number;
     private observerRequestMap: Map<number, Observer<any>>;
     private eventCounter: number;
     private readonly rasterStream: Subject<CARTA.RasterImageData>;
@@ -59,6 +65,7 @@ export class BackendService {
         this.logStore = logStore;
         this.observerRequestMap = new Map<number, Observer<any>>();
         this.eventCounter = 1;
+        this.endToEndPing = NaN;
         this.connectionStatus = ConnectionStatus.CLOSED;
         this.rasterStream = new Subject<CARTA.RasterImageData>();
         this.histogramStream = new Subject<CARTA.RegionHistogramData>();
@@ -76,6 +83,10 @@ export class BackendService {
             EventNames.RegisterViewerAck,
             EventNames.OpenFile,
             EventNames.OpenFileAck,
+            EventNames.SetSpectralRequirements,
+            EventNames.SetSpatialRequirements,
+            EventNames.SetRegion,
+            EventNames.SpectralProfileData
         ];
 
         // Check local storage for a list of events to log to console
@@ -97,6 +108,9 @@ export class BackendService {
                 this.logStore.addInfo(`ZFP loaded with ${this.subsetsRequired} workers`, ["zfp"]);
             }
         });
+
+        // check ping every 5 seconds
+        setInterval(this.sendPing, 5000);
     }
 
     @computed get zfpReady() {
@@ -159,6 +173,7 @@ export class BackendService {
                 } else {
                     this.connectionStatus = ConnectionStatus.ACTIVE;
                 }
+
                 const message = CARTA.RegisterViewer.create({sessionId: "", apiKey: apiKey});
                 const requestId = this.eventCounter;
                 this.logEvent(EventNames.RegisterViewer, requestId, message, false);
@@ -179,6 +194,17 @@ export class BackendService {
 
         return obs;
     }
+
+    sendPing = () => {
+        if (this.connection && this.connectionStatus === ConnectionStatus.ACTIVE || this.connectionStatus === ConnectionStatus.DROPPED) {
+            this.lastPingTime = performance.now();
+            this.connection.send("PING");
+        }
+    };
+
+    @action updateEndToEndPing = () => {
+        this.endToEndPing = this.lastPongTime - this.lastPingTime;
+    };
 
     @action("file list")
     getFileList(directory: string): Observable<CARTA.FileListResponse> {
@@ -282,6 +308,46 @@ export class BackendService {
         return false;
     }
 
+    @action("set region")
+    setRegion(fileId: number, regionId: number, region: RegionStore): Observable<CARTA.SetRegionAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.SetRegion.create({
+                fileId,
+                regionId,
+                regionType: region.regionType,
+                channelMin: region.channelMin,
+                channelMax: region.channelMax,
+                stokes: region.stokesValues,
+                controlPoints: region.controlPoints.map(point => ({x: point.x, y: point.y})),
+                rotation: region.rotation
+            });
+
+            const requestId = this.eventCounter;
+            this.logEvent(EventNames.SetRegion, requestId, message, false);
+            if (this.sendEvent(EventNames.SetRegion, CARTA.SetRegion.encode(message).finish())) {
+                return new Observable<CARTA.SetRegionAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("remove region")
+    removeRegion(regionId: number) {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            const message = CARTA.RemoveRegion.create({regionId});
+            this.logEvent(EventNames.RemoveRegion, this.eventCounter, message, false);
+            if (this.sendEvent(EventNames.RemoveRegion, CARTA.RemoveRegion.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @action("set spatial requirements")
     setSpatialRequirements(fileId: number, regionId: number, spatialProfiles: string[]) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
@@ -295,11 +361,10 @@ export class BackendService {
     }
 
     @action("set spectral requirements")
-    setSpectralRequirements(fileId: number, regionId: number, spectralProfiles: CARTA.SetSpectralRequirements.SpectralConfig[]) {
+    setSpectralRequirements(requirementsMessage: CARTA.SetSpectralRequirements) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.SetSpectralRequirements.create({fileId, regionId, spectralProfiles});
-            this.logEvent(EventNames.SetSpectralRequirements, this.eventCounter, message, false);
-            if (this.sendEvent(EventNames.SetSpectralRequirements, CARTA.SetSpectralRequirements.encode(message).finish())) {
+            this.logEvent(EventNames.SetSpectralRequirements, this.eventCounter, requirementsMessage, false);
+            if (this.sendEvent(EventNames.SetSpectralRequirements, CARTA.SetSpectralRequirements.encode(requirementsMessage).finish())) {
                 return true;
             }
         }
@@ -319,7 +384,11 @@ export class BackendService {
     }
 
     private messageHandler(event: MessageEvent) {
-        if (event.data.byteLength < 40) {
+        if (event.data === "PONG") {
+            this.lastPongTime = performance.now();
+            this.updateEndToEndPing();
+            return;
+        } else if (event.data.byteLength < 40) {
             console.log("Unknown event format");
             return;
         }
@@ -342,6 +411,9 @@ export class BackendService {
             } else if (eventName === EventNames.OpenFileAck) {
                 parsedMessage = CARTA.OpenFileAck.decode(eventData);
                 this.onFileOpenAck(eventId, parsedMessage);
+            } else if (eventName === EventNames.SetRegionAck) {
+                parsedMessage = CARTA.SetRegionAck.decode(eventData);
+                this.onSetRegionAck(eventId, parsedMessage);
             } else if (eventName === EventNames.RasterImageData) {
                 parsedMessage = CARTA.RasterImageData.decode(eventData);
                 this.onStreamedRasterImageData(eventId, parsedMessage);
@@ -412,6 +484,21 @@ export class BackendService {
     }
 
     private onFileOpenAck(eventId: number, ack: CARTA.OpenFileAck) {
+        const observer = this.observerRequestMap.get(eventId);
+        if (observer) {
+            if (ack.success) {
+                observer.next(ack);
+            } else {
+                observer.error(ack.message);
+            }
+            observer.complete();
+            this.observerRequestMap.delete(eventId);
+        } else {
+            console.log(`Can't find observable for request ${eventId}`);
+        }
+    }
+
+    private onSetRegionAck(eventId: number, ack: CARTA.SetRegionAck) {
         const observer = this.observerRequestMap.get(eventId);
         if (observer) {
             if (ack.success) {

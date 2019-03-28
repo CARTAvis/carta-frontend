@@ -9,3 +9,5 @@ export * from "./RenderConfigStore";
 export * from "./SpatialProfileStore";
 export * from "./SpectralProfileStore";
 export * from "./WidgetsStore";
+export * from "./RegionStore";
+export * from "./RegionSetStore";

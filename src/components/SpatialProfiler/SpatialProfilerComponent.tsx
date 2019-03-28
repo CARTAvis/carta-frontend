@@ -43,7 +43,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 return widgetStore;
             }
         }
-        console.error("can't find store for widget");
+        console.log("can't find store for widget");
         return new SpatialProfileWidgetStore();
     }
 
@@ -246,13 +246,13 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === SpatialProfilerComponent.WIDGET_CONFIG.id) {
+        if (!props.docked && props.id === SpatialProfilerComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
-            const id = props.appStore.widgetsStore.addNewSpatialProfileWidget();
+            const id = props.appStore.widgetsStore.addSpatialProfileWidget();
             props.appStore.widgetsStore.changeWidgetId(props.id, id);
         } else {
             if (!this.props.appStore.widgetsStore.spatialProfileWidgets.has(this.props.id)) {
-                console.error(`can't find store for widget with id=${this.props.id}`);
+                console.log(`can't find store for widget with id=${this.props.id}`);
                 this.props.appStore.widgetsStore.spatialProfileWidgets.set(this.props.id, new SpatialProfileWidgetStore());
             }
         }

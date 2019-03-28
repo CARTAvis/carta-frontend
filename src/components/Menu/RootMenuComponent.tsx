@@ -23,13 +23,13 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 <Menu.Item
                     text="Open image"
                     label={`${modString}O`}
-                    disabled={connectionStatus !== ConnectionStatus.ACTIVE}
+                    disabled={(connectionStatus !== ConnectionStatus.ACTIVE && connectionStatus !== ConnectionStatus.DROPPED) || appStore.fileLoading}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(false)}
                 />
                 <Menu.Item
                     text="Append image"
                     label={`${modString}L`}
-                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame}
+                    disabled={(connectionStatus !== ConnectionStatus.ACTIVE && connectionStatus !== ConnectionStatus.DROPPED) || !appStore.activeFrame || appStore.fileLoading}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(true)}
                 />
                 <Menu.Item text="Load region" disabled={true}/>
@@ -38,11 +38,12 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     text="Export image"
                     icon={"floppy-disk"}
                     label={`${modString}E`}
-                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame}
+                    disabled={!appStore.activeFrame}
                     onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
                 />
                 <Menu.Divider/>
                 <Menu.Item text="Preferences" icon={"cog"} label={`${modString}P`} disabled={true}/>
+                <Menu.Item text="Enter API Key" icon={"key"} onClick={appStore.showApiKeyDialog}/>
                 <Menu.Item text="Connect to URL" onClick={appStore.showURLConnect}/>
             </Menu>
         );
@@ -129,7 +130,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
 
         const helpMenu = (
             <Menu>
-                <Menu.Item text="Online Manual" icon={"help"} label={"F1"} onClick={this.handleDocumentationClicked}/>
+                <Menu.Item text="Online Manual" icon={"help"} onClick={this.handleDocumentationClicked}/>
                 <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={appStore.showHotkeyDialog}/>
                 <Menu.Item text="About" icon={"info-sign"} onClick={appStore.showAboutDialog}/>
             </Menu>
@@ -137,22 +138,23 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
 
         let connectivityClass = "connectivity-icon";
         let tooltip = "";
+        const latencyString = isFinite(appStore.backendService.endToEndPing) ? `${appStore.backendService.endToEndPing.toFixed(1)} ms` : "Unknown";
         switch (connectionStatus) {
             case ConnectionStatus.PENDING:
                 tooltip = "Connecting to server";
                 connectivityClass += " warning";
                 break;
             case ConnectionStatus.ACTIVE:
-                tooltip = "Connected to server";
+                tooltip = `Connected to server. Latency: ${latencyString}`;
                 connectivityClass += " online";
                 break;
             case ConnectionStatus.DROPPED:
-                tooltip = "Reconnected to server after disconnect. Some errors may occur";
+                tooltip = `Reconnected to server after disconnect. Some errors may occur. Latency: ${latencyString}`;
                 connectivityClass += " warning";
                 break;
             case ConnectionStatus.CLOSED:
             default:
-                tooltip = "Disconnected from server";
+                tooltip = `Disconnected from server. Latency: ${latencyString}`;
                 connectivityClass += " offline";
                 break;
         }

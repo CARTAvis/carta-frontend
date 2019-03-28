@@ -6,5 +6,6 @@ export * from "./Log/LogComponent";
 export * from "./Menu/RootMenuComponent";
 export * from "./Placeholder/PlaceholderComponent";
 export * from "./RenderConfig/RenderConfigComponent";
+export * from "./RegionList/RegionListComponent";
 export * from "./SpatialProfiler/SpatialProfilerComponent";
 export * from "./SpectralProfiler/SpectralProfilerComponent";

@@ -45,7 +45,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 return widgetStore;
             }
         }
-        console.error("can't find store for widget");
+        console.log("can't find store for widget");
         return new RenderConfigWidgetStore();
     }
 
@@ -92,13 +92,13 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     constructor(props: WidgetProps) {
         super(props);
         // Check if this widget hasn't been assigned an ID yet
-        if (!props.docked && props.id === RenderConfigComponent.WIDGET_CONFIG.id) {
+        if (!props.docked && props.id === RenderConfigComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
-            const id = props.appStore.widgetsStore.addNewRenderConfigWidget();
+            const id = props.appStore.widgetsStore.addRenderConfigWidget();
             props.appStore.widgetsStore.changeWidgetId(props.id, id);
         } else {
             if (!this.props.appStore.widgetsStore.renderConfigWidgets.has(this.props.id)) {
-                console.error(`can't find store for widget with id=${this.props.id}`);
+                console.log(`can't find store for widget with id=${this.props.id}`);
                 this.props.appStore.widgetsStore.renderConfigWidgets.set(this.props.id, new RenderConfigWidgetStore());
             }
         }
@@ -263,6 +263,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 id: "marker-min",
                 label: this.widgetStore.markerTextVisible ? "Min" : undefined,
                 draggable: true,
+                dragCustomBoundary: {xMax: frame.renderConfig.scaleMax},
                 dragMove: this.onMinMoved,
                 horizontal: false,
             }, {
@@ -270,6 +271,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 id: "marker-max",
                 label: this.widgetStore.markerTextVisible ? "Max" : undefined,
                 draggable: true,
+                dragCustomBoundary: {xMin: frame.renderConfig.scaleMin},
                 dragMove: this.onMaxMoved,
                 horizontal: false,
             }];

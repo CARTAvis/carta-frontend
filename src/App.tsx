@@ -5,13 +5,14 @@ import {observer} from "mobx-react";
 import DevTools from "mobx-react-devtools";
 import ReactResizeDetector from "react-resize-detector";
 import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
-import {RootMenuComponent, FloatingWidgetManagerComponent, exportImage} from "./components";
-import {AboutDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, URLConnectDialogComponent} from "./components/Dialogs";
-import {AppStore, FileBrowserStore, dayPalette, nightPalette} from "./stores";
+import {exportImage, FloatingWidgetManagerComponent, RootMenuComponent} from "./components";
+import {AboutDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, RegionDialogComponent, URLConnectDialogComponent} from "./components/Dialogs";
+import {AppStore, dayPalette, FileBrowserStore, nightPalette, RegionMode} from "./stores";
 import {smoothStepOffset} from "./utilities";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
 import "./layout-theme.css";
+import {ApiKeyDialogComponent} from "./components/Dialogs/ApiKeyDialog/ApiKeyDialogComponent";
 
 @HotkeysTarget @observer
 export class App extends React.Component<{ appStore: AppStore }> {
@@ -51,7 +52,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
             AST.setPalette(appStore.darkTheme ? nightPalette : dayPalette);
             appStore.astReady = true;
             if (connected && !autoFileLoaded && fileSearchParam) {
-                    appStore.addFrame(folderSearchParam, fileSearchParam, "", 0);
+                appStore.addFrame(folderSearchParam, fileSearchParam, "", 0);
             }
         });
         appStore.backendService.loggingEnabled = true;
@@ -60,7 +61,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
         // Log the frontend git commit hash
         appStore.logStore.addDebug(`Current frontend version: ${GitCommit.logMessage}`, ["version"]);
 
-        appStore.backendService.connect(wsURL, "1234").subscribe(sessionId => {
+        appStore.backendService.connect(wsURL, appStore.apiKey).subscribe(sessionId => {
             console.log(`Connected with session ID ${sessionId}`);
             connected = true;
             appStore.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
@@ -102,8 +103,8 @@ export class App extends React.Component<{ appStore: AppStore }> {
                         type: "react-component",
                         component: "log",
                         title: "Log",
-                        id: "log-docked",
-                        props: {appStore: this.props.appStore, id: "log-docked", docked: true}
+                        id: "log-0",
+                        props: {appStore: this.props.appStore, id: "log-0", docked: true}
                     }]
                 }]
             }, {
@@ -131,15 +132,24 @@ export class App extends React.Component<{ appStore: AppStore }> {
                         title: "Animator",
                         id: "animator-0",
                         props: {appStore: this.props.appStore, id: "animator-0", docked: true}
+                    }, {
+                        type: "react-component",
+                        component: "region-list",
+                        title: "Region List",
+                        id: "region-list-0",
+                        props: {appStore: this.props.appStore, id: "region-list-0", docked: true}
                     }]
                 }]
             }]
         }];
 
-        widgetsStore.addSpatialProfileWidget("spatial-profiler-0", -1, 0, "x");
-        widgetsStore.addSpatialProfileWidget("spatial-profiler-1", -1, 0, "y");
-        widgetsStore.addSpectralProfileWidget("spectral-profiler-0", -1, 0, "z");
+        widgetsStore.addSpatialProfileWidget("spatial-profiler-0", "x", -1, 0);
+        widgetsStore.addSpatialProfileWidget("spatial-profiler-1", "y", -1, 0);
+        widgetsStore.addSpectralProfileWidget("spectral-profiler-0", "z", -1, 0);
         widgetsStore.addRenderConfigWidget("render-config-0");
+        widgetsStore.addAnimatorWidget("animator-0");
+        widgetsStore.addRegionListWidget("region-list-0");
+        widgetsStore.addLogWidget("log-0");
 
         const layout = new GoldenLayout({
             settings: {
@@ -147,7 +157,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 showCloseIcon: false
             },
             dimensions: {
-                minItemWidth: 200,
+                minItemWidth: 250,
                 minItemHeight: 200,
                 dragProxyWidth: 600,
                 dragProxyHeight: 270,
@@ -180,12 +190,13 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         return (
             <div className={className}>
-                {process.env.NODE_ENV === "development" && <DevTools/>}
                 <RootMenuComponent appStore={appStore}/>
                 <OverlaySettingsDialogComponent appStore={appStore}/>
                 <URLConnectDialogComponent appStore={appStore}/>
+                <ApiKeyDialogComponent appStore={appStore}/>
                 <FileBrowserDialogComponent appStore={appStore}/>
                 <AboutDialogComponent appStore={appStore}/>
+                <RegionDialogComponent appStore={appStore}/>
                 <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>
@@ -239,6 +250,27 @@ export class App extends React.Component<{ appStore: AppStore }> {
         }
     };
 
+    deleteSelectedRegion = () => {
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame) {
+            appStore.activeFrame.regionSet.deleteRegion(appStore.activeFrame.regionSet.selectedRegion);
+        }
+    };
+
+    toggleCreateMode = () => {
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame) {
+            appStore.activeFrame.regionSet.toggleMode();
+        }
+    };
+
+    exitCreateMode = () => {
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame && appStore.activeFrame.regionSet.mode !== RegionMode.MOVING) {
+            appStore.activeFrame.regionSet.setMode(RegionMode.MOVING);
+        }
+    };
+
     public renderHotkeys() {
         const appStore = this.props.appStore;
         const modString = appStore.modifierString;
@@ -264,6 +296,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 {fileHotkeys}
                 <Hotkey group="Appearance" global={true} combo="shift + D" label="Toggle light/dark theme" onKeyDown={this.toggleDarkTheme}/>
                 <Hotkey group="Cursor" global={true} combo="F" label="Freeze/unfreeze cursor position" onKeyDown={appStore.toggleCursorFrozen}/>
+                <Hotkey group="Regions" global={true} combo="del" label="Delete selected region" onKeyDown={this.deleteSelectedRegion}/>
+                <Hotkey group="Regions" global={true} combo="backspace" label="Delete selected region" onKeyDown={this.deleteSelectedRegion}/>
+                <Hotkey group="Regions" global={true} combo="c" label="Toggle region creation mode" onKeyDown={this.toggleCreateMode}/>
             </Hotkeys>
         );
     }

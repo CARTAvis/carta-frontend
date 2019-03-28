@@ -1,9 +1,9 @@
 import * as GoldenLayout from "golden-layout";
 import * as $ from "jquery";
 import {action, observable} from "mobx";
-import {AnimatorComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent} from "components";
+import {AnimatorComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent} from "components";
 import {AppStore} from "./AppStore";
-import {RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore} from "./widgets";
+import {EmptyWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore} from "./widgets";
 
 export class WidgetConfig {
     id: string;
@@ -25,21 +25,40 @@ export class WidgetProps {
 }
 
 export class WidgetsStore {
-    // Golden Layout
+    // Docked (Golden Layout)
     @observable dockedLayout: GoldenLayout;
+    // Floating widgets
     @observable floatingWidgets: WidgetConfig[];
+    @observable defaultFloatingWidgetOffset: number;
     // Widget Stores
     @observable renderConfigWidgets: Map<string, RenderConfigWidgetStore>;
     @observable spatialProfileWidgets: Map<string, SpatialProfileWidgetStore>;
     @observable spectralProfileWidgets: Map<string, SpectralProfileWidgetStore>;
-    @observable defaultFloatingWidgetOffset: number;
+    @observable logWidgets: Map<string, EmptyWidgetStore>;
+    @observable regionListWidgets: Map<string, EmptyWidgetStore>;
+    @observable animatorWidgets: Map<string, EmptyWidgetStore>;
+
     private appStore: AppStore;
+    private widgetsMap: Map<string, Map<string, any>>;
 
     constructor(appStore: AppStore) {
         this.appStore = appStore;
         this.spatialProfileWidgets = new Map<string, SpatialProfileWidgetStore>();
         this.spectralProfileWidgets = new Map<string, SpectralProfileWidgetStore>();
         this.renderConfigWidgets = new Map<string, RenderConfigWidgetStore>();
+        this.animatorWidgets = new Map<string, EmptyWidgetStore>();
+        this.logWidgets = new Map<string, EmptyWidgetStore>();
+        this.regionListWidgets = new Map<string, EmptyWidgetStore>();
+
+        this.widgetsMap = new Map<string, Map<string, any>>([
+            [SpatialProfilerComponent.WIDGET_CONFIG.type, this.spatialProfileWidgets],
+            [SpectralProfilerComponent.WIDGET_CONFIG.type, this.spectralProfileWidgets],
+            [RenderConfigComponent.WIDGET_CONFIG.type, this.renderConfigWidgets],
+            [AnimatorComponent.WIDGET_CONFIG.type, this.animatorWidgets],
+            [LogComponent.WIDGET_CONFIG.type, this.logWidgets],
+            [RegionListComponent.WIDGET_CONFIG.type, this.regionListWidgets],
+        ]);
+
         this.floatingWidgets = [];
         this.defaultFloatingWidgetOffset = 100;
     }
@@ -58,10 +77,36 @@ export class WidgetsStore {
                 return SpatialProfilerComponent.WIDGET_CONFIG;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:
                 return SpectralProfilerComponent.WIDGET_CONFIG;
+            case RegionListComponent.WIDGET_CONFIG.type:
+                return RegionListComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
     }
+
+    private getNextId = (defaultId: string) => {
+        const widgets = this.widgetsMap.get(defaultId);
+        if (!widgets) {
+            return null;
+        }
+
+        // Find the next appropriate ID
+        let nextIndex = 0;
+        while (true) {
+            const nextId = `${defaultId}-${nextIndex}`;
+            if (!widgets.has(nextId)) {
+                return nextId;
+            }
+            nextIndex++;
+        }
+    };
+
+    removeWidget = (widgetId: string, widgetType: string) => {
+        const widgets = this.widgetsMap.get(widgetType);
+        if (widgets) {
+            widgets.delete(widgetId);
+        }
+    };
 
     // region Golden Layout Widgets
 
@@ -71,6 +116,7 @@ export class WidgetsStore {
         layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
         layout.registerComponent("spectral-profiler", SpectralProfilerComponent);
         layout.registerComponent("render-config", RenderConfigComponent);
+        layout.registerComponent("region-list", RegionListComponent);
         layout.registerComponent("log", LogComponent);
         layout.registerComponent("animator", AnimatorComponent);
 
@@ -120,20 +166,37 @@ export class WidgetsStore {
         const config = item.config as GoldenLayout.ReactComponentConfig;
         const id = config.id as string;
 
+        let itemId;
         // Check if it's an uninitialised widget
-        if (id === RenderConfigComponent.WIDGET_CONFIG.id) {
-            const itemId = this.addNewRenderConfigWidget();
+        switch (id) {
+            case RenderConfigComponent.WIDGET_CONFIG.type:
+                itemId = this.addRenderConfigWidget();
+                break;
+            case SpatialProfilerComponent.WIDGET_CONFIG.type:
+                itemId = this.addSpatialProfileWidget();
+                break;
+            case SpectralProfilerComponent.WIDGET_CONFIG.type:
+                itemId = this.addSpectralProfileWidget();
+                break;
+            case AnimatorComponent.WIDGET_CONFIG.type:
+                itemId = this.addAnimatorWidget();
+                break;
+            case LogComponent.WIDGET_CONFIG.type:
+                itemId = this.addLogWidget();
+                break;
+            case RegionListComponent.WIDGET_CONFIG.type:
+                itemId = this.addRegionListWidget();
+                break;
+            default:
+                // Remove it from the floating widget array, while preserving its store
+                if (this.floatingWidgets.find(w => w.id === id)) {
+                    this.removeFloatingWidget(id, true);
+                }
+        }
+
+        if (itemId) {
             config.id = itemId;
             config.props.id = itemId;
-        } else if (id === SpatialProfilerComponent.WIDGET_CONFIG.id) {
-            const itemId = this.addNewSpatialProfileWidget();
-            config.id = itemId;
-            config.props.id = itemId;
-        } else {
-            // Remove it from the floating widget array, while preserving its store
-            if (this.floatingWidgets.find(w => w.id === id)) {
-                this.removeFloatingWidget(id, true);
-            }
         }
     };
 
@@ -145,9 +208,7 @@ export class WidgetsStore {
             if (config.component !== "floated") {
                 const id = config.id as string;
                 console.log(`itemDestroyed: ${id}`);
-                if (config.component === RenderConfigComponent.WIDGET_CONFIG.type) {
-                    this.removeRenderConfigWidget(id);
-                }
+                this.removeWidget(id, config.component);
             }
         }
     };
@@ -178,9 +239,11 @@ export class WidgetsStore {
         }
 
         // Update GL title by searching for image-view components
-        const imageViewComponents = this.dockedLayout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
-        if (imageViewComponents.length) {
-            imageViewComponents[0].setTitle(newTitle);
+        if (this.dockedLayout && this.dockedLayout.root) {
+            const imageViewComponents = this.dockedLayout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
+            if (imageViewComponents.length) {
+                imageViewComponents[0].setTitle(newTitle);
+            }
         }
 
         // Update floating window title
@@ -209,37 +272,23 @@ export class WidgetsStore {
         }
     }
 
-    createFloatingLogWidget = () => {
-        this.addFloatingWidget(LogComponent.WIDGET_CONFIG);
-    };
-
-    createFloatingAnimatorWidget = () => {
-        this.addFloatingWidget(AnimatorComponent.WIDGET_CONFIG);
-    };
-
     // region Spatial Profile Widgets
     createFloatingSpatialProfilerWidget = () => {
         let config = SpatialProfilerComponent.WIDGET_CONFIG;
-        config.id = this.addNewSpatialProfileWidget();
+        config.id = this.addSpatialProfileWidget();
         this.addFloatingWidget(config);
     };
 
-    @action addNewSpatialProfileWidget() {
-        const defaultId = SpatialProfilerComponent.WIDGET_CONFIG.id;
-        // Find the next appropriate ID
-        let nextIndex = 0;
-        while (true) {
-            const nextId = `${defaultId}-${nextIndex}`;
-            if (!this.spatialProfileWidgets.has(nextId)) {
-                this.spatialProfileWidgets.set(nextId, new SpatialProfileWidgetStore());
-                return nextId;
-            }
-            nextIndex++;
+    @action addSpatialProfileWidget(id: string = null, coordinate: string = "x", fileId: number = -1, regionId: number = 0) {
+        // Generate new id if none passed in
+        if (!id) {
+            id = this.getNextId(SpatialProfilerComponent.WIDGET_CONFIG.type);
         }
-    }
 
-    @action addSpatialProfileWidget(id: string, fileId: number, regionId: number, coordinate: string) {
-        this.spatialProfileWidgets.set(id, new SpatialProfileWidgetStore(coordinate, fileId, regionId));
+        if (id) {
+            this.spatialProfileWidgets.set(id, new SpatialProfileWidgetStore(coordinate, fileId, regionId));
+        }
+        return id;
     }
 
     // endregion
@@ -247,26 +296,20 @@ export class WidgetsStore {
     // region Spectral Profile Widgets
     createFloatingSpectralProfilerWidget = () => {
         let config = SpectralProfilerComponent.WIDGET_CONFIG;
-        config.id = this.addNewSpectralProfileWidget();
+        config.id = this.addSpectralProfileWidget();
         this.addFloatingWidget(config);
     };
 
-    @action addNewSpectralProfileWidget() {
-        const defaultId = SpectralProfilerComponent.WIDGET_CONFIG.id;
-        // Find the next appropriate ID
-        let nextIndex = 0;
-        while (true) {
-            const nextId = `${defaultId}-${nextIndex}`;
-            if (!this.spectralProfileWidgets.has(nextId)) {
-                this.spectralProfileWidgets.set(nextId, new SpectralProfileWidgetStore());
-                return nextId;
-            }
-            nextIndex++;
+    @action addSpectralProfileWidget(id: string = null, coordinate: string = "z", fileId: number = -1, regionId: number = 0) {
+        // Generate new id if none passed in
+        if (!id) {
+            id = this.getNextId(SpectralProfilerComponent.WIDGET_CONFIG.type);
         }
-    }
 
-    @action addSpectralProfileWidget(id: string, fileId: number, regionId: number, coordinate: string) {
-        this.spectralProfileWidgets.set(id, new SpectralProfileWidgetStore(coordinate, fileId, regionId));
+        if (id) {
+            this.spectralProfileWidgets.set(id, new SpectralProfileWidgetStore(coordinate, fileId, regionId));
+        }
+        return id;
     }
 
     // endregion
@@ -274,30 +317,74 @@ export class WidgetsStore {
     // region Render Config Widgets
     createFloatingRenderWidget = () => {
         let config = RenderConfigComponent.WIDGET_CONFIG;
-        config.id = this.addNewRenderConfigWidget();
+        config.id = this.addRenderConfigWidget();
         this.addFloatingWidget(config);
     };
 
-    @action addNewRenderConfigWidget() {
-        const defaultId = RenderConfigComponent.WIDGET_CONFIG.id;
-        // Find the next appropriate ID
-        let nextIndex = 0;
-        while (true) {
-            const nextId = `${defaultId}-${nextIndex}`;
-            if (!this.renderConfigWidgets.has(nextId)) {
-                this.renderConfigWidgets.set(nextId, new RenderConfigWidgetStore());
-                return nextId;
-            }
-            nextIndex++;
+    @action addRenderConfigWidget(id: string = null) {
+        if (!id) {
+            id = this.getNextId(RenderConfigComponent.WIDGET_CONFIG.type);
         }
+
+        if (id) {
+            this.renderConfigWidgets.set(id, new RenderConfigWidgetStore());
+        }
+        return id;
     }
 
-    @action addRenderConfigWidget(id: string) {
-        this.renderConfigWidgets.set(id, new RenderConfigWidgetStore());
+    // endregion
+
+    // region Basic widget types (log, animator, region list)
+
+    createFloatingLogWidget = () => {
+        const config = LogComponent.WIDGET_CONFIG;
+        config.id = this.addLogWidget();
+        this.addFloatingWidget(config);
+    };
+
+    @action addLogWidget(id: string = null) {
+        if (!id) {
+            id = this.getNextId(LogComponent.WIDGET_CONFIG.type);
+        }
+
+        if (id) {
+            this.logWidgets.set(id, new EmptyWidgetStore());
+        }
+        return id;
     }
 
-    @action removeRenderConfigWidget(id: string) {
-        this.renderConfigWidgets.delete(id);
+    createFloatingAnimatorWidget = () => {
+        const config = AnimatorComponent.WIDGET_CONFIG;
+        config.id = this.addAnimatorWidget();
+        this.addFloatingWidget(config);
+    };
+
+    @action addAnimatorWidget(id: string = null) {
+        if (!id) {
+            id = this.getNextId(AnimatorComponent.WIDGET_CONFIG.type);
+        }
+
+        if (id) {
+            this.animatorWidgets.set(id, new EmptyWidgetStore());
+        }
+        return id;
+    }
+
+    createFloatingRegionListWidget = () => {
+        const config = RegionListComponent.WIDGET_CONFIG;
+        config.id = this.addRegionListWidget();
+        this.addFloatingWidget(config);
+    };
+
+    @action addRegionListWidget(id: string = null) {
+        if (!id) {
+            id = this.getNextId(RegionListComponent.WIDGET_CONFIG.type);
+        }
+
+        if (id) {
+            this.regionListWidgets.set(id, new EmptyWidgetStore());
+        }
+        return id;
     }
 
     // endregion
@@ -332,10 +419,8 @@ export class WidgetsStore {
             if (preserveStore) {
                 return;
             }
-            if (widget.type === RenderConfigComponent.WIDGET_CONFIG.type) {
-                this.appStore.widgetsStore.removeRenderConfigWidget(widget.id);
-            }
-            // TODO: Remove spatial and spectral profiles widgets' stores when closing
+
+            this.removeWidget(id, widget.type);
         }
     };
     // endregion

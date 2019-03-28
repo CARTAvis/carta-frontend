@@ -5,30 +5,41 @@ import "./ProfilerInfoComponent.css";
 
 export class ProfilerInfoComponentProps {
     darkMode: boolean;
-    cursorInfo: {label: string, cursorX: string, cursorY: string};
+    cursorInfo: {isMouseEntered: boolean, cursorX: number, cursorY: number, xUnit: string};
     statInfo: {rms: number, mean: number};
 }
 
 @observer
 export class ProfilerInfoComponent extends React.Component<ProfilerInfoComponentProps> {
+    private getCursorInforLabel = () => {
+        if (this.props.cursorInfo.cursorX === null || this.props.cursorInfo.cursorY === null ||
+            isNaN(this.props.cursorInfo.cursorX) || isNaN(this.props.cursorInfo.cursorY)) {
+            return null;
+        }
+
+        let xLabel = this.props.cursorInfo.xUnit === "Channel" ?
+                    "Channel " + this.props.cursorInfo.cursorX.toFixed(0) :
+                    formattedNotation(this.props.cursorInfo.cursorX) + " " + this.props.cursorInfo.xUnit;
+        return "(" + xLabel + ", " + this.props.cursorInfo.cursorY.toExponential(2) + ")";
+    };
+
     render() {
         let className = "profiler-info";
         if (this.props.darkMode) {
             className += " bp3-dark";
         }
-
-        let cursorInfo = (this.props.cursorInfo && this.props.cursorInfo.label && this.props.cursorInfo.cursorX && this.props.cursorInfo.cursorY) ? (
+        let cursorInfo = (this.props.cursorInfo) ? (
             <tr>
                 <td className="td-label">
-                    <pre>{this.props.cursorInfo.label}</pre>
+                    <pre>{this.props.cursorInfo.isMouseEntered ? "Cursor" : "Data"}</pre>
                 </td>
                 <td>
-                    <pre>{"(" + this.props.cursorInfo.cursorX + ", " + this.props.cursorInfo.cursorY + ")"}</pre>
+                    <pre>{this.getCursorInforLabel()}</pre>
                 </td>
             </tr>
         ) : null;
 
-        let statInfo = (this.props.statInfo && this.props.statInfo.rms && this.props.statInfo.mean) ? (
+        let statInfo = (this.props.statInfo) ? (
             <tr>
                 <td><pre>Mean/RMS:</pre></td>
                 <td>

@@ -1,11 +1,11 @@
 import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {OverlayStore} from "./OverlayStore";
-import {RenderConfigStore} from "./RenderConfigStore";
+import {OverlayStore, RegionSetStore, RenderConfigStore} from "stores";
 import {Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES} from "models";
 import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency} from "utilities";
+import {BackendService} from "../services";
 
-export class FrameInfo {
+export interface FrameInfo {
     fileId: number;
     fileInfo: CARTA.FileInfo;
     fileInfoExtended: CARTA.FileInfoExtended;
@@ -31,18 +31,31 @@ export class FrameStore {
     @observable overviewRasterData: Float32Array;
     @observable overviewRasterView: FrameView;
     @observable valid: boolean;
+    @observable regionSet: RegionSetStore;
 
-    private overlayStore: OverlayStore;
+    private readonly overlayStore: OverlayStore;
+    private readonly backendService: BackendService;
 
-    constructor(overlay: OverlayStore) {
+    constructor(overlay: OverlayStore, frameInfo: FrameInfo, backendService: BackendService) {
         this.overlayStore = overlay;
-        this.renderHiDPI = false;
+        this.backendService = backendService;
+        this.frameInfo = frameInfo;
+        this.renderHiDPI = true;
         this.center = {x: 0, y: 0};
         this.stokes = 0;
         this.channel = 0;
         this.requiredStokes = 0;
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore();
+        this.regionSet = new RegionSetStore(this, backendService);
+        this.valid = true;
+        this.currentFrameView = {
+            xMin: 0,
+            xMax: 0,
+            yMin: 0,
+            yMax: 0,
+            mip: 999
+        };
     }
 
     @computed get requiredFrameView(): FrameView {
@@ -142,8 +155,25 @@ export class FrameStore {
             return undefined;
         }
         const N = this.frameInfo.fileInfoExtended.depth;
+        const indexes = new Array<number>(N);
         const values = new Array<number>(N);
         const rawValues = new Array<number>(N);
+
+        let getChannelIndexSimple =  (value: number): number => {
+            if (!value) {
+                return null;
+            }
+
+            if (value < 0) {
+                return 0;
+            } else if (value > N - 1) {
+                return N - 1;
+            }
+
+            const ceil = Math.ceil(value);
+            const floor = Math.floor(value);
+            return (ceil - value) < (value - floor) ? ceil : floor;
+        };
 
         // By default, we try to use the WCS information to determine channel info.
         const channelTypeInfo = FrameStore.FindChannelType(this.frameInfo.fileInfoExtended.headerEntries);
@@ -179,20 +209,46 @@ export class FrameStore {
                     for (let i = 0; i < N; i++) {
                         // FITS standard uses 1 for the first pixel
                         const channelOffset = i + 1 - refPix;
+                        indexes[i] = i;
                         rawValues[i] = (channelOffset * delta + refVal);
                         values[i] = rawValues[i] * scalingFactor;
                     }
-                    return {fromWCS: true, channelType: channelTypeInfo.type, values, rawValues};
+                    return {
+                        fromWCS: true,
+                        channelType: channelTypeInfo.type,
+                        indexes,
+                        values,
+                        rawValues,
+                        getChannelIndexWCS: (value: number): number => {
+                            if (!value) {
+                                return null;
+                            }
+
+                            const index = (value / scalingFactor - refVal) / delta + refPix - 1;
+                            if (index < 0) {
+                                return 0;
+                            } else if (index > values.length - 1) {
+                                return values.length - 1;
+                            }
+
+                            const ceil = Math.ceil(index);
+                            const floor = Math.floor(index);
+                            return Math.abs(values[ceil] - value) < Math.abs(value - values[floor]) ? ceil : floor;
+                        },
+                        getChannelIndexSimple: getChannelIndexSimple
+                    };
                 }
             }
         }
 
         // return channels
         for (let i = 0; i < N; i++) {
+            indexes[i] = i;
             values[i] = i;
             rawValues[i] = i;
         }
-        return {fromWCS: false, channelType: {code: "", name: "Channel"}, values, rawValues};
+        return {fromWCS: false, channelType: {code: "", name: "Channel"}, indexes, values, rawValues,
+                getChannelIndexWCS: null, getChannelIndexSimple: getChannelIndexSimple};
     }
 
     @computed get spectralInfo(): SpectralInfo {

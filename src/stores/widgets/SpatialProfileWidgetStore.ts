@@ -16,15 +16,7 @@ export class SpatialProfileWidgetStore {
     @observable wcsAxisVisible: boolean;
     @observable markerTextVisible: boolean;
 
-    @computed get validCoordinates() {
-        const validCoordinates = [];
-        for (let coordinate of ["x", "y"]) {
-            for (let stokes of ["", "I", "Q", "U", "V"]) {
-                validCoordinates.push(`${stokes}${coordinate}`);
-            }
-        }
-        return validCoordinates;
-    }
+    private static ValidCoordinates = ["x", "y", "Ix", "Iy", "Qx", "Qy", "Ux", "Uy", "Vx", "Vz"];
 
     @action setFileId = (fileId: number) => {
         // Reset zoom when changing between files
@@ -40,7 +32,7 @@ export class SpatialProfileWidgetStore {
 
     @action setCoordinate = (coordinate: string) => {
         // Check coordinate validity
-        if (this.validCoordinates.indexOf(coordinate) !== -1) {
+        if (SpatialProfileWidgetStore.ValidCoordinates.indexOf(coordinate) !== -1) {
             // Reset zoom when changing between coordinates
             this.clearXYBounds();
             this.coordinate = coordinate;

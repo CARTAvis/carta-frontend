@@ -2,7 +2,7 @@ import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {AlertStore, AnimationState, AnimatorStore, FrameInfo, FrameStore, FileBrowserStore, LogEntry, LogStore, OverlayStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore, dayPalette, nightPalette} from ".";
+import {AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore, FrameInfo, FrameStore, LogEntry, LogStore, nightPalette, OverlayStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore} from ".";
 import {BackendService} from "services";
 import {CursorInfo, FrameView} from "models";
 import {smoothStepOffset} from "utilities";
@@ -45,6 +45,16 @@ export class AppStore {
         this.imageToolbarVisible = false;
     };
 
+    // Region dialog
+    @observable regionDialogVisible: boolean;
+    @action showRegionDialog = () => {
+        console.log(`Showing dialog for ${this.activeFrame.regionSet.selectedRegion}`);
+        this.regionDialogVisible = true;
+    };
+    @action hideRegionDialog = () => {
+        this.regionDialogVisible = false;
+    };
+
     // Overlay
     @observable overlayStore: OverlayStore;
     // File Browser
@@ -74,10 +84,31 @@ export class AppStore {
         this.aboutDialogVisible = false;
     };
 
+    @observable apiKey;
+    @action applyApiKey = (newKey: string, forceReload: boolean = true) => {
+        if (newKey) {
+            localStorage.setItem("API_KEY", newKey);
+            this.apiKey = newKey;
+        } else {
+            localStorage.removeItem("API_KEY");
+        }
+        if (forceReload) {
+            location.reload();
+        }
+    };
+    @observable apiKeyDialogVisible: boolean;
+    @action showApiKeyDialog = () => {
+        this.apiKeyDialogVisible = true;
+    };
+    @action hideApiKeyDialog = () => {
+        this.apiKeyDialogVisible = false;
+    };
+
     // Tasks
     @observable taskProgress: number;
     @observable taskStartTime: number;
     @observable taskCurrentTime: number;
+    @observable fileLoading: boolean;
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -121,7 +152,9 @@ export class AppStore {
 
     // Frame actions
     @action addFrame = (directory: string, file: string, hdu: string, fileId: number) => {
+        this.fileLoading = true;
         this.backendService.loadFile(directory, file, hdu, fileId, CARTA.RenderMode.RASTER).subscribe(ack => {
+            this.fileLoading = false;
             let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
             if (ack.fileInfoExtended.dimensions > 2) {
                 dimensionsString += `\u00D7${ack.fileInfoExtended.depth}`;
@@ -130,22 +163,19 @@ export class AppStore {
                 }
             }
             this.logStore.addInfo(`Loaded file ${ack.fileInfo.name} with dimensions ${dimensionsString}`, ["file"]);
-            let newFrame = new FrameStore(this.overlayStore);
-            newFrame.frameInfo = new FrameInfo();
-            newFrame.frameInfo.fileId = ack.fileId;
-            newFrame.frameInfo.fileInfo = ack.fileInfo as CARTA.FileInfo;
-            newFrame.frameInfo.fileInfoExtended = ack.fileInfoExtended as CARTA.FileInfoExtended;
-            newFrame.frameInfo.renderMode = CARTA.RenderMode.RASTER;
-            newFrame.fitZoom();
-            newFrame.currentFrameView = {
-                xMin: 0,
-                xMax: 0,
-                yMin: 0,
-                yMax: 0,
-                mip: 999
+            const frameInfo: FrameInfo = {
+                fileId: ack.fileId,
+                fileInfo: new CARTA.FileInfo(ack.fileInfo),
+                fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
+                renderMode: CARTA.RenderMode.RASTER
             };
-            newFrame.valid = true;
+
+            let newFrame = new FrameStore(this.overlayStore, frameInfo, this.backendService);
+            newFrame.fitZoom();
             this.loadWCS(newFrame);
+
+            // clear existing spectral requirements for the frame
+            this.existingRequirementsMap.delete(ack.fileId);
 
             // Place frame in frame array (replace frame with the same ID if it exists)
             const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === fileId);
@@ -290,7 +320,14 @@ export class AppStore {
         this.cursorFrozen = !this.cursorFrozen;
     };
 
+    private existingRequirementsMap: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
+
     constructor() {
+        const existingKey = localStorage.getItem("API_KEY");
+        if (existingKey) {
+            this.apiKey = existingKey;
+        }
+
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore);
         this.astReady = false;
@@ -305,6 +342,7 @@ export class AppStore {
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
         this.darkTheme = false;
+        this.existingRequirementsMap = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
 
         const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
             this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
@@ -315,7 +353,11 @@ export class AppStore {
         }, 200);
 
         const debouncedSetCursor = _.debounce((fileId: number, x: number, y: number) => {
-            this.backendService.setCursor(fileId, x, y);
+            const frame = this.getFrame(fileId);
+            if (frame && frame.regionSet.regions[0]) {
+                frame.regionSet.regions[0].setControlPoint(0, {x, y});
+                this.backendService.setCursor(fileId, x, y);
+            }
         }, 200);
 
         // Update frame view
@@ -384,9 +426,7 @@ export class AppStore {
         // Set spatial and spectral requirements of cursor region on file load
         autorun(() => {
             if (this.activeFrame) {
-                let profileConfig = new CARTA.SetSpectralRequirements.SpectralConfig({coordinate: "z", statsTypes: [CARTA.StatsType.None]});
                 this.backendService.setSpatialRequirements(this.activeFrame.frameInfo.fileId, 0, ["x", "y"]);
-                this.backendService.setSpectralRequirements(this.activeFrame.frameInfo.fileId, 0, [profileConfig]);
             }
         });
 
@@ -407,6 +447,9 @@ export class AppStore {
         autorun(() => {
             AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
         });
+
+        // Update requirements every 200 ms
+        setInterval(this.recalculateSpectralRequirements, 200);
 
         // Subscribe to frontend streams
         this.backendService.getSpatialProfileStream().subscribe(this.handleSpatialProfileStream);
@@ -536,4 +579,159 @@ export class AppStore {
         }
         return this.frames.find(f => f.frameInfo.fileId === fileId);
     }
+
+    // Requirements
+    recalculateSpectralRequirements = () => {
+        if (!this.activeFrame) {
+            return;
+        }
+
+        const tStart = performance.now();
+
+        const requirementsMap = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
+        this.widgetsStore.spectralProfileWidgets.forEach(v => {
+            const frame = this.getFrame(v.fileId);
+            const regionId = v.regionId;
+            const fileId = frame.frameInfo.fileId;
+            const coordinate = v.coordinate;
+            let statsType = v.statsType;
+
+            if (!frame.regionSet) {
+                return;
+            }
+            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+            if (region) {
+                // Point regions have no meaningful stats type
+                if (region.regionType === CARTA.RegionType.POINT) {
+                    statsType = CARTA.StatsType.None;
+                }
+
+                let frameRequirementsMap = requirementsMap.get(fileId);
+                if (!frameRequirementsMap) {
+                    frameRequirementsMap = new Map<number, CARTA.SetSpectralRequirements>();
+                    requirementsMap.set(fileId, frameRequirementsMap);
+                }
+
+                let regionRequirements = frameRequirementsMap.get(regionId);
+                if (!regionRequirements) {
+                    regionRequirements = new CARTA.SetSpectralRequirements({regionId, fileId});
+                    frameRequirementsMap.set(regionId, regionRequirements);
+                }
+
+                if (!regionRequirements.spectralProfiles) {
+                    regionRequirements.spectralProfiles = [];
+                }
+
+                let spectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === coordinate);
+                if (!spectralConfig) {
+                    // create new spectral config
+                    regionRequirements.spectralProfiles.push({coordinate, statsTypes: [statsType]});
+                } else if (spectralConfig.statsTypes.indexOf(statsType) === -1) {
+                    // add to the stats type array
+                    spectralConfig.statsTypes.push(statsType);
+                }
+            }
+        });
+
+        const diffList = this.diffRequirementsMap(requirementsMap);
+        this.existingRequirementsMap = requirementsMap;
+
+        const tEnd = performance.now();
+        const dt = tEnd - tStart;
+        if (diffList.length) {
+            console.log(`Spectral requirements calculated and diffed in ${dt} ms`);
+            diffList.forEach(requirements => this.backendService.setSpectralRequirements(requirements));
+        }
+    };
+
+    // This function diffs the updated requirements map with the existing requirements map, and reacts to changes
+    // Three diff cases are checked:
+    // 1. The old map has an entry, but the new one does not => send an "empty" SetSpectralRequirements message
+    // 2. The old and new maps both have entries, but they are different => send the new SetSpectralRequirements message
+    // 3. The new map has an entry, but the old one does not => send the new SetSpectralRequirements message
+    // The easiest way to check all three is to first add any missing entries to the new map (as empty requirements), and then check the updated maps entries
+    diffRequirementsMap = (updatedRequirementsMap: Map<number, Map<number, CARTA.SetSpectralRequirements>>) => {
+        const diffList: CARTA.SetSpectralRequirements[] = [];
+
+        // Fill updated requirements with missing entries
+        this.existingRequirementsMap.forEach((fileRequirements, fileId) => {
+            let updatedFileRequirements = updatedRequirementsMap.get(fileId);
+            if (!updatedFileRequirements) {
+                updatedFileRequirements = new Map<number, CARTA.SetSpectralRequirements>();
+                updatedRequirementsMap.set(fileId, updatedFileRequirements);
+            }
+            fileRequirements.forEach((regionRequirements, regionId) => {
+                let updatedRegionRequirements = updatedFileRequirements.get(regionId);
+                if (!updatedRegionRequirements) {
+                    updatedRegionRequirements = new CARTA.SetSpectralRequirements({fileId, regionId, spectralProfiles: []});
+                    updatedFileRequirements.set(regionId, updatedRegionRequirements);
+                }
+            });
+        });
+
+        // Go through updated requirements entries and find differences
+        updatedRequirementsMap.forEach((fileRequirements, fileId) => {
+            let existingFileRequirements = this.existingRequirementsMap.get(fileId);
+            if (!existingFileRequirements) {
+                // If there are no existing requirements for this fileId, all entries for this file are new
+                fileRequirements.forEach(regionRequirements => diffList.push(regionRequirements));
+            } else {
+                fileRequirements.forEach((regionRequirements, regionId) => {
+                    let existingRegionRequirements = existingFileRequirements.get(regionId);
+                    if (!existingRegionRequirements) {
+                        // If there are no existing requirements for this regionId, this is a new entry
+                        diffList.push(regionRequirements);
+                    } else {
+                        // Deep equality comparison with sorted arrays
+                        const existingConfigCount = existingRegionRequirements.spectralProfiles ? existingRegionRequirements.spectralProfiles.length : 0;
+                        const updatedConfigCount = regionRequirements.spectralProfiles ? regionRequirements.spectralProfiles.length : 0;
+
+                        if (existingConfigCount !== updatedConfigCount) {
+                            diffList.push(regionRequirements);
+                            return;
+                        }
+
+                        if (existingConfigCount === 0) {
+                            return;
+                        }
+                        const sortedConfigs = regionRequirements.spectralProfiles.sort(((a, b) => a.coordinate > b.coordinate ? 1 : -1));
+                        const sortedExistingConfigs = existingRegionRequirements.spectralProfiles.sort(((a, b) => a.coordinate > b.coordinate ? 1 : -1));
+
+                        for (let i = 0; i < updatedConfigCount; i++) {
+                            const config = sortedConfigs[i];
+                            const existingConfig = sortedExistingConfigs[i];
+                            if (config.coordinate !== existingConfig.coordinate) {
+                                diffList.push(regionRequirements);
+                                return;
+                            }
+
+                            const existingStatsCount = existingConfig.statsTypes ? existingConfig.statsTypes.length : 0;
+                            const updatedStatsCount = config.statsTypes ? config.statsTypes.length : 0;
+
+                            if (existingStatsCount !== updatedStatsCount) {
+                                diffList.push(regionRequirements);
+                                return;
+                            }
+
+                            if (existingStatsCount === 0) {
+                                return;
+                            }
+
+                            const sortedStats = config.statsTypes.sort();
+                            const sortedExistingStats = existingConfig.statsTypes.sort();
+                            for (let j = 0; j < updatedStatsCount; j++) {
+                                if (sortedStats[j] !== sortedExistingStats[j]) {
+                                    diffList.push(regionRequirements);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+        });
+        // Sort list so that requirements clearing occurs first
+        return diffList.sort((a, b) => a.spectralProfiles.length > b.spectralProfiles.length ? 1 : -1);
+    };
 }

@@ -11,7 +11,7 @@ import {PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {ProfilerInfoComponent} from "./ProfilerInfo/ProfilerInfoComponent";
 import {Point2D} from "models";
-import {clamp, formattedNotation, binarySearchByX} from "utilities";
+import {clamp, binarySearchByX} from "utilities";
 import "./LinePlotComponent.css";
 
 enum ZoomMode {
@@ -37,6 +37,7 @@ export interface LineMarker {
     horizontal: boolean;
     width?: number;
     draggable?: boolean;
+    dragCustomBoundary?: {xMin?: number, xMax?: number, yMin?: number, yMax?: number};
     dragMove?: (val: number) => void;
     isMouseMove?: boolean;
 }
@@ -104,6 +105,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     @observable selectionBoxStart = {x: 0, y: 0};
     @observable selectionBoxEnd = {x: 0, y: 0};
     @observable isMouseEntered = false;
+    @observable isMarkerDragging = false;
 
     @computed get isSelecting() {
         return this.interactionMode === InteractionMode.SELECTING;
@@ -173,6 +175,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return fraction * (this.chartArea.bottom - this.chartArea.top) + this.chartArea.top;
     }
 
+    private getCanvasSpaceX(x: number) {
+        return Math.floor(this.getPixelForValueX(x)) + 0.5 * devicePixelRatio;
+    }
+
+    private getCanvasSpaceY(y: number) {
+        return Math.floor(this.getPixelForValueY(y, this.props.logY)) + 0.5 * devicePixelRatio;
+    }
+
     onPlotRefUpdated = (plotRef) => {
         this.plotRef = plotRef;
     };
@@ -194,14 +204,36 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         this.isMouseEntered = false;
     };
 
-    dragBoundsFuncVertical = (pos: Point2D) => {
-        const chartArea = this.chartArea;
-        return {x: clamp(pos.x, chartArea.left, chartArea.right), y: chartArea.top};
+    dragBoundsFuncVertical = (pos: Point2D, marker: LineMarker) => {
+        let xMin = this.chartArea.left;
+        let xMax = this.chartArea.right;
+        if (marker.dragCustomBoundary && marker.dragCustomBoundary.xMin) {
+            xMin = this.getCanvasSpaceX(marker.dragCustomBoundary.xMin);
+        }
+        if (marker.dragCustomBoundary && marker.dragCustomBoundary.xMax) {
+            xMax = this.getCanvasSpaceX(marker.dragCustomBoundary.xMax);
+        }
+        return {x: clamp(pos.x, xMin, xMax), y: 0};
     };
 
-    dragBoundsFuncHorizontal = (pos: Point2D) => {
-        const chartArea = this.chartArea;
-        return {x: chartArea.left, y: clamp(pos.y, chartArea.top, chartArea.bottom)};
+    dragBoundsFuncHorizontal = (pos: Point2D, marker: LineMarker) => {
+        let yMin = this.chartArea.top;
+        let yMax = this.chartArea.bottom;
+        if (marker.dragCustomBoundary && marker.dragCustomBoundary.yMin) {
+            yMin = this.getCanvasSpaceY(marker.dragCustomBoundary.yMin);
+        }
+        if (marker.dragCustomBoundary && marker.dragCustomBoundary.yMax) {
+            yMax = this.getCanvasSpaceY(marker.dragCustomBoundary.yMax);
+        }
+        return {x: 0, y: clamp(pos.y, yMin, yMax)};
+    };
+
+    @action onMarkerDragStart = () => {
+        this.isMarkerDragging = true;
+    };
+
+    @action onMarkerDragEnd = () => {
+        this.isMarkerDragging = false;
     };
 
     onMarkerDragged = (ev, marker: LineMarker) => {
@@ -241,16 +273,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     onStageMouseDown = (ev) => {
-        if (this.props.data) {
-            const mouseEvent: MouseEvent = ev.evt;
-            this.stageClickStartX = mouseEvent.offsetX;
-            this.stageClickStartY = mouseEvent.offsetY;
-            const modifierPressed = mouseEvent.ctrlKey || mouseEvent.shiftKey || mouseEvent.altKey;
-            if (this.hoveredMarker === undefined && !modifierPressed) {
-                this.startSelection(mouseEvent.offsetX, mouseEvent.offsetY);
-            } else if (modifierPressed) {
-                this.startPanning(mouseEvent.offsetX);
-            }
+        const mouseEvent: MouseEvent = ev.evt;
+        this.stageClickStartX = mouseEvent.offsetX;
+        this.stageClickStartY = mouseEvent.offsetY;
+        const modifierPressed = mouseEvent.ctrlKey || mouseEvent.shiftKey || mouseEvent.altKey;
+        if (this.hoveredMarker === undefined && !modifierPressed) {
+            this.startSelection(mouseEvent.offsetX, mouseEvent.offsetY);
+        } else if (modifierPressed) {
+            this.startPanning(mouseEvent.offsetX);
         }
     };
 
@@ -259,14 +289,13 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     onStageMouseUp = (ev) => {
-        if (this.props.data) {
-            const mouseEvent: MouseEvent = ev.evt;
-
-            // Redirect clicks
-            const mouseMoveDist = {x: Math.abs(mouseEvent.offsetX - this.stageClickStartX), y: Math.abs(mouseEvent.offsetY - this.stageClickStartY)};
-            if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
-                this.onStageClick(ev);
-            } else {
+        const mouseEvent: MouseEvent = ev.evt;
+        // Redirect clicks
+        const mouseMoveDist = {x: Math.abs(mouseEvent.offsetX - this.stageClickStartX), y: Math.abs(mouseEvent.offsetY - this.stageClickStartY)};
+        if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
+            this.onStageClick(ev);
+        } else {
+            if (this.props.data) {
                 this.stageClickStartX = undefined;
                 this.stageClickStartY = undefined;
                 if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
@@ -291,8 +320,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     }
                 }
             }
-            this.endInteractions();
         }
+        this.endInteractions();
     };
 
     @action updateSelection(x: number, y: number) {
@@ -337,7 +366,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         const delta = currentTime - this.previousClickTime;
         this.previousClickTime = currentTime;
         if (delta < DOUBLE_CLICK_THRESHOLD) {
-            this.onStageDoubleClick(ev);
+            this.onStageDoubleClick();
             clearTimeout(this.pendingClickHandle);
             return;
         } else {
@@ -370,7 +399,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
     };
 
-    onStageDoubleClick = (ev) => {
+    onStageDoubleClick = () => {
         if (this.props.graphZoomReset) {
             this.props.graphZoomReset();
         }
@@ -401,6 +430,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     onMouseEnter = () => {
+        this.showMouseEnterWidget();
+    };
+
+    onMouseMove = () => {
         this.showMouseEnterWidget();
     };
 
@@ -483,10 +516,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const marker = this.props.markers[i];
                 // Default marker colors if none is given
                 const markerColor = marker.color || (this.props.darkMode ? Colors.RED4 : Colors.RED2);
-                const markerOpacity = (marker.isMouseMove && !this.isMouseEntered) ? 0 : (marker.opacity || 1);
+                const markerOpacity = (marker.isMouseMove && (!this.isMouseEntered || this.isMarkerDragging)) ?
+                                        0 : (marker.opacity || 1);
                 // Separate configuration for horizontal markers
                 if (marker.horizontal) {
-                    let valueCanvasSpace = Math.floor(this.getPixelForValueY(marker.value, this.props.logY)) + 0.5 * devicePixelRatio;
+                    let valueCanvasSpace = this.getCanvasSpaceY(marker.value);
                     if (valueCanvasSpace < Math.floor(chartArea.top - 1) || valueCanvasSpace > Math.ceil(chartArea.bottom + 1) || isNaN(valueCanvasSpace)) {
                         continue;
                     }
@@ -494,7 +528,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     const midPoint = (chartArea.left + chartArea.right) / 2.0;
 
                     let lineSegments;
-                    let interactionRect;
                     // Add hover markers
                     if (isHoverMarker) {
                         const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
@@ -522,35 +555,41 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     }
 
                     if (marker.draggable) {
-                        interactionRect = (
-                            <Rect
-                                dragBoundFunc={this.dragBoundsFuncHorizontal}
-                                x={chartArea.left}
-                                y={-MARKER_HITBOX_THICKNESS / 2.0}
-                                width={lineWidth}
-                                height={MARKER_HITBOX_THICKNESS}
+                        lines.push(
+                            <Group
+                                key={marker.id + "-draggable"}
+                                x={0}
+                                y={valueCanvasSpace}
                                 draggable={true}
+                                dragBoundFunc={pos => this.dragBoundsFuncHorizontal(pos, marker)}
                                 onDragMove={ev => this.onMarkerDragged(ev, marker)}
-                                onMouseEnter={() => this.setHoveredMarker(marker)}
-                                onMouseLeave={() => this.setHoveredMarker(undefined)}
-                            />
+                            >
+                                <Rect
+                                    x={chartArea.left}
+                                    y={-MARKER_HITBOX_THICKNESS / 2.0}
+                                    width={lineWidth}
+                                    height={MARKER_HITBOX_THICKNESS}
+                                    onMouseEnter={() => this.setHoveredMarker(marker)}
+                                    onMouseLeave={() => this.setHoveredMarker(undefined)}
+                                />
+                                {lineSegments}
+                            </Group>
+                        );
+                    } else {
+                        lines.push(
+                            <Group key={marker.id} x={0} y={valueCanvasSpace}>
+                                {lineSegments}
+                            </Group>
                         );
                     }
-                    lines.push(
-                        <Group key={marker.id} x={0} y={valueCanvasSpace}>
-                            {interactionRect}
-                            {lineSegments}
-                        </Group>
-                    );
                 } else {
-                    let valueCanvasSpace = Math.floor(this.getPixelForValueX(marker.value)) + 0.5 * devicePixelRatio;
+                    let valueCanvasSpace = this.getCanvasSpaceX(marker.value);
                     if (valueCanvasSpace < Math.floor(chartArea.left - 1) || valueCanvasSpace > Math.ceil(chartArea.right + 1) || isNaN(valueCanvasSpace)) {
                         continue;
                     }
                     const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
                     const midPoint = (chartArea.top + chartArea.bottom) / 2.0;
                     let lineSegments;
-                    let interactionRect;
                     // Add hover markers
                     if (isHoverMarker) {
                         const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
@@ -578,29 +617,35 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     }
 
                     if (marker.draggable) {
-                        interactionRect = (
-                            <Rect
-                                dragBoundFunc={this.dragBoundsFuncVertical}
-                                x={valueCanvasSpace - MARKER_HITBOX_THICKNESS / 2.0}
-                                y={chartArea.top}
-                                width={MARKER_HITBOX_THICKNESS}
-                                height={lineHeight}
-                                strokeEnabled={false}
+                        lines.push(
+                            <Group
+                                key={marker.id + "-draggable"}
+                                x={valueCanvasSpace}
+                                y={0}
                                 draggable={true}
-                                key={marker.id + "-dragrect"}
+                                dragBoundFunc={pos => this.dragBoundsFuncVertical(pos, marker)}
+                                onDragStart={this.onMarkerDragStart}
+                                onDragEnd={this.onMarkerDragEnd}
                                 onDragMove={ev => this.onMarkerDragged(ev, marker)}
-                                onMouseEnter={() => this.setHoveredMarker(marker)}
-                                onMouseLeave={() => this.setHoveredMarker(undefined)}
-                            />
+                            >
+                                <Rect
+                                    x={-MARKER_HITBOX_THICKNESS / 2.0}
+                                    y={chartArea.top}
+                                    width={MARKER_HITBOX_THICKNESS}
+                                    height={lineHeight}
+                                    onMouseEnter={() => this.setHoveredMarker(marker)}
+                                    onMouseLeave={() => this.setHoveredMarker(undefined)}
+                                />
+                                {lineSegments}
+                            </Group>
                         );
-                        lines.push(interactionRect);
+                    } else {
+                        lines.push(
+                            <Group key={marker.id} x={valueCanvasSpace} y={0}>
+                                {lineSegments}
+                            </Group>
+                        );
                     }
-
-                    lines.push(
-                        <Group key={marker.id} x={valueCanvasSpace} y={0}>
-                            {lineSegments}
-                        </Group>
-                    );
                 }
             }
         }
@@ -665,13 +710,14 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         let cursorInfo = null;
         if (this.props.data && this.props.cursorX) {
-            let x = this.isMouseEntered ? this.props.cursorX.profiler : this.props.cursorX.image;
-            let nearest = binarySearchByX(this.props.data, x);
+            let nearest = binarySearchByX(this.props.data,
+                            this.isMouseEntered ? this.props.cursorX.profiler : this.props.cursorX.image);
             if (nearest) {
                 cursorInfo = {
-                    label: this.isMouseEntered ? "Cursor:" : "Data:",
-                    cursorX: formattedNotation(nearest.x) + " " + this.props.cursorX.unit,
-                    cursorY: nearest.y.toExponential(2)
+                    isMouseEntered: this.isMouseEntered,
+                    cursorX: nearest.x,
+                    cursorY: nearest.y,
+                    xUnit: this.props.cursorX.unit,
                 };
             }
         }
@@ -682,6 +728,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 style={{cursor: this.isPanning || isHovering ? "move" : "crosshair"}}
                 onKeyDown={this.onKeyDown}
                 onMouseEnter={this.onMouseEnter}
+                onMouseMove={this.onMouseMove}
                 onMouseLeave={this.onMouseLeave}
                 tabIndex={0}
             >
