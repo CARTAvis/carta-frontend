@@ -141,7 +141,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     private updateUniforms() {
         const frame = this.props.frame;
-        const stokes = this.props.frame.stokes;
         this.gl.uniform1f(this.MinValUniform, frame.renderConfig.scaleMinVal);
         this.gl.uniform1f(this.MaxValUniform, frame.renderConfig.scaleMaxVal);
         this.gl.uniform1i(this.CmapIndex, frame.renderConfig.colorMap);
@@ -328,8 +327,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const currentView = frame ? frame.currentFrameView : null;
         if (frame) {
             const colorMapping = {
-                min: frame.renderConfig.scaleMin,
-                max: frame.renderConfig.scaleMax,
+                min: frame.renderConfig.scaleMinVal,
+                max: frame.renderConfig.scaleMaxVal,
                 colorMap: frame.renderConfig.colorMap,
                 contrast: frame.renderConfig.contrast,
                 bias: frame.renderConfig.bias,
