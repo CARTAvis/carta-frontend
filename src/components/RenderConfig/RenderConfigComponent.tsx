@@ -263,7 +263,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 id: "marker-min",
                 label: this.widgetStore.markerTextVisible ? "Min" : undefined,
                 draggable: true,
-                dragCustomBoundary: {xMax: frame.renderConfig.scaleMax},
+                dragCustomBoundary: {xMax: frame.renderConfig.scaleMaxVal},
                 dragMove: this.onMinMoved,
                 horizontal: false,
             }, {
@@ -271,7 +271,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 id: "marker-max",
                 label: this.widgetStore.markerTextVisible ? "Max" : undefined,
                 draggable: true,
-                dragCustomBoundary: {xMin: frame.renderConfig.scaleMin},
+                dragCustomBoundary: {xMin: frame.renderConfig.scaleMinVal},
                 dragMove: this.onMaxMoved,
                 horizontal: false,
             }];
