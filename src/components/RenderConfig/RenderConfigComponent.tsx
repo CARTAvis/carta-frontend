@@ -175,7 +175,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         const frame = this.props.appStore.activeFrame;
         // Check bounds first, to make sure the max isn't being moved below the min
         if (frame && frame.renderConfig && x < frame.renderConfig.scaleMaxVal) {
-            frame.renderConfig.setStokesScaleMin(x);
+            this.props.appStore.activeFrame.renderConfig.setCustomScale(x, this.props.appStore.activeFrame.renderConfig.scaleMaxVal);
         }
     };
 
@@ -183,7 +183,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         const frame = this.props.appStore.activeFrame;
         // Check bounds first, to make sure the max isn't being moved below the min
         if (frame && frame.renderConfig && x > frame.renderConfig.scaleMinVal) {
-            frame.renderConfig.setStokesScaleMax(x);
+            this.props.appStore.activeFrame.renderConfig.setCustomScale(this.props.appStore.activeFrame.renderConfig.scaleMinVal, x);
         }
     };
 
