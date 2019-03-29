@@ -366,7 +366,6 @@ export class AppStore {
             const frame = this.getFrame(fileId);
             if (frame && frame.regionSet.regions[0]) {
                 frame.regionSet.regions[0].setControlPoint(0, {x, y});
-                this.backendService.setCursor(fileId, x, y);
             }
         }, 200);
 
