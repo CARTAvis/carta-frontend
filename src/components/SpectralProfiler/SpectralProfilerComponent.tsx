@@ -85,9 +85,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         let coordinateData: CARTA.ISpectralProfile;
         if (this.frame && this.frame.regionSet) {
-            const region = this.frame.regionSet.regions.find(r=>r.regionId === this.widgetStore.regionId);
+            const region = this.frame.regionSet.regions.find(r => r.regionId === this.widgetStore.regionId);
             if (region) {
-                coordinateData = this.profileStore.getProfile(this.widgetStore.coordinate, region.isClosedRegion? this.widgetStore.statsType: CARTA.StatsType.None);
+                coordinateData = this.profileStore.getProfile(this.widgetStore.coordinate, region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.None);
             }
         }
 
