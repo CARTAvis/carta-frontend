@@ -126,7 +126,7 @@ export class SpectralProfileWidgetStore {
         this.fileId = fileId;
         this.regionId = regionId;
         this.coordinate = coordinate;
-        this.statsType = CARTA.StatsType.Sum;
+        this.statsType = CARTA.StatsType.Mean;
 
         // Describes how the data is visualised
         this.plotType = PlotType.STEPS;
