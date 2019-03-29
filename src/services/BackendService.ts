@@ -87,8 +87,8 @@ export class BackendService {
             EventNames.RegisterViewerAck,
             EventNames.OpenFile,
             EventNames.OpenFileAck,
-            EventNames.SetStatsRequirements,
-            EventNames.RegionStatsData
+            EventNames.SetHistogramRequirements,
+            EventNames.RegionHistogramData
         ];
 
         // Check local storage for a list of events to log to console
@@ -365,7 +365,7 @@ export class BackendService {
     }
 
     @action("set spectral requirements")
-    setSpectralRequirements(requirementsMessage: CARTA.SetSpectralRequirements) {
+    setSpectralRequirements(requirementsMessage: CARTA.ISetSpectralRequirements) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             this.logEvent(EventNames.SetSpectralRequirements, this.eventCounter, requirementsMessage, false);
             if (this.sendEvent(EventNames.SetSpectralRequirements, CARTA.SetSpectralRequirements.encode(requirementsMessage).finish())) {
@@ -376,7 +376,7 @@ export class BackendService {
     }
 
     @action("set stats requirements")
-    setStatsRequirements(requirementsMessage: CARTA.SetStatsRequirements) {
+    setStatsRequirements(requirementsMessage: CARTA.ISetStatsRequirements) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             this.logEvent(EventNames.SetStatsRequirements, this.eventCounter, requirementsMessage, false);
             if (this.sendEvent(EventNames.SetStatsRequirements, CARTA.SetStatsRequirements.encode(requirementsMessage).finish())) {
@@ -387,11 +387,10 @@ export class BackendService {
     }
 
     @action("set histogram requirements")
-    setHistogramRequirements(fileId: number, regionId: number, histograms: CARTA.SetHistogramRequirements.HistogramConfig[]) {
+    setHistogramRequirements(requirementsMessage: CARTA.ISetHistogramRequirements) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.SetHistogramRequirements.create({fileId, regionId, histograms});
-            this.logEvent(EventNames.SetHistogramRequirements, this.eventCounter, message, false);
-            if (this.sendEvent(EventNames.SetHistogramRequirements, CARTA.SetHistogramRequirements.encode(message).finish())) {
+            this.logEvent(EventNames.SetHistogramRequirements, this.eventCounter, requirementsMessage, false);
+            if (this.sendEvent(EventNames.SetHistogramRequirements, CARTA.SetHistogramRequirements.encode(requirementsMessage).finish())) {
                 return true;
             }
         }

@@ -26,10 +26,11 @@ export class AppStore {
     // Cursor information
     @observable cursorInfo: CursorInfo;
     @observable cursorFrozen: boolean;
-    // Profiles
+    // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
     @observable spectralProfiles: Map<number, ObservableMap<number, SpectralProfileStore>>;
     @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
+    @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
@@ -175,8 +176,10 @@ export class AppStore {
             newFrame.fitZoom();
             this.loadWCS(newFrame);
 
-            // clear existing spectral requirements for the frame
-            this.existingSpectralRequirementsMap.delete(ack.fileId);
+            // clear existing requirements for the frame
+            this.spectralRequirements.delete(ack.fileId);
+            this.statsRequirements.delete(ack.fileId);
+            this.histogramRequirements.delete(ack.fileId);
 
             // Place frame in frame array (replace frame with the same ID if it exists)
             const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === fileId);
@@ -287,8 +290,7 @@ export class AppStore {
     @action requestCubeHistogram = (fileId: number = -1) => {
         const frame = this.getFrame(fileId);
         if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
-            const histogram = {channel: -2, numBins: -1} as CARTA.SetHistogramRequirements.HistogramConfig;
-            this.backendService.setHistogramRequirements(frame.frameInfo.fileId, -2, [histogram]);
+            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: -2, histograms: [{channel: -2, numBins: -1}]});
             this.restartTaskProgress();
         }
     };
@@ -297,7 +299,7 @@ export class AppStore {
         const frame = this.getFrame(fileId);
         if (frame && frame.renderConfig.cubeHistogramProgress < 1.0) {
             frame.renderConfig.updateCubeHistogram(null, 0);
-            this.backendService.setHistogramRequirements(frame.frameInfo.fileId, -2, []);
+            this.backendService.setHistogramRequirements({fileId: frame.frameInfo.fileId, regionId: -2, histograms: []});
         }
     };
 
@@ -321,8 +323,9 @@ export class AppStore {
         this.cursorFrozen = !this.cursorFrozen;
     };
 
-    private existingSpectralRequirementsMap: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
-    private existingStatsRequirementsMap: Map<number, Array<number>>;
+    private spectralRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
+    private statsRequirements: Map<number, Array<number>>;
+    private histogramRequirements: Map<number, Array<number>>;
     private static readonly DEFAULT_STATS_TYPES = [CARTA.StatsType.NumPixels, CARTA.StatsType.Sum, CARTA.StatsType.Mean, CARTA.StatsType.RMS, CARTA.StatsType.Sigma, CARTA.StatsType.SumSq, CARTA.StatsType.Min, CARTA.StatsType.Max];
 
     constructor() {
@@ -337,6 +340,7 @@ export class AppStore {
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<number, ObservableMap<number, SpectralProfileStore>>();
         this.regionStats = new Map<number, ObservableMap<number, CARTA.RegionStatsData>>();
+        this.regionHistograms = new Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>();
         this.frames = [];
         this.activeFrame = null;
         this.animatorStore = new AnimatorStore(this);
@@ -346,8 +350,9 @@ export class AppStore {
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
         this.darkTheme = false;
-        this.existingSpectralRequirementsMap = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
-        this.existingStatsRequirementsMap = new Map<number, Array<number>>();
+        this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
+        this.statsRequirements = new Map<number, Array<number>>();
+        this.histogramRequirements = new Map<number, Array<number>>();
 
         const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
             this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
@@ -455,6 +460,7 @@ export class AppStore {
         // Update requirements every 200 ms
         setInterval(this.recalculateSpectralRequirements, 200);
         setInterval(this.recalculateStatsRequirements, 200);
+        setInterval(this.recalculateHistogramRequirements, 200);
 
         // Subscribe to frontend streams
         this.backendService.getSpatialProfileStream().subscribe(this.handleSpatialProfileStream);
@@ -513,6 +519,15 @@ export class AppStore {
         if (!regionHistogramData) {
             return;
         }
+
+        let frameHistogramMap = this.regionHistograms.get(regionHistogramData.fileId);
+        if (!frameHistogramMap) {
+            frameHistogramMap = new ObservableMap<number, CARTA.IRegionHistogramData>();
+            this.regionHistograms.set(regionHistogramData.fileId, frameHistogramMap);
+        }
+
+        frameHistogramMap.set(regionHistogramData.regionId, regionHistogramData);
+
         const updatedFrame = this.getFrame(regionHistogramData.fileId);
         if (updatedFrame && regionHistogramData.stokes === updatedFrame.requiredStokes && regionHistogramData.histograms && regionHistogramData.histograms.length) {
             if (regionHistogramData.regionId === -1) {
@@ -602,12 +617,14 @@ export class AppStore {
         return this.frames.find(f => f.frameInfo.fileId === fileId);
     }
 
+    // region requirements calculations
+
     recalculateStatsRequirements = () => {
         if (!this.activeFrame) {
             return;
         }
 
-        const requirementsMap = new Map<number, Array<number>>();
+        const updatedRequirements = new Map<number, Array<number>>();
         this.widgetsStore.statsWidgets.forEach(widgetStore => {
             const frame = this.getFrame(widgetStore.fileId);
             const regionId = widgetStore.regionId;
@@ -617,10 +634,10 @@ export class AppStore {
             }
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (regionId === -1 || region && region.isClosedRegion) {
-                let frameRequirementsArray = requirementsMap.get(fileId);
+                let frameRequirementsArray = updatedRequirements.get(fileId);
                 if (!frameRequirementsArray) {
                     frameRequirementsArray = [];
-                    requirementsMap.set(fileId, frameRequirementsArray);
+                    updatedRequirements.set(fileId, frameRequirementsArray);
                 }
                 if (frameRequirementsArray.indexOf(regionId) === -1) {
                     frameRequirementsArray.push(regionId);
@@ -628,8 +645,8 @@ export class AppStore {
             }
         });
 
-        const diffList = this.diffStatsRequirements(requirementsMap);
-        this.existingStatsRequirementsMap = requirementsMap;
+        const diffList = this.diffStatsRequirements(updatedRequirements);
+        this.statsRequirements = updatedRequirements;
 
         if (diffList.length) {
             for (const requirements of diffList) {
@@ -638,7 +655,7 @@ export class AppStore {
         }
     };
 
-    private diffStatsRequirements = (updatedRequirementsMap: Map<number, Array<number>>) => {
+    private diffStatsRequirements = (updatedRequirements: Map<number, Array<number>>) => {
         const diffList: CARTA.SetStatsRequirements[] = [];
 
         // Three possible scenarios:
@@ -647,34 +664,34 @@ export class AppStore {
         // 3. Existing array and new array => diff should be empty stats for those missing in new array, full stats for those missing in old array
 
         // (1) & (3) handled first
-        this.existingStatsRequirementsMap.forEach((existingArray, fileId) => {
-            const newArray = updatedRequirementsMap.get(fileId);
+        this.statsRequirements.forEach((statsArray, fileId) => {
+            const updatedStatsArray = updatedRequirements.get(fileId);
             // If there's no new array, remove requirements for all existing regions
-            if (!newArray) {
-                for (const regionId of existingArray) {
+            if (!updatedStatsArray) {
+                for (const regionId of statsArray) {
                     diffList.push(CARTA.SetStatsRequirements.create({fileId, regionId, stats: []}));
                 }
             } else {
                 // If regions in the new array are missing, remove requirements for those regions
-                for (const regionId of existingArray) {
-                    if (newArray.indexOf(regionId) === -1) {
+                for (const regionId of statsArray) {
+                    if (updatedStatsArray.indexOf(regionId) === -1) {
                         diffList.push(CARTA.SetStatsRequirements.create({fileId, regionId, stats: []}));
                     }
                 }
                 // If regions in the existing array are missing, add requirements for those regions
-                for (const regionId of newArray) {
-                    if (existingArray.indexOf(regionId) === -1) {
+                for (const regionId of updatedStatsArray) {
+                    if (statsArray.indexOf(regionId) === -1) {
                         diffList.push(CARTA.SetStatsRequirements.create({fileId, regionId, stats: AppStore.DEFAULT_STATS_TYPES}));
                     }
                 }
             }
         });
 
-        updatedRequirementsMap.forEach((newArray, fileId) => {
-            const existingArray = this.existingStatsRequirementsMap.get(fileId);
+        updatedRequirements.forEach((updatedStatsArray, fileId) => {
+            const statsArray = this.statsRequirements.get(fileId);
             // If there's no existing array, add requirements for all new regions
-            if (!existingArray) {
-                for (const regionId of newArray) {
+            if (!statsArray) {
+                for (const regionId of updatedStatsArray) {
                     diffList.push(CARTA.SetStatsRequirements.create({fileId, regionId, stats: AppStore.DEFAULT_STATS_TYPES}));
                 }
             }
@@ -683,13 +700,93 @@ export class AppStore {
         return diffList;
     };
 
-    // Requirements
+    recalculateHistogramRequirements = () => {
+        if (!this.activeFrame) {
+            return;
+        }
+
+        const updatedRequirements = new Map<number, Array<number>>();
+        this.widgetsStore.histogramWidgets.forEach(widgetStore => {
+            const frame = this.getFrame(widgetStore.fileId);
+            const regionId = widgetStore.regionId;
+            const fileId = frame.frameInfo.fileId;
+            if (!frame.regionSet) {
+                return;
+            }
+            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+            if (regionId === -1 || region && region.isClosedRegion) {
+                let frameRequirementsArray = updatedRequirements.get(fileId);
+                if (!frameRequirementsArray) {
+                    frameRequirementsArray = [];
+                    updatedRequirements.set(fileId, frameRequirementsArray);
+                }
+                if (frameRequirementsArray.indexOf(regionId) === -1) {
+                    frameRequirementsArray.push(regionId);
+                }
+            }
+        });
+
+        const diffList = this.diffHistogramRequirements(updatedRequirements);
+        this.histogramRequirements = updatedRequirements;
+
+        if (diffList.length) {
+            for (const requirements of diffList) {
+                this.backendService.setHistogramRequirements(requirements);
+            }
+        }
+    };
+
+    private diffHistogramRequirements = (updatedRequirements: Map<number, Array<number>>) => {
+        const diffList: CARTA.ISetHistogramRequirements[] = [];
+
+        // Three possible scenarios:
+        // 1. Existing array, no new array => diff should be empty stats requirements for each element of existing array
+        // 2. No existing array, new array => diff should be full stats requirements for each element of new array
+        // 3. Existing array and new array => diff should be empty stats for those missing in new array, full stats for those missing in old array
+
+        // (1) & (3) handled first
+        this.histogramRequirements.forEach((statsArray, fileId) => {
+            const updatedStatsArray = updatedRequirements.get(fileId);
+            // If there's no new array, remove requirements for all existing regions
+            if (!updatedStatsArray) {
+                for (const regionId of statsArray) {
+                    diffList.push({fileId, regionId, histograms: []});
+                }
+            } else {
+                // If regions in the new array are missing, remove requirements for those regions
+                for (const regionId of statsArray) {
+                    if (updatedStatsArray.indexOf(regionId) === -1) {
+                        diffList.push({fileId, regionId, histograms: []});
+                    }
+                }
+                // If regions in the existing array are missing, add requirements for those regions
+                for (const regionId of updatedStatsArray) {
+                    if (statsArray.indexOf(regionId) === -1) {
+                        diffList.push({fileId, regionId, histograms: [{channel: -1, numBins: -1}]});
+                    }
+                }
+            }
+        });
+
+        updatedRequirements.forEach((updatedStatsArray, fileId) => {
+            const statsArray = this.histogramRequirements.get(fileId);
+            // If there's no existing array, add requirements for all new regions
+            if (!statsArray) {
+                for (const regionId of updatedStatsArray) {
+                    diffList.push({fileId, regionId, histograms: [{channel: -1, numBins: -1}]});
+                }
+            }
+        });
+
+        return diffList;
+    };
+
     recalculateSpectralRequirements = () => {
         if (!this.activeFrame) {
             return;
         }
 
-        const requirementsMap = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
+        const updatedRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         this.widgetsStore.spectralProfileWidgets.forEach(widgetStore => {
             const frame = this.getFrame(widgetStore.fileId);
             const regionId = widgetStore.regionId;
@@ -707,16 +804,16 @@ export class AppStore {
                     statsType = CARTA.StatsType.None;
                 }
 
-                let frameRequirementsMap = requirementsMap.get(fileId);
-                if (!frameRequirementsMap) {
-                    frameRequirementsMap = new Map<number, CARTA.SetSpectralRequirements>();
-                    requirementsMap.set(fileId, frameRequirementsMap);
+                let frameRequirements = updatedRequirements.get(fileId);
+                if (!frameRequirements) {
+                    frameRequirements = new Map<number, CARTA.SetSpectralRequirements>();
+                    updatedRequirements.set(fileId, frameRequirements);
                 }
 
-                let regionRequirements = frameRequirementsMap.get(regionId);
+                let regionRequirements = frameRequirements.get(regionId);
                 if (!regionRequirements) {
                     regionRequirements = new CARTA.SetSpectralRequirements({regionId, fileId});
-                    frameRequirementsMap.set(regionId, regionRequirements);
+                    frameRequirements.set(regionId, regionRequirements);
                 }
 
                 if (!regionRequirements.spectralProfiles) {
@@ -734,8 +831,8 @@ export class AppStore {
             }
         });
 
-        const diffList = this.diffRequirementsMap(requirementsMap);
-        this.existingSpectralRequirementsMap = requirementsMap;
+        const diffList = this.diffSpectralRequirements(updatedRequirements);
+        this.spectralRequirements = updatedRequirements;
 
         if (diffList.length) {
             diffList.forEach(requirements => this.backendService.setSpectralRequirements(requirements));
@@ -748,78 +845,78 @@ export class AppStore {
     // 2. The old and new maps both have entries, but they are different => send the new SetSpectralRequirements message
     // 3. The new map has an entry, but the old one does not => send the new SetSpectralRequirements message
     // The easiest way to check all three is to first add any missing entries to the new map (as empty requirements), and then check the updated maps entries
-    diffRequirementsMap = (updatedRequirementsMap: Map<number, Map<number, CARTA.SetSpectralRequirements>>) => {
+    diffSpectralRequirements = (updatedRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>) => {
         const diffList: CARTA.SetSpectralRequirements[] = [];
 
         // Fill updated requirements with missing entries
-        this.existingSpectralRequirementsMap.forEach((fileRequirements, fileId) => {
-            let updatedFileRequirements = updatedRequirementsMap.get(fileId);
-            if (!updatedFileRequirements) {
-                updatedFileRequirements = new Map<number, CARTA.SetSpectralRequirements>();
-                updatedRequirementsMap.set(fileId, updatedFileRequirements);
+        this.spectralRequirements.forEach((frameRequirements, fileId) => {
+            let updatedFrameRequirements = updatedRequirements.get(fileId);
+            if (!updatedFrameRequirements) {
+                updatedFrameRequirements = new Map<number, CARTA.SetSpectralRequirements>();
+                updatedRequirements.set(fileId, updatedFrameRequirements);
             }
-            fileRequirements.forEach((regionRequirements, regionId) => {
-                let updatedRegionRequirements = updatedFileRequirements.get(regionId);
+            frameRequirements.forEach((regionRequirements, regionId) => {
+                let updatedRegionRequirements = updatedFrameRequirements.get(regionId);
                 if (!updatedRegionRequirements) {
                     updatedRegionRequirements = new CARTA.SetSpectralRequirements({fileId, regionId, spectralProfiles: []});
-                    updatedFileRequirements.set(regionId, updatedRegionRequirements);
+                    updatedFrameRequirements.set(regionId, updatedRegionRequirements);
                 }
             });
         });
 
         // Go through updated requirements entries and find differences
-        updatedRequirementsMap.forEach((fileRequirements, fileId) => {
-            let existingFileRequirements = this.existingSpectralRequirementsMap.get(fileId);
-            if (!existingFileRequirements) {
+        updatedRequirements.forEach((updatedFrameRequirements, fileId) => {
+            let frameRequirements = this.spectralRequirements.get(fileId);
+            if (!frameRequirements) {
                 // If there are no existing requirements for this fileId, all entries for this file are new
-                fileRequirements.forEach(regionRequirements => diffList.push(regionRequirements));
+                updatedFrameRequirements.forEach(regionRequirements => diffList.push(regionRequirements));
             } else {
-                fileRequirements.forEach((regionRequirements, regionId) => {
-                    let existingRegionRequirements = existingFileRequirements.get(regionId);
-                    if (!existingRegionRequirements) {
+                updatedFrameRequirements.forEach((updatedRegionRequirements, regionId) => {
+                    let regionRequirements = frameRequirements.get(regionId);
+                    if (!regionRequirements) {
                         // If there are no existing requirements for this regionId, this is a new entry
-                        diffList.push(regionRequirements);
+                        diffList.push(updatedRegionRequirements);
                     } else {
                         // Deep equality comparison with sorted arrays
-                        const existingConfigCount = existingRegionRequirements.spectralProfiles ? existingRegionRequirements.spectralProfiles.length : 0;
-                        const updatedConfigCount = regionRequirements.spectralProfiles ? regionRequirements.spectralProfiles.length : 0;
+                        const configCount = regionRequirements.spectralProfiles ? regionRequirements.spectralProfiles.length : 0;
+                        const updatedConfigCount = updatedRegionRequirements.spectralProfiles ? updatedRegionRequirements.spectralProfiles.length : 0;
 
-                        if (existingConfigCount !== updatedConfigCount) {
-                            diffList.push(regionRequirements);
+                        if (configCount !== updatedConfigCount) {
+                            diffList.push(updatedRegionRequirements);
                             return;
                         }
 
-                        if (existingConfigCount === 0) {
+                        if (configCount === 0) {
                             return;
                         }
+                        const sortedUpdatedConfigs = updatedRegionRequirements.spectralProfiles.sort(((a, b) => a.coordinate > b.coordinate ? 1 : -1));
                         const sortedConfigs = regionRequirements.spectralProfiles.sort(((a, b) => a.coordinate > b.coordinate ? 1 : -1));
-                        const sortedExistingConfigs = existingRegionRequirements.spectralProfiles.sort(((a, b) => a.coordinate > b.coordinate ? 1 : -1));
 
                         for (let i = 0; i < updatedConfigCount; i++) {
+                            const updatedConfig = sortedUpdatedConfigs[i];
                             const config = sortedConfigs[i];
-                            const existingConfig = sortedExistingConfigs[i];
-                            if (config.coordinate !== existingConfig.coordinate) {
-                                diffList.push(regionRequirements);
+                            if (updatedConfig.coordinate !== config.coordinate) {
+                                diffList.push(updatedRegionRequirements);
                                 return;
                             }
 
-                            const existingStatsCount = existingConfig.statsTypes ? existingConfig.statsTypes.length : 0;
-                            const updatedStatsCount = config.statsTypes ? config.statsTypes.length : 0;
+                            const statsCount = config.statsTypes ? config.statsTypes.length : 0;
+                            const updatedStatsCount = updatedConfig.statsTypes ? updatedConfig.statsTypes.length : 0;
 
-                            if (existingStatsCount !== updatedStatsCount) {
-                                diffList.push(regionRequirements);
+                            if (statsCount !== updatedStatsCount) {
+                                diffList.push(updatedRegionRequirements);
                                 return;
                             }
 
-                            if (existingStatsCount === 0) {
+                            if (statsCount === 0) {
                                 return;
                             }
 
+                            const sortedUpdatedStats = updatedConfig.statsTypes.sort();
                             const sortedStats = config.statsTypes.sort();
-                            const sortedExistingStats = existingConfig.statsTypes.sort();
                             for (let j = 0; j < updatedStatsCount; j++) {
-                                if (sortedStats[j] !== sortedExistingStats[j]) {
-                                    diffList.push(regionRequirements);
+                                if (sortedUpdatedStats[j] !== sortedStats[j]) {
+                                    diffList.push(updatedRegionRequirements);
                                     return;
                                 }
                             }
@@ -832,4 +929,6 @@ export class AppStore {
         // Sort list so that requirements clearing occurs first
         return diffList.sort((a, b) => a.spectralProfiles.length > b.spectralProfiles.length ? 1 : -1);
     };
+
+    // endregion
 }
