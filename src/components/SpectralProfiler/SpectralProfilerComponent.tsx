@@ -173,7 +173,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 const coordinate = this.widgetStore.coordinate;
                 const appStore = this.props.appStore;
                 if (appStore && coordinate) {
-                    const coordinateString = `${coordinate.toUpperCase()} Profile`;
+                    let coordinateString: string;
+                    if (coordinate.length == 2) {
+                        coordinateString = `Z Profile (Stokes ${coordinate[0]})`;
+                    }
+                    else {
+                        coordinateString = `Z Profile`;
+                    }
                     const regionString = this.widgetStore.regionId === 0 ? "Cursor" : `Region #${this.widgetStore.regionId}`;
                     this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString}`);
                 }
