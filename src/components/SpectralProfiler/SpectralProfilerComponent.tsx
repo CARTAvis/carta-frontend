@@ -174,7 +174,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 const appStore = this.props.appStore;
                 if (appStore && coordinate) {
                     let coordinateString: string;
-                    if (coordinate.length == 2) {
+                    if (coordinate.length === 2) {
                         coordinateString = `Z Profile (Stokes ${coordinate[0]})`;
                     }
                     else {
