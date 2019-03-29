@@ -31,7 +31,7 @@ export class ProfilerInfoComponent extends React.Component<ProfilerInfoComponent
         let cursorInfo = (this.props.cursorInfo) ? (
             <tr>
                 <td className="td-label">
-                    <pre>{this.props.cursorInfo.isMouseEntered ? "Cursor" : "Data"}</pre>
+                    <pre>{this.props.cursorInfo.isMouseEntered ? "Cursor:" : "Data:"}</pre>
                 </td>
                 <td>
                     <pre>{this.getCursorInforLabel()}</pre>

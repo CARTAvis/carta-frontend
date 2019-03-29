@@ -4,9 +4,10 @@ import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {LinePlotComponent, LinePlotComponentProps, PopoverSettingsComponent, PlotType} from "components/Shared";
+import {CARTA} from "carta-protobuf";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent} from "components/Shared";
 import {SpectralProfilerSettingsPanelComponent} from "./SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
-import {FrameStore, SpectralProfileStore, WidgetConfig, WidgetProps, AnimationState} from "stores";
+import {AnimationState, FrameStore, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp} from "utilities";
@@ -49,15 +50,18 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     @computed get profileStore(): SpectralProfileStore {
         if (this.props.appStore && this.props.appStore.activeFrame) {
-            let keyStruct = {fileId: this.widgetStore.fileId, regionId: this.widgetStore.regionId};
+            let fileId = this.widgetStore.fileId;
+            const regionId = this.widgetStore.regionId;
             // Replace "current file" fileId with active frame's fileId
             if (this.widgetStore.fileId === -1) {
-                keyStruct.fileId = this.props.appStore.activeFrame.frameInfo.fileId;
+                fileId = this.props.appStore.activeFrame.frameInfo.fileId;
             }
-            const key = `${keyStruct.fileId}-${keyStruct.regionId}`;
-            return this.props.appStore.spectralProfiles.get(key);
+            const frameMap = this.props.appStore.spectralProfiles.get(fileId);
+            if (frameMap) {
+                return frameMap.get(regionId);
+            }
         }
-        return undefined;
+        return null;
     }
 
     @computed get frame(): FrameStore {
@@ -78,7 +82,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         // Use accurate profiles from server-sent data
-        const coordinateData = this.profileStore.profiles.get(this.widgetStore.coordinate);
+
+        let coordinateData: CARTA.ISpectralProfile;
+        if (this.frame && this.frame.regionSet) {
+            const region = this.frame.regionSet.regions.find(r => r.regionId === this.widgetStore.regionId);
+            if (region) {
+                coordinateData = this.profileStore.getProfile(this.widgetStore.coordinate, region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.None);
+            }
+        }
+
         let channelInfo = this.frame.channelInfo;
         if (coordinateData && channelInfo && coordinateData.vals && coordinateData.vals.length && coordinateData.vals.length === channelInfo.values.length) {
             let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
