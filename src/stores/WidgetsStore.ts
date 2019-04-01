@@ -3,7 +3,7 @@ import * as $ from "jquery";
 import {action, observable} from "mobx";
 import {AnimatorComponent, HistogramComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent, StatsComponent} from "components";
 import {AppStore} from "./AppStore";
-import {EmptyWidgetStore, HistogramWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
+import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
 
 export class WidgetConfig {
     id: string;
@@ -42,6 +42,28 @@ export class WidgetsStore {
 
     private appStore: AppStore;
     private widgetsMap: Map<string, Map<string, any>>;
+
+    public static RemoveFrameFromRegionWidgets(storeMap: Map<string, RegionWidgetStore>, fileId: number = -1) {
+        if (fileId === -1) {
+            storeMap.forEach(widgetStore => {
+                widgetStore.clearRegionMap();
+            });
+        } else {
+            storeMap.forEach(widgetStore => {
+                widgetStore.clearFrameEntry(fileId);
+            });
+        }
+    }
+
+    public static RemoveRegionFromRegionWidgets = (storeMap: Map<string, RegionWidgetStore>, fileId, regionId: number) => {
+        storeMap.forEach(widgetStore => {
+            const selectedRegionId = widgetStore.regionIdMap.get(fileId);
+            // remove entry from map if it matches the deleted region
+            if (isFinite(selectedRegionId) && selectedRegionId === regionId) {
+                widgetStore.clearFrameEntry(fileId);
+            }
+        });
+    };
 
     constructor(appStore: AppStore) {
         this.appStore = appStore;
