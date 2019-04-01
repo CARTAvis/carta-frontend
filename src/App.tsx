@@ -296,7 +296,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 {fileHotkeys}
                 <Hotkey group="Appearance" global={true} combo="shift + D" label="Toggle light/dark theme" onKeyDown={this.toggleDarkTheme}/>
                 <Hotkey group="Cursor" global={true} combo="F" label="Freeze/unfreeze cursor position" onKeyDown={appStore.toggleCursorFrozen}/>
-                <Hotkey group="Regions" global={true} combo="del" label="Delete selected region" onKeyDown={this.deleteSelectedRegion}/>
+                <Hotkey group="Regions" global={true} combo="del" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>
                 <Hotkey group="Regions" global={true} combo="backspace" label="Delete selected region" onKeyDown={this.deleteSelectedRegion}/>
                 <Hotkey group="Regions" global={true} combo="c" label="Toggle region creation mode" onKeyDown={this.toggleCreateMode}/>
             </Hotkeys>

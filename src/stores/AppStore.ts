@@ -2,7 +2,7 @@ import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable, ObservableMap} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore, FrameInfo, FrameStore, LogEntry, LogStore, nightPalette, OverlayStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore} from ".";
+import {AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore, FrameInfo, FrameStore, LogEntry, LogStore, nightPalette, OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore} from ".";
 import {BackendService} from "services";
 import {CursorInfo, FrameView} from "models";
 import {smoothStepOffset} from "utilities";
@@ -205,6 +205,10 @@ export class AppStore {
     };
     @action removeFrame = (fileId: number) => {
         if (this.frames.find(f => f.frameInfo.fileId === fileId)) {
+            // adjust requirements for stores
+            this.widgetsStore.statsWidgets.forEach(widgetStore => {
+                widgetStore.regionIdMap.delete(fileId);
+            });
             if (this.backendService.closeFile(fileId)) {
                 if (this.activeFrame.frameInfo.fileId === fileId) {
                     this.activeFrame = null;
@@ -616,6 +620,27 @@ export class AppStore {
         }
         return this.frames.find(f => f.frameInfo.fileId === fileId);
     }
+
+    @action deleteSelectedRegion = () => {
+        if (this.activeFrame && this.activeFrame.regionSet) {
+            const fileId = this.activeFrame.frameInfo.fileId;
+            let region: RegionStore;
+            region = this.activeFrame.regionSet.selectedRegion;
+            if (region) {
+                const regionId = region.regionId;
+                // adjust requirements for stores
+                this.widgetsStore.statsWidgets.forEach(widgetStore => {
+                    const selectedRegionId = widgetStore.regionIdMap.get(fileId);
+                    // remove entry from map if it matches the deleted region
+                    if (isFinite(selectedRegionId) && selectedRegionId === regionId) {
+                        widgetStore.clearFrameEntry(fileId);
+                    }
+                });
+                // delete region
+                this.activeFrame.regionSet.deleteRegion(region);
+            }
+        }
+    };
 
     // region requirements calculations
 
