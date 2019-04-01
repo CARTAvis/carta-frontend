@@ -832,9 +832,9 @@ export class AppStore {
 
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         this.widgetsStore.spectralProfileWidgets.forEach(widgetStore => {
-            const frame = this.getFrame(widgetStore.fileId);
-            const regionId = widgetStore.regionId;
+            const frame = this.activeFrame;
             const fileId = frame.frameInfo.fileId;
+            const regionId = widgetStore.regionIdMap.get(fileId) || 0;
             const coordinate = widgetStore.coordinate;
             let statsType = widgetStore.statsType;
 

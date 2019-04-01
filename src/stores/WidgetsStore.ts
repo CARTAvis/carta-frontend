@@ -318,14 +318,14 @@ export class WidgetsStore {
         this.addFloatingWidget(config);
     };
 
-    @action addSpectralProfileWidget(id: string = null, coordinate: string = "z", fileId: number = -1, regionId: number = 0) {
+    @action addSpectralProfileWidget(id: string = null, coordinate: string = "z") {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(SpectralProfilerComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            this.spectralProfileWidgets.set(id, new SpectralProfileWidgetStore(coordinate, fileId, regionId));
+            this.spectralProfileWidgets.set(id, new SpectralProfileWidgetStore(coordinate));
         }
         return id;
     }

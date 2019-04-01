@@ -1,10 +1,9 @@
 import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {PlotType} from "components/Shared";
+import {RegionWidgetStore} from "./RegionWidgetStore";
 
-export class SpectralProfileWidgetStore {
-    @observable fileId: number;
-    @observable regionId: number;
+export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
     @observable statsType: CARTA.StatsType;
     @observable minX: number;
@@ -25,16 +24,9 @@ export class SpectralProfileWidgetStore {
         CARTA.StatsType.None, CARTA.StatsType.Sum, CARTA.StatsType.FluxDensity, CARTA.StatsType.Mean, CARTA.StatsType.RMS,
         CARTA.StatsType.Sigma, CARTA.StatsType.SumSq, CARTA.StatsType.Min, CARTA.StatsType.Max];
 
-    @action setFileId = (fileId: number) => {
-        // Reset zoom when changing between files
+    @action setRegionId = (fileId: number, regionId: number) => {
+        this.regionIdMap.set(fileId, regionId);
         this.clearXYBounds();
-        this.fileId = fileId;
-    };
-
-    @action setRegionId = (regionId: number) => {
-        // Reset zoom when changing between regions
-        this.clearXYBounds();
-        this.regionId = regionId;
     };
 
     @action setStatsType = (statsType: CARTA.StatsType) => {
@@ -121,10 +113,8 @@ export class SpectralProfileWidgetStore {
         this.cursorX = cursorVal;
     };
 
-    constructor(coordinate: string = "z", fileId: number = -1, regionId: number = 0) {
-        // Describes which data is being visualised
-        this.fileId = fileId;
-        this.regionId = regionId;
+    constructor(coordinate: string = "z") {
+        super();
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
 

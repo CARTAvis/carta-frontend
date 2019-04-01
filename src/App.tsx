@@ -145,7 +145,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         widgetsStore.addSpatialProfileWidget("spatial-profiler-0", "x", -1, 0);
         widgetsStore.addSpatialProfileWidget("spatial-profiler-1", "y", -1, 0);
-        widgetsStore.addSpectralProfileWidget("spectral-profiler-0", "z", -1, 0);
+        widgetsStore.addSpectralProfileWidget("spectral-profiler-0", "z");
         widgetsStore.addRenderConfigWidget("render-config-0");
         widgetsStore.addAnimatorWidget("animator-0");
         widgetsStore.addRegionListWidget("region-list-0");

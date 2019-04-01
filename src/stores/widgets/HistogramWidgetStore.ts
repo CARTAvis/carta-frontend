@@ -1,8 +1,8 @@
 import {action, computed, observable} from "mobx";
 import {PlotType} from "components/Shared";
+import {RegionWidgetStore} from "./RegionWidgetStore";
 
-export class HistogramWidgetStore {
-    @observable regionIdMap: Map<number, number>;
+export class HistogramWidgetStore extends RegionWidgetStore {
     @observable minX: number;
     @observable maxX: number;
     @observable minY: number;
@@ -11,18 +11,6 @@ export class HistogramWidgetStore {
     @observable logScaleY: boolean;
     @observable plotType: PlotType;
     @observable settingsPanelVisible: boolean;
-
-    @action clearFrameEntry = (fileId: number) => {
-        this.regionIdMap.delete(fileId);
-    };
-
-    @action clearRegionMap = () => {
-        this.regionIdMap.clear();
-    };
-
-    @action setRegionId = (fileId: number, regionId: number) => {
-        this.regionIdMap.set(fileId, regionId);
-    };
 
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
@@ -87,7 +75,7 @@ export class HistogramWidgetStore {
     }
 
     constructor() {
-        this.regionIdMap = new Map<number, number>();
+        super();
         this.logScaleY = true;
         this.plotType = PlotType.STEPS;
         this.settingsPanelVisible = false;
