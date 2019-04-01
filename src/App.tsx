@@ -250,13 +250,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
         }
     };
 
-    deleteSelectedRegion = () => {
-        const appStore = this.props.appStore;
-        if (appStore.activeFrame) {
-            appStore.activeFrame.regionSet.deleteRegion(appStore.activeFrame.regionSet.selectedRegion);
-        }
-    };
-
     toggleCreateMode = () => {
         const appStore = this.props.appStore;
         if (appStore.activeFrame) {

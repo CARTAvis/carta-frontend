@@ -7,7 +7,6 @@ import {CARTA} from "carta-protobuf";
 import {WidgetConfig, WidgetProps} from "stores";
 import {StatsWidgetStore} from "stores/widgets";
 import "./StatsComponent.css";
-import {Stats} from "fs";
 
 @observer
 export class StatsComponent extends React.Component<WidgetProps> {

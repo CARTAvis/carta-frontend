@@ -360,14 +360,14 @@ export class WidgetsStore {
         this.addFloatingWidget(config);
     };
 
-    @action addHistogramWidget(id: string = null, fileId: number = -1, regionId: number = -1) {
+    @action addHistogramWidget(id: string = null) {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(HistogramComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            this.histogramWidgets.set(id, new HistogramWidgetStore(fileId, regionId));
+            this.histogramWidgets.set(id, new HistogramWidgetStore());
         }
         return id;
     }
