@@ -339,14 +339,14 @@ export class WidgetsStore {
         this.addFloatingWidget(config);
     };
 
-    @action addStatsWidget(id: string = null, fileId: number = -1, regionId: number = -1) {
+    @action addStatsWidget(id: string = null) {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(StatsComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            this.statsWidgets.set(id, new StatsWidgetStore(fileId, regionId));
+            this.statsWidgets.set(id, new StatsWidgetStore());
         }
         return id;
     }

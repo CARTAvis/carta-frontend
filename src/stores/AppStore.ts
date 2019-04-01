@@ -626,9 +626,9 @@ export class AppStore {
 
         const updatedRequirements = new Map<number, Array<number>>();
         this.widgetsStore.statsWidgets.forEach(widgetStore => {
-            const frame = this.getFrame(widgetStore.fileId);
-            const regionId = widgetStore.regionId;
+            const frame = this.activeFrame;
             const fileId = frame.frameInfo.fileId;
+            const regionId = widgetStore.regionIdMap.get(fileId) || -1;
             if (!frame.regionSet) {
                 return;
             }
