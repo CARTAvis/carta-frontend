@@ -207,7 +207,7 @@ export class AppStore {
         if (this.frames.find(f => f.frameInfo.fileId === fileId)) {
             // adjust requirements for stores
             this.widgetsStore.statsWidgets.forEach(widgetStore => {
-                widgetStore.regionIdMap.delete(fileId);
+                widgetStore.clearFrameEntry(fileId);
             });
             if (this.backendService.closeFile(fileId)) {
                 if (this.activeFrame.frameInfo.fileId === fileId) {
@@ -221,6 +221,10 @@ export class AppStore {
         if (this.backendService.closeFile(-1)) {
             this.activeFrame = null;
             this.frames = [];
+            // adjust requirements for stores
+            this.widgetsStore.statsWidgets.forEach(widgetStore => {
+                widgetStore.clearRegionMap();
+            });
         }
     };
 
