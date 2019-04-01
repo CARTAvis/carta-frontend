@@ -497,7 +497,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         const tsvData = `data:text/tab-separated-values;charset=utf-8,${comment}\n${header}\n${rows.join("\n")}\n`;
 
-        const dataURL = encodeURI(tsvData).replace("#", "%23");
+        const dataURL = encodeURI(tsvData).replace(/\#/g, "%23");
 
         const a = document.createElement("a") as HTMLAnchorElement;
         a.href = dataURL;

@@ -22,6 +22,7 @@ export class RenderConfigStore {
         [FrameScaling.GAMMA, "Gamma"],
         [FrameScaling.POWER, "Power"]
     ]);
+    
     static readonly COLOR_MAPS_ALL = [
         "accent", "afmhot", "autumn", "binary", "Blues",
         "bone", "BrBG", "brg", "BuGn", "BuPu",
@@ -47,10 +48,9 @@ export class RenderConfigStore {
         "nipy_spectral", "plasma", "rainbow", "RdBu", "RdGy",
         "reds", "seismic", "spectral", "tab10", "viridis"
     ];
+
     @observable scaling: FrameScaling;
     @observable colorMap: number;
-    @observable scaleMin: number;
-    @observable scaleMax: number;
     @observable contrast: number;
     @observable bias: number;
     @observable gamma: number;
@@ -59,10 +59,13 @@ export class RenderConfigStore {
     @observable cubeHistogram: CARTA.Histogram;
     @observable useCubeHistogram: boolean;
     @observable cubeHistogramProgress: number;
-    @observable selectedPercentile: number;
-
+    @observable selectedPercentile: number[];
+    @observable stokes: number;
+    @observable scaleMin: number[];    
+    @observable scaleMax: number[];
+    
     constructor() {
-        this.selectedPercentile = 99.9;
+        this.selectedPercentile = [99.9, 99.9, 99.9, 99.9];
         this.bias = 0;
         this.contrast = 1;
         this.gamma = 1;
@@ -70,9 +73,12 @@ export class RenderConfigStore {
         this.scaling = FrameScaling.LINEAR;
         this.cubeHistogramProgress = 0;
         this.setColorMap("inferno");
+        this.stokes = 0;	
+        this.scaleMin = [0, 0, 0, 0];
+        this.scaleMax = [1, 1, 1, 1];
     }
 
-    @computed get colorMapName() {
+   @computed get colorMapName() {
         if (this.colorMap >= 0 && this.colorMap <= RenderConfigStore.COLOR_MAPS_ALL.length - 1) {
             return RenderConfigStore.COLOR_MAPS_ALL[this.colorMap];
         } else {
@@ -97,11 +103,27 @@ export class RenderConfigStore {
         }
     }
 
+    @computed get scaleMinVal() {
+        return this.scaleMin[this.stokes];
+    }
+ 
+    @computed get scaleMaxVal() {
+        return this.scaleMax[this.stokes];
+    }
+
+    @computed get selectedPercentileVal() {
+        return this.selectedPercentile[this.stokes];
+    }
+
+    @action setStokes = (val: number) => {
+        this.stokes = val;
+    }
+
     @action setUseCubeHistogram = (val: boolean) => {
         if (val !== this.useCubeHistogram) {
             this.useCubeHistogram = val;
-            if (this.selectedPercentile > 0) {
-                this.setPercentileRank(this.selectedPercentile);
+            if (this.selectedPercentile[this.stokes] > 0) {
+                this.setPercentileRank(this.selectedPercentile[this.stokes]);
             }
         }
     };
@@ -119,13 +141,13 @@ export class RenderConfigStore {
         }
         return this.histogram.firstBinCenter + (this.histogram.bins.length + 0.5) * this.histogram.binWidth;
     }
-
+    
     @action setPercentileRank = (rank: number) => {
-        this.selectedPercentile = rank;
+        this.selectedPercentile[this.stokes] = rank;
         // Find max and min if the rank is 100%
         if (rank === 100) {
-            this.scaleMin = this.histogramMin;
-            this.scaleMax = this.histogramMax;
+            this.scaleMin[this.stokes] = this.histogramMin;
+            this.scaleMax[this.stokes] = this.histogramMax;
             return true;
         }
 
@@ -136,8 +158,8 @@ export class RenderConfigStore {
         const rankComplement = 100 - rank;
         const percentiles = this.getPercentiles([rankComplement, rank]);
         if (percentiles.length === 2) {
-            this.scaleMin = percentiles[0];
-            this.scaleMax = percentiles[1];
+            this.scaleMin[this.stokes] = percentiles[0];
+            this.scaleMax[this.stokes] = percentiles[1];
             return true;
         } else {
             return false;
@@ -146,23 +168,23 @@ export class RenderConfigStore {
 
     @action updateChannelHistogram = (histogram: CARTA.Histogram) => {
         this.channelHistogram = histogram;
-        if (this.selectedPercentile > 0 && !this.useCubeHistogram) {
-            this.setPercentileRank(this.selectedPercentile);
+        if (this.selectedPercentile[this.stokes] > 0 && !this.useCubeHistogram) {
+            this.setPercentileRank(this.selectedPercentile[this.stokes]);
         }
     };
 
     @action updateCubeHistogram = (histogram: CARTA.Histogram, progress: number) => {
         this.cubeHistogram = histogram;
         this.cubeHistogramProgress = progress;
-        if (this.selectedPercentile > 0 && this.useCubeHistogram) {
-            this.setPercentileRank(this.selectedPercentile);
+        if (this.selectedPercentile[this.stokes] > 0 && this.useCubeHistogram) {
+            this.setPercentileRank(this.selectedPercentile[this.stokes]);
         }
     };
 
     @action setCustomScale = (minVal: number, maxVal: number) => {
-        this.scaleMin = minVal;
-        this.scaleMax = maxVal;
-        this.selectedPercentile = -1;
+        this.scaleMin[this.stokes] = minVal;
+        this.scaleMax[this.stokes] = maxVal;
+        this.selectedPercentile[this.stokes] = -1;
     };
 
     @action setColorMapIndex = (index: number) => {

@@ -16,7 +16,7 @@ export class FileBrowserStore {
     @observable fileInfoResp = false;
     @observable respErrmsg: string = "";
     @observable startingDirectory: string = "$BASE";
-
+    
     @action showFileBrowser = (append = false) => {
         this.appendingFrame = append;
         this.fileBrowserDialogVisible = true;

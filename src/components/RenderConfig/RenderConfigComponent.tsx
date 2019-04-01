@@ -10,7 +10,7 @@ import {RenderConfigSettingsPanelComponent} from "./RenderConfigSettingsPanelCom
 import {PopoverSettingsComponent, LinePlotComponent, LinePlotComponentProps, PlotType} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
-import {AnimationState, FrameStore, FrameScaling, WidgetConfig, WidgetProps} from "stores";
+import {AnimationState, FrameStore, FrameScaling, WidgetConfig, WidgetProps, RenderConfigStore} from "stores";
 import {clamp} from "utilities";
 import {Point2D} from "models";
 import "./RenderConfigComponent.css";
@@ -36,8 +36,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     private cachedFrame: FrameStore;
 
     @observable width: number;
-    @observable height: number;
-
+    @observable height: number; 
+   
     @computed get widgetStore(): RenderConfigWidgetStore {
         if (this.props.appStore && this.props.appStore.widgetsStore.renderConfigWidgets) {
             const widgetStore = this.props.appStore.widgetsStore.renderConfigWidgets.get(this.props.id);
@@ -123,13 +123,13 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     handleScaleMinChange = (val: number) => {
         if (isFinite(val)) {
-            this.props.appStore.activeFrame.renderConfig.setCustomScale(val, this.props.appStore.activeFrame.renderConfig.scaleMax);
+            this.props.appStore.activeFrame.renderConfig.setCustomScale(val, this.props.appStore.activeFrame.renderConfig.scaleMaxVal);
         }
     };
 
     handleScaleMaxChange = (val: number) => {
         if (isFinite(val)) {
-            this.props.appStore.activeFrame.renderConfig.setCustomScale(this.props.appStore.activeFrame.renderConfig.scaleMin, val);
+            this.props.appStore.activeFrame.renderConfig.setCustomScale(this.props.appStore.activeFrame.renderConfig.scaleMinVal, val);
         }
     };
 
@@ -174,16 +174,16 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     onMinMoved = (x: number) => {
         const frame = this.props.appStore.activeFrame;
         // Check bounds first, to make sure the max isn't being moved below the min
-        if (frame && frame.renderConfig && x < frame.renderConfig.scaleMax) {
-            frame.renderConfig.setCustomScale(x, frame.renderConfig.scaleMax);
+        if (frame && frame.renderConfig && x < frame.renderConfig.scaleMaxVal) {
+            this.props.appStore.activeFrame.renderConfig.setCustomScale(x, this.props.appStore.activeFrame.renderConfig.scaleMaxVal);
         }
     };
 
     onMaxMoved = (x: number) => {
         const frame = this.props.appStore.activeFrame;
         // Check bounds first, to make sure the max isn't being moved below the min
-        if (frame && frame.renderConfig && x > frame.renderConfig.scaleMin) {
-            frame.renderConfig.setCustomScale(frame.renderConfig.scaleMin, x);
+        if (frame && frame.renderConfig && x > frame.renderConfig.scaleMinVal) {
+            this.props.appStore.activeFrame.renderConfig.setCustomScale(this.props.appStore.activeFrame.renderConfig.scaleMinVal, x);
         }
     };
 
@@ -259,19 +259,19 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
         if (frame.renderConfig) {
             linePlotProps.markers = [{
-                value: frame.renderConfig.scaleMin,
+                value: frame.renderConfig.scaleMinVal,
                 id: "marker-min",
                 label: this.widgetStore.markerTextVisible ? "Min" : undefined,
                 draggable: true,
-                dragCustomBoundary: {xMax: frame.renderConfig.scaleMax},
+                dragCustomBoundary: {xMax: frame.renderConfig.scaleMaxVal},
                 dragMove: this.onMinMoved,
                 horizontal: false,
             }, {
-                value: frame.renderConfig.scaleMax,
+                value: frame.renderConfig.scaleMaxVal,
                 id: "marker-max",
                 label: this.widgetStore.markerTextVisible ? "Max" : undefined,
                 draggable: true,
-                dragCustomBoundary: {xMin: frame.renderConfig.scaleMin},
+                dragCustomBoundary: {xMin: frame.renderConfig.scaleMinVal},
                 dragMove: this.onMaxMoved,
                 horizontal: false,
             }];
@@ -281,16 +281,16 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         const histogramCutoff = 430 + this.settingsPanelWidth;
         const displayRankButtons = this.width > percentileButtonCutoff;
         const percentileRanks = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
-
+        const stokes = frame.renderConfig.stokes;
         let percentileButtonsDiv, percentileSelectDiv;
         if (displayRankButtons) {
             const percentileRankbuttons = percentileRanks.map(rank => (
-                <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentile === rank}>
+                <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentileVal === rank}>
                     {`${rank}%`}
                 </Button>
             ));
             percentileRankbuttons.push(
-                <Button small={true} key={-1} onClick={this.setCustomPercentileRank} active={frame.renderConfig.selectedPercentile === -1}>
+                <Button small={true} key={-1} onClick={this.setCustomPercentileRank} active={frame.renderConfig.selectedPercentileVal === -1}>
                     Custom
                 </Button>
             );
@@ -307,7 +307,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             percentileSelectDiv = (
                 <div className="percentile-select">
                     <FormGroup label="Clip Percentile" inline={true}>
-                        <HTMLSelect options={percentileRankOptions} value={frame.renderConfig.selectedPercentile} onChange={this.handlePercentileRankSelectChanged}/>
+                        <HTMLSelect options={percentileRankOptions} value={frame.renderConfig.selectedPercentileVal} onChange={this.handlePercentileRankSelectChanged}/>
                     </FormGroup>
                 </div>
             );
@@ -354,7 +354,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     />
                     <FormGroup label={"Clip Min"} inline={true}>
                         <NumericInput
-                            value={frame.renderConfig.scaleMin}
+                            value={frame.renderConfig.scaleMinVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
                             allowNumericCharactersOnly={false}
@@ -363,13 +363,13 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                     <FormGroup label={"Clip Max"} inline={true}>
                         <NumericInput
-                            value={frame.renderConfig.scaleMax}
+                            value={frame.renderConfig.scaleMaxVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
                             onValueChange={this.handleScaleMaxChange}
                         />
-                    </FormGroup>
-                    {this.width < histogramCutoff ? percentileSelectDiv : cursorInfoDiv}
+                    </FormGroup>		   		    
+                {this.width < histogramCutoff ? percentileSelectDiv : cursorInfoDiv}
                 </div>
                 <TaskProgressDialogComponent
                     isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}
