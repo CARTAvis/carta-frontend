@@ -209,6 +209,10 @@ export class AppStore {
             this.widgetsStore.statsWidgets.forEach(widgetStore => {
                 widgetStore.clearFrameEntry(fileId);
             });
+            this.widgetsStore.histogramWidgets.forEach(widgetStore => {
+                widgetStore.clearFrameEntry(fileId);
+            });
+
             if (this.backendService.closeFile(fileId)) {
                 if (this.activeFrame.frameInfo.fileId === fileId) {
                     this.activeFrame = null;
@@ -223,6 +227,9 @@ export class AppStore {
             this.frames = [];
             // adjust requirements for stores
             this.widgetsStore.statsWidgets.forEach(widgetStore => {
+                widgetStore.clearRegionMap();
+            });
+            this.widgetsStore.histogramWidgets.forEach(widgetStore => {
                 widgetStore.clearRegionMap();
             });
         }
@@ -640,6 +647,14 @@ export class AppStore {
                         widgetStore.clearFrameEntry(fileId);
                     }
                 });
+                this.widgetsStore.histogramWidgets.forEach(widgetStore => {
+                    const selectedRegionId = widgetStore.regionIdMap.get(fileId);
+                    // remove entry from map if it matches the deleted region
+                    if (isFinite(selectedRegionId) && selectedRegionId === regionId) {
+                        widgetStore.clearFrameEntry(fileId);
+                    }
+                });
+
                 // delete region
                 this.activeFrame.regionSet.deleteRegion(region);
             }
