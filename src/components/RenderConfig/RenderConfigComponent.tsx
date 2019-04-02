@@ -1,9 +1,8 @@
 import * as React from "react";
 import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
-import {action, computed, observable} from "mobx";
+import {autorun, action, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Chart} from "chart.js";
 import {Button, ButtonGroup, FormGroup, HTMLSelect, IOptionProps, NonIdealState, NumericInput} from "@blueprintjs/core";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
 import {RenderConfigSettingsPanelComponent} from "./RenderConfigSettingsPanelComponent/RenderConfigSettingsPanelComponent";
@@ -13,6 +12,7 @@ import {RenderConfigWidgetStore} from "stores/widgets";
 import {AnimationState, FrameStore, FrameScaling, WidgetConfig, WidgetProps, RenderConfigStore} from "stores";
 import {clamp} from "utilities";
 import {Point2D} from "models";
+import {CARTA} from "carta-protobuf";
 import "./RenderConfigComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -34,9 +34,10 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     }
 
     private cachedFrame: FrameStore;
+    private cachedHistogram: CARTA.Histogram;
 
     @observable width: number;
-    @observable height: number; 
+    @observable height: number;
    
     @computed get widgetStore(): RenderConfigWidgetStore {
         if (this.props.appStore && this.props.appStore.widgetsStore.renderConfigWidgets) {
@@ -102,6 +103,16 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 this.props.appStore.widgetsStore.renderConfigWidgets.set(this.props.id, new RenderConfigWidgetStore());
             }
         }
+
+        autorun(() => {
+            if (this.props.appStore.activeFrame) {
+                const newHist = this.props.appStore.activeFrame.renderConfig.histogram;
+                if (newHist !== this.cachedHistogram) {
+                    this.cachedHistogram = newHist;
+                    this.widgetStore.clearXYBounds();
+                }
+            }
+        });
     }
 
     componentDidUpdate() {
