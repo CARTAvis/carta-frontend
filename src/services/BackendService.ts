@@ -87,8 +87,8 @@ export class BackendService {
             EventNames.RegisterViewerAck,
             EventNames.OpenFile,
             EventNames.OpenFileAck,
-            EventNames.SetHistogramRequirements,
-            EventNames.RegionHistogramData
+            EventNames.SetSpectralRequirements,
+            EventNames.SpectralProfileData
         ];
 
         // Check local storage for a list of events to log to console

@@ -56,12 +56,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         const appStore = this.props.appStore;
 
         if (appStore.activeFrame) {
-            let fileId = this.widgetStore.fileId;
-            let regionId = this.widgetStore.regionId;
-            // Replace "current file" fileId with active frame's fileId
-            if (this.widgetStore.fileId === -1) {
-                fileId = appStore.activeFrame.frameInfo.fileId;
-            }
+            let fileId = appStore.activeFrame.frameInfo.fileId;
+            let regionId = this.widgetStore.regionIdMap.get(fileId) || -1;
 
             // // Image histograms handled slightly differently
             // if (regionId === -1) {
@@ -136,11 +132,12 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             const appStore = this.props.appStore;
             if (this.widgetStore) {
                 let regionString = "Unknown";
+                const regionId = this.widgetStore.regionIdMap.get(appStore.activeFrame.frameInfo.fileId) || -1;
 
-                if (this.widgetStore.regionId === -1) {
+                if (regionId === -1) {
                     regionString = "Image";
                 } else if (appStore.activeFrame && appStore.activeFrame.regionSet) {
-                    const region = appStore.activeFrame.regionSet.regions.find(r => r.regionId === this.widgetStore.regionId);
+                    const region = appStore.activeFrame.regionSet.regions.find(r => r.regionId === regionId);
                     if (region) {
                         regionString = region.nameString;
                     }

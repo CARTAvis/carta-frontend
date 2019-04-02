@@ -15,9 +15,7 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
     private handleDeleteClicked = () => {
         const appStore = this.props.appStore;
         appStore.hideRegionDialog();
-        if (appStore.activeFrame && appStore.activeFrame.regionSet.selectedRegion) {
-            appStore.activeFrame.regionSet.deleteRegion(appStore.activeFrame.regionSet.selectedRegion);
-        }
+        appStore.deleteSelectedRegion();
     };
 
     public render() {

@@ -3,7 +3,7 @@ import * as $ from "jquery";
 import {action, observable} from "mobx";
 import {AnimatorComponent, HistogramComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent, StatsComponent} from "components";
 import {AppStore} from "./AppStore";
-import {EmptyWidgetStore, HistogramWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
+import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
 
 export class WidgetConfig {
     id: string;
@@ -42,6 +42,28 @@ export class WidgetsStore {
 
     private appStore: AppStore;
     private widgetsMap: Map<string, Map<string, any>>;
+
+    public static RemoveFrameFromRegionWidgets(storeMap: Map<string, RegionWidgetStore>, fileId: number = -1) {
+        if (fileId === -1) {
+            storeMap.forEach(widgetStore => {
+                widgetStore.clearRegionMap();
+            });
+        } else {
+            storeMap.forEach(widgetStore => {
+                widgetStore.clearFrameEntry(fileId);
+            });
+        }
+    }
+
+    public static RemoveRegionFromRegionWidgets = (storeMap: Map<string, RegionWidgetStore>, fileId, regionId: number) => {
+        storeMap.forEach(widgetStore => {
+            const selectedRegionId = widgetStore.regionIdMap.get(fileId);
+            // remove entry from map if it matches the deleted region
+            if (isFinite(selectedRegionId) && selectedRegionId === regionId) {
+                widgetStore.clearFrameEntry(fileId);
+            }
+        });
+    };
 
     constructor(appStore: AppStore) {
         this.appStore = appStore;
@@ -318,14 +340,14 @@ export class WidgetsStore {
         this.addFloatingWidget(config);
     };
 
-    @action addSpectralProfileWidget(id: string = null, coordinate: string = "z", fileId: number = -1, regionId: number = 0) {
+    @action addSpectralProfileWidget(id: string = null, coordinate: string = "z") {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(SpectralProfilerComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            this.spectralProfileWidgets.set(id, new SpectralProfileWidgetStore(coordinate, fileId, regionId));
+            this.spectralProfileWidgets.set(id, new SpectralProfileWidgetStore(coordinate));
         }
         return id;
     }
@@ -339,14 +361,14 @@ export class WidgetsStore {
         this.addFloatingWidget(config);
     };
 
-    @action addStatsWidget(id: string = null, fileId: number = -1, regionId: number = -1) {
+    @action addStatsWidget(id: string = null) {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(StatsComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            this.statsWidgets.set(id, new StatsWidgetStore(fileId, regionId));
+            this.statsWidgets.set(id, new StatsWidgetStore());
         }
         return id;
     }
@@ -360,14 +382,14 @@ export class WidgetsStore {
         this.addFloatingWidget(config);
     };
 
-    @action addHistogramWidget(id: string = null, fileId: number = -1, regionId: number = -1) {
+    @action addHistogramWidget(id: string = null) {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(HistogramComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            this.histogramWidgets.set(id, new HistogramWidgetStore(fileId, regionId));
+            this.histogramWidgets.set(id, new HistogramWidgetStore());
         }
         return id;
     }

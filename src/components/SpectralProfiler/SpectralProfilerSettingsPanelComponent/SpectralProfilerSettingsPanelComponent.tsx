@@ -23,7 +23,10 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<{ ap
     };
 
     handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        this.props.widgetStore.setRegionId(parseInt(changeEvent.target.value));
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame) {
+            this.props.widgetStore.setRegionId(appStore.activeFrame.frameInfo.fileId, parseInt(changeEvent.target.value));
+        }
     };
 
     handleStatsChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
@@ -41,9 +44,13 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<{ ap
             {value: "Vz", label: "V"}
         ];
 
+        let regionId = 0;
+
         // Fill region select options with all non-temporary regions that are closed or point type
         let profileRegionOptions: IOptionProps[];
         if (this.props.appStore.activeFrame && this.props.appStore.activeFrame.regionSet) {
+            let fileId = appStore.activeFrame.frameInfo.fileId;
+            regionId = widgetStore.regionIdMap.get(fileId) || 0;
             profileRegionOptions = this.props.appStore.activeFrame.regionSet.regions.filter(r => !r.isTemporary && (r.isClosedRegion || r.regionType === CARTA.RegionType.POINT)).map(r => {
                 return {
                     value: r.regionId,
@@ -54,7 +61,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<{ ap
 
         let showStatsType = false;
         if (appStore.activeFrame) {
-            const selectedRegion = appStore.activeFrame.regionSet.regions.find(r => r.regionId === widgetStore.regionId);
+            const selectedRegion = appStore.activeFrame.regionSet.regions.find(r => r.regionId === regionId);
             showStatsType = (selectedRegion && selectedRegion.isClosedRegion);
         }
 
@@ -77,7 +84,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<{ ap
                             <HTMLSelect value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged}/>
                         </FormGroup>
                         <FormGroup label={"Region"} inline={true}>
-                            <HTMLSelect value={widgetStore.regionId} options={profileRegionOptions} onChange={this.handleRegionChanged}/>
+                            <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged}/>
                         </FormGroup>
                         {showStatsType &&
                         <FormGroup label={"Stats"} inline={true}>

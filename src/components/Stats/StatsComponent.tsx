@@ -7,7 +7,6 @@ import {CARTA} from "carta-protobuf";
 import {WidgetConfig, WidgetProps} from "stores";
 import {StatsWidgetStore} from "stores/widgets";
 import "./StatsComponent.css";
-import {Stats} from "fs";
 
 @observer
 export class StatsComponent extends React.Component<WidgetProps> {
@@ -43,21 +42,14 @@ export class StatsComponent extends React.Component<WidgetProps> {
         const appStore = this.props.appStore;
 
         if (appStore.activeFrame) {
-            let fileId = this.widgetStore.fileId;
-            let regionId = this.widgetStore.regionId;
-            // Replace "current file" fileId with active frame's fileId
-            if (this.widgetStore.fileId === -1) {
-                fileId = appStore.activeFrame.frameInfo.fileId;
-            }
+            let fileId = appStore.activeFrame.frameInfo.fileId;
+            let regionId = this.widgetStore.regionIdMap.get(fileId) || -1;
 
             const frameMap = appStore.regionStats.get(fileId);
             if (!frameMap) {
                 return null;
             }
-            const data = frameMap.get(regionId);
-            if (data) {
-                return data;
-            }
+            return frameMap.get(regionId);
         }
         return null;
     }
@@ -91,13 +83,14 @@ export class StatsComponent extends React.Component<WidgetProps> {
         // Update widget title when region or coordinate changes
         autorun(() => {
             const appStore = this.props.appStore;
-            if (this.widgetStore) {
+            if (this.widgetStore && appStore.activeFrame) {
                 let regionString = "Unknown";
 
-                if (this.widgetStore.regionId === -1) {
+                const regionId = this.widgetStore.regionIdMap.get(appStore.activeFrame.frameInfo.fileId) || -1;
+                if (regionId ===  -1) {
                     regionString = "Image";
                 } else if (appStore.activeFrame && appStore.activeFrame.regionSet) {
-                    const region = appStore.activeFrame.regionSet.regions.find(r => r.regionId === this.widgetStore.regionId);
+                    const region = appStore.activeFrame.regionSet.regions.find(r => r.regionId === regionId);
                     if (region) {
                         regionString = region.nameString;
                     }
@@ -110,7 +103,10 @@ export class StatsComponent extends React.Component<WidgetProps> {
     }
 
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        this.widgetStore.setRegionId(parseInt(changeEvent.target.value));
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame) {
+            this.widgetStore.setRegionId(appStore.activeFrame.frameInfo.fileId, parseInt(changeEvent.target.value));
+        }
     };
 
     private onResize = (width: number, height: number) => {
@@ -124,7 +120,10 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
         // Fill region select options with all non-temporary regions that are closed
         let profileRegionOptions: IOptionProps[] = [{value: -1, label: "Image"}];
+        let regionId = -1;
         if (appStore.activeFrame && appStore.activeFrame.regionSet) {
+            let fileId = appStore.activeFrame.frameInfo.fileId;
+            regionId = this.widgetStore.regionIdMap.get(fileId) || -1;
             profileRegionOptions = profileRegionOptions.concat(this.props.appStore.activeFrame.regionSet.regions.filter(r => !r.isTemporary && r.isClosedRegion).map(r => {
                 return {
                     value: r.regionId,
@@ -173,7 +172,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             <div className={"stats-widget"}>
                 <ControlGroup fill={true} vertical={true}>
                     <FormGroup label={"Region"} inline={true}>
-                        <HTMLSelect value={this.widgetStore.regionId} options={profileRegionOptions} onChange={this.handleRegionChanged}/>
+                        <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged}/>
                     </FormGroup>
                 </ControlGroup>
                 <div className="stats-display">
