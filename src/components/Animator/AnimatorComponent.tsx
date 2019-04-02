@@ -38,6 +38,11 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 val = 0;
             }
             this.props.appStore.activeFrame.setChannels(val, this.props.appStore.activeFrame.requiredStokes);
+
+            // reset render config boundaries when switching channel/stoke
+            if (this.props.appStore.widgetsStore && this.props.appStore.widgetsStore.renderConfigWidgets) {
+                this.props.appStore.widgetsStore.renderConfigWidgets.forEach(widget => widget.clearXYBounds());
+            }
         }
     };
 
@@ -50,6 +55,11 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 val = 0;
             }
             this.props.appStore.activeFrame.setChannels(this.props.appStore.activeFrame.requiredChannel, val);
+
+            // reset render config boundaries when switching channel/stoke
+            if (this.props.appStore.widgetsStore && this.props.appStore.widgetsStore.renderConfigWidgets) {
+                this.props.appStore.widgetsStore.renderConfigWidgets.forEach(widget => widget.clearXYBounds());
+            }
         }
     };
 
