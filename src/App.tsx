@@ -120,35 +120,36 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     id: "spatial-profiler-1",
                     props: {appStore: this.props.appStore, id: "spatial-profiler-1", docked: true}
                 }, {
-                    type: "react-component",
-                    component: "spectral-profiler",
-                    id: "spectral-profiler-0",
-                    props: {appStore: this.props.appStore, id: "spectral-profiler-0", docked: true}
-                }, {
-                    type: "stack",
+                    type: "row",
                     content: [{
-                        type: "react-component",
-                        component: "animator",
-                        title: "Animator",
-                        id: "animator-0",
-                        props: {appStore: this.props.appStore, id: "animator-0", docked: true}
-                    }, {
                         type: "react-component",
                         component: "region-list",
                         title: "Region List",
                         id: "region-list-0",
                         props: {appStore: this.props.appStore, id: "region-list-0", docked: true}
+                    }, {
+                        type: "react-component",
+                        component: "stats",
+                        title: "Statistics",
+                        id: "stats-0",
+                        props: {appStore: this.props.appStore, id: "stats-0", docked: true}
                     }]
+                }, {
+                    type: "react-component",
+                    component: "animator",
+                    title: "Animator",
+                    id: "animator-0",
+                    props: {appStore: this.props.appStore, id: "animator-0", docked: true}
                 }]
             }]
         }];
 
         widgetsStore.addSpatialProfileWidget("spatial-profiler-0", "x", -1, 0);
         widgetsStore.addSpatialProfileWidget("spatial-profiler-1", "y", -1, 0);
-        widgetsStore.addSpectralProfileWidget("spectral-profiler-0", "z");
         widgetsStore.addRenderConfigWidget("render-config-0");
         widgetsStore.addAnimatorWidget("animator-0");
         widgetsStore.addRegionListWidget("region-list-0");
+        widgetsStore.addStatsWidget("stats-0");
         widgetsStore.addLogWidget("log-0");
 
         const layout = new GoldenLayout({

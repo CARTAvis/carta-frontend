@@ -67,7 +67,6 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<{ ap
 
         const profileStatsOptions: IOptionProps[] = [
             {value: CARTA.StatsType.Sum, label: "Sum"},
-            {value: CARTA.StatsType.FluxDensity, label: "Flux Density"},
             {value: CARTA.StatsType.Mean, label: "Mean"},
             {value: CARTA.StatsType.RMS, label: "RMS"},
             {value: CARTA.StatsType.Sigma, label: "Sigma"},
