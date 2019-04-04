@@ -25,18 +25,18 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={600} defaultHeight={700} enableResizing={false}>
+            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={620} defaultHeight={700} enableResizing={false}>
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
                         <img src={logoPng} width={100}/>
-                        <h3>CARTA Viewer Version 1.0.1 (20190228)</h3>
+                        <h3>CARTA Viewer Version 1.1.0-beta.0 (20190405)</h3>
                     </div>
 
                     <h3>Development team:</h3>
                     <p>The development of the CARTA project is a joint effort from:</p>
                     <ul>
                         <li><a href="https://www.asiaa.sinica.edu.tw/" target="_blank">Academia Sinica, Institute of Astronomy and Astrophysics (ASIAA)</a></li>
-                        <li><a href="https://idia.ac.za/" target="_blank">Inter-university Institute for Data Intensive Astronomy (IDIA)</a></li>
+                        <li><a href="https://idia.ac.za/" target="_blank">Inter-University Institute for Data Intensive Astronomy (IDIA)</a></li>
                         <li><a href="https://science.nrao.edu/" target="_blank">National Radio Astronomy Observatory (NRAO)</a></li>
                         <li><a href="https://www.ualberta.ca/physics" target="_blank">Department of Physics, University of Alberta</a></li>
                     </ul>
