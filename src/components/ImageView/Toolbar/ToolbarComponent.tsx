@@ -63,7 +63,6 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             <Menu>
                 <MenuItem icon={"square"} text="Rectangle" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)}/>
                 <MenuItem icon={"circle"} text="Ellipse" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)}/>
-                <MenuItem disabled={true} icon={"polygon-filter"} text="Polygon"/>
             </Menu>
         );
 

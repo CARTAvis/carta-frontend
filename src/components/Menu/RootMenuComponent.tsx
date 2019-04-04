@@ -32,7 +32,6 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     disabled={(connectionStatus !== ConnectionStatus.ACTIVE && connectionStatus !== ConnectionStatus.DROPPED) || !appStore.activeFrame || appStore.fileLoading}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(true)}
                 />
-                <Menu.Item text="Load region" disabled={true}/>
                 <Menu.Divider/>
                 <Menu.Item
                     text="Export image"
@@ -42,7 +41,6 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
                 />
                 <Menu.Divider/>
-                <Menu.Item text="Preferences" icon={"cog"} label={`${modString}P`} disabled={true}/>
                 <Menu.Item text="Enter API Key" icon={"key"} onClick={appStore.showApiKeyDialog}/>
                 <Menu.Item text="Connect to URL" onClick={appStore.showURLConnect}/>
             </Menu>
@@ -66,24 +64,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     <Menu.Item text="Dark" icon={"moon"} onClick={appStore.setDarkTheme}/>
                 </Menu.Item>
                 <Menu.Item text="Overlay" icon={"widget"}>
-                    <Menu.Item text="DS9 Preset" disabled={true}/>
-                    <Menu.Item text="CASA Preset" disabled={true}/>
-                    <Menu.Divider/>
-                    <Menu.Item text="Custom Preset 1" disabled={true}/>
-                    <Menu.Item text="Custom Preset 2" disabled={true}/>
-                    <Menu.Divider/>
                     <Menu.Item text="Customize..." icon={"settings"} onClick={appStore.overlayStore.showOverlaySettings}/>
-                    <Menu.Item text="Save Current as Preset" icon={"floppy-disk"} disabled={true}/>
-                </Menu.Item>
-                <Menu.Item text="Graphs" icon={"timeline-line-chart"} disabled={true}>
-                    <Menu.Item text="DS9 Preset"/>
-                    <Menu.Item text="CASA Preset"/>
-                    <Menu.Divider/>
-                    <Menu.Item text="My graph preset"/>
-                    <Menu.Item text="Another graph preset"/>
-                    <Menu.Divider/>
-                    <Menu.Item text="Customize..." icon={"style"}/>
-                    <Menu.Item text="Save Current as Preset" icon={"floppy-disk"}/>
                 </Menu.Item>
                 {layerItems.length > 0 &&
                 <Menu.Item text="Frames" icon={"layers"}>
@@ -98,33 +79,18 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
 
         const panelMenu = (
             <Menu>
+                <Menu.Item text="Info Panels" icon={"info-sign"}>
+                    <Menu.Item text="Region List" onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
+                    <Menu.Item text="Program Log" onClick={appStore.widgetsStore.createFloatingLogWidget}/>
+                </Menu.Item>
                 <Menu.Item text="Profiles" icon={"timeline-line-chart"}>
                     <Menu.Item text="Spatial Profiler" onClick={appStore.widgetsStore.createFloatingSpatialProfilerWidget}/>
                     <Menu.Item text="Spectral Profiler" onClick={appStore.widgetsStore.createFloatingSpectralProfilerWidget}/>
                 </Menu.Item>
-                <Menu.Item text="Histograms" icon={"timeline-bar-chart"} disabled={true}>
-                    <Menu.Item text="Region Histogram"/>
-                    <Menu.Item text="Slice Histogram"/>
-                </Menu.Item>
-                <Menu.Item text="Info Panels" icon={"info-sign"}>
-                    <Menu.Item text="Region Statistics" disabled={true}/>
-                    <Menu.Item text="Program Log" onClick={appStore.widgetsStore.createFloatingLogWidget}/>
-                </Menu.Item>
-                <Menu.Divider/>
-                <Menu.Item text="3D Height-map" icon={"mountain"} disabled={true}/>
+                <Menu.Item text="Statistics" icon={"numerical"} onClick={appStore.widgetsStore.createFloatingStatsWidget}/>
+                <Menu.Item text="Histogram" icon={"timeline-bar-chart"} onClick={appStore.widgetsStore.createFloatingHistogramWidget}/>
                 <Menu.Item text="Animator" icon={"video"} onClick={appStore.widgetsStore.createFloatingAnimatorWidget}/>
                 <Menu.Item text="Render Config" icon={"style"} onClick={appStore.widgetsStore.createFloatingRenderWidget}/>
-                <Menu.Divider/>
-                <Menu.Item text="Presets" icon={"new-grid-item"} disabled={true}>
-                    <Menu.Item text="Image Only"/>
-                    <Menu.Item text="3D with Profiles"/>
-                    <Menu.Item text="Full Stokes"/>
-                    <Menu.Divider/>
-                    <Menu.Item text="Custom Preset 1" label={`${modString}1`}/>
-                    <Menu.Item text="Custom Preset 2" label={`${modString}2`}/>
-                    <Menu.Divider/>
-                    <Menu.Item text="Save Current as Preset" icon={"floppy-disk"}/>
-                </Menu.Item>
             </Menu>
         );
 
