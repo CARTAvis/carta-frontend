@@ -8,7 +8,6 @@ export enum ConnectionStatus {
     CLOSED = 0,
     PENDING = 1,
     ACTIVE = 2,
-    DROPPED = 3
 }
 
 export enum EventNames {
@@ -42,6 +41,7 @@ export enum EventNames {
 export class BackendService {
     @observable connectionStatus: ConnectionStatus;
     @observable loggingEnabled: boolean;
+    @observable connectionDropped: boolean;
     @observable sessionId: string;
     @observable apiKey: string;
     @observable endToEndPing: number;
@@ -49,6 +49,7 @@ export class BackendService {
     private connection: WebSocket;
     private lastPingTime: number;
     private lastPongTime: number;
+    private autoReconnect: boolean;
     private observerRequestMap: Map<number, Observer<any>>;
     private eventCounter: number;
     private readonly rasterStream: Subject<CARTA.RasterImageData>;
@@ -144,19 +145,22 @@ export class BackendService {
     }
 
     @action("connect")
-    connect(url: string, apiKey: string): Observable<string> {
+    connect(url: string, apiKey: string, autoConnect: boolean = true): Observable<string> {
         if (this.connection) {
+            this.connection.onclose = null;
             this.connection.close();
         }
 
-        this.connection = new WebSocket(url);
+        this.autoReconnect = autoConnect;
+        this.connectionDropped = false;
         this.connectionStatus = ConnectionStatus.PENDING;
+        this.connection = new WebSocket(url);
         this.connection.binaryType = "arraybuffer";
         this.connection.onmessage = this.messageHandler.bind(this);
         this.connection.onclose = (ev: CloseEvent) => {
             this.connectionStatus = ConnectionStatus.CLOSED;
             // Reconnect to the same URL if Websocket is closed
-            if (!ev.wasClean) {
+            if (!ev.wasClean && this.autoReconnect) {
                 setTimeout(() => {
                     const newConnection = new WebSocket(url);
                     newConnection.binaryType = "arraybuffer";
@@ -173,12 +177,11 @@ export class BackendService {
 
         const obs = new Observable<string>(observer => {
             this.connection.onopen = () => {
-                // Until session resuming is handled correctly, re-connections will be considered "dropped" connections, to indicate that errors may occur
                 if (this.connectionStatus === ConnectionStatus.CLOSED) {
-                    this.connectionStatus = ConnectionStatus.DROPPED;
-                } else {
-                    this.connectionStatus = ConnectionStatus.ACTIVE;
+                    this.connectionDropped = true;
                 }
+                this.connectionStatus = ConnectionStatus.ACTIVE;
+                this.autoReconnect = true;
 
                 const message = CARTA.RegisterViewer.create({sessionId: "", apiKey: apiKey});
                 const requestId = this.eventCounter;
@@ -202,7 +205,7 @@ export class BackendService {
     }
 
     sendPing = () => {
-        if (this.connection && this.connectionStatus === ConnectionStatus.ACTIVE || this.connectionStatus === ConnectionStatus.DROPPED) {
+        if (this.connection && this.connectionStatus === ConnectionStatus.ACTIVE) {
             this.lastPingTime = performance.now();
             this.connection.send("PING");
         }

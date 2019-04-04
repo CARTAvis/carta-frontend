@@ -5,3 +5,4 @@ export * from "./OverlaySettings/OverlaySettingsDialogComponent";
 export * from "./TaskProgressDialog/TaskProgressDialogComponent";
 export * from "./URLConnect/URLConnectDialogComponent";
 export * from "./RegionDialog/RegionDialogComponent";
+export * from "./ApiKeyDialog/ApiKeyDialogComponent";

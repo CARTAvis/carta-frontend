@@ -23,26 +23,25 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 <Menu.Item
                     text="Open image"
                     label={`${modString}O`}
-                    disabled={(connectionStatus !== ConnectionStatus.ACTIVE && connectionStatus !== ConnectionStatus.DROPPED) || appStore.fileLoading}
+                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || appStore.fileLoading}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(false)}
                 />
                 <Menu.Item
                     text="Append image"
                     label={`${modString}L`}
-                    disabled={(connectionStatus !== ConnectionStatus.ACTIVE && connectionStatus !== ConnectionStatus.DROPPED) || !appStore.activeFrame || appStore.fileLoading}
+                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(true)}
                 />
                 <Menu.Divider/>
                 <Menu.Item
                     text="Export image"
-                    icon={"floppy-disk"}
                     label={`${modString}E`}
                     disabled={!appStore.activeFrame}
                     onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
                 />
                 <Menu.Divider/>
-                <Menu.Item text="Enter API Key" icon={"key"} onClick={appStore.showApiKeyDialog}/>
-                <Menu.Item text="Connect to URL" onClick={appStore.showURLConnect}/>
+                <Menu.Item text="Enter API Key" onClick={appStore.showApiKeyDialog}/>
+                <Menu.Item text="Connect to remote server" onClick={appStore.showURLConnect}/>
             </Menu>
         );
 
@@ -111,12 +110,13 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 connectivityClass += " warning";
                 break;
             case ConnectionStatus.ACTIVE:
-                tooltip = `Connected to server. Latency: ${latencyString}`;
-                connectivityClass += " online";
-                break;
-            case ConnectionStatus.DROPPED:
-                tooltip = `Reconnected to server after disconnect. Some errors may occur. Latency: ${latencyString}`;
-                connectivityClass += " warning";
+                if (appStore.backendService.connectionDropped) {
+                    tooltip = `Reconnected to server after disconnect. Some errors may occur. Latency: ${latencyString}`;
+                    connectivityClass += " warning";
+                } else {
+                    tooltip = `Connected to server. Latency: ${latencyString}`;
+                    connectivityClass += " online";
+                }
                 break;
             case ConnectionStatus.CLOSED:
             default:

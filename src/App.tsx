@@ -2,22 +2,24 @@ import * as React from "react";
 import * as GoldenLayout from "golden-layout";
 import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
-import DevTools from "mobx-react-devtools";
+import {autorun} from "mobx";
 import ReactResizeDetector from "react-resize-detector";
 import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import {exportImage, FloatingWidgetManagerComponent, RootMenuComponent} from "./components";
-import {AboutDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, RegionDialogComponent, URLConnectDialogComponent} from "./components/Dialogs";
+import {AppToaster} from "./components/Shared";
+import {AboutDialogComponent, ApiKeyDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, RegionDialogComponent, URLConnectDialogComponent} from "./components/Dialogs";
 import {AppStore, dayPalette, FileBrowserStore, nightPalette, RegionMode} from "./stores";
+import {ConnectionStatus} from "./services";
 import {smoothStepOffset} from "./utilities";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
 import "./layout-theme.css";
-import {ApiKeyDialogComponent} from "./components/Dialogs/ApiKeyDialog/ApiKeyDialogComponent";
 
 @HotkeysTarget @observer
 export class App extends React.Component<{ appStore: AppStore }> {
 
     private glContainer: HTMLElement;
+    private previousConnectionStatus: ConnectionStatus;
 
     constructor(props: { appStore: AppStore }) {
         super(props);
@@ -60,6 +62,29 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         // Log the frontend git commit hash
         appStore.logStore.addDebug(`Current frontend version: ${GitCommit.logMessage}`, ["version"]);
+
+        this.previousConnectionStatus = ConnectionStatus.CLOSED;
+        // Display toasts when connection status changes
+        autorun(() => {
+            const newConnectionStatus = appStore.backendService.connectionStatus;
+            switch (newConnectionStatus) {
+                case ConnectionStatus.ACTIVE:
+                    if (appStore.backendService.connectionDropped) {
+                        AppToaster.show({icon: "warning-sign", message: "Reconnected to server. Some errors may occur", intent: "warning", timeout: 3000});
+                    } else {
+                        AppToaster.show({icon: "swap-vertical", message: "Connected to CARTA server", intent: "success", timeout: 3000});
+                    }
+                    break;
+                case ConnectionStatus.CLOSED:
+                    if (this.previousConnectionStatus === ConnectionStatus.ACTIVE) {
+                        AppToaster.show({icon: "error", message: "Disconnected from server", intent: "danger", timeout: 3000});
+                    }
+                    break;
+                default:
+                    break;
+            }
+            this.previousConnectionStatus = newConnectionStatus;
+        });
 
         appStore.backendService.connect(wsURL, appStore.apiKey).subscribe(sessionId => {
             console.log(`Connected with session ID ${sessionId}`);
