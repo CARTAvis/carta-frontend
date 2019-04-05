@@ -20,6 +20,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
     private glContainer: HTMLElement;
     private previousConnectionStatus: ConnectionStatus;
+    private static readonly REGION_WIDGETS_STACK_CUTOFF = 960;
 
     constructor(props: { appStore: AppStore }) {
         super(props);
@@ -101,8 +102,10 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
     componentDidMount() {
         const widgetsStore = this.props.appStore.widgetsStore;
-        // Adjust default image view size based on window height
+        // Adjust layout properties based on window dimensions
         const defaultImageViewFraction = smoothStepOffset(window.innerHeight, 720, 1080, 65, 75);
+        const statisticsRowType = (window.innerHeight > App.REGION_WIDGETS_STACK_CUTOFF) ? "row" : "stack";
+
         const initialLayout: any[] = [{
             type: "row",
             content: [{
@@ -145,8 +148,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     id: "spatial-profiler-1",
                     props: {appStore: this.props.appStore, id: "spatial-profiler-1", docked: true}
                 }, {
-                    type: "row",
+                    type: statisticsRowType,
                     content: [{
+                        width: 60,
                         type: "react-component",
                         component: "region-list",
                         title: "Region List",
