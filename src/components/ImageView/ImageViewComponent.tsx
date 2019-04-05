@@ -17,10 +17,16 @@ import {RegionViewComponent} from "./RegionView/RegionViewComponent";
 export const exportImage = (padding, darkTheme, imageName) => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
     const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
+    let regionCanvas: HTMLCanvasElement;
     let beamProfileCanvas: HTMLCanvasElement;
     const beamProfileQuery = $(".beam-profile-stage").children().children("canvas");
     if (beamProfileQuery && beamProfileQuery.length) {
         beamProfileCanvas = beamProfileQuery[0] as HTMLCanvasElement;
+    }
+
+    const regionQuery = $(".region-stage").children().children("canvas");
+    if (regionQuery && regionQuery.length) {
+        regionCanvas = regionQuery[0] as HTMLCanvasElement;
     }
 
     const composedCanvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -30,11 +36,15 @@ export const exportImage = (padding, darkTheme, imageName) => {
     const ctx = composedCanvas.getContext("2d");
     ctx.fillStyle = darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
-    ctx.scale(devicePixelRatio, devicePixelRatio);
-    ctx.drawImage(rasterCanvas, padding.left, padding.top);
+    ctx.drawImage(rasterCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     if (beamProfileCanvas) {
-        ctx.drawImage(beamProfileCanvas, padding.left, padding.top);
+        ctx.drawImage(beamProfileCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     }
+
+    if (regionCanvas) {
+        ctx.drawImage(regionCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
+    }
+
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(overlayCanvas, 0, 0);
 
