@@ -139,7 +139,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         }
 
         const val = parseFloat(ev.currentTarget.value);
-        if (isFinite(val) && !closeTo(val, this.props.appStore.activeFrame.renderConfig.scaleMinVal)) {
+        if (isFinite(val) && val !== this.props.appStore.activeFrame.renderConfig.scaleMinVal) {
             this.props.appStore.activeFrame.renderConfig.setCustomScale(val, this.props.appStore.activeFrame.renderConfig.scaleMaxVal);
         }
     };
@@ -150,7 +150,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         }
 
         const val = parseFloat(ev.currentTarget.value);
-        if (isFinite(val) && !closeTo(val, this.props.appStore.activeFrame.renderConfig.scaleMaxVal)) {
+        if (isFinite(val) && val !== this.props.appStore.activeFrame.renderConfig.scaleMaxVal) {
             this.props.appStore.activeFrame.renderConfig.setCustomScale(this.props.appStore.activeFrame.renderConfig.scaleMinVal, val);
         }
     };
