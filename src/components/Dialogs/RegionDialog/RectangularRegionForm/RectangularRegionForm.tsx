@@ -9,6 +9,8 @@ import {Point2D} from "models";
 import {closeTo} from "utilities";
 import "./RectangularRegionForm.css";
 
+const KEYCODE_ENTER = 13;
+
 @observer
 export class RectangularRegionForm extends React.Component<{ region: RegionStore, wcsInfo: number }> {
     @observable displayColorPicker: boolean;
@@ -42,7 +44,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
     };
 
     private handleCenterXChange = (ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== 13) {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
         const valueString = ev.currentTarget.value;
@@ -58,7 +60,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
     };
 
     private handleCenterYChange = (ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== 13) {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
         const valueString = ev.currentTarget.value;
@@ -74,7 +76,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
     };
 
     private handleWidthChange = (ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== 13) {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
         const valueString = ev.currentTarget.value;
@@ -90,7 +92,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
     };
 
     private handleHeightChange = (ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== 13) {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
         const valueString = ev.currentTarget.value;
@@ -106,7 +108,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
     };
 
     private handleLeftChange = (ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== 13) {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
         const valueString = ev.currentTarget.value;
@@ -130,7 +132,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
     };
 
     private handleBottomChange = (ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== 13) {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
         const valueString = ev.currentTarget.value;
@@ -154,7 +156,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
     };
 
     private handleRightChange = (ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== 13) {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
         const valueString = ev.currentTarget.value;
@@ -178,7 +180,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
     };
 
     private handleTopChange = (ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== 13) {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
         const valueString = ev.currentTarget.value;
@@ -202,7 +204,7 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
     };
 
     private handleRotationChange = (ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== 13) {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
         const valueString = ev.currentTarget.value;

@@ -6,6 +6,8 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore} from "stores";
 import "./URLConnectDialogComponent.css";
 
+const KEYCODE_ENTER = 13;
+
 @observer
 export class URLConnectDialogComponent extends React.Component<{ appStore: AppStore }, { errMessage: string, url: string }> {
     @observable errMessage: string = "";
@@ -62,7 +64,7 @@ export class URLConnectDialogComponent extends React.Component<{ appStore: AppSt
     };
 
     private handleKeyDown = (ev) => {
-        if (ev.keyCode === 13 && this.validateUrl(this.url)) {
+        if (ev.keyCode === KEYCODE_ENTER && this.validateUrl(this.url)) {
             this.onConnectClicked();
         }
     };
