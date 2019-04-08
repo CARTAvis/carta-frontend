@@ -10,7 +10,7 @@ import {PopoverSettingsComponent, LinePlotComponent, LinePlotComponentProps, Plo
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
 import {AnimationState, FrameStore, FrameScaling, WidgetConfig, WidgetProps, RenderConfigStore} from "stores";
-import {clamp} from "utilities";
+import {clamp, closeTo} from "utilities";
 import {Point2D} from "models";
 import {CARTA} from "carta-protobuf";
 import "./RenderConfigComponent.css";
@@ -138,8 +138,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             return;
         }
 
-        const val = ev.currentTarget.value;
-        if (isFinite(val)) {
+        const val = parseFloat(ev.currentTarget.value);
+        if (isFinite(val) && !closeTo(val, this.props.appStore.activeFrame.renderConfig.scaleMinVal)) {
             this.props.appStore.activeFrame.renderConfig.setCustomScale(val, this.props.appStore.activeFrame.renderConfig.scaleMaxVal);
         }
     };
@@ -149,8 +149,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             return;
         }
 
-        const val = ev.currentTarget.value;
-        if (isFinite(val)) {
+        const val = parseFloat(ev.currentTarget.value);
+        if (isFinite(val) && !closeTo(val, this.props.appStore.activeFrame.renderConfig.scaleMaxVal)) {
             this.props.appStore.activeFrame.renderConfig.setCustomScale(this.props.appStore.activeFrame.renderConfig.scaleMinVal, val);
         }
     };
