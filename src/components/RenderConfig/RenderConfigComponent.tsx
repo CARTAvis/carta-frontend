@@ -10,11 +10,12 @@ import {PopoverSettingsComponent, LinePlotComponent, LinePlotComponentProps, Plo
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
 import {AnimationState, FrameStore, FrameScaling, WidgetConfig, WidgetProps, RenderConfigStore} from "stores";
-import {clamp} from "utilities";
+import {clamp, closeTo} from "utilities";
 import {Point2D} from "models";
 import {CARTA} from "carta-protobuf";
 import "./RenderConfigComponent.css";
 
+const KEYCODE_ENTER = 13;
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 160;
 
@@ -132,14 +133,24 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         this.props.appStore.activeFrame.renderConfig.setScaling(scaling);
     };
 
-    handleScaleMinChange = (val: number) => {
-        if (isFinite(val)) {
+    handleScaleMinChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+
+        const val = parseFloat(ev.currentTarget.value);
+        if (isFinite(val) && val !== this.props.appStore.activeFrame.renderConfig.scaleMinVal) {
             this.props.appStore.activeFrame.renderConfig.setCustomScale(val, this.props.appStore.activeFrame.renderConfig.scaleMaxVal);
         }
     };
 
-    handleScaleMaxChange = (val: number) => {
-        if (isFinite(val)) {
+    handleScaleMaxChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+
+        const val = parseFloat(ev.currentTarget.value);
+        if (isFinite(val) && val !== this.props.appStore.activeFrame.renderConfig.scaleMaxVal) {
             this.props.appStore.activeFrame.renderConfig.setCustomScale(this.props.appStore.activeFrame.renderConfig.scaleMinVal, val);
         }
     };
@@ -369,7 +380,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
                             allowNumericCharactersOnly={false}
-                            onValueChange={this.handleScaleMinChange}
+                            onBlur={this.handleScaleMinChange}
+                            onKeyDown={this.handleScaleMinChange}
                         />
                     </FormGroup>
                     <FormGroup label={"Clip Max"} inline={true}>
@@ -377,7 +389,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                             value={frame.renderConfig.scaleMaxVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
-                            onValueChange={this.handleScaleMaxChange}
+                            onBlur={this.handleScaleMaxChange}
+                            onKeyDown={this.handleScaleMaxChange}
                         />
                     </FormGroup>		   		    
                 {this.width < histogramCutoff ? percentileSelectDiv : cursorInfoDiv}

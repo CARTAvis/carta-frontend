@@ -9,6 +9,8 @@ import {Point2D} from "models";
 import {closeTo} from "utilities";
 import "./EllipticalRegionForm.css";
 
+const KEYCODE_ENTER = 13;
+
 @observer
 export class EllipticalRegionForm extends React.Component<{ region: RegionStore, wcsInfo: number }> {
     @observable displayColorPicker: boolean;
@@ -20,7 +22,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
     };
 
     private handleCenterXChange = (ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== 13) {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
         const valueString = ev.currentTarget.value;
@@ -36,7 +38,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
     };
 
     private handleCenterYChange = (ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== 13) {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
         const valueString = ev.currentTarget.value;
@@ -52,7 +54,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
     };
 
     private handleMajorAxisChange = (ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== 13) {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
         const valueString = ev.currentTarget.value;
@@ -68,7 +70,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
     };
 
     private handleMinorAxisChange = (ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== 13) {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
         const valueString = ev.currentTarget.value;
@@ -84,7 +86,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
     };
 
     private handleRotationChange = (ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== 13) {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
         const valueString = ev.currentTarget.value;
