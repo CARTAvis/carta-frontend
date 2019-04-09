@@ -13,7 +13,6 @@ $table-header-color-dark: $dark-gray5;
         th {
             position: sticky;
             top: 0;
-            z-index: 2;
             background-color: $table-header-color;
             cursor: pointer;
             .bp3-icon {
