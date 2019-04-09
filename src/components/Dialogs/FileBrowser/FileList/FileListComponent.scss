@@ -1,6 +1,8 @@
 @import "../../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
 $browser-table-color: $blue3;
+$table-header-color: $light-gray4;
+$table-header-color-dark: $dark-gray5;
 
 .file-table {
     overflow-y: scroll;
@@ -12,7 +14,7 @@ $browser-table-color: $blue3;
             position: sticky;
             top: 0;
             z-index: 2;
-            background-color: $light-gray4;
+            background-color: $table-header-color;
             cursor: pointer;
             .bp3-icon {
                 vertical-align: middle;
@@ -20,7 +22,7 @@ $browser-table-color: $blue3;
             }
 
             &.dark-theme {
-                background-color: $dark-gray5;
+                background-color: $table-header-color-dark;
             }
         }
     }
