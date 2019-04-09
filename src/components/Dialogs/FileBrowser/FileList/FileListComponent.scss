@@ -10,6 +10,7 @@ $table-header-color-dark: $dark-gray5;
     width: 100%;
     margin-right: 20px;
     thead {
+        user-select: none;
         th {
             position: sticky;
             top: 0;
