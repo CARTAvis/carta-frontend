@@ -4,6 +4,7 @@ import {CARTA} from "carta-protobuf";
 import "./FileListComponent.css";
 
 export class FileListComponent extends React.Component<{
+    darkTheme: boolean,
     files: CARTA.FileListResponse,
     selectedFile: CARTA.FileInfo,
     selectedHDU: string,
@@ -89,20 +90,20 @@ export class FileListComponent extends React.Component<{
                 <HTMLTable small={true} className="file-table">
                     <thead>
                     <tr>
-                        <th id="file-header-icon"/>
-                        <th onClick={() => this.setSortColumn("name")} id="file-header-name">
+                        <th id="file-header-icon" className={this.props.darkTheme ? "dark-theme" : ""}/>
+                        <th onClick={() => this.setSortColumn("name")} id="file-header-name" className={this.props.darkTheme ? "dark-theme" : ""}>
                             File Name
                             {this.state.sortColumn === "name" &&
                             <Icon icon={this.state.sortDirection === 1 ? "symbol-triangle-down" : "symbol-triangle-up"}/>
                             }
                         </th>
-                        <th onClick={() => this.setSortColumn("type")} id="file-header-type">
+                        <th onClick={() => this.setSortColumn("type")} id="file-header-type" className={this.props.darkTheme ? "dark-theme" : ""}>
                             Type
                             {this.state.sortColumn === "type" &&
                             <Icon icon={this.state.sortDirection === 1 ? "symbol-triangle-down" : "symbol-triangle-up"}/>
                             }
                         </th>
-                        <th onClick={() => this.setSortColumn("size")} id="file-header-size">
+                        <th onClick={() => this.setSortColumn("size")} id="file-header-size" className={this.props.darkTheme ? "dark-theme" : ""}>
                             Size
                             {this.state.sortColumn === "size" &&
                             <Icon icon={this.state.sortDirection === 1 ? "symbol-triangle-down" : "symbol-triangle-up"}/>

@@ -66,6 +66,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                 <div className="bp3-dialog-body" style={{display: "flex"}}>
                     <div className="file-list-pane">
                         <FileListComponent
+                            darkTheme={this.props.appStore.darkTheme}
                             files={fileBrowserStore.fileList}
                             selectedFile={fileBrowserStore.selectedFile}
                             selectedHDU={fileBrowserStore.selectedHDU}

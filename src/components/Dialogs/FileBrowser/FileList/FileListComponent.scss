@@ -9,10 +9,18 @@ $browser-table-color: $blue3;
     margin-right: 20px;
     thead {
         th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background-color: $light-gray4;
             cursor: pointer;
             .bp3-icon {
                 vertical-align: middle;
                 height: 10px;
+            }
+
+            &.dark-theme {
+                background-color: $dark-gray5;
             }
         }
     }
