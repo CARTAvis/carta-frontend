@@ -16,8 +16,7 @@ $table-header-color-dark: $dark-gray5;
             background-color: $table-header-color;
             cursor: pointer;
             .bp3-icon {
-                vertical-align: middle;
-                height: 10px;
+                padding-left: 2px;
             }
 
             &.dark-theme {
