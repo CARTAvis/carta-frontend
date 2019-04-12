@@ -9,7 +9,7 @@ import {smoothStepOffset} from "utilities";
 import {HistogramWidgetStore, RegionWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
 
 const CURSOR_DEBOUNCE_TIME = 200;
-const CURSOR_THROTTLE_TIME = 100;
+const CURSOR_THROTTLE_TIME = 200;
 const IMAGE_THROTTLE_TIME = 200;
 const REQUIREMENTS_CHECK_INTERVAL = 200;
 
