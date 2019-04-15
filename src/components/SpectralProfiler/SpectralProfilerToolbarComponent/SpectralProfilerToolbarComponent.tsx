@@ -1,13 +1,13 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {ControlGroup, FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
-import "./SpectralProfileToolbarComponent.css";
+import "./SpectralProfilerToolbarComponent.css";
 
 @observer
-export class SpectralProfileToolbarComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore, appStore: AppStore }> {
+export class SpectralProfilerToolbarComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore, appStore: AppStore }> {
 
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         if (this.props.appStore.activeFrame) {
