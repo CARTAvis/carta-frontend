@@ -60,7 +60,7 @@ export class URLConnectDialogComponent extends React.Component<{ appStore: AppSt
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={350} defaultHeight={210} enableResizing={false}>
+            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={360} defaultHeight={210} enableResizing={false}>
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup label="Remote URL" inline={true}>
                         <InputGroup placeholder="Enter WebSocket URL" value={this.url} onChange={this.handleInput} onKeyDown={this.handleKeyDown} autoFocus={true}/>
