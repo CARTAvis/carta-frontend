@@ -104,7 +104,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
         const widgetsStore = this.props.appStore.widgetsStore;
         // Adjust layout properties based on window dimensions
         const defaultImageViewFraction = smoothStepOffset(window.innerHeight, 720, 1080, 65, 75);
-        const statisticsRowType = (window.innerHeight > App.REGION_WIDGETS_STACK_CUTOFF) ? "row" : "stack";
 
         const initialLayout: any[] = [{
             type: "row",
@@ -120,20 +119,11 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     isClosable: false,
                     props: {appStore: this.props.appStore, id: "image-view-docked", docked: true}
                 }, {
-                    type: "stack",
-                    content: [{
-                        type: "react-component",
-                        component: "render-config",
-                        title: "Render Configuration",
-                        id: "render-config-0",
-                        props: {appStore: this.props.appStore, id: "render-config-0", docked: true}
-                    }, {
-                        type: "react-component",
-                        component: "log",
-                        title: "Log",
-                        id: "log-0",
-                        props: {appStore: this.props.appStore, id: "log-0", docked: true}
-                    }]
+                    type: "react-component",
+                    component: "render-config",
+                    title: "Render Configuration",
+                    id: "render-config-0",
+                    props: {appStore: this.props.appStore, id: "render-config-0", docked: true}
                 }]
             }, {
                 type: "column",
@@ -148,21 +138,11 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     id: "spatial-profiler-1",
                     props: {appStore: this.props.appStore, id: "spatial-profiler-1", docked: true}
                 }, {
-                    type: statisticsRowType,
-                    content: [{
-                        width: 60,
-                        type: "react-component",
-                        component: "region-list",
-                        title: "Region List",
-                        id: "region-list-0",
-                        props: {appStore: this.props.appStore, id: "region-list-0", docked: true}
-                    }, {
-                        type: "react-component",
-                        component: "stats",
-                        title: "Statistics",
-                        id: "stats-0",
-                        props: {appStore: this.props.appStore, id: "stats-0", docked: true}
-                    }]
+                    type: "react-component",
+                    component: "region-list",
+                    title: "Region List",
+                    id: "region-list-0",
+                    props: {appStore: this.props.appStore, id: "region-list-0", docked: true}
                 }, {
                     type: "react-component",
                     component: "animator",
@@ -178,7 +158,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
         widgetsStore.addRenderConfigWidget("render-config-0");
         widgetsStore.addAnimatorWidget("animator-0");
         widgetsStore.addRegionListWidget("region-list-0");
-        widgetsStore.addStatsWidget("stats-0");
         widgetsStore.addLogWidget("log-0");
 
         const layout = new GoldenLayout({
