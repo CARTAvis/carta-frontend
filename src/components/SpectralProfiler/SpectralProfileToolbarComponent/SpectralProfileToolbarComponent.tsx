@@ -66,7 +66,7 @@ export class SpectralProfileToolbarComponent extends React.Component<{widgetStor
         ];
 
         return (
-            <ControlGroup vertical={false} className="spectral-profiler-toolbar">
+            <div className="spectral-profiler-toolbar">
                 <FormGroup label={"Region"} inline={true}>
                     <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged}/>
                 </FormGroup>
@@ -78,7 +78,7 @@ export class SpectralProfileToolbarComponent extends React.Component<{widgetStor
                     <HTMLSelect value={widgetStore.statsType} options={profileStatsOptions} onChange={this.handleStatsChanged}/>
                 </FormGroup>
                 }
-            </ControlGroup>
+            </div>
         );
     }
 }
