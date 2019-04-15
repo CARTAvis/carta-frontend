@@ -87,7 +87,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 let regionString = "Unknown";
 
                 const regionId = this.widgetStore.regionIdMap.get(appStore.activeFrame.frameInfo.fileId) || -1;
-                if (regionId ===  -1) {
+                if (regionId === -1) {
                     regionString = "Image";
                 } else if (appStore.activeFrame && appStore.activeFrame.regionSet) {
                     const region = appStore.activeFrame.regionSet.regions.find(r => r.regionId === regionId);
@@ -118,6 +118,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
         const appStore = this.props.appStore;
 
+        let enableRegionSelect = false;
         // Fill region select options with all non-temporary regions that are closed
         let profileRegionOptions: IOptionProps[] = [{value: -1, label: "Image"}];
         let regionId = -1;
@@ -130,6 +131,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                     label: r.nameString
                 };
             }));
+            enableRegionSelect = profileRegionOptions.length > 1;
         }
 
         let formContent;
@@ -170,11 +172,9 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
         return (
             <div className={"stats-widget"}>
-                <ControlGroup fill={true} vertical={true}>
-                    <FormGroup label={"Region"} inline={true}>
-                        <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged}/>
-                    </FormGroup>
-                </ControlGroup>
+                <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
+                    <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect}/>
+                </FormGroup>
                 <div className="stats-display">
                     {formContent}
                 </div>

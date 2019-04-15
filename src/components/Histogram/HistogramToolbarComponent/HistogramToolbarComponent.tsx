@@ -19,6 +19,7 @@ export class HistogramToolbarComponent extends React.Component<{ widgetStore: Hi
         const widgetStore = this.props.widgetStore;
 
         let regionId = -1;
+        let enableRegionSelect = false;
         // Fill region select options with all non-temporary regions that are closed
         let profileRegionOptions: IOptionProps[] = [{value: -1, label: "Image"}];
         if (appStore.activeFrame && appStore.activeFrame.regionSet) {
@@ -30,12 +31,13 @@ export class HistogramToolbarComponent extends React.Component<{ widgetStore: Hi
                     label: r.nameString
                 };
             }));
+            enableRegionSelect = profileRegionOptions.length > 1;
         }
 
         return (
             <div className="spectral-profiler-toolbar">
-                <FormGroup label={"Region"} inline={true}>
-                    <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged}/>
+                <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
+                    <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect}/>
                 </FormGroup>
             </div>
         );

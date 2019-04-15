@@ -7,7 +7,7 @@ import {SpectralProfileWidgetStore} from "stores/widgets";
 import "./SpectralProfilerToolbarComponent.css";
 
 @observer
-export class SpectralProfilerToolbarComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore, appStore: AppStore }> {
+export class SpectralProfilerToolbarComponent extends React.Component<{ widgetStore: SpectralProfileWidgetStore, appStore: AppStore }> {
 
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         if (this.props.appStore.activeFrame) {
@@ -27,6 +27,9 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
         const appStore = this.props.appStore;
         const widgetStore = this.props.widgetStore;
 
+        let enableStatsSelect = false;
+        let enableRegionSelect = false;
+        let enableStokesSelect = false;
         let regionId = 0;
         // Fill region select options with all non-temporary regions that are closed or point type
         let profileRegionOptions: IOptionProps[];
@@ -39,6 +42,11 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
                     label: r.nameString
                 };
             });
+
+            const selectedRegion = appStore.activeFrame.regionSet.regions.find(r => r.regionId === regionId);
+            enableStatsSelect = (selectedRegion && selectedRegion.isClosedRegion);
+            enableRegionSelect = profileRegionOptions.length > 1;
+            enableStokesSelect = appStore.activeFrame.frameInfo.fileInfoExtended.stokes > 1;
         }
 
         const profileCoordinateOptions = [
@@ -48,12 +56,6 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
             {value: "Uz", label: "U"},
             {value: "Vz", label: "V"}
         ];
-
-        let showStatsType = false;
-        if (appStore.activeFrame) {
-            const selectedRegion = appStore.activeFrame.regionSet.regions.find(r => r.regionId === regionId);
-            showStatsType = (selectedRegion && selectedRegion.isClosedRegion);
-        }
 
         const profileStatsOptions: IOptionProps[] = [
             {value: CARTA.StatsType.Sum, label: "Sum"},
@@ -67,17 +69,15 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
 
         return (
             <div className="spectral-profiler-toolbar">
-                <FormGroup label={"Region"} inline={true}>
-                    <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged}/>
+                <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
+                    <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect}/>
                 </FormGroup>
-                <FormGroup label={"Stokes"} inline={true}>
-                    <HTMLSelect value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged}/>
+                <FormGroup label={"Statistic"} inline={true} disabled={!enableStatsSelect}>
+                    <HTMLSelect value={widgetStore.statsType} options={profileStatsOptions} onChange={this.handleStatsChanged} disabled={!enableStatsSelect}/>
                 </FormGroup>
-                {showStatsType &&
-                <FormGroup label={"Statistic"} inline={true}>
-                    <HTMLSelect value={widgetStore.statsType} options={profileStatsOptions} onChange={this.handleStatsChanged}/>
+                <FormGroup label={"Stokes"} inline={true} disabled={!enableStokesSelect}>
+                    <HTMLSelect value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect}/>
                 </FormGroup>
-                }
             </div>
         );
     }
