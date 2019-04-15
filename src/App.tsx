@@ -322,6 +322,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 <Hotkey group="Regions" global={true} combo="del" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>
                 <Hotkey group="Regions" global={true} combo="backspace" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>
                 <Hotkey group="Regions" global={true} combo="c" label="Toggle region creation mode" onKeyDown={this.toggleCreateMode}/>
+                <Hotkey group="Regions" global={true} combo="mod" label="Corner-to-corner region creation"/>
+                <Hotkey group="Regions" global={true} combo={"shift"} label="Symmetric region creation"/>
+                <Hotkey group="Regions" global={true} combo="double-click" label="Region properties"/>
             </Hotkeys>
         );
     }

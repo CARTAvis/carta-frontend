@@ -138,13 +138,12 @@ export class AppStore {
         // - OSX/iOS use '⌘'
         // - Windows/Linux uses 'Ctrl + '
         // - Browser uses 'alt +' for compatibility reasons
-        let modString = "alt + ";
         if (process.env.REACT_APP_TARGET === "linux") {
-            modString = "ctrl + ";
+            return "ctrl + ";
         } else if (process.env.REACT_APP_TARGET === "darwin") {
-            modString = "cmd +";
+            return "cmd +";
         }
-        return modString;
+        return "alt + ";
     }
 
     // Widgets
