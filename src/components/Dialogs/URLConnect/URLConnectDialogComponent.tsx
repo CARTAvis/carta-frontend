@@ -13,7 +13,7 @@ export class URLConnectDialogComponent extends React.Component<{ appStore: AppSt
     @observable errMessage: string = "";
     @observable url: string = "";
 
-    private static readonly URL_TEST_REGEX = new RegExp(/((ws(s)?)|(http(s)?)):\/\/\S+/);
+    private static readonly URL_TEST_REGEX = new RegExp(/(ws(s)?):\/\/\S+/);
 
     public render() {
         const appStore = this.props.appStore;
