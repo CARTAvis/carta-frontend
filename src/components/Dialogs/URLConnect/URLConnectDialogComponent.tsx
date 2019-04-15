@@ -15,6 +15,32 @@ export class URLConnectDialogComponent extends React.Component<{ appStore: AppSt
 
     private static readonly URL_TEST_REGEX = new RegExp(/(ws(s)?):\/\/\S+/);
 
+    private validateUrl = (url) => {
+        return url && URLConnectDialogComponent.URL_TEST_REGEX.test(url);
+    };
+
+    private handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
+        this.url = ev.currentTarget.value;
+    };
+
+    private handleKeyDown = (ev) => {
+        if (ev.keyCode === KEYCODE_ENTER && this.validateUrl(this.url)) {
+            this.onConnectClicked();
+        }
+    };
+
+    private onConnectClicked = () => {
+        const appStore = this.props.appStore;
+        appStore.backendService.connect(this.url, appStore.apiKey, false).subscribe(sessionId => {
+            console.log(`Connected with session ID ${sessionId}`);
+            this.errMessage = "";
+            appStore.hideURLConnect();
+        }, err => {
+            this.errMessage = "Could not connect to remote URL";
+            console.log(err);
+        });
+    };
+
     public render() {
         const appStore = this.props.appStore;
         let className = "url-connect-dialog";
@@ -54,30 +80,4 @@ export class URLConnectDialogComponent extends React.Component<{ appStore: AppSt
             </DraggableDialogComponent>
         );
     }
-
-    validateUrl = (url) => {
-        return url && URLConnectDialogComponent.URL_TEST_REGEX.test(url);
-    };
-
-    private handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
-        this.url = ev.currentTarget.value;
-    };
-
-    private handleKeyDown = (ev) => {
-        if (ev.keyCode === KEYCODE_ENTER && this.validateUrl(this.url)) {
-            this.onConnectClicked();
-        }
-    };
-
-    onConnectClicked = () => {
-        const appStore = this.props.appStore;
-        appStore.backendService.connect(this.url, appStore.apiKey, false).subscribe(sessionId => {
-            console.log(`Connected with session ID ${sessionId}`);
-            this.errMessage = "";
-            appStore.hideURLConnect();
-        }, err => {
-            this.errMessage = "Could not connect to remote URL";
-            console.log(err);
-        });
-    };
 }
