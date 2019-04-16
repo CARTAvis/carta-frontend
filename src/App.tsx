@@ -104,72 +104,77 @@ export class App extends React.Component<{ appStore: AppStore }> {
         const widgetsStore = this.props.appStore.widgetsStore;
         // Adjust layout properties based on window dimensions
         const defaultImageViewFraction = smoothStepOffset(window.innerHeight, 720, 1080, 65, 75);
-        const statisticsRowType = (window.innerHeight > App.REGION_WIDGETS_STACK_CUTOFF) ? "row" : "stack";
+
+        const imageViewComponent = {
+            type: "react-component",
+            component: "image-view",
+            title: "No image loaded",
+            height: defaultImageViewFraction,
+            id: "image-view",
+            isClosable: false,
+            props: {appStore: this.props.appStore, id: "image-view-docked", docked: true}
+        };
+
+        const renderConfigComponent = {
+            type: "react-component",
+            component: "render-config",
+            title: "Render Configuration",
+            id: "render-config-0",
+            props: {appStore: this.props.appStore, id: "render-config-0", docked: true}
+        };
+
+        const spatialProfilerXComponent = {
+            type: "react-component",
+            component: "spatial-profiler",
+            id: "spatial-profiler-0",
+            props: {appStore: this.props.appStore, id: "spatial-profiler-0", docked: true}
+        };
+
+        const spatialProfilerYComponent = {
+            type: "react-component",
+            component: "spatial-profiler",
+            id: "spatial-profiler-1",
+            props: {appStore: this.props.appStore, id: "spatial-profiler-1", docked: true}
+        };
+
+        const regionListComponent = {
+            type: "react-component",
+            component: "region-list",
+            title: "Region List",
+            id: "region-list-0",
+            props: {appStore: this.props.appStore, id: "region-list-0", docked: true}
+        };
+
+        const animatorComponent = {
+            type: "react-component",
+            component: "animator",
+            title: "Animator",
+            id: "animator-0",
+            props: {appStore: this.props.appStore, id: "animator-0", docked: true}
+        };
+
+        let rightColumnContent = [];
+
+        if (window.innerHeight > App.REGION_WIDGETS_STACK_CUTOFF) {
+            rightColumnContent = [spatialProfilerXComponent, spatialProfilerYComponent, regionListComponent, animatorComponent];
+        } else {
+            rightColumnContent = [
+                spatialProfilerXComponent,
+                spatialProfilerYComponent, {
+                    type: "stack",
+                    content: [regionListComponent, animatorComponent]
+                }];
+        }
 
         const initialLayout: any[] = [{
             type: "row",
             content: [{
                 type: "column",
                 width: 60,
-                content: [{
-                    type: "react-component",
-                    component: "image-view",
-                    title: "No image loaded",
-                    height: defaultImageViewFraction,
-                    id: "image-view",
-                    isClosable: false,
-                    props: {appStore: this.props.appStore, id: "image-view-docked", docked: true}
-                }, {
-                    type: "stack",
-                    content: [{
-                        type: "react-component",
-                        component: "render-config",
-                        title: "Render Configuration",
-                        id: "render-config-0",
-                        props: {appStore: this.props.appStore, id: "render-config-0", docked: true}
-                    }, {
-                        type: "react-component",
-                        component: "log",
-                        title: "Log",
-                        id: "log-0",
-                        props: {appStore: this.props.appStore, id: "log-0", docked: true}
-                    }]
-                }]
+                content: [imageViewComponent, renderConfigComponent]
             }, {
                 type: "column",
-                content: [{
-                    type: "react-component",
-                    component: "spatial-profiler",
-                    id: "spatial-profiler-0",
-                    props: {appStore: this.props.appStore, id: "spatial-profiler-0", docked: true}
-                }, {
-                    type: "react-component",
-                    component: "spatial-profiler",
-                    id: "spatial-profiler-1",
-                    props: {appStore: this.props.appStore, id: "spatial-profiler-1", docked: true}
-                }, {
-                    type: statisticsRowType,
-                    content: [{
-                        width: 60,
-                        type: "react-component",
-                        component: "region-list",
-                        title: "Region List",
-                        id: "region-list-0",
-                        props: {appStore: this.props.appStore, id: "region-list-0", docked: true}
-                    }, {
-                        type: "react-component",
-                        component: "stats",
-                        title: "Statistics",
-                        id: "stats-0",
-                        props: {appStore: this.props.appStore, id: "stats-0", docked: true}
-                    }]
-                }, {
-                    type: "react-component",
-                    component: "animator",
-                    title: "Animator",
-                    id: "animator-0",
-                    props: {appStore: this.props.appStore, id: "animator-0", docked: true}
-                }]
+                content: rightColumnContent
             }]
         }];
 
@@ -178,7 +183,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
         widgetsStore.addRenderConfigWidget("render-config-0");
         widgetsStore.addAnimatorWidget("animator-0");
         widgetsStore.addRegionListWidget("region-list-0");
-        widgetsStore.addStatsWidget("stats-0");
         widgetsStore.addLogWidget("log-0");
 
         const layout = new GoldenLayout({

@@ -7,7 +7,8 @@ import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent} from "components/Shared";
 import {SpectralProfilerSettingsPanelComponent} from "./SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
-import {AnimationState, FrameStore, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
+import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
+import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp} from "utilities";
@@ -25,7 +26,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             minWidth: 250,
             minHeight: 225,
             defaultWidth: 650,
-            defaultHeight: 225,
+            defaultHeight: 275,
             title: "Z Profile: Cursor",
             isCloseable: true
         };
@@ -402,6 +403,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return (
             <div className={className}>
                 <div className="profile-container">
+                    <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} appStore={appStore}/>
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps}/>
                     </div>
@@ -412,7 +414,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     onHideClicked={this.widgetStore.hideSettingsPanel}
                     contentWidth={PANEL_CONTENT_WIDTH}
                 >
-                    <SpectralProfilerSettingsPanelComponent widgetStore={this.widgetStore} appStore={appStore}/>
+                    <SpectralProfilerSettingsPanelComponent widgetStore={this.widgetStore}/>
                 </PopoverSettingsComponent>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
