@@ -461,12 +461,12 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
         ctx.drawImage(canvas, 0, 0);
 
-        const dataURL = composedCanvas.toDataURL().replace("image/png", "image/octet-stream");
-
-        const a = document.createElement("a") as HTMLAnchorElement;
-        a.href = dataURL;
-        a.download = `${imageName}-${plotName.replace(" ", "-")}-${this.getTimestamp()}.png`;
-        a.dispatchEvent(new MouseEvent("click"));
+        composedCanvas.toBlob((blob) => {
+            const link = document.createElement("a") as HTMLAnchorElement;
+            link.download = `${imageName}-${plotName.replace(" ", "-")}-${this.getTimestamp()}.png`;
+            link.href = URL.createObjectURL(blob);
+            link.dispatchEvent(new MouseEvent("click"));
+        }, "image/png");
     };
 
     exportData = () => {

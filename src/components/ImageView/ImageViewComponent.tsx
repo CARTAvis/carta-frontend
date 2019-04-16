@@ -48,15 +48,14 @@ export const exportImage = (padding, darkTheme, imageName) => {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(overlayCanvas, 0, 0);
 
-    const dataURL = composedCanvas.toDataURL().replace("image/png", "image/octet-stream");
-
-    const now = new Date();
-    const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
-
-    const a = document.createElement("a") as HTMLAnchorElement;
-    a.href = dataURL;
-    a.download = `${imageName}-image-${timestamp}.png`;
-    a.dispatchEvent(new MouseEvent("click"));
+    composedCanvas.toBlob((blob) => {
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
+        const link = document.createElement("a") as HTMLAnchorElement;
+        link.download = `${imageName}-image-${timestamp}.png`;
+        link.href = URL.createObjectURL(blob);
+        link.dispatchEvent(new MouseEvent("click"));
+    }, "image/png");
 };
 
 @observer
