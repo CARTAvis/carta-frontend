@@ -13,6 +13,7 @@ import {clamp} from "utilities";
 import {Point2D} from "models";
 import "./HistogramComponent.css";
 import {CARTA} from "../../../protobuf/build";
+import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramToolbarComponent";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 180;
@@ -234,6 +235,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return (
             <div className="histogram-widget">
                 <div className="histogram-container">
+                    <HistogramToolbarComponent widgetStore={this.widgetStore} appStore={appStore}/>
                     <div className="histogram-plot">
                         <LinePlotComponent {...linePlotProps}/>
                     </div>
@@ -244,7 +246,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                     onHideClicked={this.widgetStore.hideSettingsPanel}
                     contentWidth={PANEL_CONTENT_WIDTH}
                 >
-                    <HistogramSettingsPanelComponent appStore={appStore} widgetStore={this.widgetStore}/>
+                    <HistogramSettingsPanelComponent widgetStore={this.widgetStore}/>
                 </PopoverSettingsComponent>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}/>
             </div>
