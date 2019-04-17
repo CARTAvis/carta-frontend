@@ -260,7 +260,6 @@ export class OverlayGridSettings {
     @action setGapY(gap: number) {
         this.gapY = gap;
     }
-
 }
 
 export class OverlayBorderSettings {
@@ -637,7 +636,6 @@ export class OverlayStore {
     @observable ticks: OverlayTickSettings;
 
     // Dialog
-
     @observable overlaySettingsDialogVisible = false;
 
     @action showOverlaySettings = () => {
@@ -672,7 +670,6 @@ export class OverlayStore {
     }
 
     @action setFormatsFromSystem() {
-
         if (!this.global.validWcs) {
             // TODO: check if degrees would work
             this.numbers.setDefaultFormatX(undefined);
