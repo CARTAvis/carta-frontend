@@ -8,6 +8,11 @@ import {CursorInfo, FrameView} from "models";
 import {smoothStepOffset} from "utilities";
 import {HistogramWidgetStore, RegionWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
 
+const CURSOR_DEBOUNCE_TIME = 200;
+const CURSOR_THROTTLE_TIME = 200;
+const IMAGE_THROTTLE_TIME = 200;
+const REQUIREMENTS_CHECK_INTERVAL = 200;
+
 export class AppStore {
     // Backend service
     @observable backendService: BackendService;
@@ -366,18 +371,25 @@ export class AppStore {
 
         const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
             this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
-        }, 200);
+        }, IMAGE_THROTTLE_TIME);
 
         const throttledSetChannels = _.throttle((fileId: number, channel: number, stokes: number) => {
             this.backendService.setChannels(fileId, channel, stokes);
-        }, 200);
+        }, IMAGE_THROTTLE_TIME);
 
         const debouncedSetCursor = _.debounce((fileId: number, x: number, y: number) => {
             const frame = this.getFrame(fileId);
             if (frame && frame.regionSet.regions[0]) {
                 frame.regionSet.regions[0].setControlPoint(0, {x, y});
             }
-        }, 200);
+        }, CURSOR_DEBOUNCE_TIME);
+
+        const throttledSetCursor = _.throttle((fileId: number, x: number, y: number) => {
+            const frame = this.getFrame(fileId);
+            if (frame && frame.regionSet.regions[0]) {
+                frame.regionSet.regions[0].setControlPoint(0, {x, y});
+            }
+        }, CURSOR_THROTTLE_TIME);
 
         // Update frame view
         autorun(() => {
@@ -428,15 +440,18 @@ export class AppStore {
             if (this.activeFrame && this.cursorInfo && this.cursorInfo.posImageSpace) {
                 const pos = {x: Math.round(this.cursorInfo.posImageSpace.x), y: Math.round(this.cursorInfo.posImageSpace.y)};
                 if (pos.x >= 0 && pos.x <= this.activeFrame.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y < this.activeFrame.frameInfo.fileInfoExtended.height - 1) {
-                    debouncedSetCursor(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
-
-                    let keyStruct = {fileId: this.activeFrame.frameInfo.fileId, regionId: 0};
-                    const key = `${keyStruct.fileId}-${keyStruct.regionId}`;
-                    const profileStore = this.spatialProfiles.get(key);
-                    if (profileStore) {
-                        profileStore.x = pos.x;
-                        profileStore.y = pos.y;
-                        profileStore.approximate = true;
+                    if (this.activeFrame.frameInfo.fileInfo.type === CARTA.FileType.HDF5) {
+                        throttledSetCursor(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
+                    } else {
+                        debouncedSetCursor(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
+                        let keyStruct = {fileId: this.activeFrame.frameInfo.fileId, regionId: 0};
+                        const key = `${keyStruct.fileId}-${keyStruct.regionId}`;
+                        const profileStore = this.spatialProfiles.get(key);
+                        if (profileStore) {
+                            profileStore.x = pos.x;
+                            profileStore.y = pos.y;
+                            profileStore.approximate = true;
+                        }
                     }
                 }
             }
@@ -468,9 +483,9 @@ export class AppStore {
         });
 
         // Update requirements every 200 ms
-        setInterval(this.recalculateSpectralRequirements, 200);
-        setInterval(this.recalculateStatsRequirements, 200);
-        setInterval(this.recalculateHistogramRequirements, 200);
+        setInterval(this.recalculateSpectralRequirements, REQUIREMENTS_CHECK_INTERVAL);
+        setInterval(this.recalculateStatsRequirements, REQUIREMENTS_CHECK_INTERVAL);
+        setInterval(this.recalculateHistogramRequirements, REQUIREMENTS_CHECK_INTERVAL);
 
         // Subscribe to frontend streams
         this.backendService.getSpatialProfileStream().subscribe(this.handleSpatialProfileStream);
