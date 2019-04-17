@@ -2,8 +2,8 @@ import * as React from "react";
 import * as AST from "ast_wrapper";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
-import {ASTSettingsString, FrameStore, OverlayStore} from "stores";
-import {CursorInfo, Point2D} from "models";
+import {FrameStore, OverlayStore} from "stores";
+import {CursorInfo} from "models";
 import "./OverlayComponent.css";
 
 export class OverlayComponentProps {
@@ -72,10 +72,6 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     render() {
         const styleString = this.props.overlaySettings.styleString;
-        const frameView = this.props.frame.requiredFrameView;
-        const framePadding = this.props.overlaySettings.padding;
-        const w = this.props.overlaySettings.viewWidth;
-        const h = this.props.overlaySettings.viewHeight;
 
         let className = "overlay-canvas";
         if (this.props.docked) {
