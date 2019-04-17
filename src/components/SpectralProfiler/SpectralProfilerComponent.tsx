@@ -36,8 +36,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     @observable height: number;
     @observable showHighlight: boolean;
 
-    private highlightHandle;
-
     @computed get widgetStore(): SpectralProfileWidgetStore {
         if (this.props.appStore && this.props.appStore.widgetsStore.spectralProfileWidgets) {
             const widgetStore = this.props.appStore.widgetsStore.spectralProfileWidgets.get(this.props.id);
@@ -172,23 +170,20 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     }
                     const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString}`);
+                    const selectedString = this.showHighlight ? "(Selected)" : "";
+                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString} ${selectedString}`);
                 }
             } else {
                 this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Z Profile: Cursor`);
             }
         });
 
+        // Set as highlighted when selected region matches widget region
         autorun(() => {
             const appStore = this.props.appStore;
             const frame = appStore.activeFrame;
             if (frame && frame.regionSet.selectedRegion) {
-                const linkedToSelectedRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) === frame.regionSet.selectedRegion.regionId;
-                if (linkedToSelectedRegion) {
-                    clearTimeout(this.highlightHandle);
-                    this.highlightHandle = setTimeout(() => this.showHighlight = false, 2000);
-                    this.showHighlight = true;
-                }
+                this.showHighlight = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) === frame.regionSet.selectedRegion.regionId;
             }
         });
     }
@@ -398,6 +393,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         let className = "spectral-profiler-widget";
         if (this.showHighlight) {
             className += " linked-to-selected";
+        }
+
+        if (appStore.darkTheme) {
+            className += " dark-theme";
         }
 
         return (
