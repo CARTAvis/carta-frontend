@@ -505,7 +505,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         a.dispatchEvent(new MouseEvent("click"));
     };
 
-    render() {
+    private genLines = () => {
         const chartArea = this.chartArea;
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
         let lines = [];
@@ -649,8 +649,12 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 }
             }
         }
+        return lines;
+    };
 
-        let selectionRect;
+    private genSelectionRect = () => {
+        let selectionRect = null;
+        const chartArea = this.chartArea;
         const start = this.selectionBoxStart;
         const end = this.selectionBoxEnd;
         const delta = {x: end.x - start.x, y: end.y - start.y};
@@ -691,9 +695,13 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 ];
             }
         }
+        return selectionRect;
+    };
 
-        let borderRect;
-        if (chartArea) {
+    private genBorderRect = () => {
+        const chartArea = this.chartArea;
+        let borderRect = null;
+        if (this.chartArea) {
             borderRect = (
                 // Shift by half a pixel for sharp 1px lines
                 <Rect
@@ -707,7 +715,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 />
             );
         }
+        return borderRect;
+    };
 
+    private getCursorInfo = () => {
         let cursorInfo = null;
         if (this.props.data && this.props.cursorX) {
             let nearest = binarySearchByX(this.props.data,
@@ -721,7 +732,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 };
             }
         }
+        return cursorInfo;
+    };
 
+    render() {
+        const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
         return (
             <div
                 className={"line-plot-component"}
@@ -752,9 +767,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     onWheel={this.onStageWheel}
                 >
                     <Layer>
-                        {lines}
-                        {selectionRect}
-                        {borderRect}
+                        {this.genLines()}
+                        {this.genSelectionRect()}
+                        {this.genBorderRect()}
                     </Layer>
                 </Stage>
                 <ToolbarComponent
@@ -765,7 +780,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 />
                 <ProfilerInfoComponent
                     darkMode={this.props.darkMode}
-                    cursorInfo={cursorInfo}
+                    cursorInfo={this.getCursorInfo()}
                     statInfo={this.props.dataStat}
                 />
             </div>
