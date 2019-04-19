@@ -567,7 +567,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
     };
 
-    private genVerticalLines = (marker: LineMarker, isHovering:boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number) => {
+    private genVerticalLines = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number) => {
         const chartArea = this.chartArea;
         const lineHeight = chartArea.bottom - chartArea.top;
         const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
