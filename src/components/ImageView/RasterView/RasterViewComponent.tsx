@@ -271,7 +271,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.gl.uniform1f(this.ContrastUniform, 1);
         this.gl.uniform1f(this.GammaUniform, 1);
         this.gl.uniform1f(this.AlphaUniform, 1000);
-        this.gl.uniform4f(this.NaNColor, 0, 0, 1, 1);
+        this.gl.uniform4f(this.NaNColor, 0, 0, 0, 0);
     }
 
     private initBuffers() {
