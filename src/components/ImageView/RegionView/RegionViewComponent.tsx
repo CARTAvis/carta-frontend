@@ -80,7 +80,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 let astString = new ASTSettingsString();
                 astString.add("Format(1)", this.props.overlaySettings.numbers.cursorFormatStringX(precisionX));
                 astString.add("Format(2)", this.props.overlaySettings.numbers.cursorFormatStringY(precisionY));
-                astString.add("System", this.props.overlaySettings.global.implicitSystem);
+                astString.add("System", this.props.overlaySettings.global.explicitSystem);
 
                 let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.props.frame.wcsInfo, pos.x, pos.y, astString.toString()));
                 let [p, n1, n2] = formattedNeighbourhood;
