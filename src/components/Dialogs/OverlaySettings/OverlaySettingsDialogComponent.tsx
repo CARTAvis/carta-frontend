@@ -33,7 +33,6 @@ export const renderColor: ItemRenderer<Color> = (color, {handleClick, modifiers,
 };
 
 // Font selector
-
 export class Font {
     name: string;
     id: number;

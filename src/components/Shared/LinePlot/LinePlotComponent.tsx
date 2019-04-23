@@ -505,152 +505,164 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         a.dispatchEvent(new MouseEvent("click"));
     };
 
-    render() {
+    private genHorizontalLines = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number) => {
+        const chartArea = this.chartArea;
+        const lineWidth = chartArea.right - chartArea.left;
+        const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
+        const midPoint = (chartArea.left + chartArea.right) / 2.0;
+
+        let lineSegments = null;
+        if (isHoverMarker) {
+            const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
+            const arrowStart = 3;
+            lineSegments = [
+                <Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash}/>,
+                <Arrow listening={false} key={1} x={midPoint} y={0} points={[0, -arrowStart, 0, -arrowStart - arrowSize]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor}/>,
+                <Arrow listening={false} key={2} x={midPoint} y={0} points={[0, arrowStart, 0, arrowStart + arrowSize]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor}/>
+            ];
+        } else {
+            if (marker.width) {
+                const thickness = this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.logY) - this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.logY);
+                let lowerBound = clamp(valueCanvasSpace - thickness, chartArea.top, chartArea.bottom);
+                let upperBound = clamp(valueCanvasSpace + thickness, chartArea.top, chartArea.bottom);
+                let croppedThickness = upperBound - lowerBound;
+                lineSegments = [(
+                    <Rect listening={false} key={0} x={chartArea.left} y={lowerBound - valueCanvasSpace} width={lineWidth} height={croppedThickness} fill={markerColor} opacity={markerOpacity}/>
+                )];
+            } else {
+                lineSegments = [<Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash}/>];
+            }
+        }
+        if (marker.label) {
+            lineSegments.push(<Text align={"left"} fill={markerColor} key={lineSegments.length} text={marker.label} x={chartArea.left} y={0}/>);
+        }
+
+        if (marker.draggable) {
+            return (
+                <Group
+                    key={marker.id + "-draggable"}
+                    x={0}
+                    y={valueCanvasSpace}
+                    draggable={true}
+                    dragBoundFunc={pos => this.dragBoundsFuncHorizontal(pos, marker)}
+                    onDragMove={ev => this.onMarkerDragged(ev, marker)}
+                >
+                    <Rect
+                        x={chartArea.left}
+                        y={-MARKER_HITBOX_THICKNESS / 2.0}
+                        width={lineWidth}
+                        height={MARKER_HITBOX_THICKNESS}
+                        onMouseEnter={() => this.setHoveredMarker(marker)}
+                        onMouseLeave={() => this.setHoveredMarker(undefined)}
+                    />
+                    {lineSegments}
+                </Group>
+            );
+        } else {
+            return (
+                <Group key={marker.id} x={0} y={valueCanvasSpace}>
+                    {lineSegments}
+                </Group>
+            );
+        }
+    };
+
+    private genVerticalLines = (marker: LineMarker, isHovering: boolean, markerColor: string, markerOpacity: number, valueCanvasSpace: number) => {
+        const chartArea = this.chartArea;
+        const lineHeight = chartArea.bottom - chartArea.top;
+        const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
+        const midPoint = (chartArea.top + chartArea.bottom) / 2.0;
+
+        let lineSegments = null;
+        if (isHoverMarker) {
+            const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
+            const arrowStart = 3;
+            lineSegments = [
+                <Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity}/>,
+                <Arrow listening={false} key={1} x={0} y={midPoint} points={[-arrowStart, 0, -arrowStart - arrowSize, 0]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor}/>,
+                <Arrow listening={false} key={2} x={0} y={midPoint} points={[arrowStart, 0, arrowStart + arrowSize, 0]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor}/>
+            ];
+        } else {
+            if (marker.width) {
+                const thickness = this.getPixelForValueX(marker.value + marker.width / 2.0) - this.getPixelForValueX(marker.value - marker.width / 2.0);
+                let lowerBound = clamp(valueCanvasSpace - thickness, chartArea.left, chartArea.right);
+                let upperBound = clamp(valueCanvasSpace + thickness, chartArea.left, chartArea.right);
+                let croppedThickness = upperBound - lowerBound;
+                lineSegments = [(
+                    <Rect listening={false} key={0} x={lowerBound - valueCanvasSpace} y={chartArea.top} width={croppedThickness} height={lineHeight} fill={markerColor} opacity={markerOpacity}/>
+                )];
+            } else {
+                lineSegments = [<Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity}/>];
+            }
+        }
+        if (marker.label) {
+            lineSegments.push(<Text align={"left"} fill={markerColor} key={lineSegments.length} text={marker.label} rotation={-90} x={0} y={chartArea.bottom}/>);
+        }
+
+        if (marker.draggable) {
+            return (
+                <Group
+                    key={marker.id + "-draggable"}
+                    x={valueCanvasSpace}
+                    y={0}
+                    draggable={true}
+                    dragBoundFunc={pos => this.dragBoundsFuncVertical(pos, marker)}
+                    onDragStart={this.onMarkerDragStart}
+                    onDragEnd={this.onMarkerDragEnd}
+                    onDragMove={ev => this.onMarkerDragged(ev, marker)}
+                >
+                    <Rect
+                        x={-MARKER_HITBOX_THICKNESS / 2.0}
+                        y={chartArea.top}
+                        width={MARKER_HITBOX_THICKNESS}
+                        height={lineHeight}
+                        onMouseEnter={() => this.setHoveredMarker(marker)}
+                        onMouseLeave={() => this.setHoveredMarker(undefined)}
+                    />
+                    {lineSegments}
+                </Group>
+            );
+        } else {
+            return (
+                <Group key={marker.id} x={valueCanvasSpace} y={0}>
+                    {lineSegments}
+                </Group>
+            );
+        }
+    };
+
+    private genLines = () => {
         const chartArea = this.chartArea;
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
+
         let lines = [];
         if (this.props.markers && this.props.markers.length && chartArea) {
-            const lineHeight = chartArea.bottom - chartArea.top;
-            const lineWidth = chartArea.right - chartArea.left;
             for (let i = 0; i < this.props.markers.length; i++) {
                 const marker = this.props.markers[i];
-                // Default marker colors if none is given
                 const markerColor = marker.color || (this.props.darkMode ? Colors.RED4 : Colors.RED2);
-                const markerOpacity = (marker.isMouseMove && (!this.isMouseEntered || this.isMarkerDragging)) ?
-                                        0 : (marker.opacity || 1);
-                // Separate configuration for horizontal markers
+                const markerOpacity = (marker.isMouseMove && (!this.isMouseEntered || this.isMarkerDragging)) ? 0 : (marker.opacity || 1);
+                
                 if (marker.horizontal) {
                     let valueCanvasSpace = this.getCanvasSpaceY(marker.value);
                     if (valueCanvasSpace < Math.floor(chartArea.top - 1) || valueCanvasSpace > Math.ceil(chartArea.bottom + 1) || isNaN(valueCanvasSpace)) {
                         continue;
                     }
-                    const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
-                    const midPoint = (chartArea.left + chartArea.right) / 2.0;
-
-                    let lineSegments;
-                    // Add hover markers
-                    if (isHoverMarker) {
-                        const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
-                        const arrowStart = 3;
-                        lineSegments = [
-                            <Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash}/>,
-                            <Arrow listening={false} key={1} x={midPoint} y={0} points={[0, -arrowStart, 0, -arrowStart - arrowSize]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor}/>,
-                            <Arrow listening={false} key={2} x={midPoint} y={0} points={[0, arrowStart, 0, arrowStart + arrowSize]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor}/>
-                        ];
-                    } else {
-                        if (marker.width) {
-                            const thickness = this.getPixelForValueY(marker.value - marker.width / 2.0, this.props.logY) - this.getPixelForValueY(marker.value + marker.width / 2.0, this.props.logY);
-                            let lowerBound = clamp(valueCanvasSpace - thickness, chartArea.top, chartArea.bottom);
-                            let upperBound = clamp(valueCanvasSpace + thickness, chartArea.top, chartArea.bottom);
-                            let croppedThickness = upperBound - lowerBound;
-                            lineSegments = [(
-                                <Rect listening={false} key={0} x={chartArea.left} y={lowerBound - valueCanvasSpace} width={lineWidth} height={croppedThickness} fill={markerColor} opacity={markerOpacity}/>
-                            )];
-                        } else {
-                            lineSegments = [<Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity} dash={marker.dash}/>];
-                        }
-                    }
-                    if (marker.label) {
-                        lineSegments.push(<Text align={"left"} fill={markerColor} key={lineSegments.length} text={marker.label} x={chartArea.left} y={0}/>);
-                    }
-
-                    if (marker.draggable) {
-                        lines.push(
-                            <Group
-                                key={marker.id + "-draggable"}
-                                x={0}
-                                y={valueCanvasSpace}
-                                draggable={true}
-                                dragBoundFunc={pos => this.dragBoundsFuncHorizontal(pos, marker)}
-                                onDragMove={ev => this.onMarkerDragged(ev, marker)}
-                            >
-                                <Rect
-                                    x={chartArea.left}
-                                    y={-MARKER_HITBOX_THICKNESS / 2.0}
-                                    width={lineWidth}
-                                    height={MARKER_HITBOX_THICKNESS}
-                                    onMouseEnter={() => this.setHoveredMarker(marker)}
-                                    onMouseLeave={() => this.setHoveredMarker(undefined)}
-                                />
-                                {lineSegments}
-                            </Group>
-                        );
-                    } else {
-                        lines.push(
-                            <Group key={marker.id} x={0} y={valueCanvasSpace}>
-                                {lineSegments}
-                            </Group>
-                        );
-                    }
+                    lines.push(this.genHorizontalLines(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace));
                 } else {
                     let valueCanvasSpace = this.getCanvasSpaceX(marker.value);
                     if (valueCanvasSpace < Math.floor(chartArea.left - 1) || valueCanvasSpace > Math.ceil(chartArea.right + 1) || isNaN(valueCanvasSpace)) {
                         continue;
                     }
-                    const isHoverMarker = isHovering && this.hoveredMarker.id === marker.id;
-                    const midPoint = (chartArea.top + chartArea.bottom) / 2.0;
-                    let lineSegments;
-                    // Add hover markers
-                    if (isHoverMarker) {
-                        const arrowSize = MARKER_HITBOX_THICKNESS / 1.5;
-                        const arrowStart = 3;
-                        lineSegments = [
-                            <Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity}/>,
-                            <Arrow listening={false} key={1} x={0} y={midPoint} points={[-arrowStart, 0, -arrowStart - arrowSize, 0]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor}/>,
-                            <Arrow listening={false} key={2} x={0} y={midPoint} points={[arrowStart, 0, arrowStart + arrowSize, 0]} pointerLength={arrowSize} pointerWidth={arrowSize} opacity={markerOpacity} fill={markerColor}/>
-                        ];
-                    } else {
-                        if (marker.width) {
-                            const thickness = this.getPixelForValueX(marker.value + marker.width / 2.0) - this.getPixelForValueX(marker.value - marker.width / 2.0);
-                            let lowerBound = clamp(valueCanvasSpace - thickness, chartArea.left, chartArea.right);
-                            let upperBound = clamp(valueCanvasSpace + thickness, chartArea.left, chartArea.right);
-                            let croppedThickness = upperBound - lowerBound;
-                            lineSegments = [(
-                                <Rect listening={false} key={0} x={lowerBound - valueCanvasSpace} y={chartArea.top} width={croppedThickness} height={lineHeight} fill={markerColor} opacity={markerOpacity}/>
-                            )];
-                        } else {
-                            lineSegments = [<Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity}/>];
-                        }
-                    }
-                    if (marker.label) {
-                        lineSegments.push(<Text align={"left"} fill={markerColor} key={lineSegments.length} text={marker.label} rotation={-90} x={0} y={chartArea.bottom}/>);
-                    }
-
-                    if (marker.draggable) {
-                        lines.push(
-                            <Group
-                                key={marker.id + "-draggable"}
-                                x={valueCanvasSpace}
-                                y={0}
-                                draggable={true}
-                                dragBoundFunc={pos => this.dragBoundsFuncVertical(pos, marker)}
-                                onDragStart={this.onMarkerDragStart}
-                                onDragEnd={this.onMarkerDragEnd}
-                                onDragMove={ev => this.onMarkerDragged(ev, marker)}
-                            >
-                                <Rect
-                                    x={-MARKER_HITBOX_THICKNESS / 2.0}
-                                    y={chartArea.top}
-                                    width={MARKER_HITBOX_THICKNESS}
-                                    height={lineHeight}
-                                    onMouseEnter={() => this.setHoveredMarker(marker)}
-                                    onMouseLeave={() => this.setHoveredMarker(undefined)}
-                                />
-                                {lineSegments}
-                            </Group>
-                        );
-                    } else {
-                        lines.push(
-                            <Group key={marker.id} x={valueCanvasSpace} y={0}>
-                                {lineSegments}
-                            </Group>
-                        );
-                    }
+                    lines.push(this.genVerticalLines(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace));
                 }
             }
         }
+        return lines;
+    };
 
-        let selectionRect;
+    private genSelectionRect = () => {
+        let selectionRect = null;
+        const chartArea = this.chartArea;
         const start = this.selectionBoxStart;
         const end = this.selectionBoxEnd;
         const delta = {x: end.x - start.x, y: end.y - start.y};
@@ -691,9 +703,13 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 ];
             }
         }
+        return selectionRect;
+    };
 
-        let borderRect;
-        if (chartArea) {
+    private genBorderRect = () => {
+        const chartArea = this.chartArea;
+        let borderRect = null;
+        if (this.chartArea) {
             borderRect = (
                 // Shift by half a pixel for sharp 1px lines
                 <Rect
@@ -707,7 +723,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 />
             );
         }
+        return borderRect;
+    };
 
+    private getCursorInfo = () => {
         let cursorInfo = null;
         if (this.props.data && this.props.cursorX) {
             let nearest = binarySearchByX(this.props.data,
@@ -721,7 +740,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 };
             }
         }
+        return cursorInfo;
+    };
 
+    render() {
+        const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
         return (
             <div
                 className={"line-plot-component"}
@@ -752,9 +775,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     onWheel={this.onStageWheel}
                 >
                     <Layer>
-                        {lines}
-                        {selectionRect}
-                        {borderRect}
+                        {this.genLines()}
+                        {this.genSelectionRect()}
+                        {this.genBorderRect()}
                     </Layer>
                 </Stage>
                 <ToolbarComponent
@@ -765,11 +788,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 />
                 <ProfilerInfoComponent
                     darkMode={this.props.darkMode}
-                    cursorInfo={cursorInfo}
+                    cursorInfo={this.getCursorInfo()}
                     statInfo={this.props.dataStat}
                 />
             </div>
         );
-
     }
 }

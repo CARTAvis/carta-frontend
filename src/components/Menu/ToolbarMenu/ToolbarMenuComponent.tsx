@@ -71,7 +71,7 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
                     </Button>
                 </Tooltip>
                 <Tooltip content={<span>Statistics Widget{commonTooltip}</span>}>
-                    <Button icon={"numerical"} id="statsButton" onClick={this.props.appStore.widgetsStore.createFloatingStatsWidget}/>
+                    <Button icon={"calculator"} id="statsButton" onClick={this.props.appStore.widgetsStore.createFloatingStatsWidget}/>
                 </Tooltip>
                 <Tooltip content={<span>Histogram Widget{commonTooltip}</span>}>
                     <Button icon={"timeline-bar-chart"} id="histogramButton" onClick={this.props.appStore.widgetsStore.createFloatingHistogramWidget}/>

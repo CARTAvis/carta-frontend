@@ -33,7 +33,7 @@ export enum LabelType {
 }
 
 export enum SystemType {
-    Native = "",
+    Native = "NATIVE",
     Ecliptic = "ECLIPTIC",
     FK4 = "FK4",
     FK5 = "FK5",
@@ -88,17 +88,8 @@ export class OverlayGlobalSettings {
         astString.add("Labelling", this.labelType);
         astString.add("Color", this.color);
         astString.add("Tol", (this.tolerance / 100).toFixed(2), (this.tolerance >= 0.001)); // convert to fraction
-        astString.add("System", this.implicitSystem);
+        astString.add("System", this.explicitSystem);
         return astString.toString();
-    }
-
-    // Get the current manually overridden system or nothing if system is set to native
-    @computed get implicitSystem() {
-        if (!this.validWcs || this.system === SystemType.Native) {
-            return undefined;
-        }
-
-        return this.system;
     }
 
     // Get the current manually overridden system or the default saved from file if system is set to native
@@ -260,7 +251,6 @@ export class OverlayGridSettings {
     @action setGapY(gap: number) {
         this.gapY = gap;
     }
-
 }
 
 export class OverlayBorderSettings {
@@ -637,7 +627,6 @@ export class OverlayStore {
     @observable ticks: OverlayTickSettings;
 
     // Dialog
-
     @observable overlaySettingsDialogVisible = false;
 
     @action showOverlaySettings = () => {
@@ -672,7 +661,6 @@ export class OverlayStore {
     }
 
     @action setFormatsFromSystem() {
-
         if (!this.global.validWcs) {
             // TODO: check if degrees would work
             this.numbers.setDefaultFormatX(undefined);
