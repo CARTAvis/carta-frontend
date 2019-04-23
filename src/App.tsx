@@ -317,18 +317,23 @@ export class App extends React.Component<{ appStore: AppStore }> {
             <Hotkey key={2} group="File controls" global={true} combo={`${modString}E`} label="Export image" onKeyDown={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>
         ];
 
+        const regionHotKeys = [
+            <Hotkey key={0} group="Regions" global={true} combo="c" label="Toggle region creation mode" onKeyDown={this.toggleCreateMode}/>,
+            <Hotkey key={1} group="Regions" global={true} combo="del" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
+            <Hotkey key={2} group="Regions" global={true} combo="backspace" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
+            <Hotkey key={3} group="Regions" global={true} combo="esc" label="Deselect region" onKeyDown={appStore.deselectRegion}/>,
+            <Hotkey key={4} group="Regions" global={true} combo="mod" label="Corner-to-corner region creation"/>,
+            <Hotkey key={5} group="Regions" global={true} combo={"shift"} label="Symmetric region creation"/>,
+            <Hotkey key={6} group="Regions" global={true} combo="double-click" label="Region properties"/>
+        ];
+
         return (
             <Hotkeys>
                 {animatorHotkeys}
                 {fileHotkeys}
                 <Hotkey group="Appearance" global={true} combo="shift + D" label="Toggle light/dark theme" onKeyDown={this.toggleDarkTheme}/>
                 <Hotkey group="Cursor" global={true} combo="F" label="Freeze/unfreeze cursor position" onKeyDown={appStore.toggleCursorFrozen}/>
-                <Hotkey group="Regions" global={true} combo="del" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>
-                <Hotkey group="Regions" global={true} combo="backspace" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>
-                <Hotkey group="Regions" global={true} combo="c" label="Toggle region creation mode" onKeyDown={this.toggleCreateMode}/>
-                <Hotkey group="Regions" global={true} combo="mod" label="Corner-to-corner region creation"/>
-                <Hotkey group="Regions" global={true} combo={"shift"} label="Symmetric region creation"/>
-                <Hotkey group="Regions" global={true} combo="double-click" label="Region properties"/>
+                {regionHotKeys}
             </Hotkeys>
         );
     }

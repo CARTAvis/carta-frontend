@@ -142,20 +142,16 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed get matchesSelectedRegion() {
-        // Set as highlighted when selected region matches widget region
         const appStore = this.props.appStore;
         const frame = appStore.activeFrame;
         if (frame) {
             const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
-            // Non-cursor regions
             if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
                 return widgetRegion === frame.regionSet.selectedRegion.regionId;
             }
-            // If there is no selected region, check if this region is the cursor region
-            return widgetRegion === 0 || !isFinite(widgetRegion);
         }
         return false;
-    };
+    }
 
     constructor(props: WidgetProps) {
         super(props);
