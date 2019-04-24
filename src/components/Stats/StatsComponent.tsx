@@ -143,7 +143,12 @@ export class StatsComponent extends React.Component<WidgetProps> {
             StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
                 const index = this.statsData.statistics.findIndex(s => s.statsType === type);
                 if (index >= 0) {
-                    const value = this.statsData.statistics[index].value;
+                    let value;
+                    if (typeof this.statsData.statistics[index].value === 'number' && type !== CARTA.StatsType.NumPixels) {
+                        value = this.statsData.statistics[index].value.toExponential(4);
+                    } else {
+                        value = this.statsData.statistics[index].value;
+                    }
                     rows.push((
                         <tr key={type}>
                             <td style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>{name}</td>
