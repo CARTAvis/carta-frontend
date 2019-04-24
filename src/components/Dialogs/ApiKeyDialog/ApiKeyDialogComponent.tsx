@@ -1,14 +1,14 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, Classes, IDialogProps, Intent, Tooltip} from "@blueprintjs/core";
+import {observable} from "mobx";
+import {AnchorButton, Classes, IDialogProps, InputGroup, Intent} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore} from "stores";
 import "./ApiKeyDialogComponent.css";
-import {observable} from "mobx";
 
 @observer
 export class ApiKeyDialogComponent extends React.Component<{ appStore: AppStore }> {
-    @observable key;
+    @observable key: string;
 
     constructor(props: any) {
         super(props);
@@ -34,9 +34,9 @@ export class ApiKeyDialogComponent extends React.Component<{ appStore: AppStore 
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={400} defaultHeight={160} enableResizing={false}>
+            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={400} defaultHeight={170} enableResizing={false}>
                 <div className={Classes.DIALOG_BODY}>
-                    <input className="bp3-input url-connect-input" type="text" placeholder="API Key" value={this.key} onChange={this.handleInput}/>
+                    <InputGroup className="api-key-input" placeholder="API Key" value={this.key} onChange={this.handleInput} autoFocus={true}/>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
@@ -55,6 +55,6 @@ export class ApiKeyDialogComponent extends React.Component<{ appStore: AppStore 
 
     onApplyKeyClicked = () => {
         const appStore = this.props.appStore;
-        appStore.applyApiKey(this.key);
+        appStore.applyApiKey(this.key ? this.key.trim() : undefined);
     };
 }

@@ -92,7 +92,7 @@ export class AppStore {
         this.aboutDialogVisible = false;
     };
 
-    @observable apiKey;
+    @observable apiKey: string;
     @action applyApiKey = (newKey: string, forceReload: boolean = true) => {
         if (newKey) {
             localStorage.setItem("API_KEY", newKey);
