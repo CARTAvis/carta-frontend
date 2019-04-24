@@ -34,9 +34,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
-    @observable showHighlight: boolean;
-
-    private highlightHandle;
 
     @computed get widgetStore(): SpectralProfileWidgetStore {
         if (this.props.appStore && this.props.appStore.widgetsStore.spectralProfileWidgets) {
@@ -144,6 +141,18 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return null;
     }
 
+    @computed get matchesSelectedRegion() {
+        const appStore = this.props.appStore;
+        const frame = appStore.activeFrame;
+        if (frame) {
+            const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
+            if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
+                return widgetRegion === frame.regionSet.selectedRegion.regionId;
+            }
+        }
+        return false;
+    }
+
     constructor(props: WidgetProps) {
         super(props);
         // Check if this widget hasn't been assigned an ID yet
@@ -172,23 +181,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     }
                     const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString}`);
+                    const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
+                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString} ${selectedString}`);
                 }
             } else {
                 this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Z Profile: Cursor`);
-            }
-        });
-
-        autorun(() => {
-            const appStore = this.props.appStore;
-            const frame = appStore.activeFrame;
-            if (frame && frame.regionSet.selectedRegion) {
-                const linkedToSelectedRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) === frame.regionSet.selectedRegion.regionId;
-                if (linkedToSelectedRegion) {
-                    clearTimeout(this.highlightHandle);
-                    this.highlightHandle = setTimeout(() => this.showHighlight = false, 2000);
-                    this.showHighlight = true;
-                }
             }
         });
     }
@@ -396,8 +393,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         let className = "spectral-profiler-widget";
-        if (this.showHighlight) {
+        if (this.matchesSelectedRegion) {
             className += " linked-to-selected";
+        }
+
+        if (appStore.darkTheme) {
+            className += " dark-theme";
         }
 
         return (

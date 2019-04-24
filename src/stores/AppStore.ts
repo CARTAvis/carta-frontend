@@ -658,6 +658,12 @@ export class AppStore {
         }
     };
 
+    @action deselectRegion = () => {
+        if (this.activeFrame && this.activeFrame.regionSet) {
+            this.activeFrame.regionSet.deselectRegion();
+        }
+    };
+
     // region requirements calculations
 
     recalculateStatsRequirements = () => {
