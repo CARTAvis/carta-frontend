@@ -157,10 +157,11 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 const index = this.statsData.statistics.findIndex(s => s.statsType === type);
                 if (index >= 0) {
                     const value = this.statsData.statistics[index].value;
+                    const displayValue = (isFinite(value) && type !== CARTA.StatsType.NumPixels) ? value.toExponential(4) : value;
                     rows.push((
                         <tr key={type}>
                             <td style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>{name}</td>
-                            <td style={{width: valueWidth}}>{value}</td>
+                            <td style={{width: valueWidth}}>{displayValue}</td>
                         </tr>
                     ));
                 }
