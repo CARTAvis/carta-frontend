@@ -115,6 +115,18 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return null;
     }
 
+    @computed get matchesSelectedRegion() {
+        const appStore = this.props.appStore;
+        const frame = appStore.activeFrame;
+        if (frame) {
+            const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
+            if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
+                return widgetRegion === frame.regionSet.selectedRegion.regionId;
+            }
+        }
+        return false;
+    }
+
     constructor(props: WidgetProps) {
         super(props);
         // Check if this widget hasn't been assigned an ID yet
@@ -143,7 +155,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                         regionString = region.nameString;
                     }
                 }
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `Histogram: ${regionString}`);
+                const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
+                appStore.widgetsStore.setWidgetTitle(this.props.id, `Histogram: ${regionString} ${selectedString}`);
             } else {
                 appStore.widgetsStore.setWidgetTitle(this.props.id, `Histogram`);
             }
@@ -232,8 +245,17 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             }
         }
 
+        let className = "histogram-widget";
+        if (this.matchesSelectedRegion) {
+            className += " linked-to-selected";
+        }
+
+        if (appStore.darkTheme) {
+            className += " dark-theme";
+        }
+
         return (
-            <div className="histogram-widget">
+            <div className={className}>
                 <div className="histogram-container">
                     <HistogramToolbarComponent widgetStore={this.widgetStore} appStore={appStore}/>
                     <div className="histogram-plot">

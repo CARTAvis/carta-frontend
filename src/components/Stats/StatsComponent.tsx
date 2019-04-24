@@ -54,6 +54,18 @@ export class StatsComponent extends React.Component<WidgetProps> {
         return null;
     }
 
+    @computed get matchesSelectedRegion() {
+        const appStore = this.props.appStore;
+        const frame = appStore.activeFrame;
+        if (frame) {
+            const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
+            if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
+                return widgetRegion === frame.regionSet.selectedRegion.regionId;
+            }
+        }
+        return false;
+    }
+
     private static readonly STATS_NAME_MAP = new Map<CARTA.StatsType, string>([
         [CARTA.StatsType.NumPixels, "NumPixels"],
         [CARTA.StatsType.Sum, "Sum"],
@@ -87,6 +99,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 let regionString = "Unknown";
 
                 const regionId = this.widgetStore.regionIdMap.get(appStore.activeFrame.frameInfo.fileId) || -1;
+                const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
                 if (regionId === -1) {
                     regionString = "Image";
                 } else if (appStore.activeFrame && appStore.activeFrame.regionSet) {
@@ -95,7 +108,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                         regionString = region.nameString;
                     }
                 }
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `Statistics: ${regionString}`);
+                appStore.widgetsStore.setWidgetTitle(this.props.id, `Statistics: ${regionString} ${selectedString}`);
             } else {
                 appStore.widgetsStore.setWidgetTitle(this.props.id, `Statistics`);
             }
@@ -170,8 +183,17 @@ export class StatsComponent extends React.Component<WidgetProps> {
             formContent = <NonIdealState icon={"folder-open"} title={"No stats data"} description={"Select a valid region from the dropdown"}/>;
         }
 
+        let className = "stats-widget";
+        if (this.matchesSelectedRegion) {
+            className += " linked-to-selected";
+        }
+
+        if (appStore.darkTheme) {
+            className += " dark-theme";
+        }
+
         return (
-            <div className={"stats-widget"}>
+            <div className={className}>
                 <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
                     <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect}/>
                 </FormGroup>

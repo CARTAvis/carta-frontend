@@ -4,9 +4,19 @@
     display: flex;
     width: 100%;
     height: 100%;
+
     border: 1px solid transparent;
-    border-radius: 2px;
-    transition: border 500ms linear;
+    border-radius: 3px;
+
+    &.linked-to-selected {
+        border: 1px solid $blue2;
+
+        &.dark-theme {
+            border: 1px solid $blue4;
+        }
+
+        transition: border 250ms linear;
+    }
 
     .profile-container {
         flex: 3 3 auto;
@@ -19,8 +29,5 @@
         }
     }
 
-    &.linked-to-selected {
-        border: 1px solid $red2;
-        transition: border 500ms linear;
-    }
+
 }
