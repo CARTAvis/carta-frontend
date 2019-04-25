@@ -58,13 +58,13 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
         ];
 
         const profileStatsOptions: IOptionProps[] = [
-            {value: CARTA.StatsType.Sum, label: "Sum"},
-            {value: CARTA.StatsType.Mean, label: "Mean"},
-            {value: CARTA.StatsType.RMS, label: "RMS"},
-            {value: CARTA.StatsType.Sigma, label: "Sigma"},
-            {value: CARTA.StatsType.SumSq, label: "SumSq"},
-            {value: CARTA.StatsType.Min, label: "Min"},
-            {value: CARTA.StatsType.Max, label: "Max"},
+            {value: CARTA.StatsType.Sum, label: SpectralProfileWidgetStore.statsTypeString(CARTA.StatsType.Sum)},
+            {value: CARTA.StatsType.Mean, label: SpectralProfileWidgetStore.statsTypeString(CARTA.StatsType.Mean)},
+            {value: CARTA.StatsType.RMS, label: SpectralProfileWidgetStore.statsTypeString(CARTA.StatsType.RMS)},
+            {value: CARTA.StatsType.Sigma, label: SpectralProfileWidgetStore.statsTypeString(CARTA.StatsType.Sigma)},
+            {value: CARTA.StatsType.SumSq, label: SpectralProfileWidgetStore.statsTypeString(CARTA.StatsType.SumSq)},
+            {value: CARTA.StatsType.Min, label: SpectralProfileWidgetStore.statsTypeString(CARTA.StatsType.Min)},
+            {value: CARTA.StatsType.Max, label: SpectralProfileWidgetStore.statsTypeString(CARTA.StatsType.Max)},
         ];
 
         return (

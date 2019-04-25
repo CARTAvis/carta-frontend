@@ -153,13 +153,21 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return false;
     }
 
-    @computed get selectedRegion(): RegionStore {
+    @computed get exportHeaders(): string[] {
+        let headerString = [];
+
+        // statistic type
+        headerString.push(`statistic: ${SpectralProfileWidgetStore.statsTypeString(this.widgetStore.statsType)}`);
+
+        // region info
         const frame = this.props.appStore.activeFrame;
         if (frame && frame.frameInfo && frame.regionSet) {
             const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
-            return frame.regionSet.regions.find(r => r.regionId === regionId);
+            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+            headerString.push(region.regionProperties);
         }
-        return null;
+
+        return headerString;
     };
 
     constructor(props: WidgetProps) {
@@ -389,14 +397,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.dataStat = {mean: currentPlotData.yMean, rms: currentPlotData.yRms};
                 }
 
-                let comments: string[] = [];
-                if (currentPlotData && isFinite(currentPlotData.yMean)) {
-                    comments.push(`mean: ${currentPlotData.yMean}`);
-                }
-                if (this.selectedRegion) {
-                    comments.push(this.selectedRegion.regionProperties);
-                }
-                linePlotProps.comments = comments;
+                linePlotProps.comments = this.exportHeaders;
             }
         }
 
