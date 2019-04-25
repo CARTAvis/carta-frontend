@@ -8,7 +8,7 @@ import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent} from "components/Shared";
 import {SpectralProfilerSettingsPanelComponent} from "./SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
-import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
+import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, RegionStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp} from "utilities";
@@ -152,6 +152,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
         return false;
     }
+
+    @computed get selectedRegion(): RegionStore {
+        const frame = this.props.appStore.activeFrame;
+        if (frame && frame.frameInfo && frame.regionSet) {
+            const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
+            return frame.regionSet.regions.find(r => r.regionId === regionId);
+        }
+        return null;
+    };
 
     constructor(props: WidgetProps) {
         super(props);
@@ -380,14 +389,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.dataStat = {mean: currentPlotData.yMean, rms: currentPlotData.yRms};
                 }
 
-                // TODO: Get comments from region info, rather than directly from cursor position
-                if (appStore.cursorInfo) {
-                    const comments: string[] = [];
-                    comments.push(`region (pixel): Point[${appStore.cursorInfo.posImageSpace.x.toFixed(0)}, ${appStore.cursorInfo.posImageSpace.y.toFixed(0)}]`);
-                    if (appStore.cursorInfo.infoWCS) {
-                        comments.push(`region (world): Point[${appStore.cursorInfo.infoWCS.x}, ${appStore.cursorInfo.infoWCS.y}]`);
-                    }
-                    linePlotProps.comments = comments;
+                if (this.selectedRegion) {
+                    linePlotProps.comments = [this.selectedRegion.regionProperties];
                 }
             }
         }

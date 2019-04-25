@@ -90,6 +90,26 @@ export class RegionStore {
         }
     }
 
+    @computed get regionProperties() {
+        const point = this.controlPoints[0];
+        const center = isFinite(point.x) && isFinite(point.y) ? `${point.x.toFixed(1)}, ${point.y.toFixed(1)}` : "Invalid";
+
+         switch (this.regionType) {
+            case CARTA.RegionType.POINT:
+                return `Point (pixel) [${center}]`;
+            case CARTA.RegionType.RECTANGLE:
+                return `Rectangle (pixel) [[${center}], ` +
+                        `[${this.controlPoints[1].x.toFixed(1)}, ${this.controlPoints[1].y.toFixed(1)}], ` +
+                        `${this.rotation.toFixed(1)} deg]`;
+            case CARTA.RegionType.ELLIPSE:
+                return `Ellipse (pixel) [[${center}], ` +
+                        `[maj: ${this.controlPoints[1].x.toFixed(1)}; min: ${this.controlPoints[1].y.toFixed(1)}], ` +
+                        `${this.rotation.toFixed(1)} deg]`;
+            default:
+                return "Not Implemented";
+        }
+    }
+
     constructor(backendService: BackendService, fileId: number, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1, rotation: number = 0,
                 name: string = "", color: string = Colors.TURQUOISE5, lineWidth: number = 2, dashLength: number = 0) {
         this.fileId = fileId;
