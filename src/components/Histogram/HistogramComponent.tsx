@@ -139,7 +139,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         }
 
         return headerString;
-    };
+    }
 
     constructor(props: WidgetProps) {
         super(props);

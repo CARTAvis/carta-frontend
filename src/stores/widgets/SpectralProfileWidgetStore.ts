@@ -19,8 +19,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable useWcsValues: boolean;
     @observable markerTextVisible: boolean;
 
-    public static statsTypeString(statsType: CARTA.StatsType) {
-        switch(statsType) {
+    public static StatsTypeString(statsType: CARTA.StatsType) {
+        switch (statsType) {
             case CARTA.StatsType.Sum:
                 return "Sum";
             case CARTA.StatsType.Mean:
