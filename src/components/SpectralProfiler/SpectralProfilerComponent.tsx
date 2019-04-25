@@ -389,9 +389,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.dataStat = {mean: currentPlotData.yMean, rms: currentPlotData.yRms};
                 }
 
-                if (this.selectedRegion) {
-                    linePlotProps.comments = [this.selectedRegion.regionProperties];
+                let comments: string[] = [];
+                if (currentPlotData && isFinite(currentPlotData.yMean)) {
+                    comments.push(`mean: ${currentPlotData.yMean}`);
                 }
+                if (this.selectedRegion) {
+                    comments.push(this.selectedRegion.regionProperties);
+                }
+                linePlotProps.comments = comments;
             }
         }
 
