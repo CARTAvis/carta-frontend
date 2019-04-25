@@ -127,13 +127,18 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return false;
     }
 
-    @computed get selectedRegion(): RegionStore {
+    @computed get exportHeaders(): string[] {
+        let headerString = [];
+
+        // region info
         const frame = this.props.appStore.activeFrame;
         if (frame && frame.frameInfo && frame.regionSet) {
             const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
-            return frame.regionSet.regions.find(r => r.regionId === regionId);
+            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+            headerString.push(region.regionProperties);
         }
-        return null;
+
+        return headerString;
     };
 
     constructor(props: WidgetProps) {
@@ -253,9 +258,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                 }
             }
 
-            if (this.selectedRegion) {
-                linePlotProps.comments = [this.selectedRegion.regionProperties];
-            }
+            linePlotProps.comments = this.exportHeaders;
         }
 
         let className = "histogram-widget";
