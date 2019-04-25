@@ -8,7 +8,7 @@ import {NonIdealState} from "@blueprintjs/core";
 import {HistogramSettingsPanelComponent} from "./HistogramSettingsPanelComponent/HistogramSettingsPanelComponent";
 import {PopoverSettingsComponent, LinePlotComponent, LinePlotComponentProps, PlotType} from "components/Shared";
 import {HistogramWidgetStore} from "stores/widgets";
-import {FrameStore, WidgetConfig, WidgetProps} from "stores";
+import {FrameStore, WidgetConfig, WidgetProps, RegionStore} from "stores";
 import {clamp} from "utilities";
 import {Point2D} from "models";
 import "./HistogramComponent.css";
@@ -127,6 +127,20 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return false;
     }
 
+    @computed get exportHeaders(): string[] {
+        let headerString = [];
+
+        // region info
+        const frame = this.props.appStore.activeFrame;
+        if (frame && frame.frameInfo && frame.regionSet) {
+            const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
+            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+            headerString.push(region.regionProperties);
+        }
+
+        return headerString;
+    }
+
     constructor(props: WidgetProps) {
         super(props);
         // Check if this widget hasn't been assigned an ID yet
@@ -243,6 +257,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                     linePlotProps.yMin = 0.5;
                 }
             }
+
+            linePlotProps.comments = this.exportHeaders;
         }
 
         let className = "histogram-widget";
