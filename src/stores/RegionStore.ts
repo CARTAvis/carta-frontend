@@ -103,7 +103,7 @@ export class RegionStore {
                         `${this.rotation.toFixed(1)}deg]`;
             case CARTA.RegionType.ELLIPSE:
                 return `ellipse[[${center}], ` +
-                        `[${this.controlPoints[1].x.toFixed(1)}, ${this.controlPoints[1].y.toFixed(1)}], ` +
+                        `[${this.controlPoints[1].x.toFixed(1)}pix, ${this.controlPoints[1].y.toFixed(1)}pix], ` +
                         `${this.rotation.toFixed(1)}deg]`;
             default:
                 return "Not Implemented";
