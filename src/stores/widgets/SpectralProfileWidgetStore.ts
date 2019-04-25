@@ -19,6 +19,27 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable useWcsValues: boolean;
     @observable markerTextVisible: boolean;
 
+    public static StatsTypeString(statsType: CARTA.StatsType) {
+        switch (statsType) {
+            case CARTA.StatsType.Sum:
+                return "Sum";
+            case CARTA.StatsType.Mean:
+                return "Mean";
+            case CARTA.StatsType.RMS:
+                return "RMS";
+            case CARTA.StatsType.Sigma:
+                return "Sigma";
+            case CARTA.StatsType.SumSq:
+                return "SumSq";
+            case CARTA.StatsType.Min:
+                return "Min";
+            case CARTA.StatsType.Max:
+                return "Max";
+            default:
+                return "Not Implemented";
+        }
+    }
+
     private static ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
 
     private static ValidStatsTypes = [
