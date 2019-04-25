@@ -70,11 +70,11 @@ export class StatsComponent extends React.Component<WidgetProps> {
         [CARTA.StatsType.NumPixels, "NumPixels"],
         [CARTA.StatsType.Sum, "Sum"],
         [CARTA.StatsType.Mean, "Mean"],
-        [CARTA.StatsType.RMS, "RMS"],
-        [CARTA.StatsType.Sigma, "Sigma"],
-        [CARTA.StatsType.SumSq, "SumSq"],
+        [CARTA.StatsType.Sigma, "StdDev"],
         [CARTA.StatsType.Min, "Min"],
         [CARTA.StatsType.Max, "Max"],
+        [CARTA.StatsType.RMS, "RMS"],
+        [CARTA.StatsType.SumSq, "SumSq"]
     ]);
 
     private static readonly NAME_COLUMN_WIDTH = 70;
