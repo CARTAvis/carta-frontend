@@ -310,9 +310,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         const navigationHotKeys = [
             <Hotkey key={0} group={navigationGroupTitle} global={true} combo="click" label="Pan image"/>,
-            <Hotkey key={1} group={navigationGroupTitle} global={true} combo="middle click" label="Pan image (inside region)"/>,
+            <Hotkey key={1} group={navigationGroupTitle} global={true} combo="middle-click" label="Pan image (inside region)"/>,
             <Hotkey key={2} group={navigationGroupTitle} global={true} combo="mod+click" label="Pan image (inside region)"/>,
-            <Hotkey key={3} group={navigationGroupTitle} global={true} combo="mouse wheel" label="Zoom image"/>,
+            <Hotkey key={3} group={navigationGroupTitle} global={true} combo="mouse-wheel" label="Zoom image"/>,
         ];
 
         const regionHotKeys = [
@@ -347,11 +347,11 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         return (
             <Hotkeys>
-                    {regionHotKeys}
-                    {navigationHotKeys}
-                    {animatorHotkeys}
-                    {fileHotkeys}
-                    {otherHotKeys}
+                {regionHotKeys}
+                {navigationHotKeys}
+                {animatorHotkeys}
+                {fileHotkeys}
+                {otherHotKeys}
             </Hotkeys>
         );
     }
