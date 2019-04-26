@@ -168,7 +168,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                     }
 
                     const value = this.statsData.statistics[index].value;
-                    const valueString = isFinite(value) ? `${(type === CARTA.StatsType.NumPixels) ? value : value.toExponential(4)} ${unitString}` : "";
+                    const valueString = isFinite(value) ? `${(type === CARTA.StatsType.NumPixels) ? value : value.toExponential(4)} ${unitString}` : `${value} ${unitString}`;
                     rows.push((
                         <tr key={type}>
                             <td style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>{name}</td>
