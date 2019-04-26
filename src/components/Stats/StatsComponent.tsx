@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {autorun, computed, observable} from "mobx";
-import {ControlGroup, FormGroup, HTMLSelect, HTMLTable, IOptionProps, NonIdealState} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, HTMLTable, IOptionProps, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {WidgetConfig, WidgetProps} from "stores";
@@ -155,13 +155,24 @@ export class StatsComponent extends React.Component<WidgetProps> {
             StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
                 const index = this.statsData.statistics.findIndex(s => s.statsType === type);
                 if (index >= 0) {
+                    let unitString = "";
+                    if (appStore.activeFrame && appStore.activeFrame.unit) {
+                        const unit = appStore.activeFrame.unit;
+                        if (type === CARTA.StatsType.NumPixels) {
+                            unitString = "pixel(s)";
+                        } else if (type === CARTA.StatsType.SumSq) {
+                            unitString = `(${unit})^2`;
+                        } else {
+                            unitString = unit;
+                        }
+                    }
+
                     const value = this.statsData.statistics[index].value;
-                    const unit = appStore.activeFrame.unit ? appStore.activeFrame.unit : "";
-                    const displayValue = (isFinite(value) && type !== CARTA.StatsType.NumPixels) ? `${value.toExponential(4)} ${unit}` : `${value} pixel${value > 1 ? "s" : ""}`;
+                    const valueString = isFinite(value) ? `${(type === CARTA.StatsType.NumPixels) ? value : value.toExponential(4)} ${unitString}` : "";
                     rows.push((
                         <tr key={type}>
                             <td style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>{name}</td>
-                            <td style={{width: valueWidth}}>{displayValue}</td>
+                            <td style={{width: valueWidth}}>{valueString}</td>
                         </tr>
                     ));
                 }
