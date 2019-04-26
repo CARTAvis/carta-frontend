@@ -9,6 +9,7 @@ import * as logoPng from "static/carta_logo.png";
 @observer
 export class AboutDialogComponent extends React.Component<{ appStore: AppStore }> {
 
+    private static readonly VERSION_STRING = `CARTA Viewer Version 1.1.0 (20190426)`;
     public render() {
         const appStore = this.props.appStore;
 
@@ -29,7 +30,7 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
                         <img src={logoPng} width={100}/>
-                        <h3>CARTA Viewer Version 1.1.0-beta.0 (20190405)</h3>
+                        <h3>{AboutDialogComponent.VERSION_STRING}</h3>
                     </div>
 
                     <h3>Development team:</h3>

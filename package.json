@@ -1,6 +1,6 @@
 {
     "name": "carta-frontend",
-    "version": "1.1.0-beta.0",
+    "version": "1.1.0-rc.0",
     "private": true,
     "homepage": "./",
     "dependencies": {
