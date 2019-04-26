@@ -128,7 +128,6 @@ export class StatsComponent extends React.Component<WidgetProps> {
     };
 
     public render() {
-
         const appStore = this.props.appStore;
 
         let enableRegionSelect = false;
@@ -157,7 +156,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 const index = this.statsData.statistics.findIndex(s => s.statsType === type);
                 if (index >= 0) {
                     const value = this.statsData.statistics[index].value;
-                    const displayValue = (isFinite(value) && type !== CARTA.StatsType.NumPixels) ? value.toExponential(4) : value;
+                    const unit = appStore.activeFrame.unit ? appStore.activeFrame.unit : "";
+                    const displayValue = (isFinite(value) && type !== CARTA.StatsType.NumPixels) ? `${value.toExponential(4)} ${unit}` : `${value} pixel${value > 1 ? "s" : ""}`;
                     rows.push((
                         <tr key={type}>
                             <td style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>{name}</td>
