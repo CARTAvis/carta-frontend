@@ -323,8 +323,15 @@ export class App extends React.Component<{ appStore: AppStore }> {
             <Hotkey key={2} group="Regions" global={true} combo="backspace" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
             <Hotkey key={3} group="Regions" global={true} combo="esc" label="Deselect region" onKeyDown={appStore.deselectRegion}/>,
             <Hotkey key={4} group="Regions" global={true} combo="mod" label="Corner-to-corner region creation"/>,
-            <Hotkey key={5} group="Regions" global={true} combo={"shift"} label="Symmetric region creation"/>,
+            <Hotkey key={5} group="Regions" global={true} combo="shift" label="Symmetric region creation"/>,
             <Hotkey key={6} group="Regions" global={true} combo="double-click" label="Region properties"/>
+        ];
+
+        const imageHotKeys = [
+            <Hotkey key={0} group="Image controls" global={true} combo="click" label="Pan image"/>,
+            <Hotkey key={1} group="Image controls" global={true} combo="middle-click" label="Pan image"/>,
+            <Hotkey key={2} group="Image controls" global={true} combo="cmd + click" label="Pan image"/>,
+            <Hotkey key={3} group="Image controls" global={true} combo="scroll-wheel" label="Zoom image"/>,
         ];
 
         return (
@@ -334,6 +341,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 <Hotkey group="Appearance" global={true} combo="shift + D" label="Toggle light/dark theme" onKeyDown={this.toggleDarkTheme}/>
                 <Hotkey group="Cursor" global={true} combo="F" label="Freeze/unfreeze cursor position" onKeyDown={appStore.toggleCursorFrozen}/>
                 {regionHotKeys}
+                {imageHotKeys}
             </Hotkeys>
         );
     }
