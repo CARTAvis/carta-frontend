@@ -302,38 +302,56 @@ export class App extends React.Component<{ appStore: AppStore }> {
         const appStore = this.props.appStore;
         const modString = appStore.modifierString;
 
-        const animatorHotkeys = [
-            <Hotkey key={0} group="Frame controls" global={true} combo={`${modString}]`} label="Next frame" onKeyDown={appStore.nextFrame}/>,
-            <Hotkey key={1} group="Frame controls" global={true} combo={`${modString}[`} label="Previous frame" onKeyDown={appStore.prevFrame}/>,
-            <Hotkey key={2} group="Frame controls" global={true} combo={`${modString}up`} label="Next channel" onKeyDown={this.nextChannel}/>,
-            <Hotkey key={3} group="Frame controls" global={true} combo={`${modString}down`} label="Previous channel" onKeyDown={this.prevChannel}/>,
-            <Hotkey key={4} group="Frame controls" global={true} combo={`${modString}shift + up`} label="Next Stokes cube" onKeyDown={this.nextStokes}/>,
-            <Hotkey key={5} group="Frame controls" global={true} combo={`${modString}shift + down`} label="Previous Stokes cube" onKeyDown={this.prevStokes}/>
-        ];
+        const navigationGroupTitle = "1) Navigation";
+        const regionGroupTitle = "2) Regions";
+        const animatorGroupTitle = "3) Frame controls";
+        const fileGroupTitle = "4) File controls";
+        const otherGroupTitle = "5) Other";
 
-        const fileHotkeys = [
-            <Hotkey key={0} group="File controls" global={true} combo={`${modString}O`} label="Open image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser()}/>,
-            <Hotkey key={1} group="File controls" global={true} combo={`${modString}L`} label="Append image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(true)}/>,
-            <Hotkey key={2} group="File controls" global={true} combo={`${modString}E`} label="Export image" onKeyDown={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>
+        const navigationHotKeys = [
+            <Hotkey key={0} group={navigationGroupTitle} global={true} combo="click" label="Pan image"/>,
+            <Hotkey key={1} group={navigationGroupTitle} global={true} combo="middle-click" label="Pan image (inside region)"/>,
+            <Hotkey key={2} group={navigationGroupTitle} global={true} combo="mod+click" label="Pan image (inside region)"/>,
+            <Hotkey key={3} group={navigationGroupTitle} global={true} combo="mouse-wheel" label="Zoom image"/>,
         ];
 
         const regionHotKeys = [
-            <Hotkey key={0} group="Regions" global={true} combo="c" label="Toggle region creation mode" onKeyDown={this.toggleCreateMode}/>,
-            <Hotkey key={1} group="Regions" global={true} combo="del" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
-            <Hotkey key={2} group="Regions" global={true} combo="backspace" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
-            <Hotkey key={3} group="Regions" global={true} combo="esc" label="Deselect region" onKeyDown={appStore.deselectRegion}/>,
-            <Hotkey key={4} group="Regions" global={true} combo="mod" label="Corner-to-corner region creation"/>,
-            <Hotkey key={5} group="Regions" global={true} combo={"shift"} label="Symmetric region creation"/>,
-            <Hotkey key={6} group="Regions" global={true} combo="double-click" label="Region properties"/>
+            <Hotkey key={0} group={regionGroupTitle} global={true} combo="c" label="Toggle region creation mode" onKeyDown={this.toggleCreateMode}/>,
+            <Hotkey key={1} group={regionGroupTitle} global={true} combo="del" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
+            <Hotkey key={2} group={regionGroupTitle} global={true} combo="backspace" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
+            <Hotkey key={3} group={regionGroupTitle} global={true} combo="esc" label="Deselect region" onKeyDown={appStore.deselectRegion}/>,
+            <Hotkey key={4} group={regionGroupTitle} global={true} combo="mod" label="Corner-to-corner region creation"/>,
+            <Hotkey key={5} group={regionGroupTitle} global={true} combo={"shift"} label="Symmetric region creation"/>,
+            <Hotkey key={6} group={regionGroupTitle} global={true} combo="double-click" label="Region properties"/>
+        ];
+
+        const animatorHotkeys = [
+            <Hotkey key={0} group={animatorGroupTitle} global={true} combo={`${modString}]`} label="Next frame" onKeyDown={appStore.nextFrame}/>,
+            <Hotkey key={1} group={animatorGroupTitle} global={true} combo={`${modString}[`} label="Previous frame" onKeyDown={appStore.prevFrame}/>,
+            <Hotkey key={2} group={animatorGroupTitle} global={true} combo={`${modString}up`} label="Next channel" onKeyDown={this.nextChannel}/>,
+            <Hotkey key={3} group={animatorGroupTitle} global={true} combo={`${modString}down`} label="Previous channel" onKeyDown={this.prevChannel}/>,
+            <Hotkey key={4} group={animatorGroupTitle} global={true} combo={`${modString}shift + up`} label="Next Stokes cube" onKeyDown={this.nextStokes}/>,
+            <Hotkey key={5} group={animatorGroupTitle} global={true} combo={`${modString}shift + down`} label="Previous Stokes cube" onKeyDown={this.prevStokes}/>
+        ];
+
+        const fileHotkeys = [
+            <Hotkey key={0} group={fileGroupTitle} global={true} combo={`${modString}O`} label="Open image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser()}/>,
+            <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}L`} label="Append image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(true)}/>,
+            <Hotkey key={2} group={fileGroupTitle} global={true} combo={`${modString}E`} label="Export image" onKeyDown={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>
+        ];
+
+        const otherHotKeys = [
+            <Hotkey key={0} group={otherGroupTitle} global={true} combo="shift + D" label="Toggle light/dark theme" onKeyDown={this.toggleDarkTheme}/>,
+            <Hotkey key={1} group={otherGroupTitle} global={true} combo="F" label="Freeze/unfreeze cursor position" onKeyDown={appStore.toggleCursorFrozen}/>
         ];
 
         return (
             <Hotkeys>
+                {regionHotKeys}
+                {navigationHotKeys}
                 {animatorHotkeys}
                 {fileHotkeys}
-                <Hotkey group="Appearance" global={true} combo="shift + D" label="Toggle light/dark theme" onKeyDown={this.toggleDarkTheme}/>
-                <Hotkey group="Cursor" global={true} combo="F" label="Freeze/unfreeze cursor position" onKeyDown={appStore.toggleCursorFrozen}/>
-                {regionHotKeys}
+                {otherHotKeys}
             </Hotkeys>
         );
     }
