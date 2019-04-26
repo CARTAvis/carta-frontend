@@ -155,18 +155,18 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     @computed get exportHeaders(): string[] {
         let headerString = [];
-
-        // statistic type
-        headerString.push(`statistic: ${SpectralProfileWidgetStore.StatsTypeString(this.widgetStore.statsType)}`);
-
-        // region info
         const frame = this.props.appStore.activeFrame;
         if (frame && frame.frameInfo && frame.regionSet) {
             const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+
+            // statistic type, ignore when region == cursor
+            if (regionId !== 0) {
+                headerString.push(`statistic: ${SpectralProfileWidgetStore.StatsTypeString(this.widgetStore.statsType)}`);
+            }
+            // region info
             headerString.push(region.regionProperties);
         }
-
         return headerString;
     }
 
