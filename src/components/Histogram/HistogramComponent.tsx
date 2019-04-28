@@ -135,7 +135,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         if (frame && frame.frameInfo && frame.regionSet) {
             const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-            headerString.push(region.regionProperties);
+            if (region) {
+                headerString.push(region.regionProperties);
+            }
         }
 
         return headerString;
