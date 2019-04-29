@@ -9,7 +9,7 @@ import * as logoPng from "static/carta_logo.png";
 @observer
 export class AboutDialogComponent extends React.Component<{ appStore: AppStore }> {
 
-    private static readonly VERSION_STRING = `CARTA Viewer Version 1.1.0 (20190426)`;
+    private static readonly VERSION_STRING = `CARTA Viewer Version 1.1.0 (20190429)`;
     public render() {
         const appStore = this.props.appStore;
 
