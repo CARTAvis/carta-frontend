@@ -165,7 +165,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 headerString.push(`statistic: ${SpectralProfileWidgetStore.StatsTypeString(this.widgetStore.statsType)}`);
             }
             // region info
-            headerString.push(region.regionProperties);
+            if (region) {
+                headerString.push(region.regionProperties);
+            }
         }
         return headerString;
     }
