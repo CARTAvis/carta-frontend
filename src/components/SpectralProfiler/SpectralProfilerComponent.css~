@@ -1,0 +1,21 @@
+/*
+ * Copyright 2017 Palantir Technologies, Inc. All rights reserved.
+ */
+.spectral-profiler-widget {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  border: 1px solid transparent;
+  border-radius: 3px; }
+  .spectral-profiler-widget.linked-to-selected {
+    border: 1px solid #106ba3;
+    transition: border 250ms linear; }
+    .spectral-profiler-widget.linked-to-selected.dark-theme {
+      border: 1px solid #2b95d6; }
+  .spectral-profiler-widget .profile-container {
+    flex: 3 3 auto;
+    min-width: 0;
+    padding-bottom: 5px; }
+    .spectral-profiler-widget .profile-container .profile-plot {
+      height: calc(100% - 35px);
+      position: relative; }

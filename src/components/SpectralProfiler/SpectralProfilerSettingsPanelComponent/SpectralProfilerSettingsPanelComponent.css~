@@ -1,0 +1,11 @@
+.spectral-profile-settings-panel-form .bp3-control-group {
+  margin-top: 10px;
+  margin-left: 2px;
+  margin-right: 5px; }
+  .spectral-profile-settings-panel-form .bp3-control-group .bp3-form-group {
+    margin-bottom: 5px; }
+  .spectral-profile-settings-panel-form .bp3-control-group .bp3-control {
+    margin-top: 0; }
+
+.spectral-profile-settings-panel-form .plot-type-selector {
+  margin: 0 auto 10px; }

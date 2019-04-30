@@ -1,0 +1,58 @@
+/*
+ * Copyright 2017 Palantir Technologies, Inc. All rights reserved.
+ */
+.stats-widget {
+  width: 100%;
+  height: 100%;
+  border: 1px solid transparent;
+  border-radius: 3px; }
+  .stats-widget.linked-to-selected {
+    border: 1px solid #106ba3;
+    transition: border 250ms linear; }
+    .stats-widget.linked-to-selected.dark-theme {
+      border: 1px solid #2b95d6; }
+  .stats-widget .bp3-form-group {
+    padding: 5px 5px 1px;
+    margin: 0; }
+  .stats-widget .stats-display {
+    height: calc(100% - 40px); }
+    .stats-widget .stats-display table {
+      height: 100%;
+      overflow-y: auto;
+      padding: 5px 5px 0;
+      display: block; }
+      .stats-widget .stats-display table thead.dark-theme tr th {
+        border-top: 1px solid #30404d;
+        border-bottom: 1px solid #394b59;
+        border-left: 1px solid #30404d; }
+        .stats-widget .stats-display table thead.dark-theme tr th:last-of-type {
+          border-right: 1px solid #30404d; }
+      .stats-widget .stats-display table thead tr {
+        display: block; }
+        .stats-widget .stats-display table thead tr th {
+          padding: 3px;
+          font-size: 13px;
+          cursor: default;
+          border-top: 1px solid #bfccd6;
+          border-bottom: 1px solid #a7b6c2;
+          border-left: 1px solid #bfccd6; }
+          .stats-widget .stats-display table thead tr th:last-of-type {
+            border-right: 1px solid #bfccd6; }
+      .stats-widget .stats-display table tbody {
+        display: block;
+        background: #ffffff; }
+        .stats-widget .stats-display table tbody.dark-theme {
+          background: #202b33; }
+          .stats-widget .stats-display table tbody.dark-theme tr td {
+            border-left: 1px solid #293742;
+            border-bottom: 1px solid #394b59; }
+            .stats-widget .stats-display table tbody.dark-theme tr td:last-of-type {
+              border-right: 1px solid #293742; }
+        .stats-widget .stats-display table tbody tr td {
+          padding: 3px;
+          font-size: 12px;
+          cursor: pointer;
+          border-left: 1px solid #bfccd6;
+          border-bottom: 1px solid #a7b6c2; }
+          .stats-widget .stats-display table tbody tr td:last-of-type {
+            border-right: 1px solid #bfccd6; }

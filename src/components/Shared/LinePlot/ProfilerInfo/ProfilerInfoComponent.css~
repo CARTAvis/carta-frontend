@@ -1,0 +1,14 @@
+.profiler-info {
+  position: absolute;
+  bottom: 0;
+  left: 5px;
+  margin: 0 0 0 0;
+  user-select: none; }
+  .profiler-info .info-display td {
+    text-align: left;
+    padding: 0 0 0 0; }
+  .profiler-info .info-display .td-label {
+    width: 55px; }
+  .profiler-info .info-display pre {
+    font-size: x-small;
+    margin: 0 0 0 0; }

@@ -1,0 +1,48 @@
+/*
+ * Copyright 2017 Palantir Technologies, Inc. All rights reserved.
+ */
+.overlay-settings-dialog .bp3-tab-panel {
+  height: 20em;
+  overflow: auto;
+  width: 100%; }
+
+.overlay-settings-dialog .bp3-tab-list {
+  width: 10em; }
+
+.overlay-settings-dialog .bp3-button.colorselect .bp3-button-text {
+  min-width: 100px; }
+
+.overlay-settings-dialog .bp3-numeric-input input {
+  width: 100px !important; }
+
+.overlay-settings-dialog .bp3-form-group .bp3-label {
+  width: 8em;
+  text-align: right; }
+
+.overlay-settings-dialog .font-group .bp3-form-content {
+  display: flex; }
+
+.overlay-settings-dialog .font-group input {
+  width: 40px !important; }
+
+.overlay-settings-dialog .font-group button > span > span {
+  width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  white-space: nowrap; }
+
+.overlay-settings-dialog .font-group button {
+  width: 190px;
+  margin-right: 5px; }
+
+.dropdown-color {
+  border: solid 1px black;
+  width: 100%;
+  border-radius: 3px; }
+
+.bp3-select-popover.colorselect .bp3-menu {
+  min-width: 100px;
+  max-height: 300px;
+  overflow: auto;
+  padding: 0; }

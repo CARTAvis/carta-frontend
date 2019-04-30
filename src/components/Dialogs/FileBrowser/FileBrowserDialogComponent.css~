@@ -1,0 +1,21 @@
+.file-browser-dialog {
+  min-width: 60%;
+  height: 600px; }
+  .file-browser-dialog .file-info-pane {
+    width: 40%;
+    margin-left: 5px;
+    display: flex;
+    flex-direction: column; }
+    .file-browser-dialog .file-info-pane .bp3-heading {
+      margin-top: 7px;
+      margin-bottom: 3px;
+      flex: 0 0 auto; }
+    .file-browser-dialog .file-info-pane .file-info-pre {
+      overflow-y: auto;
+      overflow-x: auto;
+      margin-top: 0;
+      margin-bottom: 0;
+      flex: 2 2 auto; }
+  .file-browser-dialog .file-list-pane {
+    overflow-y: auto;
+    width: 60%; }
