@@ -16,6 +16,16 @@ const TallTile: Point2D = {x: 512, y: 1024};
 
 export const DefaultFrameView: FrameView = {xMin: 0, xMax: 512, yMin: 0, yMax: 512, mip: 1};
 
+const tileSort = (a: TileCoordinate, b: TileCoordinate) => {
+    if (a.layer !== b.layer) {
+        return a.layer - b.layer;
+    } else if (a.x !== b.x) {
+        return a.x - b.x;
+    } else {
+        return a.y - b.y;
+    }
+};
+
 function GetRequiredTiles(frameView: FrameView, imageSize: Point2D, tileSize: Point2D): TileCoordinate[] {
     // Validate FrameView object
     if (!frameView || !isFinite(frameView.xMin) || !isFinite(frameView.xMax) || !isFinite(frameView.yMin) || !isFinite(frameView.yMax) || !isFinite(frameView.mip)) {
@@ -50,7 +60,7 @@ function GetRequiredTiles(frameView: FrameView, imageSize: Point2D, tileSize: Po
         mip: frameView.mip
     };
 
-    return "hello";
+    return [];
 }
 
 test("returns an empty array if FrameView is invalid", () => {
@@ -132,4 +142,93 @@ test("returns a single tile if tile size is equal to image size", () => {
 test("returns a single tile if tile size is larger than image size", () => {
     const result = GetRequiredTiles(DefaultFrameView, Tile256, Tile1024);
     expect(result).toEqual([{x: 0, y: 0, layer: 0}]);
+});
+
+test("returns the correct list of tiles when viewing a 1024x1024 image at full resolution using 512x512 tiles", () => {
+    // Full resolution 1024x1024 image using 512x512 tiles
+    const result = GetRequiredTiles({xMin: 0, xMax: 1024, yMin: 0, yMax: 1024, mip: 1}, Tile1024, Tile512);
+    // Full resolution: 2x2 tiles => layer = 1. Tile coordinates start at one
+    const expected: TileCoordinate[] = [];
+    [0, 1].forEach(x => {
+        [0, 1].forEach(y => {
+            expected.push({x, y, layer: 1});
+        });
+    });
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(4);
+    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+    // TODO: introduce checks to ensure optimal tile ordering
+});
+
+test("returns the correct list of tiles when viewing a 1024x1024 image at full resolution using 256x256 tiles", () => {
+    // Full resolution 1024x1024 image using 512x512 tiles
+    const result = GetRequiredTiles({xMin: 0, xMax: 1024, yMin: 0, yMax: 1024, mip: 1}, Tile1024, Tile256);
+    // Full resolution: 4x4 tiles => layer = 2. Tile coordinates start at one
+    const expected: TileCoordinate[] = [];
+    [0, 1, 2, 3].forEach(x => {
+        [0, 1, 2, 3].forEach(y => {
+            expected.push({x, y, layer: 2});
+        });
+    });
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(16);
+    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+});
+
+test("returns the correct list of tiles when viewing a tall section of a 1024x1024 image at full resolution using 256x256 tiles", () => {
+    const result = GetRequiredTiles({xMin: 100, xMax: 300, yMin: 100, yMax: 600, mip: 1}, Tile1024, Tile256);
+    const expected: TileCoordinate[] = [];
+    [0, 1].forEach(x => {
+        [0, 1, 2].forEach(y => {
+            expected.push({x, y, layer: 2});
+        });
+    });
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(6);
+    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+});
+
+test("returns the correct list of tiles when viewing a wide section of a 1024x1024 image at full resolution using 256x256 tiles", () => {
+    const result = GetRequiredTiles({xMin: -100, xMax: 1000, yMin: 800, yMax: 900, mip: 1}, Tile1024, Tile256);
+    const expected: TileCoordinate[] = [];
+    [0, 1, 2, 3].forEach(x => {
+        [3].forEach(y => {
+            expected.push({x, y, layer: 2});
+        });
+    });
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(4);
+    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+});
+
+test("returns the correct list of tiles when viewing a tall section of a 1024x1024 image at half resolution using 256x256 tiles", () => {
+    const result = GetRequiredTiles({xMin: 100, xMax: 300, yMin: 100, yMax: 600, mip: 2}, Tile1024, Tile256);
+    const expected: TileCoordinate[] = [];
+    [0].forEach(x => {
+        [0, 1].forEach(y => {
+            expected.push({x, y, layer: 1});
+        });
+    });
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(2);
+    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+});
+
+test("returns the correct list of tiles when viewing a wide section of a 1024x1024 image at half resolution using 256x256 tiles", () => {
+    const result = GetRequiredTiles({xMin: -100, xMax: 1000, yMin: 800, yMax: 900, mip: 2}, Tile1024, Tile256);
+    const expected: TileCoordinate[] = [];
+    [0, 1].forEach(x => {
+        [1].forEach(y => {
+            expected.push({x, y, layer: 1});
+        });
+    });
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(2);
+    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
 });
