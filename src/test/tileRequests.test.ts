@@ -48,7 +48,7 @@ function GetRequiredTiles(frameView: FrameView, imageSize: Point2D, tileSize: Po
     }
 
     // Check if view is out of image range
-    if (frameView.xMax < 0 || frameView.xMin > imageSize.x || frameView.yMax < 0 || frameView.yMax > imageSize.y) {
+    if (frameView.xMax < 0 || frameView.xMin > imageSize.x || frameView.yMax < 0 || frameView.yMin > imageSize.y) {
         return [];
     }
 
@@ -60,7 +60,29 @@ function GetRequiredTiles(frameView: FrameView, imageSize: Point2D, tileSize: Po
         mip: frameView.mip
     };
 
-    return [];
+    const adjustedTileSize: Point2D = {
+        x: frameView.mip * tileSize.x,
+        y: frameView.mip * tileSize.y,
+    };
+
+    const xStart = Math.floor(boundedFrameView.xMin / adjustedTileSize.x);
+    const xEnd = Math.ceil(boundedFrameView.xMax / adjustedTileSize.x);
+    const yStart = Math.floor(boundedFrameView.yMin / adjustedTileSize.y);
+    const yEnd = Math.ceil(boundedFrameView.yMax / adjustedTileSize.y);
+
+    const totalTilesX = Math.ceil(imageSize.x / tileSize.x);
+    const totalTilesY = Math.ceil(imageSize.y / tileSize.y);
+    const maxMip = Math.max(totalTilesX, totalTilesY);
+    const totalLayers = Math.ceil(Math.log2(maxMip));
+    const layer = totalLayers - Math.ceil(Math.log2(frameView.mip));
+
+    const tileSet: TileCoordinate[] = [];
+    for (let x = xStart; x < xEnd; x++) {
+        for (let y = yStart; y < yEnd; y++) {
+            tileSet.push({x, y, layer});
+        }
+    }
+    return tileSet;
 }
 
 test("returns an empty array if FrameView is invalid", () => {
