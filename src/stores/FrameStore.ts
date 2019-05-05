@@ -76,16 +76,19 @@ export class FrameStore {
         const imageHeight = pixelRatio * this.renderHeight / this.zoomLevel;
 
         const mipExact = Math.max(1.0, 1.0 / this.zoomLevel);
-        const mipRounded = (mipExact % 1.0 < 0.25) ? Math.floor(mipExact) : Math.ceil(mipExact);
-
-        const requiredView = {
+        const mipLog2 = Math.log2(mipExact);
+        const mipLog2Rounded = (mipLog2 % 1.0 < 0.25) ? Math.floor(mipLog2) : Math.ceil(mipLog2);
+        const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
+        const frameView = {
             xMin: this.center.x - imageWidth / 2.0,
             xMax: this.center.x + imageWidth / 2.0,
             yMin: this.center.y - imageHeight / 2.0,
             yMax: this.center.y + imageHeight / 2.0,
-            mip: mipRounded
+            mip: mipRoundedPow2
         };
-        return requiredView;
+
+        console.log(frameView);
+        return frameView;
     }
 
     @computed get renderWidth() {
