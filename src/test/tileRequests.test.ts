@@ -232,3 +232,59 @@ test("returns the correct list of tiles when viewing a wide section of a 1024x10
     expect(result.length).toBe(2);
     expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
 });
+
+test("returns the correct list of tiles when viewing a wide section partially above image", () => {
+    const result = GetRequiredTiles({xMin: 100, xMax: 1000, yMin: 900, yMax: 1100, mip: 2}, Tile1024, Tile256);
+    const expected: TileCoordinate[] = [];
+    [0, 1].forEach(x => {
+        [1].forEach(y => {
+            expected.push({x, y, layer: 1});
+        });
+    });
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(2);
+    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+});
+
+test("returns the correct list of tiles when viewing a wide section partially below image", () => {
+    const result = GetRequiredTiles({xMin: 100, xMax: 1000, yMin: -100, yMax: 100, mip: 2}, Tile1024, Tile256);
+    const expected: TileCoordinate[] = [];
+    [0, 1].forEach(x => {
+        [0].forEach(y => {
+            expected.push({x, y, layer: 1});
+        });
+    });
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(2);
+    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+});
+
+test("returns the correct list of tiles when viewing a tall section partially left of image", () => {
+    const result = GetRequiredTiles({xMin: -100, xMax: 50, yMin: 100, yMax: 1000, mip: 2}, Tile1024, Tile256);
+    const expected: TileCoordinate[] = [];
+    [0].forEach(x => {
+        [0, 1].forEach(y => {
+            expected.push({x, y, layer: 1});
+        });
+    });
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(2);
+    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+});
+
+test("returns the correct list of tiles when viewing a tall section partially right of image", () => {
+    const result = GetRequiredTiles({xMin: 900, xMax: 1100, yMin: 100, yMax: 1000, mip: 2}, Tile1024, Tile256);
+    const expected: TileCoordinate[] = [];
+    [1].forEach(x => {
+        [0, 1].forEach(y => {
+            expected.push({x, y, layer: 1});
+        });
+    });
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(2);
+    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+});
