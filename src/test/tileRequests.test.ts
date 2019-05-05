@@ -76,12 +76,24 @@ function GetRequiredTiles(frameView: FrameView, imageSize: Point2D, tileSize: Po
     const totalLayers = Math.ceil(Math.log2(maxMip));
     const layer = totalLayers - Math.ceil(Math.log2(frameView.mip));
 
-    const tileSet: TileCoordinate[] = [];
-    for (let x = xStart; x < xEnd; x++) {
-        for (let y = yStart; y < yEnd; y++) {
-            tileSet.push({x, y, layer});
+    const numTilesX = xEnd - xStart;
+    const numTilesY = yEnd - yStart;
+    const tileSet: TileCoordinate[] = new Array<TileCoordinate>(numTilesX * numTilesY);
+    for (let x = xStart, i = 0; x < xEnd; x++) {
+        for (let y = yStart; y < yEnd; y++, i++) {
+            tileSet[i] = {x, y, layer};
         }
     }
+
+    const midPoint = {x: (xStart + xEnd) / 2.0, y: (yStart + yEnd) / 2.0};
+    // return tileSet.sort((a, b) => {
+    //     const aX = midPoint.x - a.x;
+    //     const aY = midPoint.y - a.y;
+    //     const bX = midPoint.x - b.x;
+    //     const bY = midPoint.y - b.y;
+    //     return (aX * aX + aY * aY) - (bX * bX + bY * bY);
+    // });
+
     return tileSet;
 }
 
@@ -309,4 +321,34 @@ test("returns the correct list of tiles when viewing a tall section partially ri
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(2);
     expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+});
+
+test("give correct result when viewing a 16K image at full resolution using 256x256 tiles", () => {
+    const result = GetRequiredTiles({xMin: 0, xMax: 16384, yMin: 0, yMax: 16384, mip: 1}, {x: 16384, y: 16384}, Tile256);
+
+    let xRange = Array.from({length: 64}, ((v, k) => k));
+    let yRange = Array.from({length: 64}, ((v, k) => k));
+
+    const expected: TileCoordinate[] = [];
+    xRange.forEach(x => {
+        yRange.forEach(y => {
+            expected.push({x, y, layer: 6});
+        });
+    });
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(64 * 64);
+    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+});
+
+test("take less than 2 ms when viewing a 16K image at full resolution using 256x256 tiles", () => {
+    const tStart = performance.now();
+    const result = GetRequiredTiles({xMin: 0, xMax: 16384, yMin: 0, yMax: 16384, mip: 1}, {x: 16384, y: 16384}, Tile256);
+    const tEnd = performance.now();
+
+    const runTime = tEnd - tStart;
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(64 * 64);
+    expect(runTime).toBeLessThan(2);
 });
