@@ -8,7 +8,7 @@ import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent} from "components/Shared";
 import {SpectralProfilerSettingsPanelComponent} from "./SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
-import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, RegionStore} from "stores";
+import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp} from "utilities";
@@ -310,97 +310,95 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             markers: []
         };
 
-        if (appStore.activeFrame) {
-            if (this.profileStore && frame) {
-                if (frame.unit) {
-                    linePlotProps.yLabel = `Value (${frame.unit})`;
-                }
-                const currentPlotData = this.plotData;
-                if (currentPlotData) {
-                    linePlotProps.data = currentPlotData.values;
-                    // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
-                    if (this.widgetStore.isAutoScaledX) {
-                        linePlotProps.xMin = currentPlotData.xMin;
-                        linePlotProps.xMax = currentPlotData.xMax;
-                    } else {
-                        linePlotProps.xMin = this.widgetStore.minX;
-                        linePlotProps.xMax = this.widgetStore.maxX;
-                    }
-
-                    if (this.widgetStore.isAutoScaledY) {
-                        linePlotProps.yMin = currentPlotData.yMin;
-                        linePlotProps.yMax = currentPlotData.yMax;
-                    } else {
-                        linePlotProps.yMin = this.widgetStore.minY;
-                        linePlotProps.yMax = this.widgetStore.maxY;
-                    }
-                }
-
-                const wcsLabel = this.getChannelLabel();
-                if (wcsLabel) {
-                    linePlotProps.xLabel = this.getChannelLabel();
-                }
-                linePlotProps.cursorX = {
-                    profiler: this.widgetStore.cursorX,
-                    image: this.getCurrentChannelValue(),
-                    unit: this.getChannelUnit()
-                };
-
-                linePlotProps.markers = [];
-                if (linePlotProps.cursorX.profiler !== null) {
-                    linePlotProps.markers.push({
-                        value: linePlotProps.cursorX.profiler,
-                        id: "marker-profiler-cursor",
-                        draggable: false,
-                        horizontal: false,
-                        color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
-                        opacity: 0.8,
-                        isMouseMove: true,
-                    });
-                }
-
-                if (linePlotProps.cursorX.image !== null) {
-                    linePlotProps.markers.push({
-                        value: linePlotProps.cursorX.image,
-                        id: "marker-channel-current",
-                        opacity: 0.4,
-                        draggable: false,
-                        horizontal: false,
-                    });
-                    linePlotProps.markers.push({
-                        value: this.getRequiredChannelValue(),
-                        id: "marker-channel-required",
-                        draggable: appStore.animatorStore.animationState !== AnimationState.PLAYING,
-                        dragMove: this.onChannelChanged,
-                        horizontal: false,
-                    });
-                }
-
-                if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
-                    linePlotProps.markers.push({
-                        value: currentPlotData.yMean,
-                        id: "marker-mean",
-                        draggable: false,
-                        horizontal: true,
-                        color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
-                        dash: [5]
-                    });
-
-                    linePlotProps.markers.push({
-                        value: currentPlotData.yMean,
-                        id: "marker-rms",
-                        draggable: false,
-                        horizontal: true,
-                        width: currentPlotData.yRms,
-                        opacity: 0.2,
-                        color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
-                    });
-
-                    linePlotProps.dataStat = {mean: currentPlotData.yMean, rms: currentPlotData.yRms};
-                }
-
-                linePlotProps.comments = this.exportHeaders;
+        if (this.profileStore && frame) {
+            if (frame.unit) {
+                linePlotProps.yLabel = `Value (${frame.unit})`;
             }
+            const currentPlotData = this.plotData;
+            if (currentPlotData) {
+                linePlotProps.data = currentPlotData.values;
+                // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
+                if (this.widgetStore.isAutoScaledX) {
+                    linePlotProps.xMin = currentPlotData.xMin;
+                    linePlotProps.xMax = currentPlotData.xMax;
+                } else {
+                    linePlotProps.xMin = this.widgetStore.minX;
+                    linePlotProps.xMax = this.widgetStore.maxX;
+                }
+
+                if (this.widgetStore.isAutoScaledY) {
+                    linePlotProps.yMin = currentPlotData.yMin;
+                    linePlotProps.yMax = currentPlotData.yMax;
+                } else {
+                    linePlotProps.yMin = this.widgetStore.minY;
+                    linePlotProps.yMax = this.widgetStore.maxY;
+                }
+            }
+
+            const wcsLabel = this.getChannelLabel();
+            if (wcsLabel) {
+                linePlotProps.xLabel = this.getChannelLabel();
+            }
+            linePlotProps.cursorX = {
+                profiler: this.widgetStore.cursorX,
+                image: this.getCurrentChannelValue(),
+                unit: this.getChannelUnit()
+            };
+
+            linePlotProps.markers = [];
+            if (linePlotProps.cursorX.profiler !== null) {
+                linePlotProps.markers.push({
+                    value: linePlotProps.cursorX.profiler,
+                    id: "marker-profiler-cursor",
+                    draggable: false,
+                    horizontal: false,
+                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                    opacity: 0.8,
+                    isMouseMove: true,
+                });
+            }
+
+            if (linePlotProps.cursorX.image !== null) {
+                linePlotProps.markers.push({
+                    value: linePlotProps.cursorX.image,
+                    id: "marker-channel-current",
+                    opacity: 0.4,
+                    draggable: false,
+                    horizontal: false,
+                });
+                linePlotProps.markers.push({
+                    value: this.getRequiredChannelValue(),
+                    id: "marker-channel-required",
+                    draggable: appStore.animatorStore.animationState !== AnimationState.PLAYING,
+                    dragMove: this.onChannelChanged,
+                    horizontal: false,
+                });
+            }
+
+            if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
+                linePlotProps.markers.push({
+                    value: currentPlotData.yMean,
+                    id: "marker-mean",
+                    draggable: false,
+                    horizontal: true,
+                    color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                    dash: [5]
+                });
+
+                linePlotProps.markers.push({
+                    value: currentPlotData.yMean,
+                    id: "marker-rms",
+                    draggable: false,
+                    horizontal: true,
+                    width: currentPlotData.yRms,
+                    opacity: 0.2,
+                    color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                });
+
+                linePlotProps.dataStat = {mean: currentPlotData.yMean, rms: currentPlotData.yRms};
+            }
+
+            linePlotProps.comments = this.exportHeaders;
         }
 
         let className = "spectral-profiler-widget";
