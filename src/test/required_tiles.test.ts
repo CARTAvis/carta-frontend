@@ -1,5 +1,5 @@
 import {FrameView, Point2D, TileCoordinate} from "models";
-import {GetRequiredTiles, tileSort} from "../utilities";
+import {GetRequiredTiles, tileSortEncoded} from "../utilities";
 
 // Some default tile/image sizes
 const Tile256: Point2D = {x: 256, y: 256};
@@ -105,7 +105,7 @@ test("returns the correct list of tiles when viewing a 1024x1024 image at full r
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(4);
-    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
     // TODO: introduce checks to ensure optimal tile ordering
 });
 
@@ -122,7 +122,7 @@ test("returns the correct list of tiles when viewing a 1024x1024 image at full r
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(16);
-    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
 });
 
 test("returns the correct list of tiles when viewing a tall section of a 1024x1024 image at full resolution using 256x256 tiles", () => {
@@ -136,7 +136,7 @@ test("returns the correct list of tiles when viewing a tall section of a 1024x10
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(6);
-    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
 });
 
 test("returns the correct list of tiles when viewing a wide section of a 1024x1024 image at full resolution using 256x256 tiles", () => {
@@ -150,7 +150,7 @@ test("returns the correct list of tiles when viewing a wide section of a 1024x10
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(4);
-    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
 });
 
 test("returns the correct list of tiles when viewing a tall section of a 1024x1024 image at half resolution using 256x256 tiles", () => {
@@ -164,7 +164,7 @@ test("returns the correct list of tiles when viewing a tall section of a 1024x10
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(2);
-    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
 });
 
 test("returns the correct list of tiles when viewing a wide section of a 1024x1024 image at half resolution using 256x256 tiles", () => {
@@ -178,7 +178,7 @@ test("returns the correct list of tiles when viewing a wide section of a 1024x10
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(2);
-    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
 });
 
 test("returns the correct list of tiles when viewing a wide section partially above image", () => {
@@ -192,7 +192,7 @@ test("returns the correct list of tiles when viewing a wide section partially ab
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(2);
-    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
 });
 
 test("returns the correct list of tiles when viewing a wide section partially below image", () => {
@@ -206,7 +206,7 @@ test("returns the correct list of tiles when viewing a wide section partially be
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(2);
-    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
 });
 
 test("returns the correct list of tiles when viewing a tall section partially left of image", () => {
@@ -220,7 +220,7 @@ test("returns the correct list of tiles when viewing a tall section partially le
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(2);
-    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
 });
 
 test("returns the correct list of tiles when viewing a tall section partially right of image", () => {
@@ -234,10 +234,10 @@ test("returns the correct list of tiles when viewing a tall section partially ri
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(2);
-    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
 });
 
-test("give correct result when viewing a 16K image at full resolution using 256x256 tiles", () => {
+test("give correct result when generating tiles for a 16K image at full resolution using 256x256 tiles", () => {
     const result = GetRequiredTiles({xMin: 0, xMax: 16384, yMin: 0, yMax: 16384, mip: 1}, {x: 16384, y: 16384}, Tile256);
 
     let xRange = Array.from({length: 64}, ((v, k) => k));
@@ -252,10 +252,10 @@ test("give correct result when viewing a 16K image at full resolution using 256x
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(64 * 64);
-    expect(result.sort(tileSort)).toEqual(expected.sort(tileSort));
+    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
 });
 
-test("take less than 2 ms when viewing a 16K image at full resolution using 256x256 tiles", () => {
+test("take less than 2 ms when generating tiles for a 16K image at full resolution using 256x256 tiles", () => {
     const tStart = performance.now();
     const result = GetRequiredTiles({xMin: 0, xMax: 16384, yMin: 0, yMax: 16384, mip: 1}, {x: 16384, y: 16384}, Tile256);
     const tEnd = performance.now();

@@ -10,6 +10,10 @@ export function tileSort(a: TileCoordinate, b: TileCoordinate) {
     }
 }
 
+export function tileSortEncoded(a: TileCoordinate, b: TileCoordinate) {
+    return TileCoordinate.EncodeCoordinate(a) - TileCoordinate.EncodeCoordinate(b);
+}
+
 export function GetRequiredTiles(frameView: FrameView, imageSize: Point2D, tileSize: Point2D): TileCoordinate[] {
     // Validate FrameView object
     if (!frameView || !isFinite(frameView.xMin) || !isFinite(frameView.xMax) || !isFinite(frameView.yMin) || !isFinite(frameView.yMax) || !isFinite(frameView.mip)) {
