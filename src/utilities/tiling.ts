@@ -1,6 +1,6 @@
 import {FrameView, Point2D, TileCoordinate} from "../models";
 
-export function tileSort(a: TileCoordinate, b: TileCoordinate) {
+export function TileSort(a: TileCoordinate, b: TileCoordinate) {
     if (a.layer !== b.layer) {
         return a.layer - b.layer;
     } else if (a.x !== b.x) {
@@ -10,8 +10,24 @@ export function tileSort(a: TileCoordinate, b: TileCoordinate) {
     }
 }
 
-export function tileSortEncoded(a: TileCoordinate, b: TileCoordinate) {
+export function TileSortEncoded(a: TileCoordinate, b: TileCoordinate) {
     return TileCoordinate.EncodeCoordinate(a) - TileCoordinate.EncodeCoordinate(b);
+}
+
+export function MipToLayer(mip: number, imageSize: Point2D, tileSize: Point2D): number {
+    const totalTilesX = Math.ceil(imageSize.x / tileSize.x);
+    const totalTilesY = Math.ceil(imageSize.y / tileSize.y);
+    const maxMip = Math.max(totalTilesX, totalTilesY);
+    const totalLayers = Math.ceil(Math.log2(maxMip));
+    return totalLayers - Math.ceil(Math.log2(mip));
+}
+
+export function LayerToMip(layer: number, imageSize: Point2D, tileSize: Point2D): number {
+    const totalTilesX = Math.ceil(imageSize.x / tileSize.x);
+    const totalTilesY = Math.ceil(imageSize.y / tileSize.y);
+    const maxMip = Math.max(totalTilesX, totalTilesY);
+    const totalLayers = Math.ceil(Math.log2(maxMip));
+    return Math.pow(2.0, totalLayers - layer);
 }
 
 export function GetRequiredTiles(frameView: FrameView, imageSize: Point2D, tileSize: Point2D): TileCoordinate[] {
@@ -58,11 +74,7 @@ export function GetRequiredTiles(frameView: FrameView, imageSize: Point2D, tileS
     const yStart = Math.floor(boundedFrameView.yMin / adjustedTileSize.y);
     const yEnd = Math.ceil(boundedFrameView.yMax / adjustedTileSize.y);
 
-    const totalTilesX = Math.ceil(imageSize.x / tileSize.x);
-    const totalTilesY = Math.ceil(imageSize.y / tileSize.y);
-    const maxMip = Math.max(totalTilesX, totalTilesY);
-    const totalLayers = Math.ceil(Math.log2(maxMip));
-    const layer = totalLayers - Math.ceil(Math.log2(frameView.mip));
+    const layer = MipToLayer(frameView.mip, imageSize, tileSize);
 
     const numTilesX = xEnd - xStart;
     const numTilesY = yEnd - yStart;

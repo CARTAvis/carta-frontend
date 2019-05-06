@@ -1,11 +1,12 @@
 import {FrameView, Point2D, TileCoordinate} from "models";
-import {GetRequiredTiles, tileSortEncoded} from "../utilities";
+import {GetRequiredTiles, LayerToMip, MipToLayer, TileSortEncoded} from "../utilities";
 
 // Some default tile/image sizes
 const Tile256: Point2D = {x: 256, y: 256};
 const Tile512: Point2D = {x: 512, y: 512};
 const Tile1024: Point2D = {x: 1024, y: 1024};
 const Tile2048: Point2D = {x: 2048, y: 2048};
+const Tile4096: Point2D = {x: 4096, y: 4096};
 const WideTile: Point2D = {x: 1024, y: 512};
 const TallTile: Point2D = {x: 512, y: 1024};
 
@@ -105,7 +106,7 @@ test("returns the correct list of tiles when viewing a 1024x1024 image at full r
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(4);
-    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
+    expect(result.sort(TileSortEncoded)).toEqual(expected.sort(TileSortEncoded));
     // TODO: introduce checks to ensure optimal tile ordering
 });
 
@@ -122,7 +123,7 @@ test("returns the correct list of tiles when viewing a 1024x1024 image at full r
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(16);
-    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
+    expect(result.sort(TileSortEncoded)).toEqual(expected.sort(TileSortEncoded));
 });
 
 test("returns the correct list of tiles when viewing a tall section of a 1024x1024 image at full resolution using 256x256 tiles", () => {
@@ -136,7 +137,7 @@ test("returns the correct list of tiles when viewing a tall section of a 1024x10
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(6);
-    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
+    expect(result.sort(TileSortEncoded)).toEqual(expected.sort(TileSortEncoded));
 });
 
 test("returns the correct list of tiles when viewing a wide section of a 1024x1024 image at full resolution using 256x256 tiles", () => {
@@ -150,7 +151,7 @@ test("returns the correct list of tiles when viewing a wide section of a 1024x10
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(4);
-    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
+    expect(result.sort(TileSortEncoded)).toEqual(expected.sort(TileSortEncoded));
 });
 
 test("returns the correct list of tiles when viewing a tall section of a 1024x1024 image at half resolution using 256x256 tiles", () => {
@@ -164,7 +165,7 @@ test("returns the correct list of tiles when viewing a tall section of a 1024x10
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(2);
-    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
+    expect(result.sort(TileSortEncoded)).toEqual(expected.sort(TileSortEncoded));
 });
 
 test("returns the correct list of tiles when viewing a wide section of a 1024x1024 image at half resolution using 256x256 tiles", () => {
@@ -178,7 +179,7 @@ test("returns the correct list of tiles when viewing a wide section of a 1024x10
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(2);
-    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
+    expect(result.sort(TileSortEncoded)).toEqual(expected.sort(TileSortEncoded));
 });
 
 test("returns the correct list of tiles when viewing a wide section partially above image", () => {
@@ -192,7 +193,7 @@ test("returns the correct list of tiles when viewing a wide section partially ab
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(2);
-    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
+    expect(result.sort(TileSortEncoded)).toEqual(expected.sort(TileSortEncoded));
 });
 
 test("returns the correct list of tiles when viewing a wide section partially below image", () => {
@@ -206,7 +207,7 @@ test("returns the correct list of tiles when viewing a wide section partially be
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(2);
-    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
+    expect(result.sort(TileSortEncoded)).toEqual(expected.sort(TileSortEncoded));
 });
 
 test("returns the correct list of tiles when viewing a tall section partially left of image", () => {
@@ -220,7 +221,7 @@ test("returns the correct list of tiles when viewing a tall section partially le
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(2);
-    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
+    expect(result.sort(TileSortEncoded)).toEqual(expected.sort(TileSortEncoded));
 });
 
 test("returns the correct list of tiles when viewing a tall section partially right of image", () => {
@@ -234,7 +235,7 @@ test("returns the correct list of tiles when viewing a tall section partially ri
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(2);
-    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
+    expect(result.sort(TileSortEncoded)).toEqual(expected.sort(TileSortEncoded));
 });
 
 test("give correct result when generating tiles for a 16K image at full resolution using 256x256 tiles", () => {
@@ -252,7 +253,7 @@ test("give correct result when generating tiles for a 16K image at full resoluti
 
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(64 * 64);
-    expect(result.sort(tileSortEncoded)).toEqual(expected.sort(tileSortEncoded));
+    expect(result.sort(TileSortEncoded)).toEqual(expected.sort(TileSortEncoded));
 });
 
 test("take less than 2 ms when generating tiles for a 16K image at full resolution using 256x256 tiles", () => {
@@ -265,4 +266,52 @@ test("take less than 2 ms when generating tiles for a 16K image at full resoluti
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(64 * 64);
     expect(runTime).toBeLessThan(2);
+});
+
+test("round trip mip -> layer -> mip", () => {
+    expect(MipToLayer(8, Tile2048, Tile256)).toBe(0);
+    expect(MipToLayer(4, Tile2048, Tile256)).toBe(1);
+    expect(MipToLayer(2, Tile2048, Tile256)).toBe(2);
+    expect(MipToLayer(1, Tile2048, Tile256)).toBe(3);
+
+    expect(LayerToMip(MipToLayer(8, Tile2048, Tile256), Tile2048, Tile256)).toBe(8);
+    expect(LayerToMip(MipToLayer(4, Tile2048, Tile256), Tile2048, Tile256)).toBe(4);
+    expect(LayerToMip(MipToLayer(2, Tile2048, Tile256), Tile2048, Tile256)).toBe(2);
+    expect(LayerToMip(MipToLayer(1, Tile2048, Tile256), Tile2048, Tile256)).toBe(1);
+
+    expect(MipToLayer(16, Tile4096, Tile256)).toBe(0);
+    expect(MipToLayer(8, Tile4096, Tile256)).toBe(1);
+    expect(MipToLayer(4, Tile4096, Tile256)).toBe(2);
+    expect(MipToLayer(2, Tile4096, Tile256)).toBe(3);
+    expect(MipToLayer(1, Tile4096, Tile256)).toBe(4);
+
+    expect(LayerToMip(MipToLayer(16, Tile4096, Tile256), Tile4096, Tile256)).toBe(16);
+    expect(LayerToMip(MipToLayer(8, Tile4096, Tile256), Tile4096, Tile256)).toBe(8);
+    expect(LayerToMip(MipToLayer(4, Tile4096, Tile256), Tile4096, Tile256)).toBe(4);
+    expect(LayerToMip(MipToLayer(2, Tile4096, Tile256), Tile4096, Tile256)).toBe(2);
+    expect(LayerToMip(MipToLayer(1, Tile4096, Tile256), Tile4096, Tile256)).toBe(1);
+});
+
+test("round trip layer -> mip -> layer", () => {
+    expect(LayerToMip(0, Tile2048, Tile256)).toBe(8);
+    expect(LayerToMip(1, Tile2048, Tile256)).toBe(4);
+    expect(LayerToMip(2, Tile2048, Tile256)).toBe(2);
+    expect(LayerToMip(3, Tile2048, Tile256)).toBe(1);
+
+    expect(MipToLayer(LayerToMip(0, Tile2048, Tile256), Tile2048, Tile256)).toBe(0);
+    expect(MipToLayer(LayerToMip(1, Tile2048, Tile256), Tile2048, Tile256)).toBe(1);
+    expect(MipToLayer(LayerToMip(2, Tile2048, Tile256), Tile2048, Tile256)).toBe(2);
+    expect(MipToLayer(LayerToMip(3, Tile2048, Tile256), Tile2048, Tile256)).toBe(3);
+
+    expect(LayerToMip(0, Tile4096, Tile256)).toBe(16);
+    expect(LayerToMip(1, Tile4096, Tile256)).toBe(8);
+    expect(LayerToMip(2, Tile4096, Tile256)).toBe(4);
+    expect(LayerToMip(3, Tile4096, Tile256)).toBe(2);
+    expect(LayerToMip(4, Tile4096, Tile256)).toBe(1);
+
+    expect(MipToLayer(LayerToMip(0, Tile4096, Tile256), Tile4096, Tile256)).toBe(0);
+    expect(MipToLayer(LayerToMip(1, Tile4096, Tile256), Tile4096, Tile256)).toBe(1);
+    expect(MipToLayer(LayerToMip(2, Tile4096, Tile256), Tile4096, Tile256)).toBe(2);
+    expect(MipToLayer(LayerToMip(3, Tile4096, Tile256), Tile4096, Tile256)).toBe(3);
+    expect(MipToLayer(LayerToMip(4, Tile4096, Tile256), Tile4096, Tile256)).toBe(4);
 });
