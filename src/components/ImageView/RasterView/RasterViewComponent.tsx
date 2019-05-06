@@ -1,6 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {FrameStore, OverlayStore} from "stores";
+import {FrameView} from "models";
 import "./RasterViewComponent.css";
 import allMaps from "static/allmaps.png";
 
@@ -12,6 +13,8 @@ export class RasterViewComponentProps {
     frame: FrameStore;
     docked: boolean;
 }
+
+const TILE_SIZE = 256;
 
 @observer
 export class RasterViewComponent extends React.Component<RasterViewComponentProps> {
@@ -175,10 +178,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         // Vertices are mapped from [0-1] -> [-1, 1]
         const vertices = new Float32Array([
-            LT.x, LT.y, 0,
-            RB.x, LT.y, 0,
-            LT.x, RB.y, 0,
-            RB.x, RB.y, 0
+            LT.x, LT.y, 0.1,
+            RB.x, LT.y, 0.1,
+            LT.x, RB.y, 0.1,
+            RB.x, RB.y, 0.1
         ].map(v => -1 + 2 * v));
 
         this.gl.viewport(0, 0, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
@@ -211,6 +214,51 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
         this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, new Float32Array(vertices), WebGLRenderingContext.STATIC_DRAW);
         this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
+
+        const tStart = performance.now();
+        for (let i = 0; i < 10; i++) {
+            for (let j = 0; j < 10; j++) {
+                this.renderTiles(i, j, full.mip, i * 10 + j);
+            }
+        }
+        const tEnd = performance.now();
+        const dt = tEnd - tStart;
+        console.log(`Drew $${10*10} tiles in ${dt} ms`);
+    }
+
+    private renderTiles(tileX: number, tileY: number, mip: number, cmap: number) {
+        const frame = this.props.frame;
+        const full = frame.requiredFrameView;
+
+        const fullWidth = full.xMax - full.xMin;
+        const fullHeight = full.yMax - full.yMin;
+
+        const tileSizeAdjusted = mip * TILE_SIZE;
+        const tileImageView: FrameView = {
+            xMin: tileX * tileSizeAdjusted,
+            yMin: tileY * tileSizeAdjusted,
+            xMax: (tileX + 1) * tileSizeAdjusted,
+            yMax: (tileY + 1) * tileSizeAdjusted,
+            mip: 1
+        };
+
+        const LT = {x: (0.5 + tileImageView.xMin - full.xMin) / fullWidth, y: (0.5 + tileImageView.yMin - full.yMin) / fullHeight};
+        const RB = {x: (0.5 + tileImageView.xMax - full.xMin) / fullWidth, y: (0.5 + tileImageView.yMax - full.yMin) / fullHeight};
+
+        // Vertices are mapped from [0-1] -> [-1, 1]
+        const vertices = new Float32Array([
+            LT.x, LT.y, 0,
+            RB.x, LT.y, 0,
+            LT.x, RB.y, 0,
+            RB.x, RB.y, 0
+        ].map(v => -1 + 2 * v));
+
+        this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, new Float32Array(vertices), WebGLRenderingContext.DYNAMIC_DRAW);
+        this.gl.uniform1f(this.BiasUniform, -10);
+        this.gl.uniform1i(this.CmapIndex, cmap);
+        this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
+        this.gl.uniform1f(this.BiasUniform, frame.renderConfig.bias);
+        this.gl.uniform1i(this.CmapIndex, frame.renderConfig.colorMap);
     }
 
     private getShaderFromString(shaderScript: string, type: number) {
