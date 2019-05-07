@@ -581,6 +581,12 @@ export class BackendService {
     }
 
     private onStreamedSpectralProfileData(eventId: number, spectralProfileData: CARTA.SpectralProfileData) {
+        // Copy double-precision values to usual location if they exist
+        for (const profile of spectralProfileData.profiles) {
+            if (profile.doubleVals && profile.doubleVals.length) {
+                profile.vals = profile.doubleVals;
+            }
+        }
         this.spectralProfileStream.next(spectralProfileData);
     }
 
