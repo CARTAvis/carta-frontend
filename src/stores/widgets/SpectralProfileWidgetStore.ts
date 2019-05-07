@@ -43,7 +43,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     private static ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
 
     private static ValidStatsTypes = [
-        CARTA.StatsType.None, CARTA.StatsType.Sum, CARTA.StatsType.FluxDensity, CARTA.StatsType.Mean, CARTA.StatsType.Sigma,
+        CARTA.StatsType.Sum, CARTA.StatsType.FluxDensity, CARTA.StatsType.Mean, CARTA.StatsType.Sigma,
         CARTA.StatsType.Min, CARTA.StatsType.Max, CARTA.StatsType.RMS, CARTA.StatsType.SumSq];
 
     @action setRegionId = (fileId: number, regionId: number) => {
@@ -169,9 +169,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             }
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (region) {
-                // Point regions have no meaningful stats type
+                // Point regions have no meaningful stats type, default to Sum
                 if (region.regionType === CARTA.RegionType.POINT) {
-                    statsType = CARTA.StatsType.None;
+                    statsType = CARTA.StatsType.Sum;
                 }
 
                 let frameRequirements = updatedRequirements.get(fileId);
