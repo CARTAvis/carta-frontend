@@ -10,40 +10,9 @@ export enum ConnectionStatus {
     ACTIVE = 2,
 }
 
-export enum EventType {
-    REGISTER_VIEWER = 1,
-    FILE_LIST_REQUEST = 2,
-    FILE_INFO_REQUEST = 3,
-    OPEN_FILE = 4,
-    SET_IMAGE_VIEW = 5,
-    SET_IMAGE_CHANNELS = 6,
-    SET_CURSOR = 7,
-    SET_SPATIAL_REQUIREMENTS = 8,
-    SET_HISTOGRAM_REQUIREMENTS = 9,
-    SET_STATS_REQUIREMENTS = 10,
-    SET_REGION = 11,
-    REMOVE_REGION = 12,
-    CLOSE_FILE = 13,
-    SET_SPECTRAL_REQUIREMENTS = 14,
-    START_ANIMATION = 15,
-    START_ANIMATION_ACK = 16,
-    STOP_ANIMATION = 17,
-    REGISTER_VIEWER_ACK = 18,
-    FILE_LIST_RESPONSE = 19,
-    FILE_INFO_RESPONSE = 20,
-    OPEN_FILE_ACK = 21,
-    SET_REGION_ACK = 22,
-    REGION_HISTOGRAM_DATA = 23,
-    RASTER_IMAGE_DATA = 24,
-    SPATIAL_PROFILE_DATA = 25,
-    SPECTRAL_PROFILE_DATA = 26,
-    REGION_STATS_DATA = 27,
-    ERROR_DATA = 28
-}
-
 export class BackendService {
     private static readonly IcdVersion = 2;
-
+    private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     @observable loggingEnabled: boolean;
     @observable connectionDropped: boolean;
@@ -63,7 +32,7 @@ export class BackendService {
     private readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
     private readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
     private readonly statsStream: Subject<CARTA.RegionStatsData>;
-    private readonly logEventList: EventType[];
+    private readonly logEventList: CARTA.EventType[];
     private readonly decompressionServce: DecompressionService;
     private readonly subsetsRequired: number;
     private totalDecompressionTime: number;
@@ -89,10 +58,10 @@ export class BackendService {
         this.totalDecompressionTime = 0;
         this.totalDecompressionMPix = 0;
         this.logEventList = [
-            EventType.REGISTER_VIEWER,
-            EventType.REGISTER_VIEWER_ACK,
-            EventType.OPEN_FILE,
-            EventType.OPEN_FILE_ACK
+            CARTA.EventType.REGISTER_VIEWER,
+            CARTA.EventType.REGISTER_VIEWER_ACK,
+            CARTA.EventType.OPEN_FILE,
+            CARTA.EventType.OPEN_FILE_ACK
         ];
 
         // Check local storage for a list of events to log to console
@@ -102,7 +71,7 @@ export class BackendService {
                 const eventList = JSON.parse(localStorageEventlist);
                 if (eventList && Array.isArray(eventList) && eventList.length) {
                     for (const eventName of eventList) {
-                        const eventType = (<any> EventType)[eventName];
+                        const eventType = (<any> CARTA.EventType)[eventName];
                         if (eventType !== undefined) {
                             this.logEventList.push(eventType);
                         }
@@ -190,11 +159,10 @@ export class BackendService {
                 }
                 this.connectionStatus = ConnectionStatus.ACTIVE;
                 this.autoReconnect = true;
-
-                const message = CARTA.RegisterViewer.create({sessionId: 0, apiKey: apiKey});
+                const message = CARTA.RegisterViewer.create({sessionId: 0, apiKey: apiKey, clientFeatureFlags: BackendService.DefaultFeatureFlags});
                 const requestId = this.eventCounter;
-                this.logEvent(EventType.REGISTER_VIEWER, requestId, message, false);
-                if (this.sendEvent(EventType.REGISTER_VIEWER, CARTA.RegisterViewer.encode(message).finish())) {
+                this.logEvent(CARTA.EventType.REGISTER_VIEWER, requestId, message, false);
+                if (this.sendEvent(CARTA.EventType.REGISTER_VIEWER, CARTA.RegisterViewer.encode(message).finish())) {
                     this.observerRequestMap.set(requestId, observer);
                 } else {
                     observer.error("Could not connect");
@@ -230,8 +198,8 @@ export class BackendService {
         } else {
             const message = CARTA.FileListRequest.create({directory});
             const requestId = this.eventCounter;
-            this.logEvent(EventType.FILE_LIST_REQUEST, requestId, message, false);
-            if (this.sendEvent(EventType.FILE_LIST_REQUEST, CARTA.FileListRequest.encode(message).finish())) {
+            this.logEvent(CARTA.EventType.FILE_LIST_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.FILE_LIST_REQUEST, CARTA.FileListRequest.encode(message).finish())) {
                 return new Observable<CARTA.FileListResponse>(observer => {
                     this.observerRequestMap.set(requestId, observer);
                 });
@@ -248,8 +216,8 @@ export class BackendService {
         } else {
             const message = CARTA.FileInfoRequest.create({directory, file, hdu});
             const requestId = this.eventCounter;
-            this.logEvent(EventType.FILE_INFO_REQUEST, requestId, message, false);
-            if (this.sendEvent(EventType.FILE_INFO_REQUEST, CARTA.FileInfoRequest.encode(message).finish())) {
+            this.logEvent(CARTA.EventType.FILE_INFO_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.FILE_INFO_REQUEST, CARTA.FileInfoRequest.encode(message).finish())) {
                 return new Observable<CARTA.FileInfoResponse>(observer => {
                     this.observerRequestMap.set(requestId, observer);
                 });
@@ -266,8 +234,8 @@ export class BackendService {
         } else {
             const message = CARTA.OpenFile.create({directory, file, hdu, fileId, renderMode});
             const requestId = this.eventCounter;
-            this.logEvent(EventType.OPEN_FILE, requestId, message, false);
-            if (this.sendEvent(EventType.OPEN_FILE, CARTA.OpenFile.encode(message).finish())) {
+            this.logEvent(CARTA.EventType.OPEN_FILE, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.OPEN_FILE, CARTA.OpenFile.encode(message).finish())) {
                 return new Observable<CARTA.OpenFileAck>(observer => {
                     this.observerRequestMap.set(requestId, observer);
                 });
@@ -281,8 +249,8 @@ export class BackendService {
     closeFile(fileId: number): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             const message = CARTA.CloseFile.create({fileId});
-            this.logEvent(EventType.CLOSE_FILE, this.eventCounter, message, false);
-            if (this.sendEvent(EventType.CLOSE_FILE, CARTA.CloseFile.encode(message).finish())) {
+            this.logEvent(CARTA.EventType.CLOSE_FILE, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.CLOSE_FILE, CARTA.CloseFile.encode(message).finish())) {
                 return true;
             }
         }
@@ -293,8 +261,8 @@ export class BackendService {
     setImageView(fileId: number, xMin: number, xMax: number, yMin: number, yMax: number, mip: number, compressionQuality: number): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             const message = CARTA.SetImageView.create({fileId, imageBounds: {xMin, xMax, yMin, yMax}, mip, compressionType: CARTA.CompressionType.ZFP, compressionQuality, numSubsets: this.subsetsRequired});
-            this.logEvent(EventType.SET_IMAGE_VIEW, this.eventCounter, message, false);
-            if (this.sendEvent(EventType.SET_IMAGE_VIEW, CARTA.SetImageView.encode(message).finish())) {
+            this.logEvent(CARTA.EventType.SET_IMAGE_VIEW, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.SET_IMAGE_VIEW, CARTA.SetImageView.encode(message).finish())) {
                 return true;
             }
         }
@@ -305,8 +273,8 @@ export class BackendService {
     setChannels(fileId: number, channel: number, stokes: number): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             const message = CARTA.SetImageChannels.create({fileId, channel, stokes});
-            this.logEvent(EventType.SET_IMAGE_CHANNELS, this.eventCounter, message, false);
-            if (this.sendEvent(EventType.SET_IMAGE_CHANNELS, CARTA.SetImageChannels.encode(message).finish())) {
+            this.logEvent(CARTA.EventType.SET_IMAGE_CHANNELS, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.SET_IMAGE_CHANNELS, CARTA.SetImageChannels.encode(message).finish())) {
                 return true;
             }
         }
@@ -317,8 +285,8 @@ export class BackendService {
     setCursor(fileId: number, x: number, y: number): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             const message = CARTA.SetCursor.create({fileId, point: {x, y}});
-            this.logEvent(EventType.SET_CURSOR, this.eventCounter, message, false);
-            if (this.sendEvent(EventType.SET_CURSOR, CARTA.SetCursor.encode(message).finish())) {
+            this.logEvent(CARTA.EventType.SET_CURSOR, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.SET_CURSOR, CARTA.SetCursor.encode(message).finish())) {
                 return true;
             }
         }
@@ -340,8 +308,8 @@ export class BackendService {
             });
 
             const requestId = this.eventCounter;
-            this.logEvent(EventType.SET_REGION, requestId, message, false);
-            if (this.sendEvent(EventType.SET_REGION, CARTA.SetRegion.encode(message).finish())) {
+            this.logEvent(CARTA.EventType.SET_REGION, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.SET_REGION, CARTA.SetRegion.encode(message).finish())) {
                 return new Observable<CARTA.SetRegionAck>(observer => {
                     this.observerRequestMap.set(requestId, observer);
                 });
@@ -355,8 +323,8 @@ export class BackendService {
     removeRegion(regionId: number) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             const message = CARTA.RemoveRegion.create({regionId});
-            this.logEvent(EventType.REMOVE_REGION, this.eventCounter, message, false);
-            if (this.sendEvent(EventType.REMOVE_REGION, CARTA.RemoveRegion.encode(message).finish())) {
+            this.logEvent(CARTA.EventType.REMOVE_REGION, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.REMOVE_REGION, CARTA.RemoveRegion.encode(message).finish())) {
                 return true;
             }
         }
@@ -367,8 +335,8 @@ export class BackendService {
     setSpatialRequirements(fileId: number, regionId: number, spatialProfiles: string[]) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             const message = CARTA.SetSpatialRequirements.create({fileId, regionId, spatialProfiles});
-            this.logEvent(EventType.SET_SPATIAL_REQUIREMENTS, this.eventCounter, message, false);
-            if (this.sendEvent(EventType.SET_SPATIAL_REQUIREMENTS, CARTA.SetSpatialRequirements.encode(message).finish())) {
+            this.logEvent(CARTA.EventType.SET_SPATIAL_REQUIREMENTS, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.SET_SPATIAL_REQUIREMENTS, CARTA.SetSpatialRequirements.encode(message).finish())) {
                 return true;
             }
         }
@@ -378,8 +346,8 @@ export class BackendService {
     @action("set spectral requirements")
     setSpectralRequirements(requirementsMessage: CARTA.ISetSpectralRequirements) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            this.logEvent(EventType.SET_SPECTRAL_REQUIREMENTS, this.eventCounter, requirementsMessage, false);
-            if (this.sendEvent(EventType.SET_SPECTRAL_REQUIREMENTS, CARTA.SetSpectralRequirements.encode(requirementsMessage).finish())) {
+            this.logEvent(CARTA.EventType.SET_SPECTRAL_REQUIREMENTS, this.eventCounter, requirementsMessage, false);
+            if (this.sendEvent(CARTA.EventType.SET_SPECTRAL_REQUIREMENTS, CARTA.SetSpectralRequirements.encode(requirementsMessage).finish())) {
                 return true;
             }
         }
@@ -389,8 +357,8 @@ export class BackendService {
     @action("set stats requirements")
     setStatsRequirements(requirementsMessage: CARTA.ISetStatsRequirements) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            this.logEvent(EventType.SET_STATS_REQUIREMENTS, this.eventCounter, requirementsMessage, false);
-            if (this.sendEvent(EventType.SET_STATS_REQUIREMENTS, CARTA.SetStatsRequirements.encode(requirementsMessage).finish())) {
+            this.logEvent(CARTA.EventType.SET_STATS_REQUIREMENTS, this.eventCounter, requirementsMessage, false);
+            if (this.sendEvent(CARTA.EventType.SET_STATS_REQUIREMENTS, CARTA.SetStatsRequirements.encode(requirementsMessage).finish())) {
                 return true;
             }
         }
@@ -400,8 +368,8 @@ export class BackendService {
     @action("set histogram requirements")
     setHistogramRequirements(requirementsMessage: CARTA.ISetHistogramRequirements) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            this.logEvent(EventType.SET_HISTOGRAM_REQUIREMENTS, this.eventCounter, requirementsMessage, false);
-            if (this.sendEvent(EventType.SET_HISTOGRAM_REQUIREMENTS, CARTA.SetHistogramRequirements.encode(requirementsMessage).finish())) {
+            this.logEvent(CARTA.EventType.SET_HISTOGRAM_REQUIREMENTS, this.eventCounter, requirementsMessage, false);
+            if (this.sendEvent(CARTA.EventType.SET_HISTOGRAM_REQUIREMENTS, CARTA.SetHistogramRequirements.encode(requirementsMessage).finish())) {
                 return true;
             }
         }
@@ -422,7 +390,7 @@ export class BackendService {
         const eventHeader32 = new Uint32Array(event.data, 4, 1);
         const eventData = new Uint8Array(event.data, 8);
 
-        const eventType: EventType = eventHeader16[0];
+        const eventType: CARTA.EventType = eventHeader16[0];
         const eventIcdVersion = eventHeader16[1];
         const eventId = eventHeader32[0];
 
@@ -432,37 +400,37 @@ export class BackendService {
 
         try {
             let parsedMessage;
-            if (eventType === EventType.REGISTER_VIEWER_ACK) {
+            if (eventType === CARTA.EventType.REGISTER_VIEWER_ACK) {
                 parsedMessage = CARTA.RegisterViewerAck.decode(eventData);
                 this.onRegisterViewerAck(eventId, parsedMessage);
-            } else if (eventType === EventType.FILE_LIST_RESPONSE) {
+            } else if (eventType === CARTA.EventType.FILE_LIST_RESPONSE) {
                 parsedMessage = CARTA.FileListResponse.decode(eventData);
                 this.onFileListResponse(eventId, parsedMessage);
-            } else if (eventType === EventType.FILE_INFO_RESPONSE) {
+            } else if (eventType === CARTA.EventType.FILE_INFO_RESPONSE) {
                 parsedMessage = CARTA.FileInfoResponse.decode(eventData);
                 this.onFileInfoResponse(eventId, parsedMessage);
-            } else if (eventType === EventType.OPEN_FILE_ACK) {
+            } else if (eventType === CARTA.EventType.OPEN_FILE_ACK) {
                 parsedMessage = CARTA.OpenFileAck.decode(eventData);
                 this.onFileOpenAck(eventId, parsedMessage);
-            } else if (eventType === EventType.SET_REGION_ACK) {
+            } else if (eventType === CARTA.EventType.SET_REGION_ACK) {
                 parsedMessage = CARTA.SetRegionAck.decode(eventData);
                 this.onSetRegionAck(eventId, parsedMessage);
-            } else if (eventType === EventType.RASTER_IMAGE_DATA) {
+            } else if (eventType === CARTA.EventType.RASTER_IMAGE_DATA) {
                 parsedMessage = CARTA.RasterImageData.decode(eventData);
                 this.onStreamedRasterImageData(eventId, parsedMessage);
-            } else if (eventType === EventType.REGION_HISTOGRAM_DATA) {
+            } else if (eventType === CARTA.EventType.REGION_HISTOGRAM_DATA) {
                 parsedMessage = CARTA.RegionHistogramData.decode(eventData);
                 this.onStreamedRegionHistogramData(eventId, parsedMessage);
-            } else if (eventType === EventType.ERROR_DATA) {
+            } else if (eventType === CARTA.EventType.ERROR_DATA) {
                 parsedMessage = CARTA.ErrorData.decode(eventData);
                 this.onStreamedErrorData(eventId, parsedMessage);
-            } else if (eventType === EventType.SPATIAL_PROFILE_DATA) {
+            } else if (eventType === CARTA.EventType.SPATIAL_PROFILE_DATA) {
                 parsedMessage = CARTA.SpatialProfileData.decode(eventData);
                 this.onStreamedSpatialProfileData(eventId, parsedMessage);
-            } else if (eventType === EventType.SPECTRAL_PROFILE_DATA) {
+            } else if (eventType === CARTA.EventType.SPECTRAL_PROFILE_DATA) {
                 parsedMessage = CARTA.SpectralProfileData.decode(eventData);
                 this.onStreamedSpectralProfileData(eventId, parsedMessage);
-            } else if (eventType === EventType.REGION_STATS_DATA) {
+            } else if (eventType === CARTA.EventType.REGION_STATS_DATA) {
                 parsedMessage = CARTA.RegionStatsData.decode(eventData);
                 this.onStreamedRegionStatsData(eventId, parsedMessage);
             } else {
@@ -594,7 +562,7 @@ export class BackendService {
         this.statsStream.next(regionStatsData);
     }
 
-    private sendEvent(eventType: EventType, payload: Uint8Array): boolean {
+    private sendEvent(eventType: CARTA.EventType, payload: Uint8Array): boolean {
         if (this.connection.readyState === WebSocket.OPEN) {
             const eventData = new Uint8Array(8 + payload.byteLength);
             const eventHeader16 = new Uint16Array(eventData.buffer, 0, 2);
@@ -614,8 +582,8 @@ export class BackendService {
         }
     }
 
-    private logEvent(eventType: EventType, eventId: number, message: any, incoming: boolean = true) {
-        const eventName = EventType[eventType];
+    private logEvent(eventType: CARTA.EventType, eventId: number, message: any, incoming: boolean = true) {
+        const eventName = CARTA.EventType[eventType];
         if (this.loggingEnabled && this.logEventList.indexOf(eventType) >= 0) {
             if (incoming) {
                 if (eventId === 0) {
