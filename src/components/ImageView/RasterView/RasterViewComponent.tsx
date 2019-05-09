@@ -63,8 +63,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             if (!extTextureFloat) {
                 console.log("Could not initialise WebGL extensions");
                 this.hasFloatExtension = false;
-            }
-            else {
+            } else {
                 this.hasFloatExtension = true;
             }
             this.initShaders();
@@ -125,8 +124,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         if (!frame.rasterData || frame.rasterData.length !== w * h) {
             console.log(`Data mismatch! L=${frame.rasterData ? frame.rasterData.length : "null"}, WxH = ${w}x${h}=${w * h}`);
             return;
-        }
-        else {
+        } else {
             this.loadFP32Texture(frame.rasterData, w, h, WebGLRenderingContext.TEXTURE0);
             this.rasterDataBuffer = frame.rasterData.buffer;
         }
@@ -223,7 +221,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
         const tEnd = performance.now();
         const dt = tEnd - tStart;
-        console.log(`Drew $${10*10} tiles in ${dt} ms`);
+        console.log(`Drew $${10 * 10} tiles in ${dt} ms`);
     }
 
     private renderTiles(tileX: number, tileY: number, mip: number, cmap: number) {
