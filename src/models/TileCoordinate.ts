@@ -21,36 +21,18 @@ export class TileCoordinate {
     }
 
     public static Encode(x: number, y: number, layer: number): number {
-        if (!isFinite(x * y * layer)) {
-            return -1;
-        }
-        if (layer < 0 || x < 0 || y < 0) {
-            return -1;
-        }
-
-        const layerWidth = 2 ** layer;
-
-        if (x >= layerWidth || y >= layerWidth) {
+        const layerWidth = 1 << layer;
+        if (x < 0 || y < 0 || layer < 0 || layer > 12 || x >= layerWidth || y >= layerWidth) {
             return -1;
         }
 
-        return layerWidth * (layerWidth + y) + x;
+        return ((layer << 24) | (y << 12) | x);
     }
 
     public static Decode(encodedCoordinate: number): TileCoordinate {
-        const layer = Math.floor(0.5 * Math.log2(encodedCoordinate));
-
-        if (layer < 0 || !isFinite(layer)) {
-            return null;
-        }
-
-        const layerWidth = 2 ** layer;
-        encodedCoordinate -= layerWidth * layerWidth;
-        const x = encodedCoordinate % layerWidth;
-        const y = (encodedCoordinate - x) / layerWidth;
-        if (x < 0 || y < 0 || x >= layerWidth || y >= layerWidth) {
-            return null;
-        }
+        const x = (((encodedCoordinate << 19) >> 19) + 4096) % 4096;
+        const layer = ((encodedCoordinate >> 24) + 128) % 128;
+        const y = (((encodedCoordinate << 7) >> 19) + 4096) % 4096;
         return new TileCoordinate(x, y, layer);
     }
 }
