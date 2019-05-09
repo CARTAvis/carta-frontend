@@ -7,7 +7,8 @@ import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent} from "components/Shared";
 import {SpectralProfilerSettingsPanelComponent} from "./SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
-import {AnimationState, FrameStore, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
+import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
+import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp} from "utilities";
@@ -25,7 +26,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             minWidth: 250,
             minHeight: 225,
             defaultWidth: 650,
-            defaultHeight: 225,
+            defaultHeight: 275,
             title: "Z Profile: Cursor",
             isCloseable: true
         };
@@ -33,9 +34,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
-    @observable showHighlight: boolean;
-
-    private highlightHandle;
 
     @computed get widgetStore(): SpectralProfileWidgetStore {
         if (this.props.appStore && this.props.appStore.widgetsStore.spectralProfileWidgets) {
@@ -143,6 +141,37 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return null;
     }
 
+    @computed get matchesSelectedRegion() {
+        const appStore = this.props.appStore;
+        const frame = appStore.activeFrame;
+        if (frame) {
+            const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
+            if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
+                return widgetRegion === frame.regionSet.selectedRegion.regionId;
+            }
+        }
+        return false;
+    }
+
+    @computed get exportHeaders(): string[] {
+        let headerString = [];
+        const frame = this.props.appStore.activeFrame;
+        if (frame && frame.frameInfo && frame.regionSet) {
+            const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
+            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+
+            // statistic type, ignore when region == cursor
+            if (regionId !== 0) {
+                headerString.push(`statistic: ${SpectralProfileWidgetStore.StatsTypeString(this.widgetStore.statsType)}`);
+            }
+            // region info
+            if (region) {
+                headerString.push(region.regionProperties);
+            }
+        }
+        return headerString;
+    }
+
     constructor(props: WidgetProps) {
         super(props);
         // Check if this widget hasn't been assigned an ID yet
@@ -171,23 +200,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     }
                     const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString}`);
+                    const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
+                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString} ${selectedString}`);
                 }
             } else {
                 this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Z Profile: Cursor`);
-            }
-        });
-
-        autorun(() => {
-            const appStore = this.props.appStore;
-            const frame = appStore.activeFrame;
-            if (frame && frame.regionSet.selectedRegion) {
-                const linkedToSelectedRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) === frame.regionSet.selectedRegion.regionId;
-                if (linkedToSelectedRegion) {
-                    clearTimeout(this.highlightHandle);
-                    this.highlightHandle = setTimeout(() => this.showHighlight = false, 2000);
-                    this.showHighlight = true;
-                }
             }
         });
     }
@@ -293,115 +310,110 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             markers: []
         };
 
-        if (appStore.activeFrame) {
-            if (this.profileStore && frame) {
-                if (frame.unit) {
-                    linePlotProps.yLabel = `Value (${frame.unit})`;
-                }
-                const currentPlotData = this.plotData;
-                if (currentPlotData) {
-                    linePlotProps.data = currentPlotData.values;
-                    // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
-                    if (this.widgetStore.isAutoScaledX) {
-                        linePlotProps.xMin = currentPlotData.xMin;
-                        linePlotProps.xMax = currentPlotData.xMax;
-                    } else {
-                        linePlotProps.xMin = this.widgetStore.minX;
-                        linePlotProps.xMax = this.widgetStore.maxX;
-                    }
-
-                    if (this.widgetStore.isAutoScaledY) {
-                        linePlotProps.yMin = currentPlotData.yMin;
-                        linePlotProps.yMax = currentPlotData.yMax;
-                    } else {
-                        linePlotProps.yMin = this.widgetStore.minY;
-                        linePlotProps.yMax = this.widgetStore.maxY;
-                    }
+        if (this.profileStore && frame) {
+            if (frame.unit) {
+                linePlotProps.yLabel = `Value (${frame.unit})`;
+            }
+            const currentPlotData = this.plotData;
+            if (currentPlotData) {
+                linePlotProps.data = currentPlotData.values;
+                // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
+                if (this.widgetStore.isAutoScaledX) {
+                    linePlotProps.xMin = currentPlotData.xMin;
+                    linePlotProps.xMax = currentPlotData.xMax;
+                } else {
+                    linePlotProps.xMin = this.widgetStore.minX;
+                    linePlotProps.xMax = this.widgetStore.maxX;
                 }
 
-                const wcsLabel = this.getChannelLabel();
-                if (wcsLabel) {
-                    linePlotProps.xLabel = this.getChannelLabel();
-                }
-                linePlotProps.cursorX = {
-                    profiler: this.widgetStore.cursorX,
-                    image: this.getCurrentChannelValue(),
-                    unit: this.getChannelUnit()
-                };
-
-                linePlotProps.markers = [];
-                if (linePlotProps.cursorX.profiler !== null) {
-                    linePlotProps.markers.push({
-                        value: linePlotProps.cursorX.profiler,
-                        id: "marker-profiler-cursor",
-                        draggable: false,
-                        horizontal: false,
-                        color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
-                        opacity: 0.8,
-                        isMouseMove: true,
-                    });
-                }
-
-                if (linePlotProps.cursorX.image !== null) {
-                    linePlotProps.markers.push({
-                        value: linePlotProps.cursorX.image,
-                        id: "marker-channel-current",
-                        opacity: 0.4,
-                        draggable: false,
-                        horizontal: false,
-                    });
-                    linePlotProps.markers.push({
-                        value: this.getRequiredChannelValue(),
-                        id: "marker-channel-required",
-                        draggable: appStore.animatorStore.animationState !== AnimationState.PLAYING,
-                        dragMove: this.onChannelChanged,
-                        horizontal: false,
-                    });
-                }
-
-                if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
-                    linePlotProps.markers.push({
-                        value: currentPlotData.yMean,
-                        id: "marker-mean",
-                        draggable: false,
-                        horizontal: true,
-                        color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
-                        dash: [5]
-                    });
-
-                    linePlotProps.markers.push({
-                        value: currentPlotData.yMean,
-                        id: "marker-rms",
-                        draggable: false,
-                        horizontal: true,
-                        width: currentPlotData.yRms,
-                        opacity: 0.2,
-                        color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
-                    });
-
-                    linePlotProps.dataStat = {mean: currentPlotData.yMean, rms: currentPlotData.yRms};
-                }
-
-                // TODO: Get comments from region info, rather than directly from cursor position
-                if (appStore.cursorInfo) {
-                    const comments: string[] = [];
-                    comments.push(`region (pixel): Point[${appStore.cursorInfo.posImageSpace.x.toFixed(0)}, ${appStore.cursorInfo.posImageSpace.y.toFixed(0)}]`);
-                    if (appStore.cursorInfo.infoWCS) {
-                        comments.push(`region (world): Point[${appStore.cursorInfo.infoWCS.x}, ${appStore.cursorInfo.infoWCS.y}]`);
-                    }
-                    linePlotProps.comments = comments;
+                if (this.widgetStore.isAutoScaledY) {
+                    linePlotProps.yMin = currentPlotData.yMin;
+                    linePlotProps.yMax = currentPlotData.yMax;
+                } else {
+                    linePlotProps.yMin = this.widgetStore.minY;
+                    linePlotProps.yMax = this.widgetStore.maxY;
                 }
             }
+
+            const wcsLabel = this.getChannelLabel();
+            if (wcsLabel) {
+                linePlotProps.xLabel = this.getChannelLabel();
+            }
+            linePlotProps.cursorX = {
+                profiler: this.widgetStore.cursorX,
+                image: this.getCurrentChannelValue(),
+                unit: this.getChannelUnit()
+            };
+
+            linePlotProps.markers = [];
+            if (linePlotProps.cursorX.profiler !== null) {
+                linePlotProps.markers.push({
+                    value: linePlotProps.cursorX.profiler,
+                    id: "marker-profiler-cursor",
+                    draggable: false,
+                    horizontal: false,
+                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                    opacity: 0.8,
+                    isMouseMove: true,
+                });
+            }
+
+            if (linePlotProps.cursorX.image !== null) {
+                linePlotProps.markers.push({
+                    value: linePlotProps.cursorX.image,
+                    id: "marker-channel-current",
+                    opacity: 0.4,
+                    draggable: false,
+                    horizontal: false,
+                });
+                linePlotProps.markers.push({
+                    value: this.getRequiredChannelValue(),
+                    id: "marker-channel-required",
+                    draggable: appStore.animatorStore.animationState !== AnimationState.PLAYING,
+                    dragMove: this.onChannelChanged,
+                    horizontal: false,
+                });
+            }
+
+            if (this.widgetStore.meanRmsVisible && currentPlotData && isFinite(currentPlotData.yMean) && isFinite(currentPlotData.yRms)) {
+                linePlotProps.markers.push({
+                    value: currentPlotData.yMean,
+                    id: "marker-mean",
+                    draggable: false,
+                    horizontal: true,
+                    color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                    dash: [5]
+                });
+
+                linePlotProps.markers.push({
+                    value: currentPlotData.yMean,
+                    id: "marker-rms",
+                    draggable: false,
+                    horizontal: true,
+                    width: currentPlotData.yRms,
+                    opacity: 0.2,
+                    color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                });
+
+                linePlotProps.dataStat = {mean: currentPlotData.yMean, rms: currentPlotData.yRms};
+            }
+
+            linePlotProps.comments = this.exportHeaders;
         }
 
         let className = "spectral-profiler-widget";
-        if (this.showHighlight) {
+        if (this.matchesSelectedRegion) {
             className += " linked-to-selected";
+        }
+
+        if (appStore.darkTheme) {
+            className += " dark-theme";
         }
 
         return (
             <div className={className}>
                 <div className="profile-container">
+                    <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} appStore={appStore}/>
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps}/>
                     </div>
@@ -412,7 +424,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     onHideClicked={this.widgetStore.hideSettingsPanel}
                     contentWidth={PANEL_CONTENT_WIDTH}
                 >
-                    <SpectralProfilerSettingsPanelComponent widgetStore={this.widgetStore} appStore={appStore}/>
+                    <SpectralProfilerSettingsPanelComponent widgetStore={this.widgetStore}/>
                 </PopoverSettingsComponent>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>

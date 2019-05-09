@@ -19,11 +19,32 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable useWcsValues: boolean;
     @observable markerTextVisible: boolean;
 
+    public static StatsTypeString(statsType: CARTA.StatsType) {
+        switch (statsType) {
+            case CARTA.StatsType.Sum:
+                return "Sum";
+            case CARTA.StatsType.Mean:
+                return "Mean";
+            case CARTA.StatsType.Sigma:
+                return "StdDev";
+            case CARTA.StatsType.Min:
+                return "Min";
+            case CARTA.StatsType.Max:
+                return "Max";
+            case CARTA.StatsType.RMS:
+                return "RMS";
+            case CARTA.StatsType.SumSq:
+                return "SumSq";
+            default:
+                return "Not Implemented";
+        }
+    }
+
     private static ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz"];
 
     private static ValidStatsTypes = [
-        CARTA.StatsType.None, CARTA.StatsType.Sum, CARTA.StatsType.FluxDensity, CARTA.StatsType.Mean, CARTA.StatsType.RMS,
-        CARTA.StatsType.Sigma, CARTA.StatsType.SumSq, CARTA.StatsType.Min, CARTA.StatsType.Max];
+        CARTA.StatsType.None, CARTA.StatsType.Sum, CARTA.StatsType.FluxDensity, CARTA.StatsType.Mean, CARTA.StatsType.Sigma,
+        CARTA.StatsType.Min, CARTA.StatsType.Max, CARTA.StatsType.RMS, CARTA.StatsType.SumSq];
 
     @action setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);

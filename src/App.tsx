@@ -104,72 +104,77 @@ export class App extends React.Component<{ appStore: AppStore }> {
         const widgetsStore = this.props.appStore.widgetsStore;
         // Adjust layout properties based on window dimensions
         const defaultImageViewFraction = smoothStepOffset(window.innerHeight, 720, 1080, 65, 75);
-        const statisticsRowType = (window.innerHeight > App.REGION_WIDGETS_STACK_CUTOFF) ? "row" : "stack";
+
+        const imageViewComponent = {
+            type: "react-component",
+            component: "image-view",
+            title: "No image loaded",
+            height: defaultImageViewFraction,
+            id: "image-view",
+            isClosable: false,
+            props: {appStore: this.props.appStore, id: "image-view-docked", docked: true}
+        };
+
+        const renderConfigComponent = {
+            type: "react-component",
+            component: "render-config",
+            title: "Render Configuration",
+            id: "render-config-0",
+            props: {appStore: this.props.appStore, id: "render-config-0", docked: true}
+        };
+
+        const spatialProfilerXComponent = {
+            type: "react-component",
+            component: "spatial-profiler",
+            id: "spatial-profiler-0",
+            props: {appStore: this.props.appStore, id: "spatial-profiler-0", docked: true}
+        };
+
+        const spatialProfilerYComponent = {
+            type: "react-component",
+            component: "spatial-profiler",
+            id: "spatial-profiler-1",
+            props: {appStore: this.props.appStore, id: "spatial-profiler-1", docked: true}
+        };
+
+        const regionListComponent = {
+            type: "react-component",
+            component: "region-list",
+            title: "Region List",
+            id: "region-list-0",
+            props: {appStore: this.props.appStore, id: "region-list-0", docked: true}
+        };
+
+        const animatorComponent = {
+            type: "react-component",
+            component: "animator",
+            title: "Animator",
+            id: "animator-0",
+            props: {appStore: this.props.appStore, id: "animator-0", docked: true}
+        };
+
+        let rightColumnContent = [];
+
+        if (window.innerHeight > App.REGION_WIDGETS_STACK_CUTOFF) {
+            rightColumnContent = [spatialProfilerXComponent, spatialProfilerYComponent, regionListComponent, animatorComponent];
+        } else {
+            rightColumnContent = [
+                spatialProfilerXComponent,
+                spatialProfilerYComponent, {
+                    type: "stack",
+                    content: [regionListComponent, animatorComponent]
+                }];
+        }
 
         const initialLayout: any[] = [{
             type: "row",
             content: [{
                 type: "column",
                 width: 60,
-                content: [{
-                    type: "react-component",
-                    component: "image-view",
-                    title: "No image loaded",
-                    height: defaultImageViewFraction,
-                    id: "image-view",
-                    isClosable: false,
-                    props: {appStore: this.props.appStore, id: "image-view-docked", docked: true}
-                }, {
-                    type: "stack",
-                    content: [{
-                        type: "react-component",
-                        component: "render-config",
-                        title: "Render Configuration",
-                        id: "render-config-0",
-                        props: {appStore: this.props.appStore, id: "render-config-0", docked: true}
-                    }, {
-                        type: "react-component",
-                        component: "log",
-                        title: "Log",
-                        id: "log-0",
-                        props: {appStore: this.props.appStore, id: "log-0", docked: true}
-                    }]
-                }]
+                content: [imageViewComponent, renderConfigComponent]
             }, {
                 type: "column",
-                content: [{
-                    type: "react-component",
-                    component: "spatial-profiler",
-                    id: "spatial-profiler-0",
-                    props: {appStore: this.props.appStore, id: "spatial-profiler-0", docked: true}
-                }, {
-                    type: "react-component",
-                    component: "spatial-profiler",
-                    id: "spatial-profiler-1",
-                    props: {appStore: this.props.appStore, id: "spatial-profiler-1", docked: true}
-                }, {
-                    type: statisticsRowType,
-                    content: [{
-                        width: 60,
-                        type: "react-component",
-                        component: "region-list",
-                        title: "Region List",
-                        id: "region-list-0",
-                        props: {appStore: this.props.appStore, id: "region-list-0", docked: true}
-                    }, {
-                        type: "react-component",
-                        component: "stats",
-                        title: "Statistics",
-                        id: "stats-0",
-                        props: {appStore: this.props.appStore, id: "stats-0", docked: true}
-                    }]
-                }, {
-                    type: "react-component",
-                    component: "animator",
-                    title: "Animator",
-                    id: "animator-0",
-                    props: {appStore: this.props.appStore, id: "animator-0", docked: true}
-                }]
+                content: rightColumnContent
             }]
         }];
 
@@ -178,7 +183,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
         widgetsStore.addRenderConfigWidget("render-config-0");
         widgetsStore.addAnimatorWidget("animator-0");
         widgetsStore.addRegionListWidget("region-list-0");
-        widgetsStore.addStatsWidget("stats-0");
         widgetsStore.addLogWidget("log-0");
 
         const layout = new GoldenLayout({
@@ -298,30 +302,56 @@ export class App extends React.Component<{ appStore: AppStore }> {
         const appStore = this.props.appStore;
         const modString = appStore.modifierString;
 
+        const navigationGroupTitle = "1) Navigation";
+        const regionGroupTitle = "2) Regions";
+        const animatorGroupTitle = "3) Frame controls";
+        const fileGroupTitle = "4) File controls";
+        const otherGroupTitle = "5) Other";
+
+        const navigationHotKeys = [
+            <Hotkey key={0} group={navigationGroupTitle} global={true} combo="click" label="Pan image"/>,
+            <Hotkey key={1} group={navigationGroupTitle} global={true} combo="middle-click" label="Pan image (inside region)"/>,
+            <Hotkey key={2} group={navigationGroupTitle} global={true} combo="mod+click" label="Pan image (inside region)"/>,
+            <Hotkey key={3} group={navigationGroupTitle} global={true} combo="mouse-wheel" label="Zoom image"/>,
+        ];
+
+        const regionHotKeys = [
+            <Hotkey key={0} group={regionGroupTitle} global={true} combo="c" label="Toggle region creation mode" onKeyDown={this.toggleCreateMode}/>,
+            <Hotkey key={1} group={regionGroupTitle} global={true} combo="del" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
+            <Hotkey key={2} group={regionGroupTitle} global={true} combo="backspace" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
+            <Hotkey key={3} group={regionGroupTitle} global={true} combo="esc" label="Deselect region" onKeyDown={appStore.deselectRegion}/>,
+            <Hotkey key={4} group={regionGroupTitle} global={true} combo="mod" label="Corner-to-corner region creation"/>,
+            <Hotkey key={5} group={regionGroupTitle} global={true} combo={"shift"} label="Symmetric region creation"/>,
+            <Hotkey key={6} group={regionGroupTitle} global={true} combo="double-click" label="Region properties"/>
+        ];
+
         const animatorHotkeys = [
-            <Hotkey key={0} group="Frame controls" global={true} combo={`${modString}]`} label="Next frame" onKeyDown={appStore.nextFrame}/>,
-            <Hotkey key={1} group="Frame controls" global={true} combo={`${modString}[`} label="Previous frame" onKeyDown={appStore.prevFrame}/>,
-            <Hotkey key={2} group="Frame controls" global={true} combo={`${modString}up`} label="Next channel" onKeyDown={this.nextChannel}/>,
-            <Hotkey key={3} group="Frame controls" global={true} combo={`${modString}down`} label="Previous channel" onKeyDown={this.prevChannel}/>,
-            <Hotkey key={4} group="Frame controls" global={true} combo={`${modString}shift + up`} label="Next Stokes cube" onKeyDown={this.nextStokes}/>,
-            <Hotkey key={5} group="Frame controls" global={true} combo={`${modString}shift + down`} label="Previous Stokes cube" onKeyDown={this.prevStokes}/>
+            <Hotkey key={0} group={animatorGroupTitle} global={true} combo={`${modString}]`} label="Next frame" onKeyDown={appStore.nextFrame}/>,
+            <Hotkey key={1} group={animatorGroupTitle} global={true} combo={`${modString}[`} label="Previous frame" onKeyDown={appStore.prevFrame}/>,
+            <Hotkey key={2} group={animatorGroupTitle} global={true} combo={`${modString}up`} label="Next channel" onKeyDown={this.nextChannel}/>,
+            <Hotkey key={3} group={animatorGroupTitle} global={true} combo={`${modString}down`} label="Previous channel" onKeyDown={this.prevChannel}/>,
+            <Hotkey key={4} group={animatorGroupTitle} global={true} combo={`${modString}shift + up`} label="Next Stokes cube" onKeyDown={this.nextStokes}/>,
+            <Hotkey key={5} group={animatorGroupTitle} global={true} combo={`${modString}shift + down`} label="Previous Stokes cube" onKeyDown={this.prevStokes}/>
         ];
 
         const fileHotkeys = [
-            <Hotkey key={0} group="File controls" global={true} combo={`${modString}O`} label="Open image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser()}/>,
-            <Hotkey key={1} group="File controls" global={true} combo={`${modString}L`} label="Append image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(true)}/>,
-            <Hotkey key={2} group="File controls" global={true} combo={`${modString}E`} label="Export image" onKeyDown={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>
+            <Hotkey key={0} group={fileGroupTitle} global={true} combo={`${modString}O`} label="Open image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser()}/>,
+            <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}L`} label="Append image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(true)}/>,
+            <Hotkey key={2} group={fileGroupTitle} global={true} combo={`${modString}E`} label="Export image" onKeyDown={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>
+        ];
+
+        const otherHotKeys = [
+            <Hotkey key={0} group={otherGroupTitle} global={true} combo="shift + D" label="Toggle light/dark theme" onKeyDown={this.toggleDarkTheme}/>,
+            <Hotkey key={1} group={otherGroupTitle} global={true} combo="F" label="Freeze/unfreeze cursor position" onKeyDown={appStore.toggleCursorFrozen}/>
         ];
 
         return (
             <Hotkeys>
+                {regionHotKeys}
+                {navigationHotKeys}
                 {animatorHotkeys}
                 {fileHotkeys}
-                <Hotkey group="Appearance" global={true} combo="shift + D" label="Toggle light/dark theme" onKeyDown={this.toggleDarkTheme}/>
-                <Hotkey group="Cursor" global={true} combo="F" label="Freeze/unfreeze cursor position" onKeyDown={appStore.toggleCursorFrozen}/>
-                <Hotkey group="Regions" global={true} combo="del" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>
-                <Hotkey group="Regions" global={true} combo="backspace" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>
-                <Hotkey group="Regions" global={true} combo="c" label="Toggle region creation mode" onKeyDown={this.toggleCreateMode}/>
+                {otherHotKeys}
             </Hotkeys>
         );
     }

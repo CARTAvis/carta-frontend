@@ -4,12 +4,22 @@
     width: 100%;
     height: 100%;
 
-    .bp3-control-group {
-        padding: 5px;
+    border: 1px solid transparent;
+    border-radius: 3px;
 
-        .bp3-form-group {
-            margin: 0;
+    &.linked-to-selected {
+        border: 1px solid $blue2;
+
+        &.dark-theme {
+            border: 1px solid $blue4;
         }
+
+        transition: border 250ms linear;
+    }
+
+    .bp3-form-group {
+        padding: 5px 5px 1px;
+        margin: 0;
     }
 
     .stats-display {
@@ -18,7 +28,7 @@
         table {
             height: 100%;
             overflow-y: auto;
-            padding: 5px;
+            padding: 5px 5px 0;
             display: block;
 
             thead {

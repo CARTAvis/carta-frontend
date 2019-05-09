@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {autorun, computed, observable} from "mobx";
-import {ControlGroup, FormGroup, HTMLSelect, HTMLTable, IOptionProps, NonIdealState} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, HTMLTable, IOptionProps, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {WidgetConfig, WidgetProps} from "stores";
@@ -54,15 +54,27 @@ export class StatsComponent extends React.Component<WidgetProps> {
         return null;
     }
 
+    @computed get matchesSelectedRegion() {
+        const appStore = this.props.appStore;
+        const frame = appStore.activeFrame;
+        if (frame) {
+            const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
+            if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
+                return widgetRegion === frame.regionSet.selectedRegion.regionId;
+            }
+        }
+        return false;
+    }
+
     private static readonly STATS_NAME_MAP = new Map<CARTA.StatsType, string>([
         [CARTA.StatsType.NumPixels, "NumPixels"],
         [CARTA.StatsType.Sum, "Sum"],
         [CARTA.StatsType.Mean, "Mean"],
-        [CARTA.StatsType.RMS, "RMS"],
-        [CARTA.StatsType.Sigma, "Sigma"],
-        [CARTA.StatsType.SumSq, "SumSq"],
+        [CARTA.StatsType.Sigma, "StdDev"],
         [CARTA.StatsType.Min, "Min"],
         [CARTA.StatsType.Max, "Max"],
+        [CARTA.StatsType.RMS, "RMS"],
+        [CARTA.StatsType.SumSq, "SumSq"]
     ]);
 
     private static readonly NAME_COLUMN_WIDTH = 70;
@@ -87,7 +99,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
                 let regionString = "Unknown";
 
                 const regionId = this.widgetStore.regionIdMap.get(appStore.activeFrame.frameInfo.fileId) || -1;
-                if (regionId ===  -1) {
+                const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
+                if (regionId === -1) {
                     regionString = "Image";
                 } else if (appStore.activeFrame && appStore.activeFrame.regionSet) {
                     const region = appStore.activeFrame.regionSet.regions.find(r => r.regionId === regionId);
@@ -95,7 +108,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                         regionString = region.nameString;
                     }
                 }
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `Statistics: ${regionString}`);
+                appStore.widgetsStore.setWidgetTitle(this.props.id, `Statistics: ${regionString} ${selectedString}`);
             } else {
                 appStore.widgetsStore.setWidgetTitle(this.props.id, `Statistics`);
             }
@@ -115,9 +128,9 @@ export class StatsComponent extends React.Component<WidgetProps> {
     };
 
     public render() {
-
         const appStore = this.props.appStore;
 
+        let enableRegionSelect = false;
         // Fill region select options with all non-temporary regions that are closed
         let profileRegionOptions: IOptionProps[] = [{value: -1, label: "Image"}];
         let regionId = -1;
@@ -130,6 +143,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                     label: r.nameString
                 };
             }));
+            enableRegionSelect = profileRegionOptions.length > 1;
         }
 
         let formContent;
@@ -141,11 +155,24 @@ export class StatsComponent extends React.Component<WidgetProps> {
             StatsComponent.STATS_NAME_MAP.forEach((name, type) => {
                 const index = this.statsData.statistics.findIndex(s => s.statsType === type);
                 if (index >= 0) {
+                    let unitString = "";
+                    if (appStore.activeFrame && appStore.activeFrame.unit) {
+                        const unit = appStore.activeFrame.unit;
+                        if (type === CARTA.StatsType.NumPixels) {
+                            unitString = "pixel(s)";
+                        } else if (type === CARTA.StatsType.SumSq) {
+                            unitString = `(${unit})^2`;
+                        } else {
+                            unitString = unit;
+                        }
+                    }
+
                     const value = this.statsData.statistics[index].value;
+                    const valueString = isFinite(value) ? `${(type === CARTA.StatsType.NumPixels) ? value : value.toExponential(4)} ${unitString}` : `${value}`;
                     rows.push((
                         <tr key={type}>
                             <td style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>{name}</td>
-                            <td style={{width: valueWidth}}>{value}</td>
+                            <td style={{width: valueWidth}}>{valueString}</td>
                         </tr>
                     ));
                 }
@@ -168,13 +195,20 @@ export class StatsComponent extends React.Component<WidgetProps> {
             formContent = <NonIdealState icon={"folder-open"} title={"No stats data"} description={"Select a valid region from the dropdown"}/>;
         }
 
+        let className = "stats-widget";
+        if (this.matchesSelectedRegion) {
+            className += " linked-to-selected";
+        }
+
+        if (appStore.darkTheme) {
+            className += " dark-theme";
+        }
+
         return (
-            <div className={"stats-widget"}>
-                <ControlGroup fill={true} vertical={true}>
-                    <FormGroup label={"Region"} inline={true}>
-                        <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged}/>
-                    </FormGroup>
-                </ControlGroup>
+            <div className={className}>
+                <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
+                    <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect}/>
+                </FormGroup>
                 <div className="stats-display">
                     {formContent}
                 </div>

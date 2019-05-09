@@ -13,6 +13,7 @@ import {clamp} from "utilities";
 import {Point2D} from "models";
 import "./HistogramComponent.css";
 import {CARTA} from "../../../protobuf/build";
+import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramToolbarComponent";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 180;
@@ -114,6 +115,34 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return null;
     }
 
+    @computed get matchesSelectedRegion() {
+        const appStore = this.props.appStore;
+        const frame = appStore.activeFrame;
+        if (frame) {
+            const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
+            if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
+                return widgetRegion === frame.regionSet.selectedRegion.regionId;
+            }
+        }
+        return false;
+    }
+
+    @computed get exportHeaders(): string[] {
+        let headerString = [];
+
+        // region info
+        const frame = this.props.appStore.activeFrame;
+        if (frame && frame.frameInfo && frame.regionSet) {
+            const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
+            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+            if (region) {
+                headerString.push(region.regionProperties);
+            }
+        }
+
+        return headerString;
+    }
+
     constructor(props: WidgetProps) {
         super(props);
         // Check if this widget hasn't been assigned an ID yet
@@ -142,7 +171,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                         regionString = region.nameString;
                     }
                 }
-                appStore.widgetsStore.setWidgetTitle(this.props.id, `Histogram: ${regionString}`);
+                const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
+                appStore.widgetsStore.setWidgetTitle(this.props.id, `Histogram: ${regionString} ${selectedString}`);
             } else {
                 appStore.widgetsStore.setWidgetTitle(this.props.id, `Histogram`);
             }
@@ -229,11 +259,23 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                     linePlotProps.yMin = 0.5;
                 }
             }
+
+            linePlotProps.comments = this.exportHeaders;
+        }
+
+        let className = "histogram-widget";
+        if (this.matchesSelectedRegion) {
+            className += " linked-to-selected";
+        }
+
+        if (appStore.darkTheme) {
+            className += " dark-theme";
         }
 
         return (
-            <div className="histogram-widget">
+            <div className={className}>
                 <div className="histogram-container">
+                    <HistogramToolbarComponent widgetStore={this.widgetStore} appStore={appStore}/>
                     <div className="histogram-plot">
                         <LinePlotComponent {...linePlotProps}/>
                     </div>
@@ -244,7 +286,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                     onHideClicked={this.widgetStore.hideSettingsPanel}
                     contentWidth={PANEL_CONTENT_WIDTH}
                 >
-                    <HistogramSettingsPanelComponent appStore={appStore} widgetStore={this.widgetStore}/>
+                    <HistogramSettingsPanelComponent widgetStore={this.widgetStore}/>
                 </PopoverSettingsComponent>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}/>
             </div>

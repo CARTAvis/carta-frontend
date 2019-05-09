@@ -1,7 +1,12 @@
-import {action, observable} from "mobx";
+import {action, computed, observable} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
+
+export enum FileInfoTabs {
+    INFO = "tab-info",
+    HEADER = "tab-header"
+}
 
 export class FileBrowserStore {
     @observable fileBrowserDialogVisible = false;
@@ -10,7 +15,7 @@ export class FileBrowserStore {
     @observable selectedFile: CARTA.FileInfo;
     @observable selectedHDU: string;
     @observable fileInfoExtended: CARTA.FileInfoExtended;
-    @observable selectedTab: TabId = "fileInfo";
+    @observable selectedTab: TabId = FileInfoTabs.INFO;
     @observable loadingList = false;
     @observable loadingInfo = false;
     @observable fileInfoResp = false;
@@ -20,7 +25,7 @@ export class FileBrowserStore {
     @action showFileBrowser = (append = false) => {
         this.appendingFrame = append;
         this.fileBrowserDialogVisible = true;
-        this.selectedTab = "fileInfo";
+        this.selectedTab = FileInfoTabs.INFO;
         this.getFileList(this.startingDirectory);
     };
 
@@ -93,6 +98,30 @@ export class FileBrowserStore {
     
     @action saveStartingDirectory() {
         this.startingDirectory = this.fileList.directory;
+    }
+
+    @computed get fileInfo() {
+        let fileInfo = "";
+        if (this.fileInfoExtended && this.fileInfoExtended.computedEntries) {
+            this.fileInfoExtended.computedEntries.forEach(header => {
+                fileInfo += `${header.name} = ${header.value}\n`;
+            });
+        }
+        return fileInfo;
+    }
+
+    @computed get headers() {
+        let headers = "";
+        if (this.fileInfoExtended && this.fileInfoExtended.headerEntries) {
+            this.fileInfoExtended.headerEntries.forEach(header => {
+                if (header.name === "END") {
+                    headers += `${header.name}\n`;
+                } else {
+                    headers += `${header.name} = ${header.value}\n`;
+                }
+            });
+        }
+        return headers;
     }
 
     private backendService: BackendService;
