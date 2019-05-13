@@ -277,7 +277,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     <FloatingWidgetManagerComponent appStore={appStore}/>
                     <Dialog isOpen={appStore.hotkeyDialogVisible} className={"bp3-hotkey-dialog"} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.hideHotkeyDialog}>
                         <div className={Classes.DIALOG_BODY}>
-                            {this.renderHotkeys()}
+                            {this.hotkeyManual()}
                         </div>
                     </Dialog>
                 </div>
@@ -337,7 +337,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
     };
 
     // for rendering the manual in Help page only
-    public renderHotkeys() {
+    private hotkeyManual() {
         const appStore = this.props.appStore;
         const modString = appStore.modifierString;
 
