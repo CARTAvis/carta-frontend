@@ -2,6 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {FrameStore, OverlayStore} from "stores";
 import {FrameView} from "models";
+import {GetRequiredTiles} from "utilities";
 import "./RasterViewComponent.css";
 import allMaps from "static/allmaps.png";
 
@@ -214,17 +215,27 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
 
         const tStart = performance.now();
-        for (let i = 0; i < 10; i++) {
-            for (let j = 0; j < 10; j++) {
-                this.renderTiles(i, j, full.mip, i * 10 + j);
-            }
+
+        const imageSize = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
+        const boundedView: FrameView = {
+            xMin: Math.max(0, frame.requiredFrameView.xMin),
+            xMax: Math.min(frame.requiredFrameView.xMax, imageSize.x),
+            yMin: Math.max(0, frame.requiredFrameView.yMin),
+            yMax: Math.min(frame.requiredFrameView.yMax, imageSize.y),
+            mip: frame.requiredFrameView.mip
+        };
+
+        const requiredTiles = GetRequiredTiles(boundedView, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
+        for (const tile of requiredTiles) {
+            this.renderTile(tile.x, tile.y, boundedView.mip);
         }
+
         const tEnd = performance.now();
         const dt = tEnd - tStart;
-        console.log(`Drew $${10 * 10} tiles in ${dt} ms`);
+        console.log(`Drew ${requiredTiles.length} tiles in ${dt} ms`);
     }
 
-    private renderTiles(tileX: number, tileY: number, mip: number, cmap: number) {
+    private renderTile(tileX: number, tileY: number, mip: number) {
         const frame = this.props.frame;
         const full = frame.requiredFrameView;
 
@@ -244,17 +255,26 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const RB = {x: (0.5 + tileImageView.xMax - full.xMin) / fullWidth, y: (0.5 + tileImageView.yMax - full.yMin) / fullHeight};
 
         // Vertices are mapped from [0-1] -> [-1, 1]
+        // const vertices = new Float32Array([
+        //     LT.x, LT.y, 0,
+        //     RB.x, LT.y, 0,
+        //     LT.x, RB.y, 0,
+        //     RB.x, RB.y, 0
+        // ].map(v => -1 + 2 * v));
+
+        // Temp hack to render an outline
+        // Vertices are mapped from [0-1] -> [-1, 1]
         const vertices = new Float32Array([
             LT.x, LT.y, 0,
             RB.x, LT.y, 0,
+            RB.x, RB.y, 0,
             LT.x, RB.y, 0,
-            RB.x, RB.y, 0
         ].map(v => -1 + 2 * v));
 
         this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, new Float32Array(vertices), WebGLRenderingContext.DYNAMIC_DRAW);
         this.gl.uniform1f(this.BiasUniform, -10);
-        this.gl.uniform1i(this.CmapIndex, cmap);
-        this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
+        this.gl.uniform1i(this.CmapIndex, 1);
+        this.gl.drawArrays(WebGLRenderingContext.LINE_LOOP, 0, 4);
         this.gl.uniform1f(this.BiasUniform, frame.renderConfig.bias);
         this.gl.uniform1i(this.CmapIndex, frame.renderConfig.colorMap);
     }

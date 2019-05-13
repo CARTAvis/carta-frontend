@@ -87,7 +87,6 @@ export class FrameStore {
             mip: mipRoundedPow2
         };
 
-        console.log(frameView);
         return frameView;
     }
 
