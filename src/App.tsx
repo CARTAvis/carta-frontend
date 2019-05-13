@@ -4,7 +4,8 @@ import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import {autorun} from "mobx";
 import ReactResizeDetector from "react-resize-detector";
-import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
+import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys} from "@blueprintjs/core";
+import {HotKeys} from "react-hotkeys";
 import {exportImage, FloatingWidgetManagerComponent, RootMenuComponent} from "./components";
 import {AppToaster} from "./components/Shared";
 import {AboutDialogComponent, ApiKeyDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, RegionDialogComponent, URLConnectDialogComponent} from "./components/Dialogs";
@@ -15,7 +16,7 @@ import GitCommit from "./static/gitInfo";
 import "./App.css";
 import "./layout-theme.css";
 
-@HotkeysTarget @observer
+@observer
 export class App extends React.Component<{ appStore: AppStore }> {
 
     private glContainer: HTMLElement;
@@ -222,28 +223,65 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         document.body.style.backgroundColor = appStore.darkTheme ? Colors.DARK_GRAY4 : Colors.WHITE;
 
+        // App hotkeys
+        const modString = appStore.modifierString;
+        const hotkeyMap = {
+            "Toggle region creation mode": "c",
+            "Delete selected region": ["del", "backspace"],
+            "Deselect region": "esc",
+            "Next frame": `${modString}+]`,
+            "Previous frame": `${modString}+[`,
+            "Next channel": `${modString}+up`,
+            "Previous channel": `${modString}+down`,
+            "Next Stokes cube": `${modString}+shift+up`,
+            "Previous Stokes cube": `${modString}+shift+down`,
+            "Open image": `${modString}+o`,
+            "Append image": `${modString}+l`,
+            "Export image": `${modString}+e`,
+            "Toggle light/dark theme": "shift+d",
+            "Freeze/unfreeze cursor position": "f"
+        };
+        const hotkeyHandlers = {
+            "Toggle region creation mode": this.toggleCreateMode,
+            "Delete selected region": appStore.deleteSelectedRegion,
+            "Deselect region": appStore.deselectRegion,
+            "Next frame": appStore.nextFrame,
+            "Previous frame": appStore.prevFrame,
+            "Next channel": this.nextChannel,
+            "Previous channel": this.prevChannel,
+            "Next Stokes cube": this.nextStokes,
+            "Previous Stokes cube": this.prevStokes,
+            "Open image": () => appStore.fileBrowserStore.showFileBrowser(),
+            "Append image": () => appStore.fileBrowserStore.showFileBrowser(true),
+            "Export image": () => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name),
+            "Toggle light/dark theme": this.toggleDarkTheme,
+            "Freeze/unfreeze cursor position": appStore.toggleCursorFrozen
+        };
+
         return (
-            <div className={className}>
-                <RootMenuComponent appStore={appStore}/>
-                <OverlaySettingsDialogComponent appStore={appStore}/>
-                <URLConnectDialogComponent appStore={appStore}/>
-                <ApiKeyDialogComponent appStore={appStore}/>
-                <FileBrowserDialogComponent appStore={appStore}/>
-                <AboutDialogComponent appStore={appStore}/>
-                <RegionDialogComponent appStore={appStore}/>
-                <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
-                    <p>{appStore.alertStore.alertText}</p>
-                </Alert>
-                <div className={glClassName} ref={ref => this.glContainer = ref}>
-                    <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}/>
-                </div>
-                <FloatingWidgetManagerComponent appStore={appStore}/>
-                <Dialog isOpen={appStore.hotkeyDialogVisible} className={"bp3-hotkey-dialog"} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.hideHotkeyDialog}>
-                    <div className={Classes.DIALOG_BODY}>
-                        {this.renderHotkeys()}
+            <HotKeys keyMap={hotkeyMap} handlers={hotkeyHandlers}>
+                <div className={className}>
+                    <RootMenuComponent appStore={appStore}/>
+                    <OverlaySettingsDialogComponent appStore={appStore}/>
+                    <URLConnectDialogComponent appStore={appStore}/>
+                    <ApiKeyDialogComponent appStore={appStore}/>
+                    <FileBrowserDialogComponent appStore={appStore}/>
+                    <AboutDialogComponent appStore={appStore}/>
+                    <RegionDialogComponent appStore={appStore}/>
+                    <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
+                        <p>{appStore.alertStore.alertText}</p>
+                    </Alert>
+                    <div className={glClassName} ref={ref => this.glContainer = ref}>
+                        <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}/>
                     </div>
-                </Dialog>
-            </div>
+                    <FloatingWidgetManagerComponent appStore={appStore}/>
+                    <Dialog isOpen={appStore.hotkeyDialogVisible} className={"bp3-hotkey-dialog"} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.hideHotkeyDialog}>
+                        <div className={Classes.DIALOG_BODY}>
+                            {this.renderHotkeys()}
+                        </div>
+                    </Dialog>
+                </div>
+            </HotKeys>
         );
     }
 
@@ -298,6 +336,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
         }
     };
 
+    // for rendering the manual in Help page only
     public renderHotkeys() {
         const appStore = this.props.appStore;
         const modString = appStore.modifierString;
@@ -316,33 +355,33 @@ export class App extends React.Component<{ appStore: AppStore }> {
         ];
 
         const regionHotKeys = [
-            <Hotkey key={0} group={regionGroupTitle} global={true} combo="c" label="Toggle region creation mode" onKeyDown={this.toggleCreateMode}/>,
-            <Hotkey key={1} group={regionGroupTitle} global={true} combo="del" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
-            <Hotkey key={2} group={regionGroupTitle} global={true} combo="backspace" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
-            <Hotkey key={3} group={regionGroupTitle} global={true} combo="esc" label="Deselect region" onKeyDown={appStore.deselectRegion}/>,
+            <Hotkey key={0} group={regionGroupTitle} global={true} combo="c" label="Toggle region creation mode"/>,
+            <Hotkey key={1} group={regionGroupTitle} global={true} combo="del" label="Delete selected region"/>,
+            <Hotkey key={2} group={regionGroupTitle} global={true} combo="backspace" label="Delete selected region"/>,
+            <Hotkey key={3} group={regionGroupTitle} global={true} combo="esc" label="Deselect region"/>,
             <Hotkey key={4} group={regionGroupTitle} global={true} combo="mod" label="Corner-to-corner region creation"/>,
-            <Hotkey key={5} group={regionGroupTitle} global={true} combo={"shift"} label="Symmetric region creation"/>,
+            <Hotkey key={5} group={regionGroupTitle} global={true} combo="shift" label="Symmetric region creation"/>,
             <Hotkey key={6} group={regionGroupTitle} global={true} combo="double-click" label="Region properties"/>
         ];
 
         const animatorHotkeys = [
-            <Hotkey key={0} group={animatorGroupTitle} global={true} combo={`${modString}]`} label="Next frame" onKeyDown={appStore.nextFrame}/>,
-            <Hotkey key={1} group={animatorGroupTitle} global={true} combo={`${modString}[`} label="Previous frame" onKeyDown={appStore.prevFrame}/>,
-            <Hotkey key={2} group={animatorGroupTitle} global={true} combo={`${modString}up`} label="Next channel" onKeyDown={this.nextChannel}/>,
-            <Hotkey key={3} group={animatorGroupTitle} global={true} combo={`${modString}down`} label="Previous channel" onKeyDown={this.prevChannel}/>,
-            <Hotkey key={4} group={animatorGroupTitle} global={true} combo={`${modString}shift + up`} label="Next Stokes cube" onKeyDown={this.nextStokes}/>,
-            <Hotkey key={5} group={animatorGroupTitle} global={true} combo={`${modString}shift + down`} label="Previous Stokes cube" onKeyDown={this.prevStokes}/>
+            <Hotkey key={0} group={animatorGroupTitle} global={true} combo={`${modString}+]`} label="Next frame"/>,
+            <Hotkey key={1} group={animatorGroupTitle} global={true} combo={`${modString}+[`} label="Previous frame"/>,
+            <Hotkey key={2} group={animatorGroupTitle} global={true} combo={`${modString}+up`} label="Next channel"/>,
+            <Hotkey key={3} group={animatorGroupTitle} global={true} combo={`${modString}+down`} label="Previous channel"/>,
+            <Hotkey key={4} group={animatorGroupTitle} global={true} combo={`${modString}+shift+up`} label="Next Stokes cube"/>,
+            <Hotkey key={5} group={animatorGroupTitle} global={true} combo={`${modString}+shift+down`} label="Previous Stokes cube"/>
         ];
 
         const fileHotkeys = [
-            <Hotkey key={0} group={fileGroupTitle} global={true} combo={`${modString}O`} label="Open image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser()}/>,
-            <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}L`} label="Append image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(true)}/>,
-            <Hotkey key={2} group={fileGroupTitle} global={true} combo={`${modString}E`} label="Export image" onKeyDown={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>
+            <Hotkey key={0} group={fileGroupTitle} global={true} combo={`${modString}+O`} label="Open image"/>,
+            <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}+L`} label="Append image"/>,
+            <Hotkey key={2} group={fileGroupTitle} global={true} combo={`${modString}+E`} label="Export image"/>
         ];
 
         const otherHotKeys = [
-            <Hotkey key={0} group={otherGroupTitle} global={true} combo="shift + D" label="Toggle light/dark theme" onKeyDown={this.toggleDarkTheme}/>,
-            <Hotkey key={1} group={otherGroupTitle} global={true} combo="F" label="Freeze/unfreeze cursor position" onKeyDown={appStore.toggleCursorFrozen}/>
+            <Hotkey key={0} group={otherGroupTitle} global={true} combo="shift+D" label="Toggle light/dark theme"/>,
+            <Hotkey key={1} group={otherGroupTitle} global={true} combo="F" label="Freeze/unfreeze cursor position"/>
         ];
 
         return (

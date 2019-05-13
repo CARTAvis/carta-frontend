@@ -20,6 +20,7 @@
         "react-color": "^2.17.0",
         "react-dom": "^16.8.6",
         "react-flexbox-grid": "^2.1.2",
+        "react-hotkeys": "^1.1.4",
         "react-konva": "^16.8.6",
         "react-resize-detector": "^4.0.5",
         "react-rnd": "^9.1.2",

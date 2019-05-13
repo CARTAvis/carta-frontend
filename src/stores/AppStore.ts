@@ -144,11 +144,11 @@ export class AppStore {
         // - Windows/Linux uses 'Ctrl + '
         // - Browser uses 'alt +' for compatibility reasons
         if (process.env.REACT_APP_TARGET === "linux") {
-            return "ctrl + ";
+            return "ctrl";
         } else if (process.env.REACT_APP_TARGET === "darwin") {
-            return "cmd +";
+            return "cmd";
         }
-        return "alt + ";
+        return "alt";
     }
 
     // Widgets
