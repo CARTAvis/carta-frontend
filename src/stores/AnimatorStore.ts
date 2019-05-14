@@ -1,4 +1,5 @@
 import {action, computed, observable} from "mobx";
+import {CARTA} from "carta-protobuf";
 import {AppStore} from "./AppStore";
 import {clamp} from "utilities";
 
@@ -28,16 +29,67 @@ export class AnimatorStore {
         this.frameRate = val;
     };
     @action startAnimation = () => {
-        clearInterval(this.animateHandle);
-        this.requestQueue = [];
+        const frame = this.appStore.activeFrame;
+        if (!frame) {
+            return;
+        }
+
+        const startFrame: CARTA.IAnimationFrame = {
+            channel: frame.channel,
+            stokes: frame.stokes
+        };
+
+        const endFrame: CARTA.IAnimationFrame = {
+            channel: frame.frameInfo.fileInfoExtended.depth,
+            stokes: frame.stokes
+        };
+
+        const deltaFrame: CARTA.IAnimationFrame = {
+            channel: 1,
+            stokes: 0
+        };
+
+        const animationMessage: CARTA.IStartAnimation = {
+            fileId: frame.frameInfo.fileId,
+            startFrame,
+            endFrame,
+            deltaFrame,
+            looping: false,
+            reverse: false,
+            compressionType: CARTA.CompressionType.ZFP,
+            compressionQuality: 9,
+            frameInterval: 1000.0 / this.frameRate
+        };
+
+        this.appStore.backendService.startAnimation(animationMessage).subscribe(ack => {
+            if (ack.success) {
+                console.log("Animation started successfully");
+            }
+        });
+
         this.animationState = AnimationState.PLAYING;
-        this.animate();
-        this.animateHandle = setInterval(this.animate, this.frameInterval);
     };
+
     @action stopAnimation = () => {
+        const frame = this.appStore.activeFrame;
+        if (!frame) {
+            return;
+        }
+
+        const endFrame: CARTA.IAnimationFrame = {
+            channel: frame.channel,
+            stokes: frame.stokes
+        };
+
+        const stopMessage: CARTA.IStopAnimation = {
+            fileId: frame.frameInfo.fileId,
+            endFrame
+        };
+
+        this.appStore.backendService.stopAnimation(stopMessage);
         this.animationState = AnimationState.STOPPED;
-        clearInterval(this.animateHandle);
     };
+
     @action animate = () => {
         if (this.animationState === AnimationState.PLAYING && this.appStore && this.requestQueue.length <= Math.max(this.frameRate, 2)) {
             // Do animation
@@ -60,6 +112,7 @@ export class AnimatorStore {
             }
         }
     };
+
     @action removeFromRequestQueue = (channel: number, stokes: number) => {
         const index = this.requestQueue.findIndex(v => v.channel === channel && v.stokes === stokes);
         if (index >= 0) {

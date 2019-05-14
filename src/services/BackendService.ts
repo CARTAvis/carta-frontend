@@ -61,7 +61,10 @@ export class BackendService {
             CARTA.EventType.REGISTER_VIEWER,
             CARTA.EventType.REGISTER_VIEWER_ACK,
             CARTA.EventType.OPEN_FILE,
-            CARTA.EventType.OPEN_FILE_ACK
+            CARTA.EventType.OPEN_FILE_ACK,
+            CARTA.EventType.START_ANIMATION,
+            CARTA.EventType.START_ANIMATION_ACK,
+            CARTA.EventType.STOP_ANIMATION,
         ];
 
         // Check local storage for a list of events to log to console
@@ -376,6 +379,35 @@ export class BackendService {
         return false;
     }
 
+    @action("start animation")
+    startAnimation(animationMessage: CARTA.IStartAnimation): Observable<CARTA.StartAnimationAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.START_ANIMATION, requestId, animationMessage, false);
+            if (this.sendEvent(CARTA.EventType.START_ANIMATION, CARTA.StartAnimation.encode(animationMessage).finish())) {
+                return new Observable<CARTA.StartAnimationAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("stop animation")
+    stopAnimation(animationMessage: CARTA.IStopAnimation) {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            this.logEvent(CARTA.EventType.STOP_ANIMATION, this.eventCounter, animationMessage, false);
+            if (this.sendEvent(CARTA.EventType.STOP_ANIMATION, CARTA.StopAnimation.encode(animationMessage).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private messageHandler(event: MessageEvent) {
         if (event.data === "PONG") {
             this.lastPongTime = performance.now();
@@ -415,6 +447,9 @@ export class BackendService {
             } else if (eventType === CARTA.EventType.SET_REGION_ACK) {
                 parsedMessage = CARTA.SetRegionAck.decode(eventData);
                 this.onSetRegionAck(eventId, parsedMessage);
+            } else if (eventType === CARTA.EventType.START_ANIMATION_ACK) {
+                parsedMessage = CARTA.StartAnimationAck.decode(eventData);
+                this.onStartAnimationAck(eventId, parsedMessage);
             } else if (eventType === CARTA.EventType.RASTER_IMAGE_DATA) {
                 parsedMessage = CARTA.RasterImageData.decode(eventData);
                 this.onStreamedRasterImageData(eventId, parsedMessage);
@@ -503,6 +538,21 @@ export class BackendService {
     }
 
     private onSetRegionAck(eventId: number, ack: CARTA.SetRegionAck) {
+        const observer = this.observerRequestMap.get(eventId);
+        if (observer) {
+            if (ack.success) {
+                observer.next(ack);
+            } else {
+                observer.error(ack.message);
+            }
+            observer.complete();
+            this.observerRequestMap.delete(eventId);
+        } else {
+            console.log(`Can't find observable for request ${eventId}`);
+        }
+    }
+
+    private onStartAnimationAck(eventId: number, ack: CARTA.StartAnimationAck) {
         const observer = this.observerRequestMap.get(eventId);
         if (observer) {
             if (ack.success) {
