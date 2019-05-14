@@ -532,7 +532,6 @@ export class AppStore {
                 frameMap.set(spectralProfileData.regionId, profileStore);
             }
 
-            profileStore.channelValues = spectralProfileData.channelVals;
             profileStore.stokes = spectralProfileData.stokes;
             for (let profile of spectralProfileData.profiles) {
                 profileStore.setProfile(profile);
