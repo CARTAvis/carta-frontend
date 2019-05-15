@@ -39,20 +39,41 @@ export class AnimatorStore {
             stokes: frame.stokes
         };
 
-        const firstFrame: CARTA.IAnimationFrame = {
-            channel: 0,
-            stokes: 0
-        };
+        let firstFrame: CARTA.IAnimationFrame, lastFrame: CARTA.IAnimationFrame, deltaFrame: CARTA.IAnimationFrame;
 
-        const lastFrame: CARTA.IAnimationFrame = {
-            channel: frame.frameInfo.fileInfoExtended.depth,
-            stokes: frame.frameInfo.fileInfoExtended.stokes
-        };
+        if (this.animationMode === AnimationMode.CHANNEL) {
+            firstFrame = {
+                channel: 0,
+                stokes: frame.stokes,
+            };
 
-        const deltaFrame: CARTA.IAnimationFrame = {
-            channel: this.animationMode === AnimationMode.CHANNEL ? 1 : 0,
-            stokes: this.animationMode === AnimationMode.STOKES ? 1 : 0,
-        };
+            lastFrame = {
+                channel: frame.frameInfo.fileInfoExtended.depth - 1,
+                stokes: frame.stokes
+            };
+
+            deltaFrame = {
+                channel: 1,
+                stokes: 0
+            };
+        } else if (this.animationMode === AnimationMode.STOKES) {
+            firstFrame = {
+                channel: frame.channel,
+                stokes: 0,
+            };
+
+            lastFrame = {
+                channel: frame.channel,
+                stokes: frame.frameInfo.fileInfoExtended.stokes - 1
+            };
+
+            deltaFrame = {
+                channel: 0,
+                stokes: 1
+            };
+        } else {
+            // TODO: Handle file animations the old way
+        }
 
         const animationMessage: CARTA.IStartAnimation = {
             fileId: frame.frameInfo.fileId,
