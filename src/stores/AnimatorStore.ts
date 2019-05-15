@@ -39,26 +39,32 @@ export class AnimatorStore {
             stokes: frame.stokes
         };
 
-        const endFrame: CARTA.IAnimationFrame = {
+        const firstFrame: CARTA.IAnimationFrame = {
+            channel: 0,
+            stokes: 0
+        };
+
+        const lastFrame: CARTA.IAnimationFrame = {
             channel: frame.frameInfo.fileInfoExtended.depth,
-            stokes: frame.stokes
+            stokes: frame.frameInfo.fileInfoExtended.stokes
         };
 
         const deltaFrame: CARTA.IAnimationFrame = {
-            channel: 1,
-            stokes: 0
+            channel: this.animationMode === AnimationMode.CHANNEL ? 1 : 0,
+            stokes: this.animationMode === AnimationMode.STOKES ? 1 : 0,
         };
 
         const animationMessage: CARTA.IStartAnimation = {
             fileId: frame.frameInfo.fileId,
             startFrame,
-            endFrame,
+            firstFrame,
+            lastFrame,
             deltaFrame,
-            looping: false,
+            looping: true,
             reverse: false,
             compressionType: CARTA.CompressionType.ZFP,
             compressionQuality: 9,
-            frameInterval: 1000.0 / this.frameRate
+            frameRate: this.frameRate
         };
 
         this.appStore.backendService.startAnimation(animationMessage).subscribe(ack => {

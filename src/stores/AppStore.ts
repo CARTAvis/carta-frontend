@@ -590,6 +590,9 @@ export class AppStore {
         if (updatedFrame) {
             updatedFrame.updateFromRasterData(rasterImageData);
             if (this.animatorStore.animationState === AnimationState.PLAYING) {
+                updatedFrame.requiredChannel = rasterImageData.channel;
+                updatedFrame.requiredStokes = rasterImageData.stokes;
+
                 this.animatorStore.removeFromRequestQueue(updatedFrame.channel, updatedFrame.stokes);
             }
         }
