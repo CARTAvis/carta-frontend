@@ -230,15 +230,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             mip: frame.requiredFrameView.mip
         };
 
-        performance.mark("render_tiles_start");
         this.gl.activeTexture(WebGLRenderingContext.TEXTURE0);
         const requiredTiles = GetRequiredTiles(boundedView, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
         this.renderTiles(requiredTiles, boundedView.mip);
-        performance.mark("render_tiles_stop");
-        performance.measure("render_tiles", "render_tiles_start", "render_tiles_stop");
     }
 
-    private renderTiles(tiles: TileCoordinate[], mip: number, bias: number = 0) {
+    private renderTiles(tiles: TileCoordinate[], mip: number) {
         const tileService = this.props.tileService;
         const frame = this.props.frame;
 
@@ -252,7 +249,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             const encodedCoordinate = TileCoordinate.EncodeCoordinate(tile);
             const rasterTile = tileService.getTile(encodedCoordinate, frame.frameInfo.fileId, frame.channel, frame.stokes);
             if (rasterTile) {
-                this.renderTile(tile, rasterTile, mip, bias);
+                this.renderTile(tile, rasterTile, mip);
             } else if (tile.layer > 0) {
                 const lowResTile = {
                     layer: tile.layer - 1,
@@ -265,11 +262,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const placeholderTileList: TileCoordinate[] = [];
         placeholderTileMap.forEach((val, encodedTile) => placeholderTileList.push(TileCoordinate.Decode(encodedTile)));
         if (placeholderTileList.length) {
-            this.renderTiles(placeholderTileList, mip * 2, -10);
+            this.renderTiles(placeholderTileList, mip * 2);
         }
     }
 
-    private renderTile(tile: TileCoordinate, rasterTile: RasterTile, mip: number, bias: number) {
+    private renderTile(tile: TileCoordinate, rasterTile: RasterTile, mip: number) {
         const frame = this.props.frame;
 
         if (!rasterTile) {
@@ -317,7 +314,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         ].map(v => -1 + 2 * v));
 
         this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, new Float32Array(vertices), WebGLRenderingContext.DYNAMIC_DRAW);
-        this.gl.uniform1f(this.BiasUniform, bias);
         this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
     }
 

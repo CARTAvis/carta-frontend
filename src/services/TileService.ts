@@ -1,8 +1,7 @@
-import {BackendService} from "./BackendService";
-import {Point2D, TileCoordinate} from "models";
+import {Subject} from "rxjs";
 import {CARTA} from "carta-protobuf";
-import {Observable, Subject} from "rxjs";
-import {TileSort} from "../utilities";
+import {Point2D, TileCoordinate} from "models";
+import {BackendService} from "services";
 
 export interface RasterTile {
     data: Float32Array;
