@@ -9,10 +9,10 @@ import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
+import {RegionViewComponent} from "./RegionView/RegionViewComponent";
 import {RegionStore, WidgetConfig, WidgetProps} from "stores";
 import {CursorInfo, Point2D} from "models";
 import "./ImageViewComponent.css";
-import {RegionViewComponent} from "./RegionView/RegionViewComponent";
 
 export const exportImage = (padding, darkTheme, imageName) => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
@@ -172,6 +172,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         frame={appStore.activeFrame}
                         docked={this.props.docked}
                         overlaySettings={appStore.overlayStore}
+                        tileService={appStore.tileService}
                     />
                     {appStore.cursorInfo &&
                     <CursorOverlayComponent

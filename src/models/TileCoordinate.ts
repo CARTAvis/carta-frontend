@@ -13,7 +13,7 @@ export class TileCoordinate {
         return TileCoordinate.EncodeCoordinate(this);
     }
 
-    public static EncodeCoordinate(coordinate: TileCoordinate): number {
+    public static EncodeCoordinate(coordinate: {x: number, y: number, layer: number}): number {
         if (!coordinate) {
             return -1;
         }

@@ -4,9 +4,10 @@ import {action, autorun, computed, observable, ObservableMap} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore, FrameInfo, FrameStore, LogEntry, LogStore, nightPalette, OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore} from ".";
 import {BackendService} from "services";
-import {CursorInfo, FrameView} from "models";
-import {smoothStepOffset} from "utilities";
+import {CursorInfo, FrameView, Point2D} from "models";
+import {GetRequiredTiles, smoothStepOffset} from "utilities";
 import {HistogramWidgetStore, RegionWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
+import {TileService} from "../services/TileService";
 
 const CURSOR_DEBOUNCE_TIME = 200;
 const CURSOR_THROTTLE_TIME = 200;
@@ -14,8 +15,10 @@ const IMAGE_THROTTLE_TIME = 200;
 const REQUIREMENTS_CHECK_INTERVAL = 200;
 
 export class AppStore {
-    // Backend service
-    @observable backendService: BackendService;
+    // Backend services
+    backendService: BackendService;
+    tileService: TileService;
+
     @observable compressionQuality: number;
     // WebAssembly Module status
     @observable astReady: boolean;
@@ -351,6 +354,7 @@ export class AppStore {
 
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore);
+        this.tileService = new TileService(this.backendService);
         this.astReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<number, ObservableMap<number, SpectralProfileStore>>();
@@ -371,7 +375,7 @@ export class AppStore {
 
         const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
             this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
-        }, IMAGE_THROTTLE_TIME);
+        }, IMAGE_THROTTLE_TIME * 100);
 
         const throttledSetChannels = _.throttle((fileId: number, channel: number, stokes: number) => {
             this.backendService.setChannels(fileId, channel, stokes);
@@ -409,6 +413,14 @@ export class AppStore {
                 let adjustedQuality = smoothStepOffset(this.activeFrame.zoomLevel, 0.9, 4, 11, 21);
                 adjustedQuality = Math.round(adjustedQuality);
 
+                const imageSize: Point2D = {x: this.activeFrame.frameInfo.fileInfoExtended.width, y: this.activeFrame.frameInfo.fileInfoExtended.height};
+                const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
+                const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
+                // TODO: dynamic tile size
+                const tileSizeFullRes = reqView.mip * 256;
+                const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes, y: midPointImageCoords.y / tileSizeFullRes};
+                this.tileService.requestTiles(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords);
+
                 // Calculate if new data is required
                 const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
                 // Don't auto-update when animation is playing
@@ -430,6 +442,7 @@ export class AppStore {
                         yMax: Math.min(reqView.yMax + padFraction * reqHeight, this.activeFrame.frameInfo.fileInfoExtended.height),
                         mip: reqView.mip
                     };
+
                     throttledSetView(this.activeFrame.frameInfo.fileId, paddedView, adjustedQuality);
                 }
             }

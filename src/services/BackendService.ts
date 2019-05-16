@@ -27,6 +27,7 @@ export class BackendService {
     private observerRequestMap: Map<number, Observer<any>>;
     private eventCounter: number;
     private readonly rasterStream: Subject<CARTA.RasterImageData>;
+    private readonly rasterTileStream: Subject<CARTA.RasterTileData>;
     private readonly histogramStream: Subject<CARTA.RegionHistogramData>;
     private readonly errorStream: Subject<CARTA.ErrorData>;
     private readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
@@ -46,6 +47,7 @@ export class BackendService {
         this.endToEndPing = NaN;
         this.connectionStatus = ConnectionStatus.CLOSED;
         this.rasterStream = new Subject<CARTA.RasterImageData>();
+        this.rasterTileStream = new Subject<CARTA.RasterTileData>();
         this.histogramStream = new Subject<CARTA.RegionHistogramData>();
         this.errorStream = new Subject<CARTA.ErrorData>();
         this.spatialProfileStream = new Subject<CARTA.SpatialProfileData>();
@@ -61,7 +63,7 @@ export class BackendService {
             CARTA.EventType.REGISTER_VIEWER,
             CARTA.EventType.REGISTER_VIEWER_ACK,
             CARTA.EventType.OPEN_FILE,
-            CARTA.EventType.OPEN_FILE_ACK
+            CARTA.EventType.OPEN_FILE_ACK,
         ];
 
         // Check local storage for a list of events to log to console
@@ -99,6 +101,10 @@ export class BackendService {
 
     getRasterStream() {
         return this.rasterStream;
+    }
+
+    getRasterTileStream() {
+        return this.rasterTileStream;
     }
 
     getRegionHistogramStream() {
@@ -376,6 +382,30 @@ export class BackendService {
         return false;
     }
 
+    @action("add required tiles")
+    addRequiredTiles(fileId: number, tiles: Array<number>): boolean {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            const message = CARTA.AddRequiredTiles.create({fileId, tiles});
+            this.logEvent(CARTA.EventType.ADD_REQUIRED_TILES, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.ADD_REQUIRED_TILES, CARTA.AddRequiredTiles.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @action("remove required tiles")
+    removeRequiredTiles(fileId: number, tiles: Array<number>): boolean {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            const message = CARTA.RemoveRequiredTiles.create({fileId, tiles});
+            this.logEvent(CARTA.EventType.REMOVE_REQUIRED_TILES, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.REMOVE_REQUIRED_TILES, CARTA.RemoveRequiredTiles.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private messageHandler(event: MessageEvent) {
         if (event.data === "PONG") {
             this.lastPongTime = performance.now();
@@ -418,6 +448,9 @@ export class BackendService {
             } else if (eventType === CARTA.EventType.RASTER_IMAGE_DATA) {
                 parsedMessage = CARTA.RasterImageData.decode(eventData);
                 this.onStreamedRasterImageData(eventId, parsedMessage);
+            } else if (eventType === CARTA.EventType.RASTER_TILE_DATA) {
+                parsedMessage = CARTA.RasterTileData.decode(eventData);
+                this.onStreamedRasterTileData(eventId, parsedMessage);
             } else if (eventType === CARTA.EventType.REGION_HISTOGRAM_DATA) {
                 parsedMessage = CARTA.RegionHistogramData.decode(eventData);
                 this.onStreamedRegionHistogramData(eventId, parsedMessage);
@@ -534,6 +567,10 @@ export class BackendService {
                 this.rasterStream.next(decompressedMessage);
             });
         }
+    }
+
+    private onStreamedRasterTileData(eventId: number, rasterTileData: CARTA.RasterTileData) {
+        this.rasterTileStream.next(rasterTileData);
     }
 
     private onStreamedRegionHistogramData(eventId: number, regionHistogramData: CARTA.RegionHistogramData) {
