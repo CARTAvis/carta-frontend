@@ -63,15 +63,15 @@ export class BackendService {
             CARTA.EventType.OPEN_FILE,
             CARTA.EventType.OPEN_FILE_ACK,
             CARTA.EventType.START_ANIMATION,
-            CARTA.EventType.START_ANIMATION_ACK,
             CARTA.EventType.STOP_ANIMATION,
+            CARTA.EventType.ANIMATION_FLOW_CONTROL,
         ];
 
         // Check local storage for a list of events to log to console
-        const localStorageEventlist = localStorage.getItem("DEBUG_OVERRIDE_EVENT_LIST");
-        if (localStorageEventlist) {
+        const localStorageEventList = localStorage.getItem("DEBUG_OVERRIDE_EVENT_LIST");
+        if (localStorageEventList) {
             try {
-                const eventList = JSON.parse(localStorageEventlist);
+                const eventList = JSON.parse(localStorageEventList);
                 if (eventList && Array.isArray(eventList) && eventList.length) {
                     for (const eventName of eventList) {
                         const eventType = (<any> CARTA.EventType)[eventName];
@@ -384,7 +384,6 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.START_ANIMATION, requestId, animationMessage, false);
             if (this.sendEvent(CARTA.EventType.START_ANIMATION, CARTA.StartAnimation.encode(animationMessage).finish())) {
@@ -402,6 +401,17 @@ export class BackendService {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             this.logEvent(CARTA.EventType.STOP_ANIMATION, this.eventCounter, animationMessage, false);
             if (this.sendEvent(CARTA.EventType.STOP_ANIMATION, CARTA.StopAnimation.encode(animationMessage).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @action("animation flow control")
+    sendAnimationFlowControl(message: CARTA.IAnimationFlowControl) {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            this.logEvent(CARTA.EventType.ANIMATION_FLOW_CONTROL, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.ANIMATION_FLOW_CONTROL, CARTA.AnimationFlowControl.encode(message).finish())) {
                 return true;
             }
         }

@@ -20,7 +20,7 @@ export class AnimatorStore {
     @observable minFrameRate: number;
     @observable animationMode: AnimationMode;
     @observable animationState: AnimationState;
-    @observable requestQueue: Array<{ channel: number, stokes: number }>;
+    @observable flowControlCounter: number;
 
     @action setAnimationMode = (val: AnimationMode) => {
         this.animationMode = val;
@@ -95,6 +95,7 @@ export class AnimatorStore {
         });
 
         this.animationState = AnimationState.PLAYING;
+        this.flowControlCounter = 0;
     };
 
     @action stopAnimation = () => {
@@ -118,32 +119,17 @@ export class AnimatorStore {
     };
 
     @action animate = () => {
-        if (this.animationState === AnimationState.PLAYING && this.appStore && this.requestQueue.length <= Math.max(this.frameRate, 2)) {
+        if (this.animationState === AnimationState.PLAYING && this.animationMode === AnimationMode.FRAME) {
             // Do animation
-            switch (this.animationMode) {
-                case AnimationMode.FRAME:
-                    this.appStore.nextFrame();
-                    break;
-                case AnimationMode.CHANNEL:
-                    this.appStore.activeFrame.incrementChannels(1, 0);
-                    this.appStore.backendService.setChannels(this.appStore.activeFrame.frameInfo.fileId, this.appStore.activeFrame.requiredChannel, this.appStore.activeFrame.requiredStokes);
-                    this.requestQueue.push({channel: this.appStore.activeFrame.requiredChannel, stokes: this.appStore.activeFrame.requiredStokes});
-                    break;
-                case AnimationMode.STOKES:
-                    this.appStore.activeFrame.incrementChannels(0, 1);
-                    this.appStore.backendService.setChannels(this.appStore.activeFrame.frameInfo.fileId, this.appStore.activeFrame.requiredChannel, this.appStore.activeFrame.requiredStokes);
-                    this.requestQueue.push({channel: this.appStore.activeFrame.requiredChannel, stokes: this.appStore.activeFrame.requiredStokes});
-                    break;
-                default:
-                    break;
-            }
+            this.appStore.nextFrame();
         }
     };
 
-    @action removeFromRequestQueue = (channel: number, stokes: number) => {
-        const index = this.requestQueue.findIndex(v => v.channel === channel && v.stokes === stokes);
-        if (index >= 0) {
-            this.requestQueue = this.requestQueue.splice(index, 1);
+    @action incrementFlowCounter = (fileId: number, channel: number, stokes: number) => {
+        this.flowControlCounter++;
+        if (this.flowControlCounter >= this.frameRate) {
+            this.flowControlCounter = 0;
+            this.appStore.backendService.sendAnimationFlowControl({fileId, receivedFrame: {channel, stokes}});
         }
     };
 
@@ -156,8 +142,8 @@ export class AnimatorStore {
         this.minFrameRate = 1;
         this.animationMode = AnimationMode.CHANNEL;
         this.animationState = AnimationState.STOPPED;
+        this.flowControlCounter = 0;
         this.animateHandle = null;
-        this.requestQueue = [];
         this.appStore = appStore;
     }
 
