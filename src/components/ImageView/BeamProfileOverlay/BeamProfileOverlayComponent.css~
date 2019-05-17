@@ -1,5 +1,0 @@
-.beam-profile-stage {
-  position: absolute;
-  z-index: -1; }
-  .beam-profile-stage.docked {
-    z-index: 1; }
