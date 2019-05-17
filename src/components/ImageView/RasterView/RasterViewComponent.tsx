@@ -91,17 +91,20 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const frame = this.props.frame;
         if (frame && this.canvas && this.gl && this.cmapTexture) {
             this.clearCanvas();
-            if (frame.rasterData) {
-                // // Only update texture if the buffer has changed
-                // if (frame.rasterData.buffer !== this.rasterDataBuffer) {
-                //     this.updateTexture();
-                // }
-                // if (frame.overviewRasterData && frame.overviewRasterData.buffer !== this.overviewRasterDataBuffer) {
-                //     this.updateOverviewTexture();
-                // }
-                this.updateUniforms();
-                this.renderCanvas();
-            }
+            this.updateUniforms();
+            this.renderCanvas();
+
+            // if (frame.rasterData) {
+            //     // Only update texture if the buffer has changed
+            //     if (frame.rasterData.buffer !== this.rasterDataBuffer) {
+            //         this.updateTexture();
+            //     }
+            //     if (frame.overviewRasterData && frame.overviewRasterData.buffer !== this.overviewRasterDataBuffer) {
+            //         this.updateOverviewTexture();
+            //     }
+            //     this.updateUniforms();
+            //     this.renderCanvas();
+            // }
         }
     };
 

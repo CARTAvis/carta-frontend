@@ -428,23 +428,23 @@ export class AppStore {
                     throttledSetChannels(this.activeFrame.frameInfo.fileId, this.activeFrame.requiredChannel, this.activeFrame.requiredStokes);
                 }
 
-                const updateRequiredView = (croppedReq.mip < currentView.mip) || (croppedReq.xMin < currentView.xMin || croppedReq.xMax > currentView.xMax || croppedReq.yMin < currentView.yMin || croppedReq.yMax > currentView.yMax);
-                const updateCompressionQuality = (adjustedQuality > this.activeFrame.currentCompressionQuality);
-                if (updateRequiredView || updateCompressionQuality) {
-                    const reqWidth = reqView.xMax - reqView.xMin;
-                    const reqHeight = reqView.yMax - reqView.yMin;
-                    // Add an extra padding on either side to avoid spamming backend
-                    const padFraction = 0.05;
-                    const paddedView = {
-                        xMin: Math.max(0, reqView.xMin - padFraction * reqWidth),
-                        xMax: Math.min(reqView.xMax + padFraction * reqWidth, this.activeFrame.frameInfo.fileInfoExtended.width),
-                        yMin: Math.max(0, reqView.yMin - padFraction * reqHeight),
-                        yMax: Math.min(reqView.yMax + padFraction * reqHeight, this.activeFrame.frameInfo.fileInfoExtended.height),
-                        mip: reqView.mip
-                    };
-
-                    throttledSetView(this.activeFrame.frameInfo.fileId, paddedView, adjustedQuality);
-                }
+                // const updateRequiredView = (croppedReq.mip < currentView.mip) || (croppedReq.xMin < currentView.xMin || croppedReq.xMax > currentView.xMax || croppedReq.yMin < currentView.yMin || croppedReq.yMax > currentView.yMax);
+                // const updateCompressionQuality = (adjustedQuality > this.activeFrame.currentCompressionQuality);
+                // if (updateRequiredView || updateCompressionQuality) {
+                //     const reqWidth = reqView.xMax - reqView.xMin;
+                //     const reqHeight = reqView.yMax - reqView.yMin;
+                //     // Add an extra padding on either side to avoid spamming backend
+                //     const padFraction = 0.05;
+                //     const paddedView = {
+                //         xMin: Math.max(0, reqView.xMin - padFraction * reqWidth),
+                //         xMax: Math.min(reqView.xMax + padFraction * reqWidth, this.activeFrame.frameInfo.fileInfoExtended.width),
+                //         yMin: Math.max(0, reqView.yMin - padFraction * reqHeight),
+                //         yMax: Math.min(reqView.yMax + padFraction * reqHeight, this.activeFrame.frameInfo.fileInfoExtended.height),
+                //         mip: reqView.mip
+                //     };
+                //
+                //     throttledSetView(this.activeFrame.frameInfo.fileId, paddedView, adjustedQuality);
+                // }
             }
         });
 

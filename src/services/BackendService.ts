@@ -64,6 +64,7 @@ export class BackendService {
             CARTA.EventType.REGISTER_VIEWER_ACK,
             CARTA.EventType.OPEN_FILE,
             CARTA.EventType.OPEN_FILE_ACK,
+            CARTA.EventType.REGION_HISTOGRAM_DATA
         ];
 
         // Check local storage for a list of events to log to console
