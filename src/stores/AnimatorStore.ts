@@ -20,7 +20,6 @@ export class AnimatorStore {
     @observable minFrameRate: number;
     @observable animationMode: AnimationMode;
     @observable animationState: AnimationState;
-    @observable flowControlCounter: number;
 
     @action setAnimationMode = (val: AnimationMode) => {
         this.animationMode = val;
@@ -34,6 +33,14 @@ export class AnimatorStore {
             return;
         }
 
+        if (this.animationMode === AnimationMode.FRAME) {
+            clearInterval(this.animateHandle);
+            this.animationState = AnimationState.PLAYING;
+            this.animate();
+            this.animateHandle = setInterval(this.animate, this.frameInterval);
+            return;
+        }
+
         const startFrame: CARTA.IAnimationFrame = {
             channel: frame.channel,
             stokes: frame.stokes
@@ -43,12 +50,12 @@ export class AnimatorStore {
 
         if (this.animationMode === AnimationMode.CHANNEL) {
             firstFrame = {
-                channel: 0,
+                channel: frame.animationChannelRange[0],
                 stokes: frame.stokes,
             };
 
             lastFrame = {
-                channel: frame.frameInfo.fileInfoExtended.depth - 1,
+                channel: frame.animationChannelRange[1],
                 stokes: frame.stokes
             };
 
@@ -71,8 +78,6 @@ export class AnimatorStore {
                 channel: 0,
                 stokes: 1
             };
-        } else {
-            // TODO: Handle file animations the old way
         }
 
         const animationMessage: CARTA.IStartAnimation = {
@@ -104,17 +109,20 @@ export class AnimatorStore {
             return;
         }
 
-        const endFrame: CARTA.IAnimationFrame = {
-            channel: frame.channel,
-            stokes: frame.stokes
-        };
+        if (this.animationMode === AnimationMode.FRAME) {
+            clearInterval(this.animateHandle);
+        } else {
+            const endFrame: CARTA.IAnimationFrame = {
+                channel: frame.channel,
+                stokes: frame.stokes
+            };
 
-        const stopMessage: CARTA.IStopAnimation = {
-            fileId: frame.frameInfo.fileId,
-            endFrame
-        };
-
-        this.appStore.backendService.stopAnimation(stopMessage);
+            const stopMessage: CARTA.IStopAnimation = {
+                fileId: frame.frameInfo.fileId,
+                endFrame
+            };
+            this.appStore.backendService.stopAnimation(stopMessage);
+        }
         this.animationState = AnimationState.STOPPED;
     };
 
@@ -134,6 +142,7 @@ export class AnimatorStore {
     };
 
     private readonly appStore: AppStore;
+    private flowControlCounter: number;
     private animateHandle;
 
     constructor(appStore: AppStore) {
