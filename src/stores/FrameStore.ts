@@ -80,7 +80,7 @@ export class FrameStore {
 
         const mipExact = Math.max(1.0, 1.0 / this.zoomLevel);
         const mipLog2 = Math.log2(mipExact);
-        const mipLog2Rounded = (mipLog2 % 1.0 < 0.25) ? Math.floor(mipLog2) : Math.ceil(mipLog2);
+        const mipLog2Rounded = Math.round(mipLog2);
         const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
         const frameView = {
             xMin: this.center.x - imageWidth / 2.0,

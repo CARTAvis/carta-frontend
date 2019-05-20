@@ -22,7 +22,7 @@ export class TileService {
     private readonly cachedTiles: LRUCache<number, RasterTile>;
     private readonly pendingRequests: Map<number, boolean>;
     private readonly tileStream: Subject<number>;
-
+    private glContext: WebGLRenderingContext;
 
     public GetTileStream() {
         return this.tileStream;
@@ -41,10 +41,13 @@ export class TileService {
         this.backendService.getRasterTileStream().subscribe(this.handleStreamedTiles);
     }
 
-    getTile(tileCoordinateEncoded: number, fileId: number, channel: number, stokes: number) {
+    getTile(tileCoordinateEncoded: number, fileId: number, channel: number, stokes: number, peek: boolean = false) {
         const layer = TileCoordinate.GetLayer(tileCoordinateEncoded);
         if (layer < this.numPersistentLayers) {
             return this.persistentTiles.get(tileCoordinateEncoded);
+        }
+        if (peek) {
+            return this.cachedTiles.peek(tileCoordinateEncoded);
         }
         return this.cachedTiles.get(tileCoordinateEncoded);
     }
@@ -85,12 +88,18 @@ export class TileService {
         this.pendingRequests.clear();
     }
 
-    private clearTile(tile: RasterTile) {
-        if (tile.texture) {
-            // TODO: prevent WebGL texture leaks and delete texture
-            // gl.deleteTexture(tile.texture);
-        }
+    setContext(gl: WebGLRenderingContext) {
+        this.glContext = gl;
     }
+
+    private clearTile = (tile: RasterTile, key: number) => {
+        if (tile.texture && this.glContext) {
+            this.glContext.deleteTexture(tile.texture);
+        }
+        if (tile.data) {
+            delete tile.data;
+        }
+    };
 
     private handleStreamedTiles = (tileMessage: CARTA.IRasterTileData) => {
         if (tileMessage.compressionType !== CARTA.CompressionType.NONE) {
@@ -115,7 +124,7 @@ export class TileService {
                 if (tile.layer < this.numPersistentLayers) {
                     this.persistentTiles.set(encodedCoordinate, rasterTile);
                 } else {
-                    this.cachedTiles.set(encodedCoordinate, rasterTile);
+                    this.cachedTiles.set(encodedCoordinate, rasterTile, this.clearTile);
                 }
                 newTileCount++;
             }

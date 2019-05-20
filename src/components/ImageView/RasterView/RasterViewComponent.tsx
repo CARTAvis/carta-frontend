@@ -2,8 +2,8 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {FrameStore, OverlayStore} from "stores";
 import {FrameView, TileCoordinate} from "models";
-import {RasterTile, TileService} from "../../../services/TileService";
-import {GetRequiredTiles} from "utilities";
+import {RasterTile, TileService} from "services/TileService";
+import {GetRequiredTiles, LayerToMip} from "utilities";
 import "./RasterViewComponent.css";
 import allMaps from "static/allmaps.png";
 
@@ -24,6 +24,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private canvas: HTMLCanvasElement;
     private gl: WebGLRenderingContext;
     private hasFloatExtension: boolean;
+    private hasFloatLinearExtension: boolean;
     // GL buffers
     private rasterDataBuffer: ArrayBufferLike;
     private overviewRasterDataBuffer: ArrayBufferLike;
@@ -56,6 +57,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 if (!this.gl) {
                     return;
                 }
+                this.props.tileService.setContext(this.gl);
             } catch (e) {
                 console.log(e);
             }
@@ -66,11 +68,19 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             const extTextureFloat = this.gl.getExtension("OES_texture_float");
 
             if (!extTextureFloat) {
-                console.log("Could not initialise WebGL extensions");
+                console.log("Could not initialise WebGL float texture extension");
                 this.hasFloatExtension = false;
             } else {
                 this.hasFloatExtension = true;
+                const extTextureFloatLinear = this.gl.getExtension("OES_texture_float_linear");
+                if (!extTextureFloatLinear) {
+                    console.log("Could not initialise WebGL linear float extension");
+                    this.hasFloatLinearExtension = false;
+                } else {
+                    this.hasFloatExtension = true;
+                }
             }
+
             this.initShaders();
             this.initBuffers();
             this.loadImageTexture(allMaps, WebGLRenderingContext.TEXTURE1).then(texture => {
@@ -238,7 +248,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.renderTiles(requiredTiles, boundedView.mip);
     }
 
-    private renderTiles(tiles: TileCoordinate[], mip: number) {
+    private renderTiles(tiles: TileCoordinate[], mip: number, peek: boolean = false) {
         const tileService = this.props.tileService;
         const frame = this.props.frame;
 
@@ -250,7 +260,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         for (const tile of tiles) {
             const encodedCoordinate = TileCoordinate.EncodeCoordinate(tile);
-            const rasterTile = tileService.getTile(encodedCoordinate, frame.frameInfo.fileId, frame.channel, frame.stokes);
+            const rasterTile = tileService.getTile(encodedCoordinate, frame.frameInfo.fileId, frame.channel, frame.stokes, peek);
             if (rasterTile) {
                 this.renderTile(tile, rasterTile, mip);
             } else if (tile.layer > 0) {
@@ -265,7 +275,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const placeholderTileList: TileCoordinate[] = [];
         placeholderTileMap.forEach((val, encodedTile) => placeholderTileList.push(TileCoordinate.Decode(encodedTile)));
         if (placeholderTileList.length) {
-            this.renderTiles(placeholderTileList, mip * 2);
+            this.renderTiles(placeholderTileList, mip * 2, true);
         }
     }
 
@@ -282,14 +292,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             texture = this.gl.createTexture();
             rasterTile.texture = texture;
             this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
-            this.loadFP32Texture(rasterTile.data, 256, 256, WebGLRenderingContext.TEXTURE0);
+            const textureMip = LayerToMip(tile.layer, {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height}, {x: 256, y: 256});
+            this.loadFP32Texture(rasterTile.data, 256, 256, WebGLRenderingContext.TEXTURE0, textureMip <= 1 ? WebGLRenderingContext.NEAREST : WebGLRenderingContext.LINEAR);
+            delete rasterTile.data;
         } else {
             this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
         }
-
-        // this.gl.activeTexture(WebGLRenderingContext.TEXTURE0);
-        // this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, this.tileTexture);
-        // this.loadFP32Texture(rasterTile.data, 256, 256, WebGLRenderingContext.TEXTURE0);
 
         const full = frame.requiredFrameView;
 
@@ -417,14 +425,17 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.tileTexture = this.gl.createTexture();
     }
 
-    private loadFP32Texture(data: Float32Array, width: number, height: number, texIndex: number) {
+    private loadFP32Texture(data: Float32Array, width: number, height: number, texIndex: number, filtering: number = WebGLRenderingContext.LINEAR) {
         this.gl.activeTexture(texIndex);
-        this.gl.pixelStorei(WebGLRenderingContext.UNPACK_ALIGNMENT, 1);
         this.gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.LUMINANCE, width, height, 0, WebGLRenderingContext.LUMINANCE, WebGLRenderingContext.FLOAT, data);
 
+        if (!this.hasFloatLinearExtension) {
+            filtering = WebGLRenderingContext.NEAREST;
+        }
+
         // set the filtering so we don't need mips and it's not filtered
-        this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.NEAREST);
-        this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.NEAREST);
+        this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, filtering);
+        this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, filtering);
         this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_WRAP_S, WebGLRenderingContext.CLAMP_TO_EDGE);
         this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_WRAP_T, WebGLRenderingContext.CLAMP_TO_EDGE);
     }
