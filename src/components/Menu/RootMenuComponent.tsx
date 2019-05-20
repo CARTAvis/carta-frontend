@@ -152,6 +152,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 <Alert isOpen={this.documentationAlertVisible} onClose={this.handleAlertDismissed} canEscapeKeyCancel={true} canOutsideClickCancel={true} confirmButtonText={"Dismiss"}>
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
+                <span>DEBUG: Cache occupancy: {appStore.tileService.lruOccupancy} (LRU), {appStore.tileService.persistentOccupancy} (fixed)</span>
                 <Tooltip content={tooltip}>
                     <Icon icon={"symbol-circle"} className={connectivityClass}/>
                 </Tooltip>

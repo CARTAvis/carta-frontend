@@ -13,7 +13,7 @@ export class TileCoordinate {
         return TileCoordinate.EncodeCoordinate(this);
     }
 
-    public static EncodeCoordinate(coordinate: {x: number, y: number, layer: number}): number {
+    public static EncodeCoordinate(coordinate: { x: number, y: number, layer: number }): number {
         if (!coordinate) {
             return -1;
         }
@@ -34,5 +34,9 @@ export class TileCoordinate {
         const layer = ((encodedCoordinate >> 24) + 128) % 128;
         const y = (((encodedCoordinate << 7) >> 19) + 4096) % 4096;
         return new TileCoordinate(x, y, layer);
+    }
+
+    public static GetLayer(encodedCoordinate: number): number {
+        return ((encodedCoordinate >> 24) + 128) % 128;
     }
 }

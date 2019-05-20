@@ -2,6 +2,8 @@ import {Subject} from "rxjs";
 import {CARTA} from "carta-protobuf";
 import {Point2D, TileCoordinate} from "models";
 import {BackendService} from "services";
+import LRUCache from "mnemonist/lru-cache";
+import {observable} from "mobx";
 
 export interface RasterTile {
     data: Float32Array;
@@ -11,25 +13,39 @@ export interface RasterTile {
 }
 
 export class TileService {
+    @observable lruOccupancy: number;
+    @observable persistentOccupancy: number;
+
     private readonly backendService: BackendService;
-    private readonly cachedTiles: Map<number, RasterTile>;
+    private readonly numPersistentLayers: number;
+    private readonly persistentTiles: Map<number, RasterTile>;
+    private readonly cachedTiles: LRUCache<number, RasterTile>;
     private readonly pendingRequests: Map<number, boolean>;
     private readonly tileStream: Subject<number>;
+
 
     public GetTileStream() {
         return this.tileStream;
     }
 
-    constructor(backendService: BackendService) {
+    constructor(backendService: BackendService, numPersistentLayers: number = 4, lruCapacity: number = 512) {
         this.backendService = backendService;
-        this.cachedTiles = new Map<number, RasterTile>();
+        this.cachedTiles = new LRUCache<number, RasterTile>(Int32Array, null, lruCapacity);
+        this.persistentTiles = new Map<number, RasterTile>();
         this.pendingRequests = new Map<number, boolean>();
+        this.numPersistentLayers = numPersistentLayers;
+        this.lruOccupancy = 0;
+        this.persistentOccupancy = 0;
 
         this.tileStream = new Subject<number>();
         this.backendService.getRasterTileStream().subscribe(this.handleStreamedTiles);
     }
 
     getTile(tileCoordinateEncoded: number, fileId: number, channel: number, stokes: number) {
+        const layer = TileCoordinate.GetLayer(tileCoordinateEncoded);
+        if (layer < this.numPersistentLayers) {
+            return this.persistentTiles.get(tileCoordinateEncoded);
+        }
         return this.cachedTiles.get(tileCoordinateEncoded);
     }
 
@@ -59,6 +75,10 @@ export class TileService {
     clearCache() {
         this.cachedTiles.forEach(this.clearTile);
         this.cachedTiles.clear();
+        this.persistentTiles.forEach(this.clearTile);
+        this.persistentTiles.clear();
+        this.lruOccupancy = 0;
+        this.persistentOccupancy = 0;
     }
 
     clearRequestQueue() {
@@ -86,18 +106,22 @@ export class TileService {
                 this.pendingRequests.delete(encodedCoordinate);
 
                 // Add a new tile if it doesn't already exist in the cache
-                if (!this.cachedTiles.has(encodedCoordinate)) {
-                    const rasterTile: RasterTile = {
-                        width: tile.width,
-                        height: tile.height,
-                        data: new Float32Array(tile.imageData.buffer.slice(tile.imageData.byteOffset, tile.imageData.byteOffset + tile.imageData.byteLength)),
-                        texture: null // Textures are created on first render
-                    };
+                const rasterTile: RasterTile = {
+                    width: tile.width,
+                    height: tile.height,
+                    data: new Float32Array(tile.imageData.buffer.slice(tile.imageData.byteOffset, tile.imageData.byteOffset + tile.imageData.byteLength)),
+                    texture: null // Textures are created on first render
+                };
+                if (tile.layer < this.numPersistentLayers) {
+                    this.persistentTiles.set(encodedCoordinate, rasterTile);
+                } else {
                     this.cachedTiles.set(encodedCoordinate, rasterTile);
-                    newTileCount++;
                 }
+                newTileCount++;
             }
         }
+        this.lruOccupancy = this.cachedTiles.size;
+        this.persistentOccupancy = this.persistentTiles.size;
         this.tileStream.next(newTileCount);
     };
 }
