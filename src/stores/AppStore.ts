@@ -590,7 +590,9 @@ export class AppStore {
         if (updatedFrame) {
             updatedFrame.updateFromRasterData(rasterImageData);
             if (this.animatorStore.animationState === AnimationState.PLAYING) {
-                this.animatorStore.removeFromRequestQueue(updatedFrame.channel, updatedFrame.stokes);
+                updatedFrame.requiredChannel = rasterImageData.channel;
+                updatedFrame.requiredStokes = rasterImageData.stokes;
+                this.animatorStore.incrementFlowCounter(updatedFrame.frameInfo.fileId, updatedFrame.channel, updatedFrame.stokes);
             }
         }
     };
