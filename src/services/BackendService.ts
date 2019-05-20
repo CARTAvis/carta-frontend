@@ -11,7 +11,7 @@ export enum ConnectionStatus {
 }
 
 export class BackendService {
-    private static readonly IcdVersion = 2;
+    private static readonly IcdVersion = 3;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     @observable loggingEnabled: boolean;
@@ -68,10 +68,10 @@ export class BackendService {
         ];
 
         // Check local storage for a list of events to log to console
-        const localStorageEventlist = localStorage.getItem("DEBUG_OVERRIDE_EVENT_LIST");
-        if (localStorageEventlist) {
+        const localStorageEventList = localStorage.getItem("DEBUG_OVERRIDE_EVENT_LIST");
+        if (localStorageEventList) {
             try {
-                const eventList = JSON.parse(localStorageEventlist);
+                const eventList = JSON.parse(localStorageEventList);
                 if (eventList && Array.isArray(eventList) && eventList.length) {
                     for (const eventName of eventList) {
                         const eventType = (<any> CARTA.EventType)[eventName];
@@ -407,6 +407,45 @@ export class BackendService {
         return false;
     }
 
+    @action("start animation")
+    startAnimation(animationMessage: CARTA.IStartAnimation): Observable<CARTA.StartAnimationAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.START_ANIMATION, requestId, animationMessage, false);
+            if (this.sendEvent(CARTA.EventType.START_ANIMATION, CARTA.StartAnimation.encode(animationMessage).finish())) {
+                return new Observable<CARTA.StartAnimationAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("stop animation")
+    stopAnimation(animationMessage: CARTA.IStopAnimation) {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            this.logEvent(CARTA.EventType.STOP_ANIMATION, this.eventCounter, animationMessage, false);
+            if (this.sendEvent(CARTA.EventType.STOP_ANIMATION, CARTA.StopAnimation.encode(animationMessage).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @action("animation flow control")
+    sendAnimationFlowControl(message: CARTA.IAnimationFlowControl) {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            this.logEvent(CARTA.EventType.ANIMATION_FLOW_CONTROL, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.ANIMATION_FLOW_CONTROL, CARTA.AnimationFlowControl.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private messageHandler(event: MessageEvent) {
         if (event.data === "PONG") {
             this.lastPongTime = performance.now();
@@ -446,6 +485,9 @@ export class BackendService {
             } else if (eventType === CARTA.EventType.SET_REGION_ACK) {
                 parsedMessage = CARTA.SetRegionAck.decode(eventData);
                 this.onSetRegionAck(eventId, parsedMessage);
+            } else if (eventType === CARTA.EventType.START_ANIMATION_ACK) {
+                parsedMessage = CARTA.StartAnimationAck.decode(eventData);
+                this.onStartAnimationAck(eventId, parsedMessage);
             } else if (eventType === CARTA.EventType.RASTER_IMAGE_DATA) {
                 parsedMessage = CARTA.RasterImageData.decode(eventData);
                 this.onStreamedRasterImageData(eventId, parsedMessage);
@@ -537,6 +579,21 @@ export class BackendService {
     }
 
     private onSetRegionAck(eventId: number, ack: CARTA.SetRegionAck) {
+        const observer = this.observerRequestMap.get(eventId);
+        if (observer) {
+            if (ack.success) {
+                observer.next(ack);
+            } else {
+                observer.error(ack.message);
+            }
+            observer.complete();
+            this.observerRequestMap.delete(eventId);
+        } else {
+            console.log(`Can't find observable for request ${eventId}`);
+        }
+    }
+
+    private onStartAnimationAck(eventId: number, ack: CARTA.StartAnimationAck) {
         const observer = this.observerRequestMap.get(eventId);
         if (observer) {
             if (ack.success) {

@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, observable} from "mobx";
-import {Button, ButtonGroup, FormGroup, NonIdealState, NumericInput, Radio, Slider} from "@blueprintjs/core";
+import {Button, ButtonGroup, FormGroup, NonIdealState, NumberRange, NumericInput, Radio, RangeSlider, Slider} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {WidgetConfig, WidgetProps, AnimationMode, AnimationState} from "stores";
 import "./AnimatorComponent.css";
@@ -38,6 +38,16 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 val = 0;
             }
             this.props.appStore.activeFrame.setChannels(val, this.props.appStore.activeFrame.requiredStokes);
+        }
+    };
+
+    onRangeChanged = (range: NumberRange) => {
+        const frame = this.props.appStore.activeFrame;
+        console.log(range);
+        if (range && range.length === 2 && frame) {
+            if (range[0] >= 0 && range[0] < range[1] && range[1] < frame.frameInfo.fileInfoExtended.depth) {
+                frame.setAnimationRange(range);
+            }
         }
     };
 
@@ -166,11 +176,9 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
         if (scaledVal < 1.5) {
             return 1 * Math.pow(10, power);
-        }
-        else if (scaledVal < 3.5) {
+        } else if (scaledVal < 3.5) {
             return 2 * Math.pow(10, power);
-        }
-        else {
+        } else {
             return 5 * Math.pow(10, power);
         }
     }
@@ -185,7 +193,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         const iconOnly = this.width < 600;
         const hideSliders = this.width < 450;
 
-        let channelSlider, stokesSlider, frameSlider;
+        let channelSlider, channelRangeSlider, stokesSlider, frameSlider;
         // Frame Control
         if (appStore.frames.length > 1) {
             const frameIndex = appStore.frames.findIndex(f => f.frameInfo.fileId === activeFrame.frameInfo.fileId);
@@ -209,6 +217,8 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                             value={frameIndex}
                             min={0}
                             max={appStore.frames.length - 1}
+                            showTrackFill={false}
+                            stepSize={1}
                             onChange={this.onFrameChanged}
                             disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
                         />
@@ -242,17 +252,38 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                     {!hideSliders &&
                     <React.Fragment>
                         <Slider
+                            className="channel-slider"
                             value={activeFrame.requiredChannel}
                             min={0}
                             max={numChannels - 1}
                             labelStepSize={channelStep}
                             labelPrecision={0}
+                            showTrackFill={false}
                             onChange={this.onChannelChanged}
                             disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
                         />
                         <div className="slider-info">
                             {`Req: ${activeFrame.requiredChannel}; Current: ${activeFrame.channel}`}
                         </div>
+                    </React.Fragment>
+                    }
+                </div>
+            );
+            channelRangeSlider = (
+                <div className="animator-slider range-slider">
+                    <div className="range-label"/>
+                    {!hideSliders &&
+                    <React.Fragment>
+                        <RangeSlider
+                            value={activeFrame.animationChannelRange}
+                            min={0}
+                            max={numChannels - 1}
+                            labelStepSize={channelStep}
+                            labelPrecision={0}
+                            onChange={this.onRangeChanged}
+                            disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                        />
+                        <div className="slider-info"/>
                     </React.Fragment>
                     }
                 </div>
@@ -280,6 +311,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         <Slider
                             value={activeFrame.requiredStokes}
                             min={0}
+                            showTrackFill={false}
                             max={activeFrame.frameInfo.fileInfoExtended.stokes - 1}
                             onChange={this.onStokesChanged}
                             disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
@@ -340,6 +372,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 <div className="animator-sliders">
                     {frameSlider}
                     {channelSlider}
+                    {channelRangeSlider}
                     {stokesSlider}
                 </div>
                 }
