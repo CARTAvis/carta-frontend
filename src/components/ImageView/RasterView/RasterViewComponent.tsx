@@ -32,8 +32,10 @@ interface ShaderUniforms {
     CmapTexture: WebGLUniformLocation;
     NumCmaps: WebGLUniformLocation;
     CmapIndex: WebGLUniformLocation;
-    TileWidthCutoff: WebGLUniformLocation;
-    TileHeightCutoff: WebGLUniformLocation;
+    TileSize: WebGLUniformLocation;
+    TileScaling: WebGLUniformLocation;
+    TileOffset: WebGLUniformLocation;
+    TileBorder: WebGLUniformLocation;
 }
 
 @observer
@@ -259,6 +261,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         };
 
         this.gl.activeTexture(WebGLRenderingContext.TEXTURE0);
+        this.gl.viewport(0, 0, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
         const requiredTiles = GetRequiredTiles(boundedView, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
         this.renderTiles(requiredTiles, boundedView.mip);
     }
@@ -329,27 +332,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             mip: 1
         };
 
-        const LT = {x: (0.5 + tileImageView.xMin - full.xMin) / fullWidth, y: (0.5 + tileImageView.yMin - full.yMin) / fullHeight};
-        const RB = {x: (0.5 + tileImageView.xMax - full.xMin) / fullWidth, y: (0.5 + tileImageView.yMax - full.yMin) / fullHeight};
+        const bottomLeft = {x: (0.5 + tileImageView.xMin - full.xMin) / fullWidth, y: (0.5 + tileImageView.yMin - full.yMin) / fullHeight};
 
-        const viewportMin = {
-            x: Math.floor(LT.x * frame.renderWidth * devicePixelRatio),
-            y: Math.floor(LT.y * frame.renderHeight * devicePixelRatio)
-        };
-
-        const viewportMax = {
-            x: Math.floor(RB.x * frame.renderWidth * devicePixelRatio),
-            y: Math.floor(RB.y * frame.renderHeight * devicePixelRatio)
-        };
-        const viewportSize = {
-            x: viewportMax.x - viewportMin.x,
-            y: viewportMax.y - viewportMin.y
-        };
-
-        this.gl.uniform1f(this.shaderUniforms.TileWidthCutoff, rasterTile.width / TILE_SIZE);
-        this.gl.uniform1f(this.shaderUniforms.TileHeightCutoff, rasterTile.height / TILE_SIZE);
-
-        this.gl.viewport(viewportMin.x, viewportMin.y, viewportSize.x, viewportSize.y);
+        this.gl.uniform2f(this.shaderUniforms.TileSize, rasterTile.width / TILE_SIZE, rasterTile.height / TILE_SIZE);
+        this.gl.uniform2f(this.shaderUniforms.TileOffset, bottomLeft.x, bottomLeft.y);
+        this.gl.uniform2f(this.shaderUniforms.TileScaling, (mip * TILE_SIZE * frame.zoomLevel) / (frame.renderWidth * devicePixelRatio), (mip * TILE_SIZE * frame.zoomLevel) / (frame.renderHeight * devicePixelRatio));
         this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
     }
 
@@ -402,8 +389,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             CmapTexture: this.gl.getUniformLocation(shaderProgram, "uCmapTexture"),
             NumCmaps: this.gl.getUniformLocation(shaderProgram, "uNumCmaps"),
             CmapIndex: this.gl.getUniformLocation(shaderProgram, "uCmapIndex"),
-            TileWidthCutoff: this.gl.getUniformLocation(shaderProgram, "uTileWidthCutoff"),
-            TileHeightCutoff: this.gl.getUniformLocation(shaderProgram, "uTileHeightCutoff"),
+            TileSize: this.gl.getUniformLocation(shaderProgram, "uTileSize"),
+            TileScaling: this.gl.getUniformLocation(shaderProgram, "uTileScaling"),
+            TileOffset: this.gl.getUniformLocation(shaderProgram, "uTileOffset"),
+            TileBorder: this.gl.getUniformLocation(shaderProgram, "uTileBorder")
         };
 
         this.gl.uniform1i(this.shaderUniforms.DataTexture, 0);
@@ -416,8 +405,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.gl.uniform1f(this.shaderUniforms.Contrast, 1);
         this.gl.uniform1f(this.shaderUniforms.Gamma, 1);
         this.gl.uniform1f(this.shaderUniforms.Alpha, 1000);
-        this.gl.uniform1f(this.shaderUniforms.TileWidthCutoff, 1);
-        this.gl.uniform1f(this.shaderUniforms.TileHeightCutoff, 1);
+        this.gl.uniform1f(this.shaderUniforms.TileBorder, 0 / TILE_SIZE);
+        this.gl.uniform2f(this.shaderUniforms.TileSize, 1, 1);
+        this.gl.uniform2f(this.shaderUniforms.TileScaling, 1, 1);
+        this.gl.uniform2f(this.shaderUniforms.TileOffset, 0, 0);
         this.gl.uniform4f(this.shaderUniforms.NaNColor, 0, 0, 1, 1);
 
     }
@@ -426,10 +417,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.vertexPositionBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexPositionBuffer);
         const vertices = new Float32Array([
-            -1, -1, 0,
-            1, -1, 0,
-            -1, 1, 0,
-            1, 1, 0
+            0.0, 0.0, 0,
+            1.0, 0.0, 0,
+            0.0, 1.0, 0,
+            1.0, 1.0, 0
         ]);
         this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, vertices, WebGLRenderingContext.STATIC_DRAW);
 
