@@ -74,7 +74,7 @@ export class BackendService {
                 const eventList = JSON.parse(localStorageEventList);
                 if (eventList && Array.isArray(eventList) && eventList.length) {
                     for (const eventName of eventList) {
-                        const eventType = (<any>CARTA.EventType)[eventName];
+                        const eventType = (<any> CARTA.EventType)[eventName];
                         if (eventType !== undefined) {
                             this.logEventList.push(eventType);
                         }

@@ -104,38 +104,49 @@ export class TileService {
     };
 
     private handleStreamedTiles = (tileMessage: CARTA.IRasterTileData) => {
-        if (tileMessage.compressionType !== CARTA.CompressionType.NONE) {
-            console.error("Compressed tiles not yet implemented");
+        if (tileMessage.compressionType !== CARTA.CompressionType.NONE && tileMessage.compressionType !== CARTA.CompressionType.ZFP) {
+            console.error("Unsupported compression type");
         }
 
         let newTileCount = 0;
-
         for (let tile of tileMessage.tiles) {
             const encodedCoordinate = TileCoordinate.Encode(tile.x, tile.y, tile.layer);
             // Remove from the requested tile map
             if (this.pendingRequests.has(encodedCoordinate)) {
                 this.pendingRequests.delete(encodedCoordinate);
 
-                const decompressedData = ZFP.zfpDecompressUint8WASM(tile.imageData, tile.imageData.length, tile.width, tile.height, tileMessage.compressionQuality);
-                // put NaNs back into data
-                let decodedIndex = 0;
-                let fillVal = false;
-                const nanEncodings = new Int32Array(tile.nanEncodings.slice().buffer);
-                const N = nanEncodings.length;
-                for (let i = 0; i < N; i++) {
-                    const L = nanEncodings[i];
-                    if (fillVal) {
-                        decompressedData.fill(NaN, decodedIndex, decodedIndex + L);
+                let data: Float32Array;
+
+                if (tileMessage.compressionType === CARTA.CompressionType.NONE) {
+                    data = new Float32Array(tile.imageData.buffer.slice(tile.imageData.byteOffset, tile.imageData.byteOffset + tile.imageData.byteLength));
+                } else {
+                    const tStart = performance.now();
+                    const decompressedData = ZFP.zfpDecompressUint8WASM(tile.imageData, tile.imageData.length, tile.width, tile.height, tileMessage.compressionQuality);
+                    // put NaNs back into data
+                    let decodedIndex = 0;
+                    let fillVal = false;
+                    const nanEncodings = new Int32Array(tile.nanEncodings.slice().buffer);
+                    const N = nanEncodings.length;
+                    for (let i = 0; i < N; i++) {
+                        const L = nanEncodings[i];
+                        if (fillVal) {
+                            decompressedData.fill(NaN, decodedIndex, decodedIndex + L);
+                        }
+                        fillVal = !fillVal;
+                        decodedIndex += L;
                     }
-                    fillVal = !fillVal;
-                    decodedIndex += L;
+
+                    data = decompressedData.slice();
+                    const tStop = performance.now();
+                    const dt = tStop - tStart;
+                    console.log(`Decompressed ${tile.width}x${tile.height} ZFP tile in ${dt} ms`);
                 }
 
                 // Add a new tile if it doesn't already exist in the cache
                 const rasterTile: RasterTile = {
                     width: tile.width,
                     height: tile.height,
-                    data: decompressedData.slice(),
+                    data,
                     texture: null // Textures are created on first render
                 };
                 if (tile.layer < this.numPersistentLayers) {
