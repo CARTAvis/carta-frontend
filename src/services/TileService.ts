@@ -1,9 +1,10 @@
 import {Subject} from "rxjs";
+import {observable} from "mobx";
+import LRUCache from "mnemonist/lru-cache";
 import {CARTA} from "carta-protobuf";
+import * as ZFP from "zfp_wrapper";
 import {Point2D, TileCoordinate} from "models";
 import {BackendService} from "services";
-import LRUCache from "mnemonist/lru-cache";
-import {observable} from "mobx";
 
 export interface RasterTile {
     data: Float32Array;
@@ -39,6 +40,7 @@ export class TileService {
 
         this.tileStream = new Subject<number>();
         this.backendService.getRasterTileStream().subscribe(this.handleStreamedTiles);
+
     }
 
     getTile(tileCoordinateEncoded: number, fileId: number, channel: number, stokes: number, peek: boolean = false) {
@@ -52,7 +54,7 @@ export class TileService {
         return this.cachedTiles.get(tileCoordinateEncoded);
     }
 
-    requestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D) {
+    requestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number) {
         const numTiles = tiles.length;
         const newRequests = new Array<TileCoordinate>();
         for (const tile of tiles) {
@@ -71,7 +73,7 @@ export class TileService {
                 const bY = focusPoint.y - b.y;
                 return (aX * aX + aY * aY) - (bX * bX + bY * bY);
             }).map(tile => tile.encode());
-            this.backendService.addRequiredTiles(fileId, sortedRequests);
+            this.backendService.addRequiredTiles(fileId, sortedRequests, compressionQuality);
         }
     }
 
@@ -114,11 +116,26 @@ export class TileService {
             if (this.pendingRequests.has(encodedCoordinate)) {
                 this.pendingRequests.delete(encodedCoordinate);
 
+                const decompressedData = ZFP.zfpDecompressUint8WASM(tile.imageData, tile.imageData.length, tile.width, tile.height, tileMessage.compressionQuality);
+                // put NaNs back into data
+                let decodedIndex = 0;
+                let fillVal = false;
+                const nanEncodings = new Int32Array(tile.nanEncodings.slice().buffer);
+                const N = nanEncodings.length;
+                for (let i = 0; i < N; i++) {
+                    const L = nanEncodings[i];
+                    if (fillVal) {
+                        decompressedData.fill(NaN, decodedIndex, decodedIndex + L);
+                    }
+                    fillVal = !fillVal;
+                    decodedIndex += L;
+                }
+
                 // Add a new tile if it doesn't already exist in the cache
                 const rasterTile: RasterTile = {
                     width: tile.width,
                     height: tile.height,
-                    data: new Float32Array(tile.imageData.buffer.slice(tile.imageData.byteOffset, tile.imageData.byteOffset + tile.imageData.byteLength)),
+                    data: decompressedData.slice(),
                     texture: null // Textures are created on first render
                 };
                 if (tile.layer < this.numPersistentLayers) {

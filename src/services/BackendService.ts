@@ -74,7 +74,7 @@ export class BackendService {
                 const eventList = JSON.parse(localStorageEventList);
                 if (eventList && Array.isArray(eventList) && eventList.length) {
                     for (const eventName of eventList) {
-                        const eventType = (<any> CARTA.EventType)[eventName];
+                        const eventType = (<any>CARTA.EventType)[eventName];
                         if (eventType !== undefined) {
                             this.logEventList.push(eventType);
                         }
@@ -384,9 +384,9 @@ export class BackendService {
     }
 
     @action("add required tiles")
-    addRequiredTiles(fileId: number, tiles: Array<number>): boolean {
+    addRequiredTiles(fileId: number, tiles: Array<number>, quality: number): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.AddRequiredTiles.create({fileId, tiles});
+            const message = CARTA.AddRequiredTiles.create({fileId, tiles, compressionQuality: quality, compressionType: CARTA.CompressionType.ZFP});
             this.logEvent(CARTA.EventType.ADD_REQUIRED_TILES, this.eventCounter, message, false);
             if (this.sendEvent(CARTA.EventType.ADD_REQUIRED_TILES, CARTA.AddRequiredTiles.encode(message).finish())) {
                 return true;
