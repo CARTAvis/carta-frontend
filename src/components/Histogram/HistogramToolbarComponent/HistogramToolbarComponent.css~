@@ -1,9 +1,0 @@
-.spectral-profiler-toolbar {
-  overflow: hidden;
-  display: flex; }
-  .spectral-profiler-toolbar .bp3-form-group {
-    margin-bottom: 5px;
-    margin-top: 5px;
-    margin-left: 15px; }
-    .spectral-profiler-toolbar .bp3-form-group:first-of-type {
-      margin-left: 5px; }
