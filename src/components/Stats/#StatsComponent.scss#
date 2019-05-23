@@ -1,4 +1,4 @@
-@import "../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+\1;95;0c@import "../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
 .stats-widget {
     width: 100%;
@@ -6,8 +6,6 @@
 
     border: 1px solid transparent;
     border-radius: 3px;
-
-    user-select: none;
 
     &.linked-to-selected {
         border: 1px solid $blue2;
@@ -32,7 +30,7 @@
             overflow-y: auto;
             padding: 5px 5px 0;
             display: block;
-            user-select: text;
+
             thead {
                 &.dark-theme {
                     tr {
