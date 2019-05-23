@@ -180,6 +180,9 @@ export class AppStore {
                 renderMode: CARTA.RenderMode.RASTER
             };
 
+            this.tileService.clearCache();
+            this.tileService.clearRequestQueue();
+
             let newFrame = new FrameStore(this.overlayStore, frameInfo, this.backendService);
             newFrame.fitZoom();
             this.loadWCS(newFrame);
@@ -378,7 +381,31 @@ export class AppStore {
         }, IMAGE_THROTTLE_TIME * 100);
 
         const throttledSetChannels = _.throttle((fileId: number, channel: number, stokes: number) => {
+            this.tileService.clearCache();
+            this.tileService.clearRequestQueue();
+            this.activeFrame.channel = channel;
+            this.activeFrame.stokes = stokes;
             this.backendService.setChannels(fileId, channel, stokes);
+
+            // Calculate new required frame view (cropped to file size)
+            const reqView = this.activeFrame.requiredFrameView;
+            const currentView = this.activeFrame.currentFrameView;
+
+            const croppedReq: FrameView = {
+                xMin: Math.max(0, reqView.xMin),
+                xMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.width, reqView.xMax),
+                yMin: Math.max(0, reqView.yMin),
+                yMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.height, reqView.yMax),
+                mip: reqView.mip
+            };
+            const imageSize: Point2D = {x: this.activeFrame.frameInfo.fileInfoExtended.width, y: this.activeFrame.frameInfo.fileInfoExtended.height};
+            const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
+            const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
+            // TODO: dynamic tile size
+            const tileSizeFullRes = reqView.mip * 256;
+            const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes, y: midPointImageCoords.y / tileSizeFullRes};
+            this.tileService.requestTiles(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords, this.compressionQuality);
+
         }, IMAGE_THROTTLE_TIME);
 
         const debouncedSetCursor = _.debounce((fileId: number, x: number, y: number) => {
@@ -425,6 +452,7 @@ export class AppStore {
                 const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
                 // Don't auto-update when animation is playing
                 if (this.animatorStore.animationState === AnimationState.STOPPED && updateRequiredChannels) {
+                    console.log(`Changing channels from ${this.activeFrame.channel} -> ${this.activeFrame.requiredChannel} and ${this.activeFrame.stokes} -> ${this.activeFrame.requiredStokes}`);
                     throttledSetChannels(this.activeFrame.frameInfo.fileId, this.activeFrame.requiredChannel, this.activeFrame.requiredStokes);
                 }
 

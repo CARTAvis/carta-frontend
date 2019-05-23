@@ -59,7 +59,9 @@ export class TileService {
         const newRequests = new Array<TileCoordinate>();
         for (const tile of tiles) {
             const encodedCoordinate = tile.encode();
-            if (!this.cachedTiles.has(encodedCoordinate) && !this.pendingRequests.has(encodedCoordinate)) {
+            const tileCached = (tile.layer < this.numPersistentLayers && this.persistentTiles.has(encodedCoordinate))
+                || (tile.layer >= this.numPersistentLayers && this.cachedTiles.has(encodedCoordinate));
+            if (!tileCached && !this.pendingRequests.has(encodedCoordinate)) {
                 this.pendingRequests.set(encodedCoordinate, true);
                 newRequests.push(tile);
             }
@@ -139,7 +141,7 @@ export class TileService {
                     data = decompressedData.slice();
                     const tStop = performance.now();
                     const dt = tStop - tStart;
-                    console.log(`Decompressed ${tile.width}x${tile.height} ZFP tile in ${dt} ms`);
+                    // console.log(`Decompressed ${tile.width}x${tile.height} ZFP tile in ${dt} ms`);
                 }
 
                 // Add a new tile if it doesn't already exist in the cache
