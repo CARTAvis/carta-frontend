@@ -1,7 +1,7 @@
 .file-browser-dialog {
     min-width: 60%;
     height: 600px;
-
+    user-select: none;
     .file-info-pane {
         width: 40%;
         margin-left: 5px;
