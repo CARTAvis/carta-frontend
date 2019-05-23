@@ -32,7 +32,7 @@ export class AppStore {
     // Logs
     @observable logStore: LogStore;
     // User preference
-    @observable userPreferencesStore: UserPreferencesStore;
+    @observable preferencesStore: UserPreferencesStore;
 
     // Cursor information
     @observable cursorInfo: CursorInfo;
@@ -115,6 +115,15 @@ export class AppStore {
     };
     @action hideApiKeyDialog = () => {
         this.apiKeyDialogVisible = false;
+    };
+
+    // User preference dialog
+    @observable preferenceDialogVisible: boolean;
+    @action showPreferenceDialog = () => {
+        this.preferenceDialogVisible = true;
+    };
+    @action hidePreferenceDialog = () => {
+        this.preferenceDialogVisible = false;
     };
 
     // Tasks
@@ -367,7 +376,7 @@ export class AppStore {
         this.alertStore = new AlertStore();
         this.overlayStore = new OverlayStore();
         this.widgetsStore = new WidgetsStore(this);
-        this.userPreferencesStore = new UserPreferencesStore();
+        this.preferencesStore = new UserPreferencesStore();
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
         this.darkTheme = false;
