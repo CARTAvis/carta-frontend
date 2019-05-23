@@ -2,7 +2,10 @@ import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable, ObservableMap} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore, FrameInfo, FrameStore, LogEntry, LogStore, nightPalette, OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore} from ".";
+import {AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore,
+        FrameInfo, FrameStore, LogEntry, LogStore, nightPalette,
+        OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore,
+        UserPreferencesStore} from ".";
 import {BackendService} from "services";
 import {CursorInfo, FrameView} from "models";
 import {smoothStepOffset} from "utilities";
@@ -28,6 +31,8 @@ export class AppStore {
     @observable alertStore: AlertStore;
     // Logs
     @observable logStore: LogStore;
+    // User preference
+    @observable userPreferencesStore: UserPreferencesStore;
 
     // Cursor information
     @observable cursorInfo: CursorInfo;
@@ -362,6 +367,7 @@ export class AppStore {
         this.alertStore = new AlertStore();
         this.overlayStore = new OverlayStore();
         this.widgetsStore = new WidgetsStore(this);
+        this.userPreferencesStore = new UserPreferencesStore();
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
         this.darkTheme = false;

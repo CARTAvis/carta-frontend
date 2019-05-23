@@ -11,3 +11,4 @@ export * from "./SpectralProfileStore";
 export * from "./WidgetsStore";
 export * from "./RegionStore";
 export * from "./RegionSetStore";
+export * from "./UserPreferencesStore";
