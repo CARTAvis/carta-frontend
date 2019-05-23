@@ -102,7 +102,10 @@ ctx.onmessage = (event => {
             ctx.postMessage(["decompress", event.data[1], {
                 width: eventArgs.width,
                 subsetHeight: eventArgs.subsetHeight,
-                subsetLength: eventArgs.subsetLength
+                subsetLength: eventArgs.subsetLength,
+                requestId: eventArgs.requestId,
+                tileCoordinate: eventArgs.tileCoordinate,
+                layer: eventArgs.layer,
             }], [event.data[1]]);
 
             if (Module.debugOutput) {

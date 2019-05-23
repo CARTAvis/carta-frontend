@@ -24,6 +24,8 @@ export class TileService {
     private readonly pendingRequests: Map<number, boolean>;
     private readonly tileStream: Subject<number>;
     private glContext: WebGLRenderingContext;
+    private readonly workers: Worker[];
+    private compressionRequestCounter: number;
 
     public GetTileStream() {
         return this.tileStream;
@@ -37,9 +39,27 @@ export class TileService {
         this.numPersistentLayers = numPersistentLayers;
         this.lruOccupancy = 0;
         this.persistentOccupancy = 0;
+        this.compressionRequestCounter = 0;
 
         this.tileStream = new Subject<number>();
         this.backendService.getRasterTileStream().subscribe(this.handleStreamedTiles);
+
+        const ZFPWorker = require("worker-loader!zfp_wrapper");
+        this.workers = new Array<Worker>(Math.min(navigator.hardwareConcurrency || 4, 4));
+        for (let i = 0; i < this.workers.length; i++) {
+            this.workers[i] = new ZFPWorker();
+            this.workers[i].onmessage = (event: MessageEvent) => {
+                if (event.data[0] === "ready") {
+                    console.log(`Tile Worker ${i} ready`);
+                } else if (event.data[0] === "decompress") {
+                    const buffer = event.data[1];
+                    const eventArgs = event.data[2];
+                    const length = eventArgs.width * eventArgs.subsetHeight;
+                    const resultArray = new Float32Array(buffer, 0, length);
+                    this.updateStream(resultArray, eventArgs.width, eventArgs.subsetHeight, eventArgs.layer, eventArgs.tileCoordinate);
+                }
+            };
+        }
 
     }
 
@@ -55,7 +75,6 @@ export class TileService {
     }
 
     requestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number) {
-        const numTiles = tiles.length;
         const newRequests = new Array<TileCoordinate>();
         for (const tile of tiles) {
             const encodedCoordinate = tile.encode();
@@ -110,57 +129,54 @@ export class TileService {
             console.error("Unsupported compression type");
         }
 
-        let newTileCount = 0;
         for (let tile of tileMessage.tiles) {
             const encodedCoordinate = TileCoordinate.Encode(tile.x, tile.y, tile.layer);
             // Remove from the requested tile map
             if (this.pendingRequests.has(encodedCoordinate)) {
                 this.pendingRequests.delete(encodedCoordinate);
 
-                let data: Float32Array;
-
                 if (tileMessage.compressionType === CARTA.CompressionType.NONE) {
-                    data = new Float32Array(tile.imageData.buffer.slice(tile.imageData.byteOffset, tile.imageData.byteOffset + tile.imageData.byteLength));
+                    const decompressedData = new Float32Array(tile.imageData.buffer.slice(tile.imageData.byteOffset, tile.imageData.byteOffset + tile.imageData.byteLength));
+                    this.updateStream(decompressedData, tile.width, tile.height, tile.layer, encodedCoordinate);
                 } else {
-                    const tStart = performance.now();
-                    const decompressedData = ZFP.zfpDecompressUint8WASM(tile.imageData, tile.imageData.length, tile.width, tile.height, tileMessage.compressionQuality);
-                    // put NaNs back into data
-                    let decodedIndex = 0;
-                    let fillVal = false;
-                    const nanEncodings = new Int32Array(tile.nanEncodings.slice().buffer);
-                    const N = nanEncodings.length;
-                    for (let i = 0; i < N; i++) {
-                        const L = nanEncodings[i];
-                        if (fillVal) {
-                            decompressedData.fill(NaN, decodedIndex, decodedIndex + L);
-                        }
-                        fillVal = !fillVal;
-                        decodedIndex += L;
-                    }
-
-                    data = decompressedData.slice();
-                    const tStop = performance.now();
-                    const dt = tStop - tStart;
-                    // console.log(`Decompressed ${tile.width}x${tile.height} ZFP tile in ${dt} ms`);
+                    this.asyncDecompressTile(tile, tileMessage.compressionQuality, encodedCoordinate);
                 }
-
-                // Add a new tile if it doesn't already exist in the cache
-                const rasterTile: RasterTile = {
-                    width: tile.width,
-                    height: tile.height,
-                    data,
-                    texture: null // Textures are created on first render
-                };
-                if (tile.layer < this.numPersistentLayers) {
-                    this.persistentTiles.set(encodedCoordinate, rasterTile);
-                } else {
-                    this.cachedTiles.set(encodedCoordinate, rasterTile, this.clearTile);
-                }
-                newTileCount++;
             }
         }
-        this.lruOccupancy = this.cachedTiles.size;
-        this.persistentOccupancy = this.persistentTiles.size;
-        this.tileStream.next(newTileCount);
     };
+
+    private asyncDecompressTile(tile: CARTA.ITileData, precision: number, tileCoordinate: number) {
+        const compressedArray = tile.imageData;
+        const workerIndex = this.compressionRequestCounter % this.workers.length;
+        const nanEncodings32 = new Int32Array(tile.nanEncodings.slice(0).buffer);
+        let compressedView = new Uint8Array(tile.width * tile.height * 4);
+        compressedView.set(compressedArray);
+        this.workers[workerIndex].postMessage(["decompress", compressedView.buffer, {
+                width: tile.width,
+                subsetHeight: tile.height,
+                subsetLength: compressedArray.byteLength,
+                compression: precision,
+                nanEncodings: nanEncodings32,
+                tileCoordinate,
+                layer: tile.layer,
+                requestId: this.compressionRequestCounter
+            }],
+            [compressedView.buffer, nanEncodings32.buffer]);
+        this.compressionRequestCounter++;
+    }
+
+    private updateStream(decompressedData: Float32Array, width: number, height: number, layer: number, encodedCoordinate: number) {
+        const rasterTile: RasterTile = {
+            width,
+            height,
+            data: decompressedData,
+            texture: null // Textures are created on first render
+        };
+        if (layer < this.numPersistentLayers) {
+            this.persistentTiles.set(encodedCoordinate, rasterTile);
+        } else {
+            this.cachedTiles.set(encodedCoordinate, rasterTile, this.clearTile);
+        }
+        this.tileStream.next(1);
+    }
 }
