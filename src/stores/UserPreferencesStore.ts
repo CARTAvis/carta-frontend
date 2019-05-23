@@ -1,13 +1,23 @@
 import {action, observable} from "mobx";
 
+export enum Theme {
+    LIGHT = 0,
+    DARK = 1
+}
+
 export class UserPreferencesStore {
     // user configurable settings
-    @observable darkTheme: boolean;
+    @observable theme: string;
     @observable colorMap: number;
 
-    @action setDarkTheme = () => {
-        this.darkTheme = true;
-    };
+    @action setTheme(theme: string) {
+        this.theme = theme;
+        console.log(this.theme);
+    }
+
+    @action getTheme(): string {
+        return this.theme;
+    }
 
     // for preference UI
     @observable perferenceActiveTab = "global";
@@ -17,6 +27,6 @@ export class UserPreferencesStore {
     }
 
     constructor() {
-        this.darkTheme = false;
+        this.theme = "Light";
     }
 }
