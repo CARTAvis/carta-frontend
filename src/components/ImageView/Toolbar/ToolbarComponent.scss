@@ -4,7 +4,7 @@
     position: absolute;
     margin: 5px;
     transition: opacity 400ms;
-    user-select: text;
+   
     &.docked {
         z-index: 4;
     }
