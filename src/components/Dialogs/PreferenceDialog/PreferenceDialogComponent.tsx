@@ -31,7 +31,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         }
 
         const dialogProps: IDialogProps = {
-            icon: "settings",
+            icon: "heart",
             backdropClassName: "minimal-dialog-backdrop",
             className: className,
             canOutsideClickClose: false,

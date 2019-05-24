@@ -1,10 +1,5 @@
 import {action, observable} from "mobx";
 
-export enum Theme {
-    LIGHT = 0,
-    DARK = 1
-}
-
 export class PreferencesStore {
     // user configurable settings
     @observable scaling: string;
