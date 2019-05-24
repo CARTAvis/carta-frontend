@@ -42,6 +42,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 activeItem={currentTheme}
                 items={themes}
                 itemRenderer={renderTheme}
+                popoverProps={{minimal: true, position: "auto-end", popoverClassName: "themeselect"}}
                 onItemSelect={(theme) => { preferenceStore.setTheme(theme.name); }}
                 filterable={false}
             >
