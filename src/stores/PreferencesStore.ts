@@ -6,9 +6,9 @@ export class PreferencesStore {
     @observable colorMap: string;
 
     // for preference UI
-    @observable perferenceActiveTab = "global";
-    @action setPreferenceActiveTab(tabId: string) {
-        this.perferenceActiveTab = tabId;
+    @observable perferenceSelectedTab = "renderConfig";
+    @action setPreferenceSelectedTab(tabId: string) {
+        this.perferenceSelectedTab = tabId;
     }
 
     constructor() {
