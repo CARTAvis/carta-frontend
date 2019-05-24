@@ -22,6 +22,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             <div className="panel-container">
                 <FormGroup inline={true} label="Scaling"></FormGroup>
                 <FormGroup inline={true} label="Color map"></FormGroup>
+                <FormGroup inline={true} label="Percentile Ranks"></FormGroup>
             </div>
         );
 
