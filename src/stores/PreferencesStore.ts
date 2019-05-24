@@ -7,26 +7,17 @@ export enum Theme {
 
 export class PreferencesStore {
     // user configurable settings
-    @observable theme: string;
-    @observable colorMap: number;
-
-    @action setTheme(theme: string) {
-        this.theme = theme;
-        console.log(this.theme);
-    }
-
-    @action getTheme(): string {
-        return this.theme;
-    }
+    @observable scaling: string;
+    @observable colorMap: string;
 
     // for preference UI
     @observable perferenceActiveTab = "global";
-
     @action setPreferenceActiveTab(tabId: string) {
         this.perferenceActiveTab = tabId;
     }
 
     constructor() {
-        this.theme = "Light";
+        this.scaling= "Linear";
+        this.colorMap = "Blues";
     }
 }

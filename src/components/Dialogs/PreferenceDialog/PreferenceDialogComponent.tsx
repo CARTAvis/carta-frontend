@@ -6,63 +6,22 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
-export class Theme {
-    name: string;
-    icon: IconName;
-
-    constructor(name: string, icon: IconName) {
-        this.name = name;
-        this.icon = icon;
-    }
-}
-
-const ThemeSelect = Select.ofType<Theme>();
-
-export const renderTheme: ItemRenderer<Theme> = (theme, {handleClick, modifiers, query}) => {
-    return (
-        <MenuItem
-            active={modifiers.active}
-            key={theme.name}
-            icon={theme.icon}
-            onClick={handleClick}
-            text={theme.name}
-        />
-    );
-};
-
 @observer
 export class PreferenceDialogComponent extends React.Component<{ appStore: AppStore }> {
-    private getThemes = () => {
-        const preferenceStore = this.props.appStore.preferencesStore;
-        const themes: Theme [] = [{name: "Light", icon: "flash"}, {name: "Dark", icon: "moon"}];
-        const currentTheme: Theme = preferenceStore.getTheme() === "Light" ? themes[0] : themes[1];
-
-        return (
-            <ThemeSelect
-                activeItem={currentTheme}
-                items={themes}
-                itemRenderer={renderTheme}
-                popoverProps={{minimal: true, position: "auto-end", popoverClassName: "themeselect"}}
-                onItemSelect={(theme) => { preferenceStore.setTheme(theme.name); }}
-                filterable={false}
-            >
-                <Button text={currentTheme.name} icon={currentTheme.icon} rightIcon="double-caret-vertical"/>
-            </ThemeSelect>
-        );
-    };
-
     public render() {
         const appStore = this.props.appStore;
         const preferenceStore = appStore.preferencesStore;
 
         const globalPanel = (
             <div className="panel-container">
-                <FormGroup inline={true} label="Theme">{this.getThemes()}</FormGroup>
+                <FormGroup inline={true} label="Theme"></FormGroup>
             </div>
         );
 
         const renderConfigPanel = (
             <div className="panel-container">
+                <FormGroup inline={true} label="Scaling"></FormGroup>
+                <FormGroup inline={true} label="Color map"></FormGroup>
             </div>
         );
 
