@@ -5,7 +5,7 @@ export enum Theme {
     DARK = 1
 }
 
-export class UserPreferencesStore {
+export class PreferencesStore {
     // user configurable settings
     @observable theme: string;
     @observable colorMap: number;

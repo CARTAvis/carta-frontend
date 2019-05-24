@@ -5,7 +5,7 @@ import {CARTA} from "carta-protobuf";
 import {AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore,
         FrameInfo, FrameStore, LogEntry, LogStore, nightPalette,
         OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore,
-        UserPreferencesStore} from ".";
+        PreferencesStore} from ".";
 import {BackendService} from "services";
 import {CursorInfo, FrameView} from "models";
 import {smoothStepOffset} from "utilities";
@@ -32,7 +32,7 @@ export class AppStore {
     // Logs
     @observable logStore: LogStore;
     // User preference
-    @observable preferencesStore: UserPreferencesStore;
+    @observable preferencesStore: PreferencesStore;
 
     // Cursor information
     @observable cursorInfo: CursorInfo;
@@ -376,7 +376,7 @@ export class AppStore {
         this.alertStore = new AlertStore();
         this.overlayStore = new OverlayStore();
         this.widgetsStore = new WidgetsStore(this);
-        this.preferencesStore = new UserPreferencesStore();
+        this.preferencesStore = new PreferencesStore();
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
         this.darkTheme = false;
