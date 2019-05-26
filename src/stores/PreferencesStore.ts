@@ -28,7 +28,7 @@ export class PreferencesStore {
     }
 
     constructor() {
-        this.scaling= FrameScaling.SQUARE;
+        this.scaling = FrameScaling.SQUARE;
         this.colorMap = "Blues";
     }
 }

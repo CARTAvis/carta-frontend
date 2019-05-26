@@ -4,28 +4,12 @@ import {observer} from "mobx-react";
 import {Alert, Button, FormGroup, IPopoverProps, MenuItem, NumericInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {FrameScaling, RenderConfigStore} from "stores/RenderConfigStore";
+import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/ScalingComponent";
 
 // Static assets
 import allMaps from "static/allmaps.png";
-// Equation PNG images
-import linearPng from "static/equations/linear.png";
-import logPng from "static/equations/log.png";
-import sqrtPng from "static/equations/sqrt.png";
-import squaredPng from "static/equations/squared.png";
-import gammaPng from "static/equations/gamma.png";
-import powerPng from "static/equations/power.png";
-
-const equationPngMap = new Map([
-    [FrameScaling.LINEAR, linearPng],
-    [FrameScaling.LOG, logPng],
-    [FrameScaling.SQRT, sqrtPng],
-    [FrameScaling.SQUARE, squaredPng],
-    [FrameScaling.GAMMA, gammaPng],
-    [FrameScaling.POWER, powerPng]
-]);
 
 const ColorMapSelect = Select.ofType<string>();
-const ScalingSelect = Select.ofType<FrameScaling>();
 const HistogramSelect = Select.ofType<boolean>();
 
 interface ColormapConfigProps {
@@ -37,7 +21,6 @@ interface ColormapConfigProps {
     disableHistogramSelect: boolean;
 }
 
-const SCALING_KEYS = Array.from(RenderConfigStore.SCALING_TYPES.keys());
 const SCALING_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 const COLORMAP_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 
@@ -79,22 +62,6 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 key={colormap}
                 onClick={handleClick}
                 text={this.renderColormapBlock(colormap)}
-            />
-        );
-    };
-
-    renderScalingSelectItem = (scaling: FrameScaling, {handleClick, modifiers, query}) => {
-        if (!modifiers.matchesPredicate || !RenderConfigStore.SCALING_TYPES.has(scaling)) {
-            return null;
-        }
-        return (
-            <MenuItem
-                active={modifiers.active}
-                disabled={modifiers.disabled}
-                label={RenderConfigStore.SCALING_TYPES.get(scaling)}
-                key={scaling}
-                onClick={handleClick}
-                text={<div className="equation-div" style={{backgroundImage: `url(${equationPngMap.get(scaling)}`}}/>}
             />
         );
     };
@@ -147,16 +114,10 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 </FormGroup>
                 }
                 <FormGroup label={"Scaling"} inline={true}>
-                    <ScalingSelect
-                        activeItem={renderConfig.scaling}
-                        popoverProps={SCALING_POPOVER_PROPS}
-                        filterable={false}
-                        items={SCALING_KEYS}
+                    <ScalingComponent
+                        selectedItem={renderConfig.scaling}
                         onItemSelect={this.props.renderConfig.setScaling}
-                        itemRenderer={this.renderScalingSelectItem}
-                    >
-                        <Button text={renderConfig.scalingName} rightIcon="double-caret-vertical" alignText={"right"}/>
-                    </ScalingSelect>
+                    />
                 </FormGroup>
 
                 <FormGroup label={"Color map"} inline={true}>
