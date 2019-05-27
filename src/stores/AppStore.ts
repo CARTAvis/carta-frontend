@@ -5,7 +5,7 @@ import {CARTA} from "carta-protobuf";
 import {AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore,
         FrameInfo, FrameStore, LogEntry, LogStore, nightPalette,
         OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore,
-        PreferencesStore} from ".";
+        PreferenceStore} from ".";
 import {BackendService} from "services";
 import {CursorInfo, FrameView} from "models";
 import {smoothStepOffset} from "utilities";
@@ -32,7 +32,7 @@ export class AppStore {
     // Logs
     @observable logStore: LogStore;
     // User preference
-    @observable preferencesStore: PreferencesStore;
+    @observable preferenceStore: PreferenceStore;
 
     // Cursor information
     @observable cursorInfo: CursorInfo;
@@ -191,7 +191,7 @@ export class AppStore {
                 renderMode: CARTA.RenderMode.RASTER
             };
 
-            let newFrame = new FrameStore(this.overlayStore, frameInfo, this.backendService);
+            let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, frameInfo, this.backendService);
             newFrame.fitZoom();
             this.loadWCS(newFrame);
 
@@ -376,7 +376,7 @@ export class AppStore {
         this.alertStore = new AlertStore();
         this.overlayStore = new OverlayStore();
         this.widgetsStore = new WidgetsStore(this);
-        this.preferencesStore = new PreferencesStore();
+        this.preferenceStore = new PreferenceStore();
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
         this.darkTheme = false;

@@ -10,7 +10,7 @@ import "./PreferenceDialogComponent.css";
 export class PreferenceDialogComponent extends React.Component<{ appStore: AppStore }> {
     public render() {
         const appStore = this.props.appStore;
-        const preferenceStore = appStore.preferencesStore;
+        const preferenceStore = appStore.preferenceStore;
 
         const globalPanel = (
             <div className="panel-container">
@@ -22,7 +22,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             <div className="panel-container">
                 <FormGroup inline={true} label="Scaling">
                     <ScalingComponent
-                        selectedItem={preferenceStore.scaling}
+                        selectedItem={preferenceStore.getScaling()}
                         onItemSelect={preferenceStore.setScaling}
                     />
                 </FormGroup>
