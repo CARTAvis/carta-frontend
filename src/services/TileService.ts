@@ -2,7 +2,6 @@ import {Subject} from "rxjs";
 import {observable} from "mobx";
 import LRUCache from "mnemonist/lru-cache";
 import {CARTA} from "carta-protobuf";
-import * as ZFP from "zfp_wrapper";
 import {Point2D, TileCoordinate} from "models";
 import {BackendService} from "services";
 
@@ -13,15 +12,23 @@ export interface RasterTile {
     texture: WebGLTexture;
 }
 
+export interface CompressedTile {
+    tile: CARTA.ITileData;
+    compressionQuality: number;
+}
+
 export class TileService {
-    @observable lruOccupancy: number;
+    @observable gpuLruOccupancy: number;
+    @observable systemLruOccupancy: number;
     @observable persistentOccupancy: number;
 
     private readonly backendService: BackendService;
     private readonly numPersistentLayers: number;
     private readonly persistentTiles: Map<number, RasterTile>;
     private readonly cachedTiles: LRUCache<number, RasterTile>;
+    private readonly cachedCompressedTiles: LRUCache<number, CompressedTile>;
     private readonly pendingRequests: Map<number, boolean>;
+    private readonly pendingDecompressions: Map<number, boolean>;
     private readonly tileStream: Subject<number>;
     private glContext: WebGLRenderingContext;
     private readonly workers: Worker[];
@@ -31,13 +38,21 @@ export class TileService {
         return this.tileStream;
     }
 
-    constructor(backendService: BackendService, numPersistentLayers: number = 4, lruCapacity: number = 512) {
+    constructor(backendService: BackendService, numPersistentLayers: number = 4, lruCapacityGPU: number = 512, lruCapacitySystem = 2048) {
         this.backendService = backendService;
-        this.cachedTiles = new LRUCache<number, RasterTile>(Int32Array, null, lruCapacity);
+
+        // L1 cache: on GPU
+        this.cachedTiles = new LRUCache<number, RasterTile>(Int32Array, null, lruCapacityGPU);
         this.persistentTiles = new Map<number, RasterTile>();
         this.pendingRequests = new Map<number, boolean>();
         this.numPersistentLayers = numPersistentLayers;
-        this.lruOccupancy = 0;
+
+        // L2 cache: compressed tiles on system memory
+        this.cachedCompressedTiles = new LRUCache<number, CompressedTile>(Int32Array, null, lruCapacitySystem);
+        this.pendingDecompressions = new Map<number, boolean>();
+
+        this.gpuLruOccupancy = 0;
+        this.systemLruOccupancy = 0;
         this.persistentOccupancy = 0;
         this.compressionRequestCounter = 0;
 
@@ -60,7 +75,6 @@ export class TileService {
                 }
             };
         }
-
     }
 
     getTile(tileCoordinateEncoded: number, fileId: number, channel: number, stokes: number, peek: boolean = false) {
@@ -81,8 +95,16 @@ export class TileService {
             const tileCached = (tile.layer < this.numPersistentLayers && this.persistentTiles.has(encodedCoordinate))
                 || (tile.layer >= this.numPersistentLayers && this.cachedTiles.has(encodedCoordinate));
             if (!tileCached && !this.pendingRequests.has(encodedCoordinate)) {
-                this.pendingRequests.set(encodedCoordinate, true);
-                newRequests.push(tile);
+                const compressedTile = this.cachedCompressedTiles.get(encodedCoordinate);
+                if (compressedTile && !this.pendingDecompressions.has(encodedCoordinate)) {
+                    // Load from L2 cache instead
+                    this.asyncDecompressTile(compressedTile.tile, compressedTile.compressionQuality, encodedCoordinate);
+                } else if (!compressedTile) {
+                    // Request from backend
+                    this.pendingRequests.set(encodedCoordinate, true);
+                    newRequests.push(tile);
+                }
+
             }
         }
         if (newRequests.length) {
@@ -98,13 +120,18 @@ export class TileService {
         }
     }
 
-    clearCache() {
+    clearCache(clearL2: boolean = true) {
         this.cachedTiles.forEach(this.clearTile);
         this.cachedTiles.clear();
         this.persistentTiles.forEach(this.clearTile);
         this.persistentTiles.clear();
-        this.lruOccupancy = 0;
+        this.gpuLruOccupancy = 0;
         this.persistentOccupancy = 0;
+
+        if (clearL2) {
+            this.cachedCompressedTiles.clear();
+            this.systemLruOccupancy = 0;
+        }
     }
 
     clearRequestQueue() {
@@ -139,7 +166,9 @@ export class TileService {
                     const decompressedData = new Float32Array(tile.imageData.buffer.slice(tile.imageData.byteOffset, tile.imageData.byteOffset + tile.imageData.byteLength));
                     this.updateStream(decompressedData, tile.width, tile.height, tile.layer, encodedCoordinate);
                 } else {
+                    this.cachedCompressedTiles.set(encodedCoordinate, {tile, compressionQuality: tileMessage.compressionQuality}, null);
                     this.asyncDecompressTile(tile, tileMessage.compressionQuality, encodedCoordinate);
+                    this.systemLruOccupancy = this.cachedCompressedTiles.size;
                 }
             }
         }
@@ -151,6 +180,7 @@ export class TileService {
         const nanEncodings32 = new Int32Array(tile.nanEncodings.slice(0).buffer);
         let compressedView = new Uint8Array(tile.width * tile.height * 4);
         compressedView.set(compressedArray);
+        this.pendingDecompressions.set(tileCoordinate, true);
         this.workers[workerIndex].postMessage(["decompress", compressedView.buffer, {
                 width: tile.width,
                 subsetHeight: tile.height,
@@ -177,6 +207,9 @@ export class TileService {
         } else {
             this.cachedTiles.set(encodedCoordinate, rasterTile, this.clearTile);
         }
+        this.pendingDecompressions.delete(encodedCoordinate);
+        this.gpuLruOccupancy = this.cachedTiles.size;
+        this.persistentOccupancy = this.persistentTiles.size;
         this.tileStream.next(1);
     }
 }
