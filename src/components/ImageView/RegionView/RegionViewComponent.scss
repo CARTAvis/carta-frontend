@@ -1,6 +1,7 @@
 .region-stage {
     position: absolute;
     z-index: 1;
+    user-select: none;
     &.docked {
         z-index: 3;
     }
