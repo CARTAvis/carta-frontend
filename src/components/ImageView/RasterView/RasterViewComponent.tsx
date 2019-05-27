@@ -226,26 +226,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexPositionBuffer);
         this.gl.vertexAttribPointer(this.vertexPositionAttribute, 3, WebGLRenderingContext.FLOAT, false, 0, 0);
 
-        // if (frame.overviewRasterData) {
-        //     const adjustedWidth = Math.floor(frame.frameInfo.fileInfoExtended.width / frame.overviewRasterView.mip) * frame.overviewRasterView.mip;
-        //     const adjustedHeight = Math.floor(frame.frameInfo.fileInfoExtended.height / frame.overviewRasterView.mip) * frame.overviewRasterView.mip;
-        //     const overviewLT = {x: (0.5 - full.xMin) / fullWidth, y: (0.5 - full.yMin) / fullHeight};
-        //     const overviewRB = {x: (0.5 + adjustedWidth - full.xMin) / fullWidth, y: (0.5 + adjustedHeight - full.yMin) / fullHeight};
-        //
-        //     const overviewVertices = new Float32Array([
-        //         overviewLT.x, overviewLT.y, 0.5,
-        //         overviewRB.x, overviewLT.y, 0.5,
-        //         overviewLT.x, overviewRB.y, 0.5,
-        //         overviewRB.x, overviewRB.y, 0.5
-        //     ].map(v => -1 + 2 * v));
-        //
-        //     // Switch to TEXTURE2 for overview render
-        //     this.gl.uniform1i(this.DataTexture, 2);
-        //     this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, new Float32Array(overviewVertices), WebGLRenderingContext.STATIC_DRAW);
-        //     this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
-        //     // Switch back to TEXTURE0 for overview main render
-        //     this.gl.uniform1i(this.DataTexture, 0);
-        // }
         // this.gl.uniform1f(this.shaderUniforms.TileWidthCutoff, 1);
         // this.gl.uniform1f(this.shaderUniforms.TileHeightCutoff, 1);
         // this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, new Float32Array(vertices), WebGLRenderingContext.STATIC_DRAW);
@@ -263,7 +243,14 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.gl.activeTexture(WebGLRenderingContext.TEXTURE0);
         this.gl.viewport(0, 0, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
         const requiredTiles = GetRequiredTiles(boundedView, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
-        this.renderTiles(requiredTiles, boundedView.mip);
+        // Special case when zoomed out
+        if (requiredTiles.length === 1 && requiredTiles[0].layer === 0) {
+            const mip = LayerToMip(0, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
+            this.renderTiles(requiredTiles, mip);
+            console.log(boundedView.mip);
+        } else {
+            this.renderTiles(requiredTiles, boundedView.mip);
+        }
     }
 
     private renderTiles(tiles: TileCoordinate[], mip: number, peek: boolean = false) {
