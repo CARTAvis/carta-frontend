@@ -56,6 +56,11 @@ export function GetRequiredTiles(frameView: FrameView, imageSize: Point2D, tileS
         return [];
     }
 
+    const layer = MipToLayer(frameView.mip, imageSize, tileSize);
+    if (layer < 0) {
+        return [new TileCoordinate(0, 0, 0)];
+    }
+
     const boundedFrameView: FrameView = {
         xMin: Math.max(0, frameView.xMin),
         xMax: Math.min(frameView.xMax, imageSize.x),
@@ -74,8 +79,6 @@ export function GetRequiredTiles(frameView: FrameView, imageSize: Point2D, tileS
     const yStart = Math.floor(boundedFrameView.yMin / adjustedTileSize.y);
     const yEnd = Math.ceil(boundedFrameView.yMax / adjustedTileSize.y);
 
-    const layer = MipToLayer(frameView.mip, imageSize, tileSize);
-
     const numTilesX = xEnd - xStart;
     const numTilesY = yEnd - yStart;
     const tileSet: TileCoordinate[] = new Array<TileCoordinate>(numTilesX * numTilesY);
@@ -84,15 +87,5 @@ export function GetRequiredTiles(frameView: FrameView, imageSize: Point2D, tileS
             tileSet[i] = new TileCoordinate(x, y, layer);
         }
     }
-
-    const midPoint = {x: (xStart + xEnd) / 2.0, y: (yStart + yEnd) / 2.0};
-    // return tileSet.sort((a, b) => {
-    //     const aX = midPoint.x - a.x;
-    //     const aY = midPoint.y - a.y;
-    //     const bX = midPoint.x - b.x;
-    //     const bY = midPoint.y - b.y;
-    //     return (aX * aX + aY * aY) - (bX * bX + bY * bY);
-    // });
-
     return tileSet;
 }

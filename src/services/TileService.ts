@@ -91,6 +91,9 @@ export class TileService {
     requestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number) {
         const newRequests = new Array<TileCoordinate>();
         for (const tile of tiles) {
+            if (tile.layer < 0) {
+                continue;
+            }
             const encodedCoordinate = tile.encode();
             const tileCached = (tile.layer < this.numPersistentLayers && this.persistentTiles.has(encodedCoordinate))
                 || (tile.layer >= this.numPersistentLayers && this.cachedTiles.has(encodedCoordinate));
@@ -104,7 +107,6 @@ export class TileService {
                     this.pendingRequests.set(encodedCoordinate, true);
                     newRequests.push(tile);
                 }
-
             }
         }
         if (newRequests.length) {
