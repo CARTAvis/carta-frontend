@@ -4,7 +4,7 @@ import {FrameScaling, RenderConfigStore} from "stores/RenderConfigStore";
 export class PreferenceStore {
     // default settings json
     private static readonly DEFAULT_SETTINGS: string = `{
-        "scaling": 1
+        "scaling": 0
     }`;
     @observable json;
 
