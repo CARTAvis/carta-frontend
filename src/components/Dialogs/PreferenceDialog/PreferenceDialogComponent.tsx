@@ -12,11 +12,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         const appStore = this.props.appStore;
         const preferenceStore = appStore.preferenceStore;
 
-        const globalPanel = (
-            <div className="panel-container">
-                <FormGroup inline={true} label="Theme"></FormGroup>
-            </div>
-        );
+        const globalPanel = (null);
 
         const renderConfigPanel = (
             <div className="panel-container">
@@ -26,8 +22,6 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         onItemSelect={preferenceStore.setScaling}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Color map"></FormGroup>
-                <FormGroup inline={true} label="Percentile Ranks"></FormGroup>
             </div>
         );
 
