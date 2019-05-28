@@ -5,11 +5,8 @@ import {Alert, Button, FormGroup, IPopoverProps, MenuItem, NumericInput} from "@
 import {Select} from "@blueprintjs/select";
 import {FrameScaling, RenderConfigStore} from "stores/RenderConfigStore";
 import {ScalingComponent} from "./ScalingComponent";
+import {ColormapComponent} from "./ColormapComponent";
 
-// Static assets
-import allMaps from "static/allmaps.png";
-
-const ColorMapSelect = Select.ofType<string>();
 const HistogramSelect = Select.ofType<boolean>();
 
 interface ColormapConfigProps {
@@ -22,49 +19,11 @@ interface ColormapConfigProps {
 }
 
 const SCALING_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
-const COLORMAP_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 
 @observer
 export class ColormapConfigComponent extends React.Component<ColormapConfigProps> {
 
     @observable showCubeHistogramAlert: boolean;
-
-    renderColormapBlock = (colormap: string) => {
-        let className = "colormap-block";
-        if (this.props.darkTheme) {
-            className += " bp3-dark";
-        }
-        const blockHeight = 15;
-        const N = RenderConfigStore.COLOR_MAPS_ALL.length;
-        const i = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
-        return (
-            <div
-                className={className}
-                style={{
-                    height: `${blockHeight}px`,
-                    backgroundImage: `url(${allMaps})`,
-                    backgroundSize: `100% calc(300% * ${N})`,
-                    backgroundPosition: `0 calc(300% * -${i} - ${blockHeight}px)`,
-                }}
-            />
-        );
-    };
-
-    renderColormapSelectItem = (colormap: string, {handleClick, modifiers, query}) => {
-        if (!modifiers.matchesPredicate) {
-            return null;
-        }
-        return (
-            <MenuItem
-                active={modifiers.active}
-                disabled={modifiers.disabled}
-                label={colormap}
-                key={colormap}
-                onClick={handleClick}
-                text={this.renderColormapBlock(colormap)}
-            />
-        );
-    };
 
     renderHistogramSelectItem = (isCube: boolean, {handleClick, modifiers, query}) => {
         return <MenuItem text={isCube ? "Per-Cube" : "Per-Channel"} onClick={handleClick} key={isCube ? "cube" : "channel"}/>;
@@ -119,18 +78,11 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         onItemSelect={this.props.renderConfig.setScaling}
                     />
                 </FormGroup>
-
                 <FormGroup label={"Color map"} inline={true}>
-                    <ColorMapSelect
-                        activeItem={renderConfig.colorMapName}
-                        popoverProps={COLORMAP_POPOVER_PROPS}
-                        filterable={false}
-                        items={RenderConfigStore.COLOR_MAPS_SELECTED}
+                    <ColormapComponent
+                        selectedItem={renderConfig.colorMapName}
                         onItemSelect={this.props.renderConfig.setColorMap}
-                        itemRenderer={this.renderColormapSelectItem}
-                    >
-                        <Button text={this.renderColormapBlock(renderConfig.colorMapName)} rightIcon="double-caret-vertical" alignText={"right"}/>
-                    </ColorMapSelect>
+                    />
                 </FormGroup>
                 {renderConfig.scaling === FrameScaling.GAMMA &&
                 <FormGroup label={"Gamma"} inline={true}>
