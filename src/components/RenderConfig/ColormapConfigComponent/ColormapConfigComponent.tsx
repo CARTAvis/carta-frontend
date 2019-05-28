@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Alert, Button, FormGroup, IPopoverProps, MenuItem, NumericInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {FrameScaling, RenderConfigStore} from "stores/RenderConfigStore";
-import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/ScalingComponent";
+import {ScalingComponent} from "./ScalingComponent";
 
 // Static assets
 import allMaps from "static/allmaps.png";
