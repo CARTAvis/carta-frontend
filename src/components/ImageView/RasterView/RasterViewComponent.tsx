@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {FrameStore, OverlayStore} from "stores";
 import {FrameView, TileCoordinate} from "models";
 import {RasterTile, TileService} from "services/TileService";
-import {GetRequiredTiles, LayerToMip} from "utilities";
+import {GetRequiredTiles, getShaderProgram, LayerToMip, loadFP32Texture, loadImageTexture} from "utilities";
 import "./RasterViewComponent.css";
 import allMaps from "static/allmaps.png";
 
@@ -46,7 +46,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private hasFloatLinearExtension: boolean;
     // GL buffers
     private rasterDataBuffer: ArrayBufferLike;
-    private overviewRasterDataBuffer: ArrayBufferLike;
     private cmapTexture: WebGLTexture;
     private vertexPositionBuffer: WebGLBuffer;
     private vertexUVBuffer: WebGLBuffer;
@@ -58,38 +57,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     componentDidMount() {
         if (this.canvas) {
-            try {
-                this.gl = this.canvas.getContext("webgl", {preserveDrawingBuffer: true});
-                if (!this.gl) {
-                    return;
-                }
-                this.props.tileService.setContext(this.gl);
-            } catch (e) {
-                console.log(e);
-            }
-            if (!this.gl) {
-                console.log("Could not initialise WebGL");
-            }
 
-            const extTextureFloat = this.gl.getExtension("OES_texture_float");
-
-            if (!extTextureFloat) {
-                console.log("Could not initialise WebGL float texture extension");
-                this.hasFloatExtension = false;
-            } else {
-                this.hasFloatExtension = true;
-                const extTextureFloatLinear = this.gl.getExtension("OES_texture_float_linear");
-                if (!extTextureFloatLinear) {
-                    console.log("Could not initialise WebGL linear float extension");
-                    this.hasFloatLinearExtension = false;
-                } else {
-                    this.hasFloatExtension = true;
-                }
-            }
-
+            this.initWebGL();
             this.initShaders();
             this.initBuffers();
-            this.loadImageTexture(allMaps, WebGLRenderingContext.TEXTURE1).then(texture => {
+            loadImageTexture(this.gl, allMaps, WebGLRenderingContext.TEXTURE1).then(texture => {
                 this.cmapTexture = texture;
                 this.updateCanvas();
             });
@@ -101,6 +73,37 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     componentDidUpdate() {
         requestAnimationFrame(this.updateCanvas);
+    }
+
+    private initWebGL() {
+        try {
+            this.gl = this.canvas.getContext("webgl", {preserveDrawingBuffer: true});
+            if (!this.gl) {
+                return;
+            }
+            this.props.tileService.setContext(this.gl);
+        } catch (e) {
+            console.log(e);
+        }
+        if (!this.gl) {
+            console.log("Could not initialise WebGL");
+        }
+
+        const extTextureFloat = this.gl.getExtension("OES_texture_float");
+
+        if (!extTextureFloat) {
+            console.log("Could not initialise WebGL float texture extension");
+            this.hasFloatExtension = false;
+        } else {
+            this.hasFloatExtension = true;
+            const extTextureFloatLinear = this.gl.getExtension("OES_texture_float_linear");
+            if (!extTextureFloatLinear) {
+                console.log("Could not initialise WebGL linear float extension");
+                this.hasFloatLinearExtension = false;
+            } else {
+                this.hasFloatExtension = true;
+            }
+        }
     }
 
     private updateCanvas = () => {
@@ -115,34 +118,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             //     if (frame.rasterData.buffer !== this.rasterDataBuffer) {
             //         this.updateTexture();
             //     }
-            //     if (frame.overviewRasterData && frame.overviewRasterData.buffer !== this.overviewRasterDataBuffer) {
-            //         this.updateOverviewTexture();
-            //     }
             //     this.updateUniforms();
             //     this.renderCanvas();
             // }
         }
     };
-
-    private loadImageTexture(url: string, texIndex: number): Promise<WebGLTexture> {
-        return new Promise<WebGLTexture>((resolve, reject) => {
-            const image = new Image();
-            // Replace the existing texture with the real one once loaded
-            image.onload = () => {
-                const imageTexture = this.gl.createTexture();
-                this.gl.activeTexture(texIndex);
-                this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, imageTexture);
-                this.gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.RGB, WebGLRenderingContext.RGB, WebGLRenderingContext.UNSIGNED_BYTE, image);
-                this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_WRAP_S, WebGLRenderingContext.CLAMP_TO_EDGE);
-                this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_WRAP_T, WebGLRenderingContext.CLAMP_TO_EDGE);
-                this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, WebGLRenderingContext.NEAREST);
-                this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, WebGLRenderingContext.NEAREST);
-                resolve(imageTexture);
-            };
-            image.onerror = () => reject(`Error loading image ${url}`);
-            image.src = url;
-        });
-    }
 
     private updateTexture() {
         const frame = this.props.frame;
@@ -152,18 +132,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             console.log(`Data mismatch! L=${frame.rasterData ? frame.rasterData.length : "null"}, WxH = ${w}x${h}=${w * h}`);
             return;
         } else {
-            this.loadFP32Texture(frame.rasterData, w, h, w, h, WebGLRenderingContext.TEXTURE0);
+            loadFP32Texture(this.gl, frame.rasterData, w, h, w, h, WebGLRenderingContext.TEXTURE0);
             this.rasterDataBuffer = frame.rasterData.buffer;
-        }
-    }
-
-    private updateOverviewTexture() {
-        const frame = this.props.frame;
-        if (frame.overviewRasterData) {
-            const overviewW = Math.floor((frame.overviewRasterView.xMax - frame.overviewRasterView.xMin) / frame.overviewRasterView.mip);
-            const overviewH = Math.floor((frame.overviewRasterView.yMax - frame.overviewRasterView.yMin) / frame.overviewRasterView.mip);
-            this.loadFP32Texture(frame.overviewRasterData, overviewW, overviewH, overviewW, overviewH, WebGLRenderingContext.TEXTURE2);
-            this.overviewRasterDataBuffer = frame.overviewRasterData.buffer;
         }
     }
 
@@ -217,8 +187,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             y: viewportMax.y - viewportMin.y
         };
 
-        this.gl.viewport(viewportMin.x, viewportMin.y, viewportSize.x, viewportSize.y);
-
         this.gl.enable(WebGLRenderingContext.DEPTH_TEST);
         this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexUVBuffer);
@@ -228,6 +196,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         // this.gl.uniform1f(this.shaderUniforms.TileWidthCutoff, 1);
         // this.gl.uniform1f(this.shaderUniforms.TileHeightCutoff, 1);
+        // TODO: render raster image data properly again using new scaling uniforms
+        // this.gl.viewport(viewportMin.x, viewportMin.y, viewportSize.x, viewportSize.y);
         // this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, new Float32Array(vertices), WebGLRenderingContext.STATIC_DRAW);
         // this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
 
@@ -299,7 +269,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
 
             const textureMip = LayerToMip(tile.layer, {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height}, {x: TILE_SIZE, y: TILE_SIZE});
-            this.loadFP32Texture(rasterTile.data, TILE_SIZE, TILE_SIZE, rasterTile.width, rasterTile.height, WebGLRenderingContext.TEXTURE0, textureMip <= 1 ? WebGLRenderingContext.NEAREST : WebGLRenderingContext.LINEAR);
+            let filterType = textureMip <= 1 ? WebGLRenderingContext.NEAREST : WebGLRenderingContext.LINEAR;
+            if (!this.hasFloatLinearExtension) {
+                filterType = WebGLRenderingContext.NEAREST;
+            }
+            loadFP32Texture(this.gl, rasterTile.data, TILE_SIZE, TILE_SIZE, rasterTile.width, rasterTile.height, WebGLRenderingContext.TEXTURE0, filterType);
             delete rasterTile.data;
         } else {
             this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
@@ -327,40 +301,13 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
     }
 
-    private getShaderFromString(shaderScript: string, type: number) {
-        if (!shaderScript || !(type === WebGLRenderingContext.VERTEX_SHADER || type === WebGLRenderingContext.FRAGMENT_SHADER)) {
-            return null;
-        }
-
-        let shader = this.gl.createShader(type);
-        this.gl.shaderSource(shader, shaderScript);
-        this.gl.compileShader(shader);
-        if (!this.gl.getShaderParameter(shader, WebGLRenderingContext.COMPILE_STATUS)) {
-            console.log(this.gl.getShaderInfoLog(shader));
-            return null;
-        }
-        return shader;
-    }
-
     private initShaders() {
-        let vertexShader = this.getShaderFromString(vertShader, WebGLRenderingContext.VERTEX_SHADER);
-        let fragmentShader = this.getShaderFromString(pixelShaderSimple, WebGLRenderingContext.FRAGMENT_SHADER);
-
-        let shaderProgram = this.gl.createProgram();
-        this.gl.attachShader(shaderProgram, vertexShader);
-        this.gl.attachShader(shaderProgram, fragmentShader);
-        this.gl.linkProgram(shaderProgram);
-
-        if (!this.gl.getProgramParameter(shaderProgram, WebGLRenderingContext.LINK_STATUS)) {
-            console.log("Could not initialise shaders");
-        }
-
+        const shaderProgram = getShaderProgram(this.gl, vertShader, pixelShaderSimple);
         this.gl.useProgram(shaderProgram);
 
         this.vertexPositionAttribute = this.gl.getAttribLocation(shaderProgram, "aVertexPosition");
-        this.gl.enableVertexAttribArray(this.vertexPositionAttribute);
-
         this.vertexUVAttribute = this.gl.getAttribLocation(shaderProgram, "aVertexUV");
+        this.gl.enableVertexAttribArray(this.vertexPositionAttribute);
         this.gl.enableVertexAttribArray(this.vertexUVAttribute);
 
         this.shaderUniforms = {
@@ -426,30 +373,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const texture = this.gl.createTexture();
         this.gl.activeTexture(WebGLRenderingContext.TEXTURE0);
         this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
-
-        // Create a texture.
-        const textureOverview = this.gl.createTexture();
-        this.gl.activeTexture(WebGLRenderingContext.TEXTURE2);
-        this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, textureOverview);
-    }
-
-    private loadFP32Texture(data: Float32Array, width: number, height: number, dataWidth: number, dataHeight: number, texIndex: number, filtering: number = WebGLRenderingContext.LINEAR) {
-        this.gl.activeTexture(texIndex);
-        if (dataWidth === width && dataHeight === height) {
-            this.gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.LUMINANCE, width, height, 0, WebGLRenderingContext.LUMINANCE, WebGLRenderingContext.FLOAT, data);
-        } else {
-            this.gl.texImage2D(WebGLRenderingContext.TEXTURE_2D, 0, WebGLRenderingContext.LUMINANCE, width, height, 0, WebGLRenderingContext.LUMINANCE, WebGLRenderingContext.FLOAT, null);
-            this.gl.texSubImage2D(WebGLRenderingContext.TEXTURE_2D, 0, 0, 0, dataWidth, dataHeight, WebGLRenderingContext.LUMINANCE, WebGLRenderingContext.FLOAT, data);
-        }
-        if (!this.hasFloatLinearExtension) {
-            filtering = WebGLRenderingContext.NEAREST;
-        }
-
-        // set the filtering so we don't need mips and it's not filtered
-        this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, filtering);
-        this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, filtering);
-        this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_WRAP_S, WebGLRenderingContext.CLAMP_TO_EDGE);
-        this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_WRAP_T, WebGLRenderingContext.CLAMP_TO_EDGE);
     }
 
     render() {

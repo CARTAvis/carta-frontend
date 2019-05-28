@@ -38,7 +38,7 @@ export class TileService {
         return this.tileStream;
     }
 
-    constructor(backendService: BackendService, numPersistentLayers: number = 4, lruCapacityGPU: number = 512, lruCapacitySystem = 2048) {
+    constructor(backendService: BackendService, numPersistentLayers: number = 4, lruCapacityGPU: number = 512, lruCapacitySystem: number = 2048) {
         this.backendService = backendService;
 
         // L1 cache: on GPU
