@@ -2,7 +2,10 @@ import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable, ObservableMap} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore, FrameInfo, FrameStore, LogEntry, LogStore, nightPalette, OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore} from ".";
+import {AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore,
+        FrameInfo, FrameStore, LogEntry, LogStore, nightPalette,
+        OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore,
+        PreferenceStore} from ".";
 import {BackendService} from "services";
 import {CursorInfo, FrameView, Point2D} from "models";
 import {GetRequiredTiles, smoothStepOffset} from "utilities";
@@ -31,6 +34,8 @@ export class AppStore {
     @observable alertStore: AlertStore;
     // Logs
     @observable logStore: LogStore;
+    // User preference
+    @observable preferenceStore: PreferenceStore;
 
     // Cursor information
     @observable cursorInfo: CursorInfo;
@@ -115,6 +120,15 @@ export class AppStore {
         this.apiKeyDialogVisible = false;
     };
 
+    // User preference dialog
+    @observable preferenceDialogVisible: boolean;
+    @action showPreferenceDialog = () => {
+        this.preferenceDialogVisible = true;
+    };
+    @action hidePreferenceDialog = () => {
+        this.preferenceDialogVisible = false;
+    };
+
     // Tasks
     @observable taskProgress: number;
     @observable taskStartTime: number;
@@ -182,8 +196,7 @@ export class AppStore {
 
             this.tileService.clearCache();
             this.tileService.clearRequestQueue();
-
-            let newFrame = new FrameStore(this.overlayStore, frameInfo, this.backendService);
+            let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, frameInfo, this.backendService);
             newFrame.fitZoom();
             this.loadWCS(newFrame);
 
@@ -369,6 +382,7 @@ export class AppStore {
         this.alertStore = new AlertStore();
         this.overlayStore = new OverlayStore();
         this.widgetsStore = new WidgetsStore(this);
+        this.preferenceStore = new PreferenceStore();
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
         this.darkTheme = false;

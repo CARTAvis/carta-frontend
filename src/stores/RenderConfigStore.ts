@@ -1,4 +1,5 @@
 import {action, computed, observable} from "mobx";
+import {PreferenceStore} from "stores";
 import {CARTA} from "carta-protobuf";
 import {clamp} from "utilities";
 
@@ -64,13 +65,13 @@ export class RenderConfigStore {
     @observable scaleMin: number[];    
     @observable scaleMax: number[];
     
-    constructor() {
+    constructor(preference: PreferenceStore) {
         this.selectedPercentile = [99.9, 99.9, 99.9, 99.9];
         this.bias = 0;
         this.contrast = 1;
         this.gamma = 1;
         this.alpha = 1000;
-        this.scaling = FrameScaling.LINEAR;
+        this.scaling = preference.getScaling();
         this.cubeHistogramProgress = 0;
         this.setColorMap("inferno");
         this.stokes = 0;	
