@@ -28,6 +28,15 @@ export class PreferenceStore {
 
     constructor() {
         const preference = localStorage.getItem("CARTA_preference");
-        this.json = JSON.parse(preference ? preference : PreferenceStore.DEFAULT_SETTINGS);
+        if (preference) {
+            try {
+                this.json = JSON.parse(preference);
+            } catch (e) {
+                console.log("parse CARTA_preference from local storage error");
+                this.json = JSON.parse(PreferenceStore.DEFAULT_SETTINGS);
+            }
+        } else {
+            this.json = JSON.parse(PreferenceStore.DEFAULT_SETTINGS);
+        }
     }
 }
