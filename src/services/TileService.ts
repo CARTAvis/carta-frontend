@@ -29,6 +29,7 @@ export class TileService {
     private readonly cachedCompressedTiles: LRUCache<number, CompressedTile>;
     private readonly pendingRequests: Map<number, boolean>;
     private readonly pendingDecompressions: Map<number, boolean>;
+    private readonly channelMap: Map<number, { channel: number, stokes: number }>;
     private readonly tileStream: Subject<number>;
     private glContext: WebGLRenderingContext;
     private readonly workers: Worker[];
@@ -40,6 +41,7 @@ export class TileService {
 
     constructor(backendService: BackendService, numPersistentLayers: number = 4, lruCapacityGPU: number = 512, lruCapacitySystem: number = 2048) {
         this.backendService = backendService;
+        this.channelMap = new Map<number, { channel: number, stokes: number }>();
 
         // L1 cache: on GPU
         this.cachedTiles = new LRUCache<number, RasterTile>(Int32Array, null, lruCapacityGPU);
@@ -89,6 +91,20 @@ export class TileService {
     }
 
     requestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number) {
+        let setChannel = false;
+        const currentChannels = this.channelMap.get(fileId);
+        if (currentChannels) {
+            setChannel = (channel !== currentChannels.channel || stokes !== currentChannels.stokes);
+        } else {
+            setChannel = true;
+        }
+
+        if (setChannel) {
+            this.clearCache();
+            this.clearRequestQueue();
+            this.channelMap.set(fileId, {channel, stokes});
+        }
+
         const newRequests = new Array<TileCoordinate>();
         for (const tile of tiles) {
             if (tile.layer < 0) {
@@ -109,6 +125,7 @@ export class TileService {
                 }
             }
         }
+
         if (newRequests.length) {
             // sort by distance to midpoint and encode
             const sortedRequests = newRequests.sort((a, b) => {
@@ -118,7 +135,11 @@ export class TileService {
                 const bY = focusPoint.y - b.y;
                 return (aX * aX + aY * aY) - (bX * bX + bY * bY);
             }).map(tile => tile.encode());
-            this.backendService.addRequiredTiles(fileId, sortedRequests, compressionQuality);
+            if (setChannel) {
+                this.backendService.setChannels(fileId, channel, stokes, {fileId, compressionQuality, compressionType: CARTA.CompressionType.ZFP, tiles: sortedRequests});
+            } else {
+                this.backendService.addRequiredTiles(fileId, sortedRequests, compressionQuality);
+            }
         }
     }
 
@@ -156,6 +177,12 @@ export class TileService {
     private handleStreamedTiles = (tileMessage: CARTA.IRasterTileData) => {
         if (tileMessage.compressionType !== CARTA.CompressionType.NONE && tileMessage.compressionType !== CARTA.CompressionType.ZFP) {
             console.error("Unsupported compression type");
+        }
+
+        const currentChannels = this.channelMap.get(tileMessage.fileId);
+        // Ignore stale tiles that don't match the currently required tiles
+        if (!currentChannels || currentChannels.channel !== tileMessage.channel || currentChannels.stokes !== tileMessage.stokes) {
+            return;
         }
 
         for (let tile of tileMessage.tiles) {
