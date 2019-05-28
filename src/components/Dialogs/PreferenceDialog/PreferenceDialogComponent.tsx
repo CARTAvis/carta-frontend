@@ -1,6 +1,7 @@
 import * as React from "react";
+import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {Button, IDialogProps, Intent, Tab, Tabs, FormGroup} from "@blueprintjs/core";
+import {Button, IDialogProps, Intent, Tab, Tabs, FormGroup, TabId} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/ScalingComponent";
 import {AppStore} from "stores";
@@ -8,6 +9,8 @@ import "./PreferenceDialogComponent.css";
 
 @observer
 export class PreferenceDialogComponent extends React.Component<{ appStore: AppStore }> {
+    @observable selectedTab: TabId = "renderConfig";
+
     public render() {
         const appStore = this.props.appStore;
         const preferenceStore = appStore.preferenceStore;
@@ -47,8 +50,8 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     <Tabs
                         id="preferenceTabs"
                         vertical={true}
-                        selectedTabId={preferenceStore.preferenceSelectedTab}
-                        onChange={(tabId) => preferenceStore.setPreferenceSelectedTab(String(tabId))}
+                        selectedTabId={this.selectedTab}
+                        onChange={(tabId) => this.selectedTab = tabId}
                     >
                         <Tab id="global" title="Global" panel={globalPanel}/>
                         <Tab id="renderConfig" title="Default Render Config" panel={renderConfigPanel}/>

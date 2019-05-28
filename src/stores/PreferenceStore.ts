@@ -6,6 +6,7 @@ export class PreferenceStore {
     private static readonly DEFAULT_SETTINGS: string = `{
         "scaling": 0
     }`;
+
     @observable json;
 
     // user configurable settings
@@ -20,19 +21,13 @@ export class PreferenceStore {
         }
     };
 
-    // for preference UI
-    @observable preferenceSelectedTab = "renderConfig";
-    @action setPreferenceSelectedTab(tabId: string) {
-        this.preferenceSelectedTab = tabId;
-    }
-
     constructor() {
         const preference = localStorage.getItem("CARTA_preference");
         if (preference) {
             try {
                 this.json = JSON.parse(preference);
             } catch (e) {
-                console.log("parse CARTA_preference from local storage error");
+                console.log("parse CARTA_preference from local storage error.");
                 this.json = JSON.parse(PreferenceStore.DEFAULT_SETTINGS);
             }
         } else {
