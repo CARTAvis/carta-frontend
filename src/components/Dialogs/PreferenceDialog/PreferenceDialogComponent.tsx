@@ -51,7 +51,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         onChange={(tabId) => preferenceStore.setPreferenceSelectedTab(String(tabId))}
                     >
                         <Tab id="global" title="Global" panel={globalPanel}/>
-                        <Tab id="renderConfig" title="Render Config" panel={renderConfigPanel}/>
+                        <Tab id="renderConfig" title="Default Render Config" panel={renderConfigPanel}/>
                     </Tabs>
                 </div>
                 <div className="bp3-dialog-footer">
