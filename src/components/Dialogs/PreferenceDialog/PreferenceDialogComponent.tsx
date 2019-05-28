@@ -47,7 +47,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     <Tabs
                         id="preferenceTabs"
                         vertical={true}
-                        selectedTabId={preferenceStore.perferenceSelectedTab}
+                        selectedTabId={preferenceStore.preferenceSelectedTab}
                         onChange={(tabId) => preferenceStore.setPreferenceSelectedTab(String(tabId))}
                     >
                         <Tab id="global" title="Global" panel={globalPanel}/>

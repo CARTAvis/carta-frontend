@@ -21,9 +21,9 @@ export class PreferenceStore {
     };
 
     // for preference UI
-    @observable perferenceSelectedTab = "renderConfig";
+    @observable preferenceSelectedTab = "renderConfig";
     @action setPreferenceSelectedTab(tabId: string) {
-        this.perferenceSelectedTab = tabId;
+        this.preferenceSelectedTab = tabId;
     }
 
     constructor() {
