@@ -4,6 +4,7 @@ import {observer} from "mobx-react";
 import {Button, IDialogProps, Intent, Tab, Tabs, FormGroup, TabId} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/ScalingComponent";
+import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
 import {AppStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
@@ -23,6 +24,12 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     <ScalingComponent
                         selectedItem={preferenceStore.getScaling()}
                         onItemSelect={preferenceStore.setScaling}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Color map">
+                    <ColormapComponent
+                        selectedItem={preferenceStore.getColormap()}
+                        onItemSelect={preferenceStore.setColormap}
                     />
                 </FormGroup>
             </div>

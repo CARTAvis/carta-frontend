@@ -73,7 +73,7 @@ export class RenderConfigStore {
         this.alpha = 1000;
         this.scaling = preference.getScaling();
         this.cubeHistogramProgress = 0;
-        this.setColorMap("inferno");
+        this.setColorMap(preference.getColormap());
         this.stokes = 0;	
         this.scaleMin = [0, 0, 0, 0];
         this.scaleMax = [1, 1, 1, 1];
