@@ -31,14 +31,14 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         }
 
         const dialogProps: IDialogProps = {
-            icon: "heart",
+            icon: "cog",
             backdropClassName: "minimal-dialog-backdrop",
             className: className,
             canOutsideClickClose: false,
             lazy: true,
             isOpen: appStore.preferenceDialogVisible,
             onClose: appStore.hidePreferenceDialog,
-            title: "Preference",
+            title: "Preferences",
         };
 
         return (
