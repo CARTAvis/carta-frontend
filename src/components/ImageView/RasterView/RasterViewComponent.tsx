@@ -35,6 +35,8 @@ interface ShaderUniforms {
     TileSize: WebGLUniformLocation;
     TileScaling: WebGLUniformLocation;
     TileOffset: WebGLUniformLocation;
+    TextureOffset: WebGLUniformLocation;
+    TextureScaling: WebGLUniformLocation;
     TileBorder: WebGLUniformLocation;
 }
 
@@ -57,7 +59,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     componentDidMount() {
         if (this.canvas) {
-
             this.initWebGL();
             this.initShaders();
             this.initBuffers();
@@ -71,6 +72,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         });
     }
 
+    componentWillUnmount() {
+        if (this.props.tileService) {
+            this.props.tileService.clearTextures();
+        }
+    }
+
     componentDidUpdate() {
         requestAnimationFrame(this.updateCanvas);
     }
@@ -81,7 +88,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             if (!this.gl) {
                 return;
             }
-            this.props.tileService.setContext(this.gl);
         } catch (e) {
             console.log(e);
         }
@@ -104,6 +110,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 this.hasFloatExtension = true;
             }
         }
+        this.props.tileService.setContext(this.gl);
     }
 
     private updateCanvas = () => {
@@ -261,22 +268,37 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             return;
         }
 
-        let texture = rasterTile.texture;
-
-        if (!texture) {
-            texture = this.gl.createTexture();
-            rasterTile.texture = texture;
-            this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
-
-            const textureMip = LayerToMip(tile.layer, {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height}, {x: TILE_SIZE, y: TILE_SIZE});
-            let filterType = textureMip <= 1 ? WebGLRenderingContext.NEAREST : WebGLRenderingContext.LINEAR;
-            if (!this.hasFloatLinearExtension) {
-                filterType = WebGLRenderingContext.NEAREST;
-            }
-            loadFP32Texture(this.gl, rasterTile.data, TILE_SIZE, TILE_SIZE, rasterTile.width, rasterTile.height, WebGLRenderingContext.TEXTURE0, filterType);
+        if (rasterTile.data) {
+            this.props.tileService.uploadTileToGPU(rasterTile);
             delete rasterTile.data;
-        } else {
-            this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
+        }
+
+        // let texture = rasterTile.texture;
+        //
+        // if (!texture) {
+        //
+        //     this.props.tileService.uploadTileToGPU(rasterTile);
+        //
+        //     texture = this.gl.createTexture();
+        //     rasterTile.texture = texture;
+        //     this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
+        //
+        //     const textureMip = LayerToMip(tile.layer, {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height}, {x: TILE_SIZE, y: TILE_SIZE});
+        //     let filterType = textureMip <= 1 ? WebGLRenderingContext.NEAREST : WebGLRenderingContext.LINEAR;
+        //     if (!this.hasFloatLinearExtension) {
+        //         filterType = WebGLRenderingContext.NEAREST;
+        //     }
+        //     loadFP32Texture(this.gl, rasterTile.data, TILE_SIZE, TILE_SIZE, rasterTile.width, rasterTile.height, WebGLRenderingContext.TEXTURE0, filterType);
+        //     delete rasterTile.data;
+        // } else {
+        //     this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
+        // }
+
+        const textureParameters = this.props.tileService.getTileTextureParameters(rasterTile);
+        if (textureParameters) {
+            this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, textureParameters.texture);
+            this.gl.uniform2f(this.shaderUniforms.TextureOffset, textureParameters.xOffset, textureParameters.yOffset);
+            this.gl.uniform2f(this.shaderUniforms.TextureScaling, textureParameters.xScaling, textureParameters.yScaling);
         }
 
         const full = frame.requiredFrameView;
@@ -326,6 +348,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             TileSize: this.gl.getUniformLocation(shaderProgram, "uTileSize"),
             TileScaling: this.gl.getUniformLocation(shaderProgram, "uTileScaling"),
             TileOffset: this.gl.getUniformLocation(shaderProgram, "uTileOffset"),
+            TextureOffset: this.gl.getUniformLocation(shaderProgram, "uTextureOffset"),
+            TextureScaling: this.gl.getUniformLocation(shaderProgram, "uTextureScaling"),
             TileBorder: this.gl.getUniformLocation(shaderProgram, "uTileBorder")
         };
 

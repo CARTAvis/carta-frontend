@@ -4,18 +4,23 @@ import LRUCache from "mnemonist/lru-cache";
 import {CARTA} from "carta-protobuf";
 import {Point2D, TileCoordinate} from "models";
 import {BackendService} from "services";
+import {copyToFP32Texture, createFP32Texture} from "../utilities";
 
 export interface RasterTile {
     data: Float32Array;
     width: number;
     height: number;
-    texture: WebGLTexture;
+    textureCoordinate: number;
 }
 
 export interface CompressedTile {
     tile: CARTA.ITileData;
     compressionQuality: number;
 }
+
+const TEXTURE_SIZE = 4096;
+const TILE_SIZE = 256;
+const MAX_TEXTURES = 8;
 
 export class TileService {
     @observable gpuLruOccupancy: number;
@@ -32,6 +37,8 @@ export class TileService {
     private readonly channelMap: Map<number, { channel: number, stokes: number }>;
     private readonly tileStream: Subject<number>;
     private glContext: WebGLRenderingContext;
+    private textureArray: Array<WebGLTexture>;
+    private textureCoordinateQueue: Array<number>;
     private readonly workers: Worker[];
     private compressionRequestCounter: number;
 
@@ -39,11 +46,26 @@ export class TileService {
         return this.tileStream;
     }
 
-    constructor(backendService: BackendService, numPersistentLayers: number = 4, lruCapacityGPU: number = 512, lruCapacitySystem: number = 2048) {
+    constructor(backendService: BackendService, numPersistentLayers: number = 4, lruCapacityGPU: number = 512, lruCapacitySystem: number = 4096) {
         this.backendService = backendService;
         this.channelMap = new Map<number, { channel: number, stokes: number }>();
 
+        // TODO: calculate this properly
+        const numPersistentTiles = 85;
+        const totalTiles = lruCapacityGPU + numPersistentTiles;
+
         // L1 cache: on GPU
+        const numTilesPerTexture = (TEXTURE_SIZE * TEXTURE_SIZE) / (TILE_SIZE * TILE_SIZE);
+        const numTextures = Math.min(Math.ceil(totalTiles / numTilesPerTexture), MAX_TEXTURES);
+        lruCapacityGPU = numTextures * numTilesPerTexture - numPersistentTiles;
+        console.log(`lruGPU capacity rounded to : ${lruCapacityGPU}`);
+        this.textureCoordinateQueue = new Array<number>(totalTiles);
+
+        for (let i = 0; i < totalTiles; i++) {
+            this.textureCoordinateQueue[i] = totalTiles - 1 - i;
+        }
+
+        this.textureArray = new Array<WebGLTexture>(numTextures);
         this.cachedTiles = new LRUCache<number, RasterTile>(Int32Array, null, lruCapacityGPU);
         this.persistentTiles = new Map<number, RasterTile>();
         this.pendingRequests = new Map<number, boolean>();
@@ -163,15 +185,61 @@ export class TileService {
 
     setContext(gl: WebGLRenderingContext) {
         this.glContext = gl;
+        const textureSizeMb = TEXTURE_SIZE * TEXTURE_SIZE * 4 / 1024 / 1024;
+        console.log(`Creating ${this.textureArray.length} tile textures of size ${textureSizeMb} MB each (${textureSizeMb * this.textureArray.length} MB total)`);
+        for (let i = 0; i < this.textureArray.length; i++) {
+            this.textureArray[i] = createFP32Texture(gl, TEXTURE_SIZE, TEXTURE_SIZE, WebGLRenderingContext.TEXTURE0);
+        }
+    }
+
+    clearTextures() {
+        if (this.glContext) {
+            console.log(`Deleting ${this.textureArray.length} tile textures`);
+            for (let i = 0; i < this.textureArray.length; i++) {
+                this.glContext.deleteTexture(this.textureArray[i]);
+            }
+        }
+    }
+
+    uploadTileToGPU(tile: RasterTile) {
+        if (this.glContext) {
+            const numTilesPerTexture = (TEXTURE_SIZE * TEXTURE_SIZE) / (TILE_SIZE * TILE_SIZE);
+            const localOffset = tile.textureCoordinate % numTilesPerTexture;
+            const textureIndex = Math.floor((tile.textureCoordinate - localOffset) / numTilesPerTexture);
+            const tilesPerRow = TEXTURE_SIZE / TILE_SIZE;
+            const xOffset = (localOffset % tilesPerRow) * TILE_SIZE;
+            const yOffset = Math.floor(localOffset / tilesPerRow) * TILE_SIZE;
+            copyToFP32Texture(this.glContext, this.textureArray[textureIndex], tile.data, WebGLRenderingContext.TEXTURE0, tile.width, tile.height, xOffset, yOffset);
+        }
+    }
+
+    getTileTextureParameters(tile: RasterTile) {
+        if (this.glContext) {
+            const numTilesPerTexture = (TEXTURE_SIZE * TEXTURE_SIZE) / (TILE_SIZE * TILE_SIZE);
+            const localOffset = tile.textureCoordinate % numTilesPerTexture;
+            const textureIndex = Math.floor((tile.textureCoordinate - localOffset) / numTilesPerTexture);
+            const tilesPerRow = TEXTURE_SIZE / TILE_SIZE;
+            const xOffset = (localOffset % tilesPerRow) / tilesPerRow;
+            const yOffset = Math.floor(localOffset / tilesPerRow) / tilesPerRow;
+            const xScaling = 1.0 / tilesPerRow;
+            const yScaling = 1.0 / tilesPerRow;
+            return {
+                texture: this.textureArray[textureIndex],
+                xOffset,
+                yOffset,
+                xScaling,
+                yScaling
+            };
+        } else {
+            return null;
+        }
     }
 
     private clearTile = (tile: RasterTile, key: number) => {
-        if (tile.texture && this.glContext) {
-            this.glContext.deleteTexture(tile.texture);
-        }
         if (tile.data) {
             delete tile.data;
         }
+        this.textureCoordinateQueue.push(tile.textureCoordinate);
     };
 
     private handleStreamedTiles = (tileMessage: CARTA.IRasterTileData) => {
@@ -225,11 +293,12 @@ export class TileService {
     }
 
     private updateStream(decompressedData: Float32Array, width: number, height: number, layer: number, encodedCoordinate: number) {
+        const textureCoordinate = this.textureCoordinateQueue.pop();
         const rasterTile: RasterTile = {
             width,
             height,
+            textureCoordinate,
             data: decompressedData,
-            texture: null // Textures are created on first render
         };
         if (layer < this.numPersistentLayers) {
             this.persistentTiles.set(encodedCoordinate, rasterTile);

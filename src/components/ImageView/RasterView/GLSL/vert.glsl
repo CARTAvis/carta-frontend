@@ -9,11 +9,13 @@ varying vec2 vUV;
 uniform vec2 uTileSize;
 uniform vec2 uTileScaling;
 uniform vec2 uTileOffset;
+uniform vec2 uTextureOffset;
+uniform vec2 uTextureScaling;
 
 void main(void) {
     vec2 tilePosition = aVertexPosition.xy * uTileScaling * uTileSize + uTileOffset;
     // Convert XY from [0, 1] -> [-1, 1]
     vec2 adjustedPosition = tilePosition * 2.0 - 1.0;
     gl_Position = vec4(adjustedPosition.x, adjustedPosition.y, aVertexPosition.z, 1.0);
-    vUV = aVertexUV * uTileSize;
+    vUV = uTextureOffset + (aVertexUV * uTileSize) * uTextureScaling;
 }
