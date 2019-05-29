@@ -17,11 +17,6 @@ const COLORMAP_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position:
 export const ColormapComponent: React.FC<ColormapComponentProps> = (props) => {
     const renderColormapBlock = (colormap: string) => {
         let className = "colormap-block";
-        /*
-        if (this.props.darkTheme) {
-            className += " bp3-dark";
-        }
-        */
         const blockHeight = 15;
         const N = RenderConfigStore.COLOR_MAPS_ALL.length;
         const i = RenderConfigStore.COLOR_MAPS_ALL.indexOf(colormap);
