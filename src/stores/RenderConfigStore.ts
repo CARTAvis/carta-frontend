@@ -50,6 +50,8 @@ export class RenderConfigStore {
         "reds", "seismic", "spectral", "tab10", "viridis"
     ];
 
+    static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
+
     @observable scaling: FrameScaling;
     @observable colorMap: number;
     @observable contrast: number;
