@@ -1,4 +1,5 @@
 import {action, observable} from "mobx";
+import * as AST from "ast_wrapper";
 import {FrameScaling, RenderConfigStore} from "stores/RenderConfigStore";
 
 export class PreferenceStore {
@@ -6,7 +7,8 @@ export class PreferenceStore {
     private static readonly DEFAULT_SETTINGS_JSON: string = `{
         "scaling": 0,
         "colormap": "inferno",
-        "percentile": 99.9
+        "percentile": 99.9,
+        "astColor": "blue"
     }`;
 
     private defaultSettings;
@@ -25,6 +27,10 @@ export class PreferenceStore {
         return this.json.percentile ? this.json.percentile : this.defaultSettings.percentile;
     };
 
+    getASTColor = (): string => {
+        return this.json.astColor ? this.json.astColor : this.defaultSettings.astColor;
+    };
+
     @action setScaling = (newScaling: FrameScaling) => {
         this.json.scaling = RenderConfigStore.SCALING_TYPES.has(newScaling) ? newScaling : this.defaultSettings.scaling;
         localStorage.setItem(PreferenceStore.CARTA_PREFERENCE, JSON.stringify(this.json));
@@ -38,6 +44,12 @@ export class PreferenceStore {
     @action setPercentile = (newPercentile: string) => {
         const percentile = parseFloat(newPercentile);
         this.json.percentile = (percentile && RenderConfigStore.PERCENTILE_RANKS.includes(percentile)) ? percentile : this.defaultSettings.percentile;
+        localStorage.setItem(PreferenceStore.CARTA_PREFERENCE, JSON.stringify(this.json));
+    };
+
+    @action setASTColor = (newColor: string) => {
+        this.json.astColor = newColor;
+        this.json.astColor = AST.colors.includes(newColor) ? newColor : this.defaultSettings.astColor;
         localStorage.setItem(PreferenceStore.CARTA_PREFERENCE, JSON.stringify(this.json));
     };
 

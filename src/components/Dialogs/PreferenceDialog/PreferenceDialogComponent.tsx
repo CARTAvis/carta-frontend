@@ -6,6 +6,7 @@ import {Select} from "@blueprintjs/select";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/ScalingComponent";
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
+import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {AppStore} from "stores";
 import {RenderConfigStore} from "stores/RenderConfigStore";
 import "./PreferenceDialogComponent.css";
@@ -56,6 +57,17 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             </div>
         );
 
+        const astSettingsPanel = (
+            <div className="panel-container">
+                <FormGroup inline={true} label="Color">
+                    <ColorComponent
+                        selectedItem={preferenceStore.getASTColor()}
+                        onItemSelect={preferenceStore.setASTColor}
+                    />
+                </FormGroup>
+            </div>
+        );
+
         let className = "preference-dialog";
         if (appStore.darkTheme) {
             className += " bp3-dark";
@@ -83,6 +95,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     >
                         <Tab id="global" title="Global" panel={globalPanel}/>
                         <Tab id="renderConfig" title="Default Render Config" panel={renderConfigPanel}/>
+                        <Tab id="astSettings" title="Default AST settings" panel={astSettingsPanel}/>
                     </Tabs>
                 </div>
                 <div className="bp3-dialog-footer">

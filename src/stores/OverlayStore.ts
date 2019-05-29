@@ -1,7 +1,7 @@
 import * as AST from "ast_wrapper";
 import {Colors} from "@blueprintjs/core";
 import {action, autorun, computed, observable} from "mobx";
-import {FrameStore} from "./FrameStore";
+import {FrameStore, PreferenceStore} from "stores";
 
 export const dayPalette = [
     Colors.BLACK,        // 0
@@ -105,10 +105,10 @@ export class OverlayGlobalSettings {
         return this.system;
     }
 
-    constructor() {
+    constructor(preferenceStore: PreferenceStore) {
         this.system = SystemType.Native;
         this.labelType = LabelType.Exterior;
-        this.color = 4;
+        this.color = AST.colors.indexOf(preferenceStore.getASTColor());
         this.tolerance = 1; // percentage
 
         this.defaultSystem = SystemType.Native;
@@ -643,8 +643,8 @@ export class OverlayStore {
         this.overlaySettingsActiveTab = tabId;
     }
 
-    constructor() {
-        this.global = new OverlayGlobalSettings();
+    constructor(preferenceStore: PreferenceStore) {
+        this.global = new OverlayGlobalSettings(preferenceStore);
         this.title = new OverlayTitleSettings();
         this.grid = new OverlayGridSettings();
         this.border = new OverlayBorderSettings();
