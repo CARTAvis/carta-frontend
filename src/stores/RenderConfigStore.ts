@@ -68,7 +68,8 @@ export class RenderConfigStore {
     @observable scaleMax: number[];
     
     constructor(preference: PreferenceStore) {
-        this.selectedPercentile = [99.9, 99.9, 99.9, 99.9];
+        const percentile = preference.getPercentile();
+        this.selectedPercentile = [percentile, percentile, percentile, percentile];
         this.bias = 0;
         this.contrast = 1;
         this.gamma = 1;

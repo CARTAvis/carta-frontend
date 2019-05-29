@@ -1,16 +1,25 @@
 import * as React from "react";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {Button, IDialogProps, Intent, Tab, Tabs, FormGroup, TabId} from "@blueprintjs/core";
+import {Button, IDialogProps, Intent, Tab, Tabs, FormGroup, TabId, MenuItem, IPopoverProps} from "@blueprintjs/core";
+import {Select} from "@blueprintjs/select";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/ScalingComponent";
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
 import {AppStore} from "stores";
+import {RenderConfigStore} from "stores/RenderConfigStore";
 import "./PreferenceDialogComponent.css";
+
+const PercentilSelect = Select.ofType<string>();
+const PERCENTILE_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 
 @observer
 export class PreferenceDialogComponent extends React.Component<{ appStore: AppStore }> {
     @observable selectedTab: TabId = "renderConfig";
+
+    renderPercentilSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
+        return <MenuItem text={percentile} onClick={handleClick} key={percentile}/>;
+    };
 
     public render() {
         const appStore = this.props.appStore;
@@ -31,6 +40,18 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         selectedItem={preferenceStore.getColormap()}
                         onItemSelect={preferenceStore.setColormap}
                     />
+                </FormGroup>
+                <FormGroup inline={true} label="Percentile ranks">
+                    <PercentilSelect
+                        activeItem={preferenceStore.getPercentile().toString(10)}
+                        onItemSelect={preferenceStore.setPercentile}
+                        popoverProps={PERCENTILE_POPOVER_PROPS}
+                        filterable={false}
+                        items={RenderConfigStore.PERCENTILE_RANKS.map(String)}
+                        itemRenderer={this.renderPercentilSelectItem}
+                    >
+                        <Button text={preferenceStore.getPercentile().toString(10)} rightIcon="double-caret-vertical" alignText={"right"}/>
+                    </PercentilSelect>
                 </FormGroup>
             </div>
         );
