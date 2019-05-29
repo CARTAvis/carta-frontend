@@ -18,7 +18,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
     @observable selectedTab: TabId = "renderConfig";
 
     renderPercentilSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
-        return <MenuItem text={percentile} onClick={handleClick} key={percentile}/>;
+        return <MenuItem text={percentile + "%"} onClick={handleClick} key={percentile}/>;
     };
 
     public render() {
@@ -50,7 +50,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         items={RenderConfigStore.PERCENTILE_RANKS.map(String)}
                         itemRenderer={this.renderPercentilSelectItem}
                     >
-                        <Button text={preferenceStore.getPercentile().toString(10)} rightIcon="double-caret-vertical" alignText={"right"}/>
+                        <Button text={preferenceStore.getPercentile().toString(10) + "%"} rightIcon="double-caret-vertical" alignText={"right"}/>
                     </PercentilSelect>
                 </FormGroup>
             </div>
