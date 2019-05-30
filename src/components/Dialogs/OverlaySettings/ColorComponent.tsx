@@ -8,11 +8,12 @@ interface ColorComponentProps {
     onItemSelect: (selected: number) => void;
 }
 
+const AST_DEFAULT_COLOR = 4; // blue
 const ColorSelect = Select.ofType<string>();
 const COLOR_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colorselect"};
 
 export const ColorComponent: React.FC<ColorComponentProps> = (props) => {
-    const selectedColor = (props.selectedItem >= 0 && props.selectedItem < AST.colors.length) ? props.selectedItem : 4;
+    const selectedColor = (props.selectedItem >= 0 && props.selectedItem < AST.colors.length) ? props.selectedItem : AST_DEFAULT_COLOR;
 
     const renderColorBlock = (color: string) => {
         let className = "dropdown-color";
