@@ -1,8 +1,9 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
+import {observable} from "mobx";
 import {Select, ItemRenderer} from "@blueprintjs/select";
-import {Button, Switch, IDialogProps, Intent, Tab, Tabs, NumericInput, FormGroup, MenuItem, HTMLSelect, Collapse} from "@blueprintjs/core";
+import {Button, Switch, IDialogProps, Intent, Tab, Tabs, TabId, NumericInput, FormGroup, MenuItem, HTMLSelect, Collapse} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ColorComponent} from "./ColorComponent";
 import {AppStore, LabelType, SystemType} from "stores";
@@ -57,6 +58,8 @@ export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, qu
 
 @observer
 export class OverlaySettingsDialogComponent extends React.Component<{ appStore: AppStore }> {
+    @observable selectedTab: TabId = "global";
+
     private fontSelect(visible: boolean, currentFontId: number, fontSetter: Function) {
         let currentFont: Font = astFonts[currentFontId];
         if (typeof currentFont === "undefined") {
@@ -547,8 +550,8 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     <Tabs
                         id="overlayTabs"
                         vertical={true}
-                        selectedTabId={overlayStore.overlaySettingsActiveTab}
-                        onChange={(tabId) => overlayStore.setOverlaySettingsActiveTab(String(tabId))}
+                        selectedTabId={this.selectedTab}
+                        onChange={(tabId) => this.selectedTab = tabId}
                     >
                         <Tab id="global" title="Global" panel={globalPanel}/>
                         <Tab id="title" title="Title" panel={titlePanel}/>

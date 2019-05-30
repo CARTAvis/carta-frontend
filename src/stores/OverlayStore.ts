@@ -637,12 +637,6 @@ export class OverlayStore {
         this.overlaySettingsDialogVisible = false;
     };
 
-    @observable overlaySettingsActiveTab = "global";
-
-    @action setOverlaySettingsActiveTab(tabId: string) {
-        this.overlaySettingsActiveTab = tabId;
-    }
-
     constructor(preferenceStore: PreferenceStore) {
         this.global = new OverlayGlobalSettings(preferenceStore);
         this.title = new OverlayTitleSettings();
