@@ -18,22 +18,22 @@ export class PreferenceStore {
     // user configurable settings
     getScaling = (): FrameScaling => {
         const scaling = this.json.scaling;
-        return (scaling && RenderConfigStore.SCALING_TYPES.has(scaling)) ? scaling : this.defaultSettings.scaling;
+        return (typeof scaling === "number" && RenderConfigStore.SCALING_TYPES.has(scaling)) ? scaling : this.defaultSettings.scaling;
     };
 
     getColormap = (): string => {
         const colormap = this.json.colormap;
-        return (colormap && RenderConfigStore.COLOR_MAPS_ALL.includes(colormap)) ? colormap : this.defaultSettings.colormap;
+        return (typeof colormap === "string" && RenderConfigStore.COLOR_MAPS_ALL.includes(colormap)) ? colormap : this.defaultSettings.colormap;
     };
 
     getPercentile = (): number => {
         const percentile = this.json.percentile;
-        return (percentile && RenderConfigStore.PERCENTILE_RANKS.includes(percentile)) ? percentile : this.defaultSettings.percentile;
+        return (typeof percentile === "number" && RenderConfigStore.PERCENTILE_RANKS.includes(percentile)) ? percentile : this.defaultSettings.percentile;
     };
 
     getASTColor = (): number => {
         const astColor = this.json.astColor;
-        return (astColor && astColor >= 0 && astColor < AST.colors.length) ? astColor : this.defaultSettings.astColor;
+        return (typeof astColor === "number" && astColor >= 0 && astColor < AST.colors.length) ? astColor : this.defaultSettings.astColor;
     };
 
     @action setScaling = (newScaling: FrameScaling) => {
