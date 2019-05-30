@@ -108,7 +108,7 @@ export class OverlayGlobalSettings {
     constructor(preferenceStore: PreferenceStore) {
         this.system = SystemType.Native;
         this.labelType = LabelType.Exterior;
-        this.color = AST.colors.indexOf(preferenceStore.getASTColor());
+        this.color = preferenceStore.getASTColor();
         this.tolerance = 1; // percentage
 
         this.defaultSystem = SystemType.Native;

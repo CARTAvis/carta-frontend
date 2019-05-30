@@ -8,7 +8,7 @@ export class PreferenceStore {
         "scaling": 0,
         "colormap": "inferno",
         "percentile": 99.9,
-        "astColor": "blue"
+        "astColor": 4
     }`;
 
     private defaultSettings;
@@ -16,19 +16,23 @@ export class PreferenceStore {
 
     // user configurable settings
     getScaling = (): FrameScaling => {
-        return this.json.scaling ? this.json.scaling : this.defaultSettings.scaling;
+        const scaling = this.json.scaling;
+        return (scaling && RenderConfigStore.SCALING_TYPES.has(scaling)) ? scaling : this.defaultSettings.scaling;
     };
 
     getColormap = (): string => {
-        return this.json.colormap ? this.json.colormap : this.defaultSettings.colormap;
+        const colormap = this.json.colormap;
+        return (colormap && RenderConfigStore.COLOR_MAPS_ALL.includes(colormap)) ? colormap : this.defaultSettings.colormap;
     };
 
     getPercentile = (): number => {
-        return this.json.percentile ? this.json.percentile : this.defaultSettings.percentile;
+        const percentile = this.json.percentile;
+        return (percentile && RenderConfigStore.PERCENTILE_RANKS.includes(percentile)) ? percentile : this.defaultSettings.percentile;
     };
 
-    getASTColor = (): string => {
-        return this.json.astColor ? this.json.astColor : this.defaultSettings.astColor;
+    getASTColor = (): number => {
+        const astColor = this.json.astColor;
+        return (astColor && astColor >= 0 && astColor < AST.colors.length) ? astColor : this.defaultSettings.astColor;
     };
 
     @action setScaling = (newScaling: FrameScaling) => {
@@ -47,9 +51,8 @@ export class PreferenceStore {
         localStorage.setItem(PreferenceStore.CARTA_PREFERENCE, JSON.stringify(this.json));
     };
 
-    @action setASTColor = (newColor: string) => {
-        this.json.astColor = newColor;
-        this.json.astColor = AST.colors.includes(newColor) ? newColor : this.defaultSettings.astColor;
+    @action setASTColor = (newColor: number) => {
+        this.json.astColor = (newColor >= 0 && newColor < AST.colors.length) ? newColor : this.defaultSettings.astColor;
         localStorage.setItem(PreferenceStore.CARTA_PREFERENCE, JSON.stringify(this.json));
     };
 

@@ -4,25 +4,20 @@ import {MenuItem, Button, IPopoverProps} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 
 interface ColorComponentProps {
-    selectedItem: string;
-    onItemSelect: (selected: string) => void;
+    selectedItem: number;
+    onItemSelect: (selected: number) => void;
 }
 
 const ColorSelect = Select.ofType<string>();
 const COLOR_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colorselect"};
 
 export const ColorComponent: React.FC<ColorComponentProps> = (props) => {
+    const selectedColor = (props.selectedItem >= 0 && props.selectedItem < AST.colors.length) ? props.selectedItem : 4;
+
     const renderColorBlock = (color: string) => {
         let className = "dropdown-color";
-        
         return (
-            <div
-                className={className}
-                style={{
-                    background: color,
-                }}
-            >&nbsp;
-            </div>
+            <div className={className} style={{background: color}}>&nbsp;</div>
         );
     };
 
@@ -40,14 +35,14 @@ export const ColorComponent: React.FC<ColorComponentProps> = (props) => {
 
     return (
         <ColorSelect
-            activeItem={props.selectedItem}
-            onItemSelect={props.onItemSelect}
+            activeItem={AST.colors[selectedColor]}
+            onItemSelect={(color) => props.onItemSelect(AST.colors.indexOf(color))}
             popoverProps={COLOR_POPOVER_PROPS}
             filterable={false}
             items={AST.colors}
             itemRenderer={renderColorSelectItem}
         >
-            <Button className="colorselect" text={renderColorBlock(props.selectedItem)} rightIcon="double-caret-vertical"/>
+            <Button className="colorselect" text={renderColorBlock(AST.colors[selectedColor])} rightIcon="double-caret-vertical"/>
         </ColorSelect>
     );
 };
