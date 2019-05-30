@@ -1,6 +1,6 @@
 import {action, observable} from "mobx";
 import * as AST from "ast_wrapper";
-import {FrameScaling, RenderConfigStore} from "stores/RenderConfigStore";
+import {AppStore, FrameScaling, RenderConfigStore} from "stores";
 
 export class PreferenceStore {
     private static readonly CARTA_PREFERENCE = "CARTA_preference";
@@ -11,6 +11,7 @@ export class PreferenceStore {
         "astColor": 4
     }`;
 
+    private appStore: AppStore;
     private defaultSettings;
     @observable json;
 
@@ -53,10 +54,12 @@ export class PreferenceStore {
 
     @action setASTColor = (newColor: number) => {
         this.json.astColor = (newColor >= 0 && newColor < AST.colors.length) ? newColor : this.defaultSettings.astColor;
+        this.appStore.overlayStore.global.color = this.json.astColor;
         localStorage.setItem(PreferenceStore.CARTA_PREFERENCE, JSON.stringify(this.json));
     };
 
-    constructor() {
+    constructor(appStore: AppStore) {
+        this.appStore = appStore;
         this.defaultSettings = JSON.parse(PreferenceStore.DEFAULT_SETTINGS_JSON);
         const preference = localStorage.getItem(PreferenceStore.CARTA_PREFERENCE);
         if (preference) {
