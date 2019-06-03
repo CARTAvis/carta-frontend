@@ -18,9 +18,9 @@ export interface CompressedTile {
     compressionQuality: number;
 }
 
-const TEXTURE_SIZE = 4096;
-const TILE_SIZE = 256;
-const MAX_TEXTURES = 8;
+export const TEXTURE_SIZE = 4096;
+export const TILE_SIZE = 256;
+export const MAX_TEXTURES = 8;
 
 export class TileService {
     @observable gpuLruOccupancy: number;
@@ -219,16 +219,11 @@ export class TileService {
             const localOffset = tile.textureCoordinate % numTilesPerTexture;
             const textureIndex = Math.floor((tile.textureCoordinate - localOffset) / numTilesPerTexture);
             const tilesPerRow = TEXTURE_SIZE / TILE_SIZE;
-            const xOffset = (localOffset % tilesPerRow) / tilesPerRow;
-            const yOffset = Math.floor(localOffset / tilesPerRow) / tilesPerRow;
-            const xScaling = 1.0 / tilesPerRow;
-            const yScaling = 1.0 / tilesPerRow;
+            const xOffset = (localOffset % tilesPerRow) * TILE_SIZE;
+            const yOffset = Math.floor(localOffset / tilesPerRow) * TILE_SIZE;
             return {
                 texture: this.textureArray[textureIndex],
-                xOffset,
-                yOffset,
-                xScaling,
-                yScaling
+                offset: {x: xOffset, y: yOffset}
             };
         } else {
             return null;

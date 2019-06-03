@@ -82,4 +82,8 @@ export function copyToFP32Texture(gl: WebGLRenderingContext, texture: WebGLTextu
     gl.bindTexture(GL.TEXTURE_2D, texture);
     gl.activeTexture(texIndex);
     gl.texSubImage2D(GL.TEXTURE_2D, 0, xOffset, yOffset, dataWidth, dataHeight, GL.LUMINANCE, GL.FLOAT, data);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, GL.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, GL.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 }

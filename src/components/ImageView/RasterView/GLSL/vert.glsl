@@ -9,13 +9,19 @@ varying vec2 vUV;
 uniform vec2 uTileSize;
 uniform vec2 uTileScaling;
 uniform vec2 uTileOffset;
-uniform vec2 uTextureOffset;
-uniform vec2 uTextureScaling;
+
+// Tile texture parameters in pixels
+uniform vec2 uTileTextureOffset;
+uniform float uTextureSize;
+uniform float uTileTextureSize;
 
 void main(void) {
     vec2 tilePosition = aVertexPosition.xy * uTileScaling * uTileSize + uTileOffset;
     // Convert XY from [0, 1] -> [-1, 1]
     vec2 adjustedPosition = tilePosition * 2.0 - 1.0;
     gl_Position = vec4(adjustedPosition.x, adjustedPosition.y, aVertexPosition.z, 1.0);
-    vUV = uTextureOffset + (aVertexUV * uTileSize) * uTextureScaling;
+    vec2 tilePixel = aVertexUV * uTileSize * uTileTextureSize;
+    // Prevent edge artifacts
+    tilePixel = uTileTextureOffset + clamp(tilePixel, 0.5, uTileTextureSize - 0.5);
+    vUV = tilePixel / uTextureSize;
 }

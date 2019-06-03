@@ -2,8 +2,8 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {FrameStore, OverlayStore} from "stores";
 import {FrameView, TileCoordinate} from "models";
-import {RasterTile, TileService} from "services/TileService";
-import {GetRequiredTiles, getShaderProgram, LayerToMip, loadFP32Texture, loadImageTexture} from "utilities";
+import {RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService} from "services/TileService";
+import {GetRequiredTiles, getShaderProgram, GL, LayerToMip, loadFP32Texture, loadImageTexture} from "utilities";
 import "./RasterViewComponent.css";
 import allMaps from "static/allmaps.png";
 
@@ -16,8 +16,6 @@ export class RasterViewComponentProps {
     tileService: TileService;
     docked: boolean;
 }
-
-const TILE_SIZE = 256;
 
 interface ShaderUniforms {
     MinVal: WebGLUniformLocation;
@@ -35,8 +33,9 @@ interface ShaderUniforms {
     TileSize: WebGLUniformLocation;
     TileScaling: WebGLUniformLocation;
     TileOffset: WebGLUniformLocation;
-    TextureOffset: WebGLUniformLocation;
-    TextureScaling: WebGLUniformLocation;
+    TileTextureOffset: WebGLUniformLocation;
+    TileTextureSize: WebGLUniformLocation;
+    TextureSize: WebGLUniformLocation;
     TileBorder: WebGLUniformLocation;
 }
 
@@ -45,7 +44,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private canvas: HTMLCanvasElement;
     private gl: WebGLRenderingContext;
     private hasFloatExtension: boolean;
-    private hasFloatLinearExtension: boolean;
     // GL buffers
     private rasterDataBuffer: ArrayBufferLike;
     private cmapTexture: WebGLTexture;
@@ -55,6 +53,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private vertexPositionAttribute: number;
     private vertexUVAttribute: number;
     // Shader uniform handles
+    private shaderProgram: WebGLProgram;
     private shaderUniforms: ShaderUniforms;
 
     componentDidMount() {
@@ -73,9 +72,29 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     componentWillUnmount() {
+        // Attempt to clean up WebGL resources
+        const numTextureUnits = this.gl.getParameter(WebGLRenderingContext.MAX_TEXTURE_IMAGE_UNITS);
+        for (let unit = 0; unit < numTextureUnits; ++unit) {
+            this.gl.activeTexture(WebGLRenderingContext.TEXTURE0 + unit);
+            this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, null);
+            this.gl.bindTexture(WebGLRenderingContext.TEXTURE_CUBE_MAP, null);
+        }
+        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, null);
+        this.gl.bindBuffer(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, null);
+        this.gl.bindRenderbuffer(WebGLRenderingContext.RENDERBUFFER, null);
+        this.gl.bindFramebuffer(WebGLRenderingContext.FRAMEBUFFER, null);
+
         if (this.props.tileService) {
             this.props.tileService.clearTextures();
         }
+
+        this.gl.deleteTexture(this.cmapTexture);
+        this.gl.deleteBuffer(this.vertexPositionBuffer);
+        this.gl.deleteBuffer(this.vertexUVBuffer);
+        this.gl.deleteProgram(this.shaderProgram);
+
+        this.gl.canvas.width = 1;
+        this.gl.canvas.height = 1;
     }
 
     componentDidUpdate() {
@@ -102,13 +121,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.hasFloatExtension = false;
         } else {
             this.hasFloatExtension = true;
-            const extTextureFloatLinear = this.gl.getExtension("OES_texture_float_linear");
-            if (!extTextureFloatLinear) {
-                console.log("Could not initialise WebGL linear float extension");
-                this.hasFloatLinearExtension = false;
-            } else {
-                this.hasFloatExtension = true;
-            }
         }
         this.props.tileService.setContext(this.gl);
     }
@@ -273,32 +285,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             delete rasterTile.data;
         }
 
-        // let texture = rasterTile.texture;
-        //
-        // if (!texture) {
-        //
-        //     this.props.tileService.uploadTileToGPU(rasterTile);
-        //
-        //     texture = this.gl.createTexture();
-        //     rasterTile.texture = texture;
-        //     this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
-        //
-        //     const textureMip = LayerToMip(tile.layer, {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height}, {x: TILE_SIZE, y: TILE_SIZE});
-        //     let filterType = textureMip <= 1 ? WebGLRenderingContext.NEAREST : WebGLRenderingContext.LINEAR;
-        //     if (!this.hasFloatLinearExtension) {
-        //         filterType = WebGLRenderingContext.NEAREST;
-        //     }
-        //     loadFP32Texture(this.gl, rasterTile.data, TILE_SIZE, TILE_SIZE, rasterTile.width, rasterTile.height, WebGLRenderingContext.TEXTURE0, filterType);
-        //     delete rasterTile.data;
-        // } else {
-        //     this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
-        // }
-
         const textureParameters = this.props.tileService.getTileTextureParameters(rasterTile);
         if (textureParameters) {
             this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, textureParameters.texture);
-            this.gl.uniform2f(this.shaderUniforms.TextureOffset, textureParameters.xOffset, textureParameters.yOffset);
-            this.gl.uniform2f(this.shaderUniforms.TextureScaling, textureParameters.xScaling, textureParameters.yScaling);
+            this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MIN_FILTER, GL.NEAREST);
+            this.gl.texParameteri(WebGLRenderingContext.TEXTURE_2D, WebGLRenderingContext.TEXTURE_MAG_FILTER, GL.NEAREST);
+            this.gl.uniform2f(this.shaderUniforms.TileTextureOffset, textureParameters.offset.x, textureParameters.offset.y);
         }
 
         const full = frame.requiredFrameView;
@@ -324,33 +316,34 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     private initShaders() {
-        const shaderProgram = getShaderProgram(this.gl, vertShader, pixelShaderSimple);
-        this.gl.useProgram(shaderProgram);
+        this.shaderProgram = getShaderProgram(this.gl, vertShader, pixelShaderSimple);
+        this.gl.useProgram(this.shaderProgram);
 
-        this.vertexPositionAttribute = this.gl.getAttribLocation(shaderProgram, "aVertexPosition");
-        this.vertexUVAttribute = this.gl.getAttribLocation(shaderProgram, "aVertexUV");
+        this.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgram, "aVertexPosition");
+        this.vertexUVAttribute = this.gl.getAttribLocation(this.shaderProgram, "aVertexUV");
         this.gl.enableVertexAttribArray(this.vertexPositionAttribute);
         this.gl.enableVertexAttribArray(this.vertexUVAttribute);
 
         this.shaderUniforms = {
-            MinVal: this.gl.getUniformLocation(shaderProgram, "uMinVal"),
-            MaxVal: this.gl.getUniformLocation(shaderProgram, "uMaxVal"),
-            NaNColor: this.gl.getUniformLocation(shaderProgram, "uNaNColor"),
-            Bias: this.gl.getUniformLocation(shaderProgram, "uBias"),
-            Contrast: this.gl.getUniformLocation(shaderProgram, "uContrast"),
-            Gamma: this.gl.getUniformLocation(shaderProgram, "uGamma"),
-            Alpha: this.gl.getUniformLocation(shaderProgram, "uAlpha"),
-            ScaleType: this.gl.getUniformLocation(shaderProgram, "uScaleType"),
-            DataTexture: this.gl.getUniformLocation(shaderProgram, "uDataTexture"),
-            CmapTexture: this.gl.getUniformLocation(shaderProgram, "uCmapTexture"),
-            NumCmaps: this.gl.getUniformLocation(shaderProgram, "uNumCmaps"),
-            CmapIndex: this.gl.getUniformLocation(shaderProgram, "uCmapIndex"),
-            TileSize: this.gl.getUniformLocation(shaderProgram, "uTileSize"),
-            TileScaling: this.gl.getUniformLocation(shaderProgram, "uTileScaling"),
-            TileOffset: this.gl.getUniformLocation(shaderProgram, "uTileOffset"),
-            TextureOffset: this.gl.getUniformLocation(shaderProgram, "uTextureOffset"),
-            TextureScaling: this.gl.getUniformLocation(shaderProgram, "uTextureScaling"),
-            TileBorder: this.gl.getUniformLocation(shaderProgram, "uTileBorder")
+            MinVal: this.gl.getUniformLocation(this.shaderProgram, "uMinVal"),
+            MaxVal: this.gl.getUniformLocation(this.shaderProgram, "uMaxVal"),
+            NaNColor: this.gl.getUniformLocation(this.shaderProgram, "uNaNColor"),
+            Bias: this.gl.getUniformLocation(this.shaderProgram, "uBias"),
+            Contrast: this.gl.getUniformLocation(this.shaderProgram, "uContrast"),
+            Gamma: this.gl.getUniformLocation(this.shaderProgram, "uGamma"),
+            Alpha: this.gl.getUniformLocation(this.shaderProgram, "uAlpha"),
+            ScaleType: this.gl.getUniformLocation(this.shaderProgram, "uScaleType"),
+            DataTexture: this.gl.getUniformLocation(this.shaderProgram, "uDataTexture"),
+            CmapTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapTexture"),
+            NumCmaps: this.gl.getUniformLocation(this.shaderProgram, "uNumCmaps"),
+            CmapIndex: this.gl.getUniformLocation(this.shaderProgram, "uCmapIndex"),
+            TileSize: this.gl.getUniformLocation(this.shaderProgram, "uTileSize"),
+            TileScaling: this.gl.getUniformLocation(this.shaderProgram, "uTileScaling"),
+            TileOffset: this.gl.getUniformLocation(this.shaderProgram, "uTileOffset"),
+            TileTextureOffset: this.gl.getUniformLocation(this.shaderProgram, "uTileTextureOffset"),
+            TextureSize: this.gl.getUniformLocation(this.shaderProgram, "uTextureSize"),
+            TileTextureSize: this.gl.getUniformLocation(this.shaderProgram, "uTileTextureSize"),
+            TileBorder: this.gl.getUniformLocation(this.shaderProgram, "uTileBorder")
         };
 
         this.gl.uniform1i(this.shaderUniforms.DataTexture, 0);
@@ -367,8 +360,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.gl.uniform2f(this.shaderUniforms.TileSize, 1, 1);
         this.gl.uniform2f(this.shaderUniforms.TileScaling, 1, 1);
         this.gl.uniform2f(this.shaderUniforms.TileOffset, 0, 0);
+        this.gl.uniform2f(this.shaderUniforms.TileTextureOffset, 0, 0);
+        this.gl.uniform1f(this.shaderUniforms.TextureSize, TEXTURE_SIZE);
+        this.gl.uniform1f(this.shaderUniforms.TileTextureSize, TILE_SIZE);
         this.gl.uniform4f(this.shaderUniforms.NaNColor, 0, 0, 1, 1);
-
     }
 
     private initBuffers() {
@@ -392,11 +387,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         ]);
 
         this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, uvs, WebGLRenderingContext.STATIC_DRAW);
-
-        // Create a texture.
-        const texture = this.gl.createTexture();
-        this.gl.activeTexture(WebGLRenderingContext.TEXTURE0);
-        this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, texture);
     }
 
     render() {
