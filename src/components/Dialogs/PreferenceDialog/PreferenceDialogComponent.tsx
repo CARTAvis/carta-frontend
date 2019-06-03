@@ -95,7 +95,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     >
                         <Tab id="global" title="Global" panel={globalPanel}/>
                         <Tab id="renderConfig" title="Default Render Config" panel={renderConfigPanel}/>
-                        <Tab id="astSettings" title="Default AST settings" panel={astSettingsPanel}/>
+                        <Tab id="astSettings" title="Default WCS Overlay" panel={astSettingsPanel}/>
                     </Tabs>
                 </div>
                 <div className="bp3-dialog-footer">

@@ -49,6 +49,10 @@ export class FrameStore {
         this.requiredStokes = 0;
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore(preference);
+        const astColor = preference.getASTColor();
+        if (astColor !== overlay.global.color) {
+            overlay.global.setColor(astColor);
+        }
         this.regionSet = new RegionSetStore(this, backendService);
         this.valid = true;
         this.currentFrameView = {
