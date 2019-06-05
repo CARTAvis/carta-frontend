@@ -41,6 +41,7 @@ export class BackendService {
 
     constructor(logStore: LogStore) {
         this.logStore = logStore;
+        this.loggingEnabled = true;
         this.observerRequestMap = new Map<number, Observer<any>>();
         this.eventCounter = 1;
         this.endToEndPing = NaN;
@@ -417,6 +418,24 @@ export class BackendService {
         }
         return false;
     }
+
+    @action("authenticate")
+    authenticate = (username: string, password: string) => {
+        let authUrl = `${window.location.protocol}//${window.location.hostname}/auth`;
+        return fetch(authUrl, {
+            headers: {
+                "Accept": "application/json, text/plain, */*",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({username: username, password: password}),
+            method: "POST"
+        });
+    };
+
+    @action("set auth token")
+    setAuthToken = (token: string) => {
+        document.cookie = `CARTA-Authorization=${token}; path=/`;
+    };
 
     private messageHandler(event: MessageEvent) {
         if (event.data === "PONG") {

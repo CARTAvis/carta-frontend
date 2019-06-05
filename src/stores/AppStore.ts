@@ -2,11 +2,13 @@ import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable, ObservableMap} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore,
-        FrameInfo, FrameStore, LogEntry, LogStore, nightPalette,
-        OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore,
-        PreferenceStore} from ".";
-import {BackendService} from "services";
+import {
+    AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore,
+    FrameInfo, FrameStore, LogEntry, LogStore, nightPalette,
+    OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore,
+    PreferenceStore
+} from ".";
+import {BackendService, ConnectionStatus} from "services";
 import {CursorInfo, FrameView} from "models";
 import {smoothStepOffset} from "utilities";
 import {HistogramWidgetStore, RegionWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
@@ -124,6 +126,64 @@ export class AppStore {
     };
     @action hidePreferenceDialog = () => {
         this.preferenceDialogVisible = false;
+    };
+
+    // Auth dialog
+    @observable authDialogVisible: boolean = true;
+    @observable username: string = "";
+    @action showAuthDialog = () => {
+        this.authDialogVisible = true;
+    };
+    @action hideAuthDialog = () => {
+        this.authDialogVisible = false;
+    };
+    @action setUsername = (username: string) => {
+        this.username = username;
+    };
+
+    @action connectToServer = (socketName: string = "socket") => {
+        let wsURL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}/${socketName}`;
+        if (process.env.NODE_ENV === "development") {
+            wsURL = process.env.REACT_APP_DEFAULT_ADDRESS ? process.env.REACT_APP_DEFAULT_ADDRESS : wsURL;
+        } else {
+            wsURL = process.env.REACT_APP_DEFAULT_ADDRESS_PROD ? process.env.REACT_APP_DEFAULT_ADDRESS_PROD : wsURL;
+        }
+
+        // Check for URL query parameters as a final override
+        const url = new URL(window.location.href);
+        const socketUrl = url.searchParams.get("socketUrl");
+
+        if (socketUrl) {
+            wsURL = socketUrl;
+            console.log(`Connecting to override URL: ${wsURL}`);
+        } else {
+            console.log(`Connecting to default URL: ${wsURL}`);
+        }
+
+        const folderSearchParam = url.searchParams.get("folder");
+        const fileSearchParam = url.searchParams.get("file");
+
+        let connected = false;
+        let autoFileLoaded = false;
+
+        AST.onReady.then(() => {
+            AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
+            this.astReady = true;
+            if (this.backendService.connectionStatus === ConnectionStatus.ACTIVE && !autoFileLoaded && fileSearchParam) {
+                this.addFrame(folderSearchParam, fileSearchParam, "", 0);
+            }
+        });
+
+        this.backendService.connect(wsURL, this.apiKey).subscribe(sessionId => {
+            console.log(`Connected with session ID ${sessionId}`);
+            connected = true;
+            this.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
+
+            if (this.astReady && fileSearchParam) {
+                autoFileLoaded = true;
+                this.addFrame(folderSearchParam, fileSearchParam, "", 0);
+            }
+        }, err => console.log(err));
     };
 
     // Tasks
@@ -377,7 +437,7 @@ export class AppStore {
         this.overlayStore = new OverlayStore();
         this.widgetsStore = new WidgetsStore(this);
         this.preferenceStore = new PreferenceStore();
-        this.urlConnectDialogVisible = false;
+        this.fileBrowserStore = new FileBrowserStore(this.backendService);
         this.compressionQuality = 11;
         this.darkTheme = false;
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
