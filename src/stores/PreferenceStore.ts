@@ -1,73 +1,71 @@
-import {action, observable} from "mobx";
+import {action} from "mobx";
 import * as AST from "ast_wrapper";
 import {FrameScaling, RenderConfigStore} from "stores";
 
+const PREFERENCE_KEYS = {
+    scaling: "CARTA_scaling",
+    colormap: "CARTA_colormap",
+    percentile: "CARTA_percentile",
+    astColor: "CARTA_astColor"
+};
+
+const DEFAULTS = {
+    scaling: 0,
+    colormap: "inferno",
+    percentile: "99.9",
+    astColor: 4
+};
+
 export class PreferenceStore {
-    private static readonly CARTA_PREFERENCE = "CARTA_preference";
-    private static readonly DEFAULT_SETTINGS_JSON: string = `{
-        "scaling": 0,
-        "colormap": "inferno",
-        "percentile": 99.9,
-        "astColor": 4
-    }`;
-
-    private defaultSettings;
-    @observable json;
-
     // user configurable settings
+    validateScaling(scaling: any) {
+        const value = typeof scaling === "string" ? Number(scaling) : scaling;
+        return value !== NaN && RenderConfigStore.SCALING_TYPES.has(value) ? value : DEFAULTS.scaling;
+    }
+
+    validateColormap(colormap: string) {
+        return RenderConfigStore.COLOR_MAPS_SELECTED.includes(colormap) ? colormap : DEFAULTS.colormap;
+    }
+
+    validatePercentile(percentile: any): number {
+        const value = typeof percentile === "string" ? Number(percentile) : percentile;
+        return value !== NaN && RenderConfigStore.PERCENTILE_RANKS.includes(value) ? value : DEFAULTS.percentile;
+    }
+
+    validateASTColor(astColor: any) {
+        const value = typeof astColor === "string" ? Number(astColor) : astColor;
+        return value !== NaN && astColor >= 0 && astColor < AST.colors.length ? value : DEFAULTS.astColor;
+    }
+
     getScaling = (): FrameScaling => {
-        const scaling = this.json.scaling;
-        return (typeof scaling === "number" && RenderConfigStore.SCALING_TYPES.has(scaling)) ? scaling : this.defaultSettings.scaling;
+        return this.validateScaling(localStorage.getItem(PREFERENCE_KEYS.scaling));
     };
 
     getColormap = (): string => {
-        const colormap = this.json.colormap;
-        return (typeof colormap === "string" && RenderConfigStore.COLOR_MAPS_ALL.includes(colormap)) ? colormap : this.defaultSettings.colormap;
+        return this.validateColormap(localStorage.getItem(PREFERENCE_KEYS.colormap));
     };
 
     getPercentile = (): number => {
-        const percentile = this.json.percentile;
-        return (typeof percentile === "number" && RenderConfigStore.PERCENTILE_RANKS.includes(percentile)) ? percentile : this.defaultSettings.percentile;
+        return this.validatePercentile(localStorage.getItem(PREFERENCE_KEYS.percentile));
     };
 
     getASTColor = (): number => {
-        const astColor = this.json.astColor;
-        return (typeof astColor === "number" && astColor >= 0 && astColor < AST.colors.length) ? astColor : this.defaultSettings.astColor;
+        return this.validateASTColor(localStorage.getItem(PREFERENCE_KEYS.astColor));
     };
 
-    @action setScaling = (newScaling: FrameScaling) => {
-        this.json.scaling = RenderConfigStore.SCALING_TYPES.has(newScaling) ? newScaling : this.defaultSettings.scaling;
-        localStorage.setItem(PreferenceStore.CARTA_PREFERENCE, JSON.stringify(this.json));
+    @action setScaling = (scaling: FrameScaling) => {
+        localStorage.setItem(PREFERENCE_KEYS.scaling, this.validateScaling(scaling).toString(10));
     };
 
-    @action setColormap = (newColormap: string) => {
-        this.json.colormap = RenderConfigStore.COLOR_MAPS_ALL.includes(newColormap) ? newColormap : this.defaultSettings.colormap;
-        localStorage.setItem(PreferenceStore.CARTA_PREFERENCE, JSON.stringify(this.json));
+    @action setColormap = (colormap: string) => {
+        localStorage.setItem(PREFERENCE_KEYS.colormap, this.validateColormap(colormap));
     };
 
-    @action setPercentile = (newPercentile: string) => {
-        const percentile = parseFloat(newPercentile);
-        this.json.percentile = (percentile && RenderConfigStore.PERCENTILE_RANKS.includes(percentile)) ? percentile : this.defaultSettings.percentile;
-        localStorage.setItem(PreferenceStore.CARTA_PREFERENCE, JSON.stringify(this.json));
+    @action setPercentile = (percentile) => {
+        localStorage.setItem(PREFERENCE_KEYS.percentile, this.validatePercentile(percentile).toString());
     };
 
-    @action setASTColor = (newColor: number) => {
-        this.json.astColor = (newColor >= 0 && newColor < AST.colors.length) ? newColor : this.defaultSettings.astColor;
-        localStorage.setItem(PreferenceStore.CARTA_PREFERENCE, JSON.stringify(this.json));
+    @action setASTColor = (astColor: number) => {
+        localStorage.setItem(PREFERENCE_KEYS.astColor, this.validateASTColor(astColor).toString(10));
     };
-
-    constructor() {
-        this.defaultSettings = JSON.parse(PreferenceStore.DEFAULT_SETTINGS_JSON);
-        const preference = localStorage.getItem(PreferenceStore.CARTA_PREFERENCE);
-        if (preference) {
-            try {
-                this.json = JSON.parse(preference);
-            } catch (e) {
-                console.log("parse CARTA_preference from local storage error.");
-                this.json = this.defaultSettings;
-            }
-        } else {
-            this.json = this.defaultSettings;
-        }
-    }
 }

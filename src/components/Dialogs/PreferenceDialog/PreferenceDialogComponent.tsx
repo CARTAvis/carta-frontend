@@ -17,6 +17,10 @@ const PERCENTILE_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, positio
 @observer
 export class PreferenceDialogComponent extends React.Component<{ appStore: AppStore }> {
     @observable selectedTab: TabId = "renderConfig";
+    @observable scaling = this.props.appStore.preferenceStore.getScaling();
+    @observable colormap = this.props.appStore.preferenceStore.getColormap();
+    @observable percentile = this.props.appStore.preferenceStore.getPercentile().toString();
+    @observable astColor = this.props.appStore.preferenceStore.getASTColor();
 
     renderPercentilSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
         return <MenuItem text={percentile + "%"} onClick={handleClick} key={percentile}/>;
@@ -32,26 +36,26 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             <div className="panel-container">
                 <FormGroup inline={true} label="Scaling">
                     <ScalingComponent
-                        selectedItem={preferenceStore.getScaling()}
-                        onItemSelect={preferenceStore.setScaling}
+                        selectedItem={this.scaling}
+                        onItemSelect={(selected) => { preferenceStore.setScaling(selected); this.scaling = selected; }}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Color map">
                     <ColormapComponent
-                        selectedItem={preferenceStore.getColormap()}
-                        onItemSelect={preferenceStore.setColormap}
+                        selectedItem={this.colormap}
+                        onItemSelect={(selected) => { preferenceStore.setColormap(selected); this.colormap = selected; }}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Percentile ranks">
                     <PercentilSelect
-                        activeItem={preferenceStore.getPercentile().toString(10)}
-                        onItemSelect={preferenceStore.setPercentile}
+                        activeItem={this.percentile}
+                        onItemSelect={(selected) => { preferenceStore.setPercentile(selected); this.percentile = selected; }}
                         popoverProps={PERCENTILE_POPOVER_PROPS}
                         filterable={false}
                         items={RenderConfigStore.PERCENTILE_RANKS.map(String)}
                         itemRenderer={this.renderPercentilSelectItem}
                     >
-                        <Button text={preferenceStore.getPercentile().toString(10) + "%"} rightIcon="double-caret-vertical" alignText={"right"}/>
+                        <Button text={this.percentile + "%"} rightIcon="double-caret-vertical" alignText={"right"}/>
                     </PercentilSelect>
                 </FormGroup>
             </div>
@@ -61,8 +65,8 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             <div className="panel-container">
                 <FormGroup inline={true} label="Color">
                     <ColorComponent
-                        selectedItem={preferenceStore.getASTColor()}
-                        onItemSelect={preferenceStore.setASTColor}
+                        selectedItem={this.astColor}
+                        onItemSelect={(selected) => { preferenceStore.setASTColor(selected); this.astColor = selected; }}
                     />
                 </FormGroup>
             </div>
