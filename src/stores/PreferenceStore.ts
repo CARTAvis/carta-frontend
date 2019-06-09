@@ -18,58 +18,56 @@ const DEFAULTS = {
 
 export class PreferenceStore {
     // user configurable settings
-    validateScaling(scaling: string | number) {
-        const value = typeof scaling === "string" ? Number(scaling) : scaling;
-        return value !== NaN && RenderConfigStore.SCALING_TYPES.has(value) ? value : DEFAULTS.scaling;
+    validateScaling(scaling: string) {
+        const value = Number(scaling);
+        return scaling && value !== NaN && RenderConfigStore.SCALING_TYPES.has(value) ? value : null;
     }
 
     validateColormap(colormap: string) {
-        return RenderConfigStore.COLOR_MAPS_SELECTED.includes(colormap) ? colormap : DEFAULTS.colormap;
+        return colormap && RenderConfigStore.COLOR_MAPS_SELECTED.includes(colormap) ? colormap : null;
     }
 
-    validatePercentile(percentile: string): number {
+    validatePercentile(percentile: string) {
         const value = Number(percentile);
-        return value !== NaN && RenderConfigStore.PERCENTILE_RANKS.includes(value) ? value : DEFAULTS.percentile;
+        return percentile && value !== NaN && RenderConfigStore.PERCENTILE_RANKS.includes(value) ? value : null;
     }
 
-    validateASTColor(astColor: string | number) {
-        const value = typeof astColor === "string" ? Number(astColor) : astColor;
-        return value !== NaN && astColor >= 0 && astColor < AST.colors.length ? value : DEFAULTS.astColor;
+    validateASTColor(astColor: string) {
+        const value = Number(astColor);
+        return astColor && value !== NaN && value >= 0 && value < AST.colors.length ? value : null;
     }
 
     getScaling = (): FrameScaling => {
-        const scaling = localStorage.getItem(PREFERENCE_KEYS.scaling);
-        return scaling ? this.validateScaling(scaling) : DEFAULTS.scaling;
+        const scaling = this.validateScaling(localStorage.getItem(PREFERENCE_KEYS.scaling));
+        return scaling !== null ? scaling : DEFAULTS.scaling;
     };
 
     getColormap = (): string => {
-        const colormap = localStorage.getItem(PREFERENCE_KEYS.colormap);
-        return colormap ? this.validateColormap(colormap) : DEFAULTS.colormap;
+        return this.validateColormap(localStorage.getItem(PREFERENCE_KEYS.colormap)) || DEFAULTS.colormap;
     };
 
     getPercentile = (): number => {
-        const percentile = localStorage.getItem(PREFERENCE_KEYS.percentile);
-        return percentile ? this.validatePercentile(percentile) : DEFAULTS.percentile;
+        return this.validatePercentile(localStorage.getItem(PREFERENCE_KEYS.percentile)) || DEFAULTS.percentile;
     };
 
     getASTColor = (): number => {
-        const astColor = localStorage.getItem(PREFERENCE_KEYS.astColor);
-        return astColor ? this.validateASTColor(astColor) : DEFAULTS.astColor;
+        const astColor = this.validateASTColor(localStorage.getItem(PREFERENCE_KEYS.astColor));
+        return astColor !== null ? astColor : DEFAULTS.astColor;
     };
 
     @action setScaling = (scaling: FrameScaling) => {
-        localStorage.setItem(PREFERENCE_KEYS.scaling, this.validateScaling(scaling).toString(10));
+        localStorage.setItem(PREFERENCE_KEYS.scaling, scaling.toString(10));
     };
 
     @action setColormap = (colormap: string) => {
-        localStorage.setItem(PREFERENCE_KEYS.colormap, this.validateColormap(colormap));
+        localStorage.setItem(PREFERENCE_KEYS.colormap, colormap);
     };
 
     @action setPercentile = (percentile: string) => {
-        localStorage.setItem(PREFERENCE_KEYS.percentile, this.validatePercentile(percentile).toString());
+        localStorage.setItem(PREFERENCE_KEYS.percentile, percentile);
     };
 
     @action setASTColor = (astColor: number) => {
-        localStorage.setItem(PREFERENCE_KEYS.astColor, this.validateASTColor(astColor).toString(10));
+        localStorage.setItem(PREFERENCE_KEYS.astColor, astColor.toString(10));
     };
 }
