@@ -20,7 +20,7 @@ export class PreferenceStore {
     // user configurable settings
     validateScaling(scaling: string) {
         const value = Number(scaling);
-        return scaling && value !== NaN && RenderConfigStore.SCALING_TYPES.has(value) ? value : null;
+        return scaling && isFinite(value) && RenderConfigStore.SCALING_TYPES.has(value) ? value : null;
     }
 
     validateColormap(colormap: string) {
@@ -29,12 +29,12 @@ export class PreferenceStore {
 
     validatePercentile(percentile: string) {
         const value = Number(percentile);
-        return percentile && value !== NaN && RenderConfigStore.PERCENTILE_RANKS.includes(value) ? value : null;
+        return percentile && isFinite(value) && RenderConfigStore.PERCENTILE_RANKS.includes(value) ? value : null;
     }
 
     validateASTColor(astColor: string) {
         const value = Number(astColor);
-        return astColor && value !== NaN && value >= 0 && value < AST.colors.length ? value : null;
+        return astColor && isFinite(value) && value >= 0 && value < AST.colors.length ? value : null;
     }
 
     getScaling = (): FrameScaling => {
