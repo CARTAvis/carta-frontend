@@ -11,7 +11,7 @@ import {AppStore} from "stores";
 import {RenderConfigStore} from "stores/RenderConfigStore";
 import "./PreferenceDialogComponent.css";
 
-const PercentilSelect = Select.ofType<string>();
+const PercentileSelect = Select.ofType<string>();
 const PERCENTILE_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 
 @observer
@@ -22,7 +22,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
     @observable percentile = this.props.appStore.preferenceStore.getPercentile().toString();
     @observable astColor = this.props.appStore.preferenceStore.getASTColor();
 
-    renderPercentilSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
+    renderPercentileSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
         return <MenuItem text={percentile + "%"} onClick={handleClick} key={percentile}/>;
     };
 
@@ -47,16 +47,16 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Percentile ranks">
-                    <PercentilSelect
+                    <PercentileSelect
                         activeItem={this.percentile}
                         onItemSelect={(selected) => { preferenceStore.setPercentile(selected); this.percentile = selected; }}
                         popoverProps={PERCENTILE_POPOVER_PROPS}
                         filterable={false}
                         items={RenderConfigStore.PERCENTILE_RANKS.map(String)}
-                        itemRenderer={this.renderPercentilSelectItem}
+                        itemRenderer={this.renderPercentileSelectItem}
                     >
                         <Button text={this.percentile + "%"} rightIcon="double-caret-vertical" alignText={"right"}/>
-                    </PercentilSelect>
+                    </PercentileSelect>
                 </FormGroup>
             </div>
         );
