@@ -18,6 +18,7 @@ body {
     top: 0;
     left: 0;
     z-index: -100;
+    user-select: none;
     .bp3-dark {
         background-color: $dark-gray3;
     }

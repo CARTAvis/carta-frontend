@@ -1,6 +1,7 @@
 import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {OverlayStore, RegionSetStore, RenderConfigStore} from "stores";
+import {NumberRange} from "@blueprintjs/core";
+import {PreferenceStore, OverlayStore, RegionSetStore, RenderConfigStore} from "stores";
 import {Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES} from "models";
 import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency} from "utilities";
 import {BackendService} from "../services";
@@ -24,6 +25,7 @@ export class FrameStore {
     @observable channel: number;
     @observable requiredStokes: number;
     @observable requiredChannel: number;
+    @observable animationChannelRange: NumberRange;
     @observable currentFrameView: FrameView;
     @observable currentCompressionQuality: number;
     @observable renderConfig: RenderConfigStore;
@@ -36,7 +38,7 @@ export class FrameStore {
     private readonly overlayStore: OverlayStore;
     private readonly backendService: BackendService;
 
-    constructor(overlay: OverlayStore, frameInfo: FrameInfo, backendService: BackendService) {
+    constructor(preference: PreferenceStore, overlay: OverlayStore, frameInfo: FrameInfo, backendService: BackendService) {
         this.overlayStore = overlay;
         this.backendService = backendService;
         this.frameInfo = frameInfo;
@@ -46,7 +48,7 @@ export class FrameStore {
         this.channel = 0;
         this.requiredStokes = 0;
         this.requiredChannel = 0;
-        this.renderConfig = new RenderConfigStore();
+        this.renderConfig = new RenderConfigStore(preference);
         this.regionSet = new RegionSetStore(this, backendService);
         this.valid = true;
         this.currentFrameView = {
@@ -56,6 +58,7 @@ export class FrameStore {
             yMax: 0,
             mip: 999
         };
+        this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
     }
 
     @computed get requiredFrameView(): FrameView {
@@ -159,7 +162,7 @@ export class FrameStore {
         const values = new Array<number>(N);
         const rawValues = new Array<number>(N);
 
-        let getChannelIndexSimple =  (value: number): number => {
+        let getChannelIndexSimple = (value: number): number => {
             if (!value) {
                 return null;
             }
@@ -247,8 +250,10 @@ export class FrameStore {
             values[i] = i;
             rawValues[i] = i;
         }
-        return {fromWCS: false, channelType: {code: "", name: "Channel"}, indexes, values, rawValues,
-                getChannelIndexWCS: null, getChannelIndexSimple: getChannelIndexSimple};
+        return {
+            fromWCS: false, channelType: {code: "", name: "Channel"}, indexes, values, rawValues,
+            getChannelIndexWCS: null, getChannelIndexSimple: getChannelIndexSimple
+        };
     }
 
     @computed get spectralInfo(): SpectralInfo {
@@ -401,6 +406,10 @@ export class FrameStore {
         this.zoomLevel = Math.min(zoomX, zoomY);
         this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + 0.5;
         this.center.y = this.frameInfo.fileInfoExtended.height / 2.0 + 0.5;
+    };
+
+    @action setAnimationRange = (range: NumberRange) => {
+        this.animationChannelRange = range;
     };
 
     private calculateZoomX() {

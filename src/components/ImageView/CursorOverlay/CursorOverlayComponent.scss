@@ -10,7 +10,7 @@
     font-size: 12px;
     color: $light-gray5;
     z-index: 5;
-
+    user-select: text;
     &.docked {
         z-index: 4;
     }

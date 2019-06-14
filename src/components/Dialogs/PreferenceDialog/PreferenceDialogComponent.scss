@@ -1,16 +1,15 @@
 @import "../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
-.overlay-settings-dialog {
+.preference-dialog {
 
     .bp3-tab-panel {
         height: 20em;
         overflow: auto;
         width: 100%;
-	user-select: none;
     }
 
     .bp3-tab-list {
-        width: 10em;
+        width: 12em;
     }
     
     .bp3-button.colorselect .bp3-button-text {
@@ -51,13 +50,7 @@
     }
 }
 
-.dropdown-color {
-    border: solid 1px black;
-    width: 100%;
-    border-radius: $pt-border-radius;
-}
-
-.bp3-select-popover.colorselect {
+.bp3-select-popover.themeselect {
     
     .bp3-menu {
         min-width: 100px;

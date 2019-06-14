@@ -7,7 +7,6 @@ export class SpectralProfileStore {
     @observable stokes: number;
     @observable x: number;
     @observable y: number;
-    @observable channelValues: number[];
     @observable profiles: Map<string, ObservableMap<CARTA.StatsType, CARTA.ISpectralProfile>>;
 
     constructor(fileId: number = 0, regionId: number = 0) {
@@ -22,10 +21,6 @@ export class SpectralProfileStore {
             return coordinateMap.get(statsType);
         }
         return null;
-    }
-
-    @action setChannelValues(values: number[]) {
-        this.channelValues = values;
     }
 
     @action clearProfiles() {

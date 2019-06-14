@@ -1,6 +1,7 @@
 .raster-div {
     position: absolute;
     left: 0;
+    user-select: none;
     &.docked {
         z-index: 1;
     }

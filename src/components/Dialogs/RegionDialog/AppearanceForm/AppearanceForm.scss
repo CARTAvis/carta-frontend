@@ -4,7 +4,7 @@
     .form-contents {
         display: flex;
         flex-wrap: wrap;
-
+        user-select: none;
         .bp3-form-group {
             flex-grow: 1;
             padding-right: 10px;

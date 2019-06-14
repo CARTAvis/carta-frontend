@@ -2,7 +2,10 @@ import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable, ObservableMap} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore, FrameInfo, FrameStore, LogEntry, LogStore, nightPalette, OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore} from ".";
+import {AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore,
+        FrameInfo, FrameStore, LogEntry, LogStore, nightPalette,
+        OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore,
+        PreferenceStore} from ".";
 import {BackendService} from "services";
 import {CursorInfo, FrameView} from "models";
 import {smoothStepOffset} from "utilities";
@@ -28,6 +31,8 @@ export class AppStore {
     @observable alertStore: AlertStore;
     // Logs
     @observable logStore: LogStore;
+    // User preference
+    @observable preferenceStore: PreferenceStore;
 
     // Cursor information
     @observable cursorInfo: CursorInfo;
@@ -112,6 +117,15 @@ export class AppStore {
         this.apiKeyDialogVisible = false;
     };
 
+    // User preference dialog
+    @observable preferenceDialogVisible: boolean;
+    @action showPreferenceDialog = () => {
+        this.preferenceDialogVisible = true;
+    };
+    @action hidePreferenceDialog = () => {
+        this.preferenceDialogVisible = false;
+    };
+
     // Tasks
     @observable taskProgress: number;
     @observable taskStartTime: number;
@@ -177,7 +191,7 @@ export class AppStore {
                 renderMode: CARTA.RenderMode.RASTER
             };
 
-            let newFrame = new FrameStore(this.overlayStore, frameInfo, this.backendService);
+            let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, frameInfo, this.backendService);
             newFrame.fitZoom();
             this.loadWCS(newFrame);
 
@@ -362,6 +376,7 @@ export class AppStore {
         this.alertStore = new AlertStore();
         this.overlayStore = new OverlayStore();
         this.widgetsStore = new WidgetsStore(this);
+        this.preferenceStore = new PreferenceStore();
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
         this.darkTheme = false;
@@ -532,7 +547,6 @@ export class AppStore {
                 frameMap.set(spectralProfileData.regionId, profileStore);
             }
 
-            profileStore.channelValues = spectralProfileData.channelVals;
             profileStore.stokes = spectralProfileData.stokes;
             for (let profile of spectralProfileData.profiles) {
                 profileStore.setProfile(profile);
@@ -591,7 +605,9 @@ export class AppStore {
         if (updatedFrame) {
             updatedFrame.updateFromRasterData(rasterImageData);
             if (this.animatorStore.animationState === AnimationState.PLAYING) {
-                this.animatorStore.removeFromRequestQueue(updatedFrame.channel, updatedFrame.stokes);
+                updatedFrame.requiredChannel = rasterImageData.channel;
+                updatedFrame.requiredStokes = rasterImageData.stokes;
+                this.animatorStore.incrementFlowCounter(updatedFrame.frameInfo.fileId, updatedFrame.channel, updatedFrame.stokes);
             }
         }
     };

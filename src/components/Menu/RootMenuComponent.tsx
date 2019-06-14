@@ -40,6 +40,8 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
                 />
                 <Menu.Divider/>
+                <Menu.Item text="Preferences" onClick={appStore.showPreferenceDialog}/>
+                <Menu.Divider/>
                 <Menu.Item text="Enter API Key" onClick={appStore.showApiKeyDialog}/>
                 <Menu.Item text="Connect to remote server" onClick={appStore.showURLConnect}/>
             </Menu>

@@ -74,7 +74,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (frame.regionSet) {
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (region) {
-                coordinateData = this.profileStore.getProfile(this.widgetStore.coordinate, region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.None);
+                coordinateData = this.profileStore.getProfile(this.widgetStore.coordinate, region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.Sum);
             }
         }
 
