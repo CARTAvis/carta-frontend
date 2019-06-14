@@ -50,6 +50,8 @@ export class RenderConfigStore {
         "reds", "seismic", "spectral", "tab10", "viridis"
     ];
 
+    static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
+
     @observable scaling: FrameScaling;
     @observable colorMap: number;
     @observable contrast: number;
@@ -66,14 +68,15 @@ export class RenderConfigStore {
     @observable scaleMax: number[];
     
     constructor(preference: PreferenceStore) {
-        this.selectedPercentile = [99.9, 99.9, 99.9, 99.9];
+        const percentile = preference.getPercentile();
+        this.selectedPercentile = [percentile, percentile, percentile, percentile];
         this.bias = 0;
         this.contrast = 1;
         this.gamma = 1;
         this.alpha = 1000;
         this.scaling = preference.getScaling();
         this.cubeHistogramProgress = 0;
-        this.setColorMap("inferno");
+        this.setColorMap(preference.getColormap());
         this.stokes = 0;	
         this.scaleMin = [0, 0, 0, 0];
         this.scaleMax = [1, 1, 1, 1];
