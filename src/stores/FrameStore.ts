@@ -47,6 +47,21 @@ export class FrameStore {
         this.requiredStokes = 0;
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore(preference);
+
+        // synchornize AST overlay's color/grid/label with perference when frame is created
+        const astColor = preference.getASTColor();
+        if (astColor !== overlay.global.color) {
+            overlay.global.setColor(astColor);
+        }
+        const astGridVisible = preference.getASTGridVisible();
+        if (astGridVisible !== overlay.grid.visible) {
+            overlay.grid.setVisible(astGridVisible);
+        }
+        const astLabelsVisible = preference.getASTLabelsVisible();
+        if (astLabelsVisible !== overlay.labels.visible) {
+            overlay.labels.setVisible(astLabelsVisible);
+        }
+
         this.regionSet = new RegionSetStore(this, preference, backendService);
         this.valid = true;
         this.currentFrameView = {
