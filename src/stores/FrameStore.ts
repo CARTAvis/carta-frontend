@@ -36,11 +36,9 @@ export class FrameStore {
     @observable regionSet: RegionSetStore;
 
     private readonly overlayStore: OverlayStore;
-    private readonly backendService: BackendService;
 
     constructor(preference: PreferenceStore, overlay: OverlayStore, frameInfo: FrameInfo, backendService: BackendService) {
         this.overlayStore = overlay;
-        this.backendService = backendService;
         this.frameInfo = frameInfo;
         this.renderHiDPI = true;
         this.center = {x: 0, y: 0};
