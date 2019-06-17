@@ -53,7 +53,7 @@ export class FrameStore {
         if (astColor !== overlay.global.color) {
             overlay.global.setColor(astColor);
         }
-        this.regionSet = new RegionSetStore(this, backendService);
+        this.regionSet = new RegionSetStore(this, preference, backendService);
         this.valid = true;
         this.currentFrameView = {
             xMin: 0,

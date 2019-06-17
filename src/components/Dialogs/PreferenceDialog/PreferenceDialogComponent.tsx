@@ -1,56 +1,65 @@
 import * as React from "react";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {Button, IDialogProps, Intent, Tab, Tabs, FormGroup, TabId, MenuItem, IPopoverProps} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
+import {Button, IDialogProps, Intent, Tab, Tabs, FormGroup, TabId, MenuItem, Switch, RadioGroup, Radio} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/ScalingComponent";
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
-import {AppStore} from "stores";
-import {RenderConfigStore} from "stores/RenderConfigStore";
+import {AppearanceForm} from "components/Dialogs/RegionDialog/AppearanceForm/AppearanceForm";
+import {AppStore, RegionStore, RenderConfigStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
 const PercentileSelect = Select.ofType<string>();
-const PERCENTILE_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
+const RegionTypeSelect = Select.ofType<CARTA.RegionType>();
 
 @observer
 export class PreferenceDialogComponent extends React.Component<{ appStore: AppStore }> {
-    @observable selectedTab: TabId = "renderConfig";
+    @observable selectedTab: TabId = "regionSettings";
     @observable scaling = this.props.appStore.preferenceStore.getScaling();
     @observable colormap = this.props.appStore.preferenceStore.getColormap();
     @observable percentile = this.props.appStore.preferenceStore.getPercentile().toString();
     @observable astColor = this.props.appStore.preferenceStore.getASTColor();
+    @observable astGridVisible = this.props.appStore.preferenceStore.getASTGridVisible();
+    @observable astLabelsVisible = this.props.appStore.preferenceStore.getASTLabelsVisible();
+    @observable regionType = this.props.appStore.preferenceStore.getRegionType();
+    @observable regionCreationMode = this.props.appStore.preferenceStore.getRegionCreationMode();
 
     renderPercentileSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
         return <MenuItem text={percentile + "%"} onClick={handleClick} key={percentile}/>;
     };
 
+    renderRegionTypeSelectItem = (regionType: CARTA.RegionType, {handleClick, modifiers, query}) => {
+        return <MenuItem text={RegionStore.RegionTypeString(regionType)} onClick={handleClick} key={regionType}/>;
+    };
+
     public render() {
         const appStore = this.props.appStore;
-        const preferenceStore = appStore.preferenceStore;
+        const preference = appStore.preferenceStore;
 
         const globalPanel = (null);
 
         const renderConfigPanel = (
-            <div className="panel-container">
+            <React.Fragment>
                 <FormGroup inline={true} label="Scaling">
                     <ScalingComponent
                         selectedItem={this.scaling}
-                        onItemSelect={(selected) => { preferenceStore.setScaling(selected); this.scaling = selected; }}
+                        onItemSelect={(selected) => { preference.setScaling(selected); this.scaling = selected; }}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Color map">
                     <ColormapComponent
                         selectedItem={this.colormap}
-                        onItemSelect={(selected) => { preferenceStore.setColormap(selected); this.colormap = selected; }}
+                        onItemSelect={(selected) => { preference.setColormap(selected); this.colormap = selected; }}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Percentile ranks">
                     <PercentileSelect
                         activeItem={this.percentile}
-                        onItemSelect={(selected) => { preferenceStore.setPercentile(selected); this.percentile = selected; }}
-                        popoverProps={PERCENTILE_POPOVER_PROPS}
+                        onItemSelect={(selected) => { preference.setPercentile(selected); this.percentile = selected; }}
+                        popoverProps={{minimal: true, position: "auto"}}
                         filterable={false}
                         items={RenderConfigStore.PERCENTILE_RANKS.map(String)}
                         itemRenderer={this.renderPercentileSelectItem}
@@ -58,18 +67,57 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         <Button text={this.percentile + "%"} rightIcon="double-caret-vertical" alignText={"right"}/>
                     </PercentileSelect>
                 </FormGroup>
-            </div>
+            </React.Fragment>
         );
 
         const astSettingsPanel = (
-            <div className="panel-container">
+            <React.Fragment>
                 <FormGroup inline={true} label="Color">
                     <ColorComponent
                         selectedItem={this.astColor}
-                        onItemSelect={(selected) => { preferenceStore.setASTColor(selected); this.astColor = selected; }}
+                        onItemSelect={(selected) => { preference.setASTColor(selected); this.astColor = selected; }}
                     />
                 </FormGroup>
-            </div>
+                <FormGroup inline={true} label="Grid visible">
+                    <Switch
+                        checked={this.astGridVisible}
+                        onChange={(ev) => { preference.setASTGridVisible(ev.currentTarget.checked); this.astGridVisible = ev.currentTarget.checked; }}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Label visible">
+                    <Switch
+                        checked={this.astLabelsVisible}
+                        onChange={(ev) => { preference.setASTLabelsVisible(ev.currentTarget.checked); this.astLabelsVisible = ev.currentTarget.checked; }}
+                    />
+                </FormGroup>
+            </React.Fragment>
+        );
+
+        const regionSettingsPanel = (
+            <React.Fragment>
+                <AppearanceForm region={preference.getDefaultRegion()} darkTheme={appStore.darkTheme} isPreference={true}/>
+                <FormGroup inline={true} label="Region Type">
+                    <RegionTypeSelect
+                        activeItem={this.regionType}
+                        onItemSelect={(selected) => { preference.setRegionType(selected); this.regionType = selected; }}
+                        popoverProps={{minimal: true, position: "auto-start"}}
+                        filterable={false}
+                        items={Array.from(RegionStore.AVAILABLE_REGION_TYPES.keys())}
+                        itemRenderer={this.renderRegionTypeSelectItem}
+                    >
+                        <Button text={RegionStore.RegionTypeString(preference.getRegionType())} rightIcon="double-caret-vertical" alignText={"right"}/>
+                    </RegionTypeSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="Creation Mode">
+                    <RadioGroup
+                        selectedValue={this.regionCreationMode}
+                        onChange={(ev) => { preference.setRegionCreationMode(ev.currentTarget.value); this.regionCreationMode = ev.currentTarget.value; }}
+                    >
+                        <Radio label="Center to corner" value="center"/>
+                        <Radio label="Corner to corner" value="corner"/>
+                    </RadioGroup>
+                </FormGroup>
+            </React.Fragment>
         );
 
         let className = "preference-dialog";
@@ -89,7 +137,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={600} defaultHeight={450} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={725} defaultHeight={450} enableResizing={true}>
                 <div className="bp3-dialog-body">
                     <Tabs
                         id="preferenceTabs"
@@ -100,6 +148,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         <Tab id="global" title="Global" panel={globalPanel}/>
                         <Tab id="renderConfig" title="Default Render Config" panel={renderConfigPanel}/>
                         <Tab id="astSettings" title="Default WCS Overlay" panel={astSettingsPanel}/>
+                        <Tab id="regionSettings" title="Default Region settings" panel={regionSettingsPanel}/>
                     </Tabs>
                 </div>
                 <div className="bp3-dialog-footer">

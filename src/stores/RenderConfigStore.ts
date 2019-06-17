@@ -82,7 +82,19 @@ export class RenderConfigStore {
         this.scaleMax = [1, 1, 1, 1];
     }
 
-   @computed get colorMapName() {
+    public static IsScalingValid(scaling: FrameScaling): boolean {
+        return RenderConfigStore.SCALING_TYPES.has(scaling) ? true : false;
+    }
+
+     public static IsColormapValid(colormap: string): boolean {
+        return RenderConfigStore.COLOR_MAPS_SELECTED.includes(colormap) ? true : false;
+    }
+
+     public static IsPercentileValid(percentile: number): boolean {
+        return RenderConfigStore.PERCENTILE_RANKS.includes(percentile) ? true : false;
+    }
+
+    @computed get colorMapName() {
         if (this.colorMap >= 0 && this.colorMap <= RenderConfigStore.COLOR_MAPS_ALL.length - 1) {
             return RenderConfigStore.COLOR_MAPS_ALL[this.colorMap];
         } else {

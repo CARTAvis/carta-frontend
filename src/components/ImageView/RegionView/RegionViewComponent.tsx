@@ -13,6 +13,7 @@ import "./RegionViewComponent.css";
 export interface RegionViewComponentProps {
     frame: FrameStore;
     overlaySettings: OverlayStore;
+    isCornerMode: boolean;
     docked: boolean;
     width: number;
     height: number;
@@ -213,7 +214,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 dx = Math.sign(dx) * maxDiff;
                 dy = Math.sign(dy) * maxDiff;
             }
-            if (mouseEvent.ctrlKey || mouseEvent.metaKey) {
+            const isCtrlPressed = mouseEvent.ctrlKey || mouseEvent.metaKey;
+            if ((this.props.isCornerMode && !isCtrlPressed) || (!this.props.isCornerMode && isCtrlPressed)) {
+                // corner-to-corner region creation
                 const endPoint = {x: this.regionStartPoint.x + dx, y: this.regionStartPoint.y + dy};
                 const center = {x: (this.regionStartPoint.x + endPoint.x) / 2.0, y: (this.regionStartPoint.y + endPoint.y) / 2.0};
                 switch (this.creatingRegion.regionType) {
@@ -227,6 +230,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                         break;
                 }
             } else {
+                // center-to-corner region creation
                 switch (this.creatingRegion.regionType) {
                     case CARTA.RegionType.RECTANGLE:
                         this.creatingRegion.setControlPoints([this.regionStartPoint, {x: 2 * Math.abs(dx), y: 2 * Math.abs(dy)}]);
