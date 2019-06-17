@@ -68,7 +68,6 @@ export class RegionStore {
         return RegionStore.AVAILABLE_REGION_TYPES.has(regionType) ? true : false;
     }
 
-     // TODO: add examination of string
     public static IsRegionColorValid(regionColor: string): boolean {
         const colorHex: RegExp = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
         return colorHex.test(regionColor);
