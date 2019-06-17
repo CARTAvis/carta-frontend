@@ -64,17 +64,17 @@ export class PreferenceStore {
         return regionColor && RegionStore.IsRegionColorValid(regionColor) ? regionColor : null;
     }
 
-     validateRegionLineWidth(regionLineWidth: string) {
+    validateRegionLineWidth(regionLineWidth: string) {
         const value = Number(regionLineWidth);
         return value && value !== NaN && RegionStore.IsRegionLineWidthValid(value) ? value : null;
     }
 
-     validateRegionDashLength(regionDashLength: string) {
+    validateRegionDashLength(regionDashLength: string) {
         const value = Number(regionDashLength);
         return value && value !== NaN && RegionStore.IsRegionDashLengthValid(value) ? value : null;
     }
 
-     validateRegionCreationMode(regionCreationMode: string) {
+    validateRegionCreationMode(regionCreationMode: string) {
         return regionCreationMode && (regionCreationMode === "centner" || regionCreationMode === "corner") ? regionCreationMode : null;
     }
 
@@ -156,12 +156,10 @@ export class PreferenceStore {
     };
 
     @action setASTGridVisible = (visible: boolean) => {
-        this.appStore.overlayStore.labels.visible = visible;
         localStorage.setItem(PREFERENCE_KEYS.astGridVisible, visible ? "true" : "false");
     };
 
     @action setASTLabelsVisible = (visible: boolean) => {
-        this.appStore.overlayStore.labels.visible = visible;
         localStorage.setItem(PREFERENCE_KEYS.astLabelsVisible, visible ? "true" : "false");
     };
 
