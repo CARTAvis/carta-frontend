@@ -57,7 +57,7 @@ export class PreferenceStore {
 
     validateRegionType(regionType: string) {
         const value = Number(regionType);
-        return value && value !== NaN && RegionStore.IsRegionTypeValid(value) ? value : null;
+        return value && isFinite(value) && RegionStore.IsRegionTypeValid(value) ? value : null;
     }
 
      validateRegionColor(regionColor: string) {
@@ -66,12 +66,12 @@ export class PreferenceStore {
 
     validateRegionLineWidth(regionLineWidth: string) {
         const value = Number(regionLineWidth);
-        return value && value !== NaN && RegionStore.IsRegionLineWidthValid(value) ? value : null;
+        return value && isFinite(value) && RegionStore.IsRegionLineWidthValid(value) ? value : null;
     }
 
     validateRegionDashLength(regionDashLength: string) {
         const value = Number(regionDashLength);
-        return value && value !== NaN && RegionStore.IsRegionDashLengthValid(value) ? value : null;
+        return value && isFinite(value) && RegionStore.IsRegionDashLengthValid(value) ? value : null;
     }
 
     validateRegionCreationMode(regionCreationMode: string) {
