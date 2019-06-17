@@ -1,7 +1,7 @@
 import {action, autorun} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {FrameScaling, RenderConfigStore, RegionStore, AppStore} from "stores";
+import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
 
 const PREFERENCE_KEYS = {
     scaling: "CARTA_scaling",
@@ -32,22 +32,21 @@ const DEFAULTS = {
 };
 
 export class PreferenceStore {
-    private appStore: AppStore;
     private regionContainer: RegionStore;
 
     // validators
     validateScaling(scaling: string) {
         const value = Number(scaling);
-        return scaling && isFinite(value) && RenderConfigStore.SCALING_TYPES.has(value) ? value : null;
+        return scaling && isFinite(value) && RenderConfigStore.IsScalingValid(value) ? value : null;
     }
 
     validateColormap(colormap: string) {
-        return colormap && RenderConfigStore.COLOR_MAPS_SELECTED.includes(colormap) ? colormap : null;
+        return colormap && RenderConfigStore.IsColormapValid(colormap) ? colormap : null;
     }
 
     validatePercentile(percentile: string) {
         const value = Number(percentile);
-        return percentile && isFinite(value) && RenderConfigStore.PERCENTILE_RANKS.includes(value) ? value : null;
+        return percentile && isFinite(value) && RenderConfigStore.IsPercentileValid(value) ? value : null;
     }
 
     validateASTColor(astColor: string) {
@@ -172,9 +171,7 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.regionCreationMode, regionCreationMode);
     };
 
-    constructor(appStore: AppStore) {
-        this.appStore = appStore;
-
+    constructor() {
         // setup region settings container (for AppearanceForm in PreferenceDialogComponent)
         this.regionContainer = new RegionStore(null, -1, [{x: 0, y: 0}, {x: 1, y: 1}], this.getRegionType(), -1);
         this.regionContainer.color = this.getRegionColor();
