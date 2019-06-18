@@ -6,6 +6,7 @@ import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
 const PREFERENCE_KEYS = {
     theme: "CARTA_theme",
     autoLaunch: "CARTA_autoLaunch",
+    layout: "CARTA_layout",
     cursorFreeze: "CARTA_cursorFreeze",
     zoomMode: "CARTA_zoomMode",
     scaling: "CARTA_scaling",
@@ -24,6 +25,7 @@ const PREFERENCE_KEYS = {
 const DEFAULTS = {
     theme: "light",
     autoLaunch: true,
+    layout: "continuum_analysis",
     cursorFreeze: false,
     zoomMode: "fit",
     scaling: 0,
@@ -45,6 +47,10 @@ export class PreferenceStore {
     // user configurable settings
     validateTheme(theme: string) {
         return theme && (theme === "light" || theme === "dark") ? theme : null;
+    }
+
+    validateLayout(layout: string) {
+        return layout && (layout === "continuum_analysis" || layout === "cube_view" || layout === "cube_analysis") ? layout : null;
     }
 
     validateZoomMode(zoomMode: string) {
@@ -100,6 +106,10 @@ export class PreferenceStore {
 
     getAutoLaunch = (): boolean => {
         return localStorage.getItem(PREFERENCE_KEYS.autoLaunch) === "false" ? false : DEFAULTS.autoLaunch;
+    }
+
+    getLayout = (): string => {
+        return this.validateLayout(localStorage.getItem(PREFERENCE_KEYS.layout)) || DEFAULTS.layout;
     }
 
     getCursorFreeze = (): boolean => {
@@ -184,6 +194,10 @@ export class PreferenceStore {
 
     @action setAutoLaunch = (autoLaunch: boolean) => {
         localStorage.setItem(PREFERENCE_KEYS.autoLaunch, autoLaunch ? "true" : "false");
+    };
+
+    @action setLayout = (layout: string) => {
+        localStorage.setItem(PREFERENCE_KEYS.layout, layout);
     };
 
     @action setCursorFreeze = (cursorFreeze: boolean) => {

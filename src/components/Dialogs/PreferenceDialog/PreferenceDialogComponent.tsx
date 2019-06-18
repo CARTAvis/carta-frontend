@@ -20,6 +20,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
     @observable selectedTab: TabId = "global";
     @observable theme = this.props.appStore.preferenceStore.getTheme();
     @observable autoLaunch = this.props.appStore.preferenceStore.getAutoLaunch();
+    @observable layout = this.props.appStore.preferenceStore.getLayout();
     @observable cursorFreeze = this.props.appStore.preferenceStore.getCursorFreeze();
     @observable zoomMode = this.props.appStore.preferenceStore.getZoomMode();
     @observable scaling = this.props.appStore.preferenceStore.getScaling();
@@ -57,6 +58,17 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </FormGroup>
                 <FormGroup inline={true} label="Auto-launch File Browser">
                     <Switch checked={this.autoLaunch} innerLabelChecked="Enable" innerLabel="Disable" onChange={(ev) => { preference.setAutoLaunch(ev.currentTarget.checked); this.autoLaunch = ev.currentTarget.checked; }}/>
+                </FormGroup>
+                <FormGroup inline={true} label="Layout">
+                    <RadioGroup
+                        selectedValue={this.layout}
+                        onChange={(ev) => { preferenceStore.setLayout(ev.currentTarget.value); this.layout = ev.currentTarget.value; }}
+                        inline={true}
+                    >
+                        <Radio label="Continuum analysis" value="continuum_analysis"/>
+                        <Radio label="Cube view" value="cube_view"/>
+                        <Radio label="Cube analysis" value="cube_analysis"/>
+                    </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Cursor Position">
                     <Switch checked={this.cursorFreeze} innerLabelChecked="Freeze" innerLabel="Unfreeze" onChange={(ev) => { preference.setCursorFreeze(ev.currentTarget.checked); this.cursorFreeze = ev.currentTarget.checked; }}/>
