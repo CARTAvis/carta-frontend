@@ -140,6 +140,21 @@ export class App extends React.Component<{ appStore: AppStore }> {
             props: {appStore: this.props.appStore, id: "spatial-profiler-1", docked: true}
         };
 
+        const spectralProfilerZComponent = {
+            type: "react-component",
+            component: "spectral-profiler",
+            id: "spectral-profiler-0",
+            props: {appStore: this.props.appStore, id: "spectral-profiler-0", docked: true}
+        };
+
+        const statsComponent = {
+            type: "react-component",
+            component: "stats",
+            title: "Statistics",
+            id: "stats-0",
+            props: {appStore: this.props.appStore, id: "stats-0", docked: true}
+        };
+
         const regionListComponent = {
             type: "react-component",
             component: "region-list",
@@ -157,24 +172,37 @@ export class App extends React.Component<{ appStore: AppStore }> {
         };
 
         let rightColumnContent = [];
-
-        if (window.innerHeight > App.REGION_WIDGETS_STACK_CUTOFF) {
-            rightColumnContent = [spatialProfilerXComponent, spatialProfilerYComponent, regionListComponent, animatorComponent];
-        } else {
-            rightColumnContent = [
-                spatialProfilerXComponent,
-                spatialProfilerYComponent, {
+        let leftBottomContent: any;
+        switch (this.props.appStore.preferenceStore.getLayout()) {
+            case "continuum_analysis":
+                leftBottomContent = {
                     type: "stack",
-                    content: [regionListComponent, animatorComponent]
-                }];
+                    content: [renderConfigComponent, regionListComponent, animatorComponent]
+                };
+                rightColumnContent = [spatialProfilerXComponent, spatialProfilerYComponent, statsComponent];
+                break;
+            case "cube_analysis":
+                leftBottomContent = {
+                    type: "stack",
+                    content: [animatorComponent, renderConfigComponent, regionListComponent]
+                };
+                rightColumnContent = [spatialProfilerXComponent, spatialProfilerYComponent, spectralProfilerZComponent];
+                break;
+            case "cube_view":
+            default:
+                leftBottomContent = {
+                    type: "stack",
+                    content: [animatorComponent, renderConfigComponent, regionListComponent]
+                };
+                rightColumnContent = [spectralProfilerZComponent, statsComponent];
+                break;
         }
-
         const initialLayout: any[] = [{
             type: "row",
             content: [{
                 type: "column",
                 width: 60,
-                content: [imageViewComponent, renderConfigComponent]
+                content: [imageViewComponent, leftBottomContent]
             }, {
                 type: "column",
                 content: rightColumnContent
@@ -183,9 +211,11 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         widgetsStore.addSpatialProfileWidget("spatial-profiler-0", "x", -1, 0);
         widgetsStore.addSpatialProfileWidget("spatial-profiler-1", "y", -1, 0);
+        widgetsStore.addSpectralProfileWidget("spectral-profiler-0", "z");
         widgetsStore.addRenderConfigWidget("render-config-0");
         widgetsStore.addAnimatorWidget("animator-0");
         widgetsStore.addRegionListWidget("region-list-0");
+        widgetsStore.addStatsWidget("stats-0");
         widgetsStore.addLogWidget("log-0");
 
         const layout = new GoldenLayout({

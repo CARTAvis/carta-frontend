@@ -25,7 +25,7 @@ const PREFERENCE_KEYS = {
 const DEFAULTS = {
     theme: "light",
     autoLaunch: true,
-    layout: "continuum_analysis",
+    layout: "cube_view",
     cursorFreeze: false,
     zoomMode: "fit",
     scaling: 0,

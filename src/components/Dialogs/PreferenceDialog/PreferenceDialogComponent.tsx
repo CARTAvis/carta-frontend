@@ -65,8 +65,8 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         onChange={(ev) => { preferenceStore.setLayout(ev.currentTarget.value); this.layout = ev.currentTarget.value; }}
                         inline={true}
                     >
-                        <Radio label="Continuum analysis" value="continuum_analysis"/>
                         <Radio label="Cube view" value="cube_view"/>
+                        <Radio label="Continuum analysis" value="continuum_analysis"/>
                         <Radio label="Cube analysis" value="cube_analysis"/>
                     </RadioGroup>
                 </FormGroup>
