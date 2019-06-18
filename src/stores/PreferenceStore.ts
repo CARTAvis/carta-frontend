@@ -4,6 +4,9 @@ import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
 
 const PREFERENCE_KEYS = {
+    autoLaunch: "CARTA_autoLaunch",
+    cursorFreeze: "CARTA_cursorFreeze",
+    zoomMode: "CARTA_zoomMode",
     scaling: "CARTA_scaling",
     colormap: "CARTA_colormap",
     percentile: "CARTA_percentile",
@@ -18,6 +21,9 @@ const PREFERENCE_KEYS = {
 };
 
 const DEFAULTS = {
+    autoLaunch: true,
+    cursorFreeze: false,
+    zoomMode: "fit",
     scaling: 0,
     colormap: "inferno",
     percentile: 99.9,
@@ -34,7 +40,11 @@ const DEFAULTS = {
 export class PreferenceStore {
     private regionContainer: RegionStore;
 
-    // validators
+    // user configurable settings
+    validateZoomMode(zoomMode: string) {
+        return zoomMode && (zoomMode === "fit" || zoomMode === "1.0x") ? zoomMode : null;
+    }
+
     validateScaling(scaling: string) {
         const value = Number(scaling);
         return scaling && isFinite(value) && RenderConfigStore.IsScalingValid(value) ? value : null;
@@ -78,6 +88,18 @@ export class PreferenceStore {
     }
 
     // getters
+    getAutoLaunch = (): boolean => {
+        return localStorage.getItem(PREFERENCE_KEYS.autoLaunch) === "false" ? false : DEFAULTS.autoLaunch;
+    }
+
+    getCursorFreeze = (): boolean => {
+        return localStorage.getItem(PREFERENCE_KEYS.cursorFreeze) === "true" ? true : DEFAULTS.cursorFreeze;
+    }
+
+    getZoomMode = (): string => {
+        return this.validateZoomMode(localStorage.getItem(PREFERENCE_KEYS.zoomMode)) || DEFAULTS.zoomMode;
+    }
+
     getScaling = (): FrameScaling => {
         const scaling = this.validateScaling(localStorage.getItem(PREFERENCE_KEYS.scaling));
         return scaling !== null ? scaling : DEFAULTS.scaling;
@@ -136,8 +158,23 @@ export class PreferenceStore {
     isRegionCornerMode = (): boolean => {
         return localStorage.getItem(PREFERENCE_KEYS.regionCreationMode) === "corner" ? true : false;
     }
+    isZoomFitMode = (): boolean => {
+        return localStorage.getItem(PREFERENCE_KEYS.zoomMode) === "fit" ? true : false;
+    }
 
     // setters
+    @action setAutoLaunch = (autoLaunch: boolean) => {
+        localStorage.setItem(PREFERENCE_KEYS.autoLaunch, autoLaunch ? "true" : "false");
+    };
+
+    @action setCursorFreeze = (cursorFreeze: boolean) => {
+        localStorage.setItem(PREFERENCE_KEYS.cursorFreeze, cursorFreeze ? "true" : "false");
+    };
+
+    @action setZoomMode = (zoomMode: string) => {
+        localStorage.setItem(PREFERENCE_KEYS.zoomMode, zoomMode);
+    };
+
     @action setScaling = (scaling: FrameScaling) => {
         localStorage.setItem(PREFERENCE_KEYS.scaling, scaling.toString(10));
     };

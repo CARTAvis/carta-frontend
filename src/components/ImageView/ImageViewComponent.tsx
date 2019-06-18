@@ -103,6 +103,10 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         this.props.appStore.setImageViewDimensions(width, height);
     };
 
+    initCenter = (cursorInfo: CursorInfo) => {
+        this.props.appStore.setCursorInfo(cursorInfo);
+    };
+
     onCursorMoved = (cursorInfo: CursorInfo) => {
         if (!this.props.appStore.cursorFrozen) {
             this.props.appStore.setCursorInfo(cursorInfo);
@@ -211,6 +215,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         height={appStore.overlayStore.viewHeight - appStore.overlayStore.padding.top - appStore.overlayStore.padding.bottom}
                         top={appStore.overlayStore.padding.top}
                         left={appStore.overlayStore.padding.left}
+                        initCenter={this.initCenter}
                         onCursorMoved={this.onCursorMoved}
                         onClicked={this.onClicked}
                         onRegionDoubleClicked={this.handleRegionDoubleClicked}

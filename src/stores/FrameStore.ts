@@ -36,8 +36,10 @@ export class FrameStore {
     @observable regionSet: RegionSetStore;
 
     private readonly overlayStore: OverlayStore;
+    private readonly preference: PreferenceStore;
 
     constructor(preference: PreferenceStore, overlay: OverlayStore, frameInfo: FrameInfo, backendService: BackendService) {
+        this.preference = preference;
         this.overlayStore = overlay;
         this.frameInfo = frameInfo;
         this.renderHiDPI = true;
@@ -72,6 +74,12 @@ export class FrameStore {
             mip: 999
         };
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
+        this.fitZoom();
+    }
+
+    // Initialize new frame's zoom level according to preference
+    initZoomLevel(): void {
+        this.preference.isZoomFitMode() ? this.fitZoom() : this.setZoom(1.0);
     }
 
     @computed get requiredFrameView(): FrameView {

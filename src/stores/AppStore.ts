@@ -192,7 +192,6 @@ export class AppStore {
             };
 
             let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, frameInfo, this.backendService);
-            newFrame.fitZoom();
             this.loadWCS(newFrame);
 
             // clear existing requirements for the frame
@@ -208,6 +207,10 @@ export class AppStore {
                 this.frames.push(newFrame);
             }
             this.setActiveFrame(newFrame.frameInfo.fileId);
+
+            // Initialize new frame's zoom level according to preference
+            newFrame.initZoomLevel();
+
             this.fileBrowserStore.hideFileBrowser();
         }, err => {
             this.alertStore.showAlert(`Error loading file: ${err}`);
@@ -635,7 +638,7 @@ export class AppStore {
         if (requiredFrame) {
             this.activeFrame = requiredFrame;
             this.widgetsStore.updateImageWidgetTitle();
-            this.setCursorFrozen(false);
+            this.setCursorFrozen(this.preferenceStore.getCursorFreeze());
         } else {
             console.log(`Can't find required frame ${fileId}`);
         }
@@ -645,7 +648,7 @@ export class AppStore {
         if (index >= 0 && this.frames.length > index) {
             this.activeFrame = this.frames[index];
             this.widgetsStore.updateImageWidgetTitle();
-            this.setCursorFrozen(false);
+            this.setCursorFrozen(this.preferenceStore.getCursorFreeze());
         } else {
             console.log(`Invalid frame index ${index}`);
         }

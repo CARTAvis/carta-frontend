@@ -17,7 +17,10 @@ const RegionTypeSelect = Select.ofType<CARTA.RegionType>();
 
 @observer
 export class PreferenceDialogComponent extends React.Component<{ appStore: AppStore }> {
-    @observable selectedTab: TabId = "regionSettings";
+    @observable selectedTab: TabId = "renderConfig";
+    @observable autoLaunch = this.props.appStore.preferenceStore.getAutoLaunch();
+    @observable cursorFreeze = this.props.appStore.preferenceStore.getCursorFreeze();
+    @observable zoomMode = this.props.appStore.preferenceStore.getZoomMode();
     @observable scaling = this.props.appStore.preferenceStore.getScaling();
     @observable colormap = this.props.appStore.preferenceStore.getColormap();
     @observable percentile = this.props.appStore.preferenceStore.getPercentile().toString();
@@ -39,7 +42,25 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         const appStore = this.props.appStore;
         const preference = appStore.preferenceStore;
 
-        const globalPanel = (null);
+        const globalPanel = (
+            <React.Fragment>
+                <FormGroup inline={true} label="Auto-launch File Browser">
+                    <Switch checked={this.autoLaunch} innerLabelChecked="Enable" innerLabel="Disable" onChange={(ev) => { preference.setAutoLaunch(ev.currentTarget.checked); this.autoLaunch = ev.currentTarget.checked; }}/>
+                </FormGroup>
+                <FormGroup inline={true} label="Cursor Position">
+                    <Switch checked={this.cursorFreeze} innerLabelChecked="Freeze" innerLabel="Unfreeze" onChange={(ev) => { preference.setCursorFreeze(ev.currentTarget.checked); this.cursorFreeze = ev.currentTarget.checked; }}/>
+                </FormGroup>
+                <FormGroup inline={true} label="Image Zoom Level">
+                    <RadioGroup
+                        selectedValue={this.zoomMode}
+                        onChange={(ev) => { preference.setZoomMode(ev.currentTarget.value); this.zoomMode = ev.currentTarget.value; }}
+                    >
+                        <Radio label="Zoom to fit" value="fit"/>
+                        <Radio label="Zoom to 1.0x" value="1.0x"/>
+                    </RadioGroup>
+                </FormGroup>
+            </React.Fragment>
+        );
 
         const renderConfigPanel = (
             <React.Fragment>

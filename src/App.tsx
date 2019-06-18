@@ -97,6 +97,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 appStore.addFrame(folderSearchParam, fileSearchParam, "", 0);
             }
 
+            if (appStore.preferenceStore.getAutoLaunch()) {
+                appStore.fileBrowserStore.showFileBrowser();
+            }
         }, err => console.log(err));
     }
 

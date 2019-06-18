@@ -21,6 +21,7 @@ export interface RegionViewComponentProps {
     top: number;
     cursorFrozen: boolean;
     cursorPoint?: Point2D;
+    initCenter: (cursorInfo: CursorInfo) => void;
     onCursorMoved?: (cursorInfo: CursorInfo) => void;
     onClicked?: (cursorInfo: CursorInfo) => void;
     onRegionDoubleClicked?: (region: RegionStore) => void;
@@ -31,6 +32,12 @@ export interface RegionViewComponentProps {
 export class RegionViewComponent extends React.Component<RegionViewComponentProps> {
     @observable creatingRegion: RegionStore;
     private regionStartPoint: Point2D;
+
+    constructor(props: RegionViewComponentProps) {
+        super(props);
+        const center = {x: props.width / 2, y: props.height / 2};
+        this.props.initCenter(this.getCursorInfo(center));
+    }
 
     updateCursorPos = _.throttle((x: number, y: number) => {
         if (this.props.frame.wcsInfo && this.props.onCursorMoved) {
