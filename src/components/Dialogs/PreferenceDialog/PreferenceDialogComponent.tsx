@@ -17,7 +17,8 @@ const RegionTypeSelect = Select.ofType<CARTA.RegionType>();
 
 @observer
 export class PreferenceDialogComponent extends React.Component<{ appStore: AppStore }> {
-    @observable selectedTab: TabId = "renderConfig";
+    @observable selectedTab: TabId = "global";
+    @observable theme = this.props.appStore.preferenceStore.getTheme();
     @observable autoLaunch = this.props.appStore.preferenceStore.getAutoLaunch();
     @observable cursorFreeze = this.props.appStore.preferenceStore.getCursorFreeze();
     @observable zoomMode = this.props.appStore.preferenceStore.getZoomMode();
@@ -44,6 +45,16 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
 
         const globalPanel = (
             <React.Fragment>
+                <FormGroup inline={true} label="Theme">
+                    <RadioGroup
+                        selectedValue={this.theme}
+                        onChange={(ev) => { preference.setTheme(ev.currentTarget.value); this.theme = ev.currentTarget.value; }}
+                        inline={true}
+                    >
+                        <Radio label="Light" value="light"/>
+                        <Radio label="Dark" value="dark"/>
+                    </RadioGroup>
+                </FormGroup>
                 <FormGroup inline={true} label="Auto-launch File Browser">
                     <Switch checked={this.autoLaunch} innerLabelChecked="Enable" innerLabel="Disable" onChange={(ev) => { preference.setAutoLaunch(ev.currentTarget.checked); this.autoLaunch = ev.currentTarget.checked; }}/>
                 </FormGroup>

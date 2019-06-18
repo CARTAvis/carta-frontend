@@ -4,6 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
 
 const PREFERENCE_KEYS = {
+    theme: "CARTA_theme",
     autoLaunch: "CARTA_autoLaunch",
     cursorFreeze: "CARTA_cursorFreeze",
     zoomMode: "CARTA_zoomMode",
@@ -21,6 +22,7 @@ const PREFERENCE_KEYS = {
 };
 
 const DEFAULTS = {
+    theme: "light",
     autoLaunch: true,
     cursorFreeze: false,
     zoomMode: "fit",
@@ -41,6 +43,10 @@ export class PreferenceStore {
     private regionContainer: RegionStore;
 
     // user configurable settings
+    validateTheme(theme: string) {
+        return theme && (theme === "light" || theme === "dark") ? theme : null;
+    }
+
     validateZoomMode(zoomMode: string) {
         return zoomMode && (zoomMode === "fit" || zoomMode === "1.0x") ? zoomMode : null;
     }
@@ -88,6 +94,10 @@ export class PreferenceStore {
     }
 
     // getters
+    getTheme = (): string => {
+        return this.validateTheme(localStorage.getItem(PREFERENCE_KEYS.theme)) || DEFAULTS.theme;
+    }
+
     getAutoLaunch = (): boolean => {
         return localStorage.getItem(PREFERENCE_KEYS.autoLaunch) === "false" ? false : DEFAULTS.autoLaunch;
     }
@@ -163,6 +173,10 @@ export class PreferenceStore {
     }
 
     // setters
+    @action setTheme = (theme: string) => {
+        localStorage.setItem(PREFERENCE_KEYS.theme, theme);
+    };
+    
     @action setAutoLaunch = (autoLaunch: boolean) => {
         localStorage.setItem(PREFERENCE_KEYS.autoLaunch, autoLaunch ? "true" : "false");
     };
