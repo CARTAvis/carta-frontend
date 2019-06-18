@@ -382,7 +382,7 @@ export class AppStore {
         this.widgetsStore = new WidgetsStore(this);
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
-        this.darkTheme = false;
+        this.darkTheme = this.preferenceStore.isDarkTheme();
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         this.statsRequirements = new Map<number, Array<number>>();
         this.histogramRequirements = new Map<number, Array<number>>();

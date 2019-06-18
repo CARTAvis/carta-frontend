@@ -203,8 +203,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
         }, this.glContainer);
 
         widgetsStore.setDockedLayout(layout);
-        this.props.appStore.setDarkTheme();
-        this.props.appStore.setLightTheme();
     }
 
     // GoldenLayout resize handler

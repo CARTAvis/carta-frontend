@@ -168,6 +168,11 @@ export class PreferenceStore {
     isRegionCornerMode = (): boolean => {
         return localStorage.getItem(PREFERENCE_KEYS.regionCreationMode) === "corner" ? true : false;
     }
+    
+    isDarkTheme = (): boolean => {
+        return localStorage.getItem(PREFERENCE_KEYS.theme) === "dark" ? true : false;
+    };
+
     isZoomFitMode = (): boolean => {
         return localStorage.getItem(PREFERENCE_KEYS.zoomMode) === "fit" ? true : false;
     }
@@ -176,7 +181,7 @@ export class PreferenceStore {
     @action setTheme = (theme: string) => {
         localStorage.setItem(PREFERENCE_KEYS.theme, theme);
     };
-    
+
     @action setAutoLaunch = (autoLaunch: boolean) => {
         localStorage.setItem(PREFERENCE_KEYS.autoLaunch, autoLaunch ? "true" : "false");
     };
