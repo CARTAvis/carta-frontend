@@ -144,6 +144,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
             type: "react-component",
             component: "spectral-profiler",
             id: "spectral-profiler-0",
+            title: "Z Profile: Cursor",
             props: {appStore: this.props.appStore, id: "spectral-profiler-0", docked: true}
         };
 
@@ -186,7 +187,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     type: "stack",
                     content: [animatorComponent, renderConfigComponent, regionListComponent]
                 };
-                rightColumnContent = [spatialProfilerXComponent, spatialProfilerYComponent, spectralProfilerZComponent];
+                rightColumnContent = [spectralProfilerZComponent, statsComponent];
                 break;
             case "cube_view":
             default:
@@ -194,7 +195,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     type: "stack",
                     content: [animatorComponent, renderConfigComponent, regionListComponent]
                 };
-                rightColumnContent = [spectralProfilerZComponent, statsComponent];
+                rightColumnContent = [spatialProfilerXComponent, spatialProfilerYComponent, spectralProfilerZComponent];
                 break;
         }
         const initialLayout: any[] = [{
