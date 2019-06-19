@@ -2,6 +2,7 @@ import {action, autorun} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
+import {Theme, Layout, Zoom} from "models";
 
 const PREFERENCE_KEYS = {
     theme: "CARTA_theme",
@@ -23,11 +24,11 @@ const PREFERENCE_KEYS = {
 };
 
 const DEFAULTS = {
-    theme: "light",
+    theme: Theme.Light,
     autoLaunch: true,
-    layout: "cube_view",
+    layout: Layout.CubeView,
     cursorFreeze: false,
-    zoomMode: "fit",
+    zoomMode: Zoom.Fit,
     scaling: 0,
     colormap: "inferno",
     percentile: 99.9,
@@ -46,15 +47,15 @@ export class PreferenceStore {
 
     // user configurable settings
     validateTheme(theme: string) {
-        return theme && (theme === "light" || theme === "dark") ? theme : null;
+        return theme && (theme === Theme.Light || theme === Theme.Dark) ? theme : null;
     }
 
     validateLayout(layout: string) {
-        return layout && (layout === "continuum_analysis" || layout === "cube_view" || layout === "cube_analysis") ? layout : null;
+        return layout && (layout === Layout.CubeView || layout === Layout.CubeAnalysis || layout === Layout.ContinuumAnalysis) ? layout : null;
     }
 
     validateZoomMode(zoomMode: string) {
-        return zoomMode && (zoomMode === "fit" || zoomMode === "1.0x") ? zoomMode : null;
+        return zoomMode && (zoomMode === Zoom.Fit || zoomMode === Zoom.Raw) ? zoomMode : null;
     }
 
     validateScaling(scaling: string) {
@@ -180,11 +181,11 @@ export class PreferenceStore {
     }
     
     isDarkTheme = (): boolean => {
-        return localStorage.getItem(PREFERENCE_KEYS.theme) === "dark" ? true : false;
+        return localStorage.getItem(PREFERENCE_KEYS.theme) === Theme.Dark ? true : false;
     };
 
     isZoomFitMode = (): boolean => {
-        return localStorage.getItem(PREFERENCE_KEYS.zoomMode) === "fit" ? true : false;
+        return localStorage.getItem(PREFERENCE_KEYS.zoomMode) === Zoom.Fit ? true : false;
     }
 
     // setters

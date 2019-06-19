@@ -4,3 +4,6 @@ export * from "./ChannelType";
 export * from "./FrameView";
 export * from "./Point2D";
 export * from "./SpectralInfo";
+export * from "./Theme";
+export * from "./Layout";
+export * from "./Zoom";

@@ -9,6 +9,7 @@ import {exportImage, FloatingWidgetManagerComponent, RootMenuComponent} from "./
 import {AppToaster} from "./components/Shared";
 import {AboutDialogComponent, ApiKeyDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, RegionDialogComponent, URLConnectDialogComponent, PreferenceDialogComponent} from "./components/Dialogs";
 import {AppStore, dayPalette, FileBrowserStore, nightPalette, RegionMode, WidgetsStore} from "./stores";
+import {Layout} from "models";
 import {ConnectionStatus} from "./services";
 import {smoothStepOffset} from "./utilities";
 import GitCommit from "./static/gitInfo";
@@ -170,13 +171,13 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         let customizedLayout;
         switch (this.props.appStore.preferenceStore.getLayout()) {
-            case "continuum_analysis":
-                customizedLayout = this.genContinuumAnalysisLayout(configs, widgetsStore);
-                break;
-            case "cube_analysis":
+            case Layout.CubeAnalysis:
                 customizedLayout = this.genCubeAnalysisLayout(configs, widgetsStore);
                 break;
-            case "cube_view": default:
+            case Layout.ContinuumAnalysis:
+                customizedLayout = this.genContinuumAnalysisLayout(configs, widgetsStore);
+                break;
+            case Layout.CubeView: default:
                 customizedLayout = this.genCubeViewLayout(configs, widgetsStore);
                 break;
         }

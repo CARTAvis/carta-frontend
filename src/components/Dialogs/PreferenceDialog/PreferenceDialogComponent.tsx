@@ -9,6 +9,7 @@ import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {AppearanceForm} from "components/Dialogs/RegionDialog/AppearanceForm/AppearanceForm";
+import {Theme, Layout, Zoom} from "models";
 import {AppStore, RegionStore, RenderConfigStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
@@ -52,8 +53,8 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         onChange={(ev) => { preference.setTheme(ev.currentTarget.value); this.theme = ev.currentTarget.value; }}
                         inline={true}
                     >
-                        <Radio label="Light" value="light"/>
-                        <Radio label="Dark" value="dark"/>
+                        <Radio label="Light" value={Theme.Light}/>
+                        <Radio label="Dark" value={Theme.Dark}/>
                     </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Auto-launch File Browser">
@@ -62,12 +63,12 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 <FormGroup inline={true} label="Layout">
                     <RadioGroup
                         selectedValue={this.layout}
-                        onChange={(ev) => { preferenceStore.setLayout(ev.currentTarget.value); this.layout = ev.currentTarget.value; }}
+                        onChange={(ev) => { preference.setLayout(ev.currentTarget.value); this.layout = ev.currentTarget.value; }}
                         inline={true}
                     >
-                        <Radio label="Cube view" value="cube_view"/>
-                        <Radio label="Continuum analysis" value="continuum_analysis"/>
-                        <Radio label="Cube analysis" value="cube_analysis"/>
+                        <Radio label="Cube view" value={Layout.CubeView}/>
+                        <Radio label="Cube analysis" value={Layout.CubeAnalysis}/>
+                        <Radio label="Continuum analysis" value={Layout.ContinuumAnalysis}/>
                     </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Cursor Position">
@@ -78,8 +79,8 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         selectedValue={this.zoomMode}
                         onChange={(ev) => { preference.setZoomMode(ev.currentTarget.value); this.zoomMode = ev.currentTarget.value; }}
                     >
-                        <Radio label="Zoom to fit" value="fit"/>
-                        <Radio label="Zoom to 1.0x" value="1.0x"/>
+                        <Radio label="Zoom to fit" value={Zoom.Fit}/>
+                        <Radio label="Zoom to 1.0x" value={Zoom.Raw}/>
                     </RadioGroup>
                 </FormGroup>
             </React.Fragment>
