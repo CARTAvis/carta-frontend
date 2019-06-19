@@ -8,7 +8,7 @@ import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@b
 import {exportImage, FloatingWidgetManagerComponent, RootMenuComponent} from "./components";
 import {AppToaster} from "./components/Shared";
 import {AboutDialogComponent, ApiKeyDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, RegionDialogComponent, URLConnectDialogComponent, PreferenceDialogComponent} from "./components/Dialogs";
-import {AppStore, dayPalette, FileBrowserStore, nightPalette, RegionMode} from "./stores";
+import {AppStore, dayPalette, FileBrowserStore, nightPalette, RegionMode, WidgetsStore} from "./stores";
 import {ConnectionStatus} from "./services";
 import {smoothStepOffset} from "./utilities";
 import GitCommit from "./static/gitInfo";
@@ -20,7 +20,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
     private glContainer: HTMLElement;
     private previousConnectionStatus: ConnectionStatus;
-    private static readonly REGION_WIDGETS_STACK_CUTOFF = 960;
 
     constructor(props: { appStore: AppStore }) {
         super(props);
@@ -108,116 +107,96 @@ export class App extends React.Component<{ appStore: AppStore }> {
         // Adjust layout properties based on window dimensions
         const defaultImageViewFraction = smoothStepOffset(window.innerHeight, 720, 1080, 65, 75);
 
-        const imageViewComponent = {
-            type: "react-component",
-            component: "image-view",
-            title: "No image loaded",
-            height: defaultImageViewFraction,
-            id: "image-view",
-            isClosable: false,
-            props: {appStore: this.props.appStore, id: "image-view-docked", docked: true}
+        const configs = {
+            imageView: {
+                type: "react-component",
+                component: "image-view",
+                title: "No image loaded",
+                height: defaultImageViewFraction,
+                id: "image-view",
+                isClosable: false,
+                props: {appStore: this.props.appStore, id: "image-view-docked", docked: true}
+            },
+            // left bottom components in stack: render config, region list, animator
+            renderConfig: {
+                type: "react-component",
+                component: "render-config",
+                title: "Render Configuration",
+                id: "render-config-0",
+                props: {appStore: this.props.appStore, id: "render-config-0", docked: true}
+            },
+            regionList: {
+                type: "react-component",
+                component: "region-list",
+                title: "Region List",
+                id: "region-list-0",
+                props: {appStore: this.props.appStore, id: "region-list-0", docked: true}
+            },
+            animator: {
+                type: "react-component",
+                component: "animator",
+                title: "Animator",
+                id: "animator-0",
+                props: {appStore: this.props.appStore, id: "animator-0", docked: true}
+            },
+            // right column components: X/Y/Z profiler, statistics
+            spatialProfilerX: {
+                type: "react-component",
+                component: "spatial-profiler",
+                id: "spatial-profiler-0",
+                props: {appStore: this.props.appStore, id: "spatial-profiler-0", docked: true}
+            },
+            spatialProfilerY: {
+                type: "react-component",
+                component: "spatial-profiler",
+                id: "spatial-profiler-1",
+                props: {appStore: this.props.appStore, id: "spatial-profiler-1", docked: true}
+            },
+            spectralProfilerZ: {
+                type: "react-component",
+                component: "spectral-profiler",
+                id: "spectral-profiler-0",
+                title: "Z Profile: Cursor",
+                props: {appStore: this.props.appStore, id: "spectral-profiler-0", docked: true}
+            },
+            stats: {
+                type: "react-component",
+                component: "stats",
+                title: "Statistics",
+                id: "stats-0",
+                props: {appStore: this.props.appStore, id: "stats-0", docked: true}
+            }
         };
 
-        const renderConfigComponent = {
-            type: "react-component",
-            component: "render-config",
-            title: "Render Configuration",
-            id: "render-config-0",
-            props: {appStore: this.props.appStore, id: "render-config-0", docked: true}
-        };
-
-        const spatialProfilerXComponent = {
-            type: "react-component",
-            component: "spatial-profiler",
-            id: "spatial-profiler-0",
-            props: {appStore: this.props.appStore, id: "spatial-profiler-0", docked: true}
-        };
-
-        const spatialProfilerYComponent = {
-            type: "react-component",
-            component: "spatial-profiler",
-            id: "spatial-profiler-1",
-            props: {appStore: this.props.appStore, id: "spatial-profiler-1", docked: true}
-        };
-
-        const spectralProfilerZComponent = {
-            type: "react-component",
-            component: "spectral-profiler",
-            id: "spectral-profiler-0",
-            title: "Z Profile: Cursor",
-            props: {appStore: this.props.appStore, id: "spectral-profiler-0", docked: true}
-        };
-
-        const statsComponent = {
-            type: "react-component",
-            component: "stats",
-            title: "Statistics",
-            id: "stats-0",
-            props: {appStore: this.props.appStore, id: "stats-0", docked: true}
-        };
-
-        const regionListComponent = {
-            type: "react-component",
-            component: "region-list",
-            title: "Region List",
-            id: "region-list-0",
-            props: {appStore: this.props.appStore, id: "region-list-0", docked: true}
-        };
-
-        const animatorComponent = {
-            type: "react-component",
-            component: "animator",
-            title: "Animator",
-            id: "animator-0",
-            props: {appStore: this.props.appStore, id: "animator-0", docked: true}
-        };
-
-        let rightColumnContent = [];
-        let leftBottomContent: any;
+        let customizedLayout;
         switch (this.props.appStore.preferenceStore.getLayout()) {
             case "continuum_analysis":
-                leftBottomContent = {
-                    type: "stack",
-                    content: [renderConfigComponent, regionListComponent, animatorComponent]
-                };
-                rightColumnContent = [spatialProfilerXComponent, spatialProfilerYComponent, statsComponent];
+                customizedLayout = this.genContinuumAnalysisLayout(configs, widgetsStore);
                 break;
             case "cube_analysis":
-                leftBottomContent = {
-                    type: "stack",
-                    content: [animatorComponent, renderConfigComponent, regionListComponent]
-                };
-                rightColumnContent = [spectralProfilerZComponent, statsComponent];
+                customizedLayout = this.genCubeAnalysisLayout(configs, widgetsStore);
                 break;
-            case "cube_view":
-            default:
-                leftBottomContent = {
-                    type: "stack",
-                    content: [animatorComponent, renderConfigComponent, regionListComponent]
-                };
-                rightColumnContent = [spatialProfilerXComponent, spatialProfilerYComponent, spectralProfilerZComponent];
+            case "cube_view": default:
+                customizedLayout = this.genCubeViewLayout(configs, widgetsStore);
                 break;
         }
+
         const initialLayout: any[] = [{
             type: "row",
             content: [{
                 type: "column",
                 width: 60,
-                content: [imageViewComponent, leftBottomContent]
+                content: [configs.imageView, customizedLayout.leftBottomContent]
             }, {
                 type: "column",
-                content: rightColumnContent
+                content: customizedLayout.rightColumnContent
             }]
         }];
 
-        widgetsStore.addSpatialProfileWidget("spatial-profiler-0", "x", -1, 0);
-        widgetsStore.addSpatialProfileWidget("spatial-profiler-1", "y", -1, 0);
-        widgetsStore.addSpectralProfileWidget("spectral-profiler-0", "z");
-        widgetsStore.addRenderConfigWidget("render-config-0");
-        widgetsStore.addAnimatorWidget("animator-0");
-        widgetsStore.addRegionListWidget("region-list-0");
-        widgetsStore.addStatsWidget("stats-0");
-        widgetsStore.addLogWidget("log-0");
+        // common components in left bottom
+        widgetsStore.addRenderConfigWidget(configs.renderConfig.id);
+        widgetsStore.addAnimatorWidget(configs.animator.id);
+        widgetsStore.addRegionListWidget(configs.regionList.id);
 
         const layout = new GoldenLayout({
             settings: {
@@ -234,6 +213,47 @@ export class App extends React.Component<{ appStore: AppStore }> {
         }, this.glContainer);
 
         widgetsStore.setDockedLayout(layout);
+    }
+
+    private genContinuumAnalysisLayout(configs: any, widgetsStore: WidgetsStore) {
+        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerX.id, "x", -1, 0);
+        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerY.id, "y", -1, 0);
+        widgetsStore.addStatsWidget(configs.stats.id);
+
+        return {
+            leftBottomContent: {
+                type: "stack",
+                content: [configs.renderConfig, configs.regionList, configs.animator]
+            },
+            rightColumnContent: [configs.spatialProfilerX, configs.spatialProfilerY, configs.stats]
+        };
+    }
+
+    private genCubeAnalysisLayout(configs: any, widgetsStore: WidgetsStore) {
+        widgetsStore.addSpectralProfileWidget(configs.spectralProfilerZ.id, "z");
+        widgetsStore.addStatsWidget(configs.stats.id);
+
+        return {
+            leftBottomContent: {
+                type: "stack",
+                content: [configs.animator, configs.renderConfig, configs.regionList]
+            },
+            rightColumnContent: [configs.spectralProfilerZ, configs.stats]
+        };
+    }
+
+    private genCubeViewLayout(configs: any, widgetsStore: WidgetsStore) {
+        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerX.id, "x", -1, 0);
+        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerY.id, "y", -1, 0);
+        widgetsStore.addSpectralProfileWidget(configs.spectralProfilerZ.id, "z");
+
+        return {
+            leftBottomContent: {
+                type: "stack",
+                content: [configs.animator, configs.renderConfig, configs.regionList]
+            },
+            rightColumnContent: [configs.spatialProfilerX, configs.spatialProfilerY, configs.spectralProfilerZ]
+        };
     }
 
     // GoldenLayout resize handler
