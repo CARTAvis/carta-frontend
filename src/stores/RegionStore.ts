@@ -3,7 +3,6 @@ import {CARTA} from "carta-protobuf";
 import {Point2D} from "models";
 import {BackendService} from "../services";
 import {Colors} from "@blueprintjs/core";
-import {PreferenceStore} from "stores";
 
 export class RegionStore {
     @observable fileId: number;
