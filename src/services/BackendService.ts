@@ -421,13 +421,14 @@ export class BackendService {
 
     @action("authenticate")
     authenticate = (username: string, password: string) => {
-        let authUrl = `${window.location.protocol}//${window.location.hostname}/auth`;
+        const authUrl = `${window.location.protocol}//${window.location.hostname}/auth`;
+        const authCredential = btoa(`${username}:${password}`);
         return fetch(authUrl, {
             headers: {
                 "Accept": "application/json, text/plain, */*",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Authorization": "Basic " + authCredential
             },
-            body: JSON.stringify({username: username, password: password}),
             method: "POST"
         });
     };
