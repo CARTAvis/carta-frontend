@@ -370,6 +370,7 @@ export class AppStore {
             this.apiKey = existingKey;
         }
 
+        this.preferenceStore = new PreferenceStore();
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore);
         this.tileService = new TileService(this.backendService);
@@ -382,9 +383,8 @@ export class AppStore {
         this.activeFrame = null;
         this.animatorStore = new AnimatorStore(this);
         this.alertStore = new AlertStore();
-        this.overlayStore = new OverlayStore();
+        this.overlayStore = new OverlayStore(this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this);
-        this.preferenceStore = new PreferenceStore();
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
         this.darkTheme = false;

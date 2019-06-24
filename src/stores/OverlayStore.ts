@@ -1,7 +1,9 @@
 import * as AST from "ast_wrapper";
 import {Colors} from "@blueprintjs/core";
 import {action, autorun, computed, observable} from "mobx";
-import {FrameStore} from "./FrameStore";
+import {FrameStore, PreferenceStore} from "stores";
+
+const AST_DEFAULT_COLOR = 4; // blue
 
 export const dayPalette = [
     Colors.BLACK,        // 0
@@ -105,10 +107,10 @@ export class OverlayGlobalSettings {
         return this.system;
     }
 
-    constructor() {
+    constructor(preferenceStore: PreferenceStore) {
         this.system = SystemType.Native;
         this.labelType = LabelType.Exterior;
-        this.color = 4;
+        this.color = preferenceStore.getASTColor();
         this.tolerance = 1; // percentage
 
         this.defaultSystem = SystemType.Native;
@@ -161,7 +163,7 @@ export class OverlayTitleSettings {
         this.visible = false;
         this.hidden = false;
         this.customColor = false;
-        this.color = 4;
+        this.color = AST_DEFAULT_COLOR;
         this.font = 2;
         this.fontSize = 18;
     }
@@ -217,7 +219,7 @@ export class OverlayGridSettings {
     constructor() {
         this.visible = true;
         this.customColor = false;
-        this.color = 4;
+        this.color = AST_DEFAULT_COLOR;
         this.width = 1;
         this.customGap = false;
         this.gapX = 0.2;
@@ -270,7 +272,7 @@ export class OverlayBorderSettings {
     constructor() {
         this.visible = true;
         this.customColor = false;
-        this.color = 4;
+        this.color = AST_DEFAULT_COLOR;
         this.width = 1;
     }
 
@@ -320,7 +322,7 @@ export class OverlayTickSettings {
         this.densityX = 4;
         this.densityY = 4;
         this.customColor = false;
-        this.color = 4;
+        this.color = AST_DEFAULT_COLOR;
         this.width = 1;
         this.length = 1; // percentage
         this.majorLength = 2; // percentage
@@ -372,7 +374,7 @@ export class OverlayAxisSettings {
     constructor() {
         this.visible = false;
         this.customColor = false;
-        this.color = 4;
+        this.color = AST_DEFAULT_COLOR;
         this.width = 1;
     }
 
@@ -429,7 +431,7 @@ export class OverlayNumberSettings {
         this.fontSize = 12;
         this.font = 0;
         this.customColor = false;
-        this.color = 4;
+        this.color = AST_DEFAULT_COLOR;
         this.customFormat = false;
         this.defaultFormatX = "d";
         this.defaultFormatY = "d";
@@ -568,7 +570,7 @@ export class OverlayLabelSettings {
         this.fontSize = 15;
         this.font = 0;
         this.customColor = false;
-        this.color = 4;
+        this.color = AST_DEFAULT_COLOR;
     }
 
     @computed get styleString() {
@@ -637,14 +639,8 @@ export class OverlayStore {
         this.overlaySettingsDialogVisible = false;
     };
 
-    @observable overlaySettingsActiveTab = "global";
-
-    @action setOverlaySettingsActiveTab(tabId: string) {
-        this.overlaySettingsActiveTab = tabId;
-    }
-
-    constructor() {
-        this.global = new OverlayGlobalSettings();
+    constructor(preferenceStore: PreferenceStore) {
+        this.global = new OverlayGlobalSettings(preferenceStore);
         this.title = new OverlayTitleSettings();
         this.grid = new OverlayGridSettings();
         this.border = new OverlayBorderSettings();

@@ -1,36 +1,13 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
+import {observable} from "mobx";
 import {Select, ItemRenderer} from "@blueprintjs/select";
-import {Button, Switch, IDialogProps, Intent, Tab, Tabs, NumericInput, FormGroup, MenuItem, HTMLSelect, Collapse} from "@blueprintjs/core";
+import {Button, Switch, IDialogProps, Intent, Tab, Tabs, TabId, NumericInput, FormGroup, MenuItem, HTMLSelect, Collapse} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
+import {ColorComponent} from "./ColorComponent";
 import {AppStore, LabelType, SystemType} from "stores";
 import "./OverlaySettingsDialogComponent.css";
-
-// Color selector
-export class Color {
-    name: string;
-    id: number;
-
-    constructor(name: string, id: number) {
-        this.name = name;
-        this.id = id;
-    }
-}
-
-const ColorSelect = Select.ofType<Color>();
-
-export const renderColor: ItemRenderer<Color> = (color, {handleClick, modifiers, query}) => {
-    return (
-        <MenuItem
-            active={modifiers.active}
-            disabled={modifiers.disabled}
-            key={color.id}
-            onClick={handleClick}
-            text={(<div className="dropdown-color" style={{background: color.name}}>&nbsp;</div>)}
-        />
-    );
-};
 
 // Font selector
 export class Font {
@@ -65,7 +42,6 @@ export class Font {
 }
 
 const astFonts: Font[] = AST.fonts.map((x, i) => (new Font(x, i)));
-
 const FontSelect = Select.ofType<Font>();
 
 export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, query}) => {
@@ -82,30 +58,7 @@ export const renderFont: ItemRenderer<Font> = (font, {handleClick, modifiers, qu
 
 @observer
 export class OverlaySettingsDialogComponent extends React.Component<{ appStore: AppStore }> {
-
-    private colorSelect(visible: boolean, currentColorId: number, colorSetter: Function) {
-
-        const astColors: Color[] = AST.colors.map((x, i) => ({name: x, id: i}));
-
-        let currentColor: Color = astColors[currentColorId];
-        if (typeof currentColor === "undefined") {
-            currentColor = astColors[0];
-        }
-
-        return (
-            <ColorSelect
-                activeItem={currentColor}
-                itemRenderer={renderColor}
-                items={astColors}
-                disabled={!visible}
-                filterable={false}
-                popoverProps={{minimal: true, position: "auto-end", popoverClassName: "colorselect"}}
-                onItemSelect={(color) => colorSetter(color.id)}
-            >
-                <Button className="colorselect" text={(<div className="dropdown-color" style={{background: currentColor.name}}>&nbsp;</div>)} disabled={!visible} rightIcon="double-caret-vertical"/>
-            </ColorSelect>
-        );
-    }
+    @observable selectedTab: TabId = "global";
 
     private fontSelect(visible: boolean, currentFontId: number, fontSetter: Function) {
         let currentFont: Font = astFonts[currentFontId];
@@ -148,7 +101,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         const globalPanel = (
             <div className="panel-container">
                 <FormGroup inline={true} label="Color">
-                    {this.colorSelect(true, global.color, global.setColor)}
+                    <ColorComponent selectedItem={global.color} onItemSelect={global.setColor}/>
                 </FormGroup>
                 <FormGroup inline={true} label="Tolerance" labelInfo="(%)">
                     <NumericInput
@@ -211,7 +164,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <Collapse isOpen={title.customColor}>
                     <FormGroup inline={true} label="Color" disabled={!title.visible}>
-                        {this.colorSelect(title.visible, title.color, title.setColor)}
+                        {title.visible && <ColorComponent selectedItem={title.color} onItemSelect={title.setColor}/>}
                     </FormGroup>
                 </Collapse>
             </div>
@@ -263,7 +216,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <Collapse isOpen={ticks.customColor}>
                     <FormGroup inline={true} label="Color">
-                        {this.colorSelect(true, ticks.color, ticks.setColor)}
+                        <ColorComponent selectedItem={ticks.color} onItemSelect={ticks.setColor}/>
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Width" labelInfo="(px)">
@@ -321,7 +274,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <Collapse isOpen={grid.customColor}>
                     <FormGroup inline={true} label="Color" disabled={!grid.visible}>
-                        {this.colorSelect(grid.visible, grid.color, grid.setColor)}
+                        {grid.visible && <ColorComponent selectedItem={grid.color} onItemSelect={grid.setColor}/>}
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!grid.visible}>
@@ -389,7 +342,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <Collapse isOpen={border.customColor}>
                     <FormGroup inline={true} label="Color" disabled={!border.visible}>
-                        {this.colorSelect(border.visible, border.color, border.setColor)}
+                        {border.visible && <ColorComponent selectedItem={border.color} onItemSelect={border.setColor}/>}
                     </FormGroup>
                 </Collapse>
                 <FormGroup inline={true} label="Width" labelInfo="(px)" disabled={!border.visible}>
@@ -435,7 +388,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         disabled={!interior || !axes.visible}
                         helperText={disabledIfExterior}
                     >
-                        {this.colorSelect(interior && axes.visible, axes.color, axes.setColor)}
+                        {interior && axes.visible && <ColorComponent selectedItem={axes.color} onItemSelect={axes.setColor}/>}
                     </FormGroup>
                 </Collapse>
                 <FormGroup
@@ -486,7 +439,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <Collapse isOpen={numbers.customColor}>
                     <FormGroup inline={true} label="Color" disabled={!numbers.visible}>
-                        {this.colorSelect(numbers.visible, numbers.color, numbers.setColor)}
+                        {numbers.visible && <ColorComponent selectedItem={numbers.color} onItemSelect={numbers.setColor}/>}
                     </FormGroup>
                 </Collapse>
                 <FormGroup
@@ -569,7 +522,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <Collapse isOpen={labels.customColor}>
                     <FormGroup inline={true} label="Color" disabled={!labels.visible}>
-                        {this.colorSelect(labels.visible, labels.color, labels.setColor)}
+                        {labels.visible && <ColorComponent selectedItem={labels.color} onItemSelect={labels.setColor}/>}
                     </FormGroup>
                 </Collapse>
             </div>
@@ -597,8 +550,8 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     <Tabs
                         id="overlayTabs"
                         vertical={true}
-                        selectedTabId={overlayStore.overlaySettingsActiveTab}
-                        onChange={(tabId) => overlayStore.setOverlaySettingsActiveTab(String(tabId))}
+                        selectedTabId={this.selectedTab}
+                        onChange={(tabId) => this.selectedTab = tabId}
                     >
                         <Tab id="global" title="Global" panel={globalPanel}/>
                         <Tab id="title" title="Title" panel={titlePanel}/>
