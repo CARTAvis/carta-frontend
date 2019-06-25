@@ -168,12 +168,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         docked={this.props.docked}
                     />
                     }
-                    < RasterViewComponent
-                        frame={appStore.activeFrame}
-                        docked={this.props.docked}
-                        overlaySettings={appStore.overlayStore}
-                        tileService={appStore.tileService}
-                    />
                     {appStore.cursorInfo &&
                     <CursorOverlayComponent
                         cursorInfo={appStore.cursorInfo}
@@ -242,6 +236,12 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="image-view-div" ref={(ref) => this.containerDiv = ref} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+                <RasterViewComponent
+                    frame={appStore.activeFrame}
+                    docked={this.props.docked}
+                    overlaySettings={appStore.overlayStore}
+                    tileService={appStore.tileService}
+                />
                 {divContents}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
