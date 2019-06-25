@@ -258,7 +258,7 @@ export class TileService {
                     const decompressedData = new Float32Array(tile.imageData.buffer.slice(tile.imageData.byteOffset, tile.imageData.byteOffset + tile.imageData.byteLength));
                     this.updateStream(decompressedData, tile.width, tile.height, tile.layer, encodedCoordinate);
                 } else {
-                    this.cachedCompressedTiles.set(encodedCoordinate, {tile, compressionQuality: tileMessage.compressionQuality}, null);
+                    this.cachedCompressedTiles.set(encodedCoordinate, {tile, compressionQuality: tileMessage.compressionQuality});
                     this.asyncDecompressTile(tile, tileMessage.compressionQuality, encodedCoordinate);
                     this.systemLruOccupancy = this.cachedCompressedTiles.size;
                 }
@@ -298,7 +298,7 @@ export class TileService {
         if (layer < this.numPersistentLayers) {
             this.persistentTiles.set(encodedCoordinate, rasterTile);
         } else {
-            this.cachedTiles.set(encodedCoordinate, rasterTile, this.clearTile);
+            this.cachedTiles.setWithCallback(encodedCoordinate, rasterTile, this.clearTile);
         }
         this.pendingDecompressions.delete(encodedCoordinate);
         this.gpuLruOccupancy = this.cachedTiles.size;
