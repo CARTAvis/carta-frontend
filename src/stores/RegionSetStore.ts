@@ -1,6 +1,6 @@
 import {action, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {FrameStore, RegionStore} from "stores";
+import {FrameStore, RegionStore, PreferenceStore} from "stores";
 import {Point2D} from "models";
 import {BackendService} from "../services";
 
@@ -17,12 +17,20 @@ export class RegionSetStore {
 
     private frame: FrameStore;
     private readonly backendService: BackendService;
+    readonly isCornerMode: boolean;
+    private readonly regionColor: string;
+    private readonly regionLineWidth: number;
+    private readonly regionDashLength: number;
 
-    constructor(frame: FrameStore, backendService: BackendService) {
+    constructor(frame: FrameStore, preference: PreferenceStore, backendService: BackendService) {
         this.frame = frame;
         this.backendService = backendService;
         this.regions = [];
-        this.newRegionType = CARTA.RegionType.RECTANGLE;
+        this.newRegionType = preference.getRegionType();
+        this.isCornerMode = preference.isRegionCornerMode();
+        this.regionColor = preference.getRegionColor();
+        this.regionLineWidth = preference.getRegionLineWidth();
+        this.regionDashLength = preference.getRegionDashLength();
         this.mode = RegionMode.MOVING;
         this.addPointRegion({x: 0, y: 0}, true);
         this.selectedRegion = this.regions[0];
@@ -59,7 +67,8 @@ export class RegionSetStore {
     };
 
     @action addRectangularRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
-        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center, {x: width, y: height}], CARTA.RegionType.RECTANGLE, this.getTempRegionId());
+        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center, {x: width, y: height}], CARTA.RegionType.RECTANGLE, this.getTempRegionId(),
+                                        this.regionColor, this.regionLineWidth, this.regionDashLength);
         this.regions.push(region);
         if (!temporary) {
             this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
@@ -73,7 +82,8 @@ export class RegionSetStore {
     };
 
     @action addEllipticalRegion = (center: Point2D, semiMajor: number, semiMinor: number, temporary: boolean = false) => {
-        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center, {x: semiMinor, y: semiMajor}], CARTA.RegionType.ELLIPSE, this.getTempRegionId());
+        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center, {x: semiMinor, y: semiMajor}], CARTA.RegionType.ELLIPSE, this.getTempRegionId(),
+                                        this.regionColor, this.regionLineWidth, this.regionDashLength);
         this.regions.push(region);
         if (!temporary) {
             this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {

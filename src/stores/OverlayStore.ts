@@ -216,8 +216,8 @@ export class OverlayGridSettings {
         return astString.toString();
     }
 
-    constructor() {
-        this.visible = true;
+    constructor(preference: PreferenceStore) {
+        this.visible = preference.getASTGridVisible();
         this.customColor = false;
         this.color = AST_DEFAULT_COLOR;
         this.width = 1;
@@ -564,8 +564,8 @@ export class OverlayLabelSettings {
     @observable font: number;
     @observable fontSize: number;
 
-    constructor() {
-        this.visible = true;
+    constructor(preference: PreferenceStore) {
+        this.visible = preference.getASTLabelsVisible();
         this.hidden = false;
         this.fontSize = 15;
         this.font = 0;
@@ -642,11 +642,11 @@ export class OverlayStore {
     constructor(preferenceStore: PreferenceStore) {
         this.global = new OverlayGlobalSettings(preferenceStore);
         this.title = new OverlayTitleSettings();
-        this.grid = new OverlayGridSettings();
+        this.grid = new OverlayGridSettings(preferenceStore);
         this.border = new OverlayBorderSettings();
         this.axes = new OverlayAxisSettings();
         this.numbers = new OverlayNumberSettings();
-        this.labels = new OverlayLabelSettings();
+        this.labels = new OverlayLabelSettings(preferenceStore);
         this.ticks = new OverlayTickSettings();
 
         // if the system is manually selected, set new default formats

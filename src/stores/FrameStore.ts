@@ -36,11 +36,9 @@ export class FrameStore {
     @observable regionSet: RegionSetStore;
 
     private readonly overlayStore: OverlayStore;
-    private readonly backendService: BackendService;
 
     constructor(preference: PreferenceStore, overlay: OverlayStore, frameInfo: FrameInfo, backendService: BackendService) {
         this.overlayStore = overlay;
-        this.backendService = backendService;
         this.frameInfo = frameInfo;
         this.renderHiDPI = true;
         this.center = {x: 0, y: 0};
@@ -49,11 +47,22 @@ export class FrameStore {
         this.requiredStokes = 0;
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore(preference);
+
+        // synchornize AST overlay's color/grid/label with perference when frame is created
         const astColor = preference.getASTColor();
         if (astColor !== overlay.global.color) {
             overlay.global.setColor(astColor);
         }
-        this.regionSet = new RegionSetStore(this, backendService);
+        const astGridVisible = preference.getASTGridVisible();
+        if (astGridVisible !== overlay.grid.visible) {
+            overlay.grid.setVisible(astGridVisible);
+        }
+        const astLabelsVisible = preference.getASTLabelsVisible();
+        if (astLabelsVisible !== overlay.labels.visible) {
+            overlay.labels.setVisible(astLabelsVisible);
+        }
+
+        this.regionSet = new RegionSetStore(this, preference, backendService);
         this.valid = true;
         this.currentFrameView = {
             xMin: 0,
