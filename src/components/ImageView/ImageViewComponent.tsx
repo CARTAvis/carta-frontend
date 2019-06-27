@@ -2,7 +2,7 @@ import * as React from "react";
 import * as $ from "jquery";
 import {observer} from "mobx-react";
 import {autorun, observable} from "mobx";
-import {NonIdealState, Spinner, Colors, Tag} from "@blueprintjs/core";
+import {Colors, NonIdealState, Spinner, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
 import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
@@ -10,7 +10,7 @@ import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
 import {RegionViewComponent} from "./RegionView/RegionViewComponent";
-import {RegionStore, WidgetConfig, WidgetProps} from "stores";
+import {AnimationState, RegionStore, WidgetConfig, WidgetProps} from "stores";
 import {CursorInfo, Point2D} from "models";
 import "./ImageViewComponent.css";
 
@@ -239,7 +239,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                 <RasterViewComponent
                     frame={appStore.activeFrame}
                     docked={this.props.docked}
-                    tiledRendering={true}
+                    tiledRendering={appStore.animatorStore.animationState === AnimationState.STOPPED}
                     overlaySettings={appStore.overlayStore}
                     tileService={appStore.tileService}
                 />

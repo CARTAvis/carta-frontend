@@ -15,7 +15,7 @@ import {HistogramWidgetStore, RegionWidgetStore, SpectralProfileWidgetStore, Sta
 
 const CURSOR_DEBOUNCE_TIME = 200;
 const CURSOR_THROTTLE_TIME = 200;
-const IMAGE_THROTTLE_TIME = 200;
+const IMAGE_THROTTLE_TIME = 50;
 const IMAGE_CHANNEL_THROTTLE_TIME = 500;
 const REQUIREMENTS_CHECK_INTERVAL = 200;
 
@@ -394,7 +394,7 @@ export class AppStore {
 
         const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
             this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
-        }, IMAGE_THROTTLE_TIME * 100);
+        }, IMAGE_THROTTLE_TIME);
 
         const throttledSetChannels = _.throttle((fileId: number, channel: number, stokes: number) => {
             this.activeFrame.channel = channel;
@@ -434,12 +434,11 @@ export class AppStore {
             }
         }, CURSOR_THROTTLE_TIME);
 
-        // Update frame view
+        // Update frame view outside of animation
         autorun(() => {
-            if (this.activeFrame) {
+            if (this.activeFrame && this.animatorStore.animationState === AnimationState.STOPPED) {
                 // Calculate new required frame view (cropped to file size)
                 const reqView = this.activeFrame.requiredFrameView;
-                const currentView = this.activeFrame.currentFrameView;
 
                 const croppedReq: FrameView = {
                     xMin: Math.max(0, reqView.xMin),
@@ -455,27 +454,27 @@ export class AppStore {
                 // TODO: dynamic tile size
                 const tileSizeFullRes = reqView.mip * 256;
                 const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes, y: midPointImageCoords.y / tileSizeFullRes};
+                // TODO: throttle tile requests somehow
                 this.tileService.requestTiles(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords, this.compressionQuality);
             }
         });
 
-        // const updateRequiredView = (croppedReq.mip < currentView.mip) || (croppedReq.xMin < currentView.xMin || croppedReq.xMax > currentView.xMax || croppedReq.yMin < currentView.yMin || croppedReq.yMax > currentView.yMax);
-        // const updateCompressionQuality = (adjustedQuality > this.activeFrame.currentCompressionQuality);
-        // if (updateRequiredView || updateCompressionQuality) {
-        //     const reqWidth = reqView.xMax - reqView.xMin;
-        //     const reqHeight = reqView.yMax - reqView.yMin;
-        //     // Add an extra padding on either side to avoid spamming backend
-        //     const padFraction = 0.05;
-        //     const paddedView = {
-        //         xMin: Math.max(0, reqView.xMin - padFraction * reqWidth),
-        //         xMax: Math.min(reqView.xMax + padFraction * reqWidth, this.activeFrame.frameInfo.fileInfoExtended.width),
-        //         yMin: Math.max(0, reqView.yMin - padFraction * reqHeight),
-        //         yMax: Math.min(reqView.yMax + padFraction * reqHeight, this.activeFrame.frameInfo.fileInfoExtended.height),
-        //         mip: reqView.mip
-        //     };
-        //
-        //     throttledSetView(this.activeFrame.frameInfo.fileId, paddedView, adjustedQuality);
-        // }
+        // Update frame view during animation
+        autorun(() => {
+            if (this.activeFrame && this.animatorStore.animationState !== AnimationState.STOPPED) {
+                // Calculate new required frame view (cropped to file size)
+                const reqView = this.activeFrame.requiredFrameView;
+
+                const croppedReq: FrameView = {
+                    xMin: Math.max(0, reqView.xMin),
+                    xMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.width, reqView.xMax),
+                    yMin: Math.max(0, reqView.yMin),
+                    yMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.height, reqView.yMax),
+                    mip: reqView.mip
+                };
+                throttledSetView(this.activeFrame.frameInfo.fileId, croppedReq, 9);
+            }
+        });
 
         // Update channels when manually changed
         autorun(() => {
