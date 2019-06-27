@@ -3,10 +3,23 @@ import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable, ObservableMap} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {
-    AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore,
-    FrameInfo, FrameStore, LogEntry, LogStore, nightPalette,
-    OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore,
-    PreferenceStore
+    AlertStore,
+    AnimationMode,
+    AnimationState,
+    AnimatorStore,
+    dayPalette,
+    FileBrowserStore,
+    FrameInfo,
+    FrameStore,
+    LogEntry,
+    LogStore,
+    nightPalette,
+    OverlayStore,
+    PreferenceStore,
+    RegionStore,
+    SpatialProfileStore,
+    SpectralProfileStore,
+    WidgetsStore
 } from ".";
 import {BackendService, TileService} from "services";
 import {CursorInfo, FrameView, Point2D} from "models";
@@ -436,7 +449,7 @@ export class AppStore {
 
         // Update frame view outside of animation
         autorun(() => {
-            if (this.activeFrame && this.animatorStore.animationState === AnimationState.STOPPED) {
+            if (this.activeFrame && (this.animatorStore.animationState === AnimationState.STOPPED || this.animatorStore.animationMode === AnimationMode.FRAME)) {
                 // Calculate new required frame view (cropped to file size)
                 const reqView = this.activeFrame.requiredFrameView;
 
@@ -461,7 +474,7 @@ export class AppStore {
 
         // Update frame view during animation
         autorun(() => {
-            if (this.activeFrame && this.animatorStore.animationState !== AnimationState.STOPPED) {
+            if (this.activeFrame && (this.animatorStore.animationState !== AnimationState.STOPPED && this.animatorStore.animationMode !== AnimationMode.FRAME)) {
                 // Calculate new required frame view (cropped to file size)
                 const reqView = this.activeFrame.requiredFrameView;
 
