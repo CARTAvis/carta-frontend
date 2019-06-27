@@ -47,16 +47,6 @@ const DEFAULTS = {
 export class PreferenceStore {
     private regionContainer: RegionStore;
 
-    validateRegionLineWidth(regionLineWidth: string) {
-        const value = Number(regionLineWidth);
-        return value && isFinite(value) && RegionStore.IsRegionLineWidthValid(value) ? value : null;
-    }
-
-    validateRegionDashLength(regionDashLength: string) {
-        const value = Number(regionDashLength);
-        return value && isFinite(value) && RegionStore.IsRegionDashLengthValid(value) ? value : null;
-    }
-
     validateRegionCreationMode(regionCreationMode: string) {
         return regionCreationMode && (regionCreationMode === RegionCreationMode.CENTER || regionCreationMode === RegionCreationMode.CORNER) ? regionCreationMode : null;
     }
@@ -155,13 +145,23 @@ export class PreferenceStore {
     };
 
     getRegionLineWidth = (): number => {
-        const regionLineWidth = this.validateRegionLineWidth(localStorage.getItem(PREFERENCE_KEYS.regionLineWidth));
-        return regionLineWidth !== null ? regionLineWidth : DEFAULTS.regionLineWidth;
+        const regionLineWidth = localStorage.getItem(PREFERENCE_KEYS.regionLineWidth);
+        if (!regionLineWidth) {
+            return DEFAULTS.regionLineWidth;
+        }
+
+        const value = Number(regionLineWidth);
+        return isFinite(value) && RegionStore.IsRegionLineWidthValid(value) ? value : DEFAULTS.regionLineWidth;
     };
 
     getRegionDashLength = (): number => {
-        const regionDashLength = this.validateRegionDashLength(localStorage.getItem(PREFERENCE_KEYS.regionDashLength));
-        return regionDashLength !== null ? regionDashLength : DEFAULTS.regionDashLength;
+        const regionDashLength = localStorage.getItem(PREFERENCE_KEYS.regionDashLength);
+        if (!regionDashLength) {
+            return DEFAULTS.regionDashLength;
+        }
+
+        const value = Number(regionDashLength);
+        return isFinite(value) && RegionStore.IsRegionDashLengthValid(value) ? value : DEFAULTS.regionDashLength;
     };
 
     getRegionCreationMode = (): string => {
