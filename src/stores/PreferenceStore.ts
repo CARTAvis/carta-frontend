@@ -2,7 +2,7 @@ import {action, autorun} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
-import {Theme, Layout, Zoom, WCSType} from "models";
+import {Theme, Layout, Zoom, WCSType, RegionCreationMode} from "models";
 
 const PREFERENCE_KEYS = {
     theme: "CARTA_theme",
@@ -36,12 +36,12 @@ const DEFAULTS = {
     astColor: 4,
     astGridVisible: true,
     astLabelsVisible: true,
-    wcsType: "automatic",
+    wcsType: WCSType.Automatic,
     regionColor: "#2EE6D6",
     regionLineWidth: 2,
     regionDashLength: 0,
     regionType: 3,
-    regionCreationMode: "center"
+    regionCreationMode: RegionCreationMode.Centner
 };
 
 export class PreferenceStore {
@@ -103,7 +103,7 @@ export class PreferenceStore {
     }
 
     validateRegionCreationMode(regionCreationMode: string) {
-        return regionCreationMode && (regionCreationMode === "centner" || regionCreationMode === "corner") ? regionCreationMode : null;
+        return regionCreationMode && (regionCreationMode === RegionCreationMode.Centner || regionCreationMode === RegionCreationMode.Corner) ? regionCreationMode : null;
     }
 
     // getters
@@ -187,7 +187,7 @@ export class PreferenceStore {
     }
 
     isRegionCornerMode = (): boolean => {
-        return localStorage.getItem(PREFERENCE_KEYS.regionCreationMode) === "corner" ? true : false;
+        return localStorage.getItem(PREFERENCE_KEYS.regionCreationMode) === RegionCreationMode.Corner ? true : false;
     }
     
     isDarkTheme = (): boolean => {

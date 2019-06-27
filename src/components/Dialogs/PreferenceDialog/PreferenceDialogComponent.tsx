@@ -9,7 +9,7 @@ import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {AppearanceForm} from "components/Dialogs/RegionDialog/AppearanceForm/AppearanceForm";
-import {Theme, Layout, Zoom, WCSType} from "models";
+import {Theme, Layout, Zoom, WCSType, RegionCreationMode} from "models";
 import {AppStore, RegionStore, RenderConfigStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
@@ -170,8 +170,8 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         selectedValue={this.regionCreationMode}
                         onChange={(ev) => { preference.setRegionCreationMode(ev.currentTarget.value); this.regionCreationMode = ev.currentTarget.value; }}
                     >
-                        <Radio label="Center to corner" value="center"/>
-                        <Radio label="Corner to corner" value="corner"/>
+                        <Radio label="Center to corner" value={RegionCreationMode.Centner}/>
+                        <Radio label="Corner to corner" value={RegionCreationMode.Corner}/>
                     </RadioGroup>
                 </FormGroup>
             </React.Fragment>

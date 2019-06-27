@@ -8,3 +8,4 @@ export * from "./Theme";
 export * from "./Layout";
 export * from "./Zoom";
 export * from "./WCSType";
+export * from "./RegionCreationMode";
