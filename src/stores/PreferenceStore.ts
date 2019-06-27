@@ -47,11 +47,6 @@ const DEFAULTS = {
 export class PreferenceStore {
     private regionContainer: RegionStore;
 
-    validateASTColor(astColor: string) {
-        const value = Number(astColor);
-        return astColor && isFinite(value) && value >= 0 && value < AST.colors.length ? value : null;
-    }
-
     validateWCSType(wcsType: string) {
         return wcsType && (wcsType === WCSType.AUTOMATIC || wcsType === WCSType.DEGREES || wcsType === WCSType.SEXIGESIMAL) ? wcsType : null;
     }
@@ -129,8 +124,13 @@ export class PreferenceStore {
     };
 
     getASTColor = (): number => {
-        const astColor = this.validateASTColor(localStorage.getItem(PREFERENCE_KEYS.astColor));
-        return astColor !== null ? astColor : DEFAULTS.astColor;
+        const astColor = localStorage.getItem(PREFERENCE_KEYS.astColor);
+        if (!astColor) {
+            return DEFAULTS.astColor;
+        }
+
+        const value = Number(astColor);
+        return isFinite(value) && value >= 0 && value < AST.colors.length ? value : DEFAULTS.astColor;
     };
 
     getASTGridVisible = (): boolean => {
