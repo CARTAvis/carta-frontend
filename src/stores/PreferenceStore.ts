@@ -235,7 +235,7 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.regionCreationMode, regionCreationMode);
     };
 
-    @action resetGlobalSettings = () => {
+    resetGlobalSettings = () => {
         this.setTheme(DEFAULTS.theme);
         this.setAutoLaunch(DEFAULTS.autoLaunch);
         this.setLayout(DEFAULTS.layout);
@@ -243,17 +243,25 @@ export class PreferenceStore {
         this.setZoomMode(DEFAULTS.zoomMode);
     };
 
-    @action resetRenderConfigSettings = () => {
+    resetRenderConfigSettings = () => {
         this.setScaling(DEFAULTS.scaling);
         this.setColormap(DEFAULTS.colormap);
         this.setPercentile(DEFAULTS.percentile.toString());
     };
 
-    @action resetWCSOverlaySettings = () => {
+    resetWCSOverlaySettings = () => {
         this.setASTColor(DEFAULTS.astColor);
         this.setASTGridVisible(DEFAULTS.astGridVisible);
         this.setASTLabelsVisible(DEFAULTS.astLabelsVisible);
         this.setWCSType(DEFAULTS.wcsType);
+    };
+
+    resetRegionSettings = () => {
+        this.regionContainer.color = DEFAULTS.regionColor;
+        this.regionContainer.lineWidth = DEFAULTS.regionLineWidth;
+        this.regionContainer.dashLength = DEFAULTS.regionDashLength;
+        this.setRegionType(DEFAULTS.regionType);
+        this.setRegionCreationMode(DEFAULTS.regionCreationMode);
     };
 
     constructor() {

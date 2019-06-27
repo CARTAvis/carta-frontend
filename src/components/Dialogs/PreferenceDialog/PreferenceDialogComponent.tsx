@@ -62,6 +62,9 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 this.wcsType = preference.getWCSType();
                 break;
             case TABS.REGION:
+                preference.resetRegionSettings();
+                this.regionType = preference.getRegionType();
+                this.regionCreationMode = preference.getRegionCreationMode();
                 break;
             case TABS.GLOBAL: default:
                 preference.resetGlobalSettings();
