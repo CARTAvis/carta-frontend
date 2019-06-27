@@ -54,8 +54,8 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         onChange={(ev) => { preference.setTheme(ev.currentTarget.value); this.theme = ev.currentTarget.value; }}
                         inline={true}
                     >
-                        <Radio label="Light" value={Theme.Light}/>
-                        <Radio label="Dark" value={Theme.Dark}/>
+                        <Radio label="Light" value={Theme.LIGHT}/>
+                        <Radio label="Dark" value={Theme.DARK}/>
                     </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Auto-launch File Browser">
@@ -67,9 +67,9 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         onChange={(ev) => { preference.setLayout(ev.currentTarget.value); this.layout = ev.currentTarget.value; }}
                         inline={true}
                     >
-                        <Radio label="Cube view" value={Layout.CubeView}/>
-                        <Radio label="Cube analysis" value={Layout.CubeAnalysis}/>
-                        <Radio label="Continuum analysis" value={Layout.ContinuumAnalysis}/>
+                        <Radio label="Cube view" value={Layout.CUBEVIEW}/>
+                        <Radio label="Cube analysis" value={Layout.CUBEANALYSIS}/>
+                        <Radio label="Continuum analysis" value={Layout.CONTINUUMANALYSIS}/>
                     </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Cursor Position">
@@ -81,8 +81,8 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         onChange={(ev) => { preference.setZoomMode(ev.currentTarget.value); this.zoomMode = ev.currentTarget.value; }}
                         inline={true}
                     >
-                        <Radio label="Zoom to fit" value={Zoom.Fit}/>
-                        <Radio label="Zoom to 1.0x" value={Zoom.Raw}/>
+                        <Radio label="Zoom to fit" value={Zoom.FIT}/>
+                        <Radio label="Zoom to 1.0x" value={Zoom.RAW}/>
                     </RadioGroup>
                 </FormGroup>
             </React.Fragment>
@@ -142,9 +142,9 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         selectedValue={this.wcsType}
                         onChange={(ev) => { preference.setWCSType(ev.currentTarget.value); this.wcsType = ev.currentTarget.value; }}
                     >
-                        <Radio label="Automatic" value={WCSType.Automatic}/>
-                        <Radio label="Degrees" value={WCSType.Degrees}/>
-                        <Radio label="Sexigesimal" value={WCSType.Sexigesimal}/>
+                        <Radio label="Automatic" value={WCSType.AUTOMATIC}/>
+                        <Radio label="Degrees" value={WCSType.DEGREES}/>
+                        <Radio label="Sexigesimal" value={WCSType.SEXIGESIMAL}/>
                     </RadioGroup>
                 </FormGroup>
             </React.Fragment>
@@ -170,8 +170,8 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         selectedValue={this.regionCreationMode}
                         onChange={(ev) => { preference.setRegionCreationMode(ev.currentTarget.value); this.regionCreationMode = ev.currentTarget.value; }}
                     >
-                        <Radio label="Center to corner" value={RegionCreationMode.Centner}/>
-                        <Radio label="Corner to corner" value={RegionCreationMode.Corner}/>
+                        <Radio label="Center to corner" value={RegionCreationMode.CENTER}/>
+                        <Radio label="Corner to corner" value={RegionCreationMode.CORNER}/>
                     </RadioGroup>
                 </FormGroup>
             </React.Fragment>

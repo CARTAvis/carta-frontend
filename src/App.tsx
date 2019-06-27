@@ -171,13 +171,13 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         let customizedLayout;
         switch (this.props.appStore.preferenceStore.getLayout()) {
-            case Layout.CubeAnalysis:
+            case Layout.CUBEANALYSIS:
                 customizedLayout = this.genCubeAnalysisLayout(configs, widgetsStore);
                 break;
-            case Layout.ContinuumAnalysis:
+            case Layout.CONTINUUMANALYSIS:
                 customizedLayout = this.genContinuumAnalysisLayout(configs, widgetsStore);
                 break;
-            case Layout.CubeView: default:
+            case Layout.CUBEVIEW: default:
                 customizedLayout = this.genCubeViewLayout(configs, widgetsStore);
                 break;
         }

@@ -1,4 +1,4 @@
 export class Theme {
-    public static readonly Light = "light";
-    public static readonly Dark = "dark";
+    public static readonly LIGHT = "light";
+    public static readonly DARK = "dark";
 }

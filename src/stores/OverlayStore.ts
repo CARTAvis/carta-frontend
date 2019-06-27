@@ -667,15 +667,15 @@ export class OverlayStore {
             this.numbers.setDefaultFormatY(undefined);
         } else {
             switch (this.defaultWCSType) {
-                case WCSType.Degrees:
+                case WCSType.DEGREES:
                     this.numbers.setDefaultFormatX("d");
                     this.numbers.setDefaultFormatY("d");
                     break;
-                case WCSType.Sexigesimal:
+                case WCSType.SEXIGESIMAL:
                     this.numbers.setDefaultFormatX("hms");
                     this.numbers.setDefaultFormatY("dms");
                     break;
-                case WCSType.Automatic: default:
+                case WCSType.AUTOMATIC: default:
                     if ([SystemType.FK4, SystemType.FK5, SystemType.ICRS].indexOf(this.global.explicitSystem) > -1) {
                         this.numbers.setDefaultFormatX("hms");
                         this.numbers.setDefaultFormatY("dms");

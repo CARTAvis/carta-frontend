@@ -1,5 +1,5 @@
 export class Layout {
-    public static readonly CubeView = "cube_view";
-    public static readonly CubeAnalysis = "cube_analysis";
-    public static readonly ContinuumAnalysis = "continuum_analysis";
+    public static readonly CUBEVIEW = "cube_view";
+    public static readonly CUBEANALYSIS = "cube_analysis";
+    public static readonly CONTINUUMANALYSIS = "continuum_analysis";
 }

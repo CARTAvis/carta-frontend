@@ -25,23 +25,23 @@ const PREFERENCE_KEYS = {
 };
 
 const DEFAULTS = {
-    theme: Theme.Light,
+    theme: Theme.LIGHT,
     autoLaunch: true,
-    layout: Layout.CubeView,
+    layout: Layout.CUBEVIEW,
     cursorFreeze: false,
-    zoomMode: Zoom.Fit,
+    zoomMode: Zoom.FIT,
     scaling: 0,
     colormap: "inferno",
     percentile: 99.9,
     astColor: 4,
     astGridVisible: true,
     astLabelsVisible: true,
-    wcsType: WCSType.Automatic,
+    wcsType: WCSType.AUTOMATIC,
     regionColor: "#2EE6D6",
     regionLineWidth: 2,
     regionDashLength: 0,
     regionType: 3,
-    regionCreationMode: RegionCreationMode.Centner
+    regionCreationMode: RegionCreationMode.CENTER
 };
 
 export class PreferenceStore {
@@ -49,15 +49,15 @@ export class PreferenceStore {
 
     // user configurable settings
     validateTheme(theme: string) {
-        return theme && (theme === Theme.Light || theme === Theme.Dark) ? theme : null;
+        return theme && (theme === Theme.LIGHT || theme === Theme.DARK) ? theme : null;
     }
 
     validateLayout(layout: string) {
-        return layout && (layout === Layout.CubeView || layout === Layout.CubeAnalysis || layout === Layout.ContinuumAnalysis) ? layout : null;
+        return layout && (layout === Layout.CUBEVIEW || layout === Layout.CUBEANALYSIS || layout === Layout.CONTINUUMANALYSIS) ? layout : null;
     }
 
     validateZoomMode(zoomMode: string) {
-        return zoomMode && (zoomMode === Zoom.Fit || zoomMode === Zoom.Raw) ? zoomMode : null;
+        return zoomMode && (zoomMode === Zoom.FIT || zoomMode === Zoom.RAW) ? zoomMode : null;
     }
 
     validateScaling(scaling: string) {
@@ -80,7 +80,7 @@ export class PreferenceStore {
     }
 
     validateWCSType(wcsType: string) {
-        return wcsType && (wcsType === WCSType.Automatic || wcsType === WCSType.Degrees || wcsType === WCSType.Sexigesimal) ? wcsType : null;
+        return wcsType && (wcsType === WCSType.AUTOMATIC || wcsType === WCSType.DEGREES || wcsType === WCSType.SEXIGESIMAL) ? wcsType : null;
     }
 
     validateRegionType(regionType: string) {
@@ -103,7 +103,7 @@ export class PreferenceStore {
     }
 
     validateRegionCreationMode(regionCreationMode: string) {
-        return regionCreationMode && (regionCreationMode === RegionCreationMode.Centner || regionCreationMode === RegionCreationMode.Corner) ? regionCreationMode : null;
+        return regionCreationMode && (regionCreationMode === RegionCreationMode.CENTER || regionCreationMode === RegionCreationMode.CORNER) ? regionCreationMode : null;
     }
 
     // getters
@@ -187,15 +187,15 @@ export class PreferenceStore {
     }
 
     isRegionCornerMode = (): boolean => {
-        return localStorage.getItem(PREFERENCE_KEYS.regionCreationMode) === RegionCreationMode.Corner ? true : false;
+        return localStorage.getItem(PREFERENCE_KEYS.regionCreationMode) === RegionCreationMode.CORNER ? true : false;
     }
     
     isDarkTheme = (): boolean => {
-        return localStorage.getItem(PREFERENCE_KEYS.theme) === Theme.Dark ? true : false;
+        return localStorage.getItem(PREFERENCE_KEYS.theme) === Theme.DARK ? true : false;
     };
 
     isZoomFitMode = (): boolean => {
-        return localStorage.getItem(PREFERENCE_KEYS.zoomMode) === Zoom.Fit ? true : false;
+        return localStorage.getItem(PREFERENCE_KEYS.zoomMode) === Zoom.FIT ? true : false;
     }
 
     // setters

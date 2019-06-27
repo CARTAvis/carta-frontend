@@ -1,4 +1,4 @@
 export class RegionCreationMode {
-    public static readonly Centner = "centner";
-    public static readonly Corner = "corner";
+    public static readonly CENTER = "centner";
+    public static readonly CORNER = "corner";
 }

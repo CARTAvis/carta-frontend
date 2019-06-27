@@ -1,4 +1,4 @@
 export class Zoom {
-    public static readonly Fit = "fit";
-    public static readonly Raw = "1.0x";
+    public static readonly FIT = "fit";
+    public static readonly RAW = "1.0x";
 }

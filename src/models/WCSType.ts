@@ -1,5 +1,5 @@
 export class WCSType {
-    public static readonly Automatic = "automatic";
-    public static readonly Degrees = "degrees";
-    public static readonly Sexigesimal = "sexigesimal";
+    public static readonly AUTOMATIC = "automatic";
+    public static readonly DEGREES = "degrees";
+    public static readonly SEXIGESIMAL = "sexigesimal";
 }
