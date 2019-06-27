@@ -16,6 +16,7 @@ const PREFERENCE_KEYS = {
     astColor: "CARTA_astColor",
     astGridVisible: "CARTA_astGridVisible",
     astLabelsVisible: "CARTA_astLabelsVisible",
+    wcsType: "CARTA_wcsType",
     regionColor: "CARTA_regionColor",
     regionLineWidth: "CARTA_regionLineWidth",
     regionDashLength: "CARTA_regionDashLength",
@@ -35,6 +36,7 @@ const DEFAULTS = {
     astColor: 4,
     astGridVisible: true,
     astLabelsVisible: true,
+    wcsType: "automatic",
     regionColor: "#2EE6D6",
     regionLineWidth: 2,
     regionDashLength: 0,
@@ -77,12 +79,16 @@ export class PreferenceStore {
         return astColor && isFinite(value) && value >= 0 && value < AST.colors.length ? value : null;
     }
 
+    validateWCSType(wcsType: string) {
+        return wcsType && (wcsType === "automatic" || wcsType === "degrees" || wcsType === "sexigesimal") ? wcsType : null;
+    }
+
     validateRegionType(regionType: string) {
         const value = Number(regionType);
         return value && isFinite(value) && RegionStore.IsRegionTypeValid(value) ? value : null;
     }
 
-     validateRegionColor(regionColor: string) {
+    validateRegionColor(regionColor: string) {
         return regionColor && RegionStore.IsRegionColorValid(regionColor) ? regionColor : null;
     }
 
@@ -147,6 +153,10 @@ export class PreferenceStore {
     getASTLabelsVisible = (): boolean => {
         const astLabelsVisible = localStorage.getItem(PREFERENCE_KEYS.astLabelsVisible);
         return astLabelsVisible === "false" ? false : DEFAULTS.astLabelsVisible;
+    };
+
+    getWCSType = (): string => {
+        return this.validateWCSType(localStorage.getItem(PREFERENCE_KEYS.wcsType)) || DEFAULTS.wcsType;
     };
 
     getDefaultRegion = (): RegionStore => {
@@ -231,6 +241,10 @@ export class PreferenceStore {
 
     @action setASTLabelsVisible = (visible: boolean) => {
         localStorage.setItem(PREFERENCE_KEYS.astLabelsVisible, visible ? "true" : "false");
+    };
+
+    @action setWCSType = (wcsType: string) => {
+        localStorage.setItem(PREFERENCE_KEYS.wcsType, wcsType);
     };
 
     @action setRegionType = (regionType: CARTA.RegionType) => {

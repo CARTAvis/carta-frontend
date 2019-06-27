@@ -30,6 +30,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
     @observable astColor = this.props.appStore.preferenceStore.getASTColor();
     @observable astGridVisible = this.props.appStore.preferenceStore.getASTGridVisible();
     @observable astLabelsVisible = this.props.appStore.preferenceStore.getASTLabelsVisible();
+    @observable wcsType = this.props.appStore.preferenceStore.getWCSType();
     @observable regionType = this.props.appStore.preferenceStore.getRegionType();
     @observable regionCreationMode = this.props.appStore.preferenceStore.getRegionCreationMode();
 
@@ -78,6 +79,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     <RadioGroup
                         selectedValue={this.zoomMode}
                         onChange={(ev) => { preference.setZoomMode(ev.currentTarget.value); this.zoomMode = ev.currentTarget.value; }}
+                        inline={true}
                     >
                         <Radio label="Zoom to fit" value={Zoom.Fit}/>
                         <Radio label="Zoom to 1.0x" value={Zoom.Raw}/>
@@ -134,6 +136,16 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         checked={this.astLabelsVisible}
                         onChange={(ev) => { preference.setASTLabelsVisible(ev.currentTarget.checked); this.astLabelsVisible = ev.currentTarget.checked; }}
                     />
+                </FormGroup>
+                <FormGroup inline={true} label="WCS Type">
+                    <RadioGroup
+                        selectedValue={this.wcsType}
+                        onChange={(ev) => { preference.setWCSType(ev.currentTarget.value); this.wcsType = ev.currentTarget.value; }}
+                    >
+                        <Radio label="Automatic" value="automatic"/>
+                        <Radio label="Degrees" value="degrees"/>
+                        <Radio label="Sexigesimal" value="sexigesimal"/>
+                    </RadioGroup>
                 </FormGroup>
             </React.Fragment>
         );

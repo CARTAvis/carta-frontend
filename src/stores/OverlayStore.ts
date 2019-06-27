@@ -614,6 +614,8 @@ export class OverlayLabelSettings {
 }
 
 export class OverlayStore {
+    private defaultWCSType: string;
+
     // View size options
     @observable viewWidth: number;
     @observable viewHeight: number;
@@ -640,6 +642,7 @@ export class OverlayStore {
     };
 
     constructor(preferenceStore: PreferenceStore) {
+        this.defaultWCSType = preferenceStore.getWCSType();
         this.global = new OverlayGlobalSettings(preferenceStore);
         this.title = new OverlayTitleSettings();
         this.grid = new OverlayGridSettings(preferenceStore);
@@ -662,13 +665,25 @@ export class OverlayStore {
             this.numbers.setDefaultFormatX(undefined);
             this.numbers.setDefaultFormatY(undefined);
         } else {
-            if ([SystemType.FK4, SystemType.FK5, SystemType.ICRS].indexOf(this.global.explicitSystem) > -1) {
-                this.numbers.setDefaultFormatX("hms");
-                this.numbers.setDefaultFormatY("dms");
-            } else {
-                // Fall back to degrees by default
-                this.numbers.setDefaultFormatX("d");
-                this.numbers.setDefaultFormatY("d");
+            switch (this.defaultWCSType) {
+                case "degrees":
+                    this.numbers.setDefaultFormatX("d");
+                    this.numbers.setDefaultFormatY("d");
+                    break;
+                case "sexigesimal":
+                    this.numbers.setDefaultFormatX("hms");
+                    this.numbers.setDefaultFormatY("dms");
+                    break;
+                case "automatic": default:
+                    if ([SystemType.FK4, SystemType.FK5, SystemType.ICRS].indexOf(this.global.explicitSystem) > -1) {
+                        this.numbers.setDefaultFormatX("hms");
+                        this.numbers.setDefaultFormatY("dms");
+                    } else {
+                        // Fall back to degrees by default
+                        this.numbers.setDefaultFormatX("d");
+                        this.numbers.setDefaultFormatY("d");
+                    }
+                    break;
             }
         }
 
