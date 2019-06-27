@@ -40,17 +40,12 @@ const DEFAULTS = {
     regionColor: "#2EE6D6",
     regionLineWidth: 2,
     regionDashLength: 0,
-    regionType: 3,
+    regionType: CARTA.RegionType.RECTANGLE,
     regionCreationMode: RegionCreationMode.CENTER
 };
 
 export class PreferenceStore {
     private regionContainer: RegionStore;
-
-    validateRegionType(regionType: string) {
-        const value = Number(regionType);
-        return value && isFinite(value) && RegionStore.IsRegionTypeValid(value) ? value : null;
-    }
 
     validateRegionColor(regionColor: string) {
         return regionColor && RegionStore.IsRegionColorValid(regionColor) ? regionColor : null;
@@ -149,8 +144,13 @@ export class PreferenceStore {
     };
 
     getRegionType = (): CARTA.RegionType => {
-        const regionType = this.validateRegionType(localStorage.getItem(PREFERENCE_KEYS.regionType));
-        return regionType !== null ? regionType : DEFAULTS.regionType;
+        const regionType = localStorage.getItem(PREFERENCE_KEYS.regionType);
+        if (!regionType) {
+            return DEFAULTS.regionType;
+        }
+
+        const value = Number(regionType);
+        return isFinite(value) && RegionStore.IsRegionTypeValid(value) ? value : DEFAULTS.regionType;
     };
 
     getRegionColor = (): string => {
