@@ -47,11 +47,6 @@ const DEFAULTS = {
 export class PreferenceStore {
     private regionContainer: RegionStore;
 
-    validatePercentile(percentile: string) {
-        const value = Number(percentile);
-        return percentile && isFinite(value) && RenderConfigStore.IsPercentileValid(value) ? value : null;
-    }
-
     validateASTColor(astColor: string) {
         const value = Number(astColor);
         return astColor && isFinite(value) && value >= 0 && value < AST.colors.length ? value : null;
@@ -124,7 +119,13 @@ export class PreferenceStore {
     };
 
     getPercentile = (): number => {
-        return this.validatePercentile(localStorage.getItem(PREFERENCE_KEYS.percentile)) || DEFAULTS.percentile;
+        const percentile = localStorage.getItem(PREFERENCE_KEYS.percentile);
+        if (!percentile) {
+            return DEFAULTS.percentile;
+        }
+
+        const value = Number(percentile);
+        return isFinite(value) && RenderConfigStore.IsPercentileValid(value) ? value : DEFAULTS.percentile;
     };
 
     getASTColor = (): number => {
