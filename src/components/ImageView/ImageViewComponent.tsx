@@ -239,6 +239,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                 <RasterViewComponent
                     frame={appStore.activeFrame}
                     docked={this.props.docked}
+                    tiledRendering={true}
                     overlaySettings={appStore.overlayStore}
                     tileService={appStore.tileService}
                 />

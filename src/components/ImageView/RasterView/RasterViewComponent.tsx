@@ -13,6 +13,7 @@ const pixelShaderSimple = require("!raw-loader!./GLSL/pixel_simple.glsl");
 export class RasterViewComponentProps {
     overlaySettings: OverlayStore;
     frame: FrameStore;
+    tiledRendering: boolean;
     tileService: TileService;
     docked: boolean;
 }
@@ -132,14 +133,14 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.updateUniforms();
             this.renderCanvas();
 
-            // if (frame.rasterData) {
-            //     // Only update texture if the buffer has changed
-            //     if (frame.rasterData.buffer !== this.rasterDataBuffer) {
-            //         this.updateTexture();
-            //     }
-            //     this.updateUniforms();
-            //     this.renderCanvas();
-            // }
+            if (!this.props.tiledRendering && frame.rasterData) {
+                // Only update texture if the buffer has changed
+                if (frame.rasterData.buffer !== this.rasterDataBuffer) {
+                    this.updateTexture();
+                }
+                this.updateUniforms();
+                this.renderCanvas();
+            }
         }
     };
 
@@ -178,6 +179,19 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     private renderCanvas() {
+        this.gl.enable(WebGLRenderingContext.DEPTH_TEST);
+        this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
+
+        if (this.props.tiledRendering) {
+            this.renderTiledCanvas();
+        }
+        else {
+            this.renderAnimationCanvas();
+        }
+    }
+
+    private renderAnimationCanvas() {
+        // TODO: re-implement this based on older code
         const frame = this.props.frame;
 
         const current = frame.currentFrameView;
@@ -206,19 +220,44 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             y: viewportMax.y - viewportMin.y
         };
 
-        this.gl.enable(WebGLRenderingContext.DEPTH_TEST);
-        this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexUVBuffer);
         this.gl.vertexAttribPointer(this.vertexUVAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexPositionBuffer);
         this.gl.vertexAttribPointer(this.vertexPositionAttribute, 3, WebGLRenderingContext.FLOAT, false, 0, 0);
 
-        // this.gl.uniform1f(this.shaderUniforms.TileWidthCutoff, 1);
-        // this.gl.uniform1f(this.shaderUniforms.TileHeightCutoff, 1);
         // TODO: render raster image data properly again using new scaling uniforms
         // this.gl.viewport(viewportMin.x, viewportMin.y, viewportSize.x, viewportSize.y);
         // this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, new Float32Array(vertices), WebGLRenderingContext.STATIC_DRAW);
         // this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
+
+        const imageSize = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
+        const boundedView: FrameView = {
+            xMin: Math.max(0, frame.requiredFrameView.xMin),
+            xMax: Math.min(frame.requiredFrameView.xMax, imageSize.x),
+            yMin: Math.max(0, frame.requiredFrameView.yMin),
+            yMax: Math.min(frame.requiredFrameView.yMax, imageSize.y),
+            mip: frame.requiredFrameView.mip
+        };
+
+        this.gl.activeTexture(WebGLRenderingContext.TEXTURE0);
+        this.gl.viewport(0, 0, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
+        const requiredTiles = GetRequiredTiles(boundedView, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
+        // Special case when zoomed out
+        if (requiredTiles.length === 1 && requiredTiles[0].layer === 0) {
+            const mip = LayerToMip(0, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
+            this.renderTiles(requiredTiles, mip);
+            console.log(boundedView.mip);
+        } else {
+            this.renderTiles(requiredTiles, boundedView.mip);
+        }
+    }
+
+    private renderTiledCanvas() {
+        const frame = this.props.frame;
+        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexUVBuffer);
+        this.gl.vertexAttribPointer(this.vertexUVAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
+        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexPositionBuffer);
+        this.gl.vertexAttribPointer(this.vertexPositionAttribute, 3, WebGLRenderingContext.FLOAT, false, 0, 0);
 
         const imageSize = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
         const boundedView: FrameView = {

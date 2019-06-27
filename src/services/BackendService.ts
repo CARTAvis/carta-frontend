@@ -63,7 +63,12 @@ export class BackendService {
             CARTA.EventType.REGISTER_VIEWER,
             CARTA.EventType.REGISTER_VIEWER_ACK,
             CARTA.EventType.OPEN_FILE,
-            CARTA.EventType.OPEN_FILE_ACK
+            CARTA.EventType.OPEN_FILE_ACK,
+            CARTA.EventType.RASTER_IMAGE_DATA,
+            CARTA.EventType.RASTER_TILE_DATA,
+            CARTA.EventType.START_ANIMATION,
+            CARTA.EventType.SET_IMAGE_CHANNELS,
+            CARTA.EventType.SET_IMAGE_VIEW,
         ];
 
         // Check local storage for a list of events to log to console
@@ -411,6 +416,9 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
+            if (animationMessage.imageView) {
+                animationMessage.imageView.numSubsets = this.subsetsRequired;
+            }
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.START_ANIMATION, requestId, animationMessage, false);
             if (this.sendEvent(CARTA.EventType.START_ANIMATION, CARTA.StartAnimation.encode(animationMessage).finish())) {
