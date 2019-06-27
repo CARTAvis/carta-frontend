@@ -38,10 +38,6 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         return <MenuItem text={percentile + "%"} onClick={handleClick} key={percentile}/>;
     };
 
-    renderRegionTypeSelectItem = (regionType: CARTA.RegionType, {handleClick, modifiers, query}) => {
-        return <MenuItem text={RegionStore.RegionTypeString(regionType)} onClick={handleClick} key={regionType}/>;
-    };
-
     public render() {
         const appStore = this.props.appStore;
         const preference = appStore.preferenceStore;
@@ -150,16 +146,10 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             <React.Fragment>
                 <AppearanceForm region={preference.getDefaultRegion()} darkTheme={appStore.darkTheme} isPreference={true}/>
                 <FormGroup inline={true} label="Region Type">
-                    <RegionTypeSelect
-                        activeItem={this.regionType}
-                        onItemSelect={(selected) => { preference.setRegionType(selected); this.regionType = selected; }}
-                        popoverProps={{minimal: true, position: "auto-start"}}
-                        filterable={false}
-                        items={Array.from(RegionStore.AVAILABLE_REGION_TYPES.keys())}
-                        itemRenderer={this.renderRegionTypeSelectItem}
-                    >
-                        <Button text={RegionStore.RegionTypeString(preference.getRegionType())} rightIcon="double-caret-vertical" alignText={"right"}/>
-                    </RegionTypeSelect>
+                    <HTMLSelect value={this.regionType} onChange={(ev) => { preference.setRegionType(Number(ev.currentTarget.value)); this.regionType = Number(ev.currentTarget.value); }}>
+                        <option value={CARTA.RegionType.RECTANGLE}>Rectangle</option>
+                        <option value={CARTA.RegionType.ELLIPSE}>Ellipse</option>
+                    </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Creation Mode">
                     <RadioGroup
