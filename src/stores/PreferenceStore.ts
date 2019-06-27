@@ -47,10 +47,6 @@ const DEFAULTS = {
 export class PreferenceStore {
     private regionContainer: RegionStore;
 
-    validateRegionCreationMode(regionCreationMode: string) {
-        return regionCreationMode && (regionCreationMode === RegionCreationMode.CENTER || regionCreationMode === RegionCreationMode.CORNER) ? regionCreationMode : null;
-    }
-
     // getters
     getTheme = (): string => {
         const theme = localStorage.getItem(PREFERENCE_KEYS.theme);
@@ -165,11 +161,8 @@ export class PreferenceStore {
     };
 
     getRegionCreationMode = (): string => {
-        return this.validateRegionCreationMode(localStorage.getItem(PREFERENCE_KEYS.regionCreationMode)) || DEFAULTS.regionCreationMode;
-    }
-
-    isRegionCornerMode = (): boolean => {
-        return localStorage.getItem(PREFERENCE_KEYS.regionCreationMode) === RegionCreationMode.CORNER ? true : false;
+        const regionCreationMode = localStorage.getItem(PREFERENCE_KEYS.regionCreationMode);
+        return regionCreationMode && RegionCreationMode.isValid(regionCreationMode) ? regionCreationMode : DEFAULTS.regionCreationMode;
     }
     
     isDarkTheme = (): boolean => {
@@ -178,6 +171,10 @@ export class PreferenceStore {
 
     isZoomFitMode = (): boolean => {
         return localStorage.getItem(PREFERENCE_KEYS.zoomMode) === Zoom.FIT ? true : false;
+    }
+
+    isRegionCornerMode = (): boolean => {
+        return localStorage.getItem(PREFERENCE_KEYS.regionCreationMode) === RegionCreationMode.CORNER ? true : false;
     }
 
     // setters
