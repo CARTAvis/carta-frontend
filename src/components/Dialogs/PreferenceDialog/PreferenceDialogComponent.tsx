@@ -2,7 +2,7 @@ import * as React from "react";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {CARTA} from "carta-protobuf";
-import {Button, IDialogProps, Intent, Tab, Tabs, FormGroup, TabId, MenuItem, Switch, RadioGroup, Radio, HTMLSelect} from "@blueprintjs/core";
+import {Button, IDialogProps, Intent, Tab, Tabs, FormGroup, TabId, MenuItem, Switch, RadioGroup, Radio, HTMLSelect, AnchorButton} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/ScalingComponent";
@@ -14,11 +14,17 @@ import {AppStore, RegionStore, RenderConfigStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
 const PercentileSelect = Select.ofType<string>();
-const RegionTypeSelect = Select.ofType<CARTA.RegionType>();
+
+enum TABS {
+    GLOBAL,
+    RENDER_CONFIG,
+    WCS_OVERLAY,
+    REGION
+}
 
 @observer
 export class PreferenceDialogComponent extends React.Component<{ appStore: AppStore }> {
-    @observable selectedTab: TabId = "global";
+    @observable selectedTab: TabId = TABS.GLOBAL;
     @observable theme = this.props.appStore.preferenceStore.getTheme();
     @observable autoLaunch = this.props.appStore.preferenceStore.getAutoLaunch();
     @observable layout = this.props.appStore.preferenceStore.getLayout();
@@ -37,6 +43,19 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
     renderPercentileSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
         return <MenuItem text={percentile + "%"} onClick={handleClick} key={percentile}/>;
     };
+
+    private reset() {
+        switch (this.selectedTab) {
+            case TABS.RENDER_CONFIG:
+                break;
+            case TABS.WCS_OVERLAY:
+                break;
+            case TABS.REGION:
+                break;
+            case TABS.GLOBAL: default:
+                break;
+        }
+    }
 
     public render() {
         const appStore = this.props.appStore;
@@ -109,7 +128,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             </React.Fragment>
         );
 
-        const astSettingsPanel = (
+        const wcsOverlayPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Color">
                     <ColorComponent
@@ -188,15 +207,16 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         selectedTabId={this.selectedTab}
                         onChange={(tabId) => this.selectedTab = tabId}
                     >
-                        <Tab id="global" title="Global" panel={globalPanel}/>
-                        <Tab id="renderConfig" title="Default Render Config" panel={renderConfigPanel}/>
-                        <Tab id="astSettings" title="Default WCS Overlay" panel={astSettingsPanel}/>
-                        <Tab id="regionSettings" title="Default Region settings" panel={regionSettingsPanel}/>
+                        <Tab id={TABS.GLOBAL} title="Global" panel={globalPanel}/>
+                        <Tab id={TABS.RENDER_CONFIG} title="Default Render Config" panel={renderConfigPanel}/>
+                        <Tab id={TABS.WCS_OVERLAY} title="Default WCS Overlay" panel={wcsOverlayPanel}/>
+                        <Tab id={TABS.REGION} title="Default Region settings" panel={regionSettingsPanel}/>
                     </Tabs>
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
-                        <Button intent={Intent.PRIMARY} onClick={appStore.hidePreferenceDialog} text="Close"/>
+                        <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={this.reset} text="Reset"/>
+                        <Button intent={Intent.NONE} onClick={appStore.hidePreferenceDialog} text="Close"/>
                     </div>
                 </div>
             </DraggableDialogComponent>
