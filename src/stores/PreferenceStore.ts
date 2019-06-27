@@ -47,10 +47,6 @@ const DEFAULTS = {
 export class PreferenceStore {
     private regionContainer: RegionStore;
 
-    validateWCSType(wcsType: string) {
-        return wcsType && (wcsType === WCSType.AUTOMATIC || wcsType === WCSType.DEGREES || wcsType === WCSType.SEXIGESIMAL) ? wcsType : null;
-    }
-
     validateRegionType(regionType: string) {
         const value = Number(regionType);
         return value && isFinite(value) && RegionStore.IsRegionTypeValid(value) ? value : null;
@@ -77,7 +73,7 @@ export class PreferenceStore {
     // getters
     getTheme = (): string => {
         const theme = localStorage.getItem(PREFERENCE_KEYS.theme);
-        return Theme.isValid(theme) ? theme : DEFAULTS.theme;
+        return theme && Theme.isValid(theme) ? theme : DEFAULTS.theme;
     }
 
     getAutoLaunch = (): boolean => {
@@ -86,7 +82,7 @@ export class PreferenceStore {
 
     getLayout = (): string => {
         const layout = localStorage.getItem(PREFERENCE_KEYS.layout);
-        return Layout.isValid(layout) ? layout : DEFAULTS.layout;
+        return layout && Layout.isValid(layout) ? layout : DEFAULTS.layout;
     }
 
     getCursorFreeze = (): boolean => {
@@ -95,7 +91,7 @@ export class PreferenceStore {
 
     getZoomMode = (): string => {
         const zoomMode = localStorage.getItem(PREFERENCE_KEYS.zoomMode);
-        return Zoom.isValid(zoomMode) ? zoomMode : DEFAULTS.zoomMode;
+        return zoomMode && Zoom.isValid(zoomMode) ? zoomMode : DEFAULTS.zoomMode;
     }
 
     getScaling = (): FrameScaling => {
@@ -144,7 +140,8 @@ export class PreferenceStore {
     };
 
     getWCSType = (): string => {
-        return this.validateWCSType(localStorage.getItem(PREFERENCE_KEYS.wcsType)) || DEFAULTS.wcsType;
+        const wcsType = localStorage.getItem(PREFERENCE_KEYS.wcsType);
+        return wcsType && WCSType.isValid(wcsType) ? wcsType : DEFAULTS.wcsType;
     };
 
     getDefaultRegion = (): RegionStore => {
