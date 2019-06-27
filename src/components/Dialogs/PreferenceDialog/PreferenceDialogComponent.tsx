@@ -215,7 +215,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
-                        <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={this.reset} text="Reset"/>
+                        <AnchorButton intent={Intent.DANGER} icon={"refresh"} onClick={this.reset} text="Reset"/>
                         <Button intent={Intent.NONE} onClick={appStore.hidePreferenceDialog} text="Close"/>
                     </div>
                 </div>
