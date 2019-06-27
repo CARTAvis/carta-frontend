@@ -48,10 +48,6 @@ export class PreferenceStore {
     private regionContainer: RegionStore;
 
     // user configurable settings
-    validateZoomMode(zoomMode: string) {
-        return zoomMode && (zoomMode === Zoom.FIT || zoomMode === Zoom.RAW) ? zoomMode : null;
-    }
-
     validateScaling(scaling: string) {
         const value = Number(scaling);
         return scaling && isFinite(value) && RenderConfigStore.IsScalingValid(value) ? value : null;
@@ -118,7 +114,8 @@ export class PreferenceStore {
     }
 
     getZoomMode = (): string => {
-        return this.validateZoomMode(localStorage.getItem(PREFERENCE_KEYS.zoomMode)) || DEFAULTS.zoomMode;
+        const zoomMode = localStorage.getItem(PREFERENCE_KEYS.zoomMode);
+        return Zoom.isValid(zoomMode) ? zoomMode : DEFAULTS.zoomMode;
     }
 
     getScaling = (): FrameScaling => {

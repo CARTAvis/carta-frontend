@@ -5,5 +5,5 @@ export class Layout {
 
     public static isValid = (layout: string): boolean => {
         return layout && (layout === Layout.CUBEVIEW || layout === Layout.CUBEANALYSIS || layout === Layout.CONTINUUMANALYSIS) ? true : false;
-    }
+    };
 }
