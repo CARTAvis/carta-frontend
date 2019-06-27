@@ -47,11 +47,6 @@ const DEFAULTS = {
 export class PreferenceStore {
     private regionContainer: RegionStore;
 
-    // user configurable settings
-    validateColormap(colormap: string) {
-        return colormap && RenderConfigStore.IsColormapValid(colormap) ? colormap : null;
-    }
-
     validatePercentile(percentile: string) {
         const value = Number(percentile);
         return percentile && isFinite(value) && RenderConfigStore.IsPercentileValid(value) ? value : null;
@@ -124,7 +119,8 @@ export class PreferenceStore {
     };
 
     getColormap = (): string => {
-        return this.validateColormap(localStorage.getItem(PREFERENCE_KEYS.colormap)) || DEFAULTS.colormap;
+        const colormap = localStorage.getItem(PREFERENCE_KEYS.colormap);
+        return colormap && RenderConfigStore.IsColormapValid(colormap) ? colormap : DEFAULTS.colormap;
     };
 
     getPercentile = (): number => {
