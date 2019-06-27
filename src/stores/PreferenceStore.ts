@@ -1,4 +1,4 @@
-import {action, autorun} from "mobx";
+import {observable, action, autorun} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
@@ -45,7 +45,7 @@ const DEFAULTS = {
 };
 
 export class PreferenceStore {
-    private regionContainer: RegionStore;
+    @observable regionContainer: RegionStore;
 
     // getters
     getTheme = (): string => {
@@ -178,60 +178,60 @@ export class PreferenceStore {
     }
 
     // setters
-    @action setTheme = (theme: string) => {
+    setTheme = (theme: string) => {
         localStorage.setItem(PREFERENCE_KEYS.theme, theme);
     };
 
-    @action setAutoLaunch = (autoLaunch: boolean) => {
+    setAutoLaunch = (autoLaunch: boolean) => {
         localStorage.setItem(PREFERENCE_KEYS.autoLaunch, autoLaunch ? "true" : "false");
     };
 
-    @action setLayout = (layout: string) => {
+    setLayout = (layout: string) => {
         localStorage.setItem(PREFERENCE_KEYS.layout, layout);
     };
 
-    @action setCursorFreeze = (cursorFreeze: boolean) => {
+    setCursorFreeze = (cursorFreeze: boolean) => {
         localStorage.setItem(PREFERENCE_KEYS.cursorFreeze, cursorFreeze ? "true" : "false");
     };
 
-    @action setZoomMode = (zoomMode: string) => {
+    setZoomMode = (zoomMode: string) => {
         localStorage.setItem(PREFERENCE_KEYS.zoomMode, zoomMode);
     };
 
-    @action setScaling = (scaling: FrameScaling) => {
+    setScaling = (scaling: FrameScaling) => {
         localStorage.setItem(PREFERENCE_KEYS.scaling, scaling.toString(10));
     };
 
-    @action setColormap = (colormap: string) => {
+    setColormap = (colormap: string) => {
         localStorage.setItem(PREFERENCE_KEYS.colormap, colormap);
     };
 
-    @action setPercentile = (percentile: string) => {
+    setPercentile = (percentile: string) => {
         localStorage.setItem(PREFERENCE_KEYS.percentile, percentile);
     };
 
-    @action setASTColor = (astColor: number) => {
+    setASTColor = (astColor: number) => {
         localStorage.setItem(PREFERENCE_KEYS.astColor, astColor.toString(10));
     };
 
-    @action setASTGridVisible = (visible: boolean) => {
+    setASTGridVisible = (visible: boolean) => {
         localStorage.setItem(PREFERENCE_KEYS.astGridVisible, visible ? "true" : "false");
     };
 
-    @action setASTLabelsVisible = (visible: boolean) => {
+    setASTLabelsVisible = (visible: boolean) => {
         localStorage.setItem(PREFERENCE_KEYS.astLabelsVisible, visible ? "true" : "false");
     };
 
-    @action setWCSType = (wcsType: string) => {
+    setWCSType = (wcsType: string) => {
         localStorage.setItem(PREFERENCE_KEYS.wcsType, wcsType);
     };
 
-    @action setRegionType = (regionType: CARTA.RegionType) => {
+    setRegionType = (regionType: CARTA.RegionType) => {
         this.regionContainer.regionType = regionType;
         localStorage.setItem(PREFERENCE_KEYS.regionType, regionType.toString(10));
     };
 
-    @action setRegionCreationMode = (regionCreationMode: string) => {
+    setRegionCreationMode = (regionCreationMode: string) => {
         localStorage.setItem(PREFERENCE_KEYS.regionCreationMode, regionCreationMode);
     };
 
@@ -256,7 +256,7 @@ export class PreferenceStore {
         this.setWCSType(DEFAULTS.wcsType);
     };
 
-    resetRegionSettings = () => {
+    @action resetRegionSettings = () => {
         this.regionContainer.color = DEFAULTS.regionColor;
         this.regionContainer.lineWidth = DEFAULTS.regionLineWidth;
         this.regionContainer.dashLength = DEFAULTS.regionDashLength;
