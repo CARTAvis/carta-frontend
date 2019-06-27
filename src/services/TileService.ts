@@ -23,10 +23,6 @@ export const TILE_SIZE = 256;
 export const MAX_TEXTURES = 8;
 
 export class TileService {
-    @observable gpuLruOccupancy: number;
-    @observable systemLruOccupancy: number;
-    @observable persistentOccupancy: number;
-
     private readonly backendService: BackendService;
     private readonly numPersistentLayers: number;
     private readonly persistentTiles: Map<number, RasterTile>;
@@ -75,9 +71,6 @@ export class TileService {
         this.cachedCompressedTiles = new LRUCache<number, CompressedTile>(Int32Array, null, lruCapacitySystem);
         this.pendingDecompressions = new Map<number, boolean>();
 
-        this.gpuLruOccupancy = 0;
-        this.systemLruOccupancy = 0;
-        this.persistentOccupancy = 0;
         this.compressionRequestCounter = 0;
 
         this.tileStream = new Subject<number>();
@@ -170,12 +163,9 @@ export class TileService {
         this.cachedTiles.clear();
         this.persistentTiles.forEach(this.clearTile);
         this.persistentTiles.clear();
-        this.gpuLruOccupancy = 0;
-        this.persistentOccupancy = 0;
 
         if (clearL2) {
             this.cachedCompressedTiles.clear();
-            this.systemLruOccupancy = 0;
         }
     }
 
@@ -260,7 +250,6 @@ export class TileService {
                 } else {
                     this.cachedCompressedTiles.set(encodedCoordinate, {tile, compressionQuality: tileMessage.compressionQuality});
                     this.asyncDecompressTile(tile, tileMessage.compressionQuality, encodedCoordinate);
-                    this.systemLruOccupancy = this.cachedCompressedTiles.size;
                 }
             }
         }
@@ -301,8 +290,6 @@ export class TileService {
             this.cachedTiles.setWithCallback(encodedCoordinate, rasterTile, this.clearTile);
         }
         this.pendingDecompressions.delete(encodedCoordinate);
-        this.gpuLruOccupancy = this.cachedTiles.size;
-        this.persistentOccupancy = this.persistentTiles.size;
         this.tileStream.next(1);
     }
 }
