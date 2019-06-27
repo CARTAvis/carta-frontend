@@ -2,7 +2,7 @@ import * as React from "react";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {CARTA} from "carta-protobuf";
-import {Button, IDialogProps, Intent, Tab, Tabs, FormGroup, TabId, MenuItem, Switch, RadioGroup, Radio} from "@blueprintjs/core";
+import {Button, IDialogProps, Intent, Tab, Tabs, FormGroup, TabId, MenuItem, Switch, RadioGroup, Radio, HTMLSelect} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/ScalingComponent";
@@ -62,15 +62,11 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     <Switch checked={this.autoLaunch} innerLabelChecked="Enable" innerLabel="Disable" onChange={(ev) => { preference.setAutoLaunch(ev.currentTarget.checked); this.autoLaunch = ev.currentTarget.checked; }}/>
                 </FormGroup>
                 <FormGroup inline={true} label="Layout">
-                    <RadioGroup
-                        selectedValue={this.layout}
-                        onChange={(ev) => { preference.setLayout(ev.currentTarget.value); this.layout = ev.currentTarget.value; }}
-                        inline={true}
-                    >
-                        <Radio label="Cube view" value={Layout.CUBEVIEW}/>
-                        <Radio label="Cube analysis" value={Layout.CUBEANALYSIS}/>
-                        <Radio label="Continuum analysis" value={Layout.CONTINUUMANALYSIS}/>
-                    </RadioGroup>
+                    <HTMLSelect value={this.layout} onChange={(ev) => { preference.setLayout(ev.currentTarget.value); this.layout = ev.currentTarget.value; }}>
+                        <option value={Layout.CUBEVIEW}>Cube view</option>
+                        <option value={Layout.CUBEANALYSIS}>Cube analysis</option>
+                        <option value={Layout.CONTINUUMANALYSIS}>Continuum analysis</option>
+                    </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Cursor Position">
                     <Switch checked={this.cursorFreeze} innerLabelChecked="Freeze" innerLabel="Unfreeze" onChange={(ev) => { preference.setCursorFreeze(ev.currentTarget.checked); this.cursorFreeze = ev.currentTarget.checked; }}/>
