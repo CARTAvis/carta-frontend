@@ -48,11 +48,6 @@ export class PreferenceStore {
     private regionContainer: RegionStore;
 
     // user configurable settings
-    validateScaling(scaling: string) {
-        const value = Number(scaling);
-        return scaling && isFinite(value) && RenderConfigStore.IsScalingValid(value) ? value : null;
-    }
-
     validateColormap(colormap: string) {
         return colormap && RenderConfigStore.IsColormapValid(colormap) ? colormap : null;
     }
@@ -119,8 +114,13 @@ export class PreferenceStore {
     }
 
     getScaling = (): FrameScaling => {
-        const scaling = this.validateScaling(localStorage.getItem(PREFERENCE_KEYS.scaling));
-        return scaling !== null ? scaling : DEFAULTS.scaling;
+        const scaling = localStorage.getItem(PREFERENCE_KEYS.scaling);
+        if (!scaling) {
+            return DEFAULTS.scaling;
+        }
+
+        const value = Number(scaling);
+        return isFinite(value) && RenderConfigStore.IsScalingValid(value) ? value : DEFAULTS.scaling;
     };
 
     getColormap = (): string => {
