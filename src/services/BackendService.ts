@@ -11,7 +11,7 @@ export enum ConnectionStatus {
 }
 
 export class BackendService {
-    private static readonly IcdVersion = 3;
+    private static readonly IcdVersion = 4;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     @observable loggingEnabled: boolean;
