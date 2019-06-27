@@ -30,7 +30,7 @@ const DEFAULTS = {
     layout: Layout.CUBEVIEW,
     cursorFreeze: false,
     zoomMode: Zoom.FIT,
-    scaling: 0,
+    scaling: FrameScaling.LINEAR,
     colormap: "inferno",
     percentile: 99.9,
     astColor: 4,
@@ -46,10 +46,6 @@ const DEFAULTS = {
 
 export class PreferenceStore {
     private regionContainer: RegionStore;
-
-    validateRegionColor(regionColor: string) {
-        return regionColor && RegionStore.IsRegionColorValid(regionColor) ? regionColor : null;
-    }
 
     validateRegionLineWidth(regionLineWidth: string) {
         const value = Number(regionLineWidth);
@@ -154,7 +150,8 @@ export class PreferenceStore {
     };
 
     getRegionColor = (): string => {
-        return this.validateRegionColor(localStorage.getItem(PREFERENCE_KEYS.regionColor)) || DEFAULTS.regionColor;
+        const regionColor = localStorage.getItem(PREFERENCE_KEYS.regionColor);
+        return regionColor && RegionStore.IsRegionColorValid(regionColor) ? regionColor : DEFAULTS.regionColor;
     };
 
     getRegionLineWidth = (): number => {
