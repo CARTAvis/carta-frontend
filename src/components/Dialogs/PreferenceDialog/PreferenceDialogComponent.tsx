@@ -10,7 +10,7 @@ import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {AppearanceForm} from "components/Dialogs/RegionDialog/AppearanceForm/AppearanceForm";
 import {Theme, Layout, Zoom, WCSType, RegionCreationMode} from "models";
-import {AppStore, RegionStore, RenderConfigStore} from "stores";
+import {AppStore, RenderConfigStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
 const PercentileSelect = Select.ofType<string>();
@@ -44,18 +44,35 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         return <MenuItem text={percentile + "%"} onClick={handleClick} key={percentile}/>;
     };
 
-    private reset() {
+    private reset = () => {
+        const preference = this.props.appStore.preferenceStore;
+
         switch (this.selectedTab) {
             case TABS.RENDER_CONFIG:
+                preference.resetRenderConfigSettings();
+                this.scaling = preference.getScaling();
+                this.colormap = preference.getColormap();
+                this.percentile = preference.getPercentile().toString();
                 break;
             case TABS.WCS_OVERLAY:
+                preference.resetWCSOverlaySettings();
+                this.astColor = preference.getASTColor();
+                this.astGridVisible = preference.getASTGridVisible();
+                this.astLabelsVisible = preference.getASTLabelsVisible();
+                this.wcsType = preference.getWCSType();
                 break;
             case TABS.REGION:
                 break;
             case TABS.GLOBAL: default:
+                preference.resetGlobalSettings();
+                this.theme = preference.getTheme();
+                this.autoLaunch = preference.getAutoLaunch();
+                this.layout = preference.getLayout();
+                this.cursorFreeze = preference.getCursorFreeze();
+                this.zoomMode = preference.getZoomMode();
                 break;
         }
-    }
+    };
 
     public render() {
         const appStore = this.props.appStore;

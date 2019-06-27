@@ -235,6 +235,27 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.regionCreationMode, regionCreationMode);
     };
 
+    @action resetGlobalSettings = () => {
+        this.setTheme(DEFAULTS.theme);
+        this.setAutoLaunch(DEFAULTS.autoLaunch);
+        this.setLayout(DEFAULTS.layout);
+        this.setCursorFreeze(DEFAULTS.cursorFreeze);
+        this.setZoomMode(DEFAULTS.zoomMode);
+    };
+
+    @action resetRenderConfigSettings = () => {
+        this.setScaling(DEFAULTS.scaling);
+        this.setColormap(DEFAULTS.colormap);
+        this.setPercentile(DEFAULTS.percentile.toString());
+    };
+
+    @action resetWCSOverlaySettings = () => {
+        this.setASTColor(DEFAULTS.astColor);
+        this.setASTGridVisible(DEFAULTS.astGridVisible);
+        this.setASTLabelsVisible(DEFAULTS.astLabelsVisible);
+        this.setWCSType(DEFAULTS.wcsType);
+    };
+
     constructor() {
         // setup region settings container (for AppearanceForm in PreferenceDialogComponent)
         this.regionContainer = new RegionStore(null, -1, [{x: 0, y: 0}, {x: 1, y: 1}], this.getRegionType(), -1);
