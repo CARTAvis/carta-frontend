@@ -48,10 +48,6 @@ export class PreferenceStore {
     private regionContainer: RegionStore;
 
     // user configurable settings
-    validateLayout(layout: string) {
-        return layout && (layout === Layout.CUBEVIEW || layout === Layout.CUBEANALYSIS || layout === Layout.CONTINUUMANALYSIS) ? layout : null;
-    }
-
     validateZoomMode(zoomMode: string) {
         return zoomMode && (zoomMode === Zoom.FIT || zoomMode === Zoom.RAW) ? zoomMode : null;
     }
@@ -113,7 +109,8 @@ export class PreferenceStore {
     }
 
     getLayout = (): string => {
-        return this.validateLayout(localStorage.getItem(PREFERENCE_KEYS.layout)) || DEFAULTS.layout;
+        const layout = localStorage.getItem(PREFERENCE_KEYS.layout);
+        return Layout.isValid(layout) ? layout : DEFAULTS.layout;
     }
 
     getCursorFreeze = (): boolean => {
