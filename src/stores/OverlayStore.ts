@@ -2,6 +2,7 @@ import * as AST from "ast_wrapper";
 import {Colors} from "@blueprintjs/core";
 import {action, autorun, computed, observable} from "mobx";
 import {FrameStore, PreferenceStore} from "stores";
+import {WCSType} from "models";
 
 const AST_DEFAULT_COLOR = 4; // blue
 
@@ -666,15 +667,15 @@ export class OverlayStore {
             this.numbers.setDefaultFormatY(undefined);
         } else {
             switch (this.defaultWCSType) {
-                case "degrees":
+                case WCSType.Degrees:
                     this.numbers.setDefaultFormatX("d");
                     this.numbers.setDefaultFormatY("d");
                     break;
-                case "sexigesimal":
+                case WCSType.Sexigesimal:
                     this.numbers.setDefaultFormatX("hms");
                     this.numbers.setDefaultFormatY("dms");
                     break;
-                case "automatic": default:
+                case WCSType.Automatic: default:
                     if ([SystemType.FK4, SystemType.FK5, SystemType.ICRS].indexOf(this.global.explicitSystem) > -1) {
                         this.numbers.setDefaultFormatX("hms");
                         this.numbers.setDefaultFormatY("dms");

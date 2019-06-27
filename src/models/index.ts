@@ -7,3 +7,4 @@ export * from "./SpectralInfo";
 export * from "./Theme";
 export * from "./Layout";
 export * from "./Zoom";
+export * from "./WCSType";

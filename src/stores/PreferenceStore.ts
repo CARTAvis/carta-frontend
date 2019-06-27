@@ -2,7 +2,7 @@ import {action, autorun} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
-import {Theme, Layout, Zoom} from "models";
+import {Theme, Layout, Zoom, WCSType} from "models";
 
 const PREFERENCE_KEYS = {
     theme: "CARTA_theme",
@@ -80,7 +80,7 @@ export class PreferenceStore {
     }
 
     validateWCSType(wcsType: string) {
-        return wcsType && (wcsType === "automatic" || wcsType === "degrees" || wcsType === "sexigesimal") ? wcsType : null;
+        return wcsType && (wcsType === WCSType.Automatic || wcsType === WCSType.Degrees || wcsType === WCSType.Sexigesimal) ? wcsType : null;
     }
 
     validateRegionType(regionType: string) {

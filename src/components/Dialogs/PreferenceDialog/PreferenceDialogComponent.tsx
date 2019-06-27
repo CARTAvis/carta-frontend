@@ -9,7 +9,7 @@ import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {AppearanceForm} from "components/Dialogs/RegionDialog/AppearanceForm/AppearanceForm";
-import {Theme, Layout, Zoom} from "models";
+import {Theme, Layout, Zoom, WCSType} from "models";
 import {AppStore, RegionStore, RenderConfigStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
@@ -142,9 +142,9 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         selectedValue={this.wcsType}
                         onChange={(ev) => { preference.setWCSType(ev.currentTarget.value); this.wcsType = ev.currentTarget.value; }}
                     >
-                        <Radio label="Automatic" value="automatic"/>
-                        <Radio label="Degrees" value="degrees"/>
-                        <Radio label="Sexigesimal" value="sexigesimal"/>
+                        <Radio label="Automatic" value={WCSType.Automatic}/>
+                        <Radio label="Degrees" value={WCSType.Degrees}/>
+                        <Radio label="Sexigesimal" value={WCSType.Sexigesimal}/>
                     </RadioGroup>
                 </FormGroup>
             </React.Fragment>
