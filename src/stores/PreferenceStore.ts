@@ -48,10 +48,6 @@ export class PreferenceStore {
     private regionContainer: RegionStore;
 
     // user configurable settings
-    validateTheme(theme: string) {
-        return theme && (theme === Theme.LIGHT || theme === Theme.DARK) ? theme : null;
-    }
-
     validateLayout(layout: string) {
         return layout && (layout === Layout.CUBEVIEW || layout === Layout.CUBEANALYSIS || layout === Layout.CONTINUUMANALYSIS) ? layout : null;
     }
@@ -108,7 +104,8 @@ export class PreferenceStore {
 
     // getters
     getTheme = (): string => {
-        return this.validateTheme(localStorage.getItem(PREFERENCE_KEYS.theme)) || DEFAULTS.theme;
+        const theme = localStorage.getItem(PREFERENCE_KEYS.theme);
+        return Theme.isValid(theme) ? theme : DEFAULTS.theme;
     }
 
     getAutoLaunch = (): boolean => {
