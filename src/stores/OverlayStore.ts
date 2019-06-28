@@ -108,10 +108,10 @@ export class OverlayGlobalSettings {
         return this.system;
     }
 
-    constructor(preferenceStore: PreferenceStore) {
+    constructor(readonly preferenceStore: PreferenceStore) {
         this.system = SystemType.Native;
         this.labelType = LabelType.Exterior;
-        this.color = preferenceStore.getASTColor();
+        this.color = preferenceStore.astColor;
         this.tolerance = 1; // percentage
 
         this.defaultSystem = SystemType.Native;
@@ -217,8 +217,8 @@ export class OverlayGridSettings {
         return astString.toString();
     }
 
-    constructor(preference: PreferenceStore) {
-        this.visible = preference.getASTGridVisible();
+    constructor(readonly preference: PreferenceStore) {
+        this.visible = preference.astGridVisible;
         this.customColor = false;
         this.color = AST_DEFAULT_COLOR;
         this.width = 1;
@@ -565,8 +565,8 @@ export class OverlayLabelSettings {
     @observable font: number;
     @observable fontSize: number;
 
-    constructor(preference: PreferenceStore) {
-        this.visible = preference.getASTLabelsVisible();
+    constructor(readonly preference: PreferenceStore) {
+        this.visible = preference.astLabelsVisible;
         this.hidden = false;
         this.fontSize = 15;
         this.font = 0;
@@ -615,7 +615,7 @@ export class OverlayLabelSettings {
 }
 
 export class OverlayStore {
-    private preference: PreferenceStore;
+    private readonly preference: PreferenceStore;
 
     // View size options
     @observable viewWidth: number;
@@ -642,15 +642,15 @@ export class OverlayStore {
         this.overlaySettingsDialogVisible = false;
     };
 
-    constructor(preferenceStore: PreferenceStore) {
-        this.preference = preferenceStore;
-        this.global = new OverlayGlobalSettings(preferenceStore);
+    constructor(preference: PreferenceStore) {
+        this.preference = preference;
+        this.global = new OverlayGlobalSettings(preference);
         this.title = new OverlayTitleSettings();
-        this.grid = new OverlayGridSettings(preferenceStore);
+        this.grid = new OverlayGridSettings(preference);
         this.border = new OverlayBorderSettings();
         this.axes = new OverlayAxisSettings();
         this.numbers = new OverlayNumberSettings();
-        this.labels = new OverlayLabelSettings(preferenceStore);
+        this.labels = new OverlayLabelSettings(preference);
         this.ticks = new OverlayTickSettings();
 
         // if the system is manually selected, set new default formats
@@ -666,7 +666,7 @@ export class OverlayStore {
             this.numbers.setDefaultFormatX(undefined);
             this.numbers.setDefaultFormatY(undefined);
         } else {
-            switch (this.preference.getWCSType()) {
+            switch (this.preference.wcsType) {
                 case WCSType.DEGREES:
                     this.numbers.setDefaultFormatX("d");
                     this.numbers.setDefaultFormatY("d");

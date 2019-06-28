@@ -67,16 +67,16 @@ export class RenderConfigStore {
     @observable scaleMin: number[];    
     @observable scaleMax: number[];
     
-    constructor(preference: PreferenceStore) {
-        const percentile = preference.getPercentile();
+    constructor(readonly preference: PreferenceStore) {
+        const percentile = preference.percentile;
         this.selectedPercentile = [percentile, percentile, percentile, percentile];
         this.bias = 0;
         this.contrast = 1;
         this.gamma = 1;
         this.alpha = 1000;
-        this.scaling = preference.getScaling();
+        this.scaling = preference.scaling;
         this.cubeHistogramProgress = 0;
-        this.setColorMap(preference.getColormap());
+        this.setColorMap(preference.colormap);
         this.stokes = 0;	
         this.scaleMin = [0, 0, 0, 0];
         this.scaleMax = [1, 1, 1, 1];

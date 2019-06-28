@@ -13,8 +13,6 @@ import {Theme, Layout, Zoom, WCSType, RegionCreationMode} from "models";
 import {AppStore, RenderConfigStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
-const PercentileSelect = Select.ofType<string>();
-
 enum TABS {
     GLOBAL,
     RENDER_CONFIG,
@@ -22,23 +20,11 @@ enum TABS {
     REGION
 }
 
+const PercentileSelect = Select.ofType<string>();
+
 @observer
 export class PreferenceDialogComponent extends React.Component<{ appStore: AppStore }> {
     @observable selectedTab: TabId = TABS.GLOBAL;
-    @observable theme = this.props.appStore.preferenceStore.getTheme();
-    @observable autoLaunch = this.props.appStore.preferenceStore.getAutoLaunch();
-    @observable layout = this.props.appStore.preferenceStore.getLayout();
-    @observable cursorFreeze = this.props.appStore.preferenceStore.getCursorFreeze();
-    @observable zoomMode = this.props.appStore.preferenceStore.getZoomMode();
-    @observable scaling = this.props.appStore.preferenceStore.getScaling();
-    @observable colormap = this.props.appStore.preferenceStore.getColormap();
-    @observable percentile = this.props.appStore.preferenceStore.getPercentile().toString();
-    @observable astColor = this.props.appStore.preferenceStore.getASTColor();
-    @observable astGridVisible = this.props.appStore.preferenceStore.getASTGridVisible();
-    @observable astLabelsVisible = this.props.appStore.preferenceStore.getASTLabelsVisible();
-    @observable wcsType = this.props.appStore.preferenceStore.getWCSType();
-    @observable regionType = this.props.appStore.preferenceStore.getRegionType();
-    @observable regionCreationMode = this.props.appStore.preferenceStore.getRegionCreationMode();
 
     renderPercentileSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
         return <MenuItem text={percentile + "%"} onClick={handleClick} key={percentile}/>;
@@ -46,33 +32,18 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
 
     private reset = () => {
         const preference = this.props.appStore.preferenceStore;
-
         switch (this.selectedTab) {
             case TABS.RENDER_CONFIG:
                 preference.resetRenderConfigSettings();
-                this.scaling = preference.getScaling();
-                this.colormap = preference.getColormap();
-                this.percentile = preference.getPercentile().toString();
                 break;
             case TABS.WCS_OVERLAY:
                 preference.resetWCSOverlaySettings();
-                this.astColor = preference.getASTColor();
-                this.astGridVisible = preference.getASTGridVisible();
-                this.astLabelsVisible = preference.getASTLabelsVisible();
-                this.wcsType = preference.getWCSType();
                 break;
             case TABS.REGION:
                 preference.resetRegionSettings();
-                this.regionType = preference.getRegionType();
-                this.regionCreationMode = preference.getRegionCreationMode();
                 break;
             case TABS.GLOBAL: default:
                 preference.resetGlobalSettings();
-                this.theme = preference.getTheme();
-                this.autoLaunch = preference.getAutoLaunch();
-                this.layout = preference.getLayout();
-                this.cursorFreeze = preference.getCursorFreeze();
-                this.zoomMode = preference.getZoomMode();
                 break;
         }
     };
@@ -85,8 +56,8 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             <React.Fragment>
                 <FormGroup inline={true} label="Theme">
                     <RadioGroup
-                        selectedValue={this.theme}
-                        onChange={(ev) => { preference.setTheme(ev.currentTarget.value); this.theme = ev.currentTarget.value; }}
+                        selectedValue={preference.theme}
+                        onChange={(ev) => { preference.setTheme(ev.currentTarget.value); }}
                         inline={true}
                     >
                         <Radio label="Light" value={Theme.LIGHT}/>
@@ -94,22 +65,22 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Auto-launch File Browser">
-                    <Switch checked={this.autoLaunch} innerLabelChecked="Enable" innerLabel="Disable" onChange={(ev) => { preference.setAutoLaunch(ev.currentTarget.checked); this.autoLaunch = ev.currentTarget.checked; }}/>
+                    <Switch checked={preference.autoLaunch} innerLabelChecked="Enable" innerLabel="Disable" onChange={(ev) => { preference.setAutoLaunch(ev.currentTarget.checked); }}/>
                 </FormGroup>
                 <FormGroup inline={true} label="Layout">
-                    <HTMLSelect value={this.layout} onChange={(ev) => { preference.setLayout(ev.currentTarget.value); this.layout = ev.currentTarget.value; }}>
+                    <HTMLSelect value={preference.layout} onChange={(ev) => { preference.setLayout(ev.currentTarget.value); }}>
                         <option value={Layout.CUBEVIEW}>Cube view</option>
                         <option value={Layout.CUBEANALYSIS}>Cube analysis</option>
                         <option value={Layout.CONTINUUMANALYSIS}>Continuum analysis</option>
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Cursor Position">
-                    <Switch checked={this.cursorFreeze} innerLabelChecked="Freeze" innerLabel="Unfreeze" onChange={(ev) => { preference.setCursorFreeze(ev.currentTarget.checked); this.cursorFreeze = ev.currentTarget.checked; }}/>
+                    <Switch checked={preference.cursorFreeze} innerLabelChecked="Freeze" innerLabel="Unfreeze" onChange={(ev) => { preference.setCursorFreeze(ev.currentTarget.checked); }}/>
                 </FormGroup>
                 <FormGroup inline={true} label="Image Zoom Level">
                     <RadioGroup
-                        selectedValue={this.zoomMode}
-                        onChange={(ev) => { preference.setZoomMode(ev.currentTarget.value); this.zoomMode = ev.currentTarget.value; }}
+                        selectedValue={preference.zoomMode}
+                        onChange={(ev) => { preference.setZoomMode(ev.currentTarget.value); }}
                         inline={true}
                     >
                         <Radio label="Zoom to fit" value={Zoom.FIT}/>
@@ -123,26 +94,26 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             <React.Fragment>
                 <FormGroup inline={true} label="Scaling">
                     <ScalingComponent
-                        selectedItem={this.scaling}
-                        onItemSelect={(selected) => { preference.setScaling(selected); this.scaling = selected; }}
+                        selectedItem={preference.scaling}
+                        onItemSelect={(selected) => { preference.setScaling(selected); }}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Color map">
                     <ColormapComponent
-                        selectedItem={this.colormap}
-                        onItemSelect={(selected) => { preference.setColormap(selected); this.colormap = selected; }}
+                        selectedItem={preference.colormap}
+                        onItemSelect={(selected) => { preference.setColormap(selected); }}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Percentile ranks">
                     <PercentileSelect
-                        activeItem={this.percentile}
-                        onItemSelect={(selected) => { preference.setPercentile(selected); this.percentile = selected; }}
+                        activeItem={preference.percentile.toString(10)}
+                        onItemSelect={(selected) => { preference.setPercentile(selected); }}
                         popoverProps={{minimal: true, position: "auto"}}
                         filterable={false}
                         items={RenderConfigStore.PERCENTILE_RANKS.map(String)}
                         itemRenderer={this.renderPercentileSelectItem}
                     >
-                        <Button text={this.percentile + "%"} rightIcon="double-caret-vertical" alignText={"right"}/>
+                        <Button text={preference.percentile.toString(10) + "%"} rightIcon="double-caret-vertical" alignText={"right"}/>
                     </PercentileSelect>
                 </FormGroup>
             </React.Fragment>
@@ -152,26 +123,26 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             <React.Fragment>
                 <FormGroup inline={true} label="Color">
                     <ColorComponent
-                        selectedItem={this.astColor}
-                        onItemSelect={(selected) => { preference.setASTColor(selected); this.astColor = selected; }}
+                        selectedItem={preference.astColor}
+                        onItemSelect={(selected) => { preference.setASTColor(selected); }}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Grid visible">
                     <Switch
-                        checked={this.astGridVisible}
-                        onChange={(ev) => { preference.setASTGridVisible(ev.currentTarget.checked); this.astGridVisible = ev.currentTarget.checked; }}
+                        checked={preference.astGridVisible}
+                        onChange={(ev) => { preference.setASTGridVisible(ev.currentTarget.checked); }}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Label visible">
                     <Switch
-                        checked={this.astLabelsVisible}
-                        onChange={(ev) => { preference.setASTLabelsVisible(ev.currentTarget.checked); this.astLabelsVisible = ev.currentTarget.checked; }}
+                        checked={preference.astLabelsVisible}
+                        onChange={(ev) => { preference.setASTLabelsVisible(ev.currentTarget.checked); }}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="WCS Type">
                     <RadioGroup
-                        selectedValue={this.wcsType}
-                        onChange={(ev) => { preference.setWCSType(ev.currentTarget.value); this.wcsType = ev.currentTarget.value; }}
+                        selectedValue={preference.wcsType}
+                        onChange={(ev) => { preference.setWCSType(ev.currentTarget.value); }}
                     >
                         <Radio label="Automatic" value={WCSType.AUTOMATIC}/>
                         <Radio label="Degrees" value={WCSType.DEGREES}/>
@@ -183,17 +154,17 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
 
         const regionSettingsPanel = (
             <React.Fragment>
-                <AppearanceForm region={preference.getDefaultRegion()} darkTheme={appStore.darkTheme} isPreference={true}/>
+                <AppearanceForm region={preference.regionContainer} darkTheme={appStore.darkTheme} isPreference={true}/>
                 <FormGroup inline={true} label="Region Type">
-                    <HTMLSelect value={this.regionType} onChange={(ev) => { preference.setRegionType(Number(ev.currentTarget.value)); this.regionType = Number(ev.currentTarget.value); }}>
+                    <HTMLSelect value={preference.regionContainer.regionType} onChange={(ev) => { preference.setRegionType(Number(ev.currentTarget.value)); }}>
                         <option value={CARTA.RegionType.RECTANGLE}>Rectangle</option>
                         <option value={CARTA.RegionType.ELLIPSE}>Ellipse</option>
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Creation Mode">
                     <RadioGroup
-                        selectedValue={this.regionCreationMode}
-                        onChange={(ev) => { preference.setRegionCreationMode(ev.currentTarget.value); this.regionCreationMode = ev.currentTarget.value; }}
+                        selectedValue={preference.regionCreationMode}
+                        onChange={(ev) => { preference.setRegionCreationMode(ev.currentTarget.value); }}
                     >
                         <Radio label="Center to corner" value={RegionCreationMode.CENTER}/>
                         <Radio label="Corner to corner" value={RegionCreationMode.CORNER}/>

@@ -208,9 +208,6 @@ export class AppStore {
             }
             this.setActiveFrame(newFrame.frameInfo.fileId);
 
-            // Initialize new frame's zoom level according to preference
-            newFrame.initZoomLevel();
-
             this.fileBrowserStore.hideFileBrowser();
         }, err => {
             this.alertStore.showAlert(`Error loading file: ${err}`);
@@ -382,7 +379,7 @@ export class AppStore {
         this.widgetsStore = new WidgetsStore(this);
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
-        this.darkTheme = this.preferenceStore.isDarkTheme();
+        this.darkTheme = this.preferenceStore.isDarkTheme;
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         this.statsRequirements = new Map<number, Array<number>>();
         this.histogramRequirements = new Map<number, Array<number>>();
@@ -638,7 +635,7 @@ export class AppStore {
         if (requiredFrame) {
             this.activeFrame = requiredFrame;
             this.widgetsStore.updateImageWidgetTitle();
-            this.setCursorFrozen(this.preferenceStore.getCursorFreeze());
+            this.setCursorFrozen(this.preferenceStore.cursorFreeze);
         } else {
             console.log(`Can't find required frame ${fileId}`);
         }
@@ -648,7 +645,7 @@ export class AppStore {
         if (index >= 0 && this.frames.length > index) {
             this.activeFrame = this.frames[index];
             this.widgetsStore.updateImageWidgetTitle();
-            this.setCursorFrozen(this.preferenceStore.getCursorFreeze());
+            this.setCursorFrozen(this.preferenceStore.cursorFreeze);
         } else {
             console.log(`Invalid frame index ${index}`);
         }

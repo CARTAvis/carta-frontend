@@ -97,7 +97,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 appStore.addFrame(folderSearchParam, fileSearchParam, "", 0);
             }
 
-            if (appStore.preferenceStore.getAutoLaunch()) {
+            if (appStore.preferenceStore.autoLaunch) {
                 appStore.fileBrowserStore.showFileBrowser();
             }
         }, err => console.log(err));
@@ -170,7 +170,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
         };
 
         let customizedLayout;
-        switch (this.props.appStore.preferenceStore.getLayout()) {
+        switch (this.props.appStore.preferenceStore.layout) {
             case Layout.CUBEANALYSIS:
                 customizedLayout = this.genCubeAnalysisLayout(configs, widgetsStore);
                 break;

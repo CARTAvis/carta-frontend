@@ -13,7 +13,7 @@ import "./RegionViewComponent.css";
 export interface RegionViewComponentProps {
     frame: FrameStore;
     overlaySettings: OverlayStore;
-    preference: PreferenceStore;
+    readonly preference: PreferenceStore;
     docked: boolean;
     width: number;
     height: number;
@@ -222,7 +222,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 dy = Math.sign(dy) * maxDiff;
             }
             const isCtrlPressed = mouseEvent.ctrlKey || mouseEvent.metaKey;
-            if ((this.props.preference.isRegionCornerMode() && !isCtrlPressed) || (!this.props.preference.isRegionCornerMode() && isCtrlPressed)) {
+            if ((this.props.preference.isRegionCornerMode && !isCtrlPressed) || (!this.props.preference.isRegionCornerMode && isCtrlPressed)) {
                 // corner-to-corner region creation
                 const endPoint = {x: this.regionStartPoint.x + dx, y: this.regionStartPoint.y + dy};
                 const center = {x: (this.regionStartPoint.x + endPoint.x) / 2.0, y: (this.regionStartPoint.y + endPoint.y) / 2.0};
