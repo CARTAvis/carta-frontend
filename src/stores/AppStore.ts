@@ -489,6 +489,7 @@ export class AppStore {
             }
         });
 
+        // TODO: Move setChannels actions to AppStore and remove this autorun
         // Update channels when manually changed
         autorun(() => {
             if (this.activeFrame) {

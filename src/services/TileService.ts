@@ -37,6 +37,8 @@ export class TileService {
     private textureCoordinateQueue: Array<number>;
     private readonly workers: Worker[];
     private compressionRequestCounter: number;
+    private pendingSynchronisedTiles: Array<number>;
+    private receivedSynchronisedTiles: Array<{ coordinate: number, tile: RasterTile }>;
 
     public GetTileStream() {
         return this.tileStream;
@@ -48,20 +50,17 @@ export class TileService {
 
         // TODO: calculate this properly
         const numPersistentTiles = 85;
-        const totalTiles = lruCapacityGPU + numPersistentTiles;
+        const minRequiredTiles = lruCapacityGPU + numPersistentTiles;
 
         // L1 cache: on GPU
         const numTilesPerTexture = (TEXTURE_SIZE * TEXTURE_SIZE) / (TILE_SIZE * TILE_SIZE);
-        const numTextures = Math.min(Math.ceil(totalTiles / numTilesPerTexture), MAX_TEXTURES);
+        const numTextures = Math.min(Math.ceil(minRequiredTiles / numTilesPerTexture), MAX_TEXTURES);
         lruCapacityGPU = numTextures * numTilesPerTexture - numPersistentTiles;
         console.log(`lruGPU capacity rounded to : ${lruCapacityGPU}`);
-        this.textureCoordinateQueue = new Array<number>(totalTiles);
-
-        for (let i = 0; i < totalTiles; i++) {
-            this.textureCoordinateQueue[i] = totalTiles - 1 - i;
-        }
 
         this.textureArray = new Array<WebGLTexture>(numTextures);
+        this.resetCoordinateQueue();
+
         this.cachedTiles = new LRUCache<number, RasterTile>(Int32Array, null, lruCapacityGPU);
         this.persistentTiles = new Map<number, RasterTile>();
         this.pendingRequests = new Map<number, boolean>();
@@ -94,6 +93,17 @@ export class TileService {
         }
     }
 
+    private resetCoordinateQueue() {
+        const numTilesPerTexture = (TEXTURE_SIZE * TEXTURE_SIZE) / (TILE_SIZE * TILE_SIZE);
+        const numTextures = this.textureArray.length;
+        const totalTiles = numTextures * numTilesPerTexture;
+        this.textureCoordinateQueue = new Array<number>(totalTiles);
+
+        for (let i = 0; i < totalTiles; i++) {
+            this.textureCoordinateQueue[i] = totalTiles - 1 - i;
+        }
+    }
+
     getTile(tileCoordinateEncoded: number, fileId: number, channel: number, stokes: number, peek: boolean = false) {
         const layer = TileCoordinate.GetLayer(tileCoordinateEncoded);
         if (layer < this.numPersistentLayers) {
@@ -115,7 +125,8 @@ export class TileService {
         }
 
         if (setChannel) {
-            this.clearCache();
+            this.pendingSynchronisedTiles = tiles.map(tile => tile.encode());
+            this.receivedSynchronisedTiles = [];
             this.clearRequestQueue();
             this.channelMap.set(fileId, {channel, stokes});
         }
@@ -126,10 +137,10 @@ export class TileService {
                 continue;
             }
             const encodedCoordinate = tile.encode();
-            const tileCached = (tile.layer < this.numPersistentLayers && this.persistentTiles.has(encodedCoordinate))
-                || (tile.layer >= this.numPersistentLayers && this.cachedTiles.has(encodedCoordinate));
+            const tileCached = !setChannel && ((tile.layer < this.numPersistentLayers && this.persistentTiles.has(encodedCoordinate))
+                || (tile.layer >= this.numPersistentLayers && this.cachedTiles.has(encodedCoordinate)));
             if (!tileCached && !this.pendingRequests.has(encodedCoordinate)) {
-                const compressedTile = this.cachedCompressedTiles.get(encodedCoordinate);
+                const compressedTile = !setChannel && this.cachedCompressedTiles.get(encodedCoordinate);
                 if (compressedTile && !this.pendingDecompressions.has(encodedCoordinate)) {
                     // Load from L2 cache instead
                     this.asyncDecompressTile(compressedTile.tile, compressedTile.compressionQuality, encodedCoordinate);
@@ -277,19 +288,55 @@ export class TileService {
     }
 
     private updateStream(decompressedData: Float32Array, width: number, height: number, layer: number, encodedCoordinate: number) {
-        const textureCoordinate = this.textureCoordinateQueue.pop();
-        const rasterTile: RasterTile = {
-            width,
-            height,
-            textureCoordinate,
-            data: decompressedData,
-        };
-        if (layer < this.numPersistentLayers) {
-            this.persistentTiles.set(encodedCoordinate, rasterTile);
+        // If there are pending tiles to be synchronized, don't send tiles one-by-one
+        if (this.pendingSynchronisedTiles && this.pendingSynchronisedTiles.length) {
+            // remove coordinate from pending list
+            this.pendingSynchronisedTiles = this.pendingSynchronisedTiles.filter(v => v !== encodedCoordinate);
+            const nextTile: RasterTile = {
+                width,
+                height,
+                textureCoordinate: -1,
+                data: decompressedData,
+            };
+            if (!this.receivedSynchronisedTiles) {
+                this.receivedSynchronisedTiles = [];
+            }
+            this.receivedSynchronisedTiles.push({coordinate: encodedCoordinate, tile: nextTile});
+            this.pendingDecompressions.delete(encodedCoordinate);
+
+            // If all tiles are in place, add them to the LRU and fire the stream observable
+            if (!this.pendingSynchronisedTiles.length) {
+                const numSynchronisedTiles = this.receivedSynchronisedTiles.length;
+                this.clearCache();
+                this.resetCoordinateQueue();
+
+                for (const tilePair of this.receivedSynchronisedTiles) {
+                    tilePair.tile.textureCoordinate = this.textureCoordinateQueue.pop();
+                    if (layer < this.numPersistentLayers) {
+                        this.persistentTiles.set(tilePair.coordinate, tilePair.tile);
+                    } else {
+                        this.cachedTiles.setWithCallback(tilePair.coordinate, tilePair.tile, this.clearTile);
+                    }
+                }
+                this.receivedSynchronisedTiles = [];
+                this.tileStream.next(numSynchronisedTiles);
+            }
         } else {
-            this.cachedTiles.setWithCallback(encodedCoordinate, rasterTile, this.clearTile);
+            // Handle single tile, no sync required
+            const textureCoordinate = this.textureCoordinateQueue.pop();
+            const rasterTile: RasterTile = {
+                width,
+                height,
+                textureCoordinate,
+                data: decompressedData,
+            };
+            if (layer < this.numPersistentLayers) {
+                this.persistentTiles.set(encodedCoordinate, rasterTile);
+            } else {
+                this.cachedTiles.setWithCallback(encodedCoordinate, rasterTile, this.clearTile);
+            }
+            this.pendingDecompressions.delete(encodedCoordinate);
+            this.tileStream.next(1);
         }
-        this.pendingDecompressions.delete(encodedCoordinate);
-        this.tileStream.next(1);
     }
 }
