@@ -615,7 +615,7 @@ export class OverlayLabelSettings {
 }
 
 export class OverlayStore {
-    private defaultWCSType: string;
+    private preference: PreferenceStore;
 
     // View size options
     @observable viewWidth: number;
@@ -643,7 +643,7 @@ export class OverlayStore {
     };
 
     constructor(preferenceStore: PreferenceStore) {
-        this.defaultWCSType = preferenceStore.getWCSType();
+        this.preference = preferenceStore;
         this.global = new OverlayGlobalSettings(preferenceStore);
         this.title = new OverlayTitleSettings();
         this.grid = new OverlayGridSettings(preferenceStore);
@@ -666,7 +666,7 @@ export class OverlayStore {
             this.numbers.setDefaultFormatX(undefined);
             this.numbers.setDefaultFormatY(undefined);
         } else {
-            switch (this.defaultWCSType) {
+            switch (this.preference.getWCSType()) {
                 case WCSType.DEGREES:
                     this.numbers.setDefaultFormatX("d");
                     this.numbers.setDefaultFormatY("d");
