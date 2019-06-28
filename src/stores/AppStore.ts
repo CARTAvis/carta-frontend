@@ -430,7 +430,6 @@ export class AppStore {
             const tileSizeFullRes = reqView.mip * 256;
             const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes, y: midPointImageCoords.y / tileSizeFullRes};
             this.tileService.requestTiles(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords, this.compressionQuality);
-
         }, IMAGE_CHANNEL_THROTTLE_TIME);
 
         const debouncedSetCursor = _.debounce((fileId: number, x: number, y: number) => {
@@ -653,10 +652,11 @@ export class AppStore {
     };
 
     handleRasterImageStream = (rasterImageData: CARTA.RasterImageData) => {
-        const updatedFrame = this.getFrame(rasterImageData.fileId);
-        if (updatedFrame) {
-            updatedFrame.updateFromRasterData(rasterImageData);
-            if (this.animatorStore.animationState === AnimationState.PLAYING) {
+        // Only handle animation stream when in animating state, to prevent extraneous frames from being rendered
+        if (this.animatorStore.animationState === AnimationState.PLAYING && this.animatorStore.animationMode !== AnimationMode.FRAME) {
+            const updatedFrame = this.getFrame(rasterImageData.fileId);
+            if (updatedFrame) {
+                updatedFrame.updateFromRasterData(rasterImageData);
                 updatedFrame.requiredChannel = rasterImageData.channel;
                 updatedFrame.requiredStokes = rasterImageData.stokes;
                 this.animatorStore.incrementFlowCounter(updatedFrame.frameInfo.fileId, updatedFrame.channel, updatedFrame.stokes);
