@@ -366,7 +366,7 @@ export class AppStore {
             this.apiKey = existingKey;
         }
 
-        this.preferenceStore = new PreferenceStore();
+        this.preferenceStore = new PreferenceStore(this);
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore);
         this.astReady = false;

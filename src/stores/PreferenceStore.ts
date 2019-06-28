@@ -3,6 +3,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
 import {Theme, Layout, Zoom, WCSType, RegionCreationMode} from "models";
+import { AppStore } from "./AppStore";
 
 const PREFERENCE_KEYS = {
     theme: "CARTA_theme",
@@ -45,6 +46,7 @@ const DEFAULTS = {
 };
 
 export class PreferenceStore {
+    private readonly appStore: AppStore;
     @observable regionContainer: RegionStore;
 
     // getters
@@ -227,6 +229,10 @@ export class PreferenceStore {
     };
 
     setRegionType = (regionType: CARTA.RegionType) => {
+        if (this.appStore.activeFrame && this.appStore.activeFrame.regionSet) {
+            this.appStore.activeFrame.regionSet.setNewRegionType(regionType);
+        }
+
         this.regionContainer.regionType = regionType;
         localStorage.setItem(PREFERENCE_KEYS.regionType, regionType.toString(10));
     };
@@ -264,7 +270,9 @@ export class PreferenceStore {
         this.setRegionCreationMode(DEFAULTS.regionCreationMode);
     };
 
-    constructor() {
+    constructor(appStore: AppStore) {
+        this.appStore = appStore;
+
         // setup region settings container (for AppearanceForm in PreferenceDialogComponent)
         this.regionContainer = new RegionStore(null, -1, [{x: 0, y: 0}, {x: 1, y: 1}], this.getRegionType(), -1);
         this.regionContainer.color = this.getRegionColor();
