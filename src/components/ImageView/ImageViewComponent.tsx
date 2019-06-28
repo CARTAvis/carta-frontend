@@ -221,7 +221,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         onRegionDoubleClicked={this.handleRegionDoubleClicked}
                         onZoomed={this.onZoomed}
                         overlaySettings={appStore.overlayStore}
-                        isCornerMode={appStore.activeFrame.regionSet.isCornerMode}
+                        preference={appStore.preferenceStore}
                         cursorFrozen={appStore.cursorFrozen}
                         cursorPoint={appStore.cursorInfo ? appStore.cursorInfo.posImageSpace : null}
                         docked={this.props.docked}
