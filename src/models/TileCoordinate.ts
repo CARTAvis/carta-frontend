@@ -20,15 +20,22 @@ export class TileCoordinate {
         return TileCoordinate.Encode(coordinate.x, coordinate.y, coordinate.layer);
     }
 
+    // Encoding a tile combines x, y and layer coordinates into a single number. This makes it more efficient
+    // to transfer a list of tiles to the backend, but also simplifies using the coordinate as a map key.
+    // 12 bits are used for each of the x and y coordinates (range of 0 - 4096), 7 bits for the layer.
+    // The layer is limited to a range of 0 - 12, due to the range of the x and y coordinates
     public static Encode(x: number, y: number, layer: number): number {
         const layerWidth = 1 << layer;
+        // check bounds
         if (x < 0 || y < 0 || layer < 0 || layer > 12 || x >= layerWidth || y >= layerWidth) {
             return -1;
         }
 
+        // encode using bitwise operators
         return ((layer << 24) | (y << 12) | x);
     }
 
+    // Decode all three coordinates from an encoded coordinate using bitwise operators
     public static Decode(encodedCoordinate: number): TileCoordinate {
         const x = (((encodedCoordinate << 19) >> 19) + 4096) % 4096;
         const layer = ((encodedCoordinate >> 24) + 128) % 128;
@@ -36,6 +43,7 @@ export class TileCoordinate {
         return new TileCoordinate(x, y, layer);
     }
 
+    // Shortcut to quickly decode just the layer from an encoded coordinate
     public static GetLayer(encodedCoordinate: number): number {
         return ((encodedCoordinate >> 24) + 128) % 128;
     }

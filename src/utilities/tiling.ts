@@ -10,10 +10,13 @@ export function TileSort(a: TileCoordinate, b: TileCoordinate) {
     }
 }
 
+// Comparison function which compares tile coordinates based on their encoded coordinate.
+// This is equivalent to sorting first by layer, then by y coordinate, and finally by x
 export function TileSortEncoded(a: TileCoordinate, b: TileCoordinate) {
     return TileCoordinate.EncodeCoordinate(a) - TileCoordinate.EncodeCoordinate(b);
 }
 
+// Converts from downsampling factor (MIP) to the tile layer using conventional tiling coordinates
 export function MipToLayer(mip: number, imageSize: Point2D, tileSize: Point2D): number {
     const totalTilesX = Math.ceil(imageSize.x / tileSize.x);
     const totalTilesY = Math.ceil(imageSize.y / tileSize.y);
@@ -22,6 +25,7 @@ export function MipToLayer(mip: number, imageSize: Point2D, tileSize: Point2D): 
     return totalLayers - Math.ceil(Math.log2(mip));
 }
 
+// Converts from tile layer using conventional tiling coordinates to the appropriate downsampling factor (MIP)
 export function LayerToMip(layer: number, imageSize: Point2D, tileSize: Point2D): number {
     const totalTilesX = Math.ceil(imageSize.x / tileSize.x);
     const totalTilesY = Math.ceil(imageSize.y / tileSize.y);
