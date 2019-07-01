@@ -632,7 +632,6 @@ export class AppStore {
                         updatedFrame.renderConfig.updateChannelHistogram(channelHist);
                     } else {
                         // Defer channel histogram update until tiles arrive
-                        console.log("Deferring channel histogram update until channel tiles arrive");
                         this.pendingHistogram = regionHistogramData;
                     }
                 }
@@ -653,7 +652,6 @@ export class AppStore {
             const updatedFrame = this.getFrame(this.pendingHistogram.fileId);
             const channelHist = this.pendingHistogram.histograms.find(hist => hist.channel === updatedFrame.requiredChannel);
             if (updatedFrame && channelHist) {
-                console.log("Applying deferred channel histogram update");
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
                 this.pendingHistogram = null;
             }
