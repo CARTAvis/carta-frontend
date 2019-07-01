@@ -1,5 +1,5 @@
 import {Subject} from "rxjs";
-import {observable} from "mobx";
+import {computed, observable} from "mobx";
 import LRUCache from "mnemonist/lru-cache";
 import {CARTA} from "carta-protobuf";
 import {Point2D, TileCoordinate} from "models";
@@ -39,6 +39,10 @@ export class TileService {
     private compressionRequestCounter: number;
     private pendingSynchronisedTiles: Array<number>;
     private receivedSynchronisedTiles: Array<{ coordinate: number, tile: RasterTile }>;
+
+    @computed get waitingForSync () {
+        return this.pendingSynchronisedTiles && this.pendingSynchronisedTiles.length > 0;
+    }
 
     public GetTileStream() {
         return this.tileStream;

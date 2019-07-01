@@ -25,6 +25,7 @@ import {BackendService, TileService} from "services";
 import {CursorInfo, FrameView, Point2D} from "models";
 import {GetRequiredTiles} from "utilities";
 import {HistogramWidgetStore, RegionWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
+import apply = Reflect.apply;
 
 const CURSOR_DEBOUNCE_TIME = 200;
 const CURSOR_THROTTLE_TIME = 200;
@@ -376,6 +377,7 @@ export class AppStore {
     private spectralRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
     private statsRequirements: Map<number, Array<number>>;
     private histogramRequirements: Map<number, Array<number>>;
+    private pendingHistogram: CARTA.RegionHistogramData;
 
     constructor() {
         const existingKey = localStorage.getItem("API_KEY");
@@ -392,6 +394,7 @@ export class AppStore {
         this.spectralProfiles = new Map<number, ObservableMap<number, SpectralProfileStore>>();
         this.regionStats = new Map<number, ObservableMap<number, CARTA.RegionStatsData>>();
         this.regionHistograms = new Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>();
+
         this.frames = [];
         this.activeFrame = null;
         this.animatorStore = new AnimatorStore(this);
@@ -560,6 +563,7 @@ export class AppStore {
         this.backendService.getRasterStream().subscribe(this.handleRasterImageStream);
         this.backendService.getErrorStream().subscribe(this.handleErrorStream);
         this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
+        this.tileService.GetTileStream().subscribe(this.handleTileStream);
     }
 
     // region Subscription handlers
@@ -624,15 +628,34 @@ export class AppStore {
                 // Update channel histograms
                 const channelHist = regionHistogramData.histograms.find(hist => hist.channel === updatedFrame.requiredChannel);
                 if (channelHist) {
-                    updatedFrame.renderConfig.updateChannelHistogram(channelHist as CARTA.Histogram);
+                    if (!this.tileService.waitingForSync) {
+                        updatedFrame.renderConfig.updateChannelHistogram(channelHist);
+                    } else {
+                        // Defer channel histogram update until tiles arrive
+                        console.log("Deferring channel histogram update until channel tiles arrive");
+                        this.pendingHistogram = regionHistogramData;
+                    }
                 }
             } else if (regionHistogramData.regionId === -2) {
                 // Update cube histogram if it is still required
                 const cubeHist = regionHistogramData.histograms[0];
                 if (cubeHist && updatedFrame.renderConfig.useCubeHistogram) {
-                    updatedFrame.renderConfig.updateCubeHistogram(cubeHist as CARTA.Histogram, regionHistogramData.progress);
+                    updatedFrame.renderConfig.updateCubeHistogram(cubeHist, regionHistogramData.progress);
                     this.updateTaskProgress(regionHistogramData.progress);
                 }
+            }
+        }
+    };
+
+    handleTileStream = (newTileCount: number) => {
+        // Apply pending channel histogram
+        if (this.pendingHistogram && this.pendingHistogram.regionId === -1 && this.pendingHistogram.histograms && this.pendingHistogram.histograms.length) {
+            const updatedFrame = this.getFrame(this.pendingHistogram.fileId);
+            const channelHist = this.pendingHistogram.histograms.find(hist => hist.channel === updatedFrame.requiredChannel);
+            if (updatedFrame && channelHist) {
+                console.log("Applying deferred channel histogram update");
+                updatedFrame.renderConfig.updateChannelHistogram(channelHist);
+                this.pendingHistogram = null;
             }
         }
     };
