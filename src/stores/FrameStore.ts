@@ -309,7 +309,7 @@ export class FrameStore {
         if (rasterImageData.channelHistogramData) {
             // Update channel histograms
             if (rasterImageData.channelHistogramData.regionId === -1 && rasterImageData.channelHistogramData.histograms.length) {
-                this.renderConfig.updateChannelHistogram(rasterImageData.channelHistogramData.histograms[0] as CARTA.Histogram);
+                this.renderConfig.updateChannelHistogram(rasterImageData.channelHistogramData.histograms[0]);
             }
         }
 
