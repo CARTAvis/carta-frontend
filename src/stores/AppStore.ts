@@ -2,11 +2,13 @@ import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable, ObservableMap} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore,
-        FrameInfo, FrameStore, LogEntry, LogStore, nightPalette,
-        OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore,
-        PreferenceStore} from ".";
-import {smoothStepOffset, GetRequiredTiles} from "utilities";
+import {
+    AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore,
+    FrameInfo, FrameStore, LogEntry, LogStore, nightPalette,
+    OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore,
+    PreferenceStore, AnimationMode
+} from ".";
+import {GetRequiredTiles} from "utilities";
 import {BackendService, TileService} from "services";
 import {CursorInfo, FrameView, Theme, Point2D} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
