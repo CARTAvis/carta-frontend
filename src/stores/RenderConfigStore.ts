@@ -67,22 +67,34 @@ export class RenderConfigStore {
     @observable scaleMin: number[];    
     @observable scaleMax: number[];
     
-    constructor(preference: PreferenceStore) {
-        const percentile = preference.getPercentile();
+    constructor(readonly preference: PreferenceStore) {
+        const percentile = preference.percentile;
         this.selectedPercentile = [percentile, percentile, percentile, percentile];
         this.bias = 0;
         this.contrast = 1;
         this.gamma = 1;
         this.alpha = 1000;
-        this.scaling = preference.getScaling();
+        this.scaling = preference.scaling;
         this.cubeHistogramProgress = 0;
-        this.setColorMap(preference.getColormap());
+        this.setColorMap(preference.colormap);
         this.stokes = 0;	
         this.scaleMin = [0, 0, 0, 0];
         this.scaleMax = [1, 1, 1, 1];
     }
 
-   @computed get colorMapName() {
+    public static IsScalingValid(scaling: FrameScaling): boolean {
+        return RenderConfigStore.SCALING_TYPES.has(scaling) ? true : false;
+    }
+
+     public static IsColormapValid(colormap: string): boolean {
+        return RenderConfigStore.COLOR_MAPS_SELECTED.includes(colormap) ? true : false;
+    }
+
+     public static IsPercentileValid(percentile: number): boolean {
+        return RenderConfigStore.PERCENTILE_RANKS.includes(percentile) ? true : false;
+    }
+
+    @computed get colorMapName() {
         if (this.colorMap >= 0 && this.colorMap <= RenderConfigStore.COLOR_MAPS_ALL.length - 1) {
             return RenderConfigStore.COLOR_MAPS_ALL[this.colorMap];
         } else {

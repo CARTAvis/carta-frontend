@@ -2,30 +2,14 @@ import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable, ObservableMap} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {
-    AlertStore,
-    AnimationMode,
-    AnimationState,
-    AnimatorStore,
-    dayPalette,
-    FileBrowserStore,
-    FrameInfo,
-    FrameStore,
-    LogEntry,
-    LogStore,
-    nightPalette,
-    OverlayStore,
-    PreferenceStore,
-    RegionStore,
-    SpatialProfileStore,
-    SpectralProfileStore,
-    WidgetsStore
-} from ".";
+import {AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore,
+        FrameInfo, FrameStore, LogEntry, LogStore, nightPalette,
+        OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore,
+        PreferenceStore} from ".";
+import {smoothStepOffset, GetRequiredTiles} from "utilities";
 import {BackendService, TileService} from "services";
-import {CursorInfo, FrameView, Point2D} from "models";
-import {GetRequiredTiles} from "utilities";
+import {CursorInfo, FrameView, Theme, Point2D} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
-import apply = Reflect.apply;
 
 const CURSOR_DEBOUNCE_TIME = 200;
 const CURSOR_THROTTLE_TIME = 200;
@@ -188,7 +172,9 @@ export class AppStore {
     @observable widgetsStore: WidgetsStore;
 
     // Dark theme
-    @observable darkTheme: boolean;
+    @computed get darkTheme(): boolean {
+        return this.preferenceStore.isDarkTheme;
+    }
 
     // Frame actions
     @action addFrame = (directory: string, file: string, hdu: string, fileId: number) => {
@@ -213,7 +199,6 @@ export class AppStore {
             this.tileService.clearCache();
             this.tileService.clearRequestQueue();
             let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, frameInfo, this.backendService);
-            newFrame.fitZoom();
             this.loadWCS(newFrame);
 
             // clear existing requirements for the frame
@@ -229,6 +214,7 @@ export class AppStore {
                 this.frames.push(newFrame);
             }
             this.setActiveFrame(newFrame.frameInfo.fileId);
+
             this.fileBrowserStore.hideFileBrowser();
         }, err => {
             this.alertStore.showAlert(`Error loading file: ${err}`);
@@ -354,11 +340,11 @@ export class AppStore {
     };
 
     @action setDarkTheme = () => {
-        this.darkTheme = true;
+        this.preferenceStore.setTheme(Theme.DARK);
     };
 
     @action setLightTheme = () => {
-        this.darkTheme = false;
+        this.preferenceStore.setTheme(Theme.LIGHT);
     };
 
     @action setCursorInfo = (cursorInfo: CursorInfo) => {
@@ -385,7 +371,7 @@ export class AppStore {
             this.apiKey = existingKey;
         }
 
-        this.preferenceStore = new PreferenceStore();
+        this.preferenceStore = new PreferenceStore(this);
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore);
         this.tileService = new TileService(this.backendService);
@@ -403,7 +389,6 @@ export class AppStore {
         this.widgetsStore = new WidgetsStore(this);
         this.urlConnectDialogVisible = false;
         this.compressionQuality = 11;
-        this.darkTheme = false;
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         this.statsRequirements = new Map<number, Array<number>>();
         this.histogramRequirements = new Map<number, Array<number>>();
@@ -708,7 +693,7 @@ export class AppStore {
         if (requiredFrame) {
             this.activeFrame = requiredFrame;
             this.widgetsStore.updateImageWidgetTitle();
-            this.setCursorFrozen(false);
+            this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
         } else {
             console.log(`Can't find required frame ${fileId}`);
         }
@@ -718,7 +703,7 @@ export class AppStore {
         if (index >= 0 && this.frames.length > index) {
             this.activeFrame = this.frames[index];
             this.widgetsStore.updateImageWidgetTitle();
-            this.setCursorFrozen(false);
+            this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
         } else {
             console.log(`Invalid frame index ${index}`);
         }
