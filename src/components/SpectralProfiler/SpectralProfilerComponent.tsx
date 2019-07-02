@@ -67,7 +67,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }
 
     // Qi, calculate PA according datas
-    private calculatePA(datas: Array<any>) {
+    private calculatePA(datas: Array<any>): Array<number> {
         let vals = [];
         if (datas[0] && datas[1] && datas.length === 2 && datas[0].length === datas[1].length) {
             for (let i = 0; i < datas[0].vals.length; i++) {
@@ -78,7 +78,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }
 
     // Qi, calculate PI according datas
-    private calculatePI(datas: Array<any>) {
+    private calculatePI(datas: Array<any>): Array<number> {
         let vals = [];
         if (datas[0] && datas[1] && datas.length === 2 && datas[0].length === datas[1].length) {
             for (let i = 0; i < datas[0].vals.length; i++) {
