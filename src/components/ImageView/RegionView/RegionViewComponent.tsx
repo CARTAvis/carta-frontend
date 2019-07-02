@@ -150,6 +150,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         const cursorPosImageSpace = this.getImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
         switch (regionType) {
+            case CARTA.RegionType.POINT:
+                this.creatingRegion = frame.regionSet.addPointRegion(cursorPosImageSpace, false);
+                break;
             case CARTA.RegionType.RECTANGLE:
                 this.creatingRegion = frame.regionSet.addRectangularRegion(cursorPosImageSpace, 0, 0, true);
                 break;
@@ -265,7 +268,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         let regionRects = null;
 
         if (regionSet && regionSet.regions.length) {
-            regionRects = regionSet.regions.filter(r => (r.regionType === CARTA.RegionType.RECTANGLE || r.regionType === CARTA.RegionType.ELLIPSE) && r.isValid)
+            regionRects = regionSet.regions.filter(r => r.isValid && r.regionId > 0)
                 .sort((a, b) => a.boundingBoxArea > b.boundingBoxArea ? -1 : 1)
                 .map(
                     r => (

@@ -56,6 +56,7 @@ export class RegionSetStore {
 
         const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center], CARTA.RegionType.POINT, regionId);
         this.regions.push(region);
+        console.log(region);
         if (!cursorRegion) {
             this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
                 if (ack.success) {

@@ -53,14 +53,18 @@ export class RegionStore {
                 return "Rectangle";
             case CARTA.RegionType.ELLIPSE:
                 return "Ellipse";
+            case CARTA.RegionType.POLYGON:
+                return "Polygon";
             default:
                 return "Not Implemented";
         }
     }
 
     static readonly AVAILABLE_REGION_TYPES = new Map<CARTA.RegionType, string>([
+        [CARTA.RegionType.POINT, "Point"],
         [CARTA.RegionType.RECTANGLE, "Rectangle"],
-        [CARTA.RegionType.ELLIPSE, "Ellipse"]
+        [CARTA.RegionType.ELLIPSE, "Ellipse"],
+        [CARTA.RegionType.POLYGON, "Polygon"]
     ]);
 
     public static IsRegionTypeValid(regionType: CARTA.RegionType): boolean {
@@ -80,6 +84,12 @@ export class RegionStore {
         return regionDashLength >= 0 && regionDashLength <= RegionStore.MAX_DASH_LENGTH;
     }
 
+    private PolygonBoundingBox(): {max: Point2D, min: Point2D} {
+        let _Max = this.controlPoints.reduce((point1, point2) => { return {x: Math.max(point1.x, point2.x), y: Math.max(point1.y, point2.y)}; });
+        let _Min = this.controlPoints.reduce((point1, point2) => { return {x: Math.min(point1.x, point2.x), y: Math.min(point1.y, point2.y)}; });
+        return {max: {x: _Max.x, y: _Max.y}, min: {x: _Min.x, y: _Min.y}};
+    }
+
     @computed get isTemporary() {
         return this.regionId < 0;
     }
@@ -89,10 +99,15 @@ export class RegionStore {
             return 0;
         }
         switch (this.regionType) {
+            case CARTA.RegionType.POINT:
+                return 4;
             case CARTA.RegionType.RECTANGLE:
                 return this.controlPoints[1].x * this.controlPoints[1].y;
             case CARTA.RegionType.ELLIPSE:
                 return 4 * this.controlPoints[1].x * this.controlPoints[1].y;
+            case CARTA.RegionType.POLYGON:
+                let _box = this.PolygonBoundingBox();
+                return (_box.max.x - _box.min.x) * (_box.max.y - _box.min.y);
             default:
                 return 0;
         }
@@ -100,6 +115,7 @@ export class RegionStore {
 
     @computed get isClosedRegion() {
         switch (this.regionType) {
+            case CARTA.RegionType.POINT:
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.POLYGON:
@@ -123,6 +139,8 @@ export class RegionStore {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
                 return this.controlPoints.length === 2 && this.controlPoints[1].x > 0 && this.controlPoints[1].y > 0;
+            case CARTA.RegionType.POLYGON:
+                return this.controlPoints.length > 3;
             default:
                 return false;
         }
@@ -152,6 +170,10 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
                 return `ellipse[[${center}], ` +
                     `[${this.controlPoints[1].x.toFixed(1)}pix, ${this.controlPoints[1].y.toFixed(1)}pix], ` +
+                    `${this.rotation.toFixed(1)}deg]`;
+            case CARTA.RegionType.POLYGON:
+                return `polygon[[${center}], ` +
+                    `[${this.PolygonBoundingBox().max.x.toFixed(1)}pix, ${this.PolygonBoundingBox().max.y.toFixed(1)}pix], ` +
                     `${this.rotation.toFixed(1)}deg]`;
             default:
                 return "Not Implemented";
@@ -219,17 +241,25 @@ export class RegionStore {
     @action beginCreating = () => {
         this.creating = true;
         this.editing = true;
+        // if (this.regionId !== 0 && this.regionType === CARTA.RegionType.POINT && this.controlPoints.length === 1) {
+        //     this.controlPoints.push({x: 5, y: 5});
+        // }
     };
 
     @action endCreating = () => {
         this.creating = false;
         this.editing = false;
-        this.backendService.setRegion(this.fileId, -1, this).subscribe(ack => {
-            if (ack.success) {
-                console.log(`Updating regionID from ${this.regionId} to ${ack.regionId}`);
-                this.setRegionId(ack.regionId);
-            }
-        });
+        if (this.regionType !== CARTA.RegionType.POINT) {
+            this.backendService.setRegion(this.fileId, -1, this).subscribe(ack => {
+                if (ack.success) {
+                    console.log(`Updating regionID from ${this.regionId} to ${ack.regionId}`);
+                    this.setRegionId(ack.regionId);
+                }
+            });
+        } 
+        // if (this.regionId !== 0 && this.controlPoints.length === 1) {
+        //     this.controlPoints.push({x: 5, y: 5});
+        // }
     };
 
     @action beginEditing = () => {
@@ -243,16 +273,18 @@ export class RegionStore {
 
     // Update the region with the backend
     private updateRegion = () => {
-        if (this.regionId === 0 && this.regionType === CARTA.RegionType.POINT && this.isValid) {
-            this.backendService.setCursor(this.fileId, this.controlPoints[0].x, this.controlPoints[0].y);
-        } else {
-            this.backendService.setRegion(this.fileId, this.regionId, this).subscribe(ack => {
-                if (ack.success) {
-                    console.log(`Region updated`);
-                } else {
-                    console.log(ack.message);
-                }
-            });
+        if (this.isValid) {
+            if (this.regionId === 0 && this.regionType === CARTA.RegionType.POINT) {
+                this.backendService.setCursor(this.fileId, this.controlPoints[0].x, this.controlPoints[0].y);
+            } else {
+                this.backendService.setRegion(this.fileId, this.regionId, this).subscribe(ack => {
+                    if (ack.success) {
+                        console.log(`Region updated`);
+                    } else {
+                        console.log(ack.message);
+                    }
+                });
+            }
         }
     };
 }
