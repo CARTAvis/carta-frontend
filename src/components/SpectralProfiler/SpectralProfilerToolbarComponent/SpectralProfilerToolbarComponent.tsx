@@ -1,9 +1,9 @@
-import {observer} from "mobx-react";
+import { observer } from "mobx-react";
 import * as React from "react";
-import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
-import {CARTA} from "carta-protobuf";
-import {AppStore} from "stores";
-import {SpectralProfileWidgetStore} from "stores/widgets";
+import { FormGroup, HTMLSelect, IOptionProps } from "@blueprintjs/core";
+import { CARTA } from "carta-protobuf";
+import { AppStore } from "stores";
+import { SpectralProfileWidgetStore } from "stores/widgets";
 import "./SpectralProfilerToolbarComponent.css";
 
 @observer
@@ -49,34 +49,40 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
             enableStokesSelect = appStore.activeFrame.frameInfo.fileInfoExtended.stokes > 1;
         }
 
+        // Qi, add new stoket plot type PA, PI, Q+U (multiple lines), Q vs U (Scatter plot)
         const profileCoordinateOptions = [
-            {value: "z", label: "Current"},
-            {value: "Iz", label: "I"},
-            {value: "Qz", label: "Q"},
-            {value: "Uz", label: "U"},
-            {value: "Vz", label: "V"}
+            { value: "z", label: "Current" },
+            { value: "Iz", label: "I" },
+            { value: "Qz", label: "Q" },
+            { value: "Uz", label: "U" },
+            { value: "Vz", label: "V" },
+            { value: "PIz", label: "PI" },
+            { value: "PAz", label: "PA" },
+            { value: "Qz+Uz", label: "Q+U" },
+            { value: "QzVsUz", label: "Q vs U" },
+
         ];
 
         const profileStatsOptions: IOptionProps[] = [
-            {value: CARTA.StatsType.Sum, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Sum)},
-            {value: CARTA.StatsType.Mean, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Mean)},
-            {value: CARTA.StatsType.Sigma, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Sigma)},
-            {value: CARTA.StatsType.Min, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Min)},
-            {value: CARTA.StatsType.Max, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Max)},
-            {value: CARTA.StatsType.RMS, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.RMS)},
-            {value: CARTA.StatsType.SumSq, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.SumSq)}
+            { value: CARTA.StatsType.Sum, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Sum) },
+            { value: CARTA.StatsType.Mean, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Mean) },
+            { value: CARTA.StatsType.Sigma, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Sigma) },
+            { value: CARTA.StatsType.Min, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Min) },
+            { value: CARTA.StatsType.Max, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Max) },
+            { value: CARTA.StatsType.RMS, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.RMS) },
+            { value: CARTA.StatsType.SumSq, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.SumSq) }
         ];
 
         return (
             <div className="spectral-profiler-toolbar">
                 <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
-                    <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect}/>
+                    <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect} />
                 </FormGroup>
                 <FormGroup label={"Statistic"} inline={true} disabled={!enableStatsSelect}>
-                    <HTMLSelect value={widgetStore.statsType} options={profileStatsOptions} onChange={this.handleStatsChanged} disabled={!enableStatsSelect}/>
+                    <HTMLSelect value={widgetStore.statsType} options={profileStatsOptions} onChange={this.handleStatsChanged} disabled={!enableStatsSelect} />
                 </FormGroup>
                 <FormGroup label={"Stokes"} inline={true} disabled={!enableStokesSelect}>
-                    <HTMLSelect value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect}/>
+                    <HTMLSelect value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect} />
                 </FormGroup>
             </div>
         );

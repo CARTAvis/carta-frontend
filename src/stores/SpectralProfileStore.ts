@@ -1,5 +1,5 @@
-import {action, observable, ObservableMap} from "mobx";
-import {CARTA} from "carta-protobuf";
+import { action, observable, ObservableMap } from "mobx";
+import { CARTA } from "carta-protobuf";
 
 export class SpectralProfileStore {
     @observable regionId: number;
@@ -21,6 +21,18 @@ export class SpectralProfileStore {
             return coordinateMap.get(statsType);
         }
         return null;
+    }
+
+    // Qi, return profile array accofing coordinate array
+    getProfiles(coordinates: Array<string>, statsType: CARTA.StatsType): Array<CARTA.ISpectralProfile> {
+        let profiles = [];
+        coordinates.forEach(dataType => {
+            let profile = this.getProfile(dataType, statsType);
+            if (profile) {
+                profiles.push(profile);
+            }
+        });
+        return profiles;
     }
 
     @action clearProfiles() {

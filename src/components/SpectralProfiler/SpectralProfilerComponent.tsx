@@ -1,18 +1,19 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {autorun, computed, observable} from "mobx";
-import {observer} from "mobx-react";
-import {Colors, NonIdealState} from "@blueprintjs/core";
+import { autorun, computed, observable } from "mobx";
+import { observer } from "mobx-react";
+import { Colors, NonIdealState } from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent} from "components/Shared";
-import {SpectralProfilerSettingsPanelComponent} from "./SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
-import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
-import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
-import {SpectralProfileWidgetStore} from "stores/widgets";
-import {Point2D} from "models";
-import {clamp} from "utilities";
+import { CARTA } from "carta-protobuf";
+import { LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent } from "components/Shared";
+import { SpectralProfilerSettingsPanelComponent } from "./SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
+import { SpectralProfilerToolbarComponent } from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
+import { AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps } from "stores";
+import { SpectralProfileWidgetStore } from "stores/widgets";
+import { Point2D } from "models";
+import { clamp } from "utilities";
 import "./SpectralProfilerComponent.css";
+import { checkIfStateModificationsAreAllowed } from "mobx/lib/internal";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 180;
@@ -31,6 +32,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             isCloseable: true
         };
     }
+
+    // Qi, required type for PI, PA, Q+U and Q Vs U
+    private QUCoordinates = ["Qz", "Uz"];
 
     @observable width: number;
     @observable height: number;
@@ -62,6 +66,50 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return 20 + (this.widgetStore.settingsPanelVisible ? PANEL_CONTENT_WIDTH : 0);
     }
 
+    // Qi, calculate PA according datas
+    private calculatePA(datas: Array<any>) {
+        let vals = [];
+        if (datas[0] && datas[1] && datas.length === 2 && datas[0].length === datas[1].length) {
+            for (let i = 0; i < datas[0].vals.length; i++) {
+                vals[i] = Math.atan(datas[1].vals[i] / datas[0].vals[i]);
+            }
+        }
+        return vals;
+    }
+
+    // Qi, calculate PI according datas
+    private calculatePI(datas: Array<any>) {
+        let vals = [];
+        if (datas[0] && datas[1] && datas.length === 2 && datas[0].length === datas[1].length) {
+            for (let i = 0; i < datas[0].vals.length; i++) {
+                vals[i] = Math.sqrt(Math.pow(datas[0].vals[i], 2) + Math.pow(datas[1].vals[i], 2));
+            }
+        }
+        return vals;
+    }
+
+    // Qi, return PI, PA data for ploting
+    private calculate(coordinate: string, statsType: CARTA.StatsType): CARTA.ISpectralProfile {
+        let coordinateData: CARTA.ISpectralProfile;
+        if (coordinate === "PIz" || coordinate === "PAz") {
+            let dataSource = this.profileStore.getProfiles(this.QUCoordinates, statsType);
+            let data = [];
+            if (coordinate === "PAz") {
+                data = this.calculatePA(dataSource);
+            } else if (coordinate === "PIz") {
+                data = this.calculatePI(dataSource);
+            }
+            coordinateData = { ...dataSource[0] };
+            coordinateData.vals = [];
+            if (data) {
+                coordinateData.vals = [...data];
+            }
+        } else {
+            coordinateData = this.profileStore.getProfile(this.widgetStore.coordinate, statsType);
+        }
+        return coordinateData;
+    }
+
     @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number } {
         const frame = this.props.appStore.activeFrame;
         if (!frame) {
@@ -74,7 +122,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (frame.regionSet) {
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (region) {
-                coordinateData = this.profileStore.getProfile(this.widgetStore.coordinate, region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.Sum);
+                // Qi, calculate PI or PA if coordinate is PI or PA
+                coordinateData = this.calculate(this.widgetStore.coordinate, region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.Sum);
             }
         }
 
@@ -116,7 +165,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         continue;
                     }
                 }
-                values.push({x, y});
+                values.push({ x, y });
                 // Mean/RMS calculations
                 if (!isNaN(y)) {
                     yMin = Math.min(yMin, y);
@@ -136,7 +185,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 yMin = undefined;
                 yMax = undefined;
             }
-            return {values: values, xMin, xMax, yMin, yMax, yMean, yRms};
+            return { values: values, xMin, xMax, yMin, yMax, yMean, yRms };
         }
         return null;
     }
@@ -285,7 +334,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     render() {
         const appStore = this.props.appStore;
         if (!this.widgetStore) {
-            return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
+            return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"} />;
         }
 
         const frame = appStore.activeFrame;
@@ -395,7 +444,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                 });
 
-                linePlotProps.dataStat = {mean: currentPlotData.yMean, rms: currentPlotData.yRms};
+                linePlotProps.dataStat = { mean: currentPlotData.yMean, rms: currentPlotData.yRms };
             }
 
             linePlotProps.comments = this.exportHeaders;
@@ -413,9 +462,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return (
             <div className={className}>
                 <div className="profile-container">
-                    <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} appStore={appStore}/>
+                    <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} appStore={appStore} />
                     <div className="profile-plot">
-                        <LinePlotComponent {...linePlotProps}/>
+                        <LinePlotComponent {...linePlotProps} />
                     </div>
                 </div>
                 <PopoverSettingsComponent
@@ -424,9 +473,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     onHideClicked={this.widgetStore.hideSettingsPanel}
                     contentWidth={PANEL_CONTENT_WIDTH}
                 >
-                    <SpectralProfilerSettingsPanelComponent widgetStore={this.widgetStore}/>
+                    <SpectralProfilerSettingsPanelComponent widgetStore={this.widgetStore} />
                 </PopoverSettingsComponent>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33} />
             </div>
         );
     }
