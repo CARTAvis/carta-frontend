@@ -2,14 +2,14 @@ import {observable, computed, action, autorun} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
-import {Theme, Layout, Zoom, WCSType, RegionCreationMode} from "models";
+import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode} from "models";
 import { AppStore } from "./AppStore";
 
 const PREFERENCE_KEYS = {
     theme: "CARTA_theme",
     autoLaunch: "CARTA_autoLaunch",
     layout: "CARTA_layout",
-    cursorFreeze: "CARTA_cursorFreeze",
+    cursorPosition: "CARTA_cursorPosition",
     zoomMode: "CARTA_zoomMode",
     scaling: "CARTA_scaling",
     colormap: "CARTA_colormap",
@@ -29,7 +29,7 @@ const DEFAULTS = {
     theme: Theme.LIGHT,
     autoLaunch: true,
     layout: Layout.CUBEVIEW,
-    cursorFreeze: false,
+    cursorPosition: CursorPosition.TRACKING,
     zoomMode: Zoom.FIT,
     scaling: FrameScaling.LINEAR,
     colormap: "inferno",
@@ -51,7 +51,7 @@ export class PreferenceStore {
     @observable theme: string;
     @observable autoLaunch: boolean;
     @observable layout: string;
-    @observable cursorFreeze: boolean;
+    @observable cursorPosition: string;
     @observable zoomMode: string;
     @observable scaling: FrameScaling;
     @observable colormap: string;
@@ -78,8 +78,9 @@ export class PreferenceStore {
         return layout && Layout.isValid(layout) ? layout : DEFAULTS.layout;
     }
 
-    private getCursorFreeze = (): boolean => {
-        return localStorage.getItem(PREFERENCE_KEYS.cursorFreeze) === "true" ? true : DEFAULTS.cursorFreeze;
+    private getCursorPosition = (): string => {
+        const cursorPosition = localStorage.getItem(PREFERENCE_KEYS.cursorPosition);
+        return cursorPosition && CursorPosition.isValid(cursorPosition) ? cursorPosition : DEFAULTS.cursorPosition;
     }
 
     private getZoomMode = (): string => {
@@ -193,9 +194,14 @@ export class PreferenceStore {
         return this.regionCreationMode === RegionCreationMode.CORNER ? true : false;
     }
 
+    @computed get isCursorFrozen(): boolean {
+        return this.cursorPosition === CursorPosition.FIXED ? true : false;
+    }
+
     // setters for global
     @action setTheme = (theme: string) => {
         this.theme = theme;
+        theme === Theme.DARK ? this.appStore.setDarkTheme() : this.appStore.setLightTheme();
         localStorage.setItem(PREFERENCE_KEYS.theme, theme);
     };
 
@@ -209,9 +215,9 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.layout, layout);
     };
 
-    @action setCursorFreeze = (cursorFreeze: boolean) => {
-        this.cursorFreeze = cursorFreeze;
-        localStorage.setItem(PREFERENCE_KEYS.cursorFreeze, cursorFreeze ? "true" : "false");
+    @action setCursorPosition = (cursorPosition: string) => {
+        this.cursorPosition = cursorPosition;
+        localStorage.setItem(PREFERENCE_KEYS.cursorPosition, cursorPosition);
     };
 
     @action setZoomMode = (zoomMode: string) => {
@@ -276,7 +282,7 @@ export class PreferenceStore {
         this.setTheme(DEFAULTS.theme);
         this.setAutoLaunch(DEFAULTS.autoLaunch);
         this.setLayout(DEFAULTS.layout);
-        this.setCursorFreeze(DEFAULTS.cursorFreeze);
+        this.setCursorPosition(DEFAULTS.cursorPosition);
         this.setZoomMode(DEFAULTS.zoomMode);
     };
 
@@ -306,7 +312,7 @@ export class PreferenceStore {
         this.theme = this.getTheme();
         this.autoLaunch = this.getAutoLaunch();
         this.layout = this.getLayout();
-        this.cursorFreeze = this.getCursorFreeze();
+        this.cursorPosition = this.getCursorPosition();
         this.zoomMode = this.getZoomMode();
         this.scaling = this.getScaling();
         this.colormap = this.getColormap();

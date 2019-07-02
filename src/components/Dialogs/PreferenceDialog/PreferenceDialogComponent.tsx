@@ -9,7 +9,7 @@ import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {AppearanceForm} from "components/Dialogs/RegionDialog/AppearanceForm/AppearanceForm";
-import {Theme, Layout, Zoom, WCSType, RegionCreationMode} from "models";
+import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode} from "models";
 import {AppStore, RenderConfigStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
@@ -65,19 +65,26 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Auto-launch File Browser">
-                    <Switch checked={preference.autoLaunch} innerLabelChecked="Enable" innerLabel="Disable" onChange={(ev) => { preference.setAutoLaunch(ev.currentTarget.checked); }}/>
+                    <Switch checked={preference.autoLaunch} onChange={(ev) => { preference.setAutoLaunch(ev.currentTarget.checked); }}/>
                 </FormGroup>
-                <FormGroup inline={true} label="Layout">
+                <FormGroup inline={true} label="Default Layout">
                     <HTMLSelect value={preference.layout} onChange={(ev) => { preference.setLayout(ev.currentTarget.value); }}>
                         <option value={Layout.CUBEVIEW}>Cube view</option>
                         <option value={Layout.CUBEANALYSIS}>Cube analysis</option>
                         <option value={Layout.CONTINUUMANALYSIS}>Continuum analysis</option>
                     </HTMLSelect>
                 </FormGroup>
-                <FormGroup inline={true} label="Cursor Position">
-                    <Switch checked={preference.cursorFreeze} innerLabelChecked="Freeze" innerLabel="Unfreeze" onChange={(ev) => { preference.setCursorFreeze(ev.currentTarget.checked); }}/>
+                <FormGroup inline={true} label="Initial Cursor Position">
+                    <RadioGroup
+                        selectedValue={preference.cursorPosition}
+                        onChange={(ev) => { preference.setCursorPosition(ev.currentTarget.value); }}
+                        inline={true}
+                    >
+                        <Radio label="Fixed" value={CursorPosition.FIXED}/>
+                        <Radio label="Tracking" value={CursorPosition.TRACKING}/>
+                    </RadioGroup>
                 </FormGroup>
-                <FormGroup inline={true} label="Image Zoom Level">
+                <FormGroup inline={true} label="Initial Zoom Level">
                     <RadioGroup
                         selectedValue={preference.zoomMode}
                         onChange={(ev) => { preference.setZoomMode(ev.currentTarget.value); }}
@@ -206,7 +213,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
-                        <AnchorButton intent={Intent.DANGER} icon={"refresh"} onClick={this.reset} text="Reset"/>
+                        <AnchorButton intent={Intent.DANGER} icon={"refresh"} onClick={this.reset} text="Restore defaults"/>
                         <Button intent={Intent.NONE} onClick={appStore.hidePreferenceDialog} text="Close"/>
                     </div>
                 </div>

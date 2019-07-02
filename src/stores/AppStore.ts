@@ -635,7 +635,7 @@ export class AppStore {
         if (requiredFrame) {
             this.activeFrame = requiredFrame;
             this.widgetsStore.updateImageWidgetTitle();
-            this.setCursorFrozen(this.preferenceStore.cursorFreeze);
+            this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
         } else {
             console.log(`Can't find required frame ${fileId}`);
         }
@@ -645,7 +645,7 @@ export class AppStore {
         if (index >= 0 && this.frames.length > index) {
             this.activeFrame = this.frames[index];
             this.widgetsStore.updateImageWidgetTitle();
-            this.setCursorFrozen(this.preferenceStore.cursorFreeze);
+            this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
         } else {
             console.log(`Invalid frame index ${index}`);
         }
