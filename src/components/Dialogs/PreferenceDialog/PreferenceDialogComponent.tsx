@@ -57,7 +57,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 <FormGroup inline={true} label="Theme">
                     <RadioGroup
                         selectedValue={preference.theme}
-                        onChange={(ev) => { preference.setTheme(ev.currentTarget.value); }}
+                        onChange={(ev) => { ev.currentTarget.value === Theme.LIGHT ? appStore.setLightTheme() : appStore.setDarkTheme(); }}
                         inline={true}
                     >
                         <Radio label="Light" value={Theme.LIGHT}/>
@@ -213,7 +213,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
-                        <AnchorButton intent={Intent.DANGER} icon={"refresh"} onClick={this.reset} text="Restore defaults"/>
+                        <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={this.reset} text="Restore defaults"/>
                         <Button intent={Intent.NONE} onClick={appStore.hidePreferenceDialog} text="Close"/>
                     </div>
                 </div>

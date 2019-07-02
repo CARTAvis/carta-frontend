@@ -201,7 +201,6 @@ export class PreferenceStore {
     // setters for global
     @action setTheme = (theme: string) => {
         this.theme = theme;
-        theme === Theme.DARK ? this.appStore.setDarkTheme() : this.appStore.setLightTheme();
         localStorage.setItem(PREFERENCE_KEYS.theme, theme);
     };
 
