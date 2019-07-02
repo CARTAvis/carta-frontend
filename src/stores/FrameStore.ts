@@ -37,7 +37,7 @@ export class FrameStore {
 
     private readonly overlayStore: OverlayStore;
 
-    constructor(preference: PreferenceStore, overlay: OverlayStore, frameInfo: FrameInfo, backendService: BackendService) {
+    constructor(readonly preference: PreferenceStore, overlay: OverlayStore, frameInfo: FrameInfo, backendService: BackendService) {
         this.overlayStore = overlay;
         this.frameInfo = frameInfo;
         this.renderHiDPI = true;
@@ -49,20 +49,20 @@ export class FrameStore {
         this.renderConfig = new RenderConfigStore(preference);
 
         // synchornize AST overlay's color/grid/label with perference when frame is created
-        const astColor = preference.getASTColor();
+        const astColor = preference.astColor;
         if (astColor !== overlay.global.color) {
             overlay.global.setColor(astColor);
         }
-        const astGridVisible = preference.getASTGridVisible();
+        const astGridVisible = preference.astGridVisible;
         if (astGridVisible !== overlay.grid.visible) {
             overlay.grid.setVisible(astGridVisible);
         }
-        const astLabelsVisible = preference.getASTLabelsVisible();
+        const astLabelsVisible = preference.astLabelsVisible;
         if (astLabelsVisible !== overlay.labels.visible) {
             overlay.labels.setVisible(astLabelsVisible);
         }
 
-        this.regionSet = new RegionSetStore(this, preference, backendService);
+        this.regionSet = new RegionSetStore(this, preference.regionContainer, backendService);
         this.valid = true;
         this.currentFrameView = {
             xMin: 0,
@@ -72,6 +72,11 @@ export class FrameStore {
             mip: 999
         };
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
+
+        this.fitZoom();
+        if (preference.isZoomRAWMode) {
+            this.setZoom(1.0);
+        }
     }
 
     @computed get requiredFrameView(): FrameView {
