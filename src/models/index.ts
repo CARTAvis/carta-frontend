@@ -4,6 +4,7 @@ export * from "./ChannelType";
 export * from "./FrameView";
 export * from "./Point2D";
 export * from "./SpectralInfo";
+export * from "./TileCoordinate";
 export * from "./Theme";
 export * from "./Layout";
 export * from "./CursorPosition";

@@ -27,11 +27,20 @@ uniform float uGamma;
 uniform float uAlpha;
 uniform vec4 uNaNColor;
 
+// Tile border
+uniform float uTileBorder;
+
 bool isnan(float val) {
     return (val < 0.0 || 0.0 < val || val == 0.0) ? false : true;
 }
 
 void main(void) {
+    // Tile border
+    if (uTileBorder > 0.0 && (vUV.x < uTileBorder || vUV.y < uTileBorder)) {
+        gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        return;
+    }
+
     float range = uMaxVal - uMinVal;
     float rawVal = texture2D(uDataTexture, vUV).r;
 

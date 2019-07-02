@@ -2,17 +2,17 @@ import * as React from "react";
 import * as $ from "jquery";
 import {observer} from "mobx-react";
 import {autorun, observable} from "mobx";
-import {NonIdealState, Spinner, Colors, Tag} from "@blueprintjs/core";
+import {Colors, NonIdealState, Spinner, Tag} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {OverlayComponent} from "./Overlay/OverlayComponent";
 import {CursorOverlayComponent} from "./CursorOverlay/CursorOverlayComponent";
 import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
-import {RegionStore, WidgetConfig, WidgetProps} from "stores";
+import {RegionViewComponent} from "./RegionView/RegionViewComponent";
+import {AnimationMode, AnimationState, RegionStore, WidgetConfig, WidgetProps} from "stores";
 import {CursorInfo, Point2D} from "models";
 import "./ImageViewComponent.css";
-import {RegionViewComponent} from "./RegionView/RegionViewComponent";
 
 export const exportImage = (padding, darkTheme, imageName) => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
@@ -172,11 +172,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         docked={this.props.docked}
                     />
                     }
-                    < RasterViewComponent
-                        frame={appStore.activeFrame}
-                        docked={this.props.docked}
-                        overlaySettings={appStore.overlayStore}
-                    />
                     {appStore.cursorInfo &&
                     <CursorOverlayComponent
                         cursorInfo={appStore.cursorInfo}
@@ -247,6 +242,13 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="image-view-div" ref={(ref) => this.containerDiv = ref} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+                <RasterViewComponent
+                    frame={appStore.activeFrame}
+                    docked={this.props.docked}
+                    tiledRendering={appStore.animatorStore.animationState === AnimationState.STOPPED || appStore.animatorStore.animationMode === AnimationMode.FRAME}
+                    overlaySettings={appStore.overlayStore}
+                    tileService={appStore.tileService}
+                />
                 {divContents}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
