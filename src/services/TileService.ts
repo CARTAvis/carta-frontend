@@ -319,7 +319,10 @@ export class TileService {
                     if (layer < this.numPersistentLayers) {
                         this.persistentTiles.set(tilePair.coordinate, tilePair.tile);
                     } else {
-                        this.cachedTiles.setWithCallback(tilePair.coordinate, tilePair.tile, this.clearTile);
+                        const oldValue = this.cachedTiles.setpop(tilePair.coordinate, tilePair.tile);
+                        if  (oldValue) {
+                            this.clearTile(oldValue.value, oldValue.key);
+                        }
                     }
                 }
                 this.receivedSynchronisedTiles = [];
@@ -337,7 +340,10 @@ export class TileService {
             if (layer < this.numPersistentLayers) {
                 this.persistentTiles.set(encodedCoordinate, rasterTile);
             } else {
-                this.cachedTiles.setWithCallback(encodedCoordinate, rasterTile, this.clearTile);
+                const oldValue = this.cachedTiles.setpop(encodedCoordinate, rasterTile);
+                if  (oldValue) {
+                    this.clearTile(oldValue.value, oldValue.key);
+                }
             }
             this.pendingDecompressions.delete(encodedCoordinate);
             this.tileStream.next(1);
