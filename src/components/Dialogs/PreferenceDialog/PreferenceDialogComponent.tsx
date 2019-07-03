@@ -69,6 +69,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </FormGroup>
                 <FormGroup inline={true} label="Default Layout">
                     <HTMLSelect value={preference.layout} onChange={(ev) => { preference.setLayout(ev.currentTarget.value); }}>
+                        <option value={Layout.DEFAULT}>default</option>
                         <option value={Layout.CUBEVIEW}>Cube view</option>
                         <option value={Layout.CUBEANALYSIS}>Cube analysis</option>
                         <option value={Layout.CONTINUUMANALYSIS}>Continuum analysis</option>
