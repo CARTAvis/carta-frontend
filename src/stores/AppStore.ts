@@ -376,7 +376,7 @@ export class AppStore {
         this.preferenceStore = new PreferenceStore(this);
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore);
-        this.tileService = new TileService(this.backendService);
+        this.tileService = new TileService(this.backendService, 4, this.preferenceStore.GPUTileCache, this.preferenceStore.systemTileCache);
         this.astReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<number, ObservableMap<number, SpectralProfileStore>>();
@@ -474,7 +474,7 @@ export class AppStore {
                     yMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.height, reqView.yMax),
                     mip: reqView.mip
                 };
-                throttledSetView(this.activeFrame.frameInfo.fileId, croppedReq, 9);
+                throttledSetView(this.activeFrame.frameInfo.fileId, croppedReq, this.preferenceStore.animationCompressionQuality);
             }
         });
 

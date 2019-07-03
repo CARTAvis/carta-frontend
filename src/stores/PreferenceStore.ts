@@ -3,7 +3,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
 import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache} from "models";
-import { AppStore } from "./AppStore";
+import {AppStore} from "./AppStore";
 
 const PREFERENCE_KEYS = {
     theme: "CARTA_theme",
@@ -79,26 +79,26 @@ export class PreferenceStore {
     private getTheme = (): string => {
         const theme = localStorage.getItem(PREFERENCE_KEYS.theme);
         return theme && Theme.isValid(theme) ? theme : DEFAULTS.theme;
-    }
+    };
 
     private getAutoLaunch = (): boolean => {
         return localStorage.getItem(PREFERENCE_KEYS.autoLaunch) === "false" ? false : DEFAULTS.autoLaunch;
-    }
+    };
 
     private getLayout = (): string => {
         const layout = localStorage.getItem(PREFERENCE_KEYS.layout);
         return layout && Layout.isValid(layout) ? layout : DEFAULTS.layout;
-    }
+    };
 
     private getCursorPosition = (): string => {
         const cursorPosition = localStorage.getItem(PREFERENCE_KEYS.cursorPosition);
         return cursorPosition && CursorPosition.isValid(cursorPosition) ? cursorPosition : DEFAULTS.cursorPosition;
-    }
+    };
 
     private getZoomMode = (): string => {
         const zoomMode = localStorage.getItem(PREFERENCE_KEYS.zoomMode);
         return zoomMode && Zoom.isValid(zoomMode) ? zoomMode : DEFAULTS.zoomMode;
-    }
+    };
 
     // getters for render config
     private getScaling = (): FrameScaling => {
@@ -191,9 +191,9 @@ export class PreferenceStore {
     private getRegionCreationMode = (): string => {
         const regionCreationMode = localStorage.getItem(PREFERENCE_KEYS.regionCreationMode);
         return regionCreationMode && RegionCreationMode.isValid(regionCreationMode) ? regionCreationMode : DEFAULTS.regionCreationMode;
-    }
+    };
 
-    // getters for render quality
+    // getters for performance
     private getImageCompressionQuality = (): number => {
         const imageCompressionQuality = localStorage.getItem(PREFERENCE_KEYS.imageCompressionQuality);
         if (!imageCompressionQuality) {
@@ -233,22 +233,22 @@ export class PreferenceStore {
         const value = Number(systemTileCache);
         return isFinite(value) && TileCache.isSystemTileCacheValid(value) ? value : DEFAULTS.systemTileCache;
     };
-    
+
     // getters for boolean(convenient)
     @computed get isDarkTheme(): boolean {
-        return this.theme === Theme.DARK ? true : false;
+        return this.theme === Theme.DARK;
     }
 
     @computed get isZoomRAWMode(): boolean {
-        return this.zoomMode === Zoom.RAW ? true : false;
+        return this.zoomMode === Zoom.RAW;
     }
 
     @computed get isRegionCornerMode(): boolean {
-        return this.regionCreationMode === RegionCreationMode.CORNER ? true : false;
+        return this.regionCreationMode === RegionCreationMode.CORNER;
     }
 
     @computed get isCursorFrozen(): boolean {
-        return this.cursorPosition === CursorPosition.FIXED ? true : false;
+        return this.cursorPosition === CursorPosition.FIXED;
     }
 
     // setters for global
@@ -329,24 +329,24 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.regionCreationMode, regionCreationMode);
     };
 
-    // setters for render quality
+    // setters for performance
     @action setImageCompressionQuality = (imageCompressionQuality: number) => {
         this.appStore.compressionQuality = imageCompressionQuality;
         this.imageCompressionQuality = imageCompressionQuality;
         localStorage.setItem(PREFERENCE_KEYS.imageCompressionQuality, imageCompressionQuality.toString(10));
     };
 
-     @action setAnimationCompressionQuality = (animationCompressionQuality: number) => {
+    @action setAnimationCompressionQuality = (animationCompressionQuality: number) => {
         this.animationCompressionQuality = animationCompressionQuality;
         localStorage.setItem(PREFERENCE_KEYS.animationCompressionQuality, animationCompressionQuality.toString(10));
     };
 
-     @action setGPUTileCache = (GPUTileCache: number) => {
+    @action setGPUTileCache = (GPUTileCache: number) => {
         this.GPUTileCache = GPUTileCache;
         localStorage.setItem(PREFERENCE_KEYS.GPUTileCache, GPUTileCache.toString(10));
     };
 
-     @action setSystemTileCache = (systemTileCache: number) => {
+    @action setSystemTileCache = (systemTileCache: number) => {
         this.systemTileCache = systemTileCache;
         localStorage.setItem(PREFERENCE_KEYS.systemTileCache, systemTileCache.toString(10));
     };
@@ -381,7 +381,7 @@ export class PreferenceStore {
         this.setRegionCreationMode(DEFAULTS.regionCreationMode);
     };
 
-    @action resetRenderQualitySettings = () => {
+    @action resetPerformanceSettings = () => {
         this.setImageCompressionQuality(DEFAULTS.imageCompressionQuality);
         this.setAnimationCompressionQuality(DEFAULTS.animationCompressionQuality);
         this.setGPUTileCache(DEFAULTS.GPUTileCache);

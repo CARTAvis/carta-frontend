@@ -19,7 +19,7 @@ enum TABS {
     RENDER_CONFIG,
     WCS_OVERLAY,
     REGION,
-    RENDER_QUALITY
+    PERFORMANCE
 }
 
 const PercentileSelect = Select.ofType<string>();
@@ -60,8 +60,8 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             case TABS.REGION:
                 preference.resetRegionSettings();
                 break;
-            case TABS.RENDER_QUALITY:
-                    preference.resetRenderQualitySettings();
+            case TABS.PERFORMANCE:
+                    preference.resetPerformanceSettings();
                     break;
             case TABS.GLOBAL: default:
                 preference.resetGlobalSettings();
@@ -201,7 +201,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             </React.Fragment>
         );
 
-        const renderQualityPanel = (
+        const performancePanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Compression Quality" labelInfo={"(Images)"}>
                     <NumericInput
@@ -277,7 +277,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         <Tab id={TABS.RENDER_CONFIG} title="Default Render Config" panel={renderConfigPanel}/>
                         <Tab id={TABS.WCS_OVERLAY} title="Default WCS Overlay" panel={wcsOverlayPanel}/>
                         <Tab id={TABS.REGION} title="Default Region settings" panel={regionSettingsPanel}/>
-                        <Tab id={TABS.RENDER_QUALITY} title="Rendering Quality" panel={renderQualityPanel}/>
+                        <Tab id={TABS.PERFORMANCE} title="Performance" panel={performancePanel}/>
                     </Tabs>
                 </div>
                 <div className="bp3-dialog-footer">
