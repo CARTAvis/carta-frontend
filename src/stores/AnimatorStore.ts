@@ -100,7 +100,7 @@ export class AnimatorStore {
             },
             mip: croppedReq.mip,
             compressionType: CARTA.CompressionType.ZFP,
-            compressionQuality: 9,
+            compressionQuality: this.appStore.preferenceStore.animationCompressionQuality,
         };
 
         const animationMessage: CARTA.IStartAnimation = {
