@@ -1,19 +1,19 @@
 import * as React from "react";
 import * as _ from "lodash";
-import { autorun, computed, observable } from "mobx";
-import { observer } from "mobx-react";
-import { Colors, NonIdealState } from "@blueprintjs/core";
+import {autorun, computed, observable} from "mobx";
+import {observer} from "mobx-react";
+import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import { CARTA } from "carta-protobuf";
-import { LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent } from "components/Shared";
-import { SpectralProfilerSettingsPanelComponent } from "./SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
-import { SpectralProfilerToolbarComponent } from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
-import { AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps } from "stores";
-import { SpectralProfileWidgetStore } from "stores/widgets";
-import { Point2D } from "models";
-import { clamp } from "utilities";
+import {CARTA} from "carta-protobuf";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent} from "components/Shared";
+import {SpectralProfilerSettingsPanelComponent} from "./SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
+import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
+import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
+import {SpectralProfileWidgetStore} from "stores/widgets";
+import {Point2D} from "models";
+import {clamp} from "utilities";
 import "./SpectralProfilerComponent.css";
-import { checkIfStateModificationsAreAllowed } from "mobx/lib/internal";
+import {checkIfStateModificationsAreAllowed} from "mobx/lib/internal";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 180;
@@ -99,7 +99,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             } else if (coordinate === "PIz") {
                 data = this.calculatePI(dataSource);
             }
-            coordinateData = { ...dataSource[0] };
+            coordinateData = {...dataSource[0]};
             coordinateData.vals = [];
             if (data) {
                 coordinateData.vals = [...data];
@@ -110,7 +110,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return coordinateData;
     }
 
-    @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number } {
+    @computed get plotData(): {values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number} {
         const frame = this.props.appStore.activeFrame;
         if (!frame) {
             return null;
@@ -150,7 +150,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             let yCount = 0;
 
             // values are needed to be sorted in incremental order for binary search
-            let values: Array<{ x: number, y: number }> = [];
+            let values: Array<{x: number, y: number}> = [];
             let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
             for (let i = 0; i < channelValues.length; i++) {
                 let index = isIncremental ? i : channelValues.length - 1 - i;
@@ -165,7 +165,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         continue;
                     }
                 }
-                values.push({ x, y });
+                values.push({x, y});
                 // Mean/RMS calculations
                 if (!isNaN(y)) {
                     yMin = Math.min(yMin, y);
@@ -185,7 +185,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 yMin = undefined;
                 yMax = undefined;
             }
-            return { values: values, xMin, xMax, yMin, yMax, yMean, yRms };
+            return {values: values, xMin, xMax, yMin, yMax, yMean, yRms};
         }
         return null;
     }
@@ -444,7 +444,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                 });
 
-                linePlotProps.dataStat = { mean: currentPlotData.yMean, rms: currentPlotData.yRms };
+                linePlotProps.dataStat = {mean: currentPlotData.yMean, rms: currentPlotData.yRms};
             }
 
             linePlotProps.comments = this.exportHeaders;

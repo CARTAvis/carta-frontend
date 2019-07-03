@@ -1,8 +1,8 @@
-import { action, computed, observable } from "mobx";
-import { CARTA } from "carta-protobuf";
-import { PlotType } from "components/Shared";
-import { RegionWidgetStore } from "./RegionWidgetStore";
-import { FrameStore } from "../FrameStore";
+import {action, computed, observable} from "mobx";
+import {CARTA} from "carta-protobuf";
+import {PlotType} from "components/Shared";
+import {RegionWidgetStore} from "./RegionWidgetStore";
+import {FrameStore} from "../FrameStore";
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
@@ -41,8 +41,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     // Qi, add new stoke valid type PI, PA, Qz+Uz, QzVsUz
-    private static ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz", "PIz", "PAz", "Qz+Uz", "QzVsUz"];
-    private static ValidMultiDataCoordinates = ["PIz", "PAz", "Qz+Uz", "QzVsUz"];
+    private static ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz", "PIz", "PAz"];
+    private static ValidMultiDataCoordinates = ["PIz", "PAz"];
 
     // Qi, return regionRequirements spectralProfiles coordinate array
     private static requiredCoordinate(coordinate: string): Array<string> {
@@ -196,7 +196,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
                 let regionRequirements = frameRequirements.get(regionId);
                 if (!regionRequirements) {
-                    regionRequirements = new CARTA.SetSpectralRequirements({ regionId, fileId });
+                    regionRequirements = new CARTA.SetSpectralRequirements({regionId, fileId});
                     frameRequirements.set(regionId, regionRequirements);
                 }
 
@@ -209,7 +209,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     // create new spectral config
                     // Qi, creaet new spectral config according coordinate
                     this.requiredCoordinate(coordinate).forEach(data => {
-                        regionRequirements.spectralProfiles.push({ coordinate: data, statsTypes: [statsType] });
+                        regionRequirements.spectralProfiles.push({coordinate: data, statsTypes: [statsType]});
                     });
                 } else if (spectralConfig.statsTypes.indexOf(statsType) === -1) {
                     // add to the stats type array
@@ -240,7 +240,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             frameRequirements.forEach((regionRequirements, regionId) => {
                 let updatedRegionRequirements = updatedFrameRequirements.get(regionId);
                 if (!updatedRegionRequirements) {
-                    updatedRegionRequirements = new CARTA.SetSpectralRequirements({ fileId, regionId, spectralProfiles: [] });
+                    updatedRegionRequirements = new CARTA.SetSpectralRequirements({fileId, regionId, spectralProfiles: []});
                     updatedFrameRequirements.set(regionId, updatedRegionRequirements);
                 }
             });

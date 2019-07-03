@@ -1,5 +1,5 @@
-import { action, observable, ObservableMap } from "mobx";
-import { CARTA } from "carta-protobuf";
+import {action, observable, ObservableMap} from "mobx";
+import {CARTA} from "carta-protobuf";
 
 export class SpectralProfileStore {
     @observable regionId: number;
