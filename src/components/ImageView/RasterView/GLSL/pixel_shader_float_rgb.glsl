@@ -10,6 +10,7 @@ precision highp float;
 #define CUSTOM 7
 
 varying vec2 vUV;
+uniform bool uTiledRendering;
 // Textures
 uniform sampler2D
 uDataTexture;
@@ -27,8 +28,11 @@ uniform float uGamma;
 uniform float uAlpha;
 uniform vec4 uNaNColor;
 
-// Tile border
+// Tile texture parameters in pixels
 uniform float uTileBorder;
+uniform vec2 uTileTextureOffset;
+uniform float uTextureSize;
+uniform float uTileTextureSize;
 
 bool isnan(float val) {
     return (val < 0.0 || 0.0 < val || val == 0.0) ? false : true;
@@ -40,9 +44,21 @@ void main(void) {
         gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
         return;
     }
+    vec2 texCoords;
+
+    if (uTiledRendering) {
+        // Mimic texel fetch in WebGL1
+        vec2 tileCoordsPixel = vUV * uTileTextureSize;
+        // Prevent edge artefacts
+        vec2 texCoordsPixel = clamp(tileCoordsPixel, 0.5, uTileTextureSize - 0.5) + uTileTextureOffset;
+        texCoords = texCoordsPixel / uTextureSize;
+    }
+    else {
+        texCoords = vUV;
+    }
 
     float range = uMaxVal - uMinVal;
-    float rawVal = texture2D(uDataTexture, vUV).r;
+    float rawVal = texture2D(uDataTexture, texCoords).r;
 
     // Scaling types
     // LINEAR (Default: uScaleType == LINEAR)
