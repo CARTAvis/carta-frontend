@@ -2,12 +2,13 @@
 
 ## Prerequisites
 The build process relies heavily on `npm` and `nodejs`, so make sure they are installed and accesible.
-WebAssembly compilation requires the Emscripten compiler (`emcc`) to be in the path. Details can be found [here](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html). The protocol buffer definitions reside in a git submodule that must be initialised as follows:
+WebAssembly compilation requires the Emscripten compiler (`emcc`) to be in the path. Details can be found [here](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html). Currently, emscripten 1.38.31 or older is required. The protocol buffer definitions reside in a git submodule that must be initialised as follows:
 ```
 cd protobuf
 git submodule init
 git submodule update
-git checkout master
+# use git checkout dev when using the dev branch of carta-frontend
+git checkout master 
 ```
 Prerequisite `npm` packages can be installed using `npm install`. The WebAssembly library build process requires `wget`. Some WebAssembly libraries require `cmake` as well.
 
