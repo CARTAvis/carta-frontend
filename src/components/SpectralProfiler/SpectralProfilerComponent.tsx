@@ -334,7 +334,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     render() {
         const appStore = this.props.appStore;
         if (!this.widgetStore) {
-            return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"} />;
+            return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
         }
 
         const frame = appStore.activeFrame;
@@ -462,9 +462,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return (
             <div className={className}>
                 <div className="profile-container">
-                    <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} appStore={appStore} />
+                    <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} appStore={appStore}/>
                     <div className="profile-plot">
-                        <LinePlotComponent {...linePlotProps} />
+                        <LinePlotComponent {...linePlotProps}/>
                     </div>
                 </div>
                 <PopoverSettingsComponent
@@ -473,9 +473,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     onHideClicked={this.widgetStore.hideSettingsPanel}
                     contentWidth={PANEL_CONTENT_WIDTH}
                 >
-                    <SpectralProfilerSettingsPanelComponent widgetStore={this.widgetStore} />
+                    <SpectralProfilerSettingsPanelComponent widgetStore={this.widgetStore}/>
                 </PopoverSettingsComponent>
-                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33} />
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
         );
     }
