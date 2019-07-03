@@ -12,7 +12,7 @@
         "golden-layout": "^1.5.9",
         "konva": "^3.3.3",
         "lodash": "^4.17.11",
-        "mnemonist": "github:veggiesaurus/mnemonist#lru-delete-callback",
+        "mnemonist": "^0.29.0",
         "mobx": "^5.10.1",
         "mobx-react": "^5.4.4",
         "raw-loader": "^0.5.1",
