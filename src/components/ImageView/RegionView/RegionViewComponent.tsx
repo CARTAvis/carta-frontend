@@ -5,7 +5,7 @@ import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {Group, Layer, Line, Rect, Stage} from "react-konva";
 import {CARTA} from "carta-protobuf";
-import {ASTSettingsString, FrameStore, OverlayStore, RegionMode, RegionStore} from "stores";
+import {ASTSettingsString, FrameStore, OverlayStore, RegionMode, RegionStore, PreferenceStore} from "stores";
 import {RegionComponent} from "./RegionComponent";
 import {CursorInfo, Point2D} from "../../../models";
 import "./RegionViewComponent.css";
@@ -13,6 +13,7 @@ import "./RegionViewComponent.css";
 export interface RegionViewComponentProps {
     frame: FrameStore;
     overlaySettings: OverlayStore;
+    readonly preference: PreferenceStore;
     docked: boolean;
     width: number;
     height: number;
@@ -20,6 +21,7 @@ export interface RegionViewComponentProps {
     top: number;
     cursorFrozen: boolean;
     cursorPoint?: Point2D;
+    initCenter: (cursorInfo: CursorInfo) => void;
     onCursorMoved?: (cursorInfo: CursorInfo) => void;
     onClicked?: (cursorInfo: CursorInfo) => void;
     onRegionDoubleClicked?: (region: RegionStore) => void;
@@ -30,6 +32,12 @@ export interface RegionViewComponentProps {
 export class RegionViewComponent extends React.Component<RegionViewComponentProps> {
     @observable creatingRegion: RegionStore;
     private regionStartPoint: Point2D;
+
+    constructor(props: RegionViewComponentProps) {
+        super(props);
+        const center = {x: props.width / 2, y: props.height / 2};
+        this.props.initCenter(this.getCursorInfo(center));
+    }
 
     updateCursorPos = _.throttle((x: number, y: number) => {
         if (this.props.frame.wcsInfo && this.props.onCursorMoved) {
@@ -213,7 +221,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 dx = Math.sign(dx) * maxDiff;
                 dy = Math.sign(dy) * maxDiff;
             }
-            if (mouseEvent.ctrlKey || mouseEvent.metaKey) {
+            const isCtrlPressed = mouseEvent.ctrlKey || mouseEvent.metaKey;
+            if ((this.props.preference.isRegionCornerMode && !isCtrlPressed) || (!this.props.preference.isRegionCornerMode && isCtrlPressed)) {
+                // corner-to-corner region creation
                 const endPoint = {x: this.regionStartPoint.x + dx, y: this.regionStartPoint.y + dy};
                 const center = {x: (this.regionStartPoint.x + endPoint.x) / 2.0, y: (this.regionStartPoint.y + endPoint.y) / 2.0};
                 switch (this.creatingRegion.regionType) {
@@ -227,6 +237,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                         break;
                 }
             } else {
+                // center-to-corner region creation
                 switch (this.creatingRegion.regionType) {
                     case CARTA.RegionType.RECTANGLE:
                         this.creatingRegion.setControlPoints([this.regionStartPoint, {x: 2 * Math.abs(dx), y: 2 * Math.abs(dy)}]);

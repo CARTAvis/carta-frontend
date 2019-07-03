@@ -36,11 +36,9 @@ export class FrameStore {
     @observable regionSet: RegionSetStore;
 
     private readonly overlayStore: OverlayStore;
-    private readonly backendService: BackendService;
 
-    constructor(preference: PreferenceStore, overlay: OverlayStore, frameInfo: FrameInfo, backendService: BackendService) {
+    constructor(readonly preference: PreferenceStore, overlay: OverlayStore, frameInfo: FrameInfo, backendService: BackendService) {
         this.overlayStore = overlay;
-        this.backendService = backendService;
         this.frameInfo = frameInfo;
         this.renderHiDPI = true;
         this.center = {x: 0, y: 0};
@@ -49,7 +47,22 @@ export class FrameStore {
         this.requiredStokes = 0;
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore(preference);
-        this.regionSet = new RegionSetStore(this, backendService);
+
+        // synchornize AST overlay's color/grid/label with perference when frame is created
+        const astColor = preference.astColor;
+        if (astColor !== overlay.global.color) {
+            overlay.global.setColor(astColor);
+        }
+        const astGridVisible = preference.astGridVisible;
+        if (astGridVisible !== overlay.grid.visible) {
+            overlay.grid.setVisible(astGridVisible);
+        }
+        const astLabelsVisible = preference.astLabelsVisible;
+        if (astLabelsVisible !== overlay.labels.visible) {
+            overlay.labels.setVisible(astLabelsVisible);
+        }
+
+        this.regionSet = new RegionSetStore(this, preference.regionContainer, backendService);
         this.valid = true;
         this.currentFrameView = {
             xMin: 0,
@@ -59,6 +72,11 @@ export class FrameStore {
             mip: 999
         };
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
+
+        this.fitZoom();
+        if (preference.isZoomRAWMode) {
+            this.setZoom(1.0);
+        }
     }
 
     @computed get requiredFrameView(): FrameView {
@@ -79,16 +97,18 @@ export class FrameStore {
         const imageHeight = pixelRatio * this.renderHeight / this.zoomLevel;
 
         const mipExact = Math.max(1.0, 1.0 / this.zoomLevel);
-        const mipRounded = (mipExact % 1.0 < 0.25) ? Math.floor(mipExact) : Math.ceil(mipExact);
-
-        const requiredView = {
+        const mipLog2 = Math.log2(mipExact);
+        const mipLog2Rounded = Math.round(mipLog2);
+        const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
+        const frameView = {
             xMin: this.center.x - imageWidth / 2.0,
             xMax: this.center.x + imageWidth / 2.0,
             yMin: this.center.y - imageHeight / 2.0,
             yMax: this.center.y + imageHeight / 2.0,
-            mip: mipRounded
+            mip: mipRoundedPow2
         };
-        return requiredView;
+
+        return frameView;
     }
 
     @computed get renderWidth() {
@@ -303,7 +323,7 @@ export class FrameStore {
         if (rasterImageData.channelHistogramData) {
             // Update channel histograms
             if (rasterImageData.channelHistogramData.regionId === -1 && rasterImageData.channelHistogramData.histograms.length) {
-                this.renderConfig.updateChannelHistogram(rasterImageData.channelHistogramData.histograms[0] as CARTA.Histogram);
+                this.renderConfig.updateChannelHistogram(rasterImageData.channelHistogramData.histograms[0]);
             }
         }
 

@@ -3,7 +3,7 @@ import * as ReactDOM from "react-dom";
 import {FocusStyleManager} from "@blueprintjs/core";
 import {App} from "./App";
 import {AppStore} from "./stores";
-import registerServiceWorker from "./registerServiceWorker";
+import {unregister} from "./registerServiceWorker";
 import "./index.css";
 import "@blueprintjs/core/lib/css/blueprint.css";
 import "@blueprintjs/icons/lib/css/blueprint-icons.css";
@@ -36,4 +36,5 @@ ReactDOM.render(
     document.getElementById("root") as HTMLElement
 );
 
-registerServiceWorker();
+// remove service worker if it exists
+unregister();

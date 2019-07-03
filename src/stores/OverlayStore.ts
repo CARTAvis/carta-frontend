@@ -1,7 +1,10 @@
 import * as AST from "ast_wrapper";
 import {Colors} from "@blueprintjs/core";
 import {action, autorun, computed, observable} from "mobx";
-import {FrameStore} from "./FrameStore";
+import {FrameStore, PreferenceStore} from "stores";
+import {WCSType} from "models";
+
+const AST_DEFAULT_COLOR = 4; // blue
 
 export const dayPalette = [
     Colors.BLACK,        // 0
@@ -105,10 +108,10 @@ export class OverlayGlobalSettings {
         return this.system;
     }
 
-    constructor() {
+    constructor(readonly preferenceStore: PreferenceStore) {
         this.system = SystemType.Native;
         this.labelType = LabelType.Exterior;
-        this.color = 4;
+        this.color = preferenceStore.astColor;
         this.tolerance = 1; // percentage
 
         this.defaultSystem = SystemType.Native;
@@ -161,7 +164,7 @@ export class OverlayTitleSettings {
         this.visible = false;
         this.hidden = false;
         this.customColor = false;
-        this.color = 4;
+        this.color = AST_DEFAULT_COLOR;
         this.font = 2;
         this.fontSize = 18;
     }
@@ -214,10 +217,10 @@ export class OverlayGridSettings {
         return astString.toString();
     }
 
-    constructor() {
-        this.visible = true;
+    constructor(readonly preference: PreferenceStore) {
+        this.visible = preference.astGridVisible;
         this.customColor = false;
-        this.color = 4;
+        this.color = AST_DEFAULT_COLOR;
         this.width = 1;
         this.customGap = false;
         this.gapX = 0.2;
@@ -270,7 +273,7 @@ export class OverlayBorderSettings {
     constructor() {
         this.visible = true;
         this.customColor = false;
-        this.color = 4;
+        this.color = AST_DEFAULT_COLOR;
         this.width = 1;
     }
 
@@ -320,7 +323,7 @@ export class OverlayTickSettings {
         this.densityX = 4;
         this.densityY = 4;
         this.customColor = false;
-        this.color = 4;
+        this.color = AST_DEFAULT_COLOR;
         this.width = 1;
         this.length = 1; // percentage
         this.majorLength = 2; // percentage
@@ -372,7 +375,7 @@ export class OverlayAxisSettings {
     constructor() {
         this.visible = false;
         this.customColor = false;
-        this.color = 4;
+        this.color = AST_DEFAULT_COLOR;
         this.width = 1;
     }
 
@@ -429,7 +432,7 @@ export class OverlayNumberSettings {
         this.fontSize = 12;
         this.font = 0;
         this.customColor = false;
-        this.color = 4;
+        this.color = AST_DEFAULT_COLOR;
         this.customFormat = false;
         this.defaultFormatX = "d";
         this.defaultFormatY = "d";
@@ -562,13 +565,13 @@ export class OverlayLabelSettings {
     @observable font: number;
     @observable fontSize: number;
 
-    constructor() {
-        this.visible = true;
+    constructor(readonly preference: PreferenceStore) {
+        this.visible = preference.astLabelsVisible;
         this.hidden = false;
         this.fontSize = 15;
         this.font = 0;
         this.customColor = false;
-        this.color = 4;
+        this.color = AST_DEFAULT_COLOR;
     }
 
     @computed get styleString() {
@@ -612,6 +615,8 @@ export class OverlayLabelSettings {
 }
 
 export class OverlayStore {
+    private readonly preference: PreferenceStore;
+
     // View size options
     @observable viewWidth: number;
     @observable viewHeight: number;
@@ -637,20 +642,15 @@ export class OverlayStore {
         this.overlaySettingsDialogVisible = false;
     };
 
-    @observable overlaySettingsActiveTab = "global";
-
-    @action setOverlaySettingsActiveTab(tabId: string) {
-        this.overlaySettingsActiveTab = tabId;
-    }
-
-    constructor() {
-        this.global = new OverlayGlobalSettings();
+    constructor(preference: PreferenceStore) {
+        this.preference = preference;
+        this.global = new OverlayGlobalSettings(preference);
         this.title = new OverlayTitleSettings();
-        this.grid = new OverlayGridSettings();
+        this.grid = new OverlayGridSettings(preference);
         this.border = new OverlayBorderSettings();
         this.axes = new OverlayAxisSettings();
         this.numbers = new OverlayNumberSettings();
-        this.labels = new OverlayLabelSettings();
+        this.labels = new OverlayLabelSettings(preference);
         this.ticks = new OverlayTickSettings();
 
         // if the system is manually selected, set new default formats
@@ -666,13 +666,25 @@ export class OverlayStore {
             this.numbers.setDefaultFormatX(undefined);
             this.numbers.setDefaultFormatY(undefined);
         } else {
-            if ([SystemType.FK4, SystemType.FK5, SystemType.ICRS].indexOf(this.global.explicitSystem) > -1) {
-                this.numbers.setDefaultFormatX("hms");
-                this.numbers.setDefaultFormatY("dms");
-            } else {
-                // Fall back to degrees by default
-                this.numbers.setDefaultFormatX("d");
-                this.numbers.setDefaultFormatY("d");
+            switch (this.preference.wcsType) {
+                case WCSType.DEGREES:
+                    this.numbers.setDefaultFormatX("d");
+                    this.numbers.setDefaultFormatY("d");
+                    break;
+                case WCSType.SEXIGESIMAL:
+                    this.numbers.setDefaultFormatX("hms");
+                    this.numbers.setDefaultFormatY("dms");
+                    break;
+                case WCSType.AUTOMATIC: default:
+                    if ([SystemType.FK4, SystemType.FK5, SystemType.ICRS].indexOf(this.global.explicitSystem) > -1) {
+                        this.numbers.setDefaultFormatX("hms");
+                        this.numbers.setDefaultFormatY("dms");
+                    } else {
+                        // Fall back to degrees by default
+                        this.numbers.setDefaultFormatX("d");
+                        this.numbers.setDefaultFormatY("d");
+                    }
+                    break;
             }
         }
 

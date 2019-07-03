@@ -50,14 +50,16 @@ export class RenderConfigStore {
         "reds", "seismic", "spectral", "tab10", "viridis"
     ];
 
+    static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
+
     @observable scaling: FrameScaling;
     @observable colorMap: number;
     @observable contrast: number;
     @observable bias: number;
     @observable gamma: number;
     @observable alpha: number;
-    @observable channelHistogram: CARTA.Histogram;
-    @observable cubeHistogram: CARTA.Histogram;
+    @observable channelHistogram: CARTA.IHistogram;
+    @observable cubeHistogram: CARTA.IHistogram;
     @observable useCubeHistogram: boolean;
     @observable cubeHistogramProgress: number;
     @observable selectedPercentile: number[];
@@ -65,21 +67,34 @@ export class RenderConfigStore {
     @observable scaleMin: number[];    
     @observable scaleMax: number[];
     
-    constructor(preference: PreferenceStore) {
-        this.selectedPercentile = [99.9, 99.9, 99.9, 99.9];
+    constructor(readonly preference: PreferenceStore) {
+        const percentile = preference.percentile;
+        this.selectedPercentile = [percentile, percentile, percentile, percentile];
         this.bias = 0;
         this.contrast = 1;
         this.gamma = 1;
         this.alpha = 1000;
-        this.scaling = preference.getScaling();
+        this.scaling = preference.scaling;
         this.cubeHistogramProgress = 0;
-        this.setColorMap("inferno");
+        this.setColorMap(preference.colormap);
         this.stokes = 0;	
         this.scaleMin = [0, 0, 0, 0];
         this.scaleMax = [1, 1, 1, 1];
     }
 
-   @computed get colorMapName() {
+    public static IsScalingValid(scaling: FrameScaling): boolean {
+        return RenderConfigStore.SCALING_TYPES.has(scaling) ? true : false;
+    }
+
+     public static IsColormapValid(colormap: string): boolean {
+        return RenderConfigStore.COLOR_MAPS_SELECTED.includes(colormap) ? true : false;
+    }
+
+     public static IsPercentileValid(percentile: number): boolean {
+        return RenderConfigStore.PERCENTILE_RANKS.includes(percentile) ? true : false;
+    }
+
+    @computed get colorMapName() {
         if (this.colorMap >= 0 && this.colorMap <= RenderConfigStore.COLOR_MAPS_ALL.length - 1) {
             return RenderConfigStore.COLOR_MAPS_ALL[this.colorMap];
         } else {
@@ -167,14 +182,14 @@ export class RenderConfigStore {
         }
     };
 
-    @action updateChannelHistogram = (histogram: CARTA.Histogram) => {
+    @action updateChannelHistogram = (histogram: CARTA.IHistogram) => {
         this.channelHistogram = histogram;
         if (this.selectedPercentile[this.stokes] > 0 && !this.useCubeHistogram) {
             this.setPercentileRank(this.selectedPercentile[this.stokes]);
         }
     };
 
-    @action updateCubeHistogram = (histogram: CARTA.Histogram, progress: number) => {
+    @action updateCubeHistogram = (histogram: CARTA.IHistogram, progress: number) => {
         this.cubeHistogram = histogram;
         this.cubeHistogramProgress = progress;
         if (this.selectedPercentile[this.stokes] > 0 && this.useCubeHistogram) {
