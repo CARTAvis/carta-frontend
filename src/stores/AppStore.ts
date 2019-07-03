@@ -390,7 +390,7 @@ export class AppStore {
         this.overlayStore = new OverlayStore(this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this);
         this.urlConnectDialogVisible = false;
-        this.compressionQuality = 11;
+        this.compressionQuality = this.preferenceStore.imageCompressionQuality;
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         this.statsRequirements = new Map<number, Array<number>>();
         this.histogramRequirements = new Map<number, Array<number>>();

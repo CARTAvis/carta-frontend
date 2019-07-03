@@ -2,7 +2,7 @@ import {observable, computed, action, autorun} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
-import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode} from "models";
+import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache} from "models";
 import { AppStore } from "./AppStore";
 
 const PREFERENCE_KEYS = {
@@ -22,7 +22,11 @@ const PREFERENCE_KEYS = {
     regionLineWidth: "CARTA_regionLineWidth",
     regionDashLength: "CARTA_regionDashLength",
     regionType: "CARTA_regionType",
-    regionCreationMode: "CARTA_regionCreationMode"
+    regionCreationMode: "CARTA_regionCreationMode",
+    imageCompressionQuality: "CARTA_imageCompressionQuality",
+    animationCompressionQuality: "CARTA_animationCompressionQuality",
+    GPUTileCache: "CARTA_GPUTileCache",
+    systemTileCache: "CARTA_systemTileCache"
 };
 
 const DEFAULTS = {
@@ -42,7 +46,11 @@ const DEFAULTS = {
     regionLineWidth: 2,
     regionDashLength: 0,
     regionType: CARTA.RegionType.RECTANGLE,
-    regionCreationMode: RegionCreationMode.CENTER
+    regionCreationMode: RegionCreationMode.CENTER,
+    imageCompressionQuality: CompressionQuality.IMAGE_DEFAULT,
+    animationCompressionQuality: CompressionQuality.ANIMATION_DEFAULT,
+    GPUTileCache: TileCache.GPU_DEFAULT,
+    systemTileCache: TileCache.SYSTEM_DEFAULT
 };
 
 export class PreferenceStore {
@@ -62,6 +70,10 @@ export class PreferenceStore {
     @observable wcsType: string;
     @observable regionContainer: RegionStore;
     @observable regionCreationMode: string;
+    @observable imageCompressionQuality: number;
+    @observable animationCompressionQuality: number;
+    @observable GPUTileCache: number;
+    @observable systemTileCache: number;
 
     // getters for global settings
     private getTheme = (): string => {
@@ -180,6 +192,47 @@ export class PreferenceStore {
         const regionCreationMode = localStorage.getItem(PREFERENCE_KEYS.regionCreationMode);
         return regionCreationMode && RegionCreationMode.isValid(regionCreationMode) ? regionCreationMode : DEFAULTS.regionCreationMode;
     }
+
+    // getters for render quality
+    private getImageCompressionQuality = (): number => {
+        const imageCompressionQuality = localStorage.getItem(PREFERENCE_KEYS.imageCompressionQuality);
+        if (!imageCompressionQuality) {
+            return DEFAULTS.imageCompressionQuality;
+        }
+
+        const value = Number(imageCompressionQuality);
+        return isFinite(value) && CompressionQuality.isImageCompressionQualityValid(value) ? value : DEFAULTS.imageCompressionQuality;
+    };
+
+    private getAnimationCompressionQuality = (): number => {
+        const animationCompressionQuality = localStorage.getItem(PREFERENCE_KEYS.animationCompressionQuality);
+        if (!animationCompressionQuality) {
+            return DEFAULTS.animationCompressionQuality;
+        }
+
+        const value = Number(animationCompressionQuality);
+        return isFinite(value) && CompressionQuality.isAnimationCompressionQualityValid(value) ? value : DEFAULTS.animationCompressionQuality;
+    };
+
+    private getGPUTileCache = (): number => {
+        const GPUTileCache = localStorage.getItem(PREFERENCE_KEYS.GPUTileCache);
+        if (!GPUTileCache) {
+            return DEFAULTS.GPUTileCache;
+        }
+
+        const value = Number(GPUTileCache);
+        return isFinite(value) && TileCache.isGPUTileCacheValid(value) ? value : DEFAULTS.GPUTileCache;
+    };
+
+    private getSystemTileCache = (): number => {
+        const systemTileCache = localStorage.getItem(PREFERENCE_KEYS.systemTileCache);
+        if (!systemTileCache) {
+            return DEFAULTS.systemTileCache;
+        }
+
+        const value = Number(systemTileCache);
+        return isFinite(value) && TileCache.isSystemTileCacheValid(value) ? value : DEFAULTS.systemTileCache;
+    };
     
     // getters for boolean(convenient)
     @computed get isDarkTheme(): boolean {
@@ -276,6 +329,28 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.regionCreationMode, regionCreationMode);
     };
 
+    // setters for render quality
+    @action setImageCompressionQuality = (imageCompressionQuality: number) => {
+        this.appStore.compressionQuality = imageCompressionQuality;
+        this.imageCompressionQuality = imageCompressionQuality;
+        localStorage.setItem(PREFERENCE_KEYS.imageCompressionQuality, imageCompressionQuality.toString(10));
+    };
+
+     @action setAnimationCompressionQuality = (animationCompressionQuality: number) => {
+        this.animationCompressionQuality = animationCompressionQuality;
+        localStorage.setItem(PREFERENCE_KEYS.animationCompressionQuality, animationCompressionQuality.toString(10));
+    };
+
+     @action setGPUTileCache = (GPUTileCache: number) => {
+        this.GPUTileCache = GPUTileCache;
+        localStorage.setItem(PREFERENCE_KEYS.GPUTileCache, GPUTileCache.toString(10));
+    };
+
+     @action setSystemTileCache = (systemTileCache: number) => {
+        this.systemTileCache = systemTileCache;
+        localStorage.setItem(PREFERENCE_KEYS.systemTileCache, systemTileCache.toString(10));
+    };
+
     // reset functions
     @action resetGlobalSettings = () => {
         this.setTheme(DEFAULTS.theme);
@@ -306,6 +381,13 @@ export class PreferenceStore {
         this.setRegionCreationMode(DEFAULTS.regionCreationMode);
     };
 
+    @action resetRenderQualitySettings = () => {
+        this.setImageCompressionQuality(DEFAULTS.imageCompressionQuality);
+        this.setAnimationCompressionQuality(DEFAULTS.animationCompressionQuality);
+        this.setGPUTileCache(DEFAULTS.GPUTileCache);
+        this.setSystemTileCache(DEFAULTS.systemTileCache);
+    };
+
     constructor(appStore: AppStore) {
         this.appStore = appStore;
         this.theme = this.getTheme();
@@ -321,6 +403,10 @@ export class PreferenceStore {
         this.astLabelsVisible = this.getASTLabelsVisible();
         this.wcsType = this.getWCSType();
         this.regionCreationMode = this.getRegionCreationMode();
+        this.imageCompressionQuality = this.getImageCompressionQuality();
+        this.animationCompressionQuality = this.getAnimationCompressionQuality();
+        this.GPUTileCache = this.getGPUTileCache();
+        this.systemTileCache = this.getSystemTileCache();
 
         // setup region settings container (for AppearanceForm in PreferenceDialogComponent)
         this.regionContainer = new RegionStore(null, -1, [{x: 0, y: 0}, {x: 1, y: 1}], this.getRegionType(), -1);

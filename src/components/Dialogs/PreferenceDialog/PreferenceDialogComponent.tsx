@@ -1,15 +1,16 @@
 import * as React from "react";
+import * as _ from "lodash";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {CARTA} from "carta-protobuf";
-import {Button, IDialogProps, Intent, Tab, Tabs, FormGroup, TabId, MenuItem, Switch, RadioGroup, Radio, HTMLSelect, AnchorButton} from "@blueprintjs/core";
+import {Button, IDialogProps, Intent, Tab, Tabs, FormGroup, TabId, MenuItem, Switch, RadioGroup, Radio, HTMLSelect, AnchorButton, NumericInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/ScalingComponent";
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {AppearanceForm} from "components/Dialogs/RegionDialog/AppearanceForm/AppearanceForm";
-import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode} from "models";
+import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache} from "models";
 import {AppStore, RenderConfigStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
@@ -17,7 +18,8 @@ enum TABS {
     GLOBAL,
     RENDER_CONFIG,
     WCS_OVERLAY,
-    REGION
+    REGION,
+    RENDER_QUALITY
 }
 
 const PercentileSelect = Select.ofType<string>();
@@ -26,9 +28,25 @@ const PercentileSelect = Select.ofType<string>();
 export class PreferenceDialogComponent extends React.Component<{ appStore: AppStore }> {
     @observable selectedTab: TabId = TABS.GLOBAL;
 
-    renderPercentileSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
+    private renderPercentileSelectItem = (percentile: string, {handleClick, modifiers, query}) => {
         return <MenuItem text={percentile + "%"} onClick={handleClick} key={percentile}/>;
     };
+
+    private handleImageCompressionQualityChange = _.throttle((value: number) => {
+        this.props.appStore.preferenceStore.setImageCompressionQuality(value);
+    }, 100);
+
+    private handleAnimationCompressionQualityChange = _.throttle((value: number) => {
+        this.props.appStore.preferenceStore.setAnimationCompressionQuality(value);
+    }, 100);
+
+    private handleGPUTileCacheChange = _.throttle((value: number) => {
+        this.props.appStore.preferenceStore.setGPUTileCache(value);
+    }, 100);
+
+    private handleSystemTileCacheChange = _.throttle((value: number) => {
+        this.props.appStore.preferenceStore.setSystemTileCache(value);
+    }, 100);
 
     private reset = () => {
         const preference = this.props.appStore.preferenceStore;
@@ -42,6 +60,9 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             case TABS.REGION:
                 preference.resetRegionSettings();
                 break;
+            case TABS.RENDER_QUALITY:
+                    preference.resetRenderQualitySettings();
+                    break;
             case TABS.GLOBAL: default:
                 preference.resetGlobalSettings();
                 break;
@@ -105,13 +126,13 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         onItemSelect={(selected) => { preference.setScaling(selected); }}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Color map">
+                <FormGroup inline={true} label="Color Map">
                     <ColormapComponent
                         selectedItem={preference.colormap}
                         onItemSelect={(selected) => { preference.setColormap(selected); }}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Percentile ranks">
+                <FormGroup inline={true} label="Percentile Ranks">
                     <PercentileSelect
                         activeItem={preference.percentile.toString(10)}
                         onItemSelect={(selected) => { preference.setPercentile(selected); }}
@@ -134,13 +155,13 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         onItemSelect={(selected) => { preference.setASTColor(selected); }}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Grid visible">
+                <FormGroup inline={true} label="Grid Visible">
                     <Switch
                         checked={preference.astGridVisible}
                         onChange={(ev) => { preference.setASTGridVisible(ev.currentTarget.checked); }}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Label visible">
+                <FormGroup inline={true} label="Label Visible">
                     <Switch
                         checked={preference.astLabelsVisible}
                         onChange={(ev) => { preference.setASTLabelsVisible(ev.currentTarget.checked); }}
@@ -180,6 +201,53 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             </React.Fragment>
         );
 
+        const renderQualityPanel = (
+            <React.Fragment>
+                <FormGroup inline={true} label="Compression Quality" labelInfo={"(Images)"}>
+                    <NumericInput
+                        placeholder="Compression Quality"
+                        min={CompressionQuality.IMAGE_MIN}
+                        max={CompressionQuality.IMAGE_MAX}
+                        value={preference.imageCompressionQuality}
+                        stepSize={CompressionQuality.IMAGE_STEP}
+                        onValueChange={this.handleImageCompressionQualityChange}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Compression Quality" labelInfo={"(Animation)"}>
+                    <NumericInput
+                        placeholder="Compression Quality"
+                        min={CompressionQuality.ANIMATION_MIN}
+                        max={CompressionQuality.ANIMATION_MAX}
+                        value={preference.animationCompressionQuality}
+                        stepSize={CompressionQuality.ANIMATION_STEP}
+                        onValueChange={this.handleAnimationCompressionQualityChange}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="GPU Tile Cache Size">
+                    <NumericInput
+                        placeholder="GPU Tile Cache Size"
+                        min={TileCache.GPU_MIN}
+                        max={TileCache.GPU_MAX}
+                        value={preference.GPUTileCache}
+                        majorStepSize={TileCache.GPU_STEP}
+                        stepSize={TileCache.GPU_STEP}
+                        onValueChange={this.handleGPUTileCacheChange}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="System Tile Cache Size">
+                    <NumericInput
+                        placeholder="System Tile Cache Size"
+                        min={TileCache.SYSTEM_MIN}
+                        max={TileCache.SYSTEM_MAX}
+                        value={preference.systemTileCache}
+                        majorStepSize={TileCache.SYSTEM_STEP}
+                        stepSize={TileCache.SYSTEM_STEP}
+                        onValueChange={this.handleSystemTileCacheChange}
+                    />
+                </FormGroup>
+            </React.Fragment>
+        );
+
         let className = "preference-dialog";
         if (appStore.darkTheme) {
             className += " bp3-dark";
@@ -209,6 +277,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         <Tab id={TABS.RENDER_CONFIG} title="Default Render Config" panel={renderConfigPanel}/>
                         <Tab id={TABS.WCS_OVERLAY} title="Default WCS Overlay" panel={wcsOverlayPanel}/>
                         <Tab id={TABS.REGION} title="Default Region settings" panel={regionSettingsPanel}/>
+                        <Tab id={TABS.RENDER_QUALITY} title="Rendering Quality" panel={renderQualityPanel}/>
                     </Tabs>
                 </div>
                 <div className="bp3-dialog-footer">
