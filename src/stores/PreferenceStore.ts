@@ -32,7 +32,7 @@ const PREFERENCE_KEYS = {
 const DEFAULTS = {
     theme: Theme.LIGHT,
     autoLaunch: true,
-    layout: Layout.CUBEVIEW,
+    layout: Layout.DEFAULT,
     cursorPosition: CursorPosition.TRACKING,
     zoomMode: Zoom.FIT,
     scaling: FrameScaling.LINEAR,
