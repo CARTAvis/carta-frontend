@@ -7,3 +7,4 @@ export * from "./URLConnect/URLConnectDialogComponent";
 export * from "./RegionDialog/RegionDialogComponent";
 export * from "./ApiKeyDialog/ApiKeyDialogComponent";
 export * from "./PreferenceDialog/PreferenceDialogComponent";
+export * from "./LayoutDialog/SaveLayoutDialogComponent";

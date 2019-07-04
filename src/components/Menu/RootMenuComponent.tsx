@@ -84,14 +84,14 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         const layoutMenu = (
             <Menu>
                 <Menu.Item text="Layouts" icon={"layout-grid"}>
-                    <Menu.Item text="User Layouts" disabled={userLayouts ? false : true}>
+                    <Menu.Item text="User Layouts" disabled={userLayouts === null}>
                         {userLayouts}
                     </Menu.Item>
-                    <Menu.Item text="Presets">
+                    <Menu.Item text="Presets" disabled={presetLayouts === null}>
                         {presetLayouts}
                     </Menu.Item>
-                    <Menu.Item text="Save Layout"/>
-                    <Menu.Item text="Delete Layout"/>
+                    <Menu.Item text="Save Layout" onClick={appStore.showSaveLayoutDialog}/>
+                    <Menu.Item text="Delete Layout" onClick={appStore.showDeleteLayoutDialog}/>
                 </Menu.Item>
                 <Menu.Item text="Info Panels" icon={"info-sign"}>
                     <Menu.Item text="Region List" onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>

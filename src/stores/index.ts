@@ -12,3 +12,4 @@ export * from "./WidgetsStore";
 export * from "./RegionStore";
 export * from "./RegionSetStore";
 export * from "./PreferenceStore";
+export * from "./LayoutStore";

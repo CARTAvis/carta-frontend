@@ -6,7 +6,7 @@ import {
     AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore,
     FrameInfo, FrameStore, LogEntry, LogStore, nightPalette,
     OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore,
-    PreferenceStore, AnimationMode
+    PreferenceStore, LayoutStore, AnimationMode
 } from ".";
 import {GetRequiredTiles} from "utilities";
 import {BackendService, TileService} from "services";
@@ -38,6 +38,8 @@ export class AppStore {
     @observable logStore: LogStore;
     // User preference
     @observable preferenceStore: PreferenceStore;
+    // Layouts
+    @observable layoutStore: LayoutStore;
 
     // Cursor information
     @observable cursorInfo: CursorInfo;
@@ -129,6 +131,22 @@ export class AppStore {
     };
     @action hidePreferenceDialog = () => {
         this.preferenceDialogVisible = false;
+    };
+
+    // Layout related dialogs
+    @observable saveLayoutDialogVisible: boolean;
+    @observable deleteLayoutDialogVisible: boolean;
+    @action showSaveLayoutDialog = () => {
+        this.saveLayoutDialogVisible = true;
+    };
+    @action hideSaveLayoutDialog = () => {
+        this.saveLayoutDialogVisible = false;
+    };
+    @action showDeleteLayoutDialog = () => {
+        this.deleteLayoutDialogVisible = true;
+    };
+    @action hideDeleteLayoutDialog = () => {
+        this.deleteLayoutDialogVisible = false;
     };
 
     // Tasks
@@ -374,6 +392,7 @@ export class AppStore {
         }
 
         this.preferenceStore = new PreferenceStore(this);
+        this.layoutStore = new LayoutStore();
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore);
         this.tileService = new TileService(this.backendService, 4, this.preferenceStore.GPUTileCache, this.preferenceStore.systemTileCache);
