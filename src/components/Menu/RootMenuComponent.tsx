@@ -78,8 +78,21 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
             </Menu>
         );
 
-        const panelMenu = (
+        let userLayouts = null;
+        let presetLayouts = null;
+
+        const layoutMenu = (
             <Menu>
+                <Menu.Item text="Layouts" icon={"layout-grid"}>
+                    <Menu.Item text="User Layouts" disabled={userLayouts ? false : true}>
+                        {userLayouts}
+                    </Menu.Item>
+                    <Menu.Item text="Presets">
+                        {presetLayouts}
+                    </Menu.Item>
+                    <Menu.Item text="Save Layout"/>
+                    <Menu.Item text="Delete Layout"/>
+                </Menu.Item>
                 <Menu.Item text="Info Panels" icon={"info-sign"}>
                     <Menu.Item text="Region List" onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
                     <Menu.Item text="Program Log" onClick={appStore.widgetsStore.createFloatingLogWidget}/>
@@ -140,7 +153,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                         <Menu.Item text="View"/>
                     </Menu>
                 </Popover>
-                <Popover autoFocus={false} minimal={true} content={panelMenu} position={Position.BOTTOM_LEFT}>
+                <Popover autoFocus={false} minimal={true} content={layoutMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="root-menu-entry">
                         <Menu.Item text="Layout"/>
                     </Menu>
