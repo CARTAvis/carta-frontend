@@ -13,7 +13,7 @@ import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp} from "utilities";
 import "./SpectralProfilerComponent.css";
-import {checkIfStateModificationsAreAllowed} from "mobx/lib/internal";
+import {StokesCoordinate, StokesCoordinateLabel} from "stores/widgets/SpectralProfileWidgetStore";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 180;
@@ -33,7 +33,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         };
     }
 
-    // Qi, required type for PI, PA, Q+U and Q Vs U
+    // required type for PI, PA, Q+U and Q Vs U
     private QUCoordinates = ["Qz", "Uz"];
 
     @observable width: number;
@@ -66,44 +66,41 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return 20 + (this.widgetStore.settingsPanelVisible ? PANEL_CONTENT_WIDTH : 0);
     }
 
-    // Qi, calculate PA according datas
-    private calculatePA(datas: Array<any>): Array<number> {
+    // calculate PA according datas
+    private static calculatePA(profiles: Array<CARTA.ISpectralProfile>): Array<number> {
         let vals = [];
-        if (datas[0] && datas[1] && datas.length === 2 && datas[0].length === datas[1].length) {
-            for (let i = 0; i < datas[0].vals.length; i++) {
-                vals[i] = Math.atan(datas[1].vals[i] / datas[0].vals[i]);
+        if (profiles[0] && profiles[1] && profiles.length === 2 && profiles[0].vals.length === profiles[1].vals.length) {
+            for (let i = 0; i < profiles[0].vals.length; i++) {
+                vals[i] = Math.atan(profiles[1].vals[i] / profiles[0].vals[i]);
             }
         }
         return vals;
     }
 
-    // Qi, calculate PI according datas
-    private calculatePI(datas: Array<any>): Array<number> {
+    // calculate PI according datas
+    private static calculatePI(profiles: Array<CARTA.ISpectralProfile>): Array<number> {
         let vals = [];
-        if (datas[0] && datas[1] && datas.length === 2 && datas[0].length === datas[1].length) {
-            for (let i = 0; i < datas[0].vals.length; i++) {
-                vals[i] = Math.sqrt(Math.pow(datas[0].vals[i], 2) + Math.pow(datas[1].vals[i], 2));
+        if (profiles[0] && profiles[1] && profiles.length === 2 && profiles[0].vals.length === profiles[1].vals.length) {
+            for (let i = 0; i < profiles[0].vals.length; i++) {
+                vals[i] = Math.sqrt(Math.pow(profiles[0].vals[i], 2) + Math.pow(profiles[1].vals[i], 2));
             }
         }
         return vals;
     }
 
-    // Qi, return PI, PA data for ploting
-    private calculate(coordinate: string, statsType: CARTA.StatsType): CARTA.ISpectralProfile {
+    // return PI, PA data for ploting
+    private calculateCompositeProfile(coordinate: string, statsType: CARTA.StatsType): CARTA.ISpectralProfile {
         let coordinateData: CARTA.ISpectralProfile;
-        if (coordinate === "PIz" || coordinate === "PAz") {
+        if (coordinate === StokesCoordinate.PolarizedIntensity || coordinate === StokesCoordinate.PolarizationAngle) {
             let dataSource = this.profileStore.getProfiles(this.QUCoordinates, statsType);
             let data = [];
-            if (coordinate === "PAz") {
-                data = this.calculatePA(dataSource);
-            } else if (coordinate === "PIz") {
-                data = this.calculatePI(dataSource);
+            if (coordinate === StokesCoordinate.PolarizationAngle) {
+                data = SpectralProfilerComponent.calculatePA(dataSource);
+            } else if (coordinate === StokesCoordinate.PolarizedIntensity) {
+                data = SpectralProfilerComponent.calculatePI(dataSource);
             }
             coordinateData = {...dataSource[0]};
-            coordinateData.vals = [];
-            if (data) {
-                coordinateData.vals = [...data];
-            }
+            coordinateData.vals = data;
         } else {
             coordinateData = this.profileStore.getProfile(this.widgetStore.coordinate, statsType);
         }
@@ -122,8 +119,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (frame.regionSet) {
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (region) {
-                // Qi, calculate PI or PA if coordinate is PI or PA
-                coordinateData = this.calculate(this.widgetStore.coordinate, region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.Sum);
+                // calculate PI or PA if coordinate is PI or PA
+                coordinateData = this.calculateCompositeProfile(this.widgetStore.coordinate, region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.Sum);
             }
         }
 
@@ -244,6 +241,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     let coordinateString: string;
                     if (coordinate.length === 2) {
                         coordinateString = `Z Profile (Stokes ${coordinate[0]})`;
+                    } else if (coordinate === StokesCoordinate.PolarizedIntensity) {
+                        coordinateString = `Z Profile (Stokes ${StokesCoordinateLabel.PolarizedIntensityLabel})`;
+                    } else if (coordinate === StokesCoordinate.PolarizationAngle) {
+                        coordinateString = `Z Profile (Stokes ${StokesCoordinateLabel.PolarizationAngleLabel})`;
                     } else {
                         coordinateString = `Z Profile`;
                     }
@@ -362,6 +363,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (this.profileStore && frame) {
             if (frame.unit) {
                 linePlotProps.yLabel = `Value (${frame.unit})`;
+            }
+
+            if (this.widgetStore.coordinate === StokesCoordinate.PolarizationAngle) {
+                linePlotProps.yLabel = `Value (Rad)`;
             }
             const currentPlotData = this.plotData;
             if (currentPlotData) {

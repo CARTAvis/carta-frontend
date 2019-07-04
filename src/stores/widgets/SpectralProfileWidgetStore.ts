@@ -4,6 +4,26 @@ import {PlotType} from "components/Shared";
 import {RegionWidgetStore} from "./RegionWidgetStore";
 import {FrameStore} from "../FrameStore";
 
+export enum StokesCoordinate {
+    CurrentZ = "z",
+    TotalIntensity = "Iz",
+    LinearPolarizationQ = "Qz",
+    LinearPolarizationU = "Uz",
+    CircularPolarization = "Vz",
+    PolarizedIntensity = "PIz",
+    PolarizationAngle = "PAz"
+}
+
+export enum StokesCoordinateLabel {
+    CurrentZLabel = "Current",
+    TotalIntensityLabel = "I",
+    LinearPolarizationQLabel = "Q",
+    LinearPolarizationULabel = "U",
+    CircularPolarizationLabel = "V",
+    PolarizedIntensityLabel = "Pol. Intensity",
+    PolarizationAngleLabel = "Pol. Angle"
+}
+
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
     @observable statsType: CARTA.StatsType;
@@ -40,16 +60,16 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     }
 
-    // Qi, add new stoke valid type PI, PA, Qz+Uz, QzVsUz
-    private static ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz", "PIz", "PAz"];
+    // add new stoke valid type PI, PA, Qz+Uz, QzVsUz
+    private static ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz", "PIz", "PAz", "Qz+Uz"];
     private static ValidMultiDataCoordinates = ["PIz", "PAz"];
 
-    // Qi, return regionRequirements spectralProfiles coordinate array
-    private static requiredCoordinate(coordinate: string): Array<string> {
+    // return regionRequirements spectralProfiles coordinate array
+    private static requiredCoordinate(coordinate: string): Array<StokesCoordinate> {
         let requiredCoordinate = [];
         if (this.ValidMultiDataCoordinates.indexOf(coordinate) !== -1) {
-            requiredCoordinate.push("Qz");
-            requiredCoordinate.push("Uz");
+            requiredCoordinate.push(StokesCoordinate.LinearPolarizationQ);
+            requiredCoordinate.push(StokesCoordinate.LinearPolarizationU);
         } else {
             requiredCoordinate.push(coordinate);
         }
@@ -207,14 +227,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 let spectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === coordinate);
                 if (!spectralConfig) {
                     // create new spectral config
-                    // Qi, creaet new spectral config according coordinate
+                    // creaet new spectral config according coordinate
                     this.requiredCoordinate(coordinate).forEach(data => {
                         regionRequirements.spectralProfiles.push({coordinate: data, statsTypes: [statsType]});
                     });
                 } else if (spectralConfig.statsTypes.indexOf(statsType) === -1) {
                     // add to the stats type array
                     spectralConfig.statsTypes.push(statsType);
-                }
+                }  
             }
         });
 
@@ -262,7 +282,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                         // Deep equality comparison with sorted arrays
                         const configCount = regionRequirements.spectralProfiles ? regionRequirements.spectralProfiles.length : 0;
                         const updatedConfigCount = updatedRegionRequirements.spectralProfiles ? updatedRegionRequirements.spectralProfiles.length : 0;
-
                         if (configCount !== updatedConfigCount) {
                             diffList.push(updatedRegionRequirements);
                             return;

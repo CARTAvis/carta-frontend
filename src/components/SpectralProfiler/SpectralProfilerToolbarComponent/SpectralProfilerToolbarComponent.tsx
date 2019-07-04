@@ -5,6 +5,7 @@ import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import "./SpectralProfilerToolbarComponent.css";
+import {StokesCoordinate, StokesCoordinateLabel} from "stores/widgets/SpectralProfileWidgetStore";
 
 @observer
 export class SpectralProfilerToolbarComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore, appStore: AppStore}> {
@@ -20,7 +21,12 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
     };
 
     private handleCoordinateChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        this.props.widgetStore.setCoordinate(changeEvent.target.value);
+        let targetValue = changeEvent.target.value;
+        this.props.widgetStore.setCoordinate(targetValue);
+        // set stats back to "Mean", if stokes is PI or PA
+        if (targetValue === StokesCoordinate.PolarizedIntensity || targetValue === StokesCoordinate.PolarizationAngle) {
+            this.props.widgetStore.setStatsType(CARTA.StatsType.Mean);
+        }
     };
 
     public render() {
@@ -44,20 +50,25 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
             });
 
             const selectedRegion = appStore.activeFrame.regionSet.regions.find(r => r.regionId === regionId);
-            enableStatsSelect = (selectedRegion && selectedRegion.isClosedRegion);
+            // Disable stats change for PI and PA
+            enableStatsSelect = (
+                selectedRegion && selectedRegion.isClosedRegion 
+                && widgetStore.coordinate !== StokesCoordinate.PolarizedIntensity 
+                && widgetStore.coordinate !== StokesCoordinate.PolarizationAngle
+            );
             enableRegionSelect = profileRegionOptions.length > 1;
             enableStokesSelect = appStore.activeFrame.frameInfo.fileInfoExtended.stokes > 1;
         }
 
-        // Qi, add new stoket plot type PA, PI, Q+U (multiple lines), Q vs U (Scatter plot)
+        // add new stoket plot type PA, PI, Q+U (multiple lines), Q vs U (Scatter plot)
         const profileCoordinateOptions = [
-            {value: "z", label: "Current"},
-            {value: "Iz", label: "I"},
-            {value: "Qz", label: "Q"},
-            {value: "Uz", label: "U"},
-            {value: "Vz", label: "V"},
-            {value: "PIz", label: "PI"},
-            {value: "PAz", label: "PA"},
+            {value: StokesCoordinate.CurrentZ, label: StokesCoordinateLabel.CurrentZLabel},
+            {value: StokesCoordinate.TotalIntensity, label: StokesCoordinateLabel.TotalIntensityLabel},
+            {value: StokesCoordinate.LinearPolarizationQ, label: StokesCoordinateLabel.LinearPolarizationQLabel},
+            {value: StokesCoordinate.LinearPolarizationU, label: StokesCoordinateLabel.LinearPolarizationULabel},
+            {value: StokesCoordinate.CircularPolarization, label: StokesCoordinateLabel.CircularPolarizationLabel},
+            {value: StokesCoordinate.PolarizedIntensity, label: StokesCoordinateLabel.PolarizedIntensityLabel},
+            {value: StokesCoordinate.PolarizationAngle, label: StokesCoordinateLabel.PolarizationAngleLabel},
         ];
 
         const profileStatsOptions: IOptionProps[] = [

@@ -23,7 +23,7 @@ export class SpectralProfileStore {
         return null;
     }
 
-    // Qi, return profile array accofing coordinate array
+    // return profile array accofing coordinate array
     getProfiles(coordinates: Array<string>, statsType: CARTA.StatsType): Array<CARTA.ISpectralProfile> {
         let profiles = [];
         coordinates.forEach(dataType => {
