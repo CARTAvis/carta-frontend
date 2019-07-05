@@ -3,7 +3,6 @@ import {CARTA} from "carta-protobuf";
 import {PlotType} from "components/Shared";
 import {RegionWidgetStore} from "./RegionWidgetStore";
 import {FrameStore} from "../FrameStore";
-import {object} from "prop-types";
 
 export enum StokesCoordinate {
     CurrentZ = "z",
@@ -39,6 +38,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable meanRmsVisible: boolean;
     @observable useWcsValues: boolean;
     @observable markerTextVisible: boolean;
+    @observable fractionalPolVisible: boolean;
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
@@ -74,13 +74,17 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     private static ValidMultiDataCoordinates = [StokesCoordinate.PolarizedIntensity, StokesCoordinate.PolarizationAngle];
 
     // return regionRequirements spectralProfiles coordinate array
-    private static requiredCoordinate(coordinate: StokesCoordinate): Array<StokesCoordinate> {
+    private static requiredCoordinate(coordinate: StokesCoordinate, widgetStore: SpectralProfileWidgetStore): Array<StokesCoordinate> {
         let requiredCoordinate = [];
         if (this.ValidMultiDataCoordinates.indexOf(coordinate) !== -1) {
             requiredCoordinate.push(StokesCoordinate.LinearPolarizationQ);
             requiredCoordinate.push(StokesCoordinate.LinearPolarizationU);
         } else {
             requiredCoordinate.push(coordinate);
+        }
+
+        if (widgetStore.fractionalPolVisible) {
+            requiredCoordinate.push(StokesCoordinate.TotalIntensity);
         }
         return requiredCoordinate;
     }
@@ -178,6 +182,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.cursorX = cursorVal;
     };
 
+    @action setFractionalPolVisible = (val: boolean) => {
+        this.fractionalPolVisible = val;
+    };
+
     constructor(coordinate: string = "z") {
         super();
         this.coordinate = coordinate;
@@ -189,6 +197,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.meanRmsVisible = false;
         this.markerTextVisible = false;
         this.useWcsValues = true;
+        this.fractionalPolVisible = false;
     }
 
     @computed get isAutoScaledX() {
@@ -234,8 +243,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 }
 
                 // creaet new spectral config according coordinate
-                let enumCoordinate = Object.values(StokesCoordinate).find(values => values === coordinate);
-                this.requiredCoordinate(enumCoordinate).forEach(componentCoordinate => {
+                let enumCoordinate = Object.values(StokesCoordinate).find(val => val === coordinate);
+                this.requiredCoordinate(enumCoordinate, widgetStore).forEach(componentCoordinate => {
                     let spectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === componentCoordinate);
                     if (!spectralConfig) {
                         // create new spectral config

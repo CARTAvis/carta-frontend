@@ -1,6 +1,6 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, IOptionProps, Switch} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
@@ -9,6 +9,13 @@ import {StokesCoordinate, StokesCoordinateLabel} from "stores/widgets/SpectralPr
 
 @observer
 export class SpectralProfilerToolbarComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore, appStore: AppStore}> {
+
+    private static fractionalPolArray = [
+        StokesCoordinate.LinearPolarizationQ,
+        StokesCoordinate.LinearPolarizationU,
+        StokesCoordinate.PolarizedIntensity,
+        StokesCoordinate.CircularPolarization
+    ];
 
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         if (this.props.appStore.activeFrame) {
@@ -27,7 +34,15 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
         if (targetValue === StokesCoordinate.PolarizedIntensity || targetValue === StokesCoordinate.PolarizationAngle) {
             this.props.widgetStore.setStatsType(CARTA.StatsType.Mean);
         }
+        // set fractionalPolVisible to false, if coordinate is not PIz, Qz, Uz and Vz.
+        if (SpectralProfilerToolbarComponent.fractionalPolArray.indexOf(targetValue) === -1) {
+            this.props.widgetStore.setFractionalPolVisible(false);
+        }
     };
+
+    private handleFractionalPolChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        this.props.widgetStore.setFractionalPolVisible(changeEvent.target.checked);
+    }
 
     public render() {
         const appStore = this.props.appStore;
@@ -36,6 +51,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
         let enableStatsSelect = false;
         let enableRegionSelect = false;
         let enableStokesSelect = false;
+        let enableFractionalPol = false;
         let regionId = 0;
         // Fill region select options with all non-temporary regions that are closed or point type
         let profileRegionOptions: IOptionProps[];
@@ -58,6 +74,12 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
             );
             enableRegionSelect = profileRegionOptions.length > 1;
             enableStokesSelect = appStore.activeFrame.frameInfo.fileInfoExtended.stokes > 1;
+            enableFractionalPol = (
+                widgetStore.coordinate === StokesCoordinate.PolarizedIntensity
+                || widgetStore.coordinate === StokesCoordinate.LinearPolarizationQ
+                || widgetStore.coordinate === StokesCoordinate.LinearPolarizationU
+                || widgetStore.coordinate === StokesCoordinate.CircularPolarization 
+            );
         }
 
         // add new stoket plot type PA, PI, Q+U (multiple lines), Q vs U (Scatter plot)
@@ -91,6 +113,9 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
                 </FormGroup>
                 <FormGroup label={"Stokes"} inline={true} disabled={!enableStokesSelect}>
                     <HTMLSelect value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect}/>
+                </FormGroup>
+                <FormGroup label={"Frac. Pol."} inline={true}>
+                    <Switch checked={widgetStore.fractionalPolVisible} onChange={this.handleFractionalPolChanged} disabled={!enableFractionalPol}/>
                 </FormGroup>
             </div>
         );

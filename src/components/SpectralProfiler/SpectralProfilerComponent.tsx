@@ -34,7 +34,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }
 
     // required type for PI, PA, Q+U and Q Vs U
-    private QUCoordinates = ["Qz", "Uz"];
+    private QUCoordinates = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
 
     @observable width: number;
     @observable height: number;
@@ -88,6 +88,17 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return vals;
     }
 
+    // calculate fractional Pol
+    private static calculateFractionalPol (targetData: Array<number>, dataIz: Array<number>): Array<number> {
+        let vals = [];
+        if (targetData && dataIz && targetData.length === dataIz.length) {
+            for (let i = 0; i < targetData.length; i++) {
+                vals[i] = (targetData[i] / dataIz[i]) * 100;
+            }
+        }
+        return vals;
+    }
+
     // return PI, PA data for ploting
     private calculateCompositeProfile(coordinate: string, statsType: CARTA.StatsType): CARTA.ISpectralProfile {
         let coordinateData: CARTA.ISpectralProfile;
@@ -103,6 +114,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             coordinateData.vals = data;
         } else {
             coordinateData = this.profileStore.getProfile(this.widgetStore.coordinate, statsType);
+        }
+
+        if (this.widgetStore.fractionalPolVisible) {
+            let dataIz = this.profileStore.getProfile(StokesCoordinate.TotalIntensity, statsType);
+            if (dataIz && coordinateData && dataIz.vals && coordinateData.vals) {
+                coordinateData.vals = SpectralProfilerComponent.calculateFractionalPol(coordinateData.vals, dataIz.vals);
+            }
         }
         return coordinateData;
     }
@@ -366,7 +384,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
 
             if (this.widgetStore.coordinate === StokesCoordinate.PolarizationAngle) {
-                linePlotProps.yLabel = `Value (Rad)`;
+                linePlotProps.yLabel = `Value (Degree)`;
+            }
+
+            if (this.widgetStore.fractionalPolVisible) {
+                linePlotProps.yLabel = `Value (${this.widgetStore.coordinate[0]}/I(%))`;
             }
             const currentPlotData = this.plotData;
             if (currentPlotData) {
