@@ -57,8 +57,6 @@ export class BackendService {
         if (process.env.NODE_ENV !== "test") {
             this.decompressionServce = new DecompressionService(this.subsetsRequired);
         }
-        this.totalDecompressionTime = 0;
-        this.totalDecompressionMPix = 0;
         this.logEventList = [
             CARTA.EventType.REGISTER_VIEWER,
             CARTA.EventType.REGISTER_VIEWER_ACK,
@@ -615,16 +613,7 @@ export class BackendService {
         if (rasterImageData.compressionType === CARTA.CompressionType.NONE) {
             this.rasterStream.next(rasterImageData);
         } else {
-            const t0 = performance.now();
             this.decompressionServce.decompressRasterData(rasterImageData).then(decompressedMessage => {
-                const t1 = performance.now();
-                const sizeMpix = decompressedMessage.imageData[0].length / 4e6;
-                const dt = t1 - t0;
-                this.totalDecompressionMPix += sizeMpix;
-                this.totalDecompressionTime += dt;
-                const speed = sizeMpix / dt * 1e3;
-                const averageSpeed = this.totalDecompressionMPix / this.totalDecompressionTime * 1e3;
-                this.logStore.addDebug(`Decompressed ${sizeMpix.toFixed(2)} MPix in ${dt.toFixed(2)} ms (${speed.toFixed(2)} MPix/s); Average speed: ${averageSpeed.toFixed(2)} MPix/s`, ["zfp"]);
                 this.rasterStream.next(decompressedMessage);
             });
         }
