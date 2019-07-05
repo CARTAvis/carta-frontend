@@ -21,7 +21,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
     };
 
     private handleCoordinateChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        let targetValue = changeEvent.target.value;
+        let targetValue = Object.values(StokesCoordinate).find(values => values === changeEvent.target.value);
         this.props.widgetStore.setCoordinate(targetValue);
         // set stats back to "Mean", if stokes is PI or PA
         if (targetValue === StokesCoordinate.PolarizedIntensity || targetValue === StokesCoordinate.PolarizationAngle) {

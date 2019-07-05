@@ -1,8 +1,9 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, values} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {PlotType} from "components/Shared";
 import {RegionWidgetStore} from "./RegionWidgetStore";
 import {FrameStore} from "../FrameStore";
+import {object} from "prop-types";
 
 export enum StokesCoordinate {
     CurrentZ = "z",
@@ -61,11 +62,19 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     // add new stoke valid type PI, PA, Qz+Uz, QzVsUz
-    private static ValidCoordinates = ["z", "Iz", "Qz", "Uz", "Vz", "PIz", "PAz", "Qz+Uz"];
-    private static ValidMultiDataCoordinates = ["PIz", "PAz"];
+    private static ValidCoordinates = [
+        StokesCoordinate.CurrentZ,
+        StokesCoordinate.TotalIntensity,
+        StokesCoordinate.LinearPolarizationQ,
+        StokesCoordinate.LinearPolarizationU,
+        StokesCoordinate.CircularPolarization,
+        StokesCoordinate.PolarizedIntensity,
+        StokesCoordinate.PolarizationAngle
+    ];
+    private static ValidMultiDataCoordinates = [StokesCoordinate.PolarizedIntensity, StokesCoordinate.PolarizationAngle];
 
     // return regionRequirements spectralProfiles coordinate array
-    private static requiredCoordinate(coordinate: string): Array<StokesCoordinate> {
+    private static requiredCoordinate(coordinate: StokesCoordinate): Array<StokesCoordinate> {
         let requiredCoordinate = [];
         if (this.ValidMultiDataCoordinates.indexOf(coordinate) !== -1) {
             requiredCoordinate.push(StokesCoordinate.LinearPolarizationQ);
@@ -91,7 +100,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action setCoordinate = (coordinate: string) => {
+    @action setCoordinate = (coordinate: StokesCoordinate) => {
         // Check coordinate validity
         if (SpectralProfileWidgetStore.ValidCoordinates.indexOf(coordinate) !== -1) {
             // Reset zoom when changing between coordinates
@@ -224,17 +233,18 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                     regionRequirements.spectralProfiles = [];
                 }
 
-                let spectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === coordinate);
-                if (!spectralConfig) {
-                    // create new spectral config
-                    // creaet new spectral config according coordinate
-                    this.requiredCoordinate(coordinate).forEach(data => {
-                        regionRequirements.spectralProfiles.push({coordinate: data, statsTypes: [statsType]});
-                    });
-                } else if (spectralConfig.statsTypes.indexOf(statsType) === -1) {
-                    // add to the stats type array
-                    spectralConfig.statsTypes.push(statsType);
-                }  
+                // creaet new spectral config according coordinate
+                let enumCoordinate = Object.values(StokesCoordinate).find(values => values === coordinate);
+                this.requiredCoordinate(enumCoordinate).forEach(componentCoordinate => {
+                    let spectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === componentCoordinate);
+                    if (!spectralConfig) {
+                        // create new spectral config
+                        regionRequirements.spectralProfiles.push({coordinate: componentCoordinate, statsTypes: [statsType]});
+                    } else if (spectralConfig.statsTypes.indexOf(statsType) === -1) {
+                        // add to the stats type array
+                        spectralConfig.statsTypes.push(statsType);
+                    }
+                });  
             }
         });
 
