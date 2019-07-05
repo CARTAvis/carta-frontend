@@ -10,11 +10,16 @@ import {StokesCoordinate, StokesCoordinateLabel} from "stores/widgets/SpectralPr
 @observer
 export class SpectralProfilerToolbarComponent extends React.Component<{widgetStore: SpectralProfileWidgetStore, appStore: AppStore}> {
 
-    private static fractionalPolArray = [
+    private static validFractionalPolCoordinate = [
         StokesCoordinate.LinearPolarizationQ,
         StokesCoordinate.LinearPolarizationU,
         StokesCoordinate.PolarizedIntensity,
         StokesCoordinate.CircularPolarization
+    ];
+
+    private static unValidStatsCoordinate = [
+        StokesCoordinate.PolarizedIntensity,
+        StokesCoordinate.PolarizationAngle
     ];
 
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
@@ -31,11 +36,11 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
         let targetValue = Object.values(StokesCoordinate).find(values => values === changeEvent.target.value);
         this.props.widgetStore.setCoordinate(targetValue);
         // set stats back to "Mean", if stokes is PI or PA
-        if (targetValue === StokesCoordinate.PolarizedIntensity || targetValue === StokesCoordinate.PolarizationAngle) {
+        if (SpectralProfilerToolbarComponent.unValidStatsCoordinate.indexOf(targetValue) !== -1) {
             this.props.widgetStore.setStatsType(CARTA.StatsType.Mean);
         }
         // set fractionalPolVisible to false, if coordinate is not PIz, Qz, Uz and Vz.
-        if (SpectralProfilerToolbarComponent.fractionalPolArray.indexOf(targetValue) === -1) {
+        if (SpectralProfilerToolbarComponent.validFractionalPolCoordinate.indexOf(targetValue) === -1) {
             this.props.widgetStore.setFractionalPolVisible(false);
         }
     };

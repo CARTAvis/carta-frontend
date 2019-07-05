@@ -1,4 +1,4 @@
-import {action, computed, observable, values} from "mobx";
+import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {PlotType} from "components/Shared";
 import {RegionWidgetStore} from "./RegionWidgetStore";
