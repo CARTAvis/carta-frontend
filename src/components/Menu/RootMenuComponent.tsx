@@ -78,8 +78,8 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
             </Menu>
         );
 
-        let userLayouts = null;
-        let presetLayouts = null;
+        const userLayouts = appStore.layoutStore.getUserLayouts();
+        const presetLayouts = appStore.layoutStore.getPresetLayouts();
 
         const layoutMenu = (
             <Menu>
