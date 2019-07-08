@@ -47,7 +47,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
 
     private handleFractionalPolChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.props.widgetStore.setFractionalPolVisible(changeEvent.target.checked);
-    }
+    };
 
     public render() {
         const appStore = this.props.appStore;
@@ -87,7 +87,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
             );
         }
 
-        // add new stoket plot type PA, PI, Q+U (multiple lines), Q vs U (Scatter plot)
+        // add new Stokes plot type PA, PI, Q+U (multiple lines), Q vs U (Scatter plot)
         const profileCoordinateOptions = [
             {value: StokesCoordinate.CurrentZ, label: StokesCoordinateLabel.CurrentZLabel},
             {value: StokesCoordinate.TotalIntensity, label: StokesCoordinateLabel.TotalIntensityLabel},
@@ -119,7 +119,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{widgetSto
                 <FormGroup label={"Stokes"} inline={true} disabled={!enableStokesSelect}>
                     <HTMLSelect value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect}/>
                 </FormGroup>
-                <FormGroup label={"Frac. Pol."} inline={true}>
+                <FormGroup label={"Frac. Pol."} inline={true} disabled={!enableFractionalPol}>
                     <Switch checked={widgetStore.fractionalPolVisible} onChange={this.handleFractionalPolChanged} disabled={!enableFractionalPol}/>
                 </FormGroup>
             </div>
