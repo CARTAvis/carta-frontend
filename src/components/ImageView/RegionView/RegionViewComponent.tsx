@@ -5,7 +5,7 @@ import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {Group, Layer, Line, Rect, Stage} from "react-konva";
 import {CARTA} from "carta-protobuf";
-import {ASTSettingsString, FrameStore, OverlayStore, RegionMode, RegionStore, PreferenceStore} from "stores";
+import {ASTSettingsString, FrameStore, OverlayStore, RegionMode, RegionStore} from "stores";
 import {RegionComponent} from "./RegionComponent";
 import {CursorInfo, Point2D} from "../../../models";
 import "./RegionViewComponent.css";
@@ -13,7 +13,7 @@ import "./RegionViewComponent.css";
 export interface RegionViewComponentProps {
     frame: FrameStore;
     overlaySettings: OverlayStore;
-    readonly preference: PreferenceStore;
+    isRegionCornerMode: boolean;
     docked: boolean;
     width: number;
     height: number;
@@ -222,7 +222,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 dy = Math.sign(dy) * maxDiff;
             }
             const isCtrlPressed = mouseEvent.ctrlKey || mouseEvent.metaKey;
-            if ((this.props.preference.isRegionCornerMode && !isCtrlPressed) || (!this.props.preference.isRegionCornerMode && isCtrlPressed)) {
+            if ((this.props.isRegionCornerMode && !isCtrlPressed) || (!this.props.isRegionCornerMode && isCtrlPressed)) {
                 // corner-to-corner region creation
                 const endPoint = {x: this.regionStartPoint.x + dx, y: this.regionStartPoint.y + dy};
                 const center = {x: (this.regionStartPoint.x + endPoint.x) / 2.0, y: (this.regionStartPoint.y + endPoint.y) / 2.0};
@@ -286,6 +286,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                             onSelect={regionSet.selectRegion}
                             onDoubleClick={this.handleRegionDoubleClick}
                             listening={regionSet.mode !== RegionMode.CREATING}
+                            isRegionCornerMode={this.props.isRegionCornerMode}
                         />
                     )
                 );
