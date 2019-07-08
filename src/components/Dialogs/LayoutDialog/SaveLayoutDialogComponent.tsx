@@ -4,6 +4,7 @@ import {observer} from "mobx-react";
 import {FormGroup, InputGroup, IDialogProps, Button, Intent, Classes} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore} from "stores";
+import "./SaveLayoutDialogComponent.css";
 
 @observer
 export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppStore }> {
@@ -33,10 +34,10 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={500} defaultHeight={180} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={400} defaultHeight={185} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Save current layout as:">
-                        <InputGroup placeholder="Enter layout name" autoFocus={true} onChange={this.handleInput}/>
+                        <InputGroup className="layout-name-input" placeholder="Enter layout name" autoFocus={true} onChange={this.handleInput}/>
                     </FormGroup>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
