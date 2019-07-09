@@ -11,3 +11,5 @@ export * from "./CursorPosition";
 export * from "./Zoom";
 export * from "./WCSType";
 export * from "./RegionCreationMode";
+export * from "./CompressionQuality";
+export * from "./TileCache";

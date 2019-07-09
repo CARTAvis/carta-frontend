@@ -76,6 +76,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     componentWillUnmount() {
+        console.log(`Unmounting image view, cleaning up WebGL resources`);
         // Attempt to clean up WebGL resources
         const numTextureUnits = this.gl.getParameter(WebGLRenderingContext.MAX_TEXTURE_IMAGE_UNITS);
         for (let unit = 0; unit < numTextureUnits; ++unit) {
@@ -89,7 +90,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.gl.bindFramebuffer(WebGLRenderingContext.FRAMEBUFFER, null);
 
         if (this.props.tileService) {
-            this.props.tileService.clearTextures();
+            this.props.tileService.clearContext();
         }
 
         this.gl.deleteTexture(this.cmapTexture);
@@ -101,6 +102,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         this.gl.canvas.width = 1;
         this.gl.canvas.height = 1;
+        this.gl.getExtension("WEBGL_lose_context").loseContext();
     }
 
     componentDidUpdate() {

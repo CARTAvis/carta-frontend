@@ -40,7 +40,7 @@ export class TileService {
     private pendingSynchronisedTiles: Array<number>;
     private receivedSynchronisedTiles: Array<{ coordinate: number, tile: RasterTile }>;
 
-    @computed get waitingForSync () {
+    @computed get waitingForSync() {
         return this.pendingSynchronisedTiles && this.pendingSynchronisedTiles.length > 0;
     }
 
@@ -197,13 +197,17 @@ export class TileService {
         }
     }
 
-    clearTextures() {
+    clearContext() {
         if (this.glContext) {
             console.log(`Deleting ${this.textureArray.length} tile textures`);
             for (let i = 0; i < this.textureArray.length; i++) {
                 this.glContext.deleteTexture(this.textureArray[i]);
             }
+            this.glContext = null;
         }
+        // Clear GPU cache, but keep compressed cache, as this will be used to recreate GPU resources
+        this.clearCache(false);
+        this.resetCoordinateQueue();
     }
 
     uploadTileToGPU(tile: RasterTile) {
@@ -320,7 +324,7 @@ export class TileService {
                         this.persistentTiles.set(tilePair.coordinate, tilePair.tile);
                     } else {
                         const oldValue = this.cachedTiles.setpop(tilePair.coordinate, tilePair.tile);
-                        if  (oldValue) {
+                        if (oldValue) {
                             this.clearTile(oldValue.value, oldValue.key);
                         }
                     }
@@ -341,7 +345,7 @@ export class TileService {
                 this.persistentTiles.set(encodedCoordinate, rasterTile);
             } else {
                 const oldValue = this.cachedTiles.setpop(encodedCoordinate, rasterTile);
-                if  (oldValue) {
+                if (oldValue) {
                     this.clearTile(oldValue.value, oldValue.key);
                 }
             }

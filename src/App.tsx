@@ -171,14 +171,17 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         let customizedLayout;
         switch (this.props.appStore.preferenceStore.layout) {
+            case Layout.CUBEVIEW:
+                customizedLayout = this.genCubeViewLayout(configs, widgetsStore);
+                break;
             case Layout.CUBEANALYSIS:
                 customizedLayout = this.genCubeAnalysisLayout(configs, widgetsStore);
                 break;
             case Layout.CONTINUUMANALYSIS:
                 customizedLayout = this.genContinuumAnalysisLayout(configs, widgetsStore);
                 break;
-            case Layout.CUBEVIEW: default:
-                customizedLayout = this.genCubeViewLayout(configs, widgetsStore);
+            case Layout.DEFAULT: default:
+                customizedLayout = this.genDefaultLayout(configs, widgetsStore);
                 break;
         }
 
@@ -216,17 +219,33 @@ export class App extends React.Component<{ appStore: AppStore }> {
         widgetsStore.setDockedLayout(layout);
     }
 
-    private genContinuumAnalysisLayout(configs: any, widgetsStore: WidgetsStore) {
+    private genDefaultLayout(configs: any, widgetsStore: WidgetsStore) {
         widgetsStore.addSpatialProfileWidget(configs.spatialProfilerX.id, "x", -1, 0);
         widgetsStore.addSpatialProfileWidget(configs.spatialProfilerY.id, "y", -1, 0);
-        widgetsStore.addStatsWidget(configs.stats.id);
 
         return {
             leftBottomContent: {
                 type: "stack",
-                content: [configs.renderConfig, configs.regionList, configs.animator]
+                content: [configs.renderConfig]
             },
-            rightColumnContent: [configs.spatialProfilerX, configs.spatialProfilerY, configs.stats]
+            rightColumnContent: [configs.spatialProfilerX, configs.spatialProfilerY, {
+                type: "stack",
+                content: [configs.animator, configs.regionList]
+            }]
+        };
+    }
+
+    private genCubeViewLayout(configs: any, widgetsStore: WidgetsStore) {
+        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerX.id, "x", -1, 0);
+        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerY.id, "y", -1, 0);
+        widgetsStore.addSpectralProfileWidget(configs.spectralProfilerZ.id, "z");
+
+        return {
+            leftBottomContent: {
+                type: "stack",
+                content: [configs.animator, configs.renderConfig, configs.regionList]
+            },
+            rightColumnContent: [configs.spatialProfilerX, configs.spatialProfilerY, configs.spectralProfilerZ]
         };
     }
 
@@ -243,17 +262,17 @@ export class App extends React.Component<{ appStore: AppStore }> {
         };
     }
 
-    private genCubeViewLayout(configs: any, widgetsStore: WidgetsStore) {
+    private genContinuumAnalysisLayout(configs: any, widgetsStore: WidgetsStore) {
         widgetsStore.addSpatialProfileWidget(configs.spatialProfilerX.id, "x", -1, 0);
         widgetsStore.addSpatialProfileWidget(configs.spatialProfilerY.id, "y", -1, 0);
-        widgetsStore.addSpectralProfileWidget(configs.spectralProfilerZ.id, "z");
+        widgetsStore.addStatsWidget(configs.stats.id);
 
         return {
             leftBottomContent: {
                 type: "stack",
-                content: [configs.animator, configs.renderConfig, configs.regionList]
+                content: [configs.renderConfig, configs.regionList, configs.animator]
             },
-            rightColumnContent: [configs.spatialProfilerX, configs.spatialProfilerY, configs.spectralProfilerZ]
+            rightColumnContent: [configs.spatialProfilerX, configs.spatialProfilerY, configs.stats]
         };
     }
 
