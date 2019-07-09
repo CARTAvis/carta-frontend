@@ -392,7 +392,6 @@ export class AppStore {
         }
 
         this.preferenceStore = new PreferenceStore(this);
-        this.layoutStore = new LayoutStore();
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore);
         this.tileService = new TileService(this.backendService, 4, this.preferenceStore.GPUTileCache, this.preferenceStore.systemTileCache);
@@ -408,6 +407,7 @@ export class AppStore {
         this.alertStore = new AlertStore();
         this.overlayStore = new OverlayStore(this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this);
+        this.layoutStore = new LayoutStore(this.widgetsStore);
         this.urlConnectDialogVisible = false;
         this.compressionQuality = this.preferenceStore.imageCompressionQuality;
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();

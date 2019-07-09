@@ -78,17 +78,17 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
             </Menu>
         );
 
-        const userLayouts = appStore.layoutStore.getUserLayouts();
-        const presetLayouts = appStore.layoutStore.getPresetLayouts();
+        const userLayouts: string[] = appStore.layoutStore.getUserLayouts();
+        const presetLayouts: string[] = appStore.layoutStore.getPresetLayouts();
 
         const layoutMenu = (
             <Menu>
                 <Menu.Item text="Layouts" icon={"layout-grid"}>
-                    <Menu.Item text="User Layouts" disabled={userLayouts === null}>
-                        {userLayouts}
+                    <Menu.Item text="User Layouts" disabled={!userLayouts || userLayouts.length <= 0}>
+                        {userLayouts && userLayouts.length > 0 ? userLayouts.map((value) => <Menu.Item text={value}/>) : null}
                     </Menu.Item>
-                    <Menu.Item text="Presets" disabled={presetLayouts === null}>
-                        {presetLayouts}
+                    <Menu.Item text="Presets" disabled={!presetLayouts || presetLayouts.length <= 0}>
+                        {presetLayouts && presetLayouts.length > 0 ? presetLayouts.map((value) => <Menu.Item text={value}/>) : null}
                     </Menu.Item>
                     <Menu.Item text="Save Layout" onClick={appStore.showSaveLayoutDialog}/>
                     <Menu.Item text="Delete Layout" onClick={appStore.showDeleteLayoutDialog}/>
