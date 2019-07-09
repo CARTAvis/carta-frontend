@@ -5,6 +5,7 @@ import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore} from "stores";
 import "./RegionDialogComponent.css";
+import {PointRegionForm} from "./PointRegionForm/PointRegionForm";
 import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionForm";
 import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
@@ -43,6 +44,15 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
 
             dialogProps.title = `Editing ${region.nameString}`;
             switch (region.regionType) {
+                case CARTA.RegionType.POINT:
+                    bodyContent = (
+                        <React.Fragment>
+                            <AppearanceForm region={region} darkTheme={appStore.darkTheme}/>
+                            <PointRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
+                        </React.Fragment>
+                    );
+                    editableRegion = true;
+                    break;
                 case CARTA.RegionType.RECTANGLE:
                     bodyContent = (
                         <React.Fragment>

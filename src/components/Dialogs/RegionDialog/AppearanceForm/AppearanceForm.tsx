@@ -5,6 +5,7 @@ import {observable} from "mobx";
 import {SketchPicker, ColorResult} from "react-color";
 import {AnchorButton, FormGroup, H5, NumericInput, Popover, PopoverPosition} from "@blueprintjs/core";
 import {RegionStore} from "stores";
+import {CARTA} from "carta-protobuf";
 import "./AppearanceForm.css";
 
 @observer
@@ -62,26 +63,30 @@ export class AppearanceForm extends React.Component<{ region: RegionStore, darkT
                             <SketchPicker color={region.color} onChange={this.handleColorChange} disableAlpha={true} presetColors={RegionStore.SWATCH_COLORS}/>
                         </Popover>
                     </FormGroup>
-                    <FormGroup inline={true} label="Line Width" labelInfo="(px)">
-                        <NumericInput
-                            placeholder="Line Width"
-                            min={RegionStore.MIN_LINE_WIDTH}
-                            max={RegionStore.MAX_LINE_WIDTH}
-                            value={region.lineWidth}
-                            stepSize={0.5}
-                            onValueChange={this.handleLineWidthChange}
-                        />
-                    </FormGroup>
-                    <FormGroup inline={true} label="Dash Length" labelInfo="(px)">
-                        <NumericInput
-                            placeholder="Line Width"
-                            min={0}
-                            max={RegionStore.MAX_DASH_LENGTH}
-                            value={region.dashLength}
-                            stepSize={1}
-                            onValueChange={this.handleDashLengthChange}
-                        />
-                    </FormGroup>
+                    {region.regionType !== CARTA.RegionType.POINT &&
+                        <FormGroup  inline={true} label="Line Width" labelInfo="(px)"> 
+                            <NumericInput
+                                    placeholder="Line Width"
+                                    min={RegionStore.MIN_LINE_WIDTH}
+                                    max={RegionStore.MAX_LINE_WIDTH}
+                                    value={region.lineWidth}
+                                    stepSize={0.5}
+                                    onValueChange={this.handleLineWidthChange}
+                            />
+                        </FormGroup>
+                    }
+                    {region.regionType !== CARTA.RegionType.POINT &&
+                        <FormGroup inline={true} label="Dash Length" labelInfo="(px)">  
+                            <NumericInput
+                                placeholder="Line Width"
+                                min={0}
+                                max={RegionStore.MAX_DASH_LENGTH}
+                                value={region.dashLength}
+                                stepSize={1}
+                                onValueChange={this.handleDashLengthChange}
+                            />
+                        </FormGroup>
+                    }
                 </div>
             </div>
         );
