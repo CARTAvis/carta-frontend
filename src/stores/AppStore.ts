@@ -9,7 +9,7 @@ import {
     PreferenceStore, AnimationMode
 } from ".";
 import {GetRequiredTiles} from "utilities";
-import {BackendService, TileService} from "services";
+import {BackendService, ConnectionStatus, TileService} from "services";
 import {CursorInfo, FrameView, Theme, Point2D} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
 
@@ -185,6 +185,9 @@ export class AppStore {
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
                 this.addFrame(folderSearchParam, fileSearchParam, "", 0);
+            }
+            if (this.preferenceStore.autoLaunch) {
+                this.fileBrowserStore.showFileBrowser();
             }
         }, err => console.log(err));
     };

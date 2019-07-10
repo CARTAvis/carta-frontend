@@ -59,21 +59,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
             }
             this.previousConnectionStatus = newConnectionStatus;
         });
-
-        appStore.backendService.connect(wsURL, appStore.apiKey).subscribe(sessionId => {
-            console.log(`Connected with session ID ${sessionId}`);
-            connected = true;
-            appStore.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
-
-            if (appStore.astReady && fileSearchParam) {
-                autoFileLoaded = true;
-                appStore.addFrame(folderSearchParam, fileSearchParam, "", 0);
-            }
-
-            if (appStore.preferenceStore.autoLaunch) {
-                appStore.fileBrowserStore.showFileBrowser();
-            }
-        }, err => console.log(err));
     }
 
     componentDidMount() {
