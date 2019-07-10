@@ -316,6 +316,12 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                     radius={2}
                 />
                 }
+                {region.regionType === CARTA.RegionType.POINT && this.selectedRegionRef && this.props.selected && this.props.listening &&
+                <Circle
+                    {...commonProps}
+                    radius={6}
+                />
+                }
                 {region.regionType === CARTA.RegionType.RECTANGLE &&
                 <Rect
                     {...commonProps}
@@ -338,6 +344,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                     rotateAnchorOffset={15}
                     anchorSize={6}
                     borderStroke={Colors.TURQUOISE5}
+                    borderStrokeWidth={3}
                     borderDash={region.regionType === CARTA.RegionType.ELLIPSE ? borderDash : null}
                     keepRatio={false}
                     centeredScaling={true}

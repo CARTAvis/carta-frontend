@@ -45,7 +45,7 @@ const DEFAULTS = {
     regionColor: "#2EE6D6",
     regionLineWidth: 2,
     regionDashLength: 0,
-    regionType: CARTA.RegionType.RECTANGLE,
+    regionType: CARTA.RegionType.POINT,
     regionCreationMode: RegionCreationMode.CENTER,
     imageCompressionQuality: CompressionQuality.IMAGE_DEFAULT,
     animationCompressionQuality: CompressionQuality.ANIMATION_DEFAULT,
