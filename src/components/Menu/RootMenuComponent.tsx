@@ -5,7 +5,7 @@ import {Alert, Icon, Menu, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {exportImage} from "components";
 import {LayoutToaster} from "components/Shared";
-import {AppStore} from "stores";
+import {AppStore, LayoutStore} from "stores";
 import {ConnectionStatus} from "services";
 import "./RootMenuComponent.css";
 
@@ -17,7 +17,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
     private deleteLayout = (layoutName: string) => {
         const result = this.props.appStore.layoutStore.deleteLayout(layoutName);
         const message = result ? `Layout ${layoutName} is deleted successfully.` : `Deleting layout ${layoutName} failed!`;
-        LayoutToaster.show({icon: "layout-grid", message: message, intent: result ? "success" : "danger", timeout: 1000});
+        LayoutToaster.show({icon: "layout-grid", message: message, intent: result ? "success" : "danger", timeout: LayoutStore.TOASTER_TIMEOUT});
     };
 
     render() {

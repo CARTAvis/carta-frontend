@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {FormGroup, InputGroup, IDialogProps, Button, Intent, Classes, Tooltip} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {LayoutToaster} from "components/Shared";
-import {AppStore} from "stores";
+import {AppStore, LayoutStore} from "stores";
 import "./SaveLayoutDialogComponent.css";
 
 @observer
@@ -19,7 +19,7 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
         this.props.appStore.hideSaveLayoutDialog();
         const result = this.props.appStore.layoutStore.saveLayout(this.layoutName);
         const message = result ? `Layout ${this.layoutName} is saved successfully.` : `Saving layout ${this.layoutName} failed!`;
-        LayoutToaster.show({icon: "layout-grid", message: message, intent: result ? "success" : "danger", timeout: 1000});
+        LayoutToaster.show({icon: "layout-grid", message: message, intent: result ? "success" : "danger", timeout: LayoutStore.TOASTER_TIMEOUT});
         this.layoutName = "";
     };
 

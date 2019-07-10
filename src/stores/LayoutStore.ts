@@ -1,14 +1,17 @@
 import {observable, computed, action} from "mobx";
-import {WidgetsStore} from "stores";
+import {WidgetsStore, AlertStore} from "stores";
 
 const KEY = "CARTA_saved_layouts";
 
 export class LayoutStore {
+    public static TOASTER_TIMEOUT = 1500;
     private readonly widgetsStore: WidgetsStore;
+    private readonly alertStore: AlertStore;
     @observable private layouts; // self-defined structure: {layoutName: config, layoutName: config, ...}
 
-    constructor(widgetsStore: WidgetsStore) {
+    constructor(widgetsStore: WidgetsStore, alertStore: AlertStore) {
         this.widgetsStore = widgetsStore;
+        this.alertStore = alertStore;
         this.layouts = {};
 
         // read layout configs from local storage
@@ -29,7 +32,7 @@ export class LayoutStore {
 
     @action saveLayout = (layoutName: string): boolean => {
         if (this.layouts && layoutName && Object.keys(this.layouts).includes(layoutName)) {
-            console.log("Overwrite " + Object.keys(this.layouts));
+            this.alertStore.showAlert(`Are you sure to overwrite the existing layout ${layoutName}?`);
         } else {
             const config = this.widgetsStore.dockedLayout.toConfig();
             this.layouts[layoutName] = "";
