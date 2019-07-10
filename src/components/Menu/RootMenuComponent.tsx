@@ -78,7 +78,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
             </Menu>
         );
 
-        const userLayouts: string[] = appStore.layoutStore.getUserLayouts();
+        const userLayouts: string[] = appStore.layoutStore.userLayouts;
         const presetLayouts: string[] = appStore.layoutStore.getPresetLayouts();
 
         const layoutMenu = (
@@ -91,7 +91,10 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                         {presetLayouts && presetLayouts.length > 0 ? presetLayouts.map((value) => <Menu.Item key={value} text={value} onClick={() => appStore.layoutStore.applyLayout(value)}/>) : null}
                     </Menu.Item>
                     <Menu.Item text="Save Layout" onClick={appStore.showSaveLayoutDialog}/>
-                    <Menu.Item text="Delete Layout" onClick={appStore.showDeleteLayoutDialog}/>
+                    <Menu.Item text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
+                        {userLayouts && userLayouts.length > 0 ? userLayouts.map((value) => <Menu.Item key={value} text={value} onClick={() => appStore.layoutStore.deleteLayout(value)}/>) : null}
+                    </Menu.Item>
+                    <Menu.Item text="Show Layouts" onClick={appStore.layoutStore.showLayout}/>
                 </Menu.Item>
                 <Menu.Item text="Info Panels" icon={"info-sign"}>
                     <Menu.Item text="Region List" onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
