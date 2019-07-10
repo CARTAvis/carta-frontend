@@ -2,6 +2,7 @@ import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "./AppStore";
 import {clamp} from "utilities";
+import {FrameView} from "../models";
 
 export enum AnimationMode {
     CHANNEL = 0,
@@ -80,16 +81,37 @@ export class AnimatorStore {
             };
         }
 
+        const reqView = frame.requiredFrameView;
+
+        const croppedReq: FrameView = {
+            xMin: Math.max(0, reqView.xMin),
+            xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
+            yMin: Math.max(0, reqView.yMin),
+            yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
+            mip: reqView.mip
+        };
+
+        const imageView: CARTA.ISetImageView = {
+            imageBounds: {
+                xMin: croppedReq.xMin,
+                xMax: croppedReq.xMax,
+                yMin: croppedReq.yMin,
+                yMax: croppedReq.yMax
+            },
+            mip: croppedReq.mip,
+            compressionType: CARTA.CompressionType.ZFP,
+            compressionQuality: this.appStore.preferenceStore.animationCompressionQuality,
+        };
+
         const animationMessage: CARTA.IStartAnimation = {
             fileId: frame.frameInfo.fileId,
             startFrame,
             firstFrame,
             lastFrame,
             deltaFrame,
+            imageView,
             looping: true,
             reverse: false,
-            compressionType: CARTA.CompressionType.ZFP,
-            compressionQuality: 9,
             frameRate: this.frameRate
         };
 

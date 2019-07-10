@@ -15,6 +15,7 @@ export interface RegionComponentProps {
     layerHeight: number;
     listening: boolean;
     selected: boolean;
+    isRegionCornerMode: boolean;
     onSelect?: (region: RegionStore) => void;
     onDoubleClick?: (region: RegionStore) => void;
     onPanClick?: () => void;
@@ -125,7 +126,8 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                 node.scaleX(1);
                 node.scaleY(1);
 
-                if (konvaEvent.evt.ctrlKey || konvaEvent.evt.metaKey) {
+                const isCtrlPressed = konvaEvent.evt.ctrlKey || konvaEvent.evt.metaKey;
+                if ((this.props.isRegionCornerMode && !isCtrlPressed) || (!this.props.isRegionCornerMode && isCtrlPressed)) {
                     this.applyCornerScaling(region, konvaEvent.evt.offsetX, konvaEvent.evt.offsetY, anchor);
                 } else {
                     this.applyCenterScaling(region, konvaEvent.evt.offsetX, konvaEvent.evt.offsetY, anchor, konvaEvent.evt.shiftKey);

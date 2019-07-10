@@ -9,7 +9,7 @@ import {RenderConfigSettingsPanelComponent} from "./RenderConfigSettingsPanelCom
 import {PopoverSettingsComponent, LinePlotComponent, LinePlotComponentProps, PlotType} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
-import {AnimationState, FrameStore, FrameScaling, WidgetConfig, WidgetProps} from "stores";
+import {AnimationState, FrameStore, FrameScaling, WidgetConfig, WidgetProps, RenderConfigStore} from "stores";
 import {clamp} from "utilities";
 import {Point2D} from "models";
 import {CARTA} from "carta-protobuf";
@@ -35,7 +35,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     }
 
     private cachedFrame: FrameStore;
-    private cachedHistogram: CARTA.Histogram;
+    private cachedHistogram: CARTA.IHistogram;
 
     @observable width: number;
     @observable height: number;
@@ -302,11 +302,10 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         const percentileButtonCutoff = 600 + this.settingsPanelWidth;
         const histogramCutoff = 430 + this.settingsPanelWidth;
         const displayRankButtons = this.width > percentileButtonCutoff;
-        const percentileRanks = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
         const stokes = frame.renderConfig.stokes;
         let percentileButtonsDiv, percentileSelectDiv;
         if (displayRankButtons) {
-            const percentileRankbuttons = percentileRanks.map(rank => (
+            const percentileRankbuttons = RenderConfigStore.PERCENTILE_RANKS.map(rank => (
                 <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentileVal === rank}>
                     {`${rank}%`}
                 </Button>
@@ -324,7 +323,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 </div>
             );
         } else {
-            const percentileRankOptions: IOptionProps [] = percentileRanks.map(rank => ({label: `${rank}%`, value: rank}));
+            const percentileRankOptions: IOptionProps [] = RenderConfigStore.PERCENTILE_RANKS.map(rank => ({label: `${rank}%`, value: rank}));
             percentileRankOptions.push({label: "Custom", value: -1});
             percentileSelectDiv = (
                 <div className="percentile-select">

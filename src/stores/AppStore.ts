@@ -6,21 +6,24 @@ import {
     AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore,
     FrameInfo, FrameStore, LogEntry, LogStore, nightPalette,
     OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore,
-    PreferenceStore
+    PreferenceStore, AnimationMode
 } from ".";
-import {BackendService, ConnectionStatus} from "services";
-import {CursorInfo, FrameView} from "models";
-import {smoothStepOffset} from "utilities";
+import {GetRequiredTiles} from "utilities";
+import {BackendService, TileService} from "services";
+import {CursorInfo, FrameView, Theme, Point2D} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
 
 const CURSOR_DEBOUNCE_TIME = 200;
 const CURSOR_THROTTLE_TIME = 200;
-const IMAGE_THROTTLE_TIME = 200;
+const IMAGE_THROTTLE_TIME = 50;
+const IMAGE_CHANNEL_THROTTLE_TIME = 500;
 const REQUIREMENTS_CHECK_INTERVAL = 200;
 
 export class AppStore {
-    // Backend service
-    @observable backendService: BackendService;
+    // Backend services
+    backendService: BackendService;
+    tileService: TileService;
+
     @observable compressionQuality: number;
     // WebAssembly Module status
     @observable astReady: boolean;
@@ -229,7 +232,9 @@ export class AppStore {
     @observable widgetsStore: WidgetsStore;
 
     // Dark theme
-    @observable darkTheme: boolean;
+    @computed get darkTheme(): boolean {
+        return this.preferenceStore.isDarkTheme;
+    }
 
     // Frame actions
     @action addFrame = (directory: string, file: string, hdu: string, fileId: number) => {
@@ -251,8 +256,9 @@ export class AppStore {
                 renderMode: CARTA.RenderMode.RASTER
             };
 
+            this.tileService.clearCache();
+            this.tileService.clearRequestQueue();
             let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, frameInfo, this.backendService);
-            newFrame.fitZoom();
             this.loadWCS(newFrame);
 
             // clear existing requirements for the frame
@@ -268,6 +274,7 @@ export class AppStore {
                 this.frames.push(newFrame);
             }
             this.setActiveFrame(newFrame.frameInfo.fileId);
+
             this.fileBrowserStore.hideFileBrowser();
         }, err => {
             this.alertStore.showAlert(`Error loading file: ${err}`);
@@ -393,11 +400,11 @@ export class AppStore {
     };
 
     @action setDarkTheme = () => {
-        this.darkTheme = true;
+        this.preferenceStore.setTheme(Theme.DARK);
     };
 
     @action setLightTheme = () => {
-        this.darkTheme = false;
+        this.preferenceStore.setTheme(Theme.LIGHT);
     };
 
     @action setCursorInfo = (cursorInfo: CursorInfo) => {
@@ -416,6 +423,7 @@ export class AppStore {
     private spectralRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
     private statsRequirements: Map<number, Array<number>>;
     private histogramRequirements: Map<number, Array<number>>;
+    private pendingHistogram: CARTA.RegionHistogramData;
 
     constructor() {
         const existingKey = localStorage.getItem("API_KEY");
@@ -423,23 +431,24 @@ export class AppStore {
             this.apiKey = existingKey;
         }
 
+        this.preferenceStore = new PreferenceStore(this);
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore);
+        this.tileService = new TileService(this.backendService, 4, this.preferenceStore.GPUTileCache, this.preferenceStore.systemTileCache);
         this.astReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<number, ObservableMap<number, SpectralProfileStore>>();
         this.regionStats = new Map<number, ObservableMap<number, CARTA.RegionStatsData>>();
         this.regionHistograms = new Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>();
+
         this.frames = [];
         this.activeFrame = null;
         this.animatorStore = new AnimatorStore(this);
         this.alertStore = new AlertStore();
-        this.overlayStore = new OverlayStore();
+        this.overlayStore = new OverlayStore(this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this);
-        this.preferenceStore = new PreferenceStore();
-        this.fileBrowserStore = new FileBrowserStore(this.backendService);
-        this.compressionQuality = 11;
-        this.darkTheme = false;
+        this.urlConnectDialogVisible = false;
+        this.compressionQuality = this.preferenceStore.imageCompressionQuality;
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         this.statsRequirements = new Map<number, Array<number>>();
         this.histogramRequirements = new Map<number, Array<number>>();
@@ -449,8 +458,27 @@ export class AppStore {
         }, IMAGE_THROTTLE_TIME);
 
         const throttledSetChannels = _.throttle((fileId: number, channel: number, stokes: number) => {
-            this.backendService.setChannels(fileId, channel, stokes);
-        }, IMAGE_THROTTLE_TIME);
+            this.activeFrame.channel = channel;
+            this.activeFrame.stokes = stokes;
+
+            // Calculate new required frame view (cropped to file size)
+            const reqView = this.activeFrame.requiredFrameView;
+
+            const croppedReq: FrameView = {
+                xMin: Math.max(0, reqView.xMin),
+                xMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.width, reqView.xMax),
+                yMin: Math.max(0, reqView.yMin),
+                yMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.height, reqView.yMax),
+                mip: reqView.mip
+            };
+            const imageSize: Point2D = {x: this.activeFrame.frameInfo.fileInfoExtended.width, y: this.activeFrame.frameInfo.fileInfoExtended.height};
+            const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
+            const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
+            // TODO: dynamic tile size
+            const tileSizeFullRes = reqView.mip * 256;
+            const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes, y: midPointImageCoords.y / tileSizeFullRes};
+            this.tileService.requestTiles(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords, this.compressionQuality);
+        }, IMAGE_CHANNEL_THROTTLE_TIME);
 
         const debouncedSetCursor = _.debounce((fileId: number, x: number, y: number) => {
             const frame = this.getFrame(fileId);
@@ -466,12 +494,11 @@ export class AppStore {
             }
         }, CURSOR_THROTTLE_TIME);
 
-        // Update frame view
+        // Update frame view outside of animation
         autorun(() => {
-            if (this.activeFrame) {
+            if (this.activeFrame && (this.animatorStore.animationState === AnimationState.STOPPED || this.animatorStore.animationMode === AnimationMode.FRAME)) {
                 // Calculate new required frame view (cropped to file size)
                 const reqView = this.activeFrame.requiredFrameView;
-                const currentView = this.activeFrame.currentFrameView;
 
                 const croppedReq: FrameView = {
                     xMin: Math.max(0, reqView.xMin),
@@ -481,31 +508,43 @@ export class AppStore {
                     mip: reqView.mip
                 };
 
-                let adjustedQuality = smoothStepOffset(this.activeFrame.zoomLevel, 0.9, 4, 11, 21);
-                adjustedQuality = Math.round(adjustedQuality);
+                const imageSize: Point2D = {x: this.activeFrame.frameInfo.fileInfoExtended.width, y: this.activeFrame.frameInfo.fileInfoExtended.height};
+                const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
+                const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
+                // TODO: dynamic tile size
+                const tileSizeFullRes = reqView.mip * 256;
+                const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes, y: midPointImageCoords.y / tileSizeFullRes};
+                // TODO: throttle tile requests somehow
+                this.tileService.requestTiles(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords, this.compressionQuality);
+            }
+        });
 
+        // Update frame view during animation
+        autorun(() => {
+            if (this.activeFrame && (this.animatorStore.animationState !== AnimationState.STOPPED && this.animatorStore.animationMode !== AnimationMode.FRAME)) {
+                // Calculate new required frame view (cropped to file size)
+                const reqView = this.activeFrame.requiredFrameView;
+
+                const croppedReq: FrameView = {
+                    xMin: Math.max(0, reqView.xMin),
+                    xMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.width, reqView.xMax),
+                    yMin: Math.max(0, reqView.yMin),
+                    yMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.height, reqView.yMax),
+                    mip: reqView.mip
+                };
+                throttledSetView(this.activeFrame.frameInfo.fileId, croppedReq, this.preferenceStore.animationCompressionQuality);
+            }
+        });
+
+        // TODO: Move setChannels actions to AppStore and remove this autorun
+        // Update channels when manually changed
+        autorun(() => {
+            if (this.activeFrame) {
                 // Calculate if new data is required
                 const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
                 // Don't auto-update when animation is playing
                 if (this.animatorStore.animationState === AnimationState.STOPPED && updateRequiredChannels) {
                     throttledSetChannels(this.activeFrame.frameInfo.fileId, this.activeFrame.requiredChannel, this.activeFrame.requiredStokes);
-                }
-
-                const updateRequiredView = (croppedReq.mip < currentView.mip) || (croppedReq.xMin < currentView.xMin || croppedReq.xMax > currentView.xMax || croppedReq.yMin < currentView.yMin || croppedReq.yMax > currentView.yMax);
-                const updateCompressionQuality = (adjustedQuality > this.activeFrame.currentCompressionQuality);
-                if (updateRequiredView || updateCompressionQuality) {
-                    const reqWidth = reqView.xMax - reqView.xMin;
-                    const reqHeight = reqView.yMax - reqView.yMin;
-                    // Add an extra padding on either side to avoid spamming backend
-                    const padFraction = 0.05;
-                    const paddedView = {
-                        xMin: Math.max(0, reqView.xMin - padFraction * reqWidth),
-                        xMax: Math.min(reqView.xMax + padFraction * reqWidth, this.activeFrame.frameInfo.fileInfoExtended.width),
-                        yMin: Math.max(0, reqView.yMin - padFraction * reqHeight),
-                        yMax: Math.min(reqView.yMax + padFraction * reqHeight, this.activeFrame.frameInfo.fileInfoExtended.height),
-                        mip: reqView.mip
-                    };
-                    throttledSetView(this.activeFrame.frameInfo.fileId, paddedView, adjustedQuality);
                 }
             }
         });
@@ -569,6 +608,7 @@ export class AppStore {
         this.backendService.getRasterStream().subscribe(this.handleRasterImageStream);
         this.backendService.getErrorStream().subscribe(this.handleErrorStream);
         this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
+        this.tileService.GetTileStream().subscribe(this.handleTileStream);
     }
 
     // region Subscription handlers
@@ -633,15 +673,32 @@ export class AppStore {
                 // Update channel histograms
                 const channelHist = regionHistogramData.histograms.find(hist => hist.channel === updatedFrame.requiredChannel);
                 if (channelHist) {
-                    updatedFrame.renderConfig.updateChannelHistogram(channelHist as CARTA.Histogram);
+                    if (!this.tileService.waitingForSync) {
+                        updatedFrame.renderConfig.updateChannelHistogram(channelHist);
+                    } else {
+                        // Defer channel histogram update until tiles arrive
+                        this.pendingHistogram = regionHistogramData;
+                    }
                 }
             } else if (regionHistogramData.regionId === -2) {
                 // Update cube histogram if it is still required
                 const cubeHist = regionHistogramData.histograms[0];
                 if (cubeHist && updatedFrame.renderConfig.useCubeHistogram) {
-                    updatedFrame.renderConfig.updateCubeHistogram(cubeHist as CARTA.Histogram, regionHistogramData.progress);
+                    updatedFrame.renderConfig.updateCubeHistogram(cubeHist, regionHistogramData.progress);
                     this.updateTaskProgress(regionHistogramData.progress);
                 }
+            }
+        }
+    };
+
+    handleTileStream = (newTileCount: number) => {
+        // Apply pending channel histogram
+        if (this.pendingHistogram && this.pendingHistogram.regionId === -1 && this.pendingHistogram.histograms && this.pendingHistogram.histograms.length) {
+            const updatedFrame = this.getFrame(this.pendingHistogram.fileId);
+            const channelHist = this.pendingHistogram.histograms.find(hist => hist.channel === updatedFrame.requiredChannel);
+            if (updatedFrame && channelHist) {
+                updatedFrame.renderConfig.updateChannelHistogram(channelHist);
+                this.pendingHistogram = null;
             }
         }
     };
@@ -661,10 +718,11 @@ export class AppStore {
     };
 
     handleRasterImageStream = (rasterImageData: CARTA.RasterImageData) => {
-        const updatedFrame = this.getFrame(rasterImageData.fileId);
-        if (updatedFrame) {
-            updatedFrame.updateFromRasterData(rasterImageData);
-            if (this.animatorStore.animationState === AnimationState.PLAYING) {
+        // Only handle animation stream when in animating state, to prevent extraneous frames from being rendered
+        if (this.animatorStore.animationState === AnimationState.PLAYING && this.animatorStore.animationMode !== AnimationMode.FRAME) {
+            const updatedFrame = this.getFrame(rasterImageData.fileId);
+            if (updatedFrame) {
+                updatedFrame.updateFromRasterData(rasterImageData);
                 updatedFrame.requiredChannel = rasterImageData.channel;
                 updatedFrame.requiredStokes = rasterImageData.stokes;
                 this.animatorStore.incrementFlowCounter(updatedFrame.frameInfo.fileId, updatedFrame.channel, updatedFrame.stokes);
@@ -695,7 +753,7 @@ export class AppStore {
         if (requiredFrame) {
             this.activeFrame = requiredFrame;
             this.widgetsStore.updateImageWidgetTitle();
-            this.setCursorFrozen(false);
+            this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
         } else {
             console.log(`Can't find required frame ${fileId}`);
         }
@@ -705,7 +763,7 @@ export class AppStore {
         if (index >= 0 && this.frames.length > index) {
             this.activeFrame = this.frames[index];
             this.widgetsStore.updateImageWidgetTitle();
-            this.setCursorFrozen(false);
+            this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
         } else {
             console.log(`Invalid frame index ${index}`);
         }

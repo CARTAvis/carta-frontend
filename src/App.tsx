@@ -7,8 +7,9 @@ import ReactResizeDetector from "react-resize-detector";
 import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import {exportImage, FloatingWidgetManagerComponent, RootMenuComponent} from "./components";
 import {AppToaster} from "./components/Shared";
-import {AboutDialogComponent, ApiKeyDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, PreferenceDialogComponent, RegionDialogComponent, URLConnectDialogComponent} from "./components/Dialogs";
-import {AppStore, dayPalette, FileBrowserStore, nightPalette, RegionMode} from "./stores";
+import {AboutDialogComponent, ApiKeyDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, RegionDialogComponent, URLConnectDialogComponent, PreferenceDialogComponent} from "./components/Dialogs";
+import {AppStore, dayPalette, FileBrowserStore, nightPalette, RegionMode, WidgetsStore} from "./stores";
+import {Layout} from "models";
 import {ConnectionStatus} from "./services";
 import {smoothStepOffset} from "./utilities";
 import GitCommit from "./static/gitInfo";
@@ -21,7 +22,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
     private glContainer: HTMLElement;
     private previousConnectionStatus: ConnectionStatus;
-    private static readonly REGION_WIDGETS_STACK_CUTOFF = 960;
 
     constructor(props: { appStore: AppStore }) {
         super(props);
@@ -59,6 +59,21 @@ export class App extends React.Component<{ appStore: AppStore }> {
             }
             this.previousConnectionStatus = newConnectionStatus;
         });
+
+        appStore.backendService.connect(wsURL, appStore.apiKey).subscribe(sessionId => {
+            console.log(`Connected with session ID ${sessionId}`);
+            connected = true;
+            appStore.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
+
+            if (appStore.astReady && fileSearchParam) {
+                autoFileLoaded = true;
+                appStore.addFrame(folderSearchParam, fileSearchParam, "", 0);
+            }
+
+            if (appStore.preferenceStore.autoLaunch) {
+                appStore.fileBrowserStore.showFileBrowser();
+            }
+        }, err => console.log(err));
     }
 
     componentDidMount() {
@@ -66,65 +81,81 @@ export class App extends React.Component<{ appStore: AppStore }> {
         // Adjust layout properties based on window dimensions
         const defaultImageViewFraction = smoothStepOffset(window.innerHeight, 720, 1080, 65, 75);
 
-        const imageViewComponent = {
-            type: "react-component",
-            component: "image-view",
-            title: "No image loaded",
-            height: defaultImageViewFraction,
-            id: "image-view",
-            isClosable: false,
-            props: {appStore: this.props.appStore, id: "image-view-docked", docked: true}
+        const configs = {
+            imageView: {
+                type: "react-component",
+                component: "image-view",
+                title: "No image loaded",
+                height: defaultImageViewFraction,
+                id: "image-view",
+                isClosable: false,
+                props: {appStore: this.props.appStore, id: "image-view-docked", docked: true}
+            },
+            // left bottom components in stack: render config, region list, animator
+            renderConfig: {
+                type: "react-component",
+                component: "render-config",
+                title: "Render Configuration",
+                id: "render-config-0",
+                props: {appStore: this.props.appStore, id: "render-config-0", docked: true}
+            },
+            regionList: {
+                type: "react-component",
+                component: "region-list",
+                title: "Region List",
+                id: "region-list-0",
+                props: {appStore: this.props.appStore, id: "region-list-0", docked: true}
+            },
+            animator: {
+                type: "react-component",
+                component: "animator",
+                title: "Animator",
+                id: "animator-0",
+                props: {appStore: this.props.appStore, id: "animator-0", docked: true}
+            },
+            // right column components: X/Y/Z profiler, statistics
+            spatialProfilerX: {
+                type: "react-component",
+                component: "spatial-profiler",
+                id: "spatial-profiler-0",
+                props: {appStore: this.props.appStore, id: "spatial-profiler-0", docked: true}
+            },
+            spatialProfilerY: {
+                type: "react-component",
+                component: "spatial-profiler",
+                id: "spatial-profiler-1",
+                props: {appStore: this.props.appStore, id: "spatial-profiler-1", docked: true}
+            },
+            spectralProfilerZ: {
+                type: "react-component",
+                component: "spectral-profiler",
+                id: "spectral-profiler-0",
+                title: "Z Profile: Cursor",
+                props: {appStore: this.props.appStore, id: "spectral-profiler-0", docked: true}
+            },
+            stats: {
+                type: "react-component",
+                component: "stats",
+                title: "Statistics",
+                id: "stats-0",
+                props: {appStore: this.props.appStore, id: "stats-0", docked: true}
+            }
         };
 
-        const renderConfigComponent = {
-            type: "react-component",
-            component: "render-config",
-            title: "Render Configuration",
-            id: "render-config-0",
-            props: {appStore: this.props.appStore, id: "render-config-0", docked: true}
-        };
-
-        const spatialProfilerXComponent = {
-            type: "react-component",
-            component: "spatial-profiler",
-            id: "spatial-profiler-0",
-            props: {appStore: this.props.appStore, id: "spatial-profiler-0", docked: true}
-        };
-
-        const spatialProfilerYComponent = {
-            type: "react-component",
-            component: "spatial-profiler",
-            id: "spatial-profiler-1",
-            props: {appStore: this.props.appStore, id: "spatial-profiler-1", docked: true}
-        };
-
-        const regionListComponent = {
-            type: "react-component",
-            component: "region-list",
-            title: "Region List",
-            id: "region-list-0",
-            props: {appStore: this.props.appStore, id: "region-list-0", docked: true}
-        };
-
-        const animatorComponent = {
-            type: "react-component",
-            component: "animator",
-            title: "Animator",
-            id: "animator-0",
-            props: {appStore: this.props.appStore, id: "animator-0", docked: true}
-        };
-
-        let rightColumnContent = [];
-
-        if (window.innerHeight > App.REGION_WIDGETS_STACK_CUTOFF) {
-            rightColumnContent = [spatialProfilerXComponent, spatialProfilerYComponent, regionListComponent, animatorComponent];
-        } else {
-            rightColumnContent = [
-                spatialProfilerXComponent,
-                spatialProfilerYComponent, {
-                    type: "stack",
-                    content: [regionListComponent, animatorComponent]
-                }];
+        let customizedLayout;
+        switch (this.props.appStore.preferenceStore.layout) {
+            case Layout.CUBEVIEW:
+                customizedLayout = this.genCubeViewLayout(configs, widgetsStore);
+                break;
+            case Layout.CUBEANALYSIS:
+                customizedLayout = this.genCubeAnalysisLayout(configs, widgetsStore);
+                break;
+            case Layout.CONTINUUMANALYSIS:
+                customizedLayout = this.genContinuumAnalysisLayout(configs, widgetsStore);
+                break;
+            case Layout.DEFAULT: default:
+                customizedLayout = this.genDefaultLayout(configs, widgetsStore);
+                break;
         }
 
         const initialLayout: any[] = [{
@@ -132,19 +163,17 @@ export class App extends React.Component<{ appStore: AppStore }> {
             content: [{
                 type: "column",
                 width: 60,
-                content: [imageViewComponent, renderConfigComponent]
+                content: [configs.imageView, customizedLayout.leftBottomContent]
             }, {
                 type: "column",
-                content: rightColumnContent
+                content: customizedLayout.rightColumnContent
             }]
         }];
 
-        widgetsStore.addSpatialProfileWidget("spatial-profiler-0", "x", -1, 0);
-        widgetsStore.addSpatialProfileWidget("spatial-profiler-1", "y", -1, 0);
-        widgetsStore.addRenderConfigWidget("render-config-0");
-        widgetsStore.addAnimatorWidget("animator-0");
-        widgetsStore.addRegionListWidget("region-list-0");
-        widgetsStore.addLogWidget("log-0");
+        // common components in left bottom
+        widgetsStore.addRenderConfigWidget(configs.renderConfig.id);
+        widgetsStore.addAnimatorWidget(configs.animator.id);
+        widgetsStore.addRegionListWidget(configs.regionList.id);
 
         const layout = new GoldenLayout({
             settings: {
@@ -161,8 +190,63 @@ export class App extends React.Component<{ appStore: AppStore }> {
         }, this.glContainer);
 
         widgetsStore.setDockedLayout(layout);
-        this.props.appStore.setDarkTheme();
-        this.props.appStore.setLightTheme();
+    }
+
+    private genDefaultLayout(configs: any, widgetsStore: WidgetsStore) {
+        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerX.id, "x", -1, 0);
+        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerY.id, "y", -1, 0);
+
+        return {
+            leftBottomContent: {
+                type: "stack",
+                content: [configs.renderConfig]
+            },
+            rightColumnContent: [configs.spatialProfilerX, configs.spatialProfilerY, {
+                type: "stack",
+                content: [configs.animator, configs.regionList]
+            }]
+        };
+    }
+
+    private genCubeViewLayout(configs: any, widgetsStore: WidgetsStore) {
+        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerX.id, "x", -1, 0);
+        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerY.id, "y", -1, 0);
+        widgetsStore.addSpectralProfileWidget(configs.spectralProfilerZ.id, "z");
+
+        return {
+            leftBottomContent: {
+                type: "stack",
+                content: [configs.animator, configs.renderConfig, configs.regionList]
+            },
+            rightColumnContent: [configs.spatialProfilerX, configs.spatialProfilerY, configs.spectralProfilerZ]
+        };
+    }
+
+    private genCubeAnalysisLayout(configs: any, widgetsStore: WidgetsStore) {
+        widgetsStore.addSpectralProfileWidget(configs.spectralProfilerZ.id, "z");
+        widgetsStore.addStatsWidget(configs.stats.id);
+
+        return {
+            leftBottomContent: {
+                type: "stack",
+                content: [configs.animator, configs.renderConfig, configs.regionList]
+            },
+            rightColumnContent: [configs.spectralProfilerZ, configs.stats]
+        };
+    }
+
+    private genContinuumAnalysisLayout(configs: any, widgetsStore: WidgetsStore) {
+        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerX.id, "x", -1, 0);
+        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerY.id, "y", -1, 0);
+        widgetsStore.addStatsWidget(configs.stats.id);
+
+        return {
+            leftBottomContent: {
+                type: "stack",
+                content: [configs.renderConfig, configs.regionList, configs.animator]
+            },
+            rightColumnContent: [configs.spatialProfilerX, configs.spatialProfilerY, configs.stats]
+        };
     }
 
     // GoldenLayout resize handler
@@ -283,7 +367,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
             <Hotkey key={1} group={regionGroupTitle} global={true} combo="del" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
             <Hotkey key={2} group={regionGroupTitle} global={true} combo="backspace" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
             <Hotkey key={3} group={regionGroupTitle} global={true} combo="esc" label="Deselect region" onKeyDown={appStore.deselectRegion}/>,
-            <Hotkey key={4} group={regionGroupTitle} global={true} combo="mod" label="Corner-to-corner region creation"/>,
+            <Hotkey key={4} group={regionGroupTitle} global={true} combo="mod" label="Switch region creation mode"/>,
             <Hotkey key={5} group={regionGroupTitle} global={true} combo={"shift"} label="Symmetric region creation"/>,
             <Hotkey key={6} group={regionGroupTitle} global={true} combo="double-click" label="Region properties"/>
         ];
