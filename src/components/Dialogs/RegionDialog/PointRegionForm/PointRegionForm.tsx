@@ -100,8 +100,6 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
                             <td>
                                 <NumericInput {...commonProps} buttonPosition="none" placeholder="Y Coordinate" value={centerPoint.y} onBlur={this.handleCenterYChange} onKeyDown={this.handleCenterYChange}/>
                             </td>
-                        </tr>
-                        <tr>
                             <td>
                                 <span className="wcs-string">{wcsStringCenter}</span>
                             </td>

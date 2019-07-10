@@ -55,7 +55,7 @@ export class AppearanceForm extends React.Component<{ region: RegionStore, darkT
             <div className="form-section appearance-form">
                 {!this.props.isPreference && <H5>Appearance</H5>}
                 <div className="form-contents">
-                    <FormGroup label="Line Color" inline={true}>
+                    <FormGroup label="Color" inline={true}>
                         <Popover isOpen={this.displayColorPicker} onClose={this.handleColorClose} position={PopoverPosition.RIGHT} popoverClassName={popoverClassName}>
                             <AnchorButton onClick={this.handleColorClick} className="color-swatch-button">
                                 <div style={{backgroundColor: region.color}}/>
