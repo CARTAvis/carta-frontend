@@ -65,11 +65,13 @@ export class AuthDialogComponent extends React.Component<{ appStore: AppStore }>
             if (res.ok) {
                 res.json().then(responseData => {
                     if (responseData && responseData.username && responseData.token && responseData.socket) {
-                        // do something with response
-                        appStore.backendService.setAuthToken(responseData.token);
-                        appStore.setUsername(responseData.username);
-                        appStore.connectToServer(responseData.socket);
-                        appStore.hideAuthDialog();
+                        // Add delay to allow backend server to start listening
+                        setInterval(()=>{
+                            appStore.backendService.setAuthToken(responseData.token);
+                            appStore.setUsername(responseData.username);
+                            appStore.connectToServer(responseData.socket);
+                            appStore.hideAuthDialog();
+                        }, 50);
                     }
                 }, parseError => {
                     this.errorString = parseError;
