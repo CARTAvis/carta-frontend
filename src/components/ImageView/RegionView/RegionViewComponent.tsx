@@ -275,7 +275,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         let regionRects = null;
 
         if (regionSet && regionSet.regions.length) {
-            regionRects = regionSet.regions.filter(r => r.isValid && r.regionId > 0)
+            regionRects = regionSet.regions.filter(r => r.isValid && r.regionId !== 0)
                 .sort((a, b) => a.boundingBoxArea > b.boundingBoxArea ? -1 : 1)
                 .map(
                     r => (
