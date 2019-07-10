@@ -554,7 +554,7 @@ export class AppStore {
     }
 
     // region Subscription handlers
-    handleSpatialProfileStream = (spatialProfileData: CARTA.SpatialProfileData) => {
+    @action handleSpatialProfileStream = (spatialProfileData: CARTA.SpatialProfileData) => {
         if (this.frames.find(frame => frame.frameInfo.fileId === spatialProfileData.fileId)) {
             const key = `${spatialProfileData.fileId}-${spatialProfileData.regionId}`;
             let profileStore = this.spatialProfiles.get(key);
@@ -568,9 +568,9 @@ export class AppStore {
             profileStore.x = spatialProfileData.x;
             profileStore.y = spatialProfileData.y;
             profileStore.approximate = false;
-            const profileMap = new Map<string, CARTA.SpatialProfile>();
+            const profileMap = new Map<string, CARTA.ISpatialProfile>();
             for (let profile of spatialProfileData.profiles) {
-                profileMap.set(profile.coordinate, profile as CARTA.SpatialProfile);
+                profileMap.set(profile.coordinate, profile);
             }
             profileStore.setProfiles(profileMap);
         }

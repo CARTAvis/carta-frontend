@@ -78,136 +78,51 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             return null;
         }
 
-        if (this.profileStore.approximate) {
-            // Check if frame data can be used to approximate profile
-            if (this.profileStore.x >= this.frame.currentFrameView.xMin && this.profileStore.x <= this.frame.currentFrameView.xMax &&
-                this.profileStore.y >= this.frame.currentFrameView.yMin && this.profileStore.y <= this.frame.currentFrameView.yMax) {
-                const frameDataWidth = Math.floor((this.frame.currentFrameView.xMax - this.frame.currentFrameView.xMin) / this.frame.currentFrameView.mip);
-                const frameDataHeight = Math.floor((this.frame.currentFrameView.yMax - this.frame.currentFrameView.yMin) / this.frame.currentFrameView.mip);
-                const yOffset = Math.floor((this.profileStore.y - this.frame.currentFrameView.yMin) / this.frame.currentFrameView.mip);
-                const xOffset = Math.floor((this.profileStore.x - this.frame.currentFrameView.xMin) / this.frame.currentFrameView.mip);
+        // Use accurate profiles from server-sent data
+        const coordinateData = this.profileStore.profiles.get(this.widgetStore.coordinate);
+        if (coordinateData && coordinateData.values && coordinateData.values.length) {
+            let xMin: number;
+            let xMax: number;
 
-                let localMinX: number;
-                let localMaxX: number;
-                // Determine bounds automatically from the image view
-                if (this.widgetStore.isAutoScaledX) {
-                    if (isXProfile) {
-                        localMinX = clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width);
-                        localMaxX = clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width);
-                    } else {
-                        localMinX = clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height);
-                        localMaxX = clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height);
-                    }
-                } else {
-                    localMinX = clamp(this.widgetStore.minX, 0, this.frame.frameInfo.fileInfoExtended.width);
-                    if (isXProfile) {
-                        localMaxX = clamp(this.widgetStore.maxX, 0, this.frame.frameInfo.fileInfoExtended.width);
-                    } else {
-                        localMaxX = clamp(this.widgetStore.maxX, 0, this.frame.frameInfo.fileInfoExtended.height);
-                    }
-                }
-
-                localMinX = Math.floor(localMinX);
-                localMaxX = Math.floor(localMaxX);
-                let yMin = Number.MAX_VALUE;
-                let yMax = -Number.MAX_VALUE;
-                let yMean;
-                let yRms;
-                // Variables for mean and RMS calculations
-                let ySum = 0;
-                let ySum2 = 0;
-                let yCount = 0;
-
-                let values: { x: number, y: number }[] = [];
+            if (this.widgetStore.isAutoScaledX) {
                 if (isXProfile) {
-                    for (let i = 0; i < frameDataWidth; i++) {
-                        const x = this.frame.currentFrameView.xMin + this.frame.currentFrameView.mip * i;
-                        if (x > localMaxX) {
-                            break;
-                        }
-                        if (x >= localMinX) {
-                            const y = this.frame.rasterData[yOffset * frameDataWidth + i];
-                            values.push({x, y});
-                            if (!isNaN(y)) {
-                                yMin = Math.min(yMin, y);
-                                yMax = Math.max(yMax, y);
-                                yCount++;
-                                ySum += y;
-                                ySum2 += y * y;
-                            }
-                        }
-                    }
+                    xMin = clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width);
+                    xMax = clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width);
                 } else {
-                    for (let i = 0; i < frameDataHeight; i++) {
-                        const x = this.frame.currentFrameView.yMin + this.frame.currentFrameView.mip * i;
-                        if (x > localMaxX) {
-                            break;
-                        }
-                        if (x >= localMinX) {
-                            const y = this.frame.rasterData[i * frameDataWidth + xOffset];
-                            values.push({x, y});
-                            if (!isNaN(y)) {
-                                yMin = Math.min(yMin, y);
-                                yMax = Math.max(yMax, y);
-                                yCount++;
-                                ySum += y;
-                                ySum2 += y * y;
-                            }
-                        }
-                    }
+                    xMin = clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height);
+                    xMax = clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height);
                 }
-
-                if (yCount > 0) {
-                    yMean = ySum / yCount;
-                    yRms = Math.sqrt((ySum2 / yCount) - yMean * yMean);
+            } else {
+                xMin = clamp(this.widgetStore.minX, 0, this.frame.frameInfo.fileInfoExtended.width);
+                if (isXProfile) {
+                    xMax = clamp(this.widgetStore.maxX, 0, this.frame.frameInfo.fileInfoExtended.width);
+                } else {
+                    xMax = clamp(this.widgetStore.maxX, 0, this.frame.frameInfo.fileInfoExtended.height);
                 }
-
-                if (yMin === Number.MAX_VALUE) {
-                    yMin = undefined;
-                    yMax = undefined;
-                }
-                return {values: values, xMin: localMinX, xMax: localMaxX, yMin, yMax, yMean, yRms};
-            } else if (this.profileStore.x !== undefined && this.profileStore.y !== undefined) {
-                console.log(`Out of bounds profile request: (${this.profileStore.x}, ${this.profileStore.y})`);
             }
-        } else {
-            // Use accurate profiles from server-sent data
-            const coordinateData = this.profileStore.profiles.get(this.widgetStore.coordinate);
-            if (coordinateData && coordinateData.values && coordinateData.values.length) {
-                let xMin: number;
-                let xMax: number;
 
-                if (this.widgetStore.isAutoScaledX) {
-                    if (isXProfile) {
-                        xMin = clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width);
-                        xMax = clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width);
-                    } else {
-                        xMin = clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height);
-                        xMax = clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height);
-                    }
-                } else {
-                    xMin = clamp(this.widgetStore.minX, 0, this.frame.frameInfo.fileInfoExtended.width);
-                    if (isXProfile) {
-                        xMax = clamp(this.widgetStore.maxX, 0, this.frame.frameInfo.fileInfoExtended.width);
-                    } else {
-                        xMax = clamp(this.widgetStore.maxX, 0, this.frame.frameInfo.fileInfoExtended.height);
-                    }
-                }
+            xMin = Math.floor(xMin);
+            xMax = Math.floor(xMax);
+            let yMin = Number.MAX_VALUE;
+            let yMax = -Number.MAX_VALUE;
+            let yMean;
+            let yRms;
+            // Variables for mean and RMS calculations
+            let ySum = 0;
+            let ySum2 = 0;
+            let yCount = 0;
 
-                xMin = Math.floor(xMin);
-                xMax = Math.floor(xMax);
-                let yMin = Number.MAX_VALUE;
-                let yMax = -Number.MAX_VALUE;
-                let yMean;
-                let yRms;
-                // Variables for mean and RMS calculations
-                let ySum = 0;
-                let ySum2 = 0;
-                let yCount = 0;
+            const N = Math.floor(Math.min(xMax - xMin, coordinateData.values.length));
 
-                const N = Math.floor(Math.min(xMax - xMin, coordinateData.values.length));
-                let values: Array<{ x: number, y: number }>;
-                if (N > 0) {
+            const numPixels = this.width;
+            const desiredNumPoints = numPixels * 2;
+            const desiredDecimationFactor = N / desiredNumPoints;
+            const decimationFactor = Math.round(desiredDecimationFactor);
+            const numDecimatedPoints = decimationFactor > 1 ? Math.ceil(N / decimationFactor) : N;
+
+            let values: Array<{ x: number, y: number }>;
+            if (N > 0) {
+                if (decimationFactor <= 1) {
                     values = new Array(N);
                     for (let i = 0; i < N; i++) {
                         values[i] = {x: coordinateData.start + i + xMin, y: coordinateData.values[i + xMin]};
@@ -226,19 +141,59 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             ySum2 += y * y;
                         }
                     }
-                }
+                } else {
+                    values = new Array(numDecimatedPoints);
+                    let localMin = NaN, localMax = NaN;
+                    for (let i = 0; i < N; i++) {
+                        const val = coordinateData.values[i + xMin];
+                        const decimatedIndex = Math.floor(i / (decimationFactor * 2));
+                        const decimationOffset = i % (decimationFactor * 2);
+                        if (isFinite(val)) {
+                            if (decimationOffset == 0) {
+                                localMin = val;
+                                localMax = val;
+                            } else if (isNaN(localMin) || val < localMin) {
+                                localMin = val;
+                            } else if (isNaN(localMin) || val > localMax) {
+                                localMax = val;
+                            }
 
-                if (yCount > 0) {
-                    yMean = ySum / yCount;
-                    yRms = Math.sqrt((ySum2 / yCount) - yMean * yMean);
-                }
+                            yMin = Math.min(yMin, val);
+                            yMax = Math.max(yMax, val);
+                            yCount++;
+                            ySum += val;
+                            ySum2 += val * val;
+                        }
 
-                if (yMin === Number.MAX_VALUE) {
-                    yMin = undefined;
-                    yMax = undefined;
+                        if (decimationOffset == (decimationFactor * 2) - 1) {
+                            const x = coordinateData.start + i + xMin;
+                            values[decimatedIndex * 2] = {x, y: localMin};
+                            values[decimatedIndex * 2 + 1] = {x, y: localMax};
+                            localMin = NaN;
+                            localMax = NaN;
+                        }
+                    }
+
+                    // Add last point
+                    if (isFinite(localMax)) {
+                        const x = xMax;
+                        values[values.length - 2] = {x, y: localMin};
+                        values[values.length - 1] = {x, y: localMax};
+                    }
                 }
-                return {values: values, xMin, xMax, yMin, yMax, yMean, yRms};
             }
+
+
+            if (yCount > 0) {
+                yMean = ySum / yCount;
+                yRms = Math.sqrt((ySum2 / yCount) - yMean * yMean);
+            }
+
+            if (yMin === Number.MAX_VALUE) {
+                yMin = undefined;
+                yMax = undefined;
+            }
+            return {values: values, xMin, xMax, yMin, yMax, yMean, yRms};
         }
         return null;
     }
