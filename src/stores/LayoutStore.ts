@@ -27,7 +27,7 @@ export class LayoutStore {
         return Object.keys(this.layouts);
     }
 
-    @action saveLayout = (layoutName: string) => {
+    @action saveLayout = (layoutName: string): boolean => {
         if (this.layouts && layoutName && Object.keys(this.layouts).includes(layoutName)) {
             console.log("Overwrite " + Object.keys(this.layouts));
         } else {
@@ -37,14 +37,16 @@ export class LayoutStore {
             // TODO: save to local storage
             //localStorage.setItem(KEY, JSON.stringify(this.layouts));
         }
+        return true;
     };
 
-    @action deleteLayout = (layoutName: string) => {
+    @action deleteLayout = (layoutName: string): boolean => {
         if (this.layouts && layoutName && Object.keys(this.layouts).includes(layoutName)) {
             delete this.layouts[layoutName];
         }
 
         // TODO: save to local storage
+        return true;
     };
 
     // TODO: when presets are designed & ready

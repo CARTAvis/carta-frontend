@@ -4,6 +4,7 @@ import {observer} from "mobx-react";
 import {Alert, Icon, Menu, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {exportImage} from "components";
+import {LayoutToaster} from "components/Shared";
 import {AppStore} from "stores";
 import {ConnectionStatus} from "services";
 import "./RootMenuComponent.css";
@@ -12,6 +13,12 @@ import "./RootMenuComponent.css";
 export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
     @observable documentationAlertVisible: boolean;
     private documentationAlertTimeoutHandle;
+
+    private deleteLayout = (layoutName: string) => {
+        const result = this.props.appStore.layoutStore.deleteLayout(layoutName);
+        const message = result ? `Layout ${layoutName} is deleted successfully.` : `Deleting layout ${layoutName} failed!`;
+        LayoutToaster.show({icon: "layout-grid", message: message, intent: result ? "success" : "danger", timeout: 1000});
+    };
 
     render() {
         const appStore = this.props.appStore;
@@ -92,7 +99,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     </Menu.Item>
                     <Menu.Item text="Save Layout" onClick={appStore.showSaveLayoutDialog}/>
                     <Menu.Item text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
-                        {userLayouts && userLayouts.length > 0 ? userLayouts.map((value) => <Menu.Item key={value} text={value} onClick={() => appStore.layoutStore.deleteLayout(value)}/>) : null}
+                        {userLayouts && userLayouts.length > 0 ? userLayouts.map((value) => <Menu.Item key={value} text={value} onClick={() => this.deleteLayout(value)}/>) : null}
                     </Menu.Item>
                     <Menu.Item text="Show Layouts" onClick={appStore.layoutStore.showLayout}/>
                 </Menu.Item>
