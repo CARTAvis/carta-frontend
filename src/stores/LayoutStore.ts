@@ -41,4 +41,9 @@ export class LayoutStore {
     getPresetLayouts = (): string[] => {
         return null;
     };
+
+    // TODO: applying layout by name
+    applyLayout = (layoutName: string) => {
+        console.log("Applying layout " + layoutName);
+    };
 }
