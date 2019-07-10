@@ -446,6 +446,7 @@ export class AppStore {
 
         this.frames = [];
         this.activeFrame = null;
+        this.fileBrowserStore = new FileBrowserStore(this.backendService);
         this.animatorStore = new AnimatorStore(this);
         this.alertStore = new AlertStore();
         this.overlayStore = new OverlayStore(this.preferenceStore);
