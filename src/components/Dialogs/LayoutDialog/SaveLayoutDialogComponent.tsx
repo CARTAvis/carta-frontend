@@ -1,14 +1,14 @@
 import * as React from "react";
 import {observable, computed} from "mobx";
 import {observer} from "mobx-react";
-import {FormGroup, InputGroup, IDialogProps, Button, Intent, Classes, Tooltip, Position} from "@blueprintjs/core";
+import {FormGroup, InputGroup, IDialogProps, Button, Intent, Classes, Tooltip} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore} from "stores";
 import "./SaveLayoutDialogComponent.css";
 
 @observer
 export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppStore }> {
-    @observable layoutName: string = "";
+    @observable private layoutName: string = "";
 
     private handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
         this.layoutName = ev.currentTarget.value;
@@ -52,7 +52,8 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <Tooltip content="Layout name cannot be empty!" position={Position.TOP} disabled={!this.isEmpty}>
+                        <Button intent={Intent.NONE} onClick={() => this.layoutName = ""} disabled={this.isEmpty} text="Clear"/>
+                        <Tooltip content="Layout name cannot be empty!" disabled={!this.isEmpty}>
                             <Button intent={Intent.SUCCESS} onClick={this.saveLayout} text="Create" disabled={this.isEmpty}/>
                         </Tooltip>
                         <Button intent={Intent.NONE} onClick={appStore.hideSaveLayoutDialog} text="Close"/>
