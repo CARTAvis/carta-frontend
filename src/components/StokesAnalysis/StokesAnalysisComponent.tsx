@@ -65,9 +65,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
-    private static calculateLayout = (width: number, height: number) : string => {
+    private static calculateLayout = (width: number, height: number): string => {
         if (width && height) {
-            let ratio = width/height
+            let ratio = width / height;
             let verticalDiff = Math.abs(ratio - StokesAnalysisComponent.layoutRatioCutoffs.vertical);
             let horizontalDiff = Math.abs(ratio - StokesAnalysisComponent.layoutRatioCutoffs.horizontal);
             let squareDiff = Math.abs(ratio - StokesAnalysisComponent.layoutRatioCutoffs.square);
@@ -77,7 +77,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             if (minValue === verticalDiff) {
                 return "vertical";
             }
-            else if (minValue == horizontalDiff) {
+            else if (minValue === horizontalDiff) {
                 return "horizontal";
             }
             else if (minValue === squareDiff) {
@@ -101,11 +101,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const imageName = (appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfo.name : undefined);
 
         let quLinePlotProps: LinePlotComponentProps = {
-            xLabel: 'Frequence (GHz)',
+            xLabel: "Frequence (GHz)",
             yLabel: "Q + U",
             darkMode: appStore.darkTheme,
             imageName: imageName,
-            plotName: 'profile',
+            plotName: "profile",
             forceScientificNotationTicksY: true,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
@@ -113,11 +113,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         };
 
         let piLinePlotProps: LinePlotComponentProps = {
-            xLabel: 'Frequence (GHz)',
+            xLabel: "Frequence (GHz)",
             yLabel: "PI",
             darkMode: appStore.darkTheme,
             imageName: imageName,
-            plotName: 'profile',
+            plotName: "profile",
             forceScientificNotationTicksY: true,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
@@ -125,11 +125,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         };
 
         let paLinePlotProps: LinePlotComponentProps = {
-            xLabel: 'Frequence (GHz)',
+            xLabel: "Frequence (GHz)",
             yLabel: "PA",
             darkMode: appStore.darkTheme,
             imageName: imageName,
-            plotName: 'profile',
+            plotName: "profile",
             forceScientificNotationTicksY: true,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
@@ -137,18 +137,18 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         };
 
         let qvsuLinePlotProps: LinePlotComponentProps = {
-            xLabel: 'Q',
+            xLabel: "Q",
             yLabel: "U",
             darkMode: appStore.darkTheme,
             imageName: imageName,
-            plotName: 'profile',
+            plotName: "profile",
             forceScientificNotationTicksY: true,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true
         };
 
-        let className="profile-container-"+StokesAnalysisComponent.calculateLayout(this.width, this.height);
+        let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
 
         return (
             <div className={"stokes-widget"}>

@@ -9,7 +9,6 @@ import "./StokesAnalysisToolbarComponent.css";
 @observer
 export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore: StokesAnalysisWidgetStore, appStore: AppStore}> {
 
-
     public render() {
         const appStore = this.props.appStore;
         const widgetStore = this.props.widgetStore;

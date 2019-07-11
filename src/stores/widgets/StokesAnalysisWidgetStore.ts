@@ -3,7 +3,6 @@ import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore} from "./RegionWidgetStore";
 import {FrameStore} from "stores/FrameStore";
 
-
 export enum StokesCoordinate {
     CurrentZ = "z",
     TotalIntensity = "Iz",
@@ -43,7 +42,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable statsType: CARTA.StatsType;
     @observable fractionalPolVisible: boolean;
 
-    
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
     
     private static ValidStatsTypes = [
@@ -58,14 +56,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         }
         return requiredCoordinate;
     }
-
-    private static AddToRequirementsMap(frame: FrameStore, widgetsMap: Map<number, Map<number, CARTA.SetSpectralRequirements>>, widgetStore: StokesAnalysisWidgetStore){
-        let requiredCoordinate = StokesAnalysisWidgetStore.requiredCoordinate(widgetStore);
-        // requiredCoordinate.forEach(coordinate => {
-        //     widgetsMap.
-        // });
-    }
-
 
     @action setStatsType = (statsType: CARTA.StatsType) => {
         if (StokesAnalysisWidgetStore.ValidStatsTypes.indexOf(statsType) !== -1) {
@@ -107,7 +97,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.quScatterMinY = undefined;
         this.quScatterMaxY = undefined;
     };
-
 
     @action setChannel = (channel: number) => {
         this.channel = channel;

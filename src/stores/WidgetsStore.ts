@@ -1,7 +1,18 @@
 import * as GoldenLayout from "golden-layout";
 import * as $ from "jquery";
 import {action, observable} from "mobx";
-import {AnimatorComponent, HistogramComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent, StatsComponent, StokesAnalysisComponent} from "components";
+import {
+    AnimatorComponent, 
+    HistogramComponent, 
+    ImageViewComponent, 
+    LogComponent, 
+    PlaceholderComponent, 
+    RegionListComponent, 
+    RenderConfigComponent, 
+    SpatialProfilerComponent, 
+    SpectralProfilerComponent, 
+    StatsComponent, 
+    StokesAnalysisComponent} from "components";
 import {AppStore} from "./AppStore";
 import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 

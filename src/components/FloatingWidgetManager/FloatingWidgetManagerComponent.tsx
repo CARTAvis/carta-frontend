@@ -11,7 +11,8 @@ import {
     RenderConfigComponent,
     SpatialProfilerComponent,
     SpectralProfilerComponent,
-    StatsComponent
+    StatsComponent,
+    StokesAnalysisComponent,
 } from "components";
 import {AppStore, WidgetConfig} from "stores";
 
@@ -48,6 +49,8 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
                 return <HistogramComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
             case RegionListComponent.WIDGET_CONFIG.type:
                 return <RegionListComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+            case StokesAnalysisComponent.WIDGET_CONFIG.type:
+                return <StokesAnalysisComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
             default:
                 return <PlaceholderComponent appStore={appStore} id={widgetConfig.id} docked={false} label={widgetConfig.title}/>;
         }
