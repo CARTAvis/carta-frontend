@@ -241,9 +241,6 @@ export class RegionStore {
     @action beginCreating = () => {
         this.creating = true;
         this.editing = true;
-        // if (this.regionId !== 0 && this.regionType === CARTA.RegionType.POINT && this.controlPoints.length === 1) {
-        //     this.controlPoints.push({x: 5, y: 5});
-        // }
     };
 
     @action endCreating = () => {
@@ -257,9 +254,6 @@ export class RegionStore {
                 }
             });
         } 
-        // if (this.regionId !== 0 && this.controlPoints.length === 1) {
-        //     this.controlPoints.push({x: 5, y: 5});
-        // }
     };
 
     @action beginEditing = () => {
