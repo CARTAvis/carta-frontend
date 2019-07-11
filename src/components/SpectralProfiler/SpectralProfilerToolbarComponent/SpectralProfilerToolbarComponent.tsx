@@ -73,7 +73,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                     <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect}/>
                 </FormGroup>
                 <FormGroup label={"Statistic"} inline={true} disabled={!enableStatsSelect}>
-                    <HTMLSelect value={widgetStore.statsType} options={profileStatsOptions} onChange={this.handleStatsChanged} disabled={!enableStatsSelect}/>
+                    <HTMLSelect value={enableStatsSelect ? widgetStore.statsType : CARTA.StatsType.Sum} options={profileStatsOptions} onChange={this.handleStatsChanged} disabled={!enableStatsSelect}/>
                 </FormGroup>
                 <FormGroup label={"Stokes"} inline={true} disabled={!enableStokesSelect}>
                     <HTMLSelect value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect}/>
