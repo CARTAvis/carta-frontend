@@ -14,7 +14,7 @@ import {CursorInfo, FrameView, Theme, Point2D} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
 
 const CURSOR_DEBOUNCE_TIME = 200;
-const CURSOR_THROTTLE_TIME = 200;
+const CURSOR_THROTTLE_TIME = 100;
 const IMAGE_THROTTLE_TIME = 50;
 const IMAGE_CHANNEL_THROTTLE_TIME = 500;
 const REQUIREMENTS_CHECK_INTERVAL = 200;
@@ -500,14 +500,6 @@ export class AppStore {
                         throttledSetCursor(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
                     } else {
                         debouncedSetCursor(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
-                        let keyStruct = {fileId: this.activeFrame.frameInfo.fileId, regionId: 0};
-                        const key = `${keyStruct.fileId}-${keyStruct.regionId}`;
-                        const profileStore = this.spatialProfiles.get(key);
-                        if (profileStore) {
-                            profileStore.x = pos.x;
-                            profileStore.y = pos.y;
-                            profileStore.approximate = true;
-                        }
                     }
                 }
             }
