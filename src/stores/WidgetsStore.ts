@@ -1,9 +1,9 @@
 import * as GoldenLayout from "golden-layout";
 import * as $ from "jquery";
 import {action, observable} from "mobx";
-import {AnimatorComponent, HistogramComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent, StatsComponent} from "components";
+import {AnimatorComponent, HistogramComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent, StatsComponent, StokesAnalysisComponent} from "components";
 import {AppStore} from "./AppStore";
-import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
+import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 
 export class WidgetConfig {
     id: string;
@@ -39,6 +39,7 @@ export class WidgetsStore {
     @observable logWidgets: Map<string, EmptyWidgetStore>;
     @observable regionListWidgets: Map<string, EmptyWidgetStore>;
     @observable animatorWidgets: Map<string, EmptyWidgetStore>;
+    @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
 
     private appStore: AppStore;
     private widgetsMap: Map<string, Map<string, any>>;
@@ -75,6 +76,7 @@ export class WidgetsStore {
         this.animatorWidgets = new Map<string, EmptyWidgetStore>();
         this.logWidgets = new Map<string, EmptyWidgetStore>();
         this.regionListWidgets = new Map<string, EmptyWidgetStore>();
+        this.stokesAnalysisWidgets = new Map<string, StokesAnalysisWidgetStore>();
 
         this.widgetsMap = new Map<string, Map<string, any>>([
             [SpatialProfilerComponent.WIDGET_CONFIG.type, this.spatialProfileWidgets],
@@ -85,6 +87,7 @@ export class WidgetsStore {
             [AnimatorComponent.WIDGET_CONFIG.type, this.animatorWidgets],
             [LogComponent.WIDGET_CONFIG.type, this.logWidgets],
             [RegionListComponent.WIDGET_CONFIG.type, this.regionListWidgets],
+            [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets],
         ]);
 
         this.floatingWidgets = [];
@@ -111,6 +114,8 @@ export class WidgetsStore {
                 return HistogramComponent.WIDGET_CONFIG;
             case RegionListComponent.WIDGET_CONFIG.type:
                 return RegionListComponent.WIDGET_CONFIG;
+            case StokesAnalysisComponent.WIDGET_CONFIG.type:
+                return StokesAnalysisComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -153,6 +158,7 @@ export class WidgetsStore {
         layout.registerComponent("region-list", RegionListComponent);
         layout.registerComponent("log", LogComponent);
         layout.registerComponent("animator", AnimatorComponent);
+        layout.registerComponent("stokes", StokesAnalysisComponent);
 
         layout.on("stackCreated", (stack) => {
             let unpinButton = $(`<li class="pin-icon"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);
@@ -226,6 +232,9 @@ export class WidgetsStore {
                 break;
             case RegionListComponent.WIDGET_CONFIG.type:
                 itemId = this.addRegionListWidget();
+                break;
+            case StokesAnalysisComponent.WIDGET_CONFIG.type:
+                itemId = this.addStokesWidget();
                 break;
             default:
                 // Remove it from the floating widget array, while preserving its store
@@ -353,6 +362,27 @@ export class WidgetsStore {
     }
 
     // endregion
+
+        // region Stokes Profile Widgets
+        createFloatingStokesWidget = () => {
+            let config = StokesAnalysisComponent.WIDGET_CONFIG;
+            config.id = this.addStokesWidget();
+            this.addFloatingWidget(config);
+        };
+    
+        @action addStokesWidget(id: string = null) {
+            // Generate new id if none passed in
+            if (!id) {
+                id = this.getNextId(StokesAnalysisComponent.WIDGET_CONFIG.type);
+            }
+    
+            if (id) {
+                this.stokesAnalysisWidgets.set(id, new StokesAnalysisWidgetStore());
+            }
+            return id;
+        }
+    
+        // endregion
 
     // region Stats Widgets
     createFloatingStatsWidget = () => {
