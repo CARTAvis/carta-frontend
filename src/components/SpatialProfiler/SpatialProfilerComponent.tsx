@@ -142,11 +142,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     // Decimated data
                     values = new Array(numDecimatedPoints);
                     let localMin = NaN, localMax = NaN;
+                    let posMin, posMax;
                     let localCounter = 0;
                     for (let i = 0; i < N; i++) {
                         const val = coordinateData.values[i + xMin];
                         const decimatedIndex = Math.floor(i / (decimationFactor));
-                        const decimationOffset = i % (decimationFactor);
                         if (isFinite(val)) {
                             yMin = Math.min(yMin, val);
                             yMax = Math.max(yMax, val);
@@ -154,22 +154,30 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             ySum += val;
                             ySum2 += val * val;
 
-                            if (decimationOffset === 0) {
+                            if (isNaN(localMin) || val < localMin) {
                                 localMin = val;
+                                posMin = i;
+                            }
+                            if (isNaN(localMax) || val > localMax) {
                                 localMax = val;
-                            } else if (isNaN(localMin) || val < localMin) {
-                                localMin = val;
-                            } else if (isNaN(localMin) || val > localMax) {
-                                localMax = val;
+                                posMax = i;
                             }
                         }
 
                         localCounter++;
                         if (localCounter === decimationFactor) {
                             // Use the midpoint of the decimated data range as the x coordinate (rounded down to nearest pixel)
-                            const x = Math.floor(coordinateData.start + i + xMin - decimationFactor / 2.0);
-                            values[decimatedIndex * 2] = {x, y: localMin};
-                            values[decimatedIndex * 2 + 1] = {x, y: localMax};
+                            const x1 = Math.floor(coordinateData.start + posMin + xMin);
+                            const x2 = Math.floor(coordinateData.start + posMax + xMin);
+
+                            if (posMin < posMax) {
+                                values[decimatedIndex * 2] = {x: x1, y: localMin};
+                                values[decimatedIndex * 2 + 1] = {x: x2, y: localMax};
+                            } else {
+                                values[decimatedIndex * 2] = {x: x2, y: localMax};
+                                values[decimatedIndex * 2 + 1] = {x: x1, y: localMin};
+                            }
+
                             localMin = NaN;
                             localMax = NaN;
                             localCounter = 0;
@@ -178,9 +186,16 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
                     // Add last point if there is left over data
                     if (localCounter > 0) {
-                        const x = xMax;
-                        values[values.length - 2] = {x, y: localMin};
-                        values[values.length - 1] = {x, y: localMax};
+                        const x1 = Math.floor(coordinateData.start + posMin + xMin - decimationFactor / 2.0);
+                        const x2 = Math.floor(coordinateData.start + posMax + xMin - decimationFactor / 2.0);
+
+                        if (posMin < posMax) {
+                            values[values.length - 2] = {x: x1, y: localMin};
+                            values[values.length - 1] = {x: x2, y: localMax};
+                        } else {
+                            values[values.length - 2] = {x: x2, y: localMax};
+                            values[values.length - 1] = {x: x1, y: localMin};
+                        }
                     }
                 }
             }
