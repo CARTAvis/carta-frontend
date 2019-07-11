@@ -5,7 +5,7 @@ import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {LinePlotComponent, LinePlotComponentProps, PopoverSettingsComponent, PlotType} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent} from "components/Shared";
 import {SpatialProfilerSettingsPanelComponent} from "./SpatialProfilerSettingsPanelComponent/SpatialProfilerSettingsPanelComponent";
 import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
@@ -80,7 +80,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
         // Use accurate profiles from server-sent data
         const coordinateData = this.profileStore.profiles.get(this.widgetStore.coordinate);
-        if (coordinateData && coordinateData.values && coordinateData.values.length) {
+        if (!(coordinateData && coordinateData.values && coordinateData.values.length)) {
+            return null;
+        } else {
             let xMin: number;
             let xMax: number;
 
@@ -107,6 +109,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             let yMax = -Number.MAX_VALUE;
             let yMean;
             let yRms;
+
             // Variables for mean and RMS calculations
             let ySum = 0;
             let ySum2 = 0;
@@ -115,41 +118,43 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             const N = Math.floor(Math.min(xMax - xMin, coordinateData.values.length));
 
             const numPixels = this.width;
-            const desiredNumPoints = numPixels * 2;
-            const desiredDecimationFactor = N / desiredNumPoints;
-            const decimationFactor = Math.round(desiredDecimationFactor);
-            const numDecimatedPoints = decimationFactor > 1 ? Math.ceil(N / decimationFactor) : N;
+            const decimationFactor = Math.round(N / numPixels);
+            const numDecimatedPoints = decimationFactor > 1 ? 2 * Math.ceil(N / decimationFactor) : N;
 
             let values: Array<{ x: number, y: number }>;
             if (N > 0) {
                 if (decimationFactor <= 1) {
+                    // full resolution data
                     values = new Array(N);
                     for (let i = 0; i < N; i++) {
-                        values[i] = {x: coordinateData.start + i + xMin, y: coordinateData.values[i + xMin]};
-                    }
-
-                    for (let i = 0; i < values.length; i++) {
-                        if (values[i].x > xMax) {
-                            break;
-                        }
-                        const y = values[i].y;
-                        if (values[i].x >= xMin && !isNaN(y)) {
+                        const y = coordinateData.values[i + xMin];
+                        const x = coordinateData.start + i + xMin;
+                        if (x >= xMin && x <= xMax && isFinite(y)) {
                             yMin = Math.min(yMin, y);
                             yMax = Math.max(yMax, y);
                             yCount++;
                             ySum += y;
                             ySum2 += y * y;
                         }
+                        values[i] = {x, y};
                     }
                 } else {
+                    // Decimated data
                     values = new Array(numDecimatedPoints);
                     let localMin = NaN, localMax = NaN;
+                    let localCounter = 0;
                     for (let i = 0; i < N; i++) {
                         const val = coordinateData.values[i + xMin];
-                        const decimatedIndex = Math.floor(i / (decimationFactor * 2));
-                        const decimationOffset = i % (decimationFactor * 2);
+                        const decimatedIndex = Math.floor(i / (decimationFactor));
+                        const decimationOffset = i % (decimationFactor);
                         if (isFinite(val)) {
-                            if (decimationOffset == 0) {
+                            yMin = Math.min(yMin, val);
+                            yMax = Math.max(yMax, val);
+                            yCount++;
+                            ySum += val;
+                            ySum2 += val * val;
+
+                            if (decimationOffset === 0) {
                                 localMin = val;
                                 localMax = val;
                             } else if (isNaN(localMin) || val < localMin) {
@@ -157,25 +162,22 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                             } else if (isNaN(localMin) || val > localMax) {
                                 localMax = val;
                             }
-
-                            yMin = Math.min(yMin, val);
-                            yMax = Math.max(yMax, val);
-                            yCount++;
-                            ySum += val;
-                            ySum2 += val * val;
                         }
 
-                        if (decimationOffset == (decimationFactor * 2) - 1) {
-                            const x = coordinateData.start + i + xMin;
+                        localCounter++;
+                        if (localCounter === decimationFactor) {
+                            // Use the midpoint of the decimated data range as the x coordinate
+                            const x = coordinateData.start + i + xMin - decimationFactor / 2.0;
                             values[decimatedIndex * 2] = {x, y: localMin};
                             values[decimatedIndex * 2 + 1] = {x, y: localMax};
                             localMin = NaN;
                             localMax = NaN;
+                            localCounter = 0;
                         }
                     }
 
-                    // Add last point
-                    if (isFinite(localMax)) {
+                    // Add last point if there is left over data
+                    if (localCounter > 0) {
                         const x = xMax;
                         values[values.length - 2] = {x, y: localMin};
                         values[values.length - 1] = {x, y: localMax};
@@ -183,6 +185,13 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
 
+            for (let i = 0; i < values.length; i++) {
+                if (!values[i]) {
+                    console.log(`missing value entry ${i}`);
+                    console.log(values);
+                    break;
+                }
+            }
 
             if (yCount > 0) {
                 yMean = ySum / yCount;
@@ -195,7 +204,6 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             }
             return {values: values, xMin, xMax, yMin, yMax, yMean, yRms};
         }
-        return null;
     }
 
     constructor(props: WidgetProps) {
