@@ -21,7 +21,7 @@ export class LayoutStore {
             try {
                 this.layouts = JSON.parse(layoutJson);
             } catch (e) {
-                console.log("Parse layout Json error!");
+                this.alertStore.showAlert("Loading user-defined layout failed!");
                 this.layouts = {};
             }
         }
@@ -50,14 +50,14 @@ export class LayoutStore {
         try {
             serializedJson = JSON.stringify(this.layouts, getCircularReplacer());
         } catch (e) {
-            this.alertStore.showAlert("Serializing layout falied!");
+            this.alertStore.showAlert("Serializing user-defined layout falied!");
             return false;
         }
 
         try {
             localStorage.setItem(KEY, serializedJson);
         } catch (e) {
-            this.alertStore.showAlert("Save layout to local storage falied!");
+            this.alertStore.showAlert("Saving user-defined layout falied!");
             return false;
         }
 
@@ -70,7 +70,7 @@ export class LayoutStore {
         }
 
         if (Object.keys(this.layouts).length >= MAX_LAYOUT) {
-            this.alertStore.showAlert(`Exceed maximum layout quota(${MAX_LAYOUT}).`);
+            this.alertStore.showAlert(`Maximum user-defined layout quota exceeded (${MAX_LAYOUT} layouts).`);
             return false;
         }
 
