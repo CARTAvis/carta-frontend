@@ -2,7 +2,7 @@ import {observable, computed, action} from "mobx";
 import {WidgetsStore, AlertStore} from "stores";
 
 const KEY = "CARTA_saved_layouts";
-const MAX_LAYOUT = 10;
+const MAX_LAYOUT = 2;
 
 export class LayoutStore {
     public static TOASTER_TIMEOUT = 1500;
@@ -31,10 +31,37 @@ export class LayoutStore {
         return Object.keys(this.layouts);
     }
 
-    private saveLayoutToLocalStorage = () => {
-        let layouts = {};
-        Object.keys(this.layouts).forEach((value) => layouts[value] = this.layouts[value]);
-        localStorage.setItem(KEY, JSON.stringify(layouts));
+    private saveLayoutToLocalStorage = (): boolean => {
+        const getCircularReplacer = () => {
+            const seen = new WeakSet();
+            return (key, value) => {
+                if (typeof value === "object" && value !== null) {
+                    if (seen.has(value)) {
+                        return;
+                    }
+                    seen.add(value);
+                }
+                return value;
+            };
+        };
+
+        // serialize layout for saving
+        let serializedJson;
+        try {
+            serializedJson = JSON.stringify(this.layouts, getCircularReplacer());
+        } catch (e) {
+            this.alertStore.showAlert("Serializing layout falied!");
+            return false;
+        }
+
+        try {
+            localStorage.setItem(KEY, serializedJson);
+        } catch (e) {
+            this.alertStore.showAlert("Save layout to local storage falied!");
+            return false;
+        }
+
+        return true;
     };
 
     @action saveLayout = (layoutName: string): boolean => {
@@ -42,24 +69,34 @@ export class LayoutStore {
             return false;
         }
 
-        if (Object.keys(this.layouts).includes(layoutName)) {
-            // overwrite existing layout
-            // TODO: guard with alert
-            this.alertStore.showAlert(`Are you sure to overwrite the existing layout ${layoutName}?`);
-        } else {
-            // add new layout
-            const config = this.widgetsStore.dockedLayout.toConfig();
-            this.layouts[layoutName] = "";
+        if (Object.keys(this.layouts).length >= MAX_LAYOUT) {
+            this.alertStore.showAlert(`Exceed maximum layout quota(${MAX_LAYOUT}).`);
+            return false;
         }
-        this.saveLayoutToLocalStorage();
+
+        if (Object.keys(this.layouts).includes(layoutName)) {
+            // TODO: guard with alert
+            // `Are you sure to overwrite the existing layout ${layoutName}?`
+            // if(!this.alertStore.showOverwriteLayoutWarning()) {
+            //    return false;
+            // }
+        }
+
+        const config = this.widgetsStore.dockedLayout.toConfig();
+        this.layouts[layoutName] = config;
+
+        if (!this.saveLayoutToLocalStorage()) {
+            delete this.layouts[layoutName];
+            return false;
+        }
+
         return true;
     };
 
     @action deleteLayout = (layoutName: string): boolean => {
         if (this.layouts && layoutName && Object.keys(this.layouts).includes(layoutName)) {
             delete this.layouts[layoutName];
-            this.saveLayoutToLocalStorage();
-            return true;
+            return this.saveLayoutToLocalStorage();
         }
         return false;
     };
