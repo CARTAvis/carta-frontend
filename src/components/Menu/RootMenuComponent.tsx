@@ -101,7 +101,6 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     <Menu.Item text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
                         {userLayouts && userLayouts.length > 0 ? userLayouts.map((value) => <Menu.Item key={value} text={value} onClick={() => this.deleteLayout(value)}/>) : null}
                     </Menu.Item>
-                    <Menu.Item text="Show Layouts" onClick={appStore.layoutStore.showLayout}/>
                 </Menu.Item>
                 <Menu.Item text="Info Panels" icon={"info-sign"}>
                     <Menu.Item text="Region List" onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>

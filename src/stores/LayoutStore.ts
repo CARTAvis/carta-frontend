@@ -111,9 +111,4 @@ export class LayoutStore {
             // TODO: applying layout by name
         }
     };
-
-    // helper function, will delete when finished
-    @action showLayout = () => {
-        Object.keys(this.layouts).forEach((value) => console.log(value + ": " + this.layouts[value]));
-    };
 }
