@@ -2,6 +2,7 @@ import {observable, computed, action} from "mobx";
 import {WidgetsStore, AlertStore} from "stores";
 
 const KEY = "CARTA_saved_layouts";
+const MAX_LAYOUT = 10;
 
 export class LayoutStore {
     public static TOASTER_TIMEOUT = 1500;
@@ -30,26 +31,37 @@ export class LayoutStore {
         return Object.keys(this.layouts);
     }
 
+    private saveLayoutToLocalStorage = () => {
+        let layouts = {};
+        Object.keys(this.layouts).forEach((value) => layouts[value] = this.layouts[value]);
+        localStorage.setItem(KEY, JSON.stringify(layouts));
+    };
+
     @action saveLayout = (layoutName: string): boolean => {
-        if (this.layouts && layoutName && Object.keys(this.layouts).includes(layoutName)) {
+        if (!this.layouts || !layoutName) {
+            return false;
+        }
+
+        if (Object.keys(this.layouts).includes(layoutName)) {
+            // overwrite existing layout
+            // TODO: guard with alert
             this.alertStore.showAlert(`Are you sure to overwrite the existing layout ${layoutName}?`);
         } else {
+            // add new layout
             const config = this.widgetsStore.dockedLayout.toConfig();
             this.layouts[layoutName] = "";
-
-            // TODO: save to local storage
-            //localStorage.setItem(KEY, JSON.stringify(this.layouts));
         }
+        this.saveLayoutToLocalStorage();
         return true;
     };
 
     @action deleteLayout = (layoutName: string): boolean => {
         if (this.layouts && layoutName && Object.keys(this.layouts).includes(layoutName)) {
             delete this.layouts[layoutName];
+            this.saveLayoutToLocalStorage();
+            return true;
         }
-
-        // TODO: save to local storage
-        return true;
+        return false;
     };
 
     // TODO: when presets are designed & ready
