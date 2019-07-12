@@ -31,6 +31,14 @@ export class LayoutStore {
         return Object.keys(this.layouts);
     }
 
+    @computed get savedLayoutNumber(): number {
+        return Object.keys(this.layouts).length;
+    }
+
+    private layoutExist = (layoutName: string): boolean => {
+        return this.layouts && layoutName && Object.keys(this.layouts).includes(layoutName);
+    };
+
     private saveLayoutToLocalStorage = (): boolean => {
         const getCircularReplacer = () => {
             const seen = new WeakSet();
@@ -50,14 +58,14 @@ export class LayoutStore {
         try {
             serializedJson = JSON.stringify(this.layouts, getCircularReplacer());
         } catch (e) {
-            this.alertStore.showAlert("Serializing user-defined layout falied! " + e.message);
+            this.alertStore.showAlert("Serializing user-defined layout failed! " + e.message);
             return false;
         }
 
         try {
             localStorage.setItem(KEY, serializedJson);
         } catch (e) {
-            this.alertStore.showAlert("Saving user-defined layout falied! " + e.message);
+            this.alertStore.showAlert("Saving user-defined layout failed! " + e.message);
             return false;
         }
 
@@ -69,12 +77,12 @@ export class LayoutStore {
             return false;
         }
 
-        if (Object.keys(this.layouts).length >= MAX_LAYOUT) {
-            this.alertStore.showAlert(`Maximum user-defined layout quota exceeded (${MAX_LAYOUT} layouts).`);
+        if (this.savedLayoutNumber >= MAX_LAYOUT) {
+            this.alertStore.showAlert(`Maximum user-defined layout quota exceeded! (${MAX_LAYOUT} layouts)`);
             return false;
         }
 
-        if (Object.keys(this.layouts).includes(layoutName)) {
+        if (this.layoutExist(layoutName)) {
             // TODO: guard with alert
             // `Are you sure to overwrite the existing layout ${layoutName}?`
             // if(!this.alertStore.showOverwriteLayoutWarning()) {
@@ -94,11 +102,11 @@ export class LayoutStore {
     };
 
     @action deleteLayout = (layoutName: string): boolean => {
-        if (this.layouts && layoutName && Object.keys(this.layouts).includes(layoutName)) {
-            delete this.layouts[layoutName];
-            return this.saveLayoutToLocalStorage();
+        if (!this.layoutExist(layoutName)) {
+            return false;
         }
-        return false;
+        delete this.layouts[layoutName];
+        return this.saveLayoutToLocalStorage();
     };
 
     // TODO: when presets are designed & ready
@@ -107,8 +115,10 @@ export class LayoutStore {
     };
 
     @action applyLayout = (layoutName: string) => {
-        if (this.layouts && layoutName && Object.keys(this.layouts).includes(layoutName)) {
-            // TODO: applying layout by name
+        if (!this.layoutExist(layoutName)) {
+            this.alertStore.showAlert(`Applying layout failed. Layout ${layoutName} not found!`);
+            return;
         }
+        // TODO: apply layout
     };
 }
