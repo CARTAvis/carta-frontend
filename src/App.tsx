@@ -178,6 +178,12 @@ export class App extends React.Component<{ appStore: AppStore }> {
             }
         };
 
+        // common components in left bottom
+        widgetsStore.addRenderConfigWidget(configs.renderConfig.id);
+        widgetsStore.addAnimatorWidget(configs.animator.id);
+        widgetsStore.addRegionListWidget(configs.regionList.id);
+
+        // customize layout
         let customizedLayout;
         switch (this.props.appStore.preferenceStore.layout) {
             case Layout.CUBEVIEW:
@@ -194,7 +200,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 break;
         }
 
-        const initialLayout: any[] = [{
+        const arrangementConfig = {
             type: "row",
             content: [{
                 type: "column",
@@ -204,14 +210,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 type: "column",
                 content: customizedLayout.rightColumnContent
             }]
-        }];
+        };
 
-        // common components in left bottom
-        widgetsStore.addRenderConfigWidget(configs.renderConfig.id);
-        widgetsStore.addAnimatorWidget(configs.animator.id);
-        widgetsStore.addRegionListWidget(configs.regionList.id);
-
-        const layout = new GoldenLayout({
+        const mainLayoutConfig = {
             settings: {
                 showPopoutIcon: false,
                 showCloseIcon: false
@@ -222,10 +223,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 dragProxyWidth: 600,
                 dragProxyHeight: 270,
             },
-            content: initialLayout
-        }, this.glContainer);
-
-        widgetsStore.setDockedLayout(layout);
+            content: [arrangementConfig]
+        };
+        widgetsStore.setDockedLayout(arrangementConfig, new GoldenLayout(mainLayoutConfig, this.glContainer));
     }
 
     private genDefaultLayout(configs: any, widgetsStore: WidgetsStore) {

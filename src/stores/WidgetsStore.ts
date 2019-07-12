@@ -40,8 +40,13 @@ export class WidgetsStore {
     @observable regionListWidgets: Map<string, EmptyWidgetStore>;
     @observable animatorWidgets: Map<string, EmptyWidgetStore>;
 
+    private dockedLayoutConfig;
     private appStore: AppStore;
     private widgetsMap: Map<string, Map<string, any>>;
+
+    public getDockedLayoutConfig = () => {
+        return this.dockedLayoutConfig;
+    };
 
     public static RemoveFrameFromRegionWidgets(storeMap: Map<string, RegionWidgetStore>, fileId: number = -1) {
         if (fileId === -1) {
@@ -142,7 +147,7 @@ export class WidgetsStore {
 
     // region Golden Layout Widgets
 
-    @action setDockedLayout(layout: GoldenLayout) {
+    @action setDockedLayout(arrangementConfig: any, layout: GoldenLayout) {
         layout.registerComponent("placeholder", PlaceholderComponent);
         layout.registerComponent("image-view", ImageViewComponent);
         layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
@@ -165,6 +170,8 @@ export class WidgetsStore {
 
         layout.on("stateChanged", this.handleStateUpdates);
         layout.init();
+
+        this.dockedLayoutConfig = arrangementConfig;
         this.dockedLayout = layout;
     }
 

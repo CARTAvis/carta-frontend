@@ -90,8 +90,7 @@ export class LayoutStore {
             // }
         }
 
-        const config = this.widgetsStore.dockedLayout.toConfig();
-        this.layouts[layoutName] = config;
+        this.layouts[layoutName] = this.widgetsStore.getDockedLayoutConfig();
 
         if (!this.saveLayoutToLocalStorage()) {
             delete this.layouts[layoutName];
@@ -116,9 +115,26 @@ export class LayoutStore {
 
     @action applyLayout = (layoutName: string) => {
         if (!this.layoutExist(layoutName)) {
-            this.alertStore.showAlert(`Applying layout failed. Layout ${layoutName} not found!`);
+            this.alertStore.showAlert(`Applying layout failed! Layout ${layoutName} not found.`);
             return;
         }
-        // TODO: apply layout
+
+        const currentLayout = this.widgetsStore.dockedLayout;
+        const oldElement = currentLayout.root.contentItems[0];
+
+        // TODO: error handling
+        const newElement = currentLayout.createContentItem(this.layouts[layoutName]);
+
+        // Prevent it from re-initialising any child items
+        // newElement.isInitialised = true;
+        console.log(oldElement);
+        console.log(newElement);
+
+        // replace elements
+        // for ( i = 0; i < newElement.contentItems.length; i++ ) {
+        //    newElement.addChild(oldElement.getItemsById(newElement.contentItems.id));
+        // }
+
+        // layout.root.replaceChild(oldElement, newElement);
     };
 }
