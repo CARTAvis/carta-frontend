@@ -50,14 +50,14 @@ export class LayoutStore {
         try {
             serializedJson = JSON.stringify(this.layouts, getCircularReplacer());
         } catch (e) {
-            this.alertStore.showAlert("Serializing user-defined layout falied!");
+            this.alertStore.showAlert("Serializing user-defined layout falied! " + e.message);
             return false;
         }
 
         try {
             localStorage.setItem(KEY, serializedJson);
         } catch (e) {
-            this.alertStore.showAlert("Saving user-defined layout falied!");
+            this.alertStore.showAlert("Saving user-defined layout falied! " + e.message);
             return false;
         }
 
