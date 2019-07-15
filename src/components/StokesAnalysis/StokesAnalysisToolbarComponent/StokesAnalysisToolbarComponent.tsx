@@ -8,6 +8,16 @@ import "./StokesAnalysisToolbarComponent.css";
 
 @observer
 export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore: StokesAnalysisWidgetStore, appStore: AppStore}> {
+    
+    private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
+        if (this.props.appStore.activeFrame) {
+            this.props.widgetStore.setRegionId(this.props.appStore.activeFrame.frameInfo.fileId, parseInt(changeEvent.target.value));
+        }
+    };
+
+    private handleFractionalPolChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        this.props.widgetStore.setFractionalPolVisible(changeEvent.target.checked);
+    };
 
     public render() {
         const appStore = this.props.appStore;
@@ -16,7 +26,7 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
         let enableStatsSelect = false;
         let enableRegionSelect = false;
         let enableStokesSelect = false;
-        let enableFractionalPol = false;
+        let enableFractionalPol = true;
         let regionId = 0;
         // Fill region select options with all non-temporary regions that are closed or point type
         let profileRegionOptions: IOptionProps[];
@@ -30,7 +40,8 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
                 };
             });
 
-            const selectedRegion = appStore.activeFrame.regionSet.regions.find(r => r.regionId === regionId);
+            enableRegionSelect = profileRegionOptions.length > 1;
+            // enableStokesSelect = appStore.activeFrame.frameInfo.fileInfoExtended.stokes > 1;
         }
 
         // add new stoket plot type PA, PI, Q+U (multiple lines), Q vs U (Scatter plot)
@@ -45,7 +56,7 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
         return (
             <div className="stokes-analysis-toolbar">
                 <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
-                    <HTMLSelect value={regionId} options={profileRegionOptions} disabled={!enableRegionSelect}/>
+                    <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect}/>
                 </FormGroup>
                 <FormGroup label={"Statistic"} inline={true} disabled={!enableStatsSelect}>
                     <HTMLSelect value={widgetStore.statsType} options={profileStatsOptions} disabled={!enableStatsSelect}/>
@@ -53,8 +64,8 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
                 <FormGroup label={"Stokes"} inline={true} disabled={!enableStokesSelect}>
                     <HTMLSelect value={"Toolbar Placeholder"} options={profileCoordinateOptions} disabled={!enableStokesSelect}/>
                 </FormGroup>
-                <FormGroup label={"Frac. Pol."} inline={true}>
-                    <Switch checked={widgetStore.fractionalPolVisible} disabled={!enableFractionalPol}/>
+                <FormGroup label={"Frac. Pol."} inline={true} disabled={!enableFractionalPol}>
+                    <Switch checked={widgetStore.fractionalPolVisible} onChange={this.handleFractionalPolChanged} disabled={!enableFractionalPol}/>
                 </FormGroup>
             </div>
         );
