@@ -66,7 +66,7 @@ export class AuthDialogComponent extends React.Component<{ appStore: AppStore }>
                 res.json().then(responseData => {
                     if (responseData && responseData.username && responseData.token && responseData.socket) {
                         // Add delay to allow backend server to start listening
-                        setInterval(() => {
+                        setTimeout(() => {
                             appStore.backendService.setAuthToken(responseData.token);
                             appStore.setUsername(responseData.username);
                             appStore.connectToServer(responseData.socket);
