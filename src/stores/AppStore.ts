@@ -10,11 +10,11 @@ import {
 } from ".";
 import {GetRequiredTiles} from "utilities";
 import {BackendService, TileService} from "services";
-import {CursorInfo, FrameView, Theme, Point2D} from "models";
+import {CursorInfo, FrameView, Theme, Point2D, ProcessedSpatialProfile, ProtobufProcessing} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
 
-const CURSOR_DEBOUNCE_TIME = 200;
-const CURSOR_THROTTLE_TIME = 100;
+const CURSOR_THROTTLE_TIME = 200;
+const CURSOR_THROTTLE_TIME_ROTATED = 100;
 const IMAGE_THROTTLE_TIME = 50;
 const IMAGE_CHANNEL_THROTTLE_TIME = 500;
 const REQUIREMENTS_CHECK_INTERVAL = 200;
@@ -183,6 +183,12 @@ export class AppStore {
         this.fileLoading = true;
         this.backendService.loadFile(directory, file, hdu, fileId, CARTA.RenderMode.RASTER).subscribe(ack => {
             this.fileLoading = false;
+
+            if (!ack.success) {
+                this.alertStore.showAlert(`Error loading file: ${ack.message}`);
+                return;
+            }
+
             let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
             if (ack.fileInfoExtended.dimensions > 2) {
                 dimensionsString += `\u00D7${ack.fileInfoExtended.depth}`;
@@ -195,6 +201,7 @@ export class AppStore {
                 fileId: ack.fileId,
                 fileInfo: new CARTA.FileInfo(ack.fileInfo),
                 fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
+                fileFeatureFlags: ack.fileFeatureFlags,
                 renderMode: CARTA.RenderMode.RASTER
             };
 
@@ -422,12 +429,12 @@ export class AppStore {
             this.tileService.requestTiles(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords, this.compressionQuality);
         }, IMAGE_CHANNEL_THROTTLE_TIME);
 
-        const debouncedSetCursor = _.debounce((fileId: number, x: number, y: number) => {
+        const throttledSetCursorRotated = _.throttle((fileId: number, x: number, y: number) => {
             const frame = this.getFrame(fileId);
             if (frame && frame.regionSet.regions[0]) {
                 frame.regionSet.regions[0].setControlPoint(0, {x, y});
             }
-        }, CURSOR_DEBOUNCE_TIME);
+        }, CURSOR_THROTTLE_TIME_ROTATED);
 
         const throttledSetCursor = _.throttle((fileId: number, x: number, y: number) => {
             const frame = this.getFrame(fileId);
@@ -496,14 +503,14 @@ export class AppStore {
             if (this.activeFrame && this.cursorInfo && this.cursorInfo.posImageSpace) {
                 const pos = {x: Math.round(this.cursorInfo.posImageSpace.x), y: Math.round(this.cursorInfo.posImageSpace.y)};
                 if (pos.x >= 0 && pos.x <= this.activeFrame.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y < this.activeFrame.frameInfo.fileInfoExtended.height - 1) {
-                    if (this.activeFrame.frameInfo.fileInfo.type === CARTA.FileType.HDF5) {
-                        throttledSetCursor(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
+                    if (this.activeFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
+                        throttledSetCursorRotated(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
                     } else {
-                        debouncedSetCursor(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
+                        throttledSetCursor(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
                     }
                 }
             }
-        }, {delay: 33});
+        });
 
         // Set spatial and spectral requirements of cursor region on file load
         autorun(() => {
@@ -559,10 +566,9 @@ export class AppStore {
             profileStore.stokes = spatialProfileData.stokes;
             profileStore.x = spatialProfileData.x;
             profileStore.y = spatialProfileData.y;
-            profileStore.approximate = false;
-            const profileMap = new Map<string, CARTA.ISpatialProfile>();
+            const profileMap = new Map<string, ProcessedSpatialProfile>();
             for (let profile of spatialProfileData.profiles) {
-                profileMap.set(profile.coordinate, profile);
+                profileMap.set(profile.coordinate, ProtobufProcessing.ProcessSpatialProfile(profile));
             }
             profileStore.setProfiles(profileMap);
         }
@@ -583,7 +589,7 @@ export class AppStore {
 
             profileStore.stokes = spectralProfileData.stokes;
             for (let profile of spectralProfileData.profiles) {
-                profileStore.setProfile(profile);
+                profileStore.setProfile(ProtobufProcessing.ProcessSpectralProfile(profile));
             }
         }
     };

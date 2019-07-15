@@ -10,6 +10,7 @@ export interface FrameInfo {
     fileId: number;
     fileInfo: CARTA.FileInfo;
     fileInfoExtended: CARTA.FileInfoExtended;
+    fileFeatureFlags: number;
     renderMode: CARTA.RenderMode;
 }
 

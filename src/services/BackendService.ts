@@ -11,7 +11,7 @@ export enum ConnectionStatus {
 }
 
 export class BackendService {
-    private static readonly IcdVersion = 4;
+    private static readonly IcdVersion = 5;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     @observable loggingEnabled: boolean;
@@ -34,10 +34,8 @@ export class BackendService {
     private readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
     private readonly statsStream: Subject<CARTA.RegionStatsData>;
     private readonly logEventList: CARTA.EventType[];
-    private readonly decompressionServce: DecompressionService;
+    private readonly decompressionService: DecompressionService;
     private readonly subsetsRequired: number;
-    private totalDecompressionTime: number;
-    private totalDecompressionMPix: number;
     private readonly logStore: LogStore;
 
     constructor(logStore: LogStore) {
@@ -55,7 +53,7 @@ export class BackendService {
         this.statsStream = new Subject<CARTA.RegionStatsData>();
         this.subsetsRequired = Math.min(navigator.hardwareConcurrency || 4, 4);
         if (process.env.NODE_ENV !== "test") {
-            this.decompressionServce = new DecompressionService(this.subsetsRequired);
+            this.decompressionService = new DecompressionService(this.subsetsRequired);
         }
         this.logEventList = [
             CARTA.EventType.REGISTER_VIEWER,
@@ -94,7 +92,7 @@ export class BackendService {
     }
 
     @computed get zfpReady() {
-        return (this.decompressionServce && this.decompressionServce.zfpReady);
+        return (this.decompressionService && this.decompressionService.zfpReady);
     }
 
     getRasterStream() {
@@ -612,7 +610,7 @@ export class BackendService {
         if (rasterImageData.compressionType === CARTA.CompressionType.NONE) {
             this.rasterStream.next(rasterImageData);
         } else {
-            this.decompressionServce.decompressRasterData(rasterImageData).then(decompressedMessage => {
+            this.decompressionService.decompressRasterData(rasterImageData).then(decompressedMessage => {
                 this.rasterStream.next(decompressedMessage);
             });
         }
@@ -635,12 +633,6 @@ export class BackendService {
     }
 
     private onStreamedSpectralProfileData(eventId: number, spectralProfileData: CARTA.SpectralProfileData) {
-        // Copy double-precision values to usual location if they exist
-        for (const profile of spectralProfileData.profiles) {
-            if (profile.doubleVals && profile.doubleVals.length) {
-                profile.vals = profile.doubleVals;
-            }
-        }
         this.spectralProfileStream.next(spectralProfileData);
     }
 
