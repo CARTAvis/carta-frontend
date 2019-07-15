@@ -2,7 +2,7 @@ import * as React from "react";
 import {Colors} from "@blueprintjs/core";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {Circle, Ellipse, Group, Rect, Transformer} from "react-konva";
+import {Ellipse, Group, Rect, Transformer} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {FrameStore, RegionStore} from "stores";
@@ -288,6 +288,8 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         // Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
         const borderDash = [(width + height) * 4 / 100.0];
 
+        const pointBoardWidth = 13;
+
         const commonProps = {
             rotation: -region.rotation,
             x: centerPixelSpace.x,
@@ -311,15 +313,24 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         return (
             <Group>
                 {region.regionType === CARTA.RegionType.POINT &&
-                <Circle
+                <Rect
                     {...commonProps}
-                    radius={2}
+                    width={4}
+                    height={4}
+                    offsetX={2}
+                    offsetY={2}
+                    rotation={45}
+                    fill={region.color}
                 />
                 }
                 {region.regionType === CARTA.RegionType.POINT && this.selectedRegionRef && this.props.selected && this.props.listening &&
-                <Circle
+                <Rect
                     {...commonProps}
-                    radius={6}
+                    width={pointBoardWidth}
+                    height={pointBoardWidth}
+                    offsetX={pointBoardWidth * .5}
+                    offsetY={pointBoardWidth * .5}
+                    opacity={0}
                 />
                 }
                 {region.regionType === CARTA.RegionType.RECTANGLE &&
@@ -345,11 +356,11 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                     anchorSize={6}
                     borderStroke={Colors.TURQUOISE5}
                     borderStrokeWidth={3}
-                    borderDash={region.regionType === CARTA.RegionType.ELLIPSE ? borderDash : null}
+                    borderDash={region.regionType === CARTA.RegionType.ELLIPSE ? borderDash : (region.regionType === CARTA.RegionType.POINT ? [.3] : null)}
                     keepRatio={false}
                     centeredScaling={true}
                     draggable={false}
-                    borderEnabled={region.regionType === CARTA.RegionType.POINT ? true : false}
+                    borderEnabled={true}
                     resizeEnabled={region.regionType === CARTA.RegionType.POINT ? false : true}
                     rotateEnabled={region.regionType === CARTA.RegionType.POINT ? false : true}
                     onTransformStart={this.handleTransformStart}

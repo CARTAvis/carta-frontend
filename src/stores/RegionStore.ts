@@ -115,7 +115,6 @@ export class RegionStore {
 
     @computed get isClosedRegion() {
         switch (this.regionType) {
-            case CARTA.RegionType.POINT:
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
             case CARTA.RegionType.POLYGON:
