@@ -22,6 +22,7 @@ export class PlotContainerProps {
     forceScientificNotationTicksY?: boolean;
     interpolateLines?: boolean;
     showTopAxis?: boolean;
+    showBottomAxis?: boolean;
     topAxisTickFormatter?: (value: number, index: number, values: number[]) => string | number;
     chartAreaUpdated?: (chartArea: ChartArea) => void;
     plotRefUpdated?: (plotRef: Scatter) => void;
@@ -153,6 +154,9 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         else if (props.showTopAxis !== nextProps.showTopAxis) {
             return true;
         }
+        else if(props.showBottomAxis !== nextProps.showBottomAxis){
+            return true;
+        }
         else if (props.topAxisTickFormatter !== nextProps.topAxisTickFormatter) {
             return true;
         }
@@ -174,6 +178,13 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         const labelColor = this.props.darkMode ? Colors.LIGHT_GRAY4 : Colors.GRAY1;
         const gridColor = this.props.darkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1;
         const lineColor = this.props.lineColor || (this.props.darkMode ? Colors.BLUE4 : Colors.BLUE2);
+        let showBottomAxis = true;
+        if (typeof(this.props.showBottomAxis) === "boolean" && !this.props.showBottomAxis) {
+            showBottomAxis = false
+        }
+        
+        // console.log("tytytyt "+ this.props.showBottomAxis)
+        // console.log(showBottomAxis)
         // ChartJS plot
         let plotOptions: ChartOptions = {
             maintainAspectRatio: false,
@@ -185,6 +196,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 xAxes: [{
                     id: "x-axis-0",
                     position: "bottom",
+                    display: showBottomAxis,
                     afterBuildTicks: this.filterLinearTicks,
                     scaleLabel: {
                         fontColor: labelColor,

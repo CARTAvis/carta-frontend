@@ -66,6 +66,7 @@ export class LinePlotComponentProps {
     interpolateLines?: boolean;
     markers?: LineMarker[];
     showTopAxis?: boolean;
+    showBottomAxis?: boolean;
     topAxisTickFormatter?: (value: number, index: number, values: number[]) => string | number;
     graphClicked?: (x: number) => void;
     graphRightClicked?: (x: number) => void;

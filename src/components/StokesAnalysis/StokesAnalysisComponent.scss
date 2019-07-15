@@ -13,34 +13,34 @@
         min-width: 0;
         padding-bottom: 5px;
 
+        .profile-plot-toolbar{
+            width: 100%;
+        }
+
         .profile-plot-qup{
-            display: unset;
+            height: calc(60% - 50px);
             .profile-plot-qu {
-                height: calc(25% - 25px);
+                width: calc(98%);
+                height: calc(33%);
                 position: relative;
             }
 
-            .profile-plot-p {
-                height: calc(25% - 25px);
+            .profile-plot-pi {
+                width: calc(98%);
+                height: calc(33%);
                 position: relative;
-                display: flex;
+            }
 
-                .profile-plot-pi {
-                    width: calc(50%);
-                    height: calc(100%);
-                    position: relative;
-                }
-
-                .profile-plot-pa {
-                    width: calc(50%);
-                    height: calc(100%);
-                    position: relative;
-                }
+            .profile-plot-pa {
+                width: calc(100%);
+                height: calc(33%);
+                position: relative;
             }
         }
 
         .profile-plot-qvsu {
-            height: calc(50%);
+            width: calc(100%);
+            height: calc(40%);
             position: relative;
         }
     }
@@ -50,79 +50,37 @@
         min-width: 0;
         padding-bottom: 5px;
 
-        .profile-plot-qup{
-            width: calc(50%);
-            height: calc(100% - 50px);
-            float: left;
-            display: unset;
-            .profile-plot-qu {
-                height: calc(50%);
-                width: calc(100%);
-                position: relative;
-            }
-
-            .profile-plot-p {
-                height: calc(50%);
-                width: calc(100%);
-                position: relative;
-                display: flex;
-
-                .profile-plot-pi {
-                    width: calc(50%);
-                    height: calc(100%);
-                    position: relative;
-                }
-
-                .profile-plot-pa {
-                    width: calc(50%);
-                    height: calc(100%);
-                    position: relative;
-                }
-            }
-        }
-
-        .profile-plot-qvsu {
-            width: calc(50%);
-            height: calc(100%);
-            position: relative;
+        .profile-plot-toolbar{
+            width: 50%;
             float: right;
         }
-    }
 
-    .profile-container-square {
-        flex: 3 3 auto;
-        min-width: 0;
-        padding-bottom: 5px;
         .profile-plot-qup{
-            display: unset;
+            width: calc(50%);
+            height: calc(100%);
+            float: left;
             .profile-plot-qu {
-                height: calc(50% - 50px);
+                width: calc(98%);
+                height: calc(33%);
                 position: relative;
             }
 
-            .profile-plot-p {
-                width: calc(50%);
-                height: calc(50%);
+            .profile-plot-pi {
+                width: calc(98%);
+                height: calc(33%);
                 position: relative;
-                float: left;
+            }
 
-                .profile-plot-pi {
-                    width: calc(100%);
-                    height: calc(50%);
-                    position: relative;
-                }
-
-                .profile-plot-pa {
-                    width: calc(100%);
-                    height: calc(50%);
-                    position: relative;
-                }
+            .profile-plot-pa {
+                width: calc(100%);
+                height: calc(33%);
+                position: relative;
             }
         }
 
         .profile-plot-qvsu {
             width: calc(50%);
-            height: calc(50%);
+            height: calc(100% - 50px);
             position: relative;
             float: right;
         }

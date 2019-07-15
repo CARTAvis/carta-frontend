@@ -20,7 +20,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private static layoutRatioCutoffs = {
         vertical:  0.5,
         horizontal: 2,
-        square: 1.1, 
     };
 
     public static get WIDGET_CONFIG(): WidgetConfig {
@@ -87,18 +86,14 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let ratio = width / height;
             let verticalDiff = Math.abs(ratio - StokesAnalysisComponent.layoutRatioCutoffs.vertical);
             let horizontalDiff = Math.abs(ratio - StokesAnalysisComponent.layoutRatioCutoffs.horizontal);
-            let squareDiff = Math.abs(ratio - StokesAnalysisComponent.layoutRatioCutoffs.square);
 
-            let minValue = Math.min(verticalDiff, horizontalDiff, squareDiff);
+            let minValue = Math.min(verticalDiff, horizontalDiff);
 
             if (minValue === verticalDiff) {
                 return "vertical";
             }
             else if (minValue === horizontalDiff) {
                 return "horizontal";
-            }
-            else if (minValue === squareDiff) {
-                return "square";
             }
             return null;
         }
@@ -291,7 +286,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             forceScientificNotationTicksY: true,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
-            scrollZoom: true
+            scrollZoom: true,
+            showBottomAxis: false
         };
 
         let piLinePlotProps: LinePlotComponentProps = {
@@ -303,7 +299,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             forceScientificNotationTicksY: true,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
-            scrollZoom: true
+            scrollZoom: true,
+            showBottomAxis: false
         };
 
         let paLinePlotProps: LinePlotComponentProps = {
@@ -331,6 +328,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
+        console.log(className);
         if (this.profileStore && frame) {
             const currentPlotData = this.plotDataPI;
             // console.log(currentPlotData);
@@ -346,18 +344,18 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return (
             <div className={"stokes-widget"}>
                 <div className={className}>
-                    <div className="profile-plot-qup">
+                    <div className="profile-plot-toolbar">
                         <StokesAnalysisToolbarComponent widgetStore={this.widgetStore} appStore={appStore}/>
+                    </div>
+                    <div className="profile-plot-qup">
                         <div className="profile-plot-qu">
                             <LinePlotComponent {...quLinePlotProps}/>
                         </div>
-                        <div className="profile-plot-p">
-                            <div className="profile-plot-pi">
-                                <LinePlotComponent {...piLinePlotProps}/>
-                            </div>
-                            <div className="profile-plot-pa">
-                                <LinePlotComponent {...paLinePlotProps}/>
-                            </div>
+                        <div className="profile-plot-pi">
+                            <LinePlotComponent {...piLinePlotProps}/>
+                        </div>
+                        <div className="profile-plot-pa">
+                            <LinePlotComponent {...paLinePlotProps}/>
                         </div>
                     </div>
                     <div className="profile-plot-qvsu">
