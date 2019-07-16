@@ -356,7 +356,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                     anchorSize={6}
                     borderStroke={Colors.TURQUOISE5}
                     borderStrokeWidth={3}
-                    borderDash={region.regionType === CARTA.RegionType.ELLIPSE ? borderDash : (region.regionType === CARTA.RegionType.POINT ? [.3] : null)}
+                    borderDash={region.regionType === CARTA.RegionType.POINT ? [.3] : borderDash}
                     keepRatio={false}
                     centeredScaling={true}
                     draggable={false}
