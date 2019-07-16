@@ -1,17 +1,20 @@
 import {observable, computed, action} from "mobx";
-import {WidgetsStore, AlertStore} from "stores";
+import {AppStore, WidgetsStore, AlertStore} from "stores";
 import * as GoldenLayout from "golden-layout";
+import {smoothStepOffset} from "utilities";
 
 const KEY = "CARTA_saved_layouts";
 const MAX_LAYOUT = 2;
 
 export class LayoutStore {
     public static TOASTER_TIMEOUT = 1500;
+    private readonly appStore: AppStore;
     private readonly widgetsStore: WidgetsStore;
     private readonly alertStore: AlertStore;
     @observable private layouts; // self-defined structure: {layoutName: config, layoutName: config, ...}
 
-    constructor(widgetsStore: WidgetsStore, alertStore: AlertStore) {
+    constructor(appStore: AppStore, widgetsStore: WidgetsStore, alertStore: AlertStore) {
+        this.appStore = appStore;
         this.widgetsStore = widgetsStore;
         this.alertStore = alertStore;
         this.layouts = {};
@@ -158,6 +161,84 @@ export class LayoutStore {
                 } else if (childConfig.type === "component") {
                     // add component
                     console.log("component: " + childConfig.id);
+                    let item;
+                    switch (childConfig.id) {
+                        case "image-view":
+                            item = {
+                                type: "react-component",
+                                component: "image-view",
+                                title: "No image loaded",
+                                height: smoothStepOffset(window.innerHeight, 720, 1080, 65, 75),
+                                id: "image-view",
+                                isClosable: false,
+                                props: {appStore: this.appStore, id: "image-view-docked", docked: true}
+                            };
+                            break;
+                        case "render-config-0":
+                            item = {
+                                type: "react-component",
+                                component: "render-config",
+                                title: "Render Configuration",
+                                id: "render-config-0",
+                                props: {appStore: this.appStore, id: "render-config-0", docked: true}
+                            };
+                            break;
+                        case "region-list-0":
+                            item = {
+                                type: "react-component",
+                                component: "region-list",
+                                title: "Region List",
+                                id: "region-list-0",
+                                props: {appStore: this.appStore, id: "region-list-0", docked: true}
+                            };
+                            break;
+                        case "animator-0":
+                            item = {
+                                type: "react-component",
+                                component: "animator",
+                                title: "Animator",
+                                id: "animator-0",
+                                props: {appStore: this.appStore, id: "animator-0", docked: true}
+                            };
+                            break;
+                        case "spatial-profiler-0":
+                            item = {
+                                type: "react-component",
+                                component: "spatial-profiler",
+                                id: "spatial-profiler-0",
+                                props: {appStore: this.appStore, id: "spatial-profiler-0", docked: true}
+                            };
+                            break;
+                        case "spatial-profiler-1":
+                            item = {
+                                type: "react-component",
+                                component: "spatial-profiler",
+                                id: "spatial-profiler-1",
+                                props: {appStore: this.appStore, id: "spatial-profiler-1", docked: true}
+                            };
+                            break;
+                        case "spectral-profiler-0":
+                            item = {
+                                type: "react-component",
+                                component: "spectral-profiler",
+                                id: "spectral-profiler-0",
+                                title: "Z Profile: Cursor",
+                                props: {appStore: this.appStore, id: "spectral-profiler-0", docked: true}
+                            };
+                            break;
+                        case "stats-0":
+                            item = {
+                                type: "react-component",
+                                component: "stats",
+                                title: "Statistics",
+                                id: "stats-0",
+                                props: {appStore: this.appStore, id: "stats-0", docked: true}
+                            };
+                            break;
+                        default:
+                            break;
+                    }
+                    current.addChild(item);
                 } else {
                     // unknown type
                 }
