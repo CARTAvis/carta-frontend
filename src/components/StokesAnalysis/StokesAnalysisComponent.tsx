@@ -278,7 +278,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const imageName = (appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfo.name : undefined);
 
         let quLinePlotProps: LinePlotComponentProps = {
-            xLabel: "Frequence (GHz)",
+            // xLabel: "Frequence (GHz)",
             yLabel: "Q + U",
             darkMode: appStore.darkTheme,
             imageName: imageName,
@@ -291,7 +291,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         };
 
         let piLinePlotProps: LinePlotComponentProps = {
-            xLabel: "Frequence (GHz)",
+            // xLabel: "Frequence (GHz)",
             yLabel: "PI",
             darkMode: appStore.darkTheme,
             imageName: imageName,

@@ -196,14 +196,14 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 xAxes: [{
                     id: "x-axis-0",
                     position: "bottom",
-                    display: showBottomAxis,
                     afterBuildTicks: this.filterLinearTicks,
                     scaleLabel: {
                         fontColor: labelColor,
-                        display: true,
+                        display: showBottomAxis,
                         labelString: this.props.xLabel
                     },
                     ticks: {
+                        display: showBottomAxis,
                         minor: {
                             fontColor: labelColor,
                         },
