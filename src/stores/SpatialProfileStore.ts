@@ -1,5 +1,5 @@
 import {action, observable} from "mobx";
-import {CARTA} from "carta-protobuf";
+import {ProcessedSpatialProfile} from "models";
 
 export class SpatialProfileStore {
     @observable regionId: number;
@@ -8,21 +8,19 @@ export class SpatialProfileStore {
     @observable channel: number;
     @observable x: number;
     @observable y: number;
-    @observable approximate: boolean;
-    @observable profiles: Map<string, CARTA.SpatialProfile>;
+    @observable profiles: Map<string, ProcessedSpatialProfile>;
 
     constructor(fileId: number = 0, regionId: number = 0) {
         this.fileId = fileId;
         this.regionId = regionId;
-        this.approximate = true;
-        this.profiles = new Map<string, CARTA.SpatialProfile>();
+        this.profiles = new Map<string, ProcessedSpatialProfile>();
     }
 
-    @action setProfile(coordinate: string, profile: CARTA.SpatialProfile) {
+    @action setProfile(coordinate: string, profile: ProcessedSpatialProfile) {
         this.profiles.set(coordinate, profile);
     }
 
-    @action setProfiles(profiles: Map<string, CARTA.SpatialProfile>) {
+    @action setProfiles(profiles: Map<string, ProcessedSpatialProfile>) {
         this.profiles = profiles;
     }
 }
