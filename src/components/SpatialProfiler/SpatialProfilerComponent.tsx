@@ -74,7 +74,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
     @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number } {
         const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
-        if (!this.frame) {
+        if (!this.frame || !this.width) {
             return null;
         }
 
