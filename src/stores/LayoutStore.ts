@@ -1,5 +1,6 @@
 import {observable, computed, action} from "mobx";
 import {WidgetsStore, AlertStore} from "stores";
+import * as GoldenLayout from "golden-layout";
 
 const KEY = "CARTA_saved_layouts";
 const MAX_LAYOUT = 2;
@@ -90,7 +91,7 @@ export class LayoutStore {
             // }
         }
 
-        this.layouts[layoutName] = this.widgetsStore.getDockedLayoutConfig();
+        this.layouts[layoutName] = this.widgetsStore.dockedLayout.toConfig();
 
         if (!this.saveLayoutToLocalStorage()) {
             delete this.layouts[layoutName];
@@ -113,28 +114,65 @@ export class LayoutStore {
         return null;
     };
 
+    private traverseConfig = (config): void => {
+        if (!config.content || config.content.length === 0) {
+            console.log(config.type + ": " + config.id);
+            return;
+        }
+
+        config.content.forEach((item) => {
+            console.log(item.type);
+            this.traverseConfig(item);
+        });
+    };
+
+    private traverseItems = (parent: GoldenLayout.ContentItem): void => {
+        if (!parent.contentItems || parent.contentItems.length === 0) {
+            console.log(parent.config.id);
+            return;
+        }
+
+        parent.contentItems.forEach((item) => {
+            console.log(item.type);
+            this.traverseItems(item);
+        });
+    };
+
+    private addItem = (parent: GoldenLayout.ContentItem, oldElement: GoldenLayout.ContentItem): void => {
+        if (!parent.contentItems || parent.contentItems.length === 0) {
+            console.log(parent.config.id);
+            // const element = oldElement.getItemsById(parent.config.id)[0];
+            // parent.addChild(element);
+            return;
+        }
+
+        parent.contentItems.forEach((item) => {
+            this.addItem(item, oldElement);
+        });
+    }
+
     @action applyLayout = (layoutName: string) => {
         if (!this.layoutExist(layoutName)) {
             this.alertStore.showAlert(`Applying layout failed! Layout ${layoutName} not found.`);
             return;
         }
 
-        const currentLayout = this.widgetsStore.dockedLayout;
-        const oldElement = currentLayout.root.contentItems[0];
+        let currentLayout: GoldenLayout = this.widgetsStore.dockedLayout;
+        const currentRoot: GoldenLayout.ContentItem = currentLayout.root.contentItems[0];
 
-        // TODO: error handling
-        const newElement = currentLayout.createContentItem(this.layouts[layoutName]);
+        // TODO: error handling - try catch
+        const savedLayout = new GoldenLayout(this.layouts[layoutName]);
+        // let newElement = currentLayout.createContentItem(this.layouts[layoutName]) as unknown;
 
         // Prevent it from re-initialising any child items
-        // newElement.isInitialised = true;
-        console.log(oldElement);
-        console.log(newElement);
+        // (newElement as GoldenLayout.ContentItem).isInitialised = true;
 
-        // replace elements
-        // for ( i = 0; i < newElement.contentItems.length; i++ ) {
-        //    newElement.addChild(oldElement.getItemsById(newElement.contentItems.id));
-        // }
+        // this.traverseItems(oldElement);
+        this.traverseConfig(savedLayout.config);
 
-        // layout.root.replaceChild(oldElement, newElement);
+        // add elements recursively
+        // this.addItem(newElement as GoldenLayout.ContentItem, oldElement);
+
+        // currentLayout.root.replaceChild(oldElement, newElement as GoldenLayout.ContentItem);
     };
 }

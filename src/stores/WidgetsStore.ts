@@ -147,7 +147,7 @@ export class WidgetsStore {
 
     // region Golden Layout Widgets
 
-    @action setDockedLayout(arrangementConfig: any, layout: GoldenLayout) {
+    @action setDockedLayout(layout: GoldenLayout) {
         layout.registerComponent("placeholder", PlaceholderComponent);
         layout.registerComponent("image-view", ImageViewComponent);
         layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
@@ -171,7 +171,6 @@ export class WidgetsStore {
         layout.on("stateChanged", this.handleStateUpdates);
         layout.init();
 
-        this.dockedLayoutConfig = arrangementConfig;
         this.dockedLayout = layout;
     }
 

@@ -225,7 +225,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
             },
             content: [arrangementConfig]
         };
-        widgetsStore.setDockedLayout(arrangementConfig, new GoldenLayout(mainLayoutConfig, this.glContainer));
+        widgetsStore.setDockedLayout(new GoldenLayout(mainLayoutConfig, this.glContainer));
     }
 
     private genDefaultLayout(configs: any, widgetsStore: WidgetsStore) {
