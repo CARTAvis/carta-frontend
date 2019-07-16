@@ -137,8 +137,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                         <th style={{width: nameWidth}}>Name</th>
                         <th style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>Type</th>
                         <th style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>Pixel Center</th>
-                        {showSizeColumn && <th style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>Size(pix)</th>}
-                        {showRotationColumn && <th style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}}>P.A.(deg)</th>}
+                        {showSizeColumn && <th style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>Size (px)</th>}
+                        {showRotationColumn && <th style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}}>P.A. (deg)</th>}
                     </tr>
                     </thead>
                     <tbody className={this.props.appStore.darkTheme ? "dark-theme" : ""}>
