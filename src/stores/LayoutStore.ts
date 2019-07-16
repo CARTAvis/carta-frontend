@@ -128,26 +128,35 @@ export class LayoutStore {
 
     private traverseItems = (parent: GoldenLayout.ContentItem): void => {
         if (!parent.contentItems || parent.contentItems.length === 0) {
-            console.log(parent.config.id);
+            console.log("id: " + parent.config.id);
             return;
         }
 
         parent.contentItems.forEach((item) => {
-            console.log(item.type);
+            console.log("type: " + item.type);
             this.traverseItems(item);
         });
     };
 
-    private addItem = (parent: GoldenLayout.ContentItem, oldElement: GoldenLayout.ContentItem): void => {
-        if (!parent.contentItems || parent.contentItems.length === 0) {
-            console.log(parent.config.id);
-            // const element = oldElement.getItemsById(parent.config.id)[0];
-            // parent.addChild(element);
+    // TODO: error handling
+    private genNewContentItem = (current: GoldenLayout.ContentItem, currentConfig, layout: GoldenLayout): void => {
+        // recursion termination: add component
+        if (!currentConfig.content || currentConfig.content.length === 0) {
             return;
         }
 
-        parent.contentItems.forEach((item) => {
-            this.addItem(item, oldElement);
+        currentConfig.content.forEach((childConfig) => {
+            if (childConfig.type === "stack" || childConfig.type === "row" || childConfig.type === "column") {
+                let newItem = layout.createContentItem({
+                    type: childConfig.type,
+                    content: []
+                }) as unknown;
+                current.addChild(newItem as GoldenLayout.ContentItem);
+
+                this.genNewContentItem(newItem as GoldenLayout.ContentItem, childConfig, layout);
+            } else if (childConfig.type === "component") {
+                // add component
+            }
         });
     }
 
@@ -161,18 +170,20 @@ export class LayoutStore {
         const currentRoot: GoldenLayout.ContentItem = currentLayout.root.contentItems[0];
 
         // TODO: error handling - try catch
-        const savedLayout = new GoldenLayout(this.layouts[layoutName]);
-        // let newElement = currentLayout.createContentItem(this.layouts[layoutName]) as unknown;
+        // Create new root ContentItem for new layout
+        const newLayout = new GoldenLayout(this.layouts[layoutName]);
+        let newRoot = currentLayout.createContentItem({
+            type: newLayout.config.content[0].type,
+            content: []
+        }) as unknown;
+
+        // Recursively generate the root ContentItem according to saved config
+        this.genNewContentItem(newRoot as GoldenLayout.ContentItem, newLayout.config.content[0], currentLayout);
 
         // Prevent it from re-initialising any child items
-        // (newElement as GoldenLayout.ContentItem).isInitialised = true;
+        (newRoot as GoldenLayout.ContentItem).isInitialised = true;
 
-        // this.traverseItems(oldElement);
-        this.traverseConfig(savedLayout.config);
-
-        // add elements recursively
-        // this.addItem(newElement as GoldenLayout.ContentItem, oldElement);
-
-        // currentLayout.root.replaceChild(oldElement, newElement as GoldenLayout.ContentItem);
+        // Replace current layout with new
+        currentLayout.root.replaceChild(currentRoot, newRoot as GoldenLayout.ContentItem);
     };
 }
