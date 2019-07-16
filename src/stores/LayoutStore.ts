@@ -146,16 +146,21 @@ export class LayoutStore {
         }
 
         currentConfig.content.forEach((childConfig) => {
-            if (childConfig.type === "stack" || childConfig.type === "row" || childConfig.type === "column") {
-                let newItem = layout.createContentItem({
-                    type: childConfig.type,
-                    content: []
-                }) as unknown;
-                current.addChild(newItem as GoldenLayout.ContentItem);
+            if (childConfig.type) {
+                if (childConfig.type === "root" || childConfig.type === "stack" || childConfig.type === "row" || childConfig.type === "column") {
+                    let newItem = layout.createContentItem({
+                        type: childConfig.type,
+                        content: []
+                    }) as unknown;
+                    current.addChild(newItem as GoldenLayout.ContentItem);
 
-                this.genNewContentItem(newItem as GoldenLayout.ContentItem, childConfig, layout);
-            } else if (childConfig.type === "component") {
-                // add component
+                    this.genNewContentItem(newItem as GoldenLayout.ContentItem, childConfig, layout);
+                } else if (childConfig.type === "component") {
+                    // add component
+                    console.log("component: " + childConfig.id);
+                } else {
+                    // unknown type
+                }
             }
         });
     }
@@ -169,21 +174,24 @@ export class LayoutStore {
         let currentLayout: GoldenLayout = this.widgetsStore.dockedLayout;
         const currentRoot: GoldenLayout.ContentItem = currentLayout.root.contentItems[0];
 
-        // TODO: error handling - try catch
-        // Create new root ContentItem for new layout
-        const newLayout = new GoldenLayout(this.layouts[layoutName]);
-        let newRoot = currentLayout.createContentItem({
-            type: newLayout.config.content[0].type,
-            content: []
-        }) as unknown;
+        try {
+            // Create new root ContentItem for new layout
+            const newLayout = new GoldenLayout(this.layouts[layoutName]);
+            let newRoot = currentLayout.createContentItem({
+                type: newLayout.config.content[0].type,
+                content: []
+            }) as unknown;
 
-        // Recursively generate the root ContentItem according to saved config
-        this.genNewContentItem(newRoot as GoldenLayout.ContentItem, newLayout.config.content[0], currentLayout);
+            // Recursively generate the root ContentItem according to saved config
+            this.genNewContentItem(newRoot as GoldenLayout.ContentItem, newLayout.config.content[0], currentLayout);
 
-        // Prevent it from re-initialising any child items
-        (newRoot as GoldenLayout.ContentItem).isInitialised = true;
+            // Prevent it from re-initialising any child items
+            (newRoot as GoldenLayout.ContentItem).isInitialised = true;
 
-        // Replace current layout with new
-        currentLayout.root.replaceChild(currentRoot, newRoot as GoldenLayout.ContentItem);
+            // Replace current layout with new
+            currentLayout.root.replaceChild(currentRoot, newRoot as GoldenLayout.ContentItem);
+        } catch (e) {
+            this.alertStore.showAlert(`Applying layout failed! Layout ${layoutName} may be broken. ` + e.message);
+        }
     };
 }
