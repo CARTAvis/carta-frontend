@@ -360,7 +360,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                     keepRatio={false}
                     centeredScaling={true}
                     draggable={false}
-                    borderEnabled={true}
+                    borderEnabled={region.regionType === CARTA.RegionType.POINT ? true : false}
                     resizeEnabled={region.regionType === CARTA.RegionType.POINT ? false : true}
                     rotateEnabled={region.regionType === CARTA.RegionType.POINT ? false : true}
                     onTransformStart={this.handleTransformStart}
