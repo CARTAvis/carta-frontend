@@ -42,6 +42,26 @@ export class LayoutStore {
         return this.layouts && layoutName && Object.keys(this.layouts).includes(layoutName);
     };
 
+    private genSimpleConfig = (newParent, parent): void => {
+        if (!parent.content || parent.content.length === 0) {
+            let simpleChild = {
+                type: parent.type,
+                id: parent.id
+            };
+            newParent.content.push(simpleChild);
+            return;
+        }
+
+        parent.content.forEach((child) => {
+            let simpleChild = {
+                type: child.type,
+                content: []
+            };
+            newParent.content.push(simpleChild);
+            this.genSimpleConfig(simpleChild, child);
+        });
+    };
+
     private saveLayoutToLocalStorage = (): boolean => {
         const getCircularReplacer = () => {
             const seen = new WeakSet();
@@ -94,6 +114,8 @@ export class LayoutStore {
         }
 
         this.layouts[layoutName] = this.widgetsStore.dockedLayout.toConfig();
+        let simpleConfig = [];
+        this.genSimpleConfig(simpleConfig, this.widgetsStore.dockedLayout.config);
 
         if (!this.saveLayoutToLocalStorage()) {
             delete this.layouts[layoutName];
