@@ -334,11 +334,10 @@ export class BackendService {
     }
 
     @action("set spatial requirements")
-    setSpatialRequirements(fileId: number, regionId: number, spatialProfiles: string[]) {
+    setSpatialRequirements(requirementsMessage: CARTA.ISetSpectralRequirements) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.SetSpatialRequirements.create({fileId, regionId, spatialProfiles});
-            this.logEvent(CARTA.EventType.SET_SPATIAL_REQUIREMENTS, this.eventCounter, message, false);
-            if (this.sendEvent(CARTA.EventType.SET_SPATIAL_REQUIREMENTS, CARTA.SetSpatialRequirements.encode(message).finish())) {
+            this.logEvent(CARTA.EventType.SET_SPATIAL_REQUIREMENTS, this.eventCounter, requirementsMessage, false);
+            if (this.sendEvent(CARTA.EventType.SET_SPATIAL_REQUIREMENTS, CARTA.SetSpatialRequirements.encode(requirementsMessage).finish())) {
                 return true;
             }
         }

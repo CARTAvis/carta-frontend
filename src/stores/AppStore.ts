@@ -11,7 +11,7 @@ import {
 import {GetRequiredTiles} from "utilities";
 import {BackendService, TileService} from "services";
 import {CursorInfo, FrameView, Theme, Point2D, ProcessedSpatialProfile, ProtobufProcessing} from "models";
-import {HistogramWidgetStore, RegionWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
+import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
 
 const CURSOR_THROTTLE_TIME = 200;
 const CURSOR_THROTTLE_TIME_ROTATED = 100;
@@ -212,6 +212,7 @@ export class AppStore {
 
             // clear existing requirements for the frame
             this.spectralRequirements.delete(ack.fileId);
+            this.spatialRequirements.delete(ack.fileId);
             this.statsRequirements.delete(ack.fileId);
             this.histogramRequirements.delete(ack.fileId);
 
@@ -370,6 +371,7 @@ export class AppStore {
 
     public static readonly DEFAULT_STATS_TYPES = [CARTA.StatsType.NumPixels, CARTA.StatsType.Sum, CARTA.StatsType.Mean, CARTA.StatsType.RMS, CARTA.StatsType.Sigma, CARTA.StatsType.SumSq, CARTA.StatsType.Min, CARTA.StatsType.Max];
     private spectralRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
+    private spatialRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>;
     private statsRequirements: Map<number, Array<number>>;
     private histogramRequirements: Map<number, Array<number>>;
     private pendingHistogram: CARTA.RegionHistogramData;
@@ -399,6 +401,7 @@ export class AppStore {
         this.urlConnectDialogVisible = false;
         this.compressionQuality = this.preferenceStore.imageCompressionQuality;
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
+        this.spatialRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
         this.statsRequirements = new Map<number, Array<number>>();
         this.histogramRequirements = new Map<number, Array<number>>();
 
@@ -512,13 +515,6 @@ export class AppStore {
             }
         });
 
-        // Set spatial and spectral requirements of cursor region on file load
-        autorun(() => {
-            if (this.activeFrame) {
-                this.backendService.setSpatialRequirements(this.activeFrame.frameInfo.fileId, 0, ["x", "y"]);
-            }
-        });
-
         // Set overlay defaults from current frame
         autorun(() => {
             if (this.activeFrame) {
@@ -538,9 +534,7 @@ export class AppStore {
         });
 
         // Update requirements every 200 ms
-        setInterval(this.recalculateSpectralRequirements, REQUIREMENTS_CHECK_INTERVAL);
-        setInterval(this.recalculateStatsRequirements, REQUIREMENTS_CHECK_INTERVAL);
-        setInterval(this.recalculateHistogramRequirements, REQUIREMENTS_CHECK_INTERVAL);
+        setInterval(this.recalculateRequirements, REQUIREMENTS_CHECK_INTERVAL);
 
         // Subscribe to frontend streams
         this.backendService.getSpatialProfileStream().subscribe(this.handleSpatialProfileStream);
@@ -740,7 +734,14 @@ export class AppStore {
 
     // region requirements calculations
 
-    recalculateStatsRequirements = () => {
+    recalculateRequirements = () => {
+        this.recalculateSpatialRequirements();
+        this.recalculateSpectralRequirements();
+        this.recalculateStatsRequirements();
+        this.recalculateHistogramRequirements();
+    };
+
+    private recalculateStatsRequirements() {
         if (!this.activeFrame) {
             return;
         }
@@ -754,9 +755,9 @@ export class AppStore {
                 this.backendService.setStatsRequirements(requirements);
             }
         }
-    };
+    }
 
-    recalculateHistogramRequirements = () => {
+    private recalculateHistogramRequirements() {
         if (!this.activeFrame) {
             return;
         }
@@ -770,9 +771,9 @@ export class AppStore {
                 this.backendService.setHistogramRequirements(requirements);
             }
         }
-    };
+    }
 
-    recalculateSpectralRequirements = () => {
+    private recalculateSpectralRequirements() {
         if (!this.activeFrame) {
             return;
         }
@@ -784,7 +785,21 @@ export class AppStore {
         if (diffList.length) {
             diffList.forEach(requirements => this.backendService.setSpectralRequirements(requirements));
         }
-    };
+    }
+
+    private recalculateSpatialRequirements() {
+        if (!this.activeFrame) {
+            return;
+        }
+
+        const updatedRequirements = SpatialProfileWidgetStore.CalculateRequirementsMap(this.activeFrame, this.widgetsStore.spatialProfileWidgets);
+        const diffList = SpatialProfileWidgetStore.DiffSpatialRequirements(this.spatialRequirements, updatedRequirements);
+        this.spatialRequirements = updatedRequirements;
+
+        if (diffList.length) {
+            diffList.forEach(requirements => this.backendService.setSpatialRequirements(requirements));
+        }
+    }
 
     // endregion
 }
