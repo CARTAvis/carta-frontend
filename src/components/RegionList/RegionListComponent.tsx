@@ -21,10 +21,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     private static readonly NAME_COLUMN_MIN_WIDTH = 50;
     private static readonly NAME_COLUMN_DEFAULT_WIDTH = 160;
-    private static readonly TYPE_COLUMN_DEFAULT_WIDTH = 65;
+    private static readonly TYPE_COLUMN_DEFAULT_WIDTH = 120;
     private static readonly CENTER_COLUMN_DEFAULT_WIDTH = 120;
     private static readonly SIZE_COLUMN_DEFAULT_WIDTH = 160;
-    private static readonly ROTATION_COLUMN_DEFAULT_WIDTH = 70;
+    private static readonly ROTATION_COLUMN_DEFAULT_WIDTH = 80;
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
