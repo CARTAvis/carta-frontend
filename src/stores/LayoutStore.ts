@@ -142,7 +142,7 @@ export class LayoutStore {
     };
 
     // TODO: error handling
-    private genNewContentItem = (newParentItem: GoldenLayout.ContentItem, currentConfig, currentLayout: GoldenLayout): void => {
+    private genNewContentItem = (newParentItem: GoldenLayout.ContentItem, currentConfig: any, currentLayout: GoldenLayout): void => {
         // recursion termination: add component
         if (!currentConfig.content || currentConfig.content.length === 0) {
             return;
@@ -162,8 +162,6 @@ export class LayoutStore {
                     if (componentConfig) {
                         newParentItem.addChild(componentConfig);
                     }
-                } else {
-                    // unknown type
                 }
             }
         });
@@ -192,7 +190,7 @@ export class LayoutStore {
             // Prevent it from re-initialising any child items
             (newRoot as GoldenLayout.ContentItem).isInitialised = true;
 
-            // Replace current layout with new
+            // Replace current layout's root with newly generated root
             currentLayout.root.replaceChild(currentRoot, newRoot as GoldenLayout.ContentItem);
         } catch (e) {
             this.alertStore.showAlert(`Applying layout failed! Layout ${layoutName} may be broken. ` + e.message);
