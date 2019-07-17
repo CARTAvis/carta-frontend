@@ -1,13 +1,15 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {Chart, ChartArea, ChartData, ChartDataSets, ChartOptions} from "chart.js";
+import {ChartArea, ChartData, ChartDataSets, ChartOptions} from "chart.js";
 import {Scatter} from "react-chartjs-2";
 import {Colors} from "@blueprintjs/core";
+import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 
 export class PlotContainerProps {
     width?: number;
     height?: number;
     data?: { x: number, y: number }[];
+    multiLineData?: Map<string, { x: number, y: number }[]>;
     xMin?: number;
     xMax?: number;
     yMin?: number;
@@ -33,6 +35,22 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
     private chartArea: ChartArea;
 
     private afterChartLayout = (chart: any) => {
+        if (this.props.multiLineData && this.props.multiLineData.size) {
+            var xScale = chart.scales["x-axis-0"];
+            var yScale = chart.scales["y-axis-0"];
+            const currentWidth = chart.width;
+
+            xScale.left = 85;
+            xScale.right = currentWidth - 15;
+            xScale.width = xScale.right - xScale.left;
+
+            chart.chartArea.left = 85;
+            chart.chartArea.right = currentWidth - 15;
+            
+            yScale.right = xScale.left;
+            yScale.width = yScale.right - yScale.left;
+        }
+
         if (!_.isEqual(chart.chartArea, this.chartArea)) {
             this.chartArea = chart.chartArea;
             if (this.props.chartAreaUpdated) {
@@ -154,7 +172,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         else if (props.showTopAxis !== nextProps.showTopAxis) {
             return true;
         }
-        else if(props.showBottomAxis !== nextProps.showBottomAxis){
+        else if (props.showBottomAxis !== nextProps.showBottomAxis) {
             return true;
         }
         else if (props.topAxisTickFormatter !== nextProps.topAxisTickFormatter) {
@@ -174,13 +192,30 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         return false;
     }
 
+    private setDataset(datasetConfig: ChartDataSets, lineColor: string): ChartDataSets {
+        if (this.props.usePointSymbols) {
+            datasetConfig.showLine = false;
+            datasetConfig.pointRadius = 1;
+            datasetConfig.pointBackgroundColor = lineColor;
+        }
+        else {
+            datasetConfig.pointRadius = 0;
+            datasetConfig.showLine = true;
+            // @ts-ignore TODO: Remove once Chart.js types are updated
+            datasetConfig.steppedLine = this.props.interpolateLines ? false : "middle";
+            datasetConfig.borderWidth = 1;
+            datasetConfig.borderColor = lineColor;
+        }
+        return datasetConfig;
+    }
+
     render() {
         const labelColor = this.props.darkMode ? Colors.LIGHT_GRAY4 : Colors.GRAY1;
         const gridColor = this.props.darkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1;
         const lineColor = this.props.lineColor || (this.props.darkMode ? Colors.BLUE4 : Colors.BLUE2);
         let showBottomAxis = true;
         if (typeof(this.props.showBottomAxis) === "boolean" && !this.props.showBottomAxis) {
-            showBottomAxis = false
+            showBottomAxis = false;
         }
         
         // console.log("tytytyt "+ this.props.showBottomAxis)
@@ -216,7 +251,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         drawBorder: false,
                         color: gridColor,
                         zeroLineColor: gridColor
-                    }
+                    },
                 }, {
                     id: "x-axis-1",
                     position: "top",
@@ -252,7 +287,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         drawBorder: false,
                         color: gridColor,
                         zeroLineColor: gridColor
-                    }
+                    },
                 }]
             },
             animation: {
@@ -299,9 +334,31 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             plotData.datasets.push(datasetConfig);
         }
 
-        const plugins = [{
+        let plugins = [{
             afterLayout: this.afterChartLayout,
         }];
+
+        if (this.props.multiLineData && this.props.multiLineData.size) {
+            this.props.multiLineData.forEach((value, key) => {
+                
+                const multiLinedatasetConfig: ChartDataSets = {
+                    type: "line",
+                    label: key,
+                    data: value,
+                    fill: false,
+                    lineTension: 0,
+                };
+                this.setDataset(multiLinedatasetConfig, lineColor);
+                if (key === StokesCoordinate.LinearPolarizationQ) {
+                    multiLinedatasetConfig.borderColor = "green";
+                    plotOptions.legend.display = true;
+                } else if (key === StokesCoordinate.LinearPolarizationU) {
+                    multiLinedatasetConfig.borderColor = "blue";
+                    plotOptions.legend.display = true;
+                }
+                plotData.datasets.push(multiLinedatasetConfig);
+            });
+        }
 
         return <Scatter data={plotData} options={plotOptions} plugins={plugins} ref={this.onRef}/>;
     }

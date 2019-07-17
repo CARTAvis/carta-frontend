@@ -11,7 +11,7 @@ import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {Point2D, ChannelInfo} from "models";
 import {CARTA} from "carta-protobuf";
 import {clamp, pi, pa, normalising} from "utilities";
-import {StokesCoordinate, StokesCoordinateLabel} from "stores/widgets/StokesAnalysisWidgetStore";
+import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import "./StokesAnalysisComponent.css";
 import {build} from "protobufjs";
 
@@ -287,7 +287,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true,
-            showBottomAxis: false
+            showBottomAxis: false,
+            multiLineData: new Map()
         };
 
         let piLinePlotProps: LinePlotComponentProps = {
@@ -300,7 +301,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true,
-            showBottomAxis: false
+            showBottomAxis: false, 
+            multiLineData: new Map()
         };
 
         let paLinePlotProps: LinePlotComponentProps = {
@@ -312,7 +314,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             forceScientificNotationTicksY: true,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
-            scrollZoom: true
+            scrollZoom: true, 
+            multiLineData: new Map()
         };
 
         let qvsuLinePlotProps: LinePlotComponentProps = {
@@ -328,15 +331,17 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
-        console.log(className);
+        // console.log(className);
         if (this.profileStore && frame) {
             const currentPlotData = this.plotDataPI;
             // console.log(currentPlotData);
-            if (currentPlotData.piValues && currentPlotData.paValues && currentPlotData.qValues) {
+            if (currentPlotData.piValues && currentPlotData.paValues && currentPlotData.qValues && currentPlotData.uValues) {
                 
-                piLinePlotProps.data = currentPlotData.piValues.dataset;
-                paLinePlotProps.data = currentPlotData.paValues.dataset;
-                quLinePlotProps.data = currentPlotData.qValues.dataset;
+                piLinePlotProps.multiLineData.set(StokesCoordinate.PolarizedIntensity, currentPlotData.piValues.dataset);
+                // piLinePlotProps.data = currentPlotData.piValues.dataset;
+                paLinePlotProps.multiLineData.set(StokesCoordinate.PolarizationAngle, currentPlotData.paValues.dataset);
+                quLinePlotProps.multiLineData.set(StokesCoordinate.LinearPolarizationQ, currentPlotData.qValues.dataset);
+                quLinePlotProps.multiLineData.set(StokesCoordinate.LinearPolarizationU, currentPlotData.uValues.dataset);
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
             }
         }

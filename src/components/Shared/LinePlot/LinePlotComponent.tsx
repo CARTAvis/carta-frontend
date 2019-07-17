@@ -46,6 +46,7 @@ export class LinePlotComponentProps {
     width?: number;
     height?: number;
     data?: { x: number, y: number }[];
+    multiLineData?: Map<string, { x: number, y: number }[]>;
     dataStat?: {mean: number, rms: number};
     cursorX?: {profiler: number, image: number, unit: string};
     comments?: string[];
@@ -493,7 +494,13 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         if (plotName === "histogram") {
             rows = this.props.data.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
         } else {
-            rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+            if (this.props.data && this.props.data.length) {
+                rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+            } else if (this.props.multiLineData && this.props.multiLineData.size) {
+                this.props.multiLineData.forEach((value, key) => {
+                    rows = value.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+                });
+            }
         }
 
         const tsvData = `data:text/tab-separated-values;charset=utf-8,${comment}\n${header}\n${rows.join("\n")}\n`;
@@ -783,7 +790,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 </Stage>
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
-                    visible={this.isMouseEntered && (this.props.data !== undefined)}
+                    visible={this.isMouseEntered && (this.props.data !== undefined || this.props.multiLineData !== undefined)}
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />

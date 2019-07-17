@@ -13,15 +13,15 @@ export enum StokesCoordinate {
     PolarizationAngle = "PAz"
 }
 
-export enum StokesCoordinateLabel {
-    CurrentZLabel = "Current",
-    TotalIntensityLabel = "I",
-    LinearPolarizationQLabel = "Q",
-    LinearPolarizationULabel = "U",
-    CircularPolarizationLabel = "V",
-    PolarizedIntensityLabel = "Pol. Intensity",
-    PolarizationAngleLabel = "Pol. Angle"
-}
+// export enum StokesCoordinateLabel {
+//     CurrentZLabel = "Current",
+//     TotalIntensityLabel = "I",
+//     LinearPolarizationQLabel = "Q",
+//     LinearPolarizationULabel = "U",
+//     CircularPolarizationLabel = "V",
+//     PolarizedIntensityLabel = "Pol. Intensity",
+//     PolarizationAngleLabel = "Pol. Angle"
+// }
 
 export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable sharedMinX: number;

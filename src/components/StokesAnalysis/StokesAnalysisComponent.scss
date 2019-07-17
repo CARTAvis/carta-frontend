@@ -20,15 +20,17 @@
         .profile-plot-qup{
             height: calc(60% - 50px);
             .profile-plot-qu {
-                width: calc(98%);
+                width: calc(100%);
                 height: calc(33%);
                 position: relative;
+                margin-bottom: -0.5%;
             }
 
             .profile-plot-pi {
-                width: calc(98%);
+                width: calc(100%);
                 height: calc(33%);
                 position: relative;
+                margin-bottom: -0.5%;
             }
 
             .profile-plot-pa {
@@ -60,15 +62,17 @@
             height: calc(100%);
             float: left;
             .profile-plot-qu {
-                width: calc(97%);
+                width: calc(100%);
                 height: calc(33%);
                 position: relative;
+                margin-bottom: -0.5%;
             }
 
             .profile-plot-pi {
-                width: calc(97%);
+                width: calc(100%);
                 height: calc(33%);
                 position: relative;
+                margin-bottom: -0.5%;
             }
 
             .profile-plot-pa {
