@@ -41,6 +41,7 @@ export class AppStore {
 
     // Cursor information
     @observable cursorInfo: CursorInfo;
+    @observable cursorValue: number;
     @observable cursorFrozen: boolean;
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -361,6 +362,10 @@ export class AppStore {
         this.cursorInfo = cursorInfo;
     };
 
+    @action setCursorValue = (value: number) => {
+        this.cursorValue = value;
+    };
+
     @action setCursorFrozen = (frozen: boolean) => {
         this.cursorFrozen = frozen;
     };
@@ -565,6 +570,11 @@ export class AppStore {
                 profileMap.set(profile.coordinate, ProtobufProcessing.ProcessSpatialProfile(profile));
             }
             profileStore.setProfiles(profileMap);
+
+            // Update cursor value from profile
+            if (this.activeFrame && this.activeFrame.frameInfo.fileId === spatialProfileData.fileId) {
+                this.setCursorValue(spatialProfileData.value);
+            }
         }
     };
 
@@ -685,9 +695,7 @@ export class AppStore {
     @action setActiveFrame(fileId: number) {
         const requiredFrame = this.getFrame(fileId);
         if (requiredFrame) {
-            this.activeFrame = requiredFrame;
-            this.widgetsStore.updateImageWidgetTitle();
-            this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
+            this.changeActiveFrame(requiredFrame);
         } else {
             console.log(`Can't find required frame ${fileId}`);
         }
@@ -695,12 +703,17 @@ export class AppStore {
 
     @action setActiveFrameByIndex(index: number) {
         if (index >= 0 && this.frames.length > index) {
-            this.activeFrame = this.frames[index];
-            this.widgetsStore.updateImageWidgetTitle();
-            this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
+            this.changeActiveFrame(this.frames[index]);
         } else {
             console.log(`Invalid frame index ${index}`);
         }
+    }
+
+    private changeActiveFrame(frame: FrameStore) {
+        this.activeFrame = frame;
+        this.widgetsStore.updateImageWidgetTitle();
+        this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
+        this.setCursorValue(undefined);
     }
 
     getFrame(fileId: number) {

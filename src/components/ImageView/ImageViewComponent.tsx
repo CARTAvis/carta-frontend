@@ -175,8 +175,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     {appStore.cursorInfo &&
                     <CursorOverlayComponent
                         cursorInfo={appStore.cursorInfo}
+                        cursorValue={appStore.cursorValue}
                         spectralInfo={appStore.activeFrame.spectralInfo}
-                        mip={appStore.activeFrame.currentFrameView.mip}
                         width={appStore.overlayStore.viewWidth}
                         left={appStore.overlayStore.padding.left}
                         right={appStore.overlayStore.padding.right}
