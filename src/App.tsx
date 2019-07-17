@@ -117,6 +117,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
         // Adjust layout properties based on window dimensions
         const defaultImageViewFraction = smoothStepOffset(window.innerHeight, 720, 1080, 65, 75);
 
+        // TODO: replace configs with AppStore.COMPONENT_CONFIG
         const configs = {
             imageView: {
                 type: "react-component",

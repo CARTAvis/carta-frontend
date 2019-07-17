@@ -1,10 +1,9 @@
 import {observable, computed, action} from "mobx";
 import {AppStore, WidgetsStore, AlertStore} from "stores";
 import * as GoldenLayout from "golden-layout";
-import {smoothStepOffset} from "utilities";
 
 const KEY = "CARTA_saved_layouts";
-const MAX_LAYOUT = 2;
+const MAX_LAYOUT = 3;
 
 export class LayoutStore {
     public static TOASTER_TIMEOUT = 1500;
@@ -104,6 +103,7 @@ export class LayoutStore {
         return true;
     };
 
+    // TODO: show confirm dialog
     @action deleteLayout = (layoutName: string): boolean => {
         if (!this.layoutExist(layoutName)) {
             return false;
@@ -142,7 +142,7 @@ export class LayoutStore {
     };
 
     // TODO: error handling
-    private genNewContentItem = (current: GoldenLayout.ContentItem, currentConfig, layout: GoldenLayout): void => {
+    private genNewContentItem = (newParentItem: GoldenLayout.ContentItem, currentConfig, currentLayout: GoldenLayout): void => {
         // recursion termination: add component
         if (!currentConfig.content || currentConfig.content.length === 0) {
             return;
@@ -151,94 +151,17 @@ export class LayoutStore {
         currentConfig.content.forEach((childConfig) => {
             if (childConfig.type) {
                 if (childConfig.type === "root" || childConfig.type === "stack" || childConfig.type === "row" || childConfig.type === "column") {
-                    let newItem = layout.createContentItem({
+                    let newItem = currentLayout.createContentItem({
                         type: childConfig.type,
                         content: []
                     }) as unknown;
-                    current.addChild(newItem as GoldenLayout.ContentItem);
-
-                    this.genNewContentItem(newItem as GoldenLayout.ContentItem, childConfig, layout);
-                } else if (childConfig.type === "component") {
-                    // add component
-                    console.log("component: " + childConfig.id);
-                    let item;
-                    switch (childConfig.id) {
-                        case "image-view":
-                            item = {
-                                type: "react-component",
-                                component: "image-view",
-                                title: "No image loaded",
-                                height: smoothStepOffset(window.innerHeight, 720, 1080, 65, 75),
-                                id: "image-view",
-                                isClosable: false,
-                                props: {appStore: this.appStore, id: "image-view-docked", docked: true}
-                            };
-                            break;
-                        case "render-config-0":
-                            item = {
-                                type: "react-component",
-                                component: "render-config",
-                                title: "Render Configuration",
-                                id: "render-config-0",
-                                props: {appStore: this.appStore, id: "render-config-0", docked: true}
-                            };
-                            break;
-                        case "region-list-0":
-                            item = {
-                                type: "react-component",
-                                component: "region-list",
-                                title: "Region List",
-                                id: "region-list-0",
-                                props: {appStore: this.appStore, id: "region-list-0", docked: true}
-                            };
-                            break;
-                        case "animator-0":
-                            item = {
-                                type: "react-component",
-                                component: "animator",
-                                title: "Animator",
-                                id: "animator-0",
-                                props: {appStore: this.appStore, id: "animator-0", docked: true}
-                            };
-                            break;
-                        case "spatial-profiler-0":
-                            item = {
-                                type: "react-component",
-                                component: "spatial-profiler",
-                                id: "spatial-profiler-0",
-                                props: {appStore: this.appStore, id: "spatial-profiler-0", docked: true}
-                            };
-                            break;
-                        case "spatial-profiler-1":
-                            item = {
-                                type: "react-component",
-                                component: "spatial-profiler",
-                                id: "spatial-profiler-1",
-                                props: {appStore: this.appStore, id: "spatial-profiler-1", docked: true}
-                            };
-                            break;
-                        case "spectral-profiler-0":
-                            item = {
-                                type: "react-component",
-                                component: "spectral-profiler",
-                                id: "spectral-profiler-0",
-                                title: "Z Profile: Cursor",
-                                props: {appStore: this.appStore, id: "spectral-profiler-0", docked: true}
-                            };
-                            break;
-                        case "stats-0":
-                            item = {
-                                type: "react-component",
-                                component: "stats",
-                                title: "Statistics",
-                                id: "stats-0",
-                                props: {appStore: this.appStore, id: "stats-0", docked: true}
-                            };
-                            break;
-                        default:
-                            break;
+                    newParentItem.addChild(newItem as GoldenLayout.ContentItem);
+                    this.genNewContentItem(newItem as GoldenLayout.ContentItem, childConfig, currentLayout);
+                } else if (childConfig.type === "component") { // add component
+                    const componentConfig = AppStore.getComponentConfig(childConfig.id, this.appStore);
+                    if (componentConfig) {
+                        newParentItem.addChild(componentConfig);
                     }
-                    current.addChild(item);
                 } else {
                     // unknown type
                 }
