@@ -76,7 +76,7 @@ export class PreferenceStore {
     @observable animationCompressionQuality: number;
     @observable GPUTileCache: number;
     @observable systemTileCache: number;
-    @observable logEvents: Map<CARTA.EventType, boolean>;
+    @observable logEvents: boolean[];
 
     // getters for global settings
     private getTheme = (): string => {
@@ -238,10 +238,9 @@ export class PreferenceStore {
     };
 
     // getters for log event
-    private getLogEvents = (): Map<CARTA.EventType, boolean> => {
-        let eventMap = new Map<CARTA.EventType, boolean>();
-        const eventTypes = Object.values(CARTA.EventType);
-        eventTypes.forEach((eventType) => eventMap.set(eventType, DEFAULTS.logEvent));
+    private getLogEvents = (): boolean[] => {
+        let events = [];
+        Object.values(CARTA.EventType).sort().forEach(() => events.push(DEFAULTS.logEvent));
 
         const localStorageEventList = localStorage.getItem(PREFERENCE_KEYS.logEventList);
         if (localStorageEventList) {
@@ -251,7 +250,7 @@ export class PreferenceStore {
                     for (const eventName of eventList) {
                         const eventType = (<any> CARTA.EventType)[eventName];
                         if (eventType !== undefined) {
-                            eventMap.set(eventType, true);
+                            events[eventType] = true;
                         }
                     }
                 }
@@ -259,11 +258,7 @@ export class PreferenceStore {
                 console.log("Invalid event list read from local storage");
             }
         }
-        return eventMap;
-    };
-
-    public isEventChecked = (event: CARTA.EventType): boolean => {
-        return false;
+        return events;
     };
 
     // getters for boolean(convenient)
@@ -420,6 +415,14 @@ export class PreferenceStore {
         this.setSystemTileCache(DEFAULTS.systemTileCache);
     };
 
+    @action resetLogEventSettings = () => {
+        this.logEvents.forEach((isChecked, eventType) => {
+            if (isChecked) {
+                this.logEvents[eventType] = DEFAULTS.logEvent;
+            }
+        });
+    };
+
     constructor(appStore: AppStore) {
         this.appStore = appStore;
         this.theme = this.getTheme();
@@ -451,6 +454,16 @@ export class PreferenceStore {
             localStorage.setItem(PREFERENCE_KEYS.regionColor, this.regionContainer.color);
             localStorage.setItem(PREFERENCE_KEYS.regionLineWidth, this.regionContainer.lineWidth.toString(10));
             localStorage.setItem(PREFERENCE_KEYS.regionDashLength, this.regionContainer.dashLength.toString(10));
+        });
+
+        autorun(() => {
+            let eventList: string[] = [];
+            this.logEvents.forEach((isChecked, eventType) => {
+                if (isChecked) {
+                    eventList.push(CARTA.EventType[eventType]);
+                }
+            });
+            localStorage.setItem(PREFERENCE_KEYS.logEventList, JSON.stringify(eventList));
         });
     }
 }

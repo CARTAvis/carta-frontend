@@ -25,7 +25,7 @@ enum TABS {
     WCS_OVERLAY,
     REGION,
     PERFORMANCE,
-    LOG
+    LOG_EVENT
 }
 
 const PercentileSelect = Select.ofType<string>();
@@ -54,9 +54,6 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         this.props.appStore.preferenceStore.setSystemTileCache(value);
     }, 100);
 
-    private handleLogEventsChange = (event: CARTA.EntryType) => {
-    };
-
     private reset = () => {
         const preference = this.props.appStore.preferenceStore;
         switch (this.selectedTab) {
@@ -71,6 +68,9 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 break;
             case TABS.PERFORMANCE:
                 preference.resetPerformanceSettings();
+                break;
+            case TABS.LOG_EVENT:
+                preference.resetLogEventSettings();
                 break;
             case TABS.GLOBAL: default:
                 preference.resetGlobalSettings();
@@ -261,7 +261,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         const logEventsPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Enable logged event type">
-                    {Object.values(CARTA.EventType).map((key) => <Checkbox checked={preference.logEvents.get(key)} key={key} label={CARTA.EventType[key]} onChange={() => preference.logEvents.set(key, !preference.logEvents.get(key))} />)}
+                    {Object.values(CARTA.EventType).map((key) => <Checkbox checked={preference.logEvents[key]} key={key} label={CARTA.EventType[key]} onChange={() => preference.logEvents[key] = !preference.logEvents[key]} />)}
                 </FormGroup>
             </React.Fragment>
         );
@@ -296,7 +296,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         <Tab id={TABS.WCS_OVERLAY} title="Default WCS Overlay" panel={wcsOverlayPanel}/>
                         <Tab id={TABS.REGION} title="Default Region settings" panel={regionSettingsPanel}/>
                         <Tab id={TABS.PERFORMANCE} title="Performance" panel={performancePanel}/>
-                        <Tab id={TABS.LOG} title="Log Events" panel={logEventsPanel}/>
+                        <Tab id={TABS.LOG_EVENT} title="Log Events" panel={logEventsPanel}/>
                     </Tabs>
                 </div>
                 <div className="bp3-dialog-footer">
