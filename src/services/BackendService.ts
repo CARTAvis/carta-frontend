@@ -57,14 +57,9 @@ export class BackendService {
         if (process.env.NODE_ENV !== "test") {
             this.decompressionService = new DecompressionService(this.subsetsRequired);
         }
-        this.logEventList = [
-            CARTA.EventType.REGISTER_VIEWER,
-            CARTA.EventType.REGISTER_VIEWER_ACK,
-            CARTA.EventType.OPEN_FILE,
-            CARTA.EventType.OPEN_FILE_ACK,
-        ];
 
         // Check local storage for a list of events to log to console
+        this.logEventList = [];
         this.preferenceStore.logEvents.forEach((isChecked, eventType) => {
             if (isChecked) {
                 this.logEventList.push(eventType);

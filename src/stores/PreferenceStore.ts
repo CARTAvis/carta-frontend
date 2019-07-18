@@ -27,7 +27,7 @@ const PREFERENCE_KEYS = {
     animationCompressionQuality: "CARTA_animationCompressionQuality",
     GPUTileCache: "CARTA_GPUTileCache",
     systemTileCache: "CARTA_systemTileCache",
-    logEventList: "DEBUG_OVERRIDE_EVENT_LIST"
+    logEventList: "CARTA_logEventList"
 };
 
 const DEFAULTS = {
