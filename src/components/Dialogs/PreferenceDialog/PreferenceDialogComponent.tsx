@@ -261,7 +261,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         const logEventsPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Enable logged event type">
-                    {Events.getEvents().map((key) => <Checkbox checked={preference.isEventChecked(key)} key={key} label={Events.getEventName(key)} onChange={() => {}} />)}
+                    {Events.getEvents().map((key) => <Checkbox checked={preference.logEvents.get(key)} key={key} label={Events.getEventName(key)} onChange={() => preference.logEvents.set(key, !preference.logEvents.get(key))} />)}
                 </FormGroup>
             </React.Fragment>
         );

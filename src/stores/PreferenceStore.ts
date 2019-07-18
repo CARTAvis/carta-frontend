@@ -2,9 +2,8 @@ import {observable, computed, action, autorun} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
-import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache} from "models";
+import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Events} from "models";
 import {AppStore} from "./AppStore";
-import { Events } from "../models/Events";
 
 const PREFERENCE_KEYS = {
     theme: "CARTA_theme",
@@ -77,7 +76,7 @@ export class PreferenceStore {
     @observable animationCompressionQuality: number;
     @observable GPUTileCache: number;
     @observable systemTileCache: number;
-    @observable logEvents: number[];
+    @observable logEvents: Map<CARTA.EventType, boolean>;
 
     // getters for global settings
     private getTheme = (): string => {
@@ -239,7 +238,10 @@ export class PreferenceStore {
     };
 
     // getters for log event
-    private getLogEvents = () => {
+    private getLogEvents = (): Map<CARTA.EventType, boolean> => {
+        let eventMap = new Map<CARTA.EventType, boolean>();
+        Events.getEvents().forEach((event) => eventMap.set(event, DEFAULTS.logEvent));
+
         const localStorageEventList = localStorage.getItem(PREFERENCE_KEYS.logEventList);
         if (localStorageEventList) {
             try {
@@ -248,7 +250,7 @@ export class PreferenceStore {
                     for (const eventName of eventList) {
                         const eventType = (<any> CARTA.EventType)[eventName];
                         if (eventType !== undefined) {
-                            this.logEvents.push(eventName);
+                            eventMap.set(eventType, true);
                         }
                     }
                 }
@@ -256,6 +258,7 @@ export class PreferenceStore {
                 console.log("Invalid event list read from local storage");
             }
         }
+        return eventMap;
     };
 
     public isEventChecked = (event: CARTA.EventType): boolean => {
@@ -435,10 +438,7 @@ export class PreferenceStore {
         this.animationCompressionQuality = this.getAnimationCompressionQuality();
         this.GPUTileCache = this.getGPUTileCache();
         this.systemTileCache = this.getSystemTileCache();
-
-        // log events
-        this.logEvents = [];
-        this.getLogEvents();
+        this.logEvents = this.getLogEvents();
 
         // setup region settings container (for AppearanceForm in PreferenceDialogComponent)
         this.regionContainer = new RegionStore(null, -1, [{x: 0, y: 0}, {x: 1, y: 1}], this.getRegionType(), -1);
