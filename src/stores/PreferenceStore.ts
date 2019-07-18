@@ -237,7 +237,7 @@ export class PreferenceStore {
         return isFinite(value) && TileCache.isSystemTileCacheValid(value) ? value : DEFAULTS.systemTileCache;
     };
 
-    // getters for log event
+    // getters for log event, the list saved in local storage could be string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
     private getLogEvents = (): boolean[] => {
         let events = [];
         Object.values(CARTA.EventType).sort().forEach(() => events.push(DEFAULTS.logEvent));
@@ -463,7 +463,12 @@ export class PreferenceStore {
                     eventList.push(CARTA.EventType[eventType]);
                 }
             });
-            localStorage.setItem(PREFERENCE_KEYS.logEventList, JSON.stringify(eventList));
+
+            try {
+                localStorage.setItem(PREFERENCE_KEYS.logEventList, JSON.stringify(eventList));
+            } catch (e) {
+                console.log("Save event list to local storage failed!");
+            }
         });
     }
 }
