@@ -4,6 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
 import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache} from "models";
 import {AppStore} from "./AppStore";
+import { Events } from "../models/Events";
 
 const PREFERENCE_KEYS = {
     theme: "CARTA_theme",
@@ -26,7 +27,8 @@ const PREFERENCE_KEYS = {
     imageCompressionQuality: "CARTA_imageCompressionQuality",
     animationCompressionQuality: "CARTA_animationCompressionQuality",
     GPUTileCache: "CARTA_GPUTileCache",
-    systemTileCache: "CARTA_systemTileCache"
+    systemTileCache: "CARTA_systemTileCache",
+    logEventList: "DEBUG_OVERRIDE_EVENT_LIST"
 };
 
 const DEFAULTS = {
@@ -50,7 +52,8 @@ const DEFAULTS = {
     imageCompressionQuality: CompressionQuality.IMAGE_DEFAULT,
     animationCompressionQuality: CompressionQuality.ANIMATION_DEFAULT,
     GPUTileCache: TileCache.GPU_DEFAULT,
-    systemTileCache: TileCache.SYSTEM_DEFAULT
+    systemTileCache: TileCache.SYSTEM_DEFAULT,
+    logEvent: false
 };
 
 export class PreferenceStore {
@@ -74,6 +77,7 @@ export class PreferenceStore {
     @observable animationCompressionQuality: number;
     @observable GPUTileCache: number;
     @observable systemTileCache: number;
+    @observable logEvents: number[];
 
     // getters for global settings
     private getTheme = (): string => {
@@ -232,6 +236,30 @@ export class PreferenceStore {
 
         const value = Number(systemTileCache);
         return isFinite(value) && TileCache.isSystemTileCacheValid(value) ? value : DEFAULTS.systemTileCache;
+    };
+
+    // getters for log event
+    private getLogEvents = () => {
+        const localStorageEventList = localStorage.getItem(PREFERENCE_KEYS.logEventList);
+        if (localStorageEventList) {
+            try {
+                const eventList = JSON.parse(localStorageEventList);
+                if (eventList && Array.isArray(eventList) && eventList.length) {
+                    for (const eventName of eventList) {
+                        const eventType = (<any> CARTA.EventType)[eventName];
+                        if (eventType !== undefined) {
+                            this.logEvents.push(eventName);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log("Invalid event list read from local storage");
+            }
+        }
+    };
+
+    public isEventChecked = (event: CARTA.EventType): boolean => {
+        return false;
     };
 
     // getters for boolean(convenient)
@@ -407,6 +435,10 @@ export class PreferenceStore {
         this.animationCompressionQuality = this.getAnimationCompressionQuality();
         this.GPUTileCache = this.getGPUTileCache();
         this.systemTileCache = this.getSystemTileCache();
+
+        // log events
+        this.logEvents = [];
+        this.getLogEvents();
 
         // setup region settings container (for AppearanceForm in PreferenceDialogComponent)
         this.regionContainer = new RegionStore(null, -1, [{x: 0, y: 0}, {x: 1, y: 1}], this.getRegionType(), -1);
