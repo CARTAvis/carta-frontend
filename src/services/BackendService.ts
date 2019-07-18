@@ -1,7 +1,7 @@
 import {action, autorun, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
-import {LogStore, RegionStore} from "stores";
+import {LogStore, RegionStore, PreferenceStore} from "stores";
 import {DecompressionService} from "./DecompressionService";
 
 export enum ConnectionStatus {
@@ -37,9 +37,11 @@ export class BackendService {
     private readonly decompressionService: DecompressionService;
     private readonly subsetsRequired: number;
     private readonly logStore: LogStore;
+    private readonly preferenceStore: PreferenceStore;
 
-    constructor(logStore: LogStore) {
+    constructor(logStore: LogStore, preferenceStore: PreferenceStore) {
         this.logStore = logStore;
+        this.preferenceStore = preferenceStore;
         this.observerRequestMap = new Map<number, Observer<any>>();
         this.eventCounter = 1;
         this.endToEndPing = NaN;
@@ -63,23 +65,11 @@ export class BackendService {
         ];
 
         // Check local storage for a list of events to log to console
-        const localStorageEventList = localStorage.getItem("DEBUG_OVERRIDE_EVENT_LIST");
-        if (localStorageEventList) {
-            try {
-                const eventList = JSON.parse(localStorageEventList);
-                if (eventList && Array.isArray(eventList) && eventList.length) {
-                    for (const eventName of eventList) {
-                        const eventType = (<any> CARTA.EventType)[eventName];
-                        if (eventType !== undefined) {
-                            this.logEventList.push(eventType);
-                        }
-                    }
-                    console.log("Appending event log list from local storage");
-                }
-            } catch (e) {
-                console.log("Invalid event list read from local storage");
+        this.preferenceStore.logEvents.forEach((isChecked, eventType) => {
+            if (isChecked) {
+                this.logEventList.push(eventType);
             }
-        }
+        });
 
         autorun(() => {
             if (this.zfpReady) {
