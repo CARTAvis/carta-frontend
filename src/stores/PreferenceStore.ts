@@ -2,7 +2,7 @@ import {observable, computed, action, autorun} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
-import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Events} from "models";
+import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache} from "models";
 import {AppStore} from "./AppStore";
 
 const PREFERENCE_KEYS = {
@@ -240,7 +240,8 @@ export class PreferenceStore {
     // getters for log event
     private getLogEvents = (): Map<CARTA.EventType, boolean> => {
         let eventMap = new Map<CARTA.EventType, boolean>();
-        Events.getEvents().forEach((event) => eventMap.set(event, DEFAULTS.logEvent));
+        const eventTypes = Object.values(CARTA.EventType);
+        eventTypes.forEach((eventType) => eventMap.set(eventType, DEFAULTS.logEvent));
 
         const localStorageEventList = localStorage.getItem(PREFERENCE_KEYS.logEventList);
         if (localStorageEventList) {
