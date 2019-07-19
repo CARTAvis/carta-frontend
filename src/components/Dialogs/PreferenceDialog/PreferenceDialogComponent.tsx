@@ -15,7 +15,7 @@ import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {AppearanceForm} from "components/Dialogs/RegionDialog/AppearanceForm/AppearanceForm";
-import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache} from "models";
+import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore, RenderConfigStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
@@ -261,7 +261,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         const logEventsPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Enable logged event type">
-                    {Object.values(CARTA.EventType).map((key) => <Checkbox checked={preference.logEvents[key]} key={key} label={CARTA.EventType[key]} onChange={() => preference.logEvents[key] = !preference.logEvents[key]} />)}
+                    {Event.getEventTypes().map((eventType) => <Checkbox checked={preference.getEventChecked(eventType)} key={eventType} label={Event.getEventName(eventType)} onChange={() => preference.flipEventChecked(eventType)} />)}
                 </FormGroup>
             </React.Fragment>
         );

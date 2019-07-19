@@ -2,7 +2,7 @@ import {observable, computed, action, autorun} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
-import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache} from "models";
+import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore} from "./AppStore";
 
 const PREFERENCE_KEYS = {
@@ -76,7 +76,7 @@ export class PreferenceStore {
     @observable animationCompressionQuality: number;
     @observable GPUTileCache: number;
     @observable systemTileCache: number;
-    @observable logEvents: boolean[];
+    @observable logEventsChecked: boolean[];
 
     // getters for global settings
     private getTheme = (): string => {
@@ -239,20 +239,17 @@ export class PreferenceStore {
 
     // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
     private getLogEvents = (): boolean[] => {
-        let events = [];
-        Object.values(CARTA.EventType).sort().forEach(() => events.push(DEFAULTS.logEvent));
+        let events = Array(Event.getEventNumber()).fill(DEFAULTS.logEvent);
 
         const localStorageEventList = localStorage.getItem(PREFERENCE_KEYS.logEventList);
         if (localStorageEventList) {
             try {
-                const eventList = JSON.parse(localStorageEventList);
-                if (eventList && Array.isArray(eventList) && eventList.length) {
-                    for (const eventName of eventList) {
-                        const eventType = (<any> CARTA.EventType)[eventName];
-                        if (eventType !== undefined) {
-                            events[eventType] = true;
-                        }
-                    }
+                const eventNameList = JSON.parse(localStorageEventList);
+                if (eventNameList && Array.isArray(eventNameList) && eventNameList.length) {
+                    eventNameList.forEach((eventName) => {
+                        const eventType = Event.getEventType(eventName);
+                        if (eventType !== undefined) { events[eventType] = true; }
+                    });
                 }
             } catch (e) {
                 console.log("Invalid event list read from local storage");
@@ -260,6 +257,16 @@ export class PreferenceStore {
         }
         return events;
     };
+
+    public getEventChecked = (eventType: CARTA.EventType): boolean => {
+        return Event.isEventTypeValid(eventType) && this.logEventsChecked[eventType];
+    }
+
+    public flipEventChecked = (eventType: CARTA.EventType): void => {
+        if (Event.isEventTypeValid(eventType)) {
+            this.logEventsChecked[eventType] = !this.logEventsChecked[eventType];
+        }
+    }
 
     // getters for boolean(convenient)
     @computed get isDarkTheme(): boolean {
@@ -276,6 +283,16 @@ export class PreferenceStore {
 
     @computed get isCursorFrozen(): boolean {
         return this.cursorPosition === CursorPosition.FIXED;
+    }
+
+    @computed get checkedEventNames(): string[] {
+        let eventNames: string[] = [];
+        this.logEventsChecked.forEach((isChecked, eventType) => {
+            if (isChecked) {
+                eventNames.push(Event.getEventName(eventType));
+            }
+        });
+        return eventNames;
     }
 
     // setters for global
@@ -416,11 +433,7 @@ export class PreferenceStore {
     };
 
     @action resetLogEventSettings = () => {
-        this.logEvents.forEach((isChecked, eventType) => {
-            if (isChecked) {
-                this.logEvents[eventType] = DEFAULTS.logEvent;
-            }
-        });
+        this.logEventsChecked.fill(DEFAULTS.logEvent);
     };
 
     constructor(appStore: AppStore) {
@@ -442,7 +455,7 @@ export class PreferenceStore {
         this.animationCompressionQuality = this.getAnimationCompressionQuality();
         this.GPUTileCache = this.getGPUTileCache();
         this.systemTileCache = this.getSystemTileCache();
-        this.logEvents = this.getLogEvents();
+        this.logEventsChecked = this.getLogEvents();
 
         // setup region settings container (for AppearanceForm in PreferenceDialogComponent)
         this.regionContainer = new RegionStore(null, -1, [{x: 0, y: 0}, {x: 1, y: 1}], this.getRegionType(), -1);
@@ -457,15 +470,8 @@ export class PreferenceStore {
         });
 
         autorun(() => {
-            let eventList: string[] = [];
-            this.logEvents.forEach((isChecked, eventType) => {
-                if (isChecked) {
-                    eventList.push(CARTA.EventType[eventType]);
-                }
-            });
-
             try {
-                localStorage.setItem(PREFERENCE_KEYS.logEventList, JSON.stringify(eventList));
+                localStorage.setItem(PREFERENCE_KEYS.logEventList, JSON.stringify(this.checkedEventNames));
             } catch (e) {
                 console.log("Save event list to local storage failed!");
             }

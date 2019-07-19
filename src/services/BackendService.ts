@@ -35,7 +35,6 @@ export class BackendService {
     private readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
     private readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
     private readonly statsStream: Subject<CARTA.RegionStatsData>;
-    private readonly logEventList: CARTA.EventType[];
     private readonly decompressionService: DecompressionService;
     private readonly subsetsRequired: number;
     private readonly logStore: LogStore;
@@ -62,17 +61,6 @@ export class BackendService {
             this.decompressionService = new DecompressionService(this.subsetsRequired);
         }
 
-        // init logEventList & update the list when user preference changes
-        this.logEventList = [];
-        autorun(() => {
-            this.logEventList.length = 0;
-            this.preferenceStore.logEvents.forEach((isChecked, eventType) => {
-                if (isChecked) {
-                    this.logEventList.push(eventType);
-                }
-            });
-        });
-        
         // Construct handler and decoder maps
         this.handlerMap = new Map<CARTA.EventType, HandlerFunction>([
             [CARTA.EventType.REGISTER_VIEWER_ACK, this.onRegisterViewerAck],
@@ -656,7 +644,7 @@ export class BackendService {
 
     private logEvent(eventType: CARTA.EventType, eventId: number, message: any, incoming: boolean = true) {
         const eventName = CARTA.EventType[eventType];
-        if (this.loggingEnabled && this.logEventList.indexOf(eventType) >= 0) {
+        if (this.loggingEnabled && this.preferenceStore.getEventChecked(eventType)) {
             if (incoming) {
                 if (eventId === 0) {
                     console.log(`<== ${eventName} [Stream]`);
