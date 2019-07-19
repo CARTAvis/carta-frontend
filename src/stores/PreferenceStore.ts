@@ -239,7 +239,7 @@ export class PreferenceStore {
 
     // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
     private getLogEvents = (): boolean[] => {
-        let events = Array(Event.getEventNumber()).fill(DEFAULTS.logEvent);
+        let events = Array(Event.EVENT_NUMBER).fill(DEFAULTS.logEvent);
 
         const localStorageEventList = localStorage.getItem(PREFERENCE_KEYS.logEventList);
         if (localStorageEventList) {
@@ -247,7 +247,7 @@ export class PreferenceStore {
                 const eventNameList = JSON.parse(localStorageEventList);
                 if (eventNameList && Array.isArray(eventNameList) && eventNameList.length) {
                     eventNameList.forEach((eventName) => {
-                        const eventType = Event.getEventType(eventName);
+                        const eventType = Event.getEventTypeFromName(eventName);
                         if (eventType !== undefined) { events[eventType] = true; }
                     });
                 }
@@ -258,7 +258,7 @@ export class PreferenceStore {
         return events;
     };
 
-    public getEventChecked = (eventType: CARTA.EventType): boolean => {
+    public isEventChecked = (eventType: CARTA.EventType): boolean => {
         return Event.isEventTypeValid(eventType) && this.logEventsChecked[eventType];
     }
 
@@ -289,7 +289,7 @@ export class PreferenceStore {
         let eventNames: string[] = [];
         this.logEventsChecked.forEach((isChecked, eventType) => {
             if (isChecked) {
-                eventNames.push(Event.getEventName(eventType));
+                eventNames.push(Event.getEventNameFromType(eventType));
             }
         });
         return eventNames;

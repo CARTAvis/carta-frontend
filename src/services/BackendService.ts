@@ -644,7 +644,7 @@ export class BackendService {
 
     private logEvent(eventType: CARTA.EventType, eventId: number, message: any, incoming: boolean = true) {
         const eventName = CARTA.EventType[eventType];
-        if (this.loggingEnabled && this.preferenceStore.getEventChecked(eventType)) {
+        if (this.loggingEnabled && this.preferenceStore.isEventChecked(eventType)) {
             if (incoming) {
                 if (eventId === 0) {
                     console.log(`<== ${eventName} [Stream]`);
