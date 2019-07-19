@@ -260,9 +260,10 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
 
         const logEventsPanel = (
             <React.Fragment>
-                <FormGroup inline={true} label="Enable logged event type">
+                <FormGroup inline={false} label="Enable logged event type" className="log-event-list">
                     {Event.EVENT_TYPES.map((eventType) =>
                         <Checkbox
+                            className="log-event-checkbox"
                             key={eventType}
                             checked={preference.isEventLoggingEnabled(eventType)}
                             label={Event.getEventNameFromType(eventType)}
@@ -290,7 +291,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={725} defaultHeight={450} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} minWidth={450} minHeight={300} defaultWidth={775} defaultHeight={450} enableResizing={true}>
                 <div className="bp3-dialog-body">
                     <Tabs
                         id="preferenceTabs"
