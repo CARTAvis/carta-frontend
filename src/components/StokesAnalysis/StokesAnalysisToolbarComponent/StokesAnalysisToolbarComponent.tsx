@@ -23,9 +23,7 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
         const appStore = this.props.appStore;
         const widgetStore = this.props.widgetStore;
 
-        let enableStatsSelect = false;
         let enableRegionSelect = false;
-        let enableStokesSelect = false;
         let enableFractionalPol = true;
         let regionId = 0;
         // Fill region select options with all non-temporary regions that are closed or point type
@@ -41,30 +39,14 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
             });
 
             enableRegionSelect = profileRegionOptions.length > 1;
-            // enableStokesSelect = appStore.activeFrame.frameInfo.fileInfoExtended.stokes > 1;
         }
-
-        // add new stoket plot type PA, PI, Q+U (multiple lines), Q vs U (Scatter plot)
-        const profileCoordinateOptions = [
-            {value: "z", label: "Current"},
-        ];
-
-        const profileStatsOptions: IOptionProps[] = [
-            {value: CARTA.StatsType.Sum, label: "Mean"},
-        ];
 
         return (
             <div className="stokes-analysis-toolbar">
                 <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
                     <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect}/>
                 </FormGroup>
-                <FormGroup label={"Statistic"} inline={true} disabled={!enableStatsSelect}>
-                    <HTMLSelect value={widgetStore.statsType} options={profileStatsOptions} disabled={!enableStatsSelect}/>
-                </FormGroup>
-                <FormGroup label={"Stokes"} inline={true} disabled={!enableStokesSelect}>
-                    <HTMLSelect value={"Toolbar Placeholder"} options={profileCoordinateOptions} disabled={!enableStokesSelect}/>
-                </FormGroup>
-                <FormGroup label={"Frac. Pol."} inline={true} disabled={!enableFractionalPol}>
+                <FormGroup label={"Frac. Pol."} inline={true}>
                     <Switch checked={widgetStore.fractionalPolVisible} onChange={this.handleFractionalPolChanged} disabled={!enableFractionalPol}/>
                 </FormGroup>
             </div>

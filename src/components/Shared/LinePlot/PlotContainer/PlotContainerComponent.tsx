@@ -209,6 +209,20 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         return datasetConfig;
     }
 
+    private getColor(value: number, min: number, max: number): string {
+        let percentage = (value + Math.abs(min)) / (Math.abs(min) + Math.abs(max));
+        let hue = (percentage * 250).toString(10);
+        return ["hsl(", hue, ",100%,50%)"].join("");
+    }
+
+    private getMinY(data: Array<{x: number, y: number}>): number {
+        return data.reduce((min, p) => p.y < min ? p.y : min, data[0].y);
+    }
+
+    private getMaxY(data: Array<{x: number, y: number}>): number {
+        return data.reduce((max, p) => p.y > max ? p.y : max, data[0].y);
+    }
+
     render() {
         const labelColor = this.props.darkMode ? Colors.LIGHT_GRAY4 : Colors.GRAY1;
         const gridColor = this.props.darkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1;
@@ -218,14 +232,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             showBottomAxis = false;
         }
         
-        // console.log("tytytyt "+ this.props.showBottomAxis)
-        // console.log(showBottomAxis)
         // ChartJS plot
         let plotOptions: ChartOptions = {
             maintainAspectRatio: false,
             events: ["mousedown", "mouseup", "mousemove", "dblclick"],
             legend: {
-                display: false
+                display: false,
             },
             scales: {
                 xAxes: [{
@@ -340,7 +352,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
         if (this.props.multiLineData && this.props.multiLineData.size) {
             this.props.multiLineData.forEach((value, key) => {
-                
+                let colorArray = [];
                 const multiLinedatasetConfig: ChartDataSets = {
                     type: "line",
                     label: key,
@@ -355,7 +367,21 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 } else if (key === StokesCoordinate.LinearPolarizationU) {
                     multiLinedatasetConfig.borderColor = "blue";
                     plotOptions.legend.display = true;
+                } else if (key === StokesCoordinate.PolarizationQU) {
+                    plotOptions.scales.xAxes[0].gridLines.zeroLineColor = "red";
+                    plotOptions.scales.yAxes[0].gridLines.zeroLineColor = "red";
+                    multiLinedatasetConfig.pointRadius = 3;
+                    multiLinedatasetConfig.type = "bubble";
+                    // multiLinedatasetConfig.pointHoverRadius = 5;
+                    // multiLinedatasetConfig.pointHoverBackgroundColor = "red";
+                    let miny = this.getMinY(value);
+                    let maxy = this.getMaxY(value);
+                    multiLinedatasetConfig.data.forEach((data, i) => {
+                        let pointColor = this.getColor(data.y, miny, maxy);
+                        colorArray.push(pointColor);
+                    });
                 }
+                multiLinedatasetConfig.backgroundColor = colorArray;
                 plotData.datasets.push(multiLinedatasetConfig);
             });
         }

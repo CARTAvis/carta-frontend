@@ -10,7 +10,8 @@ export enum StokesCoordinate {
     LinearPolarizationU = "Uz",
     CircularPolarization = "Vz",
     PolarizedIntensity = "PIz",
-    PolarizationAngle = "PAz"
+    PolarizationAngle = "PAz",
+    PolarizationQU = "QvsU",
 }
 
 // export enum StokesCoordinateLabel {

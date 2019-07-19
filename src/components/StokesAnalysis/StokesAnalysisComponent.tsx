@@ -13,7 +13,6 @@ import {CARTA} from "carta-protobuf";
 import {clamp, pi, pa, normalising} from "utilities";
 import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import "./StokesAnalysisComponent.css";
-import {build} from "protobufjs";
 
 @observer
 export class StokesAnalysisComponent extends React.Component<WidgetProps> {
@@ -152,7 +151,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         let paProfile = {...qProfile};
         piProfile.coordinate = StokesCoordinate.PolarizedIntensity;
         paProfile.coordinate = StokesCoordinate.PolarizationAngle;
-        // console.log(this.profileStore)
+        
         let piCoordinate = [];
         let paCoordinate = [];
         if (qProfile && uProfile) {
@@ -160,7 +159,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             paCoordinate = StokesAnalysisComponent.calculatePA(qProfile.vals, uProfile.vals);
             let iProfile = this.profileStore.getProfile(StokesCoordinate.TotalIntensity, statsType);
             if (this.widgetStore.fractionalPolVisible && iProfile) {
-                // console.log(iProfile)
+
                 piCoordinate = StokesAnalysisComponent.calculateFractionalPol(piCoordinate, iProfile.vals);
                 qProfile.vals = StokesAnalysisComponent.calculateFractionalPol(qProfile.vals, iProfile.vals);
                 uProfile.vals = StokesAnalysisComponent.calculateFractionalPol(uProfile.vals, iProfile.vals);
@@ -228,11 +227,23 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     }
 
+    private assambleScatterPlotData(qProfile: CARTA.ISpectralProfile, uProfile: CARTA.ISpectralProfile): {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}} {
+        if (qProfile.vals  && qProfile.vals.length && uProfile.vals && uProfile.vals.length && qProfile.vals.length === uProfile.vals.length) {
+
+            let border = this.calculateXYborder(qProfile.vals);
+
+            let values = StokesAnalysisComponent.assambleXYData(qProfile.vals, uProfile.vals, -Number.MAX_VALUE,  Number.MAX_VALUE);
+            return {dataset: values, border};
+        }
+        return null;
+    }
+
     @computed get plotDataPI(): { 
         qValues: {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}}, 
         uValues: {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}},
         piValues: {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}},
         paValues: {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}},
+        quValues: {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}},
         sharedMinX: number, 
         sharedMaxX: number, polIntensityMinY: number, polIntensityMaxY: number} {
         const frame = this.props.appStore.activeFrame;
@@ -257,14 +268,14 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
         let channelInfo = frame.channelInfo;
         if (compositeProfile && channelInfo) {
-            // console.log(compositeProfile);
-            // console.log(channelInfo);
+
             let piDic = this.assambleLinePlotData(compositeProfile.piProfile, channelInfo);
             let paDic = this.assambleLinePlotData(compositeProfile.paProfile, channelInfo);
             let qDic = this.assambleLinePlotData(compositeProfile.qProfile, channelInfo);
             let uDic = this.assambleLinePlotData(compositeProfile.uProfile, channelInfo);
+            let quDic = this.assambleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile);
 
-            return {qValues: qDic, uValues: uDic, piValues: piDic, paValues: paDic, sharedMinX: 0, sharedMaxX: 0, polIntensityMinY: 0, polIntensityMaxY: 0};
+            return {qValues: qDic, uValues: uDic, piValues: piDic, paValues: paDic, quValues: quDic , sharedMinX: 0, sharedMaxX: 0, polIntensityMinY: 0, polIntensityMaxY: 0};
         }
         return null;
     }
@@ -319,30 +330,38 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         };
 
         let qvsuLinePlotProps: LinePlotComponentProps = {
-            xLabel: "Q",
-            yLabel: "U",
+            xLabel: "Stokes Q (Jy/Beam)",
+            yLabel: "Stokes U (Jy/Beam)",
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: "profile",
             forceScientificNotationTicksY: true,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
-            scrollZoom: true
+            scrollZoom: true,
+            usePointSymbols: true,
+            multiLineData: new Map()
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
-        // console.log(className);
+
         if (this.profileStore && frame) {
             const currentPlotData = this.plotDataPI;
-            // console.log(currentPlotData);
-            if (currentPlotData.piValues && currentPlotData.paValues && currentPlotData.qValues && currentPlotData.uValues) {
+
+            if (currentPlotData.piValues && currentPlotData.paValues && currentPlotData.qValues && currentPlotData.uValues && currentPlotData.quValues) {
                 
                 piLinePlotProps.multiLineData.set(StokesCoordinate.PolarizedIntensity, currentPlotData.piValues.dataset);
-                // piLinePlotProps.data = currentPlotData.piValues.dataset;
                 paLinePlotProps.multiLineData.set(StokesCoordinate.PolarizationAngle, currentPlotData.paValues.dataset);
                 quLinePlotProps.multiLineData.set(StokesCoordinate.LinearPolarizationQ, currentPlotData.qValues.dataset);
                 quLinePlotProps.multiLineData.set(StokesCoordinate.LinearPolarizationU, currentPlotData.uValues.dataset);
-                // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
+                qvsuLinePlotProps.multiLineData.set(StokesCoordinate.PolarizationQU, currentPlotData.quValues.dataset);
+            }
+
+            if (this.widgetStore.fractionalPolVisible) {
+                quLinePlotProps.yLabel = " Q/I + U/I (%)";
+                piLinePlotProps.yLabel = " PI/I (%)";
+                qvsuLinePlotProps.xLabel = "Q/I (%)";
+                qvsuLinePlotProps.yLabel = "U/I (%)";
             }
         }
 
