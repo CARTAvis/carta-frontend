@@ -52,7 +52,7 @@ const DEFAULTS = {
     animationCompressionQuality: CompressionQuality.ANIMATION_DEFAULT,
     GPUTileCache: TileCache.GPU_DEFAULT,
     systemTileCache: TileCache.SYSTEM_DEFAULT,
-    logEvent: false
+    eventLoggingEnabled: false
 };
 
 export class PreferenceStore {
@@ -76,7 +76,7 @@ export class PreferenceStore {
     @observable animationCompressionQuality: number;
     @observable GPUTileCache: number;
     @observable systemTileCache: number;
-    @observable logEventsChecked: boolean[];
+    @observable eventsLoggingEnabled: boolean[];
 
     // getters for global settings
     private getTheme = (): string => {
@@ -239,7 +239,7 @@ export class PreferenceStore {
 
     // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
     private getLogEvents = (): boolean[] => {
-        let events = Array(Event.EVENT_NUMBER).fill(DEFAULTS.logEvent);
+        let events = Array(Event.EVENT_NUMBER).fill(DEFAULTS.eventLoggingEnabled);
 
         const localStorageEventList = localStorage.getItem(PREFERENCE_KEYS.logEventList);
         if (localStorageEventList) {
@@ -259,12 +259,12 @@ export class PreferenceStore {
     };
 
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
-        return Event.isEventTypeValid(eventType) && this.logEventsChecked[eventType];
+        return Event.isEventTypeValid(eventType) && this.eventsLoggingEnabled[eventType];
     }
 
-    public flipEventChecked = (eventType: CARTA.EventType): void => {
+    public flipEventLoggingEnabled = (eventType: CARTA.EventType): void => {
         if (Event.isEventTypeValid(eventType)) {
-            this.logEventsChecked[eventType] = !this.logEventsChecked[eventType];
+            this.eventsLoggingEnabled[eventType] = !this.eventsLoggingEnabled[eventType];
         }
     }
 
@@ -287,7 +287,7 @@ export class PreferenceStore {
 
     @computed get checkedEventNames(): string[] {
         let eventNames: string[] = [];
-        this.logEventsChecked.forEach((isChecked, eventType) => {
+        this.eventsLoggingEnabled.forEach((isChecked, eventType) => {
             if (isChecked) {
                 eventNames.push(Event.getEventNameFromType(eventType));
             }
@@ -433,7 +433,7 @@ export class PreferenceStore {
     };
 
     @action resetLogEventSettings = () => {
-        this.logEventsChecked.fill(DEFAULTS.logEvent);
+        this.eventsLoggingEnabled.fill(DEFAULTS.eventLoggingEnabled);
     };
 
     constructor(appStore: AppStore) {
@@ -455,7 +455,7 @@ export class PreferenceStore {
         this.animationCompressionQuality = this.getAnimationCompressionQuality();
         this.GPUTileCache = this.getGPUTileCache();
         this.systemTileCache = this.getSystemTileCache();
-        this.logEventsChecked = this.getLogEvents();
+        this.eventsLoggingEnabled = this.getLogEvents();
 
         // setup region settings container (for AppearanceForm in PreferenceDialogComponent)
         this.regionContainer = new RegionStore(null, -1, [{x: 0, y: 0}, {x: 1, y: 1}], this.getRegionType(), -1);

@@ -266,7 +266,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                             key={eventType}
                             checked={preference.isEventLoggingEnabled(eventType)}
                             label={Event.getEventNameFromType(eventType)}
-                            onChange={() => preference.flipEventChecked(eventType)}
+                            onChange={() => preference.flipEventLoggingEnabled(eventType)}
                         />
                     )}
                 </FormGroup>
