@@ -43,7 +43,6 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
     onRangeChanged = (range: NumberRange) => {
         const frame = this.props.appStore.activeFrame;
-        console.log(range);
         if (range && range.length === 2 && frame) {
             if (range[0] >= 0 && range[0] < range[1] && range[1] < frame.frameInfo.fileInfoExtended.depth) {
                 frame.setAnimationRange(range);
