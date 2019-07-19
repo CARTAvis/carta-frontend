@@ -324,9 +324,9 @@ export class RectangularRegionForm extends React.Component<{ region: RegionStore
                             <td><span className="wcs-string">{wcsStringRight}</span></td>
                         </tr>
                         <tr>
-                            <td>Rotation <span className={Classes.TEXT_MUTED}>(deg)</span></td>
+                            <td>P.A. <span className={Classes.TEXT_MUTED}>(deg)</span></td>
                             <td>
-                                <NumericInput {...commonProps} buttonPosition="none" placeholder="Rotation" value={region.rotation} onBlur={this.handleRotationChange} onKeyDown={this.handleRotationChange}/>
+                                <NumericInput {...commonProps} buttonPosition="none" placeholder="P.A." value={region.rotation} onBlur={this.handleRotationChange} onKeyDown={this.handleRotationChange}/>
                             </td>
                         </tr>
                         </tbody>
