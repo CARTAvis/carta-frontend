@@ -10,6 +10,8 @@ export enum ConnectionStatus {
     ACTIVE = 2,
 }
 
+type HandlerFunction = (eventId: number, parsedMessage: any) => void;
+
 export class BackendService {
     private static readonly IcdVersion = 5;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
@@ -38,6 +40,8 @@ export class BackendService {
     private readonly subsetsRequired: number;
     private readonly logStore: LogStore;
     private readonly preferenceStore: PreferenceStore;
+    private readonly handlerMap: Map<CARTA.EventType, HandlerFunction>;
+    private readonly decoderMap: Map<CARTA.EventType, any>;
 
     constructor(logStore: LogStore, preferenceStore: PreferenceStore) {
         this.logStore = logStore;
@@ -65,6 +69,39 @@ export class BackendService {
                 this.logEventList.push(eventType);
             }
         });
+        
+        // Construct handler and decoder maps
+        this.handlerMap = new Map<CARTA.EventType, HandlerFunction>([
+            [CARTA.EventType.REGISTER_VIEWER_ACK, this.onRegisterViewerAck],
+            [CARTA.EventType.FILE_LIST_RESPONSE, this.onFileListResponse],
+            [CARTA.EventType.FILE_INFO_RESPONSE, this.onFileInfoResponse],
+            [CARTA.EventType.OPEN_FILE_ACK, this.onFileOpenAck],
+            [CARTA.EventType.SET_REGION_ACK, this.onSetRegionAck],
+            [CARTA.EventType.START_ANIMATION_ACK, this.onStartAnimationAck],
+            [CARTA.EventType.RASTER_IMAGE_DATA, this.onStreamedRasterImageData],
+            [CARTA.EventType.RASTER_TILE_DATA, this.onStreamedRasterTileData],
+            [CARTA.EventType.REGION_HISTOGRAM_DATA, this.onStreamedRegionHistogramData],
+            [CARTA.EventType.ERROR_DATA, this.onStreamedErrorData],
+            [CARTA.EventType.SPATIAL_PROFILE_DATA, this.onStreamedSpatialProfileData],
+            [CARTA.EventType.SPECTRAL_PROFILE_DATA, this.onStreamedSpectralProfileData],
+            [CARTA.EventType.REGION_STATS_DATA, this.onStreamedRegionStatsData],
+        ]);
+
+        this.decoderMap = new Map<CARTA.EventType, any>([
+            [CARTA.EventType.REGISTER_VIEWER_ACK, CARTA.RegisterViewerAck],
+            [CARTA.EventType.FILE_LIST_RESPONSE, CARTA.FileListResponse],
+            [CARTA.EventType.FILE_INFO_RESPONSE, CARTA.FileInfoResponse],
+            [CARTA.EventType.OPEN_FILE_ACK, CARTA.OpenFileAck],
+            [CARTA.EventType.SET_REGION_ACK, CARTA.SetRegionAck],
+            [CARTA.EventType.START_ANIMATION_ACK, CARTA.StartAnimationAck],
+            [CARTA.EventType.RASTER_IMAGE_DATA, CARTA.RasterImageData],
+            [CARTA.EventType.RASTER_TILE_DATA, CARTA.RasterTileData],
+            [CARTA.EventType.REGION_HISTOGRAM_DATA, CARTA.RegionHistogramData],
+            [CARTA.EventType.ERROR_DATA, CARTA.ErrorData],
+            [CARTA.EventType.SPATIAL_PROFILE_DATA, CARTA.SpatialProfileData],
+            [CARTA.EventType.SPECTRAL_PROFILE_DATA, CARTA.SpectralProfileData],
+            [CARTA.EventType.REGION_STATS_DATA, CARTA.RegionStatsData]
+        ]);
 
         autorun(() => {
             if (this.zfpReady) {
@@ -319,11 +356,10 @@ export class BackendService {
     }
 
     @action("set spatial requirements")
-    setSpatialRequirements(fileId: number, regionId: number, spatialProfiles: string[]) {
+    setSpatialRequirements(requirementsMessage: CARTA.ISetSpectralRequirements) {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.SetSpatialRequirements.create({fileId, regionId, spatialProfiles});
-            this.logEvent(CARTA.EventType.SET_SPATIAL_REQUIREMENTS, this.eventCounter, message, false);
-            if (this.sendEvent(CARTA.EventType.SET_SPATIAL_REQUIREMENTS, CARTA.SetSpatialRequirements.encode(message).finish())) {
+            this.logEvent(CARTA.EventType.SET_SPATIAL_REQUIREMENTS, this.eventCounter, requirementsMessage, false);
+            if (this.sendEvent(CARTA.EventType.SET_SPATIAL_REQUIREMENTS, CARTA.SetSpatialRequirements.encode(requirementsMessage).finish())) {
                 return true;
             }
         }
@@ -452,51 +488,21 @@ export class BackendService {
         }
 
         try {
-            let parsedMessage;
-            if (eventType === CARTA.EventType.REGISTER_VIEWER_ACK) {
-                parsedMessage = CARTA.RegisterViewerAck.decode(eventData);
-                this.onRegisterViewerAck(eventId, parsedMessage);
-            } else if (eventType === CARTA.EventType.FILE_LIST_RESPONSE) {
-                parsedMessage = CARTA.FileListResponse.decode(eventData);
-                this.onFileListResponse(eventId, parsedMessage);
-            } else if (eventType === CARTA.EventType.FILE_INFO_RESPONSE) {
-                parsedMessage = CARTA.FileInfoResponse.decode(eventData);
-                this.onFileInfoResponse(eventId, parsedMessage);
-            } else if (eventType === CARTA.EventType.OPEN_FILE_ACK) {
-                parsedMessage = CARTA.OpenFileAck.decode(eventData);
-                this.onFileOpenAck(eventId, parsedMessage);
-            } else if (eventType === CARTA.EventType.SET_REGION_ACK) {
-                parsedMessage = CARTA.SetRegionAck.decode(eventData);
-                this.onSetRegionAck(eventId, parsedMessage);
-            } else if (eventType === CARTA.EventType.START_ANIMATION_ACK) {
-                parsedMessage = CARTA.StartAnimationAck.decode(eventData);
-                this.onStartAnimationAck(eventId, parsedMessage);
-            } else if (eventType === CARTA.EventType.RASTER_IMAGE_DATA) {
-                parsedMessage = CARTA.RasterImageData.decode(eventData);
-                this.onStreamedRasterImageData(eventId, parsedMessage);
-            } else if (eventType === CARTA.EventType.RASTER_TILE_DATA) {
-                parsedMessage = CARTA.RasterTileData.decode(eventData);
-                this.onStreamedRasterTileData(eventId, parsedMessage);
-            } else if (eventType === CARTA.EventType.REGION_HISTOGRAM_DATA) {
-                parsedMessage = CARTA.RegionHistogramData.decode(eventData);
-                this.onStreamedRegionHistogramData(eventId, parsedMessage);
-            } else if (eventType === CARTA.EventType.ERROR_DATA) {
-                parsedMessage = CARTA.ErrorData.decode(eventData);
-                this.onStreamedErrorData(eventId, parsedMessage);
-            } else if (eventType === CARTA.EventType.SPATIAL_PROFILE_DATA) {
-                parsedMessage = CARTA.SpatialProfileData.decode(eventData);
-                this.onStreamedSpatialProfileData(eventId, parsedMessage);
-            } else if (eventType === CARTA.EventType.SPECTRAL_PROFILE_DATA) {
-                parsedMessage = CARTA.SpectralProfileData.decode(eventData);
-                this.onStreamedSpectralProfileData(eventId, parsedMessage);
-            } else if (eventType === CARTA.EventType.REGION_STATS_DATA) {
-                parsedMessage = CARTA.RegionStatsData.decode(eventData);
-                this.onStreamedRegionStatsData(eventId, parsedMessage);
-            } else {
-                console.log(`Unsupported event response ${eventType}`);
+            const messageClass = this.decoderMap.get(eventType);
+            if (messageClass) {
+                const parsedMessage = messageClass.decode(eventData);
+                if (parsedMessage) {
+                    this.logEvent(eventType, eventId, parsedMessage);
+                    const handler = this.handlerMap.get(eventType);
+                    if (handler) {
+                        handler.call(this, eventId, parsedMessage);
+                    } else {
+                        console.log(`Missing handler for event response ${eventType}`);
+                    }
+                } else {
+                    console.log(`Unsupported event response ${eventType}`);
+                }
             }
-            this.logEvent(eventType, eventId, parsedMessage);
-
         } catch (e) {
             console.log(e);
         }

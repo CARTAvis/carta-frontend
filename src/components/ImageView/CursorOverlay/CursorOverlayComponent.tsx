@@ -1,13 +1,15 @@
 import * as React from "react";
+import {observer} from "mobx-react";
 import {CSSProperties} from "react";
 import {CursorInfo, SpectralInfo} from "models";
+import {formattedExponential} from "utilities";
 import "./CursorOverlayComponent.css";
 
 class CursorOverlayProps {
     cursorInfo: CursorInfo;
+    cursorValue: number;
     spectralInfo: SpectralInfo;
     docked: boolean;
-    mip: number;
     width: number;
     top?: number;
     bottom?: number;
@@ -24,7 +26,8 @@ class CursorOverlayProps {
     showSpectral?: boolean;
 }
 
-export class CursorOverlayComponent extends React.PureComponent<CursorOverlayProps> {
+@observer
+export class CursorOverlayComponent extends React.Component<CursorOverlayProps> {
 
     render() {
         const cursorInfo = this.props.cursorInfo;
@@ -38,12 +41,9 @@ export class CursorOverlayComponent extends React.PureComponent<CursorOverlayPro
         if (this.props.showImage) {
             infoStrings.push(`Image:\u00a0(${cursorInfo.posImageSpace.x.toFixed(0)},\u00a0${cursorInfo.posImageSpace.y.toFixed(0)})`);
         }
-        if (this.props.showValue && this.props.cursorInfo.value !== undefined) {
-            let valueString = `Value:\u00a0${this.expo(this.props.cursorInfo.value, 5, this.props.unit, true, true)}`;
-            if (this.props.mip > 1) {
-                valueString += ` [${this.props.mip}\u00D7${this.props.mip}\u00a0average]`;
-            }
-            if (isNaN(this.props.cursorInfo.value)) {
+        if (this.props.showValue && this.props.cursorValue !== undefined) {
+            let valueString = `Value:\u00a0${formattedExponential(this.props.cursorValue, 5, this.props.unit, true, true)}`;
+            if (isNaN(this.props.cursorValue)) {
                 valueString = "NaN";
             }
             infoStrings.push(valueString);
@@ -62,7 +62,6 @@ export class CursorOverlayComponent extends React.PureComponent<CursorOverlayPro
         }
 
         const height = (this.props.height !== undefined && this.props.height >= 0) ? this.props.height : 20;
-        let top = 0;
 
         let styleProps: CSSProperties = {
             lineHeight: height + "px"
@@ -91,24 +90,5 @@ export class CursorOverlayComponent extends React.PureComponent<CursorOverlayPro
                 {infoStrings.join("; ")}
             </div>
         );
-    }
-
-    expo(val: number, digits: number, unit: string = "", trim: boolean = true, pad: boolean = false) {
-        let valString = val.toExponential(digits);
-        if (trim) {
-            // remove unnecessary trailing decimals
-            valString = valString.replace(/0+e/, "e");
-            valString = valString.replace(".e", ".0e");
-            // strip unnecessary exponential notation
-            valString = valString.replace("e+0", "");
-        }
-        if (pad && val >= 0) {
-            valString = " " + valString;
-        }
-        // append unit
-        if (unit && unit.length) {
-            valString = `${valString} ${unit}`;
-        }
-        return valString;
     }
 }
