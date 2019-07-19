@@ -1,7 +1,7 @@
 import {action, autorun, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
-import {LogStore, RegionStore} from "stores";
+import {LogStore, RegionStore, PreferenceStore} from "stores";
 import {DecompressionService} from "./DecompressionService";
 
 export enum ConnectionStatus {
@@ -35,15 +35,16 @@ export class BackendService {
     private readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
     private readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
     private readonly statsStream: Subject<CARTA.RegionStatsData>;
-    private readonly logEventList: CARTA.EventType[];
     private readonly decompressionService: DecompressionService;
     private readonly subsetsRequired: number;
     private readonly logStore: LogStore;
+    private readonly preferenceStore: PreferenceStore;
     private readonly handlerMap: Map<CARTA.EventType, HandlerFunction>;
     private readonly decoderMap: Map<CARTA.EventType, any>;
 
-    constructor(logStore: LogStore) {
+    constructor(logStore: LogStore, preferenceStore: PreferenceStore) {
         this.logStore = logStore;
+        this.preferenceStore = preferenceStore;
         this.observerRequestMap = new Map<number, Observer<any>>();
         this.eventCounter = 1;
         this.endToEndPing = NaN;
@@ -59,34 +60,7 @@ export class BackendService {
         if (process.env.NODE_ENV !== "test") {
             this.decompressionService = new DecompressionService(this.subsetsRequired);
         }
-        this.logEventList = [
-            CARTA.EventType.REGISTER_VIEWER,
-            CARTA.EventType.REGISTER_VIEWER_ACK,
-            CARTA.EventType.OPEN_FILE,
-            CARTA.EventType.OPEN_FILE_ACK,
-            CARTA.EventType.RASTER_IMAGE_DATA,
-            CARTA.EventType.REGION_HISTOGRAM_DATA
-        ];
 
-        // Check local storage for a list of events to log to console
-        const localStorageEventList = localStorage.getItem("DEBUG_OVERRIDE_EVENT_LIST");
-        if (localStorageEventList) {
-            try {
-                const eventList = JSON.parse(localStorageEventList);
-                if (eventList && Array.isArray(eventList) && eventList.length) {
-                    for (const eventName of eventList) {
-                        const eventType = (<any> CARTA.EventType)[eventName];
-                        if (eventType !== undefined) {
-                            this.logEventList.push(eventType);
-                        }
-                    }
-                    console.log("Appending event log list from local storage");
-                }
-            } catch (e) {
-                console.log("Invalid event list read from local storage");
-            }
-        }
-        
         // Construct handler and decoder maps
         this.handlerMap = new Map<CARTA.EventType, HandlerFunction>([
             [CARTA.EventType.REGISTER_VIEWER_ACK, this.onRegisterViewerAck],
@@ -670,7 +644,7 @@ export class BackendService {
 
     private logEvent(eventType: CARTA.EventType, eventId: number, message: any, incoming: boolean = true) {
         const eventName = CARTA.EventType[eventType];
-        if (this.loggingEnabled && this.logEventList.indexOf(eventType) >= 0) {
+        if (this.loggingEnabled && this.preferenceStore.isEventLoggingEnabled(eventType)) {
             if (incoming) {
                 if (eventId === 0) {
                     console.log(`<== ${eventName} [Stream]`);

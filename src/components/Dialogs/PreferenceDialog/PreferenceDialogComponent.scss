@@ -2,15 +2,11 @@
 
 .preference-dialog {
     .bp3-tab-panel {
-        height: 20em;
+        height: 22em;
         overflow: auto;
         width: 100%;
     }
 
-    .bp3-tab-list {
-        width: 14em;
-    }
-    
     .bp3-form-group .bp3-label {
         width: 12em;
         text-align: right;
@@ -19,6 +15,18 @@
     .bp3-numeric-input {
         .bp3-input-group {
             width: 60px;
+        }
+    }
+
+    .log-event-list {
+        .bp3-form-content {
+            display: flex;
+            flex-wrap: wrap;
+
+            .log-event-checkbox {
+                width: 250px;
+                margin-bottom: 0;
+            }
         }
     }
 
