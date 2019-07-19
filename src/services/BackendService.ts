@@ -62,12 +62,15 @@ export class BackendService {
             this.decompressionService = new DecompressionService(this.subsetsRequired);
         }
 
-        // Check local storage for a list of events to log to console
+        // init logEventList & update the list when user preference changes
         this.logEventList = [];
-        this.preferenceStore.logEvents.forEach((isChecked, eventType) => {
-            if (isChecked) {
-                this.logEventList.push(eventType);
-            }
+        autorun(() => {
+            this.logEventList.length = 0;
+            this.preferenceStore.logEvents.forEach((isChecked, eventType) => {
+                if (isChecked) {
+                    this.logEventList.push(eventType);
+                }
+            });
         });
         
         // Construct handler and decoder maps
