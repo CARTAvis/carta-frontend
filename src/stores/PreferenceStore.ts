@@ -258,7 +258,7 @@ export class PreferenceStore {
         return events;
     };
 
-    public isEventChecked = (eventType: CARTA.EventType): boolean => {
+    public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
         return Event.isEventTypeValid(eventType) && this.logEventsChecked[eventType];
     }
 
