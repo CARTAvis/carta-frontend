@@ -122,7 +122,6 @@ export class AnimatorStore {
         });
 
         this.animationState = AnimationState.PLAYING;
-        this.flowControlCounter = 0;
     };
 
     @action stopAnimation = () => {
@@ -155,16 +154,7 @@ export class AnimatorStore {
         }
     };
 
-    @action incrementFlowCounter = (fileId: number, channel: number, stokes: number) => {
-        this.flowControlCounter++;
-        if (this.flowControlCounter >= this.frameRate) {
-            this.flowControlCounter = 0;
-            this.appStore.backendService.sendAnimationFlowControl({fileId, receivedFrame: {channel, stokes}});
-        }
-    };
-
     private readonly appStore: AppStore;
-    private flowControlCounter: number;
     private animateHandle;
 
     constructor(appStore: AppStore) {
@@ -173,7 +163,6 @@ export class AnimatorStore {
         this.minFrameRate = 1;
         this.animationMode = AnimationMode.CHANNEL;
         this.animationState = AnimationState.STOPPED;
-        this.flowControlCounter = 0;
         this.animateHandle = null;
         this.appStore = appStore;
     }

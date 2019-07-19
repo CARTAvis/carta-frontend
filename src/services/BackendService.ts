@@ -3,6 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
 import {LogStore, RegionStore, PreferenceStore} from "stores";
 import {DecompressionService} from "./DecompressionService";
+import * as Long from "long";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -589,6 +590,20 @@ export class BackendService {
     }
 
     private onStreamedRasterImageData(eventId: number, rasterImageData: CARTA.RasterImageData) {
+        // Flow control
+        const flowControlMessage: CARTA.IAnimationFlowControl = {
+            fileId: rasterImageData.fileId,
+            animationId: rasterImageData.animationId,
+            receivedFrame: {
+                channel: rasterImageData.channel,
+                stokes: rasterImageData.stokes
+            },
+            timestamp: Long.fromNumber(Date.now())
+        };
+
+        this.sendAnimationFlowControl(flowControlMessage);
+
+        // Decompression
         if (rasterImageData.compressionType === CARTA.CompressionType.NONE) {
             this.rasterStream.next(rasterImageData);
         } else {
