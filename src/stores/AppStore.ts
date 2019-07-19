@@ -389,7 +389,7 @@ export class AppStore {
 
         this.preferenceStore = new PreferenceStore(this);
         this.logStore = new LogStore();
-        this.backendService = new BackendService(this.logStore);
+        this.backendService = new BackendService(this.logStore, this.preferenceStore);
         this.tileService = new TileService(this.backendService, 4, this.preferenceStore.GPUTileCache, this.preferenceStore.systemTileCache);
         this.astReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
