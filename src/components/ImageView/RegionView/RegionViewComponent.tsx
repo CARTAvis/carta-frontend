@@ -5,7 +5,7 @@ import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {Group, Layer, Line, Rect, Stage} from "react-konva";
 import {CARTA} from "carta-protobuf";
-import {ASTSettingsString, FrameStore, OverlayStore, RegionMode, RegionStore, PreferenceStore} from "stores";
+import {ASTSettingsString, FrameStore, OverlayStore, RegionMode, RegionStore} from "stores";
 import {RegionComponent} from "./RegionComponent";
 import {CursorInfo, Point2D} from "../../../models";
 import "./RegionViewComponent.css";
@@ -13,7 +13,7 @@ import "./RegionViewComponent.css";
 export interface RegionViewComponentProps {
     frame: FrameStore;
     overlaySettings: OverlayStore;
-    readonly preference: PreferenceStore;
+    isRegionCornerMode: boolean;
     docked: boolean;
     width: number;
     height: number;
@@ -45,28 +45,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     }, 100);
 
-    private getCursorInfo(cursorPosCanvasSpace: Point2D) {
+    private getCursorInfo(cursorPosCanvasSpace: Point2D): CursorInfo {
         const cursorPosImageSpace = this.getImagePos(cursorPosCanvasSpace.x, cursorPosCanvasSpace.y);
-        const currentView = this.props.frame.currentFrameView;
-
-        const cursorPosLocalImage = {
-            x: Math.round((cursorPosImageSpace.x - currentView.xMin) / currentView.mip),
-            y: Math.round((cursorPosImageSpace.y - currentView.yMin) / currentView.mip)
-        };
-
-        const roundedPosImageSpace = {
-            x: cursorPosLocalImage.x * currentView.mip + currentView.xMin,
-            y: cursorPosLocalImage.y * currentView.mip + currentView.yMin
-        };
-
-        const textureWidth = Math.floor((currentView.xMax - currentView.xMin) / currentView.mip);
-        const textureHeight = Math.floor((currentView.yMax - currentView.yMin) / currentView.mip);
-
-        let value = undefined;
-        if (cursorPosLocalImage.x >= 0 && cursorPosLocalImage.x < textureWidth && cursorPosLocalImage.y >= 0 && cursorPosLocalImage.y < textureHeight) {
-            const index = (cursorPosLocalImage.y * textureWidth + cursorPosLocalImage.x);
-            value = this.props.frame.rasterData[index];
-        }
 
         let cursorPosWCS, cursorPosFormatted;
         if (this.props.frame.validWcs) {
@@ -75,7 +55,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             const offsetBlock = [[0, 0], [1, 1], [-1, -1]];
 
             // Shift image space coordinates to 1-indexed when passing to AST
-            const cursorNeighbourhood = offsetBlock.map((offset) => AST.pixToWCS(this.props.frame.wcsInfo, roundedPosImageSpace.x + 1 + offset[0], roundedPosImageSpace.y + 1 + offset[1]));
+            const cursorNeighbourhood = offsetBlock.map((offset) => AST.pixToWCS(this.props.frame.wcsInfo, cursorPosImageSpace.x + 1 + offset[0], cursorPosImageSpace.y + 1 + offset[1]));
 
             cursorPosWCS = cursorNeighbourhood[0];
 
@@ -92,7 +72,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
                 let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.props.frame.wcsInfo, pos.x, pos.y, astString.toString()));
                 let [p, n1, n2] = formattedNeighbourhood;
-
                 if (!p.x || !p.y || p.x === "<bad>" || p.y === "<bad>") {
                     cursorPosFormatted = null;
                     break;
@@ -118,7 +97,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             posImageSpace: cursorPosImageSpace,
             posWCS: cursorPosWCS,
             infoWCS: cursorPosFormatted,
-            value: value
         };
     }
 
@@ -222,7 +200,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 dy = Math.sign(dy) * maxDiff;
             }
             const isCtrlPressed = mouseEvent.ctrlKey || mouseEvent.metaKey;
-            if ((this.props.preference.isRegionCornerMode && !isCtrlPressed) || (!this.props.preference.isRegionCornerMode && isCtrlPressed)) {
+            if ((this.props.isRegionCornerMode && !isCtrlPressed) || (!this.props.isRegionCornerMode && isCtrlPressed)) {
                 // corner-to-corner region creation
                 const endPoint = {x: this.regionStartPoint.x + dx, y: this.regionStartPoint.y + dy};
                 const center = {x: (this.regionStartPoint.x + endPoint.x) / 2.0, y: (this.regionStartPoint.y + endPoint.y) / 2.0};
@@ -286,6 +264,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                             onSelect={regionSet.selectRegion}
                             onDoubleClick={this.handleRegionDoubleClick}
                             listening={regionSet.mode !== RegionMode.CREATING}
+                            isRegionCornerMode={this.props.isRegionCornerMode}
                         />
                     )
                 );
