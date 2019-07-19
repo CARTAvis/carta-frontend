@@ -285,7 +285,7 @@ export class PreferenceStore {
         return this.cursorPosition === CursorPosition.FIXED;
     }
 
-    @computed get checkedEventNames(): string[] {
+    @computed get enabledLoggingEventNames(): string[] {
         let eventNames: string[] = [];
         this.eventsLoggingEnabled.forEach((isChecked, eventType) => {
             if (isChecked) {
@@ -471,7 +471,7 @@ export class PreferenceStore {
 
         autorun(() => {
             try {
-                localStorage.setItem(PREFERENCE_KEYS.logEventList, JSON.stringify(this.checkedEventNames));
+                localStorage.setItem(PREFERENCE_KEYS.logEventList, JSON.stringify(this.enabledLoggingEventNames));
             } catch (e) {
                 console.log("Save event list to local storage failed!");
             }
