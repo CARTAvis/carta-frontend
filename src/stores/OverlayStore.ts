@@ -112,7 +112,7 @@ export class OverlayGlobalSettings {
         this.system = SystemType.Native;
         this.labelType = LabelType.Exterior;
         this.color = preferenceStore.astColor;
-        this.tolerance = 1; // percentage
+        this.tolerance = 2; // percentage
 
         this.defaultSystem = SystemType.Native;
         this.validWcs = false;
