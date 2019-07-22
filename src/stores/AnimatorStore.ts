@@ -64,6 +64,10 @@ export class AnimatorStore {
                 channel: 1,
                 stokes: 0
             };
+
+            // Skip to the start of the animation range if below it.
+            // The first frame delivered by the animation should be the one after the current one
+            startFrame.channel = Math.max((startFrame.channel + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.channel);
         } else if (this.animationMode === AnimationMode.STOKES) {
             firstFrame = {
                 channel: frame.channel,
@@ -79,6 +83,9 @@ export class AnimatorStore {
                 channel: 0,
                 stokes: 1
             };
+            // Skip to the start of the animation range if below it
+            // The first frame delivered by the animation should be the one after the current one
+            startFrame.stokes = Math.max((startFrame.stokes + 1) % frame.frameInfo.fileInfoExtended.stokes, firstFrame.stokes);
         }
 
         const reqView = frame.requiredFrameView;
