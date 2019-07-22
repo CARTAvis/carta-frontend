@@ -8,6 +8,7 @@ const MAX_LAYOUT = 3;
 
 export class LayoutStore {
     public static TOASTER_TIMEOUT = 1500;
+
     private readonly appStore: AppStore;
     private readonly widgetsStore: WidgetsStore;
     private readonly alertStore: AlertStore;
@@ -119,16 +120,23 @@ export class LayoutStore {
             return;
         }
 
+        // TODO: is there a better way for this? putting here is not ideal for MVC
         LayoutToaster.show({icon: "layout-grid", message: `Layout ${this.layoutToBeSaved} is saved successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
     };
 
     // TODO: show confirm dialog
-    @action deleteLayout = (layoutName: string): boolean => {
+    @action deleteLayout = (layoutName: string) => {
         if (!this.layoutExist(layoutName)) {
-            return false;
+            this.alertStore.showAlert(`Cannot delete layout ${layoutName}! It does not exist.`);
+            return;
         }
+
         delete this.layouts[layoutName];
-        return this.saveLayoutToLocalStorage();
+        if (!this.saveLayoutToLocalStorage()) {
+            return;
+        }
+
+        LayoutToaster.show({icon: "layout-grid", message: `Layout ${layoutName} is deleted successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
     };
 
     // TODO: when presets are designed & ready
