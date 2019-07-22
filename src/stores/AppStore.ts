@@ -206,8 +206,8 @@ export class AppStore {
                 renderMode: CARTA.RenderMode.RASTER
             };
 
-            this.tileService.clearCache();
-            this.tileService.clearRequestQueue();
+            //this.tileService.clearCache();
+            //this.tileService.clearRequestQueue();
             let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, frameInfo, this.backendService);
             this.loadWCS(newFrame);
 
@@ -710,6 +710,10 @@ export class AppStore {
     }
 
     private changeActiveFrame(frame: FrameStore) {
+        if (frame !== this.activeFrame) {
+            this.tileService.clearCache();
+            this.tileService.clearRequestQueue();
+        }
         this.activeFrame = frame;
         this.widgetsStore.updateImageWidgetTitle();
         this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
