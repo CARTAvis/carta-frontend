@@ -720,6 +720,11 @@ export class AppStore {
     }
 
     @action setActiveFrame(fileId: number) {
+        // Disable rendering of old frame
+        if (this.activeFrame && this.activeFrame.frameInfo.fileId !== fileId) {
+            this.activeFrame.renderType = RasterRenderType.NONE;
+        }
+
         const requiredFrame = this.getFrame(fileId);
         if (requiredFrame) {
             this.changeActiveFrame(requiredFrame);
