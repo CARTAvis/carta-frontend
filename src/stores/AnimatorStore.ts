@@ -70,7 +70,7 @@ export class AnimatorStore {
             startFrame.channel = Math.max((startFrame.channel + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.channel);
             // Jump back to start if outside the range
             if (startFrame.channel > lastFrame.channel) {
-                startFrame.channel = firstFrame.channel
+                startFrame.channel = firstFrame.channel;
             }
         } else if (this.animationMode === AnimationMode.STOKES) {
             firstFrame = {
@@ -92,7 +92,7 @@ export class AnimatorStore {
             startFrame.stokes = Math.max((startFrame.stokes + 1) % frame.frameInfo.fileInfoExtended.stokes, firstFrame.stokes);
             // Jump back to start if outside the range
             if (startFrame.stokes > lastFrame.stokes) {
-                startFrame.stokes = firstFrame.stokes
+                startFrame.stokes = firstFrame.stokes;
             }
         }
 
