@@ -80,6 +80,19 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
+    private getChannelLabel = (): string => {
+        const frame = this.props.appStore.activeFrame;
+        if (this.widgetStore.useWcsValues && frame.channelInfo) {
+            const channelInfo = frame.channelInfo;
+            let channelLabel = channelInfo.channelType.name;
+            if (channelInfo.channelType.unit && channelInfo.channelType.unit.length) {
+                channelLabel += ` (${channelInfo.channelType.unit})`;
+            }
+            return channelLabel;
+        }
+        return null;
+    };
+
     private static calculateLayout = (width: number, height: number): string => {
         if (width && height) {
             let ratio = width / height;
@@ -194,9 +207,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return values;
     }
 
-    private calculateXYborder(channelValues: Array<number>): {xMin: number, xMax: number, yMin: number, yMax: number} {
-        let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
-        let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1]);
+    private calculateXYborder(xValues: Array<number>, yValues: Array<number>): {xMin: number, xMax: number, yMin: number, yMax: number} {
+        let xMin = Math.min(... xValues);
+        let xMax = Math.max(... xValues);
         let yMin = Number.MAX_VALUE;
         let yMax = -Number.MAX_VALUE;
 
@@ -206,6 +219,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             xMin = localXMin;
             xMax = localXMax;
         }
+
+        yMin = Math.min(... yValues);
+        yMax = Math.max(... yValues);
 
         if (yMin === Number.MAX_VALUE) {
             yMin = undefined;
@@ -219,7 +235,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (profile.vals  && profile.vals.length && profile.vals.length === channelInfo.values.length) {
             
             let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
-            let border = this.calculateXYborder(channelValues);
+            let border = this.calculateXYborder(channelValues, profile.vals);
 
             let values = StokesAnalysisComponent.assambleXYData(profile.vals, channelValues, border.xMin, border.xMax);
             return {dataset: values, border};
@@ -230,12 +246,16 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private assambleScatterPlotData(qProfile: CARTA.ISpectralProfile, uProfile: CARTA.ISpectralProfile): {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}} {
         if (qProfile.vals  && qProfile.vals.length && uProfile.vals && uProfile.vals.length && qProfile.vals.length === uProfile.vals.length) {
 
-            let border = this.calculateXYborder(qProfile.vals);
+            let border = this.calculateXYborder(qProfile.vals, uProfile.vals);
 
-            let values = StokesAnalysisComponent.assambleXYData(qProfile.vals, uProfile.vals, -Number.MAX_VALUE,  Number.MAX_VALUE);
+            let values = StokesAnalysisComponent.assambleXYData(uProfile.vals, qProfile.vals, border.xMin, border.xMax);
             return {dataset: values, border};
         }
         return null;
+    }
+    
+    private compareVariable(a: number, b: number, c: number, d: number): boolean {
+        return a === b && a === c && a === d && a !== null;
     }
 
     @computed get plotDataPI(): { 
@@ -289,56 +309,45 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const imageName = (appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfo.name : undefined);
 
         let quLinePlotProps: LinePlotComponentProps = {
-            // xLabel: "Frequence (GHz)",
-            yLabel: "Q + U",
+            xLabel: "Value",
+            yLabel: "Value",
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: "profile",
             forceScientificNotationTicksY: true,
-            graphZoomReset: this.widgetStore.clearXYBounds,
-            graphCursorMoved: this.onGraphCursorMoved,
-            scrollZoom: true,
             showBottomAxis: false,
-            multiLineData: new Map()
+            multiLineData: new Map(),
         };
 
         let piLinePlotProps: LinePlotComponentProps = {
-            // xLabel: "Frequence (GHz)",
-            yLabel: "PI",
+            xLabel: "Value",
+            yLabel: "Value",
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: "profile",
             forceScientificNotationTicksY: true,
-            graphZoomReset: this.widgetStore.clearXYBounds,
-            graphCursorMoved: this.onGraphCursorMoved,
-            scrollZoom: true,
             showBottomAxis: false, 
             multiLineData: new Map()
         };
 
         let paLinePlotProps: LinePlotComponentProps = {
-            xLabel: "Frequence (GHz)",
-            yLabel: "PA",
+            xLabel: "Channel",
+            yLabel: "Value",
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: "profile",
             forceScientificNotationTicksY: true,
-            graphZoomReset: this.widgetStore.clearXYBounds,
-            graphCursorMoved: this.onGraphCursorMoved,
-            scrollZoom: true, 
             multiLineData: new Map()
         };
 
         let qvsuLinePlotProps: LinePlotComponentProps = {
-            xLabel: "Stokes Q (Jy/Beam)",
-            yLabel: "Stokes U (Jy/Beam)",
+            xLabel: "Value",
+            yLabel: "Value",
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: "profile",
             forceScientificNotationTicksY: true,
-            graphZoomReset: this.widgetStore.clearXYBounds,
-            graphCursorMoved: this.onGraphCursorMoved,
-            scrollZoom: true,
+            forceScientificNotationTicksX: true,
             usePointSymbols: true,
             multiLineData: new Map()
         };
@@ -355,14 +364,56 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 quLinePlotProps.multiLineData.set(StokesCoordinate.LinearPolarizationQ, currentPlotData.qValues.dataset);
                 quLinePlotProps.multiLineData.set(StokesCoordinate.LinearPolarizationU, currentPlotData.uValues.dataset);
                 qvsuLinePlotProps.multiLineData.set(StokesCoordinate.PolarizationQU, currentPlotData.quValues.dataset);
+
+                let qBorder = currentPlotData.qValues.border;
+                let uBorder = currentPlotData.uValues.border;
+                let piBorder = currentPlotData.piValues.border;
+                let paBorder = currentPlotData.paValues.border;
+                let quBorder = currentPlotData.quValues.border;
+
+                if (this.compareVariable(qBorder.xMin, uBorder.xMin, piBorder.xMin, paBorder.xMin) && this.compareVariable(qBorder.xMax, uBorder.xMax, piBorder.xMax, paBorder.xMax)) {
+                    
+                    quLinePlotProps.xMin = qBorder.xMin;
+                    quLinePlotProps.xMax = qBorder.xMax;
+                    quLinePlotProps.yMin = qBorder.yMin < uBorder.yMin ? qBorder.yMin : uBorder.yMin;
+                    quLinePlotProps.yMax = qBorder.yMax > uBorder.yMax ? qBorder.yMax : uBorder.yMax;
+
+                    piLinePlotProps.xMin = piBorder.xMin;
+                    piLinePlotProps.xMax = piBorder.xMax;
+                    piLinePlotProps.yMin = piBorder.yMin;
+                    piLinePlotProps.yMax = piBorder.yMax;
+
+                    paLinePlotProps.xMin = paBorder.xMin;
+                    paLinePlotProps.xMax = paBorder.xMax;
+                    paLinePlotProps.yMin = paBorder.yMin;
+                    paLinePlotProps.yMax = paBorder.yMax;
+                }
+                qvsuLinePlotProps.xMin = quBorder.xMin;
+                qvsuLinePlotProps.xMax = quBorder.xMax;
+                qvsuLinePlotProps.yMin = quBorder.yMin;
+                qvsuLinePlotProps.yMax = quBorder.yMax;
             }
 
+            paLinePlotProps.yLabel = "PA (" + frame.unit + ")";
             if (this.widgetStore.fractionalPolVisible) {
-                quLinePlotProps.yLabel = " Q/I + U/I (%)";
-                piLinePlotProps.yLabel = " PI/I (%)";
+                quLinePlotProps.yLabel = "Q/I + U/I (%)";
+                piLinePlotProps.yLabel = "PI/I (%)";
                 qvsuLinePlotProps.xLabel = "Q/I (%)";
                 qvsuLinePlotProps.yLabel = "U/I (%)";
+            } else {
+                quLinePlotProps.yLabel = "Q + U (" + frame.unit + ")";
+                piLinePlotProps.yLabel = "PI (" + frame.unit + ")";
+                qvsuLinePlotProps.xLabel = "Stokes Q (" + frame.unit + ")";
+                qvsuLinePlotProps.yLabel = "Stokes U (" + frame.unit + ")";
             }
+
+            const wcsLabel = this.getChannelLabel();
+            if (wcsLabel) {
+                paLinePlotProps.xLabel = this.getChannelLabel();
+                piLinePlotProps.xLabel = this.getChannelLabel();
+                quLinePlotProps.xLabel = this.getChannelLabel();
+            }
+
         }
 
         return (

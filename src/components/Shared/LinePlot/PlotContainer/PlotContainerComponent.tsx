@@ -4,6 +4,7 @@ import {ChartArea, ChartData, ChartDataSets, ChartOptions} from "chart.js";
 import {Scatter} from "react-chartjs-2";
 import {Colors} from "@blueprintjs/core";
 import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
+import {getMinY, getMaxY} from "utilities";
 
 export class PlotContainerProps {
     width?: number;
@@ -41,11 +42,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             const currentWidth = chart.width;
 
             xScale.left = 85;
-            xScale.right = currentWidth - 15;
+            xScale.right = currentWidth - 20;
             xScale.width = xScale.right - xScale.left;
 
             chart.chartArea.left = 85;
-            chart.chartArea.right = currentWidth - 15;
+            chart.chartArea.right = currentWidth - 20;
             
             yScale.right = xScale.left;
             yScale.width = yScale.right - yScale.left;
@@ -215,14 +216,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         return ["hsl(", hue, ",100%,50%)"].join("");
     }
 
-    private getMinY(data: Array<{x: number, y: number}>): number {
-        return data.reduce((min, p) => p.y < min ? p.y : min, data[0].y);
-    }
-
-    private getMaxY(data: Array<{x: number, y: number}>): number {
-        return data.reduce((max, p) => p.y > max ? p.y : max, data[0].y);
-    }
-
     render() {
         const labelColor = this.props.darkMode ? Colors.LIGHT_GRAY4 : Colors.GRAY1;
         const gridColor = this.props.darkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1;
@@ -364,9 +357,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 if (key === StokesCoordinate.LinearPolarizationQ) {
                     multiLinedatasetConfig.borderColor = "green";
                     plotOptions.legend.display = true;
+                    plotOptions.scales.xAxes[0].gridLines.tickMarkLength = 0;
                 } else if (key === StokesCoordinate.LinearPolarizationU) {
                     multiLinedatasetConfig.borderColor = "blue";
                     plotOptions.legend.display = true;
+                } else if (key === StokesCoordinate.PolarizedIntensity) {
+                    plotOptions.scales.xAxes[0].gridLines.tickMarkLength = 0;
                 } else if (key === StokesCoordinate.PolarizationQU) {
                     plotOptions.scales.xAxes[0].gridLines.zeroLineColor = "red";
                     plotOptions.scales.yAxes[0].gridLines.zeroLineColor = "red";
@@ -374,8 +370,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     multiLinedatasetConfig.type = "bubble";
                     // multiLinedatasetConfig.pointHoverRadius = 5;
                     // multiLinedatasetConfig.pointHoverBackgroundColor = "red";
-                    let miny = this.getMinY(value);
-                    let maxy = this.getMaxY(value);
+                    let miny = getMinY(value);
+                    let maxy = getMaxY(value);
                     multiLinedatasetConfig.data.forEach((data, i) => {
                         let pointColor = this.getColor(data.y, miny, maxy);
                         colorArray.push(pointColor);

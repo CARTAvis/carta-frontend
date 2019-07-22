@@ -35,3 +35,11 @@ export function pa(q: number, u: number) {
 export function normalising(a: number, b: number) {
     return (a / b) * 100;
 }
+
+export function getMinY(data: Array<{x: number, y: number}>): number {
+    return data.reduce((min, p) => p.y < min ? p.y : min, data[0].y);
+}
+
+export function getMaxY(data: Array<{x: number, y: number}>): number {
+    return data.reduce((max, p) => p.y > max ? p.y : max, data[0].y);
+}

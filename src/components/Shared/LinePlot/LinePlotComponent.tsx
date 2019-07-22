@@ -12,6 +12,7 @@ import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {ProfilerInfoComponent} from "./ProfilerInfo/ProfilerInfoComponent";
 import {Point2D} from "models";
 import {clamp, binarySearchByX} from "utilities";
+import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import "./LinePlotComponent.css";
 
 enum ZoomMode {
@@ -490,15 +491,25 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         const header = "# x\ty";
 
-        let rows;
+        let rows = [];
         if (plotName === "histogram") {
             rows = this.props.data.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
         } else {
             if (this.props.data && this.props.data.length) {
                 rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
             } else if (this.props.multiLineData && this.props.multiLineData.size) {
+                
                 this.props.multiLineData.forEach((value, key) => {
-                    rows = value.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+                    if (key === StokesCoordinate.LinearPolarizationQ || key === StokesCoordinate.LinearPolarizationU) {
+                        rows.push(`${key}\t`);
+                        value.forEach(o => {
+                            rows.push(`${o.x}\t${o.y.toExponential(10)}`);
+                        });
+                    } else if (key === StokesCoordinate.PolarizationQU) {
+                        rows = value.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
+                    } else {
+                        rows = value.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+                    }
                 });
             }
         }
