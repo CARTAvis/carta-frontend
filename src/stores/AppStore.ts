@@ -417,26 +417,31 @@ export class AppStore {
         }, IMAGE_THROTTLE_TIME);
 
         const throttledSetChannels = _.throttle((fileId: number, channel: number, stokes: number) => {
-            this.activeFrame.channel = channel;
-            this.activeFrame.stokes = stokes;
+            const frame = this.getFrame(fileId);
+            if (!frame) {
+                return;
+            }
+
+            frame.channel = channel;
+            frame.stokes = stokes;
 
             // Calculate new required frame view (cropped to file size)
-            const reqView = this.activeFrame.requiredFrameView;
+            const reqView = frame.requiredFrameView;
 
             const croppedReq: FrameView = {
                 xMin: Math.max(0, reqView.xMin),
-                xMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.width, reqView.xMax),
+                xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
                 yMin: Math.max(0, reqView.yMin),
-                yMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.height, reqView.yMax),
+                yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
                 mip: reqView.mip
             };
-            const imageSize: Point2D = {x: this.activeFrame.frameInfo.fileInfoExtended.width, y: this.activeFrame.frameInfo.fileInfoExtended.height};
+            const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
             const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
             const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
             // TODO: dynamic tile size
             const tileSizeFullRes = reqView.mip * 256;
             const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes, y: midPointImageCoords.y / tileSizeFullRes};
-            this.tileService.requestTiles(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords, this.compressionQuality);
+            this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.compressionQuality);
         }, IMAGE_CHANNEL_THROTTLE_TIME);
 
         const throttledSetCursorRotated = _.throttle((fileId: number, x: number, y: number) => {

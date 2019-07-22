@@ -132,6 +132,7 @@ export class TileService {
 
     requestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number) {
         let channelsChanged = false;
+        let fileChanged = this.currentFileId !== fileId;
         const currentChannels = this.channelMap.get(fileId);
         if (currentChannels) {
             channelsChanged = (channel !== currentChannels.channel || stokes !== currentChannels.stokes);
@@ -139,12 +140,19 @@ export class TileService {
             channelsChanged = true;
         }
 
+        if (fileChanged) {
+            this.currentFileId = fileId;
+            this.pendingSynchronisedTiles = tiles.map(tile => tile.encode());
+            this.receivedSynchronisedTiles = [];
+            this.clearRequestQueue();
+        }
+
         if (channelsChanged) {
             this.pendingSynchronisedTiles = tiles.map(tile => tile.encode());
             this.receivedSynchronisedTiles = [];
             this.clearRequestQueue();
             this.channelMap.set(fileId, {channel, stokes});
-            this.currentFileId = fileId;
+            this.clearCompressedCache(fileId);
         }
 
         const newRequests = new Array<TileCoordinate>();
@@ -153,7 +161,7 @@ export class TileService {
                 continue;
             }
             const encodedCoordinate = tile.encode();
-            const tileCached = !channelsChanged && ((tile.layer < NUM_PERSISTENT_LAYERS && this.persistentTiles.has(encodedCoordinate))
+            const tileCached = !(channelsChanged || fileChanged) && ((tile.layer < NUM_PERSISTENT_LAYERS && this.persistentTiles.has(encodedCoordinate))
                 || (tile.layer >= NUM_PERSISTENT_LAYERS && this.cachedTiles.has(encodedCoordinate)));
             if (!tileCached && !this.pendingRequests.has(encodedCoordinate)) {
                 const compressedTile = !channelsChanged && this.getCompressedCache(fileId).get(encodedCoordinate);
@@ -333,7 +341,6 @@ export class TileService {
             if (!this.pendingSynchronisedTiles.length) {
                 const numSynchronisedTiles = this.receivedSynchronisedTiles.length;
                 this.clearGPUCache();
-                this.clearCompressedCache(fileId);
                 this.resetCoordinateQueue();
 
                 for (const tilePair of this.receivedSynchronisedTiles) {
