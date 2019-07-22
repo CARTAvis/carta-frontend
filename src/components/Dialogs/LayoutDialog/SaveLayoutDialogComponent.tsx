@@ -3,8 +3,7 @@ import {observable, computed} from "mobx";
 import {observer} from "mobx-react";
 import {FormGroup, InputGroup, IDialogProps, Button, Intent, Classes, Tooltip} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {LayoutToaster} from "components/Shared";
-import {AppStore, LayoutStore} from "stores";
+import {AppStore} from "stores";
 import "./SaveLayoutDialogComponent.css";
 
 @observer
@@ -17,10 +16,13 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
 
     private saveLayout = () => {
         this.props.appStore.hideSaveLayoutDialog();
-        const result = this.props.appStore.layoutStore.saveLayout(this.layoutName);
-        const message = result ? `Layout ${this.layoutName} is saved successfully.` : `Saving layout ${this.layoutName} failed!`;
-        LayoutToaster.show({icon: "layout-grid", message: message, intent: result ? "success" : "danger", timeout: LayoutStore.TOASTER_TIMEOUT});
-        this.layoutName = "";
+
+        this.props.appStore.layoutStore.setLayoutToBeSaved(this.layoutName);
+        if (this.props.appStore.layoutStore.layoutExist(this.layoutName)) {
+            this.props.appStore.alertStore.showInteractiveAlert(`Are you sure to overwrite the existing layout ${this.layoutName}?`);
+        } else {
+            this.props.appStore.layoutStore.saveLayout();
+        }
     };
 
     @computed get isEmpty(): boolean {

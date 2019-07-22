@@ -1,6 +1,7 @@
 import {observable, computed, action} from "mobx";
 import {AppStore, WidgetsStore, AlertStore} from "stores";
 import * as GoldenLayout from "golden-layout";
+import {LayoutToaster} from "components/Shared";
 
 const KEY = "CARTA_saved_layouts";
 const MAX_LAYOUT = 3;
@@ -10,6 +11,7 @@ export class LayoutStore {
     private readonly appStore: AppStore;
     private readonly widgetsStore: WidgetsStore;
     private readonly alertStore: AlertStore;
+    private layoutToBeSaved: string;
     @observable private layouts; // self-defined structure: {layoutName: config, layoutName: config, ...}
 
     constructor(appStore: AppStore, widgetsStore: WidgetsStore, alertStore: AlertStore) {
@@ -38,8 +40,12 @@ export class LayoutStore {
         return Object.keys(this.layouts).length;
     }
 
-    private layoutExist = (layoutName: string): boolean => {
+    public layoutExist = (layoutName: string): boolean => {
         return this.layouts && layoutName && Object.keys(this.layouts).includes(layoutName);
+    };
+
+    public setLayoutToBeSaved = (layoutName: string) => {
+        this.layoutToBeSaved = layoutName;
     };
 
     private genSimpleConfig = (newParent, parent): void => {
@@ -95,34 +101,25 @@ export class LayoutStore {
         return true;
     };
 
-    @action saveLayout = (layoutName: string): boolean => {
-        if (!this.layouts || !layoutName) {
-            return false;
+    @action saveLayout = () => {
+        if (!this.layouts || !this.layoutToBeSaved) {
+            this.alertStore.showAlert("Save layout failed! Empty layouts or name.");
+            return;
         }
 
-        if (this.savedLayoutNumber >= MAX_LAYOUT) {
+        if (!this.layoutExist(this.layoutToBeSaved) && this.savedLayoutNumber >= MAX_LAYOUT) {
             this.alertStore.showAlert(`Maximum user-defined layout quota exceeded! (${MAX_LAYOUT} layouts)`);
-            return false;
+            return;
         }
 
-        if (this.layoutExist(layoutName)) {
-            // TODO: guard with alert
-            // `Are you sure to overwrite the existing layout ${layoutName}?`
-            // if(!this.alertStore.showOverwriteLayoutWarning()) {
-            //    return false;
-            // }
-        }
-
-        this.layouts[layoutName] = this.widgetsStore.dockedLayout.toConfig();
-        let simpleConfig = [];
-        this.genSimpleConfig(simpleConfig, this.widgetsStore.dockedLayout.config);
+        this.layouts[this.layoutToBeSaved] = this.widgetsStore.dockedLayout.toConfig();
 
         if (!this.saveLayoutToLocalStorage()) {
-            delete this.layouts[layoutName];
-            return false;
+            delete this.layouts[this.layoutToBeSaved];
+            return;
         }
 
-        return true;
+        LayoutToaster.show({icon: "layout-grid", message: `Layout ${this.layoutToBeSaved} is saved successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
     };
 
     // TODO: show confirm dialog

@@ -4,7 +4,7 @@ import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import {autorun} from "mobx";
 import ReactResizeDetector from "react-resize-detector";
-import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
+import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget, Intent} from "@blueprintjs/core";
 import {exportImage, FloatingWidgetManagerComponent, RootMenuComponent} from "./components";
 import {AppToaster} from "./components/Shared";
 import {
@@ -317,6 +317,20 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 <SaveLayoutDialogComponent appStore={appStore}/>
                 <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
+                </Alert>
+                <Alert
+                    isOpen={appStore.alertStore.interactiveAlertVisible}
+                    confirmButtonText="Yes"
+                    cancelButtonText="Cancel"
+                    intent={Intent.DANGER}
+                    onConfirm={() => {
+                        appStore.alertStore.dismissInteractiveAlert();
+                        appStore.layoutStore.saveLayout();
+                    }}
+                    onCancel={appStore.alertStore.dismissInteractiveAlert}
+                    canEscapeKeyCancel={true}
+                >
+                    <p>{appStore.alertStore.interactiveAlertText}</p>
                 </Alert>
                 <div className={glClassName} ref={ref => this.glContainer = ref}>
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}/>
