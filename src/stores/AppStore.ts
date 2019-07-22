@@ -206,8 +206,9 @@ export class AppStore {
                 renderMode: CARTA.RenderMode.RASTER
             };
 
-            //this.tileService.clearCache();
-            //this.tileService.clearRequestQueue();
+            // Clear existing tile cache if it exists
+            this.tileService.clearCompressedCache(fileId);
+
             let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, frameInfo, this.backendService);
             this.loadWCS(newFrame);
 
@@ -225,7 +226,6 @@ export class AppStore {
                 this.frames.push(newFrame);
             }
             this.setActiveFrame(newFrame.frameInfo.fileId);
-
             this.fileBrowserStore.hideFileBrowser();
         }, err => {
             this.alertStore.showAlert(`Error loading file: ${err}`);
@@ -251,6 +251,7 @@ export class AppStore {
                 if (this.activeFrame.frameInfo.fileId === fileId) {
                     this.activeFrame = null;
                 }
+                this.tileService.clearCompressedCache(fileId);
                 this.frames = this.frames.filter(f => f.frameInfo.fileId !== fileId);
             }
         }
@@ -259,6 +260,7 @@ export class AppStore {
     @action removeAllFrames = () => {
         if (this.backendService.closeFile(-1)) {
             this.activeFrame = null;
+            this.tileService.clearCompressedCache(-1);
             this.frames = [];
             // adjust requirements for stores
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets);
@@ -390,7 +392,7 @@ export class AppStore {
         this.preferenceStore = new PreferenceStore(this);
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore, this.preferenceStore);
-        this.tileService = new TileService(this.backendService, 4, this.preferenceStore.GPUTileCache, this.preferenceStore.systemTileCache);
+        this.tileService = new TileService(this.backendService, this.preferenceStore.GPUTileCache, this.preferenceStore.systemTileCache);
         this.astReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<number, ObservableMap<number, SpectralProfileStore>>();
@@ -711,7 +713,7 @@ export class AppStore {
 
     private changeActiveFrame(frame: FrameStore) {
         if (frame !== this.activeFrame) {
-            this.tileService.clearCache();
+            this.tileService.clearGPUCache();
             this.tileService.clearRequestQueue();
         }
         this.activeFrame = frame;
