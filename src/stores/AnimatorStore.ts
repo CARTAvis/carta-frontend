@@ -2,6 +2,7 @@ import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "./AppStore";
 import {clamp} from "utilities";
+import {FrameView} from "models";
 
 export enum AnimationMode {
     CHANNEL = 0,
@@ -63,6 +64,14 @@ export class AnimatorStore {
                 channel: 1,
                 stokes: 0
             };
+
+            // Skip to the start of the animation range if below it.
+            // The first frame delivered by the animation should be the one after the current one
+            startFrame.channel = Math.max((startFrame.channel + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.channel);
+            // Jump back to start if outside the range
+            if (startFrame.channel > lastFrame.channel) {
+                startFrame.channel = firstFrame.channel
+            }
         } else if (this.animationMode === AnimationMode.STOKES) {
             firstFrame = {
                 channel: frame.channel,
@@ -78,7 +87,36 @@ export class AnimatorStore {
                 channel: 0,
                 stokes: 1
             };
+            // Skip to the start of the animation range if below it
+            // The first frame delivered by the animation should be the one after the current one
+            startFrame.stokes = Math.max((startFrame.stokes + 1) % frame.frameInfo.fileInfoExtended.stokes, firstFrame.stokes);
+            // Jump back to start if outside the range
+            if (startFrame.stokes > lastFrame.stokes) {
+                startFrame.stokes = firstFrame.stokes
+            }
         }
+
+        const reqView = frame.requiredFrameView;
+
+        const croppedReq: FrameView = {
+            xMin: Math.max(0, reqView.xMin),
+            xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
+            yMin: Math.max(0, reqView.yMin),
+            yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
+            mip: reqView.mip
+        };
+
+        const imageView: CARTA.ISetImageView = {
+            imageBounds: {
+                xMin: croppedReq.xMin,
+                xMax: croppedReq.xMax,
+                yMin: croppedReq.yMin,
+                yMax: croppedReq.yMax
+            },
+            mip: croppedReq.mip,
+            compressionType: CARTA.CompressionType.ZFP,
+            compressionQuality: this.appStore.preferenceStore.animationCompressionQuality,
+        };
 
         const animationMessage: CARTA.IStartAnimation = {
             fileId: frame.frameInfo.fileId,
@@ -86,10 +124,9 @@ export class AnimatorStore {
             firstFrame,
             lastFrame,
             deltaFrame,
+            imageView,
             looping: true,
             reverse: false,
-            compressionType: CARTA.CompressionType.ZFP,
-            compressionQuality: 9,
             frameRate: this.frameRate
         };
 

@@ -17,6 +17,32 @@ export class RegionStore {
     @observable editing: boolean;
     @observable creating: boolean;
 
+    static readonly MIN_LINE_WIDTH = 0.5;
+    static readonly MAX_LINE_WIDTH = 10;
+    static readonly MAX_DASH_LENGTH = 50;
+
+     static readonly SWATCH_COLORS = [
+        Colors.BLUE3,
+        Colors.GREEN3,
+        Colors.ORANGE3,
+        Colors.RED3,
+        Colors.VERMILION3,
+        Colors.ROSE3,
+        Colors.VIOLET3,
+        Colors.INDIGO3,
+        Colors.COBALT3,
+        Colors.TURQUOISE3,
+        Colors.FOREST3,
+        Colors.LIME3,
+        Colors.GOLD3,
+        Colors.SEPIA3,
+        Colors.BLACK,
+        Colors.DARK_GRAY3,
+        Colors.GRAY3,
+        Colors.LIGHT_GRAY3,
+        Colors.WHITE
+    ];
+
     private readonly backendService: BackendService;
 
     public static RegionTypeString(regionType: CARTA.RegionType): string {
@@ -30,6 +56,28 @@ export class RegionStore {
             default:
                 return "Not Implemented";
         }
+    }
+
+    static readonly AVAILABLE_REGION_TYPES = new Map<CARTA.RegionType, string>([
+        [CARTA.RegionType.RECTANGLE, "Rectangle"],
+        [CARTA.RegionType.ELLIPSE, "Ellipse"]
+    ]);
+
+    public static IsRegionTypeValid(regionType: CARTA.RegionType): boolean {
+        return RegionStore.AVAILABLE_REGION_TYPES.has(regionType) ? true : false;
+    }
+
+    public static IsRegionColorValid(regionColor: string): boolean {
+        const colorHex: RegExp = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+        return colorHex.test(regionColor);
+    }
+
+    public static IsRegionLineWidthValid(regionLineWidth: number): boolean {
+        return regionLineWidth >= RegionStore.MIN_LINE_WIDTH && regionLineWidth <= RegionStore.MAX_LINE_WIDTH;
+    }
+
+    public static IsRegionDashLengthValid(regionDashLength: number): boolean {
+        return regionDashLength >= 0 && regionDashLength <= RegionStore.MAX_DASH_LENGTH;
     }
 
     @computed get isTemporary() {
@@ -110,8 +158,8 @@ export class RegionStore {
         }
     }
 
-    constructor(backendService: BackendService, fileId: number, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1, rotation: number = 0,
-                name: string = "", color: string = Colors.TURQUOISE5, lineWidth: number = 2, dashLength: number = 0) {
+    constructor(backendService: BackendService, fileId: number, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1,
+                color: string = Colors.TURQUOISE5, lineWidth: number = 2, dashLength: number = 0, rotation: number = 0, name: string = "") {
         this.fileId = fileId;
         this.controlPoints = controlPoints;
         this.regionType = regionType;

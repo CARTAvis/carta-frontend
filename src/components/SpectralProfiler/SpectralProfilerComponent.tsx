@@ -10,7 +10,7 @@ import {SpectralProfilerSettingsPanelComponent} from "./SpectralProfilerSettings
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
-import {Point2D} from "models";
+import {Point2D, ProcessedSpectralProfile} from "models";
 import {clamp} from "utilities";
 import "./SpectralProfilerComponent.css";
 
@@ -69,7 +69,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         const fileId = frame.frameInfo.fileId;
-        let coordinateData: CARTA.ISpectralProfile;
+        let coordinateData: ProcessedSpectralProfile;
         let regionId = this.widgetStore.regionIdMap.get(fileId) || 0;
         if (frame.regionSet) {
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
@@ -79,7 +79,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         let channelInfo = frame.channelInfo;
-        if (coordinateData && channelInfo && coordinateData.vals && coordinateData.vals.length && coordinateData.vals.length === channelInfo.values.length) {
+        if (coordinateData && channelInfo && coordinateData.values && coordinateData.values.length && coordinateData.values.length === channelInfo.values.length) {
             let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
             let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
             let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1]);
@@ -106,7 +106,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             for (let i = 0; i < channelValues.length; i++) {
                 let index = isIncremental ? i : channelValues.length - 1 - i;
                 const x = channelValues[index];
-                const y = coordinateData.vals[index];
+                const y = coordinateData.values[index];
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
                 if (x < xMin || x > xMax) {

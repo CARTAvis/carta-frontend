@@ -1,62 +1,34 @@
 @import "../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
 .preference-dialog {
-
     .bp3-tab-panel {
-        height: 20em;
+        height: 22em;
         overflow: auto;
         width: 100%;
     }
 
-    .bp3-tab-list {
-        width: 12em;
-    }
-    
-    .bp3-button.colorselect .bp3-button-text {
-        min-width: 100px;
-    }
-
-    .bp3-numeric-input input {
-        width: 100px ! important;
-    }
-    
     .bp3-form-group .bp3-label {
-        width: 8em;
+        width: 12em;
         text-align: right;
     }
-    
-    .font-group {
-    
+
+    .bp3-numeric-input {
+        .bp3-input-group {
+            width: 60px;
+        }
+    }
+
+    .log-event-list {
         .bp3-form-content {
             display: flex;
-        }
-        
-        input {
-            width: 40px ! important;
-        }
-        
-        button > span > span {
-            width: 150px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: inline-block;
-            white-space: nowrap;
-        }
-        
-        button {
-            width: 190px;
-            margin-right: 5px;
-        }
-    }
-}
+            flex-wrap: wrap;
 
-.bp3-select-popover.themeselect {
-    
-    .bp3-menu {
-        min-width: 100px;
-        max-height: 300px;
-        overflow: auto;
-        padding: 0;
+            .log-event-checkbox {
+                width: 250px;
+                margin-bottom: 0;
+            }
+        }
     }
-    
+
+    user-select: none !important;
 }
