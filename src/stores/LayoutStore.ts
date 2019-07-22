@@ -49,50 +49,32 @@ export class LayoutStore {
         this.layoutToBeSaved = layoutName;
     };
 
-    private genSimpleConfig = (newParent, parent): void => {
-        if (!parent.content || parent.content.length === 0) {
-            let simpleChild = {
-                type: parent.type,
-                id: parent.id
-            };
-            newParent.content.push(simpleChild);
+    private genSimpleConfig = (newParentContent, parentContent): void => {
+        if (!newParentContent || !parentContent) {
             return;
         }
 
-        parent.content.forEach((child) => {
-            let simpleChild = {
-                type: child.type,
-                content: []
-            };
-            newParent.content.push(simpleChild);
-            this.genSimpleConfig(simpleChild, child);
+        parentContent.forEach((child) => {
+            if (child.type === "stack" || child.type === "row" || child.type === "column") {
+                let simpleChild = {
+                    type: child.type,
+                    content: []
+                };
+                newParentContent.push(simpleChild);
+                this.genSimpleConfig(simpleChild.content, child.content);
+            } else if (child.type === "component") {
+                let simpleChild = {
+                    type: child.type,
+                    id: child.id
+                };
+                newParentContent.push(simpleChild);
+            }
         });
     };
 
     private saveLayoutToLocalStorage = (): boolean => {
-        const getCircularReplacer = () => {
-            const seen = new WeakSet();
-            return (key, value) => {
-                if (typeof value === "object" && value !== null) {
-                    if (seen.has(value)) {
-                        return;
-                    }
-                    seen.add(value);
-                }
-                return value;
-            };
-        };
-
-        // serialize layout for saving
-        let serializedJson;
         try {
-            serializedJson = JSON.stringify(this.layouts, getCircularReplacer());
-        } catch (e) {
-            this.alertStore.showAlert("Serializing user-defined layout failed! " + e.message);
-            return false;
-        }
-
-        try {
+            const serializedJson = JSON.stringify(this.layouts);
             localStorage.setItem(KEY, serializedJson);
         } catch (e) {
             this.alertStore.showAlert("Saving user-defined layout failed! " + e.message);
@@ -113,7 +95,11 @@ export class LayoutStore {
             return;
         }
 
-        this.layouts[this.layoutToBeSaved] = this.widgetsStore.dockedLayout.toConfig();
+        let simpleConfig = {
+            content: []
+        };
+        this.genSimpleConfig(simpleConfig.content, this.widgetsStore.dockedLayout.config.content);
+        this.layouts[this.layoutToBeSaved] = simpleConfig;
 
         if (!this.saveLayoutToLocalStorage()) {
             delete this.layouts[this.layoutToBeSaved];
@@ -144,40 +130,15 @@ export class LayoutStore {
         return null;
     };
 
-    private traverseConfig = (config): void => {
-        if (!config.content || config.content.length === 0) {
-            console.log(config.type + ": " + config.id);
-            return;
-        }
-
-        config.content.forEach((item) => {
-            console.log(item.type);
-            this.traverseConfig(item);
-        });
-    };
-
-    private traverseItems = (parent: GoldenLayout.ContentItem): void => {
-        if (!parent.contentItems || parent.contentItems.length === 0) {
-            console.log("id: " + parent.config.id);
-            return;
-        }
-
-        parent.contentItems.forEach((item) => {
-            console.log("type: " + item.type);
-            this.traverseItems(item);
-        });
-    };
-
     // TODO: error handling
-    private genNewContentItem = (newParentItem: GoldenLayout.ContentItem, currentConfig: any, currentLayout: GoldenLayout): void => {
-        // recursion termination: add component
-        if (!currentConfig.content || currentConfig.content.length === 0) {
+    private genNewContentItem = (newParentItem: GoldenLayout.ContentItem, newConfig: any, currentLayout: GoldenLayout): void => {
+        if (!newParentItem || !newConfig || !currentLayout) {
             return;
         }
 
-        currentConfig.content.forEach((childConfig) => {
+        newConfig.content.forEach((childConfig) => {
             if (childConfig.type) {
-                if (childConfig.type === "root" || childConfig.type === "stack" || childConfig.type === "row" || childConfig.type === "column") {
+                if (childConfig.type === "stack" || childConfig.type === "row" || childConfig.type === "column") {
                     let newItem = currentLayout.createContentItem({
                         type: childConfig.type,
                         content: []
@@ -205,14 +166,14 @@ export class LayoutStore {
 
         try {
             // Create new root ContentItem for new layout
-            const newLayout = new GoldenLayout(this.layouts[layoutName]);
+            const newConfig = this.layouts[layoutName];
             let newRoot = currentLayout.createContentItem({
-                type: newLayout.config.content[0].type,
+                type: newConfig.content[0].type,
                 content: []
             }) as unknown;
 
             // Recursively generate the root ContentItem according to saved config
-            this.genNewContentItem(newRoot as GoldenLayout.ContentItem, newLayout.config.content[0], currentLayout);
+            this.genNewContentItem(newRoot as GoldenLayout.ContentItem, newConfig.content[0], currentLayout);
 
             // Prevent it from re-initialising any child items
             (newRoot as GoldenLayout.ContentItem).isInitialised = true;
