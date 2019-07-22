@@ -131,12 +131,12 @@ export class LayoutStore {
     };
 
     // TODO: error handling
-    private genNewContentItem = (newParentItem: GoldenLayout.ContentItem, newConfig: any, currentLayout: GoldenLayout): void => {
-        if (!newParentItem || !newConfig || !currentLayout) {
+    private genNewContentItem = (newParentItem: GoldenLayout.ContentItem, newConfigContent: any, currentLayout: GoldenLayout): void => {
+        if (!newParentItem || !newConfigContent || !currentLayout) {
             return;
         }
 
-        newConfig.content.forEach((childConfig) => {
+        newConfigContent.forEach((childConfig) => {
             if (childConfig.type) {
                 if (childConfig.type === "stack" || childConfig.type === "row" || childConfig.type === "column") {
                     let newItem = currentLayout.createContentItem({
@@ -144,7 +144,7 @@ export class LayoutStore {
                         content: []
                     }) as unknown;
                     newParentItem.addChild(newItem as GoldenLayout.ContentItem);
-                    this.genNewContentItem(newItem as GoldenLayout.ContentItem, childConfig, currentLayout);
+                    this.genNewContentItem(newItem as GoldenLayout.ContentItem, childConfig.content, currentLayout);
                 } else if (childConfig.type === "component") { // add component
                     const componentConfig = AppStore.getComponentConfig(childConfig.id, this.appStore);
                     if (componentConfig) {
@@ -173,7 +173,7 @@ export class LayoutStore {
             }) as unknown;
 
             // Recursively generate the root ContentItem according to saved config
-            this.genNewContentItem(newRoot as GoldenLayout.ContentItem, newConfig.content[0], currentLayout);
+            this.genNewContentItem(newRoot as GoldenLayout.ContentItem, newConfig.content[0].content, currentLayout);
 
             // Prevent it from re-initialising any child items
             (newRoot as GoldenLayout.ContentItem).isInitialised = true;
