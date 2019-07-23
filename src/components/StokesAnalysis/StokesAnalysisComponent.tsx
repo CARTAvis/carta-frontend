@@ -169,7 +169,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return vals;
     }
 
-    // calculate fractional Pol
     private static calculateFractionalPol (targetData: Array<number> | Float32Array | Float64Array, dataIz: Float32Array | Float64Array): Array<number> {
         let vals = [];
         if (targetData && dataIz && targetData.length === dataIz.length) {

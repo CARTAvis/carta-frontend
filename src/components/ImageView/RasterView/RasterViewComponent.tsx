@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {FrameStore, OverlayStore} from "stores";
+import {FrameStore, OverlayStore, RasterRenderType} from "stores";
 import {FrameView, TileCoordinate} from "models";
 import {RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService} from "services/TileService";
 import {GetRequiredTiles, getShaderProgram, GL, LayerToMip, loadFP32Texture, loadImageTexture} from "utilities";
@@ -13,7 +13,6 @@ const pixelShader = require("!raw-loader!./GLSL/pixel_shader_float_rgb.glsl");
 export class RasterViewComponentProps {
     overlaySettings: OverlayStore;
     frame: FrameStore;
-    tiledRendering: boolean;
     tileService: TileService;
     docked: boolean;
 }
@@ -136,18 +135,13 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private updateCanvas = () => {
         const frame = this.props.frame;
         if (frame && this.canvas && this.gl && this.cmapTexture) {
-            this.clearCanvas();
+            if (frame.renderType === RasterRenderType.ANIMATION && frame.rasterData && frame.rasterData.buffer !== this.rasterDataBuffer) {
+                this.updateTexture();
+            }
+
+            this.updateCanvasSize();
             this.updateUniforms();
             this.renderCanvas();
-
-            if (!this.props.tiledRendering && frame.rasterData) {
-                // Only update texture if the buffer has changed
-                if (frame.rasterData.buffer !== this.rasterDataBuffer) {
-                    this.updateTexture();
-                }
-                this.updateUniforms();
-                this.renderCanvas();
-            }
         }
     };
 
@@ -179,23 +173,28 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
     }
 
-    private clearCanvas() {
+    private updateCanvasSize() {
         const frame = this.props.frame;
-        // Resize and/or clear the canvas
-        this.canvas.width = frame.renderWidth * devicePixelRatio;
-        this.canvas.height = frame.renderHeight * devicePixelRatio;
+        // Resize and clear the canvas if needed
+        if (this.canvas.width !== frame.renderWidth * devicePixelRatio || this.canvas.height !== frame.renderHeight * devicePixelRatio) {
+            this.canvas.width = frame.renderWidth * devicePixelRatio;
+            this.canvas.height = frame.renderHeight * devicePixelRatio;
+        }
     }
 
     private renderCanvas() {
         const frame = this.props.frame;
-        this.gl.viewport(0, 0, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
-        this.gl.enable(WebGLRenderingContext.DEPTH_TEST);
-        this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
+        // Only clear and render if we're in animation or tiled mode
+        if (frame && frame.renderType !== RasterRenderType.NONE) {
+            this.gl.viewport(0, 0, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
+            this.gl.enable(WebGLRenderingContext.DEPTH_TEST);
+            this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
 
-        if (this.props.tiledRendering) {
-            this.renderTiledCanvas();
-        } else if (this.rasterDataBuffer) {
-            this.renderAnimationCanvas();
+            if (frame.renderType === RasterRenderType.TILED) {
+                this.renderTiledCanvas();
+            } else {
+                this.renderAnimationCanvas();
+            }
         }
     }
 
@@ -466,8 +465,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 gamma: frame.renderConfig.gamma,
                 alpha: frame.renderConfig.alpha
             };
+            const renderType = frame.renderType;
         }
-        const tiledRendering = this.props.tiledRendering;
         const padding = this.props.overlaySettings.padding;
         let className = "raster-div";
         if (this.props.docked) {

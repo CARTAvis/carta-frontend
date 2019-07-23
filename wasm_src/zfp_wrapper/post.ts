@@ -106,6 +106,7 @@ ctx.onmessage = (event => {
                 requestId: eventArgs.requestId,
                 tileCoordinate: eventArgs.tileCoordinate,
                 layer: eventArgs.layer,
+                fileId: eventArgs.fileId
             }], [event.data[1]]);
 
             if (Module.debugOutput) {
