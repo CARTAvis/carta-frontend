@@ -129,7 +129,7 @@ export class WidgetsStore {
     }
 
     // create drag source for ToolbarMenuComponent
-    private static createDragSource = (appStore: AppStore, layout: GoldenLayout, widgetConfig: WidgetConfig, elementId: string) => {
+    private static CreateDragSource = (appStore: AppStore, layout: GoldenLayout, widgetConfig: WidgetConfig, elementId: string) => {
         const glConfig: GoldenLayout.ReactComponentConfig = {
             type: "react-component",
             component: widgetConfig.type,
@@ -182,7 +182,7 @@ export class WidgetsStore {
         layout.registerComponent("animator", AnimatorComponent);
 
         // add drag source buttons from ToolbarMenuComponent
-        ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.createDragSource(this.appStore, layout, widgetConfig, id));
+        ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.CreateDragSource(this.appStore, layout, widgetConfig, id));
 
         layout.on("stackCreated", (stack) => {
             let unpinButton = $(`<li class="pin-icon"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);
