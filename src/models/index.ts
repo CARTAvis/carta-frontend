@@ -13,3 +13,5 @@ export * from "./WCSType";
 export * from "./RegionCreationMode";
 export * from "./CompressionQuality";
 export * from "./TileCache";
+export * from "./Processed";
+export * from "./Event";

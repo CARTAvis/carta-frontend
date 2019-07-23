@@ -1,5 +1,3 @@
-import {Point2D} from "models";
-
 export function velocityFromFrequency(freq: number, refFreq: number): number {
     const c = 299792458;
     return c * (1.0 - freq / refFreq);
@@ -31,4 +29,23 @@ export function formattedNotation(value: number): string {
         return null;
     }
     return value < 1e-2 ? value.toExponential(2) : value.toFixed(2);
+}
+
+export function formattedExponential(val: number, digits: number, unit: string = "", trim: boolean = true, pad: boolean = false) {
+    let valString = val.toExponential(digits);
+    if (trim) {
+        // remove unnecessary trailing decimals
+        valString = valString.replace(/0+e/, "e");
+        valString = valString.replace(".e", ".0e");
+        // strip unnecessary exponential notation
+        valString = valString.replace("e+0", "");
+    }
+    if (pad && val >= 0) {
+        valString = " " + valString;
+    }
+    // append unit
+    if (unit && unit.length) {
+        valString = `${valString} ${unit}`;
+    }
+    return valString;
 }

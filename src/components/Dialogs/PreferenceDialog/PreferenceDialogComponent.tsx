@@ -3,14 +3,19 @@ import * as _ from "lodash";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {CARTA} from "carta-protobuf";
-import {Button, IDialogProps, Intent, Tab, Tabs, FormGroup, TabId, MenuItem, Switch, RadioGroup, Radio, HTMLSelect, AnchorButton, NumericInput} from "@blueprintjs/core";
+import {
+    Button, IDialogProps, Intent, Tab, Tabs,
+    FormGroup, TabId, MenuItem, Switch, RadioGroup,
+    Radio, HTMLSelect, AnchorButton, NumericInput, Tooltip,
+    Position, Checkbox
+} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/ScalingComponent";
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {AppearanceForm} from "components/Dialogs/RegionDialog/AppearanceForm/AppearanceForm";
-import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache} from "models";
+import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore, RenderConfigStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
@@ -19,7 +24,8 @@ enum TABS {
     RENDER_CONFIG,
     WCS_OVERLAY,
     REGION,
-    PERFORMANCE
+    PERFORMANCE,
+    LOG_EVENT
 }
 
 const PercentileSelect = Select.ofType<string>();
@@ -61,8 +67,11 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 preference.resetRegionSettings();
                 break;
             case TABS.PERFORMANCE:
-                    preference.resetPerformanceSettings();
-                    break;
+                preference.resetPerformanceSettings();
+                break;
+            case TABS.LOG_EVENT:
+                preference.resetLogEventSettings();
+                break;
             case TABS.GLOBAL: default:
                 preference.resetGlobalSettings();
                 break;
@@ -249,6 +258,22 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             </React.Fragment>
         );
 
+        const logEventsPanel = (
+            <React.Fragment>
+                <FormGroup inline={false} label="Enable logged event type" className="log-event-list">
+                    {Event.EVENT_TYPES.map((eventType) =>
+                        <Checkbox
+                            className="log-event-checkbox"
+                            key={eventType}
+                            checked={preference.isEventLoggingEnabled(eventType)}
+                            label={Event.getEventNameFromType(eventType)}
+                            onChange={() => preference.flipEventLoggingEnabled(eventType)}
+                        />
+                    )}
+                </FormGroup>
+            </React.Fragment>
+        );
+
         let className = "preference-dialog";
         if (appStore.darkTheme) {
             className += " bp3-dark";
@@ -266,7 +291,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={725} defaultHeight={450} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} minWidth={450} minHeight={300} defaultWidth={775} defaultHeight={450} enableResizing={true}>
                 <div className="bp3-dialog-body">
                     <Tabs
                         id="preferenceTabs"
@@ -279,11 +304,14 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         <Tab id={TABS.WCS_OVERLAY} title="Default WCS Overlay" panel={wcsOverlayPanel}/>
                         <Tab id={TABS.REGION} title="Default Region settings" panel={regionSettingsPanel}/>
                         <Tab id={TABS.PERFORMANCE} title="Performance" panel={performancePanel}/>
+                        <Tab id={TABS.LOG_EVENT} title="Log Events" panel={logEventsPanel}/>
                     </Tabs>
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
-                        <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={this.reset} text="Restore defaults"/>
+                        <Tooltip content="Apply to current tab only." position={Position.TOP}>
+                            <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={this.reset} text="Restore defaults"/>
+                        </Tooltip>
                         <Button intent={Intent.NONE} onClick={appStore.hidePreferenceDialog} text="Close"/>
                     </div>
                 </div>
