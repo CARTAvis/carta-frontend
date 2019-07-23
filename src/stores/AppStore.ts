@@ -3,14 +3,29 @@ import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable, ObservableMap} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {
-    AlertStore, AnimationState, AnimatorStore, dayPalette, FileBrowserStore,
-    FrameInfo, FrameStore, LogEntry, LogStore, nightPalette,
-    OverlayStore, RegionStore, SpatialProfileStore, SpectralProfileStore, WidgetsStore,
-    PreferenceStore, LayoutStore, AnimationMode
+    AlertStore,
+    AnimationMode,
+    AnimationState,
+    AnimatorStore,
+    dayPalette,
+    FileBrowserStore,
+    FrameInfo,
+    FrameStore,
+    LogEntry,
+    LogStore,
+    nightPalette,
+    OverlayStore,
+    PreferenceStore,
+    RasterRenderType,
+    RegionStore,
+    SpatialProfileStore,
+    SpectralProfileStore,
+    WidgetsStore,
+    LayoutStore
 } from ".";
 import {smoothStepOffset, GetRequiredTiles} from "utilities";
 import {BackendService, TileService} from "services";
-import {CursorInfo, FrameView, Theme, Point2D, ProcessedSpatialProfile, ProtobufProcessing} from "models";
+import {CursorInfo, FrameView, Point2D, ProcessedSpatialProfile, ProtobufProcessing, Theme} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
 
 const CURSOR_THROTTLE_TIME = 200;
@@ -725,6 +740,11 @@ export class AppStore {
                 this.pendingHistogram = null;
             }
         }
+
+        // Switch to tiled rendering. TODO: ensure that the correct frame gets set to tiled
+        if (this.activeFrame) {
+            this.activeFrame.renderType = RasterRenderType.TILED;
+        }
     };
 
     handleRegionStatsStream = (regionStatsData: CARTA.RegionStatsData) => {
@@ -749,7 +769,7 @@ export class AppStore {
                 updatedFrame.updateFromRasterData(rasterImageData);
                 updatedFrame.requiredChannel = rasterImageData.channel;
                 updatedFrame.requiredStokes = rasterImageData.stokes;
-                this.animatorStore.incrementFlowCounter(updatedFrame.frameInfo.fileId, updatedFrame.channel, updatedFrame.stokes);
+                updatedFrame.renderType = RasterRenderType.ANIMATION;
             }
         }
     };

@@ -3,6 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
 import {LogStore, RegionStore, PreferenceStore} from "stores";
 import {DecompressionService} from "./DecompressionService";
+import * as Long from "long";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -10,10 +11,12 @@ export enum ConnectionStatus {
     ACTIVE = 2,
 }
 
+export const INVALID_ANIMATION_ID = -1;
+
 type HandlerFunction = (eventId: number, parsedMessage: any) => void;
 
 export class BackendService {
-    private static readonly IcdVersion = 5;
+    private static readonly IcdVersion = 6;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     @observable loggingEnabled: boolean;
@@ -28,6 +31,7 @@ export class BackendService {
     private autoReconnect: boolean;
     private observerRequestMap: Map<number, Observer<any>>;
     private eventCounter: number;
+    private animationId: number;
     private readonly rasterStream: Subject<CARTA.RasterImageData>;
     private readonly rasterTileStream: Subject<CARTA.RasterTileData>;
     private readonly histogramStream: Subject<CARTA.RegionHistogramData>;
@@ -48,6 +52,7 @@ export class BackendService {
         this.observerRequestMap = new Map<number, Observer<any>>();
         this.eventCounter = 1;
         this.endToEndPing = NaN;
+        this.animationId = INVALID_ANIMATION_ID;
         this.connectionStatus = ConnectionStatus.CLOSED;
         this.rasterStream = new Subject<CARTA.RasterImageData>();
         this.rasterTileStream = new Subject<CARTA.RasterTileData>();
@@ -436,6 +441,7 @@ export class BackendService {
 
     @action("stop animation")
     stopAnimation(animationMessage: CARTA.IStopAnimation) {
+        this.animationId = INVALID_ANIMATION_ID;
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             this.logEvent(CARTA.EventType.STOP_ANIMATION, this.eventCounter, animationMessage, false);
             if (this.sendEvent(CARTA.EventType.STOP_ANIMATION, CARTA.StopAnimation.encode(animationMessage).finish())) {
@@ -577,6 +583,7 @@ export class BackendService {
         const observer = this.observerRequestMap.get(eventId);
         if (observer) {
             if (ack.success) {
+                this.animationId = ack.animationId;
                 observer.next(ack);
             } else {
                 observer.error(ack.message);
@@ -589,6 +596,24 @@ export class BackendService {
     }
 
     private onStreamedRasterImageData(eventId: number, rasterImageData: CARTA.RasterImageData) {
+        // Skip animation data for previous animations
+        if (rasterImageData.animationId !== this.animationId) {
+            return;
+        }
+        // Flow control
+        const flowControlMessage: CARTA.IAnimationFlowControl = {
+            fileId: rasterImageData.fileId,
+            animationId: rasterImageData.animationId,
+            receivedFrame: {
+                channel: rasterImageData.channel,
+                stokes: rasterImageData.stokes
+            },
+            timestamp: Long.fromNumber(Date.now())
+        };
+
+        this.sendAnimationFlowControl(flowControlMessage);
+
+        // Decompression
         if (rasterImageData.compressionType === CARTA.CompressionType.NONE) {
             this.rasterStream.next(rasterImageData);
         } else {
