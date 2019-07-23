@@ -4,7 +4,7 @@ import * as GoldenLayout from "golden-layout";
 import {LayoutToaster} from "components/Shared";
 
 const KEY = "CARTA_saved_layouts";
-const MAX_LAYOUT = 3;
+const MAX_LAYOUT = 10;
 
 export class LayoutStore {
     public static TOASTER_TIMEOUT = 1500;
