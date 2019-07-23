@@ -182,7 +182,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         const opacity = clamp(this.props.opacity || 1.0, 0, 1);
         if (opacity < 1.0) {
             lineColor = hexStringToRgba(lineColor, opacity);
-            console.log(lineColor);
         }
         // ChartJS plot
         let plotOptions: ChartOptions = {
