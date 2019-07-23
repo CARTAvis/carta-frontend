@@ -7,7 +7,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
 import {exportImage, FloatingWidgetManagerComponent, RootMenuComponent} from "./components";
 import {AppToaster} from "./components/Shared";
-import {AboutDialogComponent, ApiKeyDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, RegionDialogComponent, URLConnectDialogComponent, PreferenceDialogComponent} from "./components/Dialogs";
+import {AboutDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, RegionDialogComponent, PreferenceDialogComponent} from "./components/Dialogs";
 import {AppStore, dayPalette, FileBrowserStore, nightPalette, RegionMode, WidgetsStore} from "./stores";
 import {Layout} from "models";
 import {ConnectionStatus} from "./services";
@@ -256,9 +256,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
             <div className={className}>
                 <RootMenuComponent appStore={appStore}/>
                 <OverlaySettingsDialogComponent appStore={appStore}/>
-                <URLConnectDialogComponent appStore={appStore}/>
                 <AuthDialogComponent appStore={appStore}/>
-                <ApiKeyDialogComponent appStore={appStore}/>
                 <FileBrowserDialogComponent appStore={appStore}/>
                 <AboutDialogComponent appStore={appStore}/>
                 <RegionDialogComponent appStore={appStore}/>

@@ -36,7 +36,6 @@ export class AuthDialogComponent extends React.Component<{ appStore: AppStore }>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton intent={Intent.PRIMARY} onClick={this.onSignInClicked} disabled={!this.signInEnabled} text="Sign In"/>
-                        <AnchorButton intent={Intent.WARNING} onClick={this.onAnonymousSignInClicked} disabled={this.isAuthenticating} text="Anonymous User"/>
                     </div>
                 </div>
             </Dialog>
@@ -87,13 +86,5 @@ export class AuthDialogComponent extends React.Component<{ appStore: AppStore }>
             this.errorString = "Failed to connect to authentication service";
             this.isAuthenticating = false;
         });
-    };
-
-    onAnonymousSignInClicked = () => {
-        const appStore = this.props.appStore;
-        appStore.backendService.setAuthToken("");
-        appStore.setUsername("");
-        appStore.connectToServer();
-        appStore.hideAuthDialog();
     };
 }

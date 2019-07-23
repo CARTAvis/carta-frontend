@@ -92,15 +92,8 @@ export class AppStore {
     @observable overlayStore: OverlayStore;
     // File Browser
     @observable fileBrowserStore: FileBrowserStore;
-    // Additional Dialogs
-    @observable urlConnectDialogVisible: boolean;
-    @action showURLConnect = () => {
-        this.urlConnectDialogVisible = true;
-    };
-    @action hideURLConnect = () => {
-        this.urlConnectDialogVisible = false;
-    };
 
+    // Hotkey dialog
     @observable hotkeyDialogVisible: boolean;
     @action showHotkeyDialog = () => {
         this.hotkeyDialogVisible = true;
@@ -109,32 +102,13 @@ export class AppStore {
         this.hotkeyDialogVisible = false;
     };
 
+    // About dialog
     @observable aboutDialogVisible: boolean;
     @action showAboutDialog = () => {
         this.aboutDialogVisible = true;
     };
     @action hideAboutDialog = () => {
         this.aboutDialogVisible = false;
-    };
-
-    @observable apiKey: string;
-    @action applyApiKey = (newKey: string, forceReload: boolean = true) => {
-        if (newKey) {
-            localStorage.setItem("API_KEY", newKey);
-            this.apiKey = newKey;
-        } else {
-            localStorage.removeItem("API_KEY");
-        }
-        if (forceReload) {
-            location.reload();
-        }
-    };
-    @observable apiKeyDialogVisible: boolean;
-    @action showApiKeyDialog = () => {
-        this.apiKeyDialogVisible = true;
-    };
-    @action hideApiKeyDialog = () => {
-        this.apiKeyDialogVisible = false;
     };
 
     // User preference dialog
@@ -147,7 +121,7 @@ export class AppStore {
     };
 
     // Auth dialog
-    @observable authDialogVisible: boolean = true;
+    @observable authDialogVisible: boolean = false;
     @observable username: string = "";
     @action showAuthDialog = () => {
         this.authDialogVisible = true;
@@ -192,7 +166,7 @@ export class AppStore {
             }
         });
 
-        this.backendService.connect(wsURL, this.apiKey).subscribe(sessionId => {
+        this.backendService.connect(wsURL).subscribe(sessionId => {
             console.log(`Connected with session ID ${sessionId}`);
             connected = true;
             this.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
@@ -459,11 +433,6 @@ export class AppStore {
     private pendingHistogram: CARTA.RegionHistogramData;
 
     constructor() {
-        const existingKey = localStorage.getItem("API_KEY");
-        if (existingKey) {
-            this.apiKey = existingKey;
-        }
-
         this.preferenceStore = new PreferenceStore(this);
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore, this.preferenceStore);
@@ -481,7 +450,6 @@ export class AppStore {
         this.alertStore = new AlertStore();
         this.overlayStore = new OverlayStore(this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this);
-        this.urlConnectDialogVisible = false;
         this.compressionQuality = this.preferenceStore.imageCompressionQuality;
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         this.spatialRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
@@ -632,6 +600,13 @@ export class AppStore {
         this.backendService.getErrorStream().subscribe(this.handleErrorStream);
         this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
         this.tileService.GetTileStream().subscribe(this.handleTileStream);
+
+        // Auth and connection
+        if (process.env.REACT_APP_AUTHENTICATION === "true") {
+            this.authDialogVisible = true;
+        } else {
+            this.connectToServer();
+        }
     }
 
     // region Subscription handlers

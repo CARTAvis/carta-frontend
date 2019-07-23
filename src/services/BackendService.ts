@@ -22,7 +22,6 @@ export class BackendService {
     @observable loggingEnabled: boolean;
     @observable connectionDropped: boolean;
     @observable sessionId: number;
-    @observable apiKey: string;
     @observable endToEndPing: number;
 
     private connection: WebSocket;
@@ -143,7 +142,7 @@ export class BackendService {
     }
 
     @action("connect")
-    connect(url: string, apiKey: string, autoConnect: boolean = true): Observable<number> {
+    connect(url: string, autoConnect: boolean = true): Observable<number> {
         if (this.connection) {
             this.connection.onclose = null;
             this.connection.close();
@@ -171,8 +170,6 @@ export class BackendService {
             }
         };
 
-        this.apiKey = apiKey;
-
         const obs = new Observable<number>(observer => {
             this.connection.onopen = () => {
                 if (this.connectionStatus === ConnectionStatus.CLOSED) {
@@ -180,7 +177,7 @@ export class BackendService {
                 }
                 this.connectionStatus = ConnectionStatus.ACTIVE;
                 this.autoReconnect = true;
-                const message = CARTA.RegisterViewer.create({sessionId: 0, apiKey: apiKey, clientFeatureFlags: BackendService.DefaultFeatureFlags});
+                const message = CARTA.RegisterViewer.create({sessionId: 0, clientFeatureFlags: BackendService.DefaultFeatureFlags});
                 const requestId = this.eventCounter;
                 this.logEvent(CARTA.EventType.REGISTER_VIEWER, requestId, message, false);
                 if (this.sendEvent(CARTA.EventType.REGISTER_VIEWER, CARTA.RegisterViewer.encode(message).finish())) {
@@ -465,7 +462,15 @@ export class BackendService {
 
     @action("authenticate")
     authenticate = (username: string, password: string) => {
-        const authUrl = `${window.location.protocol}//${window.location.hostname}/auth`;
+        let authUrl = `${window.location.protocol}//${window.location.hostname}/auth`;
+        // Check for URL query parameters as a final override
+        const url = new URL(window.location.href);
+        const queryUrl = url.searchParams.get("authUrl");
+
+        if (queryUrl) {
+            authUrl = queryUrl;
+        }
+
         const authCredential = btoa(`${username}:${password}`);
         return fetch(authUrl, {
             headers: {
