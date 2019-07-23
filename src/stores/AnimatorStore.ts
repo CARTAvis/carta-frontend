@@ -2,7 +2,7 @@ import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "./AppStore";
 import {clamp} from "utilities";
-import {FrameView} from "../models";
+import {FrameView} from "models";
 
 export enum AnimationMode {
     CHANNEL = 0,
@@ -68,6 +68,10 @@ export class AnimatorStore {
             // Skip to the start of the animation range if below it.
             // The first frame delivered by the animation should be the one after the current one
             startFrame.channel = Math.max((startFrame.channel + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.channel);
+            // Jump back to start if outside the range
+            if (startFrame.channel > lastFrame.channel) {
+                startFrame.channel = firstFrame.channel;
+            }
         } else if (this.animationMode === AnimationMode.STOKES) {
             firstFrame = {
                 channel: frame.channel,
@@ -86,6 +90,10 @@ export class AnimatorStore {
             // Skip to the start of the animation range if below it
             // The first frame delivered by the animation should be the one after the current one
             startFrame.stokes = Math.max((startFrame.stokes + 1) % frame.frameInfo.fileInfoExtended.stokes, firstFrame.stokes);
+            // Jump back to start if outside the range
+            if (startFrame.stokes > lastFrame.stokes) {
+                startFrame.stokes = firstFrame.stokes;
+            }
         }
 
         const reqView = frame.requiredFrameView;
