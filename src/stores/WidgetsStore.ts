@@ -182,7 +182,7 @@ export class WidgetsStore {
         layout.registerComponent("animator", AnimatorComponent);
 
         // add drag source buttons from ToolbarMenuComponent
-        ToolbarMenuComponent.getDragsourceMap().forEach((widgetConfig, id) => this.createDragSource(layout, widgetConfig, id));
+        ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => this.createDragSource(layout, widgetConfig, id));
 
         layout.on("stackCreated", (stack) => {
             let unpinButton = $(`<li class="pin-icon"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);

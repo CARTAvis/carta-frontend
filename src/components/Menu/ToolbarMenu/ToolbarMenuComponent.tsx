@@ -7,7 +7,7 @@ import "./ToolbarMenuComponent.css";
 
 @observer
 export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }> {
-    public static getDragsourceMap = (): Map<string, WidgetConfig> => {
+    public static get DRAGSOURCE_WIDGETCONFIG_MAP(): Map<string, WidgetConfig> {
         return new Map<string, WidgetConfig>([
             ["renderConfigButton", RenderConfigComponent.WIDGET_CONFIG],
             ["logButton", LogComponent.WIDGET_CONFIG],
@@ -18,7 +18,7 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
             ["statsButton", StatsComponent.WIDGET_CONFIG],
             ["histogramButton", HistogramComponent.WIDGET_CONFIG]
         ]);
-    };
+    }
 
     public render() {
         let className = "toolbar-menu";
