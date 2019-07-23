@@ -139,8 +139,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 this.updateTexture();
             }
 
-            // TODO: is this needed
-            this.clearCanvas();
+            this.updateCanvasSize();
             this.updateUniforms();
             this.renderCanvas();
         }
@@ -174,15 +173,18 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
     }
 
-    private clearCanvas() {
+    private updateCanvasSize() {
         const frame = this.props.frame;
-        // Resize and/or clear the canvas
-        this.canvas.width = frame.renderWidth * devicePixelRatio;
-        this.canvas.height = frame.renderHeight * devicePixelRatio;
+        // Resize and clear the canvas if needed
+        if (this.canvas.width !== frame.renderWidth * devicePixelRatio || this.canvas.height !== frame.renderHeight * devicePixelRatio) {
+            this.canvas.width = frame.renderWidth * devicePixelRatio;
+            this.canvas.height = frame.renderHeight * devicePixelRatio;
+        }
     }
 
     private renderCanvas() {
         const frame = this.props.frame;
+        // Only clear and render if we're in animation or tiled mode
         if (frame && frame.renderType !== RasterRenderType.NONE) {
             this.gl.viewport(0, 0, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
             this.gl.enable(WebGLRenderingContext.DEPTH_TEST);
