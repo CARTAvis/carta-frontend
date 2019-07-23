@@ -55,7 +55,7 @@ export class FrameStore {
         this.requiredStokes = 0;
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore(preference);
-        this.renderType = RasterRenderType.TILED;
+        this.renderType = RasterRenderType.NONE;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preference.astColor;
