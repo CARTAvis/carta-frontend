@@ -129,7 +129,7 @@ export class WidgetsStore {
     }
 
     // create drag source for ToolbarMenuComponent
-    private static CreateDragSource = (appStore: AppStore, layout: GoldenLayout, widgetConfig: WidgetConfig, elementId: string) => {
+    private static CreateDragSource(appStore: AppStore, layout: GoldenLayout, widgetConfig: WidgetConfig, elementId: string) {
         const glConfig: GoldenLayout.ReactComponentConfig = {
             type: "react-component",
             component: widgetConfig.type,
@@ -143,7 +143,7 @@ export class WidgetsStore {
         if (widgetElement) {
             layout.createDragSource(widgetElement, glConfig);
         }
-    };
+    }
 
     private getNextId = (defaultId: string) => {
         const widgets = this.widgetsMap.get(defaultId);
