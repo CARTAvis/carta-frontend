@@ -14,6 +14,12 @@ export interface FrameInfo {
     renderMode: CARTA.RenderMode;
 }
 
+export enum RasterRenderType {
+    NONE,
+    ANIMATION,
+    TILED
+}
+
 export class FrameStore {
     @observable frameInfo: FrameInfo;
     @observable renderHiDPI: boolean;
@@ -27,6 +33,7 @@ export class FrameStore {
     @observable requiredStokes: number;
     @observable requiredChannel: number;
     @observable animationChannelRange: NumberRange;
+    @observable renderType: RasterRenderType;
     @observable currentFrameView: FrameView;
     @observable currentCompressionQuality: number;
     @observable renderConfig: RenderConfigStore;
@@ -48,8 +55,9 @@ export class FrameStore {
         this.requiredStokes = 0;
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore(preference);
+        this.renderType = RasterRenderType.TILED;
 
-        // synchornize AST overlay's color/grid/label with perference when frame is created
+        // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preference.astColor;
         if (astColor !== overlay.global.color) {
             overlay.global.setColor(astColor);
@@ -431,6 +439,10 @@ export class FrameStore {
 
     @action setAnimationRange = (range: NumberRange) => {
         this.animationChannelRange = range;
+    };
+
+    @action setRasterRenderType = (renderType: RasterRenderType) => {
+        this.renderType = renderType;
     };
 
     private calculateZoomX() {
