@@ -1,7 +1,19 @@
 import * as GoldenLayout from "golden-layout";
 import * as $ from "jquery";
 import {action, observable} from "mobx";
-import {AnimatorComponent, HistogramComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent, StatsComponent} from "components";
+import {
+    AnimatorComponent,
+    HistogramComponent,
+    ImageViewComponent,
+    LogComponent,
+    PlaceholderComponent,
+    RegionListComponent,
+    RenderConfigComponent,
+    SpatialProfilerComponent,
+    SpectralProfilerComponent,
+    StatsComponent,
+    ToolbarMenuComponent
+} from "components";
 import {AppStore} from "./AppStore";
 import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
 
@@ -140,7 +152,22 @@ export class WidgetsStore {
         }
     };
 
-    // region Golden Layout Widgets
+    // create drag source for ToolbarMenuComponent
+    private createDragSource = (layout: GoldenLayout, widgetConfig: WidgetConfig, elementId: string) => {
+        const glConfig: GoldenLayout.ReactComponentConfig = {
+            type: "react-component",
+            component: widgetConfig.type,
+            title: widgetConfig.title,
+            id: widgetConfig.id,
+            isClosable: widgetConfig.isCloseable,
+            props: {appStore: this.appStore, id: widgetConfig.id, docked: true}
+        };
+
+        const widgetElement = document.getElementById(elementId);
+        if (widgetElement) {
+            layout.createDragSource(widgetElement, glConfig);
+        }
+    };
 
     @action setDockedLayout(layout: GoldenLayout) {
         layout.registerComponent("placeholder", PlaceholderComponent);
@@ -153,6 +180,9 @@ export class WidgetsStore {
         layout.registerComponent("region-list", RegionListComponent);
         layout.registerComponent("log", LogComponent);
         layout.registerComponent("animator", AnimatorComponent);
+
+        // add drag source buttons from ToolbarMenuComponent
+        ToolbarMenuComponent.getDragsourceMap().forEach((widgetConfig, id) => this.createDragSource(layout, widgetConfig, id));
 
         layout.on("stackCreated", (stack) => {
             let unpinButton = $(`<li class="pin-icon"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);
