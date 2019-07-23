@@ -689,7 +689,6 @@ export class AppStore {
                 updatedFrame.requiredChannel = rasterImageData.channel;
                 updatedFrame.requiredStokes = rasterImageData.stokes;
                 updatedFrame.renderType = RasterRenderType.ANIMATION;
-                this.animatorStore.incrementFlowCounter(updatedFrame.frameInfo.fileId, updatedFrame.channel, updatedFrame.stokes);
             }
         }
     };
