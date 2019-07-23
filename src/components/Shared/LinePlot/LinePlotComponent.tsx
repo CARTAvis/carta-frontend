@@ -336,7 +336,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     onStageMouseMove = (ev) => {
-        if (this.props.data) {
+        if (this.props.data || this.props.multiLineData) {
             const mouseEvent: MouseEvent = ev.evt;
             const chartArea = this.chartArea;
             let mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);

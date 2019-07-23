@@ -256,14 +256,13 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         // Special case when zoomed out
         if (requiredTiles.length === 1 && requiredTiles[0].layer === 0) {
             const mip = LayerToMip(0, imageSize, {x: TILE_SIZE, y: TILE_SIZE});
-            this.renderTiles(requiredTiles, mip);
-            console.log(boundedView.mip);
+            this.renderTiles(requiredTiles, mip, false, 3, true);
         } else {
-            this.renderTiles(requiredTiles, boundedView.mip);
+            this.renderTiles(requiredTiles, boundedView.mip, false, 3, true);
         }
     }
 
-    private renderTiles(tiles: TileCoordinate[], mip: number, peek: boolean = false) {
+    private renderTiles(tiles: TileCoordinate[], mip: number, peek: boolean = false, numPlaceholderLayersHighRes: number, renderLowRes: boolean) {
         const tileService = this.props.tileService;
         const frame = this.props.frame;
 
@@ -272,25 +271,60 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
 
         const placeholderTileMap = new Map<number, boolean>();
+        const highResPlaceholders = [];
 
         for (const tile of tiles) {
             const encodedCoordinate = TileCoordinate.EncodeCoordinate(tile);
             const rasterTile = tileService.getTile(encodedCoordinate, frame.frameInfo.fileId, frame.channel, frame.stokes, peek);
             if (rasterTile) {
                 this.renderTile(tile, rasterTile, mip);
-            } else if (tile.layer > 0) {
-                const lowResTile = {
-                    layer: tile.layer - 1,
-                    x: Math.floor(tile.x / 2.0),
-                    y: Math.floor(tile.y / 2.0),
-                };
-                placeholderTileMap.set(TileCoordinate.EncodeCoordinate(lowResTile), true);
+            } else {
+                // Add high-res placeholders
+                if (numPlaceholderLayersHighRes > 0 && mip >= 2) {
+                    highResPlaceholders.push({
+                        layer: tile.layer + 1,
+                        x: tile.x * 2,
+                        y: tile.y * 2,
+                    });
+                    highResPlaceholders.push({
+                        layer: tile.layer + 1,
+                        x: tile.x * 2 + 1,
+                        y: tile.y * 2,
+                    });
+                    highResPlaceholders.push({
+                        layer: tile.layer + 1,
+                        x: tile.x * 2,
+                        y: tile.y * 2 + 1,
+                    });
+                    highResPlaceholders.push({
+                        layer: tile.layer + 1,
+                        x: tile.x * 2 + 1,
+                        y: tile.y * 2 + 1,
+                    });
+                }
+
+                // Add low-res placeholders
+                if (tile.layer > 0 && renderLowRes) {
+                    const lowResTile = {
+                        layer: tile.layer - 1,
+                        x: Math.floor(tile.x / 2.0),
+                        y: Math.floor(tile.y / 2.0),
+                    };
+                    placeholderTileMap.set(TileCoordinate.EncodeCoordinate(lowResTile), true);
+                }
             }
         }
-        const placeholderTileList: TileCoordinate[] = [];
-        placeholderTileMap.forEach((val, encodedTile) => placeholderTileList.push(TileCoordinate.Decode(encodedTile)));
-        if (placeholderTileList.length) {
-            this.renderTiles(placeholderTileList, mip * 2, true);
+
+        // Render remaining placeholders
+        if (numPlaceholderLayersHighRes > 0 && highResPlaceholders.length) {
+            this.renderTiles(highResPlaceholders, mip / 2, true, numPlaceholderLayersHighRes - 1, false);
+        }
+        if (renderLowRes) {
+            const placeholderTileList: TileCoordinate[] = [];
+            placeholderTileMap.forEach((val, encodedTile) => placeholderTileList.push(TileCoordinate.Decode(encodedTile)));
+            if (placeholderTileList.length) {
+                this.renderTiles(placeholderTileList, mip * 2, true, 0, true);
+            }
         }
     }
 
