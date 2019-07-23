@@ -4,6 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
 import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore} from "./AppStore";
+import {isColorValid} from "../utilities";
 
 const PREFERENCE_KEYS = {
     theme: "CARTA_theme",
@@ -158,7 +159,7 @@ export class PreferenceStore {
     // getters for region
     private getRegionColor = (): string => {
         const regionColor = localStorage.getItem(PREFERENCE_KEYS.regionColor);
-        return regionColor && RegionStore.IsRegionColorValid(regionColor) ? regionColor : DEFAULTS.regionColor;
+        return regionColor && isColorValid(regionColor) ? regionColor : DEFAULTS.regionColor;
     };
 
     private getRegionLineWidth = (): number => {
