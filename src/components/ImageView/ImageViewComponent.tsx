@@ -10,7 +10,7 @@ import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
 import {RegionViewComponent} from "./RegionView/RegionViewComponent";
-import {AnimationMode, AnimationState, RegionStore, WidgetConfig, WidgetProps} from "stores";
+import {RegionStore, WidgetConfig, WidgetProps} from "stores";
 import {CursorInfo, Point2D} from "models";
 import "./ImageViewComponent.css";
 
@@ -163,8 +163,14 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             const effectiveWidth = appStore.activeFrame.renderWidth * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
             const effectiveHeight = appStore.activeFrame.renderHeight * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
 
-            divContents = (
+            divContents = effectiveWidth > 0 && effectiveHeight > 0 ? (
                 <React.Fragment>
+                    <RasterViewComponent
+                        frame={appStore.activeFrame}
+                        docked={this.props.docked}
+                        overlaySettings={appStore.overlayStore}
+                        tileService={appStore.tileService}
+                    />
                     {appStore.activeFrame.valid &&
                     <OverlayComponent
                         frame={appStore.activeFrame}
@@ -233,7 +239,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         </Tag>
                     </div>
                 </React.Fragment>
-            );
+            ) : null;
         } else if (!appStore.astReady) {
             divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner"/>} title={"Loading AST Library"}/>;
         } else {
@@ -242,12 +248,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="image-view-div" ref={(ref) => this.containerDiv = ref} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-                <RasterViewComponent
-                    frame={appStore.activeFrame}
-                    docked={this.props.docked}
-                    overlaySettings={appStore.overlayStore}
-                    tileService={appStore.tileService}
-                />
                 {divContents}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
