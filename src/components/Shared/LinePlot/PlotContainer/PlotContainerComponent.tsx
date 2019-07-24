@@ -331,7 +331,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             else {
                 datasetConfig.pointRadius = 0;
                 datasetConfig.showLine = true;
-                // @ts-ignore TODO: Remove once Chart.js types are updated
                 datasetConfig.steppedLine = this.props.interpolateLines ? false : "middle";
                 datasetConfig.borderWidth = 1;
                 datasetConfig.borderColor = lineColor;
@@ -355,21 +354,19 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 };
                 this.setDataset(multiLinedatasetConfig, lineColor);
                 if (key === StokesCoordinate.LinearPolarizationQ) {
-                    multiLinedatasetConfig.borderColor = "green";
+                    multiLinedatasetConfig.borderColor = Colors.GREEN2;
                     plotOptions.legend.display = true;
                     plotOptions.scales.xAxes[0].gridLines.tickMarkLength = 0;
                 } else if (key === StokesCoordinate.LinearPolarizationU) {
-                    multiLinedatasetConfig.borderColor = "blue";
+                    multiLinedatasetConfig.borderColor = lineColor;
                     plotOptions.legend.display = true;
                 } else if (key === StokesCoordinate.PolarizedIntensity) {
                     plotOptions.scales.xAxes[0].gridLines.tickMarkLength = 0;
                 } else if (key === StokesCoordinate.PolarizationQU) {
-                    plotOptions.scales.xAxes[0].gridLines.zeroLineColor = "red";
-                    plotOptions.scales.yAxes[0].gridLines.zeroLineColor = "red";
+                    plotOptions.scales.xAxes[0].gridLines.zeroLineColor = Colors.RED2;
+                    plotOptions.scales.yAxes[0].gridLines.zeroLineColor = Colors.RED2;
                     multiLinedatasetConfig.pointRadius = 3;
                     multiLinedatasetConfig.type = "bubble";
-                    // multiLinedatasetConfig.pointHoverRadius = 5;
-                    // multiLinedatasetConfig.pointHoverBackgroundColor = "red";
                     let miny = getMinY(value);
                     let maxy = getMaxY(value);
                     multiLinedatasetConfig.data.forEach((data, i) => {
