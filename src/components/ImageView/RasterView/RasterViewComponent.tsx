@@ -176,7 +176,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private updateCanvasSize() {
         const frame = this.props.frame;
         // Resize and clear the canvas if needed
-        if (this.canvas.width !== frame.renderWidth * devicePixelRatio || this.canvas.height !== frame.renderHeight * devicePixelRatio) {
+        if (frame && frame.isRenderable && (this.canvas.width !== frame.renderWidth * devicePixelRatio || this.canvas.height !== frame.renderHeight * devicePixelRatio)) {
             this.canvas.width = frame.renderWidth * devicePixelRatio;
             this.canvas.height = frame.renderHeight * devicePixelRatio;
         }
