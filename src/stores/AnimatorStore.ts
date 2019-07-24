@@ -70,7 +70,7 @@ export class AnimatorStore {
             startFrame.channel = Math.max((startFrame.channel + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.channel);
             // Jump back to start if outside the range
             if (startFrame.channel > lastFrame.channel) {
-                startFrame.channel = firstFrame.channel
+                startFrame.channel = firstFrame.channel;
             }
         } else if (this.animationMode === AnimationMode.STOKES) {
             firstFrame = {
@@ -92,7 +92,7 @@ export class AnimatorStore {
             startFrame.stokes = Math.max((startFrame.stokes + 1) % frame.frameInfo.fileInfoExtended.stokes, firstFrame.stokes);
             // Jump back to start if outside the range
             if (startFrame.stokes > lastFrame.stokes) {
-                startFrame.stokes = firstFrame.stokes
+                startFrame.stokes = firstFrame.stokes;
             }
         }
 
@@ -137,7 +137,6 @@ export class AnimatorStore {
         });
 
         this.animationState = AnimationState.PLAYING;
-        this.flowControlCounter = 0;
     };
 
     @action stopAnimation = () => {
@@ -170,16 +169,7 @@ export class AnimatorStore {
         }
     };
 
-    @action incrementFlowCounter = (fileId: number, channel: number, stokes: number) => {
-        this.flowControlCounter++;
-        if (this.flowControlCounter >= this.frameRate) {
-            this.flowControlCounter = 0;
-            this.appStore.backendService.sendAnimationFlowControl({fileId, receivedFrame: {channel, stokes}});
-        }
-    };
-
     private readonly appStore: AppStore;
-    private flowControlCounter: number;
     private animateHandle;
 
     constructor(appStore: AppStore) {
@@ -188,7 +178,6 @@ export class AnimatorStore {
         this.minFrameRate = 1;
         this.animationMode = AnimationMode.CHANNEL;
         this.animationState = AnimationState.STOPPED;
-        this.flowControlCounter = 0;
         this.animateHandle = null;
         this.appStore = appStore;
     }
