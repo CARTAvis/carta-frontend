@@ -163,7 +163,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             const effectiveWidth = appStore.activeFrame.renderWidth * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
             const effectiveHeight = appStore.activeFrame.renderHeight * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
 
-            divContents = (
+            divContents = appStore.activeFrame.isRenderable ? (
                 <React.Fragment>
                     {appStore.activeFrame.valid &&
                     <OverlayComponent
@@ -233,7 +233,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         </Tag>
                     </div>
                 </React.Fragment>
-            );
+            ) : null;
         } else if (!appStore.astReady) {
             divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner"/>} title={"Loading AST Library"}/>;
         } else {
