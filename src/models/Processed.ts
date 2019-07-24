@@ -6,6 +6,7 @@ export interface ProcessedSpatialProfile extends CARTA.ISpatialProfile {
 
 export interface ProcessedSpectralProfile extends CARTA.ISpectralProfile {
     values: Float32Array | Float64Array;
+    progress: number;
 }
 
 export class ProtobufProcessing {
@@ -27,25 +28,28 @@ export class ProtobufProcessing {
         };
     }
 
-    static ProcessSpectralProfile(profile: CARTA.ISpectralProfile): ProcessedSpectralProfile {
+    static ProcessSpectralProfile(profile: CARTA.ISpectralProfile, progress: number): ProcessedSpectralProfile {
         if (profile.rawValuesFp64 && profile.rawValuesFp64.length && profile.rawValuesFp64.length % 8 === 0) {
             return {
                 coordinate: profile.coordinate,
                 statsType: profile.statsType,
-                values: new Float64Array(profile.rawValuesFp64.slice().buffer)
+                values: new Float64Array(profile.rawValuesFp64.slice().buffer),
+                progress
             };
         } else if (profile.rawValuesFp32 && profile.rawValuesFp32.length && profile.rawValuesFp32.length % 4 === 0) {
             return {
                 coordinate: profile.coordinate,
                 statsType: profile.statsType,
-                values: new Float32Array(profile.rawValuesFp32.slice().buffer)
+                values: new Float32Array(profile.rawValuesFp32.slice().buffer),
+                progress
             };
         }
 
         return {
             coordinate: profile.coordinate,
             statsType: profile.statsType,
-            values: null
+            values: null,
+            progress: 0
         };
     }
 }
