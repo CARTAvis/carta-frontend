@@ -61,23 +61,20 @@ export class RegionSetStore {
     };
 
     @action addRectangularRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
-        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center, {x: width, y: height}], CARTA.RegionType.RECTANGLE, this.getTempRegionId(),
-                                        this.regionPreference.color, this.regionPreference.lineWidth, this.regionPreference.dashLength);
-        this.regions.push(region);
-        if (!temporary) {
-            this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
-                if (ack.success) {
-                    console.log(`Updating regionID from ${region.regionId} to ${ack.regionId}`);
-                    region.setRegionId(ack.regionId);
-                }
-            });
-        }
-        return region;
+        return this.addRegion([center, {x: width, y: height}], CARTA.RegionType.RECTANGLE, temporary);
     };
 
     @action addEllipticalRegion = (center: Point2D, semiMajor: number, semiMinor: number, temporary: boolean = false) => {
-        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center, {x: semiMinor, y: semiMajor}], CARTA.RegionType.ELLIPSE, this.getTempRegionId(),
-                                        this.regionPreference.color, this.regionPreference.lineWidth, this.regionPreference.dashLength);
+        return this.addRegion([center, {x: semiMinor, y: semiMajor}], CARTA.RegionType.ELLIPSE, temporary);
+    };
+
+    @action addPolygonalRegion = (points: Point2D[], temporary: boolean = false) => {
+        return this.addRegion(points, CARTA.RegionType.POLYGON, temporary);
+    };
+
+    private addRegion(points: Point2D[], regionType: CARTA.RegionType, temporary: boolean = false) {
+        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, points, regionType, this.getTempRegionId(),
+            this.regionPreference.color, this.regionPreference.lineWidth, this.regionPreference.dashLength);
         this.regions.push(region);
         if (!temporary) {
             this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
@@ -87,8 +84,9 @@ export class RegionSetStore {
                 }
             });
         }
+
         return region;
-    };
+    }
 
     @action selectRegion = (region: RegionStore) => {
         if (this.regions.indexOf(region) >= 0) {

@@ -118,6 +118,8 @@ export class RegionStore {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
                 return this.controlPoints.length === 2 && this.controlPoints[1].x > 0 && this.controlPoints[1].y > 0;
+            case CARTA.RegionType.POLYGON:
+                return this.controlPoints.length >= 1;
             default:
                 return false;
         }
