@@ -64,12 +64,7 @@ export class RegionStore {
     ]);
 
     public static IsRegionTypeValid(regionType: CARTA.RegionType): boolean {
-        return RegionStore.AVAILABLE_REGION_TYPES.has(regionType) ? true : false;
-    }
-
-    public static IsRegionColorValid(regionColor: string): boolean {
-        const colorHex: RegExp = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-        return colorHex.test(regionColor);
+        return RegionStore.AVAILABLE_REGION_TYPES.has(regionType);
     }
 
     public static IsRegionLineWidthValid(regionLineWidth: number): boolean {
