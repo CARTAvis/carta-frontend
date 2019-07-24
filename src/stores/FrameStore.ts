@@ -1,4 +1,4 @@
-import {action, computed, observable, autorun} from "mobx";
+import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {NumberRange} from "@blueprintjs/core";
 import {PreferenceStore, OverlayStore, RegionSetStore, RenderConfigStore} from "stores";
@@ -82,16 +82,10 @@ export class FrameStore {
         };
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
-        autorun(() => {
-            const width = this.overlayStore.viewWidth;
-            const height = this.overlayStore.viewHeight;
-
-            if (preference.isZoomRAWMode) {
-                this.setZoom(1.0);
-            } else {
-                this.fitZoom();
-            }
-        });
+        this.fitZoom();
+        if (preference.isZoomRAWMode) {
+            this.setZoom(1.0);
+        }
     }
 
     @computed get requiredFrameView(): FrameView {
@@ -424,20 +418,20 @@ export class FrameStore {
     }
 
     @action fitZoomX = () => {
-        this.zoomLevel = this.calculateZoomX;
+        this.zoomLevel = this.calculateZoomX();
         this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + 0.5;
         this.center.y = this.frameInfo.fileInfoExtended.height / 2.0 + 0.5;
     };
 
     @action fitZoomY = () => {
-        this.zoomLevel = this.calculateZoomY;
+        this.zoomLevel = this.calculateZoomY();
         this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + 0.5;
         this.center.y = this.frameInfo.fileInfoExtended.height / 2.0 + 0.5;
     };
 
     @action fitZoom = () => {
-        const zoomX = this.calculateZoomX;
-        const zoomY = this.calculateZoomY;
+        const zoomX = this.calculateZoomX();
+        const zoomY = this.calculateZoomY();
         this.zoomLevel = Math.min(zoomX, zoomY);
         this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + 0.5;
         this.center.y = this.frameInfo.fileInfoExtended.height / 2.0 + 0.5;
@@ -451,7 +445,7 @@ export class FrameStore {
         this.renderType = renderType;
     };
 
-    @computed private get calculateZoomX() {
+    private calculateZoomX() {
         const imageWidth = this.frameInfo.fileInfoExtended.width;
         const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
 
@@ -461,7 +455,7 @@ export class FrameStore {
         return this.renderWidth * pixelRatio / imageWidth;
     }
 
-    @computed private get calculateZoomY() {
+    private calculateZoomY() {
         const imageHeight = this.frameInfo.fileInfoExtended.height;
         const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
         if (imageHeight <= 0) {
