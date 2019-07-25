@@ -41,23 +41,7 @@ export class RegionSetStore {
     };
 
     @action addPointRegion = (center: Point2D, cursorRegion = false) => {
-        let regionId;
-        if (cursorRegion) {
-            regionId = 0;
-        } else {
-            regionId = this.getTempRegionId();
-        }
-
-        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center], CARTA.RegionType.POINT, regionId);
-        this.regions.push(region);
-        if (!cursorRegion) {
-            this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
-                if (ack.success) {
-                    region.setRegionId(ack.regionId);
-                }
-            });
-        }
-        return region;
+        return this.addRegion([center], CARTA.RegionType.POINT, cursorRegion, cursorRegion ? 0 : this.getTempRegionId());
     };
 
     @action addRectangularRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
@@ -72,8 +56,8 @@ export class RegionSetStore {
         return this.addRegion(points, CARTA.RegionType.POLYGON, temporary);
     };
 
-    private addRegion(points: Point2D[], regionType: CARTA.RegionType, temporary: boolean = false) {
-        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, points, regionType, this.getTempRegionId(),
+    private addRegion(points: Point2D[], regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId()) {
+        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, points, regionType, regionId,
             this.regionPreference.color, this.regionPreference.lineWidth, this.regionPreference.dashLength);
         this.regions.push(region);
         if (!temporary) {

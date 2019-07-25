@@ -5,8 +5,8 @@ import {observer} from "mobx-react";
 import {Ellipse, Group, Rect, Transformer} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
-import {FrameStore, RegionStore} from "../../../stores";
-import {Point2D} from "../../../models";
+import {FrameStore, RegionStore} from "stores";
+import {Point2D} from "models";
 
 export interface RegionComponentProps {
     region: RegionStore;
@@ -278,8 +278,8 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         const centerImageSpace = region.controlPoints[0];
 
         const centerPixelSpace = this.getCanvasPos(centerImageSpace.x, centerImageSpace.y);
-        const width = (region.controlPoints[1].x * frame.zoomLevel) / devicePixelRatio;
-        const height = (region.controlPoints[1].y * frame.zoomLevel) / devicePixelRatio;
+        let width = (region.controlPoints[1].x * frame.zoomLevel) / devicePixelRatio;
+        let height = (region.controlPoints[1].y * frame.zoomLevel) / devicePixelRatio;
 
         // Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
         const borderDash = [(width + height) * 4 / 100.0];
@@ -328,11 +328,14 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                     rotateAnchorOffset={15}
                     anchorSize={6}
                     borderStroke={Colors.TURQUOISE5}
-                    borderDash={region.regionType === CARTA.RegionType.ELLIPSE ? borderDash : null}
+                    borderStrokeWidth={3}
+                    borderDash={borderDash}
                     keepRatio={false}
                     centeredScaling={true}
                     draggable={false}
                     borderEnabled={false}
+                    resizeEnabled={true}
+                    rotateEnabled={true}
                     onTransformStart={this.handleTransformStart}
                     onTransform={this.handleTransform}
                     onTransformEnd={this.handleTransformEnd}

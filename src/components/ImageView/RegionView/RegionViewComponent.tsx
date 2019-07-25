@@ -10,6 +10,7 @@ import {RegionComponent} from "./RegionComponent";
 import {PolygonRegionComponent} from "./PolygonRegionComponent";
 import {CursorInfo, Point2D} from "models";
 import "./RegionViewComponent.css";
+import {PointRegionComponent} from "./PointRegionComponent";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;
@@ -139,6 +140,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         const cursorPosImageSpace = this.getImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
         switch (regionType) {
+            case CARTA.RegionType.POINT:
+                this.creatingRegion = frame.regionSet.addPointRegion(cursorPosImageSpace, false);
+                break;
             case CARTA.RegionType.RECTANGLE:
                 this.creatingRegion = frame.regionSet.addRectangularRegion(cursorPosImageSpace, 0, 0, true);
                 break;
@@ -159,6 +163,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         switch (regionType) {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
+            case CARTA.RegionType.POINT:
                 this.handleMouseUpRegularRegion();
                 break;
             case CARTA.RegionType.POLYGON:
@@ -323,44 +328,54 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             className += " docked";
         }
 
-        let regionRects = null;
-        let regionPolygons = null;
+        let regionComponents = null;
         if (regionSet && regionSet.regions.length) {
-            regionRects = regionSet.regions.filter(r => (r.regionType === CARTA.RegionType.RECTANGLE || r.regionType === CARTA.RegionType.ELLIPSE) && r.isValid)
-                .sort((a, b) => a.boundingBoxArea > b.boundingBoxArea ? -1 : 1)
-                .map(
-                    r => (
-                        <RegionComponent
-                            key={r.regionId}
-                            region={r}
-                            frame={frame}
-                            layerWidth={this.props.width}
-                            layerHeight={this.props.height}
-                            selected={r === regionSet.selectedRegion}
-                            onSelect={regionSet.selectRegion}
-                            onDoubleClick={this.handleRegionDoubleClick}
-                            listening={regionSet.mode !== RegionMode.CREATING}
-                            isRegionCornerMode={this.props.isRegionCornerMode}
-                        />
-                    )
-                );
-
-            regionPolygons = regionSet.regions.filter(r => r.regionType === CARTA.RegionType.POLYGON && r.isValid)
-                .map(
-                    r => (
-                        <PolygonRegionComponent
-                            key={r.regionId}
-                            region={r}
-                            frame={frame}
-                            layerWidth={this.props.width}
-                            layerHeight={this.props.height}
-                            selected={r === regionSet.selectedRegion}
-                            onSelect={regionSet.selectRegion}
-                            onDoubleClick={this.handleRegionDoubleClick}
-                            listening={regionSet.mode !== RegionMode.CREATING}
-                        />
-                    )
-                );
+            regionComponents = regionSet.regions.filter(r => r.isValid && r.regionId !== 0).sort((a, b) => a.boundingBoxArea > b.boundingBoxArea ? -1 : 1).map(r => {
+                    if (r.regionType === CARTA.RegionType.POLYGON) {
+                        return (
+                            <PolygonRegionComponent
+                                key={r.regionId}
+                                region={r}
+                                frame={frame}
+                                layerWidth={this.props.width}
+                                layerHeight={this.props.height}
+                                selected={r === regionSet.selectedRegion}
+                                onSelect={regionSet.selectRegion}
+                                onDoubleClick={this.handleRegionDoubleClick}
+                                listening={regionSet.mode !== RegionMode.CREATING}
+                            />
+                        );
+                    } else if (r.regionType === CARTA.RegionType.POINT) {
+                        return (
+                            <PointRegionComponent
+                                key={r.regionId}
+                                region={r}
+                                frame={frame}
+                                layerWidth={this.props.width}
+                                layerHeight={this.props.height}
+                                selected={r === regionSet.selectedRegion}
+                                onSelect={regionSet.selectRegion}
+                                onDoubleClick={this.handleRegionDoubleClick}
+                            />
+                        );
+                    } else {
+                        return (
+                            <RegionComponent
+                                key={r.regionId}
+                                region={r}
+                                frame={frame}
+                                layerWidth={this.props.width}
+                                layerHeight={this.props.height}
+                                selected={r === regionSet.selectedRegion}
+                                onSelect={regionSet.selectRegion}
+                                onDoubleClick={this.handleRegionDoubleClick}
+                                listening={regionSet.mode !== RegionMode.CREATING}
+                                isRegionCornerMode={this.props.isRegionCornerMode}
+                            />
+                        );
+                    }
+                }
+            );
         }
 
         let cursorMarker = null;
@@ -431,8 +446,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 onMouseUp={regionSet.mode === RegionMode.CREATING ? this.handleMouseUp : null}
             >
                 <Layer>
-                    {regionRects}
-                    {regionPolygons}
+                    {regionComponents}
                     {polygonCreatingLine}
                     {cursorMarker}
                 </Layer>

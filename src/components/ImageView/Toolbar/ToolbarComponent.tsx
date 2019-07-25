@@ -61,6 +61,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         const regionMenu = (
             <Menu>
+                <MenuItem icon={"dot"} text="Point" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POINT)}/>
                 <MenuItem icon={"square"} text="Rectangle" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)}/>
                 <MenuItem icon={"circle"} text="Ellipse" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)}/>
                 <MenuItem icon={"polygon-filter"} text="Polygon" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)}/>
@@ -69,6 +70,9 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
         let regionIcon: IconName;
         switch (frame.regionSet.newRegionType) {
+            case CARTA.RegionType.POINT:
+                regionIcon = "dot";
+                break;
             case CARTA.RegionType.RECTANGLE:
                 regionIcon = "square";
                 break;
