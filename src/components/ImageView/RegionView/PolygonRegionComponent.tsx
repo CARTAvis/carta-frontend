@@ -5,7 +5,7 @@ import {Group, Line, Rect} from "react-konva";
 import Konva from "konva";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
-import {closestPointOnLine} from "utilities";
+import {add2D, average2D, closestPointOnLine} from "utilities";
 import {canvasToImagePos, imageToCanvasPos} from "./shared";
 
 export interface PolygonRegionComponentProps {
@@ -59,18 +59,18 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         }
     };
 
-    private handleDragStart = () => {
+    private handleAnchorDragStart = () => {
         if (this.props.onSelect) {
             this.props.onSelect(this.props.region);
         }
         this.props.region.beginEditing();
     };
 
-    private handleDragEnd = () => {
+    private handleAnchorDragEnd = () => {
         this.props.region.endEditing();
     };
 
-    private handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+    @action private handleAnchorDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
             const node = konvaEvent.target;
             const region = this.props.region;
@@ -98,18 +98,15 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         }
     };
 
-    @action
-    private handleStrokeMouseEnter = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+    @action private handleStrokeMouseEnter = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         this.handleMouseMove(konvaEvent);
     };
 
-    @action
-    private handleStrokeMouseLeave = () => {
+    @action private handleStrokeMouseLeave = () => {
         this.hoverIntersection = null;
     };
 
-    @action
-    private handleMouseMove = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+    @action private handleMouseMove = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
         const region = this.props.region;
         if (this.props.selected && region.controlPoints.length >= 2) {
@@ -149,6 +146,33 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         }
     };
 
+    @action handleDragStart = () => {
+        if (this.props.onSelect) {
+            this.props.onSelect(this.props.region);
+        }
+        this.props.region.beginEditing();
+        this.hoverIntersection = null;
+    };
+
+    @action handleDragEnd = () => {
+        this.props.region.endEditing();
+    };
+
+    @action handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        if (konvaEvent.target) {
+            const node = konvaEvent.target;
+            const region = this.props.region;
+            const frame = this.props.frame;
+            const centerImageSpace = average2D(region.controlPoints);
+
+            const currentCenterPixelSpace = imageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
+            const newCenterPixelSpace = node.position();
+            const deltaPositionImageSpace = {x: (newCenterPixelSpace.x - currentCenterPixelSpace.x) / frame.zoomLevel, y: -(newCenterPixelSpace.y - currentCenterPixelSpace.y) / frame.zoomLevel};
+            const newPoints = region.controlPoints.map(p => add2D(p, deltaPositionImageSpace));
+            region.setControlPoints(newPoints);
+        }
+    };
+
     private getCanvasPointArray(points: Point2D[]) {
         if (!points || !points.length) {
             return null;
@@ -170,7 +194,15 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
 
     render() {
         const region = this.props.region;
+
+        const centerPoint = average2D(region.controlPoints);
+        const centerPointCanvasSpace = imageToCanvasPos(centerPoint.x, centerPoint.y, this.props.frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
         const pointArray = this.getCanvasPointArray(region.controlPoints);
+
+        for (let i = 0; i < pointArray.length / 2; i++) {
+            pointArray[i * 2] -= centerPointCanvasSpace.x;
+            pointArray[i * 2 + 1] -= centerPointCanvasSpace.y;
+        }
 
         // Construct anchors if region is selected
         let anchors = null;
@@ -180,8 +212,8 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                 anchors[i] = (
                     <Rect
                         key={i}
-                        x={pointArray[i * 2]}
-                        y={pointArray[i * 2 + 1]}
+                        x={centerPointCanvasSpace.x + pointArray[i * 2]}
+                        y={centerPointCanvasSpace.y + pointArray[i * 2 + 1]}
                         offsetX={ANCHOR_WIDTH / 2.0}
                         offsetY={ANCHOR_WIDTH / 2.0}
                         width={ANCHOR_WIDTH}
@@ -189,9 +221,9 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                         draggable={true}
                         onMouseEnter={this.handleAnchorMouseEnter}
                         onMouseOut={this.handleAnchorMouseOut}
-                        onDragStart={this.handleDragStart}
-                        onDragEnd={this.handleDragEnd}
-                        onDragMove={this.handleDrag}
+                        onDragStart={this.handleAnchorDragStart}
+                        onDragEnd={this.handleAnchorDragEnd}
+                        onDragMove={this.handleAnchorDrag}
                         onDblClick={this.handleAnchorDoubleClick}
                         fill={"white"}
                         strokeWidth={1}
@@ -224,6 +256,8 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         return (
             <Group>
                 <Line
+                    x={centerPointCanvasSpace.x}
+                    y={centerPointCanvasSpace.y}
                     stroke={region.color}
                     strokeWidth={region.lineWidth}
                     opacity={region.isTemporary ? 0.5 : 1.0}
@@ -236,11 +270,15 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                     onMouseEnter={this.handleStrokeMouseEnter}
                     onMouseLeave={this.handleStrokeMouseLeave}
                     onMouseMove={this.handleMouseMove}
+                    onDragStart={this.handleDragStart}
+                    onDragEnd={this.handleDragEnd}
+                    onDragMove={this.handleDrag}
                     perfectDrawEnabled={false}
                     lineJoin={"round"}
+                    draggable={true}
                     points={pointArray}
                     strokeHitEnabled={true}
-                    hitStrokeWidth={NEW_ANCHOR_MAX_DISTANCE * 3}
+                    hitStrokeWidth={NEW_ANCHOR_MAX_DISTANCE * 2}
                 />
                 <Group>
                     {anchors}

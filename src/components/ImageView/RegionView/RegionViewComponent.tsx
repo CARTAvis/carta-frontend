@@ -332,7 +332,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (regionSet && regionSet.regions.length) {
             regionComponents = regionSet.regions.filter(r => r.isValid && r.regionId !== 0).sort((a, b) => a.boundingBoxArea > b.boundingBoxArea ? -1 : 1).map(r => {
                     if (r.regionType === CARTA.RegionType.POLYGON) {
-                        console.log(r.boundingBoxArea);
                         return (
                             <PolygonRegionComponent
                                 key={r.regionId}
