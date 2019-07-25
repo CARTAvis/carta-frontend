@@ -176,7 +176,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private updateCanvasSize() {
         const frame = this.props.frame;
         // Resize and clear the canvas if needed
-        if (this.canvas.width !== frame.renderWidth * devicePixelRatio || this.canvas.height !== frame.renderHeight * devicePixelRatio) {
+        if (frame && frame.isRenderable && (this.canvas.width !== frame.renderWidth * devicePixelRatio || this.canvas.height !== frame.renderHeight * devicePixelRatio)) {
             this.canvas.width = frame.renderWidth * devicePixelRatio;
             this.canvas.height = frame.renderHeight * devicePixelRatio;
         }
@@ -185,7 +185,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private renderCanvas() {
         const frame = this.props.frame;
         // Only clear and render if we're in animation or tiled mode
-        if (frame && frame.renderType !== RasterRenderType.NONE) {
+        if (frame && frame.isRenderable && frame.renderType !== RasterRenderType.NONE) {
             this.gl.viewport(0, 0, frame.renderWidth * devicePixelRatio, frame.renderHeight * devicePixelRatio);
             this.gl.enable(WebGLRenderingContext.DEPTH_TEST);
             this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
@@ -481,8 +481,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                     style={{
                         top: padding.top,
                         left: padding.left,
-                        width: frame ? frame.renderWidth : 1,
-                        height: frame ? frame.renderHeight : 1
+                        width: frame && frame.isRenderable ? frame.renderWidth : 1,
+                        height: frame && frame.isRenderable ? frame.renderHeight : 1
                     }}
                 />
             </div>);

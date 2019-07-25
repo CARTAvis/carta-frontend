@@ -4,6 +4,7 @@ export * from "./FloatingWidgetManager/FloatingWidgetManagerComponent";
 export * from "./ImageView/ImageViewComponent";
 export * from "./Log/LogComponent";
 export * from "./Menu/RootMenuComponent";
+export * from "./Menu/ToolbarMenu/ToolbarMenuComponent";
 export * from "./Placeholder/PlaceholderComponent";
 export * from "./RenderConfig/RenderConfigComponent";
 export * from "./RegionList/RegionListComponent";
