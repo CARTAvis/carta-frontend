@@ -21,7 +21,7 @@ export class RegionStore {
     static readonly MAX_LINE_WIDTH = 10;
     static readonly MAX_DASH_LENGTH = 50;
 
-     static readonly SWATCH_COLORS = [
+    static readonly SWATCH_COLORS = [
         Colors.BLUE3,
         Colors.GREEN3,
         Colors.ORANGE3,
@@ -79,10 +79,14 @@ export class RegionStore {
         return regionDashLength >= 0 && regionDashLength <= RegionStore.MAX_DASH_LENGTH;
     }
 
-    private PolygonBoundingBox(): {max: Point2D, min: Point2D} {
-        let _Max = this.controlPoints.reduce((point1, point2) => { return {x: Math.max(point1.x, point2.x), y: Math.max(point1.y, point2.y)}; });
-        let _Min = this.controlPoints.reduce((point1, point2) => { return {x: Math.min(point1.x, point2.x), y: Math.min(point1.y, point2.y)}; });
-        return {max: {x: _Max.x, y: _Max.y}, min: {x: _Min.x, y: _Min.y}};
+    private getPolygonBounds(): { maxPoint: Point2D, minPoint: Point2D } {
+        let maxPoint = this.controlPoints.reduce((point1, point2) => {
+            return {x: Math.max(point1.x, point2.x), y: Math.max(point1.y, point2.y)};
+        });
+        let minPoint = this.controlPoints.reduce((point1, point2) => {
+            return {x: Math.min(point1.x, point2.x), y: Math.min(point1.y, point2.y)};
+        });
+        return {maxPoint, minPoint};
     }
 
     @computed get isTemporary() {
@@ -94,15 +98,13 @@ export class RegionStore {
             return 0;
         }
         switch (this.regionType) {
-            case CARTA.RegionType.POINT:
-                return 4;
             case CARTA.RegionType.RECTANGLE:
                 return this.controlPoints[1].x * this.controlPoints[1].y;
             case CARTA.RegionType.ELLIPSE:
                 return 4 * this.controlPoints[1].x * this.controlPoints[1].y;
             case CARTA.RegionType.POLYGON:
-                let _box = this.PolygonBoundingBox();
-                return (_box.max.x - _box.min.x) * (_box.max.y - _box.min.y);
+                const boundingBox = this.getPolygonBounds();
+                return Math.abs(boundingBox.maxPoint.x - boundingBox.minPoint.x) * Math.abs(boundingBox.maxPoint.y - boundingBox.minPoint.y);
             default:
                 return 0;
         }
@@ -166,8 +168,10 @@ export class RegionStore {
                     `[${this.controlPoints[1].x.toFixed(1)}pix, ${this.controlPoints[1].y.toFixed(1)}pix], ` +
                     `${this.rotation.toFixed(1)}deg]`;
             case CARTA.RegionType.POLYGON:
+                // TODO: Region properties
+                const bounds = this.getPolygonBounds();
                 return `polygon[[${center}], ` +
-                    `[${this.PolygonBoundingBox().max.x.toFixed(1)}pix, ${this.PolygonBoundingBox().max.y.toFixed(1)}pix], ` +
+                    `[${bounds.maxPoint.x.toFixed(1)}pix, ${bounds.maxPoint.y.toFixed(1)}pix], ` +
                     `${this.rotation.toFixed(1)}deg]`;
             default:
                 return "Not Implemented";

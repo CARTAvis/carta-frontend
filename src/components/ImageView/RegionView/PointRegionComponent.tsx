@@ -1,11 +1,9 @@
 import * as React from "react";
-import {Colors} from "@blueprintjs/core";
-import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {Group, Rect, Transformer} from "react-konva";
+import {Group, Rect} from "react-konva";
 import Konva from "konva";
 import {FrameStore, RegionStore} from "stores";
-import {Point2D} from "models";
+import {imageToCanvasPos} from "./shared";
 
 export interface PointRegionComponentProps {
     region: RegionStore;
@@ -15,27 +13,21 @@ export interface PointRegionComponentProps {
     selected: boolean;
     onSelect?: (region: RegionStore) => void;
     onDoubleClick?: (region: RegionStore) => void;
-    onPanClick?: () => void;
 }
+
+const POINT_DRAG_WIDTH = 13;
+const POINT_WIDTH = 4;
 
 @observer
 export class PointRegionComponent extends React.Component<PointRegionComponentProps> {
-    @observable selectedRegionRef;
-
-    handleRef = (ref) => {
-        if (ref && this.selectedRegionRef !== ref) {
-            this.selectedRegionRef = ref;
-        }
-    };
-
     handleDoubleClick = () => {
         if (this.props.onDoubleClick) {
             this.props.onDoubleClick(this.props.region);
         }
     };
 
-    handleClick = (konvaEvent) => {
-        const mouseEvent = konvaEvent.evt as MouseEvent;
+    handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        const mouseEvent = konvaEvent.evt;
 
         if (mouseEvent.button === 0 && !(mouseEvent.ctrlKey || mouseEvent.metaKey)) {
             // Select click
@@ -56,14 +48,14 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
         this.props.region.endEditing();
     };
 
-    handleDrag = (konvaEvent) => {
+    handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
-            const node = konvaEvent.target as Konva.Node;
+            const node = konvaEvent.target;
             const region = this.props.region;
             const frame = this.props.frame;
             const centerImageSpace = region.controlPoints[0];
 
-            const currentCenterPixelSpace = this.getCanvasPos(centerImageSpace.x, centerImageSpace.y);
+            const currentCenterPixelSpace = imageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
             const newCenterPixelSpace = node.position();
             const deltaPositionImageSpace = {x: (newCenterPixelSpace.x - currentCenterPixelSpace.x) / frame.zoomLevel, y: -(newCenterPixelSpace.y - currentCenterPixelSpace.y) / frame.zoomLevel};
             const newPosition = {x: centerImageSpace.x + deltaPositionImageSpace.x, y: centerImageSpace.y + deltaPositionImageSpace.y};
@@ -71,85 +63,41 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
         }
     };
 
-    private getImagePos(canvasX: number, canvasY: number): Point2D {
-        const frameView = this.props.frame.requiredFrameView;
-        return {
-            x: (canvasX / this.props.layerWidth) * (frameView.xMax - frameView.xMin) + frameView.xMin - 1,
-            // y coordinate is flipped in image space
-            y: (canvasY / this.props.layerHeight) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
-        };
-    }
-
-    private getCanvasPos(imageX: number, imageY: number) {
-        const currentView = this.props.frame.requiredFrameView;
-        const viewWidth = currentView.xMax - currentView.xMin;
-        const viewHeight = currentView.yMax - currentView.yMin;
-        return {
-            x: ((imageX + 1 - currentView.xMin) / viewWidth * this.props.layerWidth),
-            y: this.props.layerHeight - ((imageY + 1 - currentView.yMin) / viewHeight * this.props.layerHeight)
-        };
-    }
-
     render() {
         const region = this.props.region;
         const frame = this.props.frame;
         const centerImageSpace = region.controlPoints[0];
 
-        const centerPixelSpace = this.getCanvasPos(centerImageSpace.x, centerImageSpace.y);
-        const pointBoardWidth = 13;
-
-        const commonProps = {
-            x: centerPixelSpace.x,
-            y: centerPixelSpace.y,
-            stroke: region.color,
-            strokeWidth: region.lineWidth,
-            draggable: true,
-            onDragStart: this.handleDragStart,
-            onDragEnd: this.handleDragEnd,
-            onDragMove: this.handleDrag,
-            onClick: this.handleClick,
-            onDblClick: this.handleDoubleClick,
-            perfectDrawEnabled: false,
-            ref: this.handleRef
-        };
+        const centerPixelSpace = imageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
 
         return (
             <Group>
                 <Rect
-                    {...commonProps}
-                    width={4}
-                    height={4}
-                    offsetX={2}
-                    offsetY={2}
+                    x={centerPixelSpace.x}
+                    y={centerPixelSpace.y}
+                    width={POINT_WIDTH}
+                    height={POINT_WIDTH}
+                    offsetX={POINT_WIDTH * 0.5}
+                    offsetY={POINT_WIDTH * 0.5}
                     fill={region.color}
-                    hitStrokeWidth={16}
                 />
-                {this.selectedRegionRef && this.props.selected &&
                 <Rect
-                    {...commonProps}
-                    width={pointBoardWidth}
-                    height={pointBoardWidth}
-                    offsetX={pointBoardWidth * .5}
-                    offsetY={pointBoardWidth * .5}
-                    opacity={0}
+                    x={centerPixelSpace.x}
+                    y={centerPixelSpace.y}
+                    width={POINT_DRAG_WIDTH}
+                    stroke={"white"}
+                    strokeWidth={1}
+                    height={POINT_DRAG_WIDTH}
+                    offsetX={POINT_DRAG_WIDTH * 0.5}
+                    offsetY={POINT_DRAG_WIDTH * 0.5}
+                    opacity={this.props.selected ? 1 : 0}
+                    draggable={true}
+                    onDragStart={this.handleDragStart}
+                    onDragEnd={this.handleDragEnd}
+                    onDragMove={this.handleDrag}
+                    onClick={this.handleClick}
+                    onDblClick={this.handleDoubleClick}
                 />
-                }
-                {this.selectedRegionRef && this.props.selected &&
-                <Transformer
-                    node={this.selectedRegionRef}
-                    rotateAnchorOffset={15}
-                    anchorSize={6}
-                    borderStroke={Colors.TURQUOISE5}
-                    borderStrokeWidth={3}
-                    borderDash={[3]}
-                    keepRatio={false}
-                    centeredScaling={true}
-                    draggable={false}
-                    borderEnabled={true}
-                    resizeEnabled={false}
-                    rotateEnabled={false}
-                />
-                }
             </Group>
         );
     }
