@@ -100,7 +100,9 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     }
 
     onResize = (width: number, height: number) => {
-        this.props.appStore.setImageViewDimensions(width, height);
+        if (width > 0 && height > 0) {
+            this.props.appStore.setImageViewDimensions(width, height);
+        }
     };
 
     initCenter = (cursorInfo: CursorInfo) => {
