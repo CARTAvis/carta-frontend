@@ -47,7 +47,6 @@ export class LinePlotComponentProps {
     width?: number;
     height?: number;
     data?: { x: number, y: number }[];
-    multiLineData?: Map<string, { x: number, y: number }[]>;
     dataStat?: {mean: number, rms: number};
     cursorX?: {profiler: number, image: number, unit: string};
     comments?: string[];
@@ -68,7 +67,6 @@ export class LinePlotComponentProps {
     interpolateLines?: boolean;
     markers?: LineMarker[];
     showTopAxis?: boolean;
-    showBottomAxis?: boolean;
     topAxisTickFormatter?: (value: number, index: number, values: number[]) => string | number;
     graphClicked?: (x: number) => void;
     graphRightClicked?: (x: number) => void;
@@ -78,6 +76,18 @@ export class LinePlotComponentProps {
     graphZoomReset?: () => void;
     graphCursorMoved?: (x: number) => void;
     scrollZoom?: boolean;
+    multiPlotData?: Map<string, { x: number, y: number }[]>;
+    colorRangeEnd?: number;
+    showXAxisTicks?: boolean;
+    showXAxisLabel?: boolean;
+    xZeroLineColor?: string;
+    yZeroLineColor?: string;
+    showLegend?: boolean;
+    xTickMarkLength?: number;
+    multiPlotBorderColor?: Map<string, string>;
+    plotType?: string;
+    dataBackgroundColor?: Array<string>;
+    isGroupSubPlot?: boolean;
 }
 
 // Maximum time between double clicks
@@ -336,7 +346,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     onStageMouseMove = (ev) => {
-        if (this.props.data || this.props.multiLineData) {
+        if (this.props.data || this.props.multiPlotData) {
             const mouseEvent: MouseEvent = ev.evt;
             const chartArea = this.chartArea;
             let mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
@@ -497,9 +507,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         } else {
             if (this.props.data && this.props.data.length) {
                 rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
-            } else if (this.props.multiLineData && this.props.multiLineData.size) {
+            } else if (this.props.multiPlotData && this.props.multiPlotData.size) {
                 
-                this.props.multiLineData.forEach((value, key) => {
+                this.props.multiPlotData.forEach((value, key) => {
                     if (key === StokesCoordinate.LinearPolarizationQ || key === StokesCoordinate.LinearPolarizationU) {
                         rows.push(`${key}\t`);
                         value.forEach(o => {
@@ -725,7 +735,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return selectionRect;
     };
 
-    private genBorderRect = () => {
+    genBorderRect = () => {
         const chartArea = this.chartArea;
         let borderRect = null;
         if (this.chartArea) {
@@ -747,7 +757,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     private getCursorInfo = () => {
         let cursorInfo = null;
-        if (this.props.data && this.props.cursorX) {
+        if (this.props.data && this.props.cursorX && !this.props.isGroupSubPlot) {
             let nearest = binarySearchByX(this.props.data,
                             this.isMouseEntered ? this.props.cursorX.profiler : this.props.cursorX.image);
             if (nearest) {
@@ -801,7 +811,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 </Stage>
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
-                    visible={this.isMouseEntered && (this.props.data !== undefined || this.props.multiLineData !== undefined)}
+                    visible={this.isMouseEntered && (this.props.data !== undefined || this.props.multiPlotData !== undefined)}
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />

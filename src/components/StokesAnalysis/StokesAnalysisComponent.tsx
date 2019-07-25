@@ -4,7 +4,7 @@ import {computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {LinePlotComponent, LinePlotComponentProps} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, ScatterPlotComponent} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
 import {WidgetConfig, WidgetProps, SpectralProfileStore, FrameStore} from "stores";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
@@ -229,8 +229,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     }
 
     private calculateXYborder(xValues: Array<number>, yValues: Array<number>): {xMin: number, xMax: number, yMin: number, yMax: number} {
-        let xMin = Math.min(... xValues);
-        let xMax = Math.max(... xValues);
+        let xMin = Math.min(... xValues.filter(n => { return !isNaN(n); }));
+        let xMax = Math.max(... xValues.filter(n => { return !isNaN(n); }));
         let yMin = Number.MAX_VALUE;
         let yMax = -Number.MAX_VALUE;
 
@@ -241,8 +241,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             xMax = localXMax;
         }
 
-        yMin = Math.min(... yValues);
-        yMax = Math.max(... yValues);
+        yMin = Math.min(... yValues.filter(n => { return !isNaN(n); }));
+        yMax = Math.max(... yValues.filter(n => { return !isNaN(n); }));
 
         if (yMin === Number.MAX_VALUE) {
             yMin = undefined;
@@ -331,9 +331,14 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             imageName: imageName,
             plotName: "profile",
             forceScientificNotationTicksY: true,
-            showBottomAxis: false,
-            multiLineData: new Map(),
+            showXAxisTicks: false,
+            showXAxisLabel: false,
+            multiPlotData: new Map(),
+            showLegend: true,
+            xTickMarkLength: 0,
             graphCursorMoved: this.onGraphCursorMoved,
+            multiPlotBorderColor: new Map(),
+            isGroupSubPlot: true,
             markers: []
         };
 
@@ -344,9 +349,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             imageName: imageName,
             plotName: "profile",
             forceScientificNotationTicksY: true,
-            showBottomAxis: false, 
-            multiLineData: new Map(),
+            showXAxisTicks: false,
+            showXAxisLabel: false, 
+            multiPlotData: new Map(),
+            xTickMarkLength: 0,
             graphCursorMoved: this.onGraphCursorMoved,
+            isGroupSubPlot: true,
             markers: []
         };
 
@@ -357,12 +365,16 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             imageName: imageName,
             plotName: "profile",
             forceScientificNotationTicksY: true,
-            multiLineData: new Map(),
+            showXAxisTicks: true,
+            showXAxisLabel: true,
+            multiPlotData: new Map(),
             graphCursorMoved: this.onGraphCursorMoved,
+            isGroupSubPlot: true,
             markers: []
         };
 
-        let qvsuLinePlotProps: LinePlotComponentProps = {
+        let qvsuScatterPlotProps: LinePlotComponentProps = {
+            plotType: "bubble",
             xLabel: "Value",
             yLabel: "Value",
             darkMode: appStore.darkTheme,
@@ -370,8 +382,15 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             plotName: "profile",
             forceScientificNotationTicksY: true,
             forceScientificNotationTicksX: true,
+            showXAxisTicks: true,
+            showXAxisLabel: true,
             usePointSymbols: true,
-            multiLineData: new Map()
+            multiPlotData: new Map(),
+            xZeroLineColor: Colors.RED2,
+            yZeroLineColor: Colors.RED2,
+            multiPlotBorderColor: new Map(),
+            isGroupSubPlot: true,
+            colorRangeEnd: 250
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
@@ -380,11 +399,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             const currentPlotData = this.plotDataPI;
             if (currentPlotData && currentPlotData.piValues && currentPlotData.paValues && currentPlotData.qValues && currentPlotData.uValues && currentPlotData.quValues) {
                 
-                piLinePlotProps.multiLineData.set(StokesCoordinate.PolarizedIntensity, currentPlotData.piValues.dataset);
-                paLinePlotProps.multiLineData.set(StokesCoordinate.PolarizationAngle, currentPlotData.paValues.dataset);
-                quLinePlotProps.multiLineData.set(StokesCoordinate.LinearPolarizationQ, currentPlotData.qValues.dataset);
-                quLinePlotProps.multiLineData.set(StokesCoordinate.LinearPolarizationU, currentPlotData.uValues.dataset);
-                qvsuLinePlotProps.multiLineData.set(StokesCoordinate.PolarizationQU, currentPlotData.quValues.dataset);
+                quLinePlotProps.multiPlotData.set(StokesCoordinate.LinearPolarizationQ, currentPlotData.qValues.dataset);
+                quLinePlotProps.multiPlotData.set(StokesCoordinate.LinearPolarizationU, currentPlotData.uValues.dataset);
+                piLinePlotProps.data = currentPlotData.piValues.dataset;
+                paLinePlotProps.data = currentPlotData.paValues.dataset;
+                qvsuScatterPlotProps.data = currentPlotData.quValues.dataset;
 
                 let qBorder = currentPlotData.qValues.border;
                 let uBorder = currentPlotData.uValues.border;
@@ -409,23 +428,23 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     paLinePlotProps.yMin = paBorder.yMin;
                     paLinePlotProps.yMax = paBorder.yMax;
                 }
-                qvsuLinePlotProps.xMin = quBorder.xMin;
-                qvsuLinePlotProps.xMax = quBorder.xMax;
-                qvsuLinePlotProps.yMin = quBorder.yMin;
-                qvsuLinePlotProps.yMax = quBorder.yMax;
+                qvsuScatterPlotProps.xMin = quBorder.xMin;
+                qvsuScatterPlotProps.xMax = quBorder.xMax;
+                qvsuScatterPlotProps.yMin = quBorder.yMin;
+                qvsuScatterPlotProps.yMax = quBorder.yMax;
             }
 
             paLinePlotProps.yLabel = "PA (" + frame.unit + ")";
             if (this.widgetStore.fractionalPolVisible) {
                 quLinePlotProps.yLabel = "Q/I + U/I (%)";
                 piLinePlotProps.yLabel = "PI/I (%)";
-                qvsuLinePlotProps.xLabel = "Q/I (%)";
-                qvsuLinePlotProps.yLabel = "U/I (%)";
+                qvsuScatterPlotProps.xLabel = "Q/I (%)";
+                qvsuScatterPlotProps.yLabel = "U/I (%)";
             } else {
                 quLinePlotProps.yLabel = "Q + U (" + frame.unit + ")";
                 piLinePlotProps.yLabel = "PI (" + frame.unit + ")";
-                qvsuLinePlotProps.xLabel = "Stokes Q (" + frame.unit + ")";
-                qvsuLinePlotProps.yLabel = "Stokes U (" + frame.unit + ")";
+                qvsuScatterPlotProps.xLabel = "Stokes Q (" + frame.unit + ")";
+                qvsuScatterPlotProps.yLabel = "Stokes U (" + frame.unit + ")";
             }
 
             const wcsLabel = this.getChannelLabel();
@@ -462,10 +481,13 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 piLinePlotProps.markers.push(cursor);
                 quLinePlotProps.markers.push(cursor);
             }
+            quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, Colors.GREEN2);
+            quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationU, Colors.BLUE2);
+
             paLinePlotProps.comments = this.exportHeaders;
             piLinePlotProps.comments = this.exportHeaders;
             quLinePlotProps.comments = this.exportHeaders;
-            qvsuLinePlotProps.comments = this.exportHeaders;
+            qvsuScatterPlotProps.comments = this.exportHeaders;
 
         }
 
@@ -487,7 +509,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         </div>
                     </div>
                     <div className="profile-plot-qvsu">
-                        <LinePlotComponent {...qvsuLinePlotProps}/>
+                        <ScatterPlotComponent {...qvsuScatterPlotProps}/>
                     </div>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
