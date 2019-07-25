@@ -321,6 +321,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                     offsetY={2}
                     rotation={45}
                     fill={region.color}
+                    hitStrokeWidth={16}
                 />
                 }
                 {region.regionType === CARTA.RegionType.POINT && this.selectedRegionRef && this.props.selected && this.props.listening &&
