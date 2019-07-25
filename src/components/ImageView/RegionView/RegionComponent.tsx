@@ -5,8 +5,8 @@ import {observer} from "mobx-react";
 import {Ellipse, Group, Rect, Transformer} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
-import {FrameStore, RegionStore} from "../../../stores";
-import {Point2D} from "../../../models";
+import {FrameStore, RegionStore} from "stores";
+import {Point2D} from "models";
 
 export interface RegionComponentProps {
     region: RegionStore;
@@ -278,11 +278,17 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         const centerImageSpace = region.controlPoints[0];
 
         const centerPixelSpace = this.getCanvasPos(centerImageSpace.x, centerImageSpace.y);
-        const width = (region.controlPoints[1].x * frame.zoomLevel) / devicePixelRatio;
-        const height = (region.controlPoints[1].y * frame.zoomLevel) / devicePixelRatio;
+        let width = 0;
+        let height = 0;
+        if (region.regionType !== CARTA.RegionType.POINT) {
+            width = (region.controlPoints[1].x * frame.zoomLevel) / devicePixelRatio;
+            height = (region.controlPoints[1].y * frame.zoomLevel) / devicePixelRatio;
+        }
 
         // Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
         const borderDash = [(width + height) * 4 / 100.0];
+
+        const pointBoardWidth = 13;
 
         const commonProps = {
             rotation: -region.rotation,
@@ -306,6 +312,28 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
 
         return (
             <Group>
+                {region.regionType === CARTA.RegionType.POINT &&
+                <Rect
+                    {...commonProps}
+                    width={4}
+                    height={4}
+                    offsetX={2}
+                    offsetY={2}
+                    rotation={45}
+                    fill={region.color}
+                    hitStrokeWidth={16}
+                />
+                }
+                {region.regionType === CARTA.RegionType.POINT && this.selectedRegionRef && this.props.selected && this.props.listening &&
+                <Rect
+                    {...commonProps}
+                    width={pointBoardWidth}
+                    height={pointBoardWidth}
+                    offsetX={pointBoardWidth * .5}
+                    offsetY={pointBoardWidth * .5}
+                    opacity={0}
+                />
+                }
                 {region.regionType === CARTA.RegionType.RECTANGLE &&
                 <Rect
                     {...commonProps}
@@ -328,11 +356,14 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                     rotateAnchorOffset={15}
                     anchorSize={6}
                     borderStroke={Colors.TURQUOISE5}
-                    borderDash={region.regionType === CARTA.RegionType.ELLIPSE ? borderDash : null}
+                    borderStrokeWidth={3}
+                    borderDash={region.regionType === CARTA.RegionType.POINT ? [.3] : borderDash}
                     keepRatio={false}
                     centeredScaling={true}
                     draggable={false}
-                    borderEnabled={false}
+                    borderEnabled={region.regionType === CARTA.RegionType.POINT ? true : false}
+                    resizeEnabled={region.regionType === CARTA.RegionType.POINT ? false : true}
+                    rotateEnabled={region.regionType === CARTA.RegionType.POINT ? false : true}
                     onTransformStart={this.handleTransformStart}
                     onTransform={this.handleTransform}
                     onTransformEnd={this.handleTransformEnd}
