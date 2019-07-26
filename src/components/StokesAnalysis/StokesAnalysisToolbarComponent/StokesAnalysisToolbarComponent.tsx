@@ -24,7 +24,7 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
         const widgetStore = this.props.widgetStore;
 
         let enableRegionSelect = false;
-        let enableFractionalPol = true;
+        let enableFractionalPol = false;
         let regionId = 0;
         // Fill region select options with all non-temporary regions that are closed or point type
         let profileRegionOptions: IOptionProps[];
@@ -39,6 +39,7 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
             });
 
             enableRegionSelect = profileRegionOptions.length > 1;
+            enableFractionalPol = appStore.activeFrame.frameInfo.fileInfoExtended.stokes > 1;
         }
 
         return (
@@ -46,7 +47,7 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
                 <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
                     <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect}/>
                 </FormGroup>
-                <FormGroup label={"Frac. Pol."} inline={true}>
+                <FormGroup label={"Frac. Pol."} inline={true} disabled={!enableFractionalPol}>
                     <Switch checked={widgetStore.fractionalPolVisible} onChange={this.handleFractionalPolChanged} disabled={!enableFractionalPol}/>
                 </FormGroup>
             </div>

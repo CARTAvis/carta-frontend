@@ -58,6 +58,7 @@ export class LinePlotComponentProps {
     yLabel?: string;
     logY?: boolean;
     lineColor?: string;
+    opacity?: number;
     darkMode?: boolean;
     imageName?: string;
     plotName?: string;

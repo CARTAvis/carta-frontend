@@ -3,6 +3,7 @@ import * as _ from "lodash";
 import {ChartArea, ChartData, ChartDataSets, ChartOptions} from "chart.js";
 import {Scatter} from "react-chartjs-2";
 import {Colors} from "@blueprintjs/core";
+import {clamp, hexStringToRgba} from "utilities";
 
 export class PlotContainerProps {
     width?: number;
@@ -16,6 +17,7 @@ export class PlotContainerProps {
     yLabel?: string;
     logY?: boolean;
     lineColor?: string;
+    opacity?: number;
     darkMode?: boolean;
     usePointSymbols?: boolean;
     forceScientificNotationTicksX?: boolean;
@@ -141,6 +143,9 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         else if (props.lineColor !== nextProps.lineColor) {
             return true;
         }
+        else if (props.opacity !== nextProps.opacity) {
+            return true;
+        }
         else if (props.usePointSymbols !== nextProps.usePointSymbols) {
             return true;
         }
@@ -230,8 +235,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
     render() {
         const labelColor = this.props.darkMode ? Colors.LIGHT_GRAY4 : Colors.GRAY1;
         const gridColor = this.props.darkMode ? Colors.DARK_GRAY5 : Colors.LIGHT_GRAY1;
-        const lineColor = this.props.lineColor || (this.props.darkMode ? Colors.BLUE4 : Colors.BLUE2);
-        
+        let lineColor = this.props.lineColor || (this.props.darkMode ? Colors.BLUE4 : Colors.BLUE2);
+        const opacity = clamp(this.props.opacity || 1.0, 0, 1);
+        if (opacity < 1.0) {
+            lineColor = hexStringToRgba(lineColor, opacity);
+        }
         // ChartJS plot
         let plotOptions: ChartOptions = {
             maintainAspectRatio: false,

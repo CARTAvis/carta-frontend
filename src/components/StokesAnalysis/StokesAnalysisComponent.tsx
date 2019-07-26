@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {computed, observable} from "mobx";
+import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
@@ -74,6 +74,18 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return headerString;
     }
 
+    @computed get matchesSelectedRegion() {
+        const appStore = this.props.appStore;
+        const frame = appStore.activeFrame;
+        if (frame) {
+            const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
+            if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
+                return widgetRegion === frame.regionSet.selectedRegion.regionId;
+            }
+        }
+        return false;
+    }
+
     constructor(props: WidgetProps) {
         super(props);
         if (!props.docked && props.id === StokesAnalysisComponent.WIDGET_CONFIG.type) {
@@ -85,6 +97,26 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 this.props.appStore.widgetsStore.stokesAnalysisWidgets.set(this.props.id, new StokesAnalysisWidgetStore());
             }
         }
+
+        autorun(() => {
+            if (this.widgetStore) {
+                const appStore = this.props.appStore;
+                const frame = appStore.activeFrame;
+                let progressString = "";
+                const currentData = this.plotData;
+                if (currentData && isFinite(currentData.progress) && currentData.progress < 1.0) {
+                    progressString = `[${(currentData.progress * 100).toFixed(0)}% complete]`;
+                }
+                if (frame) {
+                    const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
+                    const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
+                    const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
+                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
+                }
+            } else {
+                this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis: Cursor`);
+            }
+        });
     }
 
     onResize = (width: number, height: number) => {
@@ -179,29 +211,31 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return vals;
     }
 
-    private calculateCompositeProfile(statsType: CARTA.StatsType): {qProfile: Array<number>, uProfile: Array<number>, piProfile: Array<number>, paProfile: Array<number>} {
-        let qProfileOriginal = this.profileStore.getProfile(StokesCoordinate.LinearPolarizationQ, statsType);
-        let uProfileOriginal = this.profileStore.getProfile(StokesCoordinate.LinearPolarizationU, statsType);
-        let piProfile = [];
-        let paProfile = [];
-        let qProfile = [];
-        let uProfile = [];
+    private calculateCompositeProfile(statsType: CARTA.StatsType): {qProfile: Array<number>, uProfile: Array<number>, piProfile: Array<number>, paProfile: Array<number>, progress: number} {
+        if (this.profileStore) {
+            let qProfileOriginal = this.profileStore.getProfile(StokesCoordinate.LinearPolarizationQ, statsType);
+            let uProfileOriginal = this.profileStore.getProfile(StokesCoordinate.LinearPolarizationU, statsType);
+            let piProfile = [];
+            let paProfile = [];
+            let qProfile = [];
+            let uProfile = [];
 
-        if (qProfileOriginal && uProfileOriginal && qProfileOriginal.values && uProfileOriginal.values) {
-            qProfile = Array.prototype.slice.call(qProfileOriginal.values);
-            uProfile = Array.prototype.slice.call(uProfileOriginal.values);
-            piProfile = StokesAnalysisComponent.calculatePI(qProfileOriginal.values, uProfileOriginal.values);
-            paProfile = StokesAnalysisComponent.calculatePA(qProfileOriginal.values, uProfileOriginal.values);
-            
-            if (this.widgetStore.fractionalPolVisible) {
-                let iProfileOriginal = this.profileStore.getProfile(StokesCoordinate.TotalIntensity, statsType);
-                if (iProfileOriginal && iProfileOriginal.values) {
-                    piProfile = StokesAnalysisComponent.calculateFractionalPol(piProfile, iProfileOriginal.values);
-                    qProfile = StokesAnalysisComponent.calculateFractionalPol(qProfile, iProfileOriginal.values);
-                    uProfile = StokesAnalysisComponent.calculateFractionalPol(uProfile, iProfileOriginal.values);
+            if (qProfileOriginal && uProfileOriginal && qProfileOriginal.values && uProfileOriginal.values) {
+                qProfile = Array.prototype.slice.call(qProfileOriginal.values);
+                uProfile = Array.prototype.slice.call(uProfileOriginal.values);
+                piProfile = StokesAnalysisComponent.calculatePI(qProfileOriginal.values, uProfileOriginal.values);
+                paProfile = StokesAnalysisComponent.calculatePA(qProfileOriginal.values, uProfileOriginal.values);
+                
+                if (this.widgetStore.fractionalPolVisible) {
+                    let iProfileOriginal = this.profileStore.getProfile(StokesCoordinate.TotalIntensity, statsType);
+                    if (iProfileOriginal && iProfileOriginal.values) {
+                        piProfile = StokesAnalysisComponent.calculateFractionalPol(piProfile, iProfileOriginal.values);
+                        qProfile = StokesAnalysisComponent.calculateFractionalPol(qProfile, iProfileOriginal.values);
+                        uProfile = StokesAnalysisComponent.calculateFractionalPol(uProfile, iProfileOriginal.values);
+                    }
                 }
+                return {qProfile, uProfile, piProfile, paProfile, progress: qProfileOriginal.progress};
             }
-            return {qProfile, uProfile, piProfile, paProfile};
         }
         return null;
     }
@@ -275,14 +309,13 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return a === b && a === c && a === d && a !== null;
     }
 
-    @computed get plotDataPI(): { 
+    @computed get plotData(): { 
         qValues: {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}}, 
         uValues: {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}},
         piValues: {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}},
         paValues: {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}},
         quValues: {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}},
-        sharedMinX: number, 
-        sharedMaxX: number, polIntensityMinY: number, polIntensityMaxY: number} {
+        progress: number} {
         const frame = this.props.appStore.activeFrame;
         if (!frame) {
             return null;
@@ -294,6 +327,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             uProfile: Array<number>,
             piProfile: Array<number>,
             paProfile: Array<number>,
+            progress: number,
         };
         let regionId = this.widgetStore.regionIdMap.get(fileId) || 0;
         if (frame.regionSet) {
@@ -311,7 +345,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let uDic = this.assambleLinePlotData(compositeProfile.uProfile, channelInfo);
             let quDic = this.assambleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile);
 
-            return {qValues: qDic, uValues: uDic, piValues: piDic, paValues: paDic, quValues: quDic , sharedMinX: 0, sharedMaxX: 0, polIntensityMinY: 0, polIntensityMaxY: 0};
+            return {qValues: qDic, uValues: uDic, piValues: piDic, paValues: paDic, quValues: quDic , progress: compositeProfile.progress};
         }
         return null;
     }
@@ -396,7 +430,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
 
         if (this.profileStore && frame) {
-            const currentPlotData = this.plotDataPI;
+            const currentPlotData = this.plotData;
             if (currentPlotData && currentPlotData.piValues && currentPlotData.paValues && currentPlotData.qValues && currentPlotData.uValues && currentPlotData.quValues) {
                 
                 quLinePlotProps.multiPlotData.set(StokesCoordinate.LinearPolarizationQ, currentPlotData.qValues.dataset);

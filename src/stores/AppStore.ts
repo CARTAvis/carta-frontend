@@ -260,6 +260,7 @@ export class AppStore {
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets, fileId);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.histogramWidgets, fileId);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.spectralProfileWidgets, fileId);
+            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets, fileId);
 
             if (this.backendService.closeFile(fileId)) {
                 if (this.activeFrame.frameInfo.fileId === fileId) {
@@ -280,6 +281,7 @@ export class AppStore {
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.histogramWidgets);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.spectralProfileWidgets);
+            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets);
         }
     };
 
@@ -454,7 +456,7 @@ export class AppStore {
             const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
             // TODO: dynamic tile size
             const tileSizeFullRes = reqView.mip * 256;
-            const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes, y: midPointImageCoords.y / tileSizeFullRes};
+            const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
             this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.compressionQuality);
         }, IMAGE_CHANNEL_THROTTLE_TIME);
 
@@ -491,7 +493,7 @@ export class AppStore {
                 const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
                 // TODO: dynamic tile size
                 const tileSizeFullRes = reqView.mip * 256;
-                const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes, y: midPointImageCoords.y / tileSizeFullRes};
+                const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
                 // TODO: throttle tile requests somehow
                 this.tileService.requestTiles(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords, this.compressionQuality);
             }
@@ -614,7 +616,7 @@ export class AppStore {
 
             profileStore.stokes = spectralProfileData.stokes;
             for (let profile of spectralProfileData.profiles) {
-                profileStore.setProfile(ProtobufProcessing.ProcessSpectralProfile(profile));
+                profileStore.setProfile(ProtobufProcessing.ProcessSpectralProfile(profile, spectralProfileData.progress));
             }
         }
     };
@@ -768,6 +770,7 @@ export class AppStore {
                 WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.statsWidgets, fileId, regionId);
                 WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.histogramWidgets, fileId, regionId);
                 WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.spectralProfileWidgets, fileId, regionId);
+                WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets, fileId, regionId);
                 // delete region
                 this.activeFrame.regionSet.deleteRegion(region);
             }
