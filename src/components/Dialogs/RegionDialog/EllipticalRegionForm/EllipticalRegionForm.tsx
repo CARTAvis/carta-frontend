@@ -1,7 +1,6 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
-import {observable} from "mobx";
 import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {RegionStore} from "stores";
@@ -13,8 +12,6 @@ const KEYCODE_ENTER = 13;
 
 @observer
 export class EllipticalRegionForm extends React.Component<{ region: RegionStore, wcsInfo: number }> {
-    @observable displayColorPicker: boolean;
-
     private static readonly REGION_PIXEL_EPS = 1.0e-3;
 
     private handleNameChange = (ev) => {
