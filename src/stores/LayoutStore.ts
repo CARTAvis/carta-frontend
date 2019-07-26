@@ -130,30 +130,27 @@ export class LayoutStore {
         return null;
     };
 
-    // TODO: error handling
-    private genNewContentItem = (newParentItem: GoldenLayout.ContentItem, newConfigContent: any, currentLayout: GoldenLayout): void => {
-        if (!newParentItem || !newConfigContent || !currentLayout) {
+    private fillComponent = (newParentContent, parentContent) => {
+        if (!newParentContent || !parentContent) {
             return;
         }
 
-        newConfigContent.forEach((childConfig) => {
-            if (childConfig.type) {
-                if (childConfig.type === "stack" || childConfig.type === "row" || childConfig.type === "column") {
-                    let newItem = currentLayout.createContentItem({
-                        type: childConfig.type,
-                        content: []
-                    }) as unknown;
-                    newParentItem.addChild(newItem as GoldenLayout.ContentItem);
-                    this.genNewContentItem(newItem as GoldenLayout.ContentItem, childConfig.content, currentLayout);
-                } else if (childConfig.type === "component") { // add component
-                    const componentConfig = AppStore.getComponentConfig(childConfig.id, this.appStore);
-                    if (componentConfig) {
-                        newParentItem.addChild(componentConfig);
-                    }
+        parentContent.forEach((child) => {
+            if (child.type === "stack" || child.type === "row" || child.type === "column") {
+                let simpleChild = {
+                    type: child.type,
+                    content: []
+                };
+                newParentContent.push(simpleChild);
+                this.fillComponent(simpleChild.content, child.content);
+            } else if (child.type === "component") {
+                const componentConfig = AppStore.getComponentConfig(child.id, this.appStore);
+                if (componentConfig) {
+                    newParentContent.push(componentConfig);
                 }
             }
         });
-    }
+    };
 
     @action applyLayout = (layoutName: string) => {
         if (!this.layoutExist(layoutName)) {
@@ -161,27 +158,29 @@ export class LayoutStore {
             return;
         }
 
-        let currentLayout: GoldenLayout = this.widgetsStore.dockedLayout;
-        const currentRoot: GoldenLayout.ContentItem = currentLayout.root.contentItems[0];
+        const config = this.layouts[layoutName];
+        const arrangementConfig = {
+            type: config.content[0].type,
+            content: []
+        };
+        this.fillComponent(arrangementConfig.content, config.content[0].content);
 
-        try {
-            // Create new root ContentItem for new layout
-            const newConfig = this.layouts[layoutName];
-            let newRoot = currentLayout.createContentItem({
-                type: newConfig.content[0].type,
-                content: []
-            }) as unknown;
+        const mainLayoutConfig = {
+            settings: {
+                showPopoutIcon: false,
+                showCloseIcon: false
+            },
+            dimensions: {
+                minItemWidth: 250,
+                minItemHeight: 200,
+                dragProxyWidth: 600,
+                dragProxyHeight: 270,
+            },
+            content: [arrangementConfig]
+        };
 
-            // Recursively generate the root ContentItem according to saved config
-            this.genNewContentItem(newRoot as GoldenLayout.ContentItem, newConfig.content[0].content, currentLayout);
-
-            // Prevent it from re-initialising any child items
-            (newRoot as GoldenLayout.ContentItem).isInitialised = true;
-
-            // Replace current layout's root with newly generated root
-            currentLayout.root.replaceChild(currentRoot, newRoot as GoldenLayout.ContentItem);
-        } catch (e) {
-            this.alertStore.showAlert(`Applying layout failed! Layout ${layoutName} may be broken. ` + e.message);
-        }
-    };
+        const widgetsStore = this.appStore.widgetsStore;
+        widgetsStore.dockedLayout.destroy();
+        widgetsStore.setDockedLayout(new GoldenLayout(mainLayoutConfig, this.appStore.getImageViewContainer()));
+    }
 }

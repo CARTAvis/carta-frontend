@@ -175,6 +175,14 @@ export class WidgetsStore {
     };
 
     @action setDockedLayout(layout: GoldenLayout) {
+        this.addRenderConfigWidget("render-config-0");
+        this.addAnimatorWidget("animator-0");
+        this.addRegionListWidget("region-list-0");
+        this.addSpatialProfileWidget("spatial-profiler-0", "x", -1, 0);
+        this.addSpatialProfileWidget("spatial-profiler-1", "y", -1, 0);
+        this.addSpectralProfileWidget("spectral-profiler-0", "z");
+        this.addStatsWidget("stats-0");
+
         layout.registerComponent("placeholder", PlaceholderComponent);
         layout.registerComponent("image-view", ImageViewComponent);
         layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
@@ -283,8 +291,8 @@ export class WidgetsStore {
             // Clean up removed widget's store (ignoring items that have been floated)
             if (config.component !== "floated") {
                 const id = config.id as string;
-                console.log(`itemDestroyed: ${id}`);
-                this.removeWidget(id, config.component);
+                // console.log(`itemDestroyed: ${id}`);
+                // this.removeWidget(id, config.component);
             }
         }
     };

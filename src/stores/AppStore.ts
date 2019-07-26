@@ -66,6 +66,8 @@ export class AppStore {
     @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
     @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
 
+    private imageViewerContainer: HTMLElement;
+
     static readonly COMPONENT_CONFIG = new Map<string, any>([
         ["image-view", {
             type: "react-component",
@@ -126,6 +128,14 @@ export class AppStore {
         componentConfig.props = {appStore: appStore, id: id, docked: true};
         return componentConfig;
     };
+
+    public getImageViewContainer = (): HTMLElement => {
+        return this.imageViewerContainer;
+    }
+
+    public setImageViewContainer = (container: HTMLElement) => {
+        this.imageViewerContainer = container;
+    }
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {

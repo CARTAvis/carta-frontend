@@ -27,8 +27,6 @@ import "./layout-theme.css";
 
 @HotkeysTarget @observer
 export class App extends React.Component<{ appStore: AppStore }> {
-
-    private glContainer: HTMLElement;
     private previousConnectionStatus: ConnectionStatus;
 
     constructor(props: { appStore: AppStore }) {
@@ -179,25 +177,20 @@ export class App extends React.Component<{ appStore: AppStore }> {
             }
         };
 
-        // common components in left bottom
-        widgetsStore.addRenderConfigWidget(configs.renderConfig.id);
-        widgetsStore.addAnimatorWidget(configs.animator.id);
-        widgetsStore.addRegionListWidget(configs.regionList.id);
-
         // customize layout
         let customizedLayout;
         switch (this.props.appStore.preferenceStore.layout) {
             case Layout.CUBEVIEW:
-                customizedLayout = this.genCubeViewLayout(configs, widgetsStore);
+                customizedLayout = this.genCubeViewLayout(configs);
                 break;
             case Layout.CUBEANALYSIS:
-                customizedLayout = this.genCubeAnalysisLayout(configs, widgetsStore);
+                customizedLayout = this.genCubeAnalysisLayout(configs);
                 break;
             case Layout.CONTINUUMANALYSIS:
-                customizedLayout = this.genContinuumAnalysisLayout(configs, widgetsStore);
+                customizedLayout = this.genContinuumAnalysisLayout(configs);
                 break;
             case Layout.DEFAULT: default:
-                customizedLayout = this.genDefaultLayout(configs, widgetsStore);
+                customizedLayout = this.genDefaultLayout(configs);
                 break;
         }
 
@@ -226,13 +219,10 @@ export class App extends React.Component<{ appStore: AppStore }> {
             },
             content: [arrangementConfig]
         };
-        widgetsStore.setDockedLayout(new GoldenLayout(mainLayoutConfig, this.glContainer));
+        widgetsStore.setDockedLayout(new GoldenLayout(mainLayoutConfig, this.props.appStore.getImageViewContainer()));
     }
 
-    private genDefaultLayout(configs: any, widgetsStore: WidgetsStore) {
-        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerX.id, "x", -1, 0);
-        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerY.id, "y", -1, 0);
-
+    private genDefaultLayout(configs: any) {
         return {
             leftBottomContent: {
                 type: "stack",
@@ -245,11 +235,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
         };
     }
 
-    private genCubeViewLayout(configs: any, widgetsStore: WidgetsStore) {
-        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerX.id, "x", -1, 0);
-        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerY.id, "y", -1, 0);
-        widgetsStore.addSpectralProfileWidget(configs.spectralProfilerZ.id, "z");
-
+    private genCubeViewLayout(configs: any) {
         return {
             leftBottomContent: {
                 type: "stack",
@@ -259,10 +245,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
         };
     }
 
-    private genCubeAnalysisLayout(configs: any, widgetsStore: WidgetsStore) {
-        widgetsStore.addSpectralProfileWidget(configs.spectralProfilerZ.id, "z");
-        widgetsStore.addStatsWidget(configs.stats.id);
-
+    private genCubeAnalysisLayout(configs: any) {
         return {
             leftBottomContent: {
                 type: "stack",
@@ -272,11 +255,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
         };
     }
 
-    private genContinuumAnalysisLayout(configs: any, widgetsStore: WidgetsStore) {
-        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerX.id, "x", -1, 0);
-        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerY.id, "y", -1, 0);
-        widgetsStore.addStatsWidget(configs.stats.id);
-
+    private genContinuumAnalysisLayout(configs: any) {
         return {
             leftBottomContent: {
                 type: "stack",
@@ -332,7 +311,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 >
                     <p>{appStore.alertStore.interactiveAlertText}</p>
                 </Alert>
-                <div className={glClassName} ref={ref => this.glContainer = ref}>
+                <div className={glClassName} ref={ref => appStore.setImageViewContainer(ref)}>
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}/>
                 </div>
                 <FloatingWidgetManagerComponent appStore={appStore}/>
