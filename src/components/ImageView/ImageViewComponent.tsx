@@ -157,15 +157,14 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
     render() {
         const appStore = this.props.appStore;
-        const beamProfile = appStore.activeFrame ? appStore.activeFrame.beamProperties : null;
-        const imageRatioTagOffset = {x: appStore.overlayStore.padding.left + appStore.overlayStore.viewWidth / 2.0, y: appStore.overlayStore.padding.top + appStore.overlayStore.viewHeight / 2.0};
 
         let divContents;
-        if (appStore.activeFrame && appStore.astReady) {
+        if (appStore.activeFrame && appStore.activeFrame.isRenderable && appStore.astReady) {
             const effectiveWidth = appStore.activeFrame.renderWidth * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
             const effectiveHeight = appStore.activeFrame.renderHeight * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
+            const imageRatioTagOffset = {x: appStore.overlayStore.padding.left + appStore.overlayStore.viewWidth / 2.0, y: appStore.overlayStore.padding.top + appStore.overlayStore.viewHeight / 2.0};
 
-            divContents = appStore.activeFrame.isRenderable ? (
+            divContents = (
                 <React.Fragment>
                     {appStore.activeFrame.valid &&
                     <OverlayComponent
@@ -192,15 +191,15 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         showSpectral={true}
                     />
                     }
-                    {beamProfile &&
+                    {appStore.activeFrame.beamProperties &&
                     <BeamProfileOverlayComponent
                         width={appStore.overlayStore.viewWidth - appStore.overlayStore.padding.left - appStore.overlayStore.padding.right}
                         height={appStore.overlayStore.viewHeight - appStore.overlayStore.padding.top - appStore.overlayStore.padding.bottom}
                         top={appStore.overlayStore.padding.top}
                         left={appStore.overlayStore.padding.left}
-                        beamMajor={beamProfile.x}
-                        beamMinor={beamProfile.y}
-                        beamAngle={beamProfile.angle}
+                        beamMajor={appStore.activeFrame.beamProperties.x}
+                        beamMinor={appStore.activeFrame.beamProperties.y}
+                        beamAngle={appStore.activeFrame.beamProperties.angle}
                         zoomLevel={appStore.activeFrame.zoomLevel}
                         docked={this.props.docked}
                         padding={10}
@@ -235,7 +234,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         </Tag>
                     </div>
                 </React.Fragment>
-            ) : null;
+            );
         } else if (!appStore.astReady) {
             divContents = <NonIdealState icon={<Spinner className="astLoadingSpinner"/>} title={"Loading AST Library"}/>;
         } else {
