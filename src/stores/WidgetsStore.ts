@@ -175,6 +175,7 @@ export class WidgetsStore {
     };
 
     @action setDockedLayout(layout: GoldenLayout) {
+        // TODO: replace with COMPONENT_CONFIG in AppStore
         this.addRenderConfigWidget("render-config-0");
         this.addAnimatorWidget("animator-0");
         this.addRegionListWidget("region-list-0");
