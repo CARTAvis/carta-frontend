@@ -95,22 +95,29 @@ export class LayoutStore {
             return;
         }
 
-        let simpleConfig = {
-            content: []
-        };
-        this.genSimpleConfig(simpleConfig.content, this.widgetsStore.dockedLayout.config.content);
-        this.layouts[this.layoutToBeSaved] = simpleConfig;
+        const currentLayout = this.widgetsStore.dockedLayout;
+        if (currentLayout && currentLayout.config && currentLayout.config.content && currentLayout.config.content.length > 0) {
+            // generate simple config from current layout
+            const currentConfig = currentLayout.config.content[0];
+            let simpleConfig = {
+                type: currentConfig.type,
+                content: []
+            };
+            this.genSimpleConfig(simpleConfig.content, currentConfig.content);
+            this.layouts[this.layoutToBeSaved] = simpleConfig;
 
-        if (!this.saveLayoutToLocalStorage()) {
-            delete this.layouts[this.layoutToBeSaved];
+            if (!this.saveLayoutToLocalStorage()) {
+                delete this.layouts[this.layoutToBeSaved];
+                return;
+            }
+        } else {
+            this.alertStore.showAlert("Save current layout failed! There is something wrong with the layout.");
             return;
         }
 
-        // TODO: is there a better way for this? putting here is not ideal for MVC
         LayoutToaster.show({icon: "layout-grid", message: `Layout ${this.layoutToBeSaved} is saved successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
     };
 
-    // TODO: show confirm dialog
     @action deleteLayout = (layoutName: string) => {
         if (!this.layoutExist(layoutName)) {
             this.alertStore.showAlert(`Cannot delete layout ${layoutName}! It does not exist.`);
@@ -130,7 +137,7 @@ export class LayoutStore {
         return null;
     };
 
-    private fillComponent = (newParentContent, parentContent) => {
+    private fillComponents = (newParentContent, parentContent) => {
         if (!newParentContent || !parentContent) {
             return;
         }
@@ -142,7 +149,7 @@ export class LayoutStore {
                     content: []
                 };
                 newParentContent.push(simpleChild);
-                this.fillComponent(simpleChild.content, child.content);
+                this.fillComponents(simpleChild.content, child.content);
             } else if (child.type === "component") {
                 const componentConfig = AppStore.getComponentConfig(child.id, this.appStore);
                 if (componentConfig) {
@@ -160,10 +167,10 @@ export class LayoutStore {
 
         const config = this.layouts[layoutName];
         const arrangementConfig = {
-            type: config.content[0].type,
+            type: config.type,
             content: []
         };
-        this.fillComponent(arrangementConfig.content, config.content[0].content);
+        this.fillComponents(arrangementConfig.content, config.content);
 
         const mainLayoutConfig = {
             settings: {
