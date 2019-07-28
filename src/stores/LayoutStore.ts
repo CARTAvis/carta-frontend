@@ -62,7 +62,7 @@ export class LayoutStore {
     public static TOASTER_TIMEOUT = 1500;
 
     private readonly appStore: AppStore;
-    private layoutToBeSaved: string;
+    private layoutNameToBeSaved: string;
 
     // self-defined structure: {layoutName: config, layoutName: config, ...}
     @observable currentLayout: string;
@@ -90,7 +90,7 @@ export class LayoutStore {
     };
 
     public setLayoutToBeSaved = (layoutName: string) => {
-        this.layoutToBeSaved = layoutName ? layoutName : "Empty";
+        this.layoutNameToBeSaved = layoutName ? layoutName : "Empty";
     };
 
     public applyPresetLayout = (layoutName: string) => {
@@ -257,12 +257,17 @@ export class LayoutStore {
     }
 
     @action saveLayout = () => {
-        if (!this.layouts || !this.layoutToBeSaved) {
+        if (!this.layouts || !this.layoutNameToBeSaved) {
             this.appStore.alertStore.showAlert("Save layout failed! Empty layouts or name.");
             return;
         }
 
-        if (!this.layoutExist(this.layoutToBeSaved) && this.savedLayoutNumber >= MAX_LAYOUT) {
+        if (PresetLayout.include(this.layoutNameToBeSaved)) {
+            this.appStore.alertStore.showAlert("Layout name cannot be the same as presets.");
+            return;
+        }
+
+        if (!this.layoutExist(this.layoutNameToBeSaved) && this.savedLayoutNumber >= MAX_LAYOUT) {
             this.appStore.alertStore.showAlert(`Maximum user-defined layout quota exceeded! (${MAX_LAYOUT} layouts)`);
             return;
         }
@@ -276,10 +281,10 @@ export class LayoutStore {
                 content: []
             };
             this.genSimpleConfig(simpleConfig.content, currentConfig.content);
-            this.layouts[this.layoutToBeSaved] = simpleConfig;
+            this.layouts[this.layoutNameToBeSaved] = simpleConfig;
 
             if (!this.saveLayoutToLocalStorage()) {
-                delete this.layouts[this.layoutToBeSaved];
+                delete this.layouts[this.layoutNameToBeSaved];
                 return;
             }
         } else {
@@ -287,7 +292,7 @@ export class LayoutStore {
             return;
         }
 
-        LayoutToaster.show({icon: "layout-grid", message: `Layout ${this.layoutToBeSaved} is saved successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
+        LayoutToaster.show({icon: "layout-grid", message: `Layout ${this.layoutNameToBeSaved} is saved successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
     };
 
     @action deleteLayout = (layoutName: string) => {
