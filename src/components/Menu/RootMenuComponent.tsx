@@ -86,10 +86,24 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
             <Menu>
                 <Menu.Item text="Layouts" icon={"layout-grid"}>
                     <Menu.Item text="User Layouts" disabled={!userLayouts || userLayouts.length <= 0}>
-                        {userLayouts && userLayouts.length > 0 ? userLayouts.map((value) => <Menu.Item key={value} text={value} onClick={() => appStore.layoutStore.applyUserLayout(value)}/>) : null}
+                        {userLayouts && userLayouts.length > 0 ? userLayouts.map((value) =>
+                            <Menu.Item
+                                key={value}
+                                text={value}
+                                active={appStore.layoutStore.currentLayout === value}
+                                onClick={() => appStore.layoutStore.applyUserLayout(value)}
+                            />
+                        ) : null}
                     </Menu.Item>
                     <Menu.Item text="Presets" disabled={!presetLayouts || presetLayouts.length <= 0}>
-                        {presetLayouts && presetLayouts.length > 0 ? presetLayouts.map((value) => <Menu.Item key={value} text={value} onClick={() => appStore.layoutStore.applyPresetLayout(value)}/>) : null}
+                        {presetLayouts && presetLayouts.length > 0 ? presetLayouts.map((value) =>
+                            <Menu.Item
+                                key={value}
+                                text={value}
+                                active={appStore.layoutStore.currentLayout === value}
+                                onClick={() => appStore.layoutStore.applyPresetLayout(value)}
+                            />
+                        ) : null}
                     </Menu.Item>
                     <Menu.Item text="Save Layout" onClick={appStore.showSaveLayoutDialog}/>
                     <Menu.Item text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>

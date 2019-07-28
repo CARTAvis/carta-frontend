@@ -65,10 +65,12 @@ export class LayoutStore {
     private layoutToBeSaved: string;
 
     // self-defined structure: {layoutName: config, layoutName: config, ...}
-    @observable private layouts;
+    @observable currentLayout: string;
+    @observable private layouts: any;
 
     constructor(appStore: AppStore) {
         this.appStore = appStore;
+        this.currentLayout = "";
         this.layouts = {};
 
         // read layout configs from local storage
@@ -152,6 +154,7 @@ export class LayoutStore {
             }]
         };
 
+        this.currentLayout = layoutName;
         this.applyLayout(config);
     };
 
@@ -161,6 +164,7 @@ export class LayoutStore {
             return;
         }
 
+        this.currentLayout = layoutName;
         this.applyLayout(this.layouts[layoutName]);
     };
 

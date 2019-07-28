@@ -310,6 +310,7 @@ export class PreferenceStore {
     @action setLayout = (layout: string) => {
         this.layout = layout;
         localStorage.setItem(PREFERENCE_KEYS.layout, layout);
+        this.appStore.layoutStore.applyPresetLayout(layout);
     };
 
     @action setCursorPosition = (cursorPosition: string) => {
