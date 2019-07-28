@@ -11,7 +11,9 @@ export class LayoutStore {
 
     private readonly appStore: AppStore;
     private layoutToBeSaved: string;
-    @observable private layouts; // self-defined structure: {layoutName: config, layoutName: config, ...}
+
+    // self-defined structure: {layoutName: config, layoutName: config, ...}
+    @observable private layouts;
 
     constructor(appStore: AppStore) {
         this.appStore = appStore;
@@ -30,11 +32,23 @@ export class LayoutStore {
     }
 
     public layoutExist = (layoutName: string): boolean => {
-        return this.layouts && layoutName && Object.keys(this.layouts).includes(layoutName);
+        return layoutName && this.userLayouts.includes(layoutName);
     };
 
     public setLayoutToBeSaved = (layoutName: string) => {
-        this.layoutToBeSaved = layoutName;
+        this.layoutToBeSaved = layoutName ? layoutName : "Empty";
+    };
+
+    private saveLayoutToLocalStorage = (): boolean => {
+        try {
+            const serializedJson = JSON.stringify(this.layouts);
+            localStorage.setItem(KEY, serializedJson);
+        } catch (e) {
+            this.appStore.alertStore.showAlert("Saving user-defined layout failed! " + e.message);
+            return false;
+        }
+
+        return true;
     };
 
     private genSimpleConfig = (newParentContent, parentContent): void => {
@@ -60,18 +74,6 @@ export class LayoutStore {
         });
     };
 
-    private saveLayoutToLocalStorage = (): boolean => {
-        try {
-            const serializedJson = JSON.stringify(this.layouts);
-            localStorage.setItem(KEY, serializedJson);
-        } catch (e) {
-            this.appStore.alertStore.showAlert("Saving user-defined layout failed! " + e.message);
-            return false;
-        }
-
-        return true;
-    };
-
     private fillComponents = (newParentContent, parentContent) => {
         if (!newParentContent || !parentContent) {
             return;
@@ -95,11 +97,11 @@ export class LayoutStore {
     };
 
     @computed get userLayouts(): string[] {
-        return Object.keys(this.layouts);
+        return this.layouts ? Object.keys(this.layouts) : [];
     }
 
     @computed get savedLayoutNumber(): number {
-        return Object.keys(this.layouts).length;
+        return this.userLayouts.length;
     }
 
     @action saveLayout = () => {
@@ -137,7 +139,7 @@ export class LayoutStore {
     };
 
     @action deleteLayout = (layoutName: string) => {
-        if (!this.layoutExist(layoutName)) {
+        if (!layoutName || !this.layoutExist(layoutName)) {
             this.appStore.alertStore.showAlert(`Cannot delete layout ${layoutName}! It does not exist.`);
             return;
         }
@@ -156,7 +158,7 @@ export class LayoutStore {
     };
 
     @action applyLayout = (layoutName: string) => {
-        if (!this.layoutExist(layoutName)) {
+        if (!layoutName || !this.layoutExist(layoutName)) {
             this.appStore.alertStore.showAlert(`Applying layout failed! Layout ${layoutName} not found.`);
             return;
         }
