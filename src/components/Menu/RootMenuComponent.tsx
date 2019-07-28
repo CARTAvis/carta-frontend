@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Alert, Icon, Menu, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {exportImage} from "components";
-import {Layout} from "models";
+import {PresetLayout} from "models";
 import {AppStore} from "stores";
 import {ConnectionStatus} from "services";
 import "./RootMenuComponent.css";
@@ -80,7 +80,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         );
 
         const userLayouts: string[] = appStore.layoutStore.userLayouts;
-        const presetLayouts: string[] = Layout.getPresetLayouts();
+        const presetLayouts: string[] = PresetLayout.getPresetLayouts();
 
         const layoutMenu = (
             <Menu>

@@ -2,7 +2,7 @@ import {observable, computed, action, autorun} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
-import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
+import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore} from "./AppStore";
 import {isColorValid} from "../utilities";
 
@@ -34,7 +34,7 @@ const PREFERENCE_KEYS = {
 const DEFAULTS = {
     theme: Theme.LIGHT,
     autoLaunch: true,
-    layout: Layout.DEFAULT,
+    layout: PresetLayout.DEFAULT,
     cursorPosition: CursorPosition.TRACKING,
     zoomMode: Zoom.FIT,
     scaling: FrameScaling.LINEAR,
@@ -91,7 +91,7 @@ export class PreferenceStore {
 
     private getLayout = (): string => {
         const layout = localStorage.getItem(PREFERENCE_KEYS.layout);
-        return layout && Layout.isValid(layout) ? layout : DEFAULTS.layout;
+        return layout && PresetLayout.isValid(layout) ? layout : DEFAULTS.layout;
     };
 
     private getCursorPosition = (): string => {

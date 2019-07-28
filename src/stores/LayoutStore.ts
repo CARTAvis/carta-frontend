@@ -1,7 +1,7 @@
 import {observable, computed, action} from "mobx";
 import {AppStore} from "stores";
 import * as GoldenLayout from "golden-layout";
-import {Layout} from "models";
+import {PresetLayout} from "models";
 import {LayoutToaster} from "components/Shared";
 import {smoothStepOffset} from "utilities";
 
@@ -94,14 +94,14 @@ export class LayoutStore {
     };
 
     public applyPresetLayout = (layoutName: string) => {
-        if (!layoutName || !Layout.isValid(layoutName)) {
+        if (!layoutName || !PresetLayout.isValid(layoutName)) {
             this.appStore.alertStore.showAlert(`Applying layout failed! Preset layout ${layoutName} not found.`);
             return;
         }
 
         let customizedLayout;
         switch (layoutName) {
-            case Layout.CUBEVIEW:
+            case PresetLayout.CUBEVIEW:
                 customizedLayout = {
                     leftBottomContent: {
                         type: "stack",
@@ -110,7 +110,7 @@ export class LayoutStore {
                     rightColumnContent: [{type: "component", id: "spatial-profiler-0"}, {type: "component", id: "spatial-profiler-1"}, {type: "component", id: "spectral-profiler-0"}]
                 };
                 break;
-            case Layout.CUBEANALYSIS:
+            case PresetLayout.CUBEANALYSIS:
                 customizedLayout = {
                     leftBottomContent: {
                         type: "stack",
@@ -119,7 +119,7 @@ export class LayoutStore {
                     rightColumnContent: [{type: "component", id: "spectral-profiler-0"}, {type: "component", id: "stats-0"}]
                 };
                 break;
-            case Layout.CONTINUUMANALYSIS:
+            case PresetLayout.CONTINUUMANALYSIS:
                 customizedLayout = {
                     leftBottomContent: {
                         type: "stack",
@@ -128,7 +128,7 @@ export class LayoutStore {
                     rightColumnContent: [{type: "component", id: "spatial-profiler-0"}, {type: "component", id: "spatial-profiler-1"}, {type: "component", id: "stats-0"}]
                 };
                 break;
-            case Layout.DEFAULT: default:
+            case PresetLayout.DEFAULT: default:
                 customizedLayout = {
                     leftBottomContent: {
                         type: "stack",

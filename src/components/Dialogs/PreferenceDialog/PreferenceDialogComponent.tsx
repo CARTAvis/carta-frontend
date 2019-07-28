@@ -15,7 +15,7 @@ import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {AppearanceForm} from "components/Dialogs/RegionDialog/AppearanceForm/AppearanceForm";
-import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
+import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore, RenderConfigStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
@@ -99,10 +99,10 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Layout">
                     <HTMLSelect value={preference.layout} onChange={(ev) => { preference.setLayout(ev.currentTarget.value); }}>
-                        <option value={Layout.DEFAULT}>{Layout.DEFAULT}</option>
-                        <option value={Layout.CUBEVIEW}>{Layout.CUBEVIEW}</option>
-                        <option value={Layout.CUBEANALYSIS}>{Layout.CUBEANALYSIS}</option>
-                        <option value={Layout.CONTINUUMANALYSIS}>{Layout.CONTINUUMANALYSIS}</option>
+                        <option value={PresetLayout.DEFAULT}>{PresetLayout.DEFAULT}</option>
+                        <option value={PresetLayout.CUBEVIEW}>{PresetLayout.CUBEVIEW}</option>
+                        <option value={PresetLayout.CUBEANALYSIS}>{PresetLayout.CUBEANALYSIS}</option>
+                        <option value={PresetLayout.CONTINUUMANALYSIS}>{PresetLayout.CONTINUUMANALYSIS}</option>
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Cursor Position">
