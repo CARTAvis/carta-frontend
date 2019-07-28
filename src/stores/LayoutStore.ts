@@ -1,10 +1,62 @@
 import {observable, computed, action} from "mobx";
 import {AppStore} from "stores";
 import * as GoldenLayout from "golden-layout";
+import {Layout} from "models";
 import {LayoutToaster} from "components/Shared";
+import {smoothStepOffset} from "utilities";
 
 const KEY = "CARTA_saved_layouts";
 const MAX_LAYOUT = 10;
+const COMPONENT_CONFIG = new Map<string, any>([
+    ["image-view", {
+        type: "react-component",
+        component: "image-view",
+        title: "No image loaded",
+        height: smoothStepOffset(window.innerHeight, 720, 1080, 65, 75), // image view fraction: adjust layout properties based on window dimensions
+        id: "image-view",
+        isClosable: false
+    }],
+    ["render-config-0", {
+        type: "react-component",
+        component: "render-config",
+        title: "Render Configuration",
+        id: "render-config-0"
+    }],
+    ["region-list-0", {
+        type: "react-component",
+        component: "region-list",
+        title: "Region List",
+        id: "region-list-0"
+    }],
+    ["animator-0", {
+        type: "react-component",
+        component: "animator",
+        title: "Animator",
+        id: "animator-0"
+    }],
+    ["spatial-profiler-0", {
+        type: "react-component",
+        component: "spatial-profiler",
+        id: "spatial-profiler-0"
+    }],
+    ["spatial-profiler-1", {
+        type: "react-component",
+        component: "spatial-profiler",
+        id: "spatial-profiler-1"
+    }],
+    ["spectral-profiler-0", {
+        type: "react-component",
+        component: "spectral-profiler",
+        id: "spectral-profiler-0",
+        title: "Z Profile: Cursor"
+    }],
+    ["stats-0", {
+        type: "react-component",
+        component: "stats",
+        title: "Statistics",
+        id: "stats-0"
+    }]
+]);
 
 export class LayoutStore {
     public static TOASTER_TIMEOUT = 1500;
@@ -37,6 +89,79 @@ export class LayoutStore {
 
     public setLayoutToBeSaved = (layoutName: string) => {
         this.layoutToBeSaved = layoutName ? layoutName : "Empty";
+    };
+
+    public applyPresetLayout = (layoutName: string) => {
+        if (!layoutName || !Layout.isValid(layoutName)) {
+            this.appStore.alertStore.showAlert(`Applying layout failed! Preset layout ${layoutName} not found.`);
+            return;
+        }
+
+        let customizedLayout;
+        switch (layoutName) {
+            case Layout.CUBEVIEW:
+                customizedLayout = {
+                    leftBottomContent: {
+                        type: "stack",
+                        content: [{type: "component", id: "animator-0"}, {type: "component", id: "render-config-0"}, {type: "component", id: "region-list-0"}]
+                    },
+                    rightColumnContent: [{type: "component", id: "spatial-profiler-0"}, {type: "component", id: "spatial-profiler-1"}, {type: "component", id: "spectral-profiler-0"}]
+                };
+                break;
+            case Layout.CUBEANALYSIS:
+                customizedLayout = {
+                    leftBottomContent: {
+                        type: "stack",
+                        content: [{type: "component", id: "animator-0"}, {type: "component", id: "render-config-0"}, {type: "component", id: "region-list-0"}]
+                    },
+                    rightColumnContent: [{type: "component", id: "spectral-profiler-0"}, {type: "component", id: "stats-0"}]
+                };
+                break;
+            case Layout.CONTINUUMANALYSIS:
+                customizedLayout = {
+                    leftBottomContent: {
+                        type: "stack",
+                        content: [{type: "component", id: "render-config-0"}, {type: "component", id: "region-list-0"}, {type: "component", id: "animator-0"}]
+                    },
+                    rightColumnContent: [{type: "component", id: "spatial-profiler-0"}, {type: "component", id: "spatial-profiler-1"}, {type: "component", id: "stats-0"}]
+                };
+                break;
+            case Layout.DEFAULT: default:
+                customizedLayout = {
+                    leftBottomContent: {
+                        type: "stack",
+                        content: [{type: "component", id: "render-config-0"}]
+                    },
+                    rightColumnContent: [{type: "component", id: "spatial-profiler-0"}, {type: "component", id: "spatial-profiler-1"}, {
+                        type: "stack",
+                        content: [{type: "component", id: "animator-0"}, {type: "component", id: "region-list-0"}]
+                    }]
+                };
+                break;
+        }
+
+        const config = {
+            type: "row",
+            content: [{
+                type: "column",
+                width: 60,
+                content: [{type: "component", id: "image-view"}, customizedLayout.leftBottomContent]
+            }, {
+                type: "column",
+                content: customizedLayout.rightColumnContent
+            }]
+        };
+
+        this.applyLayout(config);
+    };
+
+    public applyUserLayout = (layoutName: string) => {
+        if (!layoutName || !this.layoutExist(layoutName)) {
+            this.appStore.alertStore.showAlert(`Applying layout failed! User layout ${layoutName} not found.`);
+            return;
+        }
+
+        this.applyLayout(this.layouts[layoutName]);
     };
 
     private saveLayoutToLocalStorage = (): boolean => {
@@ -87,13 +212,36 @@ export class LayoutStore {
                 };
                 newParentContent.push(simpleChild);
                 this.fillComponents(simpleChild.content, child.content);
-            } else if (child.type === "component") {
-                const componentConfig = AppStore.getComponentConfig(child.id, this.appStore);
-                if (componentConfig) {
-                    newParentContent.push(componentConfig);
-                }
+            } else if (child.type === "component" && COMPONENT_CONFIG.has(child.id)) {
+                let componentConfig = COMPONENT_CONFIG.get(child.id);
+                componentConfig.props = {appStore: this.appStore, id: child.id, docked: true};
+                newParentContent.push(componentConfig);
             }
         });
+    };
+
+    private applyLayout = (config) => {
+        let arrangementConfig = {
+            type: config.type,
+            content: []
+        };
+        this.fillComponents(arrangementConfig.content, config.content);
+
+        const mainLayoutConfig = {
+            settings: {
+                showPopoutIcon: false,
+                showCloseIcon: false
+            },
+            dimensions: {
+                minItemWidth: 250,
+                minItemHeight: 200,
+                dragProxyWidth: 600,
+                dragProxyHeight: 270,
+            },
+            content: [arrangementConfig]
+        };
+
+        this.appStore.widgetsStore.applyNewLayout(new GoldenLayout(mainLayoutConfig, this.appStore.getImageViewContainer()));
     };
 
     @computed get userLayouts(): string[] {
@@ -151,39 +299,4 @@ export class LayoutStore {
 
         LayoutToaster.show({icon: "layout-grid", message: `Layout ${layoutName} is deleted successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
     };
-
-    // TODO: when presets are designed & ready
-    @action getPresetLayouts = (): string[] => {
-        return null;
-    };
-
-    @action applyLayout = (layoutName: string) => {
-        if (!layoutName || !this.layoutExist(layoutName)) {
-            this.appStore.alertStore.showAlert(`Applying layout failed! Layout ${layoutName} not found.`);
-            return;
-        }
-
-        const config = this.layouts[layoutName];
-        const arrangementConfig = {
-            type: config.type,
-            content: []
-        };
-        this.fillComponents(arrangementConfig.content, config.content);
-
-        const mainLayoutConfig = {
-            settings: {
-                showPopoutIcon: false,
-                showCloseIcon: false
-            },
-            dimensions: {
-                minItemWidth: 250,
-                minItemHeight: 200,
-                dragProxyWidth: 600,
-                dragProxyHeight: 270,
-            },
-            content: [arrangementConfig]
-        };
-
-        this.appStore.widgetsStore.applyNewLayout(new GoldenLayout(mainLayoutConfig, this.appStore.getImageViewContainer()));
-    }
 }

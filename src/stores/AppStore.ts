@@ -23,7 +23,7 @@ import {
     WidgetsStore,
     LayoutStore
 } from ".";
-import {smoothStepOffset, GetRequiredTiles} from "utilities";
+import {GetRequiredTiles} from "utilities";
 import {BackendService, TileService} from "services";
 import {CursorInfo, FrameView, Point2D, ProcessedSpatialProfile, ProtobufProcessing, Theme} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
@@ -67,67 +67,6 @@ export class AppStore {
     @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
 
     private imageViewerContainer: HTMLElement;
-
-    static readonly COMPONENT_CONFIG = new Map<string, any>([
-        ["image-view", {
-            type: "react-component",
-            component: "image-view",
-            title: "No image loaded",
-            height: smoothStepOffset(window.innerHeight, 720, 1080, 65, 75), // image view fraction: adjust layout properties based on window dimensions
-            id: "image-view",
-            isClosable: false
-        }],
-        ["render-config-0", {
-            type: "react-component",
-            component: "render-config",
-            title: "Render Configuration",
-            id: "render-config-0"
-        }],
-        ["region-list-0", {
-            type: "react-component",
-            component: "region-list",
-            title: "Region List",
-            id: "region-list-0"
-        }],
-        ["animator-0", {
-            type: "react-component",
-            component: "animator",
-            title: "Animator",
-            id: "animator-0"
-        }],
-        ["spatial-profiler-0", {
-            type: "react-component",
-            component: "spatial-profiler",
-            id: "spatial-profiler-0"
-        }],
-        ["spatial-profiler-1", {
-            type: "react-component",
-            component: "spatial-profiler",
-            id: "spatial-profiler-1"
-        }],
-        ["spectral-profiler-0", {
-            type: "react-component",
-            component: "spectral-profiler",
-            id: "spectral-profiler-0",
-            title: "Z Profile: Cursor"
-        }],
-        ["stats-0", {
-            type: "react-component",
-            component: "stats",
-            title: "Statistics",
-            id: "stats-0"
-        }]
-    ]);
-
-    public static getComponentConfig = (id: string, appStore: AppStore): any => {
-        if (!AppStore.COMPONENT_CONFIG.has(id)) {
-            return null;
-        }
-
-        let componentConfig = AppStore.COMPONENT_CONFIG.get(id);
-        componentConfig.props = {appStore: appStore, id: id, docked: true};
-        return componentConfig;
-    };
 
     public getImageViewContainer = (): HTMLElement => {
         return this.imageViewerContainer;

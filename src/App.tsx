@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as GoldenLayout from "golden-layout";
 import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import {autorun} from "mobx";
@@ -17,10 +16,8 @@ import {
     PreferenceDialogComponent,
     SaveLayoutDialogComponent
 } from "./components/Dialogs";
-import {AppStore, dayPalette, FileBrowserStore, nightPalette, RegionMode, WidgetsStore} from "./stores";
-import {Layout} from "models";
+import {AppStore, dayPalette, FileBrowserStore, nightPalette, RegionMode} from "./stores";
 import {ConnectionStatus} from "./services";
-import {smoothStepOffset} from "./utilities";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
 import "./layout-theme.css";
@@ -111,158 +108,8 @@ export class App extends React.Component<{ appStore: AppStore }> {
     }
 
     componentDidMount() {
-        const widgetsStore = this.props.appStore.widgetsStore;
-        // Adjust layout properties based on window dimensions
-        const defaultImageViewFraction = smoothStepOffset(window.innerHeight, 720, 1080, 65, 75);
-
-        // TODO: replace configs with AppStore.COMPONENT_CONFIG
-        const configs = {
-            imageView: {
-                type: "react-component",
-                component: "image-view",
-                title: "No image loaded",
-                height: defaultImageViewFraction,
-                id: "image-view",
-                isClosable: false,
-                props: {appStore: this.props.appStore, id: "image-view-docked", docked: true}
-            },
-            // left bottom components in stack: render config, region list, animator
-            renderConfig: {
-                type: "react-component",
-                component: "render-config",
-                title: "Render Configuration",
-                id: "render-config-0",
-                props: {appStore: this.props.appStore, id: "render-config-0", docked: true}
-            },
-            regionList: {
-                type: "react-component",
-                component: "region-list",
-                title: "Region List",
-                id: "region-list-0",
-                props: {appStore: this.props.appStore, id: "region-list-0", docked: true}
-            },
-            animator: {
-                type: "react-component",
-                component: "animator",
-                title: "Animator",
-                id: "animator-0",
-                props: {appStore: this.props.appStore, id: "animator-0", docked: true}
-            },
-            // right column components: X/Y/Z profiler, statistics
-            spatialProfilerX: {
-                type: "react-component",
-                component: "spatial-profiler",
-                id: "spatial-profiler-0",
-                props: {appStore: this.props.appStore, id: "spatial-profiler-0", docked: true}
-            },
-            spatialProfilerY: {
-                type: "react-component",
-                component: "spatial-profiler",
-                id: "spatial-profiler-1",
-                props: {appStore: this.props.appStore, id: "spatial-profiler-1", docked: true}
-            },
-            spectralProfilerZ: {
-                type: "react-component",
-                component: "spectral-profiler",
-                id: "spectral-profiler-0",
-                title: "Z Profile: Cursor",
-                props: {appStore: this.props.appStore, id: "spectral-profiler-0", docked: true}
-            },
-            stats: {
-                type: "react-component",
-                component: "stats",
-                title: "Statistics",
-                id: "stats-0",
-                props: {appStore: this.props.appStore, id: "stats-0", docked: true}
-            }
-        };
-
-        // customize layout
-        let customizedLayout;
-        switch (this.props.appStore.preferenceStore.layout) {
-            case Layout.CUBEVIEW:
-                customizedLayout = this.genCubeViewLayout(configs);
-                break;
-            case Layout.CUBEANALYSIS:
-                customizedLayout = this.genCubeAnalysisLayout(configs);
-                break;
-            case Layout.CONTINUUMANALYSIS:
-                customizedLayout = this.genContinuumAnalysisLayout(configs);
-                break;
-            case Layout.DEFAULT: default:
-                customizedLayout = this.genDefaultLayout(configs);
-                break;
-        }
-
-        const arrangementConfig = {
-            type: "row",
-            content: [{
-                type: "column",
-                width: 60,
-                content: [configs.imageView, customizedLayout.leftBottomContent]
-            }, {
-                type: "column",
-                content: customizedLayout.rightColumnContent
-            }]
-        };
-
-        const mainLayoutConfig = {
-            settings: {
-                showPopoutIcon: false,
-                showCloseIcon: false
-            },
-            dimensions: {
-                minItemWidth: 250,
-                minItemHeight: 200,
-                dragProxyWidth: 600,
-                dragProxyHeight: 270,
-            },
-            content: [arrangementConfig]
-        };
-        widgetsStore.applyNewLayout(new GoldenLayout(mainLayoutConfig, this.props.appStore.getImageViewContainer()));
-    }
-
-    private genDefaultLayout(configs: any) {
-        return {
-            leftBottomContent: {
-                type: "stack",
-                content: [configs.renderConfig]
-            },
-            rightColumnContent: [configs.spatialProfilerX, configs.spatialProfilerY, {
-                type: "stack",
-                content: [configs.animator, configs.regionList]
-            }]
-        };
-    }
-
-    private genCubeViewLayout(configs: any) {
-        return {
-            leftBottomContent: {
-                type: "stack",
-                content: [configs.animator, configs.renderConfig, configs.regionList]
-            },
-            rightColumnContent: [configs.spatialProfilerX, configs.spatialProfilerY, configs.spectralProfilerZ]
-        };
-    }
-
-    private genCubeAnalysisLayout(configs: any) {
-        return {
-            leftBottomContent: {
-                type: "stack",
-                content: [configs.animator, configs.renderConfig, configs.regionList]
-            },
-            rightColumnContent: [configs.spectralProfilerZ, configs.stats]
-        };
-    }
-
-    private genContinuumAnalysisLayout(configs: any) {
-        return {
-            leftBottomContent: {
-                type: "stack",
-                content: [configs.renderConfig, configs.regionList, configs.animator]
-            },
-            rightColumnContent: [configs.spatialProfilerX, configs.spatialProfilerY, configs.stats]
-        };
+        // initiate application layout
+        this.props.appStore.layoutStore.applyPresetLayout(this.props.appStore.preferenceStore.layout);
     }
 
     // GoldenLayout resize handler

@@ -99,10 +99,10 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Layout">
                     <HTMLSelect value={preference.layout} onChange={(ev) => { preference.setLayout(ev.currentTarget.value); }}>
-                        <option value={Layout.DEFAULT}>Default</option>
-                        <option value={Layout.CUBEVIEW}>Cube view</option>
-                        <option value={Layout.CUBEANALYSIS}>Cube analysis</option>
-                        <option value={Layout.CONTINUUMANALYSIS}>Continuum analysis</option>
+                        <option value={Layout.DEFAULT}>{Layout.DEFAULT}</option>
+                        <option value={Layout.CUBEVIEW}>{Layout.CUBEVIEW}</option>
+                        <option value={Layout.CUBEANALYSIS}>{Layout.CUBEANALYSIS}</option>
+                        <option value={Layout.CONTINUUMANALYSIS}>{Layout.CONTINUUMANALYSIS}</option>
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Cursor Position">
