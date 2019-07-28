@@ -109,7 +109,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
     componentDidMount() {
         // initiate application layout
-        this.props.appStore.layoutStore.applyPresetLayout(this.props.appStore.preferenceStore.layout);
+        this.props.appStore.layoutStore.applyLayout(this.props.appStore.preferenceStore.layout);
     }
 
     // GoldenLayout resize handler

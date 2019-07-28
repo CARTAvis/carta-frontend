@@ -58,6 +58,40 @@ const COMPONENT_CONFIG = new Map<string, any>([
     }]
 ]);
 
+const PRESET_CONFIGS = new Map<string, any>([
+    [PresetLayout.CUBEVIEW, {
+        leftBottomContent: {
+            type: "stack",
+            content: [{type: "component", id: "animator-0"}, {type: "component", id: "render-config-0"}, {type: "component", id: "region-list-0"}]
+        },
+        rightColumnContent: [{type: "component", id: "spatial-profiler-0"}, {type: "component", id: "spatial-profiler-1"}, {type: "component", id: "spectral-profiler-0"}]
+    }],
+    [PresetLayout.CUBEANALYSIS, {
+        leftBottomContent: {
+            type: "stack",
+            content: [{type: "component", id: "animator-0"}, {type: "component", id: "render-config-0"}, {type: "component", id: "region-list-0"}]
+        },
+        rightColumnContent: [{type: "component", id: "spectral-profiler-0"}, {type: "component", id: "stats-0"}]
+    }],
+    [PresetLayout.CONTINUUMANALYSIS, {
+        leftBottomContent: {
+            type: "stack",
+            content: [{type: "component", id: "render-config-0"}, {type: "component", id: "region-list-0"}, {type: "component", id: "animator-0"}]
+        },
+        rightColumnContent: [{type: "component", id: "spatial-profiler-0"}, {type: "component", id: "spatial-profiler-1"}, {type: "component", id: "stats-0"}]
+    }],
+    [PresetLayout.DEFAULT, {
+        leftBottomContent: {
+            type: "stack",
+            content: [{type: "component", id: "render-config-0"}]
+        },
+        rightColumnContent: [{type: "component", id: "spatial-profiler-0"}, {type: "component", id: "spatial-profiler-1"}, {
+            type: "stack",
+            content: [{type: "component", id: "animator-0"}, {type: "component", id: "region-list-0"}]
+        }]
+    }]
+]);
+
 export class LayoutStore {
     public static TOASTER_TIMEOUT = 1500;
 
@@ -74,101 +108,86 @@ export class LayoutStore {
         this.appStore = appStore;
         this.alertStore = alertStore;
         this.dockedLayout = null;
-        this.layouts = {};
+        this.layouts = this.initLayouts();
 
         // read layout configs from local storage
         const layoutJson = localStorage.getItem(KEY);
+        let userLayouts = null;
         if (layoutJson) {
             try {
-                this.layouts = JSON.parse(layoutJson);
+                userLayouts = JSON.parse(layoutJson);
             } catch (e) {
                 this.alertStore.showAlert("Loading user-defined layout failed!");
-                this.layouts = {};
+                userLayouts = null;
             }
+        }
+        if (userLayouts) {
+            Object.assign(this.layouts, userLayouts);
         }
     }
 
     public layoutExist = (layoutName: string): boolean => {
-        return layoutName && this.userLayouts.includes(layoutName);
+        return layoutName && this.allLayouts.includes(layoutName);
     };
 
     public setLayoutToBeSaved = (layoutName: string) => {
         this.layoutNameToBeSaved = layoutName ? layoutName : "Empty";
     };
 
-    public applyPresetLayout = (layoutName: string) => {
-        if (!layoutName || !PresetLayout.isValid(layoutName)) {
-            this.alertStore.showAlert(`Applying layout failed! Preset layout ${layoutName} not found.`);
+    public applyLayout = (layoutName: string) => {
+        if (!layoutName || !this.layoutExist(layoutName)) {
+            this.alertStore.showAlert(`Applying layout failed! Layout ${layoutName} not found.`);
             return;
         }
 
-        let customizedLayout;
-        switch (layoutName) {
-            case PresetLayout.CUBEVIEW:
-                customizedLayout = {
-                    leftBottomContent: {
-                        type: "stack",
-                        content: [{type: "component", id: "animator-0"}, {type: "component", id: "render-config-0"}, {type: "component", id: "region-list-0"}]
-                    },
-                    rightColumnContent: [{type: "component", id: "spatial-profiler-0"}, {type: "component", id: "spatial-profiler-1"}, {type: "component", id: "spectral-profiler-0"}]
-                };
-                break;
-            case PresetLayout.CUBEANALYSIS:
-                customizedLayout = {
-                    leftBottomContent: {
-                        type: "stack",
-                        content: [{type: "component", id: "animator-0"}, {type: "component", id: "render-config-0"}, {type: "component", id: "region-list-0"}]
-                    },
-                    rightColumnContent: [{type: "component", id: "spectral-profiler-0"}, {type: "component", id: "stats-0"}]
-                };
-                break;
-            case PresetLayout.CONTINUUMANALYSIS:
-                customizedLayout = {
-                    leftBottomContent: {
-                        type: "stack",
-                        content: [{type: "component", id: "render-config-0"}, {type: "component", id: "region-list-0"}, {type: "component", id: "animator-0"}]
-                    },
-                    rightColumnContent: [{type: "component", id: "spatial-profiler-0"}, {type: "component", id: "spatial-profiler-1"}, {type: "component", id: "stats-0"}]
-                };
-                break;
-            case PresetLayout.DEFAULT: default:
-                customizedLayout = {
-                    leftBottomContent: {
-                        type: "stack",
-                        content: [{type: "component", id: "render-config-0"}]
-                    },
-                    rightColumnContent: [{type: "component", id: "spatial-profiler-0"}, {type: "component", id: "spatial-profiler-1"}, {
-                        type: "stack",
-                        content: [{type: "component", id: "animator-0"}, {type: "component", id: "region-list-0"}]
-                    }]
-                };
-                break;
-        }
+        const config = this.layouts[layoutName];
+        let arrangementConfig = {
+            type: config.type,
+            content: []
+        };
+        this.fillComponents(arrangementConfig.content, config.content);
 
-        const config = {
-            type: "row",
-            content: [{
-                type: "column",
-                width: 60,
-                content: [{type: "component", id: "image-view"}, customizedLayout.leftBottomContent]
-            }, {
-                type: "column",
-                content: customizedLayout.rightColumnContent
-            }]
+        const mainLayoutConfig = {
+            settings: {
+                showPopoutIcon: false,
+                showCloseIcon: false
+            },
+            dimensions: {
+                minItemWidth: 250,
+                minItemHeight: 200,
+                dragProxyWidth: 600,
+                dragProxyHeight: 270,
+            },
+            content: [arrangementConfig]
         };
 
+        // destroy old layout & init new layout
+        if (this.dockedLayout) {
+            this.dockedLayout.destroy();
+        }
+        this.dockedLayout = new GoldenLayout(mainLayoutConfig, this.appStore.getImageViewContainer());
         this.dockedLayoutName = layoutName;
-        this.applyLayout(config);
+        this.appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout);
+        this.dockedLayout.init();
     };
 
-    public applyUserLayout = (layoutName: string) => {
-        if (!layoutName || !this.layoutExist(layoutName)) {
-            this.alertStore.showAlert(`Applying layout failed! User layout ${layoutName} not found.`);
-            return;
-        }
-
-        this.dockedLayoutName = layoutName;
-        this.applyLayout(this.layouts[layoutName]);
+    private initLayouts = (): any => {
+        let presets = {};
+        PresetLayout.PRESETS.forEach((presetName) => {
+            const config = PRESET_CONFIGS.get(presetName);
+            presets[presetName] = {
+                type: "row",
+                content: [{
+                    type: "column",
+                    width: 60,
+                    content: [{type: "component", id: "image-view"}, config.leftBottomContent]
+                }, {
+                    type: "column",
+                    content: config.rightColumnContent
+                }]
+            };
+        });
+        return presets;
     };
 
     private saveLayoutToLocalStorage = (): boolean => {
@@ -227,41 +246,15 @@ export class LayoutStore {
         });
     };
 
-    private applyLayout = (config) => {
-        let arrangementConfig = {
-            type: config.type,
-            content: []
-        };
-        this.fillComponents(arrangementConfig.content, config.content);
-
-        const mainLayoutConfig = {
-            settings: {
-                showPopoutIcon: false,
-                showCloseIcon: false
-            },
-            dimensions: {
-                minItemWidth: 250,
-                minItemHeight: 200,
-                dragProxyWidth: 600,
-                dragProxyHeight: 270,
-            },
-            content: [arrangementConfig]
-        };
-
-        // destroy old layout & init new layout
-        if (this.dockedLayout) {
-            this.dockedLayout.destroy();
-        }
-        this.dockedLayout = new GoldenLayout(mainLayoutConfig, this.appStore.getImageViewContainer());
-        this.appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout);
-        this.dockedLayout.init();
-    };
-
-    @computed get userLayouts(): string[] {
+    @computed get allLayouts(): string[] {
         return this.layouts ? Object.keys(this.layouts) : [];
     }
 
-    @computed get savedLayoutNumber(): number {
+    @computed get userLayouts(): string[] {
+        return this.layouts ? Object.keys(this.layouts).filter((layoutName) => !PresetLayout.isValid(layoutName)) : [];
+    }
+
+    @computed get savedUserLayoutNumber(): number {
         return this.userLayouts.length;
     }
 
@@ -271,12 +264,12 @@ export class LayoutStore {
             return;
         }
 
-        if (PresetLayout.include(this.layoutNameToBeSaved)) {
+        if (PresetLayout.isValid(this.layoutNameToBeSaved)) {
             this.alertStore.showAlert("Layout name cannot be the same as presets.");
             return;
         }
 
-        if (!this.layoutExist(this.layoutNameToBeSaved) && this.savedLayoutNumber >= MAX_LAYOUT) {
+        if (!this.layoutExist(this.layoutNameToBeSaved) && this.savedUserLayoutNumber >= MAX_LAYOUT) {
             this.alertStore.showAlert(`Maximum user-defined layout quota exceeded! (${MAX_LAYOUT} layouts)`);
             return;
         }

@@ -79,31 +79,30 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
             </Menu>
         );
 
+        const presetLayouts: string[] = PresetLayout.PRESETS;
         const userLayouts: string[] = appStore.layoutStore.userLayouts;
-        const presetLayouts: string[] = PresetLayout.getPresetLayouts();
-
         const layoutMenu = (
             <Menu>
                 <Menu.Item text="Layouts" icon={"layout-grid"}>
-                    <Menu.Item text="Layouts">
+                    <Menu.Item text="Layouts" disabled={!presetLayouts && !userLayouts}>
                         <Menu.Item text="Presets" disabled={!presetLayouts || presetLayouts.length <= 0}>
-                            {presetLayouts && presetLayouts.length > 0 ? presetLayouts.map((value) =>
+                            {presetLayouts && presetLayouts.length > 0 && presetLayouts.map((value) =>
                                 <Menu.Item
                                     key={value}
                                     text={value}
                                     active={appStore.layoutStore.dockedLayoutName === value}
-                                    onClick={() => appStore.layoutStore.applyPresetLayout(value)}
+                                    onClick={() => appStore.layoutStore.applyLayout(value)}
                                 />
-                            ) : null}
+                            )}
                         </Menu.Item>
-                        {userLayouts && userLayouts.length > 0 ? userLayouts.map((value) =>
+                        {userLayouts && userLayouts.length > 0 && userLayouts.map((value) =>
                             <Menu.Item
                                 key={value}
                                 text={value}
                                 active={appStore.layoutStore.dockedLayoutName === value}
-                                onClick={() => appStore.layoutStore.applyUserLayout(value)}
+                                onClick={() => appStore.layoutStore.applyLayout(value)}
                             />
-                        ) : null}
+                        )}
                     </Menu.Item>
                     <Menu.Item text="Save Layout" onClick={appStore.showSaveLayoutDialog}/>
                     <Menu.Item text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>

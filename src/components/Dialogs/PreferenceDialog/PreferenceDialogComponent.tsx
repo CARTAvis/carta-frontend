@@ -81,6 +81,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
     public render() {
         const appStore = this.props.appStore;
         const preference = appStore.preferenceStore;
+        const layoutStore = appStore.layoutStore;
 
         const globalPanel = (
             <React.Fragment>
@@ -99,10 +100,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Layout">
                     <HTMLSelect value={preference.layout} onChange={(ev) => { preference.setLayout(ev.currentTarget.value); }}>
-                        <option value={PresetLayout.DEFAULT}>{PresetLayout.DEFAULT}</option>
-                        <option value={PresetLayout.CUBEVIEW}>{PresetLayout.CUBEVIEW}</option>
-                        <option value={PresetLayout.CUBEANALYSIS}>{PresetLayout.CUBEANALYSIS}</option>
-                        <option value={PresetLayout.CONTINUUMANALYSIS}>{PresetLayout.CONTINUUMANALYSIS}</option>
+                        {layoutStore.allLayouts.map((layout) => <option key={layout} value={layout}>{layout}</option>)}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Cursor Position">
