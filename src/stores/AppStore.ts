@@ -509,7 +509,7 @@ export class AppStore {
         this.alertStore = new AlertStore();
         this.overlayStore = new OverlayStore(this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this);
-        this.layoutStore = new LayoutStore(this, this.widgetsStore, this.alertStore);
+        this.layoutStore = new LayoutStore(this);
         this.urlConnectDialogVisible = false;
         this.compressionQuality = this.preferenceStore.imageCompressionQuality;
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
