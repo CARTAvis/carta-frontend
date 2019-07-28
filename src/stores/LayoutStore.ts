@@ -186,8 +186,6 @@ export class LayoutStore {
             content: [arrangementConfig]
         };
 
-        const widgetsStore = this.appStore.widgetsStore;
-        widgetsStore.dockedLayout.destroy();
-        widgetsStore.setDockedLayout(new GoldenLayout(mainLayoutConfig, this.appStore.getImageViewContainer()));
+        this.appStore.widgetsStore.applyNewLayout(new GoldenLayout(mainLayoutConfig, this.appStore.getImageViewContainer()));
     }
 }

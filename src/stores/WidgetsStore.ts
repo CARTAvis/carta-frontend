@@ -106,6 +106,7 @@ export class WidgetsStore {
 
         this.floatingWidgets = [];
         this.defaultFloatingWidgetOffset = 100;
+        this.dockedLayout = null;
     }
 
     private static getDefaultWidgetConfig(type: string) {
@@ -174,7 +175,12 @@ export class WidgetsStore {
         }
     };
 
-    @action setDockedLayout(layout: GoldenLayout) {
+    private initLayout = (layout: GoldenLayout) => {
+        if (!layout) {
+            console.log("Layout is null!");
+            return;
+        }
+
         // TODO: replace with COMPONENT_CONFIG in AppStore
         this.addRenderConfigWidget("render-config-0");
         this.addAnimatorWidget("animator-0");
@@ -209,8 +215,20 @@ export class WidgetsStore {
 
         layout.on("stateChanged", this.handleStateUpdates);
         layout.init();
+    };
 
-        this.dockedLayout = layout;
+    @action applyNewLayout(newLayout: GoldenLayout) {
+        if (!newLayout) {
+            console.log("Layout is null!");
+            return;
+        }
+
+        if (this.dockedLayout) {
+            this.dockedLayout.destroy();
+        }
+
+        this.dockedLayout = newLayout;
+        this.initLayout(newLayout);
     }
 
     @action unpinWidget = (item: GoldenLayout.ContentItem) => {

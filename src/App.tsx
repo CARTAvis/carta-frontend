@@ -219,7 +219,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
             },
             content: [arrangementConfig]
         };
-        widgetsStore.setDockedLayout(new GoldenLayout(mainLayoutConfig, this.props.appStore.getImageViewContainer()));
+        widgetsStore.applyNewLayout(new GoldenLayout(mainLayoutConfig, this.props.appStore.getImageViewContainer()));
     }
 
     private genDefaultLayout(configs: any) {
