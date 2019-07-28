@@ -91,7 +91,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                                 <Menu.Item
                                     key={value}
                                     text={value}
-                                    active={appStore.layoutStore.currentLayout === value}
+                                    active={appStore.layoutStore.dockedLayoutName === value}
                                     onClick={() => appStore.layoutStore.applyPresetLayout(value)}
                                 />
                             ) : null}
@@ -100,7 +100,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                             <Menu.Item
                                 key={value}
                                 text={value}
-                                active={appStore.layoutStore.currentLayout === value}
+                                active={appStore.layoutStore.dockedLayoutName === value}
                                 onClick={() => appStore.layoutStore.applyUserLayout(value)}
                             />
                         ) : null}

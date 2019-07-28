@@ -114,8 +114,8 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
     // GoldenLayout resize handler
     onContainerResize = (width, height) => {
-        if (this.props.appStore.widgetsStore.dockedLayout) {
-            this.props.appStore.widgetsStore.dockedLayout.updateSize(width, height);
+        if (this.props.appStore.layoutStore.dockedLayout) {
+            this.props.appStore.layoutStore.dockedLayout.updateSize(width, height);
         }
     };
 

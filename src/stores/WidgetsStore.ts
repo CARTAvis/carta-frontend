@@ -14,7 +14,7 @@ import {
     StatsComponent,
     ToolbarMenuComponent
 } from "components";
-import {AppStore} from "./AppStore";
+import {AppStore, LayoutStore} from "stores";
 import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
 
 export class WidgetConfig {
@@ -37,8 +37,6 @@ export class WidgetProps {
 }
 
 export class WidgetsStore {
-    // Docked (Golden Layout)
-    @observable dockedLayout: GoldenLayout;
     // Floating widgets
     @observable floatingWidgets: WidgetConfig[];
     @observable defaultFloatingWidgetOffset: number;
@@ -52,13 +50,9 @@ export class WidgetsStore {
     @observable regionListWidgets: Map<string, EmptyWidgetStore>;
     @observable animatorWidgets: Map<string, EmptyWidgetStore>;
 
-    private dockedLayoutConfig;
     private appStore: AppStore;
+    private layoutStore: LayoutStore;
     private widgetsMap: Map<string, Map<string, any>>;
-
-    public getDockedLayoutConfig = () => {
-        return this.dockedLayoutConfig;
-    };
 
     public static RemoveFrameFromRegionWidgets(storeMap: Map<string, RegionWidgetStore>, fileId: number = -1) {
         if (fileId === -1) {
@@ -82,8 +76,9 @@ export class WidgetsStore {
         });
     };
 
-    constructor(appStore: AppStore) {
+    constructor(appStore: AppStore, layoutStore: LayoutStore) {
         this.appStore = appStore;
+        this.layoutStore = layoutStore;
         this.spatialProfileWidgets = new Map<string, SpatialProfileWidgetStore>();
         this.spectralProfileWidgets = new Map<string, SpectralProfileWidgetStore>();
         this.statsWidgets = new Map<string, StatsWidgetStore>();
@@ -106,7 +101,6 @@ export class WidgetsStore {
 
         this.floatingWidgets = [];
         this.defaultFloatingWidgetOffset = 100;
-        this.dockedLayout = null;
     }
 
     private static getDefaultWidgetConfig(type: string) {
@@ -175,7 +169,7 @@ export class WidgetsStore {
         }
     };
 
-    private initLayout = (layout: GoldenLayout) => {
+    public initLayoutWithWidgets = (layout: GoldenLayout) => {
         if (!layout) {
             console.log("Layout is null!");
             return;
@@ -209,27 +203,10 @@ export class WidgetsStore {
             unpinButton.on("click", () => this.unpinWidget(stack.getActiveContentItem()));
             stack.header.controlsContainer.prepend(unpinButton);
         });
-
         layout.on("componentCreated", this.handleItemCreation);
         layout.on("itemDestroyed", this.handleItemRemoval);
-
         layout.on("stateChanged", this.handleStateUpdates);
-        layout.init();
     };
-
-    @action applyNewLayout(newLayout: GoldenLayout) {
-        if (!newLayout) {
-            console.log("Layout is null!");
-            return;
-        }
-
-        if (this.dockedLayout) {
-            this.dockedLayout.destroy();
-        }
-
-        this.dockedLayout = newLayout;
-        this.initLayout(newLayout);
-    }
 
     @action unpinWidget = (item: GoldenLayout.ContentItem) => {
         const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
@@ -342,8 +319,8 @@ export class WidgetsStore {
         }
 
         // Update GL title by searching for image-view components
-        if (this.dockedLayout && this.dockedLayout.root) {
-            const imageViewComponents = this.dockedLayout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
+        if (this.layoutStore.dockedLayout && this.layoutStore.dockedLayout.root) {
+            const imageViewComponents = this.layoutStore.dockedLayout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
             if (imageViewComponents.length) {
                 imageViewComponents[0].setTitle(newTitle);
             }
@@ -357,9 +334,11 @@ export class WidgetsStore {
     }
 
     @action setWidgetTitle(id: string, title: string) {
-        const matchingComponents = this.dockedLayout.root.getItemsByFilter(item => item.config.id === id);
-        if (matchingComponents.length) {
-            matchingComponents[0].setTitle(title);
+        if (this.layoutStore.dockedLayout && this.layoutStore.dockedLayout.root) {
+            const matchingComponents = this.layoutStore.dockedLayout.root.getItemsByFilter(item => item.config.id === id);
+            if (matchingComponents.length) {
+                matchingComponents[0].setTitle(title);
+            }
         }
 
         const widget = this.floatingWidgets.find(w => w.id === id);
