@@ -179,10 +179,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             if (this.creatingRegion.isValid) {
                 this.creatingRegion.endCreating();
                 this.props.frame.regionSet.selectRegion(this.creatingRegion);
-                this.creatingRegion = null;
             } else {
                 this.props.frame.regionSet.deleteRegion(this.creatingRegion);
             }
+            this.creatingRegion = null;
         }
         // Switch to moving mode after region creation. Use a timeout to allow the handleClick function to execute first
         setTimeout(() => this.props.frame.regionSet.mode = RegionMode.MOVING, 1);
