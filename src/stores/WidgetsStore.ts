@@ -101,15 +101,6 @@ export class WidgetsStore {
 
         this.floatingWidgets = [];
         this.defaultFloatingWidgetOffset = 100;
-
-        // TODO: dynamically add store
-        this.addRenderConfigWidget("render-config-0");
-        this.addAnimatorWidget("animator-0");
-        this.addRegionListWidget("region-list-0");
-        this.addSpatialProfileWidget("spatial-profiler-0", "x", -1, 0);
-        this.addSpatialProfileWidget("spatial-profiler-1", "y", -1, 0);
-        this.addSpectralProfileWidget("spectral-profiler-0", "z");
-        this.addStatsWidget("stats-0");
     }
 
     private static getDefaultWidgetConfig(type: string) {
@@ -178,11 +169,40 @@ export class WidgetsStore {
         }
     };
 
-    public initLayoutWithWidgets = (layout: GoldenLayout) => {
-        if (!layout) {
-            console.log("Layout is null!");
+    public initLayoutWithWidgets = (layout: GoldenLayout, componentIDs: string[]) => {
+        if (!layout || !componentIDs) {
+            console.log("Invalid parameters!");
             return;
         }
+
+        // add widget store for components
+        componentIDs.forEach((id) => {
+            switch (id) {
+                case "render-config-0":
+                    this.addRenderConfigWidget(id);
+                    break;
+                case "animator-0":
+                    this.addAnimatorWidget(id);
+                    break;
+                case "region-list-0":
+                    this.addRegionListWidget(id);
+                    break;
+                case "spatial-profiler-0":
+                    this.addSpatialProfileWidget(id, "x", -1, 0);
+                    break;
+                case "spatial-profiler-1":
+                    this.addSpatialProfileWidget(id, "y", -1, 0);
+                    break;
+                case "spectral-profiler-0":
+                    this.addSpectralProfileWidget(id, "z");
+                    break;
+                case "stats-0":
+                    this.addStatsWidget(id);
+                    break;
+                default:
+                    break;
+            }
+        });
 
         layout.registerComponent("placeholder", PlaceholderComponent);
         layout.registerComponent("image-view", ImageViewComponent);
@@ -288,8 +308,8 @@ export class WidgetsStore {
             if (config.component !== "floated") {
                 const id = config.id as string;
                 // TODO: uncomment when dynamically adding store is integrated
-                // console.log(`itemDestroyed: ${id}`);
-                // this.removeWidget(id, config.component);
+                console.log(`itemDestroyed: ${id}`);
+                this.removeWidget(id, config.component);
             }
         }
     };

@@ -214,7 +214,7 @@ export class LayoutStore {
         });
     };
 
-    private fillComponents = (newParentContent, parentContent) => {
+    private fillComponents = (newParentContent, parentContent, componentIDs: string[]) => {
         if (!newParentContent || !parentContent) {
             return;
         }
@@ -233,8 +233,9 @@ export class LayoutStore {
                         simpleChild["height"] = child.height;
                     }
                     newParentContent.push(simpleChild);
-                    this.fillComponents(simpleChild.content, child.content);
+                    this.fillComponents(simpleChild.content, child.content, componentIDs);
                 } else if (child.type === "component" && COMPONENT_CONFIG.has(child.id)) {
+                    componentIDs.push(child.id);
                     let componentConfig = COMPONENT_CONFIG.get(child.id);
                     if (child.width) {
                         componentConfig["width"] = child.width;
@@ -277,7 +278,8 @@ export class LayoutStore {
             type: config.type,
             content: []
         };
-        this.fillComponents(arrangementConfig.content, config.content);
+        let componentIDs = [];
+        this.fillComponents(arrangementConfig.content, config.content, componentIDs);
 
         const mainLayoutConfig = {
             settings: {
@@ -299,7 +301,7 @@ export class LayoutStore {
         }
         this.dockedLayout = new GoldenLayout(mainLayoutConfig, this.appStore.getImageViewContainer());
         this.dockedLayoutName = layoutName;
-        this.appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout);
+        this.appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout, componentIDs);
         this.dockedLayout.init();
     };
 
