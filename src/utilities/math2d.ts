@@ -37,6 +37,19 @@ export function average2D(points: Point2D[]) {
     return scale2D(sum, 1.0 / points.length);
 }
 
+export function minMax2D(points: Point2D[]): { maxPoint: Point2D, minPoint: Point2D } {
+    let maxPoint = {x: -Number.MAX_VALUE, y: -Number.MAX_VALUE};
+    let minPoint = {x: Number.MAX_VALUE, y: Number.MAX_VALUE};
+
+    for (const point of points) {
+        maxPoint.x = Math.max(maxPoint.x, point.x);
+        maxPoint.y = Math.max(maxPoint.y, point.y);
+        minPoint.x = Math.min(minPoint.x, point.x);
+        minPoint.y = Math.min(minPoint.y, point.y);
+    }
+    return {maxPoint, minPoint};
+}
+
 // Returns the closest point from a point to a line segment, as well as the distance to the line segment, and whether the point lies within the line segment
 export function closestPointOnLine(p0: Point2D, p1: Point2D, p2: Point2D): { point: Point2D, bounded: boolean, distance: number } {
     const lineVector = subtract2D(p2, p1);
