@@ -90,7 +90,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                                 <Menu.Item
                                     key={value}
                                     text={value}
-                                    active={appStore.layoutStore.dockedLayoutName === value}
+                                    active={value === appStore.layoutStore.dockedLayoutName}
                                     onClick={() => appStore.layoutStore.applyLayout(value)}
                                 />
                             )}
@@ -110,7 +110,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                             <Menu.Item
                                 key={value}
                                 text={value}
-                                active={appStore.layoutStore.dockedLayoutName === value}
+                                active={value === appStore.layoutStore.dockedLayoutName}
                                 onClick={() => {
                                     appStore.layoutStore.deleteLayout(value);
                                     // apply default preset when deleting current layout
