@@ -120,43 +120,6 @@ export class LayoutStore {
         this.layoutNameToBeSaved = layoutName ? layoutName : "Empty";
     };
 
-    public applyLayout = (layoutName: string) => {
-        if (!layoutName || !this.layoutExist(layoutName)) {
-            this.alertStore.showAlert(`Applying layout failed! Layout ${layoutName} not found.`);
-            return;
-        }
-
-        const config = this.layouts[layoutName];
-        let arrangementConfig = {
-            type: config.type,
-            content: []
-        };
-        this.fillComponents(arrangementConfig.content, config.content);
-
-        const mainLayoutConfig = {
-            settings: {
-                showPopoutIcon: false,
-                showCloseIcon: false
-            },
-            dimensions: {
-                minItemWidth: 250,
-                minItemHeight: 200,
-                dragProxyWidth: 600,
-                dragProxyHeight: 270,
-            },
-            content: [arrangementConfig]
-        };
-
-        // destroy old layout & init new layout
-        if (this.dockedLayout) {
-            this.dockedLayout.destroy();
-        }
-        this.dockedLayout = new GoldenLayout(mainLayoutConfig, this.appStore.getImageViewContainer());
-        this.dockedLayoutName = layoutName;
-        this.appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout);
-        this.dockedLayout.init();
-    };
-
     private initLayouts = () => {
         // 1. fill layout with presets
         PresetLayout.PRESETS.forEach((presetName) => {
@@ -270,6 +233,43 @@ export class LayoutStore {
         return this.userLayouts.length;
     }
 
+    @action applyLayout = (layoutName: string) => {
+        if (!layoutName || !this.layoutExist(layoutName)) {
+            this.alertStore.showAlert(`Applying layout failed! Layout ${layoutName} not found.`);
+            return;
+        }
+
+        const config = this.layouts[layoutName];
+        let arrangementConfig = {
+            type: config.type,
+            content: []
+        };
+        this.fillComponents(arrangementConfig.content, config.content);
+
+        const mainLayoutConfig = {
+            settings: {
+                showPopoutIcon: false,
+                showCloseIcon: false
+            },
+            dimensions: {
+                minItemWidth: 250,
+                minItemHeight: 200,
+                dragProxyWidth: 600,
+                dragProxyHeight: 270,
+            },
+            content: [arrangementConfig]
+        };
+
+        // destroy old layout & init new layout
+        if (this.dockedLayout) {
+            this.dockedLayout.destroy();
+        }
+        this.dockedLayout = new GoldenLayout(mainLayoutConfig, this.appStore.getImageViewContainer());
+        this.dockedLayoutName = layoutName;
+        this.appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout);
+        this.dockedLayout.init();
+    };
+
     @action saveLayout = () => {
         if (!this.layouts || !this.layoutNameToBeSaved) {
             this.alertStore.showAlert("Save layout failed! Empty layouts or name.");
@@ -277,7 +277,7 @@ export class LayoutStore {
         }
 
         if (PresetLayout.isValid(this.layoutNameToBeSaved)) {
-            this.alertStore.showAlert("Layout name cannot be the same as presets.");
+            this.alertStore.showAlert("Layout name cannot be the same as system presets.");
             return;
         }
 

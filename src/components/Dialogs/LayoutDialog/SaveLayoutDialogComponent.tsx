@@ -4,6 +4,7 @@ import {observer} from "mobx-react";
 import {FormGroup, InputGroup, IDialogProps, Button, Intent, Classes, Tooltip} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore} from "stores";
+import {PresetLayout} from "models";
 import "./SaveLayoutDialogComponent.css";
 
 @observer
@@ -22,6 +23,8 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
         appStore.hideSaveLayoutDialog();
         layoutStore.setLayoutToBeSaved(this.layoutName);
         if (layoutStore.layoutExist(this.layoutName)) {
+            PresetLayout.isValid(this.layoutName) ?
+            alertStore.showAlert("Layout name cannot be the same as system presets.") :
             alertStore.showInteractiveAlert(`Are you sure to overwrite the existing layout ${this.layoutName}?`);
         } else {
             layoutStore.saveLayout();
