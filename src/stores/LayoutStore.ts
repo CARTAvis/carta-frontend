@@ -349,6 +349,7 @@ export class LayoutStore {
             return;
         }
 
+        this.dockedLayoutName = this.layoutNameToBeSaved;
         LayoutToaster.show({icon: "layout-grid", message: `Layout ${this.layoutNameToBeSaved} is saved successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
     };
 

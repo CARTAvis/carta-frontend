@@ -32,7 +32,6 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
             alertStore.showInteractiveAlert(`Are you sure to overwrite the existing layout ${this.layoutName}?`);
         } else {
             layoutStore.saveLayout();
-            layoutStore.applyLayout(this.layoutName);
         }
         this.clearInput();
     };
