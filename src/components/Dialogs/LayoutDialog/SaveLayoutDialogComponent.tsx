@@ -30,6 +30,7 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
             layoutStore.saveLayout();
             layoutStore.applyLayout(this.layoutName);
         }
+        this.layoutName = "";
     };
 
     @computed get isEmpty(): boolean {
@@ -66,7 +67,7 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <Button intent={Intent.NONE} onClick={() => this.layoutName = ""} disabled={this.isEmpty} text="Clear"/>
                         <Tooltip content="Layout name cannot be empty!" disabled={!this.isEmpty}>
-                            <Button intent={Intent.SUCCESS} onClick={this.saveLayout} text="Create" disabled={this.isEmpty}/>
+                            <Button intent={Intent.PRIMARY} onClick={this.saveLayout} text="Save" disabled={this.isEmpty}/>
                         </Tooltip>
                         <Button intent={Intent.NONE} onClick={appStore.hideSaveLayoutDialog} text="Close"/>
                     </div>
