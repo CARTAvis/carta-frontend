@@ -504,6 +504,7 @@ export class AppStore {
 
         // Update frame view outside of animation
         autorun(() => {
+            const layout = this.layoutStore.dockedLayout;
             if (this.activeFrame && (this.animatorStore.animationState === AnimationState.STOPPED || this.animatorStore.animationMode === AnimationMode.FRAME)) {
                 // Calculate new required frame view (cropped to file size)
                 const reqView = this.activeFrame.requiredFrameView;
