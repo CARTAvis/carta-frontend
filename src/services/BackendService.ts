@@ -1,9 +1,9 @@
 import {action, autorun, computed, observable} from "mobx";
+import * as Long from "long";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
 import {LogStore, RegionStore, PreferenceStore} from "stores";
 import {DecompressionService} from "./DecompressionService";
-import * as Long from "long";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -22,7 +22,6 @@ export class BackendService {
     @observable loggingEnabled: boolean;
     @observable connectionDropped: boolean;
     @observable sessionId: number;
-    @observable apiKey: string;
     @observable endToEndPing: number;
 
     private connection: WebSocket;
@@ -49,6 +48,7 @@ export class BackendService {
     constructor(logStore: LogStore, preferenceStore: PreferenceStore) {
         this.logStore = logStore;
         this.preferenceStore = preferenceStore;
+        this.loggingEnabled = true;
         this.observerRequestMap = new Map<number, Observer<any>>();
         this.eventCounter = 1;
         this.endToEndPing = NaN;
@@ -142,7 +142,7 @@ export class BackendService {
     }
 
     @action("connect")
-    connect(url: string, apiKey: string, autoConnect: boolean = true): Observable<number> {
+    connect(url: string, autoConnect: boolean = true): Observable<number> {
         if (this.connection) {
             this.connection.onclose = null;
             this.connection.close();
@@ -170,8 +170,6 @@ export class BackendService {
             }
         };
 
-        this.apiKey = apiKey;
-
         const obs = new Observable<number>(observer => {
             this.connection.onopen = () => {
                 if (this.connectionStatus === ConnectionStatus.CLOSED) {
@@ -179,7 +177,7 @@ export class BackendService {
                 }
                 this.connectionStatus = ConnectionStatus.ACTIVE;
                 this.autoReconnect = true;
-                const message = CARTA.RegisterViewer.create({sessionId: 0, apiKey: apiKey, clientFeatureFlags: BackendService.DefaultFeatureFlags});
+                const message = CARTA.RegisterViewer.create({sessionId: 0, clientFeatureFlags: BackendService.DefaultFeatureFlags});
                 const requestId = this.eventCounter;
                 this.logEvent(CARTA.EventType.REGISTER_VIEWER, requestId, message, false);
                 if (this.sendEvent(CARTA.EventType.REGISTER_VIEWER, CARTA.RegisterViewer.encode(message).finish())) {
@@ -461,6 +459,33 @@ export class BackendService {
         }
         return false;
     }
+
+    @action("authenticate")
+    authenticate = (username: string, password: string) => {
+        let authUrl = `${window.location.protocol}//${window.location.hostname}/auth`;
+        // Check for URL query parameters as a final override
+        const url = new URL(window.location.href);
+        const queryUrl = url.searchParams.get("authUrl");
+
+        if (queryUrl) {
+            authUrl = queryUrl;
+        }
+
+        const authCredential = btoa(`${username}:${password}`);
+        return fetch(authUrl, {
+            headers: {
+                "Accept": "application/json, text/plain, */*",
+                "Content-Type": "application/json",
+                "Authorization": "Basic " + authCredential
+            },
+            method: "POST"
+        });
+    };
+
+    @action("set auth token")
+    setAuthToken = (token: string) => {
+        document.cookie = `CARTA-Authorization=${token}; path=/`;
+    };
 
     private messageHandler(event: MessageEvent) {
         if (event.data === "PONG") {

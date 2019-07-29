@@ -8,11 +8,9 @@ import {exportImage, FloatingWidgetManagerComponent, RootMenuComponent} from "./
 import {AppToaster} from "./components/Shared";
 import {
     AboutDialogComponent,
-    ApiKeyDialogComponent,
     FileBrowserDialogComponent,
     OverlaySettingsDialogComponent,
     RegionDialogComponent,
-    URLConnectDialogComponent,
     PreferenceDialogComponent,
     SaveLayoutDialogComponent
 } from "./components/Dialogs";
@@ -21,6 +19,7 @@ import {ConnectionStatus} from "./services";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
 import "./layout-theme.css";
+import {AuthDialogComponent} from "./components/Dialogs/AuthDialog/AuthDialogComponent";
 
 @HotkeysTarget @observer
 export class App extends React.Component<{ appStore: AppStore }> {
@@ -31,39 +30,10 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         const appStore = this.props.appStore;
 
-        let wsURL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}/socket`;
-        if (process.env.NODE_ENV === "development") {
-            wsURL = process.env.REACT_APP_DEFAULT_ADDRESS ? process.env.REACT_APP_DEFAULT_ADDRESS : wsURL;
-        } else {
-            wsURL = process.env.REACT_APP_DEFAULT_ADDRESS_PROD ? process.env.REACT_APP_DEFAULT_ADDRESS_PROD : wsURL;
-        }
-
-        // Check for URL query parameters as a final override
-        const url = new URL(window.location.href);
-        const socketUrl = url.searchParams.get("socketUrl");
-
-        if (socketUrl) {
-            wsURL = socketUrl;
-            console.log(`Connecting to override URL: ${wsURL}`);
-        } else {
-            console.log(`Connecting to default URL: ${wsURL}`);
-        }
-
-        const folderSearchParam = url.searchParams.get("folder");
-        const fileSearchParam = url.searchParams.get("file");
-
-        let connected = false;
-        let autoFileLoaded = false;
-
         AST.onReady.then(() => {
             AST.setPalette(appStore.darkTheme ? nightPalette : dayPalette);
             appStore.astReady = true;
-            if (connected && !autoFileLoaded && fileSearchParam) {
-                appStore.addFrame(folderSearchParam, fileSearchParam, "", 0);
-            }
         });
-        appStore.backendService.loggingEnabled = true;
-        appStore.fileBrowserStore = new FileBrowserStore(appStore.backendService);
 
         // Log the frontend git commit hash
         appStore.logStore.addDebug(`Current frontend version: ${GitCommit.logMessage}`, ["version"]);
@@ -72,12 +42,13 @@ export class App extends React.Component<{ appStore: AppStore }> {
         // Display toasts when connection status changes
         autorun(() => {
             const newConnectionStatus = appStore.backendService.connectionStatus;
+            const userString = appStore.username ? ` as ${appStore.username}` : "";
             switch (newConnectionStatus) {
                 case ConnectionStatus.ACTIVE:
                     if (appStore.backendService.connectionDropped) {
-                        AppToaster.show({icon: "warning-sign", message: "Reconnected to server. Some errors may occur", intent: "warning", timeout: 3000});
+                        AppToaster.show({icon: "warning-sign", message: `Reconnected to server${userString}. Some errors may occur`, intent: "warning", timeout: 3000});
                     } else {
-                        AppToaster.show({icon: "swap-vertical", message: "Connected to CARTA server", intent: "success", timeout: 3000});
+                        AppToaster.show({icon: "swap-vertical", message: `Connected to CARTA server${userString}`, intent: "success", timeout: 3000});
                     }
                     break;
                 case ConnectionStatus.CLOSED:
@@ -90,21 +61,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
             }
             this.previousConnectionStatus = newConnectionStatus;
         });
-
-        appStore.backendService.connect(wsURL, appStore.apiKey).subscribe(sessionId => {
-            console.log(`Connected with session ID ${sessionId}`);
-            connected = true;
-            appStore.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
-
-            if (appStore.astReady && fileSearchParam) {
-                autoFileLoaded = true;
-                appStore.addFrame(folderSearchParam, fileSearchParam, "", 0);
-            }
-
-            if (appStore.preferenceStore.autoLaunch) {
-                appStore.fileBrowserStore.showFileBrowser();
-            }
-        }, err => console.log(err));
     }
 
     componentDidMount() {
@@ -134,8 +90,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
             <div className={className}>
                 <RootMenuComponent appStore={appStore}/>
                 <OverlaySettingsDialogComponent appStore={appStore}/>
-                <URLConnectDialogComponent appStore={appStore}/>
-                <ApiKeyDialogComponent appStore={appStore}/>
+                <AuthDialogComponent appStore={appStore}/>
                 <FileBrowserDialogComponent appStore={appStore}/>
                 <AboutDialogComponent appStore={appStore}/>
                 <RegionDialogComponent appStore={appStore}/>

@@ -24,7 +24,7 @@ import {
     LayoutStore
 } from ".";
 import {GetRequiredTiles} from "utilities";
-import {BackendService, TileService} from "services";
+import {BackendService, TileService, ConnectionStatus} from "services";
 import {CursorInfo, FrameView, Point2D, ProcessedSpatialProfile, ProtobufProcessing, Theme} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
 
@@ -105,15 +105,8 @@ export class AppStore {
     @observable overlayStore: OverlayStore;
     // File Browser
     @observable fileBrowserStore: FileBrowserStore;
-    // Additional Dialogs
-    @observable urlConnectDialogVisible: boolean;
-    @action showURLConnect = () => {
-        this.urlConnectDialogVisible = true;
-    };
-    @action hideURLConnect = () => {
-        this.urlConnectDialogVisible = false;
-    };
 
+    // Hotkey dialog
     @observable hotkeyDialogVisible: boolean;
     @action showHotkeyDialog = () => {
         this.hotkeyDialogVisible = true;
@@ -122,32 +115,13 @@ export class AppStore {
         this.hotkeyDialogVisible = false;
     };
 
+    // About dialog
     @observable aboutDialogVisible: boolean;
     @action showAboutDialog = () => {
         this.aboutDialogVisible = true;
     };
     @action hideAboutDialog = () => {
         this.aboutDialogVisible = false;
-    };
-
-    @observable apiKey: string;
-    @action applyApiKey = (newKey: string, forceReload: boolean = true) => {
-        if (newKey) {
-            localStorage.setItem("API_KEY", newKey);
-            this.apiKey = newKey;
-        } else {
-            localStorage.removeItem("API_KEY");
-        }
-        if (forceReload) {
-            location.reload();
-        }
-    };
-    @observable apiKeyDialogVisible: boolean;
-    @action showApiKeyDialog = () => {
-        this.apiKeyDialogVisible = true;
-    };
-    @action hideApiKeyDialog = () => {
-        this.apiKeyDialogVisible = false;
     };
 
     // User preference dialog
@@ -173,6 +147,67 @@ export class AppStore {
     };
     @action hideDeleteLayoutDialog = () => {
         this.deleteLayoutDialogVisible = false;
+    }
+
+    // Auth dialog
+    @observable authDialogVisible: boolean = false;
+    @observable username: string = "";
+    @action showAuthDialog = () => {
+        this.authDialogVisible = true;
+    };
+    @action hideAuthDialog = () => {
+        this.authDialogVisible = false;
+    };
+    @action setUsername = (username: string) => {
+        this.username = username;
+    };
+
+    @action connectToServer = (socketName: string = "socket") => {
+        let wsURL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}/${socketName}`;
+        if (process.env.NODE_ENV === "development") {
+            wsURL = process.env.REACT_APP_DEFAULT_ADDRESS ? process.env.REACT_APP_DEFAULT_ADDRESS : wsURL;
+        } else {
+            wsURL = process.env.REACT_APP_DEFAULT_ADDRESS_PROD ? process.env.REACT_APP_DEFAULT_ADDRESS_PROD : wsURL;
+        }
+
+        // Check for URL query parameters as a final override
+        const url = new URL(window.location.href);
+        const socketUrl = url.searchParams.get("socketUrl");
+
+        if (socketUrl) {
+            wsURL = socketUrl;
+            console.log(`Connecting to override URL: ${wsURL}`);
+        } else {
+            console.log(`Connecting to default URL: ${wsURL}`);
+        }
+
+        const folderSearchParam = url.searchParams.get("folder");
+        const fileSearchParam = url.searchParams.get("file");
+
+        let connected = false;
+        let autoFileLoaded = false;
+
+        AST.onReady.then(() => {
+            AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
+            this.astReady = true;
+            if (this.backendService.connectionStatus === ConnectionStatus.ACTIVE && !autoFileLoaded && fileSearchParam) {
+                this.addFrame(folderSearchParam, fileSearchParam, "", 0);
+            }
+        });
+
+        this.backendService.connect(wsURL).subscribe(sessionId => {
+            console.log(`Connected with session ID ${sessionId}`);
+            connected = true;
+            this.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
+
+            if (this.astReady && fileSearchParam) {
+                autoFileLoaded = true;
+                this.addFrame(folderSearchParam, fileSearchParam, "", 0);
+            }
+            if (this.preferenceStore.autoLaunch) {
+                this.fileBrowserStore.showFileBrowser();
+            }
+        }, err => console.log(err));
     };
 
     // Tasks
@@ -427,11 +462,6 @@ export class AppStore {
     private pendingHistogram: CARTA.RegionHistogramData;
 
     constructor() {
-        const existingKey = localStorage.getItem("API_KEY");
-        if (existingKey) {
-            this.apiKey = existingKey;
-        }
-
         this.alertStore = new AlertStore();
         this.layoutStore = new LayoutStore(this, this.alertStore);
         this.preferenceStore = new PreferenceStore(this, this.layoutStore);
@@ -446,10 +476,10 @@ export class AppStore {
 
         this.frames = [];
         this.activeFrame = null;
+        this.fileBrowserStore = new FileBrowserStore(this.backendService);
         this.animatorStore = new AnimatorStore(this);
         this.overlayStore = new OverlayStore(this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this, this.layoutStore);
-        this.urlConnectDialogVisible = false;
         this.compressionQuality = this.preferenceStore.imageCompressionQuality;
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         this.spatialRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
@@ -601,6 +631,13 @@ export class AppStore {
         this.backendService.getErrorStream().subscribe(this.handleErrorStream);
         this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
         this.tileService.GetTileStream().subscribe(this.handleTileStream);
+
+        // Auth and connection
+        if (process.env.REACT_APP_AUTHENTICATION === "true") {
+            this.authDialogVisible = true;
+        } else {
+            this.connectToServer();
+        }
     }
 
     // region Subscription handlers
