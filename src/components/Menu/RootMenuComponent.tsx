@@ -41,9 +41,6 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 />
                 <Menu.Divider/>
                 <Menu.Item text="Preferences" onClick={appStore.showPreferenceDialog}/>
-                <Menu.Divider/>
-                <Menu.Item text="Enter API Key" onClick={appStore.showApiKeyDialog}/>
-                <Menu.Item text="Connect to remote server" onClick={appStore.showURLConnect}/>
             </Menu>
         );
 
@@ -106,17 +103,18 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         let connectivityClass = "connectivity-icon";
         let tooltip = "";
         const latencyString = isFinite(appStore.backendService.endToEndPing) ? `${appStore.backendService.endToEndPing.toFixed(1)} ms` : "Unknown";
+        const userString = appStore.username ? ` as ${appStore.username}` : "";
         switch (connectionStatus) {
             case ConnectionStatus.PENDING:
-                tooltip = "Connecting to server";
+                tooltip = `Connecting to server${userString}`;
                 connectivityClass += " warning";
                 break;
             case ConnectionStatus.ACTIVE:
                 if (appStore.backendService.connectionDropped) {
-                    tooltip = `Reconnected to server after disconnect. Some errors may occur. Latency: ${latencyString}`;
+                    tooltip = `Reconnected to server${userString} after disconnect. Some errors may occur. Latency: ${latencyString}`;
                     connectivityClass += " warning";
                 } else {
-                    tooltip = `Connected to server. Latency: ${latencyString}`;
+                    tooltip = `Connected to server${userString}. Latency: ${latencyString}`;
                     connectivityClass += " online";
                 }
                 break;
