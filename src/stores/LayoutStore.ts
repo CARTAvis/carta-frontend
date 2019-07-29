@@ -196,7 +196,9 @@ export class LayoutStore {
                         simpleChild["height"] = child.height;
                     }
                     newParentContent.push(simpleChild);
-                    this.genSimpleConfig(simpleChild.content, child.content);
+                    if (child.content) {
+                        this.genSimpleConfig(simpleChild.content, child.content);
+                    }
                 } else if (child.type === "component") {
                     let simpleChild = {
                         type: child.type,
@@ -233,7 +235,9 @@ export class LayoutStore {
                         simpleChild["height"] = child.height;
                     }
                     newParentContent.push(simpleChild);
-                    this.fillComponents(simpleChild.content, child.content, componentIDs);
+                    if (child.content) {
+                        this.fillComponents(simpleChild.content, child.content, componentIDs);
+                    }
                 } else if (child.type === "component" && COMPONENT_CONFIG.has(child.id)) {
                     componentIDs.push(child.id);
                     let componentConfig = COMPONENT_CONFIG.get(child.id);
