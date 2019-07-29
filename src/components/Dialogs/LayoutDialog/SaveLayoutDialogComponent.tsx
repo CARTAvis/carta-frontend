@@ -7,6 +7,8 @@ import {AppStore} from "stores";
 import {PresetLayout} from "models";
 import "./SaveLayoutDialogComponent.css";
 
+const KEYCODE_ENTER = 13;
+
 @observer
 export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppStore }> {
     @observable private layoutName: string = "";
@@ -17,6 +19,12 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
 
     private clearInput = () => {
         this.layoutName = "";
+    };
+
+    private handleKeyDown = (ev) => {
+        if (ev.keyCode === KEYCODE_ENTER && !this.isEmpty) {
+            this.saveLayout();
+        }
     };
 
     private saveLayout = () => {
@@ -63,12 +71,11 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
             <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={400} defaultHeight={185} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Save current layout as:">
-                        <InputGroup className="layout-name-input" placeholder="Enter layout name" value={this.layoutName} autoFocus={true} onChange={this.handleInput}/>
+                        <InputGroup className="layout-name-input" placeholder="Enter layout name" value={this.layoutName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown}/>
                     </FormGroup>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <Button intent={Intent.NONE} onClick={this.clearInput} disabled={this.isEmpty} text="Clear"/>
                         <Tooltip content="Layout name cannot be empty!" disabled={!this.isEmpty}>
                             <Button intent={Intent.PRIMARY} onClick={this.saveLayout} text="Save" disabled={this.isEmpty}/>
                         </Tooltip>
