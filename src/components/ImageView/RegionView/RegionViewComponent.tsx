@@ -8,9 +8,9 @@ import {CARTA} from "carta-protobuf";
 import {ASTSettingsString, FrameStore, OverlayStore, RegionMode, RegionStore} from "stores";
 import {RegionComponent} from "./RegionComponent";
 import {PolygonRegionComponent} from "./PolygonRegionComponent";
+import {PointRegionComponent} from "./PointRegionComponent";
 import {CursorInfo, Point2D} from "models";
 import "./RegionViewComponent.css";
-import {PointRegionComponent} from "./PointRegionComponent";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;
@@ -192,7 +192,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private handleMouseUpPolygonRegion(mouseEvent: MouseEvent) {
         const frame = this.props.frame;
         const cursorPosImageSpace = this.getImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
-        if (this.creatingRegion) {
+        if (this.creatingRegion && this.creatingRegion.regionType === CARTA.RegionType.POLYGON) {
             if (this.creatingRegion.controlPoints.length) {
                 const previousPoint = this.creatingRegion.controlPoints[this.creatingRegion.controlPoints.length - 1];
                 // prevent duplicate points

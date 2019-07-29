@@ -95,7 +95,9 @@ export class RegionSetStore {
                 this.selectedRegion = this.regions[0];
             }
             this.regions = this.regions.filter(r => r !== region);
-            this.backendService.removeRegion(region.regionId);
+            if (!region.isTemporary) {
+                this.backendService.removeRegion(region.regionId);
+            }
         }
     };
 
