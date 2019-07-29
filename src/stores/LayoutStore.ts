@@ -59,6 +59,16 @@ const COMPONENT_CONFIG = new Map<string, any>([
 ]);
 
 const PRESET_CONFIGS = new Map<string, any>([
+    [PresetLayout.DEFAULT, {
+        leftBottomContent: {
+            type: "stack",
+            content: [{type: "component", id: "render-config-0"}]
+        },
+        rightColumnContent: [{type: "component", id: "spatial-profiler-0"}, {type: "component", id: "spatial-profiler-1"}, {
+            type: "stack",
+            content: [{type: "component", id: "animator-0"}, {type: "component", id: "region-list-0"}]
+        }]
+    }],
     [PresetLayout.CUBEVIEW, {
         leftBottomContent: {
             type: "stack",
@@ -79,16 +89,6 @@ const PRESET_CONFIGS = new Map<string, any>([
             content: [{type: "component", id: "render-config-0"}, {type: "component", id: "region-list-0"}, {type: "component", id: "animator-0"}]
         },
         rightColumnContent: [{type: "component", id: "spatial-profiler-0"}, {type: "component", id: "spatial-profiler-1"}, {type: "component", id: "stats-0"}]
-    }],
-    [PresetLayout.DEFAULT, {
-        leftBottomContent: {
-            type: "stack",
-            content: [{type: "component", id: "render-config-0"}]
-        },
-        rightColumnContent: [{type: "component", id: "spatial-profiler-0"}, {type: "component", id: "spatial-profiler-1"}, {
-            type: "stack",
-            content: [{type: "component", id: "animator-0"}, {type: "component", id: "region-list-0"}]
-        }]
     }]
 ]);
 
@@ -183,19 +183,33 @@ export class LayoutStore {
         }
 
         parentContent.forEach((child) => {
-            if (child.type === "stack" || child.type === "row" || child.type === "column") {
-                let simpleChild = {
-                    type: child.type,
-                    content: []
-                };
-                newParentContent.push(simpleChild);
-                this.genSimpleConfig(simpleChild.content, child.content);
-            } else if (child.type === "component") {
-                let simpleChild = {
-                    type: child.type,
-                    id: child.id
-                };
-                newParentContent.push(simpleChild);
+            if (child.type) {
+                if (child.type === "stack" || child.type === "row" || child.type === "column") {
+                    let simpleChild = {
+                        type: child.type,
+                        content: []
+                    };
+                    if (child.width) {
+                        simpleChild["width"] = child.width;
+                    }
+                    if (child.height) {
+                        simpleChild["height"] = child.height;
+                    }
+                    newParentContent.push(simpleChild);
+                    this.genSimpleConfig(simpleChild.content, child.content);
+                } else if (child.type === "component") {
+                    let simpleChild = {
+                        type: child.type,
+                        id: child.id
+                    };
+                    if (child.width) {
+                        simpleChild["width"] = child.width;
+                    }
+                    if (child.height) {
+                        simpleChild["height"] = child.height;
+                    }
+                    newParentContent.push(simpleChild);
+                }
             }
         });
     };
@@ -206,17 +220,31 @@ export class LayoutStore {
         }
 
         parentContent.forEach((child) => {
-            if (child.type === "stack" || child.type === "row" || child.type === "column") {
-                let simpleChild = {
-                    type: child.type,
-                    content: []
-                };
-                newParentContent.push(simpleChild);
-                this.fillComponents(simpleChild.content, child.content);
-            } else if (child.type === "component" && COMPONENT_CONFIG.has(child.id)) {
-                let componentConfig = COMPONENT_CONFIG.get(child.id);
-                componentConfig.props = {appStore: this.appStore, id: child.id, docked: true};
-                newParentContent.push(componentConfig);
+            if (child.type) {
+                if (child.type === "stack" || child.type === "row" || child.type === "column") {
+                    let simpleChild = {
+                        type: child.type,
+                        content: []
+                    };
+                    if (child.width) {
+                        simpleChild["width"] = child.width;
+                    }
+                    if (child.height) {
+                        simpleChild["height"] = child.height;
+                    }
+                    newParentContent.push(simpleChild);
+                    this.fillComponents(simpleChild.content, child.content);
+                } else if (child.type === "component" && COMPONENT_CONFIG.has(child.id)) {
+                    let componentConfig = COMPONENT_CONFIG.get(child.id);
+                    if (child.width) {
+                        componentConfig["width"] = child.width;
+                    }
+                    if (child.height) {
+                        componentConfig["height"] = child.height;
+                    }
+                    componentConfig.props = {appStore: this.appStore, id: child.id, docked: true};
+                    newParentContent.push(componentConfig);
+                }
             }
         });
     };
@@ -240,6 +268,11 @@ export class LayoutStore {
         }
 
         const config = this.layouts[layoutName];
+        if (!config || !config.type || !config.content) {
+            this.alertStore.showAlert(`Applying layout failed! Something is wrong with layout ${layoutName}.`);
+            return;
+        }
+
         let arrangementConfig = {
             type: config.type,
             content: []
@@ -286,22 +319,27 @@ export class LayoutStore {
             return;
         }
 
-        if (this.dockedLayout && this.dockedLayout.config && this.dockedLayout.config.content && this.dockedLayout.config.content.length > 0) {
-            // generate simple config from current layout
-            const currentConfig = this.dockedLayout.config.content[0];
-            let simpleConfig = {
-                type: currentConfig.type,
-                content: []
-            };
-            this.genSimpleConfig(simpleConfig.content, currentConfig.content);
-            this.layouts[this.layoutNameToBeSaved] = simpleConfig;
+        if (!this.dockedLayout || !this.dockedLayout.config || !this.dockedLayout.config.content || this.dockedLayout.config.content.length <= 0) {
+            this.alertStore.showAlert("Saving layout failed! Something is wrong with current layout.");
+            return;
+        }
 
-            if (!this.saveLayoutToLocalStorage()) {
-                delete this.layouts[this.layoutNameToBeSaved];
-                return;
-            }
-        } else {
-            this.alertStore.showAlert("Save current layout failed! There is something wrong with the layout.");
+        const currentConfig = this.dockedLayout.config.content[0];
+        if (!currentConfig || !currentConfig.type || !currentConfig.content) {
+            this.alertStore.showAlert("Saving layout failed! Something is wrong with current layout.");
+            return;
+        }
+
+        // generate simple config from current layout
+        let simpleConfig = {
+            type: currentConfig.type,
+            content: []
+        };
+        this.genSimpleConfig(simpleConfig.content, currentConfig.content);
+        this.layouts[this.layoutNameToBeSaved] = simpleConfig;
+
+        if (!this.saveLayoutToLocalStorage()) {
+            delete this.layouts[this.layoutNameToBeSaved];
             return;
         }
 
