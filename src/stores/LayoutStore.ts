@@ -108,22 +108,8 @@ export class LayoutStore {
         this.appStore = appStore;
         this.alertStore = alertStore;
         this.dockedLayout = null;
-        this.layouts = this.initLayouts();
-
-        // read layout configs from local storage
-        const layoutJson = localStorage.getItem(KEY);
-        let userLayouts = null;
-        if (layoutJson) {
-            try {
-                userLayouts = JSON.parse(layoutJson);
-            } catch (e) {
-                this.alertStore.showAlert("Loading user-defined layout failed!");
-                userLayouts = null;
-            }
-        }
-        if (userLayouts) {
-            Object.assign(this.layouts, userLayouts);
-        }
+        this.layouts = {};
+        this.initLayouts();
     }
 
     public layoutExist = (layoutName: string): boolean => {
@@ -171,11 +157,11 @@ export class LayoutStore {
         this.dockedLayout.init();
     };
 
-    private initLayouts = (): any => {
-        let presets = {};
+    private initLayouts = () => {
+        // 1. fill layout with presets
         PresetLayout.PRESETS.forEach((presetName) => {
             const config = PRESET_CONFIGS.get(presetName);
-            presets[presetName] = {
+            this.layouts[presetName] = {
                 type: "row",
                 content: [{
                     type: "column",
@@ -187,16 +173,42 @@ export class LayoutStore {
                 }]
             };
         });
-        return presets;
+
+        // 2. add user layouts stored in local storage
+        const layoutJson = localStorage.getItem(KEY);
+        let userLayouts = null;
+        if (layoutJson) {
+            try {
+                userLayouts = JSON.parse(layoutJson);
+            } catch (e) {
+                this.alertStore.showAlert("Loading user-defined layout failed!");
+                userLayouts = null;
+            }
+        }
+
+        if (userLayouts) {
+            // skip user layouts which have the same name as presets
+            Object.keys(userLayouts).forEach((userLayout) => {
+                if (!PresetLayout.isValid(userLayout)) { this.layouts[userLayout] = userLayouts[userLayout]; }
+            });
+        }
     };
 
     private saveLayoutToLocalStorage = (): boolean => {
-        try {
-            const serializedJson = JSON.stringify(this.layouts);
-            localStorage.setItem(KEY, serializedJson);
-        } catch (e) {
-            this.alertStore.showAlert("Saving user-defined layout failed! " + e.message);
-            return false;
+        if (this.userLayouts && this.userLayouts.length > 0) {
+            // save only user layouts to local storage, excluding presets
+            let userLayouts = {};
+            this.userLayouts.forEach((layoutName) => {
+                if (!PresetLayout.isValid(layoutName)) { userLayouts[layoutName] = this.layouts[layoutName]; }
+            });
+
+            try {
+                const serializedJson = JSON.stringify(userLayouts);
+                localStorage.setItem(KEY, serializedJson);
+            } catch (e) {
+                this.alertStore.showAlert("Saving user-defined layout failed! " + e.message);
+                return false;
+            }
         }
 
         return true;

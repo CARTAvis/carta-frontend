@@ -15,13 +15,17 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
     };
 
     private saveLayout = () => {
-        this.props.appStore.hideSaveLayoutDialog();
+        const appStore = this.props.appStore;
+        const layoutStore = this.props.appStore.layoutStore;
+        const alertStore = this.props.appStore.alertStore;
 
-        this.props.appStore.layoutStore.setLayoutToBeSaved(this.layoutName);
-        if (this.props.appStore.layoutStore.layoutExist(this.layoutName)) {
-            this.props.appStore.alertStore.showInteractiveAlert(`Are you sure to overwrite the existing layout ${this.layoutName}?`);
+        appStore.hideSaveLayoutDialog();
+        layoutStore.setLayoutToBeSaved(this.layoutName);
+        if (layoutStore.layoutExist(this.layoutName)) {
+            alertStore.showInteractiveAlert(`Are you sure to overwrite the existing layout ${this.layoutName}?`);
         } else {
-            this.props.appStore.layoutStore.saveLayout();
+            layoutStore.saveLayout();
+            layoutStore.applyLayout(this.layoutName);
         }
     };
 
