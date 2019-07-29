@@ -127,16 +127,16 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @action clearXYBounds = () => {
         this.sharedMinX = undefined;
         this.sharedMaxX = undefined;
-        this.quMinY = undefined;
-        this.quMaxY = undefined;
-        this.polIntensityMinY = undefined;
-        this.polIntensityMaxY = undefined;
-        this.polAngleMinY = undefined;
-        this.polAngleMaxY = undefined;
-        this.quScatterMinX = undefined;
-        this.quScatterMaxX = undefined;
-        this.quScatterMinY = undefined;
-        this.quScatterMaxY = undefined;
+        // this.quMinY = undefined;
+        // this.quMaxY = undefined;
+        // this.polIntensityMinY = undefined;
+        // this.polIntensityMaxY = undefined;
+        // this.polAngleMinY = undefined;
+        // this.polAngleMaxY = undefined;
+        // this.quScatterMinX = undefined;
+        // this.quScatterMaxX = undefined;
+        // this.quScatterMinY = undefined;
+        // this.quScatterMaxY = undefined;
     };
 
     @action setChannel = (channel: number) => {
@@ -172,7 +172,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.useWcsValues = true;
     }
 
-    @computed get isAutoScaledX() {
+    @computed get isLinePlotsAutoScaledX() {
         return (this.sharedMinX === undefined || this.sharedMaxX === undefined);
     }
 

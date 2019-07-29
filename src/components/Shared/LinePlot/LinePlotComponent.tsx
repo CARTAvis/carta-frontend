@@ -309,7 +309,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
             this.onStageClick(ev);
         } else {
-            if (this.props.data) {
+            if (this.props.data || this.props.multiPlotData) {
                 this.stageClickStartX = undefined;
                 this.stageClickStartY = undefined;
                 if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
@@ -420,12 +420,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     onStageWheel = (ev) => {
-        if (this.props.data && this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
+        if ((this.props.data || this.props.multiPlotData) && this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
             const wheelEvent: WheelEvent = ev.evt;
             const chartArea = this.chartArea;
             const lineHeight = 15;
             const zoomSpeed = 0.001;
-
             if (wheelEvent.offsetX > chartArea.right || wheelEvent.offsetX < chartArea.left) {
                 return;
             }

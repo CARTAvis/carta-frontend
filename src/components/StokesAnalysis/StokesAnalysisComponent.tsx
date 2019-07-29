@@ -10,7 +10,7 @@ import {WidgetConfig, WidgetProps, SpectralProfileStore, FrameStore} from "store
 import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {Point2D, ChannelInfo} from "models";
 import {CARTA} from "carta-protobuf";
-import {clamp, pi, pa, normalising} from "utilities";
+import {clamp, pi, pa, normalising, getMinY, getMaxY} from "utilities";
 import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import "./StokesAnalysisComponent.css";
 
@@ -104,14 +104,20 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 const frame = appStore.activeFrame;
                 let progressString = "";
                 const currentData = this.plotData;
-                if (currentData && isFinite(currentData.progress) && currentData.progress < 1.0) {
-                    progressString = `[${(currentData.progress * 100).toFixed(0)}% complete]`;
-                }
-                if (frame) {
-                    const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
-                    const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
-                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
+                console.log(currentData);
+                try {
+                    if (currentData && isFinite(currentData.progress) && currentData.progress < 1.0) {
+                        progressString = `[${(currentData.progress * 100).toFixed(0)}% complete]`;
+                        console.log(progressString);
+                    }
+                    if (frame) {
+                        const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
+                        const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
+                        const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
+                        this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
+                    }
+                } catch (error) {
+                    console.log(error);
                 }
             } else {
                 this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis: Cursor`);
@@ -262,15 +268,15 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return values;
     }
 
-    private calculateXYborder(xValues: Array<number>, yValues: Array<number>): {xMin: number, xMax: number, yMin: number, yMax: number} {
+    private calculateXYborder(xValues: Array<number>, yValues: Array<number>, isLinePlots: boolean): {xMin: number, xMax: number, yMin: number, yMax: number} {
         let xMin = Math.min(... xValues.filter(n => { return !isNaN(n); }));
         let xMax = Math.max(... xValues.filter(n => { return !isNaN(n); }));
         let yMin = Number.MAX_VALUE;
         let yMax = -Number.MAX_VALUE;
 
-        if (!this.widgetStore.isAutoScaledX) {
+        if (!this.widgetStore.isLinePlotsAutoScaledX && isLinePlots) {
             const localXMin = clamp(this.widgetStore.sharedMinX, xMin, xMax);
-            const localXMax = clamp(this.widgetStore.sharedMinX, xMin, xMax);
+            const localXMax = clamp(this.widgetStore.sharedMaxX, xMin, xMax);
             xMin = localXMin;
             xMax = localXMax;
         }
@@ -289,7 +295,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private assambleLinePlotData(profile: Array<number>, channelInfo: ChannelInfo): {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}} {
         if (profile  && profile.length && profile.length === channelInfo.values.length) {
             let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
-            let border = this.calculateXYborder(channelValues, profile);
+            let border = this.calculateXYborder(channelValues, profile, true);
             let values = StokesAnalysisComponent.assambleXYData(profile, channelValues, border.xMin, border.xMax);
             return {dataset: values, border};
         }
@@ -298,7 +304,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     private assambleScatterPlotData(qProfile: Array<number>, uProfile: Array<number>): {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}} {
         if (qProfile  && qProfile.length && uProfile && uProfile.length && qProfile.length === uProfile.length) {
-            let border = this.calculateXYborder(qProfile, uProfile);
+            let border = this.calculateXYborder(qProfile, uProfile, false);
             let values = StokesAnalysisComponent.assambleXYData(uProfile, qProfile, border.xMin, border.xMax);
             return {dataset: values, border};
         }
@@ -315,7 +321,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         piValues: {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}},
         paValues: {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}},
         quValues: {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}},
-        progress: number} {
+        progress: number
+    } {
         const frame = this.props.appStore.activeFrame;
         if (!frame) {
             return null;
@@ -373,6 +380,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphCursorMoved: this.onGraphCursorMoved,
             multiPlotBorderColor: new Map(),
             isGroupSubPlot: true,
+            scrollZoom: true,
+            graphZoomedX: this.widgetStore.setSharedXBounds,
+            graphZoomReset: this.widgetStore.clearXYBounds,
             markers: []
         };
 
@@ -389,6 +399,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             xTickMarkLength: 0,
             graphCursorMoved: this.onGraphCursorMoved,
             isGroupSubPlot: true,
+            scrollZoom: true,
+            graphZoomedX: this.widgetStore.setSharedXBounds,
+            graphZoomReset: this.widgetStore.clearXYBounds,
             markers: []
         };
 
@@ -404,6 +417,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             multiPlotData: new Map(),
             graphCursorMoved: this.onGraphCursorMoved,
             isGroupSubPlot: true,
+            scrollZoom: true,
+            graphZoomedX: this.widgetStore.setSharedXBounds,
+            graphZoomReset: this.widgetStore.clearXYBounds,
             markers: []
         };
 
@@ -447,18 +463,29 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
                 if (this.compareVariable(qBorder.xMin, uBorder.xMin, piBorder.xMin, paBorder.xMin) && this.compareVariable(qBorder.xMax, uBorder.xMax, piBorder.xMax, paBorder.xMax)) {
                     
-                    quLinePlotProps.xMin = qBorder.xMin;
-                    quLinePlotProps.xMax = qBorder.xMax;
                     quLinePlotProps.yMin = qBorder.yMin < uBorder.yMin ? qBorder.yMin : uBorder.yMin;
                     quLinePlotProps.yMax = qBorder.yMax > uBorder.yMax ? qBorder.yMax : uBorder.yMax;
-
-                    piLinePlotProps.xMin = piBorder.xMin;
-                    piLinePlotProps.xMax = piBorder.xMax;
+                    
+                    if (this.widgetStore.isLinePlotsAutoScaledX) {
+                        quLinePlotProps.xMin = qBorder.xMin;
+                        quLinePlotProps.xMax = qBorder.xMax;
+                        piLinePlotProps.xMin = piBorder.xMin;
+                        piLinePlotProps.xMax = piBorder.xMax;
+                        paLinePlotProps.xMin = paBorder.xMin;
+                        paLinePlotProps.xMax = paBorder.xMax;
+                    }
+                    else {
+                        quLinePlotProps.xMin = this.widgetStore.sharedMinX;
+                        quLinePlotProps.xMax = this.widgetStore.sharedMaxX;
+                        piLinePlotProps.xMin = this.widgetStore.sharedMinX;
+                        piLinePlotProps.xMax = this.widgetStore.sharedMaxX;
+                        paLinePlotProps.xMin = this.widgetStore.sharedMinX;
+                        paLinePlotProps.xMax = this.widgetStore.sharedMaxX;
+                    }
+                    
                     piLinePlotProps.yMin = piBorder.yMin;
                     piLinePlotProps.yMax = piBorder.yMax;
 
-                    paLinePlotProps.xMin = paBorder.xMin;
-                    paLinePlotProps.xMax = paBorder.xMax;
                     paLinePlotProps.yMin = paBorder.yMin;
                     paLinePlotProps.yMax = paBorder.yMax;
                 }

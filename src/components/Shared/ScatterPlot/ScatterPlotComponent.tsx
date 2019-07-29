@@ -5,10 +5,12 @@ import {Layer, Stage} from "react-konva";
 import {PlotContainerComponent} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {LinePlotComponent} from "components/Shared/LinePlot/LinePlotComponent";
+import {Colors} from "@blueprintjs/core";
 import "./ScatterPlotComponent.css";
 
 @observer
 export class ScatterPlotComponent extends LinePlotComponent {
+    private pointDefaultColor = Colors.GRAY2;
 
     private getScatterColor(value: number, min: number, max: number, toColor: number): string {
         let percentage = (value + Math.abs(min)) / (Math.abs(min) + Math.abs(max));

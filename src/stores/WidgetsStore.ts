@@ -394,26 +394,26 @@ export class WidgetsStore {
 
     // endregion
 
-        // region Stokes Profile Widgets
-        createFloatingStokesWidget = () => {
-            let config = StokesAnalysisComponent.WIDGET_CONFIG;
-            config.id = this.addStokesWidget();
-            this.addFloatingWidget(config);
-        };
-    
-        @action addStokesWidget(id: string = null) {
-            // Generate new id if none passed in
-            if (!id) {
-                id = this.getNextId(StokesAnalysisComponent.WIDGET_CONFIG.type);
-            }
-    
-            if (id) {
-                this.stokesAnalysisWidgets.set(id, new StokesAnalysisWidgetStore());
-            }
-            return id;
+    // region Stokes Profile Widgets
+    createFloatingStokesWidget = () => {
+        let config = StokesAnalysisComponent.WIDGET_CONFIG;
+        config.id = this.addStokesWidget();
+        this.addFloatingWidget(config);
+    };
+
+    @action addStokesWidget(id: string = null) {
+        // Generate new id if none passed in
+        if (!id) {
+            id = this.getNextId(StokesAnalysisComponent.WIDGET_CONFIG.type);
         }
-    
-        // endregion
+
+        if (id) {
+            this.stokesAnalysisWidgets.set(id, new StokesAnalysisWidgetStore());
+        }
+        return id;
+    }
+
+    // endregion
 
     // region Stats Widgets
     createFloatingStatsWidget = () => {
