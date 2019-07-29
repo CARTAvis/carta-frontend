@@ -79,7 +79,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                             selectedHDU={fileBrowserStore.selectedHDU}
                             onFileClicked={(file: CARTA.FileInfo, hdu: string) => fileBrowserStore.selectFile(file, hdu)}
                             onFileDoubleClicked={(file: CARTA.FileInfo, hdu: string) => this.loadFile(file.name, hdu)}
-                            onFolderClicked={(folder: string) => fileBrowserStore.selectFolder(folder)}
+                            onFolderClicked={fileBrowserStore.selectFolder}
                         />
                     </div>
                     <div className="file-info-pane">
