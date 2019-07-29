@@ -101,6 +101,15 @@ export class WidgetsStore {
 
         this.floatingWidgets = [];
         this.defaultFloatingWidgetOffset = 100;
+
+        // TODO: dynamically add store
+        this.addRenderConfigWidget("render-config-0");
+        this.addAnimatorWidget("animator-0");
+        this.addRegionListWidget("region-list-0");
+        this.addSpatialProfileWidget("spatial-profiler-0", "x", -1, 0);
+        this.addSpatialProfileWidget("spatial-profiler-1", "y", -1, 0);
+        this.addSpectralProfileWidget("spectral-profiler-0", "z");
+        this.addStatsWidget("stats-0");
     }
 
     private static getDefaultWidgetConfig(type: string) {
@@ -174,15 +183,6 @@ export class WidgetsStore {
             console.log("Layout is null!");
             return;
         }
-
-        // TODO: replace with COMPONENT_CONFIG in AppStore
-        this.addRenderConfigWidget("render-config-0");
-        this.addAnimatorWidget("animator-0");
-        this.addRegionListWidget("region-list-0");
-        this.addSpatialProfileWidget("spatial-profiler-0", "x", -1, 0);
-        this.addSpatialProfileWidget("spatial-profiler-1", "y", -1, 0);
-        this.addSpectralProfileWidget("spectral-profiler-0", "z");
-        this.addStatsWidget("stats-0");
 
         layout.registerComponent("placeholder", PlaceholderComponent);
         layout.registerComponent("image-view", ImageViewComponent);
@@ -287,6 +287,7 @@ export class WidgetsStore {
             // Clean up removed widget's store (ignoring items that have been floated)
             if (config.component !== "floated") {
                 const id = config.id as string;
+                // TODO: uncomment when dynamically adding store is integrated
                 // console.log(`itemDestroyed: ${id}`);
                 // this.removeWidget(id, config.component);
             }
