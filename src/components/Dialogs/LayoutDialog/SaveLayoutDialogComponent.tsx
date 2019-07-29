@@ -15,6 +15,10 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
         this.layoutName = ev.currentTarget.value;
     };
 
+    private clearInput = () => {
+        this.layoutName = "";
+    };
+
     private saveLayout = () => {
         const appStore = this.props.appStore;
         const layoutStore = this.props.appStore.layoutStore;
@@ -30,7 +34,7 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
             layoutStore.saveLayout();
             layoutStore.applyLayout(this.layoutName);
         }
-        this.layoutName = "";
+        this.clearInput();
     };
 
     @computed get isEmpty(): boolean {
@@ -65,11 +69,18 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <Button intent={Intent.NONE} onClick={() => this.layoutName = ""} disabled={this.isEmpty} text="Clear"/>
+                        <Button intent={Intent.NONE} onClick={this.clearInput} disabled={this.isEmpty} text="Clear"/>
                         <Tooltip content="Layout name cannot be empty!" disabled={!this.isEmpty}>
                             <Button intent={Intent.PRIMARY} onClick={this.saveLayout} text="Save" disabled={this.isEmpty}/>
                         </Tooltip>
-                        <Button intent={Intent.NONE} onClick={appStore.hideSaveLayoutDialog} text="Close"/>
+                        <Button
+                            intent={Intent.NONE}
+                            text="Close"
+                            onClick={() => {
+                                appStore.hideSaveLayoutDialog();
+                                this.clearInput();
+                            }}
+                        />
                     </div>
                 </div>
             </DraggableDialogComponent>
