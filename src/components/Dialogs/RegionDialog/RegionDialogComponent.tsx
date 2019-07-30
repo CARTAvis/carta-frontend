@@ -9,6 +9,7 @@ import {PointRegionForm} from "./PointRegionForm/PointRegionForm";
 import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionForm";
 import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
+import {PolygonRegionForm} from "./PolygonRegionForm/PolygonRegionForm";
 
 @observer
 export class RegionDialogComponent extends React.Component<{ appStore: AppStore }> {
@@ -67,6 +68,15 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
                         <React.Fragment>
                             <AppearanceForm region={region} darkTheme={appStore.darkTheme}/>
                             <EllipticalRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
+                        </React.Fragment>
+                    );
+                    editableRegion = true;
+                    break;
+                case CARTA.RegionType.POLYGON:
+                    bodyContent = (
+                        <React.Fragment>
+                            <AppearanceForm region={region} darkTheme={appStore.darkTheme}/>
+                            <PolygonRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
                         </React.Fragment>
                     );
                     editableRegion = true;

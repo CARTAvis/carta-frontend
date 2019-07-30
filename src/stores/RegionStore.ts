@@ -3,6 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {Point2D} from "models";
 import {BackendService} from "../services";
 import {Colors} from "@blueprintjs/core";
+import {minMax2D} from "../utilities";
 
 export class RegionStore {
     @observable fileId: number;
@@ -21,7 +22,7 @@ export class RegionStore {
     static readonly MAX_LINE_WIDTH = 10;
     static readonly MAX_DASH_LENGTH = 50;
 
-     static readonly SWATCH_COLORS = [
+    static readonly SWATCH_COLORS = [
         Colors.BLUE3,
         Colors.GREEN3,
         Colors.ORANGE3,
@@ -79,33 +80,30 @@ export class RegionStore {
         return regionDashLength >= 0 && regionDashLength <= RegionStore.MAX_DASH_LENGTH;
     }
 
-    private PolygonBoundingBox(): {max: Point2D, min: Point2D} {
-        let _Max = this.controlPoints.reduce((point1, point2) => { return {x: Math.max(point1.x, point2.x), y: Math.max(point1.y, point2.y)}; });
-        let _Min = this.controlPoints.reduce((point1, point2) => { return {x: Math.min(point1.x, point2.x), y: Math.min(point1.y, point2.y)}; });
-        return {max: {x: _Max.x, y: _Max.y}, min: {x: _Min.x, y: _Min.y}};
-    }
-
     @computed get isTemporary() {
         return this.regionId < 0;
     }
 
-    @computed get boundingBoxArea(): number {
+    @computed get boundingBox(): Point2D {
         if (!this.isValid) {
-            return 0;
+            return {x: 0, y: 0};
         }
         switch (this.regionType) {
-            case CARTA.RegionType.POINT:
-                return 4;
             case CARTA.RegionType.RECTANGLE:
-                return this.controlPoints[1].x * this.controlPoints[1].y;
+                return {x: this.controlPoints[1].x, y: this.controlPoints[1].y};
             case CARTA.RegionType.ELLIPSE:
-                return 4 * this.controlPoints[1].x * this.controlPoints[1].y;
+                return {x: 2 * this.controlPoints[1].x, y: 2 * this.controlPoints[1].y};
             case CARTA.RegionType.POLYGON:
-                let _box = this.PolygonBoundingBox();
-                return (_box.max.x - _box.min.x) * (_box.max.y - _box.min.y);
+                const boundingBox = minMax2D(this.controlPoints);
+                return {x: boundingBox.maxPoint.x - boundingBox.minPoint.x, y: boundingBox.maxPoint.y - boundingBox.minPoint.y};
             default:
-                return 0;
+                return {x: 0, y: 0};
         }
+    }
+
+    @computed get boundingBoxArea(): number {
+        const box = this.boundingBox;
+        return box.x * box.y;
     }
 
     @computed get isClosedRegion() {
@@ -134,7 +132,7 @@ export class RegionStore {
             case CARTA.RegionType.ELLIPSE:
                 return this.controlPoints.length === 2 && this.controlPoints[1].x > 0 && this.controlPoints[1].y > 0;
             case CARTA.RegionType.POLYGON:
-                return this.controlPoints.length > 3;
+                return this.controlPoints.length >= 1;
             default:
                 return false;
         }
@@ -166,8 +164,10 @@ export class RegionStore {
                     `[${this.controlPoints[1].x.toFixed(1)}pix, ${this.controlPoints[1].y.toFixed(1)}pix], ` +
                     `${this.rotation.toFixed(1)}deg]`;
             case CARTA.RegionType.POLYGON:
+                // TODO: Region properties
+                const bounds = minMax2D(this.controlPoints);
                 return `polygon[[${center}], ` +
-                    `[${this.PolygonBoundingBox().max.x.toFixed(1)}pix, ${this.PolygonBoundingBox().max.y.toFixed(1)}pix], ` +
+                    `[${bounds.maxPoint.x.toFixed(1)}pix, ${bounds.maxPoint.y.toFixed(1)}pix], ` +
                     `${this.rotation.toFixed(1)}deg]`;
             default:
                 return "Not Implemented";
@@ -247,7 +247,7 @@ export class RegionStore {
                     this.setRegionId(ack.regionId);
                 }
             });
-        } 
+        }
     };
 
     @action beginEditing = () => {
