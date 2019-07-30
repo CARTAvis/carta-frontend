@@ -16,7 +16,7 @@ import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {AppearanceForm} from "components/Dialogs/RegionDialog/AppearanceForm/AppearanceForm";
 import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
-import {AppStore, RenderConfigStore} from "stores";
+import {AppStore, RegionStore, RenderConfigStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
 enum TABS {
@@ -190,13 +190,17 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             </React.Fragment>
         );
 
+        let regionTypes = [];
+        RegionStore.AVAILABLE_REGION_TYPES.forEach((name, regionType) => {
+            regionTypes.push(<option key={regionType} value={regionType}>{name}</option>);
+        });
+
         const regionSettingsPanel = (
             <React.Fragment>
                 <AppearanceForm region={preference.regionContainer} darkTheme={appStore.darkTheme} isPreference={true}/>
                 <FormGroup inline={true} label="Region Type">
                     <HTMLSelect value={preference.regionContainer.regionType} onChange={(ev) => { preference.setRegionType(Number(ev.currentTarget.value)); }}>
-                        <option value={CARTA.RegionType.RECTANGLE}>Rectangle</option>
-                        <option value={CARTA.RegionType.ELLIPSE}>Ellipse</option>
+                        {regionTypes}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Creation Mode">
