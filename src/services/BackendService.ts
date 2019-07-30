@@ -478,7 +478,8 @@ export class BackendService {
                 "Content-Type": "application/json",
                 "Authorization": "Basic " + authCredential
             },
-            method: "POST"
+            method: "POST",
+            body: JSON.stringify({username, password})
         });
     };
 
