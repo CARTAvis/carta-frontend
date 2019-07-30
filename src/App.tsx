@@ -16,6 +16,7 @@ import {
 } from "./components/Dialogs";
 import {AppStore, dayPalette, FileBrowserStore, nightPalette, RegionMode} from "./stores";
 import {ConnectionStatus} from "./services";
+import {PresetLayout} from "models";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
 import "./layout-theme.css";
@@ -65,7 +66,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
     componentDidMount() {
         // initiate application layout
-        this.props.appStore.layoutStore.applyLayout(this.props.appStore.preferenceStore.layout);
+        if (!this.props.appStore.layoutStore.applyLayout(this.props.appStore.preferenceStore.layout)) {
+            this.props.appStore.layoutStore.applyLayout(PresetLayout.DEFAULT);
+        }
     }
 
     // GoldenLayout resize handler

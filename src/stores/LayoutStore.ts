@@ -266,16 +266,16 @@ export class LayoutStore {
         return this.userLayouts.length;
     }
 
-    @action applyLayout = (layoutName: string) => {
+    @action applyLayout = (layoutName: string): boolean => {
         if (!layoutName || !this.layoutExist(layoutName)) {
             this.alertStore.showAlert(`Applying layout failed! Layout ${layoutName} not found.`);
-            return;
+            return false;
         }
 
         const config = this.layouts[layoutName];
         if (!config || !config.type || !config.content) {
             this.alertStore.showAlert(`Applying layout failed! Something is wrong with layout ${layoutName}.`);
-            return;
+            return false;
         }
 
         let arrangementConfig = {
@@ -307,6 +307,8 @@ export class LayoutStore {
         this.dockedLayoutName = layoutName;
         this.appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout, componentIDs);
         this.dockedLayout.init();
+
+        return true;
     };
 
     @action saveLayout = () => {

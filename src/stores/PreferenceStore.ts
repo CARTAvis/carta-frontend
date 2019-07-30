@@ -309,9 +309,10 @@ export class PreferenceStore {
     };
 
     @action setLayout = (layout: string) => {
-        this.layout = layout;
-        localStorage.setItem(PREFERENCE_KEYS.layout, layout);
-        this.layoutStore.applyLayout(layout);
+        if (this.layoutStore.applyLayout(layout)) {
+            this.layout = layout;
+            localStorage.setItem(PREFERENCE_KEYS.layout, layout);
+        }
     };
 
     @action setCursorPosition = (cursorPosition: string) => {
