@@ -2,7 +2,7 @@ import {observable, computed, action} from "mobx";
 import {AppStore, AlertStore} from "stores";
 import * as GoldenLayout from "golden-layout";
 import {PresetLayout} from "models";
-import {LayoutToaster} from "components/Shared";
+import {AppToaster} from "components/Shared";
 import {smoothStepOffset} from "utilities";
 
 const KEY = "CARTA_saved_layouts";
@@ -348,7 +348,7 @@ export class LayoutStore {
         }
 
         this.dockedLayoutName = this.layoutNameToBeSaved;
-        LayoutToaster.show({icon: "layout-grid", message: `Layout ${this.layoutNameToBeSaved} is saved successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
+        AppToaster.show({icon: "layout-grid", message: `Layout ${this.layoutNameToBeSaved} saved successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
     };
 
     @action deleteLayout = (layoutName: string) => {
@@ -362,6 +362,6 @@ export class LayoutStore {
             return;
         }
 
-        LayoutToaster.show({icon: "layout-grid", message: `Layout ${layoutName} is deleted successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
+        AppToaster.show({icon: "layout-grid", message: `Layout ${layoutName} deleted successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
     };
 }

@@ -81,7 +81,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         const layoutMenu = (
             <Menu>
                 <Menu.Item text="Layouts" icon={"layout-grid"}>
-                    <Menu.Item text="Layouts" disabled={!presetLayouts && !userLayouts}>
+                    <Menu.Item text="Existing Layouts" disabled={!presetLayouts && !userLayouts}>
                         <Menu.Item text="Presets" disabled={!presetLayouts || presetLayouts.length <= 0}>
                             {presetLayouts && presetLayouts.length > 0 && presetLayouts.map((value) =>
                                 <Menu.Item
