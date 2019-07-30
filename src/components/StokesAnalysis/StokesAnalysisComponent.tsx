@@ -104,8 +104,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 const frame = appStore.activeFrame;
                 let progressString = "";
                 const currentData = this.plotData;
-                if (currentData && isFinite(currentData.progress) && currentData.progress < 1.0) {
-                    progressString = `[${(currentData.progress * 100).toFixed(0)}% complete]`;
+                if (currentData && isFinite(currentData.qProgress) && isFinite(currentData.uProgress)) {
+                    let minProgress = Math.min(currentData.qProgress, currentData.uProgress);
+                    if (minProgress < 1) {
+                        progressString = `[${(minProgress * 100).toFixed(0)}% complete]`;
+                    }
                 }
                 if (frame) {
                     const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
@@ -211,7 +214,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return vals;
     }
 
-    private calculateCompositeProfile(statsType: CARTA.StatsType): {qProfile: Array<number>, uProfile: Array<number>, piProfile: Array<number>, paProfile: Array<number>, progress: number} {
+    private calculateCompositeProfile(statsType: CARTA.StatsType): {qProfile: Array<number>, uProfile: Array<number>, piProfile: Array<number>, paProfile: Array<number>, qProgress: number, uProgress: number} {
         if (this.profileStore) {
             let qProfileOriginal = this.profileStore.getProfile(StokesCoordinate.LinearPolarizationQ, statsType);
             let uProfileOriginal = this.profileStore.getProfile(StokesCoordinate.LinearPolarizationU, statsType);
@@ -234,7 +237,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         uProfile = StokesAnalysisComponent.calculateFractionalPol(uProfile, iProfileOriginal.values);
                     }
                 }
-                return {qProfile, uProfile, piProfile, paProfile, progress: qProfileOriginal.progress};
+                return {qProfile, uProfile, piProfile, paProfile, qProgress: qProfileOriginal.progress, uProgress: uProfileOriginal.progress};
             }
         }
         return null;
@@ -315,7 +318,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         piValues: {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}},
         paValues: {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}},
         quValues: {dataset: Array<Point2D>, border: {xMin: number, xMax: number, yMin: number, yMax: number}},
-        progress: number
+        qProgress: number,
+        uProgress: number
     } {
         const frame = this.props.appStore.activeFrame;
         if (!frame) {
@@ -328,7 +332,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             uProfile: Array<number>,
             piProfile: Array<number>,
             paProfile: Array<number>,
-            progress: number
+            qProgress: number,
+            uProgress: number
         };
         let regionId = this.widgetStore.regionIdMap.get(fileId) || 0;
         if (frame.regionSet) {
@@ -346,7 +351,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let uDic = this.assambleLinePlotData(compositeProfile.uProfile, channelInfo);
             let quDic = this.assambleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile);
 
-            return {qValues: qDic, uValues: uDic, piValues: piDic, paValues: paDic, quValues: quDic , progress: compositeProfile.progress};
+            return {qValues: qDic, uValues: uDic, piValues: piDic, paValues: paDic, quValues: quDic , qProgress: compositeProfile.qProgress, uProgress: compositeProfile.uProgress };
         }
         return null;
     }
