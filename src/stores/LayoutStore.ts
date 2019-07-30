@@ -310,7 +310,7 @@ export class LayoutStore {
     };
 
     @action saveLayout = () => {
-        if (!this.layouts || !this.layoutNameToBeSaved) {
+        if (!this.layouts || !this.layoutNameToBeSaved || !this.dockedLayout) {
             this.alertStore.showAlert("Save layout failed! Empty layouts or name.");
             return;
         }
@@ -325,23 +325,19 @@ export class LayoutStore {
             return;
         }
 
-        if (!this.dockedLayout || !this.dockedLayout.config || !this.dockedLayout.config.content || this.dockedLayout.config.content.length <= 0) {
-            this.alertStore.showAlert("Saving layout failed! Something is wrong with current layout.");
-            return;
-        }
-
-        const currentConfig = this.dockedLayout.config.content[0];
-        if (!currentConfig || !currentConfig.type || !currentConfig.content) {
+        const currentConfig = this.dockedLayout.toConfig();
+        if (!currentConfig || !currentConfig.content || currentConfig.content.length <= 0 || !currentConfig.content[0].type || !currentConfig.content[0].content) {
             this.alertStore.showAlert("Saving layout failed! Something is wrong with current layout.");
             return;
         }
 
         // generate simple config from current layout
+        const rootConfig = currentConfig.content[0];
         let simpleConfig = {
-            type: currentConfig.type,
+            type: rootConfig.type,
             content: []
         };
-        this.genSimpleConfig(simpleConfig.content, currentConfig.content);
+        this.genSimpleConfig(simpleConfig.content, rootConfig.content);
         this.layouts[this.layoutNameToBeSaved] = simpleConfig;
 
         if (!this.saveLayoutToLocalStorage()) {
