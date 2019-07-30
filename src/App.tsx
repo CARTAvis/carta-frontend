@@ -12,15 +12,15 @@ import {
     OverlaySettingsDialogComponent,
     RegionDialogComponent,
     PreferenceDialogComponent,
-    SaveLayoutDialogComponent
+    SaveLayoutDialogComponent,
+    AuthDialogComponent
 } from "./components/Dialogs";
-import {AppStore, dayPalette, FileBrowserStore, nightPalette, RegionMode} from "./stores";
+import {AppStore, dayPalette, nightPalette, RegionMode} from "./stores";
 import {ConnectionStatus} from "./services";
 import {PresetLayout} from "models";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
 import "./layout-theme.css";
-import {AuthDialogComponent} from "./components/Dialogs/AuthDialog/AuthDialogComponent";
 
 @HotkeysTarget @observer
 export class App extends React.Component<{ appStore: AppStore }> {
