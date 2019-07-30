@@ -192,6 +192,37 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         return pointArray;
     }
 
+    private anchorNode(x: number, y: number, key: number = undefined, editableAnchor: boolean = false) {
+        let anchorProps: any = {
+            x: x,
+            y: y,
+            offsetX: ANCHOR_WIDTH / 2.0,
+            offsetY: ANCHOR_WIDTH / 2.0,
+            width: ANCHOR_WIDTH,
+            height: ANCHOR_WIDTH,
+            fill: "white",
+            strokeWidth: 1,
+            stroke: "black",
+        };
+        if (editableAnchor) {
+            anchorProps = {
+                ...anchorProps,
+                draggable: true,
+                key: key,
+                onMouseEnter: this.handleAnchorMouseEnter,
+                onMouseOut: this.handleAnchorMouseOut,
+                onDragStart: this.handleAnchorDragStart,
+                onDragEnd: this.handleAnchorDragEnd,
+                onDragMove: this.handleAnchorDrag,
+                onDblClick: this.handleAnchorDoubleClick,
+            };
+        } else {
+            anchorProps.opacity = 0.5;
+            anchorProps.listening = false;
+        }
+        return <Rect {...anchorProps}/>;
+    }
+
     render() {
         const region = this.props.region;
 
@@ -209,48 +240,14 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         if (this.props.selected) {
             anchors = new Array<React.ReactNode>(pointArray.length / 2);
             for (let i = 0; i < pointArray.length / 2; i++) {
-                anchors[i] = (
-                    <Rect
-                        key={i}
-                        x={centerPointCanvasSpace.x + pointArray[i * 2]}
-                        y={centerPointCanvasSpace.y + pointArray[i * 2 + 1]}
-                        offsetX={ANCHOR_WIDTH / 2.0}
-                        offsetY={ANCHOR_WIDTH / 2.0}
-                        width={ANCHOR_WIDTH}
-                        height={ANCHOR_WIDTH}
-                        draggable={true}
-                        onMouseEnter={this.handleAnchorMouseEnter}
-                        onMouseOut={this.handleAnchorMouseOut}
-                        onDragStart={this.handleAnchorDragStart}
-                        onDragEnd={this.handleAnchorDragEnd}
-                        onDragMove={this.handleAnchorDrag}
-                        onDblClick={this.handleAnchorDoubleClick}
-                        fill={"white"}
-                        strokeWidth={1}
-                        stroke={"black"}
-                    />
-                );
+                anchors[i] = this.anchorNode(centerPointCanvasSpace.x + pointArray[i * 2], centerPointCanvasSpace.y + pointArray[i * 2 + 1], i, true);
             }
         }
 
         let newAnchor = null;
         if (this.hoverIntersection) {
             const anchorPositionPixelSpace = imageToCanvasPos(this.hoverIntersection.x, this.hoverIntersection.y, this.props.frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
-            newAnchor = (
-                <Rect
-                    x={anchorPositionPixelSpace.x}
-                    y={anchorPositionPixelSpace.y}
-                    offsetX={ANCHOR_WIDTH / 2.0}
-                    offsetY={ANCHOR_WIDTH / 2.0}
-                    width={ANCHOR_WIDTH}
-                    height={ANCHOR_WIDTH}
-                    fill={"white"}
-                    strokeWidth={1}
-                    stroke={"black"}
-                    opacity={0.5}
-                    listening={false}
-                />
-            );
+            newAnchor = this.anchorNode(anchorPositionPixelSpace.x, anchorPositionPixelSpace.y);
         }
 
         return (
