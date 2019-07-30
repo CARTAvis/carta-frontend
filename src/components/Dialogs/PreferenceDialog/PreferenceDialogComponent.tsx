@@ -2,7 +2,6 @@ import * as React from "react";
 import * as _ from "lodash";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {CARTA} from "carta-protobuf";
 import {
     Button, IDialogProps, Intent, Tab, Tabs,
     FormGroup, TabId, MenuItem, Switch, RadioGroup,
@@ -15,7 +14,7 @@ import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {AppearanceForm} from "components/Dialogs/RegionDialog/AppearanceForm/AppearanceForm";
-import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
+import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore, RegionStore, RenderConfigStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
@@ -81,6 +80,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
     public render() {
         const appStore = this.props.appStore;
         const preference = appStore.preferenceStore;
+        const layoutStore = appStore.layoutStore;
 
         const globalPanel = (
             <React.Fragment>
@@ -99,10 +99,8 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Layout">
                     <HTMLSelect value={preference.layout} onChange={(ev) => { preference.setLayout(ev.currentTarget.value); }}>
-                        <option value={Layout.DEFAULT}>Default</option>
-                        <option value={Layout.CUBEVIEW}>Cube view</option>
-                        <option value={Layout.CUBEANALYSIS}>Cube analysis</option>
-                        <option value={Layout.CONTINUUMANALYSIS}>Continuum analysis</option>
+                        {PresetLayout.PRESETS.map((layout) => <option key={layout} value={layout}>{layout}</option>)}
+                        {layoutStore.userLayouts.map((layout) => <option key={layout} value={layout}>{layout}</option>)}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Cursor Position">

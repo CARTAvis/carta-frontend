@@ -5,3 +5,5 @@ export * from "./OverlaySettings/OverlaySettingsDialogComponent";
 export * from "./TaskProgressDialog/TaskProgressDialogComponent";
 export * from "./RegionDialog/RegionDialogComponent";
 export * from "./PreferenceDialog/PreferenceDialogComponent";
+export * from "./LayoutDialog/SaveLayoutDialogComponent";
+export * from "./AuthDialog/AuthDialogComponent";

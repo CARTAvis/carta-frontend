@@ -20,7 +20,8 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore
+    WidgetsStore,
+    LayoutStore
 } from ".";
 import {GetRequiredTiles} from "utilities";
 import {BackendService, TileService, ConnectionStatus} from "services";
@@ -52,6 +53,8 @@ export class AppStore {
     @observable logStore: LogStore;
     // User preference
     @observable preferenceStore: PreferenceStore;
+    // Layouts
+    @observable layoutStore: LayoutStore;
 
     // Cursor information
     @observable cursorInfo: CursorInfo;
@@ -62,6 +65,16 @@ export class AppStore {
     @observable spectralProfiles: Map<number, ObservableMap<number, SpectralProfileStore>>;
     @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
     @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
+
+    private imageViewerContainer: HTMLElement;
+
+    public getImageViewContainer = (): HTMLElement => {
+        return this.imageViewerContainer;
+    }
+
+    public setImageViewContainer = (container: HTMLElement) => {
+        this.imageViewerContainer = container;
+    }
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
@@ -119,6 +132,22 @@ export class AppStore {
     @action hidePreferenceDialog = () => {
         this.preferenceDialogVisible = false;
     };
+
+    // Layout related dialogs
+    @observable saveLayoutDialogVisible: boolean;
+    @observable deleteLayoutDialogVisible: boolean;
+    @action showSaveLayoutDialog = () => {
+        this.saveLayoutDialogVisible = true;
+    };
+    @action hideSaveLayoutDialog = () => {
+        this.saveLayoutDialogVisible = false;
+    };
+    @action showDeleteLayoutDialog = () => {
+        this.deleteLayoutDialogVisible = true;
+    };
+    @action hideDeleteLayoutDialog = () => {
+        this.deleteLayoutDialogVisible = false;
+    }
 
     // Auth dialog
     @observable authDialogVisible: boolean = false;
@@ -433,7 +462,9 @@ export class AppStore {
     private pendingHistogram: CARTA.RegionHistogramData;
 
     constructor() {
-        this.preferenceStore = new PreferenceStore(this);
+        this.alertStore = new AlertStore();
+        this.layoutStore = new LayoutStore(this, this.alertStore);
+        this.preferenceStore = new PreferenceStore(this, this.layoutStore);
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore, this.preferenceStore);
         this.tileService = new TileService(this.backendService, this.preferenceStore.GPUTileCache, this.preferenceStore.systemTileCache);
@@ -447,9 +478,8 @@ export class AppStore {
         this.activeFrame = null;
         this.fileBrowserStore = new FileBrowserStore(this.backendService);
         this.animatorStore = new AnimatorStore(this);
-        this.alertStore = new AlertStore();
         this.overlayStore = new OverlayStore(this.preferenceStore);
-        this.widgetsStore = new WidgetsStore(this);
+        this.widgetsStore = new WidgetsStore(this, this.layoutStore);
         this.compressionQuality = this.preferenceStore.imageCompressionQuality;
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         this.spatialRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
@@ -505,6 +535,9 @@ export class AppStore {
         // Update frame view outside of animation
         autorun(() => {
             if (this.activeFrame && (this.animatorStore.animationState === AnimationState.STOPPED || this.animatorStore.animationMode === AnimationMode.FRAME)) {
+                // Trigger update when switching layout
+                const layout = this.layoutStore.dockedLayout;
+
                 // Calculate new required frame view (cropped to file size)
                 const reqView = this.activeFrame.requiredFrameView;
 

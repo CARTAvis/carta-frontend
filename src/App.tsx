@@ -1,26 +1,29 @@
 import * as React from "react";
-import * as GoldenLayout from "golden-layout";
 import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import {autorun} from "mobx";
 import ReactResizeDetector from "react-resize-detector";
-import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget} from "@blueprintjs/core";
+import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget, Intent} from "@blueprintjs/core";
 import {exportImage, FloatingWidgetManagerComponent, RootMenuComponent} from "./components";
 import {AppToaster} from "./components/Shared";
-import {AboutDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, RegionDialogComponent, PreferenceDialogComponent} from "./components/Dialogs";
-import {AppStore, dayPalette, FileBrowserStore, nightPalette, RegionMode, WidgetsStore} from "./stores";
-import {Layout} from "models";
+import {
+    AboutDialogComponent,
+    FileBrowserDialogComponent,
+    OverlaySettingsDialogComponent,
+    RegionDialogComponent,
+    PreferenceDialogComponent,
+    SaveLayoutDialogComponent,
+    AuthDialogComponent
+} from "./components/Dialogs";
+import {AppStore, dayPalette, nightPalette, RegionMode} from "./stores";
 import {ConnectionStatus} from "./services";
-import {smoothStepOffset} from "./utilities";
+import {PresetLayout} from "models";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
 import "./layout-theme.css";
-import {AuthDialogComponent} from "./components/Dialogs/AuthDialog/AuthDialogComponent";
 
 @HotkeysTarget @observer
 export class App extends React.Component<{ appStore: AppStore }> {
-
-    private glContainer: HTMLElement;
     private previousConnectionStatus: ConnectionStatus;
 
     constructor(props: { appStore: AppStore }) {
@@ -62,182 +65,16 @@ export class App extends React.Component<{ appStore: AppStore }> {
     }
 
     componentDidMount() {
-        const widgetsStore = this.props.appStore.widgetsStore;
-        // Adjust layout properties based on window dimensions
-        const defaultImageViewFraction = smoothStepOffset(window.innerHeight, 720, 1080, 65, 75);
-
-        const configs = {
-            imageView: {
-                type: "react-component",
-                component: "image-view",
-                title: "No image loaded",
-                height: defaultImageViewFraction,
-                id: "image-view",
-                isClosable: false,
-                props: {appStore: this.props.appStore, id: "image-view-docked", docked: true}
-            },
-            // left bottom components in stack: render config, region list, animator
-            renderConfig: {
-                type: "react-component",
-                component: "render-config",
-                title: "Render Configuration",
-                id: "render-config-0",
-                props: {appStore: this.props.appStore, id: "render-config-0", docked: true}
-            },
-            regionList: {
-                type: "react-component",
-                component: "region-list",
-                title: "Region List",
-                id: "region-list-0",
-                props: {appStore: this.props.appStore, id: "region-list-0", docked: true}
-            },
-            animator: {
-                type: "react-component",
-                component: "animator",
-                title: "Animator",
-                id: "animator-0",
-                props: {appStore: this.props.appStore, id: "animator-0", docked: true}
-            },
-            // right column components: X/Y/Z profiler, statistics
-            spatialProfilerX: {
-                type: "react-component",
-                component: "spatial-profiler",
-                id: "spatial-profiler-0",
-                props: {appStore: this.props.appStore, id: "spatial-profiler-0", docked: true}
-            },
-            spatialProfilerY: {
-                type: "react-component",
-                component: "spatial-profiler",
-                id: "spatial-profiler-1",
-                props: {appStore: this.props.appStore, id: "spatial-profiler-1", docked: true}
-            },
-            spectralProfilerZ: {
-                type: "react-component",
-                component: "spectral-profiler",
-                id: "spectral-profiler-0",
-                title: "Z Profile: Cursor",
-                props: {appStore: this.props.appStore, id: "spectral-profiler-0", docked: true}
-            },
-            stats: {
-                type: "react-component",
-                component: "stats",
-                title: "Statistics",
-                id: "stats-0",
-                props: {appStore: this.props.appStore, id: "stats-0", docked: true}
-            }
-        };
-
-        let customizedLayout;
-        switch (this.props.appStore.preferenceStore.layout) {
-            case Layout.CUBEVIEW:
-                customizedLayout = this.genCubeViewLayout(configs, widgetsStore);
-                break;
-            case Layout.CUBEANALYSIS:
-                customizedLayout = this.genCubeAnalysisLayout(configs, widgetsStore);
-                break;
-            case Layout.CONTINUUMANALYSIS:
-                customizedLayout = this.genContinuumAnalysisLayout(configs, widgetsStore);
-                break;
-            case Layout.DEFAULT: default:
-                customizedLayout = this.genDefaultLayout(configs, widgetsStore);
-                break;
+        // initiate application layout
+        if (!this.props.appStore.layoutStore.applyLayout(this.props.appStore.preferenceStore.layout)) {
+            this.props.appStore.layoutStore.applyLayout(PresetLayout.DEFAULT);
         }
-
-        const initialLayout: any[] = [{
-            type: "row",
-            content: [{
-                type: "column",
-                width: 60,
-                content: [configs.imageView, customizedLayout.leftBottomContent]
-            }, {
-                type: "column",
-                content: customizedLayout.rightColumnContent
-            }]
-        }];
-
-        // common components in left bottom
-        widgetsStore.addRenderConfigWidget(configs.renderConfig.id);
-        widgetsStore.addAnimatorWidget(configs.animator.id);
-        widgetsStore.addRegionListWidget(configs.regionList.id);
-
-        const layout = new GoldenLayout({
-            settings: {
-                showPopoutIcon: false,
-                showCloseIcon: false
-            },
-            dimensions: {
-                minItemWidth: 250,
-                minItemHeight: 200,
-                dragProxyWidth: 600,
-                dragProxyHeight: 270,
-            },
-            content: initialLayout
-        }, this.glContainer);
-
-        widgetsStore.setDockedLayout(layout);
-    }
-
-    private genDefaultLayout(configs: any, widgetsStore: WidgetsStore) {
-        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerX.id, "x", -1, 0);
-        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerY.id, "y", -1, 0);
-
-        return {
-            leftBottomContent: {
-                type: "stack",
-                content: [configs.renderConfig]
-            },
-            rightColumnContent: [configs.spatialProfilerX, configs.spatialProfilerY, {
-                type: "stack",
-                content: [configs.animator, configs.regionList]
-            }]
-        };
-    }
-
-    private genCubeViewLayout(configs: any, widgetsStore: WidgetsStore) {
-        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerX.id, "x", -1, 0);
-        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerY.id, "y", -1, 0);
-        widgetsStore.addSpectralProfileWidget(configs.spectralProfilerZ.id, "z");
-
-        return {
-            leftBottomContent: {
-                type: "stack",
-                content: [configs.animator, configs.renderConfig, configs.regionList]
-            },
-            rightColumnContent: [configs.spatialProfilerX, configs.spatialProfilerY, configs.spectralProfilerZ]
-        };
-    }
-
-    private genCubeAnalysisLayout(configs: any, widgetsStore: WidgetsStore) {
-        widgetsStore.addSpectralProfileWidget(configs.spectralProfilerZ.id, "z");
-        widgetsStore.addStatsWidget(configs.stats.id);
-
-        return {
-            leftBottomContent: {
-                type: "stack",
-                content: [configs.animator, configs.renderConfig, configs.regionList]
-            },
-            rightColumnContent: [configs.spectralProfilerZ, configs.stats]
-        };
-    }
-
-    private genContinuumAnalysisLayout(configs: any, widgetsStore: WidgetsStore) {
-        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerX.id, "x", -1, 0);
-        widgetsStore.addSpatialProfileWidget(configs.spatialProfilerY.id, "y", -1, 0);
-        widgetsStore.addStatsWidget(configs.stats.id);
-
-        return {
-            leftBottomContent: {
-                type: "stack",
-                content: [configs.renderConfig, configs.regionList, configs.animator]
-            },
-            rightColumnContent: [configs.spatialProfilerX, configs.spatialProfilerY, configs.stats]
-        };
     }
 
     // GoldenLayout resize handler
     onContainerResize = (width, height) => {
-        if (this.props.appStore.widgetsStore.dockedLayout) {
-            this.props.appStore.widgetsStore.dockedLayout.updateSize(width, height);
+        if (this.props.appStore.layoutStore.dockedLayout) {
+            this.props.appStore.layoutStore.dockedLayout.updateSize(width, height);
         }
     };
 
@@ -261,10 +98,25 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 <AboutDialogComponent appStore={appStore}/>
                 <RegionDialogComponent appStore={appStore}/>
                 <PreferenceDialogComponent appStore={appStore}/>
+                <SaveLayoutDialogComponent appStore={appStore}/>
                 <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>
-                <div className={glClassName} ref={ref => this.glContainer = ref}>
+                <Alert
+                    isOpen={appStore.alertStore.interactiveAlertVisible}
+                    confirmButtonText="Yes"
+                    cancelButtonText="Cancel"
+                    intent={Intent.DANGER}
+                    onConfirm={() => {
+                        appStore.alertStore.dismissInteractiveAlert();
+                        appStore.layoutStore.saveLayout();
+                    }}
+                    onCancel={appStore.alertStore.dismissInteractiveAlert}
+                    canEscapeKeyCancel={true}
+                >
+                    <p>{appStore.alertStore.interactiveAlertText}</p>
+                </Alert>
+                <div className={glClassName} ref={ref => appStore.setImageViewContainer(ref)}>
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}/>
                 </div>
                 <FloatingWidgetManagerComponent appStore={appStore}/>
