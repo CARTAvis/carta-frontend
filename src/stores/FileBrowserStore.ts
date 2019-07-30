@@ -21,7 +21,7 @@ export class FileBrowserStore {
     @observable fileInfoResp = false;
     @observable respErrmsg: string = "";
     @observable startingDirectory: string = "$BASE";
-    
+
     @action showFileBrowser = (append = false) => {
         this.appendingFrame = append;
         this.fileBrowserDialogVisible = true;
@@ -72,11 +72,15 @@ export class FileBrowserStore {
         this.getFileInfo(this.fileList.directory, file.name, hdu);
     }
 
-    @action selectFolder(folder: string) {
+    @action selectFolder = (folder: string, absolutePath: boolean) => {
+        if (absolutePath) {
+            this.getFileList(folder);
+            return;
+        }
+
         if (folder === "..") {
             this.selectParent();
-        }
-        else if (this.fileList) {
+        } else if (this.fileList) {
             const currentDir = this.fileList.directory;
             let newFolder = folder;
             if (currentDir.length && !(currentDir.length === 1 && currentDir[0] === "/")) {
@@ -84,7 +88,7 @@ export class FileBrowserStore {
             }
             this.getFileList(newFolder);
         }
-    }
+    };
 
     @action selectParent() {
         if (this.fileList && this.fileList.parent) {
@@ -95,7 +99,7 @@ export class FileBrowserStore {
     @action setSelectedTab(newId: TabId) {
         this.selectedTab = newId;
     }
-    
+
     @action saveStartingDirectory() {
         this.startingDirectory = this.fileList.directory;
     }

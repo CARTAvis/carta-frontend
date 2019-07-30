@@ -2,8 +2,8 @@ import {observable, computed, action, autorun} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
-import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
-import {AppStore} from "./AppStore";
+import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
+import {AppStore, LayoutStore} from "stores";
 import {isColorValid} from "../utilities";
 
 const PREFERENCE_KEYS = {
@@ -34,7 +34,7 @@ const PREFERENCE_KEYS = {
 const DEFAULTS = {
     theme: Theme.LIGHT,
     autoLaunch: true,
-    layout: Layout.DEFAULT,
+    layout: PresetLayout.DEFAULT,
     cursorPosition: CursorPosition.TRACKING,
     zoomMode: Zoom.FIT,
     scaling: FrameScaling.LINEAR,
@@ -58,6 +58,7 @@ const DEFAULTS = {
 
 export class PreferenceStore {
     private readonly appStore: AppStore;
+    private readonly layoutStore: LayoutStore;
 
     @observable theme: string;
     @observable autoLaunch: boolean;
@@ -91,7 +92,7 @@ export class PreferenceStore {
 
     private getLayout = (): string => {
         const layout = localStorage.getItem(PREFERENCE_KEYS.layout);
-        return layout && Layout.isValid(layout) ? layout : DEFAULTS.layout;
+        return layout && this.layoutStore.layoutExist(layout) ? layout : DEFAULTS.layout;
     };
 
     private getCursorPosition = (): string => {
@@ -308,8 +309,10 @@ export class PreferenceStore {
     };
 
     @action setLayout = (layout: string) => {
-        this.layout = layout;
-        localStorage.setItem(PREFERENCE_KEYS.layout, layout);
+        if (this.layoutStore.applyLayout(layout)) {
+            this.layout = layout;
+            localStorage.setItem(PREFERENCE_KEYS.layout, layout);
+        }
     };
 
     @action setCursorPosition = (cursorPosition: string) => {
@@ -437,8 +440,9 @@ export class PreferenceStore {
         this.eventsLoggingEnabled.fill(DEFAULTS.eventLoggingEnabled);
     };
 
-    constructor(appStore: AppStore) {
+    constructor(appStore: AppStore, layoutStore: LayoutStore) {
         this.appStore = appStore;
+        this.layoutStore = layoutStore;
         this.theme = this.getTheme();
         this.autoLaunch = this.getAutoLaunch();
         this.layout = this.getLayout();

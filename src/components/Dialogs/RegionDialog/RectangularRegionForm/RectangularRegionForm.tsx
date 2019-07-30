@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
-import {computed, observable} from "mobx";
+import {computed} from "mobx";
 import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {RegionStore} from "stores";
@@ -13,8 +13,6 @@ const KEYCODE_ENTER = 13;
 
 @observer
 export class RectangularRegionForm extends React.Component<{ region: RegionStore, wcsInfo: number }> {
-    @observable displayColorPicker: boolean;
-
     @computed get topRightPoint(): Point2D {
         const region = this.props.region;
         if (!region || region.controlPoints.length !== 2) {

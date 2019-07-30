@@ -41,43 +41,24 @@ export class RegionSetStore {
     };
 
     @action addPointRegion = (center: Point2D, cursorRegion = false) => {
-        let regionId;
-        if (cursorRegion) {
-            regionId = 0;
-        } else {
-            regionId = this.getTempRegionId();
-        }
-
-        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center], CARTA.RegionType.POINT, regionId);
-        this.regions.push(region);
-        if (!cursorRegion) {
-            this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
-                if (ack.success) {
-                    region.setRegionId(ack.regionId);
-                }
-            });
-        }
-        return region;
+        return this.addRegion([center], CARTA.RegionType.POINT, cursorRegion, cursorRegion ? 0 : this.getTempRegionId());
     };
 
     @action addRectangularRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
-        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center, {x: width, y: height}], CARTA.RegionType.RECTANGLE, this.getTempRegionId(),
-                                        this.regionPreference.color, this.regionPreference.lineWidth, this.regionPreference.dashLength);
-        this.regions.push(region);
-        if (!temporary) {
-            this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
-                if (ack.success) {
-                    console.log(`Updating regionID from ${region.regionId} to ${ack.regionId}`);
-                    region.setRegionId(ack.regionId);
-                }
-            });
-        }
-        return region;
+        return this.addRegion([center, {x: width, y: height}], CARTA.RegionType.RECTANGLE, temporary);
     };
 
     @action addEllipticalRegion = (center: Point2D, semiMajor: number, semiMinor: number, temporary: boolean = false) => {
-        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center, {x: semiMinor, y: semiMajor}], CARTA.RegionType.ELLIPSE, this.getTempRegionId(),
-                                        this.regionPreference.color, this.regionPreference.lineWidth, this.regionPreference.dashLength);
+        return this.addRegion([center, {x: semiMinor, y: semiMajor}], CARTA.RegionType.ELLIPSE, temporary);
+    };
+
+    @action addPolygonalRegion = (points: Point2D[], temporary: boolean = false) => {
+        return this.addRegion(points, CARTA.RegionType.POLYGON, temporary);
+    };
+
+    private addRegion(points: Point2D[], regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId()) {
+        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, points, regionType, regionId,
+            this.regionPreference.color, this.regionPreference.lineWidth, this.regionPreference.dashLength);
         this.regions.push(region);
         if (!temporary) {
             this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
@@ -87,8 +68,9 @@ export class RegionSetStore {
                 }
             });
         }
+
         return region;
-    };
+    }
 
     @action selectRegion = (region: RegionStore) => {
         if (this.regions.indexOf(region) >= 0) {
@@ -113,7 +95,9 @@ export class RegionSetStore {
                 this.selectedRegion = this.regions[0];
             }
             this.regions = this.regions.filter(r => r !== region);
-            this.backendService.removeRegion(region.regionId);
+            if (!region.isTemporary) {
+                this.backendService.removeRegion(region.regionId);
+            }
         }
     };
 

@@ -15,7 +15,7 @@ import {
     ToolbarMenuComponent,
     StokesAnalysisComponent
 } from "components";
-import {AppStore} from "./AppStore";
+import {AppStore, LayoutStore} from "stores";
 import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 
 export class WidgetConfig {
@@ -38,8 +38,6 @@ export class WidgetProps {
 }
 
 export class WidgetsStore {
-    // Docked (Golden Layout)
-    @observable dockedLayout: GoldenLayout;
     // Floating widgets
     @observable floatingWidgets: WidgetConfig[];
     @observable defaultFloatingWidgetOffset: number;
@@ -55,6 +53,7 @@ export class WidgetsStore {
     @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
 
     private appStore: AppStore;
+    private layoutStore: LayoutStore;
     private widgetsMap: Map<string, Map<string, any>>;
 
     public static RemoveFrameFromRegionWidgets(storeMap: Map<string, RegionWidgetStore>, fileId: number = -1) {
@@ -79,8 +78,9 @@ export class WidgetsStore {
         });
     };
 
-    constructor(appStore: AppStore) {
+    constructor(appStore: AppStore, layoutStore: LayoutStore) {
         this.appStore = appStore;
+        this.layoutStore = layoutStore;
         this.spatialProfileWidgets = new Map<string, SpatialProfileWidgetStore>();
         this.spectralProfileWidgets = new Map<string, SpectralProfileWidgetStore>();
         this.statsWidgets = new Map<string, StatsWidgetStore>();
@@ -175,7 +175,41 @@ export class WidgetsStore {
         }
     };
 
-    @action setDockedLayout(layout: GoldenLayout) {
+    public initLayoutWithWidgets = (layout: GoldenLayout, componentIDs: string[]) => {
+        if (!layout || !componentIDs) {
+            console.log("Invalid parameters!");
+            return;
+        }
+
+        // add widget store for components
+        componentIDs.forEach((id) => {
+            switch (id) {
+                case "render-config-0":
+                    this.addRenderConfigWidget(id);
+                    break;
+                case "animator-0":
+                    this.addAnimatorWidget(id);
+                    break;
+                case "region-list-0":
+                    this.addRegionListWidget(id);
+                    break;
+                case "spatial-profiler-0":
+                    this.addSpatialProfileWidget(id, "x", -1, 0);
+                    break;
+                case "spatial-profiler-1":
+                    this.addSpatialProfileWidget(id, "y", -1, 0);
+                    break;
+                case "spectral-profiler-0":
+                    this.addSpectralProfileWidget(id, "z");
+                    break;
+                case "stats-0":
+                    this.addStatsWidget(id);
+                    break;
+                default:
+                    break;
+            }
+        });
+
         layout.registerComponent("placeholder", PlaceholderComponent);
         layout.registerComponent("image-view", ImageViewComponent);
         layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
@@ -196,14 +230,10 @@ export class WidgetsStore {
             unpinButton.on("click", () => this.unpinWidget(stack.getActiveContentItem()));
             stack.header.controlsContainer.prepend(unpinButton);
         });
-
         layout.on("componentCreated", this.handleItemCreation);
         layout.on("itemDestroyed", this.handleItemRemoval);
-
         layout.on("stateChanged", this.handleStateUpdates);
-        layout.init();
-        this.dockedLayout = layout;
-    }
+    };
 
     @action unpinWidget = (item: GoldenLayout.ContentItem) => {
         const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
@@ -287,7 +317,6 @@ export class WidgetsStore {
             // Clean up removed widget's store (ignoring items that have been floated)
             if (config.component !== "floated") {
                 const id = config.id as string;
-                console.log(`itemDestroyed: ${id}`);
                 this.removeWidget(id, config.component);
             }
         }
@@ -319,8 +348,8 @@ export class WidgetsStore {
         }
 
         // Update GL title by searching for image-view components
-        if (this.dockedLayout && this.dockedLayout.root) {
-            const imageViewComponents = this.dockedLayout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
+        if (this.layoutStore.dockedLayout && this.layoutStore.dockedLayout.root) {
+            const imageViewComponents = this.layoutStore.dockedLayout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
             if (imageViewComponents.length) {
                 imageViewComponents[0].setTitle(newTitle);
             }
@@ -334,9 +363,11 @@ export class WidgetsStore {
     }
 
     @action setWidgetTitle(id: string, title: string) {
-        const matchingComponents = this.dockedLayout.root.getItemsByFilter(item => item.config.id === id);
-        if (matchingComponents.length) {
-            matchingComponents[0].setTitle(title);
+        if (this.layoutStore.dockedLayout && this.layoutStore.dockedLayout.root) {
+            const matchingComponents = this.layoutStore.dockedLayout.root.getItemsByFilter(item => item.config.id === id);
+            if (matchingComponents.length) {
+                matchingComponents[0].setTitle(title);
+            }
         }
 
         const widget = this.floatingWidgets.find(w => w.id === id);
