@@ -307,7 +307,6 @@ export class WidgetsStore {
             // Clean up removed widget's store (ignoring items that have been floated)
             if (config.component !== "floated") {
                 const id = config.id as string;
-                console.log(`itemDestroyed: ${id}`);
                 this.removeWidget(id, config.component);
             }
         }
