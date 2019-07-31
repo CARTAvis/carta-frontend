@@ -308,11 +308,9 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.autoLaunch, autoLaunch ? "true" : "false");
     };
 
-    @action setLayout = (layout: string, apply: boolean) => {
-        if (!apply || (apply && this.layoutStore.applyLayout(layout))) {
-            this.layout = layout;
-            localStorage.setItem(PREFERENCE_KEYS.layout, layout);
-        }
+    @action setLayout = (layout: string) => {
+        this.layout = layout;
+        localStorage.setItem(PREFERENCE_KEYS.layout, layout);
     };
 
     @action setCursorPosition = (cursorPosition: string) => {
@@ -403,7 +401,7 @@ export class PreferenceStore {
     @action resetGlobalSettings = () => {
         this.setTheme(DEFAULTS.theme);
         this.setAutoLaunch(DEFAULTS.autoLaunch);
-        this.setLayout(DEFAULTS.layout, true);
+        this.setLayout(DEFAULTS.layout);
         this.setCursorPosition(DEFAULTS.cursorPosition);
         this.setZoomMode(DEFAULTS.zoomMode);
     };

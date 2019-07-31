@@ -87,7 +87,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                                 <Menu.Item
                                     key={value}
                                     text={value}
-                                    active={value === appStore.layoutStore.dockedLayoutName}
+                                    active={value === appStore.layoutStore.currentLayoutName}
                                     onClick={() => appStore.layoutStore.applyLayout(value)}
                                 />
                             )}
@@ -96,7 +96,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                             <Menu.Item
                                 key={value}
                                 text={value}
-                                active={appStore.layoutStore.dockedLayoutName === value}
+                                active={value === appStore.layoutStore.currentLayoutName}
                                 onClick={() => appStore.layoutStore.applyLayout(value)}
                             />
                         )}
@@ -107,17 +107,11 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                             <Menu.Item
                                 key={value}
                                 text={value}
-                                active={value === appStore.layoutStore.dockedLayoutName}
+                                active={value === appStore.layoutStore.currentLayoutName}
                                 onClick={() => {
                                     appStore.layoutStore.deleteLayout(value);
-                                    if (value === appStore.layoutStore.dockedLayoutName) {
-                                        // apply preference/preset default when deleting current layout
-                                        value === appStore.preferenceStore.layout ? appStore.preferenceStore.setLayout(PresetLayout.DEFAULT, true) : appStore.layoutStore.applyLayout(appStore.preferenceStore.layout);
-                                    } else {
-                                        // save preference layout to preset default if delete preference layout without applying
-                                        if (value === appStore.preferenceStore.layout) {
-                                            appStore.preferenceStore.setLayout(PresetLayout.DEFAULT, false);
-                                        }
+                                    if (value === appStore.preferenceStore.layout) {
+                                        appStore.preferenceStore.setLayout(PresetLayout.DEFAULT);
                                     }
                                 }}
                             />

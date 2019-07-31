@@ -101,7 +101,7 @@ export class LayoutStore {
 
     // self-defined structure: {layoutName: config, layoutName: config, ...}
     @observable dockedLayout: GoldenLayout;
-    @observable dockedLayoutName: string;
+    @observable currentLayoutName: string;
     @observable private layouts: any;
 
     constructor(appStore: AppStore, alertStore: AlertStore) {
@@ -158,7 +158,7 @@ export class LayoutStore {
     };
 
     private saveLayoutToLocalStorage = (): boolean => {
-        if (this.userLayouts && this.userLayouts.length > 0) {
+        if (this.userLayouts) {
             // save only user layouts to local storage, excluding presets
             let userLayouts = {};
             this.userLayouts.forEach((layoutName) => {
@@ -309,7 +309,7 @@ export class LayoutStore {
             this.dockedLayout.destroy();
         }
         this.dockedLayout = new GoldenLayout(mainLayoutConfig, this.appStore.getImageViewContainer());
-        this.dockedLayoutName = layoutName;
+        this.currentLayoutName = layoutName;
         this.appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout, componentIDs);
         this.dockedLayout.init();
 
@@ -352,7 +352,7 @@ export class LayoutStore {
             return;
         }
 
-        this.dockedLayoutName = this.layoutNameToBeSaved;
+        this.currentLayoutName = this.layoutNameToBeSaved;
         AppToaster.show({icon: "layout-grid", message: `Layout ${this.layoutNameToBeSaved} saved successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
     };
 
@@ -367,6 +367,9 @@ export class LayoutStore {
             return;
         }
 
+        if (layoutName === this.currentLayoutName) {
+            this.currentLayoutName = "";
+        }
         AppToaster.show({icon: "layout-grid", message: `Layout ${layoutName} deleted successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
     };
 }
