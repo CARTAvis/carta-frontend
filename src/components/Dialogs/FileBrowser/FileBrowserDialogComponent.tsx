@@ -15,16 +15,21 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
 
     private loadSelectedFile = () => {
         const fileBrowserStore = this.props.appStore.fileBrowserStore;
-        this.loadFile(fileBrowserStore.selectedFile.name, fileBrowserStore.selectedHDU);
+        this.loadFile(fileBrowserStore.selectedFile, fileBrowserStore.selectedHDU);
     };
 
-    private loadFile = (file: string, hdu: string) => {
+    private loadFile = (fileInfo: CARTA.IFileInfo, hdu: string) => {
         const fileBrowserStore = this.props.appStore.fileBrowserStore;
-        const frames = this.props.appStore.frames;
-        if (!fileBrowserStore.appendingFrame || !frames.length) {
-            this.props.appStore.openFile(fileBrowserStore.fileList.directory, file, hdu);
+
+        if (fileBrowserStore.browserMode === BrowserMode.File) {
+            const frames = this.props.appStore.frames;
+            if (!fileBrowserStore.appendingFrame || !frames.length) {
+                this.props.appStore.openFile(fileBrowserStore.fileList.directory, fileInfo.name, hdu);
+            } else {
+                this.props.appStore.appendFile(fileBrowserStore.fileList.directory, fileInfo.name, hdu);
+            }
         } else {
-            this.props.appStore.appendFile(fileBrowserStore.fileList.directory, file, hdu);
+            this.props.appStore.loadRegion(fileBrowserStore.fileList.directory, fileInfo.name);
         }
 
         fileBrowserStore.saveStartingDirectory();
@@ -70,6 +75,44 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             title: "File Browser",
         };
 
+        let loadButton: React.ReactNode;
+
+        if (fileBrowserStore.browserMode === BrowserMode.File) {
+            if (fileBrowserStore.appendingFrame) {
+                loadButton = (
+                    <Tooltip content={"Append this file as a new frame"}>
+                        <AnchorButton
+                            intent={Intent.PRIMARY}
+                            disabled={this.props.appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                            onClick={this.loadSelectedFile}
+                            text="Append"
+                        />
+                    </Tooltip>);
+            } else {
+                loadButton = (
+                    <Tooltip content={"Close any existing frames and load this file"}>
+                        <AnchorButton
+                            intent={Intent.PRIMARY}
+                            disabled={this.props.appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                            onClick={this.loadSelectedFile}
+                            text="Load"
+                        />
+                    </Tooltip>
+                );
+            }
+        } else {
+            loadButton = (
+                <Tooltip content={"Load a region file for the currently active frame"}>
+                    <AnchorButton
+                        intent={Intent.PRIMARY}
+                        disabled={this.props.appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !this.props.appStore.activeFrame}
+                        onClick={this.loadSelectedFile}
+                        text="Load Region"
+                    />
+                </Tooltip>
+            );
+        }
+
         return (
             <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
                 <div className="bp3-dialog-body" style={{display: "flex"}}>
@@ -79,8 +122,8 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                             files={fileBrowserStore.fileList}
                             selectedFile={fileBrowserStore.selectedFile}
                             selectedHDU={fileBrowserStore.selectedHDU}
-                            onFileClicked={(file: CARTA.FileInfo, hdu: string) => fileBrowserStore.selectFile(file, hdu)}
-                            onFileDoubleClicked={(file: CARTA.FileInfo, hdu: string) => this.loadFile(file.name, hdu)}
+                            onFileClicked={fileBrowserStore.selectFile}
+                            onFileDoubleClicked={this.loadFile}
                             onFolderClicked={fileBrowserStore.selectFolder}
                         />
                     </div>
@@ -97,25 +140,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
                         <AnchorButton intent={Intent.NONE} onClick={fileBrowserStore.hideFileBrowser} disabled={this.props.appStore.fileLoading} text="Close"/>
-                        {fileBrowserStore.appendingFrame ? (
-                            <Tooltip content={"Append this file as a new frame"}>
-                                <AnchorButton
-                                    intent={Intent.PRIMARY}
-                                    disabled={this.props.appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                                    onClick={this.loadSelectedFile}
-                                    text="Append"
-                                />
-                            </Tooltip>
-                        ) : (
-                            <Tooltip content={"Close any existing frames and load this file"}>
-                                <AnchorButton
-                                    intent={Intent.PRIMARY}
-                                    disabled={this.props.appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                                    onClick={this.loadSelectedFile}
-                                    text="Load"
-                                />
-                            </Tooltip>
-                        )}
+                        {loadButton}
                     </div>
                 </div>
             </DraggableDialogComponent>

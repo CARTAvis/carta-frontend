@@ -104,7 +104,7 @@ export class FileBrowserStore {
         });
     };
 
-    @action selectFile(file: CARTA.FileInfo, hdu: string) {
+    @action selectFile = (file: CARTA.IFileInfo, hdu: string) => {
         this.selectedFile = file;
         this.selectedHDU = hdu;
         if (this.browserMode === BrowserMode.File) {
@@ -112,7 +112,7 @@ export class FileBrowserStore {
         } else {
             this.getRegionFileInfo(this.fileList.directory, file.name);
         }
-    }
+    };
 
     @action selectFolder = (folder: string, absolutePath: boolean) => {
         if (absolutePath) {

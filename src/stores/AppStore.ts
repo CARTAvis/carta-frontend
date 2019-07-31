@@ -27,6 +27,7 @@ import {GetRequiredTiles} from "utilities";
 import {BackendService, TileService, ConnectionStatus} from "services";
 import {CursorInfo, FrameView, Point2D, ProcessedSpatialProfile, ProtobufProcessing, Theme} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
+import {AppToaster} from "../components/Shared";
 
 const CURSOR_THROTTLE_TIME = 200;
 const CURSOR_THROTTLE_TIME_ROTATED = 100;
@@ -309,15 +310,18 @@ export class AppStore {
             this.alertStore.showAlert(`Error loading file: ${err}`);
         });
     };
+
     @action appendFile = (directory: string, file: string, hdu: string) => {
         const currentIdList = this.frames.map(frame => frame.frameInfo.fileId).sort((a, b) => a - b);
         const newId = currentIdList.pop() + 1;
         this.addFrame(directory, file, hdu, newId);
     };
+
     @action openFile = (directory: string, file: string, hdu: string) => {
         this.removeAllFrames();
         this.addFrame(directory, file, hdu, 0);
     };
+
     @action removeFrame = (fileId: number) => {
         if (this.frames.find(f => f.frameInfo.fileId === fileId)) {
             // adjust requirements for stores
@@ -412,6 +416,13 @@ export class AppStore {
 
     @action prevFrame = () => {
         this.shiftFrame(-1);
+    };
+
+    // Region file actions
+    @action loadRegion = (directory: string, file: string) => {
+        // TODO: Load regions
+        AppToaster.show({icon: "warning-sign", message: `Region import not yet implemented`, intent: "warning", timeout: 3000});
+        this.fileBrowserStore.hideFileBrowser();
     };
 
     @action requestCubeHistogram = (fileId: number = -1) => {
