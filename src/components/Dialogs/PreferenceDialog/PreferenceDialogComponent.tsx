@@ -98,7 +98,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     <Switch checked={preference.autoLaunch} onChange={(ev) => { preference.setAutoLaunch(ev.currentTarget.checked); }}/>
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Layout">
-                    <HTMLSelect value={preference.layout} onChange={(ev) => { preference.setLayout(ev.currentTarget.value); }}>
+                    <HTMLSelect value={preference.layout} onChange={(ev) => { preference.setLayout(ev.currentTarget.value, true); }}>
                         {layoutStore.orderedLayouts.map((layout) => <option key={layout} value={layout}>{layout}</option>)}
                     </HTMLSelect>
                 </FormGroup>

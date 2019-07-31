@@ -110,9 +110,14 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                                 active={value === appStore.layoutStore.dockedLayoutName}
                                 onClick={() => {
                                     appStore.layoutStore.deleteLayout(value);
-                                    // apply default preset when deleting current layout
                                     if (value === appStore.layoutStore.dockedLayoutName) {
-                                        appStore.preferenceStore.setLayout(PresetLayout.DEFAULT);
+                                        // apply preference/preset default when deleting current layout
+                                        value === appStore.preferenceStore.layout ? appStore.preferenceStore.setLayout(PresetLayout.DEFAULT, true) : appStore.layoutStore.applyLayout(appStore.preferenceStore.layout);
+                                    } else {
+                                        // save preference layout to preset default if delete preference layout without applying
+                                        if (value === appStore.preferenceStore.layout) {
+                                            appStore.preferenceStore.setLayout(PresetLayout.DEFAULT, false);
+                                        }
                                     }
                                 }}
                             />
