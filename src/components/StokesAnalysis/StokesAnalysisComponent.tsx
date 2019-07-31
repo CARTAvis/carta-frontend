@@ -494,14 +494,14 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 qvsuScatterPlotProps.yMax = quBorder.yMax;
             }
 
-            paLinePlotProps.yLabel = "PA (" + frame.unit + ")";
+            paLinePlotProps.yLabel = "PA (Degrees)";
             if (this.widgetStore.fractionalPolVisible) {
-                quLinePlotProps.yLabel = "Q/I + U/I (%)";
+                quLinePlotProps.yLabel = "Stokes Value (%)";
                 piLinePlotProps.yLabel = "PI/I (%)";
                 qvsuScatterPlotProps.xLabel = "Q/I (%)";
                 qvsuScatterPlotProps.yLabel = "U/I (%)";
             } else {
-                quLinePlotProps.yLabel = "Q + U (" + frame.unit + ")";
+                quLinePlotProps.yLabel = "Stokes Value (" + frame.unit + ")";
                 piLinePlotProps.yLabel = "PI (" + frame.unit + ")";
                 qvsuScatterPlotProps.xLabel = "Stokes Q (" + frame.unit + ")";
                 qvsuScatterPlotProps.yLabel = "Stokes U (" + frame.unit + ")";

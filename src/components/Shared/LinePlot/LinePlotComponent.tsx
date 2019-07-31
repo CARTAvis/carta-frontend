@@ -774,6 +774,10 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     render() {
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
+        let stageClass = "annotation-stage";
+        if (this.props.showLegend) {
+            stageClass = "annotation-stage-legend";
+        }
         return (
             <div
                 className={"line-plot-component"}
