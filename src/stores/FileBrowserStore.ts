@@ -33,6 +33,7 @@ export class FileBrowserStore {
         this.appendingFrame = append;
         this.browserMode = mode;
         this.fileBrowserDialogVisible = true;
+        this.fileList = null;
         this.selectedTab = FileInfoTabs.INFO;
         this.getFileList(this.startingDirectory);
     };
