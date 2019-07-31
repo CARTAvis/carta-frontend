@@ -262,6 +262,11 @@ export class LayoutStore {
         return this.layouts ? Object.keys(this.layouts).filter((layoutName) => !PresetLayout.isValid(layoutName)) : [];
     }
 
+    @computed get orderedLayouts(): string[] {
+        let oderedLayouts = [...PresetLayout.PRESETS];
+        return this.userLayouts && this.userLayouts.length > 0 ? oderedLayouts.concat(this.userLayouts) : oderedLayouts;
+    }
+
     @computed get savedUserLayoutNumber(): number {
         return this.userLayouts.length;
     }
