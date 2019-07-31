@@ -92,7 +92,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                                 <Menu.Item
                                     key={value}
                                     text={value}
-                                    active={value === appStore.layoutStore.dockedLayoutName}
+                                    active={value === appStore.layoutStore.currentLayoutName}
                                     onClick={() => appStore.layoutStore.applyLayout(value)}
                                 />
                             )}
@@ -101,7 +101,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                             <Menu.Item
                                 key={value}
                                 text={value}
-                                active={appStore.layoutStore.dockedLayoutName === value}
+                                active={value === appStore.layoutStore.currentLayoutName}
                                 onClick={() => appStore.layoutStore.applyLayout(value)}
                             />
                         )}
@@ -112,11 +112,10 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                             <Menu.Item
                                 key={value}
                                 text={value}
-                                active={value === appStore.layoutStore.dockedLayoutName}
+                                active={value === appStore.layoutStore.currentLayoutName}
                                 onClick={() => {
                                     appStore.layoutStore.deleteLayout(value);
-                                    // apply default preset when deleting current layout
-                                    if (value === appStore.layoutStore.dockedLayoutName) {
+                                    if (value === appStore.preferenceStore.layout) {
                                         appStore.preferenceStore.setLayout(PresetLayout.DEFAULT);
                                     }
                                 }}
