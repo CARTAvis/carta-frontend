@@ -89,6 +89,7 @@ export class LinePlotComponentProps {
     plotType?: string;
     dataBackgroundColor?: Array<string>;
     isGroupSubPlot?: boolean;
+    centeredOrigin?: true;
 }
 
 // Maximum time between double clicks

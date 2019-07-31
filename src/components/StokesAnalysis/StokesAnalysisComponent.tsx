@@ -6,7 +6,7 @@ import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {LinePlotComponent, LinePlotComponentProps, ScatterPlotComponent} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
-import {WidgetConfig, WidgetProps, SpectralProfileStore, FrameStore} from "stores";
+import {WidgetConfig, WidgetProps, SpectralProfileStore, AnimationState} from "stores";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {Point2D, ChannelInfo} from "models";
 import {CARTA} from "carta-protobuf";
@@ -148,6 +148,36 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return "Channel";
     };
 
+    private getRequiredChannelValue = (): number => {
+        const frame = this.props.appStore.activeFrame;
+        if (frame) {
+            const channel = frame.requiredChannel;
+            if (this.widgetStore.useWcsValues && frame.channelInfo &&
+                channel >= 0 && channel < frame.channelInfo.values.length) {
+                return frame.channelInfo.values[channel];
+            }
+            return channel;
+        }
+        return null;
+    };
+
+    onChannelChanged = (x: number) => {
+        const frame = this.props.appStore.activeFrame;
+        if (this.props.appStore.animatorStore.animationState === AnimationState.PLAYING) {
+            return;
+        }
+
+        if (frame && frame.channelInfo) {
+            let channelInfo = frame.channelInfo;
+            let nearestIndex = (this.widgetStore.useWcsValues && channelInfo.getChannelIndexWCS) ?
+                channelInfo.getChannelIndexWCS(x) :
+                channelInfo.getChannelIndexSimple(x);
+            if (nearestIndex !== null && nearestIndex !== undefined) {
+                frame.setChannels(nearestIndex, frame.requiredStokes);
+            }
+        }
+    };
+
     private getCurrentChannelValue = (): number => {
         const frame = this.props.appStore.activeFrame;
         if (frame) {
@@ -285,7 +315,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             yMin = undefined;
             yMax = undefined;
         }
-
         return {xMin, xMax, yMin, yMax};
     }
 
@@ -382,6 +411,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             scrollZoom: true,
             graphZoomedX: this.widgetStore.setSharedXBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
+            graphClicked: this.onChannelChanged,
             markers: []
         };
 
@@ -401,6 +431,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             scrollZoom: true,
             graphZoomedX: this.widgetStore.setSharedXBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
+            graphClicked: this.onChannelChanged,
             markers: []
         };
 
@@ -419,6 +450,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             scrollZoom: true,
             graphZoomedX: this.widgetStore.setSharedXBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
+            graphClicked: this.onChannelChanged,
             markers: []
         };
 
@@ -439,7 +471,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             yZeroLineColor: Colors.RED2,
             multiPlotBorderColor: new Map(),
             isGroupSubPlot: true,
-            colorRangeEnd: 250
+            colorRangeEnd: 250,
+            centeredOrigin: true,
+            graphZoomedX: this.widgetStore.setquScatterPlotXBounds,
+            graphZoomedY: this.widgetStore.setquScatterPlotYBounds
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
@@ -461,10 +496,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 let quBorder = currentPlotData.quValues.border;
 
                 if (this.compareVariable(qBorder.xMin, uBorder.xMin, piBorder.xMin, paBorder.xMin) && this.compareVariable(qBorder.xMax, uBorder.xMax, piBorder.xMax, paBorder.xMax)) {
-                    
-                    quLinePlotProps.yMin = qBorder.yMin < uBorder.yMin ? qBorder.yMin : uBorder.yMin;
-                    quLinePlotProps.yMax = qBorder.yMax > uBorder.yMax ? qBorder.yMax : uBorder.yMax;
-                    
                     if (this.widgetStore.isLinePlotsAutoScaledX) {
                         quLinePlotProps.xMin = qBorder.xMin;
                         quLinePlotProps.xMax = qBorder.xMax;
@@ -481,17 +512,47 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         paLinePlotProps.xMin = this.widgetStore.sharedMinX;
                         paLinePlotProps.xMax = this.widgetStore.sharedMaxX;
                     }
-                    
-                    piLinePlotProps.yMin = piBorder.yMin;
-                    piLinePlotProps.yMax = piBorder.yMax;
 
-                    paLinePlotProps.yMin = paBorder.yMin;
-                    paLinePlotProps.yMax = paBorder.yMax;
+                    if (this.widgetStore.isQULinePlotAutoScaledY) {
+                        quLinePlotProps.yMin = qBorder.yMin < uBorder.yMin ? qBorder.yMin : uBorder.yMin;
+                        quLinePlotProps.yMax = qBorder.yMax > uBorder.yMax ? qBorder.yMax : uBorder.yMax;
+                    } else {
+                        quLinePlotProps.yMin = this.widgetStore.quMinY;
+                        quLinePlotProps.yMax = this.widgetStore.quMaxY;
+                    }
+
+                    if (this.widgetStore.isPolIntensityAutoScaledY) {
+                        piLinePlotProps.yMin = piBorder.yMin;
+                        piLinePlotProps.yMax = piBorder.yMax;
+                    } else {
+                        piLinePlotProps.yMin = this.widgetStore.polIntensityMinY;
+                        piLinePlotProps.yMax = this.widgetStore.polIntensityMaxY;
+                    }
+
+                    if (this.widgetStore.isPolAngleAutoScaledY) {
+                        paLinePlotProps.yMin = paBorder.yMin;
+                        paLinePlotProps.yMax = paBorder.yMax;
+                    } else {
+                        paLinePlotProps.yMin = this.widgetStore.polAngleMinY;
+                        paLinePlotProps.yMax = this.widgetStore.polAngleMaxY;
+                    }
+                    
                 }
-                qvsuScatterPlotProps.xMin = quBorder.xMin;
-                qvsuScatterPlotProps.xMax = quBorder.xMax;
-                qvsuScatterPlotProps.yMin = quBorder.yMin;
-                qvsuScatterPlotProps.yMax = quBorder.yMax;
+
+                if (this.widgetStore.isquScatterPlotAutoScaledX) {
+                    qvsuScatterPlotProps.xMin = quBorder.xMin;
+                    qvsuScatterPlotProps.xMax = quBorder.xMax;
+                } else {
+                    qvsuScatterPlotProps.xMin = this.widgetStore.quScatterMinX;
+                    qvsuScatterPlotProps.xMax = this.widgetStore.quScatterMaxX;
+                }
+                if (this.widgetStore.isquScatterPlotAutoScaledY) {
+                    qvsuScatterPlotProps.yMin = quBorder.yMin;
+                    qvsuScatterPlotProps.yMax = quBorder.yMax;
+                } else {
+                    qvsuScatterPlotProps.yMin = this.widgetStore.quScatterMinY;
+                    qvsuScatterPlotProps.yMax = this.widgetStore.quScatterMaxY;
+                }
             }
 
             paLinePlotProps.yLabel = "PA (Degrees)";
@@ -541,6 +602,28 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 piLinePlotProps.markers.push(cursor);
                 quLinePlotProps.markers.push(cursor);
             }
+
+            if (paLinePlotProps.cursorX.image !== null) {
+                let channelCurrent = {
+                    value: paLinePlotProps.cursorX.image,
+                    id: "marker-channel-current",
+                    opacity: 0.4,
+                    draggable: false,
+                    horizontal: false,
+                };
+                let channelRequired = {
+                    value: this.getRequiredChannelValue(),
+                    id: "marker-channel-required",
+                    draggable: appStore.animatorStore.animationState !== AnimationState.PLAYING,
+                    dragMove: this.onChannelChanged,
+                    horizontal: false,
+                };
+                paLinePlotProps.markers.push(channelCurrent, channelRequired);
+                piLinePlotProps.markers.push(channelCurrent, channelRequired);
+                quLinePlotProps.markers.push(channelCurrent, channelRequired);
+
+            }
+
             quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, Colors.GREEN2);
             quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationU, Colors.BLUE2);
 

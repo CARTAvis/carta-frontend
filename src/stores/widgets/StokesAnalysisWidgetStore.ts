@@ -124,21 +124,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.polIntensityMaxY = undefined;
     };
 
-    @action clearXYBounds = () => {
-        this.sharedMinX = undefined;
-        this.sharedMaxX = undefined;
-        // this.quMinY = undefined;
-        // this.quMaxY = undefined;
-        // this.polIntensityMinY = undefined;
-        // this.polIntensityMaxY = undefined;
-        // this.polAngleMinY = undefined;
-        // this.polAngleMaxY = undefined;
-        // this.quScatterMinX = undefined;
-        // this.quScatterMaxX = undefined;
-        // this.quScatterMinY = undefined;
-        // this.quScatterMaxY = undefined;
-    };
-
     @action setChannel = (channel: number) => {
         this.channel = channel;
     };
@@ -172,11 +157,90 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.useWcsValues = true;
     }
 
+    @action setquScatterPlotXBounds = (minVal: number, maxVal: number) => {
+        this.quScatterMinX = minVal;
+        this.quScatterMaxX = maxVal;
+    };
+
+    @action setPolAngleYBounds = (minVal: number, maxVal: number) => {
+        this.polAngleMinY = minVal;
+        this.polAngleMaxY = maxVal;
+    };
+
+    @action setquLinePlotYBounds = (minVal: number, maxVal: number) => {
+        this.quMinY = minVal;
+        this.quMaxY = maxVal;
+    };
+
+    @action setquScatterPlotYBounds = (minVal: number, maxVal: number) => {
+        this.quScatterMinY = minVal;
+        this.quScatterMaxY = maxVal;
+    };
+
+    @action clearXYBounds = () => {
+        this.sharedMinX = undefined;
+        this.sharedMaxX = undefined;
+        this.quMinY = undefined;
+        this.quMaxY = undefined;
+        this.polIntensityMinY = undefined;
+        this.polIntensityMaxY = undefined;
+        this.polAngleMinY = undefined;
+        this.polAngleMaxY = undefined;
+        // this.quScatterMinX = undefined;
+        // this.quScatterMaxX = undefined;
+        // this.quScatterMinY = undefined;
+        // this.quScatterMaxY = undefined;
+    };
+
+    @action setQULinePlotsXYBounds = (minX: number, maxX: number, minY: number, maxY: number) => {
+        this.sharedMinX = minX;
+        this.sharedMaxX = maxX;
+        this.quMinY = minY;
+        this.quMaxY = maxY;
+    };
+
+    @action setPolIntensityXYBounds = (minX: number, maxX: number, minY: number, maxY: number) => {
+        this.sharedMinX = minX;
+        this.sharedMaxX = maxX;
+        this.polIntensityMinY = minY;
+        this.polIntensityMaxY = maxY;
+    };
+
+    @action setPolAngleXYBounds = (minX: number, maxX: number, minY: number, maxY: number) => {
+        this.sharedMinX = minX;
+        this.sharedMaxX = maxX;
+        this.polAngleMinY = minY;
+        this.polAngleMaxY = maxY;
+    };
+
+    @action setquScatterPlotXYBounds = (minX: number, maxX: number, minY: number, maxY: number) => {
+        this.quScatterMinX = minX;
+        this.quScatterMaxX = maxX;
+        this.quScatterMinY = minY;
+        this.quScatterMaxY = maxY;
+    };
+
     @computed get isLinePlotsAutoScaledX() {
         return (this.sharedMinX === undefined || this.sharedMaxX === undefined);
     }
 
-    // @computed get isAutoScaledY() {
-    //     return (this.minY === undefined || this.maxY === undefined);
-    // }
+    @computed get isquScatterPlotAutoScaledX() {
+        return (this.quScatterMinX === undefined || this.quScatterMaxX === undefined);
+    }
+
+    @computed get isquScatterPlotAutoScaledY() {
+        return (this.quScatterMinY === undefined || this.quScatterMaxY === undefined);
+    }
+
+    @computed get isQULinePlotAutoScaledY() {
+        return (this.quMinY === undefined || this.quMaxY === undefined);
+    }
+
+    @computed get isPolIntensityAutoScaledY() {
+        return (this.polIntensityMinY === undefined || this.polIntensityMaxY === undefined);
+    }
+
+    @computed get isPolAngleAutoScaledY() {
+        return (this.polAngleMinY === undefined || this.polAngleMaxY === undefined);
+    }
 }

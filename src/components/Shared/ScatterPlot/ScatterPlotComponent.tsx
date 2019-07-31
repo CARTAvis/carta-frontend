@@ -29,8 +29,18 @@ export class ScatterPlotComponent extends LinePlotComponent {
         return scatterColors;
     }
 
+    private centeredOrigin(): {xMin: number, xMax: number, yMin: number, yMax: number} {
+        if (this.props.centeredOrigin && this.props.xMin && this.props.xMax && this.props.yMin && this.props.yMax) {
+            const xLimit = Math.max(Math.abs(this.props.xMin), Math.abs(this.props.xMax));
+            const yLimit = Math.max(Math.abs(this.props.yMin), Math.abs(this.props.yMax));
+            return {xMin: -xLimit, xMax: xLimit, yMin: -yLimit, yMax: yLimit};
+        }
+        return {xMin: this.props.xMin, xMax: this.props.xMax, yMin: this.props.yMin, yMax: this.props.yMax};
+    }
+
     render() {
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
+        let axisRange = this.centeredOrigin();
         return (
             <div
                 className={"scatter-plot-component"}
@@ -49,6 +59,10 @@ export class ScatterPlotComponent extends LinePlotComponent {
                     width={this.width}
                     height={this.height}
                     dataBackgroundColor={this.props.colorRangeEnd ? this.fillColor() : []}
+                    xMin={axisRange.xMin}
+                    xMax={axisRange.xMax}
+                    yMin={axisRange.yMin}
+                    yMax={axisRange.yMax}
                 />
                 <Stage
                     className={"annotation-stage"}
