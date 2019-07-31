@@ -192,25 +192,25 @@ export class RegionStore {
         this.regionId = id;
     };
 
-    @action setControlPoint = (index: number, p: Point2D) => {
+    @action setControlPoint = (index: number, p: Point2D, skipUpdate = false) => {
         if (index >= 0 && index < this.controlPoints.length) {
             this.controlPoints[index] = p;
-            if (!this.editing) {
+            if (!this.editing && !skipUpdate) {
                 this.updateRegion();
             }
         }
     };
 
-    @action setControlPoints = (points: Point2D[]) => {
+    @action setControlPoints = (points: Point2D[], skipUpdate = false) => {
         this.controlPoints = points;
-        if (!this.editing) {
+        if (!this.editing && !skipUpdate) {
             this.updateRegion();
         }
     };
 
-    @action setRotation = (angle: number) => {
+    @action setRotation = (angle: number, skipUpdate = false) => {
         this.rotation = (angle + 360) % 360;
-        if (!this.editing) {
+        if (!this.editing && !skipUpdate) {
             this.updateRegion();
         }
     };
