@@ -124,7 +124,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 const prevVal = axis.ticks[i - 1];
                 const nextVal = axis.ticks[i + 1];
                 // check if this tick might be the zero tick. If so, set it to exactly zero
-                if (prevVal * nextVal < 0 && tickVal < delta * 1e-3) {
+                if (prevVal * nextVal < 0 && Math.abs(tickVal) < Math.abs(delta * 1e-3)) {
                     axis.ticks[i] = 0.0;
                     break;
                 }
@@ -149,56 +149,39 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         // Basic prop check
         if (props.width !== nextProps.width) {
             return true;
-        }
-        else if (props.height !== nextProps.height) {
+        } else if (props.height !== nextProps.height) {
             return true;
-        }
-        else if (props.lineColor !== nextProps.lineColor) {
+        } else if (props.lineColor !== nextProps.lineColor) {
             return true;
-        }
-        else if (props.opacity !== nextProps.opacity) {
+        } else if (props.opacity !== nextProps.opacity) {
             return true;
-        }
-        else if (props.usePointSymbols !== nextProps.usePointSymbols) {
+        } else if (props.usePointSymbols !== nextProps.usePointSymbols) {
             return true;
-        }
-        else if (props.forceScientificNotationTicksX !== nextProps.forceScientificNotationTicksX) {
+        } else if (props.forceScientificNotationTicksX !== nextProps.forceScientificNotationTicksX) {
             return true;
-        }
-        else if (props.forceScientificNotationTicksY !== nextProps.forceScientificNotationTicksY) {
+        } else if (props.forceScientificNotationTicksY !== nextProps.forceScientificNotationTicksY) {
             return true;
-        }
-        else if (props.interpolateLines !== nextProps.interpolateLines) {
+        } else if (props.interpolateLines !== nextProps.interpolateLines) {
             return true;
-        }
-        else if (props.darkMode !== nextProps.darkMode) {
+        } else if (props.darkMode !== nextProps.darkMode) {
             return true;
-        }
-        else if (props.logY !== nextProps.logY) {
+        } else if (props.logY !== nextProps.logY) {
             return true;
-        }
-        else if (props.xLabel !== nextProps.xLabel) {
+        } else if (props.xLabel !== nextProps.xLabel) {
             return true;
-        }
-        else if (props.xMin !== nextProps.xMin) {
+        } else if (props.xMin !== nextProps.xMin) {
             return true;
-        }
-        else if (props.xMax !== nextProps.xMax) {
+        } else if (props.xMax !== nextProps.xMax) {
             return true;
-        }
-        else if (props.yMin !== nextProps.yMin) {
+        } else if (props.yMin !== nextProps.yMin) {
             return true;
-        }
-        else if (props.yMax !== nextProps.yMax) {
+        } else if (props.yMax !== nextProps.yMax) {
             return true;
-        }
-        else if (props.yLabel !== nextProps.yLabel) {
+        } else if (props.yLabel !== nextProps.yLabel) {
             return true;
-        }
-        else if (props.showTopAxis !== nextProps.showTopAxis) {
+        } else if (props.showTopAxis !== nextProps.showTopAxis) {
             return true;
-        }
-        else if (props.topAxisTickFormatter !== nextProps.topAxisTickFormatter) {
+        } else if (props.topAxisTickFormatter !== nextProps.topAxisTickFormatter) {
             return true;
         }
         else if (props.showXAxisTicks !== nextProps.showXAxisTicks) {
@@ -336,8 +319,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         if (this.props.logY) {
             plotOptions.scales.yAxes[0].afterBuildTicks = this.filterLogTicks;
             plotOptions.scales.yAxes[0].type = "logarithmic";
-        }
-        else {
+        } else {
             plotOptions.scales.yAxes[0].afterBuildTicks = this.filterLinearTicks;
             plotOptions.scales.yAxes[0].type = "linear";
         }
@@ -357,8 +339,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 datasetConfig.showLine = false;
                 datasetConfig.pointRadius = 1;
                 datasetConfig.pointBackgroundColor = lineColor;
-            }
-            else {
+            } else {
                 datasetConfig.pointRadius = 0;
                 datasetConfig.showLine = true;
                 datasetConfig.steppedLine = this.props.interpolateLines ? false : "middle";
