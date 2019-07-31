@@ -419,10 +419,18 @@ export class AppStore {
     };
 
     // Region file actions
-    @action loadRegion = (directory: string, file: string) => {
-        // TODO: Load regions
-        AppToaster.show({icon: "warning-sign", message: `Region import not yet implemented`, intent: "warning", timeout: 3000});
-        this.fileBrowserStore.hideFileBrowser();
+    @action importRegion = (directory: string, file: string, type: CARTA.FileType) => {
+        if (!this.activeFrame || !(type === CARTA.FileType.CRTF || type === CARTA.FileType.REG)) {
+            AppToaster.show({icon: "warning-sign", message: `Region type not supported`, intent: "danger", timeout: 3000});
+            return;
+        }
+
+        this.backendService.importRegion(directory, file, type, this.activeFrame.frameInfo.fileId).subscribe(ack => {
+            // TODO: Handle imported regions
+            console.log(ack);
+            AppToaster.show({icon: "warning-sign", message: `Region import not yet implemented`, intent: "warning", timeout: 3000});
+            this.fileBrowserStore.hideFileBrowser();
+        });
     };
 
     @action requestCubeHistogram = (fileId: number = -1) => {

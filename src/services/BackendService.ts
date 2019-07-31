@@ -74,6 +74,7 @@ export class BackendService {
             [CARTA.EventType.FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.REGION_FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.OPEN_FILE_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.IMPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.SET_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.START_ANIMATION_ACK, this.onStartAnimationAck],
             [CARTA.EventType.RASTER_IMAGE_DATA, this.onStreamedRasterImageData],
@@ -92,6 +93,7 @@ export class BackendService {
             [CARTA.EventType.FILE_INFO_RESPONSE, CARTA.FileInfoResponse],
             [CARTA.EventType.REGION_FILE_INFO_RESPONSE, CARTA.RegionFileInfoResponse],
             [CARTA.EventType.OPEN_FILE_ACK, CARTA.OpenFileAck],
+            [CARTA.EventType.IMPORT_REGION_ACK, CARTA.ImportRegionAck],
             [CARTA.EventType.SET_REGION_ACK, CARTA.SetRegionAck],
             [CARTA.EventType.START_ANIMATION_ACK, CARTA.StartAnimationAck],
             [CARTA.EventType.RASTER_IMAGE_DATA, CARTA.RasterImageData],
@@ -277,6 +279,24 @@ export class BackendService {
             this.logEvent(CARTA.EventType.REGION_FILE_INFO_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.REGION_FILE_INFO_REQUEST, CARTA.RegionFileInfoRequest.encode(message).finish())) {
                 return new Observable<CARTA.RegionFileInfoResponse>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("import region")
+    importRegion(directory: string, file: string, type: CARTA.FileType, fileId: number): Observable<CARTA.ImportRegionAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.ImportRegion.create({directory, file, type, groupId: fileId});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.IMPORT_REGION, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.IMPORT_REGION, CARTA.ImportRegion.encode(message).finish())) {
+                return new Observable<CARTA.ImportRegionAck>(observer => {
                     this.observerRequestMap.set(requestId, observer);
                 });
             } else {

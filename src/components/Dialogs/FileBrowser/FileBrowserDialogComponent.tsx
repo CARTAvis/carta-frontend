@@ -29,7 +29,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                 this.props.appStore.appendFile(fileBrowserStore.fileList.directory, fileInfo.name, hdu);
             }
         } else {
-            this.props.appStore.loadRegion(fileBrowserStore.fileList.directory, fileInfo.name);
+            this.props.appStore.importRegion(fileBrowserStore.fileList.directory, fileInfo.name, fileInfo.type);
         }
 
         fileBrowserStore.saveStartingDirectory();

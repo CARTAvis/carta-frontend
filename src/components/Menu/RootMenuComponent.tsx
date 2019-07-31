@@ -35,7 +35,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 />
                 <Menu.Divider/>
                 <Menu.Item
-                    text="Open region"
+                    text="Import regions"
                     disabled={!appStore.activeFrame}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Region, false)}
                 />
