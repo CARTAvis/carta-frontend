@@ -8,8 +8,14 @@ export enum FileInfoTabs {
     HEADER = "tab-header"
 }
 
+export enum BrowserMode {
+    File,
+    Region
+};
+
 export class FileBrowserStore {
     @observable fileBrowserDialogVisible = false;
+    @observable browserMode: BrowserMode = BrowserMode.File;
     @observable appendingFrame = false;
     @observable fileList: CARTA.FileListResponse;
     @observable selectedFile: CARTA.FileInfo;
@@ -22,8 +28,9 @@ export class FileBrowserStore {
     @observable respErrmsg: string = "";
     @observable startingDirectory: string = "$BASE";
 
-    @action showFileBrowser = (append = false) => {
+    @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
+        this.browserMode = mode;
         this.fileBrowserDialogVisible = true;
         this.selectedTab = FileInfoTabs.INFO;
         this.getFileList(this.startingDirectory);

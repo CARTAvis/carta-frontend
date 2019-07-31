@@ -5,7 +5,7 @@ import {Alert, Icon, Menu, Popover, Position, Tooltip} from "@blueprintjs/core";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {exportImage} from "components";
 import {PresetLayout} from "models";
-import {AppStore} from "stores";
+import {AppStore, BrowserMode} from "stores";
 import {ConnectionStatus} from "services";
 import "./RootMenuComponent.css";
 
@@ -25,13 +25,13 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     text="Open image"
                     label={`${modString}O`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || appStore.fileLoading}
-                    onClick={() => appStore.fileBrowserStore.showFileBrowser(false)}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)}
                 />
                 <Menu.Item
                     text="Append image"
                     label={`${modString}L`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
-                    onClick={() => appStore.fileBrowserStore.showFileBrowser(true)}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}
                 />
                 <Menu.Divider/>
                 <Menu.Item

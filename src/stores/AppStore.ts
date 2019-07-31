@@ -21,7 +21,7 @@ import {
     SpatialProfileStore,
     SpectralProfileStore,
     WidgetsStore,
-    LayoutStore
+    LayoutStore, BrowserMode
 } from ".";
 import {GetRequiredTiles} from "utilities";
 import {BackendService, TileService, ConnectionStatus} from "services";
@@ -205,7 +205,7 @@ export class AppStore {
                 this.addFrame(folderSearchParam, fileSearchParam, "", 0);
             }
             if (this.preferenceStore.autoLaunch) {
-                this.fileBrowserStore.showFileBrowser();
+                this.fileBrowserStore.showFileBrowser(BrowserMode.File);
             }
         }, err => console.log(err));
     };
