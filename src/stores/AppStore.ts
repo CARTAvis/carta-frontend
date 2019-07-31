@@ -195,8 +195,8 @@ export class AppStore {
             }
         });
 
-        this.backendService.connect(wsURL).subscribe(sessionId => {
-            console.log(`Connected with session ID ${sessionId}`);
+        this.backendService.connect(wsURL).subscribe(ack => {
+            console.log(`Connected with session ID ${ack.sessionId}`);
             connected = true;
             this.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
 

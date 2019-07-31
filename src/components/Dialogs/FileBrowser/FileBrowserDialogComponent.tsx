@@ -1,10 +1,10 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, IDialogProps, Intent, NonIdealState, Pre, Tooltip, Tabs, Tab, TabId, Spinner} from "@blueprintjs/core";
+import {AnchorButton, IDialogProps, Intent, NonIdealState, Pre, Spinner, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FileListComponent} from "./FileList/FileListComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, FileInfoTabs} from "stores";
+import {AppStore, BrowserMode, FileInfoTabs} from "stores";
 import "./FileBrowserDialogComponent.css";
 
 @observer
@@ -36,12 +36,14 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             if (fileBrowserStore.loadingInfo) {
                 return <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner"/>} title="Loading file info..."/>;
             } else {
-                if (fileBrowserStore.fileInfoResp) {
+                if (fileBrowserStore.browserMode === BrowserMode.File && fileBrowserStore.fileInfoResp) {
                     if (fileBrowserStore.selectedTab === FileInfoTabs.INFO) {
                         return <Pre className="file-info-pre">{fileBrowserStore.fileInfo}</Pre>;
                     } else if (fileBrowserStore.selectedTab === FileInfoTabs.HEADER) {
                         return <Pre className="file-info-pre">{fileBrowserStore.headers}</Pre>;
                     } // probably more tabs will be added in the future
+                } else if (fileBrowserStore.browserMode === BrowserMode.Region && fileBrowserStore.regionFileInfo) {
+                    return <Pre className="file-info-pre">{fileBrowserStore.regionFileInfo.join("\n")}</Pre>;
                 } else {
                     return <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={fileBrowserStore.respErrmsg + " Select another file from the list on the left"}/>;
                 }
@@ -85,7 +87,9 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                     <div className="file-info-pane">
                         <Tabs id="info-tabs" onChange={this.handleTabChange} selectedTabId={fileBrowserStore.selectedTab}>
                             <Tab id={FileInfoTabs.INFO} title="File Information"/>
+                            {fileBrowserStore.browserMode === BrowserMode.File &&
                             <Tab id={FileInfoTabs.HEADER} title="Header"/>
+                            }
                         </Tabs>
                         {this.loadInfoPanel()}
                     </div>

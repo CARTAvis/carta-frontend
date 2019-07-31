@@ -35,6 +35,12 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 />
                 <Menu.Divider/>
                 <Menu.Item
+                    text="Open region"
+                    label={`${modString}E`}
+                    disabled={!appStore.activeFrame}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Region, false)}
+                />
+                <Menu.Item
                     text="Export image"
                     label={`${modString}E`}
                     disabled={!appStore.activeFrame}
