@@ -116,6 +116,19 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             if (finalDist < interTickDist * 0.999) {
                 removeLastTick = true;
             }
+            // Ensure that very small ticks display as zero
+            // This is necessary due to a bug in Chart.js 2.8.0 that should be fixed in the next release
+            const delta = axis.ticks.length > 3 ? axis.ticks[2] - axis.ticks[1] : axis.ticks[1] - axis.ticks[0];
+            for (let i = 1; i < axis.ticks.length - 1; i++) {
+                const tickVal = axis.ticks[i];
+                const prevVal = axis.ticks[i - 1];
+                const nextVal = axis.ticks[i + 1];
+                // check if this tick might be the zero tick. If so, set it to exactly zero
+                if (prevVal * nextVal < 0 && tickVal < delta * 1e-3) {
+                    axis.ticks[i] = 0.0;
+                    break;
+                }
+            }
         }
         // Remove first and last ticks if they've been flagged
         axis.ticks = axis.ticks.slice(removeFirstTick ? 1 : 0, removeLastTick ? -1 : undefined);
