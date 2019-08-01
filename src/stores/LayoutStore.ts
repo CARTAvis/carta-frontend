@@ -16,23 +16,23 @@ const COMPONENT_CONFIG = new Map<string, any>([
         id: "image-view",
         isClosable: false
     }],
-    ["render-config-0", {
+    ["render-config", {
         type: "react-component",
         component: "render-config",
         title: "Render Configuration",
-        id: "render-config-0"
+        id: "render-config"
     }],
-    ["region-list-0", {
+    ["region-list", {
         type: "react-component",
         component: "region-list",
         title: "Region List",
-        id: "region-list-0"
+        id: "region-list"
     }],
-    ["animator-0", {
+    ["animator", {
         type: "react-component",
         component: "animator",
         title: "Animator",
-        id: "animator-0"
+        id: "animator"
     }],
     ["spatial-profiler-0", {
         type: "react-component",
@@ -44,17 +44,17 @@ const COMPONENT_CONFIG = new Map<string, any>([
         component: "spatial-profiler",
         id: "spatial-profiler-1"
     }],
-    ["spectral-profiler-0", {
+    ["spectral-profiler", {
         type: "react-component",
         component: "spectral-profiler",
-        id: "spectral-profiler-0",
+        id: "spectral-profiler",
         title: "Z Profile: Cursor"
     }],
-    ["stats-0", {
+    ["stats", {
         type: "react-component",
         component: "stats",
         title: "Statistics",
-        id: "stats-0"
+        id: "stats"
     }]
 ]);
 
@@ -62,33 +62,33 @@ const PRESET_CONFIGS = new Map<string, any>([
     [PresetLayout.DEFAULT, {
         leftBottomContent: {
             type: "stack",
-            content: [{type: "component", id: "render-config-0"}]
+            content: [{type: "component", id: "render-config"}]
         },
         rightColumnContent: [{type: "component", id: "spatial-profiler-0"}, {type: "component", id: "spatial-profiler-1"}, {
             type: "stack",
-            content: [{type: "component", id: "animator-0"}, {type: "component", id: "region-list-0"}]
+            content: [{type: "component", id: "animator"}, {type: "component", id: "region-list"}]
         }]
     }],
     [PresetLayout.CUBEVIEW, {
         leftBottomContent: {
             type: "stack",
-            content: [{type: "component", id: "animator-0"}, {type: "component", id: "render-config-0"}, {type: "component", id: "region-list-0"}]
+            content: [{type: "component", id: "animator"}, {type: "component", id: "render-config"}, {type: "component", id: "region-list"}]
         },
-        rightColumnContent: [{type: "component", id: "spatial-profiler-0"}, {type: "component", id: "spatial-profiler-1"}, {type: "component", id: "spectral-profiler-0"}]
+        rightColumnContent: [{type: "component", id: "spatial-profiler-x"}, {type: "component", id: "spatial-profiler-y"}, {type: "component", id: "spectral-profiler"}]
     }],
     [PresetLayout.CUBEANALYSIS, {
         leftBottomContent: {
             type: "stack",
-            content: [{type: "component", id: "animator-0"}, {type: "component", id: "render-config-0"}, {type: "component", id: "region-list-0"}]
+            content: [{type: "component", id: "animator"}, {type: "component", id: "render-config"}, {type: "component", id: "region-list"}]
         },
-        rightColumnContent: [{type: "component", id: "spectral-profiler-0"}, {type: "component", id: "stats-0"}]
+        rightColumnContent: [{type: "component", id: "spectral-profiler"}, {type: "component", id: "stats"}]
     }],
     [PresetLayout.CONTINUUMANALYSIS, {
         leftBottomContent: {
             type: "stack",
-            content: [{type: "component", id: "render-config-0"}, {type: "component", id: "region-list-0"}, {type: "component", id: "animator-0"}]
+            content: [{type: "component", id: "render-config"}, {type: "component", id: "region-list"}, {type: "component", id: "animator"}]
         },
-        rightColumnContent: [{type: "component", id: "spatial-profiler-0"}, {type: "component", id: "spatial-profiler-1"}, {type: "component", id: "stats-0"}]
+        rightColumnContent: [{type: "component", id: "spatial-profiler-x"}, {type: "component", id: "spatial-profiler-y"}, {type: "component", id: "stats"}]
     }]
 ]);
 
@@ -199,10 +199,10 @@ export class LayoutStore {
                     if (child.content) {
                         this.genSimpleConfig(simpleChild.content, child.content);
                     }
-                } else if (child.type === "component") {
+                } else if (child.type === "component" && child.component) {
                     let simpleChild = {
                         type: child.type,
-                        id: child.id
+                        id: child.component
                     };
                     if (child.width) {
                         simpleChild["width"] = child.width;
@@ -216,7 +216,7 @@ export class LayoutStore {
         });
     };
 
-    private fillComponents = (newParentContent, parentContent, componentIDs: string[]) => {
+    private fillComponents = (newParentContent, parentContent, componentConfigs: string[]) => {
         if (!newParentContent || !parentContent) {
             return;
         }
@@ -236,10 +236,9 @@ export class LayoutStore {
                     }
                     newParentContent.push(simpleChild);
                     if (child.content) {
-                        this.fillComponents(simpleChild.content, child.content, componentIDs);
+                        this.fillComponents(simpleChild.content, child.content, componentConfigs);
                     }
-                } else if (child.type === "component" && COMPONENT_CONFIG.has(child.id)) {
-                    componentIDs.push(child.id);
+                } else if (child.type === "component" && child.id && COMPONENT_CONFIG.has(child.id)) {
                     let componentConfig = COMPONENT_CONFIG.get(child.id);
                     if (child.width) {
                         componentConfig["width"] = child.width;
@@ -248,6 +247,7 @@ export class LayoutStore {
                         componentConfig["height"] = child.height;
                     }
                     componentConfig.props = {appStore: this.appStore, id: child.id, docked: true};
+                    componentConfigs.push(componentConfig);
                     newParentContent.push(componentConfig);
                 }
             }
@@ -282,8 +282,8 @@ export class LayoutStore {
             type: config.type,
             content: []
         };
-        let componentIDs = [];
-        this.fillComponents(arrangementConfig.content, config.content, componentIDs);
+        let componentConfigs = [];
+        this.fillComponents(arrangementConfig.content, config.content, componentConfigs);
 
         const mainLayoutConfig = {
             settings: {
@@ -305,7 +305,7 @@ export class LayoutStore {
         }
         this.dockedLayout = new GoldenLayout(mainLayoutConfig, this.appStore.getImageViewContainer());
         this.dockedLayoutName = layoutName;
-        this.appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout, componentIDs);
+        this.appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout, componentConfigs);
         this.dockedLayout.init();
 
         return true;

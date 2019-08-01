@@ -162,6 +162,40 @@ export class WidgetsStore {
         }
     };
 
+    private getItemId = (id: string): string => {
+        let itemId = null;
+        // Check if it's an uninitialised widget
+        switch (id) {
+           case RenderConfigComponent.WIDGET_CONFIG.type:
+               itemId = this.addRenderConfigWidget();
+               break;
+           case SpatialProfilerComponent.WIDGET_CONFIG.type:
+               itemId = this.addSpatialProfileWidget();
+               break;
+           case SpectralProfilerComponent.WIDGET_CONFIG.type:
+               itemId = this.addSpectralProfileWidget();
+               break;
+           case StatsComponent.WIDGET_CONFIG.type:
+               itemId = this.addStatsWidget();
+               break;
+           case HistogramComponent.WIDGET_CONFIG.type:
+               itemId = this.addHistogramWidget();
+               break;
+           case AnimatorComponent.WIDGET_CONFIG.type:
+               itemId = this.addAnimatorWidget();
+               break;
+           case LogComponent.WIDGET_CONFIG.type:
+               itemId = this.addLogWidget();
+               break;
+           case RegionListComponent.WIDGET_CONFIG.type:
+               itemId = this.addRegionListWidget();
+               break;
+           default:
+               break;
+        }
+        return itemId;
+    };
+
     removeWidget = (widgetId: string, widgetType: string) => {
         const widgets = this.widgetsMap.get(widgetType);
         if (widgets) {
@@ -169,38 +203,19 @@ export class WidgetsStore {
         }
     };
 
-    public initLayoutWithWidgets = (layout: GoldenLayout, componentIDs: string[]) => {
-        if (!layout || !componentIDs) {
+    public initLayoutWithWidgets = (layout: GoldenLayout, componentConfigs: any[]) => {
+        if (!layout || !componentConfigs) {
             console.log("Invalid parameters!");
             return;
         }
 
         // add widget store for components
-        componentIDs.forEach((id) => {
-            switch (id) {
-                case "render-config-0":
-                    this.addRenderConfigWidget(id);
-                    break;
-                case "animator-0":
-                    this.addAnimatorWidget(id);
-                    break;
-                case "region-list-0":
-                    this.addRegionListWidget(id);
-                    break;
-                case "spatial-profiler-0":
-                    this.addSpatialProfileWidget(id, "x", -1, 0);
-                    break;
-                case "spatial-profiler-1":
-                    this.addSpatialProfileWidget(id, "y", -1, 0);
-                    break;
-                case "spectral-profiler-0":
-                    this.addSpectralProfileWidget(id, "z");
-                    break;
-                case "stats-0":
-                    this.addStatsWidget(id);
-                    break;
-                default:
-                    break;
+        componentConfigs.forEach((componentConfig) => {
+            const config = componentConfig as GoldenLayout.ReactComponentConfig;
+            const itemId = this.getItemId(config.component);
+            if (itemId) {
+                config.id = itemId;
+                config.props.id = itemId;
             }
         });
 
