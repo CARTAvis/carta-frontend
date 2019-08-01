@@ -2,6 +2,10 @@
     min-width: 60%;
     height: 600px;
     user-select: none;
+    .file-path {
+        margin-bottom: 15px;
+        display: flex;
+    }
     .file-info-pane {
         width: 40%;
         margin-left: 5px;

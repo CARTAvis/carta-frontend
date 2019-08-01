@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, IDialogProps, Intent, NonIdealState, Pre, Tooltip, Tabs, Tab, TabId, Spinner} from "@blueprintjs/core";
+import {Icon, AnchorButton, IDialogProps, Intent, NonIdealState, Pre, Tooltip, Tabs, Tab, TabId, Spinner, IBreadcrumbProps, Breadcrumbs, Breadcrumb} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FileListComponent} from "./FileList/FileListComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -68,6 +68,27 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             title: "File Browser",
         };
 
+        let pathItems: IBreadcrumbProps[] = [{icon: "desktop", target: "."}];
+        if (fileBrowserStore.fileList) {
+            const path = fileBrowserStore.fileList.directory;
+            if (path !== ".") {
+                const dirNames = path.split("/");
+                let parentPath = "";
+                if (dirNames.length) {
+                    for (const dirName of dirNames) {
+                        if (!dirName) {
+                            continue;
+                        }
+                        parentPath += `/${dirName}`;
+                        pathItems.push({
+                            text: dirName,
+                            target: parentPath
+                        });
+                    }
+                }
+            }
+        }
+
         return (
             <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
                 <div className="bp3-dialog-body" style={{display: "flex"}}>
@@ -83,6 +104,12 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         />
                     </div>
                     <div className="file-info-pane">
+                        {pathItems &&
+                        <Breadcrumbs
+                            breadcrumbRenderer={this.renderBreadcrumb}
+                            items={pathItems}
+                        />
+                        }
                         <Tabs id="info-tabs" onChange={this.handleTabChange} selectedTabId={fileBrowserStore.selectedTab}>
                             <Tab id={FileInfoTabs.INFO} title="File Information"/>
                             <Tab id={FileInfoTabs.HEADER} title="Header"/>
@@ -117,4 +144,15 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             </DraggableDialogComponent>
         );
     }
+
+    private renderBreadcrumb = (props: IBreadcrumbProps) => {
+        return (
+            <Breadcrumb onClick={() => this.props.appStore.fileBrowserStore.selectFolder(props.target, true)}>
+                {props.icon &&
+                <Icon icon={props.icon}/>
+                }
+                {props.text}
+            </Breadcrumb>
+        );
+    };
 }
