@@ -89,7 +89,7 @@ export class LinePlotComponentProps {
     plotType?: string;
     dataBackgroundColor?: Array<string>;
     isGroupSubPlot?: boolean;
-    centeredOrigin?: true;
+    centeredOrigin?: boolean;
 }
 
 // Maximum time between double clicks
@@ -773,12 +773,19 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return cursorInfo;
     };
 
+    private resizeStageHeight(){
+        if (this.chartArea)  {
+            if (this.props.showLegend) {
+                console.log("stage")
+                console.log(this.chartArea)
+                }
+            return Math.ceil(this.chartArea.bottom - this.chartArea.top);
+        }
+        return this.height;
+    }
+
     render() {
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
-        let stageClass = "annotation-stage";
-        if (this.props.showLegend) {
-            stageClass = "annotation-stage-legend";
-        }
         return (
             <div
                 className={"line-plot-component"}

@@ -473,8 +473,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             isGroupSubPlot: true,
             colorRangeEnd: 250,
             centeredOrigin: true,
-            graphZoomedX: this.widgetStore.setquScatterPlotXBounds,
-            graphZoomedY: this.widgetStore.setquScatterPlotYBounds
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
