@@ -773,17 +773,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return cursorInfo;
     };
 
-    private resizeStageHeight(){
-        if (this.chartArea)  {
-            if (this.props.showLegend) {
-                console.log("stage")
-                console.log(this.chartArea)
-                }
-            return Math.ceil(this.chartArea.bottom - this.chartArea.top);
-        }
-        return this.height;
-    }
-
     render() {
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
         return (
