@@ -43,7 +43,7 @@ test("encodes 10000 coordinates in less than 5 ms", () => {
     expect(dt).toBeLessThan(20);
 });
 
-test("encodes 1M coordinates in less than 20 ms", () => {
+test("decodes 1M coordinates in less than 20 ms", () => {
     const layer = 12;
     const layerWidth = 2 ** layer;
     let counter = 0;
