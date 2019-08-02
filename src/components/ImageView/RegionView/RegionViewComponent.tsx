@@ -23,8 +23,6 @@ export interface RegionViewComponentProps {
     top: number;
     cursorFrozen: boolean;
     cursorPoint?: Point2D;
-    initCenter: (cursorInfo: CursorInfo) => void;
-    onCursorMoved?: (cursorInfo: CursorInfo) => void;
     onClicked?: (cursorInfo: CursorInfo) => void;
     onRegionDoubleClicked?: (region: RegionStore) => void;
     onZoomed?: (cursorInfo: CursorInfo, delta: number) => void;
@@ -38,72 +36,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private regionStartPoint: Point2D;
     @observable currentCursorPos: Point2D;
 
-    constructor(props: RegionViewComponentProps) {
-        super(props);
-        const center = {x: props.width / 2, y: props.height / 2};
-        this.props.initCenter(this.getCursorInfo(center));
-    }
-
     updateCursorPos = _.throttle((x: number, y: number) => {
-        if (this.props.frame.wcsInfo && this.props.onCursorMoved) {
-            this.props.onCursorMoved(this.getCursorInfo({x, y}));
+        if (this.props.frame.wcsInfo) {
+            this.props.frame.setCursorInfo(this.props.frame.getCursorInfo({x, y}));
         }
     }, 100);
-
-    private getCursorInfo(cursorPosCanvasSpace: Point2D): CursorInfo {
-        const cursorPosImageSpace = this.getImagePos(cursorPosCanvasSpace.x, cursorPosCanvasSpace.y);
-
-        let cursorPosWCS, cursorPosFormatted;
-        if (this.props.frame.validWcs) {
-            // We need to compare X and Y coordinates in both directions
-            // to avoid a confusing drop in precision at rounding threshold
-            const offsetBlock = [[0, 0], [1, 1], [-1, -1]];
-
-            // Shift image space coordinates to 1-indexed when passing to AST
-            const cursorNeighbourhood = offsetBlock.map((offset) => AST.pixToWCS(this.props.frame.wcsInfo, cursorPosImageSpace.x + 1 + offset[0], cursorPosImageSpace.y + 1 + offset[1]));
-
-            cursorPosWCS = cursorNeighbourhood[0];
-
-            const normalizedNeighbourhood = cursorNeighbourhood.map((pos) => AST.normalizeCoordinates(this.props.frame.wcsInfo, pos.x, pos.y));
-
-            let precisionX = 0;
-            let precisionY = 0;
-
-            while (true) {
-                let astString = new ASTSettingsString();
-                astString.add("Format(1)", this.props.overlaySettings.numbers.cursorFormatStringX(precisionX));
-                astString.add("Format(2)", this.props.overlaySettings.numbers.cursorFormatStringY(precisionY));
-                astString.add("System", this.props.overlaySettings.global.explicitSystem);
-
-                let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.props.frame.wcsInfo, pos.x, pos.y, astString.toString()));
-                let [p, n1, n2] = formattedNeighbourhood;
-                if (!p.x || !p.y || p.x === "<bad>" || p.y === "<bad>") {
-                    cursorPosFormatted = null;
-                    break;
-                }
-
-                if (p.x !== n1.x && p.x !== n2.x && p.y !== n1.y && p.y !== n2.y) {
-                    cursorPosFormatted = {x: p.x, y: p.y};
-                    break;
-                }
-
-                if (p.x === n1.x || p.x === n2.x) {
-                    precisionX += 1;
-                }
-
-                if (p.y === n1.y || p.y === n2.y) {
-                    precisionY += 1;
-                }
-            }
-        }
-
-        return {
-            posCanvasSpace: cursorPosCanvasSpace,
-            posImageSpace: cursorPosImageSpace,
-            posWCS: cursorPosWCS,
-            infoWCS: cursorPosFormatted,
-        };
-    }
 
     private getCursorCanvasPos(imageX: number, imageY: number): Point2D {
         const frameView = this.props.frame.requiredFrameView;
@@ -120,15 +57,6 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         return posCanvasSpace;
     }
 
-    private getImagePos(canvasX: number, canvasY: number): Point2D {
-        const frameView = this.props.frame.requiredFrameView;
-        return {
-            x: (canvasX / this.props.width) * (frameView.xMax - frameView.xMin) + frameView.xMin - 1,
-            // y coordinate is flipped in image space
-            y: (canvasY / this.props.height) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
-        };
-    }
-
     handleMouseDown = (konvaEvent) => {
         if (this.creatingRegion) {
             return;
@@ -138,7 +66,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const frame = this.props.frame;
         const regionType = frame.regionSet.newRegionType;
 
-        const cursorPosImageSpace = this.getImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
+        const cursorPosImageSpace = this.props.frame.getImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
         switch (regionType) {
             case CARTA.RegionType.POINT:
                 this.creatingRegion = frame.regionSet.addPointRegion(cursorPosImageSpace, false);
@@ -191,7 +119,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     @action
     private handleMouseUpPolygonRegion(mouseEvent: MouseEvent) {
         const frame = this.props.frame;
-        const cursorPosImageSpace = this.getImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
+        const cursorPosImageSpace = this.props.frame.getImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
         if (this.creatingRegion && this.creatingRegion.regionType === CARTA.RegionType.POLYGON) {
             if (this.creatingRegion.controlPoints.length) {
                 const previousPoint = this.creatingRegion.controlPoints[this.creatingRegion.controlPoints.length - 1];
@@ -219,7 +147,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         const cursorPosCanvasSpace = {x: mouseEvent.offsetX, y: mouseEvent.offsetY};
         if (this.props.frame.wcsInfo && this.props.onClicked) {
-            this.props.onClicked(this.getCursorInfo(cursorPosCanvasSpace));
+            this.props.onClicked(this.props.frame.getCursorInfo(cursorPosCanvasSpace));
         }
     };
 
@@ -229,7 +157,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const delta = mouseEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? mouseEvent.deltaY : mouseEvent.deltaY * lineHeight;
         const cursorPosCanvasSpace = {x: mouseEvent.offsetX, y: mouseEvent.offsetY};
         if (this.props.frame.wcsInfo && this.props.onZoomed) {
-            this.props.onZoomed(this.getCursorInfo(cursorPosCanvasSpace), -delta);
+            this.props.onZoomed(this.props.frame.getCursorInfo(cursorPosCanvasSpace), -delta);
         }
     };
 
@@ -253,7 +181,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     private handleRegularRegionMouseMove(mouseEvent: MouseEvent) {
-        const cursorPosImageSpace = this.getImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
+        const cursorPosImageSpace = this.props.frame.getImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
         let dx = (cursorPosImageSpace.x - this.regionStartPoint.x);
         let dy = (cursorPosImageSpace.y - this.regionStartPoint.y);
         if (mouseEvent.shiftKey) {

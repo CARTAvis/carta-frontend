@@ -445,11 +445,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
 
                 // TODO: Get comments from region info, rather than directly from cursor position
-                if (appStore.cursorInfo) {
+                if (appStore.activeFrame.cursorInfo) {
                     const comments: string[] = [];
-                    comments.push(`region (pixel): Point[${appStore.cursorInfo.posImageSpace.x.toFixed(0)}, ${appStore.cursorInfo.posImageSpace.y.toFixed(0)}]`);
-                    if (appStore.cursorInfo.infoWCS) {
-                        comments.push(`region (world): Point[${appStore.cursorInfo.infoWCS.x}, ${appStore.cursorInfo.infoWCS.y}]`);
+                    comments.push(`region (pixel): Point[${appStore.activeFrame.cursorInfo.posImageSpace.x.toFixed(0)}, ${appStore.activeFrame.cursorInfo.posImageSpace.y.toFixed(0)}]`);
+                    if (appStore.activeFrame.cursorInfo.infoWCS) {
+                        comments.push(`region (world): Point[${appStore.activeFrame.cursorInfo.infoWCS.x}, ${appStore.activeFrame.cursorInfo.infoWCS.y}]`);
                     }
                     linePlotProps.comments = comments;
                 }

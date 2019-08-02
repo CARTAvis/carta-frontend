@@ -1,8 +1,9 @@
 import {action, computed, observable, autorun} from "mobx";
 import {CARTA} from "carta-protobuf";
+import * as AST from "ast_wrapper";
 import {NumberRange} from "@blueprintjs/core";
-import {PreferenceStore, OverlayStore, RegionSetStore, RenderConfigStore} from "stores";
-import {Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES} from "models";
+import {ASTSettingsString, PreferenceStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore} from "stores";
+import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES} from "models";
 import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency} from "utilities";
 import {BackendService} from "../services";
 
@@ -27,8 +28,9 @@ export class FrameStore {
     @observable validWcs: boolean;
     @observable center: Point2D;
     @observable centerY: number;
+    @observable cursorInfo: CursorInfo;
+    @observable cursorValue: number;
     @observable cursorFrozen: boolean;
-    @observable cursorFrozenPoint: Point2D;
     @observable zoomLevel: number;
     @observable stokes: number;
     @observable channel: number;
@@ -46,14 +48,15 @@ export class FrameStore {
     @observable regionSet: RegionSetStore;
 
     private readonly overlayStore: OverlayStore;
+    private readonly logStore: LogStore;
 
-    constructor(readonly preference: PreferenceStore, overlay: OverlayStore, frameInfo: FrameInfo, backendService: BackendService) {
+    constructor(readonly preference: PreferenceStore, overlay: OverlayStore, logStore: LogStore, frameInfo: FrameInfo, backendService: BackendService) {
         this.overlayStore = overlay;
+        this.logStore = logStore;
+        this.validWcs = false;
         this.frameInfo = frameInfo;
         this.renderHiDPI = true;
         this.center = {x: 0, y: 0};
-        this.cursorFrozen = preference.isCursorFrozen;
-        this.cursorFrozenPoint = {x: 0, y: 0};
         this.stokes = 0;
         this.channel = 0;
         this.requiredStokes = 0;
@@ -86,11 +89,15 @@ export class FrameStore {
         };
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
-        // init center & cursorFrozenPoint to image center
+        this.initWCS();
         this.initCenter();
-
-        // init zoom level
         this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
+
+        // need initialized wcs to get correct cursor info
+        this.cursorInfo = this.getCursorInfo({x: this.renderWidth / 2, y: this.renderHeight / 2});
+        this.cursorValue = 0;
+        console.log("this.cursorValue = 0;");
+        this.cursorFrozen = preference.isCursorFrozen;
 
         autorun(() => {
             // update zoomLevel when image viewer is available for drawing
@@ -99,6 +106,56 @@ export class FrameStore {
             }
         });
     }
+
+    @action private initWCS = () => {
+        let headerString = "";
+
+        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+            // Skip empty header entries
+            if (!entry.value.length) {
+                continue;
+            }
+
+            // Skip higher dimensions
+            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
+                continue;
+            }
+
+            let value = entry.value;
+            if (entry.name.toUpperCase() === "NAXIS") {
+                value = "2";
+            }
+
+            if (entry.name.toUpperCase() === "WCSAXES") {
+                value = "2";
+            }
+
+            if (entry.entryType === CARTA.EntryType.STRING) {
+                value = `'${value}'`;
+            }
+
+            let name = entry.name;
+            while (name.length < 8) {
+                name += " ";
+            }
+
+            let entryString = `${name}=  ${value}`;
+            while (entryString.length < 80) {
+                entryString += " ";
+            }
+            headerString += entryString;
+        }
+        const initResult = AST.initFrame(headerString);
+        if (!initResult) {
+            this.logStore.addWarning(`Problem processing WCS info in file ${this.frameInfo.fileInfo.name}`, ["ast"]);
+            this.wcsInfo = AST.initDummyFrame();
+        } else {
+            this.wcsInfo = initResult;
+            this.validWcs = true;
+            this.overlayStore.setDefaultsFromAST(this);
+            console.log("Initialised WCS info from frame");
+        }
+    };
 
     @computed get requiredFrameView(): FrameView {
         // If there isn't a valid zoom, return a dummy view
@@ -130,6 +187,70 @@ export class FrameStore {
         };
 
         return frameView;
+    }
+
+    public getImagePos(canvasX: number, canvasY: number): Point2D {
+        const frameView = this.requiredFrameView;
+        return {
+            x: (canvasX / this.renderWidth) * (frameView.xMax - frameView.xMin) + frameView.xMin - 1,
+            // y coordinate is flipped in image space
+            y: (canvasY / this.renderHeight) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
+        };
+    }
+
+    public getCursorInfo(cursorPosCanvasSpace: Point2D): CursorInfo {
+        const cursorPosImageSpace = this.getImagePos(cursorPosCanvasSpace.x, cursorPosCanvasSpace.y);
+
+        let cursorPosWCS, cursorPosFormatted;
+        if (this.validWcs) {
+            // We need to compare X and Y coordinates in both directions
+            // to avoid a confusing drop in precision at rounding threshold
+            const offsetBlock = [[0, 0], [1, 1], [-1, -1]];
+
+            // Shift image space coordinates to 1-indexed when passing to AST
+            const cursorNeighbourhood = offsetBlock.map((offset) => AST.pixToWCS(this.wcsInfo, cursorPosImageSpace.x + 1 + offset[0], cursorPosImageSpace.y + 1 + offset[1]));
+
+            cursorPosWCS = cursorNeighbourhood[0];
+
+            const normalizedNeighbourhood = cursorNeighbourhood.map((pos) => AST.normalizeCoordinates(this.wcsInfo, pos.x, pos.y));
+
+            let precisionX = 0;
+            let precisionY = 0;
+
+            while (true) {
+                let astString = new ASTSettingsString();
+                astString.add("Format(1)", this.overlayStore.numbers.cursorFormatStringX(precisionX));
+                astString.add("Format(2)", this.overlayStore.numbers.cursorFormatStringY(precisionY));
+                astString.add("System", this.overlayStore.global.explicitSystem);
+
+                let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString()));
+                let [p, n1, n2] = formattedNeighbourhood;
+                if (!p.x || !p.y || p.x === "<bad>" || p.y === "<bad>") {
+                    cursorPosFormatted = null;
+                    break;
+                }
+
+                if (p.x !== n1.x && p.x !== n2.x && p.y !== n1.y && p.y !== n2.y) {
+                    cursorPosFormatted = {x: p.x, y: p.y};
+                    break;
+                }
+
+                if (p.x === n1.x || p.x === n2.x) {
+                    precisionX += 1;
+                }
+
+                if (p.y === n1.y || p.y === n2.y) {
+                    precisionY += 1;
+                }
+            }
+        }
+
+        return {
+            posCanvasSpace: cursorPosCanvasSpace,
+            posImageSpace: cursorPosImageSpace,
+            posWCS: cursorPosWCS,
+            infoWCS: cursorPosFormatted,
+        };
     }
 
     @computed get renderWidth() {
@@ -419,9 +540,16 @@ export class FrameStore {
         this.center = {x, y};
     }
 
-    @action setCursorFrozenPoint(point: Point2D) {
-        this.cursorFrozenPoint.x = point.x;
-        this.cursorFrozenPoint.y = point.y;
+    @action setCursorInfo(cursorInfo: CursorInfo) {
+        if (!this.cursorFrozen) {
+            this.cursorInfo = cursorInfo;
+        }
+    }
+
+    @action setCursorValue(cursorValue: number) {
+        if (!this.cursorFrozen) {
+            this.cursorValue = cursorValue;
+        }
     }
 
     // Sets a new zoom level and pans to keep the given point fixed
@@ -439,8 +567,8 @@ export class FrameStore {
     }
 
     @action private initCenter = () => {
-        this.cursorFrozenPoint.x = this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + 0.5;
-        this.cursorFrozenPoint.y = this.center.y = this.frameInfo.fileInfoExtended.height / 2.0 + 0.5;
+        this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + 0.5;
+        this.center.y = this.frameInfo.fileInfoExtended.height / 2.0 + 0.5;
     };
 
     @action fitZoom = () => {

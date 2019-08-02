@@ -105,14 +105,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         }
     };
 
-    initCenter = (cursorInfo: CursorInfo) => {
-        this.props.appStore.setCursorInfo(cursorInfo);
-    };
-
-    onCursorMoved = (cursorInfo: CursorInfo) => {
-        this.props.appStore.setCursorInfo(cursorInfo);
-    };
-
     onClicked = (cursorInfo: CursorInfo) => {
         const appStore = this.props.appStore;
         if (appStore.activeFrame
@@ -171,10 +163,10 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         docked={this.props.docked}
                     />
                     }
-                    {appStore.cursorInfo &&
+                    {appStore.activeFrame.cursorInfo &&
                     <CursorOverlayComponent
-                        cursorInfo={appStore.cursorInfo}
-                        cursorValue={appStore.cursorValue}
+                        cursorInfo={appStore.activeFrame.cursorInfo}
+                        cursorValue={appStore.activeFrame.cursorValue}
                         spectralInfo={appStore.activeFrame.spectralInfo}
                         width={appStore.overlayStore.viewWidth}
                         left={appStore.overlayStore.padding.left}
@@ -203,23 +195,23 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         padding={10}
                     />
                     }
+                    {appStore.activeFrame &&
                     <RegionViewComponent
                         frame={appStore.activeFrame}
-                        width={appStore.overlayStore.viewWidth - appStore.overlayStore.padding.left - appStore.overlayStore.padding.right}
-                        height={appStore.overlayStore.viewHeight - appStore.overlayStore.padding.top - appStore.overlayStore.padding.bottom}
+                        width={appStore.activeFrame.renderWidth}
+                        height={appStore.activeFrame.renderHeight}
                         top={appStore.overlayStore.padding.top}
                         left={appStore.overlayStore.padding.left}
-                        initCenter={this.initCenter}
-                        onCursorMoved={this.onCursorMoved}
                         onClicked={this.onClicked}
                         onRegionDoubleClicked={this.handleRegionDoubleClicked}
                         onZoomed={this.onZoomed}
                         overlaySettings={appStore.overlayStore}
                         isRegionCornerMode={appStore.preferenceStore.isRegionCornerMode}
                         cursorFrozen={appStore.activeFrame.cursorFrozen}
-                        cursorPoint={appStore.activeFrame.cursorFrozenPoint}
+                        cursorPoint={appStore.activeFrame.cursorInfo.posImageSpace}
                         docked={this.props.docked}
                     />
+                    }
                     <ToolbarComponent
                         appStore={appStore}
                         docked={this.props.docked}
