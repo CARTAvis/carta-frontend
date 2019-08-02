@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
 import {AppStore, WidgetConfig} from "stores";
-import {AnimatorComponent, HistogramComponent, LogComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent, StatsComponent} from "components";
+import {AnimatorComponent, HistogramComponent, LogComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent, StatsComponent, StokesAnalysisComponent} from "components";
 import "./ToolbarMenuComponent.css";
 
 @observer
@@ -16,7 +16,8 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
             ["spatialProfilerButton", SpatialProfilerComponent.WIDGET_CONFIG],
             ["spectralProfilerButton", SpectralProfilerComponent.WIDGET_CONFIG],
             ["statsButton", StatsComponent.WIDGET_CONFIG],
-            ["histogramButton", HistogramComponent.WIDGET_CONFIG]
+            ["histogramButton", HistogramComponent.WIDGET_CONFIG],
+            ["stokesAnalysisButton", StokesAnalysisComponent.WIDGET_CONFIG],
         ]);
     }
 
@@ -56,6 +57,11 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
                 </Tooltip>
                 <Tooltip content={<span>Render Config Widget{commonTooltip}</span>}>
                     <Button icon={"style"} id="renderConfigButton" onClick={this.props.appStore.widgetsStore.createFloatingRenderWidget}/>
+                </Tooltip>
+                <Tooltip content={<span>Stokes Analysis Widget{commonTooltip}</span>}>
+                    <Button icon={"pulse"} id="stokesAnalysisButton" className={"profiler-button"} onClick={this.props.appStore.widgetsStore.createFloatingStokesWidget}>
+                        &nbsp;s
+                    </Button>
                 </Tooltip>
             </ButtonGroup>
         );

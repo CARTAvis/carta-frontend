@@ -5,3 +5,4 @@ export * from "./RegionWidgetStore";
 export * from "./StatsWidgetStore";
 export * from "./HistogramWidgetStore";
 export * from "./EmptyWidgetStore";
+export * from "./StokesAnalysisWidgetStore";

@@ -26,7 +26,7 @@ import {
 import {GetRequiredTiles} from "utilities";
 import {BackendService, TileService, ConnectionStatus} from "services";
 import {CursorInfo, FrameView, Point2D, ProcessedSpatialProfile, ProtobufProcessing, Theme} from "models";
-import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
+import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 
 const CURSOR_THROTTLE_TIME = 200;
 const CURSOR_THROTTLE_TIME_ROTATED = 100;
@@ -319,6 +319,7 @@ export class AppStore {
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets, fileId);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.histogramWidgets, fileId);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.spectralProfileWidgets, fileId);
+            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets, fileId);
 
             if (this.backendService.closeFile(fileId)) {
                 if (this.activeFrame.frameInfo.fileId === fileId) {
@@ -339,6 +340,7 @@ export class AppStore {
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.histogramWidgets);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.spectralProfileWidgets);
+            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets);
         }
     };
 
@@ -771,6 +773,7 @@ export class AppStore {
                 WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.statsWidgets, fileId, regionId);
                 WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.histogramWidgets, fileId, regionId);
                 WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.spectralProfileWidgets, fileId, regionId);
+                WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets, fileId, regionId);
                 // delete region
                 this.activeFrame.regionSet.deleteRegion(region);
             }
@@ -830,6 +833,9 @@ export class AppStore {
         }
 
         const updatedRequirements = SpectralProfileWidgetStore.CalculateRequirementsMap(this.activeFrame, this.widgetsStore.spectralProfileWidgets);
+        if (this.widgetsStore.stokesAnalysisWidgets.size > 0) {
+            StokesAnalysisWidgetStore.addToRequirementsMap(this.activeFrame, updatedRequirements, this.widgetsStore.stokesAnalysisWidgets);
+        }
         const diffList = SpectralProfileWidgetStore.DiffSpectralRequirements(this.spectralRequirements, updatedRequirements);
         this.spectralRequirements = updatedRequirements;
 

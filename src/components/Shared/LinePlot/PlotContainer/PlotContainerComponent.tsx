@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {Chart, ChartArea, ChartData, ChartDataSets, ChartOptions} from "chart.js";
+import {ChartArea, ChartData, ChartDataSets, ChartOptions} from "chart.js";
 import {Scatter} from "react-chartjs-2";
 import {Colors} from "@blueprintjs/core";
 import {clamp, hexStringToRgba} from "utilities";
@@ -27,6 +27,17 @@ export class PlotContainerProps {
     topAxisTickFormatter?: (value: number, index: number, values: number[]) => string | number;
     chartAreaUpdated?: (chartArea: ChartArea) => void;
     plotRefUpdated?: (plotRef: Scatter) => void;
+    multiPlotData?: Map<string, { x: number, y: number }[]>;
+    showXAxisTicks?: boolean;
+    showXAxisLabel?: boolean;
+    xZeroLineColor?: string;
+    yZeroLineColor?: string;
+    showLegend?: boolean;
+    xTickMarkLength?: number;
+    multiPlotBorderColor?: Map<string, string>;
+    plotType?: string;
+    dataBackgroundColor?: Array<string>;
+    isGroupSubPlot?: boolean;
 }
 
 export class PlotContainerComponent extends React.Component<PlotContainerProps> {
@@ -34,6 +45,22 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
     private chartArea: ChartArea;
 
     private afterChartLayout = (chart: any) => {
+        if (this.props.isGroupSubPlot) {
+            var xScale = chart.scales["x-axis-0"];
+            var yScale = chart.scales["y-axis-0"];
+            const currentWidth = chart.width;
+
+            xScale.left = 85;
+            xScale.right = currentWidth - 20;
+            xScale.width = xScale.right - xScale.left;
+
+            chart.chartArea.left = 85;
+            chart.chartArea.right = currentWidth - 20;
+
+            yScale.right = xScale.left;
+            yScale.width = yScale.right - yScale.left;
+        }
+
         if (!_.isEqual(chart.chartArea, this.chartArea)) {
             this.chartArea = chart.chartArea;
             if (this.props.chartAreaUpdated) {
@@ -156,6 +183,26 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         } else if (props.topAxisTickFormatter !== nextProps.topAxisTickFormatter) {
             return true;
+        } else if (props.showXAxisTicks !== nextProps.showXAxisTicks) {
+            return true;
+        } else if (props.showXAxisLabel !== nextProps.showXAxisLabel) {
+            return true;
+        } else if (props.xZeroLineColor !== nextProps.xZeroLineColor) {
+            return true;
+        } else if (props.yZeroLineColor !== nextProps.yZeroLineColor) {
+            return true;
+        } else if (props.showLegend !== nextProps.showLegend) {
+            return true;
+        } else if (props.xTickMarkLength !== nextProps.xTickMarkLength) {
+            return true;
+        } else if (props.multiPlotBorderColor !== nextProps.multiPlotBorderColor) {
+            return true;
+        } else if (props.plotType !== nextProps.plotType) {
+            return true;
+        } else if (props.dataBackgroundColor !== nextProps.dataBackgroundColor) {
+            return true;
+        } else if (props.isGroupSubPlot !== nextProps.isGroupSubPlot) {
+            return true;
         }
 
         // Deep check of arrays (this should be optimised!)
@@ -184,7 +231,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             maintainAspectRatio: false,
             events: ["mousedown", "mouseup", "mousemove", "dblclick"],
             legend: {
-                display: false
+                display: this.props.showLegend === undefined ? false : this.props.showLegend,
             },
             scales: {
                 xAxes: [{
@@ -193,10 +240,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     afterBuildTicks: this.filterLinearTicks,
                     scaleLabel: {
                         fontColor: labelColor,
-                        display: true,
+                        display: this.props.showXAxisLabel === undefined ? true : this.props.showXAxisLabel,
                         labelString: this.props.xLabel
                     },
                     ticks: {
+                        display: this.props.showXAxisTicks === undefined ? true : this.props.showXAxisTicks,
                         minor: {
                             fontColor: labelColor,
                         },
@@ -208,8 +256,9 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     gridLines: {
                         drawBorder: false,
                         color: gridColor,
-                        zeroLineColor: gridColor
-                    }
+                        zeroLineColor: this.props.xZeroLineColor ? this.props.xZeroLineColor : gridColor,
+                        tickMarkLength: this.props.xTickMarkLength === 0 ? this.props.xTickMarkLength : 10
+                    },
                 }, {
                     id: "x-axis-1",
                     position: "top",
@@ -244,8 +293,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     gridLines: {
                         drawBorder: false,
                         color: gridColor,
-                        zeroLineColor: gridColor
-                    }
+                        zeroLineColor: this.props.yZeroLineColor ? this.props.yZeroLineColor : gridColor
+                    },
                 }]
             },
             animation: {
@@ -269,10 +318,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         if (this.props.data && this.props.data.length) {
             const datasetConfig: ChartDataSets = {
                 label: "LineGraph",
-                type: "line",
+                type: this.props.plotType ? this.props.plotType : "line",
                 data: this.props.data,
                 fill: false,
-                lineTension: 0
+                lineTension: 0,
+                backgroundColor: this.props.dataBackgroundColor ? this.props.dataBackgroundColor : []
             };
 
             if (this.props.usePointSymbols) {
@@ -282,7 +332,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             } else {
                 datasetConfig.pointRadius = 0;
                 datasetConfig.showLine = true;
-                // @ts-ignore TODO: Remove once Chart.js types are updated
                 datasetConfig.steppedLine = this.props.interpolateLines ? false : "middle";
                 datasetConfig.borderWidth = 1;
                 datasetConfig.borderColor = lineColor;
@@ -290,7 +339,26 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             plotData.datasets.push(datasetConfig);
         }
 
-        const plugins = [{
+        if (this.props.multiPlotData) {
+            this.props.multiPlotData.forEach((value, key) => {
+                const multiPlotDatasetConfig: ChartDataSets = {
+                    type: this.props.plotType ? this.props.plotType : "line",
+                    label: key,
+                    data: value,
+                    fill: false,
+                    lineTension: 0,
+                    borderColor: this.props.multiPlotBorderColor ? this.props.multiPlotBorderColor.get(key) : lineColor,
+                    showLine: true,
+                    steppedLine: this.props.interpolateLines ? false : "middle",
+                    borderWidth: 1,
+                    pointRadius: 0,
+                    backgroundColor: this.props.dataBackgroundColor ? this.props.dataBackgroundColor : []
+                };
+                plotData.datasets.push(multiPlotDatasetConfig);
+            });
+        }
+
+        let plugins = [{
             afterLayout: this.afterChartLayout,
         }];
 
