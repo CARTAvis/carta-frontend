@@ -96,7 +96,6 @@ export class FrameStore {
         // need initialized wcs to get correct cursor info
         this.cursorInfo = this.getCursorInfo({x: this.renderWidth / 2, y: this.renderHeight / 2});
         this.cursorValue = 0;
-        console.log("this.cursorValue = 0;");
         this.cursorFrozen = preference.isCursorFrozen;
 
         autorun(() => {
@@ -547,9 +546,7 @@ export class FrameStore {
     }
 
     @action setCursorValue(cursorValue: number) {
-        if (!this.cursorFrozen) {
             this.cursorValue = cursorValue;
-        }
     }
 
     // Sets a new zoom level and pans to keep the given point fixed
