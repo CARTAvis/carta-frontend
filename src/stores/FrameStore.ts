@@ -27,6 +27,7 @@ export class FrameStore {
     @observable validWcs: boolean;
     @observable center: Point2D;
     @observable centerY: number;
+    @observable cursorFrozenPoint: Point2D;
     @observable zoomLevel: number;
     @observable stokes: number;
     @observable channel: number;
@@ -50,6 +51,7 @@ export class FrameStore {
         this.frameInfo = frameInfo;
         this.renderHiDPI = true;
         this.center = {x: 0, y: 0};
+        this.cursorFrozenPoint = {x: 0, y: 0};
         this.stokes = 0;
         this.channel = 0;
         this.requiredStokes = 0;
@@ -82,7 +84,7 @@ export class FrameStore {
         };
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
-        // init center
+        // init center & cursorFrozenPoint to image center
         this.initCenter();
 
         // init zoom level
@@ -415,6 +417,11 @@ export class FrameStore {
         this.center = {x, y};
     }
 
+    @action setCursorFrozenPoint(point: Point2D) {
+        this.cursorFrozenPoint.x = point.x;
+        this.cursorFrozenPoint.y = point.y;
+    }
+
     // Sets a new zoom level and pans to keep the given point fixed
     @action zoomToPoint(x: number, y: number, zoom: number) {
         const newCenter = {
@@ -430,8 +437,8 @@ export class FrameStore {
     }
 
     @action private initCenter = () => {
-        this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + 0.5;
-        this.center.y = this.frameInfo.fileInfoExtended.height / 2.0 + 0.5;
+        this.cursorFrozenPoint.x = this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + 0.5;
+        this.cursorFrozenPoint.y = this.center.y = this.frameInfo.fileInfoExtended.height / 2.0 + 0.5;
     };
 
     @action fitZoom = () => {

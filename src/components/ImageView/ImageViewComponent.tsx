@@ -219,7 +219,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         overlaySettings={appStore.overlayStore}
                         isRegionCornerMode={appStore.preferenceStore.isRegionCornerMode}
                         cursorFrozen={appStore.cursorFrozen}
-                        cursorPoint={appStore.cursorInfo ? appStore.cursorInfo.posImageSpace : null}
+                        cursorPoint={appStore.activeFrame.cursorFrozenPoint}
                         docked={this.props.docked}
                     />
                     <ToolbarComponent

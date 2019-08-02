@@ -452,6 +452,11 @@ export class AppStore {
 
     @action toggleCursorFrozen = () => {
         this.cursorFrozen = !this.cursorFrozen;
+
+        // update frame's froze point when frozen is active
+        if (this.activeFrame && this.cursorFrozen) {
+            this.activeFrame.setCursorFrozenPoint(this.cursorInfo.posImageSpace);
+        }
     };
 
     public static readonly DEFAULT_STATS_TYPES = [CARTA.StatsType.NumPixels, CARTA.StatsType.Sum, CARTA.StatsType.Mean, CARTA.StatsType.RMS, CARTA.StatsType.Sigma, CARTA.StatsType.SumSq, CARTA.StatsType.Min, CARTA.StatsType.Max];
