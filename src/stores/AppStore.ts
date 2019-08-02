@@ -70,11 +70,11 @@ export class AppStore {
 
     public getImageViewContainer = (): HTMLElement => {
         return this.imageViewerContainer;
-    }
+    };
 
     public setImageViewContainer = (container: HTMLElement) => {
         this.imageViewerContainer = container;
-    }
+    };
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
@@ -147,7 +147,7 @@ export class AppStore {
     };
     @action hideDeleteLayoutDialog = () => {
         this.deleteLayoutDialogVisible = false;
-    }
+    };
 
     // Auth dialog
     @observable authDialogVisible: boolean = false;
@@ -662,8 +662,8 @@ export class AppStore {
             }
             profileStore.setProfiles(profileMap);
 
-            // Update cursor value from profile
-            if (this.activeFrame && this.activeFrame.frameInfo.fileId === spatialProfileData.fileId) {
+            // Update cursor value from profile if it matches the file and is the cursor data
+            if (this.activeFrame && this.activeFrame.frameInfo.fileId === spatialProfileData.fileId && spatialProfileData.regionId === 0) {
                 this.setCursorValue(spatialProfileData.value);
             }
         }
