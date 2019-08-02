@@ -162,36 +162,6 @@ export class WidgetsStore {
         }
     };
 
-    private getItemId = (id: string): string => {
-        let itemId = null;
-        switch (id) {
-           case RenderConfigComponent.WIDGET_CONFIG.type:
-               itemId = this.addRenderConfigWidget();
-               break;
-           case SpectralProfilerComponent.WIDGET_CONFIG.type:
-               itemId = this.addSpectralProfileWidget();
-               break;
-           case StatsComponent.WIDGET_CONFIG.type:
-               itemId = this.addStatsWidget();
-               break;
-           case HistogramComponent.WIDGET_CONFIG.type:
-               itemId = this.addHistogramWidget();
-               break;
-           case AnimatorComponent.WIDGET_CONFIG.type:
-               itemId = this.addAnimatorWidget();
-               break;
-           case LogComponent.WIDGET_CONFIG.type:
-               itemId = this.addLogWidget();
-               break;
-           case RegionListComponent.WIDGET_CONFIG.type:
-               itemId = this.addRegionListWidget();
-               break;
-           default:
-               break;
-        }
-        return itemId;
-    };
-
     removeWidget = (widgetId: string, widgetType: string) => {
         const widgets = this.widgetsMap.get(widgetType);
         if (widgets) {
@@ -203,10 +173,33 @@ export class WidgetsStore {
         componentConfigs.forEach((componentConfig) => {
             if (componentConfig.id) {
                 let itemId;
-                if (componentConfig.id === SpatialProfilerComponent.WIDGET_CONFIG.type) {
-                    itemId = this.addSpatialProfileWidget(null, componentConfig.coord && componentConfig.coord === "y" ? "y" : "x", -1, 0);
-                } else {
-                    itemId = this.getItemId(componentConfig.id);
+                switch (componentConfig.id) {
+                    case RenderConfigComponent.WIDGET_CONFIG.type:
+                        itemId = this.addRenderConfigWidget();
+                        break;
+                    case SpatialProfilerComponent.WIDGET_CONFIG.type:
+                        itemId = this.addSpatialProfileWidget(null, componentConfig.coord && componentConfig.coord === "y" ? "y" : "x", -1, 0);
+                        break;
+                    case SpectralProfilerComponent.WIDGET_CONFIG.type:
+                        itemId = this.addSpectralProfileWidget();
+                        break;
+                    case StatsComponent.WIDGET_CONFIG.type:
+                        itemId = this.addStatsWidget();
+                        break;
+                    case HistogramComponent.WIDGET_CONFIG.type:
+                        itemId = this.addHistogramWidget();
+                        break;
+                    case AnimatorComponent.WIDGET_CONFIG.type:
+                        itemId = this.addAnimatorWidget();
+                        break;
+                    case LogComponent.WIDGET_CONFIG.type:
+                        itemId = this.addLogWidget();
+                        break;
+                    case RegionListComponent.WIDGET_CONFIG.type:
+                        itemId = this.addRegionListWidget();
+                        break;
+                    default:
+                        break;
                 }
                 if (itemId) {
                     componentConfig.id = itemId;
