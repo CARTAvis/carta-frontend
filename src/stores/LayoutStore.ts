@@ -195,12 +195,12 @@ export class LayoutStore {
                         this.genSimpleConfig(simpleChild.content, child.content);
                     }
                 } else if (child.type === "component" && child.id) {
-                    const trimmedID = (child.id).replace(/\-\d+$/, "");
+                    const trimmed = (child.id).replace(/\-\d+$/, "");
                     let simpleChild = {
                         type: child.type,
-                        id: trimmedID
+                        id: trimmed
                     };
-                    if (trimmedID === "spatial-profiler" && child.title) {
+                    if (trimmed === "spatial-profiler" && child.title) {
                         // TODO: use better way to reveal coord property in config
                         simpleChild["coord"] = child.title.indexOf("X") >= 0 ? "x" : "y";
                     }
@@ -239,10 +239,10 @@ export class LayoutStore {
                         this.fillComponents(simpleChild.content, child.content, componentConfigs);
                     }
                 } else if (child.type === "component" && child.id) {
-                    const trimmedID = (child.id).replace(/\-\d+$/, "");
-                    if (COMPONENT_CONFIG.has(trimmedID)) {
-                        let componentConfig = Object.assign({}, COMPONENT_CONFIG.get(trimmedID));
-                        if (trimmedID === "spatial-profiler" && child.coord) {
+                    const trimmed = (child.id).replace(/\-\d+$/, "");
+                    if (COMPONENT_CONFIG.has(trimmed)) {
+                        let componentConfig = Object.assign({}, COMPONENT_CONFIG.get(trimmed));
+                        if (trimmed === "spatial-profiler" && child.coord) {
                             componentConfig["coord"] = child.coord;
                         }
                         if (child.width) {
