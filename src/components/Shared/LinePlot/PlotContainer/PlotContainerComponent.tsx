@@ -36,7 +36,7 @@ export class PlotContainerProps {
     xTickMarkLength?: number;
     multiPlotBorderColor?: Map<string, string>;
     plotType?: string;
-    dataBackgroundColor?: Array <string>;
+    dataBackgroundColor?: Array<string>;
     isGroupSubPlot?: boolean;
 }
 
@@ -56,7 +56,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
             chart.chartArea.left = 85;
             chart.chartArea.right = currentWidth - 20;
-            
+
             yScale.right = xScale.left;
             yScale.width = yScale.right - yScale.left;
         }
@@ -183,35 +183,25 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         } else if (props.topAxisTickFormatter !== nextProps.topAxisTickFormatter) {
             return true;
-        }
-        else if (props.showXAxisTicks !== nextProps.showXAxisTicks) {
+        } else if (props.showXAxisTicks !== nextProps.showXAxisTicks) {
             return true;
-        }
-        else if (props.showXAxisLabel !== nextProps.showXAxisLabel) {
+        } else if (props.showXAxisLabel !== nextProps.showXAxisLabel) {
             return true;
-        }
-        else if (props.xZeroLineColor !== nextProps.xZeroLineColor) {
+        } else if (props.xZeroLineColor !== nextProps.xZeroLineColor) {
             return true;
-        }
-        else if (props.yZeroLineColor !== nextProps.yZeroLineColor) {
+        } else if (props.yZeroLineColor !== nextProps.yZeroLineColor) {
             return true;
-        }
-        else if (props.showLegend !== nextProps.showLegend) {
+        } else if (props.showLegend !== nextProps.showLegend) {
             return true;
-        }
-        else if (props.xTickMarkLength !== nextProps.xTickMarkLength) {
+        } else if (props.xTickMarkLength !== nextProps.xTickMarkLength) {
             return true;
-        }
-        else if (props.multiPlotBorderColor !== nextProps.multiPlotBorderColor) {
+        } else if (props.multiPlotBorderColor !== nextProps.multiPlotBorderColor) {
             return true;
-        }
-        else if (props.plotType !== nextProps.plotType) {
+        } else if (props.plotType !== nextProps.plotType) {
             return true;
-        }
-        else if (props.dataBackgroundColor !== nextProps.dataBackgroundColor) {
+        } else if (props.dataBackgroundColor !== nextProps.dataBackgroundColor) {
             return true;
-        }
-        else if (props.isGroupSubPlot !== nextProps.isGroupSubPlot) {
+        } else if (props.isGroupSubPlot !== nextProps.isGroupSubPlot) {
             return true;
         }
 
