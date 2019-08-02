@@ -2,33 +2,37 @@
     min-width: 60%;
     height: 600px;
     user-select: none;
-    .file-path {
-        margin-bottom: 15px;
+    .bp3-dialog-body {
         display: flex;
-    }
-    .file-info-pane {
-        width: 40%;
-        margin-left: 5px;
-        display: flex;
-        flex-direction: column;
-        .bp3-heading {
-            margin-top: 7px;
-            margin-bottom: 3px;
-            flex: 0 0 auto;
+        overflow: hidden;
+        .file-path-pane {
+            width: 60%;
+            flex: auto;
+            .file-path {
+                margin-left: 5px;
+                margin-bottom: 5px;
+            }
+            .file-list {
+                overflow-y: auto;
+                height: 100%;
+            }
         }
-
-        .file-info-pre {
-            overflow-y: auto;
-            overflow-x: auto;
-            margin-top: 0;
-            margin-bottom: 0;
-            flex: 2 2 auto;
+        .file-info-pane {
+            width: 40%;
+            margin-left: 5px;
+            overflow: auto;
+            .bp3-heading {
+                margin-top: 7px;
+                margin-bottom: 3px;
+                flex: 0 0 auto;
+            }
+            .file-info-pre {
+                overflow: auto;
+                height: 94%;
+                margin-top: 0;
+                margin-bottom: 0;
+                flex: 2 2 auto;
+            }
         }
-
-    }
-
-    .file-list-pane {
-        overflow-y: auto;
-        width: 60%;
     }
 }
