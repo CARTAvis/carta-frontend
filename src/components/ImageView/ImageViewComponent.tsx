@@ -110,9 +110,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     };
 
     onCursorMoved = (cursorInfo: CursorInfo) => {
-        if (!this.props.appStore.cursorFrozen) {
-            this.props.appStore.setCursorInfo(cursorInfo);
-        }
+        this.props.appStore.setCursorInfo(cursorInfo);
     };
 
     onClicked = (cursorInfo: CursorInfo) => {
@@ -218,7 +216,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         onZoomed={this.onZoomed}
                         overlaySettings={appStore.overlayStore}
                         isRegionCornerMode={appStore.preferenceStore.isRegionCornerMode}
-                        cursorFrozen={appStore.cursorFrozen}
+                        cursorFrozen={appStore.activeFrame.cursorFrozen}
                         cursorPoint={appStore.activeFrame.cursorFrozenPoint}
                         docked={this.props.docked}
                     />

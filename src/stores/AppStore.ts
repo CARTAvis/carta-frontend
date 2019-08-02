@@ -59,7 +59,7 @@ export class AppStore {
     // Cursor information
     @observable cursorInfo: CursorInfo;
     @observable cursorValue: number;
-    @observable cursorFrozen: boolean;
+
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
     @observable spectralProfiles: Map<number, ObservableMap<number, SpectralProfileStore>>;
@@ -446,16 +446,14 @@ export class AppStore {
         this.cursorValue = value;
     };
 
-    @action setCursorFrozen = (frozen: boolean) => {
-        this.cursorFrozen = frozen;
-    };
-
     @action toggleCursorFrozen = () => {
-        this.cursorFrozen = !this.cursorFrozen;
+        if (this.activeFrame) {
+            this.activeFrame.cursorFrozen = !this.activeFrame.cursorFrozen;
 
-        // update frame's froze point when frozen is active
-        if (this.activeFrame && this.cursorFrozen) {
-            this.activeFrame.setCursorFrozenPoint(this.cursorInfo.posImageSpace);
+            // update frame's frozen point when frozen is active
+            if (this.activeFrame.cursorFrozen) {
+                this.activeFrame.setCursorFrozenPoint(this.cursorInfo.posImageSpace);
+            }
         }
     };
 
@@ -822,7 +820,6 @@ export class AppStore {
         }
         this.activeFrame = frame;
         this.widgetsStore.updateImageWidgetTitle();
-        this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
         this.setCursorValue(undefined);
     }
 

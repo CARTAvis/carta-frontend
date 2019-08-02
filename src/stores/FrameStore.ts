@@ -27,6 +27,7 @@ export class FrameStore {
     @observable validWcs: boolean;
     @observable center: Point2D;
     @observable centerY: number;
+    @observable cursorFrozen: boolean;
     @observable cursorFrozenPoint: Point2D;
     @observable zoomLevel: number;
     @observable stokes: number;
@@ -51,6 +52,7 @@ export class FrameStore {
         this.frameInfo = frameInfo;
         this.renderHiDPI = true;
         this.center = {x: 0, y: 0};
+        this.cursorFrozen = preference.isCursorFrozen;
         this.cursorFrozenPoint = {x: 0, y: 0};
         this.stokes = 0;
         this.channel = 0;
