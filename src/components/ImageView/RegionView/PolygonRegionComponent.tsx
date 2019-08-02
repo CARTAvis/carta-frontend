@@ -50,10 +50,12 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                 this.props.onSelect(region);
             }
 
+            // Add a new control point to the region between two existing control points
             if (this.hoverIntersection && this.hoverIndex >= 0 && this.hoverIndex < region.controlPoints.length) {
                 const currentControlPoints = region.controlPoints.slice(0);
                 currentControlPoints.splice(this.hoverIndex + 1, 0, this.hoverIntersection);
-                region.setControlPoints(currentControlPoints);
+                // Skip SET_REGION update, since the new control point lies on the line between two existing points
+                region.setControlPoints(currentControlPoints, true);
                 this.hoverIntersection = null;
             }
         }

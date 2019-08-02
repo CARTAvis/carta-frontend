@@ -99,8 +99,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Layout">
                     <HTMLSelect value={preference.layout} onChange={(ev) => { preference.setLayout(ev.currentTarget.value); }}>
-                        {PresetLayout.PRESETS.map((layout) => <option key={layout} value={layout}>{layout}</option>)}
-                        {layoutStore.userLayouts.map((layout) => <option key={layout} value={layout}>{layout}</option>)}
+                        {layoutStore.orderedLayouts.map((layout) => <option key={layout} value={layout}>{layout}</option>)}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Cursor Position">
