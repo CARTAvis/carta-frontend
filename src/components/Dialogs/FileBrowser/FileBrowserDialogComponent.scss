@@ -1,6 +1,6 @@
 .file-browser-dialog {
     min-width: 60%;
-    height: 600px;
+    height: 100%;
     user-select: none;
     .bp3-dialog-body {
         display: flex;
@@ -8,29 +8,25 @@
         .file-path-pane {
             width: 60%;
             flex: auto;
+            overflow: hidden;
             .file-path {
-                margin-left: 5px;
-                margin-bottom: 5px;
+                margin-bottom: 1%;
             }
             .file-list {
                 overflow-y: auto;
-                height: 93%;
+                height: 94%;
             }
         }
         .file-info-pane {
             width: 40%;
-            margin-left: 5px;
-            overflow: auto;
+            margin-left: 1%;
+            overflow: hidden;
             .bp3-heading {
-                margin-top: 7px;
-                margin-bottom: 3px;
                 flex: 0 0 auto;
             }
             .file-info-pre {
                 overflow: auto;
                 height: 94%;
-                margin-top: 0;
-                margin-bottom: 0;
                 flex: 2 2 auto;
             }
         }
