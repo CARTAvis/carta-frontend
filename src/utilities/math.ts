@@ -1,5 +1,3 @@
-import {func} from "prop-types";
-
 export function smoothStepOffset(val: number, edge0: number, edge1: number, level0: number, level1: number) {
     const stepVal = smoothStep(val, edge0, edge1);
     return level0 + (level1 - level0) * stepVal;

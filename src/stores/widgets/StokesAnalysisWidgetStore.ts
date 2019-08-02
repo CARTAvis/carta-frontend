@@ -30,15 +30,16 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable cursorX: number;
     @observable channel: number;
     @observable useWcsValues: boolean;
-    
+
     @observable statsType: CARTA.StatsType;
     @observable fractionalPolVisible: boolean;
 
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
-    
+
     private static ValidStatsTypes = [
         CARTA.StatsType.Mean,
     ];
+
     // return regionRequirements spectralProfiles coordinate array
     private static requiredCoordinate(widgetStore: StokesAnalysisWidgetStore): Array<StokesCoordinate> {
         let requiredCoordinate = StokesAnalysisWidgetStore.requestDataType;
@@ -50,7 +51,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     }
 
     public static addToRequirementsMap(frame: FrameStore, updatedRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>, widgetsMap: Map<string, StokesAnalysisWidgetStore>)
-    : Map<number, Map<number, CARTA.SetSpectralRequirements>> {
+        : Map<number, Map<number, CARTA.SetSpectralRequirements>> {
         widgetsMap.forEach(widgetStore => {
             const fileId = frame.frameInfo.fileId;
             const regionId = widgetStore.regionIdMap.get(fileId) || 0;
@@ -157,7 +158,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.useWcsValues = true;
     }
 
-    @action setquScatterPlotXBounds = (minVal: number, maxVal: number) => {
+    @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
         this.quScatterMinX = minVal;
         this.quScatterMaxX = maxVal;
     };
@@ -167,12 +168,12 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.polAngleMaxY = maxVal;
     };
 
-    @action setquLinePlotYBounds = (minVal: number, maxVal: number) => {
+    @action setQULinePlotYBounds = (minVal: number, maxVal: number) => {
         this.quMinY = minVal;
         this.quMaxY = maxVal;
     };
 
-    @action setquScatterPlotYBounds = (minVal: number, maxVal: number) => {
+    @action setQUScatterPlotYBounds = (minVal: number, maxVal: number) => {
         this.quScatterMinY = minVal;
         this.quScatterMaxY = maxVal;
     };
@@ -186,10 +187,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.polIntensityMaxY = undefined;
         this.polAngleMinY = undefined;
         this.polAngleMaxY = undefined;
-        // this.quScatterMinX = undefined;
-        // this.quScatterMaxX = undefined;
-        // this.quScatterMinY = undefined;
-        // this.quScatterMaxY = undefined;
     };
 
     @action setQULinePlotsXYBounds = (minX: number, maxX: number, minY: number, maxY: number) => {
@@ -224,11 +221,11 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         return (this.sharedMinX === undefined || this.sharedMaxX === undefined);
     }
 
-    @computed get isquScatterPlotAutoScaledX() {
+    @computed get isQUScatterPlotAutoScaledX() {
         return (this.quScatterMinX === undefined || this.quScatterMaxX === undefined);
     }
 
-    @computed get isquScatterPlotAutoScaledY() {
+    @computed get isQUScatterPlotAutoScaledY() {
         return (this.quScatterMinY === undefined || this.quScatterMaxY === undefined);
     }
 
