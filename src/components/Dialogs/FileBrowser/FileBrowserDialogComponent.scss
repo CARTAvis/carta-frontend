@@ -2,31 +2,33 @@
     min-width: 60%;
     height: 100%;
     user-select: none;
+    .file-path {
+        margin-left: 15px;
+        margin-top: 15px;
+    }
     .bp3-dialog-body {
         display: flex;
         overflow: hidden;
-        .file-path-pane {
+        margin-top: -5px;
+        margin-left: 15px;
+        .file-list {
             width: 60%;
             flex: auto;
-            overflow: hidden;
-            .file-path {
-                margin-bottom: 1%;
-            }
-            .file-list {
-                overflow-y: auto;
-                height: 94%;
-            }
+            overflow: auto;
+            margin-top: 1%;
         }
         .file-info-pane {
             width: 40%;
             margin-left: 1%;
-            overflow: hidden;
+            margin-bottom: 40px;
             .bp3-heading {
-                flex: 0 0 auto;
+                overflow: scroll;
+                height: 100%;
+                flex: 2 2 auto;
             }
             .file-info-pre {
-                overflow: auto;
-                height: 94%;
+                overflow: scroll;
+                height: 100%;
                 flex: 2 2 auto;
             }
         }

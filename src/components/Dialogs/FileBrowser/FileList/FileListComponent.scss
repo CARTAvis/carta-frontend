@@ -33,11 +33,13 @@ $table-header-color-dark: $dark-gray5;
 }
 
 #file-header-type {
-    width: 15%;
+    width: 56px;
+    flex-wrap: nowrap;
 }
 
 #file-header-size {
-    width: 15%;
+    width: 85px;
+    flex-wrap: nowrap;
 }
 
 // Hide table columns as the screen gets smaller

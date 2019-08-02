@@ -90,28 +90,26 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         }
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} minWidth={500} minHeight={600} defaultWidth={800} defaultHeight={600} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={400} defaultWidth={800} defaultHeight={600} enableResizing={true}>
+                <div className="file-path">
+                    {pathItems &&
+                    <Breadcrumbs
+                        breadcrumbRenderer={this.renderBreadcrumb}
+                        items={pathItems}
+                    />
+                    }
+                </div>
                 <div className="bp3-dialog-body">
-                    <div className="file-path-pane">
-                        <div className="file-path">
-                            {pathItems &&
-                            <Breadcrumbs
-                                breadcrumbRenderer={this.renderBreadcrumb}
-                                items={pathItems}
-                            />
-                            }
-                        </div>
-                        <div className="file-list">
-                            <FileListComponent
-                                darkTheme={this.props.appStore.darkTheme}
-                                files={fileBrowserStore.fileList}
-                                selectedFile={fileBrowserStore.selectedFile}
-                                selectedHDU={fileBrowserStore.selectedHDU}
-                                onFileClicked={(file: CARTA.FileInfo, hdu: string) => fileBrowserStore.selectFile(file, hdu)}
-                                onFileDoubleClicked={(file: CARTA.FileInfo, hdu: string) => this.loadFile(file.name, hdu)}
-                                onFolderClicked={fileBrowserStore.selectFolder}
-                            />
-                        </div>
+                    <div className="file-list">
+                        <FileListComponent
+                            darkTheme={this.props.appStore.darkTheme}
+                            files={fileBrowserStore.fileList}
+                            selectedFile={fileBrowserStore.selectedFile}
+                            selectedHDU={fileBrowserStore.selectedHDU}
+                            onFileClicked={(file: CARTA.FileInfo, hdu: string) => fileBrowserStore.selectFile(file, hdu)}
+                            onFileDoubleClicked={(file: CARTA.FileInfo, hdu: string) => this.loadFile(file.name, hdu)}
+                            onFolderClicked={fileBrowserStore.selectFolder}
+                        />
                     </div>
                     <div className="file-info-pane">
                         <Tabs id="info-tabs" onChange={this.handleTabChange} selectedTabId={fileBrowserStore.selectedTab}>
