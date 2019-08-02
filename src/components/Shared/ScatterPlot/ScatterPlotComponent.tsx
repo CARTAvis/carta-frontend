@@ -2,10 +2,10 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import ReactResizeDetector from "react-resize-detector";
 import {Layer, Stage} from "react-konva";
+import {Colors} from "@blueprintjs/core";
 import {PlotContainerComponent} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {LinePlotComponent} from "components/Shared/LinePlot/LinePlotComponent";
-import {Colors} from "@blueprintjs/core";
 import "./ScatterPlotComponent.css";
 
 @observer
@@ -29,7 +29,7 @@ export class ScatterPlotComponent extends LinePlotComponent {
         return scatterColors;
     }
 
-    private centeredOrigin(): {xMin: number, xMax: number, yMin: number, yMax: number} {
+    private centeredOrigin(): { xMin: number, xMax: number, yMin: number, yMax: number } {
         if (this.props.centeredOrigin && this.props.xMin && this.props.xMax && this.props.yMin && this.props.yMax) {
             const xLimit = Math.max(Math.abs(this.props.xMin), Math.abs(this.props.xMax));
             const yLimit = Math.max(Math.abs(this.props.yMin), Math.abs(this.props.yMax));
