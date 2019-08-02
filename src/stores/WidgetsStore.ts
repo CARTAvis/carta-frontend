@@ -164,13 +164,9 @@ export class WidgetsStore {
 
     private getItemId = (id: string): string => {
         let itemId = null;
-        // Check if it's an uninitialised widget
         switch (id) {
            case RenderConfigComponent.WIDGET_CONFIG.type:
                itemId = this.addRenderConfigWidget();
-               break;
-           case SpatialProfilerComponent.WIDGET_CONFIG.type:
-               itemId = this.addSpatialProfileWidget();
                break;
            case SpectralProfilerComponent.WIDGET_CONFIG.type:
                itemId = this.addSpectralProfileWidget();
@@ -203,21 +199,28 @@ export class WidgetsStore {
         }
     };
 
-    public initLayoutWithWidgets = (layout: GoldenLayout, componentConfigs: any[]) => {
-        if (!layout || !componentConfigs) {
+    public initWidgetStores = (componentConfigs: any[]) => {
+        componentConfigs.forEach((componentConfig) => {
+            if (componentConfig.id) {
+                let itemId;
+                if (componentConfig.id === SpatialProfilerComponent.WIDGET_CONFIG.type) {
+                    itemId = this.addSpatialProfileWidget(null, componentConfig.coord && componentConfig.coord === "y" ? "y" : "x", -1, 0);
+                } else {
+                    itemId = this.getItemId(componentConfig.id);
+                }
+                if (itemId) {
+                    componentConfig.id = itemId;
+                    componentConfig.props.id = itemId;
+                }
+            }
+        });
+    };
+
+    public initLayoutWithWidgets = (layout: GoldenLayout) => {
+        if (!layout) {
             console.log("Invalid parameters!");
             return;
         }
-
-        // add widget store for components
-        componentConfigs.forEach((componentConfig) => {
-            const config = componentConfig as GoldenLayout.ReactComponentConfig;
-            const itemId = this.getItemId(config.component);
-            if (itemId) {
-                config.id = itemId;
-                config.props.id = itemId;
-            }
-        });
 
         layout.registerComponent("placeholder", PlaceholderComponent);
         layout.registerComponent("image-view", ImageViewComponent);
