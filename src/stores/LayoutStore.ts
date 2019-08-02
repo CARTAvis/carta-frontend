@@ -45,11 +45,23 @@ const COMPONENT_CONFIG = new Map<string, any>([
         id: "spectral-profiler",
         title: "Z Profile: Cursor"
     }],
+    ["histogram", {
+        type: "react-component",
+        component: "histogram",
+        title: "Histogram",
+        id: "histogram"
+    }],
     ["stats", {
         type: "react-component",
         component: "stats",
         title: "Statistics",
         id: "stats"
+    }],
+    ["log", {
+        type: "react-component",
+        component: "log",
+        title: "Log",
+        id: "log"
     }]
 ]);
 
@@ -200,9 +212,9 @@ export class LayoutStore {
                         type: child.type,
                         id: trimmed
                     };
-                    if (trimmed === "spatial-profiler" && child.title) {
+                    if (trimmed === "spatial-profiler") {
                         // TODO: use better way to reveal coord property in config
-                        simpleChild["coord"] = child.title.indexOf("X") >= 0 ? "x" : "y";
+                        simpleChild["coord"] = child.title && child.title.indexOf("Y") >= 0 ? "y" : "x";
                     }
                     if (child.width) {
                         simpleChild["width"] = child.width;
@@ -242,8 +254,8 @@ export class LayoutStore {
                     const trimmed = (child.id).replace(/\-\d+$/, "");
                     if (COMPONENT_CONFIG.has(trimmed)) {
                         let componentConfig = Object.assign({}, COMPONENT_CONFIG.get(trimmed));
-                        if (trimmed === "spatial-profiler" && child.coord) {
-                            componentConfig["coord"] = child.coord;
+                        if (trimmed === "spatial-profiler") {
+                            componentConfig["coord"] = child.coord ? child.coord : "x";
                         }
                         if (child.width) {
                             componentConfig["width"] = child.width;
