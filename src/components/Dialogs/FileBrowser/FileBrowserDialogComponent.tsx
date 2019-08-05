@@ -90,7 +90,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         }
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={400} defaultWidth={800} defaultHeight={600} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={400} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
                 <div className="file-path">
                     {pathItems &&
                     <Breadcrumbs
