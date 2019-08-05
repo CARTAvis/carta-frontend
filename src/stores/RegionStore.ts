@@ -1,4 +1,4 @@
-import {action, computed, observable, toJS} from "mobx";
+import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Point2D} from "models";
 import {BackendService} from "../services";
