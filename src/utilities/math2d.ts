@@ -4,6 +4,10 @@ export function dot2D(a: Point2D, b: Point2D): number {
     return a.x * b.x + a.y * b.y;
 }
 
+export function cross2D(a: Point2D, b: Point2D): number {
+    return a.x * b.y - a.y * b.x;
+}
+
 export function add2D(a: Point2D, b: Point2D): Point2D {
     return {x: a.x + b.x, y: a.y + b.y};
 }
@@ -62,4 +66,63 @@ export function closestPointOnLine(p0: Point2D, p1: Point2D, p2: Point2D): { poi
         bounded: s >= 0 && s <= length2D(lineVector),
         distance: length2D(subtract2D(p0, point))
     };
+}
+
+function lineSegmentsIntersect(a: Point2D, b: Point2D, c: Point2D, d: Point2D): boolean {
+    const lineCD = subtract2D(d, c);
+    const crossA = cross2D(lineCD, subtract2D(a, d));
+    const crossB = cross2D(lineCD, subtract2D(b, d));
+
+    if (crossA * crossB < 0) {
+        const lineAB = subtract2D(b, a);
+        const crossC = cross2D(lineAB, subtract2D(c, b));
+        const crossD = cross2D(lineAB, subtract2D(d, b));
+        return crossC * crossD < 0;
+    } else {
+        return false;
+    }
+}
+
+// Brute-force method of checking if a polygon is simple
+// Method is O(N^2), so it should only be called if all line segments need to be tested
+export function simplePolygonTest(points: Point2D[]) {
+    if (points.length < 4) {
+        return true;
+    }
+
+    for (let i = 0; i < points.length; i++) {
+        const a = points[i];
+        const b = points[(i + 1) % points.length];
+        for (let j = i + 2; j < points.length; j++) {
+            const c = points[j];
+            const d = points[(j + 1) % points.length];
+            const intersection = lineSegmentsIntersect(a, b, c, d);
+            if (intersection) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+// Brute-force method of checking if a polygon is simple, assuming that only one point has changed.
+// Method is O(N), and should be called whenever a specific polygon control point is updated.
+export function simplePolygonPointTest(points: Point2D[], pointIndex: number) {
+    if (points.length < 4) {
+        return true;
+    }
+
+    let a = points[(pointIndex + points.length) % points.length];
+    let b = points[(pointIndex + points.length + 1) % points.length];
+    for (let j = 1; j < points.length; j++) {
+        const c = points[(j + pointIndex) % points.length];
+        const d = points[(j + pointIndex + 1) % points.length];
+        const intersection = lineSegmentsIntersect(a, b, c, d);
+        if (intersection) {
+            return false;
+        }
+    }
+
+    return true;
 }
