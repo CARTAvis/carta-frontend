@@ -56,10 +56,6 @@ export class AppStore {
     // Layouts
     @observable layoutStore: LayoutStore;
 
-    // Cursor information
-    @observable cursorInfo: CursorInfo;
-    @observable cursorValue: number;
-    @observable cursorFrozen: boolean;
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
     @observable spectralProfiles: Map<number, ObservableMap<number, SpectralProfileStore>>;
@@ -287,8 +283,7 @@ export class AppStore {
             // Clear existing tile cache if it exists
             this.tileService.clearCompressedCache(fileId);
 
-            let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, frameInfo, this.backendService);
-            this.loadWCS(newFrame);
+            let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, this.logStore, frameInfo, this.backendService);
 
             // clear existing requirements for the frame
             this.spectralRequirements.delete(ack.fileId);
@@ -349,56 +344,6 @@ export class AppStore {
         }
     };
 
-    @action loadWCS = (frame: FrameStore) => {
-        let headerString = "";
-
-        for (let entry of frame.frameInfo.fileInfoExtended.headerEntries) {
-            // Skip empty header entries
-            if (!entry.value.length) {
-                continue;
-            }
-
-            // Skip higher dimensions
-            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
-                continue;
-            }
-
-            let value = entry.value;
-            if (entry.name.toUpperCase() === "NAXIS") {
-                value = "2";
-            }
-
-            if (entry.name.toUpperCase() === "WCSAXES") {
-                value = "2";
-            }
-
-            if (entry.entryType === CARTA.EntryType.STRING) {
-                value = `'${value}'`;
-            }
-
-            let name = entry.name;
-            while (name.length < 8) {
-                name += " ";
-            }
-
-            let entryString = `${name}=  ${value}`;
-            while (entryString.length < 80) {
-                entryString += " ";
-            }
-            headerString += entryString;
-        }
-        const initResult = AST.initFrame(headerString);
-        if (!initResult) {
-            this.logStore.addWarning(`Problem processing WCS info in file ${frame.frameInfo.fileInfo.name}`, ["ast"]);
-            frame.wcsInfo = AST.initDummyFrame();
-        } else {
-            frame.wcsInfo = initResult;
-            frame.validWcs = true;
-            this.overlayStore.setDefaultsFromAST(frame);
-            console.log("Initialised WCS info from frame");
-        }
-    };
-
     @action shiftFrame = (delta: number) => {
         if (this.activeFrame && this.frames.length > 1) {
             const frameIds = this.frames.map(f => f.frameInfo.fileId).sort();
@@ -440,20 +385,10 @@ export class AppStore {
         this.preferenceStore.setTheme(Theme.LIGHT);
     };
 
-    @action setCursorInfo = (cursorInfo: CursorInfo) => {
-        this.cursorInfo = cursorInfo;
-    };
-
-    @action setCursorValue = (value: number) => {
-        this.cursorValue = value;
-    };
-
-    @action setCursorFrozen = (frozen: boolean) => {
-        this.cursorFrozen = frozen;
-    };
-
     @action toggleCursorFrozen = () => {
-        this.cursorFrozen = !this.cursorFrozen;
+        if (this.activeFrame) {
+            this.activeFrame.cursorFrozen = !this.activeFrame.cursorFrozen;
+        }
     };
 
     public static readonly DEFAULT_STATS_TYPES = [CARTA.StatsType.NumPixels, CARTA.StatsType.Sum, CARTA.StatsType.Mean, CARTA.StatsType.RMS, CARTA.StatsType.Sigma, CARTA.StatsType.SumSq, CARTA.StatsType.Min, CARTA.StatsType.Max];
@@ -595,8 +530,8 @@ export class AppStore {
 
         // Update cursor profiles
         autorun(() => {
-            if (this.activeFrame && this.cursorInfo && this.cursorInfo.posImageSpace) {
-                const pos = {x: Math.round(this.cursorInfo.posImageSpace.x), y: Math.round(this.cursorInfo.posImageSpace.y)};
+            if (this.activeFrame && this.activeFrame.cursorInfo && this.activeFrame.cursorInfo.posImageSpace) {
+                const pos = {x: Math.round(this.activeFrame.cursorInfo.posImageSpace.x), y: Math.round(this.activeFrame.cursorInfo.posImageSpace.y)};
                 if (pos.x >= 0 && pos.x <= this.activeFrame.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y < this.activeFrame.frameInfo.fileInfoExtended.height - 1) {
                     if (this.activeFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
                         throttledSetCursorRotated(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
@@ -667,7 +602,7 @@ export class AppStore {
 
             // Update cursor value from profile if it matches the file and is the cursor data
             if (this.activeFrame && this.activeFrame.frameInfo.fileId === spatialProfileData.fileId && spatialProfileData.regionId === 0) {
-                this.setCursorValue(spatialProfileData.value);
+                this.activeFrame.setCursorValue(spatialProfileData.value);
             }
         }
     };
@@ -820,8 +755,6 @@ export class AppStore {
         }
         this.activeFrame = frame;
         this.widgetsStore.updateImageWidgetTitle();
-        this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
-        this.setCursorValue(undefined);
     }
 
     getFrame(fileId: number) {
