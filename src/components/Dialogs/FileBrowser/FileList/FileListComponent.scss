@@ -14,6 +14,7 @@ $table-header-color-dark: $dark-gray5;
         user-select: none;
         th {
             position: sticky;
+            height: 40px;
             top: 0;
             background-color: $table-header-color;
             cursor: pointer;

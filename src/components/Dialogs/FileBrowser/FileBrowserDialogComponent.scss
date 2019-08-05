@@ -3,22 +3,22 @@
     height: 100%;
     user-select: none;
     .file-path {
-        margin-left: 15px;
-        margin-top: 15px;
+        margin-top: 20px;
+        margin-left: 25px;
     }
     .bp3-dialog-body {
         display: flex;
         overflow: hidden;
-        margin-top: 5px;
-        margin-left: 15px;
+        margin-top: 10px;
+        margin-left: 25px;
         .file-list {
             width: 60%;
             flex: auto;
-            overflow: auto;
+            overflow-y: auto;
         }
         .file-info-pane {
             width: 40%;
-            margin-left: 1%;
+            margin-left: 2%;
             margin-bottom: 40px;
             .file-info-pre {
                 overflow: auto;
