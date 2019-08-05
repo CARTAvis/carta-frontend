@@ -9,27 +9,24 @@
     .bp3-dialog-body {
         display: flex;
         overflow: hidden;
-        margin-top: -5px;
+        margin-top: 5px;
         margin-left: 15px;
         .file-list {
             width: 60%;
             flex: auto;
             overflow: auto;
-            margin-top: 1%;
         }
         .file-info-pane {
             width: 40%;
             margin-left: 1%;
             margin-bottom: 40px;
-            .bp3-heading {
-                overflow: scroll;
+            .file-info-pre {
+                overflow: auto;
                 height: 100%;
                 flex: 2 2 auto;
             }
-            .file-info-pre {
-                overflow: scroll;
-                height: 100%;
-                flex: 2 2 auto;
+            .bp3-heading {
+                flex: 0 0 auto;
             }
         }
     }
