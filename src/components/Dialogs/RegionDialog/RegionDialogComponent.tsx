@@ -5,12 +5,16 @@ import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore} from "stores";
 import "./RegionDialogComponent.css";
+import {PointRegionForm} from "./PointRegionForm/PointRegionForm";
 import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionForm";
 import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
+import {PolygonRegionForm} from "./PolygonRegionForm/PolygonRegionForm";
 
 @observer
 export class RegionDialogComponent extends React.Component<{ appStore: AppStore }> {
+    private static readonly MissingRegionNode = <NonIdealState icon={"folder-open"} title={"No region selected"} description={"Select a region using the list or image view"}/>;
+    private static readonly InvalidRegionNode = <NonIdealState icon={"error"} title={"Region not supported"} description={"The selected region does not have any editable properties"}/>;
 
     private handleDeleteClicked = () => {
         const appStore = this.props.appStore;
@@ -36,13 +40,24 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
         let bodyContent;
         let editableRegion = false;
         if (!appStore.activeFrame || !appStore.activeFrame.regionSet.selectedRegion) {
-            bodyContent = <NonIdealState icon={"folder-open"} title={"No region selected"} description={"Select a region using the list or image view"}/>;
+            bodyContent = RegionDialogComponent.MissingRegionNode;
+        } else if (appStore.activeFrame.regionSet.selectedRegion.regionId === 0) {
+            bodyContent = RegionDialogComponent.InvalidRegionNode;
         } else {
             const region = appStore.activeFrame.regionSet.selectedRegion;
             const frame = appStore.activeFrame;
 
             dialogProps.title = `Editing ${region.nameString}`;
             switch (region.regionType) {
+                case CARTA.RegionType.POINT:
+                    bodyContent = (
+                        <React.Fragment>
+                            <AppearanceForm region={region} darkTheme={appStore.darkTheme}/>
+                            <PointRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
+                        </React.Fragment>
+                    );
+                    editableRegion = true;
+                    break;
                 case CARTA.RegionType.RECTANGLE:
                     bodyContent = (
                         <React.Fragment>
@@ -61,8 +76,17 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
                     );
                     editableRegion = true;
                     break;
+                case CARTA.RegionType.POLYGON:
+                    bodyContent = (
+                        <React.Fragment>
+                            <AppearanceForm region={region} darkTheme={appStore.darkTheme}/>
+                            <PolygonRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
+                        </React.Fragment>
+                    );
+                    editableRegion = true;
+                    break;
                 default:
-                    bodyContent = <NonIdealState icon={"error"} title={"Region not supported"} description={"The selected region does not have any editable properties"}/>;
+                    bodyContent = RegionDialogComponent.InvalidRegionNode;
             }
         }
 

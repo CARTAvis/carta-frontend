@@ -12,6 +12,7 @@ import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {ProfilerInfoComponent} from "./ProfilerInfo/ProfilerInfoComponent";
 import {Point2D} from "models";
 import {clamp, binarySearchByX} from "utilities";
+import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import "./LinePlotComponent.css";
 
 enum ZoomMode {
@@ -57,6 +58,7 @@ export class LinePlotComponentProps {
     yLabel?: string;
     logY?: boolean;
     lineColor?: string;
+    opacity?: number;
     darkMode?: boolean;
     imageName?: string;
     plotName?: string;
@@ -75,6 +77,19 @@ export class LinePlotComponentProps {
     graphZoomReset?: () => void;
     graphCursorMoved?: (x: number) => void;
     scrollZoom?: boolean;
+    multiPlotData?: Map<string, { x: number, y: number }[]>;
+    colorRangeEnd?: number;
+    showXAxisTicks?: boolean;
+    showXAxisLabel?: boolean;
+    xZeroLineColor?: string;
+    yZeroLineColor?: string;
+    showLegend?: boolean;
+    xTickMarkLength?: number;
+    multiPlotBorderColor?: Map<string, string>;
+    plotType?: string;
+    dataBackgroundColor?: Array<string>;
+    isGroupSubPlot?: boolean;
+    centeredOrigin?: boolean;
 }
 
 // Maximum time between double clicks
@@ -295,7 +310,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
             this.onStageClick(ev);
         } else {
-            if (this.props.data) {
+            if (this.props.data || this.props.multiPlotData) {
                 this.stageClickStartX = undefined;
                 this.stageClickStartY = undefined;
                 if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
@@ -333,7 +348,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     onStageMouseMove = (ev) => {
-        if (this.props.data) {
+        if (this.props.data || this.props.multiPlotData) {
             const mouseEvent: MouseEvent = ev.evt;
             const chartArea = this.chartArea;
             let mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
@@ -406,12 +421,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     onStageWheel = (ev) => {
-        if (this.props.data && this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
+        if ((this.props.data || this.props.multiPlotData) && this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
             const wheelEvent: WheelEvent = ev.evt;
             const chartArea = this.chartArea;
             const lineHeight = 15;
             const zoomSpeed = 0.001;
-
             if (wheelEvent.offsetX > chartArea.right || wheelEvent.offsetX < chartArea.left) {
                 return;
             }
@@ -488,11 +502,27 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         const header = "# x\ty";
 
-        let rows;
+        let rows = [];
         if (plotName === "histogram") {
             rows = this.props.data.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
         } else {
-            rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+            if (this.props.data && this.props.data.length) {
+                rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+            } else if (this.props.multiPlotData && this.props.multiPlotData.size) {
+                
+                this.props.multiPlotData.forEach((value, key) => {
+                    if (key === StokesCoordinate.LinearPolarizationQ || key === StokesCoordinate.LinearPolarizationU) {
+                        rows.push(`${key}\t`);
+                        value.forEach(o => {
+                            rows.push(`${o.x}\t${o.y.toExponential(10)}`);
+                        });
+                    } else if (key === StokesCoordinate.PolarizationQU) {
+                        rows = value.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
+                    } else {
+                        rows = value.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+                    }
+                });
+            }
         }
 
         const tsvData = `data:text/tab-separated-values;charset=utf-8,${comment}\n${header}\n${rows.join("\n")}\n`;
@@ -706,7 +736,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return selectionRect;
     };
 
-    private genBorderRect = () => {
+    genBorderRect = () => {
         const chartArea = this.chartArea;
         let borderRect = null;
         if (this.chartArea) {
@@ -728,7 +758,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     private getCursorInfo = () => {
         let cursorInfo = null;
-        if (this.props.data && this.props.cursorX) {
+        if (this.props.data && this.props.cursorX && !this.props.isGroupSubPlot) {
             let nearest = binarySearchByX(this.props.data,
                             this.isMouseEntered ? this.props.cursorX.profiler : this.props.cursorX.image);
             if (nearest) {
@@ -782,7 +812,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 </Stage>
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
-                    visible={this.isMouseEntered && (this.props.data !== undefined)}
+                    visible={this.isMouseEntered && (this.props.data !== undefined || this.props.multiPlotData !== undefined)}
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />

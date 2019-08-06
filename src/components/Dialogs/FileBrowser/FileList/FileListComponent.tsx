@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Icon, NonIdealState, Spinner, HTMLTable} from "@blueprintjs/core";
+import {Icon, NonIdealState, Spinner, HTMLTable, IBreadcrumbProps, Breadcrumbs, Breadcrumb} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import "./FileListComponent.css";
 
@@ -10,7 +10,7 @@ export class FileListComponent extends React.Component<{
     selectedHDU: string,
     onFileClicked: (file: CARTA.FileInfo, hdu: string) => void,
     onFileDoubleClicked: (file: CARTA.FileInfo, hdu: string) => void,
-    onFolderClicked: (folder: string) => void
+    onFolderClicked: (folder: string, absolute: boolean) => void
 }, { sortColumn: string, sortDirection: number }> {
 
     constructor(props: any) {
@@ -22,17 +22,6 @@ export class FileListComponent extends React.Component<{
         const fileEntries = [];
         const fileList = this.props.files;
         if (fileList) {
-            if (fileList.parent) {
-                fileEntries.push(
-                    <tr key="parent" onClick={() => this.props.onFolderClicked("..")} className="file-table-entry">
-                        <td><Icon icon="folder-close"/></td>
-                        <td>..</td>
-                        <td/>
-                        <td/>
-                    </tr>
-                );
-            }
-
             let sortedDirectories: string[];
             switch (this.state.sortColumn) {
                 case "name":
@@ -45,7 +34,7 @@ export class FileListComponent extends React.Component<{
 
             fileEntries.push(sortedDirectories.map(dir => {
                 return (
-                    <tr key={dir} onClick={() => this.props.onFolderClicked(dir)} className="file-table-entry">
+                    <tr key={dir} onClick={() => this.props.onFolderClicked(dir, false)} className="file-table-entry">
                         <td><Icon icon="folder-close"/></td>
                         <td>{dir}</td>
                         <td/>
@@ -86,39 +75,83 @@ export class FileListComponent extends React.Component<{
         }
 
         if (fileList) {
+            const path = this.props.files.directory;
+            let pathItems: IBreadcrumbProps[] = [{icon: "desktop", target: "."}];
+            if (path !== ".") {
+                const dirNames = path.split("/");
+                let parentPath = "";
+                if (dirNames.length) {
+                    for (const dirName of dirNames) {
+                        if (!dirName) {
+                            continue;
+                        }
+                        parentPath += `/${dirName}`;
+                        pathItems.push({
+                            text: dirName,
+                            target: parentPath
+                        });
+                    }
+                }
+            }
+
             return (
-                <HTMLTable small={true} className="file-table">
-                    <thead>
-                    <tr>
-                        <th id="file-header-icon" className={this.props.darkTheme ? "dark-theme" : ""}/>
-                        <th onClick={() => this.setSortColumn("name")} id="file-header-name" className={this.props.darkTheme ? "dark-theme" : ""}>
-                            File Name
-                            {this.state.sortColumn === "name" &&
-                            <Icon icon={this.state.sortDirection === 1 ? "symbol-triangle-down" : "symbol-triangle-up"}/>
-                            }
-                        </th>
-                        <th onClick={() => this.setSortColumn("type")} id="file-header-type" className={this.props.darkTheme ? "dark-theme" : ""}>
-                            Type
-                            {this.state.sortColumn === "type" &&
-                            <Icon icon={this.state.sortDirection === 1 ? "symbol-triangle-down" : "symbol-triangle-up"}/>
-                            }
-                        </th>
-                        <th onClick={() => this.setSortColumn("size")} id="file-header-size" className={this.props.darkTheme ? "dark-theme" : ""}>
-                            Size
-                            {this.state.sortColumn === "size" &&
-                            <Icon icon={this.state.sortDirection === 1 ? "symbol-triangle-down" : "symbol-triangle-up"}/>
-                            }
-                        </th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {fileEntries}
-                    </tbody>
-                </HTMLTable>
+                <React.Fragment>
+                    <div className="file-path">
+                        {pathItems &&
+                        <Breadcrumbs
+                            breadcrumbRenderer={this.renderBreadcrumb}
+                            items={pathItems}
+                        />
+                        }
+                    </div>
+                    <HTMLTable small={true} className="file-table">
+                        <thead>
+                        <tr>
+                            <th id="file-header-icon" className={this.props.darkTheme ? "dark-theme" : ""}/>
+                            <th onClick={() => this.setSortColumn("name")} id="file-header-name" className={this.props.darkTheme ? "dark-theme" : ""}>
+                                File Name
+                                {this.state.sortColumn === "name" &&
+                                <Icon icon={this.state.sortDirection === 1 ? "symbol-triangle-down" : "symbol-triangle-up"}/>
+                                }
+                            </th>
+                            <th onClick={() => this.setSortColumn("type")} id="file-header-type" className={this.props.darkTheme ? "dark-theme" : ""}>
+                                Type
+                                {this.state.sortColumn === "type" &&
+                                <Icon icon={this.state.sortDirection === 1 ? "symbol-triangle-down" : "symbol-triangle-up"}/>
+                                }
+                            </th>
+                            <th onClick={() => this.setSortColumn("size")} id="file-header-size" className={this.props.darkTheme ? "dark-theme" : ""}>
+                                Size
+                                {this.state.sortColumn === "size" &&
+                                <Icon icon={this.state.sortDirection === 1 ? "symbol-triangle-down" : "symbol-triangle-up"}/>
+                                }
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {fileEntries}
+                        </tbody>
+                    </HTMLTable>
+                </React.Fragment>
             );
         } else {
             return <NonIdealState icon={<Spinner className="fileBrowserLoadingSpinner"/>} title={"Loading files"}/>;
         }
+    }
+
+    private renderBreadcrumb = (props: IBreadcrumbProps) => {
+        return (
+            <Breadcrumb onClick={() => this.onBreadcrumbClicked(props.target)}>
+                {props.icon &&
+                <Icon icon={props.icon}/>
+                }
+                {props.text}
+            </Breadcrumb>
+        );
+    };
+
+    private onBreadcrumbClicked(target: string) {
+        this.props.onFolderClicked(target, true);
     }
 
     private setSortColumn(column: string) {

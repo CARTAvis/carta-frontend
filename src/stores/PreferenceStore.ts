@@ -2,8 +2,9 @@ import {observable, computed, action, autorun} from "mobx";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
-import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache} from "models";
-import {AppStore} from "./AppStore";
+import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
+import {AppStore, LayoutStore} from "stores";
+import {isColorValid} from "../utilities";
 
 const PREFERENCE_KEYS = {
     theme: "CARTA_theme",
@@ -26,13 +27,14 @@ const PREFERENCE_KEYS = {
     imageCompressionQuality: "CARTA_imageCompressionQuality",
     animationCompressionQuality: "CARTA_animationCompressionQuality",
     GPUTileCache: "CARTA_GPUTileCache",
-    systemTileCache: "CARTA_systemTileCache"
+    systemTileCache: "CARTA_systemTileCache",
+    logEventList: "CARTA_logEventList"
 };
 
 const DEFAULTS = {
     theme: Theme.LIGHT,
     autoLaunch: true,
-    layout: Layout.DEFAULT,
+    layout: PresetLayout.DEFAULT,
     cursorPosition: CursorPosition.TRACKING,
     zoomMode: Zoom.FIT,
     scaling: FrameScaling.LINEAR,
@@ -50,11 +52,13 @@ const DEFAULTS = {
     imageCompressionQuality: CompressionQuality.IMAGE_DEFAULT,
     animationCompressionQuality: CompressionQuality.ANIMATION_DEFAULT,
     GPUTileCache: TileCache.GPU_DEFAULT,
-    systemTileCache: TileCache.SYSTEM_DEFAULT
+    systemTileCache: TileCache.SYSTEM_DEFAULT,
+    eventLoggingEnabled: false
 };
 
 export class PreferenceStore {
     private readonly appStore: AppStore;
+    private readonly layoutStore: LayoutStore;
 
     @observable theme: string;
     @observable autoLaunch: boolean;
@@ -74,6 +78,7 @@ export class PreferenceStore {
     @observable animationCompressionQuality: number;
     @observable GPUTileCache: number;
     @observable systemTileCache: number;
+    @observable eventsLoggingEnabled: boolean[];
 
     // getters for global settings
     private getTheme = (): string => {
@@ -87,7 +92,7 @@ export class PreferenceStore {
 
     private getLayout = (): string => {
         const layout = localStorage.getItem(PREFERENCE_KEYS.layout);
-        return layout && Layout.isValid(layout) ? layout : DEFAULTS.layout;
+        return layout && this.layoutStore.layoutExist(layout) ? layout : DEFAULTS.layout;
     };
 
     private getCursorPosition = (): string => {
@@ -155,7 +160,7 @@ export class PreferenceStore {
     // getters for region
     private getRegionColor = (): string => {
         const regionColor = localStorage.getItem(PREFERENCE_KEYS.regionColor);
-        return regionColor && RegionStore.IsRegionColorValid(regionColor) ? regionColor : DEFAULTS.regionColor;
+        return regionColor && isColorValid(regionColor) ? regionColor : DEFAULTS.regionColor;
     };
 
     private getRegionLineWidth = (): number => {
@@ -234,6 +239,37 @@ export class PreferenceStore {
         return isFinite(value) && TileCache.isSystemTileCacheValid(value) ? value : DEFAULTS.systemTileCache;
     };
 
+    // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
+    private getLogEvents = (): boolean[] => {
+        let events = Array(Event.EVENT_NUMBER).fill(DEFAULTS.eventLoggingEnabled);
+
+        const localStorageEventList = localStorage.getItem(PREFERENCE_KEYS.logEventList);
+        if (localStorageEventList) {
+            try {
+                const eventNameList = JSON.parse(localStorageEventList);
+                if (eventNameList && Array.isArray(eventNameList) && eventNameList.length) {
+                    eventNameList.forEach((eventName) => {
+                        const eventType = Event.getEventTypeFromName(eventName);
+                        if (eventType !== undefined) { events[eventType] = true; }
+                    });
+                }
+            } catch (e) {
+                console.log("Invalid event list read from local storage");
+            }
+        }
+        return events;
+    };
+
+    public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
+        return Event.isEventTypeValid(eventType) && this.eventsLoggingEnabled[eventType];
+    }
+
+    public flipEventLoggingEnabled = (eventType: CARTA.EventType): void => {
+        if (Event.isEventTypeValid(eventType)) {
+            this.eventsLoggingEnabled[eventType] = !this.eventsLoggingEnabled[eventType];
+        }
+    }
+
     // getters for boolean(convenient)
     @computed get isDarkTheme(): boolean {
         return this.theme === Theme.DARK;
@@ -249,6 +285,16 @@ export class PreferenceStore {
 
     @computed get isCursorFrozen(): boolean {
         return this.cursorPosition === CursorPosition.FIXED;
+    }
+
+    @computed get enabledLoggingEventNames(): string[] {
+        let eventNames: string[] = [];
+        this.eventsLoggingEnabled.forEach((isChecked, eventType) => {
+            if (isChecked) {
+                eventNames.push(Event.getEventNameFromType(eventType));
+            }
+        });
+        return eventNames;
     }
 
     // setters for global
@@ -388,8 +434,13 @@ export class PreferenceStore {
         this.setSystemTileCache(DEFAULTS.systemTileCache);
     };
 
-    constructor(appStore: AppStore) {
+    @action resetLogEventSettings = () => {
+        this.eventsLoggingEnabled.fill(DEFAULTS.eventLoggingEnabled);
+    };
+
+    constructor(appStore: AppStore, layoutStore: LayoutStore) {
         this.appStore = appStore;
+        this.layoutStore = layoutStore;
         this.theme = this.getTheme();
         this.autoLaunch = this.getAutoLaunch();
         this.layout = this.getLayout();
@@ -407,6 +458,7 @@ export class PreferenceStore {
         this.animationCompressionQuality = this.getAnimationCompressionQuality();
         this.GPUTileCache = this.getGPUTileCache();
         this.systemTileCache = this.getSystemTileCache();
+        this.eventsLoggingEnabled = this.getLogEvents();
 
         // setup region settings container (for AppearanceForm in PreferenceDialogComponent)
         this.regionContainer = new RegionStore(null, -1, [{x: 0, y: 0}, {x: 1, y: 1}], this.getRegionType(), -1);
@@ -418,6 +470,14 @@ export class PreferenceStore {
             localStorage.setItem(PREFERENCE_KEYS.regionColor, this.regionContainer.color);
             localStorage.setItem(PREFERENCE_KEYS.regionLineWidth, this.regionContainer.lineWidth.toString(10));
             localStorage.setItem(PREFERENCE_KEYS.regionDashLength, this.regionContainer.dashLength.toString(10));
+        });
+
+        autorun(() => {
+            try {
+                localStorage.setItem(PREFERENCE_KEYS.logEventList, JSON.stringify(this.enabledLoggingEventNames));
+            } catch (e) {
+                console.log("Save event list to local storage failed!");
+            }
         });
     }
 }

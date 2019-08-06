@@ -1,7 +1,8 @@
 import {action, autorun, computed, observable} from "mobx";
+import * as Long from "long";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
-import {LogStore, RegionStore} from "stores";
+import {LogStore, RegionStore, PreferenceStore} from "stores";
 import {DecompressionService} from "./DecompressionService";
 
 export enum ConnectionStatus {
@@ -10,16 +11,17 @@ export enum ConnectionStatus {
     ACTIVE = 2,
 }
 
+export const INVALID_ANIMATION_ID = -1;
+
 type HandlerFunction = (eventId: number, parsedMessage: any) => void;
 
 export class BackendService {
-    private static readonly IcdVersion = 5;
+    private static readonly IcdVersion = 6;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     @observable loggingEnabled: boolean;
     @observable connectionDropped: boolean;
     @observable sessionId: number;
-    @observable apiKey: string;
     @observable endToEndPing: number;
 
     private connection: WebSocket;
@@ -28,6 +30,7 @@ export class BackendService {
     private autoReconnect: boolean;
     private observerRequestMap: Map<number, Observer<any>>;
     private eventCounter: number;
+    private animationId: number;
     private readonly rasterStream: Subject<CARTA.RasterImageData>;
     private readonly rasterTileStream: Subject<CARTA.RasterTileData>;
     private readonly histogramStream: Subject<CARTA.RegionHistogramData>;
@@ -35,18 +38,21 @@ export class BackendService {
     private readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
     private readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
     private readonly statsStream: Subject<CARTA.RegionStatsData>;
-    private readonly logEventList: CARTA.EventType[];
     private readonly decompressionService: DecompressionService;
     private readonly subsetsRequired: number;
     private readonly logStore: LogStore;
+    private readonly preferenceStore: PreferenceStore;
     private readonly handlerMap: Map<CARTA.EventType, HandlerFunction>;
     private readonly decoderMap: Map<CARTA.EventType, any>;
 
-    constructor(logStore: LogStore) {
+    constructor(logStore: LogStore, preferenceStore: PreferenceStore) {
         this.logStore = logStore;
+        this.preferenceStore = preferenceStore;
+        this.loggingEnabled = true;
         this.observerRequestMap = new Map<number, Observer<any>>();
         this.eventCounter = 1;
         this.endToEndPing = NaN;
+        this.animationId = INVALID_ANIMATION_ID;
         this.connectionStatus = ConnectionStatus.CLOSED;
         this.rasterStream = new Subject<CARTA.RasterImageData>();
         this.rasterTileStream = new Subject<CARTA.RasterTileData>();
@@ -59,34 +65,7 @@ export class BackendService {
         if (process.env.NODE_ENV !== "test") {
             this.decompressionService = new DecompressionService(this.subsetsRequired);
         }
-        this.logEventList = [
-            CARTA.EventType.REGISTER_VIEWER,
-            CARTA.EventType.REGISTER_VIEWER_ACK,
-            CARTA.EventType.OPEN_FILE,
-            CARTA.EventType.OPEN_FILE_ACK,
-            CARTA.EventType.RASTER_IMAGE_DATA,
-            CARTA.EventType.REGION_HISTOGRAM_DATA
-        ];
 
-        // Check local storage for a list of events to log to console
-        const localStorageEventList = localStorage.getItem("DEBUG_OVERRIDE_EVENT_LIST");
-        if (localStorageEventList) {
-            try {
-                const eventList = JSON.parse(localStorageEventList);
-                if (eventList && Array.isArray(eventList) && eventList.length) {
-                    for (const eventName of eventList) {
-                        const eventType = (<any> CARTA.EventType)[eventName];
-                        if (eventType !== undefined) {
-                            this.logEventList.push(eventType);
-                        }
-                    }
-                    console.log("Appending event log list from local storage");
-                }
-            } catch (e) {
-                console.log("Invalid event list read from local storage");
-            }
-        }
-        
         // Construct handler and decoder maps
         this.handlerMap = new Map<CARTA.EventType, HandlerFunction>([
             [CARTA.EventType.REGISTER_VIEWER_ACK, this.onRegisterViewerAck],
@@ -163,7 +142,7 @@ export class BackendService {
     }
 
     @action("connect")
-    connect(url: string, apiKey: string, autoConnect: boolean = true): Observable<number> {
+    connect(url: string, autoConnect: boolean = true): Observable<number> {
         if (this.connection) {
             this.connection.onclose = null;
             this.connection.close();
@@ -191,8 +170,6 @@ export class BackendService {
             }
         };
 
-        this.apiKey = apiKey;
-
         const obs = new Observable<number>(observer => {
             this.connection.onopen = () => {
                 if (this.connectionStatus === ConnectionStatus.CLOSED) {
@@ -200,7 +177,7 @@ export class BackendService {
                 }
                 this.connectionStatus = ConnectionStatus.ACTIVE;
                 this.autoReconnect = true;
-                const message = CARTA.RegisterViewer.create({sessionId: 0, apiKey: apiKey, clientFeatureFlags: BackendService.DefaultFeatureFlags});
+                const message = CARTA.RegisterViewer.create({sessionId: 0, clientFeatureFlags: BackendService.DefaultFeatureFlags});
                 const requestId = this.eventCounter;
                 this.logEvent(CARTA.EventType.REGISTER_VIEWER, requestId, message, false);
                 if (this.sendEvent(CARTA.EventType.REGISTER_VIEWER, CARTA.RegisterViewer.encode(message).finish())) {
@@ -462,6 +439,7 @@ export class BackendService {
 
     @action("stop animation")
     stopAnimation(animationMessage: CARTA.IStopAnimation) {
+        this.animationId = INVALID_ANIMATION_ID;
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
             this.logEvent(CARTA.EventType.STOP_ANIMATION, this.eventCounter, animationMessage, false);
             if (this.sendEvent(CARTA.EventType.STOP_ANIMATION, CARTA.StopAnimation.encode(animationMessage).finish())) {
@@ -481,6 +459,33 @@ export class BackendService {
         }
         return false;
     }
+
+    @action("authenticate")
+    authenticate = (username: string, password: string) => {
+        let authUrl = `${window.location.protocol}//${window.location.hostname}/auth`;
+        // Check for URL query parameters as a final override
+        const url = new URL(window.location.href);
+        const queryUrl = url.searchParams.get("authUrl");
+
+        if (queryUrl) {
+            authUrl = queryUrl;
+        }
+
+        const authCredential = btoa(`${username}:${password}`);
+        return fetch(authUrl, {
+            headers: {
+                "Accept": "application/json, text/plain, */*",
+                "Content-Type": "application/json",
+                "Authorization": "Basic " + authCredential
+            },
+            method: "POST"
+        });
+    };
+
+    @action("set auth token")
+    setAuthToken = (token: string) => {
+        document.cookie = `CARTA-Authorization=${token}; path=/`;
+    };
 
     private messageHandler(event: MessageEvent) {
         if (event.data === "PONG") {
@@ -603,6 +608,7 @@ export class BackendService {
         const observer = this.observerRequestMap.get(eventId);
         if (observer) {
             if (ack.success) {
+                this.animationId = ack.animationId;
                 observer.next(ack);
             } else {
                 observer.error(ack.message);
@@ -615,6 +621,24 @@ export class BackendService {
     }
 
     private onStreamedRasterImageData(eventId: number, rasterImageData: CARTA.RasterImageData) {
+        // Skip animation data for previous animations
+        if (rasterImageData.animationId !== this.animationId) {
+            return;
+        }
+        // Flow control
+        const flowControlMessage: CARTA.IAnimationFlowControl = {
+            fileId: rasterImageData.fileId,
+            animationId: rasterImageData.animationId,
+            receivedFrame: {
+                channel: rasterImageData.channel,
+                stokes: rasterImageData.stokes
+            },
+            timestamp: Long.fromNumber(Date.now())
+        };
+
+        this.sendAnimationFlowControl(flowControlMessage);
+
+        // Decompression
         if (rasterImageData.compressionType === CARTA.CompressionType.NONE) {
             this.rasterStream.next(rasterImageData);
         } else {
@@ -670,7 +694,7 @@ export class BackendService {
 
     private logEvent(eventType: CARTA.EventType, eventId: number, message: any, incoming: boolean = true) {
         const eventName = CARTA.EventType[eventType];
-        if (this.loggingEnabled && this.logEventList.indexOf(eventType) >= 0) {
+        if (this.loggingEnabled && this.preferenceStore.isEventLoggingEnabled(eventType)) {
             if (incoming) {
                 if (eventId === 0) {
                     console.log(`<== ${eventName} [Stream]`);

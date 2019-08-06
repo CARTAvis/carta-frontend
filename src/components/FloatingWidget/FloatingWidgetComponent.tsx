@@ -32,9 +32,9 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
     }
 
     updateDragSource() {
-        if (this.props.appStore.widgetsStore.dockedLayout && this.pinElementRef) {
+        if (this.props.appStore.layoutStore.dockedLayout && this.pinElementRef) {
             // Check for existing drag sources
-            const layout = this.props.appStore.widgetsStore.dockedLayout;
+            const layout = this.props.appStore.layoutStore.dockedLayout;
             const matchingSources = layout["_dragSources"].filter(d => d._itemConfig.id === this.props.widgetConfig.id);
             const existingSource = matchingSources.find(d => d._element[0] === this.pinElementRef);
             if (existingSource) {

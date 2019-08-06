@@ -1,48 +1,24 @@
 import * as React from "react";
-import * as GoldenLayout from "golden-layout";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
 import {AppStore, WidgetConfig} from "stores";
-import {AnimatorComponent, HistogramComponent, LogComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent, StatsComponent} from "components";
+import {AnimatorComponent, HistogramComponent, LogComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent, StatsComponent, StokesAnalysisComponent} from "components";
 import "./ToolbarMenuComponent.css";
 
 @observer
 export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }> {
-    private createdDragSources = false;
-
-    private createDragSource(layout: GoldenLayout, widgetConfig: WidgetConfig, elementId: string) {
-        const glConfig: GoldenLayout.ReactComponentConfig = {
-            type: "react-component",
-            component: widgetConfig.type,
-            title: widgetConfig.title,
-            id: widgetConfig.id,
-            isClosable: widgetConfig.isCloseable,
-            props: {appStore: this.props.appStore, id: widgetConfig.id, docked: true}
-        };
-
-        const widgetElement = document.getElementById(elementId);
-        if (widgetElement) {
-            layout.createDragSource(widgetElement, glConfig);
-        }
-    }
-
-    componentDidUpdate() {
-        if (this.createdDragSources) {
-            return;
-        }
-
-        const layout = this.props.appStore.widgetsStore.dockedLayout;
-        if (layout && !this.createdDragSources) {
-            this.createDragSource(layout, RenderConfigComponent.WIDGET_CONFIG, "renderConfigButton");
-            this.createDragSource(layout, LogComponent.WIDGET_CONFIG, "logButton");
-            this.createDragSource(layout, AnimatorComponent.WIDGET_CONFIG, "animatorButton");
-            this.createDragSource(layout, RegionListComponent.WIDGET_CONFIG, "regionListButton");
-            this.createDragSource(layout, SpatialProfilerComponent.WIDGET_CONFIG, "spatialProfilerButton");
-            this.createDragSource(layout, SpectralProfilerComponent.WIDGET_CONFIG, "spectralProfilerButton");
-            this.createDragSource(layout, StatsComponent.WIDGET_CONFIG, "statsButton");
-            this.createDragSource(layout, HistogramComponent.WIDGET_CONFIG, "histogramButton");
-            this.createdDragSources = true;
-        }
+    public static get DRAGSOURCE_WIDGETCONFIG_MAP(): Map<string, WidgetConfig> {
+        return new Map<string, WidgetConfig>([
+            ["renderConfigButton", RenderConfigComponent.WIDGET_CONFIG],
+            ["logButton", LogComponent.WIDGET_CONFIG],
+            ["animatorButton", AnimatorComponent.WIDGET_CONFIG],
+            ["regionListButton", RegionListComponent.WIDGET_CONFIG],
+            ["spatialProfilerButton", SpatialProfilerComponent.WIDGET_CONFIG],
+            ["spectralProfilerButton", SpectralProfilerComponent.WIDGET_CONFIG],
+            ["statsButton", StatsComponent.WIDGET_CONFIG],
+            ["histogramButton", HistogramComponent.WIDGET_CONFIG],
+            ["stokesAnalysisButton", StokesAnalysisComponent.WIDGET_CONFIG],
+        ]);
     }
 
     public render() {
@@ -81,6 +57,11 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
                 </Tooltip>
                 <Tooltip content={<span>Render Config Widget{commonTooltip}</span>}>
                     <Button icon={"style"} id="renderConfigButton" onClick={this.props.appStore.widgetsStore.createFloatingRenderWidget}/>
+                </Tooltip>
+                <Tooltip content={<span>Stokes Analysis Widget{commonTooltip}</span>}>
+                    <Button icon={"pulse"} id="stokesAnalysisButton" className={"profiler-button"} onClick={this.props.appStore.widgetsStore.createFloatingStokesWidget}>
+                        &nbsp;s
+                    </Button>
                 </Tooltip>
             </ButtonGroup>
         );

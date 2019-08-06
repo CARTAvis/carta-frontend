@@ -1,0 +1,20 @@
+.point-region-form {
+    user-select: none;
+
+    .form-contents {
+        .bp3-numeric-input {
+            width: 100px;
+
+            .bp3-input-group {
+                width: 100%;
+            }
+        }
+
+        .wcs-string {
+            margin-left: 5px;
+            font-size: x-small;
+            font-family: monospace;
+            user-select: text;
+        }
+    }
+}

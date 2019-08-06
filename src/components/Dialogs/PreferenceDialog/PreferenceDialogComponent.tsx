@@ -2,16 +2,20 @@ import * as React from "react";
 import * as _ from "lodash";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {CARTA} from "carta-protobuf";
-import {Button, IDialogProps, Intent, Tab, Tabs, FormGroup, TabId, MenuItem, Switch, RadioGroup, Radio, HTMLSelect, AnchorButton, NumericInput, Tooltip, Position} from "@blueprintjs/core";
+import {
+    Button, IDialogProps, Intent, Tab, Tabs,
+    FormGroup, TabId, MenuItem, Switch, RadioGroup,
+    Radio, HTMLSelect, AnchorButton, NumericInput, Tooltip,
+    Position, Checkbox
+} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/ScalingComponent";
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {AppearanceForm} from "components/Dialogs/RegionDialog/AppearanceForm/AppearanceForm";
-import {Theme, Layout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache} from "models";
-import {AppStore, RenderConfigStore} from "stores";
+import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
+import {AppStore, RegionStore, RenderConfigStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
 enum TABS {
@@ -19,7 +23,8 @@ enum TABS {
     RENDER_CONFIG,
     WCS_OVERLAY,
     REGION,
-    PERFORMANCE
+    PERFORMANCE,
+    LOG_EVENT
 }
 
 const PercentileSelect = Select.ofType<string>();
@@ -61,8 +66,11 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 preference.resetRegionSettings();
                 break;
             case TABS.PERFORMANCE:
-                    preference.resetPerformanceSettings();
-                    break;
+                preference.resetPerformanceSettings();
+                break;
+            case TABS.LOG_EVENT:
+                preference.resetLogEventSettings();
+                break;
             case TABS.GLOBAL: default:
                 preference.resetGlobalSettings();
                 break;
@@ -72,6 +80,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
     public render() {
         const appStore = this.props.appStore;
         const preference = appStore.preferenceStore;
+        const layoutStore = appStore.layoutStore;
 
         const globalPanel = (
             <React.Fragment>
@@ -90,10 +99,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Layout">
                     <HTMLSelect value={preference.layout} onChange={(ev) => { preference.setLayout(ev.currentTarget.value); }}>
-                        <option value={Layout.DEFAULT}>Default</option>
-                        <option value={Layout.CUBEVIEW}>Cube view</option>
-                        <option value={Layout.CUBEANALYSIS}>Cube analysis</option>
-                        <option value={Layout.CONTINUUMANALYSIS}>Continuum analysis</option>
+                        {layoutStore.orderedLayouts.map((layout) => <option key={layout} value={layout}>{layout}</option>)}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Cursor Position">
@@ -181,13 +187,17 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             </React.Fragment>
         );
 
+        let regionTypes = [];
+        RegionStore.AVAILABLE_REGION_TYPES.forEach((name, regionType) => {
+            regionTypes.push(<option key={regionType} value={regionType}>{name}</option>);
+        });
+
         const regionSettingsPanel = (
             <React.Fragment>
                 <AppearanceForm region={preference.regionContainer} darkTheme={appStore.darkTheme} isPreference={true}/>
                 <FormGroup inline={true} label="Region Type">
                     <HTMLSelect value={preference.regionContainer.regionType} onChange={(ev) => { preference.setRegionType(Number(ev.currentTarget.value)); }}>
-                        <option value={CARTA.RegionType.RECTANGLE}>Rectangle</option>
-                        <option value={CARTA.RegionType.ELLIPSE}>Ellipse</option>
+                        {regionTypes}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Creation Mode">
@@ -249,6 +259,22 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             </React.Fragment>
         );
 
+        const logEventsPanel = (
+            <React.Fragment>
+                <FormGroup inline={false} label="Enable logged event type" className="log-event-list">
+                    {Event.EVENT_TYPES.map((eventType) =>
+                        <Checkbox
+                            className="log-event-checkbox"
+                            key={eventType}
+                            checked={preference.isEventLoggingEnabled(eventType)}
+                            label={Event.getEventNameFromType(eventType)}
+                            onChange={() => preference.flipEventLoggingEnabled(eventType)}
+                        />
+                    )}
+                </FormGroup>
+            </React.Fragment>
+        );
+
         let className = "preference-dialog";
         if (appStore.darkTheme) {
             className += " bp3-dark";
@@ -266,7 +292,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={725} defaultHeight={450} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} minWidth={450} minHeight={300} defaultWidth={775} defaultHeight={450} enableResizing={true}>
                 <div className="bp3-dialog-body">
                     <Tabs
                         id="preferenceTabs"
@@ -279,6 +305,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         <Tab id={TABS.WCS_OVERLAY} title="Default WCS Overlay" panel={wcsOverlayPanel}/>
                         <Tab id={TABS.REGION} title="Default Region settings" panel={regionSettingsPanel}/>
                         <Tab id={TABS.PERFORMANCE} title="Performance" panel={performancePanel}/>
+                        <Tab id={TABS.LOG_EVENT} title="Log Events" panel={logEventsPanel}/>
                     </Tabs>
                 </div>
                 <div className="bp3-dialog-footer">
