@@ -45,6 +45,12 @@ const COMPONENT_CONFIG = new Map<string, any>([
         id: "spectral-profiler",
         title: "Z Profile: Cursor"
     }],
+    ["stokes", {
+        type: "react-component",
+        component: "stokes",
+        id: "stokes",
+        title: "Stokes Analysis"
+    }],
     ["histogram", {
         type: "react-component",
         component: "histogram",
