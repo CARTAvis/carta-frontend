@@ -16,7 +16,7 @@ import "./SpatialProfilerComponent.css";
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 180;
 
-const AUTOSCALE_THROTTLE_TIME = 100;
+const AUTOSCALE_THROTTLE_TIME = 200;
 const VERTICAL_RANGE_PADDING = 0.1;
 
 @observer
@@ -40,8 +40,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     @observable height: number;
 
     // auto-scaling range
-    @observable autoMin: number;
-    @observable autoMax: number;
+    @observable autoScaleHorizontalMin: number;
+    @observable autoScaleHorizontalMax: number;
 
     @computed get widgetStore(): SpatialProfileWidgetStore {
         if (this.props.appStore && this.props.appStore.widgetsStore.spatialProfileWidgets) {
@@ -94,8 +94,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             let xMax: number;
 
             if (this.widgetStore.isAutoScaledX) {
-                xMin = this.autoMin;
-                xMax = this.autoMax;
+                xMin = this.autoScaleHorizontalMin;
+                xMax = this.autoScaleHorizontalMax;
             } else {
                 xMin = clamp(this.widgetStore.minX, 0, this.frame.frameInfo.fileInfoExtended.width);
                 if (isXProfile) {
@@ -254,11 +254,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 return null;
             }
             if (isXProfile) {
-                this.autoMin = clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width);
-                this.autoMax = clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width);
+                this.autoScaleHorizontalMin = clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width);
+                this.autoScaleHorizontalMax = clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width);
             } else {
-                this.autoMin = clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height);
-                this.autoMax = clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height);
+                this.autoScaleHorizontalMin = clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height);
+                this.autoScaleHorizontalMax = clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height);
             }
         }, {delay: AUTOSCALE_THROTTLE_TIME});
     }
