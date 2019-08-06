@@ -175,40 +175,51 @@ export class WidgetsStore {
         }
     };
 
-    public initLayoutWithWidgets = (layout: GoldenLayout, componentIDs: string[]) => {
-        if (!layout || !componentIDs) {
+    public initWidgetStores = (componentConfigs: any[]) => {
+        componentConfigs.forEach((componentConfig) => {
+            if (componentConfig.id) {
+                let itemId;
+                switch (componentConfig.id) {
+                    case RenderConfigComponent.WIDGET_CONFIG.type:
+                        itemId = this.addRenderConfigWidget();
+                        break;
+                    case SpatialProfilerComponent.WIDGET_CONFIG.type:
+                        itemId = this.addSpatialProfileWidget(null, componentConfig.coord && componentConfig.coord === "y" ? "y" : "x", -1, 0);
+                        break;
+                    case SpectralProfilerComponent.WIDGET_CONFIG.type:
+                        itemId = this.addSpectralProfileWidget();
+                        break;
+                    case StatsComponent.WIDGET_CONFIG.type:
+                        itemId = this.addStatsWidget();
+                        break;
+                    case HistogramComponent.WIDGET_CONFIG.type:
+                        itemId = this.addHistogramWidget();
+                        break;
+                    case AnimatorComponent.WIDGET_CONFIG.type:
+                        itemId = this.addAnimatorWidget();
+                        break;
+                    case LogComponent.WIDGET_CONFIG.type:
+                        itemId = this.addLogWidget();
+                        break;
+                    case RegionListComponent.WIDGET_CONFIG.type:
+                        itemId = this.addRegionListWidget();
+                        break;
+                    default:
+                        break;
+                }
+                if (itemId) {
+                    componentConfig.id = itemId;
+                    componentConfig.props.id = itemId;
+                }
+            }
+        });
+    };
+
+    public initLayoutWithWidgets = (layout: GoldenLayout) => {
+        if (!layout) {
             console.log("Invalid parameters!");
             return;
         }
-
-        // add widget store for components
-        componentIDs.forEach((id) => {
-            switch (id) {
-                case "render-config-0":
-                    this.addRenderConfigWidget(id);
-                    break;
-                case "animator-0":
-                    this.addAnimatorWidget(id);
-                    break;
-                case "region-list-0":
-                    this.addRegionListWidget(id);
-                    break;
-                case "spatial-profiler-0":
-                    this.addSpatialProfileWidget(id, "x", -1, 0);
-                    break;
-                case "spatial-profiler-1":
-                    this.addSpatialProfileWidget(id, "y", -1, 0);
-                    break;
-                case "spectral-profiler-0":
-                    this.addSpectralProfileWidget(id, "z");
-                    break;
-                case "stats-0":
-                    this.addStatsWidget(id);
-                    break;
-                default:
-                    break;
-            }
-        });
 
         layout.registerComponent("placeholder", PlaceholderComponent);
         layout.registerComponent("image-view", ImageViewComponent);
