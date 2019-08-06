@@ -218,7 +218,8 @@ export class RegionStore {
 
     private simplePolygonTest(point: number = -1) {
         const points = this.controlPoints.slice();
-        if (point >= 0) {
+        // Only allow optimised test if the polygon is currently marked as simple, to avoid cases where multiple line segments intersect
+        if (point >= 0 && this.isSimplePolygon) {
             this.isSimplePolygon = simplePolygonPointTest(points, point) && simplePolygonPointTest(points, point - 1);
         } else {
             this.isSimplePolygon = simplePolygonTest(points);
