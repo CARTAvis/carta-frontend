@@ -16,7 +16,7 @@ import "./SpatialProfilerComponent.css";
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 180;
 
-const AUTOSCALE_THROTTLE_TIME = 200;
+const AUTOSCALE_THROTTLE_TIME = 100;
 const VERTICAL_RANGE_PADDING = 0.1;
 
 @observer
