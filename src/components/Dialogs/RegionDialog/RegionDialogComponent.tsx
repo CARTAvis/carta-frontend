@@ -1,15 +1,15 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, Classes, IDialogProps, Intent, NonIdealState} from "@blueprintjs/core";
+import {AnchorButton, Classes, IDialogProps, Intent, NonIdealState, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore} from "stores";
-import "./RegionDialogComponent.css";
+import {AppStore, RegionStore} from "stores";
 import {PointRegionForm} from "./PointRegionForm/PointRegionForm";
 import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionForm";
 import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
 import {PolygonRegionForm} from "./PolygonRegionForm/PolygonRegionForm";
+import "./RegionDialogComponent.css";
 
 @observer
 export class RegionDialogComponent extends React.Component<{ appStore: AppStore }> {
@@ -38,13 +38,14 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
         };
 
         let bodyContent;
+        let region: RegionStore;
         let editableRegion = false;
         if (!appStore.activeFrame || !appStore.activeFrame.regionSet.selectedRegion) {
             bodyContent = RegionDialogComponent.MissingRegionNode;
         } else if (appStore.activeFrame.regionSet.selectedRegion.regionId === 0) {
             bodyContent = RegionDialogComponent.InvalidRegionNode;
         } else {
-            const region = appStore.activeFrame.regionSet.selectedRegion;
+            region = appStore.activeFrame.regionSet.selectedRegion;
             const frame = appStore.activeFrame;
 
             dialogProps.title = `Editing ${region.nameString}`;
@@ -97,6 +98,11 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                        {region && region.regionId !== 0 &&
+                        <Tooltip content={`Region is ${region.locked ? "locked" : "unlocked"}`}>
+                            <AnchorButton intent={Intent.WARNING} minimal={true} icon={region.locked ? "lock" : "unlock"} onClick={region.toggleLock}/>
+                        </Tooltip>
+                        }
                         {editableRegion && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked}/>}
                         <AnchorButton intent={Intent.NONE} onClick={appStore.hideRegionDialog} text="Close"/>
                     </div>

@@ -5,6 +5,8 @@ import {BackendService} from "../services";
 import {Colors} from "@blueprintjs/core";
 import {minMax2D} from "../utilities";
 
+export const CURSOR_REGION_ID = 0;
+
 export class RegionStore {
     @observable fileId: number;
     @observable regionId: number;
@@ -140,7 +142,7 @@ export class RegionStore {
     }
 
     @computed get nameString() {
-        if (this.regionId === 0) {
+        if (this.regionId === CURSOR_REGION_ID) {
             return "Cursor";
         } else if (this.name) {
             return this.name;
@@ -261,17 +263,21 @@ export class RegionStore {
     };
 
     @action toggleLock = () => {
-        this.locked = !this.locked;
+        if (this.regionId !== CURSOR_REGION_ID) {
+            this.locked = !this.locked;
+        }
     };
 
     @action setLocked = (locked: boolean) => {
-        this.locked = locked;
+        if (this.regionId !== CURSOR_REGION_ID) {
+            this.locked = locked;
+        }
     };
 
     // Update the region with the backend
     private updateRegion = () => {
         if (this.isValid) {
-            if (this.regionId === 0 && this.regionType === CARTA.RegionType.POINT) {
+            if (this.regionId === CURSOR_REGION_ID && this.regionType === CARTA.RegionType.POINT) {
                 this.backendService.setCursor(this.fileId, this.controlPoints[0].x, this.controlPoints[0].y);
             } else {
                 this.backendService.setRegion(this.fileId, this.regionId, this).subscribe(ack => {
