@@ -17,6 +17,7 @@ export class RegionStore {
     @observable rotation: number;
     @observable editing: boolean;
     @observable creating: boolean;
+    @observable locked: boolean;
 
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
@@ -257,6 +258,14 @@ export class RegionStore {
     @action endEditing = () => {
         this.editing = false;
         this.updateRegion();
+    };
+
+    @action toggleLock = () => {
+        this.locked = !this.locked;
+    };
+
+    @action setLocked = (locked: boolean) => {
+        this.locked = locked;
     };
 
     // Update the region with the backend

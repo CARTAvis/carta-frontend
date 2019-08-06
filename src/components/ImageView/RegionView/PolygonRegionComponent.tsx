@@ -259,10 +259,10 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                     y={centerPointCanvasSpace.y}
                     stroke={region.color}
                     strokeWidth={region.lineWidth}
-                    opacity={region.isTemporary ? 0.5 : 1.0}
+                    opacity={(region.isTemporary || region.locked) ? 0.5 : 1.0}
                     dash={[region.dashLength]}
                     closed={!region.creating}
-                    listening={this.props.listening}
+                    listening={this.props.listening && !region.locked}
                     onClick={this.handleClick}
                     onDblClick={this.handleDoubleClick}
                     onContextMenu={this.handleContextMenu}

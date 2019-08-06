@@ -92,6 +92,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
                     offsetY={POINT_DRAG_WIDTH * 0.5}
                     opacity={this.props.selected ? 1 : 0}
                     draggable={true}
+                    listening={!region.locked}
                     onDragStart={this.handleDragStart}
                     onDragEnd={this.handleDragEnd}
                     onDragMove={this.handleDrag}
