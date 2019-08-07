@@ -135,6 +135,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 <Menu.Item text="Histogram" icon={"timeline-bar-chart"} onClick={appStore.widgetsStore.createFloatingHistogramWidget}/>
                 <Menu.Item text="Animator" icon={"video"} onClick={appStore.widgetsStore.createFloatingAnimatorWidget}/>
                 <Menu.Item text="Render Config" icon={"style"} onClick={appStore.widgetsStore.createFloatingRenderWidget}/>
+                <Menu.Item text="Stokes Analysis" icon={"pulse"} onClick={appStore.widgetsStore.createFloatingStokesWidget}/>
             </Menu>
         );
 

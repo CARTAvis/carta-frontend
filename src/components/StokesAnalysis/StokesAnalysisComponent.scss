@@ -1,0 +1,88 @@
+@import "../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+
+.stokes-widget {
+    display: flex;
+    width: 100%;
+    height: 100%;
+
+    border: 1px solid transparent;
+    border-radius: 3px;
+
+    .profile-container-vertical {
+        flex: 3 3 auto;
+        min-width: 0;
+        padding-bottom: 5px;
+
+        .profile-plot-toolbar{
+            width: 100%;
+        }
+
+        .profile-plot-qup{
+            height: calc(60% - 50px);
+            .profile-plot-qu {
+                width: calc(100%);
+                height: calc(36%);
+                position: relative;
+            }
+
+            .profile-plot-pi {
+                width: calc(100%);
+                height: calc(28%);
+                position: relative;
+            }
+
+            .profile-plot-pa {
+                width: calc(100%);
+                height: calc(36%);
+                position: relative;
+            }
+        }
+
+        .profile-plot-qvsu {
+            width: calc(100%);
+            height: calc(40%);
+            position: relative;
+        }
+    }
+
+    .profile-container-horizontal {
+        flex: 3 3 auto;
+        min-width: 0;
+        padding-bottom: 5px;
+
+        .profile-plot-toolbar{
+            width: 50%;
+            float: right;
+        }
+
+        .profile-plot-qup{
+            width: calc(50%);
+            height: calc(100%);
+            float: left;
+            .profile-plot-qu {
+                width: calc(100%);
+                height: calc(36%);
+                position: relative;
+            }
+
+            .profile-plot-pi {
+                width: calc(100%);
+                height: calc(28%);
+                position: relative;
+            }
+
+            .profile-plot-pa {
+                width: calc(100%);
+                height: calc(36%);
+                position: relative;
+            }
+        }
+
+        .profile-plot-qvsu {
+            width: calc(50%);
+            height: calc(100% - 50px);
+            position: relative;
+            float: right;
+        }
+    }
+}

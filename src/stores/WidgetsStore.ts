@@ -12,10 +12,11 @@ import {
     SpatialProfilerComponent,
     SpectralProfilerComponent,
     StatsComponent,
-    ToolbarMenuComponent
+    ToolbarMenuComponent,
+    StokesAnalysisComponent
 } from "components";
 import {AppStore, LayoutStore} from "stores";
-import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
+import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 
 export class WidgetConfig {
     id: string;
@@ -49,6 +50,7 @@ export class WidgetsStore {
     @observable logWidgets: Map<string, EmptyWidgetStore>;
     @observable regionListWidgets: Map<string, EmptyWidgetStore>;
     @observable animatorWidgets: Map<string, EmptyWidgetStore>;
+    @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
 
     private appStore: AppStore;
     private layoutStore: LayoutStore;
@@ -87,6 +89,7 @@ export class WidgetsStore {
         this.animatorWidgets = new Map<string, EmptyWidgetStore>();
         this.logWidgets = new Map<string, EmptyWidgetStore>();
         this.regionListWidgets = new Map<string, EmptyWidgetStore>();
+        this.stokesAnalysisWidgets = new Map<string, StokesAnalysisWidgetStore>();
 
         this.widgetsMap = new Map<string, Map<string, any>>([
             [SpatialProfilerComponent.WIDGET_CONFIG.type, this.spatialProfileWidgets],
@@ -97,6 +100,7 @@ export class WidgetsStore {
             [AnimatorComponent.WIDGET_CONFIG.type, this.animatorWidgets],
             [LogComponent.WIDGET_CONFIG.type, this.logWidgets],
             [RegionListComponent.WIDGET_CONFIG.type, this.regionListWidgets],
+            [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets],
         ]);
 
         this.floatingWidgets = [];
@@ -123,6 +127,8 @@ export class WidgetsStore {
                 return HistogramComponent.WIDGET_CONFIG;
             case RegionListComponent.WIDGET_CONFIG.type:
                 return RegionListComponent.WIDGET_CONFIG;
+            case StokesAnalysisComponent.WIDGET_CONFIG.type:
+                return StokesAnalysisComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -169,40 +175,51 @@ export class WidgetsStore {
         }
     };
 
-    public initLayoutWithWidgets = (layout: GoldenLayout, componentIDs: string[]) => {
-        if (!layout || !componentIDs) {
+    public initWidgetStores = (componentConfigs: any[]) => {
+        componentConfigs.forEach((componentConfig) => {
+            if (componentConfig.id) {
+                let itemId;
+                switch (componentConfig.id) {
+                    case RenderConfigComponent.WIDGET_CONFIG.type:
+                        itemId = this.addRenderConfigWidget();
+                        break;
+                    case SpatialProfilerComponent.WIDGET_CONFIG.type:
+                        itemId = this.addSpatialProfileWidget(null, componentConfig.coord && componentConfig.coord === "y" ? "y" : "x", -1, 0);
+                        break;
+                    case SpectralProfilerComponent.WIDGET_CONFIG.type:
+                        itemId = this.addSpectralProfileWidget();
+                        break;
+                    case StatsComponent.WIDGET_CONFIG.type:
+                        itemId = this.addStatsWidget();
+                        break;
+                    case HistogramComponent.WIDGET_CONFIG.type:
+                        itemId = this.addHistogramWidget();
+                        break;
+                    case AnimatorComponent.WIDGET_CONFIG.type:
+                        itemId = this.addAnimatorWidget();
+                        break;
+                    case LogComponent.WIDGET_CONFIG.type:
+                        itemId = this.addLogWidget();
+                        break;
+                    case RegionListComponent.WIDGET_CONFIG.type:
+                        itemId = this.addRegionListWidget();
+                        break;
+                    default:
+                        break;
+                }
+                if (itemId) {
+                    componentConfig.id = itemId;
+                    componentConfig.props.id = itemId;
+                }
+            }
+        });
+    };
+
+    public initLayoutWithWidgets = (layout: GoldenLayout) => {
+        if (!layout) {
             console.log("Invalid parameters!");
             return;
         }
-
-        // add widget store for components
-        componentIDs.forEach((id) => {
-            switch (id) {
-                case "render-config-0":
-                    this.addRenderConfigWidget(id);
-                    break;
-                case "animator-0":
-                    this.addAnimatorWidget(id);
-                    break;
-                case "region-list-0":
-                    this.addRegionListWidget(id);
-                    break;
-                case "spatial-profiler-0":
-                    this.addSpatialProfileWidget(id, "x", -1, 0);
-                    break;
-                case "spatial-profiler-1":
-                    this.addSpatialProfileWidget(id, "y", -1, 0);
-                    break;
-                case "spectral-profiler-0":
-                    this.addSpectralProfileWidget(id, "z");
-                    break;
-                case "stats-0":
-                    this.addStatsWidget(id);
-                    break;
-                default:
-                    break;
-            }
-        });
 
         layout.registerComponent("placeholder", PlaceholderComponent);
         layout.registerComponent("image-view", ImageViewComponent);
@@ -214,6 +231,7 @@ export class WidgetsStore {
         layout.registerComponent("region-list", RegionListComponent);
         layout.registerComponent("log", LogComponent);
         layout.registerComponent("animator", AnimatorComponent);
+        layout.registerComponent("stokes", StokesAnalysisComponent);
 
         // add drag source buttons from ToolbarMenuComponent
         ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.CreateDragSource(this.appStore, layout, widgetConfig, id));
@@ -286,6 +304,9 @@ export class WidgetsStore {
                 break;
             case RegionListComponent.WIDGET_CONFIG.type:
                 itemId = this.addRegionListWidget();
+                break;
+            case StokesAnalysisComponent.WIDGET_CONFIG.type:
+                itemId = this.addStokesWidget();
                 break;
             default:
                 // Remove it from the floating widget array, while preserving its store
@@ -409,6 +430,27 @@ export class WidgetsStore {
 
         if (id) {
             this.spectralProfileWidgets.set(id, new SpectralProfileWidgetStore(coordinate));
+        }
+        return id;
+    }
+
+    // endregion
+
+    // region Stokes Profile Widgets
+    createFloatingStokesWidget = () => {
+        let config = StokesAnalysisComponent.WIDGET_CONFIG;
+        config.id = this.addStokesWidget();
+        this.addFloatingWidget(config);
+    };
+
+    @action addStokesWidget(id: string = null) {
+        // Generate new id if none passed in
+        if (!id) {
+            id = this.getNextId(StokesAnalysisComponent.WIDGET_CONFIG.type);
+        }
+
+        if (id) {
+            this.stokesAnalysisWidgets.set(id, new StokesAnalysisWidgetStore());
         }
         return id;
     }
