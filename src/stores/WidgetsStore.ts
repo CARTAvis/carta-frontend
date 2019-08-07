@@ -268,13 +268,13 @@ export class WidgetsStore {
         ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.CreateDragSource(this.appStore, layout, widgetConfig, id));
 
         layout.on("stackCreated", (stack) => {
-            const imageView = stack.getItemsById(ImageViewComponent.WIDGET_CONFIG.type);
+            const imageView = stack.getItemsById(ImageViewComponent.WIDGET_CONFIG.id);
             if (imageView && imageView.length > 0) {
                 // make the stack having image view component un-floatable & unstackable
                 // source for unstackable: https://github.com/golden-layout/golden-layout/issues/357
                 const originalGetArea = stack._$getArea;
                 stack._$getArea = function() {
-                    var area = originalGetArea.call(stack);
+                    const area = originalGetArea.call(stack);
                     Object.defineProperty(stack._contentAreaDimensions, "header", {enumerable: false, value: {}});
                     return area;
                 };
