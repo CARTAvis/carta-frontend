@@ -219,7 +219,7 @@ export class WidgetsStore {
         return itemId;
     };
 
-    removeFloatingWidgets = () => {
+    public removeFloatingWidgets = () => {
         if (this.floatingWidgets) {
             this.floatingWidgets.forEach((widgetConfig) => this.removeFloatingWidget(widgetConfig.id));
         }
