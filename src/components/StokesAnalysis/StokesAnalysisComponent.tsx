@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, ScatterPlotComponent} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, ScatterPlotComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
 import {WidgetConfig, WidgetProps, SpectralProfileStore, AnimationState} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
@@ -320,11 +320,16 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (yMin === Number.MAX_VALUE) {
             yMin = undefined;
             yMax = undefined;
+        } else {
+            // extend y range a bit
+            const range = yMax - yMin;
+            yMin -= range * VERTICAL_RANGE_PADDING;
+            yMax += range * VERTICAL_RANGE_PADDING;
         }
         return {xMin, xMax, yMin, yMax};
     }
 
-    private assambleLinePlotData(profile: Array<number>, channelInfo: ChannelInfo): { dataset: Array<Point2D>, border: { xMin: number, xMax: number, yMin: number, yMax: number } } {
+    private assembleLinePlotData(profile: Array<number>, channelInfo: ChannelInfo): { dataset: Array<Point2D>, border: { xMin: number, xMax: number, yMin: number, yMax: number } } {
         if (profile && profile.length && profile.length === channelInfo.values.length) {
             let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
             let border = this.calculateXYborder(channelValues, profile, true);
@@ -334,7 +339,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    private assambleScatterPlotData(qProfile: Array<number>, uProfile: Array<number>): { dataset: Array<Point2D>, border: { xMin: number, xMax: number, yMin: number, yMax: number } } {
+    private assembleScatterPlotData(qProfile: Array<number>, uProfile: Array<number>): { dataset: Array<Point2D>, border: { xMin: number, xMax: number, yMin: number, yMax: number } } {
         if (qProfile && qProfile.length && uProfile && uProfile.length && qProfile.length === uProfile.length) {
             let border = this.calculateXYborder(qProfile, uProfile, false);
             let values = this.assambleXYData(uProfile, qProfile, border.xMin, border.xMax);
@@ -380,11 +385,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
         let channelInfo = frame.channelInfo;
         if (compositeProfile && channelInfo) {
-            let piDic = this.assambleLinePlotData(compositeProfile.piProfile, channelInfo);
-            let paDic = this.assambleLinePlotData(compositeProfile.paProfile, channelInfo);
-            let qDic = this.assambleLinePlotData(compositeProfile.qProfile, channelInfo);
-            let uDic = this.assambleLinePlotData(compositeProfile.uProfile, channelInfo);
-            let quDic = this.assambleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile);
+            let piDic = this.assembleLinePlotData(compositeProfile.piProfile, channelInfo);
+            let paDic = this.assembleLinePlotData(compositeProfile.paProfile, channelInfo);
+            let qDic = this.assembleLinePlotData(compositeProfile.qProfile, channelInfo);
+            let uDic = this.assembleLinePlotData(compositeProfile.uProfile, channelInfo);
+            let quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile);
 
             return {qValues: qDic, uValues: uDic, piValues: piDic, paValues: paDic, quValues: quDic, qProgress: compositeProfile.qProgress, uProgress: compositeProfile.uProgress};
         }

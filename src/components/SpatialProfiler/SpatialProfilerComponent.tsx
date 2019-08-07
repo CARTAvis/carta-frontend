@@ -5,7 +5,7 @@ import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {SpatialProfilerSettingsPanelComponent} from "./SpatialProfilerSettingsPanelComponent/SpatialProfilerSettingsPanelComponent";
 import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
@@ -15,9 +15,7 @@ import "./SpatialProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 180;
-
 const AUTOSCALE_THROTTLE_TIME = 100;
-const VERTICAL_RANGE_PADDING = 0.1;
 
 @observer
 export class SpatialProfilerComponent extends React.Component<WidgetProps> {

@@ -38,7 +38,7 @@ export interface LineMarker {
     horizontal: boolean;
     width?: number;
     draggable?: boolean;
-    dragCustomBoundary?: {xMin?: number, xMax?: number, yMin?: number, yMax?: number};
+    dragCustomBoundary?: { xMin?: number, xMax?: number, yMin?: number, yMax?: number };
     dragMove?: (val: number) => void;
     isMouseMove?: boolean;
 }
@@ -47,8 +47,8 @@ export class LinePlotComponentProps {
     width?: number;
     height?: number;
     data?: { x: number, y: number }[];
-    dataStat?: {mean: number, rms: number};
-    cursorX?: {profiler: number, image: number, unit: string};
+    dataStat?: { mean: number, rms: number };
+    cursorX?: { profiler: number, image: number, unit: string };
     comments?: string[];
     xMin?: number;
     xMax?: number;
@@ -100,6 +100,8 @@ const DRAG_THRESHOLD = 3;
 const MARKER_HITBOX_THICKNESS = 16;
 // Maximum pixel distance before turing an X or Y zoom into an XY zoom
 const XY_ZOOM_THRESHOLD = 20;
+
+export const VERTICAL_RANGE_PADDING = 0.05;
 
 @observer
 export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
@@ -509,7 +511,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             if (this.props.data && this.props.data.length) {
                 rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
             } else if (this.props.multiPlotData && this.props.multiPlotData.size) {
-                
+
                 this.props.multiPlotData.forEach((value, key) => {
                     if (key === StokesCoordinate.LinearPolarizationQ || key === StokesCoordinate.LinearPolarizationU) {
                         rows.push(`${key}\t`);
@@ -671,7 +673,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const marker = this.props.markers[i];
                 const markerColor = marker.color || (this.props.darkMode ? Colors.RED4 : Colors.RED2);
                 const markerOpacity = (marker.isMouseMove && (!this.isMouseEntered || this.isMarkerDragging)) ? 0 : (marker.opacity || 1);
-                
+
                 if (marker.horizontal) {
                     let valueCanvasSpace = this.getCanvasSpaceY(marker.value);
                     if (valueCanvasSpace < Math.floor(chartArea.top - 1) || valueCanvasSpace > Math.ceil(chartArea.bottom + 1) || isNaN(valueCanvasSpace)) {
@@ -760,7 +762,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         let cursorInfo = null;
         if (this.props.data && this.props.cursorX && !this.props.isGroupSubPlot) {
             let nearest = binarySearchByX(this.props.data,
-                            this.isMouseEntered ? this.props.cursorX.profiler : this.props.cursorX.image);
+                this.isMouseEntered ? this.props.cursorX.profiler : this.props.cursorX.image);
             if (nearest) {
                 cursorInfo = {
                     isMouseEntered: this.isMouseEntered,
