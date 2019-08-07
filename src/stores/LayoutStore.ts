@@ -312,8 +312,8 @@ export class LayoutStore {
 
         // destroy old layout & clear floating widgets
         if (this.dockedLayout) {
-            this.dockedLayout.destroy();
             this.appStore.widgetsStore.removeFloatingWidgets();
+            this.dockedLayout.destroy();
         }
 
         // generate docked config & collect docked components
