@@ -244,9 +244,19 @@ export class FrameStore {
             }
         }
 
+        // Is cursorPos inside the image?
+        var Isinsideimg = true;
+        if (cursorPosImageSpace.x > this.frameInfo.fileInfoExtended.width || 
+            cursorPosImageSpace.x < 0 ||
+            cursorPosImageSpace.y > this.frameInfo.fileInfoExtended.height ||
+            cursorPosImageSpace.y < 0){
+            var Isinsideimg = false;
+        };
+
         return {
             posCanvasSpace: cursorPosCanvasSpace,
             posImageSpace: cursorPosImageSpace,
+            IsInImage: Isinsideimg,
             posWCS: cursorPosWCS,
             infoWCS: cursorPosFormatted,
         };

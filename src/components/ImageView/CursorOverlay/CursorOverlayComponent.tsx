@@ -31,7 +31,7 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
 
     render() {
         const cursorInfo = this.props.cursorInfo;
-        let infoStrings: string[] = [];
+        var infoStrings: string[] = [];
         if (this.props.showWCS && cursorInfo.infoWCS) {
             infoStrings.push(`WCS:\u00a0(${cursorInfo.infoWCS.x},\u00a0${cursorInfo.infoWCS.y})`);
         }
@@ -60,6 +60,11 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
                 infoStrings.push(this.props.spectralInfo.velocityString);
             }
         }
+
+        // console.log(cursorInfo.IsInImage)
+        if (cursorInfo.IsInImage === false){
+            infoStrings = [];
+        };
 
         const height = (this.props.height !== undefined && this.props.height >= 0) ? this.props.height : 20;
 
