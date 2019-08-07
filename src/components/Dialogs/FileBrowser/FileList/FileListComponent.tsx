@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Icon, NonIdealState, Spinner, HTMLTable, IBreadcrumbProps, Breadcrumbs, Breadcrumb, Tooltip} from "@blueprintjs/core";
+import {Icon, NonIdealState, Spinner, HTMLTable, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import "./FileListComponent.css";
 
@@ -85,35 +85,8 @@ export class FileListComponent extends React.Component<{
         }
 
         if (fileList) {
-            const path = this.props.files.directory;
-            let pathItems: IBreadcrumbProps[] = [{icon: "desktop", target: "."}];
-            if (path !== ".") {
-                const dirNames = path.split("/");
-                let parentPath = "";
-                if (dirNames.length) {
-                    for (const dirName of dirNames) {
-                        if (!dirName) {
-                            continue;
-                        }
-                        parentPath += `/${dirName}`;
-                        pathItems.push({
-                            text: dirName,
-                            target: parentPath
-                        });
-                    }
-                }
-            }
-
             return (
                 <React.Fragment>
-                    <div className="file-path">
-                        {pathItems &&
-                        <Breadcrumbs
-                            breadcrumbRenderer={this.renderBreadcrumb}
-                            items={pathItems}
-                        />
-                        }
-                    </div>
                     <HTMLTable small={true} className="file-table">
                         <thead>
                         <tr>
@@ -147,21 +120,6 @@ export class FileListComponent extends React.Component<{
         } else {
             return <NonIdealState icon={<Spinner className="fileBrowserLoadingSpinner"/>} title={"Loading files"}/>;
         }
-    }
-
-    private renderBreadcrumb = (props: IBreadcrumbProps) => {
-        return (
-            <Breadcrumb onClick={() => this.onBreadcrumbClicked(props.target)}>
-                {props.icon &&
-                <Icon icon={props.icon}/>
-                }
-                {props.text}
-            </Breadcrumb>
-        );
-    };
-
-    private onBreadcrumbClicked(target: string) {
-        this.props.onFolderClicked(target, true);
     }
 
     private setSortColumn(column: string) {

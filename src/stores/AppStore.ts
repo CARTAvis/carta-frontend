@@ -25,7 +25,7 @@ import {
 } from ".";
 import {GetRequiredTiles} from "utilities";
 import {BackendService, TileService, ConnectionStatus} from "services";
-import {CursorInfo, FrameView, Point2D, ProcessedSpatialProfile, ProtobufProcessing, Theme} from "models";
+import {FrameView, Point2D, ProtobufProcessing, Theme} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {AppToaster} from "../components/Shared";
 
@@ -609,7 +609,7 @@ export class AppStore {
     }
 
     // region Subscription handlers
-    @action handleSpatialProfileStream = (spatialProfileData: CARTA.SpatialProfileData) => {
+    @action handleSpatialProfileStream = (spatialProfileData: CARTA.ISpatialProfileData) => {
         if (this.frames.find(frame => frame.frameInfo.fileId === spatialProfileData.fileId)) {
             const key = `${spatialProfileData.fileId}-${spatialProfileData.regionId}`;
             let profileStore = this.spatialProfiles.get(key);
@@ -617,16 +617,7 @@ export class AppStore {
                 profileStore = new SpatialProfileStore(spatialProfileData.fileId, spatialProfileData.regionId);
                 this.spatialProfiles.set(key, profileStore);
             }
-
-            profileStore.channel = spatialProfileData.channel;
-            profileStore.stokes = spatialProfileData.stokes;
-            profileStore.x = spatialProfileData.x;
-            profileStore.y = spatialProfileData.y;
-            const profileMap = new Map<string, ProcessedSpatialProfile>();
-            for (let profile of spatialProfileData.profiles) {
-                profileMap.set(profile.coordinate, ProtobufProcessing.ProcessSpatialProfile(profile));
-            }
-            profileStore.setProfiles(profileMap);
+            profileStore.updateFromStream(spatialProfileData);
 
             // Update cursor value from profile if it matches the file and is the cursor data
             if (this.activeFrame && this.activeFrame.frameInfo.fileId === spatialProfileData.fileId && spatialProfileData.regionId === 0) {

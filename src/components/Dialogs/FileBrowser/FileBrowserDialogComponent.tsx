@@ -1,6 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, IDialogProps, Intent, NonIdealState, Pre, Spinner, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
+import {computed} from "mobx";
+import {AnchorButton, IDialogProps, Intent, NonIdealState, Pre, Spinner, Tab, TabId, Tabs, Tooltip, Breadcrumbs, Breadcrumb, IBreadcrumbProps, Icon} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FileListComponent} from "./FileList/FileListComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -72,6 +73,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             lazy: true,
             isOpen: fileBrowserStore.fileBrowserDialogVisible,
             onClose: fileBrowserStore.hideFileBrowser,
+            onOpened: () => fileBrowserStore.getFileList(fileBrowserStore.startingDirectory),
             title: "File Browser",
         };
 
@@ -114,9 +116,17 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         }
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
-                <div className="bp3-dialog-body" style={{display: "flex"}}>
-                    <div className="file-list-pane">
+            <DraggableDialogComponent dialogProps={dialogProps} minWidth={400} minHeight={400} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
+                <div className="file-path">
+                    {this.pathItems &&
+                        <Breadcrumbs
+                            breadcrumbRenderer={this.renderBreadcrumb}
+                            items={this.pathItems}
+                        />
+                    }
+                </div>
+                <div className="bp3-dialog-body">
+                    <div className="file-list">
                         <FileListComponent
                             darkTheme={this.props.appStore.darkTheme}
                             files={fileBrowserStore.fileList}
@@ -145,5 +155,40 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                 </div>
             </DraggableDialogComponent>
         );
+    }
+
+    private renderBreadcrumb = (props: IBreadcrumbProps) => {
+        return (
+            <Breadcrumb onClick={() => this.props.appStore.fileBrowserStore.selectFolder(props.target, true)}>
+                {props.icon &&
+                    <Icon icon={props.icon}/>
+                }
+                {props.text}
+            </Breadcrumb>
+        );
+    };
+
+    @computed get pathItems() {
+        let pathItems: IBreadcrumbProps[] = [{icon: "desktop", target: "."}];
+        if (this.props.appStore.fileBrowserStore.fileList) {
+            const path = this.props.appStore.fileBrowserStore.fileList.directory;
+            if (path !== ".") {
+                const dirNames = path.split("/");
+                let parentPath = "";
+                if (dirNames.length) {
+                    for (const dirName of dirNames) {
+                        if (!dirName) {
+                            continue;
+                        }
+                        parentPath += `/${dirName}`;
+                        pathItems.push({
+                            text: dirName,
+                            target: parentPath
+                        });
+                    }
+                }
+            }
+        }
+        return pathItems;
     }
 }

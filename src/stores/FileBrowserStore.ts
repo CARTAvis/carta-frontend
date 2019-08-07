@@ -35,7 +35,6 @@ export class FileBrowserStore {
         this.fileBrowserDialogVisible = true;
         this.fileList = null;
         this.selectedTab = FileInfoTabs.INFO;
-        this.getFileList(this.startingDirectory);
     };
 
     @action hideFileBrowser = () => {
