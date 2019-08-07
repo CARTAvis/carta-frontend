@@ -66,7 +66,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             lazy: true,
             isOpen: fileBrowserStore.fileBrowserDialogVisible,
             onClose: fileBrowserStore.hideFileBrowser,
-            onOpened: this.reflashFileListStore,
+            onOpened: () => fileBrowserStore.getFileList(fileBrowserStore.startingDirectory),
             title: "File Browser",
         };
 
@@ -138,12 +138,6 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             </Breadcrumb>
         );
     };
-
-    private reflashFileListStore = () => {
-        const temp = this.props.appStore.fileBrowserStore.fileList;
-        this.props.appStore.fileBrowserStore.fileList = null;
-        this.props.appStore.fileBrowserStore.fileList = temp;
-    }
 
     @computed get pathItems() {
         let pathItems: IBreadcrumbProps[] = [{icon: "desktop", target: "."}];
