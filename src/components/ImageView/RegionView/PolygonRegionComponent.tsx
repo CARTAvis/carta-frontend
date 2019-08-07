@@ -241,7 +241,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
 
         // Construct anchors if region is selected
         let anchors = null;
-        if (this.props.selected) {
+        if (this.props.selected && !region.locked) {
             anchors = new Array<React.ReactNode>(pointArray.length / 2);
             for (let i = 0; i < pointArray.length / 2; i++) {
                 anchors[i] = this.anchorNode(centerPointCanvasSpace.x + pointArray[i * 2], centerPointCanvasSpace.y + pointArray[i * 2 + 1], i, true);
@@ -249,7 +249,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         }
 
         let newAnchor = null;
-        if (this.hoverIntersection) {
+        if (this.hoverIntersection && !region.locked) {
             const anchorPositionPixelSpace = imageToCanvasPos(this.hoverIntersection.x, this.hoverIntersection.y, this.props.frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
             newAnchor = this.anchorNode(anchorPositionPixelSpace.x, anchorPositionPixelSpace.y);
         }
@@ -261,7 +261,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                     y={centerPointCanvasSpace.y}
                     stroke={region.isSimplePolygon ? region.color : INVALID_POLYGON_COLOR}
                     strokeWidth={region.lineWidth}
-                    opacity={(region.isTemporary || region.locked) ? 0.5 : 1.0}
+                    opacity={region.isTemporary ? 0.5 : (region.locked ? 0.70 : 1)}
                     dash={[region.dashLength]}
                     closed={!region.creating}
                     listening={this.props.listening && !region.locked}

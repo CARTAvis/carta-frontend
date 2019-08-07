@@ -271,7 +271,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
             y: centerPixelSpace.y,
             stroke: region.color,
             strokeWidth: region.lineWidth,
-            opacity: (region.isTemporary || region.locked) ? 0.5 : 1.0,
+            opacity: region.isTemporary ? 0.5 : (region.locked ? 0.70 : 1),
             dash: [region.dashLength],
             draggable: true,
             listening: this.props.listening && !region.locked,
@@ -316,8 +316,8 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                     centeredScaling={true}
                     draggable={false}
                     borderEnabled={false}
-                    resizeEnabled={true}
-                    rotateEnabled={true}
+                    resizeEnabled={!region.locked}
+                    rotateEnabled={!region.locked}
                     onTransformStart={this.handleTransformStart}
                     onTransform={this.handleTransform}
                     onTransformEnd={this.handleTransformEnd}
