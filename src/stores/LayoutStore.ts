@@ -1,5 +1,5 @@
 import {observable, computed, action} from "mobx";
-import {AppStore, AlertStore} from "stores";
+import {AppStore, AlertStore, WidgetConfig} from "stores";
 import * as GoldenLayout from "golden-layout";
 import {PresetLayout} from "models";
 import {AppToaster} from "components/Shared";
@@ -138,15 +138,18 @@ export class LayoutStore {
         PresetLayout.PRESETS.forEach((presetName) => {
             const config = PRESET_CONFIGS.get(presetName);
             this.layouts[presetName] = {
-                type: "row",
-                content: [{
-                    type: "column",
-                    width: 60,
-                    content: [{type: "component", id: "image-view"}, config.leftBottomContent]
-                }, {
-                    type: "column",
-                    content: config.rightColumnContent
-                }]
+                docked: {
+                    type: "row",
+                    content: [{
+                        type: "column",
+                        width: 60,
+                        content: [{type: "component", id: "image-view"}, config.leftBottomContent]
+                    }, {
+                        type: "column",
+                        content: config.rightColumnContent
+                    }]
+                },
+                floating: []
             };
         });
 
@@ -191,7 +194,7 @@ export class LayoutStore {
     };
 
     private genSimpleConfig = (newParentContent, parentContent): void => {
-        if (!newParentContent || !parentContent) {
+        if (!newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
             return;
         }
 
@@ -235,7 +238,7 @@ export class LayoutStore {
     };
 
     private fillComponents = (newParentContent, parentContent, componentConfigs: any[]) => {
-        if (!newParentContent || !parentContent) {
+        if (!newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
             return;
         }
 
@@ -302,26 +305,27 @@ export class LayoutStore {
         }
 
         const config = this.layouts[layoutName];
-        if (!config || !config.type || !config.content) {
+        if (!config || !config.docked || !config.docked.type || !config.docked.content || !config.floating) {
             this.alertStore.showAlert(`Applying layout failed! Something is wrong with layout ${layoutName}.`);
             return false;
         }
 
-        // destroy old layout if exists, the widget stores will be removed accordingly
+        // destroy old layout & clear floating widgets
         if (this.dockedLayout) {
             this.dockedLayout.destroy();
+            this.appStore.widgetsStore.removeFloatingWidgets();
         }
 
-        // generate content config & collect component configs
-        let arrangementConfig = {
-            type: config.type,
+        // generate docked config & collect docked components
+        let dockedConfig = {
+            type: config.docked.type,
             content: []
         };
-        let componentConfigs = [];
-        this.fillComponents(arrangementConfig.content, config.content, componentConfigs);
+        let dockedComponentConfigs = [];
+        this.fillComponents(dockedConfig.content, config.docked.content, dockedComponentConfigs);
 
         // use component configs to init widget stores, IDs in componentConfigs will be updated
-        this.appStore.widgetsStore.initWidgetStores(componentConfigs);
+        this.appStore.widgetsStore.initWidgets(dockedComponentConfigs, config.floating);
 
         // generate new layout config & apply
         this.dockedLayout = new GoldenLayout({
@@ -335,7 +339,7 @@ export class LayoutStore {
                 dragProxyWidth: 600,
                 dragProxyHeight: 270,
             },
-            content: [arrangementConfig]
+            content: [dockedConfig]
         }, this.appStore.getImageViewContainer());
         this.appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout);
         this.dockedLayout.init();
@@ -366,15 +370,24 @@ export class LayoutStore {
             return;
         }
 
-        // generate simple config from current layout
+        // 1. generate simple config from current docked widgets
         const rootConfig = currentConfig.content[0];
         let simpleConfig = {
-            type: rootConfig.type,
-            content: []
+            docked: {
+                type: rootConfig.type,
+                content: []
+            },
+            floating: []
         };
-        this.genSimpleConfig(simpleConfig.content, rootConfig.content);
-        this.layouts[this.layoutNameToBeSaved] = simpleConfig;
+        this.genSimpleConfig(simpleConfig.docked.content, rootConfig.content);
 
+        // 2. handle floating widgets
+        this.appStore.widgetsStore.floatingWidgets.forEach((config: WidgetConfig) => {
+            simpleConfig.floating.push(config.type);
+        });
+
+        // save layout to layouts[] & local storage
+        this.layouts[this.layoutNameToBeSaved] = simpleConfig;
         if (!this.saveLayoutToLocalStorage()) {
             delete this.layouts[this.layoutNameToBeSaved];
             return;

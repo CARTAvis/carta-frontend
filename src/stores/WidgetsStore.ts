@@ -175,43 +175,74 @@ export class WidgetsStore {
         }
     };
 
-    public initWidgetStores = (componentConfigs: any[]) => {
-        componentConfigs.forEach((componentConfig) => {
-            if (componentConfig.id) {
-                let itemId;
-                switch (componentConfig.id) {
-                    case RenderConfigComponent.WIDGET_CONFIG.type:
-                        itemId = this.addRenderConfigWidget();
-                        break;
-                    case SpatialProfilerComponent.WIDGET_CONFIG.type:
-                        itemId = this.addSpatialProfileWidget(null, componentConfig.coord && componentConfig.coord === "y" ? "y" : "x", -1, 0);
-                        break;
-                    case SpectralProfilerComponent.WIDGET_CONFIG.type:
-                        itemId = this.addSpectralProfileWidget();
-                        break;
-                    case StatsComponent.WIDGET_CONFIG.type:
-                        itemId = this.addStatsWidget();
-                        break;
-                    case HistogramComponent.WIDGET_CONFIG.type:
-                        itemId = this.addHistogramWidget();
-                        break;
-                    case AnimatorComponent.WIDGET_CONFIG.type:
-                        itemId = this.addAnimatorWidget();
-                        break;
-                    case LogComponent.WIDGET_CONFIG.type:
-                        itemId = this.addLogWidget();
-                        break;
-                    case RegionListComponent.WIDGET_CONFIG.type:
-                        itemId = this.addRegionListWidget();
-                        break;
-                    default:
-                        break;
+    private addWidgetByType = (widgetType: string, coord: string = null): string => {
+        let itemId;
+        switch (widgetType) {
+            case ImageViewComponent.WIDGET_CONFIG.type:
+                itemId = ImageViewComponent.WIDGET_CONFIG.id;
+                break;
+            case RenderConfigComponent.WIDGET_CONFIG.type:
+                itemId = this.addRenderConfigWidget();
+                break;
+            case SpatialProfilerComponent.WIDGET_CONFIG.type:
+                itemId = this.addSpatialProfileWidget(null, coord && coord === "y" ? "y" : "x", -1, 0);
+                break;
+            case SpectralProfilerComponent.WIDGET_CONFIG.type:
+                itemId = this.addSpectralProfileWidget();
+                break;
+            case StatsComponent.WIDGET_CONFIG.type:
+                itemId = this.addStatsWidget();
+                break;
+            case HistogramComponent.WIDGET_CONFIG.type:
+                itemId = this.addHistogramWidget();
+                break;
+            case AnimatorComponent.WIDGET_CONFIG.type:
+                itemId = this.addAnimatorWidget();
+                break;
+            case LogComponent.WIDGET_CONFIG.type:
+                itemId = this.addLogWidget();
+                break;
+            case RegionListComponent.WIDGET_CONFIG.type:
+                itemId = this.addRegionListWidget();
+                break;
+            case StokesAnalysisComponent.WIDGET_CONFIG.type:
+                itemId = this.addStokesWidget();
+                break;
+            default:
+                // Remove it from the floating widget array, while preserving its store
+                if (this.floatingWidgets.find(w => w.id === widgetType)) {
+                    this.removeFloatingWidget(widgetType, true);
                 }
+                itemId = null;
+                break;
+        }
+        return itemId;
+    };
+
+    removeFloatingWidgets = () => {
+        if (this.floatingWidgets) {
+            this.floatingWidgets.forEach((widgetConfig) => this.removeFloatingWidget(widgetConfig.id));
+        }
+    }
+
+    public initWidgets = (componentConfigs: any[], floating: any[]) => {
+        let isImageViewOccured: boolean = false;
+        // init docked widgets
+        componentConfigs.forEach((componentConfig) => {
+            if (componentConfig.id && componentConfig.props) {
+                const itemId = this.addWidgetByType(componentConfig.id);
                 if (itemId) {
                     componentConfig.id = itemId;
                     componentConfig.props.id = itemId;
                 }
             }
+        });
+
+        // init floating widgets
+        floating.forEach((widgetType) => {
+            let config = WidgetsStore.getDefaultWidgetConfig(widgetType);
+            config.id = this.addWidgetByType(widgetType);
+            this.addFloatingWidget(config);
         });
     };
 
@@ -278,43 +309,7 @@ export class WidgetsStore {
         const config = item.config as GoldenLayout.ReactComponentConfig;
         const id = config.id as string;
 
-        let itemId;
-        // Check if it's an uninitialised widget
-        switch (id) {
-            case RenderConfigComponent.WIDGET_CONFIG.type:
-                itemId = this.addRenderConfigWidget();
-                break;
-            case SpatialProfilerComponent.WIDGET_CONFIG.type:
-                itemId = this.addSpatialProfileWidget();
-                break;
-            case SpectralProfilerComponent.WIDGET_CONFIG.type:
-                itemId = this.addSpectralProfileWidget();
-                break;
-            case StatsComponent.WIDGET_CONFIG.type:
-                itemId = this.addStatsWidget();
-                break;
-            case HistogramComponent.WIDGET_CONFIG.type:
-                itemId = this.addHistogramWidget();
-                break;
-            case AnimatorComponent.WIDGET_CONFIG.type:
-                itemId = this.addAnimatorWidget();
-                break;
-            case LogComponent.WIDGET_CONFIG.type:
-                itemId = this.addLogWidget();
-                break;
-            case RegionListComponent.WIDGET_CONFIG.type:
-                itemId = this.addRegionListWidget();
-                break;
-            case StokesAnalysisComponent.WIDGET_CONFIG.type:
-                itemId = this.addStokesWidget();
-                break;
-            default:
-                // Remove it from the floating widget array, while preserving its store
-                if (this.floatingWidgets.find(w => w.id === id)) {
-                    this.removeFloatingWidget(id, true);
-                }
-        }
-
+        const itemId = this.addWidgetByType(id);
         if (itemId) {
             config.id = itemId;
             config.props.id = itemId;
