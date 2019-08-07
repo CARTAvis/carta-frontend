@@ -7,6 +7,7 @@ import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
 import {add2D, average2D, closestPointOnLine} from "utilities";
 import {canvasToImagePos, imageToCanvasPos} from "./shared";
+import {Colors} from "@blueprintjs/core";
 
 export interface PolygonRegionComponentProps {
     region: RegionStore;
@@ -21,6 +22,7 @@ export interface PolygonRegionComponentProps {
 
 const ANCHOR_WIDTH = 7;
 const NEW_ANCHOR_MAX_DISTANCE = 16;
+const INVALID_POLYGON_COLOR = Colors.ROSE4;
 
 @observer
 export class PolygonRegionComponent extends React.Component<PolygonRegionComponentProps> {
@@ -55,7 +57,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                 const currentControlPoints = region.controlPoints.slice(0);
                 currentControlPoints.splice(this.hoverIndex + 1, 0, this.hoverIntersection);
                 // Skip SET_REGION update, since the new control point lies on the line between two existing points
-                region.setControlPoints(currentControlPoints, true);
+                region.setControlPoints(currentControlPoints, true, false);
                 this.hoverIntersection = null;
             }
         }
@@ -171,7 +173,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             const newCenterPixelSpace = node.position();
             const deltaPositionImageSpace = {x: (newCenterPixelSpace.x - currentCenterPixelSpace.x) / frame.zoomLevel, y: -(newCenterPixelSpace.y - currentCenterPixelSpace.y) / frame.zoomLevel};
             const newPoints = region.controlPoints.map(p => add2D(p, deltaPositionImageSpace));
-            region.setControlPoints(newPoints);
+            region.setControlPoints(newPoints, false, false);
         }
     };
 
@@ -257,7 +259,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                 <Line
                     x={centerPointCanvasSpace.x}
                     y={centerPointCanvasSpace.y}
-                    stroke={region.color}
+                    stroke={region.isSimplePolygon ? region.color : INVALID_POLYGON_COLOR}
                     strokeWidth={region.lineWidth}
                     opacity={region.isTemporary ? 0.5 : 1.0}
                     dash={[region.dashLength]}
