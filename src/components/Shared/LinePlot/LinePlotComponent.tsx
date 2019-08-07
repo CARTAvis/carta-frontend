@@ -14,7 +14,6 @@ import {Point2D} from "models";
 import {clamp, binarySearchByX} from "utilities";
 import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import "./LinePlotComponent.css";
-import * as Chart from "chart.js";
 
 enum ZoomMode {
     NONE,
