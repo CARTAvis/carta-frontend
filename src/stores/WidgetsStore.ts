@@ -268,21 +268,9 @@ export class WidgetsStore {
         ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.CreateDragSource(this.appStore, layout, widgetConfig, id));
 
         layout.on("stackCreated", (stack) => {
-            const imageView = stack.getItemsById(ImageViewComponent.WIDGET_CONFIG.id);
-            if (imageView && imageView.length > 0) {
-                // make the stack having image view component un-floatable & unstackable
-                // source for unstackable: https://github.com/golden-layout/golden-layout/issues/357
-                const originalGetArea = stack._$getArea;
-                stack._$getArea = function() {
-                    const area = originalGetArea.call(stack);
-                    Object.defineProperty(stack._contentAreaDimensions, "header", {enumerable: false, value: {}});
-                    return area;
-                };
-            } else {
-                let unpinButton = $(`<li class="pin-icon"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);
-                unpinButton.on("click", () => this.unpinWidget(stack.getActiveContentItem()));
-                stack.header.controlsContainer.prepend(unpinButton);
-            }
+            let unpinButton = $(`<li class="pin-icon"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);
+            unpinButton.on("click", () => this.unpinWidget(stack.getActiveContentItem()));
+            stack.header.controlsContainer.prepend(unpinButton);
         });
         layout.on("componentCreated", this.handleItemCreation);
         layout.on("itemDestroyed", this.handleItemRemoval);
@@ -294,6 +282,12 @@ export class WidgetsStore {
         const id = itemConfig.id as string;
         const type = itemConfig.component;
         const title = itemConfig.title;
+
+        // Avoid floating ImageViewComponent
+        if (type === ImageViewComponent.WIDGET_CONFIG.type) {
+            return;
+        }
+
         // Get widget type from config
         let widgetConfig = WidgetsStore.getDefaultWidgetConfig(type);
         widgetConfig.id = id;
