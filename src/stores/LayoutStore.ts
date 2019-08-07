@@ -383,7 +383,13 @@ export class LayoutStore {
 
         // 2. handle floating widgets
         this.appStore.widgetsStore.floatingWidgets.forEach((config: WidgetConfig) => {
-            simpleConfig.floating.push(config.type);
+            let floatingConfig = {
+                type: config.type
+            };
+            if (config.type === "spatial-profiler") {
+                floatingConfig["coord"] = config.title && config.title.indexOf("Y") >= 0 ? "y" : "x";
+            }
+            simpleConfig.floating.push(floatingConfig);
         });
 
         // save layout to layouts[] & local storage

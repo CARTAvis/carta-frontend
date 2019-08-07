@@ -226,7 +226,6 @@ export class WidgetsStore {
     }
 
     public initWidgets = (componentConfigs: any[], floating: any[]) => {
-        let isImageViewOccured: boolean = false;
         // init docked widgets
         componentConfigs.forEach((componentConfig) => {
             if (componentConfig.id && componentConfig.props) {
@@ -245,10 +244,16 @@ export class WidgetsStore {
         });
 
         // init floating widgets
-        floating.forEach((widgetType) => {
-            let config = WidgetsStore.getDefaultWidgetConfig(widgetType);
-            config.id = this.addWidgetByType(widgetType);
-            this.addFloatingWidget(config);
+        floating.forEach((savedConfig) => {
+            if (savedConfig.type) {
+                let config = WidgetsStore.getDefaultWidgetConfig(savedConfig.type);
+                if (savedConfig.type === SpatialProfilerComponent.WIDGET_CONFIG.type && savedConfig.coord) {
+                    config.id = this.addWidgetByType(savedConfig.type, savedConfig.coord);
+                } else {
+                    config.id = this.addWidgetByType(savedConfig.type);
+                }
+                this.addFloatingWidget(config);
+            }
         });
     };
 
