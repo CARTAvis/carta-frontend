@@ -3,6 +3,7 @@ import {observer} from "mobx-react";
 import ReactResizeDetector from "react-resize-detector";
 import {Layer, Stage} from "react-konva";
 import {Colors} from "@blueprintjs/core";
+import {ChartArea} from "chart.js";
 import {PlotContainerComponent} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {LinePlotComponent} from "components/Shared/LinePlot/LinePlotComponent";
@@ -11,6 +12,10 @@ import "./ScatterPlotComponent.css";
 @observer
 export class ScatterPlotComponent extends LinePlotComponent {
     private pointDefaultColor = Colors.GRAY2;
+
+    private getChartAreaWH(chartArea: ChartArea): {width: number, height: number} {
+        return {width: Math.abs(chartArea.right - chartArea.left), height: Math.abs(chartArea.bottom - chartArea.top)};
+    }
 
     private getScatterColor(value: number, min: number, max: number, toColor: number): string {
         let percentage = (value + Math.abs(min)) / (Math.abs(min) + Math.abs(max));
@@ -29,10 +34,20 @@ export class ScatterPlotComponent extends LinePlotComponent {
         return scatterColors;
     }
 
-    private centeredOrigin(): { xMin: number, xMax: number, yMin: number, yMax: number } {
+    private resizeData(): { xMin: number, xMax: number, yMin: number, yMax: number } {
         if (this.props.centeredOrigin && this.props.xMin && this.props.xMax && this.props.yMin && this.props.yMax) {
-            const xLimit = Math.max(Math.abs(this.props.xMin), Math.abs(this.props.xMax));
-            const yLimit = Math.max(Math.abs(this.props.yMin), Math.abs(this.props.yMax));
+            let xLimit = Math.max(Math.abs(this.props.xMin), Math.abs(this.props.xMax));
+            let yLimit = Math.max(Math.abs(this.props.yMin), Math.abs(this.props.yMax));
+            if (this.props.equalScale) {
+                let currentChartArea = this.getChartAreaWH(this.chartArea);
+                let ratio = currentChartArea.width / currentChartArea.height;
+                if (ratio < 1) {
+                    yLimit = yLimit * (1 / ratio);
+                }
+                if (ratio > 1) {
+                    xLimit = xLimit * ratio;
+                }
+            }
             return {xMin: -xLimit, xMax: xLimit, yMin: -yLimit, yMax: yLimit};
         }
         return {xMin: this.props.xMin, xMax: this.props.xMax, yMin: this.props.yMin, yMax: this.props.yMax};
@@ -40,7 +55,7 @@ export class ScatterPlotComponent extends LinePlotComponent {
 
     render() {
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
-        let axisRange = this.centeredOrigin();
+        let axisRange = this.resizeData();
         return (
             <div
                 className={"scatter-plot-component"}
