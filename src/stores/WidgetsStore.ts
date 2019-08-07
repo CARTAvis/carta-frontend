@@ -230,7 +230,13 @@ export class WidgetsStore {
         // init docked widgets
         componentConfigs.forEach((componentConfig) => {
             if (componentConfig.id && componentConfig.props) {
-                const itemId = this.addWidgetByType(componentConfig.id);
+                let itemId;
+                if (componentConfig.id === SpatialProfilerComponent.WIDGET_CONFIG.type && componentConfig.coord) {
+                    itemId = this.addWidgetByType(componentConfig.id, componentConfig.coord);
+                } else {
+                    itemId = this.addWidgetByType(componentConfig.id);
+                }
+
                 if (itemId) {
                     componentConfig.id = itemId;
                     componentConfig.props.id = itemId;
