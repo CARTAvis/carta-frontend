@@ -66,6 +66,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             lazy: true,
             isOpen: fileBrowserStore.fileBrowserDialogVisible,
             onClose: fileBrowserStore.hideFileBrowser,
+            onOpened: () => fileBrowserStore.showFileBrowser(),
             title: "File Browser",
         };
 
@@ -76,7 +77,6 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         <Breadcrumbs
                             breadcrumbRenderer={this.renderBreadcrumb}
                             items={this.pathItems}
-                            minVisibleItems={2}
                         />
                     }
                 </div>
