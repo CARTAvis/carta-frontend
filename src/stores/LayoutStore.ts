@@ -340,7 +340,7 @@ export class LayoutStore {
                 dragProxyHeight: 270,
             },
             content: [dockedConfig]
-        }, this.appStore.getImageViewContainer());
+        }, this.appStore.getAppContainer());
         this.appStore.widgetsStore.initLayoutWithWidgets(this.dockedLayout);
         this.dockedLayout.init();
         this.currentLayoutName = layoutName;
