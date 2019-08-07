@@ -372,11 +372,20 @@ export class AppStore {
             return;
         }
 
-        this.backendService.importRegion(directory, file, type, this.activeFrame.frameInfo.fileId).subscribe(ack => {
-            // TODO: Handle imported regions
-            console.log(ack);
-            AppToaster.show({icon: "warning-sign", message: `Region import not yet implemented`, intent: "warning", timeout: 3000});
+        // ensure that the same frame is used in the callback, to prevent issues when the active frame changes while the region is being imported
+        const frame = this.activeFrame;
+        this.backendService.importRegion(directory, file, type, frame.frameInfo.fileId).subscribe(ack => {
+            if (frame && ack.success && ack.regions) {
+                for (const region of ack.regions) {
+                    if (region.regionInfo) {
+                        frame.regionSet.addExistingRegion(region.regionInfo.controlPoints as Point2D[], region.regionInfo.regionType, region.regionId);
+                    }
+                }
+            }
             this.fileBrowserStore.hideFileBrowser();
+        }, error => {
+            console.error(error);
+            AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
         });
     };
 
