@@ -31,40 +31,39 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
 
     render() {
         const cursorInfo = this.props.cursorInfo;
-        var infoStrings: string[] = [];
-        if (this.props.showWCS && cursorInfo.infoWCS) {
-            infoStrings.push(`WCS:\u00a0(${cursorInfo.infoWCS.x},\u00a0${cursorInfo.infoWCS.y})`);
-        }
-        if (this.props.showCanvas) {
-            infoStrings.push(`Canvas:\u00a0(${cursorInfo.posCanvasSpace.x.toFixed(0)},\u00a0${cursorInfo.posCanvasSpace.y.toFixed(0)})`);
-        }
-        if (this.props.showImage) {
-            infoStrings.push(`Image:\u00a0(${cursorInfo.posImageSpace.x.toFixed(0)},\u00a0${cursorInfo.posImageSpace.y.toFixed(0)})`);
-        }
-        if (this.props.showValue && this.props.cursorValue !== undefined) {
-            let valueString = `Value:\u00a0${formattedExponential(this.props.cursorValue, 5, this.props.unit, true, true)}`;
-            if (isNaN(this.props.cursorValue)) {
-                valueString = "NaN";
+        let infoStrings: string[] = [];
+        if (cursorInfo.isInsideImage === true) {
+            if (this.props.showWCS && cursorInfo.infoWCS) {
+                infoStrings.push(`WCS:\u00a0(${cursorInfo.infoWCS.x},\u00a0${cursorInfo.infoWCS.y})`);
             }
-            infoStrings.push(valueString);
-        }
-        if (this.props.showChannel && this.props.spectralInfo.channel !== undefined) {
-            infoStrings.push(`Channel:\u00a0${this.props.spectralInfo.channel}`);
-        }
-        if (this.props.showSpectral && this.props.spectralInfo.spectralString) {
-            infoStrings.push(this.props.spectralInfo.spectralString);
-            if (this.props.spectralInfo.freqString) {
-                infoStrings.push(this.props.spectralInfo.freqString);
+            if (this.props.showCanvas) {
+                infoStrings.push(`Canvas:\u00a0(${cursorInfo.posCanvasSpace.x.toFixed(0)},\u00a0${cursorInfo.posCanvasSpace.y.toFixed(0)})`);
             }
-            if (this.props.spectralInfo.velocityString) {
-                infoStrings.push(this.props.spectralInfo.velocityString);
+            if (this.props.showImage) {
+                infoStrings.push(`Image:\u00a0(${cursorInfo.posImageSpace.x.toFixed(0)},\u00a0${cursorInfo.posImageSpace.y.toFixed(0)})`);
             }
-        }
-
-        // console.log(cursorInfo.IsInImage)
-        if (cursorInfo.IsInImage === false){
+            if (this.props.showValue && this.props.cursorValue !== undefined) {
+                let valueString = `Value:\u00a0${formattedExponential(this.props.cursorValue, 5, this.props.unit, true, true)}`;
+                if (isNaN(this.props.cursorValue)) {
+                    valueString = "NaN";
+                }
+                infoStrings.push(valueString);
+            }
+            if (this.props.showChannel && this.props.spectralInfo.channel !== undefined) {
+                infoStrings.push(`Channel:\u00a0${this.props.spectralInfo.channel}`);
+            }
+            if (this.props.showSpectral && this.props.spectralInfo.spectralString) {
+                infoStrings.push(this.props.spectralInfo.spectralString);
+                if (this.props.spectralInfo.freqString) {
+                    infoStrings.push(this.props.spectralInfo.freqString);
+                }
+                if (this.props.spectralInfo.velocityString) {
+                    infoStrings.push(this.props.spectralInfo.velocityString);
+                }
+            }
+        } else {
             infoStrings = [];
-        };
+        }
 
         const height = (this.props.height !== undefined && this.props.height >= 0) ? this.props.height : 20;
 
