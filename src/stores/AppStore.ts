@@ -756,18 +756,22 @@ export class AppStore {
     }
 
     @action deleteSelectedRegion = () => {
-        if (this.activeFrame && this.activeFrame.regionSet) {
-            const fileId = this.activeFrame.frameInfo.fileId;
-            let region: RegionStore;
-            region = this.activeFrame.regionSet.selectedRegion;
-            if (region) {
-                const regionId = region.regionId;
-                WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.statsWidgets, fileId, regionId);
-                WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.histogramWidgets, fileId, regionId);
-                WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.spectralProfileWidgets, fileId, regionId);
-                WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets, fileId, regionId);
-                // delete region
-                this.activeFrame.regionSet.deleteRegion(region);
+        if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && !this.activeFrame.regionSet.selectedRegion.locked) {
+            this.deleteRegion(this.activeFrame.regionSet.selectedRegion);
+        }
+    };
+
+    @action deleteRegion = (region: RegionStore) => {
+        if (region) {
+            const frame = this.getFrame(region.fileId);
+            const regionId = region.regionId;
+            WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.statsWidgets, region.fileId, regionId);
+            WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.histogramWidgets, region.fileId, regionId);
+            WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.spectralProfileWidgets, region.fileId, regionId);
+            WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets, region.fileId, regionId);
+            // delete region
+            if (frame) {
+                frame.regionSet.deleteRegion(region);
             }
         }
     };
