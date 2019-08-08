@@ -460,8 +460,36 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
     }
 
+    private exportSubPlotImage(visible: boolean) {
+        const scatterChart = this.plotRef.chartInstance;
+        scatterChart.config.options.scales.xAxes[0].ticks.display = visible;
+        scatterChart.config.options.scales.xAxes[0].ticks.major.display = visible;
+        scatterChart.config.options.scales.xAxes[0].ticks.minor.display = visible;
+        let tickMarkLength = 10;
+        if (!visible) {
+            tickMarkLength = 0;
+        }
+        scatterChart.options.scales.xAxes[0].gridLines.tickMarkLength = tickMarkLength;
+        scatterChart.options.scales.xAxes[0].scaleLabel.display = visible;
+        scatterChart.update();
+    }
+
+    private showPlotxAxes() {
+        const scatterProps = this.plotRef.chartInstance;
+        if (this.props.isGroupSubPlot === true) {
+            if (scatterProps && scatterProps.options.scales.xAxes[0].ticks.display === false) {
+                return true;  
+            } 
+        }
+        return false;
+    }
+
     exportImage = () => {
         const scatter = this.plotRef as Scatter;
+        const showPlotxAxes = this.showPlotxAxes();
+        if (showPlotxAxes) {
+            this.exportSubPlotImage(true);
+        }
         const canvas = scatter.chartInstance.canvas;
         const plotName = this.props.plotName || "unknown";
         const imageName = this.props.imageName || "unknown";
@@ -481,6 +509,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             link.href = URL.createObjectURL(blob);
             link.dispatchEvent(new MouseEvent("click"));
         }, "image/png");
+
+        if (showPlotxAxes) {
+            this.exportSubPlotImage(false);
+        }
+
     };
 
     exportData = () => {
@@ -507,17 +540,18 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             rows = this.props.data.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
         } else {
             if (this.props.data && this.props.data.length) {
-                rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+                if (this.props.forceScientificNotationTicksX === true) {
+                    rows = this.props.data.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
+                } else {
+                    rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+                }
             } else if (this.props.multiPlotData && this.props.multiPlotData.size) {
-                
                 this.props.multiPlotData.forEach((value, key) => {
                     if (key === StokesCoordinate.LinearPolarizationQ || key === StokesCoordinate.LinearPolarizationU) {
-                        rows.push(`${key}\t`);
+                        rows.push(`# ${key}\t`);
                         value.forEach(o => {
                             rows.push(`${o.x}\t${o.y.toExponential(10)}`);
                         });
-                    } else if (key === StokesCoordinate.PolarizationQU) {
-                        rows = value.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
                     } else {
                         rows = value.map(o => `${o.x}\t${o.y.toExponential(10)}`);
                     }
