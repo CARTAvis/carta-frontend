@@ -25,7 +25,7 @@ import {
 } from ".";
 import {GetRequiredTiles} from "utilities";
 import {BackendService, TileService, ConnectionStatus} from "services";
-import {CursorInfo, FrameView, Point2D, ProcessedSpatialProfile, ProtobufProcessing, Theme} from "models";
+import {FrameView, Point2D, ProtobufProcessing, Theme} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 
 const CURSOR_THROTTLE_TIME = 200;
@@ -581,7 +581,7 @@ export class AppStore {
     }
 
     // region Subscription handlers
-    @action handleSpatialProfileStream = (spatialProfileData: CARTA.SpatialProfileData) => {
+    @action handleSpatialProfileStream = (spatialProfileData: CARTA.ISpatialProfileData) => {
         if (this.frames.find(frame => frame.frameInfo.fileId === spatialProfileData.fileId)) {
             const key = `${spatialProfileData.fileId}-${spatialProfileData.regionId}`;
             let profileStore = this.spatialProfiles.get(key);
@@ -589,16 +589,7 @@ export class AppStore {
                 profileStore = new SpatialProfileStore(spatialProfileData.fileId, spatialProfileData.regionId);
                 this.spatialProfiles.set(key, profileStore);
             }
-
-            profileStore.channel = spatialProfileData.channel;
-            profileStore.stokes = spatialProfileData.stokes;
-            profileStore.x = spatialProfileData.x;
-            profileStore.y = spatialProfileData.y;
-            const profileMap = new Map<string, ProcessedSpatialProfile>();
-            for (let profile of spatialProfileData.profiles) {
-                profileMap.set(profile.coordinate, ProtobufProcessing.ProcessSpatialProfile(profile));
-            }
-            profileStore.setProfiles(profileMap);
+            profileStore.updateFromStream(spatialProfileData);
 
             // Update cursor value from profile if it matches the file and is the cursor data
             if (this.activeFrame && this.activeFrame.frameInfo.fileId === spatialProfileData.fileId && spatialProfileData.regionId === 0) {
@@ -765,18 +756,22 @@ export class AppStore {
     }
 
     @action deleteSelectedRegion = () => {
-        if (this.activeFrame && this.activeFrame.regionSet) {
-            const fileId = this.activeFrame.frameInfo.fileId;
-            let region: RegionStore;
-            region = this.activeFrame.regionSet.selectedRegion;
-            if (region) {
-                const regionId = region.regionId;
-                WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.statsWidgets, fileId, regionId);
-                WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.histogramWidgets, fileId, regionId);
-                WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.spectralProfileWidgets, fileId, regionId);
-                WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets, fileId, regionId);
-                // delete region
-                this.activeFrame.regionSet.deleteRegion(region);
+        if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && !this.activeFrame.regionSet.selectedRegion.locked) {
+            this.deleteRegion(this.activeFrame.regionSet.selectedRegion);
+        }
+    };
+
+    @action deleteRegion = (region: RegionStore) => {
+        if (region) {
+            const frame = this.getFrame(region.fileId);
+            const regionId = region.regionId;
+            WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.statsWidgets, region.fileId, regionId);
+            WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.histogramWidgets, region.fileId, regionId);
+            WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.spectralProfileWidgets, region.fileId, regionId);
+            WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets, region.fileId, regionId);
+            // delete region
+            if (frame) {
+                frame.regionSet.deleteRegion(region);
             }
         }
     };
