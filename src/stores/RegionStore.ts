@@ -1,9 +1,11 @@
 import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {Point2D} from "models";
-import {BackendService} from "../services";
 import {Colors} from "@blueprintjs/core";
-import {minMax2D, simplePolygonTest, simplePolygonPointTest} from "../utilities";
+import {Point2D} from "models";
+import {BackendService} from "services";
+import {minMax2D, simplePolygonTest, simplePolygonPointTest} from "utilities";
+
+export const CURSOR_REGION_ID = 0;
 
 export class RegionStore {
     @observable fileId: number;
@@ -18,6 +20,7 @@ export class RegionStore {
     @observable rotation: number;
     @observable editing: boolean;
     @observable creating: boolean;
+    @observable locked: boolean;
     @observable isSimplePolygon: boolean;
 
     static readonly MIN_LINE_WIDTH = 0.5;
@@ -141,7 +144,7 @@ export class RegionStore {
     }
 
     @computed get nameString() {
-        if (this.regionId === 0) {
+        if (this.regionId === CURSOR_REGION_ID) {
             return "Cursor";
         } else if (this.name) {
             return this.name;
@@ -278,10 +281,22 @@ export class RegionStore {
         this.updateRegion();
     };
 
+    @action toggleLock = () => {
+        if (this.regionId !== CURSOR_REGION_ID) {
+            this.locked = !this.locked;
+        }
+    };
+
+    @action setLocked = (locked: boolean) => {
+        if (this.regionId !== CURSOR_REGION_ID) {
+            this.locked = locked;
+        }
+    };
+
     // Update the region with the backend
     private updateRegion = () => {
         if (this.isValid) {
-            if (this.regionId === 0 && this.regionType === CARTA.RegionType.POINT) {
+            if (this.regionId === CURSOR_REGION_ID && this.regionType === CARTA.RegionType.POINT) {
                 this.backendService.setCursor(this.fileId, this.controlPoints[0].x, this.controlPoints[0].y);
             } else {
                 this.backendService.setRegion(this.fileId, this.regionId, this).subscribe(ack => {

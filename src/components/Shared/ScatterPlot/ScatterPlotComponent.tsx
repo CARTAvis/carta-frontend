@@ -14,7 +14,7 @@ export class ScatterPlotComponent extends LinePlotComponent {
     private pointDefaultColor = Colors.GRAY2;
 
     private getChartAreaWH(chartArea: ChartArea): {width: number, height: number} {
-        if (chartArea.right && chartArea.bottom) {
+        if (chartArea && chartArea.right && chartArea.bottom) {
             return {width: Math.abs(chartArea.right - chartArea.left), height: Math.abs(chartArea.bottom - chartArea.top)};
         } else {
             return {width: 0, height: 0};
@@ -42,7 +42,7 @@ export class ScatterPlotComponent extends LinePlotComponent {
         if (this.props.centeredOrigin && this.props.xMin && this.props.xMax && this.props.yMin && this.props.yMax) {
             let xLimit = Math.max(Math.abs(this.props.xMin), Math.abs(this.props.xMax));
             let yLimit = Math.max(Math.abs(this.props.yMin), Math.abs(this.props.yMax));
-            if (this.props.equalScale) {
+            if (this.props.equalScale && this.chartArea) {
                 let currentChartArea = this.getChartAreaWH(this.chartArea);
                 if (currentChartArea.width !== 0 && currentChartArea.height !== 0) {
                     let ratio = currentChartArea.width / currentChartArea.height;
