@@ -17,7 +17,7 @@ export class ScatterPlotComponent extends LinePlotComponent {
     private opacityOutRange = 0.1;
 
     private getChartAreaWH(chartArea: ChartArea): {width: number, height: number} {
-        if (chartArea) {
+        if (chartArea && chartArea.right && chartArea.bottom) {
             return {width: Math.abs(chartArea.right - chartArea.left), height: Math.abs(chartArea.bottom - chartArea.top)};
         } else {
             return {width: 0, height: 0};
