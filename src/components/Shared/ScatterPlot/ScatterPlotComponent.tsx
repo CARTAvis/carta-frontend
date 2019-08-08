@@ -14,7 +14,11 @@ export class ScatterPlotComponent extends LinePlotComponent {
     private pointDefaultColor = Colors.GRAY2;
 
     private getChartAreaWH(chartArea: ChartArea): {width: number, height: number} {
-        return {width: Math.abs(chartArea.right - chartArea.left), height: Math.abs(chartArea.bottom - chartArea.top)};
+        if (chartArea.right && chartArea.bottom) {
+            return {width: Math.abs(chartArea.right - chartArea.left), height: Math.abs(chartArea.bottom - chartArea.top)};
+        } else {
+            return {width: 0, height: 0};
+        }
     }
 
     private getScatterColor(value: number, min: number, max: number, toColor: number): string {
@@ -40,12 +44,14 @@ export class ScatterPlotComponent extends LinePlotComponent {
             let yLimit = Math.max(Math.abs(this.props.yMin), Math.abs(this.props.yMax));
             if (this.props.equalScale) {
                 let currentChartArea = this.getChartAreaWH(this.chartArea);
-                let ratio = currentChartArea.width / currentChartArea.height;
-                if (ratio < 1) {
-                    yLimit = yLimit * (1 / ratio);
-                }
-                if (ratio > 1) {
-                    xLimit = xLimit * ratio;
+                if (currentChartArea.width !== 0 && currentChartArea.height !== 0) {
+                    let ratio = currentChartArea.width / currentChartArea.height;
+                    if (ratio < 1) {
+                        yLimit = yLimit * (1 / ratio);
+                    }
+                    if (ratio > 1) {
+                        xLimit = xLimit * ratio;
+                    }
                 }
             }
             return {xMin: -xLimit, xMax: xLimit, yMin: -yLimit, yMax: yLimit};
