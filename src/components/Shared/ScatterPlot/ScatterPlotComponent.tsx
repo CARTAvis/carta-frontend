@@ -24,31 +24,21 @@ export class ScatterPlotComponent extends LinePlotComponent {
         }
     }
 
-    // private getScatterColor(value: number, min: number, max: number, toColor: number): string {
-    //     let percentage = (value + Math.abs(min)) / (Math.abs(min) + Math.abs(max));
-    //     let hue = (percentage * toColor).toString(10);
-    //     return ["hsl(", hue, ",100%,50%)"].join("");
-    // }
-
     private getScatterColor(value: number, min: number, max: number, toColor: number, outRange: boolean): string {
         let percentage = (value + Math.abs(min)) / (Math.abs(min) + Math.abs(max));
         let hue = (percentage * toColor).toString(10);
-        // let opacity = this.opacityInit;
         if (outRange) {
-            // opacity = this.opacityOutRange;
-            return ["hsla(", hue, ",0%,50%,", this.opacityOutRange,")"].join("");
+            return ["hsla(", hue, ",0%,50%,", this.opacityOutRange, ")"].join("");
         }
-        return ["hsla(", hue, ",100%,50%,", this.opacityInit,")"].join("");
+        return ["hsla(", hue, ",100%,50%,", this.opacityInit, ")"].join("");
     }
 
     private fillColor(): Array<string> {
         let scatterColors = [];
         if (this.props.data && this.props.data.length && this.props.scatterColorIndex && this.props.scatterColorIndex.length && this.props.interactionBorder) {
-            // console.log(this.props.data.length);
-            let yMin = getMinY(this.props.data.filter(data => {return (!isNaN(data.x) && !isNaN(data.y))}));
-            let yMax = getMaxY(this.props.data.filter(data => {return (!isNaN(data.x) && !isNaN(data.y))}));
-            let xlinePlotRange = this.props.interactionBorder; 
-            // console.log(Math.log10(Math.abs(yMax)))
+            let yMin = getMinY(this.props.data.filter(data => {return (!isNaN(data.x) && !isNaN(data.y)); }));
+            let yMax = getMaxY(this.props.data.filter(data => {return (!isNaN(data.x) && !isNaN(data.y)); }));
+            let xlinePlotRange = this.props.interactionBorder;
             this.props.scatterColorIndex.forEach(data => {
                 let pointColor = this.pointDefaultColor;
                 let outRange = true;
@@ -61,17 +51,6 @@ export class ScatterPlotComponent extends LinePlotComponent {
         }
         return scatterColors;
     }
-
-    // private fillColor(): Array<string> {
-    //     let scatterColors = [];
-    //     if (this.props.data) {
-    //         this.props.data.forEach(data => {
-    //             let pointColor = this.getScatterColor(data.y, this.props.yMin, this.props.yMax, this.props.colorRangeEnd);
-    //             scatterColors.push(pointColor);
-    //         });
-    //     }
-    //     return scatterColors;
-    // }
 
     private resizeData(): { xMin: number, xMax: number, yMin: number, yMax: number } {
         if (this.props.centeredOrigin && this.props.xMin && this.props.xMax && this.props.yMin && this.props.yMax) {

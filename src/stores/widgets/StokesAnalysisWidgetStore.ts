@@ -139,7 +139,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     @action setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
-        this.clearXYBounds();
+        this.clearLinePlotsXYBounds();
     };
 
     @action setUseWcsValues = (val: boolean) => {
@@ -178,7 +178,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.quScatterMaxY = maxVal;
     };
 
-    @action clearXYBounds = () => {
+    @action clearLinePlotsXYBounds = () => {
         this.sharedMinX = undefined;
         this.sharedMaxX = undefined;
         this.quMinY = undefined;
@@ -187,6 +187,13 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.polIntensityMaxY = undefined;
         this.polAngleMinY = undefined;
         this.polAngleMaxY = undefined;
+    };
+
+    @action clearScatterPlotXYBounds = () => {
+        this.quScatterMinX = undefined;
+        this.quScatterMaxX = undefined;
+        this.quScatterMinY = undefined;
+        this.quScatterMaxY = undefined;
     };
 
     @action setQULinePlotsXYBounds = (minX: number, maxX: number, minY: number, maxY: number) => {
@@ -210,7 +217,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.polAngleMaxY = maxY;
     };
 
-    @action setquScatterPlotXYBounds = (minX: number, maxX: number, minY: number, maxY: number) => {
+    @action setQUScatterPlotXYBounds = (minX: number, maxX: number, minY: number, maxY: number) => {
         this.quScatterMinX = minX;
         this.quScatterMaxX = maxX;
         this.quScatterMinY = minY;
