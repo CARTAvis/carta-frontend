@@ -7,42 +7,77 @@ import {ChartArea} from "chart.js";
 import {PlotContainerComponent} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {LinePlotComponent} from "components/Shared/LinePlot/LinePlotComponent";
+import {getMinY, getMaxY} from "utilities";
 import "./ScatterPlotComponent.css";
 
 @observer
 export class ScatterPlotComponent extends LinePlotComponent {
     private pointDefaultColor = Colors.GRAY2;
+    private opacityInit = 1;
+    private opacityOutRange = 0.1;
 
     private getChartAreaWH(chartArea: ChartArea): {width: number, height: number} {
-        if (chartArea.right && chartArea.bottom) {
+        if (chartArea) {
             return {width: Math.abs(chartArea.right - chartArea.left), height: Math.abs(chartArea.bottom - chartArea.top)};
         } else {
             return {width: 0, height: 0};
         }
     }
 
-    private getScatterColor(value: number, min: number, max: number, toColor: number): string {
+    // private getScatterColor(value: number, min: number, max: number, toColor: number): string {
+    //     let percentage = (value + Math.abs(min)) / (Math.abs(min) + Math.abs(max));
+    //     let hue = (percentage * toColor).toString(10);
+    //     return ["hsl(", hue, ",100%,50%)"].join("");
+    // }
+
+    private getScatterColor(value: number, min: number, max: number, toColor: number, outRange: boolean): string {
         let percentage = (value + Math.abs(min)) / (Math.abs(min) + Math.abs(max));
         let hue = (percentage * toColor).toString(10);
-        return ["hsl(", hue, ",100%,50%)"].join("");
+        // let opacity = this.opacityInit;
+        if (outRange) {
+            // opacity = this.opacityOutRange;
+            return ["hsla(", hue, ",0%,50%,", this.opacityOutRange,")"].join("");
+        }
+        return ["hsla(", hue, ",100%,50%,", this.opacityInit,")"].join("");
     }
 
     private fillColor(): Array<string> {
         let scatterColors = [];
-        if (this.props.data) {
-            this.props.data.forEach(data => {
-                let pointColor = this.getScatterColor(data.y, this.props.yMin, this.props.yMax, this.props.colorRangeEnd);
+        if (this.props.data && this.props.data.length && this.props.scatterColorIndex && this.props.scatterColorIndex.length && this.props.interactionBorder) {
+            // console.log(this.props.data.length);
+            let yMin = getMinY(this.props.data.filter(data => {return (!isNaN(data.x) && !isNaN(data.y))}));
+            let yMax = getMaxY(this.props.data.filter(data => {return (!isNaN(data.x) && !isNaN(data.y))}));
+            let xlinePlotRange = this.props.interactionBorder; 
+            // console.log(Math.log10(Math.abs(yMax)))
+            this.props.scatterColorIndex.forEach(data => {
+                let pointColor = this.pointDefaultColor;
+                let outRange = true;
+                if (data.z >= xlinePlotRange.xMin && data.z <= xlinePlotRange.xMax) {
+                    outRange = false;
+                }
+                pointColor = this.getScatterColor(data.y, yMin, yMax, this.props.colorRangeEnd, outRange); 
                 scatterColors.push(pointColor);
             });
         }
         return scatterColors;
     }
 
+    // private fillColor(): Array<string> {
+    //     let scatterColors = [];
+    //     if (this.props.data) {
+    //         this.props.data.forEach(data => {
+    //             let pointColor = this.getScatterColor(data.y, this.props.yMin, this.props.yMax, this.props.colorRangeEnd);
+    //             scatterColors.push(pointColor);
+    //         });
+    //     }
+    //     return scatterColors;
+    // }
+
     private resizeData(): { xMin: number, xMax: number, yMin: number, yMax: number } {
         if (this.props.centeredOrigin && this.props.xMin && this.props.xMax && this.props.yMin && this.props.yMax) {
             let xLimit = Math.max(Math.abs(this.props.xMin), Math.abs(this.props.xMax));
             let yLimit = Math.max(Math.abs(this.props.yMin), Math.abs(this.props.yMax));
-            if (this.props.equalScale) {
+            if (this.props.equalScale && this.chartArea) {
                 let currentChartArea = this.getChartAreaWH(this.chartArea);
                 if (currentChartArea.width !== 0 && currentChartArea.height !== 0) {
                     let ratio = currentChartArea.width / currentChartArea.height;

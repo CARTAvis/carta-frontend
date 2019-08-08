@@ -13,6 +13,8 @@ import {Point2D, ChannelInfo} from "models";
 import {clamp, pi, pa, normalising} from "utilities";
 import "./StokesAnalysisComponent.css";
 
+type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
+
 @observer
 export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private static layoutRatioCutoffs = {
@@ -271,29 +273,29 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    private assambleXYData(profileVals: Array<number>, channelValues: Array<number>, xMin: number, xMax: number): Array<{ x: number, y: number }> {
-        let values: Array<{ x: number, y: number }> = [];
-        if (profileVals) {
-            let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
-            for (let i = 0; i < channelValues.length; i++) {
-                let index = isIncremental ? i : channelValues.length - 1 - i;
-                const x = channelValues[index];
-                const y = profileVals[index];
+    // private assambleXYData(profileVals: Array<number>, channelValues: Array<number>, xMin: number, xMax: number): Array<{ x: number, y: number }> {
+    //     let values: Array<{ x: number, y: number }> = [];
+    //     if (profileVals) {
+    //         let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
+    //         for (let i = 0; i < channelValues.length; i++) {
+    //             let index = isIncremental ? i : channelValues.length - 1 - i;
+    //             const x = channelValues[index];
+    //             const y = profileVals[index];
 
-                if (x < xMin || x > xMax) {
-                    if (values.length) {
-                        break;
-                    } else {
-                        continue;
-                    }
-                }
-                values.push({x, y});
-            }
-        }
-        return values;
-    }
+    //             if (x < xMin || x > xMax) {
+    //                 if (values.length) {
+    //                     break;
+    //                 } else {
+    //                     continue;
+    //                 }
+    //             }
+    //             values.push({x, y});
+    //         }
+    //     }
+    //     return values;
+    // }
 
-    private calculateXYborder(xValues: Array<number>, yValues: Array<number>, isLinePlots: boolean): { xMin: number, xMax: number, yMin: number, yMax: number } {
+    private calculateXYborder(xValues: Array<number>, yValues: Array<number>, isLinePlots: boolean): Border {
         let xMin = Math.min(...xValues.filter(n => {
             return !isNaN(n);
         }));
@@ -324,35 +326,81 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return {xMin, xMax, yMin, yMax};
     }
 
-    private assambleLinePlotData(profile: Array<number>, channelInfo: ChannelInfo): { dataset: Array<Point2D>, border: { xMin: number, xMax: number, yMin: number, yMax: number } } {
-        if (profile && profile.length && profile.length === channelInfo.values.length) {
+    // private assambleLinePlotData(profile: Array<number>, channelInfo: ChannelInfo): { dataset: Array<Point2D>, border: { xMin: number, xMax: number, yMin: number, yMax: number } } {
+    //     if (profile && profile.length && profile.length === channelInfo.values.length) {
+    //         let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
+    //         let border = this.calculateXYborder(channelValues, profile, true);
+    //         let values = this.assambleXYData(profile, channelValues, border.xMin, border.xMax);
+    //         return {dataset: values, border};
+    //     }
+    //     return null;
+    // }
+    private assambleLinePlotData(profile: Array<number>, channelInfo: ChannelInfo): {dataset: Array<Point2D>, border: Border} {
+        if (profile  && profile.length && profile.length === channelInfo.values.length) {
             let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
             let border = this.calculateXYborder(channelValues, profile, true);
-            let values = this.assambleXYData(profile, channelValues, border.xMin, border.xMax);
+            // let values = this.assambleXYData(profile, channelValues, border.xMin, border.xMax, true);
+            let values: Array<{ x: number, y: number }> = [];
+            let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
+            for (let i = 0; i < channelValues.length; i++) {
+                let index = isIncremental ? i : channelValues.length - 1 - i;
+                const x = channelValues[index];
+                const y = profile[index];
+        
+                if (x < border.xMin || x > border.xMax) {
+                    if (values.length) {
+                        break;
+                    } else {
+                        continue;
+                    }
+                }
+                values.push({x, y});
+            }
             return {dataset: values, border};
         }
         return null;
     }
+        
 
-    private assambleScatterPlotData(qProfile: Array<number>, uProfile: Array<number>): { dataset: Array<Point2D>, border: { xMin: number, xMax: number, yMin: number, yMax: number } } {
-        if (qProfile && qProfile.length && uProfile && uProfile.length && qProfile.length === uProfile.length) {
+    // private assambleScatterPlotData(qProfile: Array<number>, uProfile: Array<number>): { dataset: Array<Point2D>, border: { xMin: number, xMax: number, yMin: number, yMax: number } } {
+    //     if (qProfile && qProfile.length && uProfile && uProfile.length && qProfile.length === uProfile.length) {
+    //         let border = this.calculateXYborder(qProfile, uProfile, false);
+    //         let values = this.assambleXYData(uProfile, qProfile, border.xMin, border.xMax);
+    //         return {dataset: values, border};
+    //     }
+    //     return null;
+    // }
+
+    private assambleScatterPlotData(qProfile: Array<number>, uProfile: Array<number>, channelInfo: ChannelInfo): {dataset: Array<{x: number, y: number, z: number}>, border: Border} {
+        if (qProfile  && qProfile.length && uProfile && uProfile.length && qProfile.length === uProfile.length && qProfile.length === channelInfo.values.length) {
+            let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
             let border = this.calculateXYborder(qProfile, uProfile, false);
-            let values = this.assambleXYData(uProfile, qProfile, border.xMin, border.xMax);
+            // let values = this.assambleXYData(uProfile, qProfile, border.xMin, border.xMax, false);
+            let values: Array<{ x: number, y: number, z: number}> = [];
+            let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
+
+            for (let i = 0; i < channelValues.length; i++) {
+                let index = isIncremental ? i : channelValues.length - 1 - i;
+                const x = qProfile[index];
+                const y = uProfile[index];
+                const z = channelValues[index];
+                values.push({x, y, z});
+            }
             return {dataset: values, border};
         }
         return null;
     }
-
+        
     private compareVariable(a: number, b: number, c: number, d: number): boolean {
         return a === b && a === c && a === d && a !== null;
     }
 
     @computed get plotData(): {
-        qValues: { dataset: Array<Point2D>, border: { xMin: number, xMax: number, yMin: number, yMax: number } },
-        uValues: { dataset: Array<Point2D>, border: { xMin: number, xMax: number, yMin: number, yMax: number } },
-        piValues: { dataset: Array<Point2D>, border: { xMin: number, xMax: number, yMin: number, yMax: number } },
-        paValues: { dataset: Array<Point2D>, border: { xMin: number, xMax: number, yMin: number, yMax: number } },
-        quValues: { dataset: Array<Point2D>, border: { xMin: number, xMax: number, yMin: number, yMax: number } },
+        qValues: { dataset: Array<Point2D>, border: Border },
+        uValues: { dataset: Array<Point2D>, border: Border },
+        piValues: { dataset: Array<Point2D>, border: Border },
+        paValues: { dataset: Array<Point2D>, border: Border },
+        quValues: {dataset: Array<{x: number, y: number, z: number}>, border: Border},
         qProgress: number,
         uProgress: number
     } {
@@ -384,7 +432,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let paDic = this.assambleLinePlotData(compositeProfile.paProfile, channelInfo);
             let qDic = this.assambleLinePlotData(compositeProfile.qProfile, channelInfo);
             let uDic = this.assambleLinePlotData(compositeProfile.uProfile, channelInfo);
-            let quDic = this.assambleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile);
+            // let quDic = this.assambleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile);
+            let quDic = this.assambleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, channelInfo);
 
             return {qValues: qDic, uValues: uDic, piValues: piDic, paValues: paDic, quValues: quDic, qProgress: compositeProfile.qProgress, uProgress: compositeProfile.uProgress};
         }
@@ -416,6 +465,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             isGroupSubPlot: true,
             scrollZoom: true,
             graphZoomedX: this.widgetStore.setSharedXBounds,
+            // graphZoomedY: this.widgetStore.setQULinePlotYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphClicked: this.onChannelChanged,
             markers: []
@@ -436,6 +486,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             isGroupSubPlot: true,
             scrollZoom: true,
             graphZoomedX: this.widgetStore.setSharedXBounds,
+            // graphZoomedY: this.widgetStore.setPolIntensityYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphClicked: this.onChannelChanged,
             markers: []
@@ -487,12 +538,18 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (this.profileStore && frame) {
             const currentPlotData = this.plotData;
             if (currentPlotData && currentPlotData.piValues && currentPlotData.paValues && currentPlotData.qValues && currentPlotData.uValues && currentPlotData.quValues) {
-
+                let array = [];
                 quLinePlotProps.multiPlotData.set(StokesCoordinate.LinearPolarizationQ, currentPlotData.qValues.dataset);
                 quLinePlotProps.multiPlotData.set(StokesCoordinate.LinearPolarizationU, currentPlotData.uValues.dataset);
                 piLinePlotProps.data = currentPlotData.piValues.dataset;
                 paLinePlotProps.data = currentPlotData.paValues.dataset;
-                quScatterPlotProps.data = currentPlotData.quValues.dataset;
+                // quScatterPlotProps.data = currentPlotData.quValues.dataset;
+                quScatterPlotProps.scatterColorIndex = currentPlotData.quValues.dataset;
+                currentPlotData.quValues.dataset.map(data =>{
+                    array.push({x: data.x, y: data.y});
+                    return array;
+                });
+                quScatterPlotProps.data = array;
 
                 let qBorder = currentPlotData.qValues.border;
                 let uBorder = currentPlotData.uValues.border;
@@ -508,13 +565,17 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         piLinePlotProps.xMax = piBorder.xMax;
                         paLinePlotProps.xMin = paBorder.xMin;
                         paLinePlotProps.xMax = paBorder.xMax;
+                        quScatterPlotProps.interactionBorder = {xMin: paBorder.xMin, xMax: paBorder.xMax};
                     } else {
+                        // let xMin = this.widgetStore.sharedMinX;
+                        // let xMax = this.widgetStore.sharedMaxX;
                         quLinePlotProps.xMin = this.widgetStore.sharedMinX;
                         quLinePlotProps.xMax = this.widgetStore.sharedMaxX;
                         piLinePlotProps.xMin = this.widgetStore.sharedMinX;
                         piLinePlotProps.xMax = this.widgetStore.sharedMaxX;
                         paLinePlotProps.xMin = this.widgetStore.sharedMinX;
                         paLinePlotProps.xMax = this.widgetStore.sharedMaxX;
+                        quScatterPlotProps.interactionBorder = {xMin: this.widgetStore.sharedMinX, xMax: this.widgetStore.sharedMaxX};
                     }
 
                     if (this.widgetStore.isQULinePlotAutoScaledY) {
