@@ -397,7 +397,9 @@ export class WidgetsStore {
     // region Spatial Profile Widgets
     createFloatingSpatialProfilerWidget = () => {
         let config = SpatialProfilerComponent.WIDGET_CONFIG;
-        config.id = this.addSpatialProfileWidget();
+        config.id = this.addSpatialProfileWidget(null, "x", -1, 0);
+        this.addFloatingWidget(config);
+        config.id = this.addSpatialProfileWidget(null, "y", -1, 0);
         this.addFloatingWidget(config);
     };
 
