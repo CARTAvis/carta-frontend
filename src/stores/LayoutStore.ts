@@ -385,6 +385,8 @@ export class LayoutStore {
         this.appStore.widgetsStore.floatingWidgets.forEach((config: WidgetConfig) => {
             let floatingConfig = {
                 type: config.type,
+                defaultWidth: config.defaultWidth ? config.defaultWidth : "",
+                defaultHeight: config.defaultHeight ? config.defaultHeight : "",
                 defaultX: config.defaultX ? config.defaultX : "",
                 defaultY: config.defaultY ? config.defaultY : ""
             };

@@ -101,6 +101,10 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     widgetConfig["defaultX"] = data.x;
                     widgetConfig["defaultY"] = data.y;
                 }}
+                onResizeStop={(e, direction, element, delta) => {
+                    widgetConfig.defaultWidth += delta.width;
+                    widgetConfig.defaultHeight += delta.height;
+                }}
             >
                 <div className={titleClass}>
                     <div className={"floating-title"}>

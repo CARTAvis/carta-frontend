@@ -252,6 +252,12 @@ export class WidgetsStore {
                 } else {
                     config.id = this.addWidgetByType(savedConfig.type);
                 }
+                if (savedConfig.defaultWidth) {
+                    config.defaultWidth = savedConfig.defaultWidth;
+                }
+                if (savedConfig.defaultHeight) {
+                    config.defaultHeight = savedConfig.defaultHeight;
+                }
                 if (savedConfig.defaultX) {
                     config.defaultX = savedConfig.defaultX;
                 }
