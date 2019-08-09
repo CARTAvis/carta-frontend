@@ -479,6 +479,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             isGroupSubPlot: true,
             colorRangeEnd: 250,
             centeredOrigin: true,
+            equalScale: true,
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);

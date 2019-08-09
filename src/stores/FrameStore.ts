@@ -245,7 +245,7 @@ export class FrameStore {
         }
 
         // Is cursorPos inside the image?
-        var isInsideImg = false;
+        let isInsideImg = false;
         if (cursorPosImageSpace.x + 0.5 < this.frameInfo.fileInfoExtended.width && 
             cursorPosImageSpace.x + 0.5 > 0 &&
             cursorPosImageSpace.y + 0.5 < this.frameInfo.fileInfoExtended.height &&
