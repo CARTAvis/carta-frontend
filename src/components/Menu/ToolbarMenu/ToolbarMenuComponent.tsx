@@ -59,7 +59,9 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
                     <Button icon={"style"} id="renderConfigButton" onClick={this.props.appStore.widgetsStore.createFloatingRenderWidget}/>
                 </Tooltip>
                 <Tooltip content={<span>Stokes Analysis Widget{commonTooltip}</span>}>
-                    <Button icon={"pulse"} id="stokesAnalysisButton" onClick={this.props.appStore.widgetsStore.createFloatingStokesWidget}/>
+                    <Button icon={"pulse"} id="stokesAnalysisButton" className={"profiler-button"} onClick={this.props.appStore.widgetsStore.createFloatingStokesWidget}>
+                        &nbsp;s
+                    </Button>
                 </Tooltip>
             </ButtonGroup>
         );
