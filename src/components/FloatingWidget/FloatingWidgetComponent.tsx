@@ -97,6 +97,10 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 bounds={".gl-container"}
                 dragHandleClassName={"floating-title"}
                 onMouseDown={this.props.onSelected}
+                onDragStop={(e, data) => {
+                    widgetConfig["defaultX"] = data.x;
+                    widgetConfig["defaultY"] = data.y;
+                }}
             >
                 <div className={titleClass}>
                     <div className={"floating-title"}>

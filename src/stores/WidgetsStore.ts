@@ -252,6 +252,12 @@ export class WidgetsStore {
                 } else {
                     config.id = this.addWidgetByType(savedConfig.type);
                 }
+                if (savedConfig.defaultX) {
+                    config.defaultX = savedConfig.defaultX;
+                }
+                if (savedConfig.defaultY) {
+                    config.defaultY = savedConfig.defaultY;
+                }
                 this.addFloatingWidget(config);
             }
         });

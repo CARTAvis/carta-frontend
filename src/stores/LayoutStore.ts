@@ -384,7 +384,9 @@ export class LayoutStore {
         // 2. handle floating widgets
         this.appStore.widgetsStore.floatingWidgets.forEach((config: WidgetConfig) => {
             let floatingConfig = {
-                type: config.type
+                type: config.type,
+                defaultX: config.defaultX ? config.defaultX : "",
+                defaultY: config.defaultY ? config.defaultY : ""
             };
             if (config.type === "spatial-profiler") {
                 floatingConfig["coord"] = config.title && config.title.indexOf("Y") >= 0 ? "y" : "x";
