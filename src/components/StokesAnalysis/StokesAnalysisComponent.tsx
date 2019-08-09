@@ -474,7 +474,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         };
 
         let quScatterPlotProps: LinePlotComponentProps = {
-            plotType: "bubble",
             xLabel: "Value",
             yLabel: "Value",
             darkMode: appStore.darkTheme,
@@ -493,7 +492,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             colorRangeEnd: 240,
             centeredOrigin: true,
             equalScale: true,
-            zIndex: true
+            zIndex: true,
+            pointRadiusSet: [],
+            channel: {}
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
@@ -620,6 +621,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 paLinePlotProps.markers.push(cursor);
                 piLinePlotProps.markers.push(cursor);
                 quLinePlotProps.markers.push(cursor);
+
+                if (cursor && cursor.value && typeof(cursor.value) !== undefined) {
+                    quScatterPlotProps.channel.channelHovered = cursor.value;   
+                }
             }
 
             if (paLinePlotProps.cursorX.image !== null) {
@@ -641,6 +646,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 piLinePlotProps.markers.push(channelCurrent, channelRequired);
                 quLinePlotProps.markers.push(channelCurrent, channelRequired);
 
+                if (channelCurrent && channelCurrent.value && typeof(channelCurrent.value) !== undefined) {
+                    quScatterPlotProps.channel.channelCurrent = channelCurrent.value;
+                }
             }
 
             quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, Colors.GREEN2);

@@ -93,6 +93,8 @@ export class LinePlotComponentProps {
     equalScale?: boolean;
     zIndex?: boolean;
     interactionBorder?: {xMin: number, xMax: number};
+    channel?: {channelCurrent?: number, channelHovered?: number};
+    pointRadiusSet?: Array<number>;
 }
 
 // Maximum time between double clicks

@@ -14,6 +14,8 @@ export class ScatterPlotComponent extends LinePlotComponent {
     private pointDefaultColor = Colors.GRAY2;
     private opacityInit = 1;
     private opacityOutRange = 0.1;
+    private pointRadiuInit = 3;
+    private pointRadiu = 9;
 
     private getChartAreaWH(chartArea: ChartArea): { width: number, height: number } {
         if (chartArea && chartArea.right && chartArea.bottom) {
@@ -62,6 +64,47 @@ export class ScatterPlotComponent extends LinePlotComponent {
         return scatterColors;
     }
 
+    private closestChannel(channel: number, data: Array<{x: number, y: number, z?: number}>): number {
+        var mid;
+        var lo = 0;
+        var hi = data.length - 1;
+        while (hi - lo > 1) {
+            mid = Math.floor ((lo + hi) / 2);
+            if (data[mid].z < channel) {
+                lo = mid;
+            } else {
+                hi = mid;
+            }
+        }
+        if (channel - data[lo].z <= data[hi].z - channel) {
+            return data[lo].z;
+        }
+        return data[hi].z;
+    }
+
+    private setPointRadius(): Array<number> {
+        let pointRadius = [];
+        if (this.props.data && this.props.data.length && this.props.zIndex && this.props.channel) {
+            let channelCurrent = this.props.channel.channelCurrent;
+            let channelHovered = this.props.channel.channelHovered;
+            pointRadius = Array(this.props.data.length).fill(this.pointRadiuInit);
+            if (channelCurrent) {
+                let close = channelCurrent;
+                if (channelHovered) {
+                    close = this.closestChannel(channelHovered, this.props.data);
+                }
+                const scatterData = this.props.data;
+                for (let index = 0; index < scatterData.length; index++) {
+                    const points = scatterData[index];
+                    if (points.z === channelCurrent || points.z === close) {
+                        pointRadius[index] = this.pointRadiu;
+                    }
+                }
+            }
+        }
+        return pointRadius;
+    }
+
     private resizeData(): { xMin: number, xMax: number, yMin: number, yMax: number } {
         if (this.props.centeredOrigin && this.props.xMin && this.props.xMax && this.props.yMin && this.props.yMax) {
             let xLimit = Math.max(Math.abs(this.props.xMin), Math.abs(this.props.xMax));
@@ -104,6 +147,7 @@ export class ScatterPlotComponent extends LinePlotComponent {
                     width={this.width}
                     height={this.height}
                     dataBackgroundColor={this.props.colorRangeEnd ? this.fillColor() : []}
+                    pointRadiusSet={this.setPointRadius()}
                     xMin={axisRange.xMin}
                     xMax={axisRange.xMax}
                     yMin={axisRange.yMin}

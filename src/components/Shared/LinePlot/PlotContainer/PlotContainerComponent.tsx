@@ -8,7 +8,7 @@ import {clamp, hexStringToRgba} from "utilities";
 export class PlotContainerProps {
     width?: number;
     height?: number;
-    data?: { x: number, y: number }[];
+    data?: { x: number, y: number, z?: number}[];
     xMin?: number;
     xMax?: number;
     yMin?: number;
@@ -38,6 +38,7 @@ export class PlotContainerProps {
     plotType?: string;
     dataBackgroundColor?: Array<string>;
     isGroupSubPlot?: boolean;
+    pointRadiusSet?: Array<number>;
 }
 
 export class PlotContainerComponent extends React.Component<PlotContainerProps> {
@@ -324,11 +325,14 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 lineTension: 0,
                 backgroundColor: this.props.dataBackgroundColor ? this.props.dataBackgroundColor : []
             };
-
             if (this.props.usePointSymbols) {
                 datasetConfig.showLine = false;
-                datasetConfig.pointRadius = 1;
-                datasetConfig.pointBackgroundColor = lineColor;
+                if (this.props.pointRadiusSet && this.props.pointRadiusSet.length) {
+                    datasetConfig.pointRadius = this.props.pointRadiusSet;
+                } else {
+                    datasetConfig.pointRadius = 1;
+                    datasetConfig.pointBackgroundColor = lineColor;
+                }
             } else {
                 datasetConfig.pointRadius = 0;
                 datasetConfig.showLine = true;
