@@ -219,8 +219,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (qData && uData && qData.length === uData.length) {
             for (let i = 0; i < qData.length; i++) {
                 // Unit degree
-                const piVal = pi(qData[i], uData[i]);
-                vals[i] = pa(qData[i], uData[i]) * (180 / piVal);
+                vals[i] = pa(qData[i], uData[i]) * (180 / Math.PI);
             }
         }
         return vals;
@@ -493,7 +492,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             isGroupSubPlot: true,
             colorRangeEnd: 240,
             centeredOrigin: true,
-            equalScale: true
+            equalScale: true,
+            zIndex: true
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
@@ -501,17 +501,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (this.profileStore && frame) {
             const currentPlotData = this.plotData;
             if (currentPlotData && currentPlotData.piValues && currentPlotData.paValues && currentPlotData.qValues && currentPlotData.uValues && currentPlotData.quValues) {
-                let array = [];
                 quLinePlotProps.multiPlotData.set(StokesCoordinate.LinearPolarizationQ, currentPlotData.qValues.dataset);
                 quLinePlotProps.multiPlotData.set(StokesCoordinate.LinearPolarizationU, currentPlotData.uValues.dataset);
                 piLinePlotProps.data = currentPlotData.piValues.dataset;
                 paLinePlotProps.data = currentPlotData.paValues.dataset;
-                quScatterPlotProps.scatterColorIndex = currentPlotData.quValues.dataset;
-                currentPlotData.quValues.dataset.map(data => {
-                    array.push({x: data.x, y: data.y});
-                    return array;
-                });
-                quScatterPlotProps.data = array;
+                quScatterPlotProps.data = currentPlotData.quValues.dataset;
 
                 let qBorder = currentPlotData.qValues.border;
                 let uBorder = currentPlotData.uValues.border;
