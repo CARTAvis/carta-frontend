@@ -172,6 +172,26 @@ export class App extends React.Component<{ appStore: AppStore }> {
         }
     };
 
+    toggleRegionLock = () => {
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame) {
+            const regionSet = appStore.activeFrame.regionSet;
+            if (regionSet.selectedRegion) {
+                regionSet.selectedRegion.toggleLock();
+            }
+        }
+    };
+
+    unlockAllRegions = () => {
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame) {
+            const regionSet = appStore.activeFrame.regionSet;
+            for (const region of regionSet.regions) {
+                region.setLocked(false);
+            }
+        }
+    };
+
     public renderHotkeys() {
         const appStore = this.props.appStore;
         const modString = appStore.modifierString;
@@ -191,12 +211,14 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         const regionHotKeys = [
             <Hotkey key={0} group={regionGroupTitle} global={true} combo="c" label="Toggle region creation mode" onKeyDown={this.toggleCreateMode}/>,
-            <Hotkey key={1} group={regionGroupTitle} global={true} combo="del" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
-            <Hotkey key={2} group={regionGroupTitle} global={true} combo="backspace" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
-            <Hotkey key={3} group={regionGroupTitle} global={true} combo="esc" label="Deselect region" onKeyDown={appStore.deselectRegion}/>,
-            <Hotkey key={4} group={regionGroupTitle} global={true} combo="mod" label="Switch region creation mode"/>,
-            <Hotkey key={5} group={regionGroupTitle} global={true} combo={"shift"} label="Symmetric region creation"/>,
-            <Hotkey key={6} group={regionGroupTitle} global={true} combo="double-click" label="Region properties"/>
+            <Hotkey key={1} group={regionGroupTitle} global={true} combo="l" label="Toggle current region lock" onKeyDown={this.toggleRegionLock}/>,
+            <Hotkey key={2} group={regionGroupTitle} global={true} combo="shift + l" label="Unlock all regions" onKeyDown={this.unlockAllRegions}/>,
+            <Hotkey key={3} group={regionGroupTitle} global={true} combo="del" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
+            <Hotkey key={4} group={regionGroupTitle} global={true} combo="backspace" label="Delete selected region" onKeyDown={appStore.deleteSelectedRegion}/>,
+            <Hotkey key={5} group={regionGroupTitle} global={true} combo="esc" label="Deselect region" onKeyDown={appStore.deselectRegion}/>,
+            <Hotkey key={6} group={regionGroupTitle} global={true} combo="mod" label="Switch region creation mode"/>,
+            <Hotkey key={7} group={regionGroupTitle} global={true} combo={"shift"} label="Symmetric region creation"/>,
+            <Hotkey key={8} group={regionGroupTitle} global={true} combo="double-click" label="Region properties"/>
         ];
 
         const animatorHotkeys = [

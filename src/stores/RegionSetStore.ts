@@ -1,6 +1,6 @@
 import {action, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {FrameStore, RegionStore} from "stores";
+import {CURSOR_REGION_ID, FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
 import {BackendService} from "../services";
 
@@ -41,7 +41,7 @@ export class RegionSetStore {
     };
 
     @action addPointRegion = (center: Point2D, cursorRegion = false) => {
-        return this.addRegion([center], 0, CARTA.RegionType.POINT, cursorRegion, cursorRegion ? 0 : this.getTempRegionId());
+        return this.addRegion([center], 0, CARTA.RegionType.POINT, cursorRegion, cursorRegion ? CURSOR_REGION_ID : this.getTempRegionId());
     };
 
     @action addRectangularRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
@@ -94,7 +94,7 @@ export class RegionSetStore {
 
     @action deleteRegion = (region: RegionStore) => {
         // Cursor region cannot be deleted
-        if (region && region.regionId !== 0 && this.regions.length) {
+        if (region && region.regionId !== CURSOR_REGION_ID && this.regions.length) {
             if (region === this.selectedRegion) {
                 this.selectedRegion = this.regions[0];
             }
