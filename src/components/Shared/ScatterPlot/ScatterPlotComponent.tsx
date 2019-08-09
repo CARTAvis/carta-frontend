@@ -47,13 +47,15 @@ export class ScatterPlotComponent extends LinePlotComponent {
             let xlinePlotRange = this.props.interactionBorder;
             const outOfRangeColor = `hsla(0, 0%, 50%, ${this.opacityOutRange})`;
             const zOrder = this.frequencyIncreases(this.props.data);
+            const dataLength = this.props.data.length;
+            const colorRangeEnd = this.props.colorRangeEnd;
             this.props.data.forEach((data, i) => {
                 let pointColor = this.pointDefaultColor;
                 let outRange = true;
                 if (data.z >= xlinePlotRange.xMin && data.z <= xlinePlotRange.xMax) {
                     outRange = false;
                 }
-                pointColor = outRange ? outOfRangeColor : this.getScatterColor(i, this.props.data.length, this.props.colorRangeEnd, zOrder);
+                pointColor = outRange ? outOfRangeColor : this.getScatterColor(i, dataLength, colorRangeEnd, zOrder);
                 scatterColors.push(pointColor);
             });
         }
