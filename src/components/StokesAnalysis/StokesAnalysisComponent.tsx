@@ -306,7 +306,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return {xMin, xMax, yMin, yMax};
     }
 
-    private assambleLinePlotData(profile: Array<number>, channelInfo: ChannelInfo): {dataset: Array<Point2D>, border: Border} {
+    private assembleLinePlotData(profile: Array<number>, channelInfo: ChannelInfo): {dataset: Array<Point2D>, border: Border} {
         if (profile  && profile.length && profile.length === channelInfo.values.length) {
             let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
             let border = this.calculateXYborder(channelValues, profile, true);
@@ -331,7 +331,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    private assambleScatterPlotData(qProfile: Array<number>, uProfile: Array<number>, channelInfo: ChannelInfo): {dataset: Array<{x: number, y: number, z: number}>, border: Border} {
+    private assembleScatterPlotData(qProfile: Array<number>, uProfile: Array<number>, channelInfo: ChannelInfo): {dataset: Array<{x: number, y: number, z: number}>, border: Border} {
         if (qProfile  && qProfile.length && uProfile && uProfile.length && qProfile.length === uProfile.length && qProfile.length === channelInfo.values.length) {
             let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
             let border = this.calculateXYborder(qProfile, uProfile, false);
@@ -388,11 +388,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
         let channelInfo = frame.channelInfo;
         if (compositeProfile && channelInfo) {
-            let piDic = this.assambleLinePlotData(compositeProfile.piProfile, channelInfo);
-            let paDic = this.assambleLinePlotData(compositeProfile.paProfile, channelInfo);
-            let qDic = this.assambleLinePlotData(compositeProfile.qProfile, channelInfo);
-            let uDic = this.assambleLinePlotData(compositeProfile.uProfile, channelInfo);
-            let quDic = this.assambleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, channelInfo);
+            let piDic = this.assembleLinePlotData(compositeProfile.piProfile, channelInfo);
+            let paDic = this.assembleLinePlotData(compositeProfile.paProfile, channelInfo);
+            let qDic = this.assembleLinePlotData(compositeProfile.qProfile, channelInfo);
+            let uDic = this.assembleLinePlotData(compositeProfile.uProfile, channelInfo);
+            let quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, channelInfo);
 
             return {qValues: qDic, uValues: uDic, piValues: piDic, paValues: paDic, quValues: quDic, qProgress: compositeProfile.qProgress, uProgress: compositeProfile.uProgress};
         }
@@ -600,14 +600,14 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 quLinePlotProps.xLabel = this.getChannelLabel();
             }
 
-            let cursorXInfor = {
+            let cursorXInfo = {
                 profiler: this.widgetStore.cursorX,
                 image: this.getCurrentChannelValue(),
                 unit: this.getChannelUnit()
             };
-            paLinePlotProps.cursorX = cursorXInfor;
-            piLinePlotProps.cursorX = cursorXInfor;
-            quLinePlotProps.cursorX = cursorXInfor;
+            paLinePlotProps.cursorX = cursorXInfo;
+            piLinePlotProps.cursorX = cursorXInfo;
+            quLinePlotProps.cursorX = cursorXInfo;
 
             paLinePlotProps.markers = [];
             piLinePlotProps.markers = [];

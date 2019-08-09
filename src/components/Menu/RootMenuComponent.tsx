@@ -19,7 +19,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         const modString = appStore.modifierString;
         const connectionStatus = appStore.backendService.connectionStatus;
 
-        let stokesClassName = "stokesItem";
+        let stokesClassName = "stokes-item";
         if (this.props.appStore.darkTheme) {
             stokesClassName += " bp3-dark";
         }
@@ -83,13 +83,13 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
 
         const presetLayouts: string[] = PresetLayout.PRESETS;
         const userLayouts: string[] = appStore.layoutStore.userLayouts;
-        const stockesIcon = (
-            <Tag icon={"pulse"} className={"stockesIcon-button"}>
+        const stokesIcon = (
+            <Tag icon={"pulse"} className={"stokes-icon-button"}>
                 &nbsp;s
             </Tag>
         );
         const layoutMenu = (
-            <Menu className = "layout-menu">
+            <Menu className="layout-menu">
                 <Menu.Item text="Layouts" icon={"layout-grid"}>
                     <Menu.Item text="Existing Layouts" disabled={!presetLayouts && !userLayouts}>
                         <Menu.Item text="Presets" disabled={!presetLayouts || presetLayouts.length <= 0}>
@@ -140,7 +140,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 <Menu.Item text="Histogram" icon={"timeline-bar-chart"} onClick={appStore.widgetsStore.createFloatingHistogramWidget}/>
                 <Menu.Item text="Animator" icon={"video"} onClick={appStore.widgetsStore.createFloatingAnimatorWidget}/>
                 <Menu.Item text="Render Config" icon={"style"} onClick={appStore.widgetsStore.createFloatingRenderWidget}/>
-                <Menu.Item className = {stokesClassName} text="Stokes Analysis" icon={stockesIcon} onClick={appStore.widgetsStore.createFloatingStokesWidget}/>
+                <Menu.Item className={stokesClassName} text="Stokes Analysis" icon={stokesIcon} onClick={appStore.widgetsStore.createFloatingStokesWidget}/>
             </Menu>
         );
 

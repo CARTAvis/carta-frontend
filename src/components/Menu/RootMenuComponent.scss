@@ -8,35 +8,42 @@
     .root-menu-entry {
         min-width: 0 !important;
     }
+
     .connectivity-icon {
         padding-right: 8px;
+
         &.online {
             color: $green4;
         }
+
         &.warning {
             color: $orange4;
         }
+
         &.offline {
             color: $red4;
         }
     }
 }
 
-.bp3-portal{
-    .layout-menu{
-        .stokesItem{
-            padding-left: 0px;
-            padding-right: 0px;
-            .stockesIcon-button {
+.bp3-portal {
+    .layout-menu {
+        .stokes-item {
+            padding-left: 0;
+            padding-right: 0;
+
+            .stokes-icon-button {
                 width: 30px;
                 background-color: #ffffff00;
                 background-image: none;
-                box-shadow: inset 0 0 0 0px;
-                margin: 0px;
+                box-shadow: inset 0 0 0 0;
+                margin: 0;
                 color: $gray1;
+
                 .bp3-icon {
-                    margin: 0px;
+                    margin: 0;
                 }
+
                 .bp3-text-overflow-ellipsis {
                     position: absolute;
                     top: -8px;
@@ -45,16 +52,20 @@
                     color: $gray1;
                 }
             }
+
             .bp3-text-overflow-ellipsis {
                 margin-top: 1px;
             }
+
             &.bp3-dark {
-                .stockesIcon-button {
+                .stokes-icon-button {
                     color: $gray5;
-                    .bp3-text-overflow-ellipsis{
+
+                    .bp3-text-overflow-ellipsis {
                         color: $gray5;
                     }
                 }
+
                 .bp3-text-overflow-ellipsis {
                     color: rgb(245, 248, 250);;
                 }
