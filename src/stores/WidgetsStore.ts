@@ -40,7 +40,6 @@ export class WidgetProps {
 export class WidgetsStore {
     // Floating widgets
     @observable floatingWidgets: WidgetConfig[];
-    @observable defaultFloatingWidgetOffset: number;
     // Widget Stores
     @observable renderConfigWidgets: Map<string, RenderConfigWidgetStore>;
     @observable spatialProfileWidgets: Map<string, SpatialProfileWidgetStore>;
@@ -55,6 +54,7 @@ export class WidgetsStore {
     private appStore: AppStore;
     private layoutStore: LayoutStore;
     private widgetsMap: Map<string, Map<string, any>>;
+    private defaultFloatingWidgetOffset: number;
 
     public static RemoveFrameFromRegionWidgets(storeMap: Map<string, RegionWidgetStore>, fileId: number = -1) {
         if (fileId === -1) {
@@ -168,7 +168,13 @@ export class WidgetsStore {
         }
     };
 
-    removeWidget = (widgetId: string, widgetType: string) => {
+    private getFloatingWidgetOffset = (): number => {
+        this.defaultFloatingWidgetOffset += 25;
+        this.defaultFloatingWidgetOffset = (this.defaultFloatingWidgetOffset - 100) % 300 + 100;
+        return this.defaultFloatingWidgetOffset;
+    }
+
+    public removeWidget = (widgetId: string, widgetType: string) => {
         const widgets = this.widgetsMap.get(widgetType);
         if (widgets) {
             widgets.delete(widgetId);
@@ -252,19 +258,21 @@ export class WidgetsStore {
                 } else {
                     config.id = this.addWidgetByType(savedConfig.type);
                 }
-                if (savedConfig.defaultWidth) {
+
+                if (savedConfig.defaultWidth && savedConfig.defaultWidth > 0) {
                     config.defaultWidth = savedConfig.defaultWidth;
                 }
-                if (savedConfig.defaultHeight) {
+                if (savedConfig.defaultHeight && savedConfig.defaultHeight > 0) {
                     config.defaultHeight = savedConfig.defaultHeight;
                 }
-                if (savedConfig.defaultX) {
-                    config.defaultX = savedConfig.defaultX;
+
+                if (savedConfig.defaultX && savedConfig.defaultX > 0 && savedConfig.defaultY && savedConfig.defaultY > 0) {
+                    config["defaultX"] = savedConfig.defaultX;
+                    config["defaultY"] = savedConfig.defaultY;
+                } else {
+                    config["defaultX"] = config["defaultY"] = this.getFloatingWidgetOffset();
                 }
-                if (savedConfig.defaultY) {
-                    config.defaultY = savedConfig.defaultY;
-                }
-                this.addFloatingWidget(config);
+                this.floatingWidgets.push(config);
             }
         });
     };
@@ -615,9 +623,8 @@ export class WidgetsStore {
     };
 
     @action addFloatingWidget = (widget: WidgetConfig) => {
+        widget["defaultX"] = widget["defaultY"] = this.getFloatingWidgetOffset();
         this.floatingWidgets.push(widget);
-        this.defaultFloatingWidgetOffset += 25;
-        this.defaultFloatingWidgetOffset = (this.defaultFloatingWidgetOffset - 100) % 300 + 100;
     };
 
     // Removes a widget from the floating widget array, optionally removing the widget's associated store
