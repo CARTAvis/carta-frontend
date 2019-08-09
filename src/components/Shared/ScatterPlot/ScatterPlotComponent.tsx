@@ -7,7 +7,7 @@ import {ChartArea} from "chart.js";
 import {PlotContainerComponent} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {LinePlotComponent} from "components/Shared/LinePlot/LinePlotComponent";
-import {getMinY, getMaxY} from "utilities";
+import {minMaxPointArrayY} from "utilities";
 import "./ScatterPlotComponent.css";
 
 @observer
@@ -36,8 +36,7 @@ export class ScatterPlotComponent extends LinePlotComponent {
     private fillColor(): Array<string> {
         let scatterColors = [];
         if (this.props.data && this.props.data.length && this.props.scatterColorIndex && this.props.scatterColorIndex.length && this.props.interactionBorder) {
-            let yMin = getMinY(this.props.data.filter(data => {return (!isNaN(data.x) && !isNaN(data.y)); }));
-            let yMax = getMaxY(this.props.data.filter(data => {return (!isNaN(data.x) && !isNaN(data.y)); }));
+            let yRange = minMaxPointArrayY(this.props.data);
             let xlinePlotRange = this.props.interactionBorder;
             this.props.scatterColorIndex.forEach(data => {
                 let pointColor = this.pointDefaultColor;
@@ -45,7 +44,7 @@ export class ScatterPlotComponent extends LinePlotComponent {
                 if (data.z >= xlinePlotRange.xMin && data.z <= xlinePlotRange.xMax) {
                     outRange = false;
                 }
-                pointColor = this.getScatterColor(data.y, yMin, yMax, this.props.colorRangeEnd, outRange); 
+                pointColor = this.getScatterColor(data.y, yRange.minVal, yRange.maxVal, this.props.colorRangeEnd, outRange);
                 scatterColors.push(pointColor);
             });
         }

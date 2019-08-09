@@ -46,12 +46,43 @@ export function minMax2D(points: Point2D[]): { maxPoint: Point2D, minPoint: Poin
     let minPoint = {x: Number.MAX_VALUE, y: Number.MAX_VALUE};
 
     for (const point of points) {
+        if (!point || isNaN(point.x) || isNaN(point.y)) {
+            continue;
+        }
         maxPoint.x = Math.max(maxPoint.x, point.x);
         maxPoint.y = Math.max(maxPoint.y, point.y);
         minPoint.x = Math.min(minPoint.x, point.x);
         minPoint.y = Math.min(minPoint.y, point.y);
     }
     return {maxPoint, minPoint};
+}
+
+export function minMaxPointArrayX(points: Point2D[]): { maxVal: number, minVal: number } {
+    let maxVal = -Number.MAX_VALUE;
+    let minVal = Number.MAX_VALUE;
+
+    for (const point of points) {
+        if (!point || isNaN(point.x)) {
+            continue;
+        }
+        maxVal = Math.max(maxVal, point.x);
+        minVal = Math.min(minVal, point.x);
+    }
+    return {maxVal, minVal};
+}
+
+export function minMaxPointArrayY(points: Point2D[]): { maxVal: number, minVal: number } {
+    let maxVal = -Number.MAX_VALUE;
+    let minVal = Number.MAX_VALUE;
+
+    for (const point of points) {
+        if (!point || isNaN(point.y)) {
+            continue;
+        }
+        maxVal = Math.max(maxVal, point.y);
+        minVal = Math.min(minVal, point.y);
+    }
+    return {maxVal, minVal};
 }
 
 // Returns the closest point from a point to a line segment, as well as the distance to the line segment, and whether the point lies within the line segment
