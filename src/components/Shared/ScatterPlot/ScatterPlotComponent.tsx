@@ -7,13 +7,16 @@ import {ChartArea} from "chart.js";
 import {PlotContainerComponent} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {LinePlotComponent} from "components/Shared/LinePlot/LinePlotComponent";
+import {minMaxPointArrayY} from "utilities";
 import "./ScatterPlotComponent.css";
 
 @observer
 export class ScatterPlotComponent extends LinePlotComponent {
     private pointDefaultColor = Colors.GRAY2;
+    private opacityInit = 1;
+    private opacityOutRange = 0.1;
 
-    private getChartAreaWH(chartArea: ChartArea): {width: number, height: number} {
+    private getChartAreaWH(chartArea: ChartArea): { width: number, height: number } {
         if (chartArea && chartArea.right && chartArea.bottom) {
             return {width: Math.abs(chartArea.right - chartArea.left), height: Math.abs(chartArea.bottom - chartArea.top)};
         } else {
@@ -21,17 +24,25 @@ export class ScatterPlotComponent extends LinePlotComponent {
         }
     }
 
-    private getScatterColor(value: number, min: number, max: number, toColor: number): string {
-        let percentage = (value + Math.abs(min)) / (Math.abs(min) + Math.abs(max));
-        let hue = (percentage * toColor).toString(10);
-        return ["hsl(", hue, ",100%,50%)"].join("");
+    private getScatterColor(value: number, min: number, range: number, toColor: number): string {
+        let percentage = (value + Math.abs(min)) / range;
+        let hue = (percentage * toColor);
+        return `hsla(${hue}, 100%, 50%, ${this.opacityInit})`;
     }
 
     private fillColor(): Array<string> {
         let scatterColors = [];
-        if (this.props.data) {
-            this.props.data.forEach(data => {
-                let pointColor = this.getScatterColor(data.y, this.props.yMin, this.props.yMax, this.props.colorRangeEnd);
+        if (this.props.data && this.props.data.length && this.props.scatterColorIndex && this.props.scatterColorIndex.length && this.props.interactionBorder) {
+            let yRange = minMaxPointArrayY(this.props.data);
+            let xlinePlotRange = this.props.interactionBorder;
+            const outOfRangeColor = `hsla(0, 0%, 50%, ${this.opacityOutRange})`;
+            this.props.scatterColorIndex.forEach(data => {
+                let pointColor = this.pointDefaultColor;
+                let outRange = true;
+                if (data.z >= xlinePlotRange.xMin && data.z <= xlinePlotRange.xMax) {
+                    outRange = false;
+                }
+                pointColor = outRange ? outOfRangeColor : this.getScatterColor(data.y, yRange.minVal, yRange.maxVal - yRange.minVal, this.props.colorRangeEnd);
                 scatterColors.push(pointColor);
             });
         }

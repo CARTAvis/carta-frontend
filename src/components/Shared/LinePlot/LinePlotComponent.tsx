@@ -91,6 +91,8 @@ export class LinePlotComponentProps {
     isGroupSubPlot?: boolean;
     centeredOrigin?: boolean;
     equalScale?: boolean;
+    scatterColorIndex?: Array<{x: number, y: number, z: number}>;
+    interactionBorder?: {xMin: number, xMax: number};
 }
 
 // Maximum time between double clicks
