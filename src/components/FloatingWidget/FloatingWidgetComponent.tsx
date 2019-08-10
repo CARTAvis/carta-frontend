@@ -83,8 +83,12 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
             <Rnd
                 className={className}
                 style={{zIndex: this.props.zIndex}}
-                size={{width: widgetConfig.defaultWidth, height: widgetConfig.defaultHeight + headerHeight}}
-                position={{x: widgetConfig.defaultX, y: widgetConfig.defaultY}}
+                default={{
+                    x: widgetConfig.defaultX,
+                    y: widgetConfig.defaultY,
+                    width: widgetConfig.defaultWidth,
+                    height: widgetConfig.defaultHeight + headerHeight
+                }}
                 resizeGrid={[25, 25]}
                 dragGrid={[25, 25]}
                 minWidth={widgetConfig.minWidth}
