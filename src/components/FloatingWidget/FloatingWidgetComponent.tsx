@@ -22,13 +22,18 @@ class FloatingWidgetComponentProps {
 export class FloatingWidgetComponent extends React.Component<FloatingWidgetComponentProps> {
 
     private pinElementRef: HTMLElement;
+    private rnd: Rnd;
 
     componentDidMount() {
         this.updateDragSource();
+        this.rnd.updateSize({width: this.props.widgetConfig.defaultWidth, height: this.props.widgetConfig.defaultHeight});
+        this.rnd.updatePosition({x: this.props.widgetConfig.defaultX, y: this.props.widgetConfig.defaultY});
     }
 
     componentDidUpdate() {
         this.updateDragSource();
+        this.rnd.updateSize({width: this.props.widgetConfig.defaultWidth, height: this.props.widgetConfig.defaultHeight});
+        this.rnd.updatePosition({x: this.props.widgetConfig.defaultX, y: this.props.widgetConfig.defaultY});
     }
 
     updateDragSource() {
@@ -81,10 +86,15 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         const widgetConfig = this.props.widgetConfig;
         return (
             <Rnd
+                ref={c => this.rnd = c}
                 className={className}
                 style={{zIndex: this.props.zIndex}}
-                size={{width: widgetConfig.defaultWidth, height: widgetConfig.defaultHeight + headerHeight}}
-                position={{x: widgetConfig.defaultX, y: widgetConfig.defaultY}}
+                default={{
+                    x: widgetConfig.defaultX,
+                    y: widgetConfig.defaultY,
+                    width: widgetConfig.defaultWidth,
+                    height: widgetConfig.defaultHeight + headerHeight
+                }}
                 resizeGrid={[25, 25]}
                 dragGrid={[25, 25]}
                 minWidth={widgetConfig.minWidth}
