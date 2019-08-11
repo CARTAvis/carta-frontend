@@ -103,10 +103,12 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 dragHandleClassName={"floating-title"}
                 onMouseDown={this.props.onSelected}
                 onDragStop={(e, data) => {
-                    widgetConfig["defaultX"] = data.x;
-                    widgetConfig["defaultY"] = data.y;
+                    widgetConfig["defaultX"] = data.lastX;
+                    widgetConfig["defaultY"] = data.lastY;
                 }}
-                onResizeStop={(e, direction, element, delta) => {
+                onResizeStop={(e, direction, element, delta, position) => {
+                    widgetConfig["defaultX"] = position.x;
+                    widgetConfig["defaultY"] = position.y;
                     widgetConfig.defaultWidth += delta.width;
                     widgetConfig.defaultHeight += delta.height;
                 }}
