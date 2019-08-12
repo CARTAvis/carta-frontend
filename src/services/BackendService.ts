@@ -462,7 +462,7 @@ export class BackendService {
 
     @action("authenticate")
     authenticate = (username: string, password: string) => {
-        let authUrl = `${window.location.protocol}//${window.location.hostname}/auth`;
+        let authUrl = `${window.location.protocol}//${window.location.hostname}/carta_auth`;
         // Check for URL query parameters as a final override
         const url = new URL(window.location.href);
         const queryUrl = url.searchParams.get("authUrl");
