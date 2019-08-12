@@ -522,7 +522,7 @@ export class BackendService {
 
     @action("authenticate")
     authenticate = (username: string, password: string) => {
-        let authUrl = `${window.location.protocol}//${window.location.hostname}/auth`;
+        let authUrl = `${window.location.protocol}//${window.location.hostname}/carta_auth/`;
         // Check for URL query parameters as a final override
         const url = new URL(window.location.href);
         const queryUrl = url.searchParams.get("authUrl");
@@ -531,14 +531,12 @@ export class BackendService {
             authUrl = queryUrl;
         }
 
-        const authCredential = btoa(`${username}:${password}`);
         return fetch(authUrl, {
             headers: {
-                "Accept": "application/json, text/plain, */*",
-                "Content-Type": "application/json",
-                "Authorization": "Basic " + authCredential
+                "Content-Type": "application/json"
             },
-            method: "POST"
+            method: "POST",
+            body: JSON.stringify({username, password})
         });
     };
 
