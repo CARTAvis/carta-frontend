@@ -1,29 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {computed, observable} from "mobx";
-import {
-    Alert,
-    AnchorButton,
-    Breadcrumb,
-    Breadcrumbs,
-    Button,
-    IBreadcrumbProps,
-    Icon,
-    IDialogProps,
-    InputGroup,
-    Intent,
-    Menu,
-    MenuItem,
-    NonIdealState,
-    Popover,
-    Position,
-    Pre,
-    Spinner,
-    Tab,
-    TabId,
-    Tabs,
-    Tooltip
-} from "@blueprintjs/core";
+import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, NonIdealState, Popover, Position, Pre, Spinner, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FileListComponent} from "./FileList/FileListComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -124,6 +102,79 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         return <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected" description="Select a file from the list on the left"/>;
     };
 
+    private renderActionButton(browserMode: BrowserMode, appending: boolean) {
+        const fileBrowserStore = this.props.appStore.fileBrowserStore;
+
+        if (browserMode === BrowserMode.File) {
+            if (appending) {
+                return (
+                    <Tooltip content={"Append this file as a new frame"}>
+                        <AnchorButton
+                            intent={Intent.PRIMARY}
+                            disabled={this.props.appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                            onClick={this.loadSelectedFile}
+                            text="Append"
+                        />
+                    </Tooltip>);
+            } else {
+                return (
+                    <Tooltip content={"Close any existing frames and load this file"}>
+                        <AnchorButton
+                            intent={Intent.PRIMARY}
+                            disabled={this.props.appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
+                            onClick={this.loadSelectedFile}
+                            text="Load"
+                        />
+                    </Tooltip>
+                );
+            }
+        } else if (browserMode === BrowserMode.RegionImport) {
+            return (
+                <Tooltip content={"Load a region file for the currently active frame"}>
+                    <AnchorButton
+                        intent={Intent.PRIMARY}
+                        disabled={this.props.appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !this.props.appStore.activeFrame}
+                        onClick={this.loadSelectedFile}
+                        text="Load Region"
+                    />
+                </Tooltip>
+            );
+        } else {
+            const frame = this.props.appStore.activeFrame;
+            return (
+                <Tooltip content={"Export all regions for the currently active frame"}>
+                    <AnchorButton
+                        intent={Intent.PRIMARY}
+                        disabled={!FileBrowserDialogComponent.ValidateFilename(fileBrowserStore.exportFilename) || !frame || frame.regionSet.regions.length <= 1}
+                        onClick={this.handleExportRegionsClicked}
+                        text="Export Regions"
+                    />
+                </Tooltip>
+            );
+        }
+    }
+
+    private renderExportFilenameInput() {
+        const fileBrowserStore = this.props.appStore.fileBrowserStore;
+
+        const coordinateTypeMenu = (
+            <Popover
+                content={
+                    <Menu>
+                        <MenuItem text="World Coordinates" onClick={() => fileBrowserStore.setExportCoordinateType(CARTA.CoordinateType.WORLD)}/>
+                        <MenuItem text="Pixel Coordinates" onClick={() => fileBrowserStore.setExportCoordinateType(CARTA.CoordinateType.PIXEL)}/>
+                    </Menu>
+                }
+                position={Position.BOTTOM_RIGHT}
+            >
+                <Button minimal={true} rightIcon="caret-down">
+                    {fileBrowserStore.exportCoordinateType === CARTA.CoordinateType.WORLD ? "World" : "Pixel"}
+                </Button>
+            </Popover>
+        );
+        return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.exportFilename} onChange={this.handleExportInputChanged} rightElement={coordinateTypeMenu}/>;
+    }
+
     public render() {
         let className = "file-browser-dialog";
         if (this.props.appStore.darkTheme) {
@@ -143,77 +194,17 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             title: "File Browser",
         };
 
-        let actionButton: React.ReactNode;
+        const actionButton = this.renderActionButton(fileBrowserStore.browserMode, fileBrowserStore.appendingFrame);
+
         let exportFileInput: React.ReactNode;
-        if (fileBrowserStore.browserMode === BrowserMode.File) {
-            if (fileBrowserStore.appendingFrame) {
-                actionButton = (
-                    <Tooltip content={"Append this file as a new frame"}>
-                        <AnchorButton
-                            intent={Intent.PRIMARY}
-                            disabled={this.props.appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                            onClick={this.loadSelectedFile}
-                            text="Append"
-                        />
-                    </Tooltip>);
-            } else {
-                actionButton = (
-                    <Tooltip content={"Close any existing frames and load this file"}>
-                        <AnchorButton
-                            intent={Intent.PRIMARY}
-                            disabled={this.props.appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo}
-                            onClick={this.loadSelectedFile}
-                            text="Load"
-                        />
-                    </Tooltip>
-                );
-            }
-        } else if (fileBrowserStore.browserMode === BrowserMode.RegionImport) {
-            actionButton = (
-                <Tooltip content={"Load a region file for the currently active frame"}>
-                    <AnchorButton
-                        intent={Intent.PRIMARY}
-                        disabled={this.props.appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !this.props.appStore.activeFrame}
-                        onClick={this.loadSelectedFile}
-                        text="Load Region"
-                    />
-                </Tooltip>
-            );
-        } else {
-            const frame = this.props.appStore.activeFrame;
-            actionButton = (
-                <Tooltip content={"Export all regions for the currently active frame"}>
-                    <AnchorButton
-                        intent={Intent.PRIMARY}
-                        disabled={!FileBrowserDialogComponent.ValidateFilename(fileBrowserStore.exportFilename) || !frame || frame.regionSet.regions.length <= 1}
-                        onClick={this.handleExportRegionsClicked}
-                        text="Export Regions"
-                    />
-                </Tooltip>
-            );
-
-            const coordinateTypeMenu = (
-                <Popover
-                    content={
-                        <Menu>
-                            <MenuItem text="World Coordinates" onClick={() => fileBrowserStore.setExportCoordinateType(CARTA.CoordinateType.WORLD)}/>
-                            <MenuItem text="Pixel Coordinates" onClick={() => fileBrowserStore.setExportCoordinateType(CARTA.CoordinateType.PIXEL)}/>
-                        </Menu>
-                    }
-                    position={Position.BOTTOM_RIGHT}
-                >
-                    <Button minimal={true} rightIcon="caret-down">
-                        {fileBrowserStore.exportCoordinateType === CARTA.CoordinateType.WORLD ? "World" : "Pixel"}
-                    </Button>
-                </Popover>
-            );
-            exportFileInput = <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.exportFilename} onChange={this.handleExportInputChanged} rightElement={coordinateTypeMenu}/>;
-        }
-
         let paneClassName = "file-panes";
-        if (fileBrowserStore.browserMode !== BrowserMode.RegionExport) {
+
+        if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
+            exportFileInput = this.renderExportFilenameInput();
+        } else {
             paneClassName += " extended";
         }
+
         return (
             <DraggableDialogComponent dialogProps={dialogProps} minWidth={400} minHeight={400} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
                 <div className="file-path">
