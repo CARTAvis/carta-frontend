@@ -10,7 +10,7 @@ import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/S
 import {WidgetConfig, WidgetProps, SpectralProfileStore, AnimationState} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {Point2D, ChannelInfo} from "models";
-import {clamp, pi, pa, normalising} from "utilities";
+import {clamp, polarizedIntensity, polarizationAngle, normalising} from "utilities";
 import "./StokesAnalysisComponent.css";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
@@ -219,7 +219,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (qData && uData && qData.length === uData.length) {
             for (let i = 0; i < qData.length; i++) {
                 // Unit degree
-                vals[i] = pa(qData[i], uData[i]) * (180 / Math.PI);
+                vals[i] = polarizationAngle(qData[i], uData[i]) * (180 / Math.PI);
             }
         }
         return vals;
@@ -229,7 +229,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         let vals = [];
         if (qData && uData && qData.length === uData.length) {
             for (let i = 0; i < qData.length; i++) {
-                vals[i] = pi(qData[i], uData[i]);
+                vals[i] = polarizedIntensity(qData[i], uData[i]);
             }
         }
         return vals;
@@ -463,7 +463,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: "profile",
-            forceScientificNotationTicksY: true,
+            forceScientificNotationTicksY: false,
             showXAxisTicks: true,
             showXAxisLabel: true,
             multiPlotData: new Map(),
