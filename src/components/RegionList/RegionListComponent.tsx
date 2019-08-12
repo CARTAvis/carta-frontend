@@ -1,7 +1,7 @@
 import * as React from "react";
 import {computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {HTMLTable, NonIdealState} from "@blueprintjs/core";
+import {HTMLTable, Icon, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {RegionStore, WidgetConfig, WidgetProps} from "stores";
@@ -21,6 +21,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable width: number = 0;
     @observable height: number = 0;
 
+    private static readonly LOCK_COLUMN_DEFAULT_WIDTH = 25;
     private static readonly NAME_COLUMN_MIN_WIDTH = 50;
     private static readonly NAME_COLUMN_DEFAULT_WIDTH = 160;
     private static readonly TYPE_COLUMN_DEFAULT_WIDTH = 80;
@@ -44,6 +45,11 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
+    };
+
+    private handleRegionLockClicked = (ev: React.MouseEvent<HTMLTableDataCellElement, MouseEvent>, region: RegionStore) => {
+        region.toggleLock();
+        ev.stopPropagation();
     };
 
     render() {
@@ -121,6 +127,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 }
             }
 
+            let lockEntry: React.ReactNode;
+            if (region.regionId !== 0) {
+                lockEntry = <td style={{width: RegionListComponent.LOCK_COLUMN_DEFAULT_WIDTH}} onClick={(ev) => this.handleRegionLockClicked(ev, region)}><Icon icon={region.locked ? "lock" : "unlock"}/></td>;
+            } else {
+                lockEntry = <td style={{width: RegionListComponent.LOCK_COLUMN_DEFAULT_WIDTH}}/>;
+            }
+
             return (
                 <tr
                     className={(selectedRegion && selectedRegion.regionId === region.regionId) ? "selected" : ""}
@@ -128,6 +141,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     onClick={() => frame.regionSet.selectRegion(region)}
                     onDoubleClick={this.props.appStore.showRegionDialog}
                 >
+                    {lockEntry}
                     <td style={{width: nameWidth}}>{region.nameString}</td>
                     <td style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>{RegionStore.RegionTypeString(region.regionType)}</td>
                     {pixelCenterEntry}
@@ -142,6 +156,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 <HTMLTable style={{height: tableHeight}}>
                     <thead className={this.props.appStore.darkTheme ? "dark-theme" : ""}>
                     <tr>
+                        <th style={{width: RegionListComponent.LOCK_COLUMN_DEFAULT_WIDTH}}/>
                         <th style={{width: nameWidth}}>Name</th>
                         <th style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>Type</th>
                         <th style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>Pixel Center</th>

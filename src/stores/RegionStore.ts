@@ -1,9 +1,11 @@
 import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {Point2D} from "models";
-import {BackendService} from "../services";
 import {Colors} from "@blueprintjs/core";
-import {minMax2D} from "../utilities";
+import {Point2D} from "models";
+import {BackendService} from "services";
+import {minMax2D, simplePolygonTest, simplePolygonPointTest} from "utilities";
+
+export const CURSOR_REGION_ID = 0;
 
 export class RegionStore {
     @observable fileId: number;
@@ -13,10 +15,13 @@ export class RegionStore {
     @observable lineWidth: number;
     @observable dashLength: number;
     @observable regionType: CARTA.RegionType;
-    @observable controlPoints: Point2D[];
+    // Shallow observable, since control point updates are atomic
+    @observable.shallow controlPoints: Point2D[];
     @observable rotation: number;
     @observable editing: boolean;
     @observable creating: boolean;
+    @observable locked: boolean;
+    @observable isSimplePolygon: boolean;
 
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
@@ -139,7 +144,7 @@ export class RegionStore {
     }
 
     @computed get nameString() {
-        if (this.regionId === 0) {
+        if (this.regionId === CURSOR_REGION_ID) {
             return "Cursor";
         } else if (this.name) {
             return this.name;
@@ -198,15 +203,32 @@ export class RegionStore {
             if (!this.editing && !skipUpdate) {
                 this.updateRegion();
             }
+            if (this.regionType === CARTA.RegionType.POLYGON) {
+                this.simplePolygonTest(index);
+            }
         }
     };
 
-    @action setControlPoints = (points: Point2D[], skipUpdate = false) => {
+    @action setControlPoints = (points: Point2D[], skipUpdate = false, shapeChanged = true) => {
         this.controlPoints = points;
+        if (shapeChanged && this.regionType === CARTA.RegionType.POLYGON) {
+            this.simplePolygonTest();
+        }
         if (!this.editing && !skipUpdate) {
             this.updateRegion();
         }
     };
+
+    private simplePolygonTest(point: number = -1) {
+        const points = this.controlPoints.slice();
+        // Only allow optimised test if the polygon is currently marked as simple, to avoid cases where multiple line segments intersect
+        if (point >= 0 && this.isSimplePolygon) {
+            this.isSimplePolygon = simplePolygonPointTest(points, point) && simplePolygonPointTest(points, point - 1);
+        } else {
+            this.isSimplePolygon = simplePolygonTest(points);
+
+        }
+    }
 
     @action setRotation = (angle: number, skipUpdate = false) => {
         this.rotation = (angle + 360) % 360;
@@ -259,10 +281,22 @@ export class RegionStore {
         this.updateRegion();
     };
 
+    @action toggleLock = () => {
+        if (this.regionId !== CURSOR_REGION_ID) {
+            this.locked = !this.locked;
+        }
+    };
+
+    @action setLocked = (locked: boolean) => {
+        if (this.regionId !== CURSOR_REGION_ID) {
+            this.locked = locked;
+        }
+    };
+
     // Update the region with the backend
     private updateRegion = () => {
         if (this.isValid) {
-            if (this.regionId === 0 && this.regionType === CARTA.RegionType.POINT) {
+            if (this.regionId === CURSOR_REGION_ID && this.regionType === CARTA.RegionType.POINT) {
                 this.backendService.setCursor(this.fileId, this.controlPoints[0].x, this.controlPoints[0].y);
             } else {
                 this.backendService.setRegion(this.fileId, this.regionId, this).subscribe(ack => {

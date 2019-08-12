@@ -25,8 +25,8 @@ import {
 } from ".";
 import {GetRequiredTiles} from "utilities";
 import {BackendService, TileService, ConnectionStatus} from "services";
-import {CursorInfo, FrameView, Point2D, ProcessedSpatialProfile, ProtobufProcessing, Theme} from "models";
-import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
+import {FrameView, Point2D, ProtobufProcessing, Theme} from "models";
+import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 
 const CURSOR_THROTTLE_TIME = 200;
 const CURSOR_THROTTLE_TIME_ROTATED = 100;
@@ -56,10 +56,6 @@ export class AppStore {
     // Layouts
     @observable layoutStore: LayoutStore;
 
-    // Cursor information
-    @observable cursorInfo: CursorInfo;
-    @observable cursorValue: number;
-    @observable cursorFrozen: boolean;
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
     @observable spectralProfiles: Map<number, ObservableMap<number, SpectralProfileStore>>;
@@ -287,8 +283,7 @@ export class AppStore {
             // Clear existing tile cache if it exists
             this.tileService.clearCompressedCache(fileId);
 
-            let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, frameInfo, this.backendService);
-            this.loadWCS(newFrame);
+            let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, this.logStore, frameInfo, this.backendService);
 
             // clear existing requirements for the frame
             this.spectralRequirements.delete(ack.fileId);
@@ -324,6 +319,7 @@ export class AppStore {
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets, fileId);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.histogramWidgets, fileId);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.spectralProfileWidgets, fileId);
+            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets, fileId);
 
             if (this.backendService.closeFile(fileId)) {
                 if (this.activeFrame.frameInfo.fileId === fileId) {
@@ -344,56 +340,7 @@ export class AppStore {
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.histogramWidgets);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.spectralProfileWidgets);
-        }
-    };
-
-    @action loadWCS = (frame: FrameStore) => {
-        let headerString = "";
-
-        for (let entry of frame.frameInfo.fileInfoExtended.headerEntries) {
-            // Skip empty header entries
-            if (!entry.value.length) {
-                continue;
-            }
-
-            // Skip higher dimensions
-            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
-                continue;
-            }
-
-            let value = entry.value;
-            if (entry.name.toUpperCase() === "NAXIS") {
-                value = "2";
-            }
-
-            if (entry.name.toUpperCase() === "WCSAXES") {
-                value = "2";
-            }
-
-            if (entry.entryType === CARTA.EntryType.STRING) {
-                value = `'${value}'`;
-            }
-
-            let name = entry.name;
-            while (name.length < 8) {
-                name += " ";
-            }
-
-            let entryString = `${name}=  ${value}`;
-            while (entryString.length < 80) {
-                entryString += " ";
-            }
-            headerString += entryString;
-        }
-        const initResult = AST.initFrame(headerString);
-        if (!initResult) {
-            this.logStore.addWarning(`Problem processing WCS info in file ${frame.frameInfo.fileInfo.name}`, ["ast"]);
-            frame.wcsInfo = AST.initDummyFrame();
-        } else {
-            frame.wcsInfo = initResult;
-            frame.validWcs = true;
-            this.overlayStore.setDefaultsFromAST(frame);
-            console.log("Initialised WCS info from frame");
+            WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets);
         }
     };
 
@@ -438,20 +385,10 @@ export class AppStore {
         this.preferenceStore.setTheme(Theme.LIGHT);
     };
 
-    @action setCursorInfo = (cursorInfo: CursorInfo) => {
-        this.cursorInfo = cursorInfo;
-    };
-
-    @action setCursorValue = (value: number) => {
-        this.cursorValue = value;
-    };
-
-    @action setCursorFrozen = (frozen: boolean) => {
-        this.cursorFrozen = frozen;
-    };
-
     @action toggleCursorFrozen = () => {
-        this.cursorFrozen = !this.cursorFrozen;
+        if (this.activeFrame) {
+            this.activeFrame.cursorFrozen = !this.activeFrame.cursorFrozen;
+        }
     };
 
     public static readonly DEFAULT_STATS_TYPES = [CARTA.StatsType.NumPixels, CARTA.StatsType.Sum, CARTA.StatsType.Mean, CARTA.StatsType.RMS, CARTA.StatsType.Sigma, CARTA.StatsType.SumSq, CARTA.StatsType.Min, CARTA.StatsType.Max];
@@ -535,8 +472,9 @@ export class AppStore {
         // Update frame view outside of animation
         autorun(() => {
             if (this.activeFrame && (this.animatorStore.animationState === AnimationState.STOPPED || this.animatorStore.animationMode === AnimationMode.FRAME)) {
-                // Trigger update when switching layout
+                // Trigger update raster view/title when switching layout
                 const layout = this.layoutStore.dockedLayout;
+                this.widgetsStore.updateImageWidgetTitle();
 
                 // Calculate new required frame view (cropped to file size)
                 const reqView = this.activeFrame.requiredFrameView;
@@ -592,8 +530,8 @@ export class AppStore {
 
         // Update cursor profiles
         autorun(() => {
-            if (this.activeFrame && this.cursorInfo && this.cursorInfo.posImageSpace) {
-                const pos = {x: Math.round(this.cursorInfo.posImageSpace.x), y: Math.round(this.cursorInfo.posImageSpace.y)};
+            if (this.activeFrame && this.activeFrame.cursorInfo && this.activeFrame.cursorInfo.posImageSpace) {
+                const pos = {x: Math.round(this.activeFrame.cursorInfo.posImageSpace.x), y: Math.round(this.activeFrame.cursorInfo.posImageSpace.y)};
                 if (pos.x >= 0 && pos.x <= this.activeFrame.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y < this.activeFrame.frameInfo.fileInfoExtended.height - 1) {
                     if (this.activeFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
                         throttledSetCursorRotated(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
@@ -643,7 +581,7 @@ export class AppStore {
     }
 
     // region Subscription handlers
-    @action handleSpatialProfileStream = (spatialProfileData: CARTA.SpatialProfileData) => {
+    @action handleSpatialProfileStream = (spatialProfileData: CARTA.ISpatialProfileData) => {
         if (this.frames.find(frame => frame.frameInfo.fileId === spatialProfileData.fileId)) {
             const key = `${spatialProfileData.fileId}-${spatialProfileData.regionId}`;
             let profileStore = this.spatialProfiles.get(key);
@@ -651,20 +589,11 @@ export class AppStore {
                 profileStore = new SpatialProfileStore(spatialProfileData.fileId, spatialProfileData.regionId);
                 this.spatialProfiles.set(key, profileStore);
             }
-
-            profileStore.channel = spatialProfileData.channel;
-            profileStore.stokes = spatialProfileData.stokes;
-            profileStore.x = spatialProfileData.x;
-            profileStore.y = spatialProfileData.y;
-            const profileMap = new Map<string, ProcessedSpatialProfile>();
-            for (let profile of spatialProfileData.profiles) {
-                profileMap.set(profile.coordinate, ProtobufProcessing.ProcessSpatialProfile(profile));
-            }
-            profileStore.setProfiles(profileMap);
+            profileStore.updateFromStream(spatialProfileData);
 
             // Update cursor value from profile if it matches the file and is the cursor data
             if (this.activeFrame && this.activeFrame.frameInfo.fileId === spatialProfileData.fileId && spatialProfileData.regionId === 0) {
-                this.setCursorValue(spatialProfileData.value);
+                this.activeFrame.setCursorValue(spatialProfileData.value);
             }
         }
     };
@@ -817,8 +746,6 @@ export class AppStore {
         }
         this.activeFrame = frame;
         this.widgetsStore.updateImageWidgetTitle();
-        this.setCursorFrozen(this.preferenceStore.isCursorFrozen);
-        this.setCursorValue(undefined);
     }
 
     getFrame(fileId: number) {
@@ -829,17 +756,22 @@ export class AppStore {
     }
 
     @action deleteSelectedRegion = () => {
-        if (this.activeFrame && this.activeFrame.regionSet) {
-            const fileId = this.activeFrame.frameInfo.fileId;
-            let region: RegionStore;
-            region = this.activeFrame.regionSet.selectedRegion;
-            if (region) {
-                const regionId = region.regionId;
-                WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.statsWidgets, fileId, regionId);
-                WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.histogramWidgets, fileId, regionId);
-                WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.spectralProfileWidgets, fileId, regionId);
-                // delete region
-                this.activeFrame.regionSet.deleteRegion(region);
+        if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && !this.activeFrame.regionSet.selectedRegion.locked) {
+            this.deleteRegion(this.activeFrame.regionSet.selectedRegion);
+        }
+    };
+
+    @action deleteRegion = (region: RegionStore) => {
+        if (region) {
+            const frame = this.getFrame(region.fileId);
+            const regionId = region.regionId;
+            WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.statsWidgets, region.fileId, regionId);
+            WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.histogramWidgets, region.fileId, regionId);
+            WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.spectralProfileWidgets, region.fileId, regionId);
+            WidgetsStore.RemoveRegionFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets, region.fileId, regionId);
+            // delete region
+            if (frame) {
+                frame.regionSet.deleteRegion(region);
             }
         }
     };
@@ -897,6 +829,9 @@ export class AppStore {
         }
 
         const updatedRequirements = SpectralProfileWidgetStore.CalculateRequirementsMap(this.activeFrame, this.widgetsStore.spectralProfileWidgets);
+        if (this.widgetsStore.stokesAnalysisWidgets.size > 0) {
+            StokesAnalysisWidgetStore.addToRequirementsMap(this.activeFrame, updatedRequirements, this.widgetsStore.stokesAnalysisWidgets);
+        }
         const diffList = SpectralProfileWidgetStore.DiffSpectralRequirements(this.spectralRequirements, updatedRequirements);
         this.spectralRequirements = updatedRequirements;
 

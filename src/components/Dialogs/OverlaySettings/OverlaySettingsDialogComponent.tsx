@@ -108,7 +108,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         placeholder="Tolerance"
                         min={0.1}
                         value={global.tolerance}
-                        stepSize={1}
+                        stepSize={0.1}
                         minorStepSize={null}
                         majorStepSize={10}
                         onValueChange={(value: number) => global.setTolerance(value)}
