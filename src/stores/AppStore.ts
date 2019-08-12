@@ -63,14 +63,14 @@ export class AppStore {
     @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
     @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
 
-    private imageViewerContainer: HTMLElement;
+    private appContainer: HTMLElement;
 
-    public getImageViewContainer = (): HTMLElement => {
-        return this.imageViewerContainer;
+    public getAppContainer = (): HTMLElement => {
+        return this.appContainer;
     };
 
-    public setImageViewContainer = (container: HTMLElement) => {
-        this.imageViewerContainer = container;
+    public setAppContainer = (container: HTMLElement) => {
+        this.appContainer = container;
     };
 
     // Image view

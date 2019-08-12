@@ -7,7 +7,6 @@ import {ChartArea} from "chart.js";
 import {PlotContainerComponent} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {LinePlotComponent} from "components/Shared/LinePlot/LinePlotComponent";
-import {minMaxPointArrayY} from "utilities";
 import "./ScatterPlotComponent.css";
 
 @observer
@@ -24,25 +23,39 @@ export class ScatterPlotComponent extends LinePlotComponent {
         }
     }
 
-    private getScatterColor(value: number, min: number, range: number, toColor: number): string {
-        let percentage = (value + Math.abs(min)) / range;
+    private getScatterColor(currentIndex: number, range: number, toColor: number, frequencyIncreases: boolean): string {
+        let percentage = currentIndex / range;
+        if (!frequencyIncreases) {
+            percentage = 1 - percentage;
+        }
         let hue = (percentage * toColor);
         return `hsla(${hue}, 100%, 50%, ${this.opacityInit})`;
     }
 
+    private frequencyIncreases (data: {x: number, y: number, z?: number}[]): boolean {
+        const zFirst = data[0].z;
+        const zLast = data[data.length - 1].z;
+        if (zFirst > zLast) {
+            return false;
+        }
+        return true;
+    }
+
     private fillColor(): Array<string> {
         let scatterColors = [];
-        if (this.props.data && this.props.data.length && this.props.scatterColorIndex && this.props.scatterColorIndex.length && this.props.interactionBorder) {
-            let yRange = minMaxPointArrayY(this.props.data);
+        if (this.props.data && this.props.data.length && this.props.zIndex && this.props.interactionBorder) {
             let xlinePlotRange = this.props.interactionBorder;
             const outOfRangeColor = `hsla(0, 0%, 50%, ${this.opacityOutRange})`;
-            this.props.scatterColorIndex.forEach(data => {
+            const zOrder = this.frequencyIncreases(this.props.data);
+            const dataLength = this.props.data.length;
+            const colorRangeEnd = this.props.colorRangeEnd;
+            this.props.data.forEach((data, i) => {
                 let pointColor = this.pointDefaultColor;
                 let outRange = true;
                 if (data.z >= xlinePlotRange.xMin && data.z <= xlinePlotRange.xMax) {
                     outRange = false;
                 }
-                pointColor = outRange ? outOfRangeColor : this.getScatterColor(data.y, yRange.minVal, yRange.maxVal - yRange.minVal, this.props.colorRangeEnd);
+                pointColor = outRange ? outOfRangeColor : this.getScatterColor(i, dataLength, colorRangeEnd, zOrder);
                 scatterColors.push(pointColor);
             });
         }

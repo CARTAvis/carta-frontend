@@ -108,7 +108,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 >
                     <p>{appStore.alertStore.interactiveAlertText}</p>
                 </Alert>
-                <div className={glClassName} ref={ref => appStore.setImageViewContainer(ref)}>
+                <div className={glClassName} ref={ref => appStore.setAppContainer(ref)}>
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}/>
                 </div>
                 <FloatingWidgetManagerComponent appStore={appStore}/>

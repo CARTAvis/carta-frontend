@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {SpectralProfilerSettingsPanelComponent} from "./SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
@@ -137,6 +137,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (yMin === Number.MAX_VALUE) {
                 yMin = undefined;
                 yMax = undefined;
+            } else {
+                // extend y range a bit
+                const range = yMax - yMin;
+                yMin -= range * VERTICAL_RANGE_PADDING;
+                yMax += range * VERTICAL_RANGE_PADDING;
             }
             return {values, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
         }
