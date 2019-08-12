@@ -42,15 +42,20 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 <Menu.Item
                     text="Import regions"
                     disabled={!appStore.activeFrame}
-                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Region, false)}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)}
                 />
+                <Menu.Item
+                    text="Export regions"
+                    disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionExport, false)}
+                />
+                <Menu.Divider/>
                 <Menu.Item
                     text="Export image"
                     label={`${modString}E`}
                     disabled={!appStore.activeFrame}
                     onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
                 />
-                <Menu.Divider/>
                 <Menu.Item text="Preferences" onClick={appStore.showPreferenceDialog}/>
             </Menu>
         );

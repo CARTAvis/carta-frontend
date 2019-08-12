@@ -2,32 +2,53 @@
     min-width: 60%;
     height: 100%;
     user-select: none;
+
     .file-path {
         margin-top: 20px;
         margin-left: 25px;
     }
+
     .bp3-dialog-body {
-        display: flex;
+        height: 100%;
         overflow: hidden;
         margin-top: 10px;
         margin-left: 25px;
-        .file-list {
-            width: 60%;
-            flex: auto;
-            overflow-y: auto;
+
+        .bp3-input-group {
+            margin: 10px 5px 0;
         }
-        .file-info-pane {
-            width: 40%;
-            margin-left: 2%;
-            margin-bottom: 40px;
-            .file-info-pre {
-                overflow: auto;
+
+        .file-panes {
+            display: flex;
+            height: calc(100% - 50px);
+
+            &.extended {
                 height: 100%;
-                flex: 2 2 auto;
+
             }
-            .bp3-heading {
-                flex: 0 0 auto;
+
+            .file-list {
+                width: 60%;
+                flex: auto;
+                overflow-y: auto;
+            }
+
+            .file-info-pane {
+                width: 40%;
+                margin-left: 2%;
+                margin-bottom: 40px;
+
+                .file-info-pre {
+                    overflow: auto;
+                    height: 100%;
+                    flex: 2 2 auto;
+                }
+
+                .bp3-heading {
+                    flex: 0 0 auto;
+                }
             }
         }
+
     }
 }

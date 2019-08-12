@@ -10,7 +10,8 @@ export enum FileInfoTabs {
 
 export enum BrowserMode {
     File,
-    Region
+    RegionImport,
+    RegionExport
 }
 
 export class FileBrowserStore {
@@ -26,8 +27,10 @@ export class FileBrowserStore {
     @observable loadingList = false;
     @observable loadingInfo = false;
     @observable fileInfoResp = false;
-    @observable respErrmsg: string = "";
+    @observable responseErrorMessage: string = "";
     @observable startingDirectory: string = "$BASE";
+    @observable exportFilename: string;
+    @observable exportCoordinateType: CARTA.CoordinateType;
 
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
@@ -35,6 +38,7 @@ export class FileBrowserStore {
         this.fileBrowserDialogVisible = true;
         this.fileList = null;
         this.selectedTab = FileInfoTabs.INFO;
+        this.exportFilename = "";
     };
 
     @action hideFileBrowser = () => {
@@ -48,15 +52,15 @@ export class FileBrowserStore {
         this.fileInfoExtended = null;
         this.regionFileInfo = null;
 
-        if (this.browserMode === BrowserMode.Region) {
-            this.backendService.getRegionList(directory).subscribe(res => {
+        if (this.browserMode === BrowserMode.File) {
+            this.backendService.getFileList(directory).subscribe(res => {
                 this.fileList = res;
             }, err => {
                 console.log(err);
                 this.loadingList = false;
             });
         } else {
-            this.backendService.getFileList(directory).subscribe(res => {
+            this.backendService.getRegionList(directory).subscribe(res => {
                 this.fileList = res;
             }, err => {
                 console.log(err);
@@ -77,7 +81,7 @@ export class FileBrowserStore {
             this.fileInfoResp = true;
         }, err => {
             console.log(err);
-            this.respErrmsg = err;
+            this.responseErrorMessage = err;
             this.fileInfoResp = false;
             this.fileInfoExtended = null;
             this.loadingInfo = false;
@@ -96,7 +100,7 @@ export class FileBrowserStore {
             this.fileInfoResp = true;
         }, err => {
             console.log(err);
-            this.respErrmsg = err;
+            this.responseErrorMessage = err;
             this.fileInfoResp = false;
             this.regionFileInfo = null;
             this.loadingInfo = false;
@@ -109,6 +113,7 @@ export class FileBrowserStore {
         if (this.browserMode === BrowserMode.File) {
             this.getFileInfo(this.fileList.directory, file.name, hdu);
         } else {
+            this.setExportFilename(file.name);
             this.getRegionFileInfo(this.fileList.directory, file.name);
         }
     };
@@ -144,6 +149,14 @@ export class FileBrowserStore {
     @action saveStartingDirectory() {
         this.startingDirectory = this.fileList.directory;
     }
+
+    @action setExportFilename = (filename: string) => {
+        this.exportFilename = filename;
+    };
+
+    @action setExportCoordinateType = (coordType: CARTA.CoordinateType) => {
+        this.exportCoordinateType = coordType;
+    };
 
     @computed get fileInfo() {
         let fileInfo = "";

@@ -2,7 +2,7 @@ import {action, autorun, computed, observable} from "mobx";
 import * as Long from "long";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
-import {LogStore, RegionStore, PreferenceStore} from "stores";
+import {LogStore, PreferenceStore, RegionStore} from "stores";
 import {DecompressionService} from "./DecompressionService";
 
 export enum ConnectionStatus {
@@ -75,6 +75,7 @@ export class BackendService {
             [CARTA.EventType.REGION_FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.OPEN_FILE_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.IMPORT_REGION_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.EXPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.SET_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.START_ANIMATION_ACK, this.onStartAnimationAck],
             [CARTA.EventType.RASTER_IMAGE_DATA, this.onStreamedRasterImageData],
@@ -94,6 +95,7 @@ export class BackendService {
             [CARTA.EventType.REGION_FILE_INFO_RESPONSE, CARTA.RegionFileInfoResponse],
             [CARTA.EventType.OPEN_FILE_ACK, CARTA.OpenFileAck],
             [CARTA.EventType.IMPORT_REGION_ACK, CARTA.ImportRegionAck],
+            [CARTA.EventType.EXPORT_REGION_ACK, CARTA.ExportRegionAck],
             [CARTA.EventType.SET_REGION_ACK, CARTA.SetRegionAck],
             [CARTA.EventType.START_ANIMATION_ACK, CARTA.StartAnimationAck],
             [CARTA.EventType.RASTER_IMAGE_DATA, CARTA.RasterImageData],
@@ -297,6 +299,24 @@ export class BackendService {
             this.logEvent(CARTA.EventType.IMPORT_REGION, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.IMPORT_REGION, CARTA.ImportRegion.encode(message).finish())) {
                 return new Observable<CARTA.ImportRegionAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("export regions")
+    exportRegion(directory: string, file: string, type: CARTA.FileType, coordType: CARTA.CoordinateType, fileId: number, regionId: number[]): Observable<CARTA.ExportRegionAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.ExportRegion.create({directory, file, type, fileId, regionId, coordType});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.EXPORT_REGION, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.EXPORT_REGION, CARTA.ExportRegion.encode(message).finish())) {
+                return new Observable<CARTA.ExportRegionAck>(observer => {
                     this.observerRequestMap.set(requestId, observer);
                 });
             } else {
