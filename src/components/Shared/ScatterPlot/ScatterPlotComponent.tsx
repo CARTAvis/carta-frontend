@@ -12,8 +12,10 @@ import "./ScatterPlotComponent.css";
 @observer
 export class ScatterPlotComponent extends LinePlotComponent {
     private pointDefaultColor = Colors.GRAY2;
+    private opacityInit = 1;
+    private opacityOutRange = 0.1;
 
-    private getChartAreaWH(chartArea: ChartArea): {width: number, height: number} {
+    private getChartAreaWH(chartArea: ChartArea): { width: number, height: number } {
         if (chartArea && chartArea.right && chartArea.bottom) {
             return {width: Math.abs(chartArea.right - chartArea.left), height: Math.abs(chartArea.bottom - chartArea.top)};
         } else {
@@ -21,17 +23,39 @@ export class ScatterPlotComponent extends LinePlotComponent {
         }
     }
 
-    private getScatterColor(value: number, min: number, max: number, toColor: number): string {
-        let percentage = (value + Math.abs(min)) / (Math.abs(min) + Math.abs(max));
-        let hue = (percentage * toColor).toString(10);
-        return ["hsl(", hue, ",100%,50%)"].join("");
+    private getScatterColor(currentIndex: number, range: number, toColor: number, frequencyIncreases: boolean): string {
+        let percentage = currentIndex / range;
+        if (!frequencyIncreases) {
+            percentage = 1 - percentage;
+        }
+        let hue = (percentage * toColor);
+        return `hsla(${hue}, 100%, 50%, ${this.opacityInit})`;
+    }
+
+    private frequencyIncreases (data: {x: number, y: number, z?: number}[]): boolean {
+        const zFirst = data[0].z;
+        const zLast = data[data.length - 1].z;
+        if (zFirst > zLast) {
+            return false;
+        }
+        return true;
     }
 
     private fillColor(): Array<string> {
         let scatterColors = [];
-        if (this.props.data) {
-            this.props.data.forEach(data => {
-                let pointColor = this.getScatterColor(data.y, this.props.yMin, this.props.yMax, this.props.colorRangeEnd);
+        if (this.props.data && this.props.data.length && this.props.zIndex && this.props.interactionBorder) {
+            let xlinePlotRange = this.props.interactionBorder;
+            const outOfRangeColor = `hsla(0, 0%, 50%, ${this.opacityOutRange})`;
+            const zOrder = this.frequencyIncreases(this.props.data);
+            const dataLength = this.props.data.length;
+            const colorRangeEnd = this.props.colorRangeEnd;
+            this.props.data.forEach((data, i) => {
+                let pointColor = this.pointDefaultColor;
+                let outRange = true;
+                if (data.z >= xlinePlotRange.xMin && data.z <= xlinePlotRange.xMax) {
+                    outRange = false;
+                }
+                pointColor = outRange ? outOfRangeColor : this.getScatterColor(i, dataLength, colorRangeEnd, zOrder);
                 scatterColors.push(pointColor);
             });
         }

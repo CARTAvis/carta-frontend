@@ -46,7 +46,7 @@ export interface LineMarker {
 export class LinePlotComponentProps {
     width?: number;
     height?: number;
-    data?: { x: number, y: number }[];
+    data?: { x: number, y: number, z?: number}[];
     dataStat?: {mean: number, rms: number};
     cursorX?: {profiler: number, image: number, unit: string};
     comments?: string[];
@@ -91,6 +91,8 @@ export class LinePlotComponentProps {
     isGroupSubPlot?: boolean;
     centeredOrigin?: boolean;
     equalScale?: boolean;
+    zIndex?: boolean;
+    interactionBorder?: {xMin: number, xMax: number};
 }
 
 // Maximum time between double clicks
