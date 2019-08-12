@@ -1,6 +1,5 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {observable} from "mobx";
 import ReactResizeDetector from "react-resize-detector";
 import {Layer, Stage} from "react-konva";
 import {ChartArea} from "chart.js";
