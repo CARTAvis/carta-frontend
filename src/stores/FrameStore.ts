@@ -8,7 +8,7 @@ import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency} from "u
 import {BackendService} from "../services";
 
 // Orignal point of datacube starts from (x,y) = (-0.5, -0.5)
-const originPoint = 0.5;
+const ORIGIN_POINT_OFFSET = 0.5;
 
 export interface FrameInfo {
     fileId: number;
@@ -249,10 +249,10 @@ export class FrameStore {
 
         // Is cursorPos inside the image?
         let isInsideImg = false;
-        if (cursorPosImageSpace.x + originPoint < this.frameInfo.fileInfoExtended.width && 
-            cursorPosImageSpace.x + originPoint > 0 &&
-            cursorPosImageSpace.y + originPoint < this.frameInfo.fileInfoExtended.height &&
-            cursorPosImageSpace.y + originPoint > 0) {
+        if (cursorPosImageSpace.x + ORIGIN_POINT_OFFSET < this.frameInfo.fileInfoExtended.width && 
+            cursorPosImageSpace.x + ORIGIN_POINT_OFFSET > 0 &&
+            cursorPosImageSpace.y + ORIGIN_POINT_OFFSET < this.frameInfo.fileInfoExtended.height &&
+            cursorPosImageSpace.y + ORIGIN_POINT_OFFSET > 0) {
             isInsideImg = true;
         }
 
@@ -577,8 +577,8 @@ export class FrameStore {
     }
 
     @action private initCenter = () => {
-        this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + originPoint;
-        this.center.y = this.frameInfo.fileInfoExtended.height / 2.0 + originPoint;
+        this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + ORIGIN_POINT_OFFSET;
+        this.center.y = this.frameInfo.fileInfoExtended.height / 2.0 + ORIGIN_POINT_OFFSET;
     };
 
     @action fitZoom = () => {
