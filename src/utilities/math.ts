@@ -24,9 +24,13 @@ export function pi(q: number, u: number) {
     return Math.sqrt(Math.pow(q, 2) + Math.pow(u, 2));
 }
 
-// 0.5 * arctan(u/q)
+// // 0.5 * arctan(u/q)
+// export function pa(q: number, u: number) {
+//     return 0.5 * (Math.atan(u / q));
+// }
+// 0.5 * Math.atan2(U, Q) * 180 / Math.pi
 export function pa(q: number, u: number) {
-    return 0.5 * (Math.atan(u / q));
+    return 0.5 * Math.atan2(u, q) * 180 / Math.PI;
 }
 
 // normalising a by b

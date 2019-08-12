@@ -92,8 +92,6 @@ export class LinePlotComponentProps {
     centeredOrigin?: boolean;
     equalScale?: boolean;
     zIndex?: boolean;
-    interactionBorder?: {xMin: number, xMax: number};
-    channel?: {channelCurrent?: number, channelHovered?: number};
     pointRadiusSet?: Array<number>;
 }
 
@@ -700,7 +698,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
     };
 
-    private genLines = () => {
+    genLines = () => {
         const chartArea = this.chartArea;
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
 
@@ -710,7 +708,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const marker = this.props.markers[i];
                 const markerColor = marker.color || (this.props.darkMode ? Colors.RED4 : Colors.RED2);
                 const markerOpacity = (marker.isMouseMove && (!this.isMouseEntered || this.isMarkerDragging)) ? 0 : (marker.opacity || 1);
-                
                 if (marker.horizontal) {
                     let valueCanvasSpace = this.getCanvasSpaceY(marker.value);
                     if (valueCanvasSpace < Math.floor(chartArea.top - 1) || valueCanvasSpace > Math.ceil(chartArea.bottom + 1) || isNaN(valueCanvasSpace)) {
