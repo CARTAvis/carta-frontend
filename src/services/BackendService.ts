@@ -471,12 +471,10 @@ export class BackendService {
             authUrl = queryUrl;
         }
 
-        const authCredential = btoa(`${username}:${password}`);
         return fetch(authUrl, {
             headers: {
                 "Accept": "application/json, text/plain, */*",
-                "Content-Type": "application/json",
-                "Authorization": "Basic " + authCredential
+                "Content-Type": "application/json"
             },
             method: "POST",
             body: JSON.stringify({username, password})
