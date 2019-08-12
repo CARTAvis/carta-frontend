@@ -73,7 +73,8 @@ export class AuthDialogComponent extends React.Component<{ appStore: AppStore }>
                         }, 50);
                     }
                 }, parseError => {
-                    this.errorString = parseError;
+                    this.errorString = "Problem parsing server response";
+                    console.error(parseError);
                 });
             } else {
                 if (res.status === 403) {

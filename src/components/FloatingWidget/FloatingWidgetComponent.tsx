@@ -22,13 +22,18 @@ class FloatingWidgetComponentProps {
 export class FloatingWidgetComponent extends React.Component<FloatingWidgetComponentProps> {
 
     private pinElementRef: HTMLElement;
+    private rnd: Rnd;
 
     componentDidMount() {
         this.updateDragSource();
+        this.rnd.updateSize({width: this.props.widgetConfig.defaultWidth, height: this.props.widgetConfig.defaultHeight});
+        this.rnd.updatePosition({x: this.props.widgetConfig.defaultX, y: this.props.widgetConfig.defaultY});
     }
 
     componentDidUpdate() {
         this.updateDragSource();
+        this.rnd.updateSize({width: this.props.widgetConfig.defaultWidth, height: this.props.widgetConfig.defaultHeight});
+        this.rnd.updatePosition({x: this.props.widgetConfig.defaultX, y: this.props.widgetConfig.defaultY});
     }
 
     updateDragSource() {
@@ -81,14 +86,14 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         const widgetConfig = this.props.widgetConfig;
         return (
             <Rnd
+                ref={c => this.rnd = c}
                 className={className}
                 style={{zIndex: this.props.zIndex}}
                 default={{
-                    // Shift by 5 pixels to compensate for 5px CSS margins
-                    x: widgetConfig.defaultX !== undefined ? widgetConfig.defaultX : widgetsStore.defaultFloatingWidgetOffset + 5,
-                    y: widgetConfig.defaultY !== undefined ? widgetConfig.defaultY : widgetsStore.defaultFloatingWidgetOffset,
+                    x: widgetConfig.defaultX,
+                    y: widgetConfig.defaultY,
                     width: widgetConfig.defaultWidth,
-                    height: widgetConfig.defaultHeight + headerHeight,
+                    height: widgetConfig.defaultHeight + headerHeight
                 }}
                 resizeGrid={[25, 25]}
                 dragGrid={[25, 25]}
@@ -97,6 +102,16 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 bounds={".gl-container"}
                 dragHandleClassName={"floating-title"}
                 onMouseDown={this.props.onSelected}
+                onDragStop={(e, data) => {
+                    widgetConfig["defaultX"] = data.lastX;
+                    widgetConfig["defaultY"] = data.lastY;
+                }}
+                onResizeStop={(e, direction, element, delta, position) => {
+                    widgetConfig["defaultX"] = position.x;
+                    widgetConfig["defaultY"] = position.y;
+                    widgetConfig.defaultWidth += delta.width;
+                    widgetConfig.defaultHeight += delta.height;
+                }}
             >
                 <div className={titleClass}>
                     <div className={"floating-title"}>

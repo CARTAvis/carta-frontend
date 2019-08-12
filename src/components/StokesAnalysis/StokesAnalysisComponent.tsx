@@ -5,12 +5,12 @@ import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, ScatterPlotComponent} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, ScatterPlotComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
 import {WidgetConfig, WidgetProps, SpectralProfileStore, AnimationState} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {Point2D, ChannelInfo} from "models";
-import {clamp, pi, pa, normalising} from "utilities";
+import {clamp, polarizedIntensity, polarizationAngle, normalising} from "utilities";
 import "./StokesAnalysisComponent.css";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
@@ -226,7 +226,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (qData && uData && qData.length === uData.length) {
             for (let i = 0; i < qData.length; i++) {
                 // Unit degree
-                vals[i] = pa(qData[i], uData[i]);
+                vals[i] = polarizationAngle(qData[i], uData[i]);
             }
         }
         return vals;
@@ -236,7 +236,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         let vals = [];
         if (qData && uData && qData.length === uData.length) {
             for (let i = 0; i < qData.length; i++) {
-                vals[i] = pi(qData[i], uData[i]);
+                vals[i] = polarizedIntensity(qData[i], uData[i]);
             }
         }
         return vals;
@@ -308,6 +308,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (yMin === Number.MAX_VALUE) {
             yMin = undefined;
             yMax = undefined;
+        } else {
+            // extend y range a bit
+            const range = yMax - yMin;
+            yMin -= range * VERTICAL_RANGE_PADDING;
+            yMax += range * VERTICAL_RANGE_PADDING;
         }
         return {xMin, xMax, yMin, yMax};
     }
@@ -317,12 +322,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
             let border = this.calculateXYborder(channelValues, profile, true);
             let values: Array<{ x: number, y: number }> = [];
-            let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
+            let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1];
             for (let i = 0; i < channelValues.length; i++) {
                 let index = isIncremental ? i : channelValues.length - 1 - i;
                 const x = channelValues[index];
                 const y = profile[index];
-        
+
                 if (x < border.xMin || x > border.xMax) {
                     if (values.length) {
                         break;
@@ -356,7 +361,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         }
         return null;
     }
-        
+
     private compareVariable(a: number, b: number, c: number, d: number): boolean {
         return a === b && a === c && a === d && a !== null;
     }
@@ -545,7 +550,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: "profile",
-            forceScientificNotationTicksY: true,
+            forceScientificNotationTicksY: false,
             showXAxisTicks: true,
             showXAxisLabel: true,
             multiPlotData: new Map(),
