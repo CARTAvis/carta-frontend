@@ -473,7 +473,6 @@ export class BackendService {
 
         return fetch(authUrl, {
             headers: {
-                "Accept": "application/json, text/plain, */*",
                 "Content-Type": "application/json"
             },
             method: "POST",
