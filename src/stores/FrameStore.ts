@@ -222,7 +222,7 @@ export class FrameStore {
                 astString.add("Format(2)", this.overlayStore.numbers.cursorFormatStringY(precisionY));
                 astString.add("System", this.overlayStore.global.explicitSystem);
 
-                let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString()));
+                let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString()), true);
                 let [p, n1, n2] = formattedNeighbourhood;
                 if (!p.x || !p.y || p.x === "<bad>" || p.y === "<bad>") {
                     cursorPosFormatted = null;

@@ -257,19 +257,19 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
 
         let astString = new ASTSettingsString();
-        // astString.add("System", this.props.appStore.overlayStore.global.explicitSystem);
+        astString.add("System", this.props.appStore.overlayStore.global.explicitSystem);
 
         if (isXProfile) {
             for (let i = 0; i < values.length; i++) {
                 const pointWCS = AST.pixToWCS(this.frame.wcsInfo, values[i] + 1, this.profileStore.y + 1);
                 const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
-                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, normVals.x, undefined, astString.toString()).x;
+                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, normVals.x, undefined, astString.toString(), true).x;
             }
         } else {
             for (let i = 0; i < values.length; i++) {
                 const pointWCS = AST.pixToWCS(this.frame.wcsInfo, this.profileStore.x + 1, values[i] + 1);
                 const normVals = AST.normalizeCoordinates(this.frame.wcsInfo, pointWCS.x, pointWCS.y);
-                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, undefined, normVals.y, astString.toString()).y;
+                this.cachedFormattedCoordinates[i] = AST.getFormattedCoordinates(this.frame.wcsInfo, undefined, normVals.y, astString.toString(), true).y;
             }
         }
         this.trimDecimals();
