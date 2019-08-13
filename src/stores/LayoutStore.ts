@@ -107,6 +107,7 @@ const PRESET_CONFIGS = new Map<string, any>([
 
 export class LayoutStore {
     public static TOASTER_TIMEOUT = 1500;
+    private static readonly LayoutVersion = 1;
 
     private readonly appStore: AppStore;
     private alertStore: AlertStore;
@@ -138,6 +139,7 @@ export class LayoutStore {
         PresetLayout.PRESETS.forEach((presetName) => {
             const config = PRESET_CONFIGS.get(presetName);
             this.layouts[presetName] = {
+                layoutVersion: LayoutStore.LayoutVersion,
                 docked: {
                     type: "row",
                     content: [{
@@ -305,7 +307,7 @@ export class LayoutStore {
         }
 
         const config = this.layouts[layoutName];
-        if (!config || !config.docked || !config.docked.type || !config.docked.content || !config.floating) {
+        if (!config || !config.layoutVersion || !config.docked || !config.docked.type || !config.docked.content || !config.floating) {
             this.alertStore.showAlert(`Applying layout failed! Something is wrong with layout ${layoutName}.`);
             return false;
         }
@@ -373,6 +375,7 @@ export class LayoutStore {
         // 1. generate simple config from current docked widgets
         const rootConfig = currentConfig.content[0];
         let simpleConfig = {
+            layoutVersion: LayoutStore.LayoutVersion,
             docked: {
                 type: rootConfig.type,
                 content: []
