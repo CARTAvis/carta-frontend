@@ -15,6 +15,7 @@ export class FileListComponent extends React.Component<{
 
     private static readonly fileTypeMap = new Map<CARTA.FileType, { type: string, description: string }>([
         [CARTA.FileType.FITS, {type: "FITS", description: "Flexible Image Transport System"}],
+        [CARTA.FileType.CASA, {type: "CASA", description: "CASA Image"}],
         [CARTA.FileType.MIRIAD, {type: "Miriad", description: "ATNF Miriad Image"}],
         [CARTA.FileType.HDF5, {type: "HDF5", description: "HDF5 File (IDIA Schema)"}],
         [CARTA.FileType.CRTF, {type: "CRTF", description: "CASA Region Text Format"}],
