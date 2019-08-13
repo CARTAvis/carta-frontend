@@ -5,7 +5,7 @@ import {Alert, Icon, Menu, Popover, Position, Tooltip, Tag} from "@blueprintjs/c
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {exportImage} from "components";
 import {PresetLayout} from "models";
-import {AppStore} from "stores";
+import {AppStore, BrowserMode} from "stores";
 import {ConnectionStatus} from "services";
 import "./RootMenuComponent.css";
 
@@ -30,13 +30,24 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     text="Open image"
                     label={`${modString}O`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || appStore.fileLoading}
-                    onClick={() => appStore.fileBrowserStore.showFileBrowser(false)}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)}
                 />
                 <Menu.Item
                     text="Append image"
                     label={`${modString}L`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
-                    onClick={() => appStore.fileBrowserStore.showFileBrowser(true)}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}
+                />
+                <Menu.Divider/>
+                <Menu.Item
+                    text="Import regions"
+                    disabled={!appStore.activeFrame}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)}
+                />
+                <Menu.Item
+                    text="Export regions"
+                    disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionExport, false)}
                 />
                 <Menu.Divider/>
                 <Menu.Item
@@ -45,7 +56,6 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     disabled={!appStore.activeFrame}
                     onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
                 />
-                <Menu.Divider/>
                 <Menu.Item text="Preferences" onClick={appStore.showPreferenceDialog}/>
             </Menu>
         );

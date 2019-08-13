@@ -1,17 +1,26 @@
 import * as React from "react";
-import {Icon, NonIdealState, Spinner, HTMLTable} from "@blueprintjs/core";
+import {Icon, NonIdealState, Spinner, HTMLTable, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import "./FileListComponent.css";
 
 export class FileListComponent extends React.Component<{
     darkTheme: boolean,
-    files: CARTA.FileListResponse,
-    selectedFile: CARTA.FileInfo,
+    files: CARTA.IFileListResponse,
+    selectedFile: CARTA.IFileInfo,
     selectedHDU: string,
     onFileClicked: (file: CARTA.FileInfo, hdu: string) => void,
     onFileDoubleClicked: (file: CARTA.FileInfo, hdu: string) => void,
     onFolderClicked: (folder: string, absolute: boolean) => void
 }, { sortColumn: string, sortDirection: number }> {
+
+    private static readonly FileTypeMap = new Map<CARTA.FileType, { type: string, description: string }>([
+        [CARTA.FileType.FITS, {type: "FITS", description: "Flexible Image Transport System"}],
+        [CARTA.FileType.CASA, {type: "CASA", description: "CASA Image"}],
+        [CARTA.FileType.MIRIAD, {type: "Miriad", description: "ATNF Miriad Image"}],
+        [CARTA.FileType.HDF5, {type: "HDF5", description: "HDF5 File (IDIA Schema)"}],
+        [CARTA.FileType.CRTF, {type: "CRTF", description: "CASA Region Text Format"}],
+        [CARTA.FileType.REG, {type: "REG", description: "DS9 Region Format"}],
+    ]);
 
     constructor(props: any) {
         super(props);
@@ -62,11 +71,13 @@ export class FileListComponent extends React.Component<{
                     if (file === this.props.selectedFile && hdu === this.props.selectedHDU) {
                         className += " file-table-entry-selected";
                     }
+
+                    const typeInfo = this.getFileTypeDisplay(file.type);
                     return (
                         <tr key={`${file.name}:${hdu}`} onDoubleClick={() => this.props.onFileDoubleClicked(file, hdu)} onClick={() => this.props.onFileClicked(file, hdu)} className={className}>
                             <td><Icon icon="document"/></td>
                             <td>{file.HDUList.length > 1 ? `${file.name}: HDU ${hdu}` : file.name}</td>
-                            <td>{this.getFileTypeDisplay(file.type)}</td>
+                            <td><Tooltip content={typeInfo.description}>{typeInfo.type}</Tooltip></td>
                             <td>{this.getFileSizeDisplay(file.size as number)}</td>
                         </tr>
                     );
@@ -133,17 +144,6 @@ export class FileListComponent extends React.Component<{
     }
 
     private getFileTypeDisplay(type: CARTA.FileType) {
-        switch (type) {
-            case CARTA.FileType.FITS:
-                return "FITS";
-            case CARTA.FileType.MIRIAD:
-                return "Miriad";
-            case CARTA.FileType.CASA:
-                return "CASA";
-            case CARTA.FileType.HDF5:
-                return "HDF5";
-            default:
-                return "Unknown";
-        }
+        return FileListComponent.FileTypeMap.get(type) || {type: "Unknown", description: "An unknown file format"};
     }
 }
