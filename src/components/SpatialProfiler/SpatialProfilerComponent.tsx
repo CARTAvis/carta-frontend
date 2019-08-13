@@ -123,7 +123,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
             let values: Array<{ x: number, y: number }>;
             if (N > 0) {
-                if (decimationFactor <= 1) {
+                if (decimationFactor <= 1 || this.widgetStore.plotType === PlotType.POINTS) {
                     // full resolution data
                     values = new Array(N);
                     for (let i = 0; i < N; i++) {
