@@ -5,6 +5,7 @@ import {PresetLayout} from "models";
 import {AppToaster} from "components/Shared";
 import {smoothStepOffset} from "utilities";
 
+const INITIAL_LAYOUT_VERSION = 1;
 const KEY = "CARTA_saved_layouts";
 const MAX_LAYOUT = 10;
 const COMPONENT_CONFIG = new Map<string, any>([
@@ -309,6 +310,11 @@ export class LayoutStore {
         const config = this.layouts[layoutName];
         if (!config || !config.layoutVersion || !config.docked || !config.docked.type || !config.docked.content || !config.floating) {
             this.alertStore.showAlert(`Applying layout failed! Something is wrong with layout ${layoutName}.`);
+            return false;
+        }
+
+        if (isNaN(config.layoutVersion) || config.layoutVersion > LayoutStore.LayoutVersion || config.layoutVersion < INITIAL_LAYOUT_VERSION) {
+            this.alertStore.showAlert(`Invalid layout version.`);
             return false;
         }
 
