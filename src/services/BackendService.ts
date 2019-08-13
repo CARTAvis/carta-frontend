@@ -2,7 +2,7 @@ import {action, autorun, computed, observable} from "mobx";
 import * as Long from "long";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
-import {LogStore, RegionStore, PreferenceStore} from "stores";
+import {LogStore, PreferenceStore, RegionStore} from "stores";
 import {DecompressionService} from "./DecompressionService";
 
 export enum ConnectionStatus {
@@ -16,7 +16,7 @@ export const INVALID_ANIMATION_ID = -1;
 type HandlerFunction = (eventId: number, parsedMessage: any) => void;
 
 export class BackendService {
-    private static readonly IcdVersion = 6;
+    private static readonly IcdVersion = 7;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     @observable loggingEnabled: boolean;
@@ -68,11 +68,15 @@ export class BackendService {
 
         // Construct handler and decoder maps
         this.handlerMap = new Map<CARTA.EventType, HandlerFunction>([
-            [CARTA.EventType.REGISTER_VIEWER_ACK, this.onRegisterViewerAck],
-            [CARTA.EventType.FILE_LIST_RESPONSE, this.onFileListResponse],
-            [CARTA.EventType.FILE_INFO_RESPONSE, this.onFileInfoResponse],
-            [CARTA.EventType.OPEN_FILE_ACK, this.onFileOpenAck],
-            [CARTA.EventType.SET_REGION_ACK, this.onSetRegionAck],
+            [CARTA.EventType.REGISTER_VIEWER_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.FILE_LIST_RESPONSE, this.onSimpleMappedResponse],
+            [CARTA.EventType.REGION_LIST_RESPONSE, this.onSimpleMappedResponse],
+            [CARTA.EventType.FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
+            [CARTA.EventType.REGION_FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
+            [CARTA.EventType.OPEN_FILE_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.IMPORT_REGION_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.EXPORT_REGION_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.SET_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.START_ANIMATION_ACK, this.onStartAnimationAck],
             [CARTA.EventType.RASTER_IMAGE_DATA, this.onStreamedRasterImageData],
             [CARTA.EventType.RASTER_TILE_DATA, this.onStreamedRasterTileData],
@@ -86,8 +90,12 @@ export class BackendService {
         this.decoderMap = new Map<CARTA.EventType, any>([
             [CARTA.EventType.REGISTER_VIEWER_ACK, CARTA.RegisterViewerAck],
             [CARTA.EventType.FILE_LIST_RESPONSE, CARTA.FileListResponse],
+            [CARTA.EventType.REGION_LIST_RESPONSE, CARTA.RegionListResponse],
             [CARTA.EventType.FILE_INFO_RESPONSE, CARTA.FileInfoResponse],
+            [CARTA.EventType.REGION_FILE_INFO_RESPONSE, CARTA.RegionFileInfoResponse],
             [CARTA.EventType.OPEN_FILE_ACK, CARTA.OpenFileAck],
+            [CARTA.EventType.IMPORT_REGION_ACK, CARTA.ImportRegionAck],
+            [CARTA.EventType.EXPORT_REGION_ACK, CARTA.ExportRegionAck],
             [CARTA.EventType.SET_REGION_ACK, CARTA.SetRegionAck],
             [CARTA.EventType.START_ANIMATION_ACK, CARTA.StartAnimationAck],
             [CARTA.EventType.RASTER_IMAGE_DATA, CARTA.RasterImageData],
@@ -142,7 +150,7 @@ export class BackendService {
     }
 
     @action("connect")
-    connect(url: string, autoConnect: boolean = true): Observable<number> {
+    connect(url: string, autoConnect: boolean = true): Observable<CARTA.RegisterViewerAck> {
         if (this.connection) {
             this.connection.onclose = null;
             this.connection.close();
@@ -170,7 +178,7 @@ export class BackendService {
             }
         };
 
-        const obs = new Observable<number>(observer => {
+        const obs = new Observable<CARTA.RegisterViewerAck>(observer => {
             this.connection.onopen = () => {
                 if (this.connectionStatus === ConnectionStatus.CLOSED) {
                     this.connectionDropped = true;
@@ -190,9 +198,9 @@ export class BackendService {
             this.connection.onerror = (ev => observer.error(ev));
         });
 
-        obs.subscribe(res => {
-            console.log(`Connected with session ID ${res}`);
-            this.sessionId = res;
+        obs.subscribe(ack => {
+            console.log(`Connected with session ID ${ack.sessionId}`);
+            this.sessionId = ack.sessionId;
         });
 
         return obs;
@@ -227,6 +235,24 @@ export class BackendService {
         }
     }
 
+    @action("region list")
+    getRegionList(directory: string): Observable<CARTA.RegionListResponse> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.RegionListRequest.create({directory});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.REGION_LIST_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.REGION_LIST_REQUEST, CARTA.RegionListRequest.encode(message).finish())) {
+                return new Observable<CARTA.RegionListResponse>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
     @action("file info")
     getFileInfo(directory: string, file: string, hdu: string): Observable<CARTA.FileInfoResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
@@ -237,6 +263,60 @@ export class BackendService {
             this.logEvent(CARTA.EventType.FILE_INFO_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.FILE_INFO_REQUEST, CARTA.FileInfoRequest.encode(message).finish())) {
                 return new Observable<CARTA.FileInfoResponse>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("region info")
+    getRegionFileInfo(directory: string, file: string): Observable<CARTA.RegionFileInfoResponse> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.RegionFileInfoRequest.create({directory, file});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.REGION_FILE_INFO_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.REGION_FILE_INFO_REQUEST, CARTA.RegionFileInfoRequest.encode(message).finish())) {
+                return new Observable<CARTA.RegionFileInfoResponse>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("import region")
+    importRegion(directory: string, file: string, type: CARTA.FileType, fileId: number): Observable<CARTA.ImportRegionAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.ImportRegion.create({directory, file, type, groupId: fileId});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.IMPORT_REGION, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.IMPORT_REGION, CARTA.ImportRegion.encode(message).finish())) {
+                return new Observable<CARTA.ImportRegionAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("export regions")
+    exportRegion(directory: string, file: string, type: CARTA.FileType, coordType: CARTA.CoordinateType, fileId: number, regionId: number[]): Observable<CARTA.ExportRegionAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.ExportRegion.create({directory, file, type, fileId, regionId, coordType});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.EXPORT_REGION, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.EXPORT_REGION, CARTA.ExportRegion.encode(message).finish())) {
+                return new Observable<CARTA.ExportRegionAck>(observer => {
                     this.observerRequestMap.set(requestId, observer);
                 });
             } else {
@@ -528,72 +608,13 @@ export class BackendService {
         }
     }
 
-    private onRegisterViewerAck(eventId: number, response: CARTA.RegisterViewerAck) {
-        const observer = this.observerRequestMap.get(eventId);
-        if (observer) {
-            if (response.success) {
-                observer.next(response.sessionId);
-            } else {
-                observer.error(response.message);
-                this.observerRequestMap.delete(eventId);
-            }
-        } else {
-            console.log(`Can't find observable for request ${eventId}`);
-        }
-    }
-
-    private onFileListResponse(eventId: number, response: CARTA.FileListResponse) {
+    private onSimpleMappedResponse(eventId: number, response: any) {
         const observer = this.observerRequestMap.get(eventId);
         if (observer) {
             if (response.success) {
                 observer.next(response);
             } else {
                 observer.error(response.message);
-            }
-            observer.complete();
-            this.observerRequestMap.delete(eventId);
-        } else {
-            console.log(`Can't find observable for request ${eventId}`);
-        }
-    }
-
-    private onFileInfoResponse(eventId: number, response: CARTA.FileInfoResponse) {
-        const observer = this.observerRequestMap.get(eventId);
-        if (observer) {
-            if (response.success) {
-                observer.next(response);
-            } else {
-                observer.error(response.message);
-            }
-            observer.complete();
-            this.observerRequestMap.delete(eventId);
-        } else {
-            console.log(`Can't find observable for request ${eventId}`);
-        }
-    }
-
-    private onFileOpenAck(eventId: number, ack: CARTA.OpenFileAck) {
-        const observer = this.observerRequestMap.get(eventId);
-        if (observer) {
-            if (ack.success) {
-                observer.next(ack);
-            } else {
-                observer.error(ack.message);
-            }
-            observer.complete();
-            this.observerRequestMap.delete(eventId);
-        } else {
-            console.log(`Can't find observable for request ${eventId}`);
-        }
-    }
-
-    private onSetRegionAck(eventId: number, ack: CARTA.SetRegionAck) {
-        const observer = this.observerRequestMap.get(eventId);
-        if (observer) {
-            if (ack.success) {
-                observer.next(ack);
-            } else {
-                observer.error(ack.message);
             }
             observer.complete();
             this.observerRequestMap.delete(eventId);
