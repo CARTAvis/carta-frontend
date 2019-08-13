@@ -139,7 +139,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         return value.toExponential(2);
     };
 
-    private formatTicksAutomatic = (value: number, index: number, values: number[]) => {
+    private formatXTicksAutomatic = (value: number, index: number, values: number[]) => {
+        // TODO: Work out how to revert to the automatic ChartJS formatting function
+        return value;
+    };
+
+    private formatYTicksAutomatic = (value: number, index: number, values: number[]) => {
         // TODO: Work out how to revert to the automatic ChartJS formatting function
         if (value) {
             return value.toFixed();
@@ -257,7 +262,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         maxRotation: 0,
                         min: this.props.xMin,
                         max: this.props.xMax,
-                        callback: this.props.forceScientificNotationTicksX ? this.formatTicksScientific : this.formatTicksAutomatic
+                        callback: this.props.forceScientificNotationTicksX ? this.formatTicksScientific : this.formatXTicksAutomatic
                     },
                     gridLines: {
                         drawBorder: false,
@@ -294,7 +299,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         display: true,
                         min: this.props.yMin,
                         max: this.props.yMax,
-                        callback: this.props.forceScientificNotationTicksY ? this.formatTicksScientific : this.formatTicksAutomatic
+                        callback: this.props.forceScientificNotationTicksY ? this.formatTicksScientific : this.formatYTicksAutomatic
                     },
                     gridLines: {
                         drawBorder: false,
