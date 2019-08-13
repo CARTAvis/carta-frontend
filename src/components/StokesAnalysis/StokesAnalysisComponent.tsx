@@ -20,10 +20,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private pointDefaultColor = Colors.GRAY2;
     private opacityInit = 1;
     private opacityOutRange = 0.1;
-    private pointRadiuInit = 3;
-    private pointRadiu = 9;
     private colorRangeEnd = 240;
-    private channelBorder: {xMin: number, xMax: number};
+    private pointRadius = 3;
     private static layoutRatioCutoffs = {
         vertical: 0.5,
         horizontal: 2,
@@ -407,52 +405,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return scatterColors;
     }
 
-    private closestChannel(channel: number, data: Array<{x: number, y: number, z?: number}>): number {
-        var mid;
-        var lo = 0;
-        var hi = data.length - 1;
-        while (hi - lo > 1) {
-            mid = Math.floor ((lo + hi) / 2);
-            if (data[mid].z < channel) {
-                lo = mid;
-            } else {
-                hi = mid;
-            }
-        }
-        if (channel - data[lo].z <= data[hi].z - channel) {
-            return data[lo].z;
-        }
-        return data[hi].z;
-    }
-
-    private setPointRadius(data: Array<{x: number, y: number, z?: number}>, channel: {channelCurrent: number, channelHovered: number}, zIndex: boolean): Array<number> {
-        let pointRadius = [];
-        if (data && data.length && zIndex && channel) {
-            let channelCurrent = channel.channelCurrent;
-            let channelHovered = channel.channelHovered;
-            pointRadius = Array(data.length).fill(this.pointRadiuInit);
-            if (channelCurrent) {
-                let close = channelCurrent;
-                if (channelHovered) {
-                    close = this.closestChannel(channelHovered, data);
-                    if (this.channelBorder && this.channelBorder.xMin !== this.channelBorder.xMax) {
-                        if (close >= this.channelBorder.xMax || close <= this.channelBorder.xMin || this.isMouseMoveIntoLinePlots) {
-                            close = channelCurrent;
-                        }
-                    }
-                }
-                const scatterData = data;
-                for (let index = 0; index < scatterData.length; index++) {
-                    const points = scatterData[index];
-                    if (points.z === channelCurrent || points.z === close) {
-                        pointRadius[index] = this.pointRadiu;
-                    }
-                }
-            }
-        }
-        return pointRadius;
-    }
-
     private onMouseEnterHandler = () => {
         this.isMouseMoveIntoLinePlots = false;
     }
@@ -565,7 +517,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: "profile",
-            forceScientificNotationTicksY: false,
+            forceScientificNotationTicksY: true,
             showXAxisTicks: true,
             showXAxisLabel: true,
             multiPlotData: new Map(),
@@ -600,11 +552,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             centeredOrigin: true,
             equalScale: true,
             zIndex: true,
-            pointRadiusSet: []
+            pointRadius: this.pointRadius,
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
-        let interactionBorder = {xMin: 0, xMax: 0};
         if (this.profileStore && frame) {
             const currentPlotData = this.plotData;
             if (currentPlotData && currentPlotData.piValues && currentPlotData.paValues && currentPlotData.qValues && currentPlotData.uValues && currentPlotData.quValues) {
@@ -621,8 +572,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 let quBorder = currentPlotData.quValues.border;
 
                 if (this.compareVariable(qBorder.xMin, uBorder.xMin, piBorder.xMin, paBorder.xMin) && this.compareVariable(qBorder.xMax, uBorder.xMax, piBorder.xMax, paBorder.xMax)) {
-                    interactionBorder = {xMin: paBorder.xMin, xMax: paBorder.xMax};
-                    this.channelBorder = {xMin: paBorder.xMin, xMax: paBorder.xMax};
+                    let interactionBorder = {xMin: paBorder.xMin, xMax: paBorder.xMax};
                     if (this.widgetStore.isLinePlotsAutoScaledX) {
                         quLinePlotProps.xMin = qBorder.xMin;
                         quLinePlotProps.xMax = qBorder.xMax;
@@ -717,7 +667,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             piLinePlotProps.markers = [];
             quLinePlotProps.markers = [];
 
-            let channel = {channelCurrent: 0, channelHovered: 0};
             if (paLinePlotProps.cursorX.profiler !== null) {
                 let cursor = {
                     value: paLinePlotProps.cursorX.profiler,
@@ -731,10 +680,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 paLinePlotProps.markers.push(cursor);
                 piLinePlotProps.markers.push(cursor);
                 quLinePlotProps.markers.push(cursor);
-
-                if (cursor && cursor.value && typeof(cursor.value) !== undefined) {
-                    channel.channelHovered = cursor.value;   
-                }
             }
 
             if (paLinePlotProps.cursorX.image !== null) {
@@ -755,15 +700,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 paLinePlotProps.markers.push(channelCurrent, channelRequired);
                 piLinePlotProps.markers.push(channelCurrent, channelRequired);
                 quLinePlotProps.markers.push(channelCurrent, channelRequired);
-
-                if (channelCurrent && channelCurrent.value && typeof(channelCurrent.value) !== undefined) {
-                    channel.channelCurrent = channelCurrent.value;
-                }
-            }
-
-            if (quScatterPlotProps.data && quScatterPlotProps.data.length && interactionBorder) {
-                let pointRadius = this.setPointRadius(quScatterPlotProps.data, channel, true);
-                quScatterPlotProps.pointRadiusSet = pointRadius;
             }
 
             quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, Colors.GREEN2);

@@ -38,7 +38,7 @@ export class PlotContainerProps {
     plotType?: string;
     dataBackgroundColor?: Array<string>;
     isGroupSubPlot?: boolean;
-    pointRadiusSet?: Array<number>;
+    pointRadius?: number;
 }
 
 export class PlotContainerComponent extends React.Component<PlotContainerProps> {
@@ -204,6 +204,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         } else if (props.isGroupSubPlot !== nextProps.isGroupSubPlot) {
             return true;
+        } else if (props.pointRadius !== nextProps.pointRadius) {
+            return true;
         }
 
         // Deep check of arrays (this should be optimised!)
@@ -323,22 +325,24 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 data: this.props.data,
                 fill: false,
                 lineTension: 0,
-                backgroundColor: this.props.dataBackgroundColor ? this.props.dataBackgroundColor : []
+                // backgroundColor: this.props.dataBackgroundColor ? this.props.dataBackgroundColor : []
             };
             if (this.props.usePointSymbols) {
                 datasetConfig.showLine = false;
-                if (this.props.pointRadiusSet && this.props.pointRadiusSet.length) {
-                    datasetConfig.pointRadius = this.props.pointRadiusSet;
-                } else {
-                    datasetConfig.pointRadius = 1;
-                    datasetConfig.pointBackgroundColor = lineColor;
-                }
+                datasetConfig.pointRadius = 1;
+                datasetConfig.pointBackgroundColor = lineColor;
             } else {
                 datasetConfig.pointRadius = 0;
                 datasetConfig.showLine = true;
                 datasetConfig.steppedLine = this.props.interpolateLines ? false : "middle";
                 datasetConfig.borderWidth = 1;
                 datasetConfig.borderColor = lineColor;
+            }
+            if (this.props.dataBackgroundColor) {
+                datasetConfig.pointBackgroundColor = this.props.dataBackgroundColor;
+            }
+            if (this.props.pointRadius) {
+                datasetConfig.pointRadius = this.props.pointRadius;
             }
             plotData.datasets.push(datasetConfig);
         }
