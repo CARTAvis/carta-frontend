@@ -24,6 +24,11 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
     private loadFile = (fileInfo: CARTA.IFileInfo, hdu: string) => {
         const fileBrowserStore = this.props.appStore.fileBrowserStore;
 
+        // Ignore load if in export mode
+        if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
+            return;
+        }
+
         if (fileBrowserStore.browserMode === BrowserMode.File) {
             const frames = this.props.appStore.frames;
             if (!fileBrowserStore.appendingFrame || !frames.length) {
