@@ -141,6 +141,9 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
     private formatTicksAutomatic = (value: number, index: number, values: number[]) => {
         // TODO: Work out how to revert to the automatic ChartJS formatting function
+        if (value) {
+            return value.toFixed();
+        }
         return value;
     };
 

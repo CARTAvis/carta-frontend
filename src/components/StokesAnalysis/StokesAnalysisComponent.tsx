@@ -517,7 +517,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: "profile",
-            forceScientificNotationTicksY: true,
+            forceScientificNotationTicksY: false,
             showXAxisTicks: true,
             showXAxisLabel: true,
             multiPlotData: new Map(),
