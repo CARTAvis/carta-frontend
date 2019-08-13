@@ -13,7 +13,7 @@ export class FileListComponent extends React.Component<{
     onFolderClicked: (folder: string, absolute: boolean) => void
 }, { sortColumn: string, sortDirection: number }> {
 
-    private static readonly fileTypeMap = new Map<CARTA.FileType, { type: string, description: string }>([
+    private static readonly FileTypeMap = new Map<CARTA.FileType, { type: string, description: string }>([
         [CARTA.FileType.FITS, {type: "FITS", description: "Flexible Image Transport System"}],
         [CARTA.FileType.CASA, {type: "CASA", description: "CASA Image"}],
         [CARTA.FileType.MIRIAD, {type: "Miriad", description: "ATNF Miriad Image"}],
@@ -144,6 +144,6 @@ export class FileListComponent extends React.Component<{
     }
 
     private getFileTypeDisplay(type: CARTA.FileType) {
-        return FileListComponent.fileTypeMap.get(type) || {type: "Unknown", description: "An unknown file format"};
+        return FileListComponent.FileTypeMap.get(type) || {type: "Unknown", description: "An unknown file format"};
     }
 }
