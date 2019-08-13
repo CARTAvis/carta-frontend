@@ -76,6 +76,7 @@ export class ScatterPlotComponent extends LinePlotComponent {
                     onWheel={this.onStageWheel}
                 >
                     <Layer>
+                        {this.genLines()}
                         {this.genBorderRect()}
                     </Layer>
                 </Stage>

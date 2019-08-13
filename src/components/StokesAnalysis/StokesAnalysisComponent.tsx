@@ -600,7 +600,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             centeredOrigin: true,
             equalScale: true,
             zIndex: true,
-            pointRadiusSet: []
+            pointRadiusSet: [],
+            graphCursorMoved: this.onGraphCursorMoved,
+            markers: []
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
@@ -728,9 +730,22 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     opacity: 0.8,
                     isMouseMove: this.isMouseMoveIntoLinePlots,
                 };
+                // console.log(cursor)
                 paLinePlotProps.markers.push(cursor);
                 piLinePlotProps.markers.push(cursor);
                 quLinePlotProps.markers.push(cursor);
+
+                let cursor2 = {
+                    value: paLinePlotProps.cursorX.profiler,
+                    id: "marker-profiler-cursor-stokes",
+                    draggable: false,
+                    horizontal: false,
+                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                    opacity: 0.8,
+                    isMouseMove: false,
+                };
+                console.log(cursor2)
+                quScatterPlotProps.markers.push(cursor2);
 
                 if (cursor && cursor.value && typeof(cursor.value) !== undefined) {
                     channel.channelHovered = cursor.value;   
