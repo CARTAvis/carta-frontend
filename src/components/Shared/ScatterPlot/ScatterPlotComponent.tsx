@@ -84,7 +84,7 @@ export class ScatterPlotComponent extends LinePlotComponent {
         const chartArea = this.chartArea;
         let lines = [];
         const channel = this.props.currentChannel;
-        if (chartArea && channel) {
+        if (chartArea && channel && !isNaN(channel.x) && !isNaN(channel.y)) {
             const markerColor = this.props.darkMode ? Colors.GRAY4 : Colors.GRAY2;
             const markerOpacity = this.markerOpacity;
             let border = this.resizeData();

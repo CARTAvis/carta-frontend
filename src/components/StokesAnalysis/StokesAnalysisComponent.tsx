@@ -600,8 +600,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             centeredOrigin: true,
             equalScale: true,
             zIndex: true,
-            pointRadius: this.pointRadius,
-            markers: [],
+            pointRadius: this.pointRadius
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
