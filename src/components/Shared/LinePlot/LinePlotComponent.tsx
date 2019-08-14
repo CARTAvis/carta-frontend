@@ -93,6 +93,7 @@ export class LinePlotComponentProps {
     equalScale?: boolean;
     zIndex?: boolean;
     pointRadiusSet?: Array<number>;
+    currentChannel?: {x: number, y: number, z?: number};
 }
 
 // Maximum time between double clicks
@@ -700,7 +701,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         }
     };
 
-    genLines = () => {
+    private genLines = () => {
         const chartArea = this.chartArea;
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
 

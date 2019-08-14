@@ -1,7 +1,8 @@
 import * as React from "react";
 import {observer} from "mobx-react";
+import {Colors} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {Layer, Stage} from "react-konva";
+import {Layer, Stage, Group, Line} from "react-konva";
 import {ChartArea} from "chart.js";
 import {PlotContainerComponent} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
@@ -40,6 +41,70 @@ export class ScatterPlotComponent extends LinePlotComponent {
         return {xMin: this.props.xMin, xMax: this.props.xMax, yMin: this.props.yMin, yMax: this.props.yMax};
     }
 
+    private getPixelValue(value: number, min: number, max: number, isX: boolean) {
+        if (!this.chartArea) {
+            return undefined;
+        }
+        let fraction = (value - min) / (max - min);
+        if (!isX) {
+            fraction = 1 - fraction;
+            return fraction * (this.chartArea.bottom - this.chartArea.top) + this.chartArea.top;
+        }
+        return fraction * (this.chartArea.right - this.chartArea.left) + this.chartArea.left;
+    }
+
+    private genXline(id: string, markerColor: string, markerOpacity: number, valueCanvasSpace: number) {
+        const chartArea = this.chartArea;
+        let lineSegments = [];
+        if (chartArea) {
+           lineSegments.push(<Line listening={false} key={0} points={[0, chartArea.top, 0, chartArea.bottom]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity}/>); 
+        } 
+        return (
+            <Group key={id} x={valueCanvasSpace} y={0}>
+                {lineSegments}
+            </Group>
+        );
+    }
+
+    private genYline(id: string, markerColor: string, markerOpacity: number, valueCanvasSpace: number) {
+        const chartArea = this.chartArea;
+        let lineSegments = [];
+        if (chartArea) {
+            lineSegments.push(<Line listening={false} key={0} points={[chartArea.left, 0, chartArea.right, 0]} strokeWidth={1} stroke={markerColor} opacity={markerOpacity}/>);
+        }
+        return (
+            <Group key={id} x={0} y={valueCanvasSpace}>
+                {lineSegments}
+            </Group>
+        );
+    }
+
+    private genIndicator = () => {
+        const chartArea = this.chartArea;
+        let lines = [];
+        if (this.props.markers && this.props.markers.length && chartArea && this.props.currentChannel ) {
+            const channel = this.props.currentChannel;
+            for (let i = 0; i < this.props.markers.length; i++) {
+                const marker = this.props.markers[i];
+                const markerColor = marker.color || (this.props.darkMode ? Colors.RED4 : Colors.RED2);
+                const markerOpacity = (marker.isMouseMove && (!this.isMouseEntered || this.isMarkerDragging)) ? 0 : (marker.opacity || 1);
+                let border = this.resizeData();
+                let xCanvasSpace = Math.floor(this.getPixelValue(channel.x, border.xMin, border.xMax, true)) + 0.5 * devicePixelRatio;
+                if (xCanvasSpace < Math.floor(chartArea.left - 1) || xCanvasSpace > Math.ceil(chartArea.right + 1) || isNaN(xCanvasSpace)) {
+                    continue;
+                }
+                lines.push(this.genXline("scatter-indicator-x", markerColor, markerOpacity, xCanvasSpace));
+                
+                let yCanvasSpace = Math.floor(this.getPixelValue(channel.y, border.yMin, border.yMax, false)) + 0.5 * devicePixelRatio;
+                if (yCanvasSpace < Math.floor(chartArea.top - 1) || yCanvasSpace > Math.ceil(chartArea.bottom + 1) || isNaN(yCanvasSpace)) {
+                    continue;
+                }
+                lines.push(this.genYline("scatter-indicator-y", markerColor, markerOpacity, yCanvasSpace));  
+            }
+        }
+        return lines;
+    }
+
     render() {
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
         let axisRange = this.resizeData();
@@ -76,7 +141,7 @@ export class ScatterPlotComponent extends LinePlotComponent {
                     onWheel={this.onStageWheel}
                 >
                     <Layer>
-                        {this.genLines()}
+                        {this.genIndicator()}
                         {this.genBorderRect()}
                     </Layer>
                 </Stage>

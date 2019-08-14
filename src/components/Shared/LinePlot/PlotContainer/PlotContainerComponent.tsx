@@ -322,8 +322,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 type: this.props.plotType ? this.props.plotType : "line",
                 data: this.props.data,
                 fill: false,
-                lineTension: 0,
-                backgroundColor: this.props.dataBackgroundColor ? this.props.dataBackgroundColor : []
+                lineTension: 0
             };
             if (this.props.usePointSymbols) {
                 datasetConfig.showLine = false;

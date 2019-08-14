@@ -425,18 +425,18 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return data[hi].z;
     }
 
-    private setPointRadius(data: Array<{x: number, y: number, z?: number}>, channel: {channelCurrent: number, channelHovered: number}, zIndex: boolean): Array<number> {
-        let pointRadius = [];
+    private setPointRadius(data: Array<{x: number, y: number, z?: number}>, channel: {channelCurrent: number, channelHovered: number}, zIndex: boolean): {x: number, y: number, z?: number} {
+        let point;
         if (data && data.length && zIndex && channel) {
             let channelCurrent = channel.channelCurrent;
             let channelHovered = channel.channelHovered;
-            pointRadius = Array(data.length).fill(this.pointRadiuInit);
+            point = data[0];
             if (channelCurrent) {
                 let close = channelCurrent;
                 if (channelHovered) {
                     close = this.closestChannel(channelHovered, data);
-                    if (this.channelBorder && this.channelBorder.xMin !== this.channelBorder.xMax) {
-                        if (close >= this.channelBorder.xMax || close <= this.channelBorder.xMin || this.isMouseMoveIntoLinePlots) {
+                    if (this.channelBorder && this.channelBorder.xMin !== 0) {
+                        if (close > this.channelBorder.xMax || close < this.channelBorder.xMin || this.isMouseMoveIntoLinePlots) {
                             close = channelCurrent;
                         }
                     }
@@ -444,13 +444,13 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 const scatterData = data;
                 for (let index = 0; index < scatterData.length; index++) {
                     const points = scatterData[index];
-                    if (points.z === channelCurrent || points.z === close) {
-                        pointRadius[index] = this.pointRadiu;
+                    if (points.z === close) {
+                        point = points;
                     }
                 }
             }
         }
-        return pointRadius;
+        return point;
     }
 
     private onMouseEnterHandler = () => {
@@ -718,6 +718,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             paLinePlotProps.markers = [];
             piLinePlotProps.markers = [];
             quLinePlotProps.markers = [];
+            quScatterPlotProps.markers = [];
 
             let channel = {channelCurrent: 0, channelHovered: 0};
             if (paLinePlotProps.cursorX.profiler !== null) {
@@ -730,7 +731,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     opacity: 0.8,
                     isMouseMove: this.isMouseMoveIntoLinePlots,
                 };
-                // console.log(cursor)
                 paLinePlotProps.markers.push(cursor);
                 piLinePlotProps.markers.push(cursor);
                 quLinePlotProps.markers.push(cursor);
@@ -744,7 +744,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     opacity: 0.8,
                     isMouseMove: false,
                 };
-                console.log(cursor2)
+
                 quScatterPlotProps.markers.push(cursor2);
 
                 if (cursor && cursor.value && typeof(cursor.value) !== undefined) {
@@ -777,8 +777,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
 
             if (quScatterPlotProps.data && quScatterPlotProps.data.length && interactionBorder) {
-                let pointRadius = this.setPointRadius(quScatterPlotProps.data, channel, true);
-                quScatterPlotProps.pointRadiusSet = pointRadius;
+                const scatterChannel = this.setPointRadius(quScatterPlotProps.data, channel, true);
+                quScatterPlotProps.currentChannel = scatterChannel;
             }
 
             quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, Colors.GREEN2);
