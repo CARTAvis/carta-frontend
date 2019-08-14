@@ -7,10 +7,11 @@ import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, ScatterPlotComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
-import {WidgetConfig, WidgetProps, SpectralProfileStore, AnimationState} from "stores";
+import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
-import {Point2D, ChannelInfo} from "models";
-import {clamp, polarizedIntensity, polarizationAngle, normalising} from "utilities";
+import {ChannelInfo, Point2D} from "models";
+import {clamp, normalising, polarizationAngle, polarizedIntensity} from "utilities";
 import "./StokesAnalysisComponent.css";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
@@ -22,7 +23,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private opacityOutRange = 0.1;
     private colorRangeEnd = 240;
     private pointRadius = 3;
-    private channelBorder: {xMin: number, xMax: number};
+    private channelBorder: { xMin: number, xMax: number };
     private static layoutRatioCutoffs = {
         vertical: 0.5,
         horizontal: 2,
@@ -318,8 +319,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return {xMin, xMax, yMin, yMax};
     }
 
-    private assembleLinePlotData(profile: Array<number>, channelInfo: ChannelInfo): {dataset: Array<Point2D>, border: Border} {
-        if (profile  && profile.length && profile.length === channelInfo.values.length) {
+    private assembleLinePlotData(profile: Array<number>, channelInfo: ChannelInfo): { dataset: Array<Point2D>, border: Border } {
+        if (profile && profile.length && profile.length === channelInfo.values.length) {
             let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
             let border = this.calculateXYborder(channelValues, profile, true);
             let values: Array<{ x: number, y: number }> = [];
@@ -343,11 +344,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    private assembleScatterPlotData(qProfile: Array<number>, uProfile: Array<number>, channelInfo: ChannelInfo): {dataset: Array<{x: number, y: number, z: number}>, border: Border} {
-        if (qProfile  && qProfile.length && uProfile && uProfile.length && qProfile.length === uProfile.length && qProfile.length === channelInfo.values.length) {
+    private assembleScatterPlotData(qProfile: Array<number>, uProfile: Array<number>, channelInfo: ChannelInfo): { dataset: Array<{ x: number, y: number, z: number }>, border: Border } {
+        if (qProfile && qProfile.length && uProfile && uProfile.length && qProfile.length === uProfile.length && qProfile.length === channelInfo.values.length) {
             let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
             let border = this.calculateXYborder(qProfile, uProfile, false);
-            let values: Array<{ x: number, y: number, z: number}> = [];
+            let values: Array<{ x: number, y: number, z: number }> = [];
             let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
 
             for (let i = 0; i < channelValues.length; i++) {
@@ -376,7 +377,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return `hsla(${hue}, 100%, 50%, ${this.opacityInit})`;
     }
 
-    private frequencyIncreases (data: {x: number, y: number, z?: number}[]): boolean {
+    private frequencyIncreases(data: { x: number, y: number, z?: number }[]): boolean {
         const zFirst = data[0].z;
         const zLast = data[data.length - 1].z;
         if (zFirst > zLast) {
@@ -385,7 +386,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return true;
     }
 
-    private fillColor(data: Array<{x: number, y: number, z?: number}>, interactionBorder: {xMin: number, xMax: number}, zIndex: boolean): Array<string> {
+    private fillColor(data: Array<{ x: number, y: number, z?: number }>, interactionBorder: { xMin: number, xMax: number }, zIndex: boolean): Array<string> {
         let scatterColors = [];
         if (data && data.length && zIndex && interactionBorder) {
             let xlinePlotRange = interactionBorder;
@@ -406,7 +407,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return scatterColors;
     }
 
-    private closestChannel(channel: number, data: Array<{x: number, y: number, z?: number}>): number {
+    private closestChannel(channel: number, data: Array<{ x: number, y: number, z?: number }>): number {
         var mid;
         var lo = 0;
         var hi = data.length - 1;
@@ -424,7 +425,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return data[hi].z;
     }
 
-    private setPointRadius(data: Array<{x: number, y: number, z?: number}>, channel: {channelCurrent: number, channelHovered: number}, zIndex: boolean): {x: number, y: number, z?: number} {
+    private setPointRadius(data: Array<{ x: number, y: number, z?: number }>, channel: { channelCurrent: number, channelHovered: number }, zIndex: boolean): { x: number, y: number, z?: number } {
         let point;
         if (data && data.length && zIndex && channel) {
             let channelCurrent = channel.channelCurrent;
@@ -454,18 +455,18 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     private onMouseEnterHandler = () => {
         this.isMouseMoveIntoLinePlots = false;
-    }
+    };
 
     private onMouseleaveHandler = () => {
         this.isMouseMoveIntoLinePlots = true;
-    }
+    };
 
     @computed get plotData(): {
         qValues: { dataset: Array<Point2D>, border: Border },
         uValues: { dataset: Array<Point2D>, border: Border },
         piValues: { dataset: Array<Point2D>, border: Border },
         paValues: { dataset: Array<Point2D>, border: Border },
-        quValues: {dataset: Array<{x: number, y: number, z: number}>, border: Border},
+        quValues: { dataset: Array<{ x: number, y: number, z: number }>, border: Border },
         qProgress: number,
         uProgress: number
     } {
@@ -518,7 +519,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: "profile",
-            forceScientificNotationTicksY: true,
+            tickTypeY: TickType.Scientific,
             showXAxisTicks: false,
             showXAxisLabel: false,
             multiPlotData: new Map(),
@@ -542,7 +543,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: "profile",
-            forceScientificNotationTicksY: true,
+            tickTypeY: TickType.Scientific,
             showXAxisTicks: false,
             showXAxisLabel: false,
             multiPlotData: new Map(),
@@ -564,7 +565,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: "profile",
-            forceScientificNotationTicksY: false,
+            tickTypeY: TickType.Integer,
             showXAxisTicks: true,
             showXAxisLabel: true,
             multiPlotData: new Map(),
@@ -585,8 +586,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: "profile",
-            forceScientificNotationTicksY: true,
-            forceScientificNotationTicksX: true,
+            tickTypeX: TickType.Scientific,
+            tickTypeY: TickType.Scientific,
             showXAxisTicks: true,
             showXAxisLabel: true,
             usePointSymbols: true,
