@@ -1,9 +1,22 @@
 import * as GoldenLayout from "golden-layout";
 import * as $ from "jquery";
 import {action, observable} from "mobx";
-import {AnimatorComponent, HistogramComponent, ImageViewComponent, LogComponent, PlaceholderComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent, StatsComponent} from "components";
-import {AppStore} from "./AppStore";
-import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore} from "./widgets";
+import {
+    AnimatorComponent,
+    HistogramComponent,
+    ImageViewComponent,
+    LogComponent,
+    PlaceholderComponent,
+    RegionListComponent,
+    RenderConfigComponent,
+    SpatialProfilerComponent,
+    SpectralProfilerComponent,
+    StatsComponent,
+    ToolbarMenuComponent,
+    StokesAnalysisComponent
+} from "components";
+import {AppStore, LayoutStore} from "stores";
+import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 
 export class WidgetConfig {
     id: string;
@@ -25,11 +38,8 @@ export class WidgetProps {
 }
 
 export class WidgetsStore {
-    // Docked (Golden Layout)
-    @observable dockedLayout: GoldenLayout;
     // Floating widgets
     @observable floatingWidgets: WidgetConfig[];
-    @observable defaultFloatingWidgetOffset: number;
     // Widget Stores
     @observable renderConfigWidgets: Map<string, RenderConfigWidgetStore>;
     @observable spatialProfileWidgets: Map<string, SpatialProfileWidgetStore>;
@@ -39,9 +49,12 @@ export class WidgetsStore {
     @observable logWidgets: Map<string, EmptyWidgetStore>;
     @observable regionListWidgets: Map<string, EmptyWidgetStore>;
     @observable animatorWidgets: Map<string, EmptyWidgetStore>;
+    @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
 
     private appStore: AppStore;
+    private layoutStore: LayoutStore;
     private widgetsMap: Map<string, Map<string, any>>;
+    private defaultFloatingWidgetOffset: number;
 
     public static RemoveFrameFromRegionWidgets(storeMap: Map<string, RegionWidgetStore>, fileId: number = -1) {
         if (fileId === -1) {
@@ -65,8 +78,9 @@ export class WidgetsStore {
         });
     };
 
-    constructor(appStore: AppStore) {
+    constructor(appStore: AppStore, layoutStore: LayoutStore) {
         this.appStore = appStore;
+        this.layoutStore = layoutStore;
         this.spatialProfileWidgets = new Map<string, SpatialProfileWidgetStore>();
         this.spectralProfileWidgets = new Map<string, SpectralProfileWidgetStore>();
         this.statsWidgets = new Map<string, StatsWidgetStore>();
@@ -75,6 +89,7 @@ export class WidgetsStore {
         this.animatorWidgets = new Map<string, EmptyWidgetStore>();
         this.logWidgets = new Map<string, EmptyWidgetStore>();
         this.regionListWidgets = new Map<string, EmptyWidgetStore>();
+        this.stokesAnalysisWidgets = new Map<string, StokesAnalysisWidgetStore>();
 
         this.widgetsMap = new Map<string, Map<string, any>>([
             [SpatialProfilerComponent.WIDGET_CONFIG.type, this.spatialProfileWidgets],
@@ -85,6 +100,7 @@ export class WidgetsStore {
             [AnimatorComponent.WIDGET_CONFIG.type, this.animatorWidgets],
             [LogComponent.WIDGET_CONFIG.type, this.logWidgets],
             [RegionListComponent.WIDGET_CONFIG.type, this.regionListWidgets],
+            [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets],
         ]);
 
         this.floatingWidgets = [];
@@ -111,8 +127,27 @@ export class WidgetsStore {
                 return HistogramComponent.WIDGET_CONFIG;
             case RegionListComponent.WIDGET_CONFIG.type:
                 return RegionListComponent.WIDGET_CONFIG;
+            case StokesAnalysisComponent.WIDGET_CONFIG.type:
+                return StokesAnalysisComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
+        }
+    }
+
+    // create drag source for ToolbarMenuComponent
+    private static CreateDragSource(appStore: AppStore, layout: GoldenLayout, widgetConfig: WidgetConfig, elementId: string) {
+        const glConfig: GoldenLayout.ReactComponentConfig = {
+            type: "react-component",
+            component: widgetConfig.type,
+            title: widgetConfig.title,
+            id: widgetConfig.id,
+            isClosable: widgetConfig.isCloseable,
+            props: {appStore: appStore, id: widgetConfig.id, docked: true}
+        };
+
+        const widgetElement = document.getElementById(elementId);
+        if (widgetElement) {
+            layout.createDragSource(widgetElement, glConfig);
         }
     }
 
@@ -133,16 +168,121 @@ export class WidgetsStore {
         }
     };
 
-    removeWidget = (widgetId: string, widgetType: string) => {
+    private getFloatingWidgetOffset = (): number => {
+        this.defaultFloatingWidgetOffset += 25;
+        this.defaultFloatingWidgetOffset = (this.defaultFloatingWidgetOffset - 100) % 300 + 100;
+        return this.defaultFloatingWidgetOffset;
+    }
+
+    public removeWidget = (widgetId: string, widgetType: string) => {
         const widgets = this.widgetsMap.get(widgetType);
         if (widgets) {
             widgets.delete(widgetId);
         }
     };
 
-    // region Golden Layout Widgets
+    private addWidgetByType = (widgetType: string, coord: string = null): string => {
+        let itemId;
+        switch (widgetType) {
+            case ImageViewComponent.WIDGET_CONFIG.type:
+                itemId = ImageViewComponent.WIDGET_CONFIG.id;
+                break;
+            case RenderConfigComponent.WIDGET_CONFIG.type:
+                itemId = this.addRenderConfigWidget();
+                break;
+            case SpatialProfilerComponent.WIDGET_CONFIG.type:
+                itemId = this.addSpatialProfileWidget(null, coord && coord === "y" ? "y" : "x", -1, 0);
+                break;
+            case SpectralProfilerComponent.WIDGET_CONFIG.type:
+                itemId = this.addSpectralProfileWidget();
+                break;
+            case StatsComponent.WIDGET_CONFIG.type:
+                itemId = this.addStatsWidget();
+                break;
+            case HistogramComponent.WIDGET_CONFIG.type:
+                itemId = this.addHistogramWidget();
+                break;
+            case AnimatorComponent.WIDGET_CONFIG.type:
+                itemId = this.addAnimatorWidget();
+                break;
+            case LogComponent.WIDGET_CONFIG.type:
+                itemId = this.addLogWidget();
+                break;
+            case RegionListComponent.WIDGET_CONFIG.type:
+                itemId = this.addRegionListWidget();
+                break;
+            case StokesAnalysisComponent.WIDGET_CONFIG.type:
+                itemId = this.addStokesWidget();
+                break;
+            default:
+                // Remove it from the floating widget array, while preserving its store
+                if (this.floatingWidgets.find(w => w.id === widgetType)) {
+                    this.removeFloatingWidget(widgetType, true);
+                }
+                itemId = null;
+                break;
+        }
+        return itemId;
+    };
 
-    @action setDockedLayout(layout: GoldenLayout) {
+    public removeFloatingWidgets = () => {
+        if (this.floatingWidgets) {
+            this.floatingWidgets.forEach((widgetConfig) => this.removeFloatingWidget(widgetConfig.id));
+        }
+    }
+
+    public initWidgets = (componentConfigs: any[], floating: any[]) => {
+        // init docked widgets
+        componentConfigs.forEach((componentConfig) => {
+            if (componentConfig.id && componentConfig.props) {
+                let itemId;
+                if (componentConfig.id === SpatialProfilerComponent.WIDGET_CONFIG.type && componentConfig.coord) {
+                    itemId = this.addWidgetByType(componentConfig.id, componentConfig.coord);
+                } else {
+                    itemId = this.addWidgetByType(componentConfig.id);
+                }
+
+                if (itemId) {
+                    componentConfig.id = itemId;
+                    componentConfig.props.id = itemId;
+                }
+            }
+        });
+
+        // init floating widgets
+        floating.forEach((savedConfig) => {
+            if (savedConfig.type) {
+                let config = WidgetsStore.getDefaultWidgetConfig(savedConfig.type);
+                if (savedConfig.type === SpatialProfilerComponent.WIDGET_CONFIG.type && savedConfig.coord) {
+                    config.id = this.addWidgetByType(savedConfig.type, savedConfig.coord);
+                } else {
+                    config.id = this.addWidgetByType(savedConfig.type);
+                }
+
+                if (savedConfig.defaultWidth && savedConfig.defaultWidth > 0) {
+                    config.defaultWidth = savedConfig.defaultWidth;
+                }
+                if (savedConfig.defaultHeight && savedConfig.defaultHeight > 0) {
+                    config.defaultHeight = savedConfig.defaultHeight;
+                }
+
+                if (savedConfig.defaultX && savedConfig.defaultX > 0 && savedConfig.defaultY && savedConfig.defaultY > 0) {
+                    config["defaultX"] = savedConfig.defaultX;
+                    config["defaultY"] = savedConfig.defaultY;
+                } else {
+                    config["defaultX"] = config["defaultY"] = this.getFloatingWidgetOffset();
+                }
+                this.floatingWidgets.push(config);
+            }
+        });
+    };
+
+    public initLayoutWithWidgets = (layout: GoldenLayout) => {
+        if (!layout) {
+            console.log("Invalid parameters!");
+            return;
+        }
+
         layout.registerComponent("placeholder", PlaceholderComponent);
         layout.registerComponent("image-view", ImageViewComponent);
         layout.registerComponent("spatial-profiler", SpatialProfilerComponent);
@@ -153,26 +293,32 @@ export class WidgetsStore {
         layout.registerComponent("region-list", RegionListComponent);
         layout.registerComponent("log", LogComponent);
         layout.registerComponent("animator", AnimatorComponent);
+        layout.registerComponent("stokes", StokesAnalysisComponent);
+
+        // add drag source buttons from ToolbarMenuComponent
+        ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.CreateDragSource(this.appStore, layout, widgetConfig, id));
 
         layout.on("stackCreated", (stack) => {
             let unpinButton = $(`<li class="pin-icon"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);
             unpinButton.on("click", () => this.unpinWidget(stack.getActiveContentItem()));
             stack.header.controlsContainer.prepend(unpinButton);
         });
-
         layout.on("componentCreated", this.handleItemCreation);
         layout.on("itemDestroyed", this.handleItemRemoval);
-
         layout.on("stateChanged", this.handleStateUpdates);
-        layout.init();
-        this.dockedLayout = layout;
-    }
+    };
 
     @action unpinWidget = (item: GoldenLayout.ContentItem) => {
         const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
         const id = itemConfig.id as string;
         const type = itemConfig.component;
         const title = itemConfig.title;
+
+        // Avoid floating ImageViewComponent
+        if (type === ImageViewComponent.WIDGET_CONFIG.type) {
+            return;
+        }
+
         // Get widget type from config
         let widgetConfig = WidgetsStore.getDefaultWidgetConfig(type);
         widgetConfig.id = id;
@@ -200,40 +346,7 @@ export class WidgetsStore {
         const config = item.config as GoldenLayout.ReactComponentConfig;
         const id = config.id as string;
 
-        let itemId;
-        // Check if it's an uninitialised widget
-        switch (id) {
-            case RenderConfigComponent.WIDGET_CONFIG.type:
-                itemId = this.addRenderConfigWidget();
-                break;
-            case SpatialProfilerComponent.WIDGET_CONFIG.type:
-                itemId = this.addSpatialProfileWidget();
-                break;
-            case SpectralProfilerComponent.WIDGET_CONFIG.type:
-                itemId = this.addSpectralProfileWidget();
-                break;
-            case StatsComponent.WIDGET_CONFIG.type:
-                itemId = this.addStatsWidget();
-                break;
-            case HistogramComponent.WIDGET_CONFIG.type:
-                itemId = this.addHistogramWidget();
-                break;
-            case AnimatorComponent.WIDGET_CONFIG.type:
-                itemId = this.addAnimatorWidget();
-                break;
-            case LogComponent.WIDGET_CONFIG.type:
-                itemId = this.addLogWidget();
-                break;
-            case RegionListComponent.WIDGET_CONFIG.type:
-                itemId = this.addRegionListWidget();
-                break;
-            default:
-                // Remove it from the floating widget array, while preserving its store
-                if (this.floatingWidgets.find(w => w.id === id)) {
-                    this.removeFloatingWidget(id, true);
-                }
-        }
-
+        const itemId = this.addWidgetByType(id);
         if (itemId) {
             config.id = itemId;
             config.props.id = itemId;
@@ -247,7 +360,6 @@ export class WidgetsStore {
             // Clean up removed widget's store (ignoring items that have been floated)
             if (config.component !== "floated") {
                 const id = config.id as string;
-                console.log(`itemDestroyed: ${id}`);
                 this.removeWidget(id, config.component);
             }
         }
@@ -279,8 +391,8 @@ export class WidgetsStore {
         }
 
         // Update GL title by searching for image-view components
-        if (this.dockedLayout && this.dockedLayout.root) {
-            const imageViewComponents = this.dockedLayout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
+        if (this.layoutStore.dockedLayout && this.layoutStore.dockedLayout.root) {
+            const imageViewComponents = this.layoutStore.dockedLayout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
             if (imageViewComponents.length) {
                 imageViewComponents[0].setTitle(newTitle);
             }
@@ -294,9 +406,11 @@ export class WidgetsStore {
     }
 
     @action setWidgetTitle(id: string, title: string) {
-        const matchingComponents = this.dockedLayout.root.getItemsByFilter(item => item.config.id === id);
-        if (matchingComponents.length) {
-            matchingComponents[0].setTitle(title);
+        if (this.layoutStore.dockedLayout && this.layoutStore.dockedLayout.root) {
+            const matchingComponents = this.layoutStore.dockedLayout.root.getItemsByFilter(item => item.config.id === id);
+            if (matchingComponents.length) {
+                matchingComponents[0].setTitle(title);
+            }
         }
 
         const widget = this.floatingWidgets.find(w => w.id === id);
@@ -348,6 +462,27 @@ export class WidgetsStore {
 
         if (id) {
             this.spectralProfileWidgets.set(id, new SpectralProfileWidgetStore(coordinate));
+        }
+        return id;
+    }
+
+    // endregion
+
+    // region Stokes Profile Widgets
+    createFloatingStokesWidget = () => {
+        let config = StokesAnalysisComponent.WIDGET_CONFIG;
+        config.id = this.addStokesWidget();
+        this.addFloatingWidget(config);
+    };
+
+    @action addStokesWidget(id: string = null) {
+        // Generate new id if none passed in
+        if (!id) {
+            id = this.getNextId(StokesAnalysisComponent.WIDGET_CONFIG.type);
+        }
+
+        if (id) {
+            this.stokesAnalysisWidgets.set(id, new StokesAnalysisWidgetStore());
         }
         return id;
     }
@@ -488,9 +623,8 @@ export class WidgetsStore {
     };
 
     @action addFloatingWidget = (widget: WidgetConfig) => {
+        widget["defaultX"] = widget["defaultY"] = this.getFloatingWidgetOffset();
         this.floatingWidgets.push(widget);
-        this.defaultFloatingWidgetOffset += 25;
-        this.defaultFloatingWidgetOffset = (this.defaultFloatingWidgetOffset - 100) % 300 + 100;
     };
 
     // Removes a widget from the floating widget array, optionally removing the widget's associated store

@@ -1,8 +1,11 @@
 import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {Point2D} from "models";
-import {BackendService} from "../services";
 import {Colors} from "@blueprintjs/core";
+import {Point2D} from "models";
+import {BackendService} from "services";
+import {minMax2D, simplePolygonTest, simplePolygonPointTest} from "utilities";
+
+export const CURSOR_REGION_ID = 0;
 
 export class RegionStore {
     @observable fileId: number;
@@ -12,16 +15,19 @@ export class RegionStore {
     @observable lineWidth: number;
     @observable dashLength: number;
     @observable regionType: CARTA.RegionType;
-    @observable controlPoints: Point2D[];
+    // Shallow observable, since control point updates are atomic
+    @observable.shallow controlPoints: Point2D[];
     @observable rotation: number;
     @observable editing: boolean;
     @observable creating: boolean;
+    @observable locked: boolean;
+    @observable isSimplePolygon: boolean;
 
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
     static readonly MAX_DASH_LENGTH = 50;
 
-     static readonly SWATCH_COLORS = [
+    static readonly SWATCH_COLORS = [
         Colors.BLUE3,
         Colors.GREEN3,
         Colors.ORANGE3,
@@ -53,23 +59,22 @@ export class RegionStore {
                 return "Rectangle";
             case CARTA.RegionType.ELLIPSE:
                 return "Ellipse";
+            case CARTA.RegionType.POLYGON:
+                return "Polygon";
             default:
                 return "Not Implemented";
         }
     }
 
     static readonly AVAILABLE_REGION_TYPES = new Map<CARTA.RegionType, string>([
+        [CARTA.RegionType.POINT, "Point"],
         [CARTA.RegionType.RECTANGLE, "Rectangle"],
-        [CARTA.RegionType.ELLIPSE, "Ellipse"]
+        [CARTA.RegionType.ELLIPSE, "Ellipse"],
+        [CARTA.RegionType.POLYGON, "Polygon"]
     ]);
 
     public static IsRegionTypeValid(regionType: CARTA.RegionType): boolean {
-        return RegionStore.AVAILABLE_REGION_TYPES.has(regionType) ? true : false;
-    }
-
-    public static IsRegionColorValid(regionColor: string): boolean {
-        const colorHex: RegExp = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-        return colorHex.test(regionColor);
+        return RegionStore.AVAILABLE_REGION_TYPES.has(regionType);
     }
 
     public static IsRegionLineWidthValid(regionLineWidth: number): boolean {
@@ -84,18 +89,26 @@ export class RegionStore {
         return this.regionId < 0;
     }
 
-    @computed get boundingBoxArea(): number {
+    @computed get boundingBox(): Point2D {
         if (!this.isValid) {
-            return 0;
+            return {x: 0, y: 0};
         }
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
-                return this.controlPoints[1].x * this.controlPoints[1].y;
+                return {x: this.controlPoints[1].x, y: this.controlPoints[1].y};
             case CARTA.RegionType.ELLIPSE:
-                return 4 * this.controlPoints[1].x * this.controlPoints[1].y;
+                return {x: 2 * this.controlPoints[1].x, y: 2 * this.controlPoints[1].y};
+            case CARTA.RegionType.POLYGON:
+                const boundingBox = minMax2D(this.controlPoints);
+                return {x: boundingBox.maxPoint.x - boundingBox.minPoint.x, y: boundingBox.maxPoint.y - boundingBox.minPoint.y};
             default:
-                return 0;
+                return {x: 0, y: 0};
         }
+    }
+
+    @computed get boundingBoxArea(): number {
+        const box = this.boundingBox;
+        return box.x * box.y;
     }
 
     @computed get isClosedRegion() {
@@ -123,13 +136,15 @@ export class RegionStore {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
                 return this.controlPoints.length === 2 && this.controlPoints[1].x > 0 && this.controlPoints[1].y > 0;
+            case CARTA.RegionType.POLYGON:
+                return this.controlPoints.length >= 1;
             default:
                 return false;
         }
     }
 
     @computed get nameString() {
-        if (this.regionId === 0) {
+        if (this.regionId === CURSOR_REGION_ID) {
             return "Cursor";
         } else if (this.name) {
             return this.name;
@@ -153,6 +168,12 @@ export class RegionStore {
                 return `ellipse[[${center}], ` +
                     `[${this.controlPoints[1].x.toFixed(1)}pix, ${this.controlPoints[1].y.toFixed(1)}pix], ` +
                     `${this.rotation.toFixed(1)}deg]`;
+            case CARTA.RegionType.POLYGON:
+                // TODO: Region properties
+                const bounds = minMax2D(this.controlPoints);
+                return `polygon[[${center}], ` +
+                    `[${bounds.maxPoint.x.toFixed(1)}pix, ${bounds.maxPoint.y.toFixed(1)}pix], ` +
+                    `${this.rotation.toFixed(1)}deg]`;
             default:
                 return "Not Implemented";
         }
@@ -170,31 +191,49 @@ export class RegionStore {
         this.dashLength = dashLength;
         this.rotation = rotation;
         this.backendService = backendService;
+        this.simplePolygonTest();
     }
 
     @action setRegionId = (id: number) => {
         this.regionId = id;
     };
 
-    @action setControlPoint = (index: number, p: Point2D) => {
+    @action setControlPoint = (index: number, p: Point2D, skipUpdate = false) => {
         if (index >= 0 && index < this.controlPoints.length) {
             this.controlPoints[index] = p;
-            if (!this.editing) {
+            if (!this.editing && !skipUpdate) {
                 this.updateRegion();
+            }
+            if (this.regionType === CARTA.RegionType.POLYGON) {
+                this.simplePolygonTest(index);
             }
         }
     };
 
-    @action setControlPoints = (points: Point2D[]) => {
+    @action setControlPoints = (points: Point2D[], skipUpdate = false, shapeChanged = true) => {
         this.controlPoints = points;
-        if (!this.editing) {
+        if (shapeChanged && this.regionType === CARTA.RegionType.POLYGON) {
+            this.simplePolygonTest();
+        }
+        if (!this.editing && !skipUpdate) {
             this.updateRegion();
         }
     };
 
-    @action setRotation = (angle: number) => {
+    private simplePolygonTest(point: number = -1) {
+        const points = this.controlPoints.slice();
+        // Only allow optimised test if the polygon is currently marked as simple, to avoid cases where multiple line segments intersect
+        if (point >= 0 && this.isSimplePolygon) {
+            this.isSimplePolygon = simplePolygonPointTest(points, point) && simplePolygonPointTest(points, point - 1);
+        } else {
+            this.isSimplePolygon = simplePolygonTest(points);
+
+        }
+    }
+
+    @action setRotation = (angle: number, skipUpdate = false) => {
         this.rotation = (angle + 360) % 360;
-        if (!this.editing) {
+        if (!this.editing && !skipUpdate) {
             this.updateRegion();
         }
     };
@@ -224,12 +263,14 @@ export class RegionStore {
     @action endCreating = () => {
         this.creating = false;
         this.editing = false;
-        this.backendService.setRegion(this.fileId, -1, this).subscribe(ack => {
-            if (ack.success) {
-                console.log(`Updating regionID from ${this.regionId} to ${ack.regionId}`);
-                this.setRegionId(ack.regionId);
-            }
-        });
+        if (this.regionType !== CARTA.RegionType.POINT) {
+            this.backendService.setRegion(this.fileId, -1, this).subscribe(ack => {
+                if (ack.success) {
+                    console.log(`Updating regionID from ${this.regionId} to ${ack.regionId}`);
+                    this.setRegionId(ack.regionId);
+                }
+            });
+        }
     };
 
     @action beginEditing = () => {
@@ -241,18 +282,32 @@ export class RegionStore {
         this.updateRegion();
     };
 
+    @action toggleLock = () => {
+        if (this.regionId !== CURSOR_REGION_ID) {
+            this.locked = !this.locked;
+        }
+    };
+
+    @action setLocked = (locked: boolean) => {
+        if (this.regionId !== CURSOR_REGION_ID) {
+            this.locked = locked;
+        }
+    };
+
     // Update the region with the backend
     private updateRegion = () => {
-        if (this.regionId === 0 && this.regionType === CARTA.RegionType.POINT && this.isValid) {
-            this.backendService.setCursor(this.fileId, this.controlPoints[0].x, this.controlPoints[0].y);
-        } else {
-            this.backendService.setRegion(this.fileId, this.regionId, this).subscribe(ack => {
-                if (ack.success) {
-                    console.log(`Region updated`);
-                } else {
-                    console.log(ack.message);
-                }
-            });
+        if (this.isValid) {
+            if (this.regionId === CURSOR_REGION_ID && this.regionType === CARTA.RegionType.POINT) {
+                this.backendService.setCursor(this.fileId, this.controlPoints[0].x, this.controlPoints[0].y);
+            } else {
+                this.backendService.setRegion(this.fileId, this.regionId, this).subscribe(ack => {
+                    if (ack.success) {
+                        console.log(`Region updated`);
+                    } else {
+                        console.log(ack.message);
+                    }
+                });
+            }
         }
     };
 }

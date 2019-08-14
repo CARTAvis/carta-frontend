@@ -1,6 +1,6 @@
 import {action, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {FrameStore, RegionStore} from "stores";
+import {CURSOR_REGION_ID, FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
 import {BackendService} from "../services";
 
@@ -41,43 +41,28 @@ export class RegionSetStore {
     };
 
     @action addPointRegion = (center: Point2D, cursorRegion = false) => {
-        let regionId;
-        if (cursorRegion) {
-            regionId = 0;
-        } else {
-            regionId = this.getTempRegionId();
-        }
-
-        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center], CARTA.RegionType.POINT, regionId);
-        this.regions.push(region);
-        if (!cursorRegion) {
-            this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
-                if (ack.success) {
-                    region.setRegionId(ack.regionId);
-                }
-            });
-        }
-        return region;
+        return this.addRegion([center], 0, CARTA.RegionType.POINT, cursorRegion, cursorRegion ? CURSOR_REGION_ID : this.getTempRegionId());
     };
 
     @action addRectangularRegion = (center: Point2D, width: number, height: number, temporary: boolean = false) => {
-        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center, {x: width, y: height}], CARTA.RegionType.RECTANGLE, this.getTempRegionId(),
-                                        this.regionPreference.color, this.regionPreference.lineWidth, this.regionPreference.dashLength);
-        this.regions.push(region);
-        if (!temporary) {
-            this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
-                if (ack.success) {
-                    console.log(`Updating regionID from ${region.regionId} to ${ack.regionId}`);
-                    region.setRegionId(ack.regionId);
-                }
-            });
-        }
-        return region;
+        return this.addRegion([center, {x: width, y: height}], 0, CARTA.RegionType.RECTANGLE, temporary);
     };
 
     @action addEllipticalRegion = (center: Point2D, semiMajor: number, semiMinor: number, temporary: boolean = false) => {
-        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, [center, {x: semiMinor, y: semiMajor}], CARTA.RegionType.ELLIPSE, this.getTempRegionId(),
-                                        this.regionPreference.color, this.regionPreference.lineWidth, this.regionPreference.dashLength);
+        return this.addRegion([center, {x: semiMinor, y: semiMajor}], 0, CARTA.RegionType.ELLIPSE, temporary);
+    };
+
+    @action addPolygonalRegion = (points: Point2D[], temporary: boolean = false) => {
+        return this.addRegion(points, 0, CARTA.RegionType.POLYGON, temporary);
+    };
+
+    @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number) => {
+        return this.addRegion(points, rotation, regionType, true, regionId);
+    };
+
+    private addRegion(points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId()) {
+        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, points, regionType, regionId,
+            this.regionPreference.color, this.regionPreference.lineWidth, this.regionPreference.dashLength, rotation);
         this.regions.push(region);
         if (!temporary) {
             this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
@@ -87,8 +72,9 @@ export class RegionSetStore {
                 }
             });
         }
+
         return region;
-    };
+    }
 
     @action selectRegion = (region: RegionStore) => {
         if (this.regions.indexOf(region) >= 0) {
@@ -108,12 +94,14 @@ export class RegionSetStore {
 
     @action deleteRegion = (region: RegionStore) => {
         // Cursor region cannot be deleted
-        if (region && region.regionId !== 0 && this.regions.length) {
+        if (region && region.regionId !== CURSOR_REGION_ID && this.regions.length) {
             if (region === this.selectedRegion) {
                 this.selectedRegion = this.regions[0];
             }
             this.regions = this.regions.filter(r => r !== region);
-            this.backendService.removeRegion(region.regionId);
+            if (!region.isTemporary) {
+                this.backendService.removeRegion(region.regionId);
+            }
         }
     };
 

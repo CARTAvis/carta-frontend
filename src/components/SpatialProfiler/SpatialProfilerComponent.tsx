@@ -5,7 +5,8 @@ import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpatialProfilerSettingsPanelComponent} from "./SpatialProfilerSettingsPanelComponent/SpatialProfilerSettingsPanelComponent";
 import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
@@ -15,6 +16,7 @@ import "./SpatialProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 180;
+const AUTOSCALE_THROTTLE_TIME = 100;
 
 @observer
 export class SpatialProfilerComponent extends React.Component<WidgetProps> {
@@ -35,6 +37,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
+
+    // auto-scaling range
+    @observable autoScaleHorizontalMin: number;
+    @observable autoScaleHorizontalMax: number;
 
     @computed get widgetStore(): SpatialProfileWidgetStore {
         if (this.props.appStore && this.props.appStore.widgetsStore.spatialProfileWidgets) {
@@ -87,13 +93,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             let xMax: number;
 
             if (this.widgetStore.isAutoScaledX) {
-                if (isXProfile) {
-                    xMin = clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width);
-                    xMax = clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width);
-                } else {
-                    xMin = clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height);
-                    xMax = clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height);
-                }
+                xMin = this.autoScaleHorizontalMin;
+                xMax = this.autoScaleHorizontalMax;
             } else {
                 xMin = clamp(this.widgetStore.minX, 0, this.frame.frameInfo.fileInfoExtended.width);
                 if (isXProfile) {
@@ -115,7 +116,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             let ySum2 = 0;
             let yCount = 0;
 
-            const N = Math.floor(Math.min(xMax - xMin, coordinateData.values.length));
+            const N = Math.floor(Math.min(xMax - xMin + 1, coordinateData.values.length));
 
             const numPixels = this.width;
             const decimationFactor = Math.round(N / numPixels);
@@ -123,7 +124,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
             let values: Array<{ x: number, y: number }>;
             if (N > 0) {
-                if (decimationFactor <= 1) {
+                if (decimationFactor <= 1 || this.widgetStore.plotType === PlotType.POINTS) {
                     // full resolution data
                     values = new Array(N);
                     for (let i = 0; i < N; i++) {
@@ -208,6 +209,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             if (yMin === Number.MAX_VALUE) {
                 yMin = undefined;
                 yMax = undefined;
+            } else {
+                // extend y range a bit
+                const range = yMax - yMin;
+                yMin -= range * VERTICAL_RANGE_PADDING;
+                yMax += range * VERTICAL_RANGE_PADDING;
             }
             return {values: values, xMin, xMax, yMin, yMax, yMean, yRms};
         }
@@ -240,6 +246,20 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `X Profile: Cursor`);
             }
         });
+
+        autorun(() => {
+            const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
+            if (!this.frame || !this.width) {
+                return null;
+            }
+            if (isXProfile) {
+                this.autoScaleHorizontalMin = clamp(this.frame.requiredFrameView.xMin, 0, this.frame.frameInfo.fileInfoExtended.width);
+                this.autoScaleHorizontalMax = clamp(this.frame.requiredFrameView.xMax, 0, this.frame.frameInfo.fileInfoExtended.width);
+            } else {
+                this.autoScaleHorizontalMin = clamp(this.frame.requiredFrameView.yMin, 0, this.frame.frameInfo.fileInfoExtended.height);
+                this.autoScaleHorizontalMax = clamp(this.frame.requiredFrameView.yMax, 0, this.frame.frameInfo.fileInfoExtended.height);
+            }
+        }, {delay: AUTOSCALE_THROTTLE_TIME});
     }
 
     onResize = (width: number, height: number) => {
@@ -355,7 +375,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             plotName: `${isXProfile ? "X" : "Y"} profile`,
             usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
             interpolateLines: this.widgetStore.plotType === PlotType.LINES,
-            forceScientificNotationTicksY: true,
+            tickTypeY: TickType.Scientific,
             graphZoomedX: this.widgetStore.setXBounds,
             graphZoomedY: this.widgetStore.setYBounds,
             graphZoomedXY: this.widgetStore.setXYBounds,
@@ -395,6 +415,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     } else {
                         linePlotProps.yMin = this.widgetStore.minY;
                         linePlotProps.yMax = this.widgetStore.maxY;
+                    }
+
+                    // Use interpolated lines when decimating data to speed up rendering
+                    if (currentPlotData.values && currentPlotData.values.length > this.width * 1.5) {
+                        linePlotProps.interpolateLines = true;
                     }
                 }
 
@@ -445,11 +470,11 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 }
 
                 // TODO: Get comments from region info, rather than directly from cursor position
-                if (appStore.cursorInfo) {
+                if (appStore.activeFrame.cursorInfo) {
                     const comments: string[] = [];
-                    comments.push(`region (pixel): Point[${appStore.cursorInfo.posImageSpace.x.toFixed(0)}, ${appStore.cursorInfo.posImageSpace.y.toFixed(0)}]`);
-                    if (appStore.cursorInfo.infoWCS) {
-                        comments.push(`region (world): Point[${appStore.cursorInfo.infoWCS.x}, ${appStore.cursorInfo.infoWCS.y}]`);
+                    comments.push(`region (pixel): Point[${appStore.activeFrame.cursorInfo.posImageSpace.x.toFixed(0)}, ${appStore.activeFrame.cursorInfo.posImageSpace.y.toFixed(0)}]`);
+                    if (appStore.activeFrame.cursorInfo.infoWCS) {
+                        comments.push(`region (world): Point[${appStore.activeFrame.cursorInfo.infoWCS.x}, ${appStore.activeFrame.cursorInfo.infoWCS.y}]`);
                     }
                     linePlotProps.comments = comments;
                 }

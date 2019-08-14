@@ -1,10 +1,11 @@
 import * as React from "react";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, Icon, Menu, Popover, Position, Tooltip} from "@blueprintjs/core";
+import {Alert, Icon, Menu, Popover, Position, Tooltip, Tag} from "@blueprintjs/core";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {exportImage} from "components";
-import {AppStore} from "stores";
+import {PresetLayout} from "models";
+import {AppStore, BrowserMode} from "stores";
 import {ConnectionStatus} from "services";
 import "./RootMenuComponent.css";
 
@@ -18,19 +19,35 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         const modString = appStore.modifierString;
         const connectionStatus = appStore.backendService.connectionStatus;
 
+        let stokesClassName = "stokes-item";
+        if (this.props.appStore.darkTheme) {
+            stokesClassName += " bp3-dark";
+        }
+
         const fileMenu = (
             <Menu>
                 <Menu.Item
                     text="Open image"
                     label={`${modString}O`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || appStore.fileLoading}
-                    onClick={() => appStore.fileBrowserStore.showFileBrowser(false)}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)}
                 />
                 <Menu.Item
                     text="Append image"
                     label={`${modString}L`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
-                    onClick={() => appStore.fileBrowserStore.showFileBrowser(true)}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}
+                />
+                <Menu.Divider/>
+                <Menu.Item
+                    text="Import regions"
+                    disabled={!appStore.activeFrame}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)}
+                />
+                <Menu.Item
+                    text="Export regions"
+                    disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionExport, false)}
                 />
                 <Menu.Divider/>
                 <Menu.Item
@@ -39,11 +56,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     disabled={!appStore.activeFrame}
                     onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
                 />
-                <Menu.Divider/>
                 <Menu.Item text="Preferences" onClick={appStore.showPreferenceDialog}/>
-                <Menu.Divider/>
-                <Menu.Item text="Enter API Key" onClick={appStore.showApiKeyDialog}/>
-                <Menu.Item text="Connect to remote server" onClick={appStore.showURLConnect}/>
             </Menu>
         );
 
@@ -78,8 +91,53 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
             </Menu>
         );
 
-        const panelMenu = (
-            <Menu>
+        const presetLayouts: string[] = PresetLayout.PRESETS;
+        const userLayouts: string[] = appStore.layoutStore.userLayouts;
+        const stokesIcon = (
+            <Tag icon={"pulse"} className={"stokes-icon-button"}>
+                &nbsp;s
+            </Tag>
+        );
+        const layoutMenu = (
+            <Menu className="layout-menu">
+                <Menu.Item text="Layouts" icon={"layout-grid"}>
+                    <Menu.Item text="Existing Layouts" disabled={!presetLayouts && !userLayouts}>
+                        <Menu.Item text="Presets" disabled={!presetLayouts || presetLayouts.length <= 0}>
+                            {presetLayouts && presetLayouts.length > 0 && presetLayouts.map((value) =>
+                                <Menu.Item
+                                    key={value}
+                                    text={value}
+                                    active={value === appStore.layoutStore.currentLayoutName}
+                                    onClick={() => appStore.layoutStore.applyLayout(value)}
+                                />
+                            )}
+                        </Menu.Item>
+                        {userLayouts && userLayouts.length > 0 && userLayouts.map((value) =>
+                            <Menu.Item
+                                key={value}
+                                text={value}
+                                active={value === appStore.layoutStore.currentLayoutName}
+                                onClick={() => appStore.layoutStore.applyLayout(value)}
+                            />
+                        )}
+                    </Menu.Item>
+                    <Menu.Item text="Save Layout" onClick={appStore.showSaveLayoutDialog}/>
+                    <Menu.Item text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
+                        {userLayouts && userLayouts.length > 0 && userLayouts.map((value) =>
+                            <Menu.Item
+                                key={value}
+                                text={value}
+                                active={value === appStore.layoutStore.currentLayoutName}
+                                onClick={() => {
+                                    appStore.layoutStore.deleteLayout(value);
+                                    if (value === appStore.preferenceStore.layout) {
+                                        appStore.preferenceStore.setLayout(PresetLayout.DEFAULT);
+                                    }
+                                }}
+                            />
+                        )}
+                    </Menu.Item>
+                </Menu.Item>
                 <Menu.Item text="Info Panels" icon={"info-sign"}>
                     <Menu.Item text="Region List" onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
                     <Menu.Item text="Program Log" onClick={appStore.widgetsStore.createFloatingLogWidget}/>
@@ -92,6 +150,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 <Menu.Item text="Histogram" icon={"timeline-bar-chart"} onClick={appStore.widgetsStore.createFloatingHistogramWidget}/>
                 <Menu.Item text="Animator" icon={"video"} onClick={appStore.widgetsStore.createFloatingAnimatorWidget}/>
                 <Menu.Item text="Render Config" icon={"style"} onClick={appStore.widgetsStore.createFloatingRenderWidget}/>
+                <Menu.Item className={stokesClassName} text="Stokes Analysis" icon={stokesIcon} onClick={appStore.widgetsStore.createFloatingStokesWidget}/>
             </Menu>
         );
 
@@ -106,17 +165,18 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         let connectivityClass = "connectivity-icon";
         let tooltip = "";
         const latencyString = isFinite(appStore.backendService.endToEndPing) ? `${appStore.backendService.endToEndPing.toFixed(1)} ms` : "Unknown";
+        const userString = appStore.username ? ` as ${appStore.username}` : "";
         switch (connectionStatus) {
             case ConnectionStatus.PENDING:
-                tooltip = "Connecting to server";
+                tooltip = `Connecting to server${userString}`;
                 connectivityClass += " warning";
                 break;
             case ConnectionStatus.ACTIVE:
                 if (appStore.backendService.connectionDropped) {
-                    tooltip = `Reconnected to server after disconnect. Some errors may occur. Latency: ${latencyString}`;
+                    tooltip = `Reconnected to server${userString} after disconnect. Some errors may occur. Latency: ${latencyString}`;
                     connectivityClass += " warning";
                 } else {
-                    tooltip = `Connected to server. Latency: ${latencyString}`;
+                    tooltip = `Connected to server${userString}. Latency: ${latencyString}`;
                     connectivityClass += " online";
                 }
                 break;
@@ -140,7 +200,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                         <Menu.Item text="View"/>
                     </Menu>
                 </Popover>
-                <Popover autoFocus={false} minimal={true} content={panelMenu} position={Position.BOTTOM_LEFT}>
+                <Popover autoFocus={false} minimal={true} content={layoutMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="root-menu-entry">
                         <Menu.Item text="Layout"/>
                     </Menu>

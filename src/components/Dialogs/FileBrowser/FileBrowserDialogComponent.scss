@@ -1,30 +1,54 @@
 .file-browser-dialog {
     min-width: 60%;
-    height: 600px;
+    height: 100%;
     user-select: none;
-    .file-info-pane {
-        width: 40%;
-        margin-left: 5px;
-        display: flex;
-        flex-direction: column;
-        .bp3-heading {
-            margin-top: 7px;
-            margin-bottom: 3px;
-            flex: 0 0 auto;
-        }
 
-        .file-info-pre {
-            overflow-y: auto;
-            overflow-x: auto;
-            margin-top: 0;
-            margin-bottom: 0;
-            flex: 2 2 auto;
-        }
-
+    .file-path {
+        margin-top: 20px;
+        margin-left: 25px;
     }
 
-    .file-list-pane {
-        overflow-y: auto;
-        width: 60%;
+    .bp3-dialog-body {
+        height: 100%;
+        overflow: hidden;
+        margin-top: 10px;
+        margin-left: 25px;
+
+        .bp3-input-group {
+            margin: 10px 5px 5px;
+        }
+
+        .file-panes {
+            display: flex;
+            height: calc(100% - 45px);
+
+            &.extended {
+                height: 100%;
+
+            }
+
+            .file-list {
+                width: 60%;
+                flex: auto;
+                overflow-y: auto;
+            }
+
+            .file-info-pane {
+                width: 40%;
+                margin-left: 2%;
+                margin-bottom: 40px;
+
+                .file-info-pre {
+                    overflow: auto;
+                    height: 100%;
+                    flex: 2 2 auto;
+                }
+
+                .bp3-heading {
+                    flex: 0 0 auto;
+                }
+            }
+        }
+
     }
 }

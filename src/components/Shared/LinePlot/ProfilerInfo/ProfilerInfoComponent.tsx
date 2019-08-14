@@ -11,7 +11,7 @@ export class ProfilerInfoComponentProps {
 
 @observer
 export class ProfilerInfoComponent extends React.Component<ProfilerInfoComponentProps> {
-    private getCursorInforLabel = () => {
+    private getCursorInfoLabel = () => {
         if (this.props.cursorInfo.cursorX === null || this.props.cursorInfo.cursorY === null ||
             isNaN(this.props.cursorInfo.cursorX) || isNaN(this.props.cursorInfo.cursorY)) {
             return null;
@@ -34,7 +34,7 @@ export class ProfilerInfoComponent extends React.Component<ProfilerInfoComponent
                     <pre>{this.props.cursorInfo.isMouseEntered ? "Cursor:" : "Data:"}</pre>
                 </td>
                 <td>
-                    <pre>{this.getCursorInforLabel()}</pre>
+                    <pre>{this.getCursorInfoLabel()}</pre>
                 </td>
             </tr>
         ) : null;

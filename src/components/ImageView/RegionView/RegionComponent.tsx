@@ -5,8 +5,9 @@ import {observer} from "mobx-react";
 import {Ellipse, Group, Rect, Transformer} from "react-konva";
 import Konva from "konva";
 import {CARTA} from "carta-protobuf";
-import {FrameStore, RegionStore} from "../../../stores";
-import {Point2D} from "../../../models";
+import {FrameStore, RegionStore} from "stores";
+import {Point2D} from "models";
+import {canvasToImagePos, imageToCanvasPos} from "./shared";
 
 export interface RegionComponentProps {
     region: RegionStore;
@@ -18,7 +19,6 @@ export interface RegionComponentProps {
     isRegionCornerMode: boolean;
     onSelect?: (region: RegionStore) => void;
     onDoubleClick?: (region: RegionStore) => void;
-    onPanClick?: () => void;
 }
 
 @observer
@@ -35,7 +35,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         }
     };
 
-    handleContextMenu = (konvaEvent) => {
+    handleContextMenu = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         konvaEvent.evt.preventDefault();
         console.log("context click!");
     };
@@ -46,8 +46,8 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         }
     };
 
-    handleClick = (konvaEvent) => {
-        const mouseEvent = konvaEvent.evt as MouseEvent;
+    handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
+        const mouseEvent = konvaEvent.evt;
 
         if (mouseEvent.button === 0 && !(mouseEvent.ctrlKey || mouseEvent.metaKey)) {
             // Select click
@@ -120,7 +120,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                 region.setRotation(-rotation);
             } else {
                 // revert node scaling and position before adjusting region control points
-                const centerCanvasPos = this.getCanvasPos(region.controlPoints[0].x, region.controlPoints[0].y);
+                const centerCanvasPos = imageToCanvasPos(region.controlPoints[0].x, region.controlPoints[0].y, this.props.frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
                 node.x(centerCanvasPos.x);
                 node.y(centerCanvasPos.y);
                 node.scaleX(1);
@@ -137,7 +137,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
     };
 
     applyCornerScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string) => {
-        const newAnchorPoint = this.getImagePos(canvasX, canvasY);
+        const newAnchorPoint = canvasToImagePos(canvasX, canvasY, this.props.frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
 
         let w: number, h: number;
         let sizeFactor: number;
@@ -185,7 +185,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
     };
 
     applyCenterScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, keepAspect: boolean) => {
-        const newAnchorPoint = this.getImagePos(canvasX, canvasY);
+        const newAnchorPoint = canvasToImagePos(canvasX, canvasY, this.props.frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
         const centerPoint = region.controlPoints[0];
 
         let w: number, h: number;
@@ -238,14 +238,14 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         this.props.region.endEditing();
     };
 
-    handleDrag = (konvaEvent) => {
+    handleDrag = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         if (konvaEvent.target) {
-            const node = konvaEvent.target as Konva.Node;
+            const node = konvaEvent.target;
             const region = this.props.region;
             const frame = this.props.frame;
             const centerImageSpace = region.controlPoints[0];
 
-            const currentCenterPixelSpace = this.getCanvasPos(centerImageSpace.x, centerImageSpace.y);
+            const currentCenterPixelSpace = imageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
             const newCenterPixelSpace = node.position();
             const deltaPositionImageSpace = {x: (newCenterPixelSpace.x - currentCenterPixelSpace.x) / frame.zoomLevel, y: -(newCenterPixelSpace.y - currentCenterPixelSpace.y) / frame.zoomLevel};
             const newPosition = {x: centerImageSpace.x + deltaPositionImageSpace.x, y: centerImageSpace.y + deltaPositionImageSpace.y};
@@ -253,33 +253,14 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         }
     };
 
-    private getImagePos(canvasX: number, canvasY: number): Point2D {
-        const frameView = this.props.frame.requiredFrameView;
-        return {
-            x: (canvasX / this.props.layerWidth) * (frameView.xMax - frameView.xMin) + frameView.xMin - 1,
-            // y coordinate is flipped in image space
-            y: (canvasY / this.props.layerHeight) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
-        };
-    }
-
-    private getCanvasPos(imageX: number, imageY: number) {
-        const currentView = this.props.frame.requiredFrameView;
-        const viewWidth = currentView.xMax - currentView.xMin;
-        const viewHeight = currentView.yMax - currentView.yMin;
-        return {
-            x: ((imageX + 1 - currentView.xMin) / viewWidth * this.props.layerWidth),
-            y: this.props.layerHeight - ((imageY + 1 - currentView.yMin) / viewHeight * this.props.layerHeight)
-        };
-    }
-
     render() {
         const region = this.props.region;
         const frame = this.props.frame;
         const centerImageSpace = region.controlPoints[0];
 
-        const centerPixelSpace = this.getCanvasPos(centerImageSpace.x, centerImageSpace.y);
-        const width = (region.controlPoints[1].x * frame.zoomLevel) / devicePixelRatio;
-        const height = (region.controlPoints[1].y * frame.zoomLevel) / devicePixelRatio;
+        const centerPixelSpace = imageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
+        let width = (region.controlPoints[1].x * frame.zoomLevel) / devicePixelRatio;
+        let height = (region.controlPoints[1].y * frame.zoomLevel) / devicePixelRatio;
 
         // Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
         const borderDash = [(width + height) * 4 / 100.0];
@@ -290,10 +271,10 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
             y: centerPixelSpace.y,
             stroke: region.color,
             strokeWidth: region.lineWidth,
-            opacity: region.isTemporary ? 0.5 : 1.0,
+            opacity: region.isTemporary ? 0.5 : (region.locked ? 0.70 : 1),
             dash: [region.dashLength],
             draggable: true,
-            listening: this.props.listening,
+            listening: this.props.listening && !region.locked,
             onDragStart: this.handleDragStart,
             onDragEnd: this.handleDragEnd,
             onDragMove: this.handleDrag,
@@ -326,13 +307,17 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
                 <Transformer
                     node={this.selectedRegionRef}
                     rotateAnchorOffset={15}
-                    anchorSize={6}
+                    anchorSize={7}
+                    anchorStroke={"black"}
                     borderStroke={Colors.TURQUOISE5}
-                    borderDash={region.regionType === CARTA.RegionType.ELLIPSE ? borderDash : null}
+                    borderStrokeWidth={3}
+                    borderDash={borderDash}
                     keepRatio={false}
                     centeredScaling={true}
                     draggable={false}
                     borderEnabled={false}
+                    resizeEnabled={!region.locked}
+                    rotateEnabled={!region.locked}
                     onTransformStart={this.handleTransformStart}
                     onTransform={this.handleTransform}
                     onTransformEnd={this.handleTransformEnd}

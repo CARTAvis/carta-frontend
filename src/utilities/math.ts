@@ -18,3 +18,18 @@ export function clamp(val: number, minVal: number, maxVal: number) {
 export function closeTo(a: number, b: number, limit: number = 1.0e-6) {
     return Math.abs(a - b) < limit;
 }
+
+// sqrt(q^2 + u^2)
+export function polarizedIntensity(q: number, u: number) {
+    return Math.sqrt(Math.pow(q, 2) + Math.pow(u, 2));
+}
+
+// 0.5 * Math.atan2(U, Q) * 180 / Math.pi
+export function polarizationAngle(q: number, u: number) {
+    return 0.5 * Math.atan2(u, q) * 180 / Math.PI;
+}
+
+// normalising a by b
+export function normalising(a: number, b: number) {
+    return (a / b) * 100;
+}

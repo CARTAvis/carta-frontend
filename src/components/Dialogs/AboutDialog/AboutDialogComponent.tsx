@@ -29,7 +29,7 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
                         <img src={logoPng} width={100}/>
-                        <h3>CARTA Viewer Version 1.1.0-beta.0 (20190405)</h3>
+                        <h3>CARTA Viewer Version 1.2.0-beta.0 (20190814)</h3>
                     </div>
 
                     <h3>Development team:</h3>
@@ -48,7 +48,7 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
                     </ul>
                     <h3>License</h3>
                     <p>
-                        Copyright (C) 2018-2019 ASIAA, IDIA, and NRAO. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
+                        Copyright (C) 2018-2019 ASIAA, IDIA, NRAO, and Department of Physics, University of Alberta. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
                         <a href="http://www.gnu.org/copyleft/gpl.html" target="_blank">GNU General Public License version 3</a>&#160;
                         as published by the Free Software Foundation.
                     </p>

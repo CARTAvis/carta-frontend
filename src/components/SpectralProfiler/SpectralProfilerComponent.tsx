@@ -5,7 +5,8 @@ import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerSettingsPanelComponent} from "./SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
@@ -16,6 +17,8 @@ import "./SpectralProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 180;
+
+type PlotData = { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
 
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
@@ -62,7 +65,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return 20 + (this.widgetStore.settingsPanelVisible ? PANEL_CONTENT_WIDTH : 0);
     }
 
-    @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number } {
+    @computed get plotData(): PlotData {
         const frame = this.props.appStore.activeFrame;
         if (!frame) {
             return null;
@@ -73,7 +76,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         let regionId = this.widgetStore.regionIdMap.get(fileId) || 0;
         if (frame.regionSet) {
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-            if (region) {
+            if (region && this.profileStore) {
                 coordinateData = this.profileStore.getProfile(this.widgetStore.coordinate, region.isClosedRegion ? this.widgetStore.statsType : CARTA.StatsType.Sum);
             }
         }
@@ -102,7 +105,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
             // values are needed to be sorted in incremental order for binary search
             let values: Array<{ x: number, y: number }> = [];
-            let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
+            let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1];
             for (let i = 0; i < channelValues.length; i++) {
                 let index = isIncremental ? i : channelValues.length - 1 - i;
                 const x = channelValues[index];
@@ -135,8 +138,13 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (yMin === Number.MAX_VALUE) {
                 yMin = undefined;
                 yMax = undefined;
+            } else {
+                // extend y range a bit
+                const range = yMax - yMin;
+                yMin -= range * VERTICAL_RANGE_PADDING;
+                yMax += range * VERTICAL_RANGE_PADDING;
             }
-            return {values: values, xMin, xMax, yMin, yMax, yMean, yRms};
+            return {values, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
         }
         return null;
     }
@@ -191,6 +199,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 const coordinate = this.widgetStore.coordinate;
                 const appStore = this.props.appStore;
                 const frame = appStore.activeFrame;
+                let progressString = "";
+                const currentData = this.plotData;
+                if (currentData && isFinite(currentData.progress) && currentData.progress < 1.0) {
+                    progressString = `[${(currentData.progress * 100).toFixed(0)}% complete]`;
+                }
                 if (frame && coordinate) {
                     let coordinateString: string;
                     if (coordinate.length === 2) {
@@ -201,7 +214,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
-                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString} ${selectedString}`);
+                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString} ${selectedString} ${progressString}`);
                 }
             } else {
                 this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Z Profile: Cursor`);
@@ -299,7 +312,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             plotName: `Z profile`,
             usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
             interpolateLines: this.widgetStore.plotType === PlotType.LINES,
-            forceScientificNotationTicksY: true,
+            tickTypeY: TickType.Scientific,
             graphClicked: this.onChannelChanged,
             graphZoomedX: this.widgetStore.setXBounds,
             graphZoomedY: this.widgetStore.setYBounds,
@@ -317,6 +330,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             const currentPlotData = this.plotData;
             if (currentPlotData) {
                 linePlotProps.data = currentPlotData.values;
+                // Opacity ranges from 0.15 to 0.40 when data is in progress, and is 1.0 when finished
+                linePlotProps.opacity = currentPlotData.progress < 1.0 ? 0.15 + currentPlotData.progress / 4.0 : 1.0;
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                 if (this.widgetStore.isAutoScaledX) {
                     linePlotProps.xMin = currentPlotData.xMin;

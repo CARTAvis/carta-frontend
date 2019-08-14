@@ -1,21 +1,27 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, Classes, IDialogProps, Intent, NonIdealState} from "@blueprintjs/core";
+import {AnchorButton, Classes, IDialogProps, Intent, NonIdealState, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore} from "stores";
-import "./RegionDialogComponent.css";
+import {AppStore, RegionStore} from "stores";
+import {PointRegionForm} from "./PointRegionForm/PointRegionForm";
 import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionForm";
 import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
 import {AppearanceForm} from "./AppearanceForm/AppearanceForm";
+import {PolygonRegionForm} from "./PolygonRegionForm/PolygonRegionForm";
+import "./RegionDialogComponent.css";
 
 @observer
 export class RegionDialogComponent extends React.Component<{ appStore: AppStore }> {
+    private static readonly MissingRegionNode = <NonIdealState icon={"folder-open"} title={"No region selected"} description={"Select a region using the list or image view"}/>;
+    private static readonly InvalidRegionNode = <NonIdealState icon={"error"} title={"Region not supported"} description={"The selected region does not have any editable properties"}/>;
 
     private handleDeleteClicked = () => {
         const appStore = this.props.appStore;
         appStore.hideRegionDialog();
-        appStore.deleteSelectedRegion();
+        if (appStore.activeFrame && appStore.activeFrame.regionSet.selectedRegion) {
+            appStore.deleteRegion(appStore.activeFrame.regionSet.selectedRegion);
+        }
     };
 
     public render() {
@@ -34,15 +40,27 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
         };
 
         let bodyContent;
+        let region: RegionStore;
         let editableRegion = false;
         if (!appStore.activeFrame || !appStore.activeFrame.regionSet.selectedRegion) {
-            bodyContent = <NonIdealState icon={"folder-open"} title={"No region selected"} description={"Select a region using the list or image view"}/>;
+            bodyContent = RegionDialogComponent.MissingRegionNode;
+        } else if (appStore.activeFrame.regionSet.selectedRegion.regionId === 0) {
+            bodyContent = RegionDialogComponent.InvalidRegionNode;
         } else {
-            const region = appStore.activeFrame.regionSet.selectedRegion;
+            region = appStore.activeFrame.regionSet.selectedRegion;
             const frame = appStore.activeFrame;
 
             dialogProps.title = `Editing ${region.nameString}`;
             switch (region.regionType) {
+                case CARTA.RegionType.POINT:
+                    bodyContent = (
+                        <React.Fragment>
+                            <AppearanceForm region={region} darkTheme={appStore.darkTheme}/>
+                            <PointRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
+                        </React.Fragment>
+                    );
+                    editableRegion = true;
+                    break;
                 case CARTA.RegionType.RECTANGLE:
                     bodyContent = (
                         <React.Fragment>
@@ -61,8 +79,17 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
                     );
                     editableRegion = true;
                     break;
+                case CARTA.RegionType.POLYGON:
+                    bodyContent = (
+                        <React.Fragment>
+                            <AppearanceForm region={region} darkTheme={appStore.darkTheme}/>
+                            <PolygonRegionForm region={region} wcsInfo={frame.validWcs ? frame.wcsInfo : 0}/>
+                        </React.Fragment>
+                    );
+                    editableRegion = true;
+                    break;
                 default:
-                    bodyContent = <NonIdealState icon={"error"} title={"Region not supported"} description={"The selected region does not have any editable properties"}/>;
+                    bodyContent = RegionDialogComponent.InvalidRegionNode;
             }
         }
 
@@ -73,6 +100,11 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                        {region && region.regionId !== 0 &&
+                        <Tooltip content={`Region is ${region.locked ? "locked" : "unlocked"}`}>
+                            <AnchorButton intent={Intent.WARNING} minimal={true} icon={region.locked ? "lock" : "unlock"} onClick={region.toggleLock}/>
+                        </Tooltip>
+                        }
                         {editableRegion && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked}/>}
                         <AnchorButton intent={Intent.NONE} onClick={appStore.hideRegionDialog} text="Close"/>
                     </div>
