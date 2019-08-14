@@ -38,7 +38,7 @@ export class PlotContainerProps {
     plotType?: string;
     dataBackgroundColor?: Array<string>;
     isGroupSubPlot?: boolean;
-    pointRadiusSet?: Array<number>;
+    pointRadius?: number;
 }
 
 export class PlotContainerComponent extends React.Component<PlotContainerProps> {
@@ -139,8 +139,16 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         return value.toExponential(2);
     };
 
-    private formatTicksAutomatic = (value: number, index: number, values: number[]) => {
+    private formatXTicksAutomatic = (value: number, index: number, values: number[]) => {
         // TODO: Work out how to revert to the automatic ChartJS formatting function
+        return value;
+    };
+
+    private formatYTicksAutomatic = (value: number, index: number, values: number[]) => {
+        // TODO: Work out how to revert to the automatic ChartJS formatting function
+        if (value) {
+            return value.toFixed();
+        }
         return value;
     };
 
@@ -204,6 +212,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         } else if (props.isGroupSubPlot !== nextProps.isGroupSubPlot) {
             return true;
+        } else if (props.pointRadius !== nextProps.pointRadius) {
+            return true;
         }
 
         // Deep check of arrays (this should be optimised!)
@@ -252,7 +262,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         maxRotation: 0,
                         min: this.props.xMin,
                         max: this.props.xMax,
-                        callback: this.props.forceScientificNotationTicksX ? this.formatTicksScientific : this.formatTicksAutomatic
+                        callback: this.props.forceScientificNotationTicksX ? this.formatTicksScientific : this.formatXTicksAutomatic
                     },
                     gridLines: {
                         drawBorder: false,
@@ -289,7 +299,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         display: true,
                         min: this.props.yMin,
                         max: this.props.yMax,
-                        callback: this.props.forceScientificNotationTicksY ? this.formatTicksScientific : this.formatTicksAutomatic
+                        callback: this.props.forceScientificNotationTicksY ? this.formatTicksScientific : this.formatYTicksAutomatic
                     },
                     gridLines: {
                         drawBorder: false,
@@ -326,18 +336,20 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             };
             if (this.props.usePointSymbols) {
                 datasetConfig.showLine = false;
-                if (this.props.pointRadiusSet && this.props.pointRadiusSet.length) {
-                    datasetConfig.pointRadius = this.props.pointRadiusSet;
-                } else {
-                    datasetConfig.pointRadius = 1;
-                    datasetConfig.pointBackgroundColor = lineColor;
-                }
+                datasetConfig.pointRadius = 1;
+                datasetConfig.pointBackgroundColor = lineColor;
             } else {
                 datasetConfig.pointRadius = 0;
                 datasetConfig.showLine = true;
                 datasetConfig.steppedLine = this.props.interpolateLines ? false : "middle";
                 datasetConfig.borderWidth = 1;
                 datasetConfig.borderColor = lineColor;
+            }
+            if (this.props.dataBackgroundColor) {
+                datasetConfig.pointBackgroundColor = this.props.dataBackgroundColor;
+            }
+            if (this.props.pointRadius) {
+                datasetConfig.pointRadius = this.props.pointRadius;
             }
             plotData.datasets.push(datasetConfig);
         }

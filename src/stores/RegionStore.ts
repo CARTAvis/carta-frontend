@@ -191,6 +191,7 @@ export class RegionStore {
         this.dashLength = dashLength;
         this.rotation = rotation;
         this.backendService = backendService;
+        this.simplePolygonTest();
     }
 
     @action setRegionId = (id: number) => {

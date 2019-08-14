@@ -20,9 +20,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private pointDefaultColor = Colors.GRAY2;
     private opacityInit = 1;
     private opacityOutRange = 0.1;
-    private pointRadiuInit = 3;
-    private pointRadiu = 9;
     private colorRangeEnd = 240;
+    private pointRadius = 3;
     private channelBorder: {xMin: number, xMax: number};
     private static layoutRatioCutoffs = {
         vertical: 0.5,
@@ -600,9 +599,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             centeredOrigin: true,
             equalScale: true,
             zIndex: true,
-            pointRadiusSet: [],
-            graphCursorMoved: this.onGraphCursorMoved,
-            markers: []
+            pointRadius: this.pointRadius,
+            markers: [],
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
@@ -711,6 +709,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 image: this.getCurrentChannelValue(),
                 unit: this.getChannelUnit()
             };
+            let channel = {channelCurrent: 0, channelHovered: 0};
             paLinePlotProps.cursorX = cursorXInfo;
             piLinePlotProps.cursorX = cursorXInfo;
             quLinePlotProps.cursorX = cursorXInfo;
@@ -720,7 +719,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             quLinePlotProps.markers = [];
             quScatterPlotProps.markers = [];
 
-            let channel = {channelCurrent: 0, channelHovered: 0};
             if (paLinePlotProps.cursorX.profiler !== null) {
                 let cursor = {
                     value: paLinePlotProps.cursorX.profiler,

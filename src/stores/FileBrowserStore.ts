@@ -8,24 +8,37 @@ export enum FileInfoTabs {
     HEADER = "tab-header"
 }
 
+export enum BrowserMode {
+    File,
+    RegionImport,
+    RegionExport
+}
+
 export class FileBrowserStore {
     @observable fileBrowserDialogVisible = false;
+    @observable browserMode: BrowserMode = BrowserMode.File;
     @observable appendingFrame = false;
-    @observable fileList: CARTA.FileListResponse;
-    @observable selectedFile: CARTA.FileInfo;
+    @observable fileList: CARTA.IFileListResponse;
+    @observable selectedFile: CARTA.IFileInfo;
     @observable selectedHDU: string;
-    @observable fileInfoExtended: CARTA.FileInfoExtended;
+    @observable fileInfoExtended: CARTA.IFileInfoExtended;
+    @observable regionFileInfo: string[];
     @observable selectedTab: TabId = FileInfoTabs.INFO;
     @observable loadingList = false;
     @observable loadingInfo = false;
     @observable fileInfoResp = false;
-    @observable respErrmsg: string = "";
+    @observable responseErrorMessage: string = "";
     @observable startingDirectory: string = "$BASE";
+    @observable exportFilename: string;
+    @observable exportCoordinateType: CARTA.CoordinateType;
 
-    @action showFileBrowser = (append = false) => {
+    @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
+        this.browserMode = mode;
         this.fileBrowserDialogVisible = true;
+        this.fileList = null;
         this.selectedTab = FileInfoTabs.INFO;
+        this.exportFilename = "";
     };
 
     @action hideFileBrowser = () => {
@@ -34,16 +47,26 @@ export class FileBrowserStore {
 
     @action getFileList = (directory: string) => {
         this.loadingList = true;
-        this.backendService.getFileList(directory).subscribe(res => {
-            this.fileList = res;
-            this.selectedFile = null;
-            this.selectedHDU = null;
-            this.fileInfoExtended = null;
-            this.loadingList = false;
-        }, err => {
-            console.log(err);
-            this.loadingList = false;
-        });
+        this.selectedFile = null;
+        this.selectedHDU = null;
+        this.fileInfoExtended = null;
+        this.regionFileInfo = null;
+
+        if (this.browserMode === BrowserMode.File) {
+            this.backendService.getFileList(directory).subscribe(res => {
+                this.fileList = res;
+            }, err => {
+                console.log(err);
+                this.loadingList = false;
+            });
+        } else {
+            this.backendService.getRegionList(directory).subscribe(res => {
+                this.fileList = res;
+            }, err => {
+                console.log(err);
+                this.loadingList = false;
+            });
+        }
     };
 
     @action getFileInfo = (directory: string, file: string, hdu: string) => {
@@ -52,24 +75,48 @@ export class FileBrowserStore {
         this.fileInfoExtended = null;
         this.backendService.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
-                this.fileInfoExtended = res.fileInfoExtended as CARTA.FileInfoExtended;
+                this.fileInfoExtended = res.fileInfoExtended;
                 this.loadingInfo = false;
             }
             this.fileInfoResp = true;
         }, err => {
             console.log(err);
-            this.respErrmsg = err;
+            this.responseErrorMessage = err;
             this.fileInfoResp = false;
             this.fileInfoExtended = null;
             this.loadingInfo = false;
         });
     };
 
-    @action selectFile(file: CARTA.FileInfo, hdu: string) {
+    @action getRegionFileInfo = (directory: string, file: string) => {
+        this.loadingInfo = true;
+        this.fileInfoResp = false;
+        this.regionFileInfo = null;
+        this.backendService.getRegionFileInfo(directory, file).subscribe((res: CARTA.IRegionFileInfoResponse) => {
+            if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
+                this.loadingInfo = false;
+                this.regionFileInfo = res.contents;
+            }
+            this.fileInfoResp = true;
+        }, err => {
+            console.log(err);
+            this.responseErrorMessage = err;
+            this.fileInfoResp = false;
+            this.regionFileInfo = null;
+            this.loadingInfo = false;
+        });
+    };
+
+    @action selectFile = (file: CARTA.IFileInfo, hdu: string) => {
         this.selectedFile = file;
         this.selectedHDU = hdu;
-        this.getFileInfo(this.fileList.directory, file.name, hdu);
-    }
+        if (this.browserMode === BrowserMode.File) {
+            this.getFileInfo(this.fileList.directory, file.name, hdu);
+        } else {
+            this.setExportFilename(file.name);
+            this.getRegionFileInfo(this.fileList.directory, file.name);
+        }
+    };
 
     @action selectFolder = (folder: string, absolutePath: boolean) => {
         if (absolutePath) {
@@ -102,6 +149,14 @@ export class FileBrowserStore {
     @action saveStartingDirectory() {
         this.startingDirectory = this.fileList.directory;
     }
+
+    @action setExportFilename = (filename: string) => {
+        this.exportFilename = filename;
+    };
+
+    @action setExportCoordinateType = (coordType: CARTA.CoordinateType) => {
+        this.exportCoordinateType = coordType;
+    };
 
     @computed get fileInfo() {
         let fileInfo = "";

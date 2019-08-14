@@ -21,12 +21,13 @@ import {
     SpatialProfileStore,
     SpectralProfileStore,
     WidgetsStore,
-    LayoutStore
+    LayoutStore, BrowserMode, CURSOR_REGION_ID
 } from ".";
 import {GetRequiredTiles} from "utilities";
 import {BackendService, TileService, ConnectionStatus} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
+import {AppToaster} from "../components/Shared";
 
 const CURSOR_THROTTLE_TIME = 200;
 const CURSOR_THROTTLE_TIME_ROTATED = 100;
@@ -191,8 +192,8 @@ export class AppStore {
             }
         });
 
-        this.backendService.connect(wsURL).subscribe(sessionId => {
-            console.log(`Connected with session ID ${sessionId}`);
+        this.backendService.connect(wsURL).subscribe(ack => {
+            console.log(`Connected with session ID ${ack.sessionId}`);
             connected = true;
             this.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
 
@@ -201,7 +202,7 @@ export class AppStore {
                 this.addFrame(folderSearchParam, fileSearchParam, "", 0);
             }
             if (this.preferenceStore.autoLaunch) {
-                this.fileBrowserStore.showFileBrowser();
+                this.fileBrowserStore.showFileBrowser(BrowserMode.File);
             }
         }, err => console.log(err));
     };
@@ -304,15 +305,18 @@ export class AppStore {
             this.alertStore.showAlert(`Error loading file: ${err}`);
         });
     };
+
     @action appendFile = (directory: string, file: string, hdu: string) => {
         const currentIdList = this.frames.map(frame => frame.frameInfo.fileId).sort((a, b) => a - b);
         const newId = currentIdList.pop() + 1;
         this.addFrame(directory, file, hdu, newId);
     };
+
     @action openFile = (directory: string, file: string, hdu: string) => {
         this.removeAllFrames();
         this.addFrame(directory, file, hdu, 0);
     };
+
     @action removeFrame = (fileId: number) => {
         if (this.frames.find(f => f.frameInfo.fileId === fileId)) {
             // adjust requirements for stores
@@ -359,6 +363,47 @@ export class AppStore {
 
     @action prevFrame = () => {
         this.shiftFrame(-1);
+    };
+
+    // Region file actions
+    @action importRegion = (directory: string, file: string, type: CARTA.FileType) => {
+        if (!this.activeFrame || !(type === CARTA.FileType.CRTF || type === CARTA.FileType.REG)) {
+            AppToaster.show({icon: "warning-sign", message: `Region type not supported`, intent: "danger", timeout: 3000});
+            return;
+        }
+
+        // ensure that the same frame is used in the callback, to prevent issues when the active frame changes while the region is being imported
+        const frame = this.activeFrame;
+        this.backendService.importRegion(directory, file, type, frame.frameInfo.fileId).subscribe(ack => {
+            if (frame && ack.success && ack.regions) {
+                for (const region of ack.regions) {
+                    if (region.regionInfo) {
+                        frame.regionSet.addExistingRegion(region.regionInfo.controlPoints as Point2D[], region.regionInfo.rotation, region.regionInfo.regionType, region.regionId);
+                    }
+                }
+            }
+            this.fileBrowserStore.hideFileBrowser();
+        }, error => {
+            console.error(error);
+            AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
+        });
+    };
+
+    @action exportRegions = (directory: string, file: string, coordType: CARTA.CoordinateType) => {
+        const frame = this.activeFrame;
+        // Prevent exporting if only the cursor region exists
+        if (!frame.regionSet.regions || frame.regionSet.regions.length <= 1) {
+            return;
+        }
+
+        const regionIds = frame.regionSet.regions.map(r => r.regionId).filter(id => id !== CURSOR_REGION_ID);
+        this.backendService.exportRegion(directory, file, CARTA.FileType.CRTF, coordType, frame.frameInfo.fileId, regionIds).subscribe(() => {
+            AppToaster.show({icon: "saved", message: `Exported regions for ${frame.frameInfo.fileInfo.name} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`, intent: "success", timeout: 3000});
+            this.fileBrowserStore.hideFileBrowser();
+        }, error => {
+            console.error(error);
+            AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
+        });
     };
 
     @action requestCubeHistogram = (fileId: number = -1) => {

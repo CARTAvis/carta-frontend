@@ -92,7 +92,7 @@ export class LinePlotComponentProps {
     centeredOrigin?: boolean;
     equalScale?: boolean;
     zIndex?: boolean;
-    pointRadiusSet?: Array<number>;
+    pointRadius?: number;
     currentChannel?: {x: number, y: number, z?: number};
 }
 
