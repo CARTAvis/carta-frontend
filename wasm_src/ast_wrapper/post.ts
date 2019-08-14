@@ -101,7 +101,7 @@ Module.clearLastErrorMessage = Module.cwrap("clearLastErrorMessage", null);
 
 Module.currentFormatStrings = [];
 
-Module.getFormattedCoordinates = function (wcsInfo: number, x: number, y: number, formatString: string, tempFormat: boolean = true) {
+Module.getFormattedCoordinates = function (wcsInfo: number, x: number, y: number, formatString: string, tempFormat: boolean) {
     let prevString;
     if (tempFormat) {
         prevString = Module.currentFormatStrings[wcsInfo];
