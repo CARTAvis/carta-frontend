@@ -1,15 +1,16 @@
 import * as React from "react";
 import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
-import {autorun, action, computed, observable} from "mobx";
+import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, FormGroup, HTMLSelect, IOptionProps, NonIdealState, NumericInput} from "@blueprintjs/core";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
 import {RenderConfigSettingsPanelComponent} from "./RenderConfigSettingsPanelComponent/RenderConfigSettingsPanelComponent";
-import {PopoverSettingsComponent, LinePlotComponent, LinePlotComponentProps, PlotType} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent} from "components/Shared";
+import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
-import {AnimationState, FrameStore, FrameScaling, WidgetConfig, WidgetProps, RenderConfigStore} from "stores";
+import {AnimationState, FrameScaling, FrameStore, RenderConfigStore, WidgetConfig, WidgetProps} from "stores";
 import {clamp} from "utilities";
 import {Point2D} from "models";
 import {CARTA} from "carta-protobuf";
@@ -241,7 +242,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             logY: this.widgetStore.logScaleY,
             usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
             interpolateLines: this.widgetStore.plotType === PlotType.LINES,
-            forceScientificNotationTicksY: true,
+            tickTypeY: TickType.Scientific,
             graphClicked: this.onMinMoved,
             graphRightClicked: this.onMaxMoved,
             graphZoomedX: this.widgetStore.setXBounds,
