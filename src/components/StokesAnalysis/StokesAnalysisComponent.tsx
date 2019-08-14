@@ -717,7 +717,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             paLinePlotProps.markers = [];
             piLinePlotProps.markers = [];
             quLinePlotProps.markers = [];
-            quScatterPlotProps.markers = [];
 
             if (paLinePlotProps.cursorX.profiler !== null) {
                 let cursor = {
