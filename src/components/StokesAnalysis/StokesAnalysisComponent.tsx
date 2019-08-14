@@ -733,19 +733,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 paLinePlotProps.markers.push(cursor);
                 piLinePlotProps.markers.push(cursor);
                 quLinePlotProps.markers.push(cursor);
-
-                let cursor2 = {
-                    value: paLinePlotProps.cursorX.profiler,
-                    id: "marker-profiler-cursor-stokes",
-                    draggable: false,
-                    horizontal: false,
-                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
-                    opacity: 0.8,
-                    isMouseMove: false,
-                };
-
-                quScatterPlotProps.markers.push(cursor2);
-
                 if (cursor && cursor.value && typeof(cursor.value) !== undefined) {
                     channel.channelHovered = cursor.value;   
                 }
