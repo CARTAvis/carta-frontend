@@ -7,12 +7,12 @@ import {ChartArea} from "chart.js";
 import {Scatter} from "react-chartjs-2";
 import ReactResizeDetector from "react-resize-detector";
 import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
-import {PlotContainerComponent} from "./PlotContainer/PlotContainerComponent";
+import {PlotContainerComponent, TickType} from "./PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {ProfilerInfoComponent} from "./ProfilerInfo/ProfilerInfoComponent";
-import {Point2D} from "models";
-import {clamp, binarySearchByX} from "utilities";
 import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
+import {Point2D} from "models";
+import {binarySearchByX, clamp} from "utilities";
 import "./LinePlotComponent.css";
 
 enum ZoomMode {
@@ -46,7 +46,7 @@ export interface LineMarker {
 export class LinePlotComponentProps {
     width?: number;
     height?: number;
-    data?: { x: number, y: number, z?: number}[];
+    data?: { x: number, y: number, z?: number }[];
     dataStat?: { mean: number, rms: number };
     cursorX?: { profiler: number, image: number, unit: string };
     comments?: string[];
@@ -63,8 +63,8 @@ export class LinePlotComponentProps {
     imageName?: string;
     plotName?: string;
     usePointSymbols?: boolean;
-    forceScientificNotationTicksX?: boolean;
-    forceScientificNotationTicksY?: boolean;
+    tickTypeX?: TickType;
+    tickTypeY?: TickType;
     interpolateLines?: boolean;
     markers?: LineMarker[];
     showTopAxis?: boolean;
@@ -92,7 +92,7 @@ export class LinePlotComponentProps {
     centeredOrigin?: boolean;
     equalScale?: boolean;
     zIndex?: boolean;
-    interactionBorder?: {xMin: number, xMax: number};
+    pointRadius?: number;
 }
 
 // Maximum time between double clicks
@@ -545,7 +545,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
             rows = this.props.data.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
         } else {
             if (this.props.data && this.props.data.length) {
-                if (this.props.forceScientificNotationTicksX === true) {
+                if (this.props.tickTypeX === TickType.Scientific) {
                     rows = this.props.data.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
                 } else {
                     rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
@@ -710,7 +710,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 const marker = this.props.markers[i];
                 const markerColor = marker.color || (this.props.darkMode ? Colors.RED4 : Colors.RED2);
                 const markerOpacity = (marker.isMouseMove && (!this.isMouseEntered || this.isMarkerDragging)) ? 0 : (marker.opacity || 1);
-
                 if (marker.horizontal) {
                     let valueCanvasSpace = this.getCanvasSpaceY(marker.value);
                     if (valueCanvasSpace < Math.floor(chartArea.top - 1) || valueCanvasSpace > Math.ceil(chartArea.bottom + 1) || isNaN(valueCanvasSpace)) {
@@ -814,6 +813,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     render() {
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
+        const cursorInfo = this.getCursorInfo();
+
         return (
             <div
                 className={"line-plot-component"}
@@ -855,11 +856,13 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />
+                {cursorInfo &&
                 <ProfilerInfoComponent
                     darkMode={this.props.darkMode}
-                    cursorInfo={this.getCursorInfo()}
+                    cursorInfo={cursorInfo}
                     statInfo={this.props.dataStat}
                 />
+                }
             </div>
         );
     }

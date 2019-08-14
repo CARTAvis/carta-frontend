@@ -5,15 +5,16 @@ import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Chart} from "chart.js";
 import {NonIdealState} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
 import {HistogramSettingsPanelComponent} from "./HistogramSettingsPanelComponent/HistogramSettingsPanelComponent";
-import {PopoverSettingsComponent, LinePlotComponent, LinePlotComponentProps, PlotType} from "components/Shared";
+import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramToolbarComponent";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent} from "components/Shared";
+import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {HistogramWidgetStore} from "stores/widgets";
 import {FrameStore, WidgetConfig, WidgetProps} from "stores";
 import {clamp} from "utilities";
 import {Point2D} from "models";
 import "./HistogramComponent.css";
-import {CARTA} from "../../../protobuf/build";
-import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramToolbarComponent";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 180;
@@ -225,7 +226,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             logY: this.widgetStore.logScaleY,
             usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
             interpolateLines: this.widgetStore.plotType === PlotType.LINES,
-            forceScientificNotationTicksY: true,
+            tickTypeY: TickType.Scientific,
             graphZoomedX: this.widgetStore.setXBounds,
             graphZoomedY: this.widgetStore.setYBounds,
             graphZoomedXY: this.widgetStore.setXYBounds,

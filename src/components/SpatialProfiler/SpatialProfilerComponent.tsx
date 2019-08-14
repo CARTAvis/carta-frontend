@@ -6,6 +6,7 @@ import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpatialProfilerSettingsPanelComponent} from "./SpatialProfilerSettingsPanelComponent/SpatialProfilerSettingsPanelComponent";
 import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
@@ -374,7 +375,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             plotName: `${isXProfile ? "X" : "Y"} profile`,
             usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
             interpolateLines: this.widgetStore.plotType === PlotType.LINES,
-            forceScientificNotationTicksY: true,
+            tickTypeY: TickType.Scientific,
             graphZoomedX: this.widgetStore.setXBounds,
             graphZoomedY: this.widgetStore.setYBounds,
             graphZoomedXY: this.widgetStore.setXYBounds,

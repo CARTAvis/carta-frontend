@@ -6,6 +6,7 @@ import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerSettingsPanelComponent} from "./SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
@@ -311,7 +312,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             plotName: `Z profile`,
             usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
             interpolateLines: this.widgetStore.plotType === PlotType.LINES,
-            forceScientificNotationTicksY: true,
+            tickTypeY: TickType.Scientific,
             graphClicked: this.onChannelChanged,
             graphZoomedX: this.widgetStore.setXBounds,
             graphZoomedY: this.widgetStore.setYBounds,

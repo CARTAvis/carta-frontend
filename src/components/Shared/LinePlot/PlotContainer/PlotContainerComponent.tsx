@@ -5,10 +5,16 @@ import {Scatter} from "react-chartjs-2";
 import {Colors} from "@blueprintjs/core";
 import {clamp, hexStringToRgba} from "utilities";
 
+export enum TickType {
+    Automatic,
+    Scientific,
+    Integer
+}
+
 export class PlotContainerProps {
     width?: number;
     height?: number;
-    data?: { x: number, y: number }[];
+    data?: { x: number, y: number, z?: number }[];
     xMin?: number;
     xMax?: number;
     yMin?: number;
@@ -20,8 +26,8 @@ export class PlotContainerProps {
     opacity?: number;
     darkMode?: boolean;
     usePointSymbols?: boolean;
-    forceScientificNotationTicksX?: boolean;
-    forceScientificNotationTicksY?: boolean;
+    tickTypeX?: TickType;
+    tickTypeY?: TickType;
     interpolateLines?: boolean;
     showTopAxis?: boolean;
     topAxisTickFormatter?: (value: number, index: number, values: number[]) => string | number;
@@ -38,6 +44,7 @@ export class PlotContainerProps {
     plotType?: string;
     dataBackgroundColor?: Array<string>;
     isGroupSubPlot?: boolean;
+    pointRadius?: number;
 }
 
 export class PlotContainerComponent extends React.Component<PlotContainerProps> {
@@ -134,14 +141,32 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         axis.ticks = axis.ticks.slice(removeFirstTick ? 1 : 0, removeLastTick ? -1 : undefined);
     };
 
-    private formatTicksScientific = (value: number, index: number, values: number[]) => {
+    private static FormatTicksScientific = (value: number, index: number, values: number[]) => {
         return value.toExponential(2);
     };
 
-    private formatTicksAutomatic = (value: number, index: number, values: number[]) => {
+    private static FormatTicksInteger = (value: number, index: number, values: number[]) => {
+        if (value) {
+            return value.toFixed();
+        }
+        return value;
+    };
+
+    private static FormatTicksAutomatic = (value: number, index: number, values: number[]) => {
         // TODO: Work out how to revert to the automatic ChartJS formatting function
         return value;
     };
+
+    private static GetCallbackForTickType(tickType: TickType) {
+        switch (tickType) {
+            case TickType.Scientific:
+                return PlotContainerComponent.FormatTicksScientific;
+            case TickType.Integer:
+                return PlotContainerComponent.FormatTicksInteger;
+            default:
+                return PlotContainerComponent.FormatTicksAutomatic;
+        }
+    }
 
     shouldComponentUpdate(nextProps: PlotContainerProps) {
         const props = this.props;
@@ -157,9 +182,9 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         } else if (props.usePointSymbols !== nextProps.usePointSymbols) {
             return true;
-        } else if (props.forceScientificNotationTicksX !== nextProps.forceScientificNotationTicksX) {
+        } else if (props.tickTypeX !== nextProps.tickTypeX) {
             return true;
-        } else if (props.forceScientificNotationTicksY !== nextProps.forceScientificNotationTicksY) {
+        } else if (props.tickTypeY !== nextProps.tickTypeY) {
             return true;
         } else if (props.interpolateLines !== nextProps.interpolateLines) {
             return true;
@@ -203,6 +228,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         } else if (props.isGroupSubPlot !== nextProps.isGroupSubPlot) {
             return true;
+        } else if (props.pointRadius !== nextProps.pointRadius) {
+            return true;
         }
 
         // Deep check of arrays (this should be optimised!)
@@ -226,6 +253,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         if (opacity < 1.0) {
             lineColor = hexStringToRgba(lineColor, opacity);
         }
+
         // ChartJS plot
         let plotOptions: ChartOptions = {
             maintainAspectRatio: false,
@@ -251,7 +279,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         maxRotation: 0,
                         min: this.props.xMin,
                         max: this.props.xMax,
-                        callback: this.props.forceScientificNotationTicksX ? this.formatTicksScientific : this.formatTicksAutomatic
+                        callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeX)
                     },
                     gridLines: {
                         drawBorder: false,
@@ -288,7 +316,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         display: true,
                         min: this.props.yMin,
                         max: this.props.yMax,
-                        callback: this.props.forceScientificNotationTicksY ? this.formatTicksScientific : this.formatTicksAutomatic
+                        callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeY)
                     },
                     gridLines: {
                         drawBorder: false,
@@ -322,9 +350,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 data: this.props.data,
                 fill: false,
                 lineTension: 0,
-                backgroundColor: this.props.dataBackgroundColor ? this.props.dataBackgroundColor : []
             };
-
             if (this.props.usePointSymbols) {
                 datasetConfig.showLine = false;
                 datasetConfig.pointRadius = 1;
@@ -335,6 +361,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 datasetConfig.steppedLine = this.props.interpolateLines ? false : "middle";
                 datasetConfig.borderWidth = 1;
                 datasetConfig.borderColor = lineColor;
+            }
+            if (this.props.dataBackgroundColor) {
+                datasetConfig.pointBackgroundColor = this.props.dataBackgroundColor;
+            }
+            if (this.props.pointRadius) {
+                datasetConfig.pointRadius = this.props.pointRadius;
             }
             plotData.datasets.push(datasetConfig);
         }

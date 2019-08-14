@@ -24,8 +24,9 @@ export function polarizedIntensity(q: number, u: number) {
     return Math.sqrt(Math.pow(q, 2) + Math.pow(u, 2));
 }
 
+// 0.5 * Math.atan2(U, Q) * 180 / Math.pi
 export function polarizationAngle(q: number, u: number) {
-    return Math.atan(u / q);
+    return 0.5 * Math.atan2(u, q) * 180 / Math.PI;
 }
 
 // normalising a by b
