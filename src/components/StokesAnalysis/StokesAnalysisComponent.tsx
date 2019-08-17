@@ -23,6 +23,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private opacityOutRange = 0.1;
     private colorRangeEnd = 240;
     private pointRadius = 3;
+    private minProgress = 0;
+    private QlinePlotColor = Colors.GREEN2;
+    private UlinePlotColor = Colors.BLUE2;
     private static layoutRatioCutoffs = {
         vertical: 0.5,
         horizontal: 2,
@@ -114,10 +117,17 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 let progressString = "";
                 const currentData = this.plotData;
                 if (currentData && isFinite(currentData.qProgress) && isFinite(currentData.uProgress)) {
-                    let minProgress = Math.min(currentData.qProgress, currentData.uProgress);
-                    if (minProgress < 1) {
-                        progressString = `[${(minProgress * 100).toFixed(0)}% complete]`;
+                    const minProgress = Math.min(currentData.qProgress, currentData.uProgress);
+                    let currentProgress = "";
+                    if (minProgress === currentData.qProgress) {
+                        currentProgress = "Qz";
+                    } else {
+                        currentProgress = "Uz";
                     }
+                    if (minProgress < 1) {
+                        progressString = `[${(minProgress * 100).toFixed(0)}% complete ${currentProgress}]`;
+                    }
+                    this.minProgress = minProgress;
                 }
                 if (frame) {
                     const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
@@ -565,6 +575,16 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 piLinePlotProps.data = currentPlotData.piValues.dataset;
                 paLinePlotProps.data = currentPlotData.paValues.dataset;
                 quScatterPlotProps.data = currentPlotData.quValues.dataset;
+ 
+                const lineOpacity = this.minProgress < 1.0 ? 0.15 + this.minProgress / 4.0 : 1.0;
+                quLinePlotProps.opacity = lineOpacity;
+                piLinePlotProps.opacity = lineOpacity;
+                paLinePlotProps.opacity = lineOpacity;
+                quLinePlotProps.opacity = lineOpacity;
+                if (lineOpacity === 1) {
+                    quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, this.QlinePlotColor);
+                    quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationU, this.UlinePlotColor);
+                }
 
                 let qBorder = currentPlotData.qValues.border;
                 let uBorder = currentPlotData.uValues.border;
@@ -702,9 +722,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 piLinePlotProps.markers.push(channelCurrent, channelRequired);
                 quLinePlotProps.markers.push(channelCurrent, channelRequired);
             }
-
-            quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, Colors.GREEN2);
-            quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationU, Colors.BLUE2);
 
             paLinePlotProps.comments = this.exportHeaders;
             piLinePlotProps.comments = this.exportHeaders;
