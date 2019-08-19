@@ -195,7 +195,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             lazy: true,
             isOpen: fileBrowserStore.fileBrowserDialogVisible,
             onClose: fileBrowserStore.hideFileBrowser,
-            onOpened: () => fileBrowserStore.getFileList(fileBrowserStore.startingDirectory),
+            onOpened: () => {const _list = fileBrowserStore.fileList; fileBrowserStore.fileList = null; fileBrowserStore.fileList = _list; },
             title: "File Browser",
         };
 
