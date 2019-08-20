@@ -379,7 +379,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 }
                 const multiPlotDatasetConfig: ChartDataSets = {
                     type: this.props.plotType ? this.props.plotType : "line",
-                    label: key,
+                    label: key[0],
                     data: value,
                     fill: false,
                     lineTension: 0,
