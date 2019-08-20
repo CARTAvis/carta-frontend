@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {computed, observable} from "mobx";
+import {action, computed, observable} from "mobx";
 import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, NonIdealState, Popover, Position, Pre, Spinner, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FileListComponent} from "./FileList/FileListComponent";
@@ -180,6 +180,14 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.exportFilename} onChange={this.handleExportInputChanged} rightElement={coordinateTypeMenu}/>;
     }
 
+    /// Reflash file list to trigger the Breadcrumb re-rendering
+    @action
+    private reflashFileList() {
+        const tempList = this.props.appStore.fileBrowserStore.fileList; 
+        this.props.appStore.fileBrowserStore.fileList = null; 
+        this.props.appStore.fileBrowserStore.fileList = tempList;
+    }
+
     public render() {
         let className = "file-browser-dialog";
         if (this.props.appStore.darkTheme) {
@@ -195,7 +203,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             lazy: true,
             isOpen: fileBrowserStore.fileBrowserDialogVisible,
             onClose: fileBrowserStore.hideFileBrowser,
-            onOpened: () => {const _list = fileBrowserStore.fileList; fileBrowserStore.fileList = null; fileBrowserStore.fileList = _list; },
+            onOpened: () => this.reflashFileList(),
             title: "File Browser",
         };
 
