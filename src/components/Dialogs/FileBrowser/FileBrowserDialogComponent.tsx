@@ -180,12 +180,10 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.exportFilename} onChange={this.handleExportInputChanged} rightElement={coordinateTypeMenu}/>;
     }
 
-    /// Reflash file list to trigger the Breadcrumb re-rendering
+    // Refresh file list to trigger the Breadcrumb re-rendering
     @action
-    private reflashFileList() {
-        const tempList = this.props.appStore.fileBrowserStore.fileList; 
-        this.props.appStore.fileBrowserStore.fileList = null; 
-        this.props.appStore.fileBrowserStore.fileList = tempList;
+    private refreshFileList() {
+        this.props.appStore.fileBrowserStore.fileList = {...this.props.appStore.fileBrowserStore.fileList};
     }
 
     public render() {
@@ -203,7 +201,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             lazy: true,
             isOpen: fileBrowserStore.fileBrowserDialogVisible,
             onClose: fileBrowserStore.hideFileBrowser,
-            onOpened: () => this.reflashFileList(),
+            onOpened: () => this.refreshFileList(),
             title: "File Browser",
         };
 
