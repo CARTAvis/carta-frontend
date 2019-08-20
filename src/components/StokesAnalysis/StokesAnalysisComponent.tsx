@@ -118,14 +118,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 const currentData = this.plotData;
                 if (currentData && isFinite(currentData.qProgress) && isFinite(currentData.uProgress)) {
                     const minProgress = Math.min(currentData.qProgress, currentData.uProgress);
-                    let currentProgress = "";
-                    if (minProgress === currentData.qProgress) {
-                        currentProgress = "Qz";
-                    } else {
-                        currentProgress = "Uz";
-                    }
                     if (minProgress < 1) {
-                        progressString = `[${(minProgress * 100).toFixed(0)}% complete ${currentProgress}]`;
+                        progressString = `[${(minProgress * 100).toFixed(0)}% complete]`;
                     }
                     this.minProgress = minProgress;
                 }
@@ -581,10 +575,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 piLinePlotProps.opacity = lineOpacity;
                 paLinePlotProps.opacity = lineOpacity;
                 quLinePlotProps.opacity = lineOpacity;
-                if (lineOpacity === 1) {
-                    quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, this.QlinePlotColor);
-                    quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationU, this.UlinePlotColor);
-                }
+                
+                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, this.QlinePlotColor);
+                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationU, this.UlinePlotColor);
 
                 let qBorder = currentPlotData.qValues.border;
                 let uBorder = currentPlotData.uValues.border;
