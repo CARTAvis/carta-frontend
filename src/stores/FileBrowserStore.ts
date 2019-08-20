@@ -39,6 +39,7 @@ export class FileBrowserStore {
         this.fileList = null;
         this.selectedTab = FileInfoTabs.INFO;
         this.exportFilename = "";
+        this.getFileList(this.startingDirectory);
     };
 
     @action hideFileBrowser = () => {
