@@ -50,6 +50,8 @@ export class FrameStore {
     private readonly overlayStore: OverlayStore;
     private readonly logStore: LogStore;
 
+    private static readonly CursorInfoMaxPrecision = 25;
+
     constructor(readonly preference: PreferenceStore, overlay: OverlayStore, logStore: LogStore, frameInfo: FrameInfo, backendService: BackendService) {
         this.overlayStore = overlay;
         this.logStore = logStore;
@@ -216,7 +218,7 @@ export class FrameStore {
             let precisionX = 0;
             let precisionY = 0;
 
-            while (true) {
+            while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
                 let astString = new ASTSettingsString();
                 astString.add("Format(1)", this.overlayStore.numbers.cursorFormatStringX(precisionX));
                 astString.add("Format(2)", this.overlayStore.numbers.cursorFormatStringY(precisionY));
