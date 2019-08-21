@@ -117,7 +117,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 let progressString = "";
                 const currentData = this.plotData;
                 if (currentData && isFinite(currentData.qProgress) && isFinite(currentData.uProgress)) {
-                    const minProgress = Math.min(currentData.qProgress, currentData.uProgress);
+                    const minProgress = Math.min(currentData.qProgress, currentData.uProgress, currentData.iProgress);
                     if (minProgress < 1) {
                         progressString = `[${(minProgress * 100).toFixed(0)}% complete]`;
                     }
@@ -257,7 +257,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return vals;
     }
 
-    private calculateCompositeProfile(statsType: CARTA.StatsType): { qProfile: Array<number>, uProfile: Array<number>, piProfile: Array<number>, paProfile: Array<number>, qProgress: number, uProgress: number } {
+    private calculateCompositeProfile(statsType: CARTA.StatsType): { qProfile: Array<number>, uProfile: Array<number>, piProfile: Array<number>, paProfile: Array<number>, qProgress: number, uProgress: number, iProgress: number } {
         if (this.profileStore) {
             let qProfileOriginal = this.profileStore.getProfile(StokesCoordinate.LinearPolarizationQ, statsType);
             let uProfileOriginal = this.profileStore.getProfile(StokesCoordinate.LinearPolarizationU, statsType);
@@ -278,9 +278,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         piProfile = StokesAnalysisComponent.calculateFractionalPol(piProfile, iProfileOriginal.values);
                         qProfile = StokesAnalysisComponent.calculateFractionalPol(qProfile, iProfileOriginal.values);
                         uProfile = StokesAnalysisComponent.calculateFractionalPol(uProfile, iProfileOriginal.values);
+                        return {qProfile, uProfile, piProfile, paProfile, qProgress: qProfileOriginal.progress, uProgress: uProfileOriginal.progress, iProgress: iProfileOriginal.progress};
                     }
                 }
-                return {qProfile, uProfile, piProfile, paProfile, qProgress: qProfileOriginal.progress, uProgress: uProfileOriginal.progress};
+                return {qProfile, uProfile, piProfile, paProfile, qProgress: qProfileOriginal.progress, uProgress: uProfileOriginal.progress, iProgress: 1};
             }
         }
         return null;
@@ -425,7 +426,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         paValues: { dataset: Array<Point2D>, border: Border },
         quValues: { dataset: Array<{ x: number, y: number, z: number }>, border: Border },
         qProgress: number,
-        uProgress: number
+        uProgress: number,
+        iProgress: number
     } {
         const frame = this.props.appStore.activeFrame;
         if (!frame) {
@@ -439,7 +441,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             piProfile: Array<number>,
             paProfile: Array<number>,
             qProgress: number,
-            uProgress: number
+            uProgress: number,
+            iProgress: number
         };
         let regionId = this.widgetStore.regionIdMap.get(fileId) || 0;
         if (frame.regionSet) {
@@ -457,7 +460,16 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let uDic = this.assembleLinePlotData(compositeProfile.uProfile, channelInfo);
             let quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, channelInfo);
 
-            return {qValues: qDic, uValues: uDic, piValues: piDic, paValues: paDic, quValues: quDic, qProgress: compositeProfile.qProgress, uProgress: compositeProfile.uProgress};
+            return {
+                qValues: qDic, 
+                uValues: uDic, 
+                piValues: piDic, 
+                paValues: paDic, 
+                quValues: quDic, 
+                qProgress: compositeProfile.qProgress, 
+                uProgress: compositeProfile.uProgress,
+                iProgress: compositeProfile.iProgress
+            };
         }
         return null;
     }
