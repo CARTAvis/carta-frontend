@@ -259,12 +259,6 @@ export class AppStore {
         this.fileLoading = true;
         this.backendService.loadFile(directory, file, hdu, fileId, CARTA.RenderMode.RASTER).subscribe(ack => {
             this.fileLoading = false;
-
-            if (!ack.success) {
-                this.alertStore.showAlert(`Error loading file: ${ack.message}`);
-                return;
-            }
-
             let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
             if (ack.fileInfoExtended.dimensions > 2) {
                 dimensionsString += `\u00D7${ack.fileInfoExtended.depth}`;
@@ -303,6 +297,7 @@ export class AppStore {
             this.fileBrowserStore.hideFileBrowser();
         }, err => {
             this.alertStore.showAlert(`Error loading file: ${err}`);
+            this.fileLoading = false;
         });
     };
 
