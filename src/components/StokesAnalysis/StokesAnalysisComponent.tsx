@@ -15,6 +15,7 @@ import {clamp, normalising, polarizationAngle, polarizedIntensity} from "utiliti
 import "./StokesAnalysisComponent.css";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
+type Point3D = { x: number, y: number, z?: number };
 
 @observer
 export class StokesAnalysisComponent extends React.Component<WidgetProps> {
@@ -425,12 +426,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return data[hi].z;
     }
 
-    private setPointRadius(data: Array<{ x: number, y: number, z?: number }>, channel: { channelCurrent: number, channelHovered: number }, zIndex: boolean): { x: number, y: number, z?: number } {
-        let point;
+    private getScatterChannel(data: Array<{ x: number, y: number, z?: number }>, channel: { channelCurrent: number, channelHovered: number }, zIndex: boolean): { currentChannel: Point3D, hoveredChannel: Point3D } {
+        let indicator = { currentChannel: data[0], hoveredChannel: data[0]};
         if (data && data.length && zIndex && channel) {
             let channelCurrent = channel.channelCurrent;
             let channelHovered = channel.channelHovered;
-            point = data[0];
             if (channelCurrent) {
                 let close = channelCurrent;
                 if (channelHovered) {
@@ -441,16 +441,18 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         }
                     }
                 }
-                const scatterData = data;
-                for (let index = 0; index < scatterData.length; index++) {
-                    const points = scatterData[index];
+                for (let index = 0; index < data.length; index++) {
+                    const points = data[index];
                     if (points.z === close) {
-                        point = points;
+                        indicator.hoveredChannel = points;
+                    }
+                    if (points.z === channelCurrent) {
+                        indicator.currentChannel = points;
                     }
                 }
             }
         }
-        return point;
+        return indicator;
     }
 
     private onMouseEnterHandler = () => {
@@ -592,8 +594,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             showXAxisLabel: true,
             usePointSymbols: true,
             multiPlotData: new Map(),
-            xZeroLineColor: Colors.RED2,
-            yZeroLineColor: Colors.RED2,
+            xZeroLineColor: Colors.GRAY2,
+            yZeroLineColor: Colors.GRAY2,
             multiPlotBorderColor: new Map(),
             isGroupSubPlot: true,
             colorRangeEnd: 240,
@@ -761,8 +763,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
 
             if (quScatterPlotProps.data && quScatterPlotProps.data.length && interactionBorder) {
-                const scatterChannel = this.setPointRadius(quScatterPlotProps.data, channel, true);
-                quScatterPlotProps.currentChannel = scatterChannel;
+                const scatterChannel = this.getScatterChannel(quScatterPlotProps.data, channel, true);
+                quScatterPlotProps.scatterIndicator = scatterChannel;
             }
 
             quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, Colors.GREEN2);

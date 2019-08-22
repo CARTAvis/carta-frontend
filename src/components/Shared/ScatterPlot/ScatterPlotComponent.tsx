@@ -83,15 +83,24 @@ export class ScatterPlotComponent extends LinePlotComponent {
     private genIndicator = () => {
         const chartArea = this.chartArea;
         let lines = [];
-        const channel = this.props.currentChannel;
-        if (chartArea && channel && !isNaN(channel.x) && !isNaN(channel.y)) {
-            const markerColor = this.props.darkMode ? Colors.GRAY4 : Colors.GRAY2;
-            const markerOpacity = this.markerOpacity;
-            let border = this.resizeData();
-            let xCanvasSpace = Math.floor(this.getPixelValue(channel.x, border.xMin, border.xMax, true)) + 0.5 * devicePixelRatio;
-            lines.push(this.genXline("scatter-indicator-x", markerColor, markerOpacity, xCanvasSpace));
-            let yCanvasSpace = Math.floor(this.getPixelValue(channel.y, border.yMin, border.yMax, false)) + 0.5 * devicePixelRatio;
-            lines.push(this.genYline("scatter-indicator-y", markerColor, markerOpacity, yCanvasSpace));  
+        const channel = this.props.scatterIndicator;
+        let border = this.resizeData();
+        const markerOpacity = this.markerOpacity; 
+        if (chartArea && channel && channel.hoveredChannel && !isNaN(channel.hoveredChannel.x) && !isNaN(channel.hoveredChannel.y)) {
+            const channelH = this.props.scatterIndicator.hoveredChannel;
+            const markerColor = this.props.darkMode ? Colors.GRAY4 : Colors.GRAY2;           
+            let xCanvasSpace = Math.floor(this.getPixelValue(channelH.x, border.xMin, border.xMax, true)) + 0.5 * devicePixelRatio;
+            lines.push(this.genXline("scatter-indicator-x-hovered", markerColor, markerOpacity, xCanvasSpace));
+            let yCanvasSpace = Math.floor(this.getPixelValue(channelH.y, border.yMin, border.yMax, false)) + 0.5 * devicePixelRatio;
+            lines.push(this.genYline("scatter-indicator-y-hovered", markerColor, markerOpacity, yCanvasSpace));  
+        }
+        if (chartArea && channel && channel.currentChannel && !isNaN(channel.currentChannel.x) && !isNaN(channel.currentChannel.y)) {
+            const channelC = this.props.scatterIndicator.currentChannel;
+            const markerColor = this.props.darkMode ? Colors.RED4 : Colors.RED2;
+            let xCanvasSpace = Math.floor(this.getPixelValue(channelC.x, border.xMin, border.xMax, true)) + 0.5 * devicePixelRatio;
+            lines.push(this.genXline("scatter-indicator-x-current", markerColor, markerOpacity, xCanvasSpace));
+            let yCanvasSpace = Math.floor(this.getPixelValue(channelC.y, border.yMin, border.yMax, false)) + 0.5 * devicePixelRatio;
+            lines.push(this.genYline("scatter-indicator-y-current", markerColor, markerOpacity, yCanvasSpace));  
         }
         return lines;
     }
