@@ -7,6 +7,7 @@
         "@blueprintjs/core": "^3.17.1",
         "@blueprintjs/icons": "^3.9.1",
         "@blueprintjs/select": "^3.9.0",
+        "ajv": "^6.10.2",
         "chart.js": "^2.8.0",
         "chartjs-plugin-annotation": "^0.5.7",
         "golden-layout": "^1.5.9",

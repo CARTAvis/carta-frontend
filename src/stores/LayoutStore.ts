@@ -1,6 +1,7 @@
 import {observable, computed, action} from "mobx";
 import {AppStore, AlertStore, WidgetConfig} from "stores";
 import * as GoldenLayout from "golden-layout";
+import * as Ajv from "ajv";
 import {PresetLayout} from "models";
 import {AppToaster} from "components/Shared";
 import {smoothStepOffset} from "utilities";
@@ -106,6 +107,25 @@ const PRESET_CONFIGS = new Map<string, any>([
     }]
 ]);
 
+const LAYOUT_SCHEMA = {
+    "title": "Layout",
+    "type": "object",
+    "properties": {
+        "layoutVersion": {
+            "type": "integer"
+        },
+        "docked":  {
+            "type": "object"
+        },
+        "floating": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    }
+};
+
 export class LayoutStore {
     public static TOASTER_TIMEOUT = 1500;
     private static readonly LayoutVersion = 1;
@@ -157,6 +177,7 @@ export class LayoutStore {
         });
 
         // 2. add user layouts stored in local storage
+        // TODO: use json validator
         const layoutJson = localStorage.getItem(KEY);
         let userLayouts = null;
         if (layoutJson) {
