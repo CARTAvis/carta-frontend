@@ -373,18 +373,22 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
         if (this.props.multiPlotData) {
             this.props.multiPlotData.forEach((value, key) => {
+                let currentLineColor = this.props.multiPlotBorderColor ? this.props.multiPlotBorderColor.get(key) : lineColor;
+                if (opacity < 1.0) {
+                    currentLineColor = hexStringToRgba(currentLineColor, opacity);
+                }
                 const multiPlotDatasetConfig: ChartDataSets = {
                     type: this.props.plotType ? this.props.plotType : "line",
-                    label: key,
+                    label: key[0],
                     data: value,
                     fill: false,
                     lineTension: 0,
-                    borderColor: this.props.multiPlotBorderColor ? this.props.multiPlotBorderColor.get(key) : lineColor,
+                    borderColor: currentLineColor,
+                    backgroundColor: currentLineColor,
                     showLine: true,
                     steppedLine: this.props.interpolateLines ? false : "middle",
                     borderWidth: 1,
-                    pointRadius: 0,
-                    backgroundColor: this.props.dataBackgroundColor ? this.props.dataBackgroundColor : []
+                    pointRadius: 0
                 };
                 plotData.datasets.push(multiPlotDatasetConfig);
             });
