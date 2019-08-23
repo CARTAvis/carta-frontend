@@ -23,6 +23,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private opacityOutRange = 0.1;
     private colorRangeEnd = 240;
     private pointRadius = 3;
+    private minProgress = 0;
+    private QlinePlotColor = Colors.GREEN2;
+    private UlinePlotColor = Colors.BLUE2;
     private static layoutRatioCutoffs = {
         vertical: 0.5,
         horizontal: 2,
@@ -114,10 +117,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 let progressString = "";
                 const currentData = this.plotData;
                 if (currentData && isFinite(currentData.qProgress) && isFinite(currentData.uProgress)) {
-                    let minProgress = Math.min(currentData.qProgress, currentData.uProgress);
+                    const minProgress = Math.min(currentData.qProgress, currentData.uProgress, currentData.iProgress);
                     if (minProgress < 1) {
                         progressString = `[${(minProgress * 100).toFixed(0)}% complete]`;
                     }
+                    this.minProgress = minProgress;
                 }
                 if (frame) {
                     const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
@@ -253,7 +257,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return vals;
     }
 
-    private calculateCompositeProfile(statsType: CARTA.StatsType): { qProfile: Array<number>, uProfile: Array<number>, piProfile: Array<number>, paProfile: Array<number>, qProgress: number, uProgress: number } {
+    private calculateCompositeProfile(statsType: CARTA.StatsType): { qProfile: Array<number>, uProfile: Array<number>, piProfile: Array<number>, paProfile: Array<number>, qProgress: number, uProgress: number, iProgress: number } {
         if (this.profileStore) {
             let qProfileOriginal = this.profileStore.getProfile(StokesCoordinate.LinearPolarizationQ, statsType);
             let uProfileOriginal = this.profileStore.getProfile(StokesCoordinate.LinearPolarizationU, statsType);
@@ -274,9 +278,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         piProfile = StokesAnalysisComponent.calculateFractionalPol(piProfile, iProfileOriginal.values);
                         qProfile = StokesAnalysisComponent.calculateFractionalPol(qProfile, iProfileOriginal.values);
                         uProfile = StokesAnalysisComponent.calculateFractionalPol(uProfile, iProfileOriginal.values);
+                        return {qProfile, uProfile, piProfile, paProfile, qProgress: qProfileOriginal.progress, uProgress: uProfileOriginal.progress, iProgress: iProfileOriginal.progress};
                     }
                 }
-                return {qProfile, uProfile, piProfile, paProfile, qProgress: qProfileOriginal.progress, uProgress: uProfileOriginal.progress};
+                return {qProfile, uProfile, piProfile, paProfile, qProgress: qProfileOriginal.progress, uProgress: uProfileOriginal.progress, iProgress: 1};
             }
         }
         return null;
@@ -421,7 +426,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         paValues: { dataset: Array<Point2D>, border: Border },
         quValues: { dataset: Array<{ x: number, y: number, z: number }>, border: Border },
         qProgress: number,
-        uProgress: number
+        uProgress: number,
+        iProgress: number
     } {
         const frame = this.props.appStore.activeFrame;
         if (!frame) {
@@ -435,7 +441,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             piProfile: Array<number>,
             paProfile: Array<number>,
             qProgress: number,
-            uProgress: number
+            uProgress: number,
+            iProgress: number
         };
         let regionId = this.widgetStore.regionIdMap.get(fileId) || 0;
         if (frame.regionSet) {
@@ -453,7 +460,16 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let uDic = this.assembleLinePlotData(compositeProfile.uProfile, channelInfo);
             let quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, channelInfo);
 
-            return {qValues: qDic, uValues: uDic, piValues: piDic, paValues: paDic, quValues: quDic, qProgress: compositeProfile.qProgress, uProgress: compositeProfile.uProgress};
+            return {
+                qValues: qDic, 
+                uValues: uDic, 
+                piValues: piDic, 
+                paValues: paDic, 
+                quValues: quDic, 
+                qProgress: compositeProfile.qProgress, 
+                uProgress: compositeProfile.uProgress,
+                iProgress: compositeProfile.iProgress
+            };
         }
         return null;
     }
@@ -565,6 +581,15 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 piLinePlotProps.data = currentPlotData.piValues.dataset;
                 paLinePlotProps.data = currentPlotData.paValues.dataset;
                 quScatterPlotProps.data = currentPlotData.quValues.dataset;
+ 
+                const lineOpacity = this.minProgress < 1.0 ? 0.15 + this.minProgress / 4.0 : 1.0;
+                quLinePlotProps.opacity = lineOpacity;
+                piLinePlotProps.opacity = lineOpacity;
+                paLinePlotProps.opacity = lineOpacity;
+                quLinePlotProps.opacity = lineOpacity;
+                
+                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, this.QlinePlotColor);
+                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationU, this.UlinePlotColor);
 
                 let qBorder = currentPlotData.qValues.border;
                 let uBorder = currentPlotData.uValues.border;
@@ -702,9 +727,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 piLinePlotProps.markers.push(channelCurrent, channelRequired);
                 quLinePlotProps.markers.push(channelCurrent, channelRequired);
             }
-
-            quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, Colors.GREEN2);
-            quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationU, Colors.BLUE2);
 
             paLinePlotProps.comments = this.exportHeaders;
             piLinePlotProps.comments = this.exportHeaders;

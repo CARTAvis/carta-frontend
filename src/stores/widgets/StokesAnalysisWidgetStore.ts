@@ -43,9 +43,11 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     // return regionRequirements spectralProfiles coordinate array
     private static requiredCoordinate(widgetStore: StokesAnalysisWidgetStore): Array<StokesCoordinate> {
         let requiredCoordinate = StokesAnalysisWidgetStore.requestDataType;
-
+        let Iz = requiredCoordinate.indexOf(StokesCoordinate.TotalIntensity);
         if (widgetStore.fractionalPolVisible) {
-            requiredCoordinate.push(StokesCoordinate.TotalIntensity);
+            if (Iz < 0 ) {
+                requiredCoordinate.push(StokesCoordinate.TotalIntensity);
+            }
         }
         return requiredCoordinate;
     }
