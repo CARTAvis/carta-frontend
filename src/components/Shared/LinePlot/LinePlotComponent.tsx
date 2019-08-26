@@ -96,6 +96,7 @@ export class LinePlotComponentProps {
     zIndex?: boolean;
     pointRadius?: number;
     scatterIndicator?:  { currentChannel: Point3D, hoveredChannel: Point3D };
+    zeroLineWidth?: number;
 }
 
 // Maximum time between double clicks
