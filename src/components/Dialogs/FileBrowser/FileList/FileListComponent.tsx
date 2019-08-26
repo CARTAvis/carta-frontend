@@ -31,14 +31,13 @@ export class FileListComponent extends React.Component<{
         const fileEntries = [];
         const fileList = this.props.files;
         if (fileList) {
-            let sortedDirectories: string[];
-            switch (this.state.sortColumn) {
-                case "name":
+            let sortedDirectories: string[] = [];
+            if (fileList.subdirectories && fileList.subdirectories.length) {
+                if (this.state.sortColumn === "name") {
                     sortedDirectories = fileList.subdirectories.sort((a, b) => this.state.sortDirection * (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
-                    break;
-                default:
+                } else {
                     sortedDirectories = fileList.subdirectories.sort((a, b) => (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
-                    break;
+                }
             }
 
             fileEntries.push(sortedDirectories.map(dir => {
