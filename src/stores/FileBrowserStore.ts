@@ -187,5 +187,6 @@ export class FileBrowserStore {
 
     constructor(backendService: BackendService) {
         this.backendService = backendService;
+        this.exportCoordinateType = CARTA.CoordinateType.WORLD;
     }
 }
