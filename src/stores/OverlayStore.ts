@@ -671,7 +671,7 @@ export class OverlayStore {
                     this.numbers.setDefaultFormatX("d");
                     this.numbers.setDefaultFormatY("d");
                     break;
-                case WCSType.SEXIGESIMAL:
+                case WCSType.SEXAGESIMAL:
                     this.numbers.setDefaultFormatX("hms");
                     this.numbers.setDefaultFormatY("dms");
                     break;
