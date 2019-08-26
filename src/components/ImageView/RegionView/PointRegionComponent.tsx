@@ -16,7 +16,7 @@ export interface PointRegionComponentProps {
 }
 
 const POINT_DRAG_WIDTH = 13;
-const POINT_WIDTH = 4;
+const POINT_WIDTH = 8;
 
 @observer
 export class PointRegionComponent extends React.Component<PointRegionComponentProps> {

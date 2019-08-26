@@ -174,14 +174,14 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         onChange={(ev) => { preference.setASTLabelsVisible(ev.currentTarget.checked); }}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="WCS Type">
+                <FormGroup inline={true} label="WCS Format">
                     <RadioGroup
                         selectedValue={preference.wcsType}
                         onChange={(ev) => { preference.setWCSType(ev.currentTarget.value); }}
                     >
                         <Radio label="Automatic" value={WCSType.AUTOMATIC}/>
-                        <Radio label="Degrees" value={WCSType.DEGREES}/>
-                        <Radio label="Sexigesimal" value={WCSType.SEXIGESIMAL}/>
+                        <Radio label="Decimal degrees" value={WCSType.DEGREES}/>
+                        <Radio label="Sexagesimal" value={WCSType.SEXAGESIMAL}/>
                     </RadioGroup>
                 </FormGroup>
             </React.Fragment>
