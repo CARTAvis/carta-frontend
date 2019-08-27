@@ -28,13 +28,12 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
             <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={620} defaultHeight={700} enableResizing={false}>
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
-                        <img src={logoPng} width={100}/>
+                        <img src={logoPng} width={80}/>
                         <h3>CARTA Viewer Version 1.2.0 (20190827)</h3>
                         <a href="https://doi.org/10.5281/zenodo.3377984" target="_blank">
                             <img src="https://zenodo.org/badge/DOI/10.5281/zenodo.3377984.svg" alt="DOI"/>
                         </a>
                     </div>
-
                     <h3>Development team:</h3>
                     <p>The development of the CARTA project is a joint effort from:</p>
                     <ul>
