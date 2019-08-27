@@ -23,6 +23,10 @@ export class AnimatorStore {
     @observable animationState: AnimationState;
 
     @action setAnimationMode = (val: AnimationMode) => {
+        // Prevent animation mode changes during playback
+        if (this.animationState === AnimationState.PLAYING) {
+            return;
+        }
         this.animationMode = val;
     };
     @action setFrameRate = (val: number) => {
