@@ -2,7 +2,7 @@
 
 ## Prerequisites
 The build process relies heavily on `npm` and `nodejs`, so make sure they are installed and accesible.
-WebAssembly compilation requires the Emscripten compiler (`emcc`) to be in the path. Details can be found [here](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html). Currently, emscripten 1.38.31 or older is required. The protocol buffer definitions reside in a git submodule that must be initialised as follows:
+WebAssembly compilation requires the Emscripten compiler (`emcc`) to be in the path. Details can be found [here](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html). The protocol buffer definitions reside in a git submodule that must be initialised as follows:
 ```
 cd protobuf
 git submodule init
@@ -23,3 +23,5 @@ Currently, each build script symlinks the JavaScript portion of the wrapper to a
 * **Building static protocol buffer code** is done using the `build_proto.sh` script in the `protobuf` folder, which builds the static JavaScript code, as well as the TypeScript definitions, and symlinks to the `node_modules/carta-protobuf` directory.
 * **Webpack** is used to build and bundle all the JavaScript, Sass and HTML code elegantly. You can run `npm start` to run a live dev server, while the build process watches for any changes to source files.
 Standalone versions can be built with `npm run build`, which produces a distributable build in the `build` folder.
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3377984.svg)](https://doi.org/10.5281/zenodo.3377984)
