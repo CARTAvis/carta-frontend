@@ -183,7 +183,9 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
     // Refresh file list to trigger the Breadcrumb re-rendering
     @action
     private refreshFileList() {
-        this.props.appStore.fileBrowserStore.fileList = {...this.props.appStore.fileBrowserStore.fileList};
+        if (this.props.appStore.fileBrowserStore.fileList) {
+            this.props.appStore.fileBrowserStore.fileList = {...this.props.appStore.fileBrowserStore.fileList};
+        }
     }
 
     public render() {
