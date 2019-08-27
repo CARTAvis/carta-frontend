@@ -107,27 +107,8 @@ const PRESET_CONFIGS = new Map<string, any>([
     }]
 ]);
 
-const LAYOUT_SCHEMA = {
-    "title": "Layout",
-    "type": "object",
-    "properties": {
-        "layoutVersion": {
-            "type": "integer"
-        },
-        "docked":  {
-            "type": "object"
-        },
-        "floating": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
-        }
-    }
-};
-
 export class LayoutStore {
-    public static TOASTER_TIMEOUT = 1500;
+    public static readonly TOASTER_TIMEOUT = 1500;
     private static readonly LayoutVersion = 1;
 
     private readonly appStore: AppStore;
@@ -138,6 +119,39 @@ export class LayoutStore {
     @observable dockedLayout: GoldenLayout;
     @observable currentLayoutName: string;
     @observable private layouts: any;
+
+    // key: version, value: schema
+    private static readonly LAYOUT_SCHEMAS = {
+        "1" : {
+            "properties": {
+                "layoutVersion": {
+                    "type": "integer",
+                    "maximum": LayoutStore.LayoutVersion,
+                    "minimum": INITIAL_LAYOUT_VERSION
+                },
+                "docked":  {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "content": {
+                            "type": "array",
+                            "items": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "floating": {
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
+                }
+            }
+        }
+    };
 
     constructor(appStore: AppStore, alertStore: AlertStore) {
         this.appStore = appStore;
@@ -328,14 +342,18 @@ export class LayoutStore {
             return false;
         }
 
+        // find correct layout version with validator
         const config = this.layouts[layoutName];
-        if (!config || !config.layoutVersion || !config.docked || !config.docked.type || !config.docked.content || !config.floating) {
-            this.alertStore.showAlert(`Applying layout failed! Something is wrong with layout ${layoutName}.`);
-            return false;
+        const jsonValidator = new Ajv();
+        let version = null;
+        for (const ver in LayoutStore.LAYOUT_SCHEMAS) {
+            if (jsonValidator.validate(LayoutStore.LAYOUT_SCHEMAS[ver], config)) {
+                version = ver;
+                break;
+            }
         }
-
-        if (isNaN(config.layoutVersion) || config.layoutVersion > LayoutStore.LayoutVersion || config.layoutVersion < INITIAL_LAYOUT_VERSION) {
-            this.alertStore.showAlert(`Invalid layout version.`);
+        if (!version) {
+            this.alertStore.showAlert(`Applying layout failed! Layout ${layoutName} is invalid.`);
             return false;
         }
 
