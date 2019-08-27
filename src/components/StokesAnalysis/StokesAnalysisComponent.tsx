@@ -15,6 +15,7 @@ import {clamp, normalising, polarizationAngle, polarizedIntensity} from "utiliti
 import "./StokesAnalysisComponent.css";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
+type Point3D = { x: number, y: number, z?: number };
 
 @observer
 export class StokesAnalysisComponent extends React.Component<WidgetProps> {
@@ -23,6 +24,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private opacityOutRange = 0.1;
     private colorRangeEnd = 240;
     private pointRadius = 3;
+    private channelBorder: { xMin: number, xMax: number };
     private minProgress = 0;
     private QlinePlotColor = Colors.GREEN2;
     private UlinePlotColor = Colors.BLUE2;
@@ -411,6 +413,53 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return scatterColors;
     }
 
+    private closestChannel(channel: number, data: Array<{ x: number, y: number, z?: number }>): number {
+        var mid;
+        var lo = 0;
+        var hi = data.length - 1;
+        while (hi - lo > 1) {
+            mid = Math.floor ((lo + hi) / 2);
+            if (data[mid].z < channel) {
+                lo = mid;
+            } else {
+                hi = mid;
+            }
+        }
+        if (channel - data[lo].z <= data[hi].z - channel) {
+            return data[lo].z;
+        }
+        return data[hi].z;
+    }
+
+    private getScatterChannel(data: Array<{ x: number, y: number, z?: number }>, channel: { channelCurrent: number, channelHovered: number }, zIndex: boolean): { currentChannel: Point3D, hoveredChannel: Point3D } {
+        let indicator = { currentChannel: data[0], hoveredChannel: data[0]};
+        if (data && data.length && zIndex && channel) {
+            let channelCurrent = channel.channelCurrent;
+            let channelHovered = channel.channelHovered;
+            if (channelCurrent) {
+                let close = channelCurrent;
+                if (channelHovered) {
+                    close = this.closestChannel(channelHovered, data);
+                    if (this.channelBorder && this.channelBorder.xMin !== 0) {
+                        if (close > this.channelBorder.xMax || close < this.channelBorder.xMin || this.isMouseMoveIntoLinePlots) {
+                            close = channelCurrent;
+                        }
+                    }
+                }
+                for (let index = 0; index < data.length; index++) {
+                    const points = data[index];
+                    if (points.z === close) {
+                        indicator.hoveredChannel = points;
+                    }
+                    if (points.z === channelCurrent) {
+                        indicator.currentChannel = points;
+                    }
+                }
+            }
+        }
+        return indicator;
+    }
+
     private onMouseEnterHandler = () => {
         this.isMouseMoveIntoLinePlots = false;
     };
@@ -561,18 +610,18 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             showXAxisLabel: true,
             usePointSymbols: true,
             multiPlotData: new Map(),
-            xZeroLineColor: Colors.RED2,
-            yZeroLineColor: Colors.RED2,
+            zeroLineWidth: 2,
             multiPlotBorderColor: new Map(),
             isGroupSubPlot: true,
             colorRangeEnd: 240,
             centeredOrigin: true,
             equalScale: true,
             zIndex: true,
-            pointRadius: this.pointRadius,
+            pointRadius: this.pointRadius
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
+        let interactionBorder = {xMin: 0, xMax: 0};
         if (this.profileStore && frame) {
             const currentPlotData = this.plotData;
             if (currentPlotData && currentPlotData.piValues && currentPlotData.paValues && currentPlotData.qValues && currentPlotData.uValues && currentPlotData.quValues) {
@@ -598,7 +647,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 let quBorder = currentPlotData.quValues.border;
 
                 if (this.compareVariable(qBorder.xMin, uBorder.xMin, piBorder.xMin, paBorder.xMin) && this.compareVariable(qBorder.xMax, uBorder.xMax, piBorder.xMax, paBorder.xMax)) {
-                    let interactionBorder = {xMin: paBorder.xMin, xMax: paBorder.xMax};
+                    interactionBorder = {xMin: paBorder.xMin, xMax: paBorder.xMax};
+                    this.channelBorder = {xMin: paBorder.xMin, xMax: paBorder.xMax};
                     if (this.widgetStore.isLinePlotsAutoScaledX) {
                         quLinePlotProps.xMin = qBorder.xMin;
                         quLinePlotProps.xMax = qBorder.xMax;
@@ -685,6 +735,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 image: this.getCurrentChannelValue(),
                 unit: this.getChannelUnit()
             };
+            let channel = {channelCurrent: 0, channelHovered: 0};
             paLinePlotProps.cursorX = cursorXInfo;
             piLinePlotProps.cursorX = cursorXInfo;
             quLinePlotProps.cursorX = cursorXInfo;
@@ -706,6 +757,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 paLinePlotProps.markers.push(cursor);
                 piLinePlotProps.markers.push(cursor);
                 quLinePlotProps.markers.push(cursor);
+                if (cursor && cursor.value && typeof(cursor.value) !== undefined) {
+                    channel.channelHovered = cursor.value;   
+                }
             }
 
             if (paLinePlotProps.cursorX.image !== null) {
@@ -726,6 +780,15 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 paLinePlotProps.markers.push(channelCurrent, channelRequired);
                 piLinePlotProps.markers.push(channelCurrent, channelRequired);
                 quLinePlotProps.markers.push(channelCurrent, channelRequired);
+
+                if (channelCurrent && channelCurrent.value && typeof(channelCurrent.value) !== undefined) {
+                    channel.channelCurrent = channelCurrent.value;
+                }
+            }
+
+            if (quScatterPlotProps.data && quScatterPlotProps.data.length && interactionBorder) {
+                const scatterChannel = this.getScatterChannel(quScatterPlotProps.data, channel, true);
+                quScatterPlotProps.scatterIndicator = scatterChannel;
             }
 
             paLinePlotProps.comments = this.exportHeaders;

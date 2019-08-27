@@ -45,6 +45,7 @@ export class PlotContainerProps {
     dataBackgroundColor?: Array<string>;
     isGroupSubPlot?: boolean;
     pointRadius?: number;
+    zeroLineWidth?: number;
 }
 
 export class PlotContainerComponent extends React.Component<PlotContainerProps> {
@@ -230,6 +231,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         } else if (props.pointRadius !== nextProps.pointRadius) {
             return true;
+        } else if (props.zeroLineWidth !== nextProps.zeroLineWidth) {
+            return true;
         }
 
         // Deep check of arrays (this should be optimised!)
@@ -285,6 +288,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         drawBorder: false,
                         color: gridColor,
                         zeroLineColor: this.props.xZeroLineColor ? this.props.xZeroLineColor : gridColor,
+                        zeroLineWidth: this.props.zeroLineWidth ? this.props.zeroLineWidth : 1,
                         tickMarkLength: this.props.xTickMarkLength === 0 ? this.props.xTickMarkLength : 10
                     },
                 }, {
@@ -321,7 +325,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     gridLines: {
                         drawBorder: false,
                         color: gridColor,
-                        zeroLineColor: this.props.yZeroLineColor ? this.props.yZeroLineColor : gridColor
+                        zeroLineColor: this.props.yZeroLineColor ? this.props.yZeroLineColor : gridColor,
+                        zeroLineWidth: this.props.zeroLineWidth ? this.props.zeroLineWidth : 1,
                     },
                 }]
             },

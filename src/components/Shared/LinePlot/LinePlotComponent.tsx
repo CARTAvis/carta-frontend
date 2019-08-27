@@ -28,6 +28,8 @@ enum InteractionMode {
     PANNING
 }
 
+type Point3D = { x: number, y: number, z?: number };
+
 export interface LineMarker {
     value: number;
     id: string;
@@ -93,6 +95,8 @@ export class LinePlotComponentProps {
     equalScale?: boolean;
     zIndex?: boolean;
     pointRadius?: number;
+    scatterIndicator?:  { currentChannel: Point3D, hoveredChannel: Point3D };
+    zeroLineWidth?: number;
 }
 
 // Maximum time between double clicks
