@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {action, observable} from "mobx";
 import {Button, ButtonGroup, FormGroup, NonIdealState, NumberRange, NumericInput, Radio, RangeSlider, Slider} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {WidgetConfig, WidgetProps, AnimationMode, AnimationState} from "stores";
+import {AnimationMode, AnimationState, WidgetConfig, WidgetProps} from "stores";
 import "./AnimatorComponent.css";
 
 @observer
@@ -198,7 +198,13 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             const frameIndex = appStore.frames.findIndex(f => f.frameInfo.fileId === activeFrame.frameInfo.fileId);
             frameSlider = (
                 <div className="animator-slider">
-                    <Radio value={AnimationMode.FRAME} checked={appStore.animatorStore.animationMode === AnimationMode.FRAME} onChange={this.onAnimationModeChanged} label="Frame"/>
+                    <Radio
+                        value={AnimationMode.FRAME}
+                        disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                        checked={appStore.animatorStore.animationMode === AnimationMode.FRAME}
+                        onChange={this.onAnimationModeChanged}
+                        label="Frame"
+                    />
                     {hideSliders &&
                     <NumericInput
                         value={frameIndex}
@@ -236,7 +242,13 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             const channelStep = numChannels > 10 ? ((numChannels - 1) / (numLabels - 1)) : 1;
             channelSlider = (
                 <div className="animator-slider">
-                    <Radio value={AnimationMode.CHANNEL} checked={appStore.animatorStore.animationMode === AnimationMode.CHANNEL} onChange={this.onAnimationModeChanged} label="Channel"/>
+                    <Radio
+                        value={AnimationMode.CHANNEL}
+                        disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                        checked={appStore.animatorStore.animationMode === AnimationMode.CHANNEL}
+                        onChange={this.onAnimationModeChanged}
+                        label="Channel"
+                    />
                     {hideSliders &&
                     <NumericInput
                         value={activeFrame.requiredChannel}
@@ -293,7 +305,13 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         if (numStokes > 1) {
             stokesSlider = (
                 <div className="animator-slider">
-                    <Radio value={AnimationMode.STOKES} checked={appStore.animatorStore.animationMode === AnimationMode.STOKES} onChange={this.onAnimationModeChanged} label="Stokes"/>
+                    <Radio
+                        value={AnimationMode.STOKES}
+                        disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                        checked={appStore.animatorStore.animationMode === AnimationMode.STOKES}
+                        onChange={this.onAnimationModeChanged}
+                        label="Stokes"
+                    />
                     {hideSliders &&
                     <NumericInput
                         value={activeFrame.requiredStokes}
@@ -333,8 +351,12 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             <ButtonGroup fill={true} className="playback-buttons">
                 <Button icon={"chevron-backward"} onClick={this.onFirstClicked}>{!iconOnly && "First"}</Button>
                 <Button icon={"step-backward"} onClick={this.onPrevClicked}>{!iconOnly && "Prev"}</Button>
-                <Button icon={"stop"} onClick={appStore.animatorStore.stopAnimation} active={appStore.animatorStore.animationState === AnimationState.STOPPED}>{!iconOnly && "Stop"}</Button>
-                <Button icon={"play"} onClick={appStore.animatorStore.startAnimation} active={appStore.animatorStore.animationState === AnimationState.PLAYING}>{!iconOnly && "Play"}</Button>
+                {appStore.animatorStore.animationState === AnimationState.PLAYING &&
+                <Button icon={"stop"} onClick={appStore.animatorStore.stopAnimation}>{!iconOnly && "Stop"}</Button>
+                }
+                {appStore.animatorStore.animationState === AnimationState.STOPPED &&
+                <Button icon={"play"} onClick={appStore.animatorStore.startAnimation}>{!iconOnly && "Play"}</Button>
+                }
                 <Button icon={"step-forward"} onClick={this.onNextClicked}>{!iconOnly && "Next"}</Button>
                 <Button icon={"chevron-forward"} onClick={this.onLastClicked}>{!iconOnly && "Last"}</Button>
             </ButtonGroup>

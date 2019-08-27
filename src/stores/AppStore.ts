@@ -7,10 +7,13 @@ import {
     AnimationMode,
     AnimationState,
     AnimatorStore,
+    BrowserMode,
+    CURSOR_REGION_ID,
     dayPalette,
     FileBrowserStore,
     FrameInfo,
     FrameStore,
+    LayoutStore,
     LogEntry,
     LogStore,
     nightPalette,
@@ -20,11 +23,10 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore,
-    LayoutStore, BrowserMode, CURSOR_REGION_ID
+    WidgetsStore
 } from ".";
 import {GetRequiredTiles} from "utilities";
-import {BackendService, TileService, ConnectionStatus} from "services";
+import {BackendService, ConnectionStatus, TileService} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {AppToaster} from "../components/Shared";
@@ -302,12 +304,20 @@ export class AppStore {
     };
 
     @action appendFile = (directory: string, file: string, hdu: string) => {
+        // Stop animations playing before loading a new frame
+        if (this.animatorStore.animationState === AnimationState.PLAYING) {
+            this.animatorStore.stopAnimation();
+        }
         const currentIdList = this.frames.map(frame => frame.frameInfo.fileId).sort((a, b) => a - b);
         const newId = currentIdList.pop() + 1;
         this.addFrame(directory, file, hdu, newId);
     };
 
     @action openFile = (directory: string, file: string, hdu: string) => {
+        // Stop animations playing before loading a new frame
+        if (this.animatorStore.animationState === AnimationState.PLAYING) {
+            this.animatorStore.stopAnimation();
+        }
         this.removeAllFrames();
         this.addFrame(directory, file, hdu, 0);
     };
