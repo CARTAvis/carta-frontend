@@ -6,7 +6,7 @@ import {AppToaster} from "components/Shared";
 import {smoothStepOffset} from "utilities";
 
 const INITIAL_LAYOUT_VERSION = 1;
-const KEY = "CARTA_saved_layouts";
+const KEY = "savedLayouts";
 const MAX_LAYOUT = 10;
 const COMPONENT_CONFIG = new Map<string, any>([
     ["image-view", {
