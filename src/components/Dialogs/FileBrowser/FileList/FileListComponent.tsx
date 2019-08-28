@@ -31,14 +31,13 @@ export class FileListComponent extends React.Component<{
         const fileEntries = [];
         const fileList = this.props.files;
         if (fileList) {
-            let sortedDirectories: string[];
-            switch (this.state.sortColumn) {
-                case "name":
+            let sortedDirectories: string[] = [];
+            if (fileList.subdirectories && fileList.subdirectories.length) {
+                if (this.state.sortColumn === "name") {
                     sortedDirectories = fileList.subdirectories.sort((a, b) => this.state.sortDirection * (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
-                    break;
-                default:
+                } else {
                     sortedDirectories = fileList.subdirectories.sort((a, b) => (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
-                    break;
+                }
             }
 
             fileEntries.push(sortedDirectories.map(dir => {
@@ -52,19 +51,23 @@ export class FileListComponent extends React.Component<{
                 );
             }));
 
-            let sortedFiles;
-            switch (this.state.sortColumn) {
-                case "name":
-                    sortedFiles = fileList.files.sort((a, b) => this.state.sortDirection * (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1));
-                    break;
-                case "type":
-                    sortedFiles = fileList.files.sort((a, b) => this.state.sortDirection * (a.type > b.type ? -1 : 1));
-                    break;
-                case "size":
-                default:
-                    sortedFiles = fileList.files.sort((a, b) => this.state.sortDirection * (a.size < b.size ? -1 : 1));
-                    break;
+            let sortedFiles = [];
+
+            if (fileList.files && fileList.files.length) {
+                switch (this.state.sortColumn) {
+                    case "name":
+                        sortedFiles = fileList.files.sort((a, b) => this.state.sortDirection * (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1));
+                        break;
+                    case "type":
+                        sortedFiles = fileList.files.sort((a, b) => this.state.sortDirection * (a.type > b.type ? -1 : 1));
+                        break;
+                    case "size":
+                    default:
+                        sortedFiles = fileList.files.sort((a, b) => this.state.sortDirection * (a.size < b.size ? -1 : 1));
+                        break;
+                }
             }
+
             fileEntries.push(sortedFiles.map((file: CARTA.FileInfo) => {
                 return file.HDUList.map(hdu => {
                     let className = "file-table-entry";

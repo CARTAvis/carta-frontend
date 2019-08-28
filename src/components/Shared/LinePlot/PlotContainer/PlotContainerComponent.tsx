@@ -45,6 +45,7 @@ export class PlotContainerProps {
     dataBackgroundColor?: Array<string>;
     isGroupSubPlot?: boolean;
     pointRadius?: number;
+    zeroLineWidth?: number;
 }
 
 export class PlotContainerComponent extends React.Component<PlotContainerProps> {
@@ -230,6 +231,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         } else if (props.pointRadius !== nextProps.pointRadius) {
             return true;
+        } else if (props.zeroLineWidth !== nextProps.zeroLineWidth) {
+            return true;
         }
 
         // Deep check of arrays (this should be optimised!)
@@ -285,6 +288,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         drawBorder: false,
                         color: gridColor,
                         zeroLineColor: this.props.xZeroLineColor ? this.props.xZeroLineColor : gridColor,
+                        zeroLineWidth: this.props.zeroLineWidth ? this.props.zeroLineWidth : 1,
                         tickMarkLength: this.props.xTickMarkLength === 0 ? this.props.xTickMarkLength : 10
                     },
                 }, {
@@ -321,7 +325,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     gridLines: {
                         drawBorder: false,
                         color: gridColor,
-                        zeroLineColor: this.props.yZeroLineColor ? this.props.yZeroLineColor : gridColor
+                        zeroLineColor: this.props.yZeroLineColor ? this.props.yZeroLineColor : gridColor,
+                        zeroLineWidth: this.props.zeroLineWidth ? this.props.zeroLineWidth : 1,
                     },
                 }]
             },
@@ -373,18 +378,22 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
         if (this.props.multiPlotData) {
             this.props.multiPlotData.forEach((value, key) => {
+                let currentLineColor = this.props.multiPlotBorderColor ? this.props.multiPlotBorderColor.get(key) : lineColor;
+                if (opacity < 1.0) {
+                    currentLineColor = hexStringToRgba(currentLineColor, opacity);
+                }
                 const multiPlotDatasetConfig: ChartDataSets = {
                     type: this.props.plotType ? this.props.plotType : "line",
-                    label: key,
+                    label: key[0],
                     data: value,
                     fill: false,
                     lineTension: 0,
-                    borderColor: this.props.multiPlotBorderColor ? this.props.multiPlotBorderColor.get(key) : lineColor,
+                    borderColor: currentLineColor,
+                    backgroundColor: currentLineColor,
                     showLine: true,
                     steppedLine: this.props.interpolateLines ? false : "middle",
                     borderWidth: 1,
-                    pointRadius: 0,
-                    backgroundColor: this.props.dataBackgroundColor ? this.props.dataBackgroundColor : []
+                    pointRadius: 0
                 };
                 plotData.datasets.push(multiPlotDatasetConfig);
             });
