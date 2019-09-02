@@ -6,6 +6,7 @@ import {ASTSettingsString, PreferenceStore, OverlayStore, LogStore, RegionSetSto
 import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES} from "models";
 import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency} from "utilities";
 import {BackendService} from "../services";
+import * as _ from "lodash";
 
 export interface FrameInfo {
     fileId: number;
@@ -45,6 +46,7 @@ export class FrameStore {
     @observable overviewRasterData: Float32Array;
     @observable overviewRasterView: FrameView;
     @observable valid: boolean;
+    @observable moving: boolean;
     @observable regionSet: RegionSetStore;
 
     private readonly overlayStore: OverlayStore;
@@ -65,6 +67,7 @@ export class FrameStore {
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore(preference);
         this.renderType = RasterRenderType.NONE;
+        this.moving = false;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preference.astColor;
@@ -537,9 +540,9 @@ export class FrameStore {
         this.zoomLevel = zoom;
     }
 
-    @action setCenter(x: number, y: number) {
+    @action setCenter = _.throttle((x: number, y: number) => {
         this.center = {x, y};
-    }
+    }, 33);
 
     @action setCursorInfo(cursorInfo: CursorInfo) {
         if (!this.cursorFrozen) {
@@ -581,6 +584,14 @@ export class FrameStore {
 
     @action setRasterRenderType = (renderType: RasterRenderType) => {
         this.renderType = renderType;
+    };
+
+    @action startMoving = () => {
+        this.moving = true;
+    };
+
+    @action endMoving = () => {
+        this.moving = false;
     };
 
     @computed private get zoomLevelForFit() {

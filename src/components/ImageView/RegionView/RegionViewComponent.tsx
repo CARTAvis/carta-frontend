@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as _ from "lodash";
 import * as AST from "ast_wrapper";
-import {action, observable} from "mobx";
+import {action, observable, toJS} from "mobx";
 import {observer} from "mobx-react";
 import {Group, Layer, Line, Rect, Stage} from "react-konva";
 import {CARTA} from "carta-protobuf";
@@ -11,11 +11,14 @@ import {PolygonRegionComponent} from "./PolygonRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
 import {CursorInfo, Point2D} from "models";
 import "./RegionViewComponent.css";
+import {add2D, subtract2D} from "../../../utilities";
+import {canvasToImagePos, imageToCanvasPos} from "./shared";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;
     overlaySettings: OverlayStore;
     isRegionCornerMode: boolean;
+    dragPanningEnabled: boolean;
     docked: boolean;
     width: number;
     height: number;
@@ -35,6 +38,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     @observable creatingRegion: RegionStore;
     private regionStartPoint: Point2D;
     @observable currentCursorPos: Point2D;
+
+    private dragPanning: boolean;
+    private dragOffset: Point2D;
+    private initialDragPoint: Point2D;
+    private initialDragCenter: Point2D;
 
     updateCursorPos = _.throttle((x: number, y: number) => {
         if (this.props.frame.wcsInfo) {
@@ -57,7 +65,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         return posCanvasSpace;
     }
 
-    handleMouseDown = (konvaEvent) => {
+    regionCreationStart = (konvaEvent) => {
         if (this.creatingRegion) {
             return;
         }
@@ -84,7 +92,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         this.creatingRegion.beginCreating();
     };
 
-    handleMouseUp = (konvaEvent) => {
+    regionCreationEnd = (konvaEvent) => {
+        this.dragPanning = false;
         const frame = this.props.frame;
         const regionType = frame.regionSet.newRegionType;
 
@@ -99,6 +108,47 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 break;
             default:
                 break;
+        }
+    };
+
+    handlePanStart = (konvaEvent) => {
+        if (this.props.dragPanningEnabled) {
+            this.dragPanning = true;
+
+            const mouseEvent = konvaEvent.evt as MouseEvent;
+            const frame = this.props.frame;
+            if (frame) {
+                this.initialDragPoint = canvasToImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame.requiredFrameView, this.props.width, this.props.height);
+                this.initialDragCenter = frame.center;
+                frame.startMoving();
+            }
+        }
+    };
+
+    handlePan = (deltaX: number, deltaY: number) => {
+        const deltaCanvasSpace = {x: deltaX, y: deltaY};
+        const frame = this.props.frame;
+
+        if (frame) {
+            if (!this.dragOffset) {
+                this.dragOffset = deltaCanvasSpace;
+            } else {
+                this.dragOffset = add2D(this.dragOffset, deltaCanvasSpace);
+                const initialCenterCanvasSpace = imageToCanvasPos(this.initialDragCenter.x, this.initialDragCenter.y, frame.requiredFrameView, this.props.width, this.props.height);
+                const newCenterCanvasSpace = subtract2D(initialCenterCanvasSpace, this.dragOffset);
+                const newCenterImageSpace = canvasToImagePos(newCenterCanvasSpace.x, newCenterCanvasSpace.y, frame.requiredFrameView, this.props.width, this.props.height);
+                frame.setCenter(newCenterImageSpace.x, newCenterImageSpace.y);
+            }
+        }
+    };
+
+    handlePanEnd = () => {
+        this.dragPanning = false;
+        this.dragOffset = null;
+        const frame = this.props.frame;
+
+        if (frame) {
+            frame.endMoving();
         }
     };
 
@@ -146,7 +196,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         const cursorPosCanvasSpace = {x: mouseEvent.offsetX, y: mouseEvent.offsetY};
-        if (this.props.frame.wcsInfo && this.props.onClicked) {
+        if (this.props.frame.wcsInfo && this.props.onClicked && !this.props.dragPanningEnabled) {
             this.props.onClicked(this.props.frame.getCursorInfo(cursorPosCanvasSpace));
         }
     };
@@ -163,7 +213,14 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     handleMove = (konvaEvent) => {
         const mouseEvent = konvaEvent.evt as MouseEvent;
-        if (this.props.frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion) {
+        const frame = this.props.frame;
+
+        if (this.props.dragPanningEnabled && this.dragPanning) {
+            this.handlePan(mouseEvent.movementX, mouseEvent.movementY);
+            return;
+        }
+
+        if (frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion) {
             switch (this.creatingRegion.regionType) {
                 case CARTA.RegionType.RECTANGLE:
                 case CARTA.RegionType.ELLIPSE:
@@ -370,8 +427,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 onWheel={this.handleWheel}
                 onMouseMove={this.handleMove}
                 onDblClick={this.handleStageDoubleClick}
-                onMouseDown={regionSet.mode === RegionMode.CREATING ? this.handleMouseDown : null}
-                onMouseUp={regionSet.mode === RegionMode.CREATING ? this.handleMouseUp : null}
+                onMouseDown={regionSet.mode === RegionMode.CREATING ? this.regionCreationStart : this.handlePanStart}
+                onMouseUp={regionSet.mode === RegionMode.CREATING ? this.regionCreationEnd : this.handlePanEnd}
             >
                 <Layer>
                     {regionComponents}

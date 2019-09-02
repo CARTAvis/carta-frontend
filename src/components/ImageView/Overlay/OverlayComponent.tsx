@@ -59,11 +59,17 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     styleString);
             };
 
-            plot(settings.styleString);
+            let currentStyleString = settings.styleString;
+            if (frame.moving) {
+                const tolVal = Math.max(settings.global.tolerance / 100.0, 0.15);
+                currentStyleString += `, Tol=${tolVal}`;
+            }
+
+            plot(currentStyleString);
 
             if (/No grid curves can be drawn for axis/.test(AST.getLastErrorMessage())) {
                 // Try to re-plot without the grid
-                plot(settings.styleString.replace(/Gap\(\d\)=[^,]+, ?/g, "").replace("Grid=1", "Grid=0"));
+                plot(currentStyleString.replace(/Gap\(\d\)=[^,]+, ?/g, "").replace("Grid=1", "Grid=0"));
             }
 
             AST.clearLastErrorMessage();
@@ -78,6 +84,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const framePadding = this.props.overlaySettings.padding;
         const w = this.props.overlaySettings.viewWidth;
         const h = this.props.overlaySettings.viewHeight;
+        const moving = this.props.frame.moving;
 
         let className = "overlay-canvas";
         if (this.props.docked) {
