@@ -213,13 +213,17 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     handleMove = (konvaEvent) => {
         const mouseEvent = konvaEvent.evt as MouseEvent;
-        const frame = this.props.frame;
+
+        if (!mouseEvent.buttons) {
+            this.handlePanEnd();
+        }
 
         if (this.props.dragPanningEnabled && this.dragPanning) {
             this.handlePan(mouseEvent.movementX, mouseEvent.movementY);
             return;
         }
 
+        const frame = this.props.frame;
         if (frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion) {
             switch (this.creatingRegion.regionType) {
                 case CARTA.RegionType.RECTANGLE:

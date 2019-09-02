@@ -540,9 +540,9 @@ export class FrameStore {
         this.zoomLevel = zoom;
     }
 
-    @action setCenter = _.throttle((x: number, y: number) => {
+    @action setCenter(x: number, y: number) {
         this.center = {x, y};
-    }, 33);
+    }
 
     @action setCursorInfo(cursorInfo: CursorInfo) {
         if (!this.cursorFrozen) {
@@ -551,7 +551,7 @@ export class FrameStore {
     }
 
     @action setCursorValue(cursorValue: number) {
-            this.cursorValue = cursorValue;
+        this.cursorValue = cursorValue;
     }
 
     // Sets a new zoom level and pans to keep the given point fixed
@@ -594,11 +594,13 @@ export class FrameStore {
         this.moving = false;
     };
 
-    @computed private get zoomLevelForFit() {
+    @computed
+    private get zoomLevelForFit() {
         return Math.min(this.calculateZoomX, this.calculateZoomY);
     }
 
-    @computed private get calculateZoomX() {
+    @computed
+    private get calculateZoomX() {
         const imageWidth = this.frameInfo.fileInfoExtended.width;
         const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
 
@@ -608,7 +610,8 @@ export class FrameStore {
         return this.renderWidth * pixelRatio / imageWidth;
     }
 
-    @computed private get calculateZoomY() {
+    @computed
+    private get calculateZoomY() {
         const imageHeight = this.frameInfo.fileInfoExtended.height;
         const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
         if (imageHeight <= 0) {
