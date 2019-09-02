@@ -1,6 +1,6 @@
 import {LayoutStore} from "stores";
 
-// key: version, value: schema
+// key: layout schema version, value: schema
 export const LAYOUT_SCHEMAS = {
     "1" : {
         "properties": {
