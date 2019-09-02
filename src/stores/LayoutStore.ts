@@ -2,11 +2,10 @@ import {observable, computed, action} from "mobx";
 import {AppStore, AlertStore, WidgetConfig} from "stores";
 import * as GoldenLayout from "golden-layout";
 import * as Ajv from "ajv";
-import {PresetLayout} from "models";
+import {LAYOUT_SCHEMAS, PresetLayout} from "models";
 import {AppToaster} from "components/Shared";
 import {smoothStepOffset} from "utilities";
 
-const INITIAL_LAYOUT_VERSION = 1;
 const KEY = "savedLayouts";
 const MAX_LAYOUT = 10;
 const COMPONENT_CONFIG = new Map<string, any>([
@@ -109,7 +108,8 @@ const PRESET_CONFIGS = new Map<string, any>([
 
 export class LayoutStore {
     public static readonly TOASTER_TIMEOUT = 1500;
-    private static readonly LayoutVersion = 1;
+    public static readonly InitialLayoutVersion = 1;
+    public static readonly LayoutVersion = 1;
 
     private readonly appStore: AppStore;
     private alertStore: AlertStore;
@@ -119,39 +119,6 @@ export class LayoutStore {
     @observable dockedLayout: GoldenLayout;
     @observable currentLayoutName: string;
     @observable private layouts: any;
-
-    // key: version, value: schema
-    private static readonly LAYOUT_SCHEMAS = {
-        "1" : {
-            "properties": {
-                "layoutVersion": {
-                    "type": "integer",
-                    "maximum": LayoutStore.LayoutVersion,
-                    "minimum": INITIAL_LAYOUT_VERSION
-                },
-                "docked":  {
-                    "type": "object",
-                    "properties": {
-                        "type": {
-                            "type": "string"
-                        },
-                        "content": {
-                            "type": "array",
-                            "items": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "floating": {
-                    "type": "array",
-                    "items": {
-                        "type": "object"
-                    }
-                }
-            }
-        }
-    };
 
     constructor(appStore: AppStore, alertStore: AlertStore) {
         this.appStore = appStore;
@@ -346,8 +313,8 @@ export class LayoutStore {
         const config = this.layouts[layoutName];
         const jsonValidator = new Ajv();
         let version = null;
-        for (const ver in LayoutStore.LAYOUT_SCHEMAS) {
-            if (jsonValidator.validate(LayoutStore.LAYOUT_SCHEMAS[ver], config)) {
+        for (const ver in LAYOUT_SCHEMAS) {
+            if (jsonValidator.validate(LAYOUT_SCHEMAS[ver], config)) {
                 version = ver;
                 break;
             }
