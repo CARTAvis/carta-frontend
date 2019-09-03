@@ -41,7 +41,7 @@ const DEFAULTS = {
     colormap: "inferno",
     percentile: 99.9,
     astColor: 4,
-    astGridVisible: true,
+    astGridVisible: false,
     astLabelsVisible: true,
     wcsType: WCSType.AUTOMATIC,
     regionColor: "#2EE6D6",
@@ -144,7 +144,7 @@ export class PreferenceStore {
 
     private getASTGridVisible = (): boolean => {
         const astGridVisible = localStorage.getItem(PREFERENCE_KEYS.astGridVisible);
-        return astGridVisible === "false" ? false : DEFAULTS.astGridVisible;
+        return astGridVisible === "true" ? true : DEFAULTS.astGridVisible;
     };
 
     private getASTLabelsVisible = (): boolean => {
