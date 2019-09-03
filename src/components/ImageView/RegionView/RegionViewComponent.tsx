@@ -1,11 +1,11 @@
 import * as React from "react";
 import * as _ from "lodash";
-import * as AST from "ast_wrapper";
-import {action, observable, toJS} from "mobx";
+import {action, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Group, Layer, Line, Rect, Stage} from "react-konva";
+import Konva from "konva";
 import {CARTA} from "carta-protobuf";
-import {ASTSettingsString, FrameStore, OverlayStore, RegionMode, RegionStore} from "stores";
+import {FrameStore, OverlayStore, RegionMode, RegionStore} from "stores";
 import {RegionComponent} from "./RegionComponent";
 import {PolygonRegionComponent} from "./PolygonRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
@@ -109,6 +109,19 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             default:
                 break;
         }
+    };
+
+    handleDragStart = (konvaEvent: Konva.KonvaEventObject<DragEvent>) => {
+
+
+    };
+
+    handleDragMove = (konvaEvent: Konva.KonvaEventObject<DragEvent>) => {
+
+    };
+
+    handleDragEnd = (konvaEvent: Konva.KonvaEventObject<DragEvent>) => {
+
     };
 
     handlePanStart = (konvaEvent) => {
@@ -431,8 +444,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 onWheel={this.handleWheel}
                 onMouseMove={this.handleMove}
                 onDblClick={this.handleStageDoubleClick}
-                onMouseDown={regionSet.mode === RegionMode.CREATING ? this.regionCreationStart : this.handlePanStart}
-                onMouseUp={regionSet.mode === RegionMode.CREATING ? this.regionCreationEnd : this.handlePanEnd}
+                draggable={regionSet.mode !== RegionMode.CREATING && this.props.dragPanningEnabled}
+                onDragStart={this.handleDragStart}
+                onDragMove={this.handleDragMove}
+                onDragEnd={this.handleDragEnd}
+                onMouseDown={regionSet.mode === RegionMode.CREATING ? this.regionCreationStart : null}
+                onMouseUp={regionSet.mode === RegionMode.CREATING ? this.regionCreationEnd : null}
             >
                 <Layer>
                     {regionComponents}
