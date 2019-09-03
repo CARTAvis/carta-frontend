@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
 import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore, LayoutStore} from "stores";
-import {isColorValid} from "../utilities";
+import {isColorValid, parseBoolean} from "../utilities";
 
 const PREFERENCE_KEYS = {
     theme: "theme",
@@ -87,7 +87,8 @@ export class PreferenceStore {
     };
 
     private getAutoLaunch = (): boolean => {
-        return localStorage.getItem(PREFERENCE_KEYS.autoLaunch) === "false" ? false : DEFAULTS.autoLaunch;
+        const autoLaunch = localStorage.getItem(PREFERENCE_KEYS.autoLaunch);
+        return parseBoolean(autoLaunch, DEFAULTS.autoLaunch);
     };
 
     private getLayout = (): string => {
@@ -144,12 +145,12 @@ export class PreferenceStore {
 
     private getASTGridVisible = (): boolean => {
         const astGridVisible = localStorage.getItem(PREFERENCE_KEYS.astGridVisible);
-        return astGridVisible === "true" ? true : DEFAULTS.astGridVisible;
+        return parseBoolean(astGridVisible, DEFAULTS.astGridVisible);
     };
 
     private getASTLabelsVisible = (): boolean => {
         const astLabelsVisible = localStorage.getItem(PREFERENCE_KEYS.astLabelsVisible);
-        return astLabelsVisible === "false" ? false : DEFAULTS.astLabelsVisible;
+        return parseBoolean(astLabelsVisible, DEFAULTS.astLabelsVisible);
     };
 
     private getWCSType = (): string => {
