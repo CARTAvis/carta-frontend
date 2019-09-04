@@ -172,7 +172,7 @@ export class WidgetsStore {
         this.defaultFloatingWidgetOffset += 25;
         this.defaultFloatingWidgetOffset = (this.defaultFloatingWidgetOffset - 100) % 300 + 100;
         return this.defaultFloatingWidgetOffset;
-    }
+    };
 
     public removeWidget = (widgetId: string, widgetType: string) => {
         const widgets = this.widgetsMap.get(widgetType);
@@ -229,7 +229,7 @@ export class WidgetsStore {
         if (this.floatingWidgets) {
             this.floatingWidgets.forEach((widgetConfig) => this.removeFloatingWidget(widgetConfig.id));
         }
-    }
+    };
 
     public initWidgets = (componentConfigs: any[], floating: any[]) => {
         // init docked widgets
@@ -394,13 +394,15 @@ export class WidgetsStore {
         if (this.layoutStore.dockedLayout && this.layoutStore.dockedLayout.root) {
             const imageViewComponents = this.layoutStore.dockedLayout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
             if (imageViewComponents.length) {
-                imageViewComponents[0].setTitle(newTitle);
+                if (imageViewComponents[0].config && imageViewComponents[0].config.title !== newTitle) {
+                    imageViewComponents[0].setTitle(newTitle);
+                }
             }
         }
 
         // Update floating window title
         const imageViewWidget = this.floatingWidgets.find(w => w.type === ImageViewComponent.WIDGET_CONFIG.type);
-        if (imageViewWidget) {
+        if (imageViewWidget && imageViewWidget.title !== newTitle) {
             this.setWidgetTitle(imageViewWidget.id, newTitle);
         }
     }
