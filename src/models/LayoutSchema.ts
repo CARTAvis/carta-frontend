@@ -1,4 +1,5 @@
-import {LayoutStore} from "stores";
+const InitialLayoutVersion = 1;
+const CurrentLayoutVersion = 1;
 
 // key: layout schema version, value: schema
 export const LAYOUT_SCHEMAS = {
@@ -6,8 +7,8 @@ export const LAYOUT_SCHEMAS = {
         "properties": {
             "layoutVersion": {
                 "type": "integer",
-                "minimum": LayoutStore.InitialLayoutVersion,
-                "maximum": LayoutStore.LayoutVersion
+                "minimum": InitialLayoutVersion,
+                "maximum": CurrentLayoutVersion
             },
             "docked":  {
                 "type": "object",

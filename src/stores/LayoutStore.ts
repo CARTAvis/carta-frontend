@@ -108,7 +108,6 @@ const PRESET_CONFIGS = new Map<string, any>([
 
 export class LayoutStore {
     public static readonly TOASTER_TIMEOUT = 1500;
-    public static readonly InitialLayoutVersion = 1;
     public static readonly LayoutVersion = 1;
 
     private readonly appStore: AppStore;
