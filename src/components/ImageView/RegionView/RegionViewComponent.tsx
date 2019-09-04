@@ -202,16 +202,26 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
-        if (konvaEvent.target.nodeType !== "Stage" && ((mouseEvent.button === 0 && !(mouseEvent.ctrlKey || mouseEvent.metaKey)) || mouseEvent.button === 2)) {
+
+        const isSecondaryClick = mouseEvent.button !== 0 || mouseEvent.ctrlKey || mouseEvent.metaKey;
+
+        // Ignore clicks that aren't on the stage, unless it's a secondary click
+        if (konvaEvent.target !== konvaEvent.currentTarget && !isSecondaryClick) {
             return;
         }
 
+        // Ignore region creation mode clicks
         if (this.props.frame.regionSet.mode === RegionMode.CREATING && mouseEvent.button === 0) {
             return;
         }
 
+        // Deselect selected region if in drag-to-pan mode and user clicks on the stage
+        if (this.props.dragPanningEnabled && !isSecondaryClick) {
+            this.props.frame.regionSet.deselectRegion();
+        }
+
         const cursorPosCanvasSpace = {x: mouseEvent.offsetX, y: mouseEvent.offsetY};
-        if (this.props.frame.wcsInfo && this.props.onClicked && !this.props.dragPanningEnabled) {
+        if (this.props.frame.wcsInfo && this.props.onClicked && (!this.props.dragPanningEnabled || isSecondaryClick)) {
             this.props.onClicked(this.props.frame.getCursorInfo(cursorPosCanvasSpace));
         }
     };
