@@ -28,8 +28,6 @@ enum InteractionMode {
     PANNING
 }
 
-type Point3D = { x: number, y: number, z?: number };
-
 export interface LineMarker {
     value: number;
     id: string;
@@ -80,7 +78,6 @@ export class LinePlotComponentProps {
     graphCursorMoved?: (x: number) => void;
     scrollZoom?: boolean;
     multiPlotData?: Map<string, { x: number, y: number }[]>;
-    colorRangeEnd?: number;
     showXAxisTicks?: boolean;
     showXAxisLabel?: boolean;
     xZeroLineColor?: string;
@@ -89,13 +86,9 @@ export class LinePlotComponentProps {
     xTickMarkLength?: number;
     multiPlotBorderColor?: Map<string, string>;
     plotType?: string;
-    dataBackgroundColor?: Array<string>;
     isGroupSubPlot?: boolean;
-    centeredOrigin?: boolean;
-    equalScale?: boolean;
     zIndex?: boolean;
     pointRadius?: number;
-    scatterIndicator?:  { currentChannel: Point3D, hoveredChannel: Point3D };
     zeroLineWidth?: number;
 }
 

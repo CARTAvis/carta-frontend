@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, ScatterPlotComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
@@ -225,7 +225,15 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     };
 
     onGraphCursorMoved = _.throttle((x) => {
-        this.widgetStore.setCursor(x);
+        this.widgetStore.setlinePlotCursorX(x);
+        // console.log(x)
+        // console.log(y)
+    }, 33);
+
+    onScatterGraphCursorMoved = _.throttle((x, y) => {
+        this.widgetStore.setScatterPlotCursor({ x: x, y: y});
+        // console.log(x)
+        // console.log(y)
     }, 33);
 
     private static calculatePA(qData: Float32Array | Float64Array, uData: Float32Array | Float64Array): Array<number> {
@@ -598,9 +606,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             markers: []
         };
 
-        let quScatterPlotProps: LinePlotComponentProps = {
-            xLabel: "Value",
-            yLabel: "Value",
+        let quScatterPlotProps: ScatterPlotComponentProps = {
+            xLabel: "Channel",
+            yLabel: "Channel",
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: "profile",
@@ -617,7 +625,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             centeredOrigin: true,
             equalScale: true,
             zIndex: true,
-            pointRadius: this.pointRadius
+            pointRadius: this.pointRadius,
+            graphCursorMoved: this.onScatterGraphCursorMoved,
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
@@ -731,7 +740,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
 
             let cursorXInfo = {
-                profiler: this.widgetStore.cursorX,
+                profiler: this.widgetStore.linePlotcursorX,
                 image: this.getCurrentChannelValue(),
                 unit: this.getChannelUnit()
             };
@@ -739,7 +748,14 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             paLinePlotProps.cursorX = cursorXInfo;
             piLinePlotProps.cursorX = cursorXInfo;
             quLinePlotProps.cursorX = cursorXInfo;
+            // console.log(cursorXInfo)
 
+            let scatterCursorInfor = {
+                profiler: { x: this.widgetStore.scatterPlotCursorX, y: this.widgetStore.scatterPlotCursorY, z: 0},
+                image: { x: 0, y: 0, z: 0},
+                unit: this.getChannelUnit()
+            }
+            quScatterPlotProps.cursorXY = scatterCursorInfor;
             paLinePlotProps.markers = [];
             piLinePlotProps.markers = [];
             quLinePlotProps.markers = [];
