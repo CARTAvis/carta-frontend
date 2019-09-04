@@ -60,7 +60,8 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         }
 
         filename = filename.trim();
-        this.props.appStore.exportRegions(directory, filename, this.props.appStore.fileBrowserStore.exportCoordinateType);
+        const fileBrowserStore = this.props.appStore.fileBrowserStore;
+        this.props.appStore.exportRegions(directory, filename, fileBrowserStore.exportCoordinateType, fileBrowserStore.exportFileType);
         console.log(`Exporting all regions to ${directory}/${filename}`);
     }
 
@@ -177,7 +178,28 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                 </Button>
             </Popover>
         );
-        return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.exportFilename} onChange={this.handleExportInputChanged} rightElement={coordinateTypeMenu}/>;
+
+        const fileTypeMenu = (
+            <Popover
+                content={
+                    <Menu>
+                        <MenuItem text="CRTF Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.CRTF)}/>
+                        <MenuItem text="DS9 Region File" onClick={() => fileBrowserStore.setExportFileType(CARTA.FileType.REG)}/>
+                    </Menu>
+                }
+                position={Position.BOTTOM_RIGHT}
+            >
+                <Button minimal={true} rightIcon="caret-down">
+                    {fileBrowserStore.exportFileType === CARTA.FileType.CRTF ? "CRTF" : "DS9"}
+                </Button>
+            </Popover>
+        );
+
+        let sideMenu = <div>
+            {fileTypeMenu}
+            {coordinateTypeMenu}
+        </div>;
+        return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.exportFilename} onChange={this.handleExportInputChanged} rightElement={sideMenu}/>;
     }
 
     // Refresh file list to trigger the Breadcrumb re-rendering
