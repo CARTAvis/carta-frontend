@@ -168,17 +168,17 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     private handleMouseUpRegularRegion() {
+        const frame = this.props.frame;
+
         if (this.creatingRegion) {
             if (this.creatingRegion.isValid) {
                 this.creatingRegion.endCreating();
-                this.props.frame.regionSet.selectRegion(this.creatingRegion);
+                frame.regionSet.selectRegion(this.creatingRegion);
             } else {
-                this.props.frame.regionSet.deleteRegion(this.creatingRegion);
+                frame.regionSet.deleteRegion(this.creatingRegion);
             }
             this.creatingRegion = null;
         }
-        // Switch to moving mode after region creation. Use a timeout to allow the handleClick function to execute first
-        setTimeout(() => this.props.frame.regionSet.mode = RegionMode.MOVING, 1);
     }
 
     @action
@@ -311,19 +311,17 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     private handleStageDoubleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
-        const mouseEvent = konvaEvent.evt as MouseEvent;
-        if (this.props.frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion && this.creatingRegion.regionType === CARTA.RegionType.POLYGON) {
+        const frame = this.props.frame;
+        if (frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion && this.creatingRegion.regionType === CARTA.RegionType.POLYGON) {
             // Handle region completion
             if (this.creatingRegion.isValid && this.creatingRegion.controlPoints.length > 2) {
                 this.creatingRegion.endCreating();
-                this.props.frame.regionSet.selectRegion(this.creatingRegion);
+                frame.regionSet.selectRegion(this.creatingRegion);
                 this.creatingRegion = null;
             } else {
-                this.props.frame.regionSet.deleteRegion(this.creatingRegion);
+                frame.regionSet.deleteRegion(this.creatingRegion);
                 this.creatingRegion = null;
             }
-            // Switch to moving mode after region creation. Use a timeout to allow the handleClick function to execute first
-            setTimeout(() => this.props.frame.regionSet.mode = RegionMode.MOVING, 1);
         }
     };
 
