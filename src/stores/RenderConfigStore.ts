@@ -52,6 +52,9 @@ export class RenderConfigStore {
 
     static readonly PERCENTILE_RANKS = [90, 95, 99, 99.5, 99.9, 99.95, 99.99, 100];
 
+    static readonly GAMMA_MIN = 0;
+    static readonly GAMMA_MAX = 2;
+
     @observable scaling: FrameScaling;
     @observable colorMap: number;
     @observable contrast: number;
@@ -72,8 +75,8 @@ export class RenderConfigStore {
         this.selectedPercentile = [percentile, percentile, percentile, percentile];
         this.bias = 0;
         this.contrast = 1;
-        this.gamma = 1;
-        this.alpha = 1000;
+        this.alpha = preference.scalingAlpha;
+        this.gamma = preference.scalingGamma;
         this.scaling = preference.scaling;
         this.cubeHistogramProgress = 0;
         this.setColorMap(preference.colormap);
@@ -86,11 +89,15 @@ export class RenderConfigStore {
         return RenderConfigStore.SCALING_TYPES.has(scaling) ? true : false;
     }
 
-     public static IsColormapValid(colormap: string): boolean {
+    public static IsGammaValid(gamma: number): boolean {
+        return gamma >= RenderConfigStore.GAMMA_MIN && gamma <= RenderConfigStore.GAMMA_MAX;
+    }
+
+    public static IsColormapValid(colormap: string): boolean {
         return RenderConfigStore.COLOR_MAPS_SELECTED.includes(colormap) ? true : false;
     }
 
-     public static IsPercentileValid(percentile: number): boolean {
+    public static IsPercentileValid(percentile: number): boolean {
         return RenderConfigStore.PERCENTILE_RANKS.includes(percentile) ? true : false;
     }
 
