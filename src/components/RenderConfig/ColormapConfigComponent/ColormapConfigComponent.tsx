@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, Button, FormGroup, IPopoverProps, MenuItem, NumericInput} from "@blueprintjs/core";
+import {Alert, Button, Checkbox, FormGroup, IPopoverProps, MenuItem, NumericInput, Switch} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {FrameScaling, RenderConfigStore} from "stores/RenderConfigStore";
 import {ScalingComponent} from "./ScalingComponent";
@@ -41,6 +41,10 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
         }
     };
 
+    handleInvertedChanged: React.FormEventHandler<HTMLInputElement> = (evt) => {
+        this.props.renderConfig.setInverted(evt.currentTarget.checked);
+    };
+
     handleHistogramChange = (value: boolean) => {
         if (value && !this.props.renderConfig.cubeHistogram) {
             this.showCubeHistogramAlert = true;
@@ -75,13 +79,20 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 <FormGroup label={"Scaling"} inline={true}>
                     <ScalingComponent
                         selectedItem={renderConfig.scaling}
-                        onItemSelect={this.props.renderConfig.setScaling}
+                        onItemSelect={renderConfig.setScaling}
                     />
                 </FormGroup>
                 <FormGroup label={"Color map"} inline={true}>
                     <ColormapComponent
+                        inverted={renderConfig.inverted}
                         selectedItem={renderConfig.colorMapName}
-                        onItemSelect={this.props.renderConfig.setColorMap}
+                        onItemSelect={renderConfig.setColorMap}
+                    />
+                </FormGroup>
+                <FormGroup label={"Invert color map"} inline={true}>
+                    <Switch
+                        checked={renderConfig.inverted}
+                        onChange={this.handleInvertedChanged}
                     />
                 </FormGroup>
                 {renderConfig.scaling === FrameScaling.GAMMA &&

@@ -25,6 +25,7 @@ interface ShaderUniforms {
     Gamma: WebGLUniformLocation;
     Alpha: WebGLUniformLocation;
     ScaleType: WebGLUniformLocation;
+    Inverted: WebGLUniformLocation;
     NaNColor: WebGLUniformLocation;
     DataTexture: WebGLUniformLocation;
     CmapTexture: WebGLUniformLocation;
@@ -166,6 +167,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1f(this.shaderUniforms.MaxVal, renderConfig.scaleMaxVal);
             this.gl.uniform1i(this.shaderUniforms.CmapIndex, renderConfig.colorMap);
             this.gl.uniform1i(this.shaderUniforms.ScaleType, renderConfig.scaling);
+            this.gl.uniform1i(this.shaderUniforms.Inverted, renderConfig.inverted ? 1 : 0);
             this.gl.uniform1f(this.shaderUniforms.Bias, renderConfig.bias);
             this.gl.uniform1f(this.shaderUniforms.Contrast, renderConfig.contrast);
             this.gl.uniform1f(this.shaderUniforms.Gamma, renderConfig.gamma);
@@ -387,6 +389,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             Gamma: this.gl.getUniformLocation(this.shaderProgram, "uGamma"),
             Alpha: this.gl.getUniformLocation(this.shaderProgram, "uAlpha"),
             ScaleType: this.gl.getUniformLocation(this.shaderProgram, "uScaleType"),
+            Inverted: this.gl.getUniformLocation(this.shaderProgram, "uInverted"),
             DataTexture: this.gl.getUniformLocation(this.shaderProgram, "uDataTexture"),
             CmapTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapTexture"),
             NumCmaps: this.gl.getUniformLocation(this.shaderProgram, "uNumCmaps"),
@@ -411,6 +414,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.gl.uniform1f(this.shaderUniforms.Contrast, 1);
         this.gl.uniform1f(this.shaderUniforms.Gamma, 1);
         this.gl.uniform1f(this.shaderUniforms.Alpha, 1000);
+        this.gl.uniform1i(this.shaderUniforms.Inverted, 0);
         this.gl.uniform1i(this.shaderUniforms.TiledRendering, 1);
         this.gl.uniform1f(this.shaderUniforms.TileBorder, 0 / TILE_SIZE);
         this.gl.uniform2f(this.shaderUniforms.TileSize, 1, 1);
@@ -463,7 +467,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 bias: frame.renderConfig.bias,
                 scaling: frame.renderConfig.scaling,
                 gamma: frame.renderConfig.gamma,
-                alpha: frame.renderConfig.alpha
+                alpha: frame.renderConfig.alpha,
+                inverted: frame.renderConfig.inverted
             };
             const renderType = frame.renderType;
         }
