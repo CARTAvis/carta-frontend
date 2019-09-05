@@ -225,14 +225,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     onGraphCursorMoved = _.throttle((x) => {
         this.widgetStore.setlinePlotCursorX(x);
-        // console.log(x)
-        // console.log(y)
     }, 33);
 
     onScatterGraphCursorMoved = _.throttle((x, y) => {
         this.widgetStore.setScatterPlotCursor({ x: x, y: y});
-        // console.log(x)
-        // console.log(y)
     }, 33);
 
     private static calculatePA(qData: Float32Array | Float64Array, uData: Float32Array | Float64Array): Array<number> {
@@ -606,8 +602,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         };
 
         let quScatterPlotProps: ScatterPlotComponentProps = {
-            xLabel: "Channel",
-            yLabel: "Channel",
+            xLabel: "Value",
+            yLabel: "Value",
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: "profile",
