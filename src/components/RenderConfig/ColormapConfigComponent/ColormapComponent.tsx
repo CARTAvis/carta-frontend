@@ -5,6 +5,7 @@ import {RenderConfigStore} from "stores/RenderConfigStore";
 
 interface ColormapComponentProps {
     selectedItem: string;
+    inverted: boolean;
     onItemSelect: (selected: string) => void;
 }
 
@@ -24,6 +25,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = (props) => {
             <div
                 className={className}
                 style={{
+                    transform: `scaleX(${props.inverted ? -1 : 1})`,
                     height: `${blockHeight}px`,
                     backgroundImage: `url(${allMaps})`,
                     backgroundSize: `100% calc(300% * ${N})`,
