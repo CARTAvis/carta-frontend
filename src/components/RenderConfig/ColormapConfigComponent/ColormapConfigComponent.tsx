@@ -95,25 +95,25 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                         onChange={this.handleInvertedChanged}
                     />
                 </FormGroup>
-                {renderConfig.scaling === FrameScaling.GAMMA &&
-                <FormGroup label={"Gamma"} inline={true}>
-                    <NumericInput
-                        min={0}
-                        max={2}
-                        stepSize={0.1}
-                        minorStepSize={0.01}
-                        majorStepSize={0.5}
-                        value={renderConfig.gamma}
-                        onValueChange={this.handleGammaChange}
-                    />
-                </FormGroup>
-                }
                 {(renderConfig.scaling === FrameScaling.LOG || renderConfig.scaling === FrameScaling.POWER) &&
                 <FormGroup label={"Alpha"} inline={true}>
                     <NumericInput
                         buttonPosition={"none"}
                         value={renderConfig.alpha}
                         onValueChange={this.handleAlphaChange}
+                    />
+                </FormGroup>
+                }
+                {renderConfig.scaling === FrameScaling.GAMMA &&
+                <FormGroup label={"Gamma"} inline={true}>
+                    <NumericInput
+                        min={RenderConfigStore.GAMMA_MIN}
+                        max={RenderConfigStore.GAMMA_MAX}
+                        stepSize={0.1}
+                        minorStepSize={0.01}
+                        majorStepSize={0.5}
+                        value={renderConfig.gamma}
+                        onValueChange={this.handleGammaChange}
                     />
                 </FormGroup>
                 }
