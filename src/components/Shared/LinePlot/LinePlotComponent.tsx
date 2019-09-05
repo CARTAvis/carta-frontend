@@ -15,14 +15,14 @@ import {Point2D} from "models";
 import {binarySearchByX, clamp} from "utilities";
 import "./LinePlotComponent.css";
 
-enum ZoomMode {
+export enum ZoomMode {
     NONE,
     X,
     Y,
     XY
 }
 
-enum InteractionMode {
+export enum InteractionMode {
     NONE,
     SELECTING,
     PANNING
@@ -46,7 +46,7 @@ export interface LineMarker {
 export class LinePlotComponentProps {
     width?: number;
     height?: number;
-    data?: { x: number, y: number, z?: number }[];
+    data?: { x: number, y: number }[];
     dataStat?: { mean: number, rms: number };
     cursorX?: { profiler: number, image: number, unit: string };
     comments?: string[];
@@ -87,7 +87,6 @@ export class LinePlotComponentProps {
     multiPlotBorderColor?: Map<string, string>;
     plotType?: string;
     isGroupSubPlot?: boolean;
-    zIndex?: boolean;
     pointRadius?: number;
     zeroLineWidth?: number;
 }
@@ -771,7 +770,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return selectionRect;
     };
 
-    genBorderRect = () => {
+    private genBorderRect = () => {
         const chartArea = this.chartArea;
         let borderRect = null;
         if (this.chartArea) {

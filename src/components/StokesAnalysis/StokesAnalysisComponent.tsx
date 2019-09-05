@@ -617,9 +617,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             showXAxisTicks: true,
             showXAxisLabel: true,
             usePointSymbols: true,
-            multiPlotData: new Map(),
             zeroLineWidth: 2,
-            multiPlotBorderColor: new Map(),
             isGroupSubPlot: true,
             colorRangeEnd: 240,
             centeredOrigin: true,
@@ -748,14 +746,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             paLinePlotProps.cursorX = cursorXInfo;
             piLinePlotProps.cursorX = cursorXInfo;
             quLinePlotProps.cursorX = cursorXInfo;
-            // console.log(cursorXInfo)
 
-            let scatterCursorInfor = {
-                profiler: { x: this.widgetStore.scatterPlotCursorX, y: this.widgetStore.scatterPlotCursorY, z: 0},
-                image: { x: 0, y: 0, z: 0},
-                unit: this.getChannelUnit()
-            }
-            quScatterPlotProps.cursorXY = scatterCursorInfor;
             paLinePlotProps.markers = [];
             piLinePlotProps.markers = [];
             quLinePlotProps.markers = [];
