@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, Button, Checkbox, FormGroup, IPopoverProps, MenuItem, NumericInput, Switch} from "@blueprintjs/core";
+import {Alert, Button, FormGroup, IPopoverProps, MenuItem, NumericInput, Switch} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {FrameScaling, RenderConfigStore} from "stores/RenderConfigStore";
 import {ScalingComponent} from "./ScalingComponent";
