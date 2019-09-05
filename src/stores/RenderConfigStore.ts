@@ -23,7 +23,7 @@ export class RenderConfigStore {
         [FrameScaling.GAMMA, "Gamma"],
         [FrameScaling.POWER, "Power"]
     ]);
-    
+
     static readonly COLOR_MAPS_ALL = [
         "accent", "afmhot", "autumn", "binary", "Blues",
         "bone", "BrBG", "brg", "BuGn", "BuPu",
@@ -61,15 +61,16 @@ export class RenderConfigStore {
     @observable bias: number;
     @observable gamma: number;
     @observable alpha: number;
+    @observable inverted: boolean;
     @observable channelHistogram: CARTA.IHistogram;
     @observable cubeHistogram: CARTA.IHistogram;
     @observable useCubeHistogram: boolean;
     @observable cubeHistogramProgress: number;
     @observable selectedPercentile: number[];
     @observable stokes: number;
-    @observable scaleMin: number[];    
+    @observable scaleMin: number[];
     @observable scaleMax: number[];
-    
+
     constructor(readonly preference: PreferenceStore) {
         const percentile = preference.percentile;
         this.selectedPercentile = [percentile, percentile, percentile, percentile];
@@ -78,15 +79,16 @@ export class RenderConfigStore {
         this.alpha = preference.scalingAlpha;
         this.gamma = preference.scalingGamma;
         this.scaling = preference.scaling;
+        this.inverted = false;
         this.cubeHistogramProgress = 0;
         this.setColorMap(preference.colormap);
-        this.stokes = 0;	
+        this.stokes = 0;
         this.scaleMin = [0, 0, 0, 0];
         this.scaleMax = [1, 1, 1, 1];
     }
 
     public static IsScalingValid(scaling: FrameScaling): boolean {
-        return RenderConfigStore.SCALING_TYPES.has(scaling) ? true : false;
+        return RenderConfigStore.SCALING_TYPES.has(scaling);
     }
 
     public static IsGammaValid(gamma: number): boolean {
@@ -94,11 +96,11 @@ export class RenderConfigStore {
     }
 
     public static IsColormapValid(colormap: string): boolean {
-        return RenderConfigStore.COLOR_MAPS_SELECTED.includes(colormap) ? true : false;
+        return RenderConfigStore.COLOR_MAPS_SELECTED.includes(colormap);
     }
 
     public static IsPercentileValid(percentile: number): boolean {
-        return RenderConfigStore.PERCENTILE_RANKS.includes(percentile) ? true : false;
+        return RenderConfigStore.PERCENTILE_RANKS.includes(percentile);
     }
 
     @computed get colorMapName() {
@@ -129,7 +131,7 @@ export class RenderConfigStore {
     @computed get scaleMinVal() {
         return this.scaleMin[this.stokes];
     }
- 
+
     @computed get scaleMaxVal() {
         return this.scaleMax[this.stokes];
     }
@@ -140,7 +142,7 @@ export class RenderConfigStore {
 
     @action setStokes = (val: number) => {
         this.stokes = val;
-    }
+    };
 
     @action setUseCubeHistogram = (val: boolean) => {
         if (val !== this.useCubeHistogram) {
@@ -164,7 +166,7 @@ export class RenderConfigStore {
         }
         return this.histogram.firstBinCenter + (this.histogram.bins.length + 0.5) * this.histogram.binWidth;
     }
-    
+
     @action setPercentileRank = (rank: number) => {
         this.selectedPercentile[this.stokes] = rank;
         // Find max and min if the rank is 100%
@@ -233,6 +235,10 @@ export class RenderConfigStore {
 
     @action setAlpha = (alpha: number) => {
         this.alpha = alpha;
+    };
+
+    @action setInverted = (inverted: boolean) => {
+        this.inverted = inverted;
     };
 
     private getPercentiles(ranks: number[]): number[] {

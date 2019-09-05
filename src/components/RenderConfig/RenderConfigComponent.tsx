@@ -306,12 +306,12 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         const stokes = frame.renderConfig.stokes;
         let percentileButtonsDiv, percentileSelectDiv;
         if (displayRankButtons) {
-            const percentileRankbuttons = RenderConfigStore.PERCENTILE_RANKS.map(rank => (
+            const percentileRankButtons = RenderConfigStore.PERCENTILE_RANKS.map(rank => (
                 <Button small={true} key={rank} onClick={() => this.handlePercentileRankClick(rank)} active={frame.renderConfig.selectedPercentileVal === rank}>
                     {`${rank}%`}
                 </Button>
             ));
-            percentileRankbuttons.push(
+            percentileRankButtons.push(
                 <Button small={true} key={-1} onClick={this.setCustomPercentileRank} active={frame.renderConfig.selectedPercentileVal === -1}>
                     Custom
                 </Button>
@@ -319,7 +319,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             percentileButtonsDiv = (
                 <div className="percentile-buttons">
                     <ButtonGroup fill={true}>
-                        {percentileRankbuttons}
+                        {percentileRankButtons}
                     </ButtonGroup>
                 </div>
             );

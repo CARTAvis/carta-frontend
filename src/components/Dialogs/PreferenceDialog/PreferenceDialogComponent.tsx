@@ -14,7 +14,7 @@ import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {AppearanceForm} from "components/Dialogs/RegionDialog/AppearanceForm/AppearanceForm";
-import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
+import {Theme, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore, FrameScaling, RegionStore, RenderConfigStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
@@ -135,6 +135,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </FormGroup>
                 <FormGroup inline={true} label="Color Map">
                     <ColormapComponent
+                        inverted={false}
                         selectedItem={preference.colormap}
                         onItemSelect={(selected) => { preference.setColormap(selected); }}
                     />
