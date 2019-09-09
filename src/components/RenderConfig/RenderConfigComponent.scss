@@ -110,3 +110,16 @@
         margin-left: 5px;
     }
 }
+
+.profiler-info {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    z-index: 1;
+
+    pre {
+        margin-top: 0;
+        margin-bottom: 0;
+        font-size: x-small;
+    }
+}
