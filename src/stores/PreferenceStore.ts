@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
 import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore, LayoutStore} from "stores";
-import {isColorValid} from "../utilities";
+import {isColorValid, parseBoolean} from "../utilities";
 
 const PREFERENCE_KEYS = {
     theme: "theme",
@@ -15,6 +15,8 @@ const PREFERENCE_KEYS = {
     scaling: "scaling",
     colormap: "colormap",
     percentile: "percentile",
+    scalingAlpha: "scalingAlpha",
+    scalingGamma: "scalingGamma",
     astColor: "astColor",
     astGridVisible: "astGridVisible",
     astLabelsVisible: "astLabelsVisible",
@@ -40,8 +42,10 @@ const DEFAULTS = {
     scaling: FrameScaling.LINEAR,
     colormap: "inferno",
     percentile: 99.9,
+    scalingAlpha: 1000,
+    scalingGamma: 1,
     astColor: 4,
-    astGridVisible: true,
+    astGridVisible: false,
     astLabelsVisible: true,
     wcsType: WCSType.AUTOMATIC,
     regionColor: "#2EE6D6",
@@ -68,6 +72,8 @@ export class PreferenceStore {
     @observable scaling: FrameScaling;
     @observable colormap: string;
     @observable percentile: number;
+    @observable scalingAlpha: number;
+    @observable scalingGamma: number;
     @observable astColor: number;
     @observable astGridVisible: boolean;
     @observable astLabelsVisible: boolean;
@@ -87,7 +93,8 @@ export class PreferenceStore {
     };
 
     private getAutoLaunch = (): boolean => {
-        return localStorage.getItem(PREFERENCE_KEYS.autoLaunch) === "false" ? false : DEFAULTS.autoLaunch;
+        const autoLaunch = localStorage.getItem(PREFERENCE_KEYS.autoLaunch);
+        return parseBoolean(autoLaunch, DEFAULTS.autoLaunch);
     };
 
     private getLayout = (): string => {
@@ -131,6 +138,26 @@ export class PreferenceStore {
         return isFinite(value) && RenderConfigStore.IsPercentileValid(value) ? value : DEFAULTS.percentile;
     };
 
+    private getScalingAlpha = (): number => {
+        const scalingAlpha = localStorage.getItem(PREFERENCE_KEYS.scalingAlpha);
+        if (!scalingAlpha) {
+            return DEFAULTS.scalingAlpha;
+        }
+
+        const value = Number(scalingAlpha);
+        return isFinite(value) ? value : DEFAULTS.scalingAlpha;
+    };
+
+    private getScalingGamma = (): number => {
+        const scalingGamma = localStorage.getItem(PREFERENCE_KEYS.scalingGamma);
+        if (!scalingGamma) {
+            return DEFAULTS.scalingGamma;
+        }
+
+        const value = Number(scalingGamma);
+        return isFinite(value) && RenderConfigStore.IsGammaValid(value) ? value : DEFAULTS.scalingGamma;
+    };
+
     // getters for WCS overlay
     private getASTColor = (): number => {
         const astColor = localStorage.getItem(PREFERENCE_KEYS.astColor);
@@ -144,12 +171,12 @@ export class PreferenceStore {
 
     private getASTGridVisible = (): boolean => {
         const astGridVisible = localStorage.getItem(PREFERENCE_KEYS.astGridVisible);
-        return astGridVisible === "false" ? false : DEFAULTS.astGridVisible;
+        return parseBoolean(astGridVisible, DEFAULTS.astGridVisible);
     };
 
     private getASTLabelsVisible = (): boolean => {
         const astLabelsVisible = localStorage.getItem(PREFERENCE_KEYS.astLabelsVisible);
-        return astLabelsVisible === "false" ? false : DEFAULTS.astLabelsVisible;
+        return parseBoolean(astLabelsVisible, DEFAULTS.astLabelsVisible);
     };
 
     private getWCSType = (): string => {
@@ -339,6 +366,16 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.percentile, percentile);
     };
 
+    @action setScalingAlpha = (scalingAlpha: number) => {
+        this.scalingAlpha = scalingAlpha;
+        localStorage.setItem(PREFERENCE_KEYS.scalingAlpha, scalingAlpha.toString(10));
+    };
+
+    @action setScalingGamma = (scalingGamma: number) => {
+        this.scalingGamma = scalingGamma;
+        localStorage.setItem(PREFERENCE_KEYS.scalingGamma, scalingGamma.toString(10));
+    };
+
     // setters for WCS overlay
     @action setASTColor = (astColor: number) => {
         this.astColor = astColor;
@@ -410,6 +447,8 @@ export class PreferenceStore {
         this.setScaling(DEFAULTS.scaling);
         this.setColormap(DEFAULTS.colormap);
         this.setPercentile(DEFAULTS.percentile.toString());
+        this.setScalingAlpha(DEFAULTS.scalingAlpha);
+        this.setScalingGamma(DEFAULTS.scalingGamma);
     };
 
     @action resetWCSOverlaySettings = () => {
@@ -449,6 +488,8 @@ export class PreferenceStore {
         this.scaling = this.getScaling();
         this.colormap = this.getColormap();
         this.percentile = this.getPercentile();
+        this.scalingAlpha = this.getScalingAlpha();
+        this.scalingGamma = this.getScalingGamma();
         this.astColor = this.getASTColor();
         this.astGridVisible = this.getASTGridVisible();
         this.astLabelsVisible = this.getASTLabelsVisible();

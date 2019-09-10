@@ -28,8 +28,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private channelBorder: { xMin: number, xMax: number };
     private minProgress = 0;
     private cursorInfo: {isMouseEntered: boolean, quValue: Point2D, channel: number, pi: number, pa: number, xUnit: string};
-    private QlinePlotColor = Colors.GREEN2;
-    private UlinePlotColor = Colors.BLUE2;
     private static layoutRatioCutoffs = {
         vertical: 0.5,
         horizontal: 2,
@@ -750,8 +748,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 paLinePlotProps.opacity = lineOpacity;
                 quLinePlotProps.opacity = lineOpacity;
                 
-                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, this.QlinePlotColor);
-                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationU, this.UlinePlotColor);
+                const QlinePlotColor = appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2;
+                const UlinePlotColor = appStore.darkTheme ? Colors.ORANGE4 : Colors.ORANGE2;
+                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, QlinePlotColor);
+                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationU, UlinePlotColor);
 
                 let qBorder = currentPlotData.qValues.border;
                 let uBorder = currentPlotData.uValues.border;
