@@ -31,12 +31,12 @@ export class FileListComponent extends React.Component<{
         const fileEntries = [];
         const fileList = this.props.files;
         if (fileList) {
-            let sortedDirectories: string[] = [];
-            if (fileList.subdirectories && fileList.subdirectories.length) {
+            let sortedDirectories = fileList.subdirectories.slice();
+            if (sortedDirectories) {
                 if (this.state.sortColumn === "name") {
-                    sortedDirectories = fileList.subdirectories.sort((a, b) => this.state.sortDirection * (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
+                    sortedDirectories.sort((a, b) => this.state.sortDirection * (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
                 } else {
-                    sortedDirectories = fileList.subdirectories.sort((a, b) => (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
+                    sortedDirectories.sort((a, b) => (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
                 }
             }
 
@@ -51,19 +51,19 @@ export class FileListComponent extends React.Component<{
                 );
             }));
 
-            let sortedFiles = [];
+            let sortedFiles = fileList.files.slice();
 
-            if (fileList.files && fileList.files.length) {
+            if (sortedFiles) {
                 switch (this.state.sortColumn) {
                     case "name":
-                        sortedFiles = fileList.files.sort((a, b) => this.state.sortDirection * (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1));
+                        sortedFiles.sort((a, b) => this.state.sortDirection * (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1));
                         break;
                     case "type":
-                        sortedFiles = fileList.files.sort((a, b) => this.state.sortDirection * (a.type > b.type ? -1 : 1));
+                        sortedFiles.sort((a, b) => this.state.sortDirection * (a.type > b.type ? -1 : 1));
                         break;
                     case "size":
                     default:
-                        sortedFiles = fileList.files.sort((a, b) => this.state.sortDirection * (a.size < b.size ? -1 : 1));
+                        sortedFiles.sort((a, b) => this.state.sortDirection * (a.size < b.size ? -1 : 1));
                         break;
                 }
             }
