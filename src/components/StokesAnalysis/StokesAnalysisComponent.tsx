@@ -822,17 +822,17 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     quScatterPlotProps.yMax = this.widgetStore.quScatterMaxY;
                 }
                 // cursor infor
-                let cursorXInfo = {
+                let lineCursorXInfo = {
                     profiler: this.widgetStore.linePlotcursorX,
                     image: this.getCurrentChannelValue(),
                     unit: this.getChannelUnit()
                 };
-                paLinePlotProps.cursorX = cursorXInfo;
-                piLinePlotProps.cursorX = cursorXInfo;
-                quLinePlotProps.cursorX = cursorXInfo;
+                paLinePlotProps.cursorX = lineCursorXInfo;
+                piLinePlotProps.cursorX = lineCursorXInfo;
+                quLinePlotProps.cursorX = lineCursorXInfo;
                 let scatterCursorInfor = {
                     profiler: { x: this.widgetStore.scatterPlotCursorX, y: this.widgetStore.scatterPlotCursorY},
-                    image: this.matchXYindex(cursorXInfo.image, currentPlotData.quValues.dataset),
+                    image: this.matchXYindex(lineCursorXInfo.image, currentPlotData.quValues.dataset),
                     unit: this.getChannelUnit()
                 };
                 quScatterPlotProps.cursorXY = scatterCursorInfor;
@@ -841,9 +841,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     currentPlotData.piValues.dataset, 
                     currentPlotData.paValues.dataset, 
                     scatterCursorInfor.profiler,
-                    cursorXInfo.profiler,
+                    lineCursorXInfo.profiler,
                     scatterCursorInfor.image,
-                    cursorXInfo.image);
+                    lineCursorXInfo.image);
                 if (this.cursorInfo && this.cursorInfo.quValue) {
                     quScatterPlotProps.cursorNearestPoint = this.cursorInfo.quValue;
                 }
