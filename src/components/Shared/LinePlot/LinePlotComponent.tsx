@@ -41,6 +41,7 @@ export interface LineMarker {
     dragCustomBoundary?: { xMin?: number, xMax?: number, yMin?: number, yMax?: number };
     dragMove?: (val: number) => void;
     isMouseMove?: boolean;
+    interactionMarker?: boolean;
 }
 
 export class LinePlotComponentProps {
@@ -718,7 +719,12 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     if (valueCanvasSpace < Math.floor(chartArea.left - 1) || valueCanvasSpace > Math.ceil(chartArea.right + 1) || isNaN(valueCanvasSpace)) {
                         continue;
                     }
-                    lines.push(this.genVerticalLines(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace));
+                    if (marker.interactionMarker) {
+                        const markerOpacityInteraction = (!marker.isMouseMove && (this.isMouseEntered)) ? 0 : (marker.opacity || 1);
+                        lines.push(this.genVerticalLines(marker, isHovering, markerColor, markerOpacityInteraction, valueCanvasSpace));
+                    } else {
+                        lines.push(this.genVerticalLines(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace));
+                    }
                 }
             }
         }
@@ -811,7 +817,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     render() {
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
         const cursorInfo = this.getCursorInfo();
-
         return (
             <div
                 className={"line-plot-component"}

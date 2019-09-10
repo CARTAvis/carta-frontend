@@ -8,6 +8,7 @@
         td {
             text-align: left;
             padding: 0 0 0 0;
+            background-color: #ffffff00;
         }
 
         .td-label {
@@ -18,5 +19,11 @@
             font-size: x-small;
             margin: 0 0 0 0;
         }
+    }
+}
+
+.floating-widget {
+    .bp3-dark {
+        border: 0px;
     }
 }

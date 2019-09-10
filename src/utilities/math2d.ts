@@ -158,14 +158,15 @@ export function simplePolygonPointTest(points: Point2D[], pointIndex: number) {
     return true;
 }
 
+type Point3D = { x: number, y: number, z?: number };
 // get distance between two points
-export function pointsDistance (p1: Point2D, p2: Point2D) {
+export function pointsDistance (p1: Point3D, p2: Point3D) {
     const distance = subtract2D(p1, p2);
-    return Math.sqrt(distance.x * distance.x + distance.y * distance.y)
+    return distance.x * distance.x + distance.y * distance.y;
 }
 
 // Returns the closest point from a points array to current cursor point. 
-export function closestPointToCursor (cursor: Point2D, points: Point2D[]) {
+export function closestPointToCursor (cursor: Point3D, points: Point3D[]) {
     let minDistance = Number.MAX_VALUE;
     let closestPoint = cursor;
     for (let index = 0; index < points.length; index++) {
