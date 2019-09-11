@@ -1,6 +1,6 @@
 import {action, computed, observable, autorun} from "mobx";
 import {CARTA} from "carta-protobuf";
-import * as AST from "ast_wrapper";
+import * as AST from "carta-ast-wrapper";
 import {NumberRange} from "@blueprintjs/core";
 import {ASTSettingsString, PreferenceStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore} from "stores";
 import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES} from "models";

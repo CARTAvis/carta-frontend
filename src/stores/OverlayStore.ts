@@ -1,4 +1,4 @@
-import * as AST from "ast_wrapper";
+import * as AST from "carta-ast-wrapper";
 import {Colors} from "@blueprintjs/core";
 import {action, autorun, computed, observable} from "mobx";
 import {FrameStore, PreferenceStore} from "stores";

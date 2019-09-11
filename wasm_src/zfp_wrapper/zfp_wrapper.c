@@ -5,10 +5,6 @@
 #include <string.h>
 #include "zfp.h"
 
-int main(int argc, char** argv) {
-    printf("Loaded ZFP wrapper\n");
-}
-
 int EMSCRIPTEN_KEEPALIVE encodeFloats(float* arr, char* rgba, int N) {
     uint32_t* u32arr = (uint32_t*) arr;
     for (int i = 0, offset = 0; i < N; i++, offset += 4) {

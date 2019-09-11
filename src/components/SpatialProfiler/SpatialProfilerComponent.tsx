@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
-import * as AST from "ast_wrapper";
+import * as AST from "carta-ast-wrapper";
 import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";

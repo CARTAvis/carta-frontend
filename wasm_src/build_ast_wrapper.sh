@@ -16,12 +16,9 @@ if [[ $(find build/ast_wrapper.js -type f -size +1000c 2>/dev/null) ]]; then
     echo "Found"
     # copy WASM module to public folder for serving
     cp build/ast_wrapper.wasm ../../public/
-    # link wrapper to node modules
+    # create local package for install
     mv build/ast_wrapper.js build/index.js
-    cd ../../node_modules
-    rm -f ast_wrapper
-    ln -s ../wasm_src/ast_wrapper/build ast_wrapper
-
+    cp package.json build/package.json
 else
     echo "Not found!"
     exit

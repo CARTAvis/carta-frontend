@@ -1,5 +1,5 @@
 import * as _ from "lodash";
-import * as AST from "ast_wrapper";
+import * as AST from "carta-ast-wrapper";
 import {action, autorun, computed, observable, ObservableMap} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {

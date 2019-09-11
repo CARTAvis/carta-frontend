@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as AST from "ast_wrapper";
+import * as AST from "carta-ast-wrapper";
 import * as _ from "lodash";
 import {observer} from "mobx-react";
 import {FrameStore, OverlayStore} from "stores";

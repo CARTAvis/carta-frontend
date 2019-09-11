@@ -79,7 +79,7 @@ export class TileService {
         this.tileStream = new Subject<number>();
         this.backendService.getRasterTileStream().subscribe(this.handleStreamedTiles);
 
-        const ZFPWorker = require("worker-loader!zfp_wrapper");
+        const ZFPWorker = require("worker-loader!carta-zfp-wrapper");
         this.workers = new Array<Worker>(Math.min(navigator.hardwareConcurrency || 4, 4));
         for (let i = 0; i < this.workers.length; i++) {
             this.workers[i] = new ZFPWorker();

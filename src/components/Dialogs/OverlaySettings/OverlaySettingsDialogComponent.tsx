@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as AST from "ast_wrapper";
+import * as AST from "carta-ast-wrapper";
 import {observer} from "mobx-react";
 import {observable} from "mobx";
 import {Select, ItemRenderer} from "@blueprintjs/select";

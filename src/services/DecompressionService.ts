@@ -13,7 +13,7 @@ export class DecompressionService {
     private isQueueFree: boolean;
 
     constructor(numWorkers: number) {
-        const ZFPWorker = require("worker-loader!zfp_wrapper");
+        const ZFPWorker = require("worker-loader!carta-zfp-wrapper");
         this.decompressedData = null;
         this.workQueue = [];
         this.workers = new Array<Worker>(numWorkers);

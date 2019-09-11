@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as AST from "ast_wrapper";
+import * as AST from "carta-ast-wrapper";
 import {observer} from "mobx-react";
 import {H5, InputGroup, NumericInput, Classes} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";

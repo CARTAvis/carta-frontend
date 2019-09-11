@@ -1,5 +1,5 @@
 import {observable, computed, action, autorun} from "mobx";
-import * as AST from "ast_wrapper";
+import * as AST from "carta-ast-wrapper";
 import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
 import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";

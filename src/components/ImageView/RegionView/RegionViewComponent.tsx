@@ -1,11 +1,10 @@
 import * as React from "react";
 import * as _ from "lodash";
-import * as AST from "ast_wrapper";
 import {action, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Group, Layer, Line, Rect, Stage} from "react-konva";
 import {CARTA} from "carta-protobuf";
-import {ASTSettingsString, FrameStore, OverlayStore, RegionMode, RegionStore} from "stores";
+import {FrameStore, OverlayStore, RegionMode, RegionStore} from "stores";
 import {RegionComponent} from "./RegionComponent";
 import {PolygonRegionComponent} from "./PolygonRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
