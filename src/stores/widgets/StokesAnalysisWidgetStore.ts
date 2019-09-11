@@ -32,6 +32,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable useWcsValues: boolean;
     @observable scatterPlotCursorX: number;
     @observable scatterPlotCursorY: number;
+    @observable isMouseMoveIntoScatterPlots: boolean;
+    @observable isMouseMoveIntoLinePlots: boolean;
 
     @observable statsType: CARTA.StatsType;
     @observable fractionalPolVisible: boolean;
@@ -102,6 +104,14 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         });
         return updatedRequirements;
     }
+
+    @action setMouseMoveIntoScatterPlots = (val: boolean) => {
+        this.isMouseMoveIntoScatterPlots = val;
+    };
+
+    @action setMouseMoveIntoLinePlots = (val: boolean) => {
+        this.isMouseMoveIntoLinePlots = val;
+    };
 
     @action setStatsType = (statsType: CARTA.StatsType) => {
         if (StokesAnalysisWidgetStore.ValidStatsTypes.indexOf(statsType) !== -1) {

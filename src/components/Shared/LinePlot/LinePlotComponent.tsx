@@ -91,6 +91,7 @@ export class LinePlotComponentProps {
     zIndex?: boolean;
     pointRadius?: number;
     zeroLineWidth?: number;
+    mouseEntered?: (value: boolean) => void;
 }
 
 // Maximum time between double clicks
@@ -216,6 +217,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     @action showMouseEnterWidget = () => {
         this.isMouseEntered = true;
+        if (this.props.mouseEntered) {
+            this.props.mouseEntered(true);
+        }
     };
 
     @action hideMouseEnterWidget = () => {
@@ -456,6 +460,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     onMouseLeave = () => {
         this.hideMouseEnterWidget();
+        if (this.props.mouseEntered) {
+            this.props.mouseEntered(false);
+        }
     };
 
     private getTimestamp() {

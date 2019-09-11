@@ -53,6 +53,7 @@ export class ScatterPlotComponentProps {
     graphZoomedXY?: (xMin: number, xMax: number, yMin: number, yMax: number) => void;
     graphZoomReset?: () => void;
     graphCursorMoved?: (x: number, y: number) => void;
+    mouseEntered?: (value: boolean) => void;
     scrollZoom?: boolean;
     multiPlotData?: Map<string, { x: number, y: number }[]>;
     colorRangeEnd?: number;
@@ -115,6 +116,10 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     @action showMouseEnterWidget = () => {
         this.isMouseEntered = true;
+        // set mouseEtered to true, if mouse entered into the plots or mouse already in plots
+        if (this.props.mouseEntered) {
+            this.props.mouseEntered(true);
+        }
     };
 
     @action hideMouseEnterWidget = () => {
@@ -135,6 +140,9 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     onMouseLeave = () => {
         this.hideMouseEnterWidget();
+        if (this.props.mouseEntered) {
+            this.props.mouseEntered(false);
+        }
     };
 
     onKeyDown = (ev: React.KeyboardEvent) => {

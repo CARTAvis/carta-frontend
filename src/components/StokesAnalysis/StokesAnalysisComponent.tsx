@@ -33,9 +33,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         horizontal: 2,
     };
 
-    @observable isMouseMoveIntoLinePlots = false;
-    @observable isMouseMoveIntoScatterPlots = false;
-
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
             id: "stokes",
@@ -489,7 +486,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 if (channelHovered) {
                     close = this.closestChannel(channelHovered, data);
                     if (this.channelBorder && this.channelBorder.xMin !== 0) {
-                        if (close > this.channelBorder.xMax || close < this.channelBorder.xMin || !this.isMouseMoveIntoLinePlots) {
+                        if (close > this.channelBorder.xMax || close < this.channelBorder.xMin || !this.widgetStore.isMouseMoveIntoLinePlots) {
                             close = channelCurrent;
                         }
                     }
@@ -507,22 +504,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         }
         return indicator;
     }
-
-    private onMouseEnterHandler = () => {
-        this.isMouseMoveIntoLinePlots = true;
-    };
-
-    private onMouseleaveHandler = () => {
-        this.isMouseMoveIntoLinePlots = false;
-    };
-
-    private onMouseEnterScatterHandler = () => {
-        this.isMouseMoveIntoScatterPlots = true;
-    };
-
-    private onMouseleaveScatterHandler = () => {
-        this.isMouseMoveIntoScatterPlots = false;
-    };
 
     @computed get plotData(): {
         qValues: { dataset: Array<Point2D>, border: Border },
@@ -580,10 +561,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     }
 
     private getCursorInfo (quDataset: Point3D[], piDataset: Point2D[], paDataset: Point2D[], scatterCursorProfiler: Point3D, lineCursorProfiler: number, scatterCursorImage: Point3D, lineCursorImage: number) {
-        const isMouseEntered = this.isMouseMoveIntoLinePlots || this.isMouseMoveIntoScatterPlots;
+        const isMouseEntered = this.widgetStore.isMouseMoveIntoLinePlots || this.widgetStore.isMouseMoveIntoScatterPlots;
         const xUnit =  this.getChannelUnit();
         let profilerData = {q: 0, u: 0, pi: 0, pa: 0, channel: 0};
-        if (this.isMouseMoveIntoLinePlots) {
+        if (this.widgetStore.isMouseMoveIntoLinePlots) {
             const lineCursorPIDataProfiler = binarySearchByX(piDataset, lineCursorProfiler);
             const lineCursorPADataProfiler = binarySearchByX(paDataset, lineCursorProfiler);
             if (lineCursorPIDataProfiler && lineCursorPADataProfiler) {
@@ -595,7 +576,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 profilerData.pa = lineCursorPADataProfiler.y;
             }   
         }
-        if (this.isMouseMoveIntoScatterPlots) {
+        if (this.widgetStore.isMouseMoveIntoScatterPlots) {
             const minIndex = closestPointIndexToCursor(scatterCursorProfiler, quDataset);
             const currentScatterData = quDataset[minIndex];
             const lineCursorPIDataProfiler = binarySearchByX(piDataset, currentScatterData.z);
@@ -638,7 +619,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         }
         const frame = appStore.activeFrame;
         const imageName = (appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfo.name : undefined);
-
         let quLinePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
@@ -660,7 +640,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphZoomedXY: this.widgetStore.setQULinePlotsXYBounds,
             graphZoomReset: this.widgetStore.clearLinePlotsXYBounds,
             graphClicked: this.onChannelChanged,
-            markers: []
+            markers: [],
+            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots
         };
 
         let piLinePlotProps: LinePlotComponentProps = {
@@ -682,7 +663,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphZoomedXY: this.widgetStore.setPolIntensityXYBounds,
             graphZoomReset: this.widgetStore.clearLinePlotsXYBounds,
             graphClicked: this.onChannelChanged,
-            markers: []
+            markers: [],
+            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots
         };
 
         let paLinePlotProps: LinePlotComponentProps = {
@@ -703,7 +685,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphZoomedXY: this.widgetStore.setPolAngleXYBounds,
             graphZoomReset: this.widgetStore.clearLinePlotsXYBounds,
             graphClicked: this.onChannelChanged,
-            markers: []
+            markers: [],
+            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots
         };
 
         let quScatterPlotProps: ScatterPlotComponentProps = {
@@ -729,6 +712,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphCursorMoved: this.onScatterGraphCursorMoved,
             graphClicked: this.onScatterChannelChanged,
             graphZoomReset: this.widgetStore.clearScatterPlotXYBounds,
+            mouseEntered: this.widgetStore.setMouseMoveIntoScatterPlots,
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
@@ -875,7 +859,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             piLinePlotProps.markers = [];
             quLinePlotProps.markers = [];
 
-            if (this.cursorInfo && this.cursorInfo.channel && this.isMouseMoveIntoScatterPlots) {
+            if (this.cursorInfo && this.cursorInfo.channel && this.widgetStore.isMouseMoveIntoScatterPlots) {
                 let lineCursorIndicator = {
                     value: this.cursorInfo.channel,
                     id: "marker-profiler-cursor-stokes2",
@@ -883,7 +867,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     horizontal: false,
                     color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
                     opacity: 0.8,
-                    isMouseMove: !this.isMouseMoveIntoLinePlots,
+                    isMouseMove: !this.widgetStore.isMouseMoveIntoLinePlots,
                     interactionMarker: true,
                 };
                 paLinePlotProps.markers.push(lineCursorIndicator);
@@ -899,7 +883,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     horizontal: false,
                     color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
                     opacity: 0.8,
-                    isMouseMove: !this.isMouseMoveIntoLinePlots,
+                    isMouseMove: !this.widgetStore.isMouseMoveIntoLinePlots,
                 };
                 paLinePlotProps.markers.push(cursor);
                 piLinePlotProps.markers.push(cursor);
@@ -951,7 +935,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     <div className="profile-plot-toolbar">
                         <StokesAnalysisToolbarComponent widgetStore={this.widgetStore} appStore={appStore}/>
                     </div>
-                    <div className="profile-plot-qup" onMouseEnter={this.onMouseEnterHandler} onMouseLeave={this.onMouseleaveHandler}>
+                    <div className="profile-plot-qup">
                         <div className="profile-plot-qu">
                             <LinePlotComponent {...quLinePlotProps}/>
                         </div>
@@ -962,7 +946,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                             <LinePlotComponent {...paLinePlotProps}/>
                         </div>
                     </div>
-                    <div className="profile-plot-qvsu" onMouseEnter={this.onMouseEnterScatterHandler} onMouseLeave={this.onMouseleaveScatterHandler}>
+                    <div className="profile-plot-qvsu">
                         <ScatterPlotComponent {...quScatterPlotProps}/>
                     </div>
                     {this.cursorInfo &&
