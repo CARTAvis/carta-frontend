@@ -350,7 +350,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             }
 
             cursorInfoDiv = (
-                <div className="cursor-display">
+                <div className="profiler-info">
                     <pre>{`Cursor: ${numberString}`}</pre>
                 </div>
             );
@@ -363,6 +363,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     {displayRankButtons ? percentileButtonsDiv : percentileSelectDiv}
                     <div className="histogram-plot">
                         <LinePlotComponent {...linePlotProps}/>
+                        {cursorInfoDiv}
                     </div>
                 </div>
                 }
@@ -393,7 +394,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                             onKeyDown={this.handleScaleMaxChange}
                         />
                     </FormGroup>		   		    
-                {this.width < histogramCutoff ? percentileSelectDiv : cursorInfoDiv}
+                {this.width < histogramCutoff && percentileSelectDiv}
                 </div>
                 <TaskProgressDialogComponent
                     isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}
