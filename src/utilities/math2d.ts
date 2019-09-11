@@ -165,17 +165,17 @@ export function pointsDistance (p1: Point3D, p2: Point3D) {
     return distance.x * distance.x + distance.y * distance.y;
 }
 
-// Returns the closest point from a points array to current cursor point. 
-export function closestPointToCursor (cursor: Point3D, points: Point3D[]) {
-    let minDistance = Number.MAX_VALUE;
-    let closestPoint = cursor;
+// Returns the closest point index from a points array to current cursor point. 
+export function closestPointIndexToCursor (cursor: Point3D, points: Point3D[]) {
+    let minDistanceSquared = Number.MAX_VALUE;
+    let minIndex = 0;
     for (let index = 0; index < points.length; index++) {
         const point = points[index];
         const distance = pointsDistance(cursor, point);
-        if (distance < minDistance) {
-            minDistance = distance;
-            closestPoint = point;
+        if (distance < minDistanceSquared) {
+            minDistanceSquared = distance;
+            minIndex = index;
         }
     }
-    return closestPoint;
+    return minIndex;
 }

@@ -12,7 +12,7 @@ import {StokesAnalysisProfilerInfoComponent} from "./ProfilerInfo/ProfilerInfoCo
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {ChannelInfo, Point2D} from "models";
-import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointToCursor} from "utilities";
+import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor} from "utilities";
 import "./StokesAnalysisComponent.css";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
@@ -596,7 +596,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }   
         }
         if (this.isMouseMoveIntoScatterPlots) {
-            const currentScatterData = closestPointToCursor(scatterCursorProfiler, quDataset);
+            const minIndex = closestPointIndexToCursor(scatterCursorProfiler, quDataset);
+            const currentScatterData = quDataset[minIndex];
             const lineCursorPIDataProfiler = binarySearchByX(piDataset, currentScatterData.z);
             const lineCursorPADataProfiler = binarySearchByX(paDataset, currentScatterData.z);
             if (lineCursorPIDataProfiler && lineCursorPADataProfiler) {
