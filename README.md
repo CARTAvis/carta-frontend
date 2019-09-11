@@ -13,8 +13,7 @@ git checkout master
 Prerequisite `npm` packages can be installed using `npm install`. The WebAssembly library build process requires `wget`. Some WebAssembly libraries require `cmake` as well.
 
 ## Build process:
-The easiest way to build everything is to first run `build_libs.sh` from within the `wasm_libs` subdirectory, followed by `npm run build`, which will install and build all remaning components. To start a live server, run `npm run start` after building. 
-
+The easiest way to build everything is to first run `wasm_libs/build_libs.sh`, followed by `npm run build`, which will install and build all remaning components. To start a live server, run `npm run start` after building. 
 
 There are four steps in the build process. Some are more automated than others.
 * **Building statically linked WebAssembly libraries of dependencies**, such as [AST](https://github.com/Starlink/ast) and [ZFP](https://github.com/LLNL/zfp).

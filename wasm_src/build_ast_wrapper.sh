@@ -3,8 +3,8 @@ command -v emcc >/dev/null 2>&1 || { echo "Script requires emcc but it's not ins
 cd ast_wrapper
 mkdir -p build
 printf "Building AST wrapper..."
-npx tsc pre.ts --outFile build/pre.js
-npx tsc post.ts --outFile build/post.js
+npx  -p typescript tsc pre.ts --outFile build/pre.js
+npx  -p typescript tsc post.ts --outFile build/post.js
 emcc -std=c++11 -o build/ast_wrapper.js ast_wrapper.cc grf_debug.cc --pre-js build/pre.js --post-js build/post.js \
     -I../../wasm_libs/ast -L../../wasm_libs/ast/.libs -last -last_pal -lm -g0 -O2 \
     -s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s NO_EXIT_RUNTIME=1 -s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "cwrap", "UTF8ToString"]' \

@@ -1,4 +1,5 @@
 declare var Module: any;
+declare var module: NodeModule;
 declare var addOnPostRun: any;
 const ctx: Worker = self as any;
 
