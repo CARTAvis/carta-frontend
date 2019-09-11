@@ -31,8 +31,9 @@ export class FileListComponent extends React.Component<{
         const fileEntries = [];
         const fileList = this.props.files;
         if (fileList) {
-            let sortedDirectories = fileList.subdirectories.slice();
-            if (sortedDirectories) {
+            let sortedDirectories = [];
+            if (fileList.subdirectories && fileList.subdirectories.length) {
+                sortedDirectories = fileList.subdirectories.slice();
                 if (this.state.sortColumn === "name") {
                     sortedDirectories.sort((a, b) => this.state.sortDirection * (a.toLowerCase() < b.toLowerCase() ? -1 : 1));
                 } else {
@@ -50,10 +51,10 @@ export class FileListComponent extends React.Component<{
                     </tr>
                 );
             }));
-
-            let sortedFiles = fileList.files.slice();
-
-            if (sortedFiles) {
+            
+            let sortedFiles = [];
+            if (fileList.files && fileList.files.length) {
+                sortedFiles = fileList.files.slice();
                 switch (this.state.sortColumn) {
                     case "name":
                         sortedFiles.sort((a, b) => this.state.sortDirection * (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1));
