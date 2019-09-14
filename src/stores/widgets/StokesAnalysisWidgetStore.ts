@@ -1,4 +1,5 @@
 import {action, computed, observable} from "mobx";
+import {ChartArea} from "chart.js";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore} from "./RegionWidgetStore";
 import {FrameStore} from "stores/FrameStore";
@@ -34,6 +35,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable scatterPlotCursorY: number;
     @observable isMouseMoveIntoScatterPlots: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
+    @observable scatterChartArea: ChartArea;
 
     @observable statsType: CARTA.StatsType;
     @observable fractionalPolVisible: boolean;
@@ -105,6 +107,10 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         return updatedRequirements;
     }
 
+    @action setScatterChartAres = (chartArea: ChartArea) => {
+        this.scatterChartArea = chartArea;
+    }
+
     @action setMouseMoveIntoScatterPlots = (val: boolean) => {
         this.isMouseMoveIntoScatterPlots = val;
     };
@@ -159,6 +165,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @action setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
         this.clearLinePlotsXYBounds();
+        this.clearScatterPlotXYBounds();
     };
 
     @action setUseWcsValues = (val: boolean) => {

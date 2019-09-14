@@ -4,6 +4,7 @@ import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
+import {ChartArea} from "chart.js";
 import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
@@ -14,6 +15,7 @@ import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {ChannelInfo, Point2D} from "models";
 import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor} from "utilities";
 import "./StokesAnalysisComponent.css";
+import {throws} from "assert";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
 type Point3D = { x: number, y: number, z?: number };
@@ -28,6 +30,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private channelBorder: { xMin: number, xMax: number };
     private minProgress = 0;
     private cursorInfo: {isMouseEntered: boolean, quValue: Point2D, channel: number, pi: number, pa: number, xUnit: string};
+    private scatterOutRangePointIndex: number[];
     private static layoutRatioCutoffs = {
         vertical: 0.5,
         horizontal: 2,
@@ -334,6 +337,32 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     }
 
+    private getChartAreaWH(chartArea: ChartArea): { width: number, height: number } {
+        if (chartArea && chartArea.right && chartArea.bottom) {
+            return {width: Math.abs(chartArea.right - chartArea.left), height: Math.abs(chartArea.bottom - chartArea.top)};
+        } else {
+            return {width: 0, height: 0};
+        }
+    }
+
+    private resizeScatterData(xMin: number, xMax: number, yMin: number, yMax: number): { xMin: number, xMax: number, yMin: number, yMax: number } {        
+        let xLimit = Math.max(Math.abs(xMin), Math.abs(xMax));
+        let yLimit = Math.max(Math.abs(yMin), Math.abs(yMax));
+        if (this.widgetStore.scatterChartArea) {
+            let currentChartArea = this.getChartAreaWH(this.widgetStore.scatterChartArea);
+            if (currentChartArea.width !== 0 && currentChartArea.height !== 0) {
+                let ratio = currentChartArea.width / currentChartArea.height;
+                if (ratio < 1) {
+                    yLimit = yLimit * (1 / ratio);
+                }
+                if (ratio > 1) {
+                    xLimit = xLimit * ratio;
+                }
+            }
+        }
+        return {xMin: -xLimit, xMax: xLimit, yMin: -yLimit, yMax: yLimit};
+    }
+
     private calculateXYborder(xValues: Array<number>, yValues: Array<number>, isLinePlots: boolean): Border {
         let xMin = Math.min(...xValues.filter(n => {
             return !isNaN(n);
@@ -347,6 +376,14 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (!this.widgetStore.isLinePlotsAutoScaledX && isLinePlots) {
             const localXMin = clamp(this.widgetStore.sharedMinX, xMin, xMax);
             const localXMax = clamp(this.widgetStore.sharedMaxX, xMin, xMax);
+            xMin = localXMin;
+            xMax = localXMax;
+        }
+
+        if(!this.widgetStore.isQUScatterPlotAutoScaledX && !isLinePlots){
+            const localXMin = clamp(this.widgetStore.quScatterMinX, xMin, xMax);
+            const localXMax = clamp(this.widgetStore.quScatterMaxX, xMin, xMax);
+            console.log("calculate border xmin Array = " +xMin +" xmax array = "+xMax+" change max"+this.widgetStore.quScatterMaxX+" change min"+this.widgetStore.quScatterMinX)
             xMin = localXMin;
             xMax = localXMax;
         }
@@ -376,6 +413,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let border = this.calculateXYborder(channelValues, profile, true);
             let values: Array<{ x: number, y: number }> = [];
             let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1];
+            // console.log(border)
+            console.log(this.scatterOutRangePointIndex)
             for (let i = 0; i < channelValues.length; i++) {
                 let index = isIncremental ? i : channelValues.length - 1 - i;
                 const x = channelValues[index];
@@ -388,8 +427,16 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         continue;
                     }
                 }
-                values.push({x, y});
+
+                if (this.scatterOutRangePointIndex && this.scatterOutRangePointIndex.indexOf(x) >= 0) {
+                    console.log(x + " " + this.scatterOutRangePointIndex.indexOf(x))
+                    values.push({x: x, y: NaN});
+                } else {
+                    values.push({x, y});
+                }
+                // values.push({x, y});
             }
+            console.log(values)
             return {dataset: values, border};
         }
         return null;
@@ -401,16 +448,25 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let border = this.calculateXYborder(qProfile, uProfile, false);
             let values: Array<{ x: number, y: number, z: number }> = [];
             let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
-
+            // centered origin and equal scaler
+            let equalScalerBorder = this.resizeScatterData(border.xMin, border.xMax, border.yMin, border.yMax);
+            // console.log(border)
+            this.scatterOutRangePointIndex = [];
             for (let i = 0; i < channelValues.length; i++) {
                 // Todo: still need handel data outof range when zooming
                 let index = isIncremental ? i : channelValues.length - 1 - i;
                 const x = qProfile[index];
                 const y = uProfile[index];
                 const z = channelValues[index];
+                // console.log("in for x=" + x + " " + (x >= border.xMin && x <= border.xMax))
                 values.push({x, y, z});
+                if ( x < border.xMin || x > border.xMax) {
+                    // x: index, y: z???
+                    this.scatterOutRangePointIndex.push(z);   
+                }
             }
-            return {dataset: values, border};
+            // console.log(values)
+            return {dataset: values, border: equalScalerBorder};
         }
         return null;
     }
@@ -647,6 +703,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         let piLinePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
+            usePointSymbols: true,
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: "profile",
@@ -702,17 +759,18 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             usePointSymbols: true,
             multiPlotData: new Map(),
             zeroLineWidth: 2,
-            multiPlotBorderColor: new Map(),
             isGroupSubPlot: true,
             colorRangeEnd: 240,
-            centeredOrigin: true,
-            equalScale: true,
             zIndex: true,
             pointRadius: this.pointRadius,
             graphCursorMoved: this.onScatterGraphCursorMoved,
             graphClicked: this.onScatterChannelChanged,
             graphZoomReset: this.widgetStore.clearScatterPlotXYBounds,
             mouseEntered: this.widgetStore.setMouseMoveIntoScatterPlots,
+            graphZoomedX: this.widgetStore.setQUScatterPlotXBounds,
+            scrollZoom: true,
+            graphZoomedXY: this.widgetStore.setQUScatterPlotXYBounds,
+            updateChartArea: this.widgetStore.setScatterChartAres,
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
