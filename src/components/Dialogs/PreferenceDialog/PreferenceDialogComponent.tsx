@@ -2,6 +2,7 @@ import * as React from "react";
 import * as _ from "lodash";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
+import {CARTA} from "carta-protobuf";
 import {
     Button, IDialogProps, Intent, Tab, Tabs,
     FormGroup, TabId, MenuItem, Switch, RadioGroup,
@@ -293,7 +294,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         const logEventsPanel = (
             <React.Fragment>
                 <FormGroup inline={false} label="Enable logged event type" className="log-event-list">
-                    {Event.EVENT_TYPES.map((eventType) =>
+                    {Event.EVENT_TYPES.map((eventType: CARTA.EventType) =>
                         <Checkbox
                             className="log-event-checkbox"
                             key={eventType}
