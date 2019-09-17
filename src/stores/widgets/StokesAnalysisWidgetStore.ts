@@ -36,9 +36,9 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable isMouseMoveIntoScatterPlots: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
     @observable scatterChartArea: ChartArea;
-
     @observable statsType: CARTA.StatsType;
     @observable fractionalPolVisible: boolean;
+    scatterOutRangePointsIndex: Array<number>;
 
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
 
@@ -182,6 +182,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         // Describes how the data is visualised
         this.fractionalPolVisible = false;
         this.useWcsValues = true;
+        this.scatterOutRangePointsIndex = [];
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
@@ -220,6 +221,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.quScatterMaxX = undefined;
         this.quScatterMinY = undefined;
         this.quScatterMaxY = undefined;
+        this.scatterOutRangePointsIndex = [];
     };
 
     @action setQULinePlotsXYBounds = (minX: number, maxX: number, minY: number, maxY: number) => {

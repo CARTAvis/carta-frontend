@@ -15,14 +15,14 @@ import {Point2D} from "models";
 import {binarySearchByX, clamp} from "utilities";
 import "./LinePlotComponent.css";
 
-enum ZoomMode {
+export enum ZoomMode {
     NONE,
     X,
     Y,
     XY
 }
 
-enum InteractionMode {
+export enum InteractionMode {
     NONE,
     SELECTING,
     PANNING

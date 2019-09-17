@@ -9,17 +9,12 @@ import {Layer, Stage, Group, Line, Ring, Rect} from "react-konva";
 import {ChartArea} from "chart.js";
 import {PlotContainerComponent, TickType} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
+import {ZoomMode, InteractionMode} from "components/Shared/LinePlot/LinePlotComponent";
 import {Point2D} from "models";
 import {clamp} from "utilities";
 import "./ScatterPlotComponent.css";
 
 type Point3D = { x: number, y: number, z?: number };
-
-enum InteractionMode {
-    NONE,
-    SELECTING,
-    PANNING
-}
 
 export class ScatterPlotComponentProps {
     width?: number;
@@ -78,6 +73,10 @@ export class ScatterPlotComponentProps {
 const DOUBLE_CLICK_THRESHOLD = 300;
 // Minimum pixel distance before turning a click into a drag event
 const DRAG_THRESHOLD = 3;
+// Thickness of the rectangle used for detecting hits
+const MARKER_HITBOX_THICKNESS = 16;
+// Maximum pixel distance before turing an X or Y zoom into an XY zoom
+const XY_ZOOM_THRESHOLD = 20;
 
 @observer
 export class ScatterPlotComponent extends React.Component<ScatterPlotComponentProps> {
@@ -87,6 +86,10 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     private pendingClickHandle;
     private stageClickStartX: number;
     private stageClickStartY: number;
+    private panPrevious: number;
+
+    @observable selectionBoxStart = {x: 0, y: 0};
+    @observable selectionBoxEnd = {x: 0, y: 0};
 
     @observable chartArea: ChartArea;
     @observable width = 0;
@@ -351,13 +354,41 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 const cursorYPosGraphSpace = this.getValueForPixelY(mousePosY);
                 this.props.graphCursorMoved(cursorXPosGraphSpace, cursorYPosGraphSpace);
             }
+            if (this.isSelecting) {
+                this.updateSelection(mousePosX, mousePosY);
+            }
         }
     };
+
+    @action startSelection(x: number, y: number) {
+        this.interactionMode = InteractionMode.SELECTING;
+        this.selectionBoxStart = {x, y};
+        this.selectionBoxEnd = {x, y};
+    }
+
+    @action startPanning(x: number) {
+        this.interactionMode = InteractionMode.PANNING;
+        this.panPrevious = x;
+    }
+
+    @action updateSelection(x: number, y: number) {
+        this.selectionBoxEnd = {x, y};
+    }
+
+    @action updatePan(x: number) {
+        this.panPrevious = x;
+    }
 
     onStageMouseDown = (ev) => {
         const mouseEvent: MouseEvent = ev.evt;
         this.stageClickStartX = mouseEvent.offsetX;
         this.stageClickStartY = mouseEvent.offsetY;
+        const modifierPressed = mouseEvent.ctrlKey || mouseEvent.shiftKey || mouseEvent.altKey;
+        if (!modifierPressed) {
+            this.startSelection(mouseEvent.offsetX, mouseEvent.offsetY);
+        } else if (modifierPressed) {
+            this.startPanning(mouseEvent.offsetX);
+        }
     };
 
     onStageDoubleClick = () => {
@@ -399,7 +430,33 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         const mouseMoveDist = {x: Math.abs(mouseEvent.offsetX - this.stageClickStartX), y: Math.abs(mouseEvent.offsetY - this.stageClickStartY)};
         if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
             this.onStageClick(ev);
-        } 
+        } else {
+            if (this.props.data) {
+                this.stageClickStartX = undefined;
+                this.stageClickStartY = undefined;
+                if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
+                    let minCanvasSpace = Math.min(this.selectionBoxStart.x, this.selectionBoxEnd.x);
+                    let maxCanvasSpace = Math.max(this.selectionBoxStart.x, this.selectionBoxEnd.x);
+                    let minX = this.getValueForPixelX(minCanvasSpace);
+                    let maxX = this.getValueForPixelX(maxCanvasSpace);
+
+                    minCanvasSpace = Math.min(this.selectionBoxStart.y, this.selectionBoxEnd.y);
+                    maxCanvasSpace = Math.max(this.selectionBoxStart.y, this.selectionBoxEnd.y);
+                    // Canvas space y-axis is inverted, so min/max are switched when transforming to graph space
+                    let minY = this.getValueForPixelY(maxCanvasSpace);
+                    let maxY = this.getValueForPixelY(minCanvasSpace);
+
+                    if (this.zoomMode === ZoomMode.X) {
+                        this.props.graphZoomedX(minX, maxX);
+                    }
+                    if (this.zoomMode === ZoomMode.Y) {
+                        this.props.graphZoomedY(minY, maxY);
+                    } else if (this.zoomMode === ZoomMode.XY) {
+                        this.props.graphZoomedXY(minX, maxX, minY, maxY);
+                    }
+                }
+            }
+        }
         this.endInteractions();
     };
 
@@ -418,6 +475,66 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             const rangeChange = zoomSpeed * delta * currentRange;
             this.props.graphZoomedX(this.props.xMin - rangeChange * fraction, this.props.xMax + rangeChange * (1 - fraction));
         }
+    };
+
+    @computed get zoomMode(): ZoomMode {
+        const absDelta = {x: Math.abs(this.selectionBoxEnd.x - this.selectionBoxStart.x), y: Math.abs(this.selectionBoxEnd.y - this.selectionBoxStart.y)};
+        if (absDelta.x > XY_ZOOM_THRESHOLD && absDelta.y > XY_ZOOM_THRESHOLD && this.props.graphZoomedXY) {
+            return ZoomMode.XY;
+        } else if (this.props.graphZoomedX && this.props.graphZoomedY) {
+            return absDelta.x > absDelta.y ? ZoomMode.X : ZoomMode.Y;
+        } else if (this.props.graphZoomedX) {
+            return ZoomMode.X;
+        } else if (this.props.graphZoomedY) {
+            return ZoomMode.Y;
+        } else {
+            return ZoomMode.NONE;
+        }
+    }
+
+    private genSelectionRect = () => {
+        let selectionRect = null;
+        const chartArea = this.chartArea;
+        const start = this.selectionBoxStart;
+        const end = this.selectionBoxEnd;
+        const delta = {x: end.x - start.x, y: end.y - start.y};
+        const absDelta = {x: Math.abs(delta.x), y: Math.abs(delta.y)};
+
+        if (this.isSelecting && (absDelta.x > DRAG_THRESHOLD || absDelta.y > DRAG_THRESHOLD) && chartArea) {
+            const w = chartArea.right - chartArea.left;
+            const h = chartArea.bottom - chartArea.top;
+            if (this.zoomMode === ZoomMode.X) {
+                // Determine appropriate bounds for the zoom markers, so that they don't extend past the chart area
+                const heightAbove = clamp(XY_ZOOM_THRESHOLD, 0, start.y - chartArea.top);
+                const heightBelow = clamp(XY_ZOOM_THRESHOLD, 0, chartArea.bottom - start.y);
+                // Selection rectangle consists of a filled rectangle with vertical drag handles on either side
+                selectionRect = [
+                    <Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={start.x} y={chartArea.top} width={delta.x} height={h}/>,
+                    <Line stroke={Colors.GRAY3} key={1} x={start.x} y={start.y} points={[0, -heightAbove, 0, heightBelow]} strokeWidth={3}/>,
+                    <Line stroke={Colors.GRAY3} key={2} x={end.x} y={start.y} points={[0, -heightAbove, 0, heightBelow]} strokeWidth={3}/>
+                ];
+            } else if (this.zoomMode === ZoomMode.Y) {
+                // Determine appropriate bounds for the zoom markers, so that they don't extend past the chart area
+                const widthLeft = clamp(XY_ZOOM_THRESHOLD, 0, start.x - chartArea.left);
+                const widthRight = clamp(XY_ZOOM_THRESHOLD, 0, chartArea.right - start.x);
+                // Selection rectangle consists of a filled rectangle with horizontal drag handles on either side
+                selectionRect = [
+                    <Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={chartArea.left} y={start.y} width={w} height={delta.y}/>,
+                    <Line stroke={Colors.GRAY3} key={1} x={start.x} y={start.y} points={[-widthLeft, 0, widthRight, 0]} strokeWidth={3}/>,
+                    <Line stroke={Colors.GRAY3} key={2} x={start.x} y={end.y} points={[-widthLeft, 0, widthRight, 0]} strokeWidth={3}/>
+                ];
+            } else if (this.zoomMode === ZoomMode.XY) {
+                // Selection rectangle consists of a filled rectangle with drag corners
+                selectionRect = [
+                    <Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={start.x} y={start.y} width={delta.x} height={delta.y}/>,
+                    <Line stroke={Colors.GRAY3} key={1} x={start.x} y={start.y} points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>,
+                    <Line stroke={Colors.GRAY3} key={2} x={end.x} y={start.y} points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>,
+                    <Line stroke={Colors.GRAY3} key={3} x={start.x} y={end.y} points={[0, -XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>,
+                    <Line stroke={Colors.GRAY3} key={4} x={end.x} y={end.y} points={[-XY_ZOOM_THRESHOLD / 2.0, 0, 0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>
+                ];
+            }
+        }
+        return selectionRect;
     };
 
     render() {
@@ -450,6 +567,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 >
                     <Layer>
                         {this.genIndicator()}
+                        {this.genSelectionRect()}
                         {this.genBorderRect()}
                     </Layer>
                 </Stage>

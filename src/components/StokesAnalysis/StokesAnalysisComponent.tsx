@@ -15,7 +15,6 @@ import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {ChannelInfo, Point2D} from "models";
 import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor} from "utilities";
 import "./StokesAnalysisComponent.css";
-import {throws} from "assert";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
 type Point3D = { x: number, y: number, z?: number };
@@ -30,7 +29,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private channelBorder: { xMin: number, xMax: number };
     private minProgress = 0;
     private cursorInfo: {isMouseEntered: boolean, quValue: Point2D, channel: number, pi: number, pa: number, xUnit: string};
-    private scatterOutRangePointIndex: number[];
     private static layoutRatioCutoffs = {
         vertical: 0.5,
         horizontal: 2,
@@ -51,6 +49,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
+    @observable scatterOutRangePointsIndex: number[];
 
     @computed get widgetStore(): StokesAnalysisWidgetStore {
         if (this.props.appStore && this.props.appStore.widgetsStore.stokesAnalysisWidgets) {
@@ -380,10 +379,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             xMax = localXMax;
         }
 
-        if(!this.widgetStore.isQUScatterPlotAutoScaledX && !isLinePlots){
+        if (!this.widgetStore.isQUScatterPlotAutoScaledX && !isLinePlots) {
             const localXMin = clamp(this.widgetStore.quScatterMinX, xMin, xMax);
             const localXMax = clamp(this.widgetStore.quScatterMaxX, xMin, xMax);
-            console.log("calculate border xmin Array = " +xMin +" xmax array = "+xMax+" change max"+this.widgetStore.quScatterMaxX+" change min"+this.widgetStore.quScatterMinX)
             xMin = localXMin;
             xMax = localXMax;
         }
@@ -394,6 +392,13 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         yMax = Math.max(...yValues.filter(n => {
             return !isNaN(n);
         }));
+
+        if (!this.widgetStore.isQUScatterPlotAutoScaledY && !isLinePlots) {
+            const localYMin = clamp(this.widgetStore.quScatterMinY, yMin, yMax);
+            const localYMax = clamp(this.widgetStore.quScatterMaxY, yMin, yMax);
+            yMin = localYMin;
+            yMax = localYMax;
+        }
 
         if (yMin === Number.MAX_VALUE) {
             yMin = undefined;
@@ -413,8 +418,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let border = this.calculateXYborder(channelValues, profile, true);
             let values: Array<{ x: number, y: number }> = [];
             let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1];
-            // console.log(border)
-            console.log(this.scatterOutRangePointIndex)
+
             for (let i = 0; i < channelValues.length; i++) {
                 let index = isIncremental ? i : channelValues.length - 1 - i;
                 const x = channelValues[index];
@@ -428,15 +432,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     }
                 }
 
-                if (this.scatterOutRangePointIndex && this.scatterOutRangePointIndex.indexOf(x) >= 0) {
-                    console.log(x + " " + this.scatterOutRangePointIndex.indexOf(x))
-                    values.push({x: x, y: NaN});
-                } else {
+                // if (!(this.widgetStore.scatterOutRangePointsIndex && this.widgetStore.scatterOutRangePointsIndex.indexOf(x) >= 0)) {
                     values.push({x, y});
-                }
-                // values.push({x, y});
+                // } else {
+                //     values.push({x: x, y: NaN});
+                // }
             }
-            console.log(values)
             return {dataset: values, border};
         }
         return null;
@@ -450,22 +451,18 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
             // centered origin and equal scaler
             let equalScalerBorder = this.resizeScatterData(border.xMin, border.xMax, border.yMin, border.yMax);
-            // console.log(border)
-            this.scatterOutRangePointIndex = [];
+            this.widgetStore.scatterOutRangePointsIndex = [];
             for (let i = 0; i < channelValues.length; i++) {
-                // Todo: still need handel data outof range when zooming
                 let index = isIncremental ? i : channelValues.length - 1 - i;
                 const x = qProfile[index];
                 const y = uProfile[index];
                 const z = channelValues[index];
-                // console.log("in for x=" + x + " " + (x >= border.xMin && x <= border.xMax))
                 values.push({x, y, z});
-                if ( x < border.xMin || x > border.xMax) {
-                    // x: index, y: z???
-                    this.scatterOutRangePointIndex.push(z);   
+                // handel data outof range when zooming
+                if ( x < border.xMin || x > border.xMax || y < border.yMin || y > border.yMax) {
+                    this.widgetStore.scatterOutRangePointsIndex.push(z);   
                 }
             }
-            // console.log(values)
             return {dataset: values, border: equalScalerBorder};
         }
         return null;
@@ -596,11 +593,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
         let channelInfo = frame.channelInfo;
         if (compositeProfile && channelInfo) {
+            let quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, channelInfo);
             let piDic = this.assembleLinePlotData(compositeProfile.piProfile, channelInfo);
             let paDic = this.assembleLinePlotData(compositeProfile.paProfile, channelInfo);
             let qDic = this.assembleLinePlotData(compositeProfile.qProfile, channelInfo);
             let uDic = this.assembleLinePlotData(compositeProfile.uProfile, channelInfo);
-            let quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, channelInfo);
 
             return {
                 qValues: qDic, 
@@ -661,8 +658,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 isMouseEntered: isMouseEntered,
                 quValue: { x: scatterCursorImage.x, y: scatterCursorImage.y },
                 channel: lineCursorImage,
-                pi: lineCursorPIDataImage.y,
-                pa: lineCursorPADataImage.y,
+                pi: lineCursorPIDataImage? lineCursorPIDataImage.y : NaN,
+                pa: lineCursorPADataImage? lineCursorPADataImage.y : NaN,
                 xUnit: xUnit
             };
         }
@@ -771,6 +768,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             scrollZoom: true,
             graphZoomedXY: this.widgetStore.setQUScatterPlotXYBounds,
             updateChartArea: this.widgetStore.setScatterChartAres,
+            graphZoomedY: this.widgetStore.setQUScatterPlotYBounds
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
@@ -856,6 +854,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 } else {
                     quScatterPlotProps.xMin = this.widgetStore.quScatterMinX;
                     quScatterPlotProps.xMax = this.widgetStore.quScatterMaxX;
+                    // console.log(this.widgetStore.scatterOutRangePointsIndex.indexOf(1))
                 }
                 if (this.widgetStore.isQUScatterPlotAutoScaledY) {
                     quScatterPlotProps.yMin = quBorder.yMin;
