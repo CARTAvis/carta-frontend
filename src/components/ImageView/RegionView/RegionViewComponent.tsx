@@ -11,7 +11,7 @@ import {PolygonRegionComponent} from "./PolygonRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
 import {CursorInfo, Point2D} from "models";
 import "./RegionViewComponent.css";
-import {add2D, subtract2D} from "../../../utilities";
+import {add2D, average2D, length2D, subtract2D} from "../../../utilities";
 import {canvasToImagePos, imageToCanvasPos} from "./shared";
 
 export interface RegionViewComponentProps {
@@ -41,8 +41,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     private dragPanning: boolean;
     private dragOffset: Point2D;
-    private initialDragPoint: Point2D;
+    private initialDragPointCanvasSpace: Point2D;
     private initialDragCenter: Point2D;
+    private initialPinchZoom: number;
+    private initialPinchDistance: number;
 
     updateCursorPos = _.throttle((x: number, y: number) => {
         if (this.props.frame.wcsInfo) {
@@ -117,10 +119,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             if (this.props.dragPanningEnabled) {
                 this.dragPanning = true;
 
-                const mouseEvent = konvaEvent.evt as MouseEvent;
+                let cursorPoint = konvaEvent.target.getStage().getPointerPosition();
                 const frame = this.props.frame;
                 if (frame) {
-                    this.initialDragPoint = canvasToImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame.requiredFrameView, this.props.width, this.props.height);
+                    this.initialDragPointCanvasSpace = cursorPoint;
                     this.initialDragCenter = frame.center;
                     frame.startMoving();
                 }
@@ -131,7 +133,27 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     handleDragMove = (konvaEvent: Konva.KonvaEventObject<DragEvent>) => {
         // Only handle stage drag events
         if (konvaEvent.target === konvaEvent.currentTarget) {
-            this.handlePan(konvaEvent.evt.movementX, konvaEvent.evt.movementY);
+            let cursorPoint = konvaEvent.target.getStage().getPointerPosition();
+            let isPanDrag = true;
+            if (konvaEvent.evt.type === "touchmove") {
+                const touchEvent = (konvaEvent.evt as unknown) as TouchEvent;
+
+                if (touchEvent.touches.length > 1) {
+                    isPanDrag = false;
+                    const rect = (touchEvent.target as any).getBoundingClientRect();
+                    const touch0 = {x: touchEvent.targetTouches[0].pageX - rect.left, y: touchEvent.targetTouches[0].pageY - rect.top};
+                    const touch1 = {x: touchEvent.targetTouches[1].pageX - rect.left, y: touchEvent.targetTouches[1].pageY - rect.top};
+
+                    this.handlePinch(touch0, touch1);
+                } else {
+                    this.initialPinchDistance = -1;
+                    this.initialPinchZoom = -1;
+                }
+            }
+
+            if (isPanDrag) {
+                this.handlePan(cursorPoint);
+            }
             konvaEvent.target.x(0);
             konvaEvent.target.y(0);
         }
@@ -148,17 +170,46 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 frame.endMoving();
             }
         }
+        this.initialPinchDistance = -1;
+        this.initialPinchZoom = -1;
     };
 
-    handlePan = (deltaX: number, deltaY: number) => {
-        const deltaCanvasSpace = {x: deltaX, y: deltaY};
+    handlePinch = (touch0: Point2D, touch1: Point2D) => {
         const frame = this.props.frame;
 
+        if (!frame || !touch0 || !touch1) {
+            return;
+        }
+
+        const deltaTouch = subtract2D(touch1, touch0);
+        const distance = length2D(deltaTouch);
+        const centerCanvasSpace = average2D([touch0, touch1]);
+        // ignore invalid
+        if (!isFinite(distance) || distance <= 0) {
+            return;
+        }
+
+        if (this.initialPinchDistance > 0) {
+            const zoomFactor = distance / this.initialPinchDistance;
+            const centerImageSpace = canvasToImagePos(centerCanvasSpace.x, centerCanvasSpace.y, frame.requiredFrameView, this.props.width, this.props.height);
+            frame.zoomToPoint(centerImageSpace.x, centerImageSpace.y, this.initialPinchZoom * zoomFactor);
+        } else {
+            this.initialPinchDistance = distance;
+            this.initialPinchZoom = frame.zoomLevel;
+        }
+    };
+
+    handlePan = (offset: Point2D) => {
+        // ignore invalid offsets
+        if (!offset || !isFinite(offset.x) || !isFinite(offset.y)) {
+            return;
+        }
+        const frame = this.props.frame;
         if (frame) {
             if (!this.dragOffset) {
-                this.dragOffset = deltaCanvasSpace;
+                this.dragOffset = {x: 0, y: 0};
             } else {
-                this.dragOffset = add2D(this.dragOffset, deltaCanvasSpace);
+                this.dragOffset = subtract2D(offset, this.initialDragPointCanvasSpace);
                 const initialCenterCanvasSpace = imageToCanvasPos(this.initialDragCenter.x, this.initialDragCenter.y, frame.requiredFrameView, this.props.width, this.props.height);
                 const newCenterCanvasSpace = subtract2D(initialCenterCanvasSpace, this.dragOffset);
                 const newCenterImageSpace = canvasToImagePos(newCenterCanvasSpace.x, newCenterCanvasSpace.y, frame.requiredFrameView, this.props.width, this.props.height);
