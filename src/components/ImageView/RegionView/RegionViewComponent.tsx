@@ -138,12 +138,11 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             if (konvaEvent.evt.type === "touchmove") {
                 const touchEvent = (konvaEvent.evt as unknown) as TouchEvent;
 
-                if (touchEvent.touches.length > 1) {
+                if (touchEvent.touches.length > 1 && touchEvent.target) {
                     isPanDrag = false;
                     const rect = (touchEvent.target as any).getBoundingClientRect();
-                    const touch0 = {x: touchEvent.targetTouches[0].pageX - rect.left, y: touchEvent.targetTouches[0].pageY - rect.top};
-                    const touch1 = {x: touchEvent.targetTouches[1].pageX - rect.left, y: touchEvent.targetTouches[1].pageY - rect.top};
-
+                    const touch0 = {x: touchEvent.touches[0].pageX - rect.left, y: touchEvent.touches[0].pageY - rect.top};
+                    const touch1 = {x: touchEvent.touches[1].pageX - rect.left, y: touchEvent.touches[1].pageY - rect.top};
                     this.handlePinch(touch0, touch1);
                 } else {
                     this.initialPinchDistance = -1;
