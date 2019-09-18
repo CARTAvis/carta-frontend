@@ -229,6 +229,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             }
             this.creatingRegion = null;
         }
+        // Switch to moving mode after region creation. Use a timeout to allow the handleClick function to execute first
+        setTimeout(() => this.props.frame.regionSet.mode = RegionMode.MOVING, 1);
     }
 
     @action
@@ -372,6 +374,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 frame.regionSet.deleteRegion(this.creatingRegion);
                 this.creatingRegion = null;
             }
+            // Switch to moving mode after region creation. Use a timeout to allow the handleClick function to execute first
+            setTimeout(() => this.props.frame.regionSet.mode = RegionMode.MOVING, 1);
         }
     };
 
