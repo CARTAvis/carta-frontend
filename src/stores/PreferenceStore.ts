@@ -12,6 +12,7 @@ const PREFERENCE_KEYS = {
     layout: "layout",
     cursorPosition: "cursorPosition",
     zoomMode: "zoomMode",
+    dragPanning: "dragPanning",
     scaling: "scaling",
     colormap: "colormap",
     percentile: "percentile",
@@ -39,6 +40,7 @@ const DEFAULTS = {
     layout: PresetLayout.DEFAULT,
     cursorPosition: CursorPosition.TRACKING,
     zoomMode: Zoom.FIT,
+    dragPanning: true,
     scaling: FrameScaling.LINEAR,
     colormap: "inferno",
     percentile: 99.9,
@@ -69,6 +71,7 @@ export class PreferenceStore {
     @observable layout: string;
     @observable cursorPosition: string;
     @observable zoomMode: string;
+    @observable dragPanning: boolean;
     @observable scaling: FrameScaling;
     @observable colormap: string;
     @observable percentile: number;
@@ -110,6 +113,11 @@ export class PreferenceStore {
     private getZoomMode = (): string => {
         const zoomMode = localStorage.getItem(PREFERENCE_KEYS.zoomMode);
         return zoomMode && Zoom.isValid(zoomMode) ? zoomMode : DEFAULTS.zoomMode;
+    };
+
+    private getDragPanning = (): boolean => {
+        const dragPanning = localStorage.getItem(PREFERENCE_KEYS.dragPanning);
+        return dragPanning === "false" ? false : DEFAULTS.dragPanning;
     };
 
     // getters for render config
@@ -277,7 +285,9 @@ export class PreferenceStore {
                 if (eventNameList && Array.isArray(eventNameList) && eventNameList.length) {
                     eventNameList.forEach((eventName) => {
                         const eventType = Event.getEventTypeFromName(eventName);
-                        if (eventType !== undefined) { events[eventType] = true; }
+                        if (eventType !== undefined) {
+                            events[eventType] = true;
+                        }
                     });
                 }
             } catch (e) {
@@ -289,13 +299,13 @@ export class PreferenceStore {
 
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
         return Event.isEventTypeValid(eventType) && this.eventsLoggingEnabled[eventType];
-    }
+    };
 
     public flipEventLoggingEnabled = (eventType: CARTA.EventType): void => {
         if (Event.isEventTypeValid(eventType)) {
             this.eventsLoggingEnabled[eventType] = !this.eventsLoggingEnabled[eventType];
         }
-    }
+    };
 
     // getters for boolean(convenient)
     @computed get isDarkTheme(): boolean {
@@ -348,6 +358,11 @@ export class PreferenceStore {
     @action setZoomMode = (zoomMode: string) => {
         this.zoomMode = zoomMode;
         localStorage.setItem(PREFERENCE_KEYS.zoomMode, zoomMode);
+    };
+
+    @action setDragPanning = (dragPanning: boolean) => {
+        this.dragPanning = dragPanning;
+        localStorage.setItem(PREFERENCE_KEYS.dragPanning, String(dragPanning));
     };
 
     // setters for render config
@@ -485,6 +500,7 @@ export class PreferenceStore {
         this.layout = this.getLayout();
         this.cursorPosition = this.getCursorPosition();
         this.zoomMode = this.getZoomMode();
+        this.dragPanning = this.getDragPanning();
         this.scaling = this.getScaling();
         this.colormap = this.getColormap();
         this.percentile = this.getPercentile();

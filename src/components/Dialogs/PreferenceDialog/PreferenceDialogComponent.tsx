@@ -122,6 +122,9 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         <Radio label="Zoom to 1.0x" value={Zoom.RAW}/>
                     </RadioGroup>
                 </FormGroup>
+                <FormGroup inline={true} label="Enable drag-to-pan">
+                    <Switch checked={preference.dragPanning} onChange={(ev) => { preference.setDragPanning(ev.currentTarget.checked); }}/>
+                </FormGroup>
             </React.Fragment>
         );
 
