@@ -432,11 +432,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     }
                 }
 
-                // if (!(this.widgetStore.scatterOutRangePointsIndex && this.widgetStore.scatterOutRangePointsIndex.indexOf(x) >= 0)) {
+                if (!(this.widgetStore.scatterOutRangePointsIndex && this.widgetStore.scatterOutRangePointsIndex.indexOf(x) >= 0)) {
                     values.push({x, y});
-                // } else {
-                //     values.push({x: x, y: NaN});
-                // }
+                } 
+                else {
+                    values.push({x: x, y: NaN});
+                }
             }
             return {dataset: values, border};
         }
@@ -658,8 +659,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 isMouseEntered: isMouseEntered,
                 quValue: { x: scatterCursorImage.x, y: scatterCursorImage.y },
                 channel: lineCursorImage,
-                pi: lineCursorPIDataImage? lineCursorPIDataImage.y : NaN,
-                pa: lineCursorPADataImage? lineCursorPADataImage.y : NaN,
+                pi: lineCursorPIDataImage ? lineCursorPIDataImage.y : NaN,
+                pa: lineCursorPADataImage ? lineCursorPADataImage.y : NaN,
                 xUnit: xUnit
             };
         }
@@ -700,7 +701,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         let piLinePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
-            usePointSymbols: true,
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: "profile",
@@ -847,14 +847,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     }
 
                 }
-
                 if (this.widgetStore.isQUScatterPlotAutoScaledX) {
                     quScatterPlotProps.xMin = quBorder.xMin;
                     quScatterPlotProps.xMax = quBorder.xMax;
                 } else {
                     quScatterPlotProps.xMin = this.widgetStore.quScatterMinX;
                     quScatterPlotProps.xMax = this.widgetStore.quScatterMaxX;
-                    // console.log(this.widgetStore.scatterOutRangePointsIndex.indexOf(1))
                 }
                 if (this.widgetStore.isQUScatterPlotAutoScaledY) {
                     quScatterPlotProps.yMin = quBorder.yMin;
@@ -975,8 +973,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
 
             if (quScatterPlotProps.data && quScatterPlotProps.data.length && interactionBorder) {
-                const scatterChannel = this.getScatterChannel(quScatterPlotProps.data, channel, true);
-                quScatterPlotProps.indicatorInteractionChannel = scatterChannel;
+                const scatterChannelInteraction = this.getScatterChannel(quScatterPlotProps.data, channel, true);
+                quScatterPlotProps.indicatorInteractionChannel = {
+                    currentChannel: scatterChannelInteraction.currentChannel, 
+                    hoveredChannel: scatterChannelInteraction.hoveredChannel,
+                    start: this.widgetStore.isMouseMoveIntoLinePlots
+                };
             }
 
             paLinePlotProps.comments = this.exportHeaders;
@@ -1010,6 +1012,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     <StokesAnalysisProfilerInfoComponent
                         darkMode={appStore.darkTheme}
                         cursorInfo={this.cursorInfo}
+                        fractionalPol={this.widgetStore.fractionalPolVisible}
                     />
                     }
                 </div>

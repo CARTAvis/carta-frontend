@@ -36,6 +36,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable isMouseMoveIntoScatterPlots: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
     @observable scatterChartArea: ChartArea;
+
     @observable statsType: CARTA.StatsType;
     @observable fractionalPolVisible: boolean;
     scatterOutRangePointsIndex: Array<number>;

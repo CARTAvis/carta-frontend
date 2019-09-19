@@ -63,7 +63,7 @@ export class ScatterPlotComponentProps {
     isGroupSubPlot?: boolean;
     zIndex?: boolean;
     pointRadius?: number;
-    indicatorInteractionChannel?: { currentChannel: Point3D, hoveredChannel: Point3D };
+    indicatorInteractionChannel?: { currentChannel: Point3D, hoveredChannel: Point3D, start: boolean };
     zeroLineWidth?: number;
     cursorNearestPoint?: { x: number, y: number };
     updateChartArea?: (chartArea: ChartArea) => void;
@@ -86,7 +86,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     private pendingClickHandle;
     private stageClickStartX: number;
     private stageClickStartY: number;
-    private panPrevious: number;
+    private panPrevious: {x: number, y: number};
 
     @observable selectionBoxStart = {x: 0, y: 0};
     @observable selectionBoxEnd = {x: 0, y: 0};
@@ -99,6 +99,10 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     @computed get isSelecting() {
         return this.interactionMode === InteractionMode.SELECTING;
+    }
+
+    @computed get isPanning() {
+        return this.interactionMode === InteractionMode.PANNING;
     }
 
     onPlotRefUpdated = (plotRef) => {
@@ -246,14 +250,15 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         let indicator = [];
         const channel = this.props.indicatorInteractionChannel;
         const markerOpacity = this.markerOpacity; 
-        if (chartArea && channel && channel.hoveredChannel && !isNaN(channel.hoveredChannel.x) && !isNaN(channel.hoveredChannel.y) && channel.hoveredChannel !== channel.currentChannel) {
+        if (chartArea && channel && channel.hoveredChannel && !isNaN(channel.hoveredChannel.x) && !isNaN(channel.hoveredChannel.y) && !this.isMouseEntered && channel.start) {
             const channelH = this.props.indicatorInteractionChannel.hoveredChannel;
-            const markerColor = this.props.darkMode ? Colors.GRAY4 : Colors.GRAY2;
+            const markerColor = this.props.darkMode ? Colors.RED4 : Colors.RED2;
             if (channelH.x >= this.props.xMin && channelH.x <= this.props.xMax && channelH.y >= this.props.yMin && channelH.y <= this.props.yMax) {
                 let xCanvasSpace = Math.floor(this.getPixelValue(channelH.x, this.props.xMin, this.props.xMax, true)) + 0.5 * devicePixelRatio;
                 let yCanvasSpace = Math.floor(this.getPixelValue(channelH.y, this.props.yMin, this.props.yMax, false));
-                indicator.push(this.genXline("scatter-indicator-x-hovered-interactive", markerColor, markerOpacity, xCanvasSpace));
-                indicator.push(this.genYline("scatter-indicator-y-hovered-interactive", markerColor, markerOpacity, yCanvasSpace));
+                // indicator.push(this.genXline("scatter-indicator-x-hovered-interactive", markerColor, markerOpacity, xCanvasSpace));
+                // indicator.push(this.genYline("scatter-indicator-y-hovered-interactive", markerColor, markerOpacity, yCanvasSpace));
+                indicator.push(this.genCircle("scatter-indicator-y-hovered-interaction-circle", markerColor , xCanvasSpace, yCanvasSpace));
             }
         }
         if (chartArea && channel && channel.currentChannel && !isNaN(channel.currentChannel.x) && !isNaN(channel.currentChannel.y)) {
@@ -353,6 +358,23 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 const cursorXPosGraphSpace = this.getValueForPixelX(mousePosX);
                 const cursorYPosGraphSpace = this.getValueForPixelY(mousePosY);
                 this.props.graphCursorMoved(cursorXPosGraphSpace, cursorYPosGraphSpace);
+            } else if (this.isPanning && this.props.graphZoomedX) {
+                const currentPanX = mousePosX;
+                const currentPanY = mousePosY;
+                const prevPanGraphSpaceX = this.getValueForPixelX(this.panPrevious.x);
+                const currentPanGraphSpaceX = this.getValueForPixelX(currentPanX);
+                const deltaX = (currentPanGraphSpaceX - prevPanGraphSpaceX);
+                const prevPanGraphSpaceY = this.getValueForPixelY(this.panPrevious.y);
+                const currentPanGraphSpaceY = this.getValueForPixelY(currentPanY);
+                const deltaY = (currentPanGraphSpaceY - prevPanGraphSpaceY);
+
+                this.updatePan(currentPanX, currentPanY);
+
+                const pinMinX = this.props.xMin - deltaX;
+                const pinMaxX = this.props.xMax - deltaX;
+                const pinMinY = this.props.yMin - deltaY;
+                const pinMaxY = this.props.yMax - deltaY;
+                this.props.graphZoomedXY(pinMinX, pinMaxX, pinMinY, pinMaxY);
             }
             if (this.isSelecting) {
                 this.updateSelection(mousePosX, mousePosY);
@@ -366,17 +388,18 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         this.selectionBoxEnd = {x, y};
     }
 
-    @action startPanning(x: number) {
+    @action startPanning(x: number, y: number) {
         this.interactionMode = InteractionMode.PANNING;
-        this.panPrevious = x;
+        this.panPrevious = { x, y };
+
     }
 
     @action updateSelection(x: number, y: number) {
         this.selectionBoxEnd = {x, y};
     }
 
-    @action updatePan(x: number) {
-        this.panPrevious = x;
+    @action updatePan(x: number, y: number) {
+        this.panPrevious = { x, y };
     }
 
     onStageMouseDown = (ev) => {
@@ -387,7 +410,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         if (!modifierPressed) {
             this.startSelection(mouseEvent.offsetX, mouseEvent.offsetY);
         } else if (modifierPressed) {
-            this.startPanning(mouseEvent.offsetX);
+            this.startPanning(mouseEvent.offsetX, mouseEvent.offsetY);
         }
     };
 
@@ -470,10 +493,19 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 return;
             }
             const delta = wheelEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? wheelEvent.deltaY : wheelEvent.deltaY * lineHeight;
-            let currentRange = this.props.xMax - this.props.xMin;
-            const fraction = (wheelEvent.offsetX - chartArea.left) / (chartArea.right - chartArea.left);
-            const rangeChange = zoomSpeed * delta * currentRange;
-            this.props.graphZoomedX(this.props.xMin - rangeChange * fraction, this.props.xMax + rangeChange * (1 - fraction));
+            let currentRangeX = this.props.xMax - this.props.xMin;
+            const fractionX = (wheelEvent.offsetX - chartArea.left) / (chartArea.right - chartArea.left);
+            const rangeChangeX = zoomSpeed * delta * currentRangeX;
+
+            let currentRangeY = this.props.yMax - this.props.yMin;
+            const fractionY = (wheelEvent.offsetY - chartArea.top) / (chartArea.bottom - chartArea.top);
+            const rangeChangeY = zoomSpeed * delta * currentRangeY;
+
+            const zoomMinX = this.props.xMin - rangeChangeX * fractionX;
+            const zoomMaxX = this.props.xMax + rangeChangeX * (1 - fractionX);
+            const zoomMinY = this.props.yMin - rangeChangeY * fractionY;
+            const zoomMaxY = this.props.yMax + rangeChangeY * (1 - fractionY);
+            this.props.graphZoomedXY(zoomMinX, zoomMaxX, zoomMinY, zoomMaxY);
         }
     };
 
@@ -541,7 +573,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         return (
             <div
                 className={"scatter-plot-component"}
-                style={{cursor: "crosshair"}}
+                // style={{cursor: "crosshair"}}
+                style={{cursor: this.isPanning ? "move" : "crosshair"}}
                 onKeyDown={this.onKeyDown}
                 onMouseEnter={this.onMouseEnter}
                 onMouseMove={this.onMouseMove}
