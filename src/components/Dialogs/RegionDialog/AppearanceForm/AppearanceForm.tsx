@@ -78,7 +78,7 @@ export class AppearanceForm extends React.Component<{ region: RegionStore, darkT
                     {region.regionType !== CARTA.RegionType.POINT &&
                         <FormGroup inline={true} label="Dash Length" labelInfo="(px)">  
                             <NumericInput
-                                placeholder="Line Width"
+                                placeholder="Dash Length"
                                 min={0}
                                 max={RegionStore.MAX_DASH_LENGTH}
                                 value={region.dashLength}

@@ -13,7 +13,6 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/ScalingComponent";
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
-import {AppearanceForm} from "components/Dialogs/RegionDialog/AppearanceForm/AppearanceForm";
 import {ColorPickerComponent} from "components/Shared";
 import {Theme, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore, FrameScaling, RegionStore, RenderConfigStore} from "stores";
@@ -183,7 +182,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 }
-                <FormGroup inline={true} label="NaN color">
+                <FormGroup inline={true} label="NaN Color">
                     <ColorPickerComponent
                         color={preference.nanColor}
                         presetColors={[Colors.BLUE3]}
@@ -235,7 +234,35 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
 
         const regionSettingsPanel = (
             <React.Fragment>
-                <AppearanceForm region={preference.regionContainer} darkTheme={appStore.darkTheme} isPreference={true}/>
+                <FormGroup inline={true} label="Color">
+                    <ColorPickerComponent
+                        color={preference.regionContainer.color}
+                        presetColors={RegionStore.SWATCH_COLORS}
+                        setColor={preference.regionContainer.setColor}
+                        disableAlpha={true}
+                        darkTheme={appStore.darkTheme}
+                    />
+                </FormGroup>
+                <FormGroup  inline={true} label="Line Width" labelInfo="(px)">
+                    <NumericInput
+                            placeholder="Line Width"
+                            min={RegionStore.MIN_LINE_WIDTH}
+                            max={RegionStore.MAX_LINE_WIDTH}
+                            value={preference.regionContainer.lineWidth}
+                            stepSize={0.5}
+                            onValueChange={(value: number) => preference.regionContainer.setLineWidth(Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)))}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Dash Length" labelInfo="(px)">
+                    <NumericInput
+                        placeholder="Dash Length"
+                        min={0}
+                        max={RegionStore.MAX_DASH_LENGTH}
+                        value={preference.regionContainer.dashLength}
+                        stepSize={1}
+                        onValueChange={(value: number) => preference.regionContainer.setDashLength(Math.max(0, Math.min(RegionStore.MAX_DASH_LENGTH, value)))}
+                    />
+                </FormGroup>
                 <FormGroup inline={true} label="Region Type">
                     <HTMLSelect value={preference.regionContainer.regionType} onChange={(ev) => { preference.setRegionType(Number(ev.currentTarget.value)); }}>
                         {regionTypes}
