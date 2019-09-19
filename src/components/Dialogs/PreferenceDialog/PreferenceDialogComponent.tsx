@@ -6,7 +6,7 @@ import {
     Button, IDialogProps, Intent, Tab, Tabs,
     FormGroup, TabId, MenuItem, Switch, RadioGroup,
     Radio, HTMLSelect, AnchorButton, NumericInput, Tooltip,
-    Position, Checkbox
+    Position, Checkbox, Colors
 } from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -14,6 +14,7 @@ import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {AppearanceForm} from "components/Dialogs/RegionDialog/AppearanceForm/AppearanceForm";
+import {ColorPickerComponent} from "components/Shared";
 import {Theme, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore, FrameScaling, RegionStore, RenderConfigStore} from "stores";
 import "./PreferenceDialogComponent.css";
@@ -182,6 +183,15 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 }
+                <FormGroup inline={true} label="NaN color">
+                    <ColorPickerComponent
+                        color={preference.nanColor}
+                        presetColors={[Colors.BLUE3]}
+                        setColor={preference.setNaNColor}
+                        disableAlpha={false}
+                        darkTheme={appStore.darkTheme}
+                    />
+                </FormGroup>
             </React.Fragment>
         );
 
