@@ -28,8 +28,6 @@ enum InteractionMode {
     PANNING
 }
 
-type Point3D = { x: number, y: number, z?: number };
-
 export interface LineMarker {
     value: number;
     id: string;
@@ -43,6 +41,7 @@ export interface LineMarker {
     dragCustomBoundary?: { xMin?: number, xMax?: number, yMin?: number, yMax?: number };
     dragMove?: (val: number) => void;
     isMouseMove?: boolean;
+    interactionMarker?: boolean;
 }
 
 export class LinePlotComponentProps {
@@ -80,7 +79,6 @@ export class LinePlotComponentProps {
     graphCursorMoved?: (x: number) => void;
     scrollZoom?: boolean;
     multiPlotData?: Map<string, { x: number, y: number }[]>;
-    colorRangeEnd?: number;
     showXAxisTicks?: boolean;
     showXAxisLabel?: boolean;
     xZeroLineColor?: string;
@@ -89,14 +87,11 @@ export class LinePlotComponentProps {
     xTickMarkLength?: number;
     multiPlotBorderColor?: Map<string, string>;
     plotType?: string;
-    dataBackgroundColor?: Array<string>;
     isGroupSubPlot?: boolean;
-    centeredOrigin?: boolean;
-    equalScale?: boolean;
     zIndex?: boolean;
     pointRadius?: number;
-    scatterIndicator?:  { currentChannel: Point3D, hoveredChannel: Point3D };
     zeroLineWidth?: number;
+    mouseEntered?: (value: boolean) => void;
 }
 
 // Maximum time between double clicks
@@ -222,6 +217,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     @action showMouseEnterWidget = () => {
         this.isMouseEntered = true;
+        if (this.props.mouseEntered) {
+            this.props.mouseEntered(true);
+        }
     };
 
     @action hideMouseEnterWidget = () => {
@@ -462,6 +460,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     onMouseLeave = () => {
         this.hideMouseEnterWidget();
+        if (this.props.mouseEntered) {
+            this.props.mouseEntered(false);
+        }
     };
 
     private getTimestamp() {
@@ -725,7 +726,12 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     if (valueCanvasSpace < Math.floor(chartArea.left - 1) || valueCanvasSpace > Math.ceil(chartArea.right + 1) || isNaN(valueCanvasSpace)) {
                         continue;
                     }
-                    lines.push(this.genVerticalLines(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace));
+                    if (marker.interactionMarker) {
+                        const markerOpacityInteraction = (!marker.isMouseMove && (this.isMouseEntered)) ? 0 : (marker.opacity || 1);
+                        lines.push(this.genVerticalLines(marker, isHovering, markerColor, markerOpacityInteraction, valueCanvasSpace));
+                    } else {
+                        lines.push(this.genVerticalLines(marker, isHovering, markerColor, markerOpacity, valueCanvasSpace));
+                    }
                 }
             }
         }
@@ -818,7 +824,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     render() {
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
         const cursorInfo = this.getCursorInfo();
-
         return (
             <div
                 className={"line-plot-component"}

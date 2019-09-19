@@ -14,8 +14,8 @@ import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {AppearanceForm} from "components/Dialogs/RegionDialog/AppearanceForm/AppearanceForm";
-import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
-import {AppStore, RegionStore, RenderConfigStore} from "stores";
+import {Theme, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
+import {AppStore, FrameScaling, RegionStore, RenderConfigStore} from "stores";
 import "./PreferenceDialogComponent.css";
 
 enum TABS {
@@ -135,6 +135,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </FormGroup>
                 <FormGroup inline={true} label="Color Map">
                     <ColormapComponent
+                        inverted={false}
                         selectedItem={preference.colormap}
                         onItemSelect={(selected) => { preference.setColormap(selected); }}
                     />
@@ -151,6 +152,36 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         <Button text={preference.percentile.toString(10) + "%"} rightIcon="double-caret-vertical" alignText={"right"}/>
                     </PercentileSelect>
                 </FormGroup>
+                {(preference.scaling === FrameScaling.LOG || preference.scaling === FrameScaling.POWER) &&
+                <FormGroup label={"Alpha"} inline={true}>
+                    <NumericInput
+                        buttonPosition={"none"}
+                        value={preference.scalingAlpha}
+                        onValueChange={(value: number) => {
+                            if (isFinite(value)) {
+                                preference.setScalingAlpha(value);
+                            }
+                        }}
+                    />
+                </FormGroup>
+                }
+                {preference.scaling === FrameScaling.GAMMA &&
+                <FormGroup label={"Gamma"} inline={true}>
+                    <NumericInput
+                        min={RenderConfigStore.GAMMA_MIN}
+                        max={RenderConfigStore.GAMMA_MAX}
+                        stepSize={0.1}
+                        minorStepSize={0.01}
+                        majorStepSize={0.5}
+                        value={preference.scalingGamma}
+                        onValueChange={(value: number) => {
+                            if (isFinite(value)) {
+                                preference.setScalingGamma(value);
+                            }
+                        }}
+                    />
+                </FormGroup>
+                }
             </React.Fragment>
         );
 

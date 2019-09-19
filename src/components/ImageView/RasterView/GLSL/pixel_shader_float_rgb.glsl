@@ -20,6 +20,7 @@ uCmapTexture;
 uniform int uNumCmaps;
 uniform int uCmapIndex;
 uniform int uScaleType;
+uniform int uInverted;
 uniform float uMinVal;
 uniform float uMaxVal;
 uniform float uBias;
@@ -84,6 +85,10 @@ void main(void) {
     x = clamp(x - uBias, 0.0, 1.0);
     // contrast mod
     x = clamp((x - 0.5) * uContrast + 0.5, 0.0, 1.0);
+    // invert mod
+    if (uInverted > 0) {
+        x = 1.0 - x;
+    }
 
     float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
     vec2 cmapCoords = vec2(x, cmapYVal);
