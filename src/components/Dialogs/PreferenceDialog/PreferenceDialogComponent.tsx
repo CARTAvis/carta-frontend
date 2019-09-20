@@ -6,7 +6,7 @@ import {
     Button, IDialogProps, Intent, Tab, Tabs,
     FormGroup, TabId, MenuItem, Switch, RadioGroup,
     Radio, HTMLSelect, AnchorButton, NumericInput, Tooltip,
-    Position, Checkbox, Colors
+    Position, Checkbox
 } from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {DraggableDialogComponent} from "components/Dialogs";
@@ -185,7 +185,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 <FormGroup inline={true} label="NaN Color">
                     <ColorPickerComponent
                         color={preference.nanColor}
-                        presetColors={[Colors.BLUE3]}
+                        presetColors={["#0000FF", "#A9A9A9"]}
                         setColor={preference.setNaNColor}
                         disableAlpha={false}
                         darkTheme={appStore.darkTheme}

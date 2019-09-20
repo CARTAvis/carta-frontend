@@ -4,7 +4,7 @@ export function isColorValid(colorString: string): boolean {
 }
 
 // adapted from https://stackoverflow.com/questions/21646738/convert-hex-to-rgba
-export function hexStringToRgba(colorString: string, opacity: number) {
+export function hexStringToRgb(colorString: string) {
     let c;
     if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(colorString)) {
         c = colorString.substring(1).split("");
@@ -12,7 +12,12 @@ export function hexStringToRgba(colorString: string, opacity: number) {
             c = [c[0], c[0], c[1], c[1], c[2], c[2]];
         }
         c = "0x" + c.join("");
-        return `rgba(${(c >> 16) & 255}, ${(c >> 8) & 255}, ${c & 255}, ${opacity})`;
+
+        return {
+            r: (c >> 16) & 255,
+            g: (c >> 8) & 255,
+            b: c & 255
+        };
     }
     return null;
 }
