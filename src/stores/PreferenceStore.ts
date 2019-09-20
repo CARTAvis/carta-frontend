@@ -45,7 +45,7 @@ const DEFAULTS = {
     percentile: 99.9,
     scalingAlpha: 1000,
     scalingGamma: 1,
-    nanColor: "#137CBD",
+    nanColor: "#0000FF",
     astColor: 4,
     astGridVisible: false,
     astLabelsVisible: true,
