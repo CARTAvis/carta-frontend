@@ -256,7 +256,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         if (opacity < 1.0) {
             const rgb = hexStringToRgb(lineColor);
             if (rgb) {
-                lineColor =`rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+                lineColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
             }
         }
 
@@ -385,7 +385,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 if (opacity < 1.0) {
                     const rgb = hexStringToRgb(currentLineColor);
                     if (rgb) {
-                        currentLineColor =`rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+                        currentLineColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
                     }
                 }
                 const multiPlotDatasetConfig: ChartDataSets = {
