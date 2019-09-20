@@ -175,7 +175,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
             const rgb = hexStringToRgb(renderConfig.nanColor);
             if (rgb) {
-                this.gl.uniform4f(this.shaderUniforms.NaNColor, rgb.r, rgb.g, rgb.b, 1);
+                this.gl.uniform4f(this.shaderUniforms.NaNColor, rgb.r/255, rgb.g/255, rgb.b/255, 1);
             }
         }
     }
