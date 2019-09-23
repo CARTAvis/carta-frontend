@@ -2,7 +2,7 @@ import {CARTA} from "carta-protobuf";
 
 // class Event is a simple wrapper for CARTA.EventType
 export class Event {
-    public static readonly EVENT_TYPES = Object.values(CARTA.EventType);
+    public static readonly EVENT_TYPES = Object.values(CARTA.EventType) as CARTA.EventType[];
     public static readonly EVENT_NUMBER = Event.EVENT_TYPES.length;
 
     public static isEventTypeValid = (eventType: CARTA.EventType): boolean => {

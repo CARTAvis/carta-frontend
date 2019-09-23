@@ -19,7 +19,7 @@ import {
     nightPalette,
     OverlayStore,
     PreferenceStore,
-    RasterRenderType,
+    RasterRenderType, RegionFileType,
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
@@ -33,7 +33,7 @@ import {AppToaster} from "../components/Shared";
 
 const CURSOR_THROTTLE_TIME = 200;
 const CURSOR_THROTTLE_TIME_ROTATED = 100;
-const IMAGE_THROTTLE_TIME = 50;
+const IMAGE_THROTTLE_TIME = 200;
 const IMAGE_CHANNEL_THROTTLE_TIME = 500;
 const REQUIREMENTS_CHECK_INTERVAL = 200;
 
@@ -394,7 +394,7 @@ export class AppStore {
         });
     };
 
-    @action exportRegions = (directory: string, file: string, coordType: CARTA.CoordinateType) => {
+    @action exportRegions = (directory: string, file: string, coordType: CARTA.CoordinateType, fileType: RegionFileType) => {
         const frame = this.activeFrame;
         // Prevent exporting if only the cursor region exists
         if (!frame.regionSet.regions || frame.regionSet.regions.length <= 1) {
@@ -402,7 +402,7 @@ export class AppStore {
         }
 
         const regionIds = frame.regionSet.regions.map(r => r.regionId).filter(id => id !== CURSOR_REGION_ID);
-        this.backendService.exportRegion(directory, file, CARTA.FileType.CRTF, coordType, frame.frameInfo.fileId, regionIds).subscribe(() => {
+        this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionIds).subscribe(() => {
             AppToaster.show({icon: "saved", message: `Exported regions for ${frame.frameInfo.fileInfo.name} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`, intent: "success", timeout: 3000});
             this.fileBrowserStore.hideFileBrowser();
         }, error => {
