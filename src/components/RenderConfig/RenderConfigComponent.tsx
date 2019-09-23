@@ -40,7 +40,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
-   
+
     @computed get widgetStore(): RenderConfigWidgetStore {
         if (this.props.appStore && this.props.appStore.widgetsStore.renderConfigWidgets) {
             const widgetStore = this.props.appStore.widgetsStore.renderConfigWidgets.get(this.props.id);
@@ -192,6 +192,42 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             frame.renderConfig.setUseCubeHistogram(false);
         }
         this.props.appStore.cancelCubeHistogramRequest();
+    };
+
+    handleApplyContours = () => {
+        const appStore = this.props.appStore;
+        if (!appStore || !appStore.activeFrame || !appStore.activeFrame.renderConfig) {
+            return;
+        }
+
+        const frame = appStore.activeFrame;
+        const renderConfig = frame.renderConfig;
+        const minVal = renderConfig.scaleMinVal;
+        const maxVal = renderConfig.scaleMaxVal;
+        const numLevels = 5;
+        const step = (maxVal - minVal) / (numLevels - 1);
+        const levels = new Array<number>(numLevels);
+        for (let i = 0; i < numLevels; i++) {
+            levels[i] = minVal + i * step;
+        }
+
+        // TODO: Allow a different reference frame
+        const contourParameters: CARTA.ISetContourParameters = {
+            fileId: frame.frameInfo.fileId,
+            referenceFileId: frame.frameInfo.fileId,
+            channel: frame.requiredChannel,
+            stokes: frame.stokes,
+            smoothingMode: CARTA.SmoothingMode.GaussianBlur,
+            smoothingFactor: 7,
+            levels,
+            imageBounds: {
+                xMin: 0,
+                xMax: frame.frameInfo.fileInfoExtended.width,
+                yMin: 0,
+                yMax: frame.frameInfo.fileInfoExtended.height,
+            }
+        };
+        this.props.appStore.backendService.setContourParameters(contourParameters);
     };
 
     onMinMoved = (x: number) => {
@@ -393,8 +429,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                             onBlur={this.handleScaleMaxChange}
                             onKeyDown={this.handleScaleMaxChange}
                         />
-                    </FormGroup>		   		    
-                {this.width < histogramCutoff && percentileSelectDiv}
+                    </FormGroup>
+                    <Button onClick={this.handleApplyContours}>Apply Contours</Button>
+                    {this.width < histogramCutoff && percentileSelectDiv}
                 </div>
                 <TaskProgressDialogComponent
                     isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}

@@ -508,6 +508,21 @@ export class FrameStore {
         }
     }
 
+    @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
+        this.stokes = contourImageData.stokes;
+        this.channel = contourImageData.channel;
+
+        for (const contourSet of contourImageData.contourSets) {
+            const indices = new Int32Array(contourSet.rawStartIndicesI32.buffer.slice(contourSet.rawStartIndicesI32.byteOffset, contourSet.rawStartIndicesI32.byteOffset + contourSet.rawStartIndicesI32.byteLength));
+            const vertices = new Float32Array(contourSet.rawCoordinatesFp32.buffer.slice(contourSet.rawCoordinatesFp32.byteOffset, contourSet.rawCoordinatesFp32.byteOffset + contourSet.rawCoordinatesFp32.byteLength));
+            console.log({
+                level: contourSet.level,
+                indices,
+                vertices
+            });
+        }
+    }
+
     @action setChannels(channel: number, stokes: number) {
         // Automatically switch to per-channel histograms when Stokes parameter changes
         this.renderConfig.setStokes(stokes);
