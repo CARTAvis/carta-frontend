@@ -1,10 +1,17 @@
+export interface RGBA {
+    r: number;
+    g: number;
+    b: number;
+    a: number;
+}
+
 export function isColorValid(colorString: string): boolean {
     const colorHex: RegExp = /^#([A-Fa-f0-9]{3}){1,2}$/;
     return colorHex.test(colorString);
 }
 
 // adapted from https://stackoverflow.com/questions/21646738/convert-hex-to-rgba
-export function hexStringToRgb(colorString: string) {
+export function hexStringToRgba(colorString: string, alpha: number = 1): RGBA {
     if (!isColorValid(colorString)) {
         return null;
     }
@@ -18,7 +25,8 @@ export function hexStringToRgb(colorString: string) {
     return {
         r: (hex >> 16) & 255,
         g: (hex >> 8) & 255,
-        b: hex & 255
+        b: hex & 255,
+        a: alpha
     };
 }
 // end stolen from https://stackoverflow.com/questions/21646738/convert-hex-to-rgba

@@ -9,6 +9,7 @@ import {
     Position, Checkbox
 } from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
+import {ColorResult} from "react-color";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/ScalingComponent";
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
@@ -16,6 +17,7 @@ import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent"
 import {ColorPickerComponent} from "components/Shared";
 import {Theme, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore, FrameScaling, RegionStore, RenderConfigStore} from "stores";
+import {hexStringToRgba} from "utilities";
 import "./PreferenceDialogComponent.css";
 
 enum TABS {
@@ -184,9 +186,12 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 }
                 <FormGroup inline={true} label="NaN Color">
                     <ColorPickerComponent
-                        color={preference.nanColor}
+                        color={hexStringToRgba(preference.nanColorHex, preference.nanAlpha)}
                         presetColors={["#0000FF", "#A9A9A9"]}
-                        setColor={preference.setNaNColor}
+                        setColor={(color: ColorResult) => {
+                            preference.setNaNColorHex(color.hex);
+                            preference.setNaNAlpha(color.rgb.a);
+                        }}
                         disableAlpha={false}
                         darkTheme={appStore.darkTheme}
                     />
@@ -238,7 +243,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     <ColorPickerComponent
                         color={preference.regionContainer.color}
                         presetColors={RegionStore.SWATCH_COLORS}
-                        setColor={preference.regionContainer.setColor}
+                        setColor={(color: ColorResult) => preference.regionContainer.setColor(color.hex)}
                         disableAlpha={true}
                         darkTheme={appStore.darkTheme}
                     />

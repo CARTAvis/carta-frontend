@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {FrameStore, OverlayStore, RasterRenderType} from "stores";
 import {FrameView, TileCoordinate} from "models";
 import {RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService} from "services/TileService";
-import {GetRequiredTiles, getShaderProgram, GL, LayerToMip, loadFP32Texture, loadImageTexture, hexStringToRgb} from "utilities";
+import {GetRequiredTiles, getShaderProgram, GL, LayerToMip, loadFP32Texture, loadImageTexture, hexStringToRgba} from "utilities";
 import "./RasterViewComponent.css";
 import allMaps from "static/allmaps.png";
 
@@ -173,9 +173,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1f(this.shaderUniforms.Gamma, renderConfig.gamma);
             this.gl.uniform1f(this.shaderUniforms.Alpha, renderConfig.alpha);
 
-            const rgb = hexStringToRgb(renderConfig.nanColor);
-            if (rgb) {
-                this.gl.uniform4f(this.shaderUniforms.NaNColor, rgb.r / 255, rgb.g / 255, rgb.b / 255, 1);
+            const rgba = hexStringToRgba(renderConfig.nan.colorHex, renderConfig.nan.alpha);
+            if (rgba) {
+                this.gl.uniform4f(this.shaderUniforms.NaNColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
             }
         }
     }

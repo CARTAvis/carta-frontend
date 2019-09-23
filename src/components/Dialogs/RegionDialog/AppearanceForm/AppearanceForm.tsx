@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
+import {ColorResult} from "react-color";
 import {FormGroup, H5, NumericInput} from "@blueprintjs/core";
 import {ColorPickerComponent} from "components/Shared";
 import {RegionStore} from "stores";
@@ -35,7 +36,7 @@ export class AppearanceForm extends React.Component<{ region: RegionStore, darkT
                         <ColorPickerComponent
                             color={region.color}
                             presetColors={RegionStore.SWATCH_COLORS}
-                            setColor={region.setColor}
+                            setColor={(color: ColorResult) => region.setColor(color.hex)}
                             disableAlpha={true}
                             darkTheme={this.props.darkTheme}
                         />

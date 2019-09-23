@@ -17,7 +17,8 @@ const PREFERENCE_KEYS = {
     percentile: "percentile",
     scalingAlpha: "scalingAlpha",
     scalingGamma: "scalingGamma",
-    nanColor: "nanColor",
+    nanColorHex: "nanColorHex",
+    nanAlpha: "nanAlpha",
     astColor: "astColor",
     astGridVisible: "astGridVisible",
     astLabelsVisible: "astLabelsVisible",
@@ -45,7 +46,8 @@ const DEFAULTS = {
     percentile: 99.9,
     scalingAlpha: 1000,
     scalingGamma: 1,
-    nanColor: "#0000FF",
+    nanColorHex: "#0000FF",
+    nanAlpha: 1,
     astColor: 4,
     astGridVisible: false,
     astLabelsVisible: true,
@@ -76,7 +78,8 @@ export class PreferenceStore {
     @observable percentile: number;
     @observable scalingAlpha: number;
     @observable scalingGamma: number;
-    @observable nanColor: string;
+    @observable nanColorHex: string;
+    @observable nanAlpha: number;
     @observable astColor: number;
     @observable astGridVisible: boolean;
     @observable astLabelsVisible: boolean;
@@ -161,9 +164,19 @@ export class PreferenceStore {
         return isFinite(value) && RenderConfigStore.IsGammaValid(value) ? value : DEFAULTS.scalingGamma;
     };
 
-    private getNaNColor = (): string => {
-        const nanColor = localStorage.getItem(PREFERENCE_KEYS.nanColor);
-        return nanColor && isColorValid(nanColor) ? nanColor : DEFAULTS.nanColor;
+    private getNaNColorHex = (): string => {
+        const nanColorHex = localStorage.getItem(PREFERENCE_KEYS.nanColorHex);
+        return nanColorHex && isColorValid(nanColorHex) ? nanColorHex : DEFAULTS.nanColorHex;
+    };
+
+    private getNaNAlpha = (): number => {
+        const nanAlpha = localStorage.getItem(PREFERENCE_KEYS.nanAlpha);
+        if (!nanAlpha) {
+            return DEFAULTS.nanAlpha;
+        }
+
+        const value = Number(nanAlpha);
+        return isFinite(value) && value >= 0 && value <= 1 ? value : DEFAULTS.nanAlpha;
     };
 
     // getters for WCS overlay
@@ -384,9 +397,14 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.scalingGamma, scalingGamma.toString(10));
     };
 
-    @action setNaNColor = (nanColor: string) => {
-        this.nanColor = nanColor;
-        localStorage.setItem(PREFERENCE_KEYS.nanColor, nanColor);
+    @action setNaNColorHex = (nanColorHex: string) => {
+        this.nanColorHex = nanColorHex;
+        localStorage.setItem(PREFERENCE_KEYS.nanColorHex, nanColorHex);
+    };
+
+    @action setNaNAlpha = (nanAlpha: number) => {
+        this.nanAlpha = nanAlpha;
+        localStorage.setItem(PREFERENCE_KEYS.nanAlpha, nanAlpha.toString(10));
     };
 
     // setters for WCS overlay
@@ -462,7 +480,8 @@ export class PreferenceStore {
         this.setPercentile(DEFAULTS.percentile.toString());
         this.setScalingAlpha(DEFAULTS.scalingAlpha);
         this.setScalingGamma(DEFAULTS.scalingGamma);
-        this.setNaNColor(DEFAULTS.nanColor);
+        this.setNaNColorHex(DEFAULTS.nanColorHex);
+        this.setNaNAlpha(DEFAULTS.nanAlpha);
     };
 
     @action resetWCSOverlaySettings = () => {
@@ -504,7 +523,8 @@ export class PreferenceStore {
         this.percentile = this.getPercentile();
         this.scalingAlpha = this.getScalingAlpha();
         this.scalingGamma = this.getScalingGamma();
-        this.nanColor = this.getNaNColor();
+        this.nanColorHex = this.getNaNColorHex();
+        this.nanAlpha = this.getNaNAlpha();
         this.astColor = this.getASTColor();
         this.astGridVisible = this.getASTGridVisible();
         this.astLabelsVisible = this.getASTLabelsVisible();
