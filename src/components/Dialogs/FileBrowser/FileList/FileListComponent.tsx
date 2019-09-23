@@ -19,7 +19,7 @@ export class FileListComponent extends React.Component<{
         [CARTA.FileType.MIRIAD, {type: "Miriad", description: "ATNF Miriad Image"}],
         [CARTA.FileType.HDF5, {type: "HDF5", description: "HDF5 File (IDIA Schema)"}],
         [CARTA.FileType.CRTF, {type: "CRTF", description: "CASA Region Text Format"}],
-        [CARTA.FileType.REG, {type: "REG", description: "DS9 Region Format"}],
+        [CARTA.FileType.REG, {type: "DS9", description: "DS9 Region Format"}],
     ]);
 
     constructor(props: any) {
