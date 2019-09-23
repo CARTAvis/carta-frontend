@@ -17,6 +17,8 @@ interface ColorPickerComponentProps {
 
 @observer
 export class ColorPickerComponent extends React.Component<ColorPickerComponentProps> {
+    private static readonly CHANGE_DELAY = 100;
+
     @observable displayColorPicker: boolean;
 
     private handleColorClick = () => {
@@ -27,11 +29,11 @@ export class ColorPickerComponent extends React.Component<ColorPickerComponentPr
         this.displayColorPicker = false;
     };
 
-    private handleColorChange = (newColor: ColorResult) => {
+    private handleColorChange = _.throttle((newColor: ColorResult) => {
         if (this.props.setColor) {
             this.props.setColor(newColor);
         }
-    };
+    }, ColorPickerComponent.CHANGE_DELAY);
 
     public render() {
         let popoverClassName = "color-picker-popup";
