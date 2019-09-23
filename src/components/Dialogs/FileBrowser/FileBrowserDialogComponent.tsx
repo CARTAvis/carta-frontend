@@ -195,10 +195,12 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             </Popover>
         );
 
-        let sideMenu = <div>
-            {fileTypeMenu}
-            {coordinateTypeMenu}
-        </div>;
+        let sideMenu = (
+            <div>
+                {fileTypeMenu}
+                {coordinateTypeMenu}
+            </div>
+        );
         return <InputGroup autoFocus={true} placeholder="Enter file name" value={fileBrowserStore.exportFilename} onChange={this.handleExportInputChanged} rightElement={sideMenu}/>;
     }
 
