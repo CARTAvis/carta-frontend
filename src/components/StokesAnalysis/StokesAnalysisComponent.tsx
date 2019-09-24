@@ -918,8 +918,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
 
             if (quScatterPlotProps.data && quScatterPlotProps.data.length && interactionBorder) {
-                const scatterChannel = this.getScatterChannel(quScatterPlotProps.data, channel, true);
-                quScatterPlotProps.indicatorInteractionChannel = scatterChannel;
+                const scatterChannelInteraction = this.getScatterChannel(quScatterPlotProps.data, channel, true);
+                quScatterPlotProps.indicatorInteractionChannel = {
+                    currentChannel: scatterChannelInteraction.currentChannel, 
+                    hoveredChannel: scatterChannelInteraction.hoveredChannel,
+                    start: this.widgetStore.isMouseMoveIntoLinePlots
+                };
             }
 
             paLinePlotProps.comments = this.exportHeaders;
@@ -953,6 +957,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     <StokesAnalysisProfilerInfoComponent
                         darkMode={appStore.darkTheme}
                         cursorInfo={this.cursorInfo}
+                        fractionalPol={this.widgetStore.fractionalPolVisible}
                     />
                     }
                 </div>

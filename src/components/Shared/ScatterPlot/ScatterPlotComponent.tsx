@@ -71,7 +71,7 @@ export class ScatterPlotComponentProps {
     equalScale?: boolean;
     zIndex?: boolean;
     pointRadius?: number;
-    indicatorInteractionChannel?: { currentChannel: Point3D, hoveredChannel: Point3D };
+    indicatorInteractionChannel?: { currentChannel: Point3D, hoveredChannel: Point3D, start: boolean };
     zeroLineWidth?: number;
     cursorNearestPoint?: { x: number, y: number };
 }
@@ -276,36 +276,35 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
     private genIndicator = () => {
         const chartArea = this.chartArea;
-        let lines = [];
+        let indicator = [];
         const channel = this.props.indicatorInteractionChannel;
         let border = this.resizeData();
         const markerOpacity = this.markerOpacity; 
-        if (chartArea && channel && channel.hoveredChannel && !isNaN(channel.hoveredChannel.x) && !isNaN(channel.hoveredChannel.y) && channel.hoveredChannel !== channel.currentChannel) {
+        if (chartArea && channel && channel.hoveredChannel && !isNaN(channel.hoveredChannel.x) && !isNaN(channel.hoveredChannel.y) && !this.isMouseEntered && channel.start) {
             const channelH = this.props.indicatorInteractionChannel.hoveredChannel;
             const markerColor = this.props.darkMode ? Colors.GRAY4 : Colors.GRAY2;           
             let xCanvasSpace = Math.floor(this.getPixelValue(channelH.x, border.xMin, border.xMax, true)) + 0.5 * devicePixelRatio;
-            lines.push(this.genXline("scatter-indicator-x-hovered-interactive", markerColor, markerOpacity, xCanvasSpace));
             let yCanvasSpace = Math.floor(this.getPixelValue(channelH.y, border.yMin, border.yMax, false));
-            lines.push(this.genYline("scatter-indicator-y-hovered-interactive", markerColor, markerOpacity, yCanvasSpace));
+            indicator.push(this.genCircle("scatter-indicator-y-hovered-interaction-circle", markerColor , xCanvasSpace, yCanvasSpace));
         }
         if (chartArea && channel && channel.currentChannel && !isNaN(channel.currentChannel.x) && !isNaN(channel.currentChannel.y)) {
             const channelC = this.props.indicatorInteractionChannel.currentChannel;
             const markerColor = this.props.darkMode ? Colors.RED4 : Colors.RED2;
             let xCanvasSpace = Math.floor(this.getPixelValue(channelC.x, border.xMin, border.xMax, true)) + 0.5 * devicePixelRatio;
-            lines.push(this.genXline("scatter-indicator-x-current-interactive", markerColor, markerOpacity, xCanvasSpace));
+            indicator.push(this.genXline("scatter-indicator-x-current-interactive", markerColor, markerOpacity, xCanvasSpace));
             let yCanvasSpace = Math.floor(this.getPixelValue(channelC.y, border.yMin, border.yMax, false)) + 0.5 * devicePixelRatio;
-            lines.push(this.genYline("scatter-indicator-y-current-interactive", markerColor, markerOpacity, yCanvasSpace)); 
+            indicator.push(this.genYline("scatter-indicator-y-current-interactive", markerColor, markerOpacity, yCanvasSpace)); 
         }
-        if (this.props.cursorXY && this.isMouseEntered && this.props.cursorNearestPoint) {
-            const channelH = this.props.cursorXY.profiler;
+        if (this.isMouseEntered && this.props.cursorNearestPoint) {
+            const channelH = this.props.cursorNearestPoint;
             const markerColor = this.props.darkMode ? Colors.GRAY4 : Colors.GRAY2;
             if (channelH.x >= this.centeredOriginMode.xMin && channelH.x <= this.centeredOriginMode.xMax && channelH.y >= this.centeredOriginMode.yMin && channelH.y <= this.centeredOriginMode.yMax) {
                 const x = Math.floor(this.getPixelValue(this.props.cursorNearestPoint.x, border.xMin, border.xMax, true)) + 0.5 * devicePixelRatio;
                 const y = Math.floor(this.getPixelValue(this.props.cursorNearestPoint.y, border.yMin, border.yMax, false)) + 0.5 * devicePixelRatio;
-                lines.push(this.genCircle("scatter-indicator-y-hovered-circle", markerColor , x, y));
+                indicator.push(this.genCircle("scatter-indicator-y-hovered-circle", markerColor , x, y));
             }
         }
-        return lines;
+        return indicator;
     }
 
     exportImage = () => {
