@@ -377,7 +377,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         onChange={(tabId) => this.selectedTab = tabId}
                     >
                         <Tab id={TABS.GLOBAL} title="Global" panel={globalPanel}/>
-                        <Tab id={TABS.RENDER_CONFIG} title="Render Config" panel={renderConfigPanel}/>
+                        <Tab id={TABS.RENDER_CONFIG} title="Render Configuration" panel={renderConfigPanel}/>
                         <Tab id={TABS.WCS_OVERLAY} title="Default WCS Overlay" panel={wcsOverlayPanel}/>
                         <Tab id={TABS.REGION} title="Default Region settings" panel={regionSettingsPanel}/>
                         <Tab id={TABS.PERFORMANCE} title="Performance" panel={performancePanel}/>
