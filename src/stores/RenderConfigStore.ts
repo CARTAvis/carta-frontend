@@ -70,10 +70,6 @@ export class RenderConfigStore {
     @observable stokes: number;
     @observable scaleMin: number[];
     @observable scaleMax: number[];
-    @observable nan: {
-        colorHex: string;
-        alpha: number;
-    };
 
     constructor(readonly preference: PreferenceStore) {
         const percentile = preference.percentile;
@@ -89,10 +85,6 @@ export class RenderConfigStore {
         this.stokes = 0;
         this.scaleMin = [0, 0, 0, 0];
         this.scaleMax = [1, 1, 1, 1];
-        this.nan = {
-            colorHex: preference.nanColorHex,
-            alpha: preference.nanAlpha
-        };
     }
 
     public static IsScalingValid(scaling: FrameScaling): boolean {
