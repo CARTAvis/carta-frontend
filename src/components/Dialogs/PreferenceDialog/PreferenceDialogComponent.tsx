@@ -132,20 +132,20 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
 
         const renderConfigPanel = (
             <React.Fragment>
-                <FormGroup inline={true} label="Scaling">
+                <FormGroup inline={true} label="Default Scaling">
                     <ScalingComponent
                         selectedItem={preference.scaling}
                         onItemSelect={(selected) => { preference.setScaling(selected); }}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Color Map">
+                <FormGroup inline={true} label="Default Color Map">
                     <ColormapComponent
                         inverted={false}
                         selectedItem={preference.colormap}
                         onItemSelect={(selected) => { preference.setColormap(selected); }}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Percentile Ranks">
+                <FormGroup inline={true} label="Default Percentile Ranks">
                     <PercentileSelect
                         activeItem={preference.percentile.toString(10)}
                         onItemSelect={(selected) => { preference.setPercentile(selected); }}
@@ -187,7 +187,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 }
-                <FormGroup inline={true} label="NaN Color">
+                <FormGroup inline={true} label="Default NaN Color">
                     <ColorPickerComponent
                         color={hexStringToRgba(preference.nanColorHex, preference.nanAlpha)}
                         presetColors={RegionStore.SWATCH_COLORS}
@@ -377,7 +377,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         onChange={(tabId) => this.selectedTab = tabId}
                     >
                         <Tab id={TABS.GLOBAL} title="Global" panel={globalPanel}/>
-                        <Tab id={TABS.RENDER_CONFIG} title="Default Render Config" panel={renderConfigPanel}/>
+                        <Tab id={TABS.RENDER_CONFIG} title="Render Config" panel={renderConfigPanel}/>
                         <Tab id={TABS.WCS_OVERLAY} title="Default WCS Overlay" panel={wcsOverlayPanel}/>
                         <Tab id={TABS.REGION} title="Default Region settings" panel={regionSettingsPanel}/>
                         <Tab id={TABS.PERFORMANCE} title="Performance" panel={performancePanel}/>
