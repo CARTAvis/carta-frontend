@@ -187,12 +187,12 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 }
-                <FormGroup inline={true} label="Default NaN Color">
+                <FormGroup inline={true} label="NaN Color">
                     <ColorPickerComponent
                         color={hexStringToRgba(preference.nanColorHex, preference.nanAlpha)}
-                        presetColors={RegionStore.SWATCH_COLORS}
+                        presetColors={[...RegionStore.SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
-                            preference.setNaNColorHex(color.hex);
+                            preference.setNaNColorHex(color.hex === "transparent" ? "#000000" : color.hex);
                             preference.setNaNAlpha(color.rgb.a);
                         }}
                         disableAlpha={false}
