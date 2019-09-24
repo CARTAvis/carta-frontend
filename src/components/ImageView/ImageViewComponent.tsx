@@ -238,6 +238,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     frame={appStore.activeFrame}
                     docked={this.props.docked}
                     overlaySettings={appStore.overlayStore}
+                    preference={appStore.preferenceStore}
                     tileService={appStore.tileService}
                 />
                 {divContents}

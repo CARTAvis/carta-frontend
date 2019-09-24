@@ -1,20 +1,32 @@
+export interface RGBA {
+    r: number;
+    g: number;
+    b: number;
+    a: number;
+}
+
 export function isColorValid(colorString: string): boolean {
-    const colorHex: RegExp = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+    const colorHex: RegExp = /^#([A-Fa-f0-9]{3}){1,2}$/;
     return colorHex.test(colorString);
 }
 
 // adapted from https://stackoverflow.com/questions/21646738/convert-hex-to-rgba
-export function hexStringToRgba(colorString: string, opacity: number) {
-    let c;
-    if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(colorString)) {
-        c = colorString.substring(1).split("");
-        if (c.length === 3) {
-            c = [c[0], c[0], c[1], c[1], c[2], c[2]];
-        }
-        c = "0x" + c.join("");
-        return `rgba(${(c >> 16) & 255}, ${(c >> 8) & 255}, ${c & 255}, ${opacity})`;
+export function hexStringToRgba(colorString: string, alpha: number = 1): RGBA {
+    if (!isColorValid(colorString)) {
+        return null;
     }
-    return null;
-}
 
+    let c = colorString.substring(1).split("");
+    if (c.length === 3) { // shorthand hex color
+        c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+    }
+    const hex = Number("0x" + c.join(""));
+
+    return {
+        r: (hex >> 16) & 255,
+        g: (hex >> 8) & 255,
+        b: hex & 255,
+        a: alpha
+    };
+}
 // end stolen from https://stackoverflow.com/questions/21646738/convert-hex-to-rgba
