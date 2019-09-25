@@ -1,9 +1,9 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {FrameStore, OverlayStore, RasterRenderType} from "stores";
+import {FrameStore, OverlayStore, PreferenceStore, RasterRenderType} from "stores";
 import {FrameView, TileCoordinate} from "models";
 import {RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService} from "services/TileService";
-import {GetRequiredTiles, getShaderProgram, GL, LayerToMip, loadFP32Texture, loadImageTexture} from "utilities";
+import {GetRequiredTiles, getShaderProgram, GL, LayerToMip, loadFP32Texture, loadImageTexture, hexStringToRgba} from "utilities";
 import "./RasterViewComponent.css";
 import allMaps from "static/allmaps.png";
 
@@ -11,6 +11,7 @@ const vertexShader = require("!raw-loader!./GLSL/vertex_shader.glsl");
 const pixelShader = require("!raw-loader!./GLSL/pixel_shader_float_rgb.glsl");
 
 export class RasterViewComponentProps {
+    preference: PreferenceStore;
     overlaySettings: OverlayStore;
     frame: FrameStore;
     tileService: TileService;
@@ -162,7 +163,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     private updateUniforms() {
         const renderConfig = this.props.frame.renderConfig;
-        if (renderConfig && this.shaderUniforms) {
+        const preference = this.props.preference;
+        if (renderConfig && preference && this.shaderUniforms) {
             this.gl.uniform1f(this.shaderUniforms.MinVal, renderConfig.scaleMinVal);
             this.gl.uniform1f(this.shaderUniforms.MaxVal, renderConfig.scaleMaxVal);
             this.gl.uniform1i(this.shaderUniforms.CmapIndex, renderConfig.colorMap);
@@ -172,6 +174,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1f(this.shaderUniforms.Contrast, renderConfig.contrast);
             this.gl.uniform1f(this.shaderUniforms.Gamma, renderConfig.gamma);
             this.gl.uniform1f(this.shaderUniforms.Alpha, renderConfig.alpha);
+
+            const rgba = hexStringToRgba(preference.nanColorHex, preference.nanAlpha);
+            if (rgba) {
+                this.gl.uniform4f(this.shaderUniforms.NaNColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
+            }
         }
     }
 
@@ -458,6 +465,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const frame = this.props.frame;
         const frameView = frame ? frame.requiredFrameView : null;
         const currentView = frame ? frame.currentFrameView : null;
+        const preference = this.props.preference;
         if (frame) {
             const colorMapping = {
                 min: frame.renderConfig.scaleMinVal,
@@ -468,7 +476,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 scaling: frame.renderConfig.scaling,
                 gamma: frame.renderConfig.gamma,
                 alpha: frame.renderConfig.alpha,
-                inverted: frame.renderConfig.inverted
+                inverted: frame.renderConfig.inverted,
+                nanColorHex: preference.nanColorHex,
+                nanAlpha: preference.nanAlpha
             };
             const renderType = frame.renderType;
         }
