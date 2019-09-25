@@ -727,14 +727,19 @@ export class BackendService {
         for (const contourSet of contourData.contourSets) {
             compressedSize += contourSet.rawCoordinates.byteLength;
             contourSet.rawCoordinates = ZstdApi.decompress(contourSet.rawCoordinates);
-            // TODO: This should be done in WebAssembly! Far too slow in JS
+
+            // TODO: This should be done in WebAssembly! Far too slow in JS. Eventually WebAssembly will also support SSE
             const floatCoordinates = new Float32Array(contourSet.rawCoordinates.buffer);
             const shuffledBytes = new Uint8Array(16);
             const shuffledIntegers = new Int32Array(shuffledBytes.buffer);
             let counter = 0;
-            // Un-shuffle data
+
             let v = 0;
-            for (v = 0; v < 4 * Math.floor(floatCoordinates.length / 4); v += 4) {
+            const N = floatCoordinates.length;
+            const blockedLength = 4 * Math.floor(N / 4);
+
+            // Un-shuffle data and convert from int to float based on decimation factor
+            for (v = 0; v < blockedLength; v += 4) {
                 const i = 4 * v;
                 shuffledBytes[0] = contourSet.rawCoordinates[i];
                 shuffledBytes[1] = contourSet.rawCoordinates[i + 4];
@@ -765,7 +770,15 @@ export class BackendService {
             for (let i = 0; i < remainingIntegers.length; i++, v++) {
                 floatCoordinates[v] = remainingIntegers[i] / contourSet.decimationFactor;
             }
+
+            // Reverse the delta-encoding
+            for (v = N - 4; v >= 0; v -= 2) {
+                floatCoordinates[v] = floatCoordinates[v + 2] - floatCoordinates[v];
+                floatCoordinates[v + 1] = floatCoordinates[v + 3] - floatCoordinates[v + 1];
+            }
+
             vertexCounter += floatCoordinates.length / 2;
+
         }
         const tEnd = performance.now();
         const dt = tEnd - tStart;
