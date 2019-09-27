@@ -1,6 +1,6 @@
 import {Point2D} from "../models";
 
-export function binarySearchByX(array: Array<Point2D>, x: number): {point: Point2D, index: number} {
+export function binarySearchByX(array: readonly Point2D[], x: number): {point: Point2D, index: number} {
     if (array === undefined || array.length === 0 || x === undefined) {
         return null;
     }

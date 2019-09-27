@@ -234,7 +234,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     };
 
-    private matchXYindex (z: number, data: Point3D[]): Point3D {
+    private matchXYindex (z: number, data: readonly Point3D[]): Point3D {
         let point = data[0];
         for (let index = 0; index < data.length; index++) {
             const element = data[index];
@@ -242,7 +242,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 point = element;
                 break;
             }
-            
         }
         return point;
     }
@@ -560,36 +559,64 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    private getCursorInfo (quDataset: Point3D[], piDataset: Point2D[], paDataset: Point2D[], scatterCursorProfiler: Point3D, lineCursorProfiler: number, scatterCursorImage: Point3D, lineCursorImage: number) {
+    private fillProfilerDataInLinePlots = (
+        quDataset: readonly Point3D[],
+        piDataset: readonly Point2D[],
+        paDataset: readonly Point2D[],
+        lineCursorProfiler: number,
+        profilerData: {q: number, u: number, pi: number, pa: number, channel: number}
+    ) => {
+        const piNearest = binarySearchByX(piDataset, lineCursorProfiler);
+        const paNearest = binarySearchByX(paDataset, lineCursorProfiler);
+        if (piNearest && piNearest.point && paNearest && paNearest.point) {
+            let cursor = this.matchXYindex(piNearest.point.x, quDataset);
+            profilerData.q = cursor.x;
+            profilerData.u = cursor.y;
+            profilerData.channel = cursor.z;
+            profilerData.pi = piNearest.point.y;
+            profilerData.pa = paNearest.point.y;
+        }
+    };
+
+    private fillProfilerDataInScatterPlots = (
+        quDataset: readonly Point3D[],
+        piDataset: readonly Point2D[],
+        paDataset: readonly Point2D[],
+        scatterCursorProfiler: Point3D,
+        profilerData: {q: number, u: number, pi: number, pa: number, channel: number}
+    ) => {
+        const minIndex = closestPointIndexToCursor(scatterCursorProfiler, quDataset);
+        const currentScatterData = quDataset[minIndex];
+        const piNearest = binarySearchByX(piDataset, currentScatterData.z);
+        const paNearest = binarySearchByX(paDataset, currentScatterData.z);
+        if (piNearest && piNearest.point && paNearest && paNearest.point) {
+            profilerData.q = currentScatterData.x;
+            profilerData.u = currentScatterData.y;
+            profilerData.channel = piNearest.point.x;
+            profilerData.pi = piNearest.point.y;
+            profilerData.pa = paNearest.point.y;
+        }
+    };
+
+    private getCursorInfo = (
+        quDataset: readonly Point3D[],
+        piDataset: readonly Point2D[],
+        paDataset: readonly Point2D[],
+        scatterCursorProfiler: Point3D,
+        lineCursorProfiler: number,
+        scatterCursorImage: Point3D,
+        lineCursorImage: number
+    ) => {
         const isMouseEntered = this.widgetStore.isMouseMoveIntoLinePlots || this.widgetStore.isMouseMoveIntoScatterPlots;
         const xUnit =  this.getChannelUnit();
-        let profilerData = {q: 0, u: 0, pi: 0, pa: 0, channel: 0};
-        if (this.widgetStore.isMouseMoveIntoLinePlots) {
-            const piNearest = binarySearchByX(piDataset, lineCursorProfiler);
-            const paNearest = binarySearchByX(paDataset, lineCursorProfiler);
-            if (piNearest && piNearest.point && paNearest && paNearest.point) {
-                let cursor = this.matchXYindex(piNearest.point.x, quDataset);
-                profilerData.q = cursor.x;
-                profilerData.u = cursor.y;
-                profilerData.channel = cursor.z;
-                profilerData.pi = piNearest.point.y;
-                profilerData.pa = paNearest.point.y;
-            }   
-        }
-        if (this.widgetStore.isMouseMoveIntoScatterPlots) {
-            const minIndex = closestPointIndexToCursor(scatterCursorProfiler, quDataset);
-            const currentScatterData = quDataset[minIndex];
-            const piNearest = binarySearchByX(piDataset, currentScatterData.z);
-            const paNearest = binarySearchByX(paDataset, currentScatterData.z);
-            if (piNearest && piNearest.point && paNearest && paNearest.point) {
-                profilerData.q = currentScatterData.x;
-                profilerData.u = currentScatterData.y;
-                profilerData.channel = piNearest.point.x;
-                profilerData.pi = piNearest.point.y;
-                profilerData.pa = paNearest.point.y;
-            }
-        }
         if (isMouseEntered) {
+            let profilerData = {q: 0, u: 0, pi: 0, pa: 0, channel: 0};
+            if (this.widgetStore.isMouseMoveIntoLinePlots) {
+                this.fillProfilerDataInLinePlots(quDataset, piDataset, paDataset, lineCursorProfiler, profilerData);
+            }
+            if (this.widgetStore.isMouseMoveIntoScatterPlots) {
+                this.fillProfilerDataInScatterPlots(quDataset, piDataset, paDataset, scatterCursorProfiler, profilerData);
+            }
             return {
                 isMouseEntered: isMouseEntered,
                 quValue: { x: profilerData.q, y: profilerData.u },
@@ -614,7 +641,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 return null;
             }
         }
-    }
+    };
     
     render() {
         const appStore = this.props.appStore;
