@@ -255,7 +255,10 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         let lineColor = this.props.lineColor || (this.props.darkMode ? Colors.BLUE4 : Colors.BLUE2);
         const opacity = clamp(this.props.opacity || 1.0, 0, 1);
         if (opacity < 1.0) {
-            lineColor = hexStringToRgba(lineColor, opacity);
+            const rgb = hexStringToRgba(lineColor);
+            if (rgb) {
+                lineColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+            }
         }
 
         // ChartJS plot
@@ -386,7 +389,10 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             this.props.multiPlotData.forEach((value, key) => {
                 let currentLineColor = this.props.multiPlotBorderColor ? this.props.multiPlotBorderColor.get(key) : lineColor;
                 if (opacity < 1.0) {
-                    currentLineColor = hexStringToRgba(currentLineColor, opacity);
+                    const rgb = hexStringToRgba(currentLineColor);
+                    if (rgb) {
+                        currentLineColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+                    }
                 }
                 const multiPlotDatasetConfig: ChartDataSets = {
                     type: this.props.plotType ? this.props.plotType : "line",

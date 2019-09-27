@@ -14,6 +14,9 @@ export enum BrowserMode {
     RegionExport
 }
 
+export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.REG;
+export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
+
 export class FileBrowserStore {
     @observable fileBrowserDialogVisible = false;
     @observable browserMode: BrowserMode = BrowserMode.File;
@@ -31,6 +34,7 @@ export class FileBrowserStore {
     @observable startingDirectory: string = "$BASE";
     @observable exportFilename: string;
     @observable exportCoordinateType: CARTA.CoordinateType;
+    @observable exportFileType: RegionFileType;
 
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
@@ -159,6 +163,10 @@ export class FileBrowserStore {
         this.exportCoordinateType = coordType;
     };
 
+    @action setExportFileType = (fileType: RegionFileType) => {
+        this.exportFileType = fileType;
+    };
+
     @computed get fileInfo() {
         let fileInfo = "";
         if (this.fileInfoExtended && this.fileInfoExtended.computedEntries) {
@@ -188,5 +196,6 @@ export class FileBrowserStore {
     constructor(backendService: BackendService) {
         this.backendService = backendService;
         this.exportCoordinateType = CARTA.CoordinateType.WORLD;
+        this.exportFileType = CARTA.FileType.CRTF;
     }
 }

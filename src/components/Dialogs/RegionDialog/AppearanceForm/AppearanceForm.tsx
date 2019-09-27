@@ -1,32 +1,14 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {observer} from "mobx-react";
-import {observable} from "mobx";
-import {SketchPicker, ColorResult} from "react-color";
-import {AnchorButton, FormGroup, H5, NumericInput, Popover, PopoverPosition} from "@blueprintjs/core";
+import {ColorResult} from "react-color";
+import {FormGroup, H5, NumericInput} from "@blueprintjs/core";
+import {ColorPickerComponent} from "components/Shared";
 import {RegionStore} from "stores";
 import {CARTA} from "carta-protobuf";
 import "./AppearanceForm.css";
 
-@observer
-export class AppearanceForm extends React.Component<{ region: RegionStore, darkTheme: boolean, isPreference?: boolean }> {
-    @observable displayColorPicker: boolean;
-
+export class AppearanceForm extends React.Component<{ region: RegionStore, darkTheme: boolean }> {
     private static readonly APPEARANCE_CHANGE_DELAY = 100;
-
-    private handleColorClick = () => {
-        this.displayColorPicker = true;
-    };
-
-    private handleColorClose = () => {
-        this.displayColorPicker = false;
-    };
-
-    private handleColorChange = _.throttle((newColor: ColorResult) => {
-        if (this.props.region) {
-            this.props.region.setColor(newColor.hex);
-        }
-    }, AppearanceForm.APPEARANCE_CHANGE_DELAY);
 
     private handleLineWidthChange = _.throttle((value: number) => {
         if (this.props.region) {
@@ -46,22 +28,18 @@ export class AppearanceForm extends React.Component<{ region: RegionStore, darkT
             return null;
         }
 
-        let popoverClassName = "appearance-picker-popup";
-        if (this.props.darkTheme) {
-            popoverClassName += " bp3-dark";
-        }
-
         return (
             <div className="form-section appearance-form">
-                {!this.props.isPreference && <H5>Appearance</H5>}
+                <H5>Appearance</H5>
                 <div className="form-contents">
                     <FormGroup label="Color" inline={true}>
-                        <Popover isOpen={this.displayColorPicker} onClose={this.handleColorClose} position={PopoverPosition.RIGHT} popoverClassName={popoverClassName}>
-                            <AnchorButton onClick={this.handleColorClick} className="color-swatch-button">
-                                <div style={{backgroundColor: region.color}}/>
-                            </AnchorButton>
-                            <SketchPicker color={region.color} onChange={this.handleColorChange} disableAlpha={true} presetColors={RegionStore.SWATCH_COLORS}/>
-                        </Popover>
+                        <ColorPickerComponent
+                            color={region.color}
+                            presetColors={RegionStore.SWATCH_COLORS}
+                            setColor={(color: ColorResult) => region.setColor(color.hex)}
+                            disableAlpha={true}
+                            darkTheme={this.props.darkTheme}
+                        />
                     </FormGroup>
                     {region.regionType !== CARTA.RegionType.POINT &&
                         <FormGroup  inline={true} label="Line Width" labelInfo="(px)"> 
@@ -78,7 +56,7 @@ export class AppearanceForm extends React.Component<{ region: RegionStore, darkT
                     {region.regionType !== CARTA.RegionType.POINT &&
                         <FormGroup inline={true} label="Dash Length" labelInfo="(px)">  
                             <NumericInput
-                                placeholder="Line Width"
+                                placeholder="Dash Length"
                                 min={0}
                                 max={RegionStore.MAX_DASH_LENGTH}
                                 value={region.dashLength}

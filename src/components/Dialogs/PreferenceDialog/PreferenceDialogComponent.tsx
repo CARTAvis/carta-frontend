@@ -9,13 +9,15 @@ import {
     Position, Checkbox
 } from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
+import {ColorResult} from "react-color";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/ScalingComponent";
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
-import {AppearanceForm} from "components/Dialogs/RegionDialog/AppearanceForm/AppearanceForm";
+import {ColorPickerComponent} from "components/Shared";
 import {Theme, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore, FrameScaling, RegionStore, RenderConfigStore} from "stores";
+import {hexStringToRgba} from "utilities";
 import "./PreferenceDialogComponent.css";
 
 enum TABS {
@@ -122,25 +124,28 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         <Radio label="Zoom to 1.0x" value={Zoom.RAW}/>
                     </RadioGroup>
                 </FormGroup>
+                <FormGroup inline={true} label="Enable drag-to-pan">
+                    <Switch checked={preference.dragPanning} onChange={(ev) => { preference.setDragPanning(ev.currentTarget.checked); }}/>
+                </FormGroup>
             </React.Fragment>
         );
 
         const renderConfigPanel = (
             <React.Fragment>
-                <FormGroup inline={true} label="Scaling">
+                <FormGroup inline={true} label="Default Scaling">
                     <ScalingComponent
                         selectedItem={preference.scaling}
                         onItemSelect={(selected) => { preference.setScaling(selected); }}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Color Map">
+                <FormGroup inline={true} label="Default Color Map">
                     <ColormapComponent
                         inverted={false}
                         selectedItem={preference.colormap}
                         onItemSelect={(selected) => { preference.setColormap(selected); }}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Percentile Ranks">
+                <FormGroup inline={true} label="Default Percentile Ranks">
                     <PercentileSelect
                         activeItem={preference.percentile.toString(10)}
                         onItemSelect={(selected) => { preference.setPercentile(selected); }}
@@ -182,6 +187,18 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 }
+                <FormGroup inline={true} label="NaN Color">
+                    <ColorPickerComponent
+                        color={hexStringToRgba(preference.nanColorHex, preference.nanAlpha)}
+                        presetColors={[...RegionStore.SWATCH_COLORS, "transparent"]}
+                        setColor={(color: ColorResult) => {
+                            preference.setNaNColorHex(color.hex === "transparent" ? "#000000" : color.hex);
+                            preference.setNaNAlpha(color.rgb.a);
+                        }}
+                        disableAlpha={false}
+                        darkTheme={appStore.darkTheme}
+                    />
+                </FormGroup>
             </React.Fragment>
         );
 
@@ -225,7 +242,35 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
 
         const regionSettingsPanel = (
             <React.Fragment>
-                <AppearanceForm region={preference.regionContainer} darkTheme={appStore.darkTheme} isPreference={true}/>
+                <FormGroup inline={true} label="Color">
+                    <ColorPickerComponent
+                        color={preference.regionContainer.color}
+                        presetColors={RegionStore.SWATCH_COLORS}
+                        setColor={(color: ColorResult) => preference.regionContainer.setColor(color.hex)}
+                        disableAlpha={true}
+                        darkTheme={appStore.darkTheme}
+                    />
+                </FormGroup>
+                <FormGroup  inline={true} label="Line Width" labelInfo="(px)">
+                    <NumericInput
+                            placeholder="Line Width"
+                            min={RegionStore.MIN_LINE_WIDTH}
+                            max={RegionStore.MAX_LINE_WIDTH}
+                            value={preference.regionContainer.lineWidth}
+                            stepSize={0.5}
+                            onValueChange={(value: number) => preference.regionContainer.setLineWidth(Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)))}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Dash Length" labelInfo="(px)">
+                    <NumericInput
+                        placeholder="Dash Length"
+                        min={0}
+                        max={RegionStore.MAX_DASH_LENGTH}
+                        value={preference.regionContainer.dashLength}
+                        stepSize={1}
+                        onValueChange={(value: number) => preference.regionContainer.setDashLength(Math.max(0, Math.min(RegionStore.MAX_DASH_LENGTH, value)))}
+                    />
+                </FormGroup>
                 <FormGroup inline={true} label="Region Type">
                     <HTMLSelect value={preference.regionContainer.regionType} onChange={(ev) => { preference.setRegionType(Number(ev.currentTarget.value)); }}>
                         {regionTypes}
@@ -332,7 +377,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         onChange={(tabId) => this.selectedTab = tabId}
                     >
                         <Tab id={TABS.GLOBAL} title="Global" panel={globalPanel}/>
-                        <Tab id={TABS.RENDER_CONFIG} title="Default Render Config" panel={renderConfigPanel}/>
+                        <Tab id={TABS.RENDER_CONFIG} title="Render Configuration" panel={renderConfigPanel}/>
                         <Tab id={TABS.WCS_OVERLAY} title="Default WCS Overlay" panel={wcsOverlayPanel}/>
                         <Tab id={TABS.REGION} title="Default Region settings" panel={regionSettingsPanel}/>
                         <Tab id={TABS.PERFORMANCE} title="Performance" panel={performancePanel}/>

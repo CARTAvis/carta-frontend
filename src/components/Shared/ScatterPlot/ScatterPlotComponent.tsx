@@ -253,7 +253,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         const markerOpacity = this.markerOpacity; 
         if (chartArea && channel && channel.hoveredChannel && !isNaN(channel.hoveredChannel.x) && !isNaN(channel.hoveredChannel.y) && !this.isMouseEntered && channel.start) {
             const channelH = this.props.indicatorInteractionChannel.hoveredChannel;
-            const markerColor = this.props.darkMode ? Colors.RED4 : Colors.RED2;
+            const markerColor = this.props.darkMode ? Colors.GRAY4 : Colors.GRAY2;
             if (channelH.x >= this.props.xMin && channelH.x <= this.props.xMax && channelH.y >= this.props.yMin && channelH.y <= this.props.yMax) {
                 let xCanvasSpace = Math.floor(this.getPixelValue(channelH.x, this.props.xMin, this.props.xMax, true)) + 0.5 * devicePixelRatio;
                 let yCanvasSpace = Math.floor(this.getPixelValue(channelH.y, this.props.yMin, this.props.yMax, false));

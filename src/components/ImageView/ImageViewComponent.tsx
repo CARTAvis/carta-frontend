@@ -207,6 +207,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         onZoomed={this.onZoomed}
                         overlaySettings={appStore.overlayStore}
                         isRegionCornerMode={appStore.preferenceStore.isRegionCornerMode}
+                        dragPanningEnabled={appStore.preferenceStore.dragPanning}
                         cursorFrozen={appStore.activeFrame.cursorFrozen}
                         cursorPoint={appStore.activeFrame.cursorInfo.posImageSpace}
                         docked={this.props.docked}
@@ -237,6 +238,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     frame={appStore.activeFrame}
                     docked={this.props.docked}
                     overlaySettings={appStore.overlayStore}
+                    preference={appStore.preferenceStore}
                     tileService={appStore.tileService}
                 />
                 {divContents}
