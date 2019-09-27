@@ -140,6 +140,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
+        this.widgetStore.clearScatterPlotXYBounds();
     };
 
     private getChannelLabel = (): string => {
@@ -403,7 +404,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (yMin === Number.MAX_VALUE) {
             yMin = undefined;
             yMax = undefined;
-        } else {
+        } 
+        else if (isLinePlots) {
             // extend y range a bit
             const range = yMax - yMin;
             yMin -= range * VERTICAL_RANGE_PADDING;
@@ -434,8 +436,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
                 if (!(this.widgetStore.scatterOutRangePointsIndex && this.widgetStore.scatterOutRangePointsIndex.indexOf(x) >= 0)) {
                     values.push({x, y});
-                } 
-                else {
+                } else {
                     values.push({x: x, y: NaN});
                 }
             }
@@ -695,7 +696,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearLinePlotsXYBounds,
             graphClicked: this.onChannelChanged,
             markers: [],
-            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots
+            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
+            interactionMode: true
         };
 
         let piLinePlotProps: LinePlotComponentProps = {
@@ -718,7 +720,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearLinePlotsXYBounds,
             graphClicked: this.onChannelChanged,
             markers: [],
-            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots
+            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
+            interactionMode: true
         };
 
         let paLinePlotProps: LinePlotComponentProps = {
@@ -740,7 +743,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearLinePlotsXYBounds,
             graphClicked: this.onChannelChanged,
             markers: [],
-            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots
+            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
+            interactionMode: true
         };
 
         let quScatterPlotProps: ScatterPlotComponentProps = {
@@ -768,7 +772,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             scrollZoom: true,
             graphZoomedXY: this.widgetStore.setQUScatterPlotXYBounds,
             updateChartArea: this.widgetStore.setScatterChartAres,
-            graphZoomedY: this.widgetStore.setQUScatterPlotYBounds
+            graphZoomedY: this.widgetStore.setQUScatterPlotYBounds,
+            rectSelection: false
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
@@ -847,6 +852,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     }
 
                 }
+
                 if (this.widgetStore.isQUScatterPlotAutoScaledX) {
                     quScatterPlotProps.xMin = quBorder.xMin;
                     quScatterPlotProps.xMax = quBorder.xMax;

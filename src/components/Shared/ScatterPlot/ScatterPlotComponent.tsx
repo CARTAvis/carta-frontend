@@ -67,6 +67,7 @@ export class ScatterPlotComponentProps {
     zeroLineWidth?: number;
     cursorNearestPoint?: { x: number, y: number };
     updateChartArea?: (chartArea: ChartArea) => void;
+    rectSelection?: boolean;
 }
 
 // Maximum time between double clicks
@@ -256,8 +257,6 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             if (channelH.x >= this.props.xMin && channelH.x <= this.props.xMax && channelH.y >= this.props.yMin && channelH.y <= this.props.yMax) {
                 let xCanvasSpace = Math.floor(this.getPixelValue(channelH.x, this.props.xMin, this.props.xMax, true)) + 0.5 * devicePixelRatio;
                 let yCanvasSpace = Math.floor(this.getPixelValue(channelH.y, this.props.yMin, this.props.yMax, false));
-                // indicator.push(this.genXline("scatter-indicator-x-hovered-interactive", markerColor, markerOpacity, xCanvasSpace));
-                // indicator.push(this.genYline("scatter-indicator-y-hovered-interactive", markerColor, markerOpacity, yCanvasSpace));
                 indicator.push(this.genCircle("scatter-indicator-y-hovered-interaction-circle", markerColor , xCanvasSpace, yCanvasSpace));
             }
         }
@@ -454,7 +453,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
             this.onStageClick(ev);
         } else {
-            if (this.props.data) {
+            if (this.props.data && this.props.rectSelection) {
                 this.stageClickStartX = undefined;
                 this.stageClickStartY = undefined;
                 if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
@@ -573,7 +572,6 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         return (
             <div
                 className={"scatter-plot-component"}
-                // style={{cursor: "crosshair"}}
                 style={{cursor: this.isPanning ? "move" : "crosshair"}}
                 onKeyDown={this.onKeyDown}
                 onMouseEnter={this.onMouseEnter}
@@ -600,8 +598,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 >
                     <Layer>
                         {this.genIndicator()}
-                        {this.genSelectionRect()}
                         {this.genBorderRect()}
+                        {this.props.rectSelection ? this.genSelectionRect() : null}
                     </Layer>
                 </Stage>
                 <ToolbarComponent

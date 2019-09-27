@@ -92,6 +92,7 @@ export class LinePlotComponentProps {
     pointRadius?: number;
     zeroLineWidth?: number;
     mouseEntered?: (value: boolean) => void;
+    interactionMode?: boolean;
 }
 
 // Maximum time between double clicks

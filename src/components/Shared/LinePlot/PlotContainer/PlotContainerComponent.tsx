@@ -46,6 +46,7 @@ export class PlotContainerProps {
     isGroupSubPlot?: boolean;
     pointRadius?: number;
     zeroLineWidth?: number;
+    interactionMode?: boolean;
 }
 
 export class PlotContainerComponent extends React.Component<PlotContainerProps> {
@@ -367,6 +368,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 datasetConfig.borderWidth = 1;
                 datasetConfig.borderColor = lineColor;
             }
+
+            if (this.props.interactionMode) {
+                datasetConfig.pointRadius = 1;
+                datasetConfig.pointStyle = "line";
+            }
             if (this.props.dataBackgroundColor) {
                 datasetConfig.pointBackgroundColor = this.props.dataBackgroundColor;
             }
@@ -395,6 +401,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     borderWidth: 1,
                     pointRadius: 0
                 };
+
+                if (this.props.interactionMode) {
+                    multiPlotDatasetConfig.pointRadius = 1;
+                    multiPlotDatasetConfig.pointStyle = "line";
+                }
+
                 plotData.datasets.push(multiPlotDatasetConfig);
             });
         }
