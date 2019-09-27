@@ -216,7 +216,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 channel = element.z;
                 break;
             }
-            
         }
         return channel;
     }
@@ -820,7 +819,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         paLinePlotProps.yMin = this.widgetStore.polAngleMinY;
                         paLinePlotProps.yMax = this.widgetStore.polAngleMaxY;
                     }
-
                 }
 
                 if (this.widgetStore.isQUScatterPlotAutoScaledX) {
@@ -863,7 +861,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 if (this.cursorInfo && this.cursorInfo.quValue) {
                     quScatterPlotProps.cursorNearestPoint = this.cursorInfo.quValue;
                 }
-                
             }
 
             paLinePlotProps.yLabel = "PA (Degrees)";
@@ -961,7 +958,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             piLinePlotProps.comments = this.exportHeaders;
             quLinePlotProps.comments = this.exportHeaders;
             quScatterPlotProps.comments = this.exportHeaders;
-
         }
 
         return (
