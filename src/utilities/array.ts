@@ -1,16 +1,22 @@
 import {Point2D} from "../models";
 
-export function binarySearchByX(array: Array<Point2D>, x: number): Point2D {
+export function binarySearchByX(array: Array<Point2D>, x: number): {point: Point2D, index: number} {
     if (array === undefined || array.length === 0 || x === undefined) {
         return null;
     }
 
     if (x < array[0].x) {
-        return array[0];
+        return {
+            point: array[0],
+            index: 0
+        };
     }
 
     if (x > array[array.length - 1].x) {
-        return array[array.length - 1];
+        return {
+            point: array[array.length - 1],
+            index: array.length - 1
+        };
     }
 
     // binary search for the nearest point by x
@@ -24,8 +30,16 @@ export function binarySearchByX(array: Array<Point2D>, x: number): Point2D {
         } else if (x > array[middle].x) {
             start = middle + 1;
         } else {
-            return array[middle];
+            return {
+                point: array[middle],
+                index: middle
+            };
         }
     }
-    return ((array[start].x - x) < (x - array[end].x)) ? array[start] : array[end];
+
+    const closer = ((array[start].x - x) < (x - array[end].x)) ? start : end;
+    return {
+            point: array[closer],
+            index: closer
+    };
 }

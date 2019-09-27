@@ -809,11 +809,11 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         if (this.props.data && this.props.cursorX && !this.props.isGroupSubPlot) {
             let nearest = binarySearchByX(this.props.data,
                 this.isMouseEntered ? this.props.cursorX.profiler : this.props.cursorX.image);
-            if (nearest) {
+            if (nearest && nearest.point) {
                 cursorInfo = {
                     isMouseEntered: this.isMouseEntered,
-                    cursorX: nearest.x,
-                    cursorY: nearest.y,
+                    cursorX: nearest.point.x,
+                    cursorY: nearest.point.y,
                     xUnit: this.props.cursorX.unit,
                 };
             }
