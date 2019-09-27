@@ -607,6 +607,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         scatterCursorImage: Point3D,
         lineCursorImage: number
     ) => {
+        let cursorInfo = null;
         const isMouseEntered = this.widgetStore.isMouseMoveIntoLinePlots || this.widgetStore.isMouseMoveIntoScatterPlots;
         const xUnit =  this.getChannelUnit();
         if (isMouseEntered) {
@@ -617,7 +618,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             if (this.widgetStore.isMouseMoveIntoScatterPlots) {
                 this.fillProfilerDataInScatterPlots(quDataset, piDataset, paDataset, scatterCursorProfiler, profilerData);
             }
-            return {
+            cursorInfo = {
                 isMouseEntered: isMouseEntered,
                 quValue: { x: profilerData.q, y: profilerData.u },
                 channel: profilerData.channel,
@@ -629,7 +630,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             const piNearest = binarySearchByX(piDataset, lineCursorImage);
             const paNearest = binarySearchByX(paDataset, lineCursorImage);
             if (piNearest && piNearest.point && paNearest && paNearest.point) {
-                return {
+                cursorInfo = {
                     isMouseEntered: isMouseEntered,
                     quValue: { x: scatterCursorImage.x, y: scatterCursorImage.y },
                     channel: lineCursorImage,
@@ -637,10 +638,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     pa: paNearest.point.y,
                     xUnit: xUnit
                 };
-            } else {
-                return null;
             }
         }
+        return cursorInfo;
     };
     
     render() {

@@ -807,8 +807,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     private getCursorInfo = () => {
         let cursorInfo = null;
         if (this.props.data && this.props.cursorX && !this.props.isGroupSubPlot) {
-            let nearest = binarySearchByX(this.props.data,
-                this.isMouseEntered ? this.props.cursorX.profiler : this.props.cursorX.image);
+            const nearest = binarySearchByX(this.props.data, this.isMouseEntered ? this.props.cursorX.profiler : this.props.cursorX.image);
             if (nearest && nearest.point) {
                 cursorInfo = {
                     isMouseEntered: this.isMouseEntered,
