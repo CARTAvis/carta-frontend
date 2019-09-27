@@ -12,13 +12,13 @@ import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarCompone
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
-import {clamp} from "utilities";
+import {binarySearchByX, clamp, formattedNotation} from "utilities";
 import "./SpectralProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
 const PANEL_CONTENT_WIDTH = 180;
 
-type PlotData = { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
+type PlotData = { values: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
 
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
@@ -295,6 +295,31 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCursor(x);
     }, 33);
 
+    private genProfilerInfo = () => {
+        let cursorInfoDiv = null;
+        if (this.plotData) {
+            const cursorX = {
+                profiler: this.widgetStore.cursorX,
+                image: this.getCurrentChannelValue(),
+                unit: this.getChannelUnit()
+            };
+            const nearest = binarySearchByX(this.plotData.values, this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
+            let cursorString = "";
+            if (nearest && nearest.point) {
+                const xLabel = cursorX.unit === "Channel" ? "Channel " + nearest.point.x.toFixed(0) : nearest.point.x + " " + cursorX.unit;
+                cursorString =  "(" + xLabel + ", " + nearest.point.y.toExponential(2) + ")";
+            }
+
+            cursorInfoDiv = (
+                <div className="profiler-info">
+                    <pre>{`${this.widgetStore.isMouseMoveIntoLinePlots ? "Cursor:" : "Data:"} ${cursorString}`}</pre>
+                    {this.widgetStore.meanRmsVisible && <pre>{`Mean/RMS: ${formattedNotation(this.plotData.yMean) + " / " + formattedNotation(this.plotData.yRms)}`}</pre>}
+                </div>
+            );
+        }
+        return cursorInfoDiv;
+    };
+
     render() {
         const appStore = this.props.appStore;
         if (!this.widgetStore) {
@@ -320,13 +345,15 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true,
-            markers: []
+            markers: [],
+            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots
         };
 
         if (this.profileStore && frame) {
             if (frame.unit) {
                 linePlotProps.yLabel = `Value (${frame.unit})`;
             }
+
             const currentPlotData = this.plotData;
             if (currentPlotData) {
                 linePlotProps.data = currentPlotData.values;
@@ -354,16 +381,16 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (wcsLabel) {
                 linePlotProps.xLabel = this.getChannelLabel();
             }
-            linePlotProps.cursorX = {
+
+            const cursorX = {
                 profiler: this.widgetStore.cursorX,
                 image: this.getCurrentChannelValue(),
                 unit: this.getChannelUnit()
             };
-
             linePlotProps.markers = [];
-            if (linePlotProps.cursorX.profiler !== null) {
+            if (cursorX.profiler !== null) {
                 linePlotProps.markers.push({
-                    value: linePlotProps.cursorX.profiler,
+                    value: cursorX.profiler,
                     id: "marker-profiler-cursor",
                     draggable: false,
                     horizontal: false,
@@ -372,10 +399,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     isMouseMove: true,
                 });
             }
-
-            if (linePlotProps.cursorX.image !== null) {
+            if (cursorX.image !== null) {
                 linePlotProps.markers.push({
-                    value: linePlotProps.cursorX.image,
+                    value: cursorX.image,
                     id: "marker-channel-current",
                     opacity: 0.4,
                     draggable: false,
@@ -409,8 +435,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     opacity: 0.2,
                     color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                 });
-
-                linePlotProps.dataStat = {mean: currentPlotData.yMean, rms: currentPlotData.yRms};
             }
 
             linePlotProps.comments = this.exportHeaders;
@@ -431,6 +455,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} appStore={appStore}/>
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps}/>
+                        {this.genProfilerInfo()}
                     </div>
                 </div>
                 <PopoverSettingsComponent
