@@ -6,17 +6,11 @@ export function binarySearchByX(array: readonly Point2D[], x: number): {point: P
     }
 
     if (x < array[0].x) {
-        return {
-            point: array[0],
-            index: 0
-        };
+        return {point: array[0], index: 0};
     }
 
     if (x > array[array.length - 1].x) {
-        return {
-            point: array[array.length - 1],
-            index: array.length - 1
-        };
+        return {point: array[array.length - 1], index: array.length - 1};
     }
 
     // binary search for the nearest point by x
@@ -30,16 +24,10 @@ export function binarySearchByX(array: readonly Point2D[], x: number): {point: P
         } else if (x > array[middle].x) {
             start = middle + 1;
         } else {
-            return {
-                point: array[middle],
-                index: middle
-            };
+            return {point: array[middle], index: middle};
         }
     }
 
     const closer = ((array[start].x - x) < (x - array[end].x)) ? start : end;
-    return {
-            point: array[closer],
-            index: closer
-    };
+    return {point: array[closer], index: closer};
 }
