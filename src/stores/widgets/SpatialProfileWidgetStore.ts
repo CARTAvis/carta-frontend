@@ -17,6 +17,7 @@ export class SpatialProfileWidgetStore {
     @observable meanRmsVisible: boolean;
     @observable wcsAxisVisible: boolean;
     @observable markerTextVisible: boolean;
+    @observable isMouseMoveIntoLinePlots: boolean;
 
     private static ValidCoordinates = ["x", "y", "Ix", "Iy", "Qx", "Qy", "Ux", "Uy", "Vx", "Vz"];
 
@@ -101,6 +102,10 @@ export class SpatialProfileWidgetStore {
 
     @action setCursor = (cursorVal: number) => {
         this.cursorX = cursorVal;
+    };
+
+    @action setMouseMoveIntoLinePlots = (val: boolean) => {
+        this.isMouseMoveIntoLinePlots = val;
     };
 
     constructor(coordinate: string = "x", fileId: number = -1, regionId: number = 0) {
