@@ -748,6 +748,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
         let interactionBorder = {xMin: 0, xMax: 0};
         if (this.profileStore && frame) {
+            const cursorX = {
+                profiler: this.widgetStore.linePlotcursorX,
+                image: this.getCurrentChannelValue(),
+                unit: this.getChannelUnit()
+            };
             const currentPlotData = this.plotData;
             let channel = {channelCurrent: 0, channelHovered: 0};
             if (currentPlotData && currentPlotData.piValues && currentPlotData.paValues && currentPlotData.qValues && currentPlotData.uValues && currentPlotData.quValues) {
@@ -835,18 +840,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     quScatterPlotProps.yMin = this.widgetStore.quScatterMinY;
                     quScatterPlotProps.yMax = this.widgetStore.quScatterMaxY;
                 }
-                // cursor infor
-                let lineCursorXInfo = {
-                    profiler: this.widgetStore.linePlotcursorX,
-                    image: this.getCurrentChannelValue(),
-                    unit: this.getChannelUnit()
-                };
-                paLinePlotProps.cursorX = lineCursorXInfo;
-                piLinePlotProps.cursorX = lineCursorXInfo;
-                quLinePlotProps.cursorX = lineCursorXInfo;
                 let scatterCursorInfor = {
                     profiler: { x: this.widgetStore.scatterPlotCursorX, y: this.widgetStore.scatterPlotCursorY},
-                    image: this.matchXYindex(lineCursorXInfo.image, currentPlotData.quValues.dataset),
+                    image: this.matchXYindex(cursorX.image, currentPlotData.quValues.dataset),
                     unit: this.getChannelUnit()
                 };
                 quScatterPlotProps.cursorXY = scatterCursorInfor;
@@ -855,9 +851,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     currentPlotData.piValues.dataset, 
                     currentPlotData.paValues.dataset, 
                     scatterCursorInfor.profiler,
-                    lineCursorXInfo.profiler,
+                    cursorX.profiler,
                     scatterCursorInfor.image,
-                    lineCursorXInfo.image);
+                    cursorX.image);
                 if (this.cursorInfo && this.cursorInfo.quValue) {
                     quScatterPlotProps.cursorNearestPoint = this.cursorInfo.quValue;
                 }
@@ -903,9 +899,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 quLinePlotProps.markers.push(lineCursorIndicator);
             }
 
-            if (paLinePlotProps.cursorX && paLinePlotProps.cursorX.profiler !== null) {
+            if (cursorX.profiler !== null) {
                 let cursor = {
-                    value: paLinePlotProps.cursorX.profiler,
+                    value: cursorX.profiler,
                     id: "marker-profiler-cursor-stokes",
                     draggable: false,
                     horizontal: false,
@@ -921,9 +917,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 }
             }
 
-            if (paLinePlotProps.cursorX && paLinePlotProps.cursorX.image !== null) {
+            if (cursorX.image !== null) {
                 let channelCurrent = {
-                    value: paLinePlotProps.cursorX.image,
+                    value: cursorX.image,
                     id: "marker-channel-current",
                     opacity: 0.4,
                     draggable: false,
