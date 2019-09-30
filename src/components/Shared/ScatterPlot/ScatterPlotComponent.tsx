@@ -67,7 +67,6 @@ export class ScatterPlotComponentProps {
     zeroLineWidth?: number;
     cursorNearestPoint?: { x: number, y: number };
     updateChartArea?: (chartArea: ChartArea) => void;
-    rectSelection?: boolean;
 }
 
 // Maximum time between double clicks
@@ -255,7 +254,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             const channelH = this.props.indicatorInteractionChannel.hoveredChannel;
             const markerColor = this.props.darkMode ? Colors.GRAY4 : Colors.GRAY2;
             if (channelH.x >= this.props.xMin && channelH.x <= this.props.xMax && channelH.y >= this.props.yMin && channelH.y <= this.props.yMax) {
-                let xCanvasSpace = Math.floor(this.getPixelValue(channelH.x, this.props.xMin, this.props.xMax, true)) + 0.5 * devicePixelRatio;
+                let xCanvasSpace = Math.floor(this.getPixelValue(channelH.x, this.props.xMin, this.props.xMax, true));
                 let yCanvasSpace = Math.floor(this.getPixelValue(channelH.y, this.props.yMin, this.props.yMax, false));
                 indicator.push(this.genCircle("scatter-indicator-y-hovered-interaction-circle", markerColor , xCanvasSpace, yCanvasSpace));
             }
@@ -264,8 +263,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             const channelC = this.props.indicatorInteractionChannel.currentChannel;
             const markerColor = this.props.darkMode ? Colors.RED4 : Colors.RED2;
             if (channelC.x >= this.props.xMin && channelC.x <= this.props.xMax && channelC.y >= this.props.yMin && channelC.y <= this.props.yMax) {
-                let xCanvasSpace = Math.floor(this.getPixelValue(channelC.x, this.props.xMin, this.props.xMax, true)) + 0.5 * devicePixelRatio;
-                let yCanvasSpace = Math.floor(this.getPixelValue(channelC.y, this.props.yMin, this.props.yMax, false)) + 0.5 * devicePixelRatio;
+                let xCanvasSpace = Math.floor(this.getPixelValue(channelC.x, this.props.xMin, this.props.xMax, true));
+                let yCanvasSpace = Math.floor(this.getPixelValue(channelC.y, this.props.yMin, this.props.yMax, false));
                 indicator.push(this.genXline("scatter-indicator-x-current-interactive", markerColor, markerOpacity, xCanvasSpace));
                 indicator.push(this.genYline("scatter-indicator-y-current-interactive", markerColor, markerOpacity, yCanvasSpace)); 
             }
@@ -357,7 +356,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 const cursorXPosGraphSpace = this.getValueForPixelX(mousePosX);
                 const cursorYPosGraphSpace = this.getValueForPixelY(mousePosY);
                 this.props.graphCursorMoved(cursorXPosGraphSpace, cursorYPosGraphSpace);
-            } else if (this.isPanning && this.props.graphZoomedX) {
+            } else if (this.isPanning && this.props.graphZoomedXY) {
                 const currentPanX = mousePosX;
                 const currentPanY = mousePosY;
                 const prevPanGraphSpaceX = this.getValueForPixelX(this.panPrevious.x);
@@ -366,9 +365,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 const prevPanGraphSpaceY = this.getValueForPixelY(this.panPrevious.y);
                 const currentPanGraphSpaceY = this.getValueForPixelY(currentPanY);
                 const deltaY = (currentPanGraphSpaceY - prevPanGraphSpaceY);
-
                 this.updatePan(currentPanX, currentPanY);
-
                 const pinMinX = this.props.xMin - deltaX;
                 const pinMaxX = this.props.xMax - deltaX;
                 const pinMinY = this.props.yMin - deltaY;
@@ -453,7 +450,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
             this.onStageClick(ev);
         } else {
-            if (this.props.data && this.props.rectSelection) {
+            if (this.props.data) {
                 this.stageClickStartX = undefined;
                 this.stageClickStartY = undefined;
                 if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
@@ -483,7 +480,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     };
 
     onStageWheel = (ev) => {
-        if (this.props.data && this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
+        if (this.props.data && this.props.scrollZoom && this.props.graphZoomedXY && this.chartArea) {
             const wheelEvent: WheelEvent = ev.evt;
             const chartArea = this.chartArea;
             const lineHeight = 15;
@@ -599,7 +596,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                     <Layer>
                         {this.genIndicator()}
                         {this.genBorderRect()}
-                        {this.props.rectSelection ? this.genSelectionRect() : null}
+                        {this.genSelectionRect()}
                     </Layer>
                 </Stage>
                 <ToolbarComponent

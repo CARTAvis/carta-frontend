@@ -161,6 +161,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     @action setFractionalPolVisible = (val: boolean) => {
         this.fractionalPolVisible = val;
+        this.clearScatterPlotXYBounds();
     };
 
     @action setRegionId = (fileId: number, regionId: number) => {
