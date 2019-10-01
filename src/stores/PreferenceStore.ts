@@ -93,7 +93,7 @@ export class PreferenceStore {
     @observable animationCompressionQuality: number;
     @observable GPUTileCache: number;
     @observable systemTileCache: number;
-    @observable eventsLoggingEnabled: boolean[];
+    @observable eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
 
     // getters for global settings
     private getTheme = (): string => {
@@ -296,18 +296,19 @@ export class PreferenceStore {
     };
 
     // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
-    private getLogEvents = (): boolean[] => {
-        let events = Array(Event.EVENT_NUMBER).fill(DEFAULTS.eventLoggingEnabled);
+    private getLogEvents = (): Map<CARTA.EventType, boolean> => {
+        let events = new Map<CARTA.EventType, boolean>();
+        Event.EVENT_TYPES.forEach(eventType => events.set(eventType, DEFAULTS.eventLoggingEnabled));
 
         const localStorageEventList = localStorage.getItem(PREFERENCE_KEYS.logEventList);
-        if (localStorageEventList) {
+        if (localStorageEventList && localStorageEventList.length) {
             try {
                 const eventNameList = JSON.parse(localStorageEventList);
                 if (eventNameList && Array.isArray(eventNameList) && eventNameList.length) {
                     eventNameList.forEach((eventName) => {
                         const eventType = Event.getEventTypeFromName(eventName);
                         if (eventType !== undefined) {
-                            events[eventType] = true;
+                            events.set(eventType, true);
                         }
                     });
                 }
@@ -319,12 +320,12 @@ export class PreferenceStore {
     };
 
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
-        return Event.isEventTypeValid(eventType) && this.eventsLoggingEnabled[eventType];
+        return Event.isEventTypeValid(eventType) && this.eventsLoggingEnabled.get(eventType);
     };
 
     public flipEventLoggingEnabled = (eventType: CARTA.EventType): void => {
         if (Event.isEventTypeValid(eventType)) {
-            this.eventsLoggingEnabled[eventType] = !this.eventsLoggingEnabled[eventType];
+            this.eventsLoggingEnabled.set(eventType, !this.eventsLoggingEnabled.get(eventType));
         }
     };
 
@@ -522,7 +523,7 @@ export class PreferenceStore {
     };
 
     @action resetLogEventSettings = () => {
-        this.eventsLoggingEnabled.fill(DEFAULTS.eventLoggingEnabled);
+        this.eventsLoggingEnabled.forEach((value, key, map) => map.set(key, DEFAULTS.eventLoggingEnabled));
     };
 
     constructor(appStore: AppStore, layoutStore: LayoutStore) {
