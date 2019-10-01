@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerSettingsPanelComponent} from "./SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
@@ -295,8 +295,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCursor(x);
     }, 33);
 
-    private genProfilerInfo = () => {
-        let cursorInfoDiv = null;
+    private genProfilerInfo = (): string[] => {
+        let profilerInfo: string[] = [];
         if (this.plotData) {
             const cursorX = {
                 profiler: this.widgetStore.cursorX,
@@ -310,14 +310,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 cursorString =  "(" + xLabel + ", " + nearest.point.y.toExponential(2) + ")";
             }
 
-            cursorInfoDiv = (
-                <div className="profiler-info">
-                    <pre>{`${this.widgetStore.isMouseMoveIntoLinePlots ? "Cursor:" : "Data:"} ${cursorString}`}</pre>
-                    {this.widgetStore.meanRmsVisible && <pre>{`Mean/RMS: ${formattedNotation(this.plotData.yMean) + " / " + formattedNotation(this.plotData.yRms)}`}</pre>}
-                </div>
-            );
+            profilerInfo.push(`${this.widgetStore.isMouseMoveIntoLinePlots ? "Cursor:" : "Data:"} ${cursorString}`);
+            if (this.widgetStore.meanRmsVisible) {
+                profilerInfo.push(`Mean/RMS: ${formattedNotation(this.plotData.yMean) + " / " + formattedNotation(this.plotData.yRms)}`);
+            }
         }
-        return cursorInfoDiv;
+        return profilerInfo;
     };
 
     render() {
@@ -455,7 +453,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     <SpectralProfilerToolbarComponent widgetStore={this.widgetStore} appStore={appStore}/>
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps}/>
-                        {this.genProfilerInfo()}
+                        <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                     </div>
                 </div>
                 <PopoverSettingsComponent

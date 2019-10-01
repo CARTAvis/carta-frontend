@@ -5,7 +5,7 @@ import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpatialProfilerSettingsPanelComponent} from "./SpatialProfilerSettingsPanelComponent/SpatialProfilerSettingsPanelComponent";
 import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps} from "stores";
@@ -353,8 +353,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return this.cachedFormattedCoordinates[i];
     };
 
-    private genProfilerInfo = () => {
-        let cursorInfoDiv = null;
+    private genProfilerInfo = (): string[] => {
+        let profilerInfo: string[] = [];
         if (this.plotData) {
             const cursorX = {
                 profiler: this.widgetStore.cursorX,
@@ -368,14 +368,12 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 cursorString =  "(" + xLabel + ", " + nearest.point.y.toExponential(2) + ")";
             }
 
-            cursorInfoDiv = (
-                <div className="profiler-info">
-                    <pre>{`${this.widgetStore.isMouseMoveIntoLinePlots ? "Cursor:" : "Data:"} ${cursorString}`}</pre>
-                    {this.widgetStore.meanRmsVisible && <pre>{`Mean/RMS: ${formattedNotation(this.plotData.yMean) + " / " + formattedNotation(this.plotData.yRms)}`}</pre>}
-                </div>
-            );
+            profilerInfo.push(`${this.widgetStore.isMouseMoveIntoLinePlots ? "Cursor:" : "Data:"} ${cursorString}`);
+            if (this.widgetStore.meanRmsVisible) {
+                profilerInfo.push(`Mean/RMS: ${formattedNotation(this.plotData.yMean) + " / " + formattedNotation(this.plotData.yRms)}`);
+            }
         }
-        return cursorInfoDiv;
+        return profilerInfo;
     };
 
     onGraphCursorMoved = _.throttle((x) => {
@@ -508,7 +506,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 <div className="profile-container">
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps}/>
-                        {this.genProfilerInfo()}
+                        <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                     </div>
                 </div>
                 <PopoverSettingsComponent
