@@ -303,10 +303,20 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 image: this.getCurrentChannelValue(),
                 unit: this.getChannelUnit()
             };
-            const nearest = binarySearchByX(this.plotData.values, this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
+            const data = this.plotData.values;
+            const nearest = binarySearchByX(data, this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
             let cursorString = "";
-            if (nearest && nearest.point) {
-                const xLabel = cursorX.unit === "Channel" ? "Channel " + nearest.point.x.toFixed(0) : nearest.point.x + " " + cursorX.unit;
+            if (nearest && nearest.point && nearest.index >= 0 && nearest.index < data.length) {
+                let floatXStr = "";
+                const diffLeft = nearest.index - 1 >= 0 ? Math.abs(nearest.point.x - data[nearest.index - 1].x) : 0;
+                if (diffLeft > 0 && diffLeft < 1e-6) {
+                    floatXStr = formattedNotation(nearest.point.x);
+                } else if (diffLeft >= 1e-6  && diffLeft < 1e-3) {
+                    floatXStr = nearest.point.x.toFixed(6);
+                } else {
+                    floatXStr = nearest.point.x.toFixed(3);
+                }
+                const xLabel = cursorX.unit === "Channel" ? "Channel " + nearest.point.x.toFixed(0) : floatXStr + " " + cursorX.unit;
                 cursorString =  "(" + xLabel + ", " + nearest.point.y.toExponential(2) + ")";
             }
 
