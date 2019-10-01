@@ -2,7 +2,7 @@ import {action, computed, observable, autorun} from "mobx";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {NumberRange} from "@blueprintjs/core";
-import {ASTSettingsString, PreferenceStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore} from "stores";
+import {ASTSettingsString, PreferenceStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore, ContourConfigStore, ContourStore} from "stores";
 import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES} from "models";
 import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency} from "utilities";
 import {BackendService} from "../services";
@@ -42,124 +42,14 @@ export class FrameStore {
     @observable currentFrameView: FrameView;
     @observable currentCompressionQuality: number;
     @observable renderConfig: RenderConfigStore;
+    @observable contourConfig: ContourConfigStore;
+    @observable contourStores: Map<number, ContourStore>;
     @observable rasterData: Float32Array;
     @observable overviewRasterData: Float32Array;
     @observable overviewRasterView: FrameView;
     @observable valid: boolean;
     @observable moving: boolean;
     @observable regionSet: RegionSetStore;
-
-    private readonly overlayStore: OverlayStore;
-    private readonly logStore: LogStore;
-
-    private static readonly CursorInfoMaxPrecision = 25;
-
-    constructor(readonly preference: PreferenceStore, overlay: OverlayStore, logStore: LogStore, frameInfo: FrameInfo, backendService: BackendService) {
-        this.overlayStore = overlay;
-        this.logStore = logStore;
-        this.validWcs = false;
-        this.frameInfo = frameInfo;
-        this.renderHiDPI = true;
-        this.center = {x: 0, y: 0};
-        this.stokes = 0;
-        this.channel = 0;
-        this.requiredStokes = 0;
-        this.requiredChannel = 0;
-        this.renderConfig = new RenderConfigStore(preference);
-        this.renderType = RasterRenderType.NONE;
-        this.moving = false;
-
-        // synchronize AST overlay's color/grid/label with preference when frame is created
-        const astColor = preference.astColor;
-        if (astColor !== overlay.global.color) {
-            overlay.global.setColor(astColor);
-        }
-        const astGridVisible = preference.astGridVisible;
-        if (astGridVisible !== overlay.grid.visible) {
-            overlay.grid.setVisible(astGridVisible);
-        }
-        const astLabelsVisible = preference.astLabelsVisible;
-        if (astLabelsVisible !== overlay.labels.visible) {
-            overlay.labels.setVisible(astLabelsVisible);
-        }
-
-        this.regionSet = new RegionSetStore(this, preference.regionContainer, backendService);
-        this.valid = true;
-        this.currentFrameView = {
-            xMin: 0,
-            xMax: 0,
-            yMin: 0,
-            yMax: 0,
-            mip: 999
-        };
-        this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
-
-        this.initWCS();
-        this.initCenter();
-        this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
-
-        // need initialized wcs to get correct cursor info
-        this.cursorInfo = this.getCursorInfo({x: this.renderWidth / 2, y: this.renderHeight / 2});
-        this.cursorValue = 0;
-        this.cursorFrozen = preference.isCursorFrozen;
-
-        autorun(() => {
-            // update zoomLevel when image viewer is available for drawing
-            if (this.isRenderable && this.zoomLevel <= 0) {
-                this.zoomLevel = this.zoomLevelForFit;
-            }
-        });
-    }
-
-    @action private initWCS = () => {
-        let headerString = "";
-
-        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
-            // Skip empty header entries
-            if (!entry.value.length) {
-                continue;
-            }
-
-            // Skip higher dimensions
-            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
-                continue;
-            }
-
-            let value = entry.value;
-            if (entry.name.toUpperCase() === "NAXIS") {
-                value = "2";
-            }
-
-            if (entry.name.toUpperCase() === "WCSAXES") {
-                value = "2";
-            }
-
-            if (entry.entryType === CARTA.EntryType.STRING) {
-                value = `'${value}'`;
-            }
-
-            let name = entry.name;
-            while (name.length < 8) {
-                name += " ";
-            }
-
-            let entryString = `${name}=  ${value}`;
-            while (entryString.length < 80) {
-                entryString += " ";
-            }
-            headerString += entryString;
-        }
-        const initResult = AST.initFrame(headerString);
-        if (!initResult) {
-            this.logStore.addWarning(`Problem processing WCS info in file ${this.frameInfo.fileInfo.name}`, ["ast"]);
-            this.wcsInfo = AST.initDummyFrame();
-        } else {
-            this.wcsInfo = initResult;
-            this.validWcs = true;
-            this.overlayStore.setDefaultsFromAST(this);
-            console.log("Initialised WCS info from frame");
-        }
-    };
 
     @computed get requiredFrameView(): FrameView {
         // If there isn't a valid zoom, return a dummy view
@@ -191,70 +81,6 @@ export class FrameStore {
         };
 
         return frameView;
-    }
-
-    public getImagePos(canvasX: number, canvasY: number): Point2D {
-        const frameView = this.requiredFrameView;
-        return {
-            x: (canvasX / this.renderWidth) * (frameView.xMax - frameView.xMin) + frameView.xMin - 1,
-            // y coordinate is flipped in image space
-            y: (canvasY / this.renderHeight) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
-        };
-    }
-
-    public getCursorInfo(cursorPosCanvasSpace: Point2D): CursorInfo {
-        const cursorPosImageSpace = this.getImagePos(cursorPosCanvasSpace.x, cursorPosCanvasSpace.y);
-
-        let cursorPosWCS, cursorPosFormatted;
-        if (this.validWcs) {
-            // We need to compare X and Y coordinates in both directions
-            // to avoid a confusing drop in precision at rounding threshold
-            const offsetBlock = [[0, 0], [1, 1], [-1, -1]];
-
-            // Shift image space coordinates to 1-indexed when passing to AST
-            const cursorNeighbourhood = offsetBlock.map((offset) => AST.pixToWCS(this.wcsInfo, cursorPosImageSpace.x + 1 + offset[0], cursorPosImageSpace.y + 1 + offset[1]));
-
-            cursorPosWCS = cursorNeighbourhood[0];
-
-            const normalizedNeighbourhood = cursorNeighbourhood.map((pos) => AST.normalizeCoordinates(this.wcsInfo, pos.x, pos.y));
-
-            let precisionX = 0;
-            let precisionY = 0;
-
-            while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
-                let astString = new ASTSettingsString();
-                astString.add("Format(1)", this.overlayStore.numbers.cursorFormatStringX(precisionX));
-                astString.add("Format(2)", this.overlayStore.numbers.cursorFormatStringY(precisionY));
-                astString.add("System", this.overlayStore.global.explicitSystem);
-
-                let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString()), true);
-                let [p, n1, n2] = formattedNeighbourhood;
-                if (!p.x || !p.y || p.x === "<bad>" || p.y === "<bad>") {
-                    cursorPosFormatted = null;
-                    break;
-                }
-
-                if (p.x !== n1.x && p.x !== n2.x && p.y !== n1.y && p.y !== n2.y) {
-                    cursorPosFormatted = {x: p.x, y: p.y};
-                    break;
-                }
-
-                if (p.x === n1.x || p.x === n2.x) {
-                    precisionX += 1;
-                }
-
-                if (p.y === n1.y || p.y === n2.y) {
-                    precisionY += 1;
-                }
-            }
-        }
-
-        return {
-            posCanvasSpace: cursorPosCanvasSpace,
-            posImageSpace: cursorPosImageSpace,
-            posWCS: cursorPosWCS,
-            infoWCS: cursorPosFormatted,
-        };
     }
 
     @computed get renderWidth() {
@@ -465,6 +291,212 @@ export class FrameStore {
         return spectralInfo;
     }
 
+    @computed
+    private get zoomLevelForFit() {
+        return Math.min(this.calculateZoomX, this.calculateZoomY);
+    }
+
+    @computed
+    private get calculateZoomX() {
+        const imageWidth = this.frameInfo.fileInfoExtended.width;
+        const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
+
+        if (imageWidth <= 0) {
+            return 1.0;
+        }
+        return this.renderWidth * pixelRatio / imageWidth;
+    }
+
+    @computed
+    private get calculateZoomY() {
+        const imageHeight = this.frameInfo.fileInfoExtended.height;
+        const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
+        if (imageHeight <= 0) {
+            return 1.0;
+        }
+        return this.renderHeight * pixelRatio / imageHeight;
+    }
+
+    private readonly overlayStore: OverlayStore;
+    private readonly logStore: LogStore;
+    private readonly backendService: BackendService;
+
+    private static readonly CursorInfoMaxPrecision = 25;
+
+    constructor(readonly preference: PreferenceStore, overlay: OverlayStore, logStore: LogStore, frameInfo: FrameInfo, backendService: BackendService) {
+        this.overlayStore = overlay;
+        this.logStore = logStore;
+        this.backendService = backendService;
+        this.validWcs = false;
+        this.frameInfo = frameInfo;
+        this.renderHiDPI = true;
+        this.center = {x: 0, y: 0};
+        this.stokes = 0;
+        this.channel = 0;
+        this.requiredStokes = 0;
+        this.requiredChannel = 0;
+        this.renderConfig = new RenderConfigStore(preference);
+        this.contourConfig = new ContourConfigStore(preference);
+        this.contourStores = new Map<number, ContourStore>();
+        this.renderType = RasterRenderType.NONE;
+        this.moving = false;
+
+        // synchronize AST overlay's color/grid/label with preference when frame is created
+        const astColor = preference.astColor;
+        if (astColor !== overlay.global.color) {
+            overlay.global.setColor(astColor);
+        }
+        const astGridVisible = preference.astGridVisible;
+        if (astGridVisible !== overlay.grid.visible) {
+            overlay.grid.setVisible(astGridVisible);
+        }
+        const astLabelsVisible = preference.astLabelsVisible;
+        if (astLabelsVisible !== overlay.labels.visible) {
+            overlay.labels.setVisible(astLabelsVisible);
+        }
+
+        this.regionSet = new RegionSetStore(this, preference.regionContainer, backendService);
+        this.valid = true;
+        this.currentFrameView = {
+            xMin: 0,
+            xMax: 0,
+            yMin: 0,
+            yMax: 0,
+            mip: 999
+        };
+        this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
+
+        this.initWCS();
+        this.initCenter();
+        this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
+
+        // need initialized wcs to get correct cursor info
+        this.cursorInfo = this.getCursorInfo({x: this.renderWidth / 2, y: this.renderHeight / 2});
+        this.cursorValue = 0;
+        this.cursorFrozen = preference.isCursorFrozen;
+
+        autorun(() => {
+            // update zoomLevel when image viewer is available for drawing
+            if (this.isRenderable && this.zoomLevel <= 0) {
+                this.zoomLevel = this.zoomLevelForFit;
+            }
+        });
+    }
+
+    @action private initWCS = () => {
+        let headerString = "";
+
+        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+            // Skip empty header entries
+            if (!entry.value.length) {
+                continue;
+            }
+
+            // Skip higher dimensions
+            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[3-9]/)) {
+                continue;
+            }
+
+            let value = entry.value;
+            if (entry.name.toUpperCase() === "NAXIS") {
+                value = "2";
+            }
+
+            if (entry.name.toUpperCase() === "WCSAXES") {
+                value = "2";
+            }
+
+            if (entry.entryType === CARTA.EntryType.STRING) {
+                value = `'${value}'`;
+            }
+
+            let name = entry.name;
+            while (name.length < 8) {
+                name += " ";
+            }
+
+            let entryString = `${name}=  ${value}`;
+            while (entryString.length < 80) {
+                entryString += " ";
+            }
+            headerString += entryString;
+        }
+        const initResult = AST.initFrame(headerString);
+        if (!initResult) {
+            this.logStore.addWarning(`Problem processing WCS info in file ${this.frameInfo.fileInfo.name}`, ["ast"]);
+            this.wcsInfo = AST.initDummyFrame();
+        } else {
+            this.wcsInfo = initResult;
+            this.validWcs = true;
+            this.overlayStore.setDefaultsFromAST(this);
+            console.log("Initialised WCS info from frame");
+        }
+    };
+
+    public getImagePos(canvasX: number, canvasY: number): Point2D {
+        const frameView = this.requiredFrameView;
+        return {
+            x: (canvasX / this.renderWidth) * (frameView.xMax - frameView.xMin) + frameView.xMin - 1,
+            // y coordinate is flipped in image space
+            y: (canvasY / this.renderHeight) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
+        };
+    }
+
+    public getCursorInfo(cursorPosCanvasSpace: Point2D): CursorInfo {
+        const cursorPosImageSpace = this.getImagePos(cursorPosCanvasSpace.x, cursorPosCanvasSpace.y);
+
+        let cursorPosWCS, cursorPosFormatted;
+        if (this.validWcs) {
+            // We need to compare X and Y coordinates in both directions
+            // to avoid a confusing drop in precision at rounding threshold
+            const offsetBlock = [[0, 0], [1, 1], [-1, -1]];
+
+            // Shift image space coordinates to 1-indexed when passing to AST
+            const cursorNeighbourhood = offsetBlock.map((offset) => AST.pixToWCS(this.wcsInfo, cursorPosImageSpace.x + 1 + offset[0], cursorPosImageSpace.y + 1 + offset[1]));
+
+            cursorPosWCS = cursorNeighbourhood[0];
+
+            const normalizedNeighbourhood = cursorNeighbourhood.map((pos) => AST.normalizeCoordinates(this.wcsInfo, pos.x, pos.y));
+
+            let precisionX = 0;
+            let precisionY = 0;
+
+            while (precisionX < FrameStore.CursorInfoMaxPrecision && precisionY < FrameStore.CursorInfoMaxPrecision) {
+                let astString = new ASTSettingsString();
+                astString.add("Format(1)", this.overlayStore.numbers.cursorFormatStringX(precisionX));
+                astString.add("Format(2)", this.overlayStore.numbers.cursorFormatStringY(precisionY));
+                astString.add("System", this.overlayStore.global.explicitSystem);
+
+                let formattedNeighbourhood = normalizedNeighbourhood.map((pos) => AST.getFormattedCoordinates(this.wcsInfo, pos.x, pos.y, astString.toString()), true);
+                let [p, n1, n2] = formattedNeighbourhood;
+                if (!p.x || !p.y || p.x === "<bad>" || p.y === "<bad>") {
+                    cursorPosFormatted = null;
+                    break;
+                }
+
+                if (p.x !== n1.x && p.x !== n2.x && p.y !== n1.y && p.y !== n2.y) {
+                    cursorPosFormatted = {x: p.x, y: p.y};
+                    break;
+                }
+
+                if (p.x === n1.x || p.x === n2.x) {
+                    precisionX += 1;
+                }
+
+                if (p.y === n1.y || p.y === n2.y) {
+                    precisionY += 1;
+                }
+            }
+        }
+
+        return {
+            posCanvasSpace: cursorPosCanvasSpace,
+            posImageSpace: cursorPosImageSpace,
+            posWCS: cursorPosWCS,
+            infoWCS: cursorPosFormatted,
+        };
+    }
+
     @action updateFromRasterData(rasterImageData: CARTA.RasterImageData) {
         this.stokes = rasterImageData.stokes;
         this.channel = rasterImageData.channel;
@@ -511,15 +543,14 @@ export class FrameStore {
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
         this.stokes = contourImageData.stokes;
         this.channel = contourImageData.channel;
-
+        this.contourStores.clear();
         for (const contourSet of contourImageData.contourSets) {
             const indices = new Int32Array(contourSet.rawStartIndices.buffer.slice(contourSet.rawStartIndices.byteOffset, contourSet.rawStartIndices.byteOffset + contourSet.rawStartIndices.byteLength));
             const vertices = new Float32Array(contourSet.rawCoordinates.buffer.slice(contourSet.rawCoordinates.byteOffset, contourSet.rawCoordinates.byteOffset + contourSet.rawCoordinates.byteLength));
-            console.log({
-                level: contourSet.level,
-                indices,
-                vertices
-            });
+
+            const contourStore = new ContourStore();
+            contourStore.setContourData(indices, vertices);
+            this.contourStores.set(contourSet.level, contourStore);
         }
     }
 
@@ -609,31 +640,31 @@ export class FrameStore {
         this.moving = false;
     };
 
-    @computed
-    private get zoomLevelForFit() {
-        return Math.min(this.calculateZoomX, this.calculateZoomY);
-    }
-
-    @computed
-    private get calculateZoomX() {
-        const imageWidth = this.frameInfo.fileInfoExtended.width;
-        const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
-
-        if (imageWidth <= 0) {
-            return 1.0;
+    @action applyContours = () => {
+        if (!this.contourConfig || !this.renderConfig) {
+            return;
         }
-        return this.renderWidth * pixelRatio / imageWidth;
-    }
 
-    @computed
-    private get calculateZoomY() {
-        const imageHeight = this.frameInfo.fileInfoExtended.height;
-        const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
-        if (imageHeight <= 0) {
-            return 1.0;
-        }
-        return this.renderHeight * pixelRatio / imageHeight;
-    }
+        this.contourConfig.setBounds(this.renderConfig.scaleMinVal, this.renderConfig.scaleMaxVal);
+
+        // TODO: Allow a different reference frame
+        const contourParameters: CARTA.ISetContourParameters = {
+            fileId: this.frameInfo.fileId,
+            referenceFileId: this.frameInfo.fileId,
+            channel: this.requiredChannel,
+            stokes: this.stokes,
+            smoothingMode: CARTA.SmoothingMode.GaussianBlur,
+            smoothingFactor: 7,
+            levels: this.contourConfig.levels,
+            imageBounds: {
+                xMin: 0,
+                xMax: this.frameInfo.fileInfoExtended.width,
+                yMin: 0,
+                yMax: this.frameInfo.fileInfoExtended.height,
+            }
+        };
+        this.backendService.setContourParameters(contourParameters);
+    };
 
     // Tests a list of headers for valid channel information in either 3rd or 4th axis
     private static FindChannelType(entries: CARTA.IHeaderEntry[]) {

@@ -13,6 +13,7 @@ import {RegionViewComponent} from "./RegionView/RegionViewComponent";
 import {AnimationMode, AnimationState, RegionStore, WidgetConfig, WidgetProps} from "stores";
 import {CursorInfo, Point2D} from "models";
 import "./ImageViewComponent.css";
+import {ContourViewComponent} from "./ContourView/ContourViewComponent";
 
 export const exportImage = (padding, darkTheme, imageName) => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
@@ -240,6 +241,11 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     overlaySettings={appStore.overlayStore}
                     preference={appStore.preferenceStore}
                     tileService={appStore.tileService}
+                />
+                <ContourViewComponent
+                    frame={appStore.activeFrame}
+                    docked={this.props.docked}
+                    overlaySettings={appStore.overlayStore}
                 />
                 {divContents}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>

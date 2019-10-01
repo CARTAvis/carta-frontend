@@ -196,38 +196,12 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     handleApplyContours = () => {
         const appStore = this.props.appStore;
-        if (!appStore || !appStore.activeFrame || !appStore.activeFrame.renderConfig) {
+        if (!appStore || !appStore.activeFrame) {
             return;
         }
 
-        const frame = appStore.activeFrame;
-        const renderConfig = frame.renderConfig;
-        const minVal = renderConfig.scaleMinVal;
-        const maxVal = renderConfig.scaleMaxVal;
-        const numLevels = 5;
-        const step = (maxVal - minVal) / (numLevels - 1);
-        const levels = new Array<number>(numLevels);
-        for (let i = 0; i < numLevels; i++) {
-            levels[i] = minVal + i * step;
-        }
+        appStore.activeFrame.applyContours();
 
-        // TODO: Allow a different reference frame
-        const contourParameters: CARTA.ISetContourParameters = {
-            fileId: frame.frameInfo.fileId,
-            referenceFileId: frame.frameInfo.fileId,
-            channel: frame.requiredChannel,
-            stokes: frame.stokes,
-            smoothingMode: CARTA.SmoothingMode.GaussianBlur,
-            smoothingFactor: 7,
-            levels,
-            imageBounds: {
-                xMin: 0,
-                xMax: frame.frameInfo.fileInfoExtended.width,
-                yMin: 0,
-                yMax: frame.frameInfo.fileInfoExtended.height,
-            }
-        };
-        this.props.appStore.backendService.setContourParameters(contourParameters);
     };
 
     onMinMoved = (x: number) => {
