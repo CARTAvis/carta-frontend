@@ -20,18 +20,12 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
 
     componentDidMount() {
         if (this.canvas) {
-            if (this.props.frame.wcsInfo) {
-                this.updateImageDimensions();
-            }
             this.renderCanvas();
         }
     }
 
     componentDidUpdate() {
         if (this.canvas) {
-            if (this.props.frame.wcsInfo) {
-                this.updateImageDimensions();
-            }
             this.renderCanvas();
         }
     }
@@ -41,12 +35,13 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         this.canvas.height = this.props.overlaySettings.viewHeight * devicePixelRatio;
     }
 
-    renderCanvas = () => {
+    renderCanvas = _.throttle(() => {
         const settings = this.props.overlaySettings;
         const frame = this.props.frame;
         const pixelRatio = devicePixelRatio;
 
         if (frame.wcsInfo) {
+            this.updateImageDimensions();
             AST.setCanvas(this.canvas);
 
             const plot = (styleString: string) => {
@@ -59,16 +54,23 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
                     styleString);
             };
 
-            plot(settings.styleString);
+            let currentStyleString = settings.styleString;
+            // Override the AST tolerance during motion
+            if (frame.moving) {
+                const tolVal = Math.max(settings.global.tolerance * 2 / 100.0, 0.1);
+                currentStyleString += `, Tol=${tolVal}`;
+            }
+
+            plot(currentStyleString);
 
             if (/No grid curves can be drawn for axis/.test(AST.getLastErrorMessage())) {
                 // Try to re-plot without the grid
-                plot(settings.styleString.replace(/Gap\(\d\)=[^,]+, ?/g, "").replace("Grid=1", "Grid=0"));
+                plot(currentStyleString.replace(/Gap\(\d\)=[^,]+, ?/g, "").replace("Grid=1", "Grid=0"));
             }
 
             AST.clearLastErrorMessage();
         }
-    };
+    }, 50);
 
     render() {
         const styleString = this.props.overlaySettings.styleString;
@@ -78,6 +80,7 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const framePadding = this.props.overlaySettings.padding;
         const w = this.props.overlaySettings.viewWidth;
         const h = this.props.overlaySettings.viewHeight;
+        const moving = this.props.frame.moving;
 
         let className = "overlay-canvas";
         if (this.props.docked) {

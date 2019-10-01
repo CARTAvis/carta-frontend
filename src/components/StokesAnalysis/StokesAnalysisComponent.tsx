@@ -5,13 +5,14 @@ import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, ScatterPlotComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
+import {StokesAnalysisProfilerInfoComponent} from "./ProfilerInfo/ProfilerInfoComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {ChannelInfo, Point2D} from "models";
-import {clamp, normalising, polarizationAngle, polarizedIntensity} from "utilities";
+import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor} from "utilities";
 import "./StokesAnalysisComponent.css";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
@@ -26,14 +27,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private pointRadius = 3;
     private channelBorder: { xMin: number, xMax: number };
     private minProgress = 0;
-    private QlinePlotColor = Colors.GREEN2;
-    private UlinePlotColor = Colors.BLUE2;
+    private cursorInfo: {isMouseEntered: boolean, quValue: Point2D, channel: number, pi: number, pa: number, xUnit: string};
     private static layoutRatioCutoffs = {
         vertical: 0.5,
         horizontal: 2,
     };
-
-    @observable isMouseMoveIntoLinePlots = false;
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -193,6 +191,36 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         }
     };
 
+    onScatterChannelChanged = (x: number, y: number, data: Point3D[]) => {
+        const frame = this.props.appStore.activeFrame;
+        if (this.props.appStore.animatorStore.animationState === AnimationState.PLAYING) {
+            return;
+        }
+        if (data.length > 0 && frame && frame.channelInfo) {
+            let channelInfo = frame.channelInfo;
+            const zIndex = this.matchZindex(x, y, data);
+            let nearestIndex = (this.widgetStore.useWcsValues && channelInfo.getChannelIndexWCS) ?
+                channelInfo.getChannelIndexWCS(zIndex) :
+                channelInfo.getChannelIndexSimple(zIndex);
+            if (nearestIndex !== null && nearestIndex !== undefined) {
+                frame.setChannels(nearestIndex, frame.requiredStokes);
+            }
+        }
+    };
+
+    private matchZindex (x: number, y: number, data: Point3D[]): number {
+        let channel = 0;
+        for (let index = 0; index < data.length; index++) {
+            const element = data[index];
+            if (element.x === x && element.y === y) {
+                channel = element.z;
+                break;
+            }
+            
+        }
+        return channel;
+    }
+
     private getCurrentChannelValue = (): number => {
         const frame = this.props.appStore.activeFrame;
         if (frame) {
@@ -205,6 +233,19 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         }
         return null;
     };
+
+    private matchXYindex (z: number, data: Point3D[]): Point3D {
+        let point = data[0];
+        for (let index = 0; index < data.length; index++) {
+            const element = data[index];
+            if (element.z === z) {
+                point = element;
+                break;
+            }
+            
+        }
+        return point;
+    }
 
     private static calculateLayout = (width: number, height: number): string => {
         if (width && height) {
@@ -225,7 +266,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     };
 
     onGraphCursorMoved = _.throttle((x) => {
-        this.widgetStore.setCursor(x);
+        this.widgetStore.setlinePlotCursorX(x);
+    }, 33);
+
+    onScatterGraphCursorMoved = _.throttle((x, y) => {
+        this.widgetStore.setScatterPlotCursor({ x: x, y: y});
     }, 33);
 
     private static calculatePA(qData: Float32Array | Float64Array, uData: Float32Array | Float64Array): Array<number> {
@@ -383,7 +428,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return `hsla(${hue}, 100%, 50%, ${this.opacityInit})`;
     }
 
-    private frequencyIncreases(data: { x: number, y: number, z?: number }[]): boolean {
+    private frequencyIncreases(data: Point3D[]): boolean {
         const zFirst = data[0].z;
         const zLast = data[data.length - 1].z;
         if (zFirst > zLast) {
@@ -441,7 +486,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 if (channelHovered) {
                     close = this.closestChannel(channelHovered, data);
                     if (this.channelBorder && this.channelBorder.xMin !== 0) {
-                        if (close > this.channelBorder.xMax || close < this.channelBorder.xMin || this.isMouseMoveIntoLinePlots) {
+                        if (close > this.channelBorder.xMax || close < this.channelBorder.xMin || !this.widgetStore.isMouseMoveIntoLinePlots) {
                             close = channelCurrent;
                         }
                     }
@@ -459,14 +504,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         }
         return indicator;
     }
-
-    private onMouseEnterHandler = () => {
-        this.isMouseMoveIntoLinePlots = false;
-    };
-
-    private onMouseleaveHandler = () => {
-        this.isMouseMoveIntoLinePlots = true;
-    };
 
     @computed get plotData(): {
         qValues: { dataset: Array<Point2D>, border: Border },
@@ -523,6 +560,58 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     }
 
+    private getCursorInfo (quDataset: Point3D[], piDataset: Point2D[], paDataset: Point2D[], scatterCursorProfiler: Point3D, lineCursorProfiler: number, scatterCursorImage: Point3D, lineCursorImage: number) {
+        const isMouseEntered = this.widgetStore.isMouseMoveIntoLinePlots || this.widgetStore.isMouseMoveIntoScatterPlots;
+        const xUnit =  this.getChannelUnit();
+        let profilerData = {q: 0, u: 0, pi: 0, pa: 0, channel: 0};
+        if (this.widgetStore.isMouseMoveIntoLinePlots) {
+            const lineCursorPIDataProfiler = binarySearchByX(piDataset, lineCursorProfiler);
+            const lineCursorPADataProfiler = binarySearchByX(paDataset, lineCursorProfiler);
+            if (lineCursorPIDataProfiler && lineCursorPADataProfiler) {
+                let cursor = this.matchXYindex(lineCursorPIDataProfiler.x, quDataset);
+                profilerData.q = cursor.x;
+                profilerData.u = cursor.y;
+                profilerData.channel = cursor.z;
+                profilerData.pi = lineCursorPIDataProfiler.y;
+                profilerData.pa = lineCursorPADataProfiler.y;
+            }   
+        }
+        if (this.widgetStore.isMouseMoveIntoScatterPlots) {
+            const minIndex = closestPointIndexToCursor(scatterCursorProfiler, quDataset);
+            const currentScatterData = quDataset[minIndex];
+            const lineCursorPIDataProfiler = binarySearchByX(piDataset, currentScatterData.z);
+            const lineCursorPADataProfiler = binarySearchByX(paDataset, currentScatterData.z);
+            if (lineCursorPIDataProfiler && lineCursorPADataProfiler) {
+                profilerData.q = currentScatterData.x;
+                profilerData.u = currentScatterData.y;
+                profilerData.channel = lineCursorPIDataProfiler.x;
+                profilerData.pi = lineCursorPIDataProfiler.y;
+                profilerData.pa = lineCursorPADataProfiler.y;
+            }
+        }
+        if (isMouseEntered) {
+            return {
+                isMouseEntered: isMouseEntered,
+                quValue: { x: profilerData.q, y: profilerData.u },
+                channel: profilerData.channel,
+                pi: profilerData.pi,
+                pa: profilerData.pa,
+                xUnit: xUnit
+            };   
+        } else {
+            const lineCursorPIDataImage = binarySearchByX(piDataset, lineCursorImage);
+            const lineCursorPADataImage = binarySearchByX(paDataset, lineCursorImage);
+            return {
+                isMouseEntered: isMouseEntered,
+                quValue: { x: scatterCursorImage.x, y: scatterCursorImage.y },
+                channel: lineCursorImage,
+                pi: lineCursorPIDataImage.y,
+                pa: lineCursorPADataImage.y,
+                xUnit: xUnit
+            };
+        }
+    }
+    
     render() {
         const appStore = this.props.appStore;
         if (!this.widgetStore) {
@@ -530,7 +619,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         }
         const frame = appStore.activeFrame;
         const imageName = (appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfo.name : undefined);
-
         let quLinePlotProps: LinePlotComponentProps = {
             xLabel: "Channel",
             yLabel: "Value",
@@ -552,7 +640,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphZoomedXY: this.widgetStore.setQULinePlotsXYBounds,
             graphZoomReset: this.widgetStore.clearLinePlotsXYBounds,
             graphClicked: this.onChannelChanged,
-            markers: []
+            markers: [],
+            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots
         };
 
         let piLinePlotProps: LinePlotComponentProps = {
@@ -574,7 +663,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphZoomedXY: this.widgetStore.setPolIntensityXYBounds,
             graphZoomReset: this.widgetStore.clearLinePlotsXYBounds,
             graphClicked: this.onChannelChanged,
-            markers: []
+            markers: [],
+            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots
         };
 
         let paLinePlotProps: LinePlotComponentProps = {
@@ -595,12 +685,13 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphZoomedXY: this.widgetStore.setPolAngleXYBounds,
             graphZoomReset: this.widgetStore.clearLinePlotsXYBounds,
             graphClicked: this.onChannelChanged,
-            markers: []
+            markers: [],
+            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots
         };
 
-        let quScatterPlotProps: LinePlotComponentProps = {
-            xLabel: "Value",
-            yLabel: "Value",
+        let quScatterPlotProps: ScatterPlotComponentProps = {
+            xLabel: "Channel",
+            yLabel: "Channel",
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: "profile",
@@ -617,13 +708,18 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             centeredOrigin: true,
             equalScale: true,
             zIndex: true,
-            pointRadius: this.pointRadius
+            pointRadius: this.pointRadius,
+            graphCursorMoved: this.onScatterGraphCursorMoved,
+            graphClicked: this.onScatterChannelChanged,
+            graphZoomReset: this.widgetStore.clearScatterPlotXYBounds,
+            mouseEntered: this.widgetStore.setMouseMoveIntoScatterPlots,
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
         let interactionBorder = {xMin: 0, xMax: 0};
         if (this.profileStore && frame) {
             const currentPlotData = this.plotData;
+            let channel = {channelCurrent: 0, channelHovered: 0};
             if (currentPlotData && currentPlotData.piValues && currentPlotData.paValues && currentPlotData.qValues && currentPlotData.uValues && currentPlotData.quValues) {
                 quLinePlotProps.multiPlotData.set(StokesCoordinate.LinearPolarizationQ, currentPlotData.qValues.dataset);
                 quLinePlotProps.multiPlotData.set(StokesCoordinate.LinearPolarizationU, currentPlotData.uValues.dataset);
@@ -637,8 +733,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 paLinePlotProps.opacity = lineOpacity;
                 quLinePlotProps.opacity = lineOpacity;
                 
-                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, this.QlinePlotColor);
-                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationU, this.UlinePlotColor);
+                const QlinePlotColor = appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2;
+                const UlinePlotColor = appStore.darkTheme ? Colors.ORANGE4 : Colors.ORANGE2;
+                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, QlinePlotColor);
+                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationU, UlinePlotColor);
 
                 let qBorder = currentPlotData.qValues.border;
                 let uBorder = currentPlotData.uValues.border;
@@ -708,6 +806,33 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     quScatterPlotProps.yMin = this.widgetStore.quScatterMinY;
                     quScatterPlotProps.yMax = this.widgetStore.quScatterMaxY;
                 }
+                // cursor infor
+                let lineCursorXInfo = {
+                    profiler: this.widgetStore.linePlotcursorX,
+                    image: this.getCurrentChannelValue(),
+                    unit: this.getChannelUnit()
+                };
+                paLinePlotProps.cursorX = lineCursorXInfo;
+                piLinePlotProps.cursorX = lineCursorXInfo;
+                quLinePlotProps.cursorX = lineCursorXInfo;
+                let scatterCursorInfor = {
+                    profiler: { x: this.widgetStore.scatterPlotCursorX, y: this.widgetStore.scatterPlotCursorY},
+                    image: this.matchXYindex(lineCursorXInfo.image, currentPlotData.quValues.dataset),
+                    unit: this.getChannelUnit()
+                };
+                quScatterPlotProps.cursorXY = scatterCursorInfor;
+                this.cursorInfo = this.getCursorInfo(
+                    currentPlotData.quValues.dataset, 
+                    currentPlotData.piValues.dataset, 
+                    currentPlotData.paValues.dataset, 
+                    scatterCursorInfor.profiler,
+                    lineCursorXInfo.profiler,
+                    scatterCursorInfor.image,
+                    lineCursorXInfo.image);
+                if (this.cursorInfo && this.cursorInfo.quValue) {
+                    quScatterPlotProps.cursorNearestPoint = this.cursorInfo.quValue;
+                }
+                
             }
 
             paLinePlotProps.yLabel = "PA (Degrees)";
@@ -730,21 +855,27 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 quLinePlotProps.xLabel = this.getChannelLabel();
             }
 
-            let cursorXInfo = {
-                profiler: this.widgetStore.cursorX,
-                image: this.getCurrentChannelValue(),
-                unit: this.getChannelUnit()
-            };
-            let channel = {channelCurrent: 0, channelHovered: 0};
-            paLinePlotProps.cursorX = cursorXInfo;
-            piLinePlotProps.cursorX = cursorXInfo;
-            quLinePlotProps.cursorX = cursorXInfo;
-
             paLinePlotProps.markers = [];
             piLinePlotProps.markers = [];
             quLinePlotProps.markers = [];
 
-            if (paLinePlotProps.cursorX.profiler !== null) {
+            if (this.cursorInfo && this.cursorInfo.channel && this.widgetStore.isMouseMoveIntoScatterPlots) {
+                let lineCursorIndicator = {
+                    value: this.cursorInfo.channel,
+                    id: "marker-profiler-cursor-stokes2",
+                    draggable: false,
+                    horizontal: false,
+                    color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
+                    opacity: 0.8,
+                    isMouseMove: !this.widgetStore.isMouseMoveIntoLinePlots,
+                    interactionMarker: true,
+                };
+                paLinePlotProps.markers.push(lineCursorIndicator);
+                piLinePlotProps.markers.push(lineCursorIndicator);
+                quLinePlotProps.markers.push(lineCursorIndicator);
+            }
+
+            if (paLinePlotProps.cursorX && paLinePlotProps.cursorX.profiler !== null) {
                 let cursor = {
                     value: paLinePlotProps.cursorX.profiler,
                     id: "marker-profiler-cursor-stokes",
@@ -752,7 +883,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     horizontal: false,
                     color: appStore.darkTheme ? Colors.GRAY4 : Colors.GRAY2,
                     opacity: 0.8,
-                    isMouseMove: this.isMouseMoveIntoLinePlots,
+                    isMouseMove: !this.widgetStore.isMouseMoveIntoLinePlots,
                 };
                 paLinePlotProps.markers.push(cursor);
                 piLinePlotProps.markers.push(cursor);
@@ -762,7 +893,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 }
             }
 
-            if (paLinePlotProps.cursorX.image !== null) {
+            if (paLinePlotProps.cursorX && paLinePlotProps.cursorX.image !== null) {
                 let channelCurrent = {
                     value: paLinePlotProps.cursorX.image,
                     id: "marker-channel-current",
@@ -787,8 +918,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
 
             if (quScatterPlotProps.data && quScatterPlotProps.data.length && interactionBorder) {
-                const scatterChannel = this.getScatterChannel(quScatterPlotProps.data, channel, true);
-                quScatterPlotProps.scatterIndicator = scatterChannel;
+                const scatterChannelInteraction = this.getScatterChannel(quScatterPlotProps.data, channel, true);
+                quScatterPlotProps.indicatorInteractionChannel = {
+                    currentChannel: scatterChannelInteraction.currentChannel, 
+                    hoveredChannel: scatterChannelInteraction.hoveredChannel,
+                    start: this.widgetStore.isMouseMoveIntoLinePlots
+                };
             }
 
             paLinePlotProps.comments = this.exportHeaders;
@@ -804,7 +939,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     <div className="profile-plot-toolbar">
                         <StokesAnalysisToolbarComponent widgetStore={this.widgetStore} appStore={appStore}/>
                     </div>
-                    <div className="profile-plot-qup" onMouseEnter={this.onMouseEnterHandler} onMouseLeave={this.onMouseleaveHandler}>
+                    <div className="profile-plot-qup">
                         <div className="profile-plot-qu">
                             <LinePlotComponent {...quLinePlotProps}/>
                         </div>
@@ -818,6 +953,13 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     <div className="profile-plot-qvsu">
                         <ScatterPlotComponent {...quScatterPlotProps}/>
                     </div>
+                    {this.cursorInfo &&
+                    <StokesAnalysisProfilerInfoComponent
+                        darkMode={appStore.darkTheme}
+                        cursorInfo={this.cursorInfo}
+                        fractionalPol={this.widgetStore.fractionalPolVisible}
+                    />
+                    }
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>

@@ -6,6 +6,7 @@ import {ASTSettingsString, PreferenceStore, OverlayStore, LogStore, RegionSetSto
 import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES} from "models";
 import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency} from "utilities";
 import {BackendService} from "../services";
+import * as _ from "lodash";
 
 export interface FrameInfo {
     fileId: number;
@@ -45,6 +46,7 @@ export class FrameStore {
     @observable overviewRasterData: Float32Array;
     @observable overviewRasterView: FrameView;
     @observable valid: boolean;
+    @observable moving: boolean;
     @observable regionSet: RegionSetStore;
 
     private readonly overlayStore: OverlayStore;
@@ -65,6 +67,7 @@ export class FrameStore {
         this.requiredChannel = 0;
         this.renderConfig = new RenderConfigStore(preference);
         this.renderType = RasterRenderType.NONE;
+        this.moving = false;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preference.astColor;
@@ -548,7 +551,7 @@ export class FrameStore {
     }
 
     @action setCursorValue(cursorValue: number) {
-            this.cursorValue = cursorValue;
+        this.cursorValue = cursorValue;
     }
 
     // Sets a new zoom level and pans to keep the given point fixed
@@ -583,11 +586,21 @@ export class FrameStore {
         this.renderType = renderType;
     };
 
-    @computed private get zoomLevelForFit() {
+    @action startMoving = () => {
+        this.moving = true;
+    };
+
+    @action endMoving = () => {
+        this.moving = false;
+    };
+
+    @computed
+    private get zoomLevelForFit() {
         return Math.min(this.calculateZoomX, this.calculateZoomY);
     }
 
-    @computed private get calculateZoomX() {
+    @computed
+    private get calculateZoomX() {
         const imageWidth = this.frameInfo.fileInfoExtended.width;
         const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
 
@@ -597,7 +610,8 @@ export class FrameStore {
         return this.renderWidth * pixelRatio / imageWidth;
     }
 
-    @computed private get calculateZoomY() {
+    @computed
+    private get calculateZoomY() {
         const imageHeight = this.frameInfo.fileInfoExtended.height;
         const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
         if (imageHeight <= 0) {

@@ -12,9 +12,14 @@ const PREFERENCE_KEYS = {
     layout: "layout",
     cursorPosition: "cursorPosition",
     zoomMode: "zoomMode",
+    dragPanning: "dragPanning",
     scaling: "scaling",
     colormap: "colormap",
     percentile: "percentile",
+    scalingAlpha: "scalingAlpha",
+    scalingGamma: "scalingGamma",
+    nanColorHex: "nanColorHex",
+    nanAlpha: "nanAlpha",
     astColor: "astColor",
     astGridVisible: "astGridVisible",
     astLabelsVisible: "astLabelsVisible",
@@ -37,9 +42,14 @@ const DEFAULTS = {
     layout: PresetLayout.DEFAULT,
     cursorPosition: CursorPosition.TRACKING,
     zoomMode: Zoom.FIT,
+    dragPanning: true,
     scaling: FrameScaling.LINEAR,
     colormap: "inferno",
     percentile: 99.9,
+    scalingAlpha: 1000,
+    scalingGamma: 1,
+    nanColorHex: "#137CBD",
+    nanAlpha: 1,
     astColor: 4,
     astGridVisible: false,
     astLabelsVisible: true,
@@ -65,9 +75,14 @@ export class PreferenceStore {
     @observable layout: string;
     @observable cursorPosition: string;
     @observable zoomMode: string;
+    @observable dragPanning: boolean;
     @observable scaling: FrameScaling;
     @observable colormap: string;
     @observable percentile: number;
+    @observable scalingAlpha: number;
+    @observable scalingGamma: number;
+    @observable nanColorHex: string;
+    @observable nanAlpha: number;
     @observable astColor: number;
     @observable astGridVisible: boolean;
     @observable astLabelsVisible: boolean;
@@ -106,6 +121,11 @@ export class PreferenceStore {
         return zoomMode && Zoom.isValid(zoomMode) ? zoomMode : DEFAULTS.zoomMode;
     };
 
+    private getDragPanning = (): boolean => {
+        const dragPanning = localStorage.getItem(PREFERENCE_KEYS.dragPanning);
+        return dragPanning === "false" ? false : DEFAULTS.dragPanning;
+    };
+
     // getters for render config
     private getScaling = (): FrameScaling => {
         const scaling = localStorage.getItem(PREFERENCE_KEYS.scaling);
@@ -130,6 +150,41 @@ export class PreferenceStore {
 
         const value = Number(percentile);
         return isFinite(value) && RenderConfigStore.IsPercentileValid(value) ? value : DEFAULTS.percentile;
+    };
+
+    private getScalingAlpha = (): number => {
+        const scalingAlpha = localStorage.getItem(PREFERENCE_KEYS.scalingAlpha);
+        if (!scalingAlpha) {
+            return DEFAULTS.scalingAlpha;
+        }
+
+        const value = Number(scalingAlpha);
+        return isFinite(value) ? value : DEFAULTS.scalingAlpha;
+    };
+
+    private getScalingGamma = (): number => {
+        const scalingGamma = localStorage.getItem(PREFERENCE_KEYS.scalingGamma);
+        if (!scalingGamma) {
+            return DEFAULTS.scalingGamma;
+        }
+
+        const value = Number(scalingGamma);
+        return isFinite(value) && RenderConfigStore.IsGammaValid(value) ? value : DEFAULTS.scalingGamma;
+    };
+
+    private getNaNColorHex = (): string => {
+        const nanColorHex = localStorage.getItem(PREFERENCE_KEYS.nanColorHex);
+        return nanColorHex && isColorValid(nanColorHex) ? nanColorHex : DEFAULTS.nanColorHex;
+    };
+
+    private getNaNAlpha = (): number => {
+        const nanAlpha = localStorage.getItem(PREFERENCE_KEYS.nanAlpha);
+        if (!nanAlpha) {
+            return DEFAULTS.nanAlpha;
+        }
+
+        const value = Number(nanAlpha);
+        return isFinite(value) && value >= 0 && value <= 1 ? value : DEFAULTS.nanAlpha;
     };
 
     // getters for WCS overlay
@@ -251,7 +306,9 @@ export class PreferenceStore {
                 if (eventNameList && Array.isArray(eventNameList) && eventNameList.length) {
                     eventNameList.forEach((eventName) => {
                         const eventType = Event.getEventTypeFromName(eventName);
-                        if (eventType !== undefined) { events[eventType] = true; }
+                        if (eventType !== undefined) {
+                            events[eventType] = true;
+                        }
                     });
                 }
             } catch (e) {
@@ -263,13 +320,13 @@ export class PreferenceStore {
 
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
         return Event.isEventTypeValid(eventType) && this.eventsLoggingEnabled[eventType];
-    }
+    };
 
     public flipEventLoggingEnabled = (eventType: CARTA.EventType): void => {
         if (Event.isEventTypeValid(eventType)) {
             this.eventsLoggingEnabled[eventType] = !this.eventsLoggingEnabled[eventType];
         }
-    }
+    };
 
     // getters for boolean(convenient)
     @computed get isDarkTheme(): boolean {
@@ -324,6 +381,11 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.zoomMode, zoomMode);
     };
 
+    @action setDragPanning = (dragPanning: boolean) => {
+        this.dragPanning = dragPanning;
+        localStorage.setItem(PREFERENCE_KEYS.dragPanning, String(dragPanning));
+    };
+
     // setters for render config
     @action setScaling = (scaling: FrameScaling) => {
         this.scaling = scaling;
@@ -338,6 +400,26 @@ export class PreferenceStore {
     @action setPercentile = (percentile: string) => {
         this.percentile = Number(percentile);
         localStorage.setItem(PREFERENCE_KEYS.percentile, percentile);
+    };
+
+    @action setScalingAlpha = (scalingAlpha: number) => {
+        this.scalingAlpha = scalingAlpha;
+        localStorage.setItem(PREFERENCE_KEYS.scalingAlpha, scalingAlpha.toString(10));
+    };
+
+    @action setScalingGamma = (scalingGamma: number) => {
+        this.scalingGamma = scalingGamma;
+        localStorage.setItem(PREFERENCE_KEYS.scalingGamma, scalingGamma.toString(10));
+    };
+
+    @action setNaNColorHex = (nanColorHex: string) => {
+        this.nanColorHex = nanColorHex;
+        localStorage.setItem(PREFERENCE_KEYS.nanColorHex, nanColorHex);
+    };
+
+    @action setNaNAlpha = (nanAlpha: number) => {
+        this.nanAlpha = nanAlpha;
+        localStorage.setItem(PREFERENCE_KEYS.nanAlpha, nanAlpha.toString(10));
     };
 
     // setters for WCS overlay
@@ -411,6 +493,10 @@ export class PreferenceStore {
         this.setScaling(DEFAULTS.scaling);
         this.setColormap(DEFAULTS.colormap);
         this.setPercentile(DEFAULTS.percentile.toString());
+        this.setScalingAlpha(DEFAULTS.scalingAlpha);
+        this.setScalingGamma(DEFAULTS.scalingGamma);
+        this.setNaNColorHex(DEFAULTS.nanColorHex);
+        this.setNaNAlpha(DEFAULTS.nanAlpha);
     };
 
     @action resetWCSOverlaySettings = () => {
@@ -447,9 +533,14 @@ export class PreferenceStore {
         this.layout = this.getLayout();
         this.cursorPosition = this.getCursorPosition();
         this.zoomMode = this.getZoomMode();
+        this.dragPanning = this.getDragPanning();
         this.scaling = this.getScaling();
         this.colormap = this.getColormap();
         this.percentile = this.getPercentile();
+        this.scalingAlpha = this.getScalingAlpha();
+        this.scalingGamma = this.getScalingGamma();
+        this.nanColorHex = this.getNaNColorHex();
+        this.nanAlpha = this.getNaNAlpha();
         this.astColor = this.getASTColor();
         this.astGridVisible = this.getASTGridVisible();
         this.astLabelsVisible = this.getASTLabelsVisible();

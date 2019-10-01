@@ -27,9 +27,13 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable quScatterMaxX: number;
     @observable quScatterMinY: number;
     @observable quScatterMaxY: number;
-    @observable cursorX: number;
+    @observable linePlotcursorX: number;
     @observable channel: number;
     @observable useWcsValues: boolean;
+    @observable scatterPlotCursorX: number;
+    @observable scatterPlotCursorY: number;
+    @observable isMouseMoveIntoScatterPlots: boolean;
+    @observable isMouseMoveIntoLinePlots: boolean;
 
     @observable statsType: CARTA.StatsType;
     @observable fractionalPolVisible: boolean;
@@ -101,6 +105,14 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         return updatedRequirements;
     }
 
+    @action setMouseMoveIntoScatterPlots = (val: boolean) => {
+        this.isMouseMoveIntoScatterPlots = val;
+    };
+
+    @action setMouseMoveIntoLinePlots = (val: boolean) => {
+        this.isMouseMoveIntoLinePlots = val;
+    };
+
     @action setStatsType = (statsType: CARTA.StatsType) => {
         if (StokesAnalysisWidgetStore.ValidStatsTypes.indexOf(statsType) !== -1) {
             this.statsType = statsType;
@@ -131,8 +143,13 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.channel = channel;
     };
 
-    @action setCursor = (cursorVal: number) => {
-        this.cursorX = cursorVal;
+    @action setlinePlotCursorX = (cursorVal: number) => {
+        this.linePlotcursorX = cursorVal;
+    };
+
+    @action setScatterPlotCursor = (cursorVal: { x: number, y: number }) => {
+        this.scatterPlotCursorX = cursorVal.x;
+        this.scatterPlotCursorY = cursorVal.y;
     };
 
     @action setFractionalPolVisible = (val: boolean) => {
