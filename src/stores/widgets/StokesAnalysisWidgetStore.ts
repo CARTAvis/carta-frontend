@@ -40,6 +40,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable statsType: CARTA.StatsType;
     @observable fractionalPolVisible: boolean;
     scatterOutRangePointsIndex: Array<number>;
+    multicolorLineColors: Array<string>;
 
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
 

@@ -47,7 +47,56 @@ export class PlotContainerProps {
     pointRadius?: number;
     zeroLineWidth?: number;
     interactionMode?: boolean;
+    multicolorLineColors?: Array<string>;
 }
+
+interface MulticolorLineChartDatasets extends ChartDataSets  {
+    multicolorLineColors?: Array<string>;
+}
+
+// https://github.com/chartjs/Chart.js/issues/4895
+// https://github.com/jerairrest/react-chartjs-2/issues/131 react-chartjs-2 with Typescript error
+const Chart = require("react-chartjs-2").Chart;
+Chart.defaults.multicolorLine = Chart.defaults.line;
+Chart.controllers.multicolorLine = Chart.controllers.line.extend({
+    draw: function(ease) {
+        let startIndex = 0;
+        const meta = this.getMeta();
+        const points = meta.data || [];
+        const colors = this.getDataset().multicolorLineColors;
+        const area = this.chart.chartArea;
+        const originalDatasets = meta.dataset._children.filter(function(data) {
+            return !isNaN(data._view.y);
+        });
+
+        function _setColor(newColor: string, meta) {
+            meta.dataset._view.borderColor = newColor;
+        }
+
+        if (!colors) {
+            Chart.controllers.line.prototype.draw.call(this, ease);
+            return;
+        }
+
+        for (var i = 2; i <= colors.length; i++) {
+            if (colors[i-1] !== colors[i]) {
+                _setColor(colors[i-1], meta);
+                meta.dataset._children = originalDatasets.slice(startIndex, i);
+                meta.dataset.draw();
+                startIndex = i - 1;
+            }
+        }
+
+        meta.dataset._children = originalDatasets.slice(startIndex);
+        meta.dataset.draw();
+        meta.dataset._children = originalDatasets;
+
+        // neee change to for loop
+        points.forEach(function(point) {
+            point.draw(area);
+        });
+    }
+});
 
 export class PlotContainerComponent extends React.Component<PlotContainerProps> {
     private plotRef: Scatter;
@@ -234,7 +283,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         } else if (props.zeroLineWidth !== nextProps.zeroLineWidth) {
             return true;
-        }
+        } 
 
         // Deep check of arrays (this should be optimised!)
         if (!props.data || !nextProps.data || props.data.length !== nextProps.data.length) {
@@ -242,6 +291,15 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
         }
         for (let i = 0; i < props.data.length; i++) {
             if (props.data[i].x !== nextProps.data[i].x || props.data[i].y !== nextProps.data[i].y) {
+                return true;
+            }
+        }
+
+        if (!props.multicolorLineColors || !nextProps.multicolorLineColors || props.multicolorLineColors.length !== nextProps.multicolorLineColors.length) {
+            return true;
+        }
+        for (let i = 0; i < props.multicolorLineColors.length; i++) {
+            if (props.multicolorLineColors[i] !== nextProps.multicolorLineColors[i]) {
                 return true;
             }
         }
@@ -353,7 +411,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
         let plotData: Partial<ChartData> = {datasets: []};
         if (this.props.data && this.props.data.length) {
-            const datasetConfig: ChartDataSets = {
+            const datasetConfig: MulticolorLineChartDatasets = {
                 label: "LineGraph",
                 type: this.props.plotType ? this.props.plotType : "line",
                 data: this.props.data,
@@ -372,9 +430,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 datasetConfig.borderColor = lineColor;
             }
 
+            // need to check for this.props.multicolorLineColors?
             if (this.props.interactionMode) {
                 datasetConfig.pointRadius = 1;
                 datasetConfig.pointStyle = "line";
+                datasetConfig.type = 'multicolorLine';
+                datasetConfig.multicolorLineColors = this.props.multicolorLineColors;
             }
             if (this.props.dataBackgroundColor) {
                 datasetConfig.pointBackgroundColor = this.props.dataBackgroundColor;
@@ -394,7 +455,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                         currentLineColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
                     }
                 }
-                const multiPlotDatasetConfig: ChartDataSets = {
+                const multiPlotDatasetConfig: MulticolorLineChartDatasets = {
                     type: this.props.plotType ? this.props.plotType : "line",
                     label: key[0],
                     data: value,
@@ -408,9 +469,12 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     pointRadius: 0
                 };
 
+                // need to check for this.props.multicolorLineColors?
                 if (this.props.interactionMode) {
                     multiPlotDatasetConfig.pointRadius = 1;
                     multiPlotDatasetConfig.pointStyle = "line";
+                    multiPlotDatasetConfig.type = 'multicolorLine';
+                    multiPlotDatasetConfig.multicolorLineColors = this.props.multicolorLineColors;
                 }
 
                 plotData.datasets.push(multiPlotDatasetConfig);

@@ -33,6 +33,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         vertical: 0.5,
         horizontal: 2,
     };
+    // @observable multicolorLineColors: Array<string>;
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -433,12 +434,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         continue;
                     }
                 }
-
-                if (!(this.widgetStore.scatterOutRangePointsIndex && this.widgetStore.scatterOutRangePointsIndex.indexOf(x) >= 0)) {
-                    values.push({x, y});
-                } else {
-                    values.push({x: x, y: NaN});
-                }
+                values.push({x, y});
+                // if (!(this.widgetStore.scatterOutRangePointsIndex && this.widgetStore.scatterOutRangePointsIndex.indexOf(x) >= 0)) {
+                //     values.push({x, y});
+                // } else {
+                //     values.push({x: x, y: NaN});
+                // }
             }
             return {dataset: values, border};
         }
@@ -454,6 +455,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             // centered origin and equal scaler
             let equalScalerBorder = this.resizeScatterData(border.xMin, border.xMax, border.yMin, border.yMax);
             this.widgetStore.scatterOutRangePointsIndex = [];
+            this.widgetStore.multicolorLineColors = [""];
             for (let i = 0; i < channelValues.length; i++) {
                 let index = isIncremental ? i : channelValues.length - 1 - i;
                 const x = qProfile[index];
@@ -461,7 +463,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 const z = channelValues[index];
                 values.push({x, y, z});
                 if ( x < border.xMin || x > border.xMax || y < border.yMin || y > border.yMax) {
-                    this.widgetStore.scatterOutRangePointsIndex.push(z);   
+                    this.widgetStore.scatterOutRangePointsIndex.push(z);
+                    this.widgetStore.multicolorLineColors.push("hsla(0, 0%, 50%, 0.5)")   
+                } else {
+                    this.widgetStore.multicolorLineColors.push(Colors.RED2)
                 }
             }
             return {dataset: values, border: equalScalerBorder};
@@ -825,6 +830,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     }
                     let dataBackgroundColor = this.fillColor(quScatterPlotProps.data, interactionBorder, true);
                     quScatterPlotProps.dataBackgroundColor = dataBackgroundColor;
+                    quLinePlotProps.multicolorLineColors = this.widgetStore.multicolorLineColors;
+                    piLinePlotProps.multicolorLineColors = this.widgetStore.multicolorLineColors;
+                    paLinePlotProps.multicolorLineColors = this.widgetStore.multicolorLineColors;
 
                     if (this.widgetStore.isQULinePlotAutoScaledY) {
                         quLinePlotProps.yMin = qBorder.yMin < uBorder.yMin ? qBorder.yMin : uBorder.yMin;

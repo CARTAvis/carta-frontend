@@ -93,6 +93,7 @@ export class LinePlotComponentProps {
     zeroLineWidth?: number;
     mouseEntered?: (value: boolean) => void;
     interactionMode?: boolean;
+    multicolorLineColors?: Array<string>;
 }
 
 // Maximum time between double clicks
