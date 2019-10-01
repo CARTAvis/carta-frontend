@@ -356,7 +356,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 const cursorXPosGraphSpace = this.getValueForPixelX(mousePosX);
                 const cursorYPosGraphSpace = this.getValueForPixelY(mousePosY);
                 this.props.graphCursorMoved(cursorXPosGraphSpace, cursorYPosGraphSpace);
-            } else if (this.isPanning && this.props.graphZoomedXY) {
+            }  
+            if (this.isPanning && this.props.graphZoomedXY) {
                 const currentPanX = mousePosX;
                 const currentPanY = mousePosY;
                 const prevPanGraphSpaceX = this.getValueForPixelX(this.panPrevious.x);
@@ -485,7 +486,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             const chartArea = this.chartArea;
             const lineHeight = 15;
             const zoomSpeed = 0.001;
-            if (wheelEvent.offsetX > chartArea.right || wheelEvent.offsetX < chartArea.left) {
+            if (wheelEvent.offsetX > chartArea.right || wheelEvent.offsetX < chartArea.left || wheelEvent.offsetY > chartArea.bottom || wheelEvent.offsetY < chartArea.top) {
                 return;
             }
             const delta = wheelEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? wheelEvent.deltaY : wheelEvent.deltaY * lineHeight;
@@ -499,8 +500,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
             const zoomMinX = this.props.xMin - rangeChangeX * fractionX;
             const zoomMaxX = this.props.xMax + rangeChangeX * (1 - fractionX);
-            const zoomMinY = this.props.yMin - rangeChangeY * fractionY;
-            const zoomMaxY = this.props.yMax + rangeChangeY * (1 - fractionY);
+            const zoomMinY = this.props.yMin - rangeChangeY * (1 - fractionY);
+            const zoomMaxY = this.props.yMax + rangeChangeY * fractionY;
             this.props.graphZoomedXY(zoomMinX, zoomMaxX, zoomMinY, zoomMaxY);
         }
     };
