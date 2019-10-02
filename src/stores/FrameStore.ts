@@ -654,14 +654,16 @@ export class FrameStore {
             channel: this.requiredChannel,
             stokes: this.stokes,
             smoothingMode: CARTA.SmoothingMode.GaussianBlur,
-            smoothingFactor: 5,
+            smoothingFactor: 3,
             levels: this.contourConfig.levels,
             imageBounds: {
                 xMin: 0,
                 xMax: this.frameInfo.fileInfoExtended.width,
                 yMin: 0,
                 yMax: this.frameInfo.fileInfoExtended.height,
-            }
+            },
+            decimationFactor: 4,
+            compressionLevel: 8
         };
         this.backendService.setContourParameters(contourParameters);
     };
