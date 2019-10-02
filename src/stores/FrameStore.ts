@@ -654,7 +654,7 @@ export class FrameStore {
             channel: this.requiredChannel,
             stokes: this.stokes,
             smoothingMode: CARTA.SmoothingMode.GaussianBlur,
-            smoothingFactor: 7,
+            smoothingFactor: 5,
             levels: this.contourConfig.levels,
             imageBounds: {
                 xMin: 0,

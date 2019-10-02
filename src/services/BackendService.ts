@@ -771,14 +771,18 @@ export class BackendService {
                 floatCoordinates[v] = remainingIntegers[i] / contourSet.decimationFactor;
             }
 
-            // Reverse the delta-encoding
-            for (v = N - 4; v >= 0; v -= 2) {
-                floatCoordinates[v] = floatCoordinates[v + 2] - floatCoordinates[v];
-                floatCoordinates[v + 1] = floatCoordinates[v + 3] - floatCoordinates[v + 1];
+            let lastX = 0;
+            let lastY = 0;
+
+            for (let i = 0; i < N - 1; i += 2) {
+                const deltaX = floatCoordinates[i];
+                const deltaY = floatCoordinates[i + 1];
+                lastX += deltaX;
+                lastY += deltaY;
+                floatCoordinates[i] = lastX;
+                floatCoordinates[i + 1] = lastY;
             }
-
             vertexCounter += floatCoordinates.length / 2;
-
         }
         const tEnd = performance.now();
         const dt = tEnd - tStart;
