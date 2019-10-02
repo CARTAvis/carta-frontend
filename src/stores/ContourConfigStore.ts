@@ -1,6 +1,13 @@
 import {action, computed, observable} from "mobx";
 import {RGBColor} from "react-color";
 import {PreferenceStore} from "./PreferenceStore";
+import {hexStringToRgba} from "../utilities";
+
+export enum ContourColorMode {
+    Constant = 0,
+    Colormapped = 1,
+    Custom = 2
+}
 
 export class ContourConfigStore {
     @observable enabled: boolean;
@@ -13,8 +20,6 @@ export class ContourConfigStore {
     @observable manualLevels: number[];
 
     private readonly preferenceStore: PreferenceStore;
-    static readonly DefaultNumLevels = 5;
-    static readonly DefaultContourColor: RGBColor = {r: 0, g: 255, b: 0};
 
     // Returns computed or manual contour levels
     @computed get levels(): number[] {
@@ -22,9 +27,9 @@ export class ContourConfigStore {
         if (this.manualLevelsEnabled) {
             return this.manualLevels;
         } else if (isFinite(this.lowerBound) && isFinite(this.upperBound) && this.lowerBound < this.upperBound && this.numComputedLevels >= 1) {
-            // For single contour levels, just use the upper bound
+            // For single contour levels, just use the lower bound
             if (this.numComputedLevels < 2) {
-                return [this.upperBound];
+                return [this.lowerBound];
             } else {
                 // Fill in the steps linearly
                 const stepSize = (this.upperBound - this.lowerBound) / (this.numComputedLevels - 1);
@@ -43,8 +48,8 @@ export class ContourConfigStore {
         this.preferenceStore = preferenceStore;
         this.enabled = false;
         this.manualLevelsEnabled = false;
-        this.numComputedLevels = ContourConfigStore.DefaultNumLevels;
-        this.color = ContourConfigStore.DefaultContourColor;
+        this.numComputedLevels = this.preferenceStore.contourNumLevels;
+        this.color = hexStringToRgba(this.preferenceStore.contourColor);
         this.manualLevels = [];
     }
 

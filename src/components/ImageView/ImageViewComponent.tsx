@@ -245,6 +245,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                 <ContourViewComponent
                     frame={appStore.activeFrame}
                     docked={this.props.docked}
+                    preference={appStore.preferenceStore}
                     overlaySettings={appStore.overlayStore}
                 />
                 {divContents}

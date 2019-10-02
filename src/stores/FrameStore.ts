@@ -4,7 +4,7 @@ import * as AST from "ast_wrapper";
 import {NumberRange} from "@blueprintjs/core";
 import {ASTSettingsString, PreferenceStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore, ContourConfigStore, ContourStore} from "stores";
 import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES} from "models";
-import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency} from "utilities";
+import {clamp, frequencyStringFromVelocity, hexStringToRgba, velocityStringFromFrequency} from "utilities";
 import {BackendService} from "../services";
 import * as _ from "lodash";
 
@@ -645,8 +645,10 @@ export class FrameStore {
             return;
         }
 
+        // TODO: This should be defined by the contour config widget
         this.contourConfig.setBounds(this.renderConfig.scaleMinVal, this.renderConfig.scaleMaxVal);
-
+        this.contourConfig.setNumComputedLevels(this.preference.contourNumLevels);
+        this.contourConfig.setColor(hexStringToRgba(this.preference.contourColor));
         // TODO: Allow a different reference frame
         const contourParameters: CARTA.ISetContourParameters = {
             fileId: this.frameInfo.fileId,
@@ -654,7 +656,7 @@ export class FrameStore {
             channel: this.requiredChannel,
             stokes: this.stokes,
             smoothingMode: CARTA.SmoothingMode.GaussianBlur,
-            smoothingFactor: 3,
+            smoothingFactor: this.preference.contourSmoothingFactor,
             levels: this.contourConfig.levels,
             imageBounds: {
                 xMin: 0,
@@ -662,8 +664,8 @@ export class FrameStore {
                 yMin: 0,
                 yMax: this.frameInfo.fileInfoExtended.height,
             },
-            decimationFactor: 4,
-            compressionLevel: 8
+            decimationFactor: this.preference.contourDecimation,
+            compressionLevel: this.preference.contourCompressionLevel
         };
         this.backendService.setContourParameters(contourParameters);
     };

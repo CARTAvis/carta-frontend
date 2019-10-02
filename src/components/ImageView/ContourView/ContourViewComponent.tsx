@@ -1,8 +1,7 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {OverlayStore} from "stores/OverlayStore";
-import {FrameStore} from "stores/FrameStore";
-import {getShaderFromString} from "utilities/webgl";
+import {FrameStore, OverlayStore, PreferenceStore} from "stores";
+import {getShaderFromString, hexStringToRgba} from "utilities";
 import "./ContourViewComponent.css";
 
 const vertexShaderLine = require("!raw-loader!./GLSL/vert_line.glsl");
@@ -10,6 +9,7 @@ const pixelShaderDashed = require("!raw-loader!./GLSL/pixel_dashed.glsl");
 
 export interface ContourViewComponentProps {
     overlaySettings: OverlayStore;
+    preference: PreferenceStore;
     frame: FrameStore;
     docked: boolean;
 }
@@ -82,7 +82,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             this.gl.uniform2f(this.OffsetUniform, offset.x, offset.y);
             const color = frame.contourConfig.color;
             if (color) {
-                this.gl.uniform4f(this.LineColorUniform, color.r, color.g, color.b, color.a || 1.0);
+                this.gl.uniform4f(this.LineColorUniform, color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a || 1.0);
             } else {
                 this.gl.uniform4f(this.LineColorUniform, 1, 1, 1, 1);
             }
