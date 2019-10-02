@@ -33,7 +33,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         vertical: 0.5,
         horizontal: 2,
     };
-    // @observable multicolorLineColors: Array<string>;
+    private multicolorLineColorOutRange = "hsla(0, 0%, 50%, 0.5)";
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -50,7 +50,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
-    @observable scatterOutRangePointsIndex: number[];
 
     @computed get widgetStore(): StokesAnalysisWidgetStore {
         if (this.props.appStore && this.props.appStore.widgetsStore.stokesAnalysisWidgets) {
@@ -435,11 +434,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     }
                 }
                 values.push({x, y});
-                // if (!(this.widgetStore.scatterOutRangePointsIndex && this.widgetStore.scatterOutRangePointsIndex.indexOf(x) >= 0)) {
-                //     values.push({x, y});
-                // } else {
-                //     values.push({x: x, y: NaN});
-                // }
             }
             return {dataset: values, border};
         }
@@ -454,20 +448,18 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
             // centered origin and equal scaler
             let equalScalerBorder = this.resizeScatterData(border.xMin, border.xMax, border.yMin, border.yMax);
-            this.widgetStore.scatterOutRangePointsIndex = [];
-            this.widgetStore.multicolorLineColors = [""];
+            this.widgetStore.scatterOutRangePointsZIndex = [];
             for (let i = 0; i < channelValues.length; i++) {
                 let index = isIncremental ? i : channelValues.length - 1 - i;
                 const x = qProfile[index];
                 const y = uProfile[index];
                 const z = channelValues[index];
                 values.push({x, y, z});
-                if ( x < border.xMin || x > border.xMax || y < border.yMin || y > border.yMax) {
-                    this.widgetStore.scatterOutRangePointsIndex.push(z);
-                    this.widgetStore.multicolorLineColors.push("hsla(0, 0%, 50%, 0.5)")   
-                } else {
-                    this.widgetStore.multicolorLineColors.push(Colors.RED2)
-                }
+
+                // update line plot color array
+                if (x < border.xMin || x > border.xMax || y < border.yMin || y > border.yMax) {
+                    this.widgetStore.scatterOutRangePointsZIndex.push(z);  
+                } 
             }
             return {dataset: values, border: equalScalerBorder};
         }
@@ -496,7 +488,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return true;
     }
 
-    private fillColor(data: Array<{ x: number, y: number, z?: number }>, interactionBorder: { xMin: number, xMax: number }, zIndex: boolean): Array<string> {
+    private fillScatterColor(data: Array<{ x: number, y: number, z?: number }>, interactionBorder: { xMin: number, xMax: number }, zIndex: boolean): Array<string> {
         let scatterColors = [];
         if (data && data.length && zIndex && interactionBorder) {
             let xlinePlotRange = interactionBorder;
@@ -515,6 +507,22 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             });
         }
         return scatterColors;
+    }
+
+    private fillLineColor(data: Array<Point2D>, lineColor: string): Array<string> {
+        // n points have n-1 gaps between all points
+        let lineColors = [""];
+        if (data && data.length && lineColor) {
+            for (let index = 0; index < data.length; index++) {
+                const point = data[index];
+                if (!(this.widgetStore.scatterOutRangePointsZIndex && this.widgetStore.scatterOutRangePointsZIndex.indexOf(point.x) >= 0)) {
+                    lineColors.push(lineColor);
+                } else {
+                    lineColors.push(this.multicolorLineColorOutRange);
+                }
+            }
+        }
+        return lineColors;
     }
 
     private closestChannel(channel: number, data: Array<{ x: number, y: number, z?: number }>): number {
@@ -705,7 +713,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphClicked: this.onChannelChanged,
             markers: [],
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
-            interactionMode: true
+            interactionMode: true,
+            multiColorMultiLinesColors: new Map()
         };
 
         let piLinePlotProps: LinePlotComponentProps = {
@@ -717,7 +726,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             tickTypeY: TickType.Scientific,
             showXAxisTicks: false,
             showXAxisLabel: false,
-            multiPlotData: new Map(),
             xTickMarkLength: 0,
             graphCursorMoved: this.onGraphCursorMoved,
             isGroupSubPlot: true,
@@ -741,7 +749,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             tickTypeY: TickType.Integer,
             showXAxisTicks: true,
             showXAxisLabel: true,
-            multiPlotData: new Map(),
             graphCursorMoved: this.onGraphCursorMoved,
             isGroupSubPlot: true,
             scrollZoom: true,
@@ -798,10 +805,19 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 paLinePlotProps.opacity = lineOpacity;
                 quLinePlotProps.opacity = lineOpacity;
                 
-                const QlinePlotColor = appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2;
-                const UlinePlotColor = appStore.darkTheme ? Colors.ORANGE4 : Colors.ORANGE2;
-                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, QlinePlotColor);
-                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationU, UlinePlotColor);
+                const qlinePlotColor = appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2;
+                const ulinePlotColor = appStore.darkTheme ? Colors.ORANGE4 : Colors.ORANGE2;
+                const lineColor = appStore.darkTheme ? Colors.BLUE4 : Colors.BLUE2;
+                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, qlinePlotColor);
+                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationU, ulinePlotColor);
+
+                const loadData = (currentPlotData.qProgress === 1 && currentPlotData.uProgress === 1 && currentPlotData.iProgress === 1);
+                const qlinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.qValues.dataset, qlinePlotColor) : [];
+                const ulinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.uValues.dataset, ulinePlotColor) : [];
+                quLinePlotProps.multiColorMultiLinesColors.set(StokesCoordinate.LinearPolarizationQ, qlinePlotWithInteractionColor);
+                quLinePlotProps.multiColorMultiLinesColors.set(StokesCoordinate.LinearPolarizationU, ulinePlotWithInteractionColor);
+                piLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.piValues.dataset, lineColor) : [];
+                paLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.paValues.dataset, lineColor) : [];
 
                 let qBorder = currentPlotData.qValues.border;
                 let uBorder = currentPlotData.uValues.border;
@@ -828,11 +844,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         paLinePlotProps.xMax = this.widgetStore.sharedMaxX;
                         interactionBorder = {xMin: this.widgetStore.sharedMinX, xMax: this.widgetStore.sharedMaxX};
                     }
-                    let dataBackgroundColor = this.fillColor(quScatterPlotProps.data, interactionBorder, true);
+                    let dataBackgroundColor = this.fillScatterColor(quScatterPlotProps.data, interactionBorder, true);
                     quScatterPlotProps.dataBackgroundColor = dataBackgroundColor;
-                    quLinePlotProps.multicolorLineColors = this.widgetStore.multicolorLineColors;
-                    piLinePlotProps.multicolorLineColors = this.widgetStore.multicolorLineColors;
-                    paLinePlotProps.multicolorLineColors = this.widgetStore.multicolorLineColors;
 
                     if (this.widgetStore.isQULinePlotAutoScaledY) {
                         quLinePlotProps.yMin = qBorder.yMin < uBorder.yMin ? qBorder.yMin : uBorder.yMin;

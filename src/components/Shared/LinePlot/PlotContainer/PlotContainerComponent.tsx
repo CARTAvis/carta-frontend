@@ -47,30 +47,32 @@ export class PlotContainerProps {
     pointRadius?: number;
     zeroLineWidth?: number;
     interactionMode?: boolean;
-    multicolorLineColors?: Array<string>;
+    multiColorSingleLineColors?: Array<string>;
+    multiColorMultiLinesColors?: Map<string, Array<string>>;
 }
 
 interface MulticolorLineChartDatasets extends ChartDataSets  {
     multicolorLineColors?: Array<string>;
 }
 
+// Multiple colors in one line
 // https://github.com/chartjs/Chart.js/issues/4895
 // https://github.com/jerairrest/react-chartjs-2/issues/131 react-chartjs-2 with Typescript error
 const Chart = require("react-chartjs-2").Chart;
 Chart.defaults.multicolorLine = Chart.defaults.line;
 Chart.controllers.multicolorLine = Chart.controllers.line.extend({
-    draw: function(ease) {
+    draw: function(ease: any) {
         let startIndex = 0;
         const meta = this.getMeta();
         const points = meta.data || [];
         const colors = this.getDataset().multicolorLineColors;
         const area = this.chart.chartArea;
-        const originalDatasets = meta.dataset._children.filter(function(data) {
-            return !isNaN(data._view.y);
+        const originalDatasets = meta.dataset._children.filter(function(data: any) {
+            return true;
         });
 
-        function _setColor(newColor: string, meta) {
-            meta.dataset._view.borderColor = newColor;
+        function _setColor(newColor: string, plot: any) {
+            plot.dataset._view.borderColor = newColor;
         }
 
         if (!colors) {
@@ -79,8 +81,8 @@ Chart.controllers.multicolorLine = Chart.controllers.line.extend({
         }
 
         for (var i = 2; i <= colors.length; i++) {
-            if (colors[i-1] !== colors[i]) {
-                _setColor(colors[i-1], meta);
+            if (colors[i - 1] !== colors[i]) {
+                _setColor(colors[i - 1], meta);
                 meta.dataset._children = originalDatasets.slice(startIndex, i);
                 meta.dataset.draw();
                 startIndex = i - 1;
@@ -91,10 +93,10 @@ Chart.controllers.multicolorLine = Chart.controllers.line.extend({
         meta.dataset.draw();
         meta.dataset._children = originalDatasets;
 
-        // neee change to for loop
-        points.forEach(function(point) {
+        for (let index = 0; index < points.length; index++) {
+            const point = points[index];
             point.draw(area);
-        });
+        }
     }
 });
 
@@ -295,11 +297,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             }
         }
 
-        if (!props.multicolorLineColors || !nextProps.multicolorLineColors || props.multicolorLineColors.length !== nextProps.multicolorLineColors.length) {
+        if (!props.multiColorSingleLineColors || !nextProps.multiColorSingleLineColors || props.multiColorSingleLineColors.length !== nextProps.multiColorSingleLineColors.length) {
             return true;
         }
-        for (let i = 0; i < props.multicolorLineColors.length; i++) {
-            if (props.multicolorLineColors[i] !== nextProps.multicolorLineColors[i]) {
+        for (let i = 0; i < props.multiColorSingleLineColors.length; i++) {
+            if (props.multiColorSingleLineColors[i] !== nextProps.multiColorSingleLineColors[i]) {
                 return true;
             }
         }
@@ -430,12 +432,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 datasetConfig.borderColor = lineColor;
             }
 
-            // need to check for this.props.multicolorLineColors?
-            if (this.props.interactionMode) {
-                datasetConfig.pointRadius = 1;
+            if (this.props.interactionMode && this.props.multiColorSingleLineColors && this.props.multiColorSingleLineColors.length && !this.props.usePointSymbols) {
+                datasetConfig.pointRadius = 0.5;
                 datasetConfig.pointStyle = "line";
-                datasetConfig.type = 'multicolorLine';
-                datasetConfig.multicolorLineColors = this.props.multicolorLineColors;
+                datasetConfig.type = "multicolorLine";
+                datasetConfig.multicolorLineColors = this.props.multiColorSingleLineColors;
             }
             if (this.props.dataBackgroundColor) {
                 datasetConfig.pointBackgroundColor = this.props.dataBackgroundColor;
@@ -468,13 +469,15 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     borderWidth: 1,
                     pointRadius: 0
                 };
-
-                // need to check for this.props.multicolorLineColors?
-                if (this.props.interactionMode) {
-                    multiPlotDatasetConfig.pointRadius = 1;
+                
+                if (this.props.interactionMode && this.props.multiColorMultiLinesColors && this.props.multiColorMultiLinesColors.size && !this.props.usePointSymbols) {
+                    multiPlotDatasetConfig.pointRadius = 0.5;
                     multiPlotDatasetConfig.pointStyle = "line";
-                    multiPlotDatasetConfig.type = 'multicolorLine';
-                    multiPlotDatasetConfig.multicolorLineColors = this.props.multicolorLineColors;
+                    multiPlotDatasetConfig.type = "multicolorLine";
+                    multiPlotDatasetConfig.multicolorLineColors = this.props.multiColorMultiLinesColors.get(key);
+                }
+                if (this.props.pointRadius) {
+                    multiPlotDatasetConfig.pointRadius = this.props.pointRadius;
                 }
 
                 plotData.datasets.push(multiPlotDatasetConfig);

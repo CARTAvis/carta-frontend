@@ -85,7 +85,7 @@ export class LinePlotComponentProps {
     yZeroLineColor?: string;
     showLegend?: boolean;
     xTickMarkLength?: number;
-    multiPlotBorderColor?: Map<string, string>;
+    multiPlotBorderColor?: Map<string, any>;
     plotType?: string;
     isGroupSubPlot?: boolean;
     zIndex?: boolean;
@@ -93,7 +93,8 @@ export class LinePlotComponentProps {
     zeroLineWidth?: number;
     mouseEntered?: (value: boolean) => void;
     interactionMode?: boolean;
-    multicolorLineColors?: Array<string>;
+    multiColorSingleLineColors?: Array<string>;
+    multiColorMultiLinesColors?: Map<string, Array<string>>;
 }
 
 // Maximum time between double clicks
