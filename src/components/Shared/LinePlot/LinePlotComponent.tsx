@@ -85,7 +85,7 @@ export class LinePlotComponentProps {
     yZeroLineColor?: string;
     showLegend?: boolean;
     xTickMarkLength?: number;
-    multiPlotBorderColor?: Map<string, any>;
+    multiPlotBorderColor?: Map<string, string>;
     plotType?: string;
     isGroupSubPlot?: boolean;
     zIndex?: boolean;
