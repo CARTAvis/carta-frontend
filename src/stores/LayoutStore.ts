@@ -2,7 +2,7 @@ import {observable, computed, action} from "mobx";
 import {AppStore, AlertStore, WidgetConfig} from "stores";
 import * as GoldenLayout from "golden-layout";
 import * as Ajv from "ajv";
-import {LAYOUT_SCHEMAS, PresetLayout} from "models";
+import {LAYOUT_SCHEMAS, isLayoutVersionValid, PresetLayout} from "models";
 import {AppToaster} from "components/Shared";
 import {smoothStepOffset} from "utilities";
 
@@ -135,6 +135,25 @@ export class LayoutStore {
         this.layoutNameToBeSaved = layoutName ? layoutName : "Empty";
     };
 
+    private validateUserLayouts = (userLayouts) => {
+        if (userLayouts) {
+            const jsonValidator = new Ajv();
+            Object.keys(userLayouts).forEach((userLayout) => {
+                // skip user layouts which have the same name as presets & those dont have correct key 'layoutVersion' as integer
+                if (!PresetLayout.isValid(userLayout) &&
+                    "layoutVersion" in userLayouts[userLayout] &&
+                    typeof userLayouts[userLayout].layoutVersion === "number" &&
+                    isLayoutVersionValid(userLayouts[userLayout].layoutVersion)
+                ) {
+                    const version = userLayouts[userLayout].layoutVersion;
+                    if (jsonValidator.validate(LAYOUT_SCHEMAS[version], userLayouts[userLayout])) {
+                        this.layouts[userLayout] = userLayouts[userLayout];
+                    }
+                }
+            });
+        }
+    };
+
     private initLayouts = () => {
         // 1. fill layout with presets
         PresetLayout.PRESETS.forEach((presetName) => {
@@ -156,8 +175,7 @@ export class LayoutStore {
             };
         });
 
-        // 2. add user layouts stored in local storage
-        // TODO: use json validator
+        // 2. add user layouts stored in local storage after validation
         const layoutJson = localStorage.getItem(KEY);
         let userLayouts = null;
         if (layoutJson) {
@@ -168,13 +186,7 @@ export class LayoutStore {
                 userLayouts = null;
             }
         }
-
-        if (userLayouts) {
-            // skip user layouts which have the same name as presets
-            Object.keys(userLayouts).forEach((userLayout) => {
-                if (!PresetLayout.isValid(userLayout)) { this.layouts[userLayout] = userLayouts[userLayout]; }
-            });
-        }
+        this.validateUserLayouts(userLayouts);
     };
 
     private saveLayoutToLocalStorage = (): boolean => {
@@ -308,20 +320,7 @@ export class LayoutStore {
             return false;
         }
 
-        // find correct layout version with validator
         const config = this.layouts[layoutName];
-        const jsonValidator = new Ajv();
-        let version = null;
-        for (const ver in LAYOUT_SCHEMAS) {
-            if (jsonValidator.validate(LAYOUT_SCHEMAS[ver], config)) {
-                version = ver;
-                break;
-            }
-        }
-        if (!version) {
-            this.alertStore.showAlert(`Applying layout failed! Layout ${layoutName} is invalid.`);
-            return false;
-        }
 
         // destroy old layout & clear floating widgets
         if (this.dockedLayout) {

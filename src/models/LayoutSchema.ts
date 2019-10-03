@@ -1,6 +1,10 @@
 const InitialLayoutVersion = 1;
 const CurrentLayoutVersion = 1;
 
+export const isLayoutVersionValid = (version: number): boolean => {
+    return Number.isInteger(version) && version >= InitialLayoutVersion && version <= CurrentLayoutVersion;
+};
+
 // key: layout schema version, value: schema
 export const LAYOUT_SCHEMAS = {
     "1" : {
