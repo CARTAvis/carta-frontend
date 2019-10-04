@@ -15,14 +15,14 @@ import {Point2D} from "models";
 import {binarySearchByX, clamp} from "utilities";
 import "./LinePlotComponent.css";
 
-enum ZoomMode {
+export enum ZoomMode {
     NONE,
     X,
     Y,
     XY
 }
 
-enum InteractionMode {
+export enum InteractionMode {
     NONE,
     SELECTING,
     PANNING
@@ -92,6 +92,7 @@ export class LinePlotComponentProps {
     pointRadius?: number;
     zeroLineWidth?: number;
     mouseEntered?: (value: boolean) => void;
+    interactionMode?: boolean;
 }
 
 // Maximum time between double clicks
@@ -784,7 +785,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return selectionRect;
     };
 
-    genBorderRect = () => {
+    private genBorderRect = () => {
         const chartArea = this.chartArea;
         let borderRect = null;
         if (this.chartArea) {
