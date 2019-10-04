@@ -622,7 +622,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const piNearest = binarySearchByX(piDataset, lineCursorProfiler);
         const paNearest = binarySearchByX(paDataset, lineCursorProfiler);
         if (piNearest && piNearest.point && paNearest && paNearest.point) {
-            let cursor = this.matchXYindex(piNearest.point.x, quDataset);
+            const cursor = this.matchXYindex(piNearest.point.x, quDataset);
             profilerData.q = cursor.x;
             profilerData.u = cursor.y;
             profilerData.channel = cursor.z;
