@@ -363,7 +363,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return {xMin: -xLimit, xMax: xLimit, yMin: -yLimit, yMax: yLimit};
     }
 
-    private calculateXYborder(xValues: Array<number>, yValues: Array<number>, isLinePlots: boolean): Border {
+    private calculateXYborder(xValues: Array<number>, yValues: Array<number>, isLinePlots: boolean, type: StokesCoordinate): Border {
         let xMin = Math.min(...xValues.filter(n => {
             return !isNaN(n);
         }));
@@ -380,7 +380,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             xMax = localXMax;
         }
 
-        if (!this.widgetStore.isQUScatterPlotAutoScaledX && !isLinePlots) {
+        if (!this.widgetStore.isQUScatterPlotAutoScaledX && !isLinePlots && type === StokesCoordinate.PolarizationQU) {
             const localXMin = clamp(this.widgetStore.quScatterMinX, xMin, xMax);
             const localXMax = clamp(this.widgetStore.quScatterMaxX, xMin, xMax);
             xMin = localXMin;
@@ -394,7 +394,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             return !isNaN(n);
         }));
 
-        if (!this.widgetStore.isQUScatterPlotAutoScaledY && !isLinePlots) {
+        if (!this.widgetStore.isQUScatterPlotAutoScaledY && !isLinePlots && type === StokesCoordinate.PolarizationQU) {
             const localYMin = clamp(this.widgetStore.quScatterMinY, yMin, yMax);
             const localYMax = clamp(this.widgetStore.quScatterMaxY, yMin, yMax);
             yMin = localYMin;
@@ -405,6 +405,26 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             yMin = undefined;
             yMax = undefined;
         } 
+
+        if (!this.widgetStore.isPolAngleAutoScaledY && isLinePlots && type === StokesCoordinate.PolarizationAngle) {
+            const localYMin = clamp(this.widgetStore.polAngleMinY, yMin, yMax);
+            const localYMax = clamp(this.widgetStore.polAngleMaxY, yMin, yMax);
+            yMin = localYMin;
+            yMax = localYMax;
+        }
+        if (!this.widgetStore.isPolIntensityAutoScaledY && isLinePlots && type === StokesCoordinate.PolarizedIntensity) {
+            const localYMin = clamp(this.widgetStore.polIntensityMinY, yMin, yMax);
+            const localYMax = clamp(this.widgetStore.polIntensityMaxY, yMin, yMax);
+            yMin = localYMin;
+            yMax = localYMax;
+        }
+        if (!this.widgetStore.isQULinePlotAutoScaledY && isLinePlots && (type === StokesCoordinate.LinearPolarizationQ || type === StokesCoordinate.LinearPolarizationU)) {
+            const localYMin = clamp(this.widgetStore.quMinY, yMin, yMax);
+            const localYMax = clamp(this.widgetStore.quMaxY, yMin, yMax);
+            yMin = localYMin;
+            yMax = localYMax;
+        }
+
         else if (isLinePlots) {
             // extend y range a bit gor line plots
             const range = yMax - yMin;
@@ -414,10 +434,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return {xMin, xMax, yMin, yMax};
     }
 
-    private assembleLinePlotData(profile: Array<number>, channelInfo: ChannelInfo): { dataset: Array<Point2D>, border: Border } {
+    private assembleLinePlotData(profile: Array<number>, channelInfo: ChannelInfo, type: StokesCoordinate): { dataset: Array<Point2D>, border: Border } {
         if (profile && profile.length && profile.length === channelInfo.values.length) {
             let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
-            let border = this.calculateXYborder(channelValues, profile, true);
+            let border = this.calculateXYborder(channelValues, profile, true, type);
             let values: Array<{ x: number, y: number }> = [];
             let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1];
 
@@ -426,24 +446,21 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 const x = channelValues[index];
                 const y = profile[index];
 
-                if (x < border.xMin || x > border.xMax) {
-                    if (values.length) {
-                        break;
-                    } else {
-                        continue;
-                    }
+                if (x < border.xMin || x > border.xMax || y < border.yMin || y > border.yMax) {
+                    values.push({x: x, y: NaN});
+                } else {
+                    values.push({x, y});
                 }
-                values.push({x, y});
             }
             return {dataset: values, border};
         }
         return null;
     }
 
-    private assembleScatterPlotData(qProfile: Array<number>, uProfile: Array<number>, channelInfo: ChannelInfo): { dataset: Array<{ x: number, y: number, z: number }>, border: Border } {
+    private assembleScatterPlotData(qProfile: Array<number>, uProfile: Array<number>, channelInfo: ChannelInfo, type: StokesCoordinate): { dataset: Array<{ x: number, y: number, z: number }>, border: Border } {
         if (qProfile && qProfile.length && uProfile && uProfile.length && qProfile.length === uProfile.length && qProfile.length === channelInfo.values.length) {
             let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
-            let border = this.calculateXYborder(qProfile, uProfile, false);
+            let border = this.calculateXYborder(qProfile, uProfile, false, type);
             let values: Array<{ x: number, y: number, z: number }> = [];
             let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
             // centered origin and equal scaler
@@ -607,11 +624,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
         let channelInfo = frame.channelInfo;
         if (compositeProfile && channelInfo) {
-            let quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, channelInfo);
-            let piDic = this.assembleLinePlotData(compositeProfile.piProfile, channelInfo);
-            let paDic = this.assembleLinePlotData(compositeProfile.paProfile, channelInfo);
-            let qDic = this.assembleLinePlotData(compositeProfile.qProfile, channelInfo);
-            let uDic = this.assembleLinePlotData(compositeProfile.uProfile, channelInfo);
+            let quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, channelInfo, StokesCoordinate.PolarizationQU);
+            let piDic = this.assembleLinePlotData(compositeProfile.piProfile, channelInfo, StokesCoordinate.PolarizedIntensity);
+            let paDic = this.assembleLinePlotData(compositeProfile.paProfile, channelInfo, StokesCoordinate.PolarizationAngle);
+            let qDic = this.assembleLinePlotData(compositeProfile.qProfile, channelInfo, StokesCoordinate.LinearPolarizationQ);
+            let uDic = this.assembleLinePlotData(compositeProfile.uProfile, channelInfo, StokesCoordinate.LinearPolarizationU);
 
             return {
                 qValues: qDic, 

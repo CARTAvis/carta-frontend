@@ -62,6 +62,7 @@ const Chart = require("react-chartjs-2").Chart;
 Chart.defaults.multicolorLine = Chart.defaults.line;
 Chart.controllers.multicolorLine = Chart.controllers.line.extend({
     draw: function(ease: any) {
+
         let startIndex = 0;
         const meta = this.getMeta();
         const points = meta.data || [];
@@ -84,15 +85,12 @@ Chart.controllers.multicolorLine = Chart.controllers.line.extend({
             if (colors[i - 1] !== colors[i]) {
                 _setColor(colors[i - 1], meta);
                 meta.dataset._children = originalDatasets.slice(startIndex, i);
-                meta.dataset.draw();
+                meta.dataset.draw(ease);   
                 startIndex = i - 1;
             }
         }
-
-        meta.dataset._children = originalDatasets.slice(startIndex);
-        meta.dataset.draw();
-        meta.dataset._children = originalDatasets;
-
+        
+        // draw data point
         for (let index = 0; index < points.length; index++) {
             const point = points[index];
             point.draw(area);
