@@ -5,13 +5,13 @@ import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpatialProfilerSettingsPanelComponent} from "./SpatialProfilerSettingsPanelComponent/SpatialProfilerSettingsPanelComponent";
 import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {clamp} from "utilities";
+import {binarySearchByX, clamp, formattedNotation} from "utilities";
 import "./SpatialProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -80,7 +80,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
     @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number } {
         const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
-        if (!this.frame || !this.width) {
+        if (!this.frame || !this.width || !this.profileStore) {
             return null;
         }
 
@@ -353,6 +353,29 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         return this.cachedFormattedCoordinates[i];
     };
 
+    private genProfilerInfo = (): string[] => {
+        let profilerInfo: string[] = [];
+        if (this.plotData) {
+            const cursorX = {
+                profiler: this.widgetStore.cursorX,
+                image: this.widgetStore.coordinate.indexOf("x") >= 0 ? this.profileStore.x : this.profileStore.y,
+                unit: "px"
+            };
+            const nearest = binarySearchByX(this.plotData.values, this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
+            let cursorString = "";
+            if (nearest && nearest.point) {
+                const xLabel = cursorX.unit === "Channel" ? "Channel " + nearest.point.x.toFixed(0) : nearest.point.x + " " + cursorX.unit;
+                cursorString =  "(" + xLabel + ", " + nearest.point.y.toExponential(2) + ")";
+            }
+
+            profilerInfo.push(`${this.widgetStore.isMouseMoveIntoLinePlots ? "Cursor:" : "Data:"} ${cursorString}`);
+            if (this.widgetStore.meanRmsVisible) {
+                profilerInfo.push(`Mean/RMS: ${formattedNotation(this.plotData.yMean) + " / " + formattedNotation(this.plotData.yRms)}`);
+            }
+        }
+        return profilerInfo;
+    };
+
     onGraphCursorMoved = _.throttle((x) => {
         this.widgetStore.setCursor(x);
     }, 33);
@@ -381,7 +404,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             graphZoomedXY: this.widgetStore.setXYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
-            scrollZoom: true
+            scrollZoom: true,
+            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots
         };
 
         if (appStore.activeFrame) {
@@ -423,21 +447,19 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                     }
                 }
 
-                linePlotProps.cursorX = {
+                const cursorX = {
                     profiler: this.widgetStore.cursorX,
                     image: isXProfile ? this.profileStore.x : this.profileStore.y,
                     unit: "px"
                 };
-
                 linePlotProps.markers = [{
-                    value: linePlotProps.cursorX.image,
+                    value: cursorX.image,
                     id: "marker-image-cursor",
                     draggable: false,
                     horizontal: false,
                 }];
-
                 linePlotProps.markers.push({
-                    value: linePlotProps.cursorX.profiler,
+                    value: cursorX.profiler,
                     id: "marker-profiler-cursor",
                     draggable: false,
                     horizontal: false,
@@ -465,8 +487,6 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         opacity: 0.2,
                         color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
                     });
-
-                    linePlotProps.dataStat = {mean: currentPlotData.yMean, rms: currentPlotData.yRms};
                 }
 
                 // TODO: Get comments from region info, rather than directly from cursor position
@@ -486,6 +506,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 <div className="profile-container">
                     <div className="profile-plot">
                         <LinePlotComponent {...linePlotProps}/>
+                        <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                     </div>
                 </div>
                 <PopoverSettingsComponent
