@@ -18,6 +18,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable meanRmsVisible: boolean;
     @observable useWcsValues: boolean;
     @observable markerTextVisible: boolean;
+    @observable isMouseMoveIntoLinePlots: boolean;
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
@@ -133,6 +134,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @action setCursor = (cursorVal: number) => {
         this.cursorX = cursorVal;
+    };
+
+    @action setMouseMoveIntoLinePlots = (val: boolean) => {
+        this.isMouseMoveIntoLinePlots = val;
     };
 
     constructor(coordinate: string = "z") {
