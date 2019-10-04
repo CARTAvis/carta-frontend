@@ -639,15 +639,19 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         profilerData: {q: number, u: number, pi: number, pa: number, channel: number}
     ) => {
         const minIndex = closestPointIndexToCursor(scatterCursorProfiler, quDataset);
-        const currentScatterData = quDataset[minIndex];
-        const piNearest = binarySearchByX(piDataset, currentScatterData.z);
-        const paNearest = binarySearchByX(paDataset, currentScatterData.z);
-        if (piNearest && piNearest.point && paNearest && paNearest.point) {
-            profilerData.q = currentScatterData.x;
-            profilerData.u = currentScatterData.y;
-            profilerData.channel = piNearest.point.x;
-            profilerData.pi = piNearest.point.y;
-            profilerData.pa = paNearest.point.y;
+        if (minIndex >= 0) {
+            const currentScatterData = quDataset[minIndex];
+            if (currentScatterData) {
+                const piNearest = binarySearchByX(piDataset, currentScatterData.z);
+                const paNearest = binarySearchByX(paDataset, currentScatterData.z);
+                profilerData.q = currentScatterData.x;
+                profilerData.u = currentScatterData.y;
+                if (piNearest && piNearest.point && paNearest && paNearest.point) {
+                    profilerData.channel = piNearest.point.x;
+                    profilerData.pi = piNearest.point.y;
+                    profilerData.pa = paNearest.point.y;
+                }
+            }
         }
     };
 
