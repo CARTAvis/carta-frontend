@@ -1,4 +1,5 @@
 import {action, computed, observable} from "mobx";
+import {ChartArea} from "chart.js";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore} from "./RegionWidgetStore";
 import {FrameStore} from "stores/FrameStore";
@@ -34,9 +35,11 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable scatterPlotCursorY: number;
     @observable isMouseMoveIntoScatterPlots: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
+    @observable scatterChartArea: ChartArea;
 
     @observable statsType: CARTA.StatsType;
     @observable fractionalPolVisible: boolean;
+    scatterOutRangePointsIndex: Array<number>;
 
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
 
@@ -105,6 +108,10 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         return updatedRequirements;
     }
 
+    @action setScatterChartAres = (chartArea: ChartArea) => {
+        this.scatterChartArea = chartArea;
+    }
+
     @action setMouseMoveIntoScatterPlots = (val: boolean) => {
         this.isMouseMoveIntoScatterPlots = val;
     };
@@ -154,11 +161,13 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     @action setFractionalPolVisible = (val: boolean) => {
         this.fractionalPolVisible = val;
+        this.clearScatterPlotXYBounds();
     };
 
     @action setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
         this.clearLinePlotsXYBounds();
+        this.clearScatterPlotXYBounds();
     };
 
     @action setUseWcsValues = (val: boolean) => {
@@ -175,6 +184,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         // Describes how the data is visualised
         this.fractionalPolVisible = false;
         this.useWcsValues = true;
+        this.scatterOutRangePointsIndex = [];
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
@@ -213,6 +223,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.quScatterMaxX = undefined;
         this.quScatterMinY = undefined;
         this.quScatterMaxY = undefined;
+        this.scatterOutRangePointsIndex = [];
     };
 
     @action setQULinePlotsXYBounds = (minX: number, maxX: number, minY: number, maxY: number) => {

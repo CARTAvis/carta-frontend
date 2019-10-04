@@ -9,17 +9,12 @@ import {Layer, Stage, Group, Line, Ring, Rect} from "react-konva";
 import {ChartArea} from "chart.js";
 import {PlotContainerComponent, TickType} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
+import {ZoomMode, InteractionMode} from "components/Shared/LinePlot/LinePlotComponent";
 import {Point2D} from "models";
 import {clamp} from "utilities";
 import "./ScatterPlotComponent.css";
 
 type Point3D = { x: number, y: number, z?: number };
-
-enum InteractionMode {
-    NONE,
-    SELECTING,
-    PANNING
-}
 
 export class ScatterPlotComponentProps {
     width?: number;
@@ -63,33 +58,38 @@ export class ScatterPlotComponentProps {
     yZeroLineColor?: string;
     showLegend?: boolean;
     xTickMarkLength?: number;
-    multiPlotBorderColor?: Map<string, string>;
     plotType?: string;
     dataBackgroundColor?: Array<string>;
     isGroupSubPlot?: boolean;
-    centeredOrigin?: boolean;
-    equalScale?: boolean;
     zIndex?: boolean;
     pointRadius?: number;
     indicatorInteractionChannel?: { currentChannel: Point3D, hoveredChannel: Point3D, start: boolean };
     zeroLineWidth?: number;
     cursorNearestPoint?: { x: number, y: number };
+    updateChartArea?: (chartArea: ChartArea) => void;
 }
 
 // Maximum time between double clicks
 const DOUBLE_CLICK_THRESHOLD = 300;
 // Minimum pixel distance before turning a click into a drag event
 const DRAG_THRESHOLD = 3;
+// Thickness of the rectangle used for detecting hits
+const MARKER_HITBOX_THICKNESS = 16;
+// Maximum pixel distance before turing an X or Y zoom into an XY zoom
+const XY_ZOOM_THRESHOLD = 20;
 
 @observer
 export class ScatterPlotComponent extends React.Component<ScatterPlotComponentProps> {
     private markerOpacity = 0.8;
     private plotRef;
-    private centeredOriginMode: { xMin: number, xMax: number, yMin: number, yMax: number };
     private previousClickTime: number;
     private pendingClickHandle;
     private stageClickStartX: number;
     private stageClickStartY: number;
+    private panPrevious: {x: number, y: number};
+
+    @observable selectionBoxStart = {x: 0, y: 0};
+    @observable selectionBoxEnd = {x: 0, y: 0};
 
     @observable chartArea: ChartArea;
     @observable width = 0;
@@ -101,12 +101,19 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         return this.interactionMode === InteractionMode.SELECTING;
     }
 
+    @computed get isPanning() {
+        return this.interactionMode === InteractionMode.PANNING;
+    }
+
     onPlotRefUpdated = (plotRef) => {
         this.plotRef = plotRef;
     };
 
     @action updateChart = (chartArea: ChartArea) => {
         this.chartArea = chartArea;
+        if (this.props.updateChartArea) {
+            this.props.updateChartArea(chartArea);
+        }
     };
 
     @action resize = (w, h) => {
@@ -176,35 +183,6 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         return borderRect;
     };
 
-    private getChartAreaWH(chartArea: ChartArea): { width: number, height: number } {
-        if (chartArea && chartArea.right && chartArea.bottom) {
-            return {width: Math.abs(chartArea.right - chartArea.left), height: Math.abs(chartArea.bottom - chartArea.top)};
-        } else {
-            return {width: 0, height: 0};
-        }
-    }
-
-    private resizeData(): { xMin: number, xMax: number, yMin: number, yMax: number } {
-        if (this.props.centeredOrigin && this.props.xMin && this.props.xMax && this.props.yMin && this.props.yMax) {
-            let xLimit = Math.max(Math.abs(this.props.xMin), Math.abs(this.props.xMax));
-            let yLimit = Math.max(Math.abs(this.props.yMin), Math.abs(this.props.yMax));
-            if (this.props.equalScale && this.chartArea) {
-                let currentChartArea = this.getChartAreaWH(this.chartArea);
-                if (currentChartArea.width !== 0 && currentChartArea.height !== 0) {
-                    let ratio = currentChartArea.width / currentChartArea.height;
-                    if (ratio < 1) {
-                        yLimit = yLimit * (1 / ratio);
-                    }
-                    if (ratio > 1) {
-                        xLimit = xLimit * ratio;
-                    }
-                }
-            }
-            return {xMin: -xLimit, xMax: xLimit, yMin: -yLimit, yMax: yLimit};
-        }
-        return {xMin: this.props.xMin, xMax: this.props.xMax, yMin: this.props.yMin, yMax: this.props.yMax};
-    }
-
     private getPixelValue(value: number, min: number, max: number, isX: boolean) {
         if (!this.chartArea) {
             return undefined;
@@ -217,15 +195,11 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         return fraction * (this.chartArea.right - this.chartArea.left) + this.chartArea.left;
     }
 
-    // not fit, need to change
     private getValueForPixelX(pixel: number) {
         if (!this.chartArea) {
             return undefined;
         }
         const fraction = (pixel - this.chartArea.left) / (this.chartArea.right - this.chartArea.left);
-        if (this.centeredOriginMode && this.props.centeredOrigin) {
-            return fraction * (this.centeredOriginMode.xMax - this.centeredOriginMode.xMin) + this.centeredOriginMode.xMin;
-        }
         return fraction * (this.props.xMax - this.props.xMin) + this.props.xMin;
     }
 
@@ -234,9 +208,6 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
             return undefined;
         }
         const fraction = (this.chartArea.bottom - pixel) / (this.chartArea.bottom - this.chartArea.top);
-        if (this.centeredOriginMode && this.props.centeredOrigin) {
-            return fraction * (this.centeredOriginMode.yMax - this.centeredOriginMode.yMin) + this.centeredOriginMode.yMin;
-        }
         return fraction * (this.props.yMax - this.props.yMin) + this.props.yMin;
     }
 
@@ -278,29 +249,32 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         const chartArea = this.chartArea;
         let indicator = [];
         const channel = this.props.indicatorInteractionChannel;
-        let border = this.resizeData();
         const markerOpacity = this.markerOpacity; 
         if (chartArea && channel && channel.hoveredChannel && !isNaN(channel.hoveredChannel.x) && !isNaN(channel.hoveredChannel.y) && !this.isMouseEntered && channel.start) {
             const channelH = this.props.indicatorInteractionChannel.hoveredChannel;
-            const markerColor = this.props.darkMode ? Colors.GRAY4 : Colors.GRAY2;           
-            let xCanvasSpace = Math.floor(this.getPixelValue(channelH.x, border.xMin, border.xMax, true)) + 0.5 * devicePixelRatio;
-            let yCanvasSpace = Math.floor(this.getPixelValue(channelH.y, border.yMin, border.yMax, false));
-            indicator.push(this.genCircle("scatter-indicator-y-hovered-interaction-circle", markerColor , xCanvasSpace, yCanvasSpace));
+            const markerColor = this.props.darkMode ? Colors.GRAY4 : Colors.GRAY2;
+            if (channelH.x >= this.props.xMin && channelH.x <= this.props.xMax && channelH.y >= this.props.yMin && channelH.y <= this.props.yMax) {
+                let xCanvasSpace = Math.floor(this.getPixelValue(channelH.x, this.props.xMin, this.props.xMax, true));
+                let yCanvasSpace = Math.floor(this.getPixelValue(channelH.y, this.props.yMin, this.props.yMax, false));
+                indicator.push(this.genCircle("scatter-indicator-y-hovered-interaction-circle", markerColor , xCanvasSpace, yCanvasSpace));
+            }
         }
         if (chartArea && channel && channel.currentChannel && !isNaN(channel.currentChannel.x) && !isNaN(channel.currentChannel.y)) {
             const channelC = this.props.indicatorInteractionChannel.currentChannel;
             const markerColor = this.props.darkMode ? Colors.RED4 : Colors.RED2;
-            let xCanvasSpace = Math.floor(this.getPixelValue(channelC.x, border.xMin, border.xMax, true)) + 0.5 * devicePixelRatio;
-            indicator.push(this.genXline("scatter-indicator-x-current-interactive", markerColor, markerOpacity, xCanvasSpace));
-            let yCanvasSpace = Math.floor(this.getPixelValue(channelC.y, border.yMin, border.yMax, false)) + 0.5 * devicePixelRatio;
-            indicator.push(this.genYline("scatter-indicator-y-current-interactive", markerColor, markerOpacity, yCanvasSpace)); 
+            if (channelC.x >= this.props.xMin && channelC.x <= this.props.xMax && channelC.y >= this.props.yMin && channelC.y <= this.props.yMax) {
+                let xCanvasSpace = Math.floor(this.getPixelValue(channelC.x, this.props.xMin, this.props.xMax, true));
+                let yCanvasSpace = Math.floor(this.getPixelValue(channelC.y, this.props.yMin, this.props.yMax, false));
+                indicator.push(this.genXline("scatter-indicator-x-current-interactive", markerColor, markerOpacity, xCanvasSpace));
+                indicator.push(this.genYline("scatter-indicator-y-current-interactive", markerColor, markerOpacity, yCanvasSpace)); 
+            }
         }
         if (this.isMouseEntered && this.props.cursorNearestPoint) {
-            const channelH = this.props.cursorNearestPoint;
+            const nearestPoint = this.props.cursorNearestPoint;
             const markerColor = this.props.darkMode ? Colors.GRAY4 : Colors.GRAY2;
-            if (channelH.x >= this.centeredOriginMode.xMin && channelH.x <= this.centeredOriginMode.xMax && channelH.y >= this.centeredOriginMode.yMin && channelH.y <= this.centeredOriginMode.yMax) {
-                const x = Math.floor(this.getPixelValue(this.props.cursorNearestPoint.x, border.xMin, border.xMax, true)) + 0.5 * devicePixelRatio;
-                const y = Math.floor(this.getPixelValue(this.props.cursorNearestPoint.y, border.yMin, border.yMax, false)) + 0.5 * devicePixelRatio;
+            if (nearestPoint.x >= this.props.xMin && nearestPoint.x <= this.props.xMax && nearestPoint.y >= this.props.yMin && nearestPoint.y <= this.props.yMax) {
+                const x = Math.floor(this.getPixelValue(nearestPoint.x, this.props.xMin, this.props.xMax, true)) + 0.5 * devicePixelRatio;
+                const y = Math.floor(this.getPixelValue(nearestPoint.y, this.props.yMin, this.props.yMax, false)) + 0.5 * devicePixelRatio;
                 indicator.push(this.genCircle("scatter-indicator-y-hovered-circle", markerColor , x, y));
             }
         }
@@ -382,14 +356,59 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 const cursorXPosGraphSpace = this.getValueForPixelX(mousePosX);
                 const cursorYPosGraphSpace = this.getValueForPixelY(mousePosY);
                 this.props.graphCursorMoved(cursorXPosGraphSpace, cursorYPosGraphSpace);
+            }  
+            if (this.isPanning && this.props.graphZoomedXY) {
+                const currentPanX = mousePosX;
+                const currentPanY = mousePosY;
+                const prevPanGraphSpaceX = this.getValueForPixelX(this.panPrevious.x);
+                const currentPanGraphSpaceX = this.getValueForPixelX(currentPanX);
+                const deltaX = (currentPanGraphSpaceX - prevPanGraphSpaceX);
+                const prevPanGraphSpaceY = this.getValueForPixelY(this.panPrevious.y);
+                const currentPanGraphSpaceY = this.getValueForPixelY(currentPanY);
+                const deltaY = (currentPanGraphSpaceY - prevPanGraphSpaceY);
+                this.updatePan(currentPanX, currentPanY);
+                const pinMinX = this.props.xMin - deltaX;
+                const pinMaxX = this.props.xMax - deltaX;
+                const pinMinY = this.props.yMin - deltaY;
+                const pinMaxY = this.props.yMax - deltaY;
+                this.props.graphZoomedXY(pinMinX, pinMaxX, pinMinY, pinMaxY);
+            }
+            if (this.isSelecting) {
+                this.updateSelection(mousePosX, mousePosY);
             }
         }
     };
+
+    @action startSelection(x: number, y: number) {
+        this.interactionMode = InteractionMode.SELECTING;
+        this.selectionBoxStart = {x, y};
+        this.selectionBoxEnd = {x, y};
+    }
+
+    @action startPanning(x: number, y: number) {
+        this.interactionMode = InteractionMode.PANNING;
+        this.panPrevious = { x, y };
+
+    }
+
+    @action updateSelection(x: number, y: number) {
+        this.selectionBoxEnd = {x, y};
+    }
+
+    @action updatePan(x: number, y: number) {
+        this.panPrevious = { x, y };
+    }
 
     onStageMouseDown = (ev) => {
         const mouseEvent: MouseEvent = ev.evt;
         this.stageClickStartX = mouseEvent.offsetX;
         this.stageClickStartY = mouseEvent.offsetY;
+        const modifierPressed = mouseEvent.ctrlKey || mouseEvent.shiftKey || mouseEvent.altKey;
+        if (!modifierPressed) {
+            this.startSelection(mouseEvent.offsetX, mouseEvent.offsetY);
+        } else if (modifierPressed) {
+            this.startPanning(mouseEvent.offsetX, mouseEvent.offsetY);
+        }
     };
 
     onStageDoubleClick = () => {
@@ -431,18 +450,127 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         const mouseMoveDist = {x: Math.abs(mouseEvent.offsetX - this.stageClickStartX), y: Math.abs(mouseEvent.offsetY - this.stageClickStartY)};
         if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
             this.onStageClick(ev);
-        } 
+        } else {
+            if (this.props.data) {
+                this.stageClickStartX = undefined;
+                this.stageClickStartY = undefined;
+                if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
+                    let minCanvasSpace = Math.min(this.selectionBoxStart.x, this.selectionBoxEnd.x);
+                    let maxCanvasSpace = Math.max(this.selectionBoxStart.x, this.selectionBoxEnd.x);
+                    let minX = this.getValueForPixelX(minCanvasSpace);
+                    let maxX = this.getValueForPixelX(maxCanvasSpace);
+
+                    minCanvasSpace = Math.min(this.selectionBoxStart.y, this.selectionBoxEnd.y);
+                    maxCanvasSpace = Math.max(this.selectionBoxStart.y, this.selectionBoxEnd.y);
+                    // Canvas space y-axis is inverted, so min/max are switched when transforming to graph space
+                    let minY = this.getValueForPixelY(maxCanvasSpace);
+                    let maxY = this.getValueForPixelY(minCanvasSpace);
+
+                    if (this.zoomMode === ZoomMode.X) {
+                        this.props.graphZoomedX(minX, maxX);
+                    }
+                    if (this.zoomMode === ZoomMode.Y) {
+                        this.props.graphZoomedY(minY, maxY);
+                    } else if (this.zoomMode === ZoomMode.XY) {
+                        this.props.graphZoomedXY(minX, maxX, minY, maxY);
+                    }
+                }
+            }
+        }
         this.endInteractions();
     };
 
+    onStageWheel = (ev) => {
+        if (this.props.data && this.props.scrollZoom && this.props.graphZoomedXY && this.chartArea) {
+            const wheelEvent: WheelEvent = ev.evt;
+            const chartArea = this.chartArea;
+            const lineHeight = 15;
+            const zoomSpeed = 0.001;
+            if (wheelEvent.offsetX > chartArea.right || wheelEvent.offsetX < chartArea.left || wheelEvent.offsetY > chartArea.bottom || wheelEvent.offsetY < chartArea.top) {
+                return;
+            }
+            const delta = wheelEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? wheelEvent.deltaY : wheelEvent.deltaY * lineHeight;
+            let currentRangeX = this.props.xMax - this.props.xMin;
+            const fractionX = (wheelEvent.offsetX - chartArea.left) / (chartArea.right - chartArea.left);
+            const rangeChangeX = zoomSpeed * delta * currentRangeX;
+
+            let currentRangeY = this.props.yMax - this.props.yMin;
+            const fractionY = (wheelEvent.offsetY - chartArea.top) / (chartArea.bottom - chartArea.top);
+            const rangeChangeY = zoomSpeed * delta * currentRangeY;
+
+            const zoomMinX = this.props.xMin - rangeChangeX * fractionX;
+            const zoomMaxX = this.props.xMax + rangeChangeX * (1 - fractionX);
+            const zoomMinY = this.props.yMin - rangeChangeY * (1 - fractionY);
+            const zoomMaxY = this.props.yMax + rangeChangeY * fractionY;
+            this.props.graphZoomedXY(zoomMinX, zoomMaxX, zoomMinY, zoomMaxY);
+        }
+    };
+
+    @computed get zoomMode(): ZoomMode {
+        const absDelta = {x: Math.abs(this.selectionBoxEnd.x - this.selectionBoxStart.x), y: Math.abs(this.selectionBoxEnd.y - this.selectionBoxStart.y)};
+        if (absDelta.x > XY_ZOOM_THRESHOLD && absDelta.y > XY_ZOOM_THRESHOLD && this.props.graphZoomedXY) {
+            return ZoomMode.XY;
+        } else if (this.props.graphZoomedX && this.props.graphZoomedY) {
+            return absDelta.x > absDelta.y ? ZoomMode.X : ZoomMode.Y;
+        } else if (this.props.graphZoomedX) {
+            return ZoomMode.X;
+        } else if (this.props.graphZoomedY) {
+            return ZoomMode.Y;
+        } else {
+            return ZoomMode.NONE;
+        }
+    }
+
+    private genSelectionRect = () => {
+        let selectionRect = null;
+        const chartArea = this.chartArea;
+        const start = this.selectionBoxStart;
+        const end = this.selectionBoxEnd;
+        const delta = {x: end.x - start.x, y: end.y - start.y};
+        const absDelta = {x: Math.abs(delta.x), y: Math.abs(delta.y)};
+
+        if (this.isSelecting && (absDelta.x > DRAG_THRESHOLD || absDelta.y > DRAG_THRESHOLD) && chartArea) {
+            const w = chartArea.right - chartArea.left;
+            const h = chartArea.bottom - chartArea.top;
+            if (this.zoomMode === ZoomMode.X) {
+                // Determine appropriate bounds for the zoom markers, so that they don't extend past the chart area
+                const heightAbove = clamp(XY_ZOOM_THRESHOLD, 0, start.y - chartArea.top);
+                const heightBelow = clamp(XY_ZOOM_THRESHOLD, 0, chartArea.bottom - start.y);
+                // Selection rectangle consists of a filled rectangle with vertical drag handles on either side
+                selectionRect = [
+                    <Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={start.x} y={chartArea.top} width={delta.x} height={h}/>,
+                    <Line stroke={Colors.GRAY3} key={1} x={start.x} y={start.y} points={[0, -heightAbove, 0, heightBelow]} strokeWidth={3}/>,
+                    <Line stroke={Colors.GRAY3} key={2} x={end.x} y={start.y} points={[0, -heightAbove, 0, heightBelow]} strokeWidth={3}/>
+                ];
+            } else if (this.zoomMode === ZoomMode.Y) {
+                // Determine appropriate bounds for the zoom markers, so that they don't extend past the chart area
+                const widthLeft = clamp(XY_ZOOM_THRESHOLD, 0, start.x - chartArea.left);
+                const widthRight = clamp(XY_ZOOM_THRESHOLD, 0, chartArea.right - start.x);
+                // Selection rectangle consists of a filled rectangle with horizontal drag handles on either side
+                selectionRect = [
+                    <Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={chartArea.left} y={start.y} width={w} height={delta.y}/>,
+                    <Line stroke={Colors.GRAY3} key={1} x={start.x} y={start.y} points={[-widthLeft, 0, widthRight, 0]} strokeWidth={3}/>,
+                    <Line stroke={Colors.GRAY3} key={2} x={start.x} y={end.y} points={[-widthLeft, 0, widthRight, 0]} strokeWidth={3}/>
+                ];
+            } else if (this.zoomMode === ZoomMode.XY) {
+                // Selection rectangle consists of a filled rectangle with drag corners
+                selectionRect = [
+                    <Rect fill={Colors.GRAY3} key={0} opacity={0.2} x={start.x} y={start.y} width={delta.x} height={delta.y}/>,
+                    <Line stroke={Colors.GRAY3} key={1} x={start.x} y={start.y} points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>,
+                    <Line stroke={Colors.GRAY3} key={2} x={end.x} y={start.y} points={[0, XY_ZOOM_THRESHOLD / 2.0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>,
+                    <Line stroke={Colors.GRAY3} key={3} x={start.x} y={end.y} points={[0, -XY_ZOOM_THRESHOLD / 2.0, 0, 0, XY_ZOOM_THRESHOLD / 2.0, 0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>,
+                    <Line stroke={Colors.GRAY3} key={4} x={end.x} y={end.y} points={[-XY_ZOOM_THRESHOLD / 2.0, 0, 0, 0, 0, -XY_ZOOM_THRESHOLD / 2.0]} strokeWidth={3} scaleX={Math.sign(delta.x)} scaleY={Math.sign(delta.y)}/>
+                ];
+            }
+        }
+        return selectionRect;
+    };
+
     render() {
-        // const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
-        let axisRange = this.resizeData();
-        this.centeredOriginMode = axisRange;
         return (
             <div
                 className={"scatter-plot-component"}
-                style={{cursor: "crosshair"}}
+                style={{cursor: this.isPanning ? "move" : "crosshair"}}
                 onKeyDown={this.onKeyDown}
                 onMouseEnter={this.onMouseEnter}
                 onMouseMove={this.onMouseMove}
@@ -456,10 +584,6 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                     chartAreaUpdated={this.updateChart}
                     width={this.width}
                     height={this.height}
-                    xMin={axisRange.xMin}
-                    xMax={axisRange.xMax}
-                    yMin={axisRange.yMin}
-                    yMax={axisRange.yMax}
                 />
                 <Stage
                     className={"annotation-stage"}
@@ -468,10 +592,12 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                     onMouseMove={this.onStageMouseMove}
                     onMouseDown={this.onStageMouseDown}
                     onMouseUp={this.onStageMouseUp}
+                    onWheel={this.onStageWheel}
                 >
                     <Layer>
                         {this.genIndicator()}
                         {this.genBorderRect()}
+                        {this.genSelectionRect()}
                     </Layer>
                 </Stage>
                 <ToolbarComponent
