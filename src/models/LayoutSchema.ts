@@ -1,39 +1,41 @@
-const InitialLayoutVersion = 1;
-const CurrentLayoutVersion = 1;
+export class LayoutSchema {
+    public static readonly INITIAL_LAYOUT_SCHEMA_VERSION = 1;
+    public static readonly CURRENT_LAYOUT_SCHEMA_VERSION = 1;
 
-export const isLayoutVersionValid = (version: number): boolean => {
-    return Number.isInteger(version) && version >= InitialLayoutVersion && version <= CurrentLayoutVersion;
-};
+    public static isLayoutVersionValid = (version: number): boolean => {
+        return Number.isInteger(version) && version >= LayoutSchema.INITIAL_LAYOUT_SCHEMA_VERSION && version <= LayoutSchema.CURRENT_LAYOUT_SCHEMA_VERSION;
+    };
 
-// key: layout schema version, value: schema
-export const LAYOUT_SCHEMAS = {
-    "1" : {
-        "properties": {
-            "layoutVersion": {
-                "type": "integer",
-                "minimum": InitialLayoutVersion,
-                "maximum": CurrentLayoutVersion
-            },
-            "docked":  {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string"
-                    },
-                    "content": {
-                        "type": "array",
-                        "items": {
-                            "type": "object"
+    // key: layout schema version, value: schema
+    public static readonly LAYOUT_SCHEMAS = {
+        "1" : {
+            "properties": {
+                "layoutVersion": {
+                    "type": "integer",
+                    "minimum": LayoutSchema.INITIAL_LAYOUT_SCHEMA_VERSION,
+                    "maximum": LayoutSchema.CURRENT_LAYOUT_SCHEMA_VERSION
+                },
+                "docked":  {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "content": {
+                            "type": "array",
+                            "items": {
+                                "type": "object"
+                            }
                         }
                     }
-                }
-            },
-            "floating": {
-                "type": "array",
-                "items": {
-                    "type": "object"
+                },
+                "floating": {
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
                 }
             }
         }
-    }
-};
+    };
+}

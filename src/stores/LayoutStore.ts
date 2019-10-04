@@ -2,7 +2,7 @@ import {observable, computed, action} from "mobx";
 import {AppStore, AlertStore, WidgetConfig} from "stores";
 import * as GoldenLayout from "golden-layout";
 import * as Ajv from "ajv";
-import {LAYOUT_SCHEMAS, isLayoutVersionValid, PresetLayout} from "models";
+import {LayoutSchema, PresetLayout} from "models";
 import {AppToaster} from "components/Shared";
 import {smoothStepOffset} from "utilities";
 
@@ -108,7 +108,6 @@ const PRESET_CONFIGS = new Map<string, any>([
 
 export class LayoutStore {
     public static readonly TOASTER_TIMEOUT = 1500;
-    public static readonly LayoutVersion = 1;
 
     private readonly appStore: AppStore;
     private alertStore: AlertStore;
@@ -143,10 +142,10 @@ export class LayoutStore {
                 if (!PresetLayout.isValid(userLayout) &&
                     "layoutVersion" in userLayouts[userLayout] &&
                     typeof userLayouts[userLayout].layoutVersion === "number" &&
-                    isLayoutVersionValid(userLayouts[userLayout].layoutVersion)
+                    LayoutSchema.isLayoutVersionValid(userLayouts[userLayout].layoutVersion)
                 ) {
                     const version = userLayouts[userLayout].layoutVersion;
-                    if (jsonValidator.validate(LAYOUT_SCHEMAS[version], userLayouts[userLayout])) {
+                    if (jsonValidator.validate(LayoutSchema.LAYOUT_SCHEMAS[version], userLayouts[userLayout])) {
                         this.layouts[userLayout] = userLayouts[userLayout];
                     }
                 }
@@ -159,7 +158,7 @@ export class LayoutStore {
         PresetLayout.PRESETS.forEach((presetName) => {
             const config = PRESET_CONFIGS.get(presetName);
             this.layouts[presetName] = {
-                layoutVersion: LayoutStore.LayoutVersion,
+                layoutVersion: LayoutSchema.CURRENT_LAYOUT_SCHEMA_VERSION,
                 docked: {
                     type: "row",
                     content: [{
@@ -385,7 +384,7 @@ export class LayoutStore {
         // 1. generate simple config from current docked widgets
         const rootConfig = currentConfig.content[0];
         let simpleConfig = {
-            layoutVersion: LayoutStore.LayoutVersion,
+            layoutVersion: LayoutSchema.CURRENT_LAYOUT_SCHEMA_VERSION,
             docked: {
                 type: rootConfig.type,
                 content: []
