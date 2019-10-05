@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {NumberRange} from "@blueprintjs/core";
 import {ASTSettingsString, PreferenceStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore, ContourConfigStore, ContourStore} from "stores";
-import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES} from "models";
+import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES, ProtobufProcessing} from "models";
 import {clamp, frequencyStringFromVelocity, hexStringToRgba, velocityStringFromFrequency} from "utilities";
 import {BackendService} from "../services";
 import * as _ from "lodash";
@@ -541,15 +541,23 @@ export class FrameStore {
     }
 
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
-        this.stokes = contourImageData.stokes;
-        this.channel = contourImageData.channel;
-        this.contourStores.clear();
-        for (const contourSet of contourImageData.contourSets) {
-            const indices = new Int32Array(contourSet.rawStartIndices.buffer.slice(contourSet.rawStartIndices.byteOffset, contourSet.rawStartIndices.byteOffset + contourSet.rawStartIndices.byteLength));
-            const vertices = new Float32Array(contourSet.rawCoordinates.buffer.slice(contourSet.rawCoordinates.byteOffset, contourSet.rawCoordinates.byteOffset + contourSet.rawCoordinates.byteLength));
+        const tStart = performance.now();
+        let vertexCounter = 0;
 
+        const processedData = ProtobufProcessing.ProcessContourData(contourImageData);
+        for (const contourSet of processedData.contourSets) {
+            vertexCounter += contourSet.coordinates.length / 2;
+        }
+        const tEnd = performance.now();
+        const dt = tEnd - tStart;
+        console.log(`Decompressed and un-shuffled ${vertexCounter} vertices  in ${dt} ms.`);
+        this.stokes = processedData.stokes;
+        this.channel = processedData.channel;
+        this.contourStores.clear();
+
+        for (const contourSet of processedData.contourSets) {
             const contourStore = new ContourStore();
-            contourStore.setContourData(indices, vertices);
+            contourStore.setContourData(contourSet.indices, contourSet.coordinates);
             this.contourStores.set(contourSet.level, contourStore);
         }
     }
