@@ -20,9 +20,10 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     private gl: WebGLRenderingContext;
     // GL buffers
     private vertexDataBuffer: WebGLBuffer;
+    private vertexLengthDataBuffer: WebGLBuffer;
     // Shader attribute handles
     private vertexPositionAttribute: number;
-    // private vertexLengthAttribute: number;
+    private vertexLengthAttribute: number;
 
     // Shader uniform handles
     private ScaleUniform: WebGLUniformLocation;
@@ -91,18 +92,21 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 frame.contourStores.forEach((contourStore, level) => {
 
                     // Dash length in canvas pixels
-                    const dashLength = 0;
+                    const dashLength = level <= 0 ? 4 : 0;
                     const indices = contourStore.indices;
                     const vertexData = contourStore.vertexData;
+                    const vertexLengthData = contourStore.lengthData;
                     const numIndices = indices.length;
                     // each vertex has x, y and length values
                     const numVertices = vertexData.length / 2;
 
                     this.gl.uniform1f(this.DashLengthUniform, dashLength);
 
-                    // // Update buffer
+                    // Update buffer
                     this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexDataBuffer);
                     this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, vertexData, WebGLRenderingContext.STATIC_DRAW);
+                    this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexLengthDataBuffer);
+                    this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, vertexLengthData, WebGLRenderingContext.STATIC_DRAW);
 
                     // render
                     for (let i = 0; i < numIndices; i++) {
@@ -138,8 +142,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
         this.vertexPositionAttribute = this.gl.getAttribLocation(shaderProgram, "aVertexPosition");
         this.gl.enableVertexAttribArray(this.vertexPositionAttribute);
-        // this.vertexLengthAttribute = this.gl.getAttribLocation(shaderProgram, "aVertexLength");
-        // this.gl.enableVertexAttribArray(this.vertexLengthAttribute);
+        this.vertexLengthAttribute = this.gl.getAttribLocation(shaderProgram, "aVertexLength");
+        this.gl.enableVertexAttribArray(this.vertexLengthAttribute);
 
         this.DashLengthUniform = this.gl.getUniformLocation(shaderProgram, "uDashLength");
         this.LineColorUniform = this.gl.getUniformLocation(shaderProgram, "uLineColor");
@@ -149,10 +153,12 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
     private initBuffers() {
         this.vertexDataBuffer = this.gl.createBuffer();
+        this.vertexLengthDataBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexDataBuffer);
         // First two floats of the array represent x and y positions. Last float represents cumulative length in the current line
         this.gl.vertexAttribPointer(this.vertexPositionAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
-        // this.gl.vertexAttribPointer(this.vertexLengthAttribute, 1, WebGLRenderingContext.FLOAT, false, 3 * 4, 2 * 4);
+        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexLengthDataBuffer);
+        this.gl.vertexAttribPointer(this.vertexLengthAttribute, 1, WebGLRenderingContext.FLOAT, false, 0, 0);
     }
 
     render() {

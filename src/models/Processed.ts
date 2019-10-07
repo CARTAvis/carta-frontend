@@ -28,7 +28,6 @@ export interface ProcessedContourSet {
     level: number;
     indices: Int32Array;
     coordinates: Float32Array;
-    lengths?: Float32Array;
 }
 
 export class ProtobufProcessing {
