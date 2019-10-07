@@ -81,7 +81,7 @@ Chart.controllers.multicolorLine = Chart.controllers.line.extend({
             return;
         }
 
-        for (var i = 2; i <= colors.length; i++) {
+        for (let i = 2; i <= colors.length; i++) {
             if (colors[i - 1] !== colors[i]) {
                 _setColor(colors[i - 1], meta);
                 meta.dataset._children = originalDatasets.slice(startIndex, i);
