@@ -6,7 +6,7 @@ import {observer} from "mobx-react";
 import {Button, ButtonGroup, FormGroup, HTMLSelect, IOptionProps, NonIdealState, NumericInput} from "@blueprintjs/core";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
 import {RenderConfigSettingsPanelComponent} from "./RenderConfigSettingsPanelComponent/RenderConfigSettingsPanelComponent";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent, ProfilerInfoComponent} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
@@ -224,6 +224,27 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCursor(x);
     }, 100);
 
+    private genProfilerInfo = (): string[] => {
+        let profilerInfo: string[] = [];
+        if (this.widgetStore.cursorX !== undefined) {
+            let numberString;
+            // Switch between standard and scientific notation
+            if (this.widgetStore.cursorX < 1e-2) {
+                numberString = this.widgetStore.cursorX.toExponential(2);
+            } else {
+                numberString = this.widgetStore.cursorX.toFixed(2);
+            }
+
+            const frame = this.props.appStore.activeFrame;
+            if (frame.unit) {
+                numberString += ` ${frame.unit}`;
+            }
+
+            profilerInfo.push(`Cursor: ${numberString}`);
+        }
+        return profilerInfo;
+    };
+
     render() {
         const appStore = this.props.appStore;
         const frame = appStore.activeFrame;
@@ -345,27 +366,6 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             );
         }
 
-        let cursorInfoDiv;
-        if (this.width >= histogramCutoff && this.widgetStore.cursorX !== undefined) {
-            let numberString;
-            // Switch between standard and scientific notation
-            if (this.widgetStore.cursorX < 1e-2) {
-                numberString = this.widgetStore.cursorX.toExponential(2);
-            } else {
-                numberString = this.widgetStore.cursorX.toFixed(2);
-            }
-
-            if (frame.unit) {
-                numberString += ` ${frame.unit}`;
-            }
-
-            cursorInfoDiv = (
-                <div className="profiler-info">
-                    <pre>{`Cursor: ${numberString}`}</pre>
-                </div>
-            );
-        }
-
         return (
             <div className="render-config-container">
                 {this.width > histogramCutoff &&
@@ -373,7 +373,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     {displayRankButtons ? percentileButtonsDiv : percentileSelectDiv}
                     <div className="histogram-plot">
                         <LinePlotComponent {...linePlotProps}/>
-                        {cursorInfoDiv}
+                        {this.width >= histogramCutoff && <ProfilerInfoComponent info={this.genProfilerInfo()}/>}
                     </div>
                 </div>
                 }

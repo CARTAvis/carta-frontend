@@ -35,7 +35,7 @@ export const exportImage = (padding, darkTheme, imageName) => {
     composedCanvas.height = overlayCanvas.height;
 
     const ctx = composedCanvas.getContext("2d");
-    ctx.fillStyle = darkTheme ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.0)";
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
     ctx.drawImage(rasterCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     if (beamProfileCanvas) {
