@@ -509,7 +509,7 @@ export class PreferenceStore {
 
     @action setContourColor = (color: string) => {
         this.contourColor = color;
-        localStorage.setItem(PREFERENCE_KEYS.contourColormap, color);
+        localStorage.setItem(PREFERENCE_KEYS.contourColor, color);
     };
 
     @action setContourColormap = (colormap: string) => {
