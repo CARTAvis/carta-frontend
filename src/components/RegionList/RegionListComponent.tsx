@@ -22,9 +22,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable height: number = 0;
 
     private static readonly LOCK_COLUMN_DEFAULT_WIDTH = 25;
+    private static readonly FOCUS_COLUMN_DEFAULT_WIDTH = 25;
     private static readonly NAME_COLUMN_MIN_WIDTH = 50;
-    private static readonly NAME_COLUMN_DEFAULT_WIDTH = 160;
-    private static readonly TYPE_COLUMN_DEFAULT_WIDTH = 80;
+    private static readonly NAME_COLUMN_DEFAULT_WIDTH = 150;
+    private static readonly TYPE_COLUMN_DEFAULT_WIDTH = 90;
     private static readonly CENTER_COLUMN_DEFAULT_WIDTH = 120;
     private static readonly SIZE_COLUMN_DEFAULT_WIDTH = 160;
     private static readonly ROTATION_COLUMN_DEFAULT_WIDTH = 80;
@@ -49,6 +50,14 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     private handleRegionLockClicked = (ev: React.MouseEvent<HTMLTableDataCellElement, MouseEvent>, region: RegionStore) => {
         region.toggleLock();
+        ev.stopPropagation();
+    };
+
+    private handleFocusClicked = (ev: React.MouseEvent<HTMLTableDataCellElement, MouseEvent>, region: RegionStore) => {
+        console.log(region.regionId);
+        if (this.props.appStore.activeFrame) {
+            this.props.appStore.activeFrame.setCenter(region.controlPoints[0].x, region.controlPoints[0].y);
+        }
         ev.stopPropagation();
     };
 
@@ -134,6 +143,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 lockEntry = <td style={{width: RegionListComponent.LOCK_COLUMN_DEFAULT_WIDTH}}/>;
             }
 
+            let focusEntry: React.ReactNode;
+            if (region.regionId) {
+                focusEntry = <td style={{width: RegionListComponent.FOCUS_COLUMN_DEFAULT_WIDTH}} onClick={(ev) => this.handleFocusClicked(ev, region)}><Icon icon={"eye-open"}/></td>;
+            } else {
+                focusEntry = <td style={{width: RegionListComponent.FOCUS_COLUMN_DEFAULT_WIDTH}}/>;
+            }
+
             return (
                 <tr
                     className={(selectedRegion && selectedRegion.regionId === region.regionId) ? "selected" : ""}
@@ -141,7 +157,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     onClick={() => frame.regionSet.selectRegion(region)}
                     onDoubleClick={this.props.appStore.showRegionDialog}
                 >
-                    {lockEntry}
+                    {lockEntry}{focusEntry}
                     <td style={{width: nameWidth}}>{region.nameString}</td>
                     <td style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>{RegionStore.RegionTypeString(region.regionType)}</td>
                     {pixelCenterEntry}
@@ -157,6 +173,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <thead className={this.props.appStore.darkTheme ? "dark-theme" : ""}>
                     <tr>
                         <th style={{width: RegionListComponent.LOCK_COLUMN_DEFAULT_WIDTH}}/>
+                        <th style={{width: RegionListComponent.FOCUS_COLUMN_DEFAULT_WIDTH}}/>
                         <th style={{width: nameWidth}}>Name</th>
                         <th style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>Type</th>
                         <th style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>Pixel Center</th>
