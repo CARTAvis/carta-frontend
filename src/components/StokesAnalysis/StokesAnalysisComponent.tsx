@@ -4,6 +4,7 @@ import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
+import {ChartArea} from "chart.js";
 import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
@@ -48,6 +49,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
+    @observable scatterOutRangePointsIndex: number[];
 
     @computed get widgetStore(): StokesAnalysisWidgetStore {
         if (this.props.appStore && this.props.appStore.widgetsStore.stokesAnalysisWidgets) {
@@ -138,6 +140,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
+        this.widgetStore.clearScatterPlotXYBounds();
     };
 
     private getChannelLabel = (): string => {
@@ -216,7 +219,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 channel = element.z;
                 break;
             }
-            
         }
         return channel;
     }
@@ -234,7 +236,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     };
 
-    private matchXYindex (z: number, data: Point3D[]): Point3D {
+    private matchXYindex (z: number, data: readonly Point3D[]): Point3D {
         let point = data[0];
         for (let index = 0; index < data.length; index++) {
             const element = data[index];
@@ -242,7 +244,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 point = element;
                 break;
             }
-            
         }
         return point;
     }
@@ -334,6 +335,32 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     }
 
+    private getChartAreaWH(chartArea: ChartArea): { width: number, height: number } {
+        if (chartArea && chartArea.right && chartArea.bottom) {
+            return {width: Math.abs(chartArea.right - chartArea.left), height: Math.abs(chartArea.bottom - chartArea.top)};
+        } else {
+            return {width: 0, height: 0};
+        }
+    }
+
+    private resizeScatterData(xMin: number, xMax: number, yMin: number, yMax: number): { xMin: number, xMax: number, yMin: number, yMax: number } {        
+        let xLimit = Math.max(Math.abs(xMin), Math.abs(xMax));
+        let yLimit = Math.max(Math.abs(yMin), Math.abs(yMax));
+        if (this.widgetStore.scatterChartArea) {
+            let currentChartArea = this.getChartAreaWH(this.widgetStore.scatterChartArea);
+            if (currentChartArea.width !== 0 && currentChartArea.height !== 0) {
+                let ratio = currentChartArea.width / currentChartArea.height;
+                if (ratio < 1) {
+                    yLimit = yLimit * (1 / ratio);
+                }
+                if (ratio > 1) {
+                    xLimit = xLimit * ratio;
+                }
+            }
+        }
+        return {xMin: -xLimit, xMax: xLimit, yMin: -yLimit, yMax: yLimit};
+    }
+
     private calculateXYborder(xValues: Array<number>, yValues: Array<number>, isLinePlots: boolean): Border {
         let xMin = Math.min(...xValues.filter(n => {
             return !isNaN(n);
@@ -351,6 +378,13 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             xMax = localXMax;
         }
 
+        if (!this.widgetStore.isQUScatterPlotAutoScaledX && !isLinePlots) {
+            const localXMin = clamp(this.widgetStore.quScatterMinX, xMin, xMax);
+            const localXMax = clamp(this.widgetStore.quScatterMaxX, xMin, xMax);
+            xMin = localXMin;
+            xMax = localXMax;
+        }
+
         yMin = Math.min(...yValues.filter(n => {
             return !isNaN(n);
         }));
@@ -358,11 +392,19 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             return !isNaN(n);
         }));
 
+        if (!this.widgetStore.isQUScatterPlotAutoScaledY && !isLinePlots) {
+            const localYMin = clamp(this.widgetStore.quScatterMinY, yMin, yMax);
+            const localYMax = clamp(this.widgetStore.quScatterMaxY, yMin, yMax);
+            yMin = localYMin;
+            yMax = localYMax;
+        }
+
         if (yMin === Number.MAX_VALUE) {
             yMin = undefined;
             yMax = undefined;
-        } else {
-            // extend y range a bit
+        } 
+        else if (isLinePlots) {
+            // extend y range a bit gor line plots
             const range = yMax - yMin;
             yMin -= range * VERTICAL_RANGE_PADDING;
             yMax += range * VERTICAL_RANGE_PADDING;
@@ -376,6 +418,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let border = this.calculateXYborder(channelValues, profile, true);
             let values: Array<{ x: number, y: number }> = [];
             let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1];
+
             for (let i = 0; i < channelValues.length; i++) {
                 let index = isIncremental ? i : channelValues.length - 1 - i;
                 const x = channelValues[index];
@@ -388,7 +431,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         continue;
                     }
                 }
-                values.push({x, y});
+
+                if (!(this.widgetStore.scatterOutRangePointsIndex && this.widgetStore.scatterOutRangePointsIndex.indexOf(x) >= 0)) {
+                    values.push({x, y});
+                } else {
+                    values.push({x: x, y: NaN});
+                }
             }
             return {dataset: values, border};
         }
@@ -401,16 +449,20 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let border = this.calculateXYborder(qProfile, uProfile, false);
             let values: Array<{ x: number, y: number, z: number }> = [];
             let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
-
+            // centered origin and equal scaler
+            let equalScalerBorder = this.resizeScatterData(border.xMin, border.xMax, border.yMin, border.yMax);
+            this.widgetStore.scatterOutRangePointsIndex = [];
             for (let i = 0; i < channelValues.length; i++) {
-                // Todo: still need handel data outof range when zooming
                 let index = isIncremental ? i : channelValues.length - 1 - i;
                 const x = qProfile[index];
                 const y = uProfile[index];
                 const z = channelValues[index];
                 values.push({x, y, z});
+                if ( x < border.xMin || x > border.xMax || y < border.yMin || y > border.yMax) {
+                    this.widgetStore.scatterOutRangePointsIndex.push(z);   
+                }
             }
-            return {dataset: values, border};
+            return {dataset: values, border: equalScalerBorder};
         }
         return null;
     }
@@ -540,11 +592,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
         let channelInfo = frame.channelInfo;
         if (compositeProfile && channelInfo) {
+            let quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, channelInfo);
             let piDic = this.assembleLinePlotData(compositeProfile.piProfile, channelInfo);
             let paDic = this.assembleLinePlotData(compositeProfile.paProfile, channelInfo);
             let qDic = this.assembleLinePlotData(compositeProfile.qProfile, channelInfo);
             let uDic = this.assembleLinePlotData(compositeProfile.uProfile, channelInfo);
-            let quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, channelInfo);
 
             return {
                 qValues: qDic, 
@@ -560,37 +612,70 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    private getCursorInfo (quDataset: Point3D[], piDataset: Point2D[], paDataset: Point2D[], scatterCursorProfiler: Point3D, lineCursorProfiler: number, scatterCursorImage: Point3D, lineCursorImage: number) {
-        const isMouseEntered = this.widgetStore.isMouseMoveIntoLinePlots || this.widgetStore.isMouseMoveIntoScatterPlots;
-        const xUnit =  this.getChannelUnit();
-        let profilerData = {q: 0, u: 0, pi: 0, pa: 0, channel: 0};
-        if (this.widgetStore.isMouseMoveIntoLinePlots) {
-            const lineCursorPIDataProfiler = binarySearchByX(piDataset, lineCursorProfiler);
-            const lineCursorPADataProfiler = binarySearchByX(paDataset, lineCursorProfiler);
-            if (lineCursorPIDataProfiler && lineCursorPADataProfiler) {
-                let cursor = this.matchXYindex(lineCursorPIDataProfiler.x, quDataset);
-                profilerData.q = cursor.x;
-                profilerData.u = cursor.y;
-                profilerData.channel = cursor.z;
-                profilerData.pi = lineCursorPIDataProfiler.y;
-                profilerData.pa = lineCursorPADataProfiler.y;
-            }   
+    private fillProfilerDataInLinePlots = (
+        quDataset: readonly Point3D[],
+        piDataset: readonly Point2D[],
+        paDataset: readonly Point2D[],
+        lineCursorProfiler: number,
+        profilerData: {q: number, u: number, pi: number, pa: number, channel: number}
+    ) => {
+        const piNearest = binarySearchByX(piDataset, lineCursorProfiler);
+        const paNearest = binarySearchByX(paDataset, lineCursorProfiler);
+        if (piNearest && piNearest.point && paNearest && paNearest.point) {
+            const cursor = this.matchXYindex(piNearest.point.x, quDataset);
+            profilerData.q = cursor.x;
+            profilerData.u = cursor.y;
+            profilerData.channel = cursor.z;
+            profilerData.pi = piNearest.point.y;
+            profilerData.pa = paNearest.point.y;
         }
-        if (this.widgetStore.isMouseMoveIntoScatterPlots) {
-            const minIndex = closestPointIndexToCursor(scatterCursorProfiler, quDataset);
+    };
+
+    private fillProfilerDataInScatterPlots = (
+        quDataset: readonly Point3D[],
+        piDataset: readonly Point2D[],
+        paDataset: readonly Point2D[],
+        scatterCursorProfiler: Point3D,
+        profilerData: {q: number, u: number, pi: number, pa: number, channel: number}
+    ) => {
+        const minIndex = closestPointIndexToCursor(scatterCursorProfiler, quDataset);
+        if (minIndex >= 0) {
             const currentScatterData = quDataset[minIndex];
-            const lineCursorPIDataProfiler = binarySearchByX(piDataset, currentScatterData.z);
-            const lineCursorPADataProfiler = binarySearchByX(paDataset, currentScatterData.z);
-            if (lineCursorPIDataProfiler && lineCursorPADataProfiler) {
+            if (currentScatterData) {
+                const piNearest = binarySearchByX(piDataset, currentScatterData.z);
+                const paNearest = binarySearchByX(paDataset, currentScatterData.z);
                 profilerData.q = currentScatterData.x;
                 profilerData.u = currentScatterData.y;
-                profilerData.channel = lineCursorPIDataProfiler.x;
-                profilerData.pi = lineCursorPIDataProfiler.y;
-                profilerData.pa = lineCursorPADataProfiler.y;
+                if (piNearest && piNearest.point && paNearest && paNearest.point) {
+                    profilerData.channel = piNearest.point.x;
+                    profilerData.pi = piNearest.point.y;
+                    profilerData.pa = paNearest.point.y;
+                }
             }
         }
+    };
+
+    private getCursorInfo = (
+        quDataset: readonly Point3D[],
+        piDataset: readonly Point2D[],
+        paDataset: readonly Point2D[],
+        scatterCursorProfiler: Point3D,
+        lineCursorProfiler: number,
+        scatterCursorImage: Point3D,
+        lineCursorImage: number
+    ) => {
+        let cursorInfo = null;
+        const isMouseEntered = this.widgetStore.isMouseMoveIntoLinePlots || this.widgetStore.isMouseMoveIntoScatterPlots;
+        const xUnit =  this.getChannelUnit();
         if (isMouseEntered) {
-            return {
+            let profilerData = {q: NaN, u: NaN, pi: NaN, pa: NaN, channel: NaN};
+            if (this.widgetStore.isMouseMoveIntoLinePlots) {
+                this.fillProfilerDataInLinePlots(quDataset, piDataset, paDataset, lineCursorProfiler, profilerData);
+            }
+            if (this.widgetStore.isMouseMoveIntoScatterPlots) {
+                this.fillProfilerDataInScatterPlots(quDataset, piDataset, paDataset, scatterCursorProfiler, profilerData);
+            }
+            cursorInfo = {
                 isMouseEntered: isMouseEntered,
                 quValue: { x: profilerData.q, y: profilerData.u },
                 channel: profilerData.channel,
@@ -599,18 +684,19 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 xUnit: xUnit
             };   
         } else {
-            const lineCursorPIDataImage = binarySearchByX(piDataset, lineCursorImage);
-            const lineCursorPADataImage = binarySearchByX(paDataset, lineCursorImage);
-            return {
+            const piNearest = binarySearchByX(piDataset, lineCursorImage);
+            const paNearest = binarySearchByX(paDataset, lineCursorImage);
+            cursorInfo = {
                 isMouseEntered: isMouseEntered,
-                quValue: { x: scatterCursorImage.x, y: scatterCursorImage.y },
+                quValue: { x: scatterCursorImage ? scatterCursorImage.x : NaN, y: scatterCursorImage ? scatterCursorImage.y : NaN },
                 channel: lineCursorImage,
-                pi: lineCursorPIDataImage.y,
-                pa: lineCursorPADataImage.y,
+                pi: piNearest && piNearest.point ? piNearest.point.y : NaN,
+                pa: paNearest && paNearest.point ? paNearest.point.y : NaN,
                 xUnit: xUnit
             };
         }
-    }
+        return cursorInfo;
+    };
     
     render() {
         const appStore = this.props.appStore;
@@ -641,7 +727,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearLinePlotsXYBounds,
             graphClicked: this.onChannelChanged,
             markers: [],
-            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots
+            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
+            interactionMode: true
         };
 
         let piLinePlotProps: LinePlotComponentProps = {
@@ -664,7 +751,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearLinePlotsXYBounds,
             graphClicked: this.onChannelChanged,
             markers: [],
-            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots
+            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
+            interactionMode: true
         };
 
         let paLinePlotProps: LinePlotComponentProps = {
@@ -686,7 +774,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearLinePlotsXYBounds,
             graphClicked: this.onChannelChanged,
             markers: [],
-            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots
+            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
+            interactionMode: true
         };
 
         let quScatterPlotProps: ScatterPlotComponentProps = {
@@ -700,24 +789,28 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             showXAxisTicks: true,
             showXAxisLabel: true,
             usePointSymbols: true,
-            multiPlotData: new Map(),
             zeroLineWidth: 2,
-            multiPlotBorderColor: new Map(),
             isGroupSubPlot: true,
             colorRangeEnd: 240,
-            centeredOrigin: true,
-            equalScale: true,
             zIndex: true,
             pointRadius: this.pointRadius,
             graphCursorMoved: this.onScatterGraphCursorMoved,
             graphClicked: this.onScatterChannelChanged,
             graphZoomReset: this.widgetStore.clearScatterPlotXYBounds,
             mouseEntered: this.widgetStore.setMouseMoveIntoScatterPlots,
+            scrollZoom: true,
+            graphZoomedXY: this.widgetStore.setQUScatterPlotXYBounds,
+            updateChartArea: this.widgetStore.setScatterChartAres,
         };
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
         let interactionBorder = {xMin: 0, xMax: 0};
         if (this.profileStore && frame) {
+            const cursorX = {
+                profiler: this.widgetStore.linePlotcursorX,
+                image: this.getCurrentChannelValue(),
+                unit: this.getChannelUnit()
+            };
             const currentPlotData = this.plotData;
             let channel = {channelCurrent: 0, channelHovered: 0};
             if (currentPlotData && currentPlotData.piValues && currentPlotData.paValues && currentPlotData.qValues && currentPlotData.uValues && currentPlotData.quValues) {
@@ -789,7 +882,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         paLinePlotProps.yMin = this.widgetStore.polAngleMinY;
                         paLinePlotProps.yMax = this.widgetStore.polAngleMaxY;
                     }
-
                 }
 
                 if (this.widgetStore.isQUScatterPlotAutoScaledX) {
@@ -806,18 +898,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     quScatterPlotProps.yMin = this.widgetStore.quScatterMinY;
                     quScatterPlotProps.yMax = this.widgetStore.quScatterMaxY;
                 }
-                // cursor infor
-                let lineCursorXInfo = {
-                    profiler: this.widgetStore.linePlotcursorX,
-                    image: this.getCurrentChannelValue(),
-                    unit: this.getChannelUnit()
-                };
-                paLinePlotProps.cursorX = lineCursorXInfo;
-                piLinePlotProps.cursorX = lineCursorXInfo;
-                quLinePlotProps.cursorX = lineCursorXInfo;
                 let scatterCursorInfor = {
                     profiler: { x: this.widgetStore.scatterPlotCursorX, y: this.widgetStore.scatterPlotCursorY},
-                    image: this.matchXYindex(lineCursorXInfo.image, currentPlotData.quValues.dataset),
+                    image: this.matchXYindex(cursorX.image, currentPlotData.quValues.dataset),
                     unit: this.getChannelUnit()
                 };
                 quScatterPlotProps.cursorXY = scatterCursorInfor;
@@ -826,13 +909,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     currentPlotData.piValues.dataset, 
                     currentPlotData.paValues.dataset, 
                     scatterCursorInfor.profiler,
-                    lineCursorXInfo.profiler,
+                    cursorX.profiler,
                     scatterCursorInfor.image,
-                    lineCursorXInfo.image);
+                    cursorX.image);
                 if (this.cursorInfo && this.cursorInfo.quValue) {
                     quScatterPlotProps.cursorNearestPoint = this.cursorInfo.quValue;
                 }
-                
             }
 
             paLinePlotProps.yLabel = "PA (Degrees)";
@@ -875,9 +957,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 quLinePlotProps.markers.push(lineCursorIndicator);
             }
 
-            if (paLinePlotProps.cursorX && paLinePlotProps.cursorX.profiler !== null) {
+            if (cursorX.profiler !== null) {
                 let cursor = {
-                    value: paLinePlotProps.cursorX.profiler,
+                    value: cursorX.profiler,
                     id: "marker-profiler-cursor-stokes",
                     draggable: false,
                     horizontal: false,
@@ -893,9 +975,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 }
             }
 
-            if (paLinePlotProps.cursorX && paLinePlotProps.cursorX.image !== null) {
+            if (cursorX.image !== null) {
                 let channelCurrent = {
-                    value: paLinePlotProps.cursorX.image,
+                    value: cursorX.image,
                     id: "marker-channel-current",
                     opacity: 0.4,
                     draggable: false,
@@ -930,7 +1012,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             piLinePlotProps.comments = this.exportHeaders;
             quLinePlotProps.comments = this.exportHeaders;
             quScatterPlotProps.comments = this.exportHeaders;
-
         }
 
         return (

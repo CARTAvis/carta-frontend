@@ -9,20 +9,19 @@ import ReactResizeDetector from "react-resize-detector";
 import {Arrow, Group, Layer, Line, Rect, Stage, Text} from "react-konva";
 import {PlotContainerComponent, TickType} from "./PlotContainer/PlotContainerComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
-import {ProfilerInfoComponent} from "./ProfilerInfo/ProfilerInfoComponent";
 import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import {Point2D} from "models";
-import {binarySearchByX, clamp} from "utilities";
+import {clamp} from "utilities";
 import "./LinePlotComponent.css";
 
-enum ZoomMode {
+export enum ZoomMode {
     NONE,
     X,
     Y,
     XY
 }
 
-enum InteractionMode {
+export enum InteractionMode {
     NONE,
     SELECTING,
     PANNING
@@ -48,8 +47,6 @@ export class LinePlotComponentProps {
     width?: number;
     height?: number;
     data?: { x: number, y: number, z?: number }[];
-    dataStat?: { mean: number, rms: number };
-    cursorX?: { profiler: number, image: number, unit: string };
     comments?: string[];
     xMin?: number;
     xMax?: number;
@@ -92,6 +89,7 @@ export class LinePlotComponentProps {
     pointRadius?: number;
     zeroLineWidth?: number;
     mouseEntered?: (value: boolean) => void;
+    interactionMode?: boolean;
 }
 
 // Maximum time between double clicks
@@ -224,6 +222,9 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     @action hideMouseEnterWidget = () => {
         this.isMouseEntered = false;
+        if (this.props.mouseEntered) {
+            this.props.mouseEntered(false);
+        }
     };
 
     dragBoundsFuncVertical = (pos: Point2D, marker: LineMarker) => {
@@ -460,9 +461,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
     onMouseLeave = () => {
         this.hideMouseEnterWidget();
-        if (this.props.mouseEntered) {
-            this.props.mouseEntered(false);
-        }
     };
 
     private getTimestamp() {
@@ -509,7 +507,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         composedCanvas.height = canvas.height;
 
         const ctx = composedCanvas.getContext("2d");
-        ctx.fillStyle = this.props.darkMode ? Colors.DARK_GRAY3 : Colors.LIGHT_GRAY5;
+        ctx.fillStyle = "rgba(255, 255, 255, 0.0)";
         ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
         ctx.drawImage(canvas, 0, 0);
 
@@ -784,7 +782,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return selectionRect;
     };
 
-    genBorderRect = () => {
+    private genBorderRect = () => {
         const chartArea = this.chartArea;
         let borderRect = null;
         if (this.chartArea) {
@@ -804,26 +802,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         return borderRect;
     };
 
-    private getCursorInfo = () => {
-        let cursorInfo = null;
-        if (this.props.data && this.props.cursorX && !this.props.isGroupSubPlot) {
-            let nearest = binarySearchByX(this.props.data,
-                this.isMouseEntered ? this.props.cursorX.profiler : this.props.cursorX.image);
-            if (nearest) {
-                cursorInfo = {
-                    isMouseEntered: this.isMouseEntered,
-                    cursorX: nearest.x,
-                    cursorY: nearest.y,
-                    xUnit: this.props.cursorX.unit,
-                };
-            }
-        }
-        return cursorInfo;
-    };
-
     render() {
         const isHovering = this.hoveredMarker !== undefined && !this.isSelecting;
-        const cursorInfo = this.getCursorInfo();
         return (
             <div
                 className={"line-plot-component"}
@@ -865,13 +845,6 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />
-                {cursorInfo &&
-                <ProfilerInfoComponent
-                    darkMode={this.props.darkMode}
-                    cursorInfo={cursorInfo}
-                    statInfo={this.props.dataStat}
-                />
-                }
             </div>
         );
     }
