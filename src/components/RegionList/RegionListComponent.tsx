@@ -54,23 +54,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     private handleFocusClicked = (ev: React.MouseEvent<HTMLTableDataCellElement, MouseEvent>, region: RegionStore) => {
-        const activeFrame = this.props.appStore.activeFrame;
-        if (activeFrame) {
-            let point: Point2D;
-            if (region.regionType === CARTA.RegionType.POLYGON) {
-                const bounds = minMax2D(region.controlPoints);
-                point = midpoint2D(bounds.minPoint, bounds.maxPoint);
-            } else {
-                point = region.controlPoints[0];
-            }
-            activeFrame.setCenter(point.x, point.y);
-            
-            if (region.regionType !== CARTA.RegionType.POINT) {
-                activeFrame.setZoom(.333 * Math.max(activeFrame.renderWidth / region.boundingBox.x, activeFrame.renderHeight / region.boundingBox.y));
-            } else {
-                activeFrame.setZoom(1.0);
-            }
-        }
+        region.focusCenter(this.props.appStore.activeFrame);
         ev.stopPropagation();
     };
 

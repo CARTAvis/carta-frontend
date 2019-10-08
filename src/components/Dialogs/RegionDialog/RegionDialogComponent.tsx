@@ -24,6 +24,8 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
         }
     };
 
+    private handleFocusClicked = () => this.props.appStore.activeFrame.regionSet.selectedRegion.focusCenter(this.props.appStore.activeFrame);
+
     public render() {
         const appStore = this.props.appStore;
 
@@ -93,6 +95,17 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
             }
         }
 
+        let tooltips = region && region.regionId !== 0 && (
+            <React.Fragment>
+                <Tooltip content={`Region is ${region.locked ? "locked" : "unlocked"}`}>
+                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={region.locked ? "lock" : "unlock"} onClick={region.toggleLock}/>
+                </Tooltip>
+                <Tooltip content={"Focus"}>
+                    <AnchorButton intent={Intent.WARNING} minimal={true} icon={"eye-open"} onClick={this.handleFocusClicked}/>
+                </Tooltip>
+            </React.Fragment>
+        );
+
         return (
             <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={600} defaultHeight={450} minHeight={300} minWidth={400} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
@@ -100,11 +113,7 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        {region && region.regionId !== 0 &&
-                        <Tooltip content={`Region is ${region.locked ? "locked" : "unlocked"}`}>
-                            <AnchorButton intent={Intent.WARNING} minimal={true} icon={region.locked ? "lock" : "unlock"} onClick={region.toggleLock}/>
-                        </Tooltip>
-                        }
+                        {tooltips}
                         {editableRegion && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked}/>}
                         <AnchorButton intent={Intent.NONE} onClick={appStore.hideRegionDialog} text="Close"/>
                     </div>

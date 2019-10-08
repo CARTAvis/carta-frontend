@@ -3,9 +3,11 @@ import {CARTA} from "carta-protobuf";
 import {Colors} from "@blueprintjs/core";
 import {Point2D} from "models";
 import {BackendService} from "services";
-import {minMax2D, simplePolygonTest, simplePolygonPointTest} from "utilities";
+import {FrameStore} from "stores";
+import {minMax2D, midpoint2D, simplePolygonTest, simplePolygonPointTest} from "utilities";
 
 export const CURSOR_REGION_ID = 0;
+export const FOCUS_REGION_RATIO = 0.4;
 
 export class RegionStore {
     @observable fileId: number;
@@ -291,6 +293,24 @@ export class RegionStore {
     @action setLocked = (locked: boolean) => {
         if (this.regionId !== CURSOR_REGION_ID) {
             this.locked = locked;
+        }
+    };
+
+    @action focusCenter = (activeFrame: FrameStore) => {
+        if (activeFrame) {
+            let regionCenter: Point2D;
+            if (this.regionType === CARTA.RegionType.POLYGON) {
+                const bounds = minMax2D(this.controlPoints);
+                regionCenter = midpoint2D(bounds.minPoint, bounds.maxPoint);
+            } else {
+                regionCenter = this.controlPoints[0];
+            }
+            activeFrame.setCenter(regionCenter.x, regionCenter.y);
+            
+            const zoomLevel = FOCUS_REGION_RATIO * Math.min(activeFrame.renderWidth / this.boundingBox.x, activeFrame.renderHeight / this.boundingBox.y);
+            if (activeFrame.renderWidth < activeFrame.zoomLevel * this.boundingBox.x || activeFrame.renderHeight < activeFrame.zoomLevel * this.boundingBox.y) {
+                activeFrame.setZoom(zoomLevel);
+            }
         }
     };
 
