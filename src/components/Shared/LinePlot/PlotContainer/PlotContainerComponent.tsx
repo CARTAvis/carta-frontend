@@ -3,7 +3,7 @@ import * as _ from "lodash";
 import {ChartArea, ChartData, ChartDataSets, ChartOptions} from "chart.js";
 import {Scatter} from "react-chartjs-2";
 import {Colors} from "@blueprintjs/core";
-import {clamp, hexStringToRgba} from "utilities";
+import {clamp, hexStringToRgba, toFixed} from "utilities";
 
 export enum TickType {
     Automatic,
@@ -198,7 +198,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
     private static FormatTicksInteger = (value: number, index: number, values: number[]) => {
         if (value) {
-            return value.toFixed();
+            return toFixed(value);
         }
         return value;
     };

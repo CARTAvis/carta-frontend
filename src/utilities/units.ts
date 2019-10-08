@@ -6,7 +6,7 @@ export function velocityFromFrequency(freq: number, refFreq: number): number {
 export function velocityStringFromFrequency(freq: number, refFreq: number): string {
     if (isFinite(refFreq)) {
         const velocityVal = velocityFromFrequency(freq, refFreq);
-        return `Velocity:\u00a0${(velocityVal * 1e-3).toFixed(4)}\u00a0km/s`;
+        return `Velocity:\u00a0${toFixed(velocityVal * 1e-3, 4)}\u00a0km/s`;
     }
     return null;
 }
@@ -19,25 +19,25 @@ export function frequencyFromVelocity(velocity: number, refFreq: number): number
 export function frequencyStringFromVelocity(velocity: number, refFreq: number): string {
     if (isFinite(refFreq)) {
         const frequencyVal = frequencyFromVelocity(velocity, refFreq);
-        return `Frequency:\u00a0${(frequencyVal * 1e-9).toFixed(4)}\u00a0GHz`;
+        return `Frequency:\u00a0${toFixed(frequencyVal * 1e-9, 4)}\u00a0GHz`;
     }
     return null;
 }
 
 // According to MDN, toFixed only works for up to 20 decimals
-export function toFixed(val: number, decimals: number) {
+export function toFixed(val: number, decimals: number = 0): string {
     if (isFinite(val) && isFinite(decimals) && decimals >= 0 && decimals <= 20) {
       return val.toFixed(decimals);
     }
     // leave undefined or non-finite values as is (+- INF, NaN and undefined will still appear properly)
-    return val;
+    return String(val);
 }
 
 export function formattedNotation(value: number): string {
     if (value === null || isNaN(value)) {
         return null;
     }
-    return value < 1e-2 ? value.toExponential(2) : value.toFixed(2);
+    return value < 1e-2 ? value.toExponential(2) : toFixed(value, 2);
 }
 
 export function formattedExponential(val: number, digits: number, unit: string = "", trim: boolean = true, pad: boolean = false) {
