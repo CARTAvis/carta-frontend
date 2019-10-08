@@ -39,7 +39,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     @observable statsType: CARTA.StatsType;
     @observable fractionalPolVisible: boolean;
-    scatterOutRangePointsIndex: Array<number>;
+    scatterOutRangePointsZIndex: Array<number>;
 
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
 
@@ -184,7 +184,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         // Describes how the data is visualised
         this.fractionalPolVisible = false;
         this.useWcsValues = true;
-        this.scatterOutRangePointsIndex = [];
+        this.scatterOutRangePointsZIndex = [];
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
@@ -223,7 +223,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.quScatterMaxX = undefined;
         this.quScatterMinY = undefined;
         this.quScatterMaxY = undefined;
-        this.scatterOutRangePointsIndex = [];
+        this.scatterOutRangePointsZIndex = [];
     };
 
     @action setQULinePlotsXYBounds = (minX: number, maxX: number, minY: number, maxY: number) => {
