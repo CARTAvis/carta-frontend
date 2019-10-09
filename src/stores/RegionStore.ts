@@ -4,7 +4,7 @@ import {Colors} from "@blueprintjs/core";
 import {Point2D} from "models";
 import {BackendService} from "services";
 import {FrameStore} from "stores";
-import {minMax2D, midpoint2D, simplePolygonTest, simplePolygonPointTest} from "utilities";
+import {minMax2D, midpoint2D, scale2D, simplePolygonTest, simplePolygonPointTest} from "utilities";
 
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
@@ -99,7 +99,7 @@ export class RegionStore {
             case CARTA.RegionType.POINT:
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
-                return {x: this.controlPoints[0].x, y: this.controlPoints[0].y};
+                return this.controlPoints[0];
             case CARTA.RegionType.POLYGON:
                 const bounds = minMax2D(this.controlPoints);
                 return midpoint2D(bounds.minPoint, bounds.maxPoint);
@@ -114,9 +114,9 @@ export class RegionStore {
         }
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
-                return {x: this.controlPoints[1].x, y: this.controlPoints[1].y};
+                return this.controlPoints[1];
             case CARTA.RegionType.ELLIPSE:
-                return {x: 2 * this.controlPoints[1].x, y: 2 * this.controlPoints[1].y};
+                return scale2D(this.controlPoints[1], 2);
             case CARTA.RegionType.POLYGON:
                 const boundingBox = minMax2D(this.controlPoints);
                 return {x: boundingBox.maxPoint.x - boundingBox.minPoint.x, y: boundingBox.maxPoint.y - boundingBox.minPoint.y};
