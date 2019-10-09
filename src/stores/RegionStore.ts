@@ -87,8 +87,25 @@ export class RegionStore {
         return regionDashLength >= 0 && regionDashLength <= RegionStore.MAX_DASH_LENGTH;
     }
 
-    @computed get isTemporary() {
+    @computed get isTemporary(): boolean {
         return this.regionId < 0;
+    }
+
+    @computed get center(): Point2D {
+        if (!this.isValid) {
+            return {x: 0, y: 0};
+        }
+        switch (this.regionType) {
+            case CARTA.RegionType.POINT:
+            case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ELLIPSE:
+                return {x: this.controlPoints[0].x, y: this.controlPoints[0].y};
+            case CARTA.RegionType.POLYGON:
+                const bounds = minMax2D(this.controlPoints);
+                return midpoint2D(bounds.minPoint, bounds.maxPoint);
+            default:
+                return {x: 0, y: 0};
+        }
     }
 
     @computed get boundingBox(): Point2D {
@@ -113,7 +130,7 @@ export class RegionStore {
         return box.x * box.y;
     }
 
-    @computed get isClosedRegion() {
+    @computed get isClosedRegion(): boolean {
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
@@ -125,7 +142,7 @@ export class RegionStore {
         }
     }
 
-    @computed get isValid() {
+    @computed get isValid(): boolean {
         // All regions require at least one control point
         if (!this.controlPoints || !this.controlPoints.length) {
             return false;
@@ -145,7 +162,7 @@ export class RegionStore {
         }
     }
 
-    @computed get nameString() {
+    @computed get nameString(): string {
         if (this.regionId === CURSOR_REGION_ID) {
             return "Cursor";
         } else if (this.name) {
@@ -155,7 +172,7 @@ export class RegionStore {
         }
     }
 
-    @computed get regionProperties() {
+    @computed get regionProperties(): string {
         const point = this.controlPoints[0];
         const center = isFinite(point.x) && isFinite(point.y) ? `${point.x.toFixed(1)}pix, ${point.y.toFixed(1)}pix` : "Invalid";
 
@@ -298,17 +315,10 @@ export class RegionStore {
 
     @action focusCenter = (activeFrame: FrameStore) => {
         if (activeFrame) {
-            let regionCenter: Point2D;
-            if (this.regionType === CARTA.RegionType.POLYGON) {
-                const bounds = minMax2D(this.controlPoints);
-                regionCenter = midpoint2D(bounds.minPoint, bounds.maxPoint);
-            } else {
-                regionCenter = this.controlPoints[0];
-            }
-            activeFrame.setCenter(regionCenter.x, regionCenter.y);
+            activeFrame.setCenter(this.center.x, this.center.y);
             
-            const zoomLevel = FOCUS_REGION_RATIO * Math.min(activeFrame.renderWidth / this.boundingBox.x, activeFrame.renderHeight / this.boundingBox.y);
             if (activeFrame.renderWidth < activeFrame.zoomLevel * this.boundingBox.x || activeFrame.renderHeight < activeFrame.zoomLevel * this.boundingBox.y) {
+                const zoomLevel = FOCUS_REGION_RATIO * Math.min(activeFrame.renderWidth / this.boundingBox.x, activeFrame.renderHeight / this.boundingBox.y);
                 activeFrame.setZoom(zoomLevel);
             }
         }

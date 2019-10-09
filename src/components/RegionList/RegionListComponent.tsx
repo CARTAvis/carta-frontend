@@ -6,7 +6,6 @@ import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {RegionStore, WidgetConfig, WidgetProps} from "stores";
 import {Point2D} from "models";
-import {midpoint2D, minMax2D} from "utilities";
 import "./RegionListComponent.css";
 
 @observer
@@ -106,13 +105,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const selectedRegion = frame.regionSet.selectedRegion;
 
         const rows = this.validRegions.map(region => {
-            let point: Point2D;
-            if (region.regionType === CARTA.RegionType.POLYGON) {
-                const bounds = minMax2D(region.controlPoints);
-                point = midpoint2D(bounds.minPoint, bounds.maxPoint);
-            } else {
-                point = region.controlPoints[0];
-            }
+            let point: Point2D = region.center;
+            
             let pixelCenterEntry;
             if (isFinite(point.x) && isFinite(point.y)) {
                 pixelCenterEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>{`(${point.x.toFixed(1)}, ${point.y.toFixed(1)})`}</td>;
