@@ -88,19 +88,20 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 this.gl.uniform4f(this.LineColorUniform, 1, 1, 1, 1);
             }
 
+            let drawOpCounter = 0;
+            const dashFactor = Math.pow(3.0, Math.ceil(Math.log(1.0 / frame.zoomLevel) / Math.log(3)));
             if (frame.contourStores) {
                 frame.contourStores.forEach((contourStore, level) => {
 
                     // Dash length in canvas pixels
-                    const dashLength = level <= 0 ? 4 : 0;
+                    const dashLength = level <= 0 ? 10 : 0;
                     const indices = contourStore.indices;
                     const vertexData = contourStore.vertexData;
                     const vertexLengthData = contourStore.lengthData;
                     const numIndices = indices.length;
                     // each vertex has x, y and length values
                     const numVertices = vertexData.length / 2;
-
-                    this.gl.uniform1f(this.DashLengthUniform, dashLength);
+                    this.gl.uniform1f(this.DashLengthUniform, dashLength * dashFactor);
 
                     // Update buffer
                     this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexDataBuffer);
@@ -119,9 +120,11 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                         }
                         const traceVertices = endIndex - startIndex;
                         this.gl.drawArrays(WebGLRenderingContext.LINE_STRIP, startIndex, traceVertices);
+                        drawOpCounter++;
                     }
                 });
             }
+            //console.log(`Drew contours using ${drawOpCounter} draw operations`);
         }
     };
 
