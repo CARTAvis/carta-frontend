@@ -557,7 +557,7 @@ export class FrameStore {
 
         for (const contourSet of processedData.contourSets) {
             const contourStore = new ContourStore();
-            contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates);
+            contourStore.setContourData(contourSet.indices, contourSet.indexOffsets, contourSet.coordinates);
             this.contourStores.set(contourSet.level, contourStore);
         }
     }

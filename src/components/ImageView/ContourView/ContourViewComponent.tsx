@@ -19,8 +19,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     private canvas: HTMLCanvasElement;
     private gl: WebGLRenderingContext;
     // GL buffers
-    private vertexDataBuffer: WebGLBuffer;
-    private vertexLengthDataBuffer: WebGLBuffer;
     // Shader attribute handles
     private vertexPositionAttribute: number;
     private vertexLengthAttribute: number;
@@ -38,6 +36,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 if (!this.gl) {
                     return;
                 }
+                this.gl.getExtension("OES_element_index_uint");
             } catch (e) {
                 console.log(e);
             }
@@ -46,7 +45,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             }
 
             this.initShaders();
-            this.initBuffers();
         }
     }
 
@@ -81,14 +79,11 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             // update uniforms
             this.gl.uniform2f(this.ScaleUniform, scale.x, scale.y);
             this.gl.uniform2f(this.OffsetUniform, offset.x, offset.y);
-            const color = frame.contourConfig.color;
-            if (color) {
-                this.gl.uniform4f(this.LineColorUniform, color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a || 1.0);
-            } else {
-                this.gl.uniform4f(this.LineColorUniform, 1, 1, 1, 1);
-            }
 
             let drawOpCounter = 0;
+            const tStart = performance.now();
+
+            // Calculates ceiling power-of-three value as a dash factor.
             const dashFactor = Math.pow(3.0, Math.ceil(Math.log(1.0 / frame.zoomLevel) / Math.log(3)));
             if (frame.contourStores) {
                 frame.contourStores.forEach((contourStore, level) => {
@@ -99,32 +94,37 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                     const vertexData = contourStore.vertexData;
                     const vertexLengthData = contourStore.lengthData;
                     const numIndices = indices.length;
+                    const indexOffsets = contourStore.indexOffsets;
+
                     // each vertex has x, y and length values
                     const numVertices = vertexData.length / 2;
                     this.gl.uniform1f(this.DashLengthUniform, dashLength * dashFactor);
 
-                    // Update buffer
-                    this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexDataBuffer);
-                    this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, vertexData, WebGLRenderingContext.STATIC_DRAW);
-                    this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexLengthDataBuffer);
-                    this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, vertexLengthData, WebGLRenderingContext.STATIC_DRAW);
+                    // Update buffers
+                    contourStore.generateBuffers(this.gl);
 
-                    // render
-                    for (let i = 0; i < numIndices; i++) {
-                        const startIndex = indices[i] / 2;
-                        let endIndex;
-                        if (i === numIndices - 1) {
-                            endIndex = numVertices;
-                        } else {
-                            endIndex = indices[i + 1] / 2;
-                        }
-                        const traceVertices = endIndex - startIndex;
-                        this.gl.drawArrays(WebGLRenderingContext.LINE_STRIP, startIndex, traceVertices);
-                        drawOpCounter++;
+                    this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, contourStore.vertexDataBuffer);
+                    this.gl.vertexAttribPointer(this.vertexPositionAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
+                    this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, contourStore.vertexLengthBuffer);
+                    this.gl.vertexAttribPointer(this.vertexLengthAttribute, 1, WebGLRenderingContext.FLOAT, false, 0, 0);
+                    this.gl.bindBuffer(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, contourStore.indexBuffer);
+
+                    // TODO: Color should come from the level's color definition
+                    const color = frame.contourConfig.color;
+                    if (color) {
+                        this.gl.uniform4f(this.LineColorUniform, color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a || 1.0);
+                    } else {
+                        this.gl.uniform4f(this.LineColorUniform, 1, 1, 1, 1);
                     }
+
+                    // Render all poly-lines in this level using the vertex buffer and index buffer
+                    this.gl.drawElements(WebGLRenderingContext.LINES, numIndices, WebGLRenderingContext.UNSIGNED_INT, 0);
+                    drawOpCounter++;
                 });
             }
-            //console.log(`Drew contours using ${drawOpCounter} draw operations`);
+            const tEnd = performance.now();
+            const dt = tEnd - tStart;
+            // console.log(`Drew contours using ${drawOpCounter} draw operations in ${dt.toFixed(2)} ms`);
         }
     };
 
@@ -152,16 +152,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         this.LineColorUniform = this.gl.getUniformLocation(shaderProgram, "uLineColor");
         this.ScaleUniform = this.gl.getUniformLocation(shaderProgram, "uScale");
         this.OffsetUniform = this.gl.getUniformLocation(shaderProgram, "uOffset");
-    }
-
-    private initBuffers() {
-        this.vertexDataBuffer = this.gl.createBuffer();
-        this.vertexLengthDataBuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexDataBuffer);
-        // First two floats of the array represent x and y positions. Last float represents cumulative length in the current line
-        this.gl.vertexAttribPointer(this.vertexPositionAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexLengthDataBuffer);
-        this.gl.vertexAttribPointer(this.vertexLengthAttribute, 1, WebGLRenderingContext.FLOAT, false, 0, 0);
     }
 
     render() {

@@ -27,6 +27,7 @@ export interface ProcessedContourData {
 export interface ProcessedContourSet {
     level: number;
     indexOffsets: Int32Array;
+    indices: Int32Array;
     coordinates: Float32Array;
 }
 
@@ -132,9 +133,34 @@ export class ProtobufProcessing {
             floatCoordinates[i + 1] = lastY;
         }
 
+        // generate indices
+        const indexOffsets = new Int32Array(contourSet.rawStartIndices.buffer.slice(contourSet.rawStartIndices.byteOffset, contourSet.rawStartIndices.byteOffset + contourSet.rawStartIndices.byteLength));
+        const numPolyLines = indexOffsets.length;
+        const numVertices = floatCoordinates.length / 2;
+        const numIndices = 2 * (numVertices - numPolyLines);
+
+        const indices = new Int32Array(numIndices + 2);
+        let indexCounter = 0;
+        let lineCounter = 1;
+        let maxIndex = 0;
+        let endVertex = (lineCounter === numPolyLines) ? numVertices - 1 : indexOffsets[lineCounter] / 2 - 1;
+        for (let i = 0; i < numVertices - 1; i++) {
+            // end current polyline if we've reached the end vertex
+            if (i >=  endVertex) {
+                endVertex = (lineCounter === numPolyLines) ? numVertices - 1 : indexOffsets[lineCounter] / 2 - 1;
+                lineCounter++;
+            } else {
+                indices[indexCounter] = i;
+                indices[indexCounter + 1] = i + 1;
+                indexCounter += 2;
+                maxIndex = i + 1;
+            }
+        }
+
         return {
             level: contourSet.level,
-            indexOffsets: new Int32Array(contourSet.rawStartIndices.buffer.slice(contourSet.rawStartIndices.byteOffset, contourSet.rawStartIndices.byteOffset + contourSet.rawStartIndices.byteLength)),
+            indexOffsets,
+            indices,
             coordinates: floatCoordinates
         };
     }
