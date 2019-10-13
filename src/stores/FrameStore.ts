@@ -338,6 +338,13 @@ export class FrameStore {
         this.renderConfig = new RenderConfigStore(preference);
         this.contourConfig = new ContourConfigStore(preference);
         this.contourStores = new Map<number, ContourStore>();
+        // TODO: remove this from testing
+        const indexOffsets = new Int32Array([0]);
+        const vertexData = new Float32Array([10, 10, 10, 110, 110, 220, 110, 10]);
+        const dummyContours = new ContourStore();
+        dummyContours.setContourData(indexOffsets, vertexData);
+        this.contourStores.set(1, dummyContours);
+
         this.renderType = RasterRenderType.NONE;
         this.moving = false;
 
@@ -557,7 +564,7 @@ export class FrameStore {
 
         for (const contourSet of processedData.contourSets) {
             const contourStore = new ContourStore();
-            contourStore.setContourData(contourSet.indices, contourSet.indexOffsets, contourSet.coordinates);
+            contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates);
             this.contourStores.set(contourSet.level, contourStore);
         }
     }

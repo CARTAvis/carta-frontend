@@ -24,6 +24,12 @@ export function scale2D(a: Point2D, s: number): Point2D {
     return {x: a.x * s, y: a.y * s};
 }
 
+export function normal2D(a: Point2D, b: Point2D): Point2D {
+    const delta = subtract2D(a, b);
+    let normal = {x: -delta.y, y: delta.x};
+    return normalize2D(normal);
+}
+
 export function length2D(a: Point2D): number {
     return Math.sqrt(dot2D(a, a));
 }
@@ -159,14 +165,15 @@ export function simplePolygonPointTest(points: Point2D[], pointIndex: number) {
 }
 
 type Point3D = { x: number, y: number, z?: number };
+
 // get distance between two points
-export function pointsDistance (p1: Point3D, p2: Point3D) {
+export function pointsDistance(p1: Point3D, p2: Point3D) {
     const distance = subtract2D(p1, p2);
     return distance.x * distance.x + distance.y * distance.y;
 }
 
 // Returns the closest point index from a points array to current cursor point. 
-export function closestPointIndexToCursor (cursor: Point3D, points: readonly Point3D[]) {
+export function closestPointIndexToCursor(cursor: Point3D, points: readonly Point3D[]) {
     let minDistanceSquared = Number.MAX_VALUE;
     let minIndex = 0;
     for (let index = 0; index < points.length; index++) {
