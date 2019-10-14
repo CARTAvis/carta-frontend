@@ -339,8 +339,32 @@ export class FrameStore {
         this.contourConfig = new ContourConfigStore(preference);
         this.contourStores = new Map<number, ContourStore>();
         // TODO: remove this from testing
-        const indexOffsets = new Int32Array([0]);
-        const vertexData = new Float32Array([10, 10, 10, 110, 110, 220, 110, 10]);
+        // Single square for loop testing
+        // const indexOffsets = new Int32Array([0]);
+        // const vertexData = new Float32Array([0, 0, 0, 200, 200, 200, 200, 0, 0, 0]);
+        // Single triangle for loop testing
+        // const indexOffsets = new Int32Array([0]);
+        // const vertexData = new Float32Array([0, 0, 0, 200, 200, 200, 0, 0]);
+        // Single square with missing side for loop testing
+        // const indexOffsets = new Int32Array([0]);
+        // const vertexData = new Float32Array([0, 0, 0, 200, 200, 200, 200, 0]);
+        // Polygon for loop testing
+        // const N = 4;
+        // const indexOffsets = new Int32Array([0]);
+        // const vertexData = new Float32Array((N + 1) * 2);
+        // for (let i = 0; i <= N; i++) {
+        //     vertexData[i * 2] = 100 * Math.cos(i * 2.0 * Math.PI / N);
+        //     vertexData[i * 2 + 1] = 100 * Math.sin(i * 2.0 * Math.PI / N);
+        // }
+
+        // const vertexData = new Float32Array([0, 0, 0, 200, 200, 200, 200, 0]);
+        // Squares
+        const indexOffsets = new Int32Array([0, 5]);
+        const vertexData = new Float32Array([0, 0, 0, 200, 200, 200, 200, 0, 0, 0, 300, 300, 300, 500, 500, 500, 500, 300, 300, 300]);
+        // zig-zags
+        // const indexOffsets = new Int32Array([0]);
+        // const vertexData = new Float32Array([0, 0, 100, 100, 200, 0, 300, 100, 400, 0, 500, 100, 600, 0, 0, 300, 100, 400, 200, 300, 300, 400, 400, 300, 500, 400, 600, 300]);
+
         const dummyContours = new ContourStore();
         dummyContours.setContourData(indexOffsets, vertexData);
         this.contourStores.set(1, dummyContours);

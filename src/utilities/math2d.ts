@@ -25,9 +25,12 @@ export function scale2D(a: Point2D, s: number): Point2D {
 }
 
 export function normal2D(a: Point2D, b: Point2D): Point2D {
-    const delta = subtract2D(a, b);
-    let normal = {x: -delta.y, y: delta.x};
-    return normalize2D(normal);
+    const delta = normalize2D(subtract2D(a, b));
+    return perpVector2D(delta);
+}
+
+export function perpVector2D(dir: Point2D): Point2D {
+    return {x: -dir.y, y: dir.x};
 }
 
 export function length2D(a: Point2D): number {

@@ -81,6 +81,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             // update uniforms
             this.gl.uniform2f(this.ScaleUniform, scale.x, scale.y);
             this.gl.uniform2f(this.OffsetUniform, offset.x, offset.y);
+            this.gl.uniform1f(this.LineThicknessUniform, 8.0 / frame.zoomLevel);
 
             let drawOpCounter = 0;
             const tStart = performance.now();
@@ -102,7 +103,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                     const numVertices = vertexData.length / 2;
                     this.gl.uniform1f(this.DashLengthUniform, dashLength * dashFactor);
                     this.gl.uniform1f(this.DashLengthUniform, 0);
-                    this.gl.uniform1f(this.LineThicknessUniform, 0.1);
 
                     // Update buffers
                     contourStore.generateBuffers(this.gl);
@@ -125,8 +125,9 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
                     // Render all poly-lines in this level using the vertex buffer and index buffer
                     this.gl.drawElements(WebGLRenderingContext.TRIANGLES, numIndices, WebGLRenderingContext.UNSIGNED_INT, 0);
-                    this.gl.uniform4f(this.LineColorUniform, 0, 1, 0, 1);
-                    this.gl.drawElements(WebGLRenderingContext.LINES, numIndices, WebGLRenderingContext.UNSIGNED_INT, 0);
+                    this.gl.uniform4f(this.LineColorUniform, 1, 1, 1, 1);
+                    this.gl.drawArrays(WebGLRenderingContext.POINTS, 0, numVertices);
+
                     drawOpCounter++;
                 });
             }
