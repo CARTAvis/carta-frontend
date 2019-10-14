@@ -150,6 +150,10 @@ export class ContourStore {
     }
 
     private static FillNormals(normalData: Float32Array, offset: number, normal: Point2D) {
+        if (!normal) {
+            return;
+        }
+
         normalData[offset] = normal.x;
         normalData[offset + 1] = normal.y;
         normalData[offset + 2] = -normal.x;
