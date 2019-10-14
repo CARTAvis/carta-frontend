@@ -62,6 +62,9 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             case TABS.RENDER_CONFIG:
                 preference.resetRenderConfigSettings();
                 break;
+            case TABS.CONTOUR_CONFIG:
+                preference.resetContourConfigSettings();
+                break;
             case TABS.WCS_OVERLAY:
                 preference.resetWCSOverlaySettings();
                 break;
@@ -226,6 +229,17 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         majorStepSize={1}
                         stepSize={1}
                         onValueChange={preference.setContourNumLevels}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Contour Thickness">
+                    <NumericInput
+                        placeholder="Contour Thickness"
+                        min={0.5}
+                        max={10}
+                        value={preference.contourThickness}
+                        majorStepSize={0.5}
+                        stepSize={0.5}
+                        onValueChange={preference.setContourThickness}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default Contour Color">

@@ -1,7 +1,7 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {FrameStore, OverlayStore, PreferenceStore} from "stores";
-import {getShaderFromString, hexStringToRgba} from "utilities";
+import {getShaderFromString} from "utilities";
 import "./ContourViewComponent.css";
 
 const vertexShaderLine = require("!raw-loader!./GLSL/vert_line.glsl");
@@ -81,28 +81,21 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             // update uniforms
             this.gl.uniform2f(this.ScaleUniform, scale.x, scale.y);
             this.gl.uniform2f(this.OffsetUniform, offset.x, offset.y);
-            this.gl.uniform1f(this.LineThicknessUniform, 8.0 / frame.zoomLevel);
+            this.gl.uniform1f(this.LineThicknessUniform, devicePixelRatio * this.props.preference.contourThickness / frame.zoomLevel);
 
-            let drawOpCounter = 0;
-            const tStart = performance.now();
-
-            // Calculates ceiling power-of-three value as a dash factor.
+            // Calculates ceiling power-of-three value as a dash factor. Not sure if this is needed
             const dashFactor = Math.pow(3.0, Math.ceil(Math.log(1.0 / frame.zoomLevel) / Math.log(3)));
             if (frame.contourStores) {
                 frame.contourStores.forEach((contourStore, level) => {
 
                     // Dash length in canvas pixels
-                    const dashLength = level <= 0 ? 10 : 0;
+                    // const dashLength = level <= 0 ? 5 : 0;
+                    const dashLength = 0;
                     const indices = contourStore.indices;
-                    const vertexData = contourStore.vertexData;
-                    const vertexLengthData = contourStore.lengthData;
                     const numIndices = indices.length;
-                    const indexOffsets = contourStore.indexOffsets;
 
                     // each vertex has x, y and length values
-                    const numVertices = vertexData.length / 2;
-                    this.gl.uniform1f(this.DashLengthUniform, dashLength * dashFactor);
-                    this.gl.uniform1f(this.DashLengthUniform, 0);
+                    this.gl.uniform1f(this.DashLengthUniform, devicePixelRatio * dashLength);
 
                     // Update buffers
                     contourStore.generateBuffers(this.gl);
@@ -126,14 +119,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                     // Render all poly-lines in this level using the vertex buffer and index buffer
                     this.gl.drawElements(WebGLRenderingContext.TRIANGLES, numIndices, WebGLRenderingContext.UNSIGNED_INT, 0);
                     this.gl.uniform4f(this.LineColorUniform, 1, 1, 1, 1);
-                    this.gl.drawArrays(WebGLRenderingContext.POINTS, 0, numVertices);
-
-                    drawOpCounter++;
                 });
             }
-            const tEnd = performance.now();
-            const dt = tEnd - tStart;
-            // console.log(`Drew contours using ${drawOpCounter} draw operations in ${dt.toFixed(2)} ms`);
         }
     };
 
@@ -176,6 +163,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 const indices = contourStore.indices;
                 const vertexData = contourStore.vertexData;
             });
+            const thickness = this.props.preference.contourThickness;
         }
         const padding = this.props.overlaySettings.padding;
         let className = "contour-div";

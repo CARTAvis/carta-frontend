@@ -6,7 +6,6 @@ import {FrameScaling, RenderConfigStore, RegionStore, ContourColorMode} from "st
 import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore, LayoutStore} from "stores";
 import {isColorValid, parseBoolean} from "../utilities";
-import {act} from "react-dom/test-utils";
 
 const PREFERENCE_KEYS = {
     theme: "theme",
@@ -25,6 +24,7 @@ const PREFERENCE_KEYS = {
     contourSmoothingMode: "contourSmoothingMode",
     contourSmoothingFactor: "contourSmoothingFactor",
     contourNumLevels: "contourNumLevels",
+    contourThickness: "contourThickness",
     contourColorMode: "contourColorMode",
     contourColor: "contourColor",
     contourColormap: "contourColormap",
@@ -61,8 +61,9 @@ const DEFAULTS = {
     nanColorHex: "#137CBD",
     nanAlpha: 1,
     contourSmoothingMode: CARTA.SmoothingMode.GaussianBlur,
-    contourSmoothingFactor: 3,
+    contourSmoothingFactor: 4,
     contourNumLevels: 5,
+    contourThickness: 1,
     contourColorMode: 0,
     contourColor: Colors.GREEN3,
     contourColormap: "viridis",
@@ -104,6 +105,7 @@ export class PreferenceStore {
     @observable contourSmoothingMode: CARTA.SmoothingMode;
     @observable contourSmoothingFactor: number;
     @observable contourNumLevels: number;
+    @observable contourThickness: number;
     @observable contourColorMode: ContourColorMode;
     @observable contourColor: string;
     @observable contourColormap: string;
@@ -240,6 +242,15 @@ export class PreferenceStore {
         }
         const valInt = parseInt(valString);
         return (isFinite(valInt) && valInt >= 1 && valInt <= 15) ? valInt : DEFAULTS.contourNumLevels;
+    };
+
+    private getContourThickness = (): number => {
+        const valString = localStorage.getItem(PREFERENCE_KEYS.contourThickness);
+        if (!valString) {
+            return DEFAULTS.contourThickness;
+        }
+        const value = parseFloat(valString);
+        return (isFinite(value) && value > 0 && value <= 10) ? value : DEFAULTS.contourThickness;
     };
 
     private getContourDecimation = (): number => {
@@ -507,6 +518,11 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.contourNumLevels, val.toString());
     };
 
+    @action setContourThickness = (val: number) => {
+        this.contourThickness = val;
+        localStorage.setItem(PREFERENCE_KEYS.contourThickness, val.toString());
+    };
+
     @action setContourColor = (color: string) => {
         this.contourColor = color;
         localStorage.setItem(PREFERENCE_KEYS.contourColor, color);
@@ -607,6 +623,7 @@ export class PreferenceStore {
     @action resetContourConfigSettings = () => {
         this.setContourSmoothingFactor(DEFAULTS.contourSmoothingFactor);
         this.setContourNumLevels(DEFAULTS.contourNumLevels);
+        this.setContourThickness(DEFAULTS.contourThickness);
         this.setContourColor(DEFAULTS.contourColor);
         this.setContourColormap(DEFAULTS.contourColormap);
     };
@@ -657,6 +674,7 @@ export class PreferenceStore {
         this.nanAlpha = this.getNaNAlpha();
         this.contourSmoothingFactor = this.getContourSmoothingFactor();
         this.contourNumLevels = this.getContourNumLevels();
+        this.contourThickness = this.getContourThickness();
         this.contourColor = this.getContourColor();
         this.contourColormap = this.getContourColormap();
         this.astColor = this.getASTColor();

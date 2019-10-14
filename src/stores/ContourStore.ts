@@ -1,8 +1,6 @@
 import {action, computed, observable} from "mobx";
 import {Point2D} from "models";
-import {add2D, dot2D, length2D, normal2D, normalize2D, perpVector2D, scale2D, subtract2D} from "utilities";
-import {first} from "rxjs/operators";
-import {start} from "repl";
+import {add2D, dot2D, length2D, normalize2D, perpVector2D, scale2D, subtract2D} from "utilities";
 
 export class ContourStore {
     @observable indices: Int32Array;
@@ -17,6 +15,7 @@ export class ContourStore {
     indexBuffer: WebGLBuffer;
 
     private gl: WebGLRenderingContext;
+    private static MiterLimit = 1.5;
 
     @computed get hasValidData() {
         if (!this.indices || !this.vertexData) {
@@ -29,9 +28,7 @@ export class ContourStore {
     @action setContourData = (indexOffsets: Int32Array, vertexData: Float32Array) => {
         // Clear existing data to remove data buffers
         this.clearData();
-
         const numVertices = vertexData.length / 2;
-
         this.vertexData = ContourStore.DuplicateVertexData(vertexData);
         this.indexOffsets = indexOffsets;
         this.normalData = ContourStore.GenerateLineNormals(vertexData, indexOffsets);
@@ -62,8 +59,8 @@ export class ContourStore {
         const normalData = new Float32Array(numVertices * 4);
 
         for (let i = 0; i < numPolyLines; i++) {
-            const startIndex = indexOffsets[i];
-            const endIndex = i < numPolyLines - 1 ? indexOffsets[i + 1] : numVertices;
+            const startIndex = indexOffsets[i] / 2;
+            const endIndex = i < numPolyLines - 1 ? indexOffsets[i + 1] / 2 : numVertices;
             ContourStore.FillSinglePolylineNormals(vertexData, startIndex, endIndex, normalData);
         }
         return normalData;
@@ -71,7 +68,6 @@ export class ContourStore {
 
     private static FillSinglePolylineNormals(vertexData: Float32Array, startIndex: number, endIndex: number, normalData: Float32Array) {
         const numVertices = endIndex - startIndex;
-
         if (numVertices < 2) {
             return;
         }
@@ -81,7 +77,19 @@ export class ContourStore {
         let currentPoint = {x: vertexData[vertexOffset], y: vertexData[vertexOffset + 1]};
         let nextPoint = {x: vertexData[vertexOffset + 2], y: vertexData[vertexOffset + 3]};
 
-        const firstDir = normalize2D(subtract2D(nextPoint, currentPoint));
+        let firstDir = normalize2D(subtract2D(nextPoint, currentPoint));
+
+        if (!isFinite(firstDir.x) || !isFinite(firstDir.y)) {
+            // Find first non-degenerate vertex and use that as the initial direction
+            for (let i = 2; i < numVertices - 1; i++) {
+                const newOffset = (startIndex + i) * 2;
+                nextPoint = {x: vertexData[newOffset], y: vertexData[newOffset + 1]};
+                firstDir = normalize2D(subtract2D(nextPoint, currentPoint));
+                if (isFinite(firstDir.x) && isFinite(firstDir.y)) {
+                    break;
+                }
+            }
+        }
         let prevDir = firstDir;
         let prevNormal: Point2D;
 
@@ -94,12 +102,21 @@ export class ContourStore {
             currentPoint = {x: vertexData[vertexOffset], y: vertexData[vertexOffset + 1]};
             nextPoint = {x: vertexData[vertexOffset + 2], y: vertexData[vertexOffset + 3]};
 
-            const currentDir = normalize2D(subtract2D(nextPoint, currentPoint));
+            let currentDir = normalize2D(subtract2D(nextPoint, currentPoint));
+            // Handle degenerate vertices
+            if (!isFinite(currentDir.x) || !isFinite(currentDir.y)) {
+                currentDir = prevDir;
+            }
+
             const currentNormal = perpVector2D(currentDir);
             const tangent = normalize2D(add2D(prevDir, currentDir));
             const tangentNormal = perpVector2D(tangent);
-            const mitreLength = 1.0 / dot2D(tangent, prevDir);
-            const computedNormal = scale2D(tangentNormal, mitreLength);
+            let miterLength = Math.min(1.0 / dot2D(tangent, prevDir), ContourStore.MiterLimit);
+            // Prevent mitre issues when going backwards
+            if (isNaN(miterLength)) {
+                miterLength = 1.0;
+            }
+            const computedNormal = scale2D(tangentNormal, miterLength);
 
             ContourStore.FillNormals(normalData, normalOffset, computedNormal);
 
@@ -113,13 +130,13 @@ export class ContourStore {
         const firstPoint = {x: vertexData[startIndex * 2], y: vertexData[startIndex * 2 + 1]};
         const lastPoint = {x: vertexData[(endIndex - 1) * 2], y: vertexData[(endIndex - 1) * 2 + 1]};
         const firstLastDist = length2D(subtract2D(firstPoint, lastPoint));
-        const loop = firstLastDist < 1e-3;
+        const loop = firstLastDist < 1e-6;
 
         if (loop) {
             // Join first and last lines
             const tangent = normalize2D(add2D(prevDir, firstDir));
             const tangentNormal = perpVector2D(tangent);
-            const mitreLength = 1.0 / dot2D(tangent, prevDir);
+            const mitreLength = Math.min(1.0 / dot2D(tangent, prevDir), ContourStore.MiterLimit);
             firstNorm = scale2D(tangentNormal, mitreLength);
             lastNorm = firstNorm;
         } else {
@@ -141,14 +158,11 @@ export class ContourStore {
 
     private static GenerateLineIndices(indexOffsets: Int32Array, numVertices: number) {
         const numPolyLines = indexOffsets.length;
-        const numLineSegments = 2 * (numVertices - numPolyLines);
-        const normalData = new Float32Array(numVertices * 4);
-
         const indices = [];
 
         for (let i = 0; i < numPolyLines; i++) {
-            const startIndex = indexOffsets[i];
-            const endIndex = i < numPolyLines - 1 ? indexOffsets[i + 1] : numVertices;
+            const startIndex = indexOffsets[i] / 2;
+            const endIndex = i < numPolyLines - 1 ? indexOffsets[i + 1] / 2 : numVertices;
 
             for (let j = startIndex; j < endIndex - 1; j++) {
                 const offset = j * 2;
@@ -160,30 +174,7 @@ export class ContourStore {
                 indices.push(offset);
             }
         }
-
         return new Int32Array(indices);
-
-        // const indices = new Int32Array(6 * (numLineSegments + 1));
-        // let indexCounter = 0;
-        // let lineCounter = 1;
-        // let endVertex = (lineCounter === numPolyLines) ? numVertices - 1 : indexOffsets[lineCounter] / 2 - 1;
-        // for (let i = 0; i < numVertices - 1; i++) {
-        //     // end current polyline if we've reached the end vertex
-        //     if (i >= endVertex) {
-        //         endVertex = (lineCounter === numPolyLines) ? numVertices - 1 : indexOffsets[lineCounter] / 2 - 1;
-        //         lineCounter++;
-        //     } else {
-        //         const i0 = i * 2;
-        //         indices[indexCounter] = i0;
-        //         indices[indexCounter + 1] = i0 + 1;
-        //         indices[indexCounter + 2] = i0 + 3;
-        //         indices[indexCounter + 3] = i0 + 3;
-        //         indices[indexCounter + 4] = i0 + 2;
-        //         indices[indexCounter + 5] = i0;
-        //         indexCounter += 6;
-        //     }
-        // }
-        // return indices;
     }
 
     private static GenerateLengthData(vertexData: Float32Array) {
@@ -203,7 +194,7 @@ export class ContourStore {
             lastPoint = currentPoint;
             cumulativeLength += currentLength;
             lengths[i] = cumulativeLength;
-            lengths[i + 1] = cumulativeLength;
+            lengths[i + 1] = -cumulativeLength;
         }
         return lengths;
     }

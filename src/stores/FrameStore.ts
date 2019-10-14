@@ -1,12 +1,11 @@
 import {action, computed, observable, autorun} from "mobx";
+import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {NumberRange} from "@blueprintjs/core";
 import {ASTSettingsString, PreferenceStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore, ContourConfigStore, ContourStore} from "stores";
 import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES, ProtobufProcessing} from "models";
+import {BackendService} from "services";
 import {clamp, frequencyStringFromVelocity, hexStringToRgba, velocityStringFromFrequency} from "utilities";
-import {BackendService} from "../services";
-import * as _ from "lodash";
 
 export interface FrameInfo {
     fileId: number;
@@ -338,37 +337,6 @@ export class FrameStore {
         this.renderConfig = new RenderConfigStore(preference);
         this.contourConfig = new ContourConfigStore(preference);
         this.contourStores = new Map<number, ContourStore>();
-        // TODO: remove this from testing
-        // Single square for loop testing
-        // const indexOffsets = new Int32Array([0]);
-        // const vertexData = new Float32Array([0, 0, 0, 200, 200, 200, 200, 0, 0, 0]);
-        // Single triangle for loop testing
-        // const indexOffsets = new Int32Array([0]);
-        // const vertexData = new Float32Array([0, 0, 0, 200, 200, 200, 0, 0]);
-        // Single square with missing side for loop testing
-        // const indexOffsets = new Int32Array([0]);
-        // const vertexData = new Float32Array([0, 0, 0, 200, 200, 200, 200, 0]);
-        // Polygon for loop testing
-        // const N = 4;
-        // const indexOffsets = new Int32Array([0]);
-        // const vertexData = new Float32Array((N + 1) * 2);
-        // for (let i = 0; i <= N; i++) {
-        //     vertexData[i * 2] = 100 * Math.cos(i * 2.0 * Math.PI / N);
-        //     vertexData[i * 2 + 1] = 100 * Math.sin(i * 2.0 * Math.PI / N);
-        // }
-
-        // const vertexData = new Float32Array([0, 0, 0, 200, 200, 200, 200, 0]);
-        // Squares
-        const indexOffsets = new Int32Array([0, 5]);
-        const vertexData = new Float32Array([0, 0, 0, 200, 200, 200, 200, 0, 0, 0, 300, 300, 300, 500, 500, 500, 500, 300, 300, 300]);
-        // zig-zags
-        // const indexOffsets = new Int32Array([0]);
-        // const vertexData = new Float32Array([0, 0, 100, 100, 200, 0, 300, 100, 400, 0, 500, 100, 600, 0, 0, 300, 100, 400, 200, 300, 300, 400, 400, 300, 500, 400, 600, 300]);
-
-        const dummyContours = new ContourStore();
-        dummyContours.setContourData(indexOffsets, vertexData);
-        this.contourStores.set(1, dummyContours);
-
         this.renderType = RasterRenderType.NONE;
         this.moving = false;
 
