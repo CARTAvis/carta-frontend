@@ -18,7 +18,7 @@ import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent"
 import {ColorPickerComponent} from "components/Shared";
 import {Theme, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore, FrameScaling, RegionStore, RenderConfigStore} from "stores";
-import {hexStringToRgba} from "utilities";
+import {hexStringToRgba, parseBoolean} from "utilities";
 import "./PreferenceDialogComponent.css";
 
 enum TABS {
@@ -239,9 +239,9 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         onValueChange={preference.setContourNumLevels}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Contour Thickness">
+                <FormGroup inline={true} label="Thickness">
                     <NumericInput
-                        placeholder="Contour Thickness"
+                        placeholder="Thickness"
                         min={0.5}
                         max={10}
                         value={preference.contourThickness}
@@ -250,7 +250,20 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         onValueChange={preference.setContourThickness}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Default Contour Color">
+                <FormGroup inline={true} label="Default Color Mode">
+                    <HTMLSelect value={preference.contourColormapEnabled ? 1 : 0} onChange={(ev) => preference.setContourColormapEnabled(parseInt(ev.currentTarget.value) > 0)}>
+                        <option key={0} value={0}>Constant Color</option>
+                        <option key={1} value={1}>Color-mapped</option>
+                    </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="Default Color Map">
+                    <ColormapComponent
+                        inverted={false}
+                        selectedItem={preference.contourColormap}
+                        onItemSelect={(selected) => { preference.setContourColormap(selected); }}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Default Color">
                     <ColorPickerComponent
                         color={preference.contourColor}
                         presetColors={RegionStore.SWATCH_COLORS}

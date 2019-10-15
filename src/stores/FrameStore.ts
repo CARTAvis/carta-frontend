@@ -656,6 +656,9 @@ export class FrameStore {
         this.contourConfig.setBounds(this.renderConfig.scaleMinVal, this.renderConfig.scaleMaxVal);
         this.contourConfig.setNumComputedLevels(this.preference.contourNumLevels);
         this.contourConfig.setColor(hexStringToRgba(this.preference.contourColor));
+        this.contourConfig.setColormap(this.preference.colormap);
+        this.contourConfig.setColormapEnabled(this.preference.contourColormapEnabled);
+
         // TODO: Allow a different reference frame
         const contourParameters: CARTA.ISetContourParameters = {
             fileId: this.frameInfo.fileId,

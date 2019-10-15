@@ -3,18 +3,14 @@ import {RGBColor} from "react-color";
 import {PreferenceStore} from "./PreferenceStore";
 import {hexStringToRgba} from "../utilities";
 
-export enum ContourColorMode {
-    Constant = 0,
-    Colormapped = 1,
-    Custom = 2
-}
-
 export class ContourConfigStore {
     @observable enabled: boolean;
     @observable numComputedLevels: number;
     @observable lowerBound: number;
     @observable upperBound: number;
     @observable color: RGBColor;
+    @observable colormapEnabled: boolean;
+    @observable colormap: string;
     @observable dashLength: number;
     @observable manualLevelsEnabled: boolean;
     @observable manualLevels: number[];
@@ -50,6 +46,8 @@ export class ContourConfigStore {
         this.manualLevelsEnabled = false;
         this.numComputedLevels = this.preferenceStore.contourNumLevels;
         this.color = hexStringToRgba(this.preferenceStore.contourColor);
+        this.colormapEnabled = this.preferenceStore.contourColormapEnabled;
+        this.colormap = this.preferenceStore.contourColormap;
         this.manualLevels = [];
     }
 
@@ -84,4 +82,12 @@ export class ContourConfigStore {
     @action setDashLength(length: number) {
         this.dashLength = length;
     }
+
+    @action setColormap = (colormap: string) => {
+        this.colormap = colormap;
+    };
+
+    @action setColormapEnabled = (val: boolean) => {
+        this.colormapEnabled = val;
+    };
 }

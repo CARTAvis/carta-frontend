@@ -2,10 +2,10 @@ import {observable, computed, action, autorun} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {FrameScaling, RenderConfigStore, RegionStore, ContourColorMode} from "stores";
+import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
 import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore, LayoutStore} from "stores";
-import {isColorValid, parseBoolean} from "../utilities";
+import {isColorValid, parseBoolean} from "utilities";
 
 const PREFERENCE_KEYS = {
     theme: "theme",
@@ -25,7 +25,7 @@ const PREFERENCE_KEYS = {
     contourSmoothingFactor: "contourSmoothingFactor",
     contourNumLevels: "contourNumLevels",
     contourThickness: "contourThickness",
-    contourColorMode: "contourColorMode",
+    contourColormapEnabled: "contourColormapEnabled",
     contourColor: "contourColor",
     contourColormap: "contourColormap",
     astColor: "astColor",
@@ -64,7 +64,7 @@ const DEFAULTS = {
     contourSmoothingFactor: 4,
     contourNumLevels: 5,
     contourThickness: 1,
-    contourColorMode: 0,
+    contourColormapEnabled: false,
     contourColor: Colors.GREEN3,
     contourColormap: "viridis",
     astColor: 4,
@@ -106,7 +106,7 @@ export class PreferenceStore {
     @observable contourSmoothingFactor: number;
     @observable contourNumLevels: number;
     @observable contourThickness: number;
-    @observable contourColorMode: ContourColorMode;
+    @observable contourColormapEnabled: boolean;
     @observable contourColor: string;
     @observable contourColormap: string;
     @observable astColor: number;
@@ -216,6 +216,11 @@ export class PreferenceStore {
     };
 
     // getters for Contour Config
+    private getContourColormapEnabled = (): boolean => {
+        const colormapEnabled = localStorage.getItem(PREFERENCE_KEYS.contourColormapEnabled);
+        return parseBoolean(colormapEnabled, DEFAULTS.contourColormapEnabled);
+    };
+
     private getContourColormap = (): string => {
         const colormap = localStorage.getItem(PREFERENCE_KEYS.contourColormap);
         return colormap && RenderConfigStore.IsColormapValid(colormap) ? colormap : DEFAULTS.contourColormap;
@@ -543,8 +548,13 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.contourColor, color);
     };
 
+    @action setContourColormapEnabled = (val: boolean) => {
+        this.contourColormapEnabled = val;
+        localStorage.setItem(PREFERENCE_KEYS.contourColormapEnabled, String(val));
+    };
+
     @action setContourColormap = (colormap: string) => {
-        this.colormap = colormap;
+        this.contourColormap = colormap;
         localStorage.setItem(PREFERENCE_KEYS.contourColormap, colormap);
     };
 
@@ -642,6 +652,7 @@ export class PreferenceStore {
         this.setContourThickness(DEFAULTS.contourThickness);
         this.setContourColor(DEFAULTS.contourColor);
         this.setContourColormap(DEFAULTS.contourColormap);
+        this.setContourColormapEnabled(DEFAULTS.contourColormapEnabled);
     };
 
     @action resetWCSOverlaySettings = () => {
@@ -694,6 +705,7 @@ export class PreferenceStore {
         this.contourThickness = this.getContourThickness();
         this.contourColor = this.getContourColor();
         this.contourColormap = this.getContourColormap();
+        this.contourColormapEnabled = this.getContourColormapEnabled();
         this.astColor = this.getASTColor();
         this.astGridVisible = this.getASTGridVisible();
         this.astLabelsVisible = this.getASTLabelsVisible();

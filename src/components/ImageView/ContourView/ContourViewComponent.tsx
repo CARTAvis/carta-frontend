@@ -21,6 +21,7 @@ interface ShaderUniforms {
     DashLength: WebGLUniformLocation;
     LineColor: WebGLUniformLocation;
     LineThickness: WebGLUniformLocation;
+    CmapEnabled: WebGLUniformLocation;
     CmapValue: WebGLUniformLocation;
     CmapTexture: WebGLUniformLocation;
     NumCmaps: WebGLUniformLocation;
@@ -104,16 +105,22 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 const minVal = Math.min(...levels);
                 const maxVal = Math.max(...levels);
 
-                frame.contourStores.forEach((contourStore, level) => {
+                const color = frame.contourConfig.color;
+                if (color) {
+                    this.gl.uniform4f(this.shaderUniforms.LineColor, color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a || 1.0);
+                } else {
+                    this.gl.uniform4f(this.shaderUniforms.LineColor, 1, 1, 1, 1);
+                }
+                this.gl.uniform1i(this.shaderUniforms.CmapEnabled, frame.contourConfig.colormapEnabled ? 1 : 0);
 
-                    // Dash length in canvas pixels
-                    // const dashLength = level <= 0 ? 5 : 0;
-                    const dashLength = 0;
+                // Dash length in canvas pixels
+                // const dashLength = level <= 0 ? 5 : 0;
+                const dashLength = 0;
+                this.gl.uniform1f(this.shaderUniforms.DashLength, devicePixelRatio * dashLength);
+
+                frame.contourStores.forEach((contourStore, level) => {
                     const indices = contourStore.indices;
                     const numIndices = indices.length;
-
-                    // each vertex has x, y and length values
-                    this.gl.uniform1f(this.shaderUniforms.DashLength, devicePixelRatio * dashLength);
 
                     // Update buffers
                     contourStore.generateBuffers(this.gl);
@@ -126,7 +133,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                     this.gl.vertexAttribPointer(this.vertexLengthAttribute, 1, WebGLRenderingContext.FLOAT, false, 0, 0);
                     this.gl.bindBuffer(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, contourStore.indexBuffer);
 
-                    // TODO: Color should come from the level's color definition
                     let levelFraction: number;
                     if (minVal !== maxVal) {
                         levelFraction = (level - minVal) / (maxVal - minVal);
@@ -135,13 +141,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                     }
 
                     this.gl.uniform1f(this.shaderUniforms.CmapValue, levelFraction);
-
-                    const color = frame.contourConfig.color;
-                    if (color) {
-                        this.gl.uniform4f(this.shaderUniforms.LineColor, color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a || 1.0);
-                    } else {
-                        this.gl.uniform4f(this.shaderUniforms.LineColor, 1, 1, 1, 1);
-                    }
 
                     // Render all poly-lines in this level using the vertex buffer and index buffer
                     this.gl.drawElements(WebGLRenderingContext.TRIANGLES, numIndices, WebGLRenderingContext.UNSIGNED_INT, 0);
@@ -178,6 +177,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             DashLength: this.gl.getUniformLocation(shaderProgram, "uDashLength"),
             LineColor: this.gl.getUniformLocation(shaderProgram, "uLineColor"),
             LineThickness: this.gl.getUniformLocation(shaderProgram, "uLineThickness"),
+            CmapEnabled: this.gl.getUniformLocation(shaderProgram, "uCmapEnabled"),
             CmapValue: this.gl.getUniformLocation(shaderProgram, "uCmapValue"),
             CmapTexture: this.gl.getUniformLocation(shaderProgram, "uCmapTexture"),
             NumCmaps: this.gl.getUniformLocation(shaderProgram, "uNumCmaps"),
@@ -194,6 +194,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         if (frame) {
             const view = frame.requiredFrameView;
             const contourData = frame.contourStores;
+            const config = frame.contourConfig;
             contourData.forEach(contourStore => {
                 const indices = contourStore.indices;
                 const vertexData = contourStore.vertexData;

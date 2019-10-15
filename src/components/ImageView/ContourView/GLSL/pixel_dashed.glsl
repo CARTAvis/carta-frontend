@@ -5,6 +5,7 @@ varying float vLineSide;
 
 uniform float uDashLength;
 uniform vec4 uLineColor;
+uniform int uCmapEnabled;
 
 uniform sampler2D uCmapTexture;
 uniform float uCmapValue;
@@ -22,8 +23,14 @@ void main(void) {
         dashStrength = 1.0;
     }
 
-    float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
-    vec2 cmapCoords = vec2(uCmapValue, cmapYVal);
+    vec4 color;
+    if (uCmapEnabled > 0) {
+        float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
+        vec2 cmapCoords = vec2(uCmapValue, cmapYVal);
+        color = texture2D(uCmapTexture, cmapCoords);
+    } else {
+        color = uLineColor;
+    }
 
-    gl_FragColor = dashStrength * texture2D(uCmapTexture, cmapCoords);
+    gl_FragColor = dashStrength * color;
 }
