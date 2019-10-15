@@ -10,6 +10,7 @@ import {
 } from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {ColorResult} from "react-color";
+import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/ScalingComponent";
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
@@ -209,6 +210,13 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
 
         const contourConfigPanel = (
             <React.Fragment>
+                <FormGroup inline={true} label="Smoothing Mode">
+                    <HTMLSelect value={preference.contourSmoothingMode} onChange={(ev) => { preference.setContourSmoothingMode(Number(ev.currentTarget.value)); }}>
+                        <option key={CARTA.SmoothingMode.NoSmoothing} value={CARTA.SmoothingMode.NoSmoothing}>No Smoothing</option>
+                        <option key={CARTA.SmoothingMode.BlockAverage} value={CARTA.SmoothingMode.BlockAverage}>Block</option>
+                        <option key={CARTA.SmoothingMode.GaussianBlur} value={CARTA.SmoothingMode.GaussianBlur}>Gaussian</option>
+                    </HTMLSelect>
+                </FormGroup>
                 <FormGroup inline={true} label="Default Smoothing Factor">
                     <NumericInput
                         placeholder="Default Smoothing Factor"

@@ -662,7 +662,7 @@ export class FrameStore {
             referenceFileId: this.frameInfo.fileId,
             channel: this.requiredChannel,
             stokes: this.stokes,
-            smoothingMode: CARTA.SmoothingMode.GaussianBlur,
+            smoothingMode: this.preference.contourSmoothingMode,
             smoothingFactor: this.preference.contourSmoothingFactor,
             levels: this.contourConfig.levels,
             imageBounds: {

@@ -60,7 +60,7 @@ const DEFAULTS = {
     scalingGamma: 1,
     nanColorHex: "#137CBD",
     nanAlpha: 1,
-    contourSmoothingMode: CARTA.SmoothingMode.GaussianBlur,
+    contourSmoothingMode: CARTA.SmoothingMode.BlockAverage,
     contourSmoothingFactor: 4,
     contourNumLevels: 5,
     contourThickness: 1,
@@ -224,6 +224,16 @@ export class PreferenceStore {
     private getContourColor = (): string => {
         const contourColor = localStorage.getItem(PREFERENCE_KEYS.contourColor);
         return contourColor && isColorValid(contourColor) ? contourColor : DEFAULTS.contourColor;
+    };
+
+    private getContourSmoothingMode = (): CARTA.SmoothingMode => {
+        const val = localStorage.getItem(PREFERENCE_KEYS.contourSmoothingMode);
+        if (!val) {
+            return DEFAULTS.contourSmoothingMode;
+        }
+
+        const value = Number(val);
+        return value >= 0 && value <= 2 ? value : DEFAULTS.contourSmoothingMode;
     };
 
     private getContourSmoothingFactor = (): number => {
@@ -508,6 +518,11 @@ export class PreferenceStore {
     };
 
     // setters for contours
+    @action setContourSmoothingMode = (val: CARTA.SmoothingMode) => {
+        this.contourSmoothingMode = val;
+        localStorage.setItem(PREFERENCE_KEYS.contourSmoothingMode, val.toString());
+    };
+
     @action setContourSmoothingFactor = (val: number) => {
         this.contourSmoothingFactor = val;
         localStorage.setItem(PREFERENCE_KEYS.contourSmoothingFactor, val.toString());
@@ -622,6 +637,7 @@ export class PreferenceStore {
 
     @action resetContourConfigSettings = () => {
         this.setContourSmoothingFactor(DEFAULTS.contourSmoothingFactor);
+        this.setContourSmoothingMode(DEFAULTS.contourSmoothingMode);
         this.setContourNumLevels(DEFAULTS.contourNumLevels);
         this.setContourThickness(DEFAULTS.contourThickness);
         this.setContourColor(DEFAULTS.contourColor);
@@ -672,6 +688,7 @@ export class PreferenceStore {
         this.scalingGamma = this.getScalingGamma();
         this.nanColorHex = this.getNaNColorHex();
         this.nanAlpha = this.getNaNAlpha();
+        this.contourSmoothingMode = this.getContourSmoothingMode();
         this.contourSmoothingFactor = this.getContourSmoothingFactor();
         this.contourNumLevels = this.getContourNumLevels();
         this.contourThickness = this.getContourThickness();
