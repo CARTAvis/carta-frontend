@@ -320,7 +320,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
             this.onStageClick(ev);
         } else {
-            if (this.props.data || this.props.multiPlotData) {
+            if (this.props.data || (this.props.multiPlotData && this.props.multiPlotData.size > 0)) {
                 this.stageClickStartX = undefined;
                 this.stageClickStartY = undefined;
                 if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
@@ -358,7 +358,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     onStageMouseMove = (ev) => {
-        if (this.props.data || this.props.multiPlotData) {
+        if (this.props.data || (this.props.multiPlotData && this.props.multiPlotData.size > 0)) {
             const mouseEvent: MouseEvent = ev.evt;
             const chartArea = this.chartArea;
             let mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
@@ -431,7 +431,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     onStageWheel = (ev) => {
-        if ((this.props.data || this.props.multiPlotData) && this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
+        if ((this.props.data || (this.props.multiPlotData && this.props.multiPlotData.size > 0) ) && this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
             const wheelEvent: WheelEvent = ev.evt;
             const chartArea = this.chartArea;
             const lineHeight = 15;
@@ -843,7 +843,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 </Stage>
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
-                    visible={this.isMouseEntered && (this.props.data !== undefined || this.props.multiPlotData !== undefined)}
+                    visible={this.isMouseEntered && (this.props.data !== undefined || (this.props.multiPlotData && this.props.multiPlotData.size > 0))}
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />
