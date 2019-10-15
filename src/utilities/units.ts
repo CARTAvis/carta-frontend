@@ -24,6 +24,14 @@ export function frequencyStringFromVelocity(velocity: number, refFreq: number): 
     return null;
 }
 
+export function toExponential(val: number, decimals: number = 0): string {
+    if (isFinite(val) && isFinite(decimals) && decimals >= 0 && decimals <= 20) {
+      return val.toExponential(decimals);
+    }
+    // leave undefined or non-finite values as is (+- INF, NaN and undefined will still appear properly)
+    return String(val);
+}
+
 // According to MDN, toFixed only works for up to 20 decimals
 export function toFixed(val: number, decimals: number = 0): string {
     if (isFinite(val) && isFinite(decimals) && decimals >= 0 && decimals <= 20) {
@@ -37,11 +45,11 @@ export function formattedNotation(value: number): string {
     if (value === null || isNaN(value)) {
         return null;
     }
-    return value < 1e-2 ? value.toExponential(2) : toFixed(value, 2);
+    return value < 1e-2 ? toExponential(value, 2) : toFixed(value, 2);
 }
 
 export function formattedExponential(val: number, digits: number, unit: string = "", trim: boolean = true, pad: boolean = false) {
-    let valString = val.toExponential(digits);
+    let valString = toExponential(val, digits);
     if (trim) {
         // remove unnecessary trailing decimals
         valString = valString.replace(/0+e/, "e");

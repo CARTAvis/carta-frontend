@@ -11,7 +11,7 @@ import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent"
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
 import {AnimationState, FrameScaling, FrameStore, RenderConfigStore, WidgetConfig, WidgetProps} from "stores";
-import {clamp, toFixed} from "utilities";
+import {clamp, toExponential, toFixed} from "utilities";
 import {Point2D} from "models";
 import {CARTA} from "carta-protobuf";
 import "./RenderConfigComponent.css";
@@ -220,7 +220,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             let numberString;
             // Switch between standard and scientific notation
             if (this.widgetStore.cursorX < 1e-2) {
-                numberString = this.widgetStore.cursorX.toExponential(2);
+                numberString = toExponential(this.widgetStore.cursorX, 2);
             } else {
                 numberString = toFixed(this.widgetStore.cursorX, 2);
             }

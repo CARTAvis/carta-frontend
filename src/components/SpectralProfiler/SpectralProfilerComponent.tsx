@@ -12,7 +12,7 @@ import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarCompone
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
-import {binarySearchByX, clamp, formattedNotation, toFixed} from "utilities";
+import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
 import "./SpectralProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -317,7 +317,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     floatXStr = toFixed(nearest.point.x, 3);
                 }
                 const xLabel = cursorX.unit === "Channel" ? "Channel " + toFixed(nearest.point.x) : floatXStr + " " + cursorX.unit;
-                cursorString =  "(" + xLabel + ", " + nearest.point.y.toExponential(2) + ")";
+                cursorString =  "(" + xLabel + ", " + toExponential(nearest.point.y, 2) + ")";
             }
 
             profilerInfo.push(`${this.widgetStore.isMouseMoveIntoLinePlots ? "Cursor:" : "Data:"} ${cursorString}`);

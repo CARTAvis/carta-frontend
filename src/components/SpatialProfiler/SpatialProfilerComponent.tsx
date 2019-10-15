@@ -11,7 +11,7 @@ import {SpatialProfilerSettingsPanelComponent} from "./SpatialProfilerSettingsPa
 import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {binarySearchByX, clamp, formattedNotation, toFixed} from "utilities";
+import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
 import "./SpatialProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -365,7 +365,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             let cursorString = "";
             if (nearest && nearest.point) {
                 const xLabel = cursorX.unit === "Channel" ? "Channel " + toFixed(nearest.point.x) : nearest.point.x + " " + cursorX.unit;
-                cursorString =  "(" + xLabel + ", " + nearest.point.y.toExponential(2) + ")";
+                cursorString =  "(" + xLabel + ", " + toExponential(nearest.point.y, 2) + ")";
             }
 
             profilerInfo.push(`${this.widgetStore.isMouseMoveIntoLinePlots ? "Cursor:" : "Data:"} ${cursorString}`);

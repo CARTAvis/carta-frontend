@@ -11,7 +11,7 @@ import {PlotContainerComponent, TickType} from "./PlotContainer/PlotContainerCom
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import {Point2D} from "models";
-import {clamp} from "utilities";
+import {clamp, toExponential} from "utilities";
 import "./LinePlotComponent.css";
 
 export enum ZoomMode {
@@ -547,23 +547,23 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         let rows = [];
         if (plotName === "histogram") {
-            rows = this.props.data.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
+            rows = this.props.data.map(o => `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}`);
         } else {
             if (this.props.data && this.props.data.length) {
                 if (this.props.tickTypeX === TickType.Scientific) {
-                    rows = this.props.data.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
+                    rows = this.props.data.map(o => `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}`);
                 } else {
-                    rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+                    rows = this.props.data.map(o => `${o.x}\t${toExponential(o.y, 10)}`);
                 }
             } else if (this.props.multiPlotData && this.props.multiPlotData.size) {
                 this.props.multiPlotData.forEach((value, key) => {
                     if (key === StokesCoordinate.LinearPolarizationQ || key === StokesCoordinate.LinearPolarizationU) {
                         rows.push(`# ${key}\t`);
                         value.forEach(o => {
-                            rows.push(`${o.x}\t${o.y.toExponential(10)}`);
+                            rows.push(`${o.x}\t${toExponential(o.y, 10)}`);
                         });
                     } else {
-                        rows = value.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+                        rows = value.map(o => `${o.x}\t${toExponential(o.y, 10)}`);
                     }
                 });
             }

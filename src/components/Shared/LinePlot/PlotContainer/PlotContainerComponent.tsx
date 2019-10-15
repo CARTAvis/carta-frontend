@@ -3,7 +3,7 @@ import * as _ from "lodash";
 import {ChartArea, ChartData, ChartDataSets, ChartOptions} from "chart.js";
 import {Scatter} from "react-chartjs-2";
 import {Colors} from "@blueprintjs/core";
-import {clamp, hexStringToRgba, toFixed} from "utilities";
+import {clamp, hexStringToRgba, toExponential, toFixed} from "utilities";
 
 export enum TickType {
     Automatic,
@@ -193,14 +193,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
     };
 
     private static FormatTicksScientific = (value: number, index: number, values: number[]) => {
-        return value.toExponential(2);
+        return toExponential(value, 2);
     };
 
     private static FormatTicksInteger = (value: number, index: number, values: number[]) => {
-        if (value) {
-            return toFixed(value);
-        }
-        return value;
+        return toFixed(value);
     };
 
     private static FormatTicksAutomatic = (value: number, index: number, values: number[]) => {
