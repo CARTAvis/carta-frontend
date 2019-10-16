@@ -1,6 +1,7 @@
 import * as React from "react";
 import {Icon, NonIdealState, Spinner, HTMLTable, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import {toFixed} from "utilities";
 import "./FileListComponent.css";
 
 export class FileListComponent extends React.Component<{
@@ -137,11 +138,11 @@ export class FileListComponent extends React.Component<{
 
     private getFileSizeDisplay(sizeInBytes: number): string {
         if (sizeInBytes >= 1e9) {
-            return `${(sizeInBytes / 1e9).toFixed(1)} GB`;
+            return `${toFixed(sizeInBytes / 1e9, 1)} GB`;
         } else if (sizeInBytes >= 1e6) {
-            return `${(sizeInBytes / 1e6).toFixed(1)} MB`;
+            return `${toFixed(sizeInBytes / 1e6, 1)} MB`;
         } else if (sizeInBytes >= 1e3) {
-            return `${(sizeInBytes / 1e3).toFixed(1)} kB`;
+            return `${toFixed(sizeInBytes / 1e3, 1)} kB`;
         } else {
             return `${sizeInBytes} B`;
         }

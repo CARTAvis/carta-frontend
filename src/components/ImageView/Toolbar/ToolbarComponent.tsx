@@ -5,6 +5,7 @@ import {Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition,
 import {CARTA} from "carta-protobuf";
 import {exportImage} from "components";
 import {AppStore, RegionMode} from "stores";
+import {toFixed} from "utilities";
 import "./ToolbarComponent.css";
 
 export class ToolbarComponentProps {
@@ -56,7 +57,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             className += " docked";
         }
 
-        const currentZoomSpan = <span><br/><i><small>Current: {frame.zoomLevel.toFixed(2)}x</small></i></span>;
+        const currentZoomSpan = <span><br/><i><small>Current: {toFixed(frame.zoomLevel, 2)}x</small></i></span>;
         const tooltipPosition: PopoverPosition = this.props.vertical ? "left" : "bottom";
 
         const regionMenu = (

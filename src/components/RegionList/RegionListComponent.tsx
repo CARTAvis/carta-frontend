@@ -6,7 +6,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {RegionStore, WidgetConfig, WidgetProps} from "stores";
 import {Point2D} from "models";
-import {midpoint2D, minMax2D} from "utilities";
+import {midpoint2D, minMax2D, toFixed} from "utilities";
 import "./RegionListComponent.css";
 
 @observer
@@ -109,7 +109,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             }
             let pixelCenterEntry;
             if (isFinite(point.x) && isFinite(point.y)) {
-                pixelCenterEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>{`(${point.x.toFixed(1)}, ${point.y.toFixed(1)})`}</td>;
+                pixelCenterEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>{`(${toFixed(point.x, 1)}, ${toFixed(point.y, 1)})`}</td>;
             } else {
                 pixelCenterEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>Invalid</td>;
             }
@@ -118,10 +118,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (showSizeColumn) {
                 if (region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.POLYGON) {
                     const sizePoint = region.boundingBox;
-                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>{`(${sizePoint.x.toFixed(1)} \u00D7 ${sizePoint.y.toFixed(1)})`}</td>;
+                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>{`(${toFixed(sizePoint.x, 1)} \u00D7 ${toFixed(sizePoint.y, 1)})`}</td>;
                 } else if (region.regionType === CARTA.RegionType.ELLIPSE) {
                     const sizePoint = region.controlPoints[1];
-                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>{`maj: ${sizePoint.x.toFixed(1)}; min: ${sizePoint.y.toFixed(1)}`}</td>;
+                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>{`maj: ${toFixed(sizePoint.x, 1)}; min: ${toFixed(sizePoint.y, 1)}`}</td>;
                 } else {
                     pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}/>;
                 }
@@ -146,7 +146,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     <td style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>{RegionStore.RegionTypeString(region.regionType)}</td>
                     {pixelCenterEntry}
                     {showSizeColumn && pixelSizeEntry}
-                    {showRotationColumn && <td style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}}>{region.rotation.toFixed(1)}</td>}
+                    {showRotationColumn && <td style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}}>{toFixed(region.rotation, 1)}</td>}
                 </tr>
             );
         });

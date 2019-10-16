@@ -11,7 +11,7 @@ import {PlotContainerComponent, TickType} from "./PlotContainer/PlotContainerCom
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {StokesCoordinate} from "stores/widgets/StokesAnalysisWidgetStore";
 import {Point2D} from "models";
-import {clamp} from "utilities";
+import {clamp, toExponential} from "utilities";
 import "./LinePlotComponent.css";
 
 export enum ZoomMode {
@@ -320,7 +320,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
         if (mouseMoveDist.x < DRAG_THRESHOLD && mouseMoveDist.y < DRAG_THRESHOLD) {
             this.onStageClick(ev);
         } else {
-            if (this.props.data || this.props.multiPlotData) {
+            if (this.props.data || (this.props.multiPlotData && this.props.multiPlotData.size > 0)) {
                 this.stageClickStartX = undefined;
                 this.stageClickStartY = undefined;
                 if (this.isSelecting && this.zoomMode !== ZoomMode.NONE) {
@@ -358,7 +358,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     }
 
     onStageMouseMove = (ev) => {
-        if (this.props.data || this.props.multiPlotData) {
+        if (this.props.data || (this.props.multiPlotData && this.props.multiPlotData.size > 0)) {
             const mouseEvent: MouseEvent = ev.evt;
             const chartArea = this.chartArea;
             let mousePosX = clamp(mouseEvent.offsetX, chartArea.left - 1, chartArea.right + 1);
@@ -431,7 +431,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
     };
 
     onStageWheel = (ev) => {
-        if ((this.props.data || this.props.multiPlotData) && this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
+        if ((this.props.data || (this.props.multiPlotData && this.props.multiPlotData.size > 0) ) && this.props.scrollZoom && this.props.graphZoomedX && this.chartArea) {
             const wheelEvent: WheelEvent = ev.evt;
             const chartArea = this.chartArea;
             const lineHeight = 15;
@@ -547,23 +547,23 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
 
         let rows = [];
         if (plotName === "histogram") {
-            rows = this.props.data.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
+            rows = this.props.data.map(o => `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}`);
         } else {
             if (this.props.data && this.props.data.length) {
                 if (this.props.tickTypeX === TickType.Scientific) {
-                    rows = this.props.data.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
+                    rows = this.props.data.map(o => `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}`);
                 } else {
-                    rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+                    rows = this.props.data.map(o => `${o.x}\t${toExponential(o.y, 10)}`);
                 }
             } else if (this.props.multiPlotData && this.props.multiPlotData.size) {
                 this.props.multiPlotData.forEach((value, key) => {
                     if (key === StokesCoordinate.LinearPolarizationQ || key === StokesCoordinate.LinearPolarizationU) {
                         rows.push(`# ${key}\t`);
                         value.forEach(o => {
-                            rows.push(`${o.x}\t${o.y.toExponential(10)}`);
+                            rows.push(`${o.x}\t${toExponential(o.y, 10)}`);
                         });
                     } else {
-                        rows = value.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+                        rows = value.map(o => `${o.x}\t${toExponential(o.y, 10)}`);
                     }
                 });
             }
@@ -843,7 +843,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 </Stage>
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
-                    visible={this.isMouseEntered && (this.props.data !== undefined || this.props.multiPlotData !== undefined)}
+                    visible={this.isMouseEntered && (this.props.data !== undefined || (this.props.multiPlotData && this.props.multiPlotData.size > 0))}
                     exportImage={this.exportImage}
                     exportData={this.exportData}
                 />

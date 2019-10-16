@@ -4,8 +4,8 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, PreferenceStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore, ContourConfigStore, ContourStore} from "stores";
 import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES, ProtobufProcessing} from "models";
-import {BackendService} from "services";
-import {clamp, frequencyStringFromVelocity, hexStringToRgba, velocityStringFromFrequency} from "utilities";
+import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency, toFixed, hexStringToRgba} from "utilities";
+import {BackendService} from "../services";
 
 export interface FrameInfo {
     fileId: number;
@@ -273,7 +273,7 @@ export class FrameStore {
                 } else {
                     spectralName = channelInfo.channelType.name;
                 }
-                spectralInfo.spectralString = `${spectralName}:\u00a0${channelInfo.values[this.channel].toFixed(4)}\u00a0${channelInfo.channelType.unit}`;
+                spectralInfo.spectralString = `${spectralName}:\u00a0${toFixed(channelInfo.values[this.channel], 4)}\u00a0${channelInfo.channelType.unit}`;
 
                 const refFreq = this.referenceFrequency;
                 // Add velocity conversion
