@@ -151,6 +151,8 @@ export class OverlayTitleSettings {
     @observable customColor: boolean;
     @observable color: number;
     @observable hidden: boolean;
+    @observable customText: boolean;
+    @observable customTitleString: string;
 
     @computed get styleString() {
         let astString = new ASTSettingsString();
@@ -158,6 +160,7 @@ export class OverlayTitleSettings {
         astString.add("Font(Title)", this.font);
         astString.add("Size(Title)", this.fontSize);
         astString.add("Color(Title)", this.color, this.customColor);
+        astString.add("Title", this.customTitleString, this.customText);
         return astString.toString();
     }
 
@@ -168,6 +171,8 @@ export class OverlayTitleSettings {
         this.color = AST_DEFAULT_COLOR;
         this.font = 2;
         this.fontSize = 18;
+        this.customText = false;
+        this.customTitleString = "";
     }
 
     @computed get show() {
@@ -196,6 +201,14 @@ export class OverlayTitleSettings {
 
     @action setColor = (color: number) => {
         this.color = color;
+    };
+
+    @action setCustomText = (customTitle: boolean) => {
+        this.customText = customTitle;
+    };
+
+    @action setCustomTitleString = (customTitleString: string) => {
+        this.customTitleString = customTitleString;
     };
 }
 
@@ -565,6 +578,9 @@ export class OverlayLabelSettings {
     @observable color: number;
     @observable font: number;
     @observable fontSize: number;
+    @observable customText: boolean;
+    @observable customLabelX: string;
+    @observable customLabelY: string;
 
     constructor(readonly preference: PreferenceStore) {
         this.visible = preference.astLabelsVisible;
@@ -573,6 +589,9 @@ export class OverlayLabelSettings {
         this.font = 0;
         this.customColor = false;
         this.color = AST_DEFAULT_COLOR;
+        this.customText = false;
+        this.customLabelX = "";
+        this.customLabelY = "";
     }
 
     @computed get styleString() {
@@ -582,6 +601,8 @@ export class OverlayLabelSettings {
         astString.add("Font(TextLab)", this.font);
         astString.add("Size(TextLab)", this.fontSize);
         astString.add("Color(TextLab)", this.color, this.customColor);
+        astString.add("Label(1)", this.customLabelX, this.customText);
+        astString.add("Label(2)", this.customLabelY, this.customText);
 
         return astString.toString();
     }
@@ -613,6 +634,18 @@ export class OverlayLabelSettings {
     @action setFontSize(fontSize: number) {
         this.fontSize = fontSize;
     }
+
+    @action setCustomText = (val: boolean) => {
+        this.customText = val;
+    };
+
+    @action setCustomLabelX = (label: string) => {
+        this.customLabelX = label;
+    };
+
+    @action setCustomLabelY = (label: string) => {
+        this.customLabelY = label;
+    };
 }
 
 export class OverlayStore {
@@ -676,7 +709,8 @@ export class OverlayStore {
                     this.numbers.setDefaultFormatX("hms");
                     this.numbers.setDefaultFormatY("dms");
                     break;
-                case WCSType.AUTOMATIC: default:
+                case WCSType.AUTOMATIC:
+                default:
                     if ([SystemType.FK4, SystemType.FK5, SystemType.ICRS].indexOf(this.global.explicitSystem) > -1) {
                         this.numbers.setDefaultFormatX("hms");
                         this.numbers.setDefaultFormatY("dms");
