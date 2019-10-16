@@ -1,11 +1,13 @@
-import {action, computed, observable} from "mobx";
-import {CARTA} from "carta-protobuf";
-import {Colors} from "@blueprintjs/core";
-import {Point2D} from "models";
-import {BackendService} from "services";
-import {minMax2D, simplePolygonTest, simplePolygonPointTest, toFixed} from "utilities";
+import { action, computed, observable } from "mobx";
+import { CARTA } from "carta-protobuf";
+import { Colors } from "@blueprintjs/core";
+import { Point2D } from "models";
+import { BackendService } from "services";
+import { minMax2D, midpoint2D, scale2D, simplePolygonTest, simplePolygonPointTest, toFixed } from "utilities";
+import { FrameStore } from "stores";
 
 export const CURSOR_REGION_ID = 0;
+export const FOCUS_REGION_RATIO = 0.4;
 
 export class RegionStore {
     @observable fileId: number;
@@ -22,6 +24,7 @@ export class RegionStore {
     @observable creating: boolean;
     @observable locked: boolean;
     @observable isSimplePolygon: boolean;
+    @observable activeFrame: FrameStore;
 
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
@@ -85,8 +88,25 @@ export class RegionStore {
         return regionDashLength >= 0 && regionDashLength <= RegionStore.MAX_DASH_LENGTH;
     }
 
-    @computed get isTemporary() {
+    @computed get isTemporary(): boolean {
         return this.regionId < 0;
+    }
+
+    @computed get center(): Point2D {
+        if (!this.isValid) {
+            return {x: 0, y: 0};
+        }
+        switch (this.regionType) {
+            case CARTA.RegionType.POINT:
+            case CARTA.RegionType.RECTANGLE:
+            case CARTA.RegionType.ELLIPSE:
+                return this.controlPoints[0];
+            case CARTA.RegionType.POLYGON:
+                const bounds = minMax2D(this.controlPoints);
+                return midpoint2D(bounds.minPoint, bounds.maxPoint);
+            default:
+                return {x: 0, y: 0};
+        }
     }
 
     @computed get boundingBox(): Point2D {
@@ -95,9 +115,9 @@ export class RegionStore {
         }
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
-                return {x: this.controlPoints[1].x, y: this.controlPoints[1].y};
+                return this.controlPoints[1];
             case CARTA.RegionType.ELLIPSE:
-                return {x: 2 * this.controlPoints[1].x, y: 2 * this.controlPoints[1].y};
+                return scale2D(this.controlPoints[1], 2);
             case CARTA.RegionType.POLYGON:
                 const boundingBox = minMax2D(this.controlPoints);
                 return {x: boundingBox.maxPoint.x - boundingBox.minPoint.x, y: boundingBox.maxPoint.y - boundingBox.minPoint.y};
@@ -111,7 +131,7 @@ export class RegionStore {
         return box.x * box.y;
     }
 
-    @computed get isClosedRegion() {
+    @computed get isClosedRegion(): boolean {
         switch (this.regionType) {
             case CARTA.RegionType.RECTANGLE:
             case CARTA.RegionType.ELLIPSE:
@@ -123,7 +143,7 @@ export class RegionStore {
         }
     }
 
-    @computed get isValid() {
+    @computed get isValid(): boolean {
         // All regions require at least one control point
         if (!this.controlPoints || !this.controlPoints.length) {
             return false;
@@ -143,7 +163,7 @@ export class RegionStore {
         }
     }
 
-    @computed get nameString() {
+    @computed get nameString(): string {
         if (this.regionId === CURSOR_REGION_ID) {
             return "Cursor";
         } else if (this.name) {
@@ -153,7 +173,7 @@ export class RegionStore {
         }
     }
 
-    @computed get regionProperties() {
+    @computed get regionProperties(): string {
         const point = this.controlPoints[0];
         const center = isFinite(point.x) && isFinite(point.y) ? `${toFixed(point.x, 1)}pix, ${toFixed(point.y, 1)}pix` : "Invalid";
 
@@ -179,9 +199,10 @@ export class RegionStore {
         }
     }
 
-    constructor(backendService: BackendService, fileId: number, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1,
+    constructor(backendService: BackendService, fileId: number, activeFrame: FrameStore,  controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1,
                 color: string = Colors.TURQUOISE5, lineWidth: number = 2, dashLength: number = 0, rotation: number = 0, name: string = "") {
         this.fileId = fileId;
+        this.activeFrame = activeFrame;
         this.controlPoints = controlPoints;
         this.regionType = regionType;
         this.regionId = regionId;
@@ -291,6 +312,17 @@ export class RegionStore {
     @action setLocked = (locked: boolean) => {
         if (this.regionId !== CURSOR_REGION_ID) {
             this.locked = locked;
+        }
+    };
+
+    @action focusCenter = () => {
+        if (this.activeFrame) {
+            this.activeFrame.setCenter(this.center.x, this.center.y);
+            
+            if (this.activeFrame.renderWidth < this.activeFrame.zoomLevel * this.boundingBox.x || this.activeFrame.renderHeight < this.activeFrame.zoomLevel * this.boundingBox.y) {
+                const zoomLevel = FOCUS_REGION_RATIO * Math.min(this.activeFrame.renderWidth / this.boundingBox.x, this.activeFrame.renderHeight / this.boundingBox.y);
+                this.activeFrame.setZoom(zoomLevel);
+            }
         }
     };
 
