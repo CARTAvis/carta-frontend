@@ -1,3 +1,5 @@
+import {toFixed} from "utilities";
+
 export class Point2D {
     x: number;
     y: number;
@@ -7,7 +9,7 @@ export class Point2D {
             return `(${point.x}, ${point.y})`;
         }
         else {
-            return `(${point.x.toFixed(decimals)}, ${point.y.toFixed(decimals)})`;
+            return `(${toFixed(point.x, decimals)}, ${toFixed(point.y, decimals)})`;
         }
     }
 }

@@ -13,7 +13,7 @@ import {StokesAnalysisProfilerInfoComponent} from "./ProfilerInfo/ProfilerInfoCo
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {ChannelInfo, Point2D} from "models";
-import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor} from "utilities";
+import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed} from "utilities";
 import "./StokesAnalysisComponent.css";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
@@ -122,7 +122,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 if (currentData && isFinite(currentData.qProgress) && isFinite(currentData.uProgress)) {
                     const minProgress = Math.min(currentData.qProgress, currentData.uProgress, currentData.iProgress);
                     if (minProgress < 1) {
-                        progressString = `[${(minProgress * 100).toFixed(0)}% complete]`;
+                        progressString = `[${toFixed(minProgress * 100)}% complete]`;
                     }
                     this.minProgress = minProgress;
                 }

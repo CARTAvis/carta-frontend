@@ -12,6 +12,7 @@ import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverl
 import {RegionViewComponent} from "./RegionView/RegionViewComponent";
 import {AnimationMode, AnimationState, RegionStore, WidgetConfig, WidgetProps} from "stores";
 import {CursorInfo, Point2D} from "models";
+import {toFixed} from "utilities";
 import "./ImageViewComponent.css";
 
 export const exportImage = (padding, darkTheme, imageName) => {
@@ -221,7 +222,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     />
                     <div style={{opacity: this.showRatioIndicator ? 1 : 0, left: imageRatioTagOffset.x, top: imageRatioTagOffset.y}} className={"tag-image-ratio"}>
                         <Tag large={true}>
-                            {effectiveWidth} x {effectiveHeight} ({(effectiveWidth / effectiveHeight).toFixed(2)})
+                            {effectiveWidth} x {effectiveHeight} ({toFixed(effectiveWidth / effectiveHeight, 2)})
                         </Tag>
                     </div>
                 </React.Fragment>

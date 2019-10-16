@@ -1,6 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Button, Classes, Dialog, ProgressBar, Tooltip} from "@blueprintjs/core";
+import {toFixed} from "utilities";
 
 interface TaskProgressDialogComponentProps {
     progress: number;
@@ -22,11 +23,11 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
             if (numSeconds > 60) {
                 const numMinutes = Math.floor(numSeconds / 60);
                 const remainingSeconds = Math.floor(numSeconds - numMinutes * 60);
-                const secondsText = remainingSeconds >= 10 ? remainingSeconds.toFixed(0) : `0${remainingSeconds.toFixed(0)}`;
+                const secondsText = remainingSeconds >= 10 ? toFixed(remainingSeconds) : `0${toFixed(remainingSeconds)}`;
                 timeRemainingText = `${numMinutes}m${secondsText}s`;
             } else {
                 const remainingSeconds = Math.floor(numSeconds);
-                const secondsText = remainingSeconds >= 10 ? remainingSeconds.toFixed(0) : `0${remainingSeconds.toFixed(0)}`;
+                const secondsText = remainingSeconds >= 10 ? toFixed(remainingSeconds) : `0${toFixed(remainingSeconds)}`;
                 timeRemainingText = `${secondsText}s`;
             }
             titleText = `${this.props.text} (${timeRemainingText} left)`;

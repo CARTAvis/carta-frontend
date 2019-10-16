@@ -12,7 +12,7 @@ import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarCompone
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
-import {binarySearchByX, clamp, formattedNotation} from "utilities";
+import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
 import "./SpectralProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -202,7 +202,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 let progressString = "";
                 const currentData = this.plotData;
                 if (currentData && isFinite(currentData.progress) && currentData.progress < 1.0) {
-                    progressString = `[${(currentData.progress * 100).toFixed(0)}% complete]`;
+                    progressString = `[${toFixed(currentData.progress * 100)}% complete]`;
                 }
                 if (frame && coordinate) {
                     let coordinateString: string;
@@ -312,12 +312,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 if (diffLeft > 0 && diffLeft < 1e-6) {
                     floatXStr = formattedNotation(nearest.point.x);
                 } else if (diffLeft >= 1e-6  && diffLeft < 1e-3) {
-                    floatXStr = nearest.point.x.toFixed(6);
+                    floatXStr = toFixed(nearest.point.x, 6);
                 } else {
-                    floatXStr = nearest.point.x.toFixed(3);
+                    floatXStr = toFixed(nearest.point.x, 3);
                 }
-                const xLabel = cursorX.unit === "Channel" ? "Channel " + nearest.point.x.toFixed(0) : floatXStr + " " + cursorX.unit;
-                cursorString =  "(" + xLabel + ", " + nearest.point.y.toExponential(2) + ")";
+                const xLabel = cursorX.unit === "Channel" ? "Channel " + toFixed(nearest.point.x) : floatXStr + " " + cursorX.unit;
+                cursorString =  "(" + xLabel + ", " + toExponential(nearest.point.y, 2) + ")";
             }
 
             profilerInfo.push(`${this.widgetStore.isMouseMoveIntoLinePlots ? "Cursor:" : "Data:"} ${cursorString}`);
