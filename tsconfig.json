@@ -27,6 +27,7 @@
         "build",
         "wasm_src",
         "wasm_libs",
+        "protobuf",
         "scripts",
         "acceptance-tests",
         "webpack",
