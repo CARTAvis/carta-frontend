@@ -3,7 +3,7 @@ import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import {observable} from "mobx";
 import {Select, ItemRenderer} from "@blueprintjs/select";
-import {Button, Switch, IDialogProps, Intent, Tab, Tabs, TabId, NumericInput, FormGroup, MenuItem, HTMLSelect, Collapse} from "@blueprintjs/core";
+import {Button, Switch, IDialogProps, Intent, Tab, Tabs, TabId, NumericInput, FormGroup, MenuItem, HTMLSelect, Collapse, InputGroup} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ColorComponent} from "./ColorComponent";
 import {AppStore, LabelType, SystemType} from "stores";
@@ -155,6 +155,18 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => title.setFontSize(value)}
                     />
                 </FormGroup>
+                <FormGroup inline={true} label="Custom text" disabled={!title.visible}>
+                    <Switch
+                        checked={title.customText}
+                        disabled={!title.visible}
+                        onChange={(ev) => title.setCustomText(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <Collapse isOpen={title.customText}>
+                    <FormGroup inline={true} label="Title Text" disabled={!title.visible}>
+                        <InputGroup disabled={!title.visible} value={title.customTitleString} placeholder="Enter title text" onChange={ev => title.setCustomTitleString(ev.currentTarget.value)}/>
+                    </FormGroup>
+                </Collapse>
                 <FormGroup inline={true} label="Custom color" disabled={!title.visible}>
                     <Switch
                         checked={title.customColor}
@@ -513,6 +525,21 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => labels.setFontSize(value)}
                     />
                 </FormGroup>
+                <FormGroup inline={true} label="Custom text" disabled={!labels.visible}>
+                    <Switch
+                        checked={labels.customText}
+                        disabled={!labels.visible}
+                        onChange={(ev) => labels.setCustomText(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <Collapse isOpen={labels.customText}>
+                    <FormGroup inline={true} label="Label Text (X)" disabled={!labels.visible}>
+                        <InputGroup disabled={!labels.visible} value={labels.customLabelX} placeholder="Enter label text" onChange={ev => labels.setCustomLabelX(ev.currentTarget.value)}/>
+                    </FormGroup>
+                    <FormGroup inline={true} label="Label Text (Y)" disabled={!labels.visible}>
+                        <InputGroup disabled={!labels.visible} value={labels.customLabelY} placeholder="Enter label text" onChange={ev => labels.setCustomLabelY(ev.currentTarget.value)}/>
+                    </FormGroup>
+                </Collapse>
                 <FormGroup inline={true} label="Custom color" disabled={!labels.visible}>
                     <Switch
                         checked={labels.customColor}

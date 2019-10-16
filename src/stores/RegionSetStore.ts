@@ -61,7 +61,7 @@ export class RegionSetStore {
     };
 
     private addRegion(points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId()) {
-        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, points, regionType, regionId,
+        const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, this.frame, points, regionType, regionId,
             this.regionPreference.color, this.regionPreference.lineWidth, this.regionPreference.dashLength, rotation);
         this.regions.push(region);
         if (!temporary) {
