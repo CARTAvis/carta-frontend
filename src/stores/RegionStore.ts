@@ -1,10 +1,10 @@
-import {action, computed, observable} from "mobx";
-import {CARTA} from "carta-protobuf";
-import {Colors} from "@blueprintjs/core";
-import {Point2D} from "models";
-import {BackendService} from "services";
-import {FrameStore} from "stores";
-import {minMax2D, midpoint2D, scale2D, simplePolygonTest, simplePolygonPointTest} from "utilities";
+import { action, computed, observable } from "mobx";
+import { CARTA } from "carta-protobuf";
+import { Colors } from "@blueprintjs/core";
+import { Point2D } from "models";
+import { BackendService } from "services";
+import { minMax2D, midpoint2D, scale2D, simplePolygonTest, simplePolygonPointTest, toFixed } from "utilities";
+import { FrameStore } from "stores";
 
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
@@ -175,25 +175,25 @@ export class RegionStore {
 
     @computed get regionProperties(): string {
         const point = this.controlPoints[0];
-        const center = isFinite(point.x) && isFinite(point.y) ? `${point.x.toFixed(1)}pix, ${point.y.toFixed(1)}pix` : "Invalid";
+        const center = isFinite(point.x) && isFinite(point.y) ? `${toFixed(point.x, 1)}pix, ${toFixed(point.y, 1)}pix` : "Invalid";
 
         switch (this.regionType) {
             case CARTA.RegionType.POINT:
                 return `Point (pixel) [${center}]`;
             case CARTA.RegionType.RECTANGLE:
                 return `rotbox[[${center}], ` +
-                    `[${this.controlPoints[1].x.toFixed(1)}pix, ${this.controlPoints[1].y.toFixed(1)}pix], ` +
-                    `${this.rotation.toFixed(1)}deg]`;
+                    `[${toFixed(this.controlPoints[1].x, 1)}pix, ${toFixed(this.controlPoints[1].y, 1)}pix], ` +
+                    `${toFixed(this.rotation, 1)}deg]`;
             case CARTA.RegionType.ELLIPSE:
                 return `ellipse[[${center}], ` +
-                    `[${this.controlPoints[1].x.toFixed(1)}pix, ${this.controlPoints[1].y.toFixed(1)}pix], ` +
-                    `${this.rotation.toFixed(1)}deg]`;
+                    `[${toFixed(this.controlPoints[1].x, 1)}pix, ${toFixed(this.controlPoints[1].y, 1)}pix], ` +
+                    `${toFixed(this.rotation, 1)}deg]`;
             case CARTA.RegionType.POLYGON:
                 // TODO: Region properties
                 const bounds = minMax2D(this.controlPoints);
                 return `polygon[[${center}], ` +
-                    `[${bounds.maxPoint.x.toFixed(1)}pix, ${bounds.maxPoint.y.toFixed(1)}pix], ` +
-                    `${this.rotation.toFixed(1)}deg]`;
+                    `[${toFixed(bounds.maxPoint.x, 1)}pix, ${toFixed(bounds.maxPoint.y, 1)}pix], ` +
+                    `${toFixed(this.rotation, 1)}deg]`;
             default:
                 return "Not Implemented";
         }

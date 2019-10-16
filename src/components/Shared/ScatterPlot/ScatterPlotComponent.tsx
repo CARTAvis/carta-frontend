@@ -11,7 +11,7 @@ import {PlotContainerComponent, TickType} from "components/Shared/LinePlot/PlotC
 import {ToolbarComponent} from "components/Shared/LinePlot/Toolbar/ToolbarComponent";
 import {ZoomMode, InteractionMode} from "components/Shared/LinePlot/LinePlotComponent";
 import {Point2D} from "models";
-import {clamp} from "utilities";
+import {clamp, toExponential} from "utilities";
 import "./ScatterPlotComponent.css";
 
 type Point3D = { x: number, y: number, z?: number };
@@ -324,13 +324,13 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
 
         let rows = [];
         if (plotName === "histogram") {
-            rows = this.props.data.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
+            rows = this.props.data.map(o => `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}`);
         } else {
             if (this.props.data && this.props.data.length) {
                 if (this.props.tickTypeX === TickType.Scientific) {
-                    rows = this.props.data.map(o => `${o.x.toExponential(10)}\t${o.y.toExponential(10)}`);
+                    rows = this.props.data.map(o => `${toExponential(o.x, 10)}\t${toExponential(o.y, 10)}`);
                 } else {
-                    rows = this.props.data.map(o => `${o.x}\t${o.y.toExponential(10)}`);
+                    rows = this.props.data.map(o => `${o.x}\t${toExponential(o.y, 10)}`);
                 }
             }
         }

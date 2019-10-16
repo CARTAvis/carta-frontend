@@ -3,6 +3,7 @@ import {Colors} from "@blueprintjs/core";
 import {action, autorun, computed, observable} from "mobx";
 import {FrameStore, PreferenceStore} from "stores";
 import {WCSType} from "models";
+import {toFixed} from "utilities";
 
 const AST_DEFAULT_COLOR = 4; // blue
 
@@ -90,7 +91,7 @@ export class OverlayGlobalSettings {
         let astString = new ASTSettingsString();
         astString.add("Labelling", this.labelType);
         astString.add("Color", this.color);
-        astString.add("Tol", (this.tolerance / 100).toFixed(2), (this.tolerance >= 0.001)); // convert to fraction
+        astString.add("Tol", toFixed(this.tolerance / 100, 2), (this.tolerance >= 0.001)); // convert to fraction
         astString.add("System", this.explicitSystem);
         return astString.toString();
     }
@@ -312,8 +313,8 @@ export class OverlayTickSettings {
         astString.add("MinTick(2)", this.densityY, this.customDensity);
         astString.add("Color(Ticks)", this.color, this.customColor);
         astString.add("Width(Ticks)", this.width, (this.width > 0));
-        astString.add("MinTickLen", (this.length / 100).toFixed(2)); // convert to fraction
-        astString.add("MajTickLen", (this.majorLength / 100).toFixed(2)); // convert to fraction
+        astString.add("MinTickLen", toFixed(this.length / 100, 2)); // convert to fraction
+        astString.add("MajTickLen", toFixed(this.majorLength / 100, 2)); // convert to fraction
         return astString.toString();
     }
 

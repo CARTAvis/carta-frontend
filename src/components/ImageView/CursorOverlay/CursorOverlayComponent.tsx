@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {CSSProperties} from "react";
 import {CursorInfo, SpectralInfo} from "models";
-import {formattedExponential} from "utilities";
+import {formattedExponential, toFixed} from "utilities";
 import "./CursorOverlayComponent.css";
 
 class CursorOverlayProps {
@@ -36,10 +36,10 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             infoStrings.push(`WCS:\u00a0(${cursorInfo.infoWCS.x},\u00a0${cursorInfo.infoWCS.y})`);
         }
         if (this.props.showCanvas) {
-            infoStrings.push(`Canvas:\u00a0(${cursorInfo.posCanvasSpace.x.toFixed(0)},\u00a0${cursorInfo.posCanvasSpace.y.toFixed(0)})`);
+            infoStrings.push(`Canvas:\u00a0(${toFixed(cursorInfo.posCanvasSpace.x)},\u00a0${toFixed(cursorInfo.posCanvasSpace.y)})`);
         }
         if (this.props.showImage) {
-            infoStrings.push(`Image:\u00a0(${cursorInfo.posImageSpace.x.toFixed(0)},\u00a0${cursorInfo.posImageSpace.y.toFixed(0)})`);
+            infoStrings.push(`Image:\u00a0(${toFixed(cursorInfo.posImageSpace.x)},\u00a0${toFixed(cursorInfo.posImageSpace.y)})`);
         }
         if (this.props.showValue && this.props.cursorValue !== undefined) {
             let valueString = `Value:\u00a0${formattedExponential(this.props.cursorValue, 5, this.props.unit, true, true)}`;
