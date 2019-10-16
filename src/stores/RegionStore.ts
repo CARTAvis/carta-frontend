@@ -24,6 +24,7 @@ export class RegionStore {
     @observable creating: boolean;
     @observable locked: boolean;
     @observable isSimplePolygon: boolean;
+    @observable activeFrame: FrameStore;
 
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
@@ -198,9 +199,10 @@ export class RegionStore {
         }
     }
 
-    constructor(backendService: BackendService, fileId: number, controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1,
+    constructor(backendService: BackendService, fileId: number, activeFrame: FrameStore,  controlPoints: Point2D[], regionType: CARTA.RegionType, regionId: number = -1,
                 color: string = Colors.TURQUOISE5, lineWidth: number = 2, dashLength: number = 0, rotation: number = 0, name: string = "") {
         this.fileId = fileId;
+        this.activeFrame = activeFrame;
         this.controlPoints = controlPoints;
         this.regionType = regionType;
         this.regionId = regionId;
@@ -313,13 +315,13 @@ export class RegionStore {
         }
     };
 
-    @action focusCenter = (activeFrame: FrameStore) => {
-        if (activeFrame) {
-            activeFrame.setCenter(this.center.x, this.center.y);
+    @action focusCenter = () => {
+        if (this.activeFrame) {
+            this.activeFrame.setCenter(this.center.x, this.center.y);
             
-            if (activeFrame.renderWidth < activeFrame.zoomLevel * this.boundingBox.x || activeFrame.renderHeight < activeFrame.zoomLevel * this.boundingBox.y) {
-                const zoomLevel = FOCUS_REGION_RATIO * Math.min(activeFrame.renderWidth / this.boundingBox.x, activeFrame.renderHeight / this.boundingBox.y);
-                activeFrame.setZoom(zoomLevel);
+            if (this.activeFrame.renderWidth < this.activeFrame.zoomLevel * this.boundingBox.x || this.activeFrame.renderHeight < this.activeFrame.zoomLevel * this.boundingBox.y) {
+                const zoomLevel = FOCUS_REGION_RATIO * Math.min(this.activeFrame.renderWidth / this.boundingBox.x, this.activeFrame.renderHeight / this.boundingBox.y);
+                this.activeFrame.setZoom(zoomLevel);
             }
         }
     };

@@ -24,7 +24,7 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
         }
     };
 
-    private handleFocusClicked = () => this.props.appStore.activeFrame.regionSet.selectedRegion.focusCenter(this.props.appStore.activeFrame);
+    private handleFocusClicked = () => this.props.appStore.activeFrame.regionSet.selectedRegion.focusCenter();
 
     public render() {
         const appStore = this.props.appStore;

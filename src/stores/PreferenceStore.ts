@@ -554,7 +554,7 @@ export class PreferenceStore {
         this.eventsLoggingEnabled = this.getLogEvents();
 
         // setup region settings container (for AppearanceForm in PreferenceDialogComponent)
-        this.regionContainer = new RegionStore(null, -1, [{x: 0, y: 0}, {x: 1, y: 1}], this.getRegionType(), -1);
+        this.regionContainer = new RegionStore(null, -1, null, [{x: 0, y: 0}, {x: 1, y: 1}], this.getRegionType(), -1);
         this.regionContainer.color = this.getRegionColor();
         this.regionContainer.lineWidth = this.getRegionLineWidth();
         this.regionContainer.dashLength = this.getRegionDashLength();

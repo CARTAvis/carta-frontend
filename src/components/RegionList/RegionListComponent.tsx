@@ -20,8 +20,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable width: number = 0;
     @observable height: number = 0;
 
-    private static readonly LOCK_COLUMN_DEFAULT_WIDTH = 25;
-    private static readonly FOCUS_COLUMN_DEFAULT_WIDTH = 25;
+    private static readonly ACTION_COLUMN_DEFAULT_WIDTH = 25;
     private static readonly NAME_COLUMN_MIN_WIDTH = 50;
     private static readonly NAME_COLUMN_DEFAULT_WIDTH = 150;
     private static readonly TYPE_COLUMN_DEFAULT_WIDTH = 90;
@@ -53,7 +52,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     private handleFocusClicked = (ev: React.MouseEvent<HTMLTableDataCellElement, MouseEvent>, region: RegionStore) => {
-        region.focusCenter(this.props.appStore.activeFrame);
+        region.focusCenter();
         ev.stopPropagation();
     };
 
@@ -129,16 +128,16 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
             let lockEntry: React.ReactNode;
             if (region.regionId !== 0) {
-                lockEntry = <td style={{width: RegionListComponent.LOCK_COLUMN_DEFAULT_WIDTH}} onClick={(ev) => this.handleRegionLockClicked(ev, region)}><Icon icon={region.locked ? "lock" : "unlock"}/></td>;
+                lockEntry = <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={(ev) => this.handleRegionLockClicked(ev, region)}><Icon icon={region.locked ? "lock" : "unlock"}/></td>;
             } else {
-                lockEntry = <td style={{width: RegionListComponent.LOCK_COLUMN_DEFAULT_WIDTH}}/>;
+                lockEntry = <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}/>;
             }
 
             let focusEntry: React.ReactNode;
             if (region.regionId) {
-                focusEntry = <td style={{width: RegionListComponent.FOCUS_COLUMN_DEFAULT_WIDTH}} onClick={(ev) => this.handleFocusClicked(ev, region)}><Icon icon={"eye-open"}/></td>;
+                focusEntry = <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={(ev) => this.handleFocusClicked(ev, region)}><Icon icon={"eye-open"}/></td>;
             } else {
-                focusEntry = <td style={{width: RegionListComponent.FOCUS_COLUMN_DEFAULT_WIDTH}}/>;
+                focusEntry = <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}/>;
             }
 
             return (
@@ -163,8 +162,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 <HTMLTable style={{height: tableHeight}}>
                     <thead className={this.props.appStore.darkTheme ? "dark-theme" : ""}>
                     <tr>
-                        <th style={{width: RegionListComponent.LOCK_COLUMN_DEFAULT_WIDTH}}/>
-                        <th style={{width: RegionListComponent.FOCUS_COLUMN_DEFAULT_WIDTH}}/>
+                        <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}/>
+                        <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}/>
                         <th style={{width: nameWidth}}>Name</th>
                         <th style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>Type</th>
                         <th style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>Pixel Center</th>
