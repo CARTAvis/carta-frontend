@@ -6,6 +6,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {WidgetConfig, WidgetProps} from "stores";
 import {StatsWidgetStore} from "stores/widgets";
+import {toExponential} from "utilities";
 import "./StatsComponent.css";
 
 @observer
@@ -168,7 +169,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                     }
 
                     const value = this.statsData.statistics[index].value;
-                    const valueString = isFinite(value) ? `${(type === CARTA.StatsType.NumPixels) ? value : value.toExponential(4)} ${unitString}` : `${value}`;
+                    const valueString = isFinite(value) ? `${(type === CARTA.StatsType.NumPixels) ? value : toExponential(value, 4)} ${unitString}` : `${value}`;
                     rows.push((
                         <tr key={type}>
                             <td style={{width: StatsComponent.NAME_COLUMN_WIDTH}}>{name}</td>

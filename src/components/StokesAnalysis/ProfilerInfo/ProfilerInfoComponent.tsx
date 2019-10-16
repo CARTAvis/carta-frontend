@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {formattedNotation} from "utilities";
+import {formattedNotation, toExponential, toFixed} from "utilities";
 import "./ProfilerInfoComponent.css";
 
 class StokesAnalysisProfilerInfoComponentProps {
@@ -17,16 +17,16 @@ export class StokesAnalysisProfilerInfoComponent extends React.Component<StokesA
             return null;
         }
         const xLabel = this.props.cursorInfo.xUnit === "Channel" ?
-                    "Channel " + this.props.cursorInfo.channel.toFixed(0) :
+                    "Channel " + toFixed(this.props.cursorInfo.channel) :
                     formattedNotation(this.props.cursorInfo.channel) + " " + this.props.cursorInfo.xUnit;
         const qLabel = this.props.fractionalPol ? ", Q/I: " : ", Q: ";
         const uLabel = this.props.fractionalPol ? ", U/I: " : ", U: ";
         const piLabel = this.props.fractionalPol ? ", PI/I: " : ", PI: ";
         return "(" + xLabel 
-                + qLabel + this.props.cursorInfo.quValue.x.toExponential(2) 
-                + uLabel + this.props.cursorInfo.quValue.y.toExponential(2)
-                + piLabel + this.props.cursorInfo.pi.toExponential(2)
-                + ", PA: " + this.props.cursorInfo.pa.toFixed(2)
+                + qLabel + toExponential(this.props.cursorInfo.quValue.x, 2)
+                + uLabel + toExponential(this.props.cursorInfo.quValue.y, 2)
+                + piLabel + toExponential(this.props.cursorInfo.pi, 2)
+                + ", PA: " + toFixed(this.props.cursorInfo.pa, 2)
                 + ")";
     };
 

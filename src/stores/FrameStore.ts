@@ -4,7 +4,7 @@ import * as AST from "ast_wrapper";
 import {NumberRange} from "@blueprintjs/core";
 import {ASTSettingsString, PreferenceStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore} from "stores";
 import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES} from "models";
-import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency} from "utilities";
+import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency, toFixed} from "utilities";
 import {BackendService} from "../services";
 import * as _ from "lodash";
 
@@ -448,7 +448,7 @@ export class FrameStore {
                 } else {
                     spectralName = channelInfo.channelType.name;
                 }
-                spectralInfo.spectralString = `${spectralName}:\u00a0${channelInfo.values[this.channel].toFixed(4)}\u00a0${channelInfo.channelType.unit}`;
+                spectralInfo.spectralString = `${spectralName}:\u00a0${toFixed(channelInfo.values[this.channel], 4)}\u00a0${channelInfo.channelType.unit}`;
 
                 const refFreq = this.referenceFrequency;
                 // Add velocity conversion

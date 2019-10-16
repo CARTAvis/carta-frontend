@@ -11,7 +11,7 @@ import {SpatialProfilerSettingsPanelComponent} from "./SpatialProfilerSettingsPa
 import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {binarySearchByX, clamp, formattedNotation} from "utilities";
+import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
 import "./SpatialProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
@@ -364,8 +364,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             const nearest = binarySearchByX(this.plotData.values, this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
             let cursorString = "";
             if (nearest && nearest.point) {
-                const xLabel = cursorX.unit === "Channel" ? "Channel " + nearest.point.x.toFixed(0) : nearest.point.x + " " + cursorX.unit;
-                cursorString =  "(" + xLabel + ", " + nearest.point.y.toExponential(2) + ")";
+                const xLabel = cursorX.unit === "Channel" ? "Channel " + toFixed(nearest.point.x) : nearest.point.x + " " + cursorX.unit;
+                cursorString =  "(" + xLabel + ", " + toExponential(nearest.point.y, 2) + ")";
             }
 
             profilerInfo.push(`${this.widgetStore.isMouseMoveIntoLinePlots ? "Cursor:" : "Data:"} ${cursorString}`);
@@ -492,7 +492,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 // TODO: Get comments from region info, rather than directly from cursor position
                 if (appStore.activeFrame.cursorInfo) {
                     const comments: string[] = [];
-                    comments.push(`region (pixel): Point[${appStore.activeFrame.cursorInfo.posImageSpace.x.toFixed(0)}, ${appStore.activeFrame.cursorInfo.posImageSpace.y.toFixed(0)}]`);
+                    comments.push(`region (pixel): Point[${toFixed(appStore.activeFrame.cursorInfo.posImageSpace.x)}, ${toFixed(appStore.activeFrame.cursorInfo.posImageSpace.y)}]`);
                     if (appStore.activeFrame.cursorInfo.infoWCS) {
                         comments.push(`region (world): Point[${appStore.activeFrame.cursorInfo.infoWCS.x}, ${appStore.activeFrame.cursorInfo.infoWCS.y}]`);
                     }

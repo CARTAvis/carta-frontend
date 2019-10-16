@@ -7,6 +7,7 @@ import {exportImage} from "components";
 import {PresetLayout} from "models";
 import {AppStore, BrowserMode} from "stores";
 import {ConnectionStatus} from "services";
+import {toFixed} from "utilities";
 import "./RootMenuComponent.css";
 
 @observer
@@ -164,7 +165,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
 
         let connectivityClass = "connectivity-icon";
         let tooltip = "";
-        const latencyString = isFinite(appStore.backendService.endToEndPing) ? `${appStore.backendService.endToEndPing.toFixed(1)} ms` : "Unknown";
+        const latencyString = isFinite(appStore.backendService.endToEndPing) ? `${toFixed(appStore.backendService.endToEndPing, 1)} ms` : "Unknown";
         const userString = appStore.username ? ` as ${appStore.username}` : "";
         switch (connectionStatus) {
             case ConnectionStatus.PENDING:

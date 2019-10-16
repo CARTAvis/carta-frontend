@@ -13,7 +13,7 @@ import {StokesAnalysisProfilerInfoComponent} from "./ProfilerInfo/ProfilerInfoCo
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {ChannelInfo, Point2D} from "models";
-import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor} from "utilities";
+import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed} from "utilities";
 import "./StokesAnalysisComponent.css";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
@@ -33,6 +33,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         vertical: 0.5,
         horizontal: 2,
     };
+    private multicolorLineColorOutRange = "hsla(0, 0%, 50%, 0.5)";
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -121,7 +122,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 if (currentData && isFinite(currentData.qProgress) && isFinite(currentData.uProgress)) {
                     const minProgress = Math.min(currentData.qProgress, currentData.uProgress, currentData.iProgress);
                     if (minProgress < 1) {
-                        progressString = `[${(minProgress * 100).toFixed(0)}% complete]`;
+                        progressString = `[${toFixed(minProgress * 100)}% complete]`;
                     }
                     this.minProgress = minProgress;
                 }
@@ -361,7 +362,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return {xMin: -xLimit, xMax: xLimit, yMin: -yLimit, yMax: yLimit};
     }
 
-    private calculateXYborder(xValues: Array<number>, yValues: Array<number>, isLinePlots: boolean): Border {
+    private calculateXYborder(xValues: Array<number>, yValues: Array<number>, isLinePlots: boolean, type: StokesCoordinate): Border {
         let xMin = Math.min(...xValues.filter(n => {
             return !isNaN(n);
         }));
@@ -378,7 +379,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             xMax = localXMax;
         }
 
-        if (!this.widgetStore.isQUScatterPlotAutoScaledX && !isLinePlots) {
+        if (!this.widgetStore.isQUScatterPlotAutoScaledX && !isLinePlots && type === StokesCoordinate.PolarizationQU) {
             const localXMin = clamp(this.widgetStore.quScatterMinX, xMin, xMax);
             const localXMax = clamp(this.widgetStore.quScatterMaxX, xMin, xMax);
             xMin = localXMin;
@@ -392,7 +393,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             return !isNaN(n);
         }));
 
-        if (!this.widgetStore.isQUScatterPlotAutoScaledY && !isLinePlots) {
+        if (!this.widgetStore.isQUScatterPlotAutoScaledY && !isLinePlots && type === StokesCoordinate.PolarizationQU) {
             const localYMin = clamp(this.widgetStore.quScatterMinY, yMin, yMax);
             const localYMax = clamp(this.widgetStore.quScatterMaxY, yMin, yMax);
             yMin = localYMin;
@@ -403,6 +404,26 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             yMin = undefined;
             yMax = undefined;
         } 
+
+        if (!this.widgetStore.isPolAngleAutoScaledY && isLinePlots && type === StokesCoordinate.PolarizationAngle) {
+            const localYMin = clamp(this.widgetStore.polAngleMinY, yMin, yMax);
+            const localYMax = clamp(this.widgetStore.polAngleMaxY, yMin, yMax);
+            yMin = localYMin;
+            yMax = localYMax;
+        }
+        if (!this.widgetStore.isPolIntensityAutoScaledY && isLinePlots && type === StokesCoordinate.PolarizedIntensity) {
+            const localYMin = clamp(this.widgetStore.polIntensityMinY, yMin, yMax);
+            const localYMax = clamp(this.widgetStore.polIntensityMaxY, yMin, yMax);
+            yMin = localYMin;
+            yMax = localYMax;
+        }
+        if (!this.widgetStore.isQULinePlotAutoScaledY && isLinePlots && (type === StokesCoordinate.LinearPolarizationQ || type === StokesCoordinate.LinearPolarizationU)) {
+            const localYMin = clamp(this.widgetStore.quMinY, yMin, yMax);
+            const localYMax = clamp(this.widgetStore.quMaxY, yMin, yMax);
+            yMin = localYMin;
+            yMax = localYMax;
+        }
+
         else if (isLinePlots) {
             // extend y range a bit gor line plots
             const range = yMax - yMin;
@@ -412,10 +433,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return {xMin, xMax, yMin, yMax};
     }
 
-    private assembleLinePlotData(profile: Array<number>, channelInfo: ChannelInfo): { dataset: Array<Point2D>, border: Border } {
+    private assembleLinePlotData(profile: Array<number>, channelInfo: ChannelInfo, type: StokesCoordinate): { dataset: Array<Point2D>, border: Border } {
         if (profile && profile.length && profile.length === channelInfo.values.length) {
             let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
-            let border = this.calculateXYborder(channelValues, profile, true);
+            let border = this.calculateXYborder(channelValues, profile, true, type);
             let values: Array<{ x: number, y: number }> = [];
             let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1];
 
@@ -424,18 +445,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 const x = channelValues[index];
                 const y = profile[index];
 
-                if (x < border.xMin || x > border.xMax) {
-                    if (values.length) {
-                        break;
-                    } else {
-                        continue;
-                    }
-                }
-
-                if (!(this.widgetStore.scatterOutRangePointsIndex && this.widgetStore.scatterOutRangePointsIndex.indexOf(x) >= 0)) {
-                    values.push({x, y});
-                } else {
+                if (x < border.xMin || x > border.xMax || y < border.yMin || y > border.yMax) {
                     values.push({x: x, y: NaN});
+                } else {
+                    values.push({x, y});
                 }
             }
             return {dataset: values, border};
@@ -443,24 +456,26 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    private assembleScatterPlotData(qProfile: Array<number>, uProfile: Array<number>, channelInfo: ChannelInfo): { dataset: Array<{ x: number, y: number, z: number }>, border: Border } {
+    private assembleScatterPlotData(qProfile: Array<number>, uProfile: Array<number>, channelInfo: ChannelInfo, type: StokesCoordinate): { dataset: Array<{ x: number, y: number, z: number }>, border: Border } {
         if (qProfile && qProfile.length && uProfile && uProfile.length && qProfile.length === uProfile.length && qProfile.length === channelInfo.values.length) {
             let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
-            let border = this.calculateXYborder(qProfile, uProfile, false);
+            let border = this.calculateXYborder(qProfile, uProfile, false, type);
             let values: Array<{ x: number, y: number, z: number }> = [];
             let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
             // centered origin and equal scaler
             let equalScalerBorder = this.resizeScatterData(border.xMin, border.xMax, border.yMin, border.yMax);
-            this.widgetStore.scatterOutRangePointsIndex = [];
+            this.widgetStore.scatterOutRangePointsZIndex = [];
             for (let i = 0; i < channelValues.length; i++) {
                 let index = isIncremental ? i : channelValues.length - 1 - i;
                 const x = qProfile[index];
                 const y = uProfile[index];
                 const z = channelValues[index];
                 values.push({x, y, z});
-                if ( x < border.xMin || x > border.xMax || y < border.yMin || y > border.yMax) {
-                    this.widgetStore.scatterOutRangePointsIndex.push(z);   
-                }
+
+                // update line plot color array
+                if (x < border.xMin || x > border.xMax || y < border.yMin || y > border.yMax) {
+                    this.widgetStore.scatterOutRangePointsZIndex.push(z);  
+                } 
             }
             return {dataset: values, border: equalScalerBorder};
         }
@@ -489,7 +504,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return true;
     }
 
-    private fillColor(data: Array<{ x: number, y: number, z?: number }>, interactionBorder: { xMin: number, xMax: number }, zIndex: boolean): Array<string> {
+    private fillScatterColor(data: Array<{ x: number, y: number, z?: number }>, interactionBorder: { xMin: number, xMax: number }, zIndex: boolean): Array<string> {
         let scatterColors = [];
         if (data && data.length && zIndex && interactionBorder) {
             let xlinePlotRange = interactionBorder;
@@ -508,6 +523,22 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             });
         }
         return scatterColors;
+    }
+
+    private fillLineColor(data: Array<Point2D>, lineColor: string): Array<string> {
+        // n points have n-1 gaps between all points
+        let lineColors = [""];
+        if (data && data.length && lineColor) {
+            for (let index = 0; index < data.length; index++) {
+                const point = data[index];
+                if (!(this.widgetStore.scatterOutRangePointsZIndex && this.widgetStore.scatterOutRangePointsZIndex.indexOf(point.x) >= 0)) {
+                    lineColors.push(lineColor);
+                } else {
+                    lineColors.push(this.multicolorLineColorOutRange);
+                }
+            }
+        }
+        return lineColors;
     }
 
     private closestChannel(channel: number, data: Array<{ x: number, y: number, z?: number }>): number {
@@ -592,11 +623,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
         let channelInfo = frame.channelInfo;
         if (compositeProfile && channelInfo) {
-            let quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, channelInfo);
-            let piDic = this.assembleLinePlotData(compositeProfile.piProfile, channelInfo);
-            let paDic = this.assembleLinePlotData(compositeProfile.paProfile, channelInfo);
-            let qDic = this.assembleLinePlotData(compositeProfile.qProfile, channelInfo);
-            let uDic = this.assembleLinePlotData(compositeProfile.uProfile, channelInfo);
+            let quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, channelInfo, StokesCoordinate.PolarizationQU);
+            let piDic = this.assembleLinePlotData(compositeProfile.piProfile, channelInfo, StokesCoordinate.PolarizedIntensity);
+            let paDic = this.assembleLinePlotData(compositeProfile.paProfile, channelInfo, StokesCoordinate.PolarizationAngle);
+            let qDic = this.assembleLinePlotData(compositeProfile.qProfile, channelInfo, StokesCoordinate.LinearPolarizationQ);
+            let uDic = this.assembleLinePlotData(compositeProfile.uProfile, channelInfo, StokesCoordinate.LinearPolarizationU);
 
             return {
                 qValues: qDic, 
@@ -728,7 +759,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             graphClicked: this.onChannelChanged,
             markers: [],
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
-            interactionMode: true
+            interactionMode: true,
+            multiColorMultiLinesColors: new Map()
         };
 
         let piLinePlotProps: LinePlotComponentProps = {
@@ -740,7 +772,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             tickTypeY: TickType.Scientific,
             showXAxisTicks: false,
             showXAxisLabel: false,
-            multiPlotData: new Map(),
             xTickMarkLength: 0,
             graphCursorMoved: this.onGraphCursorMoved,
             isGroupSubPlot: true,
@@ -764,7 +795,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             tickTypeY: TickType.Integer,
             showXAxisTicks: true,
             showXAxisLabel: true,
-            multiPlotData: new Map(),
             graphCursorMoved: this.onGraphCursorMoved,
             isGroupSubPlot: true,
             scrollZoom: true,
@@ -826,10 +856,19 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 paLinePlotProps.opacity = lineOpacity;
                 quLinePlotProps.opacity = lineOpacity;
                 
-                const QlinePlotColor = appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2;
-                const UlinePlotColor = appStore.darkTheme ? Colors.ORANGE4 : Colors.ORANGE2;
-                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, QlinePlotColor);
-                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationU, UlinePlotColor);
+                const qlinePlotColor = appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2;
+                const ulinePlotColor = appStore.darkTheme ? Colors.ORANGE4 : Colors.ORANGE2;
+                const lineColor = appStore.darkTheme ? Colors.BLUE4 : Colors.BLUE2;
+                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationQ, qlinePlotColor);
+                quLinePlotProps.multiPlotBorderColor.set(StokesCoordinate.LinearPolarizationU, ulinePlotColor);
+
+                const loadData = (currentPlotData.qProgress === 1 && currentPlotData.uProgress === 1 && currentPlotData.iProgress === 1);
+                const qlinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.qValues.dataset, qlinePlotColor) : [];
+                const ulinePlotWithInteractionColor = loadData ? this.fillLineColor(currentPlotData.uValues.dataset, ulinePlotColor) : [];
+                quLinePlotProps.multiColorMultiLinesColors.set(StokesCoordinate.LinearPolarizationQ, qlinePlotWithInteractionColor);
+                quLinePlotProps.multiColorMultiLinesColors.set(StokesCoordinate.LinearPolarizationU, ulinePlotWithInteractionColor);
+                piLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.piValues.dataset, lineColor) : [];
+                paLinePlotProps.multiColorSingleLineColors = loadData ? this.fillLineColor(currentPlotData.paValues.dataset, lineColor) : [];
 
                 let qBorder = currentPlotData.qValues.border;
                 let uBorder = currentPlotData.uValues.border;
@@ -856,7 +895,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                         paLinePlotProps.xMax = this.widgetStore.sharedMaxX;
                         interactionBorder = {xMin: this.widgetStore.sharedMinX, xMax: this.widgetStore.sharedMaxX};
                     }
-                    let dataBackgroundColor = this.fillColor(quScatterPlotProps.data, interactionBorder, true);
+                    let dataBackgroundColor = this.fillScatterColor(quScatterPlotProps.data, interactionBorder, true);
                     quScatterPlotProps.dataBackgroundColor = dataBackgroundColor;
 
                     if (this.widgetStore.isQULinePlotAutoScaledY) {
