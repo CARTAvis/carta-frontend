@@ -1,12 +1,12 @@
 import * as React from "react";
-import {computed, observable} from "mobx";
-import {observer} from "mobx-react";
-import {HTMLTable, Icon, NonIdealState} from "@blueprintjs/core";
+import { computed, observable } from "mobx";
+import { observer } from "mobx-react";
+import { HTMLTable, Icon, NonIdealState } from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {CARTA} from "carta-protobuf";
-import {RegionStore, WidgetConfig, WidgetProps} from "stores";
-import {Point2D} from "models";
-import {midpoint2D, minMax2D, toFixed} from "utilities";
+import { CARTA } from "carta-protobuf";
+import { RegionStore, WidgetConfig, WidgetProps } from "stores";
+import { Point2D} from "models";
+import { toFixed } from "utilities";
 import "./RegionListComponent.css";
 
 @observer
@@ -21,10 +21,10 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     @observable width: number = 0;
     @observable height: number = 0;
 
-    private static readonly LOCK_COLUMN_DEFAULT_WIDTH = 25;
+    private static readonly ACTION_COLUMN_DEFAULT_WIDTH = 25;
     private static readonly NAME_COLUMN_MIN_WIDTH = 50;
-    private static readonly NAME_COLUMN_DEFAULT_WIDTH = 160;
-    private static readonly TYPE_COLUMN_DEFAULT_WIDTH = 80;
+    private static readonly NAME_COLUMN_DEFAULT_WIDTH = 150;
+    private static readonly TYPE_COLUMN_DEFAULT_WIDTH = 90;
     private static readonly CENTER_COLUMN_DEFAULT_WIDTH = 120;
     private static readonly SIZE_COLUMN_DEFAULT_WIDTH = 160;
     private static readonly ROTATION_COLUMN_DEFAULT_WIDTH = 80;
@@ -49,6 +49,11 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
     private handleRegionLockClicked = (ev: React.MouseEvent<HTMLTableDataCellElement, MouseEvent>, region: RegionStore) => {
         region.toggleLock();
+        ev.stopPropagation();
+    };
+
+    private handleFocusClicked = (ev: React.MouseEvent<HTMLTableDataCellElement, MouseEvent>, region: RegionStore) => {
+        region.focusCenter();
         ev.stopPropagation();
     };
 
@@ -100,13 +105,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
         const selectedRegion = frame.regionSet.selectedRegion;
 
         const rows = this.validRegions.map(region => {
-            let point: Point2D;
-            if (region.regionType === CARTA.RegionType.POLYGON) {
-                const bounds = minMax2D(region.controlPoints);
-                point = midpoint2D(bounds.minPoint, bounds.maxPoint);
-            } else {
-                point = region.controlPoints[0];
-            }
+            let point: Point2D = region.center;
+            
             let pixelCenterEntry;
             if (isFinite(point.x) && isFinite(point.y)) {
                 pixelCenterEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>{`(${toFixed(point.x, 1)}, ${toFixed(point.y, 1)})`}</td>;
@@ -129,9 +129,16 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
             let lockEntry: React.ReactNode;
             if (region.regionId !== 0) {
-                lockEntry = <td style={{width: RegionListComponent.LOCK_COLUMN_DEFAULT_WIDTH}} onClick={(ev) => this.handleRegionLockClicked(ev, region)}><Icon icon={region.locked ? "lock" : "unlock"}/></td>;
+                lockEntry = <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={(ev) => this.handleRegionLockClicked(ev, region)}><Icon icon={region.locked ? "lock" : "unlock"}/></td>;
             } else {
-                lockEntry = <td style={{width: RegionListComponent.LOCK_COLUMN_DEFAULT_WIDTH}}/>;
+                lockEntry = <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}/>;
+            }
+
+            let focusEntry: React.ReactNode;
+            if (region.regionId) {
+                focusEntry = <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={(ev) => this.handleFocusClicked(ev, region)}><Icon icon={"eye-open"}/></td>;
+            } else {
+                focusEntry = <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}/>;
             }
 
             return (
@@ -141,7 +148,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     onClick={() => frame.regionSet.selectRegion(region)}
                     onDoubleClick={this.props.appStore.showRegionDialog}
                 >
-                    {lockEntry}
+                    {lockEntry}{focusEntry}
                     <td style={{width: nameWidth}}>{region.nameString}</td>
                     <td style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>{RegionStore.RegionTypeString(region.regionType)}</td>
                     {pixelCenterEntry}
@@ -156,7 +163,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 <HTMLTable style={{height: tableHeight}}>
                     <thead className={this.props.appStore.darkTheme ? "dark-theme" : ""}>
                     <tr>
-                        <th style={{width: RegionListComponent.LOCK_COLUMN_DEFAULT_WIDTH}}/>
+                        <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}/>
+                        <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}/>
                         <th style={{width: nameWidth}}>Name</th>
                         <th style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>Type</th>
                         <th style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>Pixel Center</th>
