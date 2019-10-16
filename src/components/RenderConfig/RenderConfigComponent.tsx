@@ -204,6 +204,15 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     };
 
+    handleClearContours = () => {
+        const appStore = this.props.appStore;
+        if (!appStore || !appStore.activeFrame) {
+            return;
+        }
+
+        appStore.activeFrame.clearContours();
+    };
+
     onMinMoved = (x: number) => {
         const frame = this.props.appStore.activeFrame;
         // Check bounds first, to make sure the max isn't being moved below the min
@@ -404,8 +413,11 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                             onKeyDown={this.handleScaleMaxChange}
                         />
                     </FormGroup>
-                    <Button onClick={this.handleApplyContours}>Apply Contours</Button>
                     {this.width < histogramCutoff && percentileSelectDiv}
+                    <ButtonGroup>
+                        <Button onClick={this.handleApplyContours}>Apply Contours</Button>
+                        <Button onClick={this.handleClearContours}>Clear</Button>
+                    </ButtonGroup>
                 </div>
                 <TaskProgressDialogComponent
                     isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}

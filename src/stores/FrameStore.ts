@@ -680,6 +680,12 @@ export class FrameStore {
         this.backendService.setContourParameters(contourParameters);
     };
 
+    @action clearContours = () => {
+        // Clear up GPU resources
+        this.contourStores.forEach(contourStore => contourStore.clearData());
+        this.contourStores.clear();
+    };
+
     // Tests a list of headers for valid channel information in either 3rd or 4th axis
     private static FindChannelType(entries: CARTA.IHeaderEntry[]) {
         if (!entries || !entries.length) {
