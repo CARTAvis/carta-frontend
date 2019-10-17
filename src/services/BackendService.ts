@@ -4,8 +4,6 @@ import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
 import {LogStore, PreferenceStore, RegionStore} from "stores";
 import {DecompressionService} from "./DecompressionService";
-import {ProtobufProcessing} from "../models";
-const ZstdCodec = require("zstd-codec").ZstdCodec;
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -14,12 +12,6 @@ export enum ConnectionStatus {
 }
 
 export const INVALID_ANIMATION_ID = -1;
-
-let ZstdApi: any;
-
-ZstdCodec.run(zstd => {
-    ZstdApi = new zstd.Simple();
-});
 
 type HandlerFunction = (eventId: number, parsedMessage: any) => void;
 
