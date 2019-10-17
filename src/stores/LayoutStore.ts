@@ -137,16 +137,16 @@ export class LayoutStore {
     private validateUserLayouts = (userLayouts) => {
         if (userLayouts) {
             const jsonValidator = new Ajv();
-            Object.keys(userLayouts).forEach((userLayout) => {
+            Object.keys(userLayouts).forEach((layoutName) => {
                 // skip user layouts which have the same name as presets & those dont have correct key 'layoutVersion' as integer
-                if (!PresetLayout.isValid(userLayout) &&
-                    "layoutVersion" in userLayouts[userLayout] &&
-                    typeof userLayouts[userLayout].layoutVersion === "number" &&
-                    LayoutSchema.isLayoutVersionValid(userLayouts[userLayout].layoutVersion)
+                if (!PresetLayout.isValid(layoutName) &&
+                    "layoutVersion" in userLayouts[layoutName] &&
+                    typeof userLayouts[layoutName].layoutVersion === "number" &&
+                    LayoutSchema.isLayoutVersionValid(userLayouts[layoutName].layoutVersion)
                 ) {
-                    const version = userLayouts[userLayout].layoutVersion;
-                    if (jsonValidator.validate(LayoutSchema.LAYOUT_SCHEMAS[version], userLayouts[userLayout])) {
-                        this.layouts[userLayout] = userLayouts[userLayout];
+                    const version = userLayouts[layoutName].layoutVersion;
+                    if (jsonValidator.validate(LayoutSchema.LAYOUT_SCHEMAS[version], userLayouts[layoutName])) {
+                        this.layouts[layoutName] = userLayouts[layoutName];
                     }
                 }
             });

@@ -9,6 +9,7 @@ export class LayoutSchema {
     // key: layout schema version, value: schema
     public static readonly LAYOUT_SCHEMAS = {
         "1" : {
+            "required": ["layoutVersion", "docked", "floating"],
             "properties": {
                 "layoutVersion": {
                     "type": "integer",
