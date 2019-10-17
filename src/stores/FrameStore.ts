@@ -663,8 +663,6 @@ export class FrameStore {
         const contourParameters: CARTA.ISetContourParameters = {
             fileId: this.frameInfo.fileId,
             referenceFileId: this.frameInfo.fileId,
-            channel: this.requiredChannel,
-            stokes: this.stokes,
             smoothingMode: this.preference.contourSmoothingMode,
             smoothingFactor: this.preference.contourSmoothingFactor,
             levels: this.contourConfig.levels,
@@ -684,6 +682,12 @@ export class FrameStore {
         // Clear up GPU resources
         this.contourStores.forEach(contourStore => contourStore.clearData());
         this.contourStores.clear();
+        // Send empty contour parameter message to the backend, to prevent contours from being automatically updated
+        const contourParameters: CARTA.ISetContourParameters = {
+            fileId: this.frameInfo.fileId,
+            referenceFileId: this.frameInfo.fileId,
+        };
+        this.backendService.setContourParameters(contourParameters);
     };
 
     // Tests a list of headers for valid channel information in either 3rd or 4th axis
