@@ -199,6 +199,8 @@ export class AppStore {
             connected = true;
             this.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
 
+            // TODO: init preference/layout store after connection is built
+
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
                 this.addFrame(folderSearchParam, fileSearchParam, "", 0);
