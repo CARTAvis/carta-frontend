@@ -112,6 +112,7 @@ export class LayoutStore {
     private readonly appStore: AppStore;
     private alertStore: AlertStore;
     private layoutNameToBeSaved: string;
+    private serverSupport: boolean;
 
     // self-defined structure: {layoutName: config, layoutName: config, ...}
     @observable dockedLayout: GoldenLayout;
@@ -123,7 +124,7 @@ export class LayoutStore {
         this.alertStore = alertStore;
         this.dockedLayout = null;
         this.layouts = {};
-        this.initLayouts();
+        this.initLayoutsWithLocalStorage();
     }
 
     public layoutExist = (layoutName: string): boolean => {
@@ -132,6 +133,17 @@ export class LayoutStore {
 
     public setLayoutToBeSaved = (layoutName: string) => {
         this.layoutNameToBeSaved = layoutName ? layoutName : "Empty";
+    };
+
+    // TODO: init with server or localStorage
+    public init = (layouts: { [k: string]: string; }, serverSupport: boolean) => {
+        this.serverSupport = serverSupport;
+        if (serverSupport) {
+
+        } else {
+            // init with localStorage
+            // this.initLayoutsWithLocalStorage();
+        }
     };
 
     private validateUserLayouts = (userLayouts) => {
@@ -153,7 +165,7 @@ export class LayoutStore {
         }
     };
 
-    private initLayouts = () => {
+    private initLayoutsWithLocalStorage = () => {
         // 1. fill layout with presets
         PresetLayout.PRESETS.forEach((presetName) => {
             const config = PRESET_CONFIGS.get(presetName);

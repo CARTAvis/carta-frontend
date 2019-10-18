@@ -200,6 +200,11 @@ export class AppStore {
             this.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
 
             // TODO: init preference/layout store after connection is built
+            if (ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_PREFERENCES) {
+            } else {
+            }
+            const serverSupportsLayout = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_LAYOUTS ? true : false;
+            this.layoutStore.init(ack.userLayouts, serverSupportsLayout);
 
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
