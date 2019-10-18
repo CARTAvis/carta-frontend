@@ -16,7 +16,7 @@ export const INVALID_ANIMATION_ID = -1;
 type HandlerFunction = (eventId: number, parsedMessage: any) => void;
 
 export class BackendService {
-    private static readonly IcdVersion = 7;
+    private static readonly IcdVersion = 9;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     @observable loggingEnabled: boolean;
@@ -38,6 +38,7 @@ export class BackendService {
     private readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
     private readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
     private readonly statsStream: Subject<CARTA.RegionStatsData>;
+    private readonly contourStream: Subject<CARTA.ContourImageData>;
     private readonly decompressionService: DecompressionService;
     private readonly subsetsRequired: number;
     private readonly logStore: LogStore;
@@ -61,6 +62,8 @@ export class BackendService {
         this.spatialProfileStream = new Subject<CARTA.SpatialProfileData>();
         this.spectralProfileStream = new Subject<CARTA.SpectralProfileData>();
         this.statsStream = new Subject<CARTA.RegionStatsData>();
+        this.contourStream = new Subject<CARTA.ContourImageData>();
+
         this.subsetsRequired = Math.min(navigator.hardwareConcurrency || 4, 4);
         if (process.env.NODE_ENV !== "test") {
             this.decompressionService = new DecompressionService(this.subsetsRequired);
@@ -85,6 +88,7 @@ export class BackendService {
             [CARTA.EventType.SPATIAL_PROFILE_DATA, this.onStreamedSpatialProfileData],
             [CARTA.EventType.SPECTRAL_PROFILE_DATA, this.onStreamedSpectralProfileData],
             [CARTA.EventType.REGION_STATS_DATA, this.onStreamedRegionStatsData],
+            [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData],
         ]);
 
         this.decoderMap = new Map<CARTA.EventType, any>([
@@ -104,7 +108,8 @@ export class BackendService {
             [CARTA.EventType.ERROR_DATA, CARTA.ErrorData],
             [CARTA.EventType.SPATIAL_PROFILE_DATA, CARTA.SpatialProfileData],
             [CARTA.EventType.SPECTRAL_PROFILE_DATA, CARTA.SpectralProfileData],
-            [CARTA.EventType.REGION_STATS_DATA, CARTA.RegionStatsData]
+            [CARTA.EventType.REGION_STATS_DATA, CARTA.RegionStatsData],
+            [CARTA.EventType.CONTOUR_IMAGE_DATA, CARTA.ContourImageData],
         ]);
 
         autorun(() => {
@@ -147,6 +152,10 @@ export class BackendService {
 
     getRegionStatsStream() {
         return this.statsStream;
+    }
+
+    getContourStream() {
+        return this.contourStream;
     }
 
     @action("connect")
@@ -540,6 +549,17 @@ export class BackendService {
         return false;
     }
 
+    @action("set contour parameters")
+    setContourParameters(message: CARTA.ISetContourParameters) {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            this.logEvent(CARTA.EventType.SET_CONTOUR_PARAMETERS, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.SET_CONTOUR_PARAMETERS, CARTA.SetContourParameters.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @action("authenticate")
     authenticate = (username: string, password: string) => {
         let authUrl = `${window.location.protocol}//${window.location.hostname}/carta_auth/`;
@@ -689,6 +709,10 @@ export class BackendService {
 
     private onStreamedRegionStatsData(eventId: number, regionStatsData: CARTA.RegionStatsData) {
         this.statsStream.next(regionStatsData);
+    }
+
+    private onStreamedContourData(eventId: number, contourData: CARTA.ContourImageData) {
+        this.contourStream.next(contourData);
     }
 
     private sendEvent(eventType: CARTA.EventType, payload: Uint8Array): boolean {
