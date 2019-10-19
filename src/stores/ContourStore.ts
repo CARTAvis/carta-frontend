@@ -3,16 +3,17 @@ import {Point2D} from "models";
 import {add2D, dot2D, length2D, normalize2D, perpVector2D, scale2D, subtract2D} from "utilities";
 
 export class ContourStore {
-    @observable indices: Int32Array;
-    @observable indexOffsets: Int32Array;
-    @observable vertexData: Float32Array;
-    @observable lengthData: Float32Array;
-    @observable normalData: Float32Array;
+    @observable indices: Int32Array[];
+    @observable indexOffsets: Int32Array[];
+    @observable vertexData: Float32Array[];
+    @observable lengthData: Float32Array[];
+    @observable normalData: Float32Array[];
+    @observable progress: number;
 
-    vertexDataBuffer: WebGLBuffer;
-    vertexNormalBuffer: WebGLBuffer;
-    vertexLengthBuffer: WebGLBuffer;
-    indexBuffer: WebGLBuffer;
+    vertexDataBuffers: WebGLBuffer[];
+    vertexNormalBuffers: WebGLBuffer[];
+    vertexLengthBuffers: WebGLBuffer[];
+    indexBuffers: WebGLBuffer[];
 
     private gl: WebGLRenderingContext;
     private static MiterLimit = 1.5;
@@ -25,15 +26,60 @@ export class ContourStore {
         return this.indices.length > 0 && this.vertexData.length > 0;
     }
 
+    @computed get chunkCount() {
+        if (!this.vertexData) {
+            return 0;
+        }
+        return this.vertexData.length;
+    }
+
+    @computed get vertexCount() {
+        if (!this.vertexData) {
+            return 0;
+        }
+        let count = 0;
+        for (let i = 0; i < this.vertexData.length; i++) {
+            // Each vertex is repeated twice, and each vertex has two coordinates
+            count += this.vertexData[i].length / 4;
+        }
+        return count;
+    }
+
+    @computed get isComplete() {
+        return this.progress >= 1.0;
+    }
+
     @action setContourData = (indexOffsets: Int32Array, vertexData: Float32Array) => {
         // Clear existing data to remove data buffers
         this.clearData();
+        this.addContourData(indexOffsets, vertexData, 1.0);
+    };
+
+    @action addContourData = (indexOffsets: Int32Array, vertexData: Float32Array, progress: number) => {
         const numVertices = vertexData.length / 2;
-        this.vertexData = ContourStore.DuplicateVertexData(vertexData);
-        this.indexOffsets = indexOffsets;
-        this.normalData = ContourStore.GenerateLineNormals(vertexData, indexOffsets);
-        this.indices = ContourStore.GenerateLineIndices(indexOffsets, numVertices);
-        this.lengthData = ContourStore.GenerateLengthData(vertexData);
+
+        if (!this.vertexData) {
+            this.vertexData = [];
+        }
+        if (!this.indexOffsets) {
+            this.indexOffsets = [];
+        }
+        if (!this.normalData) {
+            this.normalData = [];
+        }
+        if (!this.indices) {
+            this.indices = [];
+        }
+        if (!this.lengthData) {
+            this.lengthData = [];
+        }
+
+        this.vertexData.push(ContourStore.DuplicateVertexData(vertexData));
+        this.indexOffsets.push(indexOffsets);
+        this.normalData.push(ContourStore.GenerateLineNormals(vertexData, indexOffsets));
+        this.indices.push(ContourStore.GenerateLineIndices(indexOffsets, numVertices));
+        this.lengthData.push(ContourStore.GenerateLengthData(vertexData));
+        this.progress = progress;
     };
 
     private static DuplicateVertexData(vertexData: Float32Array) {
@@ -55,7 +101,6 @@ export class ContourStore {
     private static GenerateLineNormals(vertexData: Float32Array, indexOffsets: Int32Array) {
         const numPolyLines = indexOffsets.length;
         const numVertices = vertexData.length / 2;
-        const numLineSegments = 2 * (numVertices - numPolyLines);
         const normalData = new Float32Array(numVertices * 4);
 
         for (let i = 0; i < numPolyLines; i++) {
@@ -203,41 +248,61 @@ export class ContourStore {
         return lengths;
     }
 
-    @action generateBuffers(gl: WebGLRenderingContext) {
+    @action generateBuffers(gl: WebGLRenderingContext, index: number) {
+        if (!this.vertexDataBuffers) {
+            this.vertexDataBuffers = [];
+        }
+        if (!this.vertexNormalBuffers) {
+            this.vertexNormalBuffers = [];
+        }
+        if (!this.vertexLengthBuffers) {
+            this.vertexLengthBuffers = [];
+        }
+        if (!this.indexBuffers) {
+            this.indexBuffers = [];
+        }
+
         // skip this if the buffers are already generated
-        if (gl === this.gl && this.vertexDataBuffer && this.vertexNormalBuffer && this.vertexLengthBuffer && this.indexBuffer) {
+        if (gl === this.gl && this.vertexDataBuffers[index] && this.vertexNormalBuffers[index] && this.vertexLengthBuffers[index] && this.indexBuffers[index]) {
             return;
+        }
+
+        if (this.vertexDataBuffers.length !== index) {
+            console.log(`WebGL buffer index is incorrect!`);
         }
 
         // TODO: handle buffer cleanup when no longer needed
         this.gl = gl;
-        this.indexBuffer = this.gl.createBuffer();
-        this.vertexDataBuffer = this.gl.createBuffer();
-        this.vertexLengthBuffer = this.gl.createBuffer();
-        this.vertexNormalBuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-        this.gl.bufferData(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, this.indices, WebGLRenderingContext.STATIC_DRAW);
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexDataBuffer);
-        this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, this.vertexData, WebGLRenderingContext.STATIC_DRAW);
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexNormalBuffer);
-        this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, this.normalData, WebGLRenderingContext.STATIC_DRAW);
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexLengthBuffer);
-        this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, this.lengthData, WebGLRenderingContext.STATIC_DRAW);
+        this.indexBuffers.push(this.gl.createBuffer());
+        this.vertexDataBuffers.push(this.gl.createBuffer());
+        this.vertexLengthBuffers.push(this.gl.createBuffer());
+        this.vertexNormalBuffers.push(this.gl.createBuffer());
+        this.gl.bindBuffer(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, this.indexBuffers[index]);
+        this.gl.bufferData(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, this.indices[index], WebGLRenderingContext.STATIC_DRAW);
+        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexDataBuffers[index]);
+        this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, this.vertexData[index], WebGLRenderingContext.STATIC_DRAW);
+        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexNormalBuffers[index]);
+        this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, this.normalData[index], WebGLRenderingContext.STATIC_DRAW);
+        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexLengthBuffers[index]);
+        this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, this.lengthData[index], WebGLRenderingContext.STATIC_DRAW);
     }
 
     @action clearData = () => {
-        this.indices = null;
-        this.indexOffsets = null;
-        this.vertexData = null;
+        this.indices = [];
+        this.indexOffsets = [];
+        this.vertexData = [];
 
-        if (this.gl) {
-            this.gl.deleteBuffer(this.indexBuffer);
-            this.gl.deleteBuffer(this.vertexDataBuffer);
-            this.gl.deleteBuffer(this.vertexNormalBuffer);
-            this.gl.deleteBuffer(this.vertexLengthBuffer);
-            this.indexBuffer = null;
-            this.vertexDataBuffer = null;
-            this.vertexLengthBuffer = null;
+        if (this.gl && this.vertexDataBuffers) {
+            const numBuffers = this.vertexDataBuffers.length;
+            for (let i = 0; i < numBuffers; i++) {
+                this.gl.deleteBuffer(this.indexBuffers[i]);
+                this.gl.deleteBuffer(this.vertexDataBuffers[i]);
+                this.gl.deleteBuffer(this.vertexNormalBuffers[i]);
+                this.gl.deleteBuffer(this.vertexLengthBuffers[i]);
+            }
+            this.indexBuffers = [];
+            this.vertexDataBuffers = [];
+            this.vertexLengthBuffers = [];
         }
     };
 }

@@ -119,20 +119,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 this.gl.uniform1f(this.shaderUniforms.DashLength, devicePixelRatio * dashLength);
 
                 frame.contourStores.forEach((contourStore, level) => {
-                    const indices = contourStore.indices;
-                    const numIndices = indices.length;
-
-                    // Update buffers
-                    contourStore.generateBuffers(this.gl);
-
-                    this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, contourStore.vertexDataBuffer);
-                    this.gl.vertexAttribPointer(this.vertexPositionAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
-                    this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, contourStore.vertexNormalBuffer);
-                    this.gl.vertexAttribPointer(this.vertexNormalAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
-                    this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, contourStore.vertexLengthBuffer);
-                    this.gl.vertexAttribPointer(this.vertexLengthAttribute, 1, WebGLRenderingContext.FLOAT, false, 0, 0);
-                    this.gl.bindBuffer(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, contourStore.indexBuffer);
-
                     let levelFraction: number;
                     if (minVal !== maxVal) {
                         levelFraction = (level - minVal) / (maxVal - minVal);
@@ -141,9 +127,24 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                     }
 
                     this.gl.uniform1f(this.shaderUniforms.CmapValue, levelFraction);
+                    // Update buffers
+                    for (let i = 0; i < contourStore.chunkCount; i++) {
+                        contourStore.generateBuffers(this.gl, i);
 
-                    // Render all poly-lines in this level using the vertex buffer and index buffer
-                    this.gl.drawElements(WebGLRenderingContext.TRIANGLES, numIndices, WebGLRenderingContext.UNSIGNED_INT, 0);
+                        const indices = contourStore.indices[i];
+                        const numIndices = indices.length;
+
+                        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, contourStore.vertexDataBuffers[i]);
+                        this.gl.vertexAttribPointer(this.vertexPositionAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
+                        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, contourStore.vertexNormalBuffers[i]);
+                        this.gl.vertexAttribPointer(this.vertexNormalAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
+                        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, contourStore.vertexLengthBuffers[i]);
+                        this.gl.vertexAttribPointer(this.vertexLengthAttribute, 1, WebGLRenderingContext.FLOAT, false, 0, 0);
+                        this.gl.bindBuffer(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, contourStore.indexBuffers[i]);
+
+                        // Render all poly-lines in this chunk using the vertex buffer and index buffer
+                        this.gl.drawElements(WebGLRenderingContext.TRIANGLES, numIndices, WebGLRenderingContext.UNSIGNED_INT, 0);
+                    }
                 });
             }
         }
@@ -196,8 +197,11 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             const contourData = frame.contourStores;
             const config = frame.contourConfig;
             contourData.forEach(contourStore => {
-                const indices = contourStore.indices;
-                const vertexData = contourStore.vertexData;
+                if (contourStore.vertexData) {
+                    contourStore.vertexData.forEach(v => {
+                        const vertexData = v;
+                    });
+                }
             });
             const thickness = this.props.preference.contourThickness;
         }

@@ -321,6 +321,7 @@ export class FrameStore {
     private readonly backendService: BackendService;
 
     private static readonly CursorInfoMaxPrecision = 25;
+    private static readonly ContourChunkSize = 100 * 1000;
 
     constructor(readonly preference: PreferenceStore, overlay: OverlayStore, logStore: LogStore, frameInfo: FrameInfo, backendService: BackendService) {
         this.overlayStore = overlay;
@@ -552,13 +553,37 @@ export class FrameStore {
         console.log(`Decompressed and un-shuffled ${vertexCounter} vertices  in ${dt} ms.`);
         this.stokes = processedData.stokes;
         this.channel = processedData.channel;
-        this.contourStores.clear();
 
         for (const contourSet of processedData.contourSets) {
-            const contourStore = new ContourStore();
-            contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates);
-            this.contourStores.set(contourSet.level, contourStore);
+            let contourStore = this.contourStores.get(contourSet.level);
+            if (!contourStore) {
+                contourStore = new ContourStore();
+                this.contourStores.set(contourSet.level, contourStore);
+            }
+
+            if (!contourStore.isComplete && processedData.progress > 0) {
+                contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+            } else {
+                contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates);
+            }
         }
+
+        let totalProgress = 0;
+        let totalVertices = 0;
+        let totalChunks = 0;
+        // Clear up stale contour levels by checking against the config, and update total contour progress
+        this.contourStores.forEach((contourStore, level) => {
+            if (this.contourConfig.levels.indexOf(level) === -1) {
+                this.contourStores.delete(level);
+            } else {
+                totalProgress += contourStore.progress;
+                totalVertices += contourStore.vertexCount;
+                totalChunks += contourStore.chunkCount;
+            }
+        });
+
+        const progress = totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
+        console.log(`Contour progress: ${toFixed(progress * 100, 0)}%. Total vertices: ${totalVertices} in ${totalChunks} chunks`);
     }
 
     @action setChannels(channel: number, stokes: number) {
@@ -673,7 +698,8 @@ export class FrameStore {
                 yMax: this.frameInfo.fileInfoExtended.height,
             },
             decimationFactor: this.preference.contourDecimation,
-            compressionLevel: this.preference.contourCompressionLevel
+            compressionLevel: this.preference.contourCompressionLevel,
+            contourChunkSize: FrameStore.ContourChunkSize
         };
         this.backendService.setContourParameters(contourParameters);
     };

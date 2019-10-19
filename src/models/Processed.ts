@@ -21,6 +21,7 @@ export interface ProcessedContourData {
     imageBounds?: CARTA.IImageBounds;
     channel: number;
     stokes: number;
+    progress: number;
     contourSets: ProcessedContourSet[];
 }
 
@@ -148,6 +149,7 @@ export class ProtobufProcessing {
             channel: contourData.channel,
             stokes: contourData.stokes,
             imageBounds: contourData.imageBounds,
+            progress: contourData.progress,
             contourSets: contourData.contourSets ? contourData.contourSets.map(contourSet => this.ProcessContourSet(contourSet)) : null
         };
     }
