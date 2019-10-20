@@ -2,6 +2,7 @@ declare var Module: any;
 declare var addOnPostRun: any;
 
 const decompress = Module.cwrap("ZSTD_decompress", "number", ["number", "number", "number", "number"]);
+const decodeArray = Module.cwrap("decodeArray", "number", ["number", "number", "number"]);
 
 Module.srcAllocated = 0;
 Module.srcPtr = 0;
@@ -29,7 +30,7 @@ Module.onReady = new Promise(function (func) {
     Module.ZstdReady = true;
 });
 
-Module.Decompress = (src: Uint8Array, destSize: number): Uint8Array => {
+function resizeAndFillBuffers(src: Uint8Array, destSize) {
     const srcSize = src.byteLength;
 
     // resize src if buffer is not big enough
@@ -48,9 +49,25 @@ Module.Decompress = (src: Uint8Array, destSize: number): Uint8Array => {
 
     const srcHeap = new Uint8Array(Module.HEAPU8.buffer, Module.srcPtr, srcSize);
     srcHeap.set(src);
+}
+
+Module.Decompress = (src: Uint8Array, destSize: number): Uint8Array => {
+    const srcSize = src.byteLength;
+    resizeAndFillBuffers(src, destSize);
+
     const destHeap = new Uint8Array(Module.HEAPU8.buffer, Module.destPtr, destSize);
     const result = decompress(Module.destPtr, destSize, Module.srcPtr, srcSize);
     return destHeap.slice();
+};
+
+Module.Decode = (src: Uint8Array, destSize: number, decimationFactor: number): Float32Array => {
+    const srcSize = src.byteLength;
+    resizeAndFillBuffers(src, destSize);
+
+    const result = decompress(Module.destPtr, destSize, Module.srcPtr, srcSize);
+    const destHeapFloat = new Float32Array(Module.HEAPU8.buffer, Module.destPtr, destSize / 4);
+    decodeArray(Module.destPtr, destSize, decimationFactor);
+    return destHeapFloat.slice();
 };
 
 module.exports = Module;
