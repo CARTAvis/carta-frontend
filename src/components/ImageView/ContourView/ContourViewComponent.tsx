@@ -134,12 +134,10 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                         const indices = contourStore.indices[i];
                         const numIndices = indices.length;
 
-                        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, contourStore.vertexDataBuffers[i]);
-                        this.gl.vertexAttribPointer(this.vertexPositionAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
-                        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, contourStore.vertexNormalBuffers[i]);
-                        this.gl.vertexAttribPointer(this.vertexNormalAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
-                        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, contourStore.vertexLengthBuffers[i]);
-                        this.gl.vertexAttribPointer(this.vertexLengthAttribute, 1, WebGLRenderingContext.FLOAT, false, 0, 0);
+                        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, contourStore.vertexBuffers[i]);
+                        this.gl.vertexAttribPointer(this.vertexPositionAttribute, 2, WebGLRenderingContext.FLOAT, false, 20, 0);
+                        this.gl.vertexAttribPointer(this.vertexNormalAttribute, 2, WebGLRenderingContext.FLOAT, false, 20, 8);
+                        this.gl.vertexAttribPointer(this.vertexLengthAttribute, 1, WebGLRenderingContext.FLOAT, false, 20, 16);
                         this.gl.bindBuffer(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, contourStore.indexBuffers[i]);
 
                         // Render all poly-lines in this chunk using the vertex buffer and index buffer

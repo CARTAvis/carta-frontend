@@ -6,17 +6,14 @@ export class ContourStore {
     @observable indices: Int32Array[];
     @observable indexOffsets: Int32Array[];
     @observable vertexData: Float32Array[];
-    @observable lengthData: Float32Array[];
-    @observable normalData: Float32Array[];
     @observable progress: number;
 
-    vertexDataBuffers: WebGLBuffer[];
-    vertexNormalBuffers: WebGLBuffer[];
-    vertexLengthBuffers: WebGLBuffer[];
+    vertexBuffers: WebGLBuffer[];
     indexBuffers: WebGLBuffer[];
 
     private gl: WebGLRenderingContext;
     private static MiterLimit = 1.5;
+    private static VertexDataElements = 10;
 
     @computed get hasValidData() {
         if (!this.indices || !this.vertexData) {
@@ -55,8 +52,8 @@ export class ContourStore {
         this.addContourData(indexOffsets, vertexData, 1.0);
     };
 
-    @action addContourData = (indexOffsets: Int32Array, vertexData: Float32Array, progress: number) => {
-        const numVertices = vertexData.length / 2;
+    @action addContourData = (indexOffsets: Int32Array, sourceVertices: Float32Array, progress: number) => {
+        const numVertices = sourceVertices.length / 2;
 
         if (!this.vertexData) {
             this.vertexData = [];
@@ -64,54 +61,30 @@ export class ContourStore {
         if (!this.indexOffsets) {
             this.indexOffsets = [];
         }
-        if (!this.normalData) {
-            this.normalData = [];
-        }
         if (!this.indices) {
             this.indices = [];
         }
-        if (!this.lengthData) {
-            this.lengthData = [];
-        }
 
-        this.vertexData.push(ContourStore.DuplicateVertexData(vertexData));
+        this.vertexData.push(ContourStore.GenerateVertexData(sourceVertices, indexOffsets));
         this.indexOffsets.push(indexOffsets);
-        this.normalData.push(ContourStore.GenerateLineNormals(vertexData, indexOffsets));
         this.indices.push(ContourStore.GenerateLineIndices(indexOffsets, numVertices));
-        this.lengthData.push(ContourStore.GenerateLengthData(vertexData));
         this.progress = progress;
     };
 
-    private static DuplicateVertexData(vertexData: Float32Array) {
-        const numVertices = vertexData.length / 2;
-        const duplicateData = new Float32Array(numVertices * 4);
-
-        for (let i = 0; i < numVertices; i++) {
-            const x = vertexData[i * 2];
-            const y = vertexData[i * 2 + 1];
-            duplicateData[i * 4] = x;
-            duplicateData[i * 4 + 1] = y;
-            duplicateData[i * 4 + 2] = x;
-            duplicateData[i * 4 + 3] = y;
-        }
-
-        return duplicateData;
-    }
-
-    private static GenerateLineNormals(vertexData: Float32Array, indexOffsets: Int32Array) {
+    private static GenerateVertexData(sourceVertices: Float32Array, indexOffsets: Int32Array) {
         const numPolyLines = indexOffsets.length;
-        const numVertices = vertexData.length / 2;
-        const normalData = new Float32Array(numVertices * 4);
+        const numVertices = sourceVertices.length / 2;
+        const vertexData = new Float32Array(numVertices * ContourStore.VertexDataElements);
 
         for (let i = 0; i < numPolyLines; i++) {
             const startIndex = indexOffsets[i] / 2;
             const endIndex = i < numPolyLines - 1 ? indexOffsets[i + 1] / 2 : numVertices;
-            ContourStore.FillSinglePolylineNormals(vertexData, startIndex, endIndex, normalData);
+            ContourStore.FillSinglePolyline(sourceVertices, startIndex, endIndex, vertexData);
         }
-        return normalData;
+        return vertexData;
     }
 
-    private static FillSinglePolylineNormals(vertexData: Float32Array, startIndex: number, endIndex: number, normalData: Float32Array) {
+    private static FillSinglePolyline(sourceVertices: Float32Array, startIndex: number, endIndex: number, vertexData: Float32Array) {
         const numVertices = endIndex - startIndex;
         if (numVertices < 2) {
             return;
@@ -119,8 +92,11 @@ export class ContourStore {
 
         // First vertex
         let vertexOffset = startIndex * 2;
-        let currentPoint = {x: vertexData[vertexOffset], y: vertexData[vertexOffset + 1]};
-        let nextPoint = {x: vertexData[vertexOffset + 2], y: vertexData[vertexOffset + 3]};
+        let currentPoint = {x: sourceVertices[vertexOffset], y: sourceVertices[vertexOffset + 1]};
+        let nextPoint = {x: sourceVertices[vertexOffset + 2], y: sourceVertices[vertexOffset + 3]};
+
+        let segmentLength = length2D(subtract2D(currentPoint, nextPoint));
+        let cumulativeLength = segmentLength;
 
         let firstDir = normalize2D(subtract2D(nextPoint, currentPoint));
 
@@ -128,7 +104,7 @@ export class ContourStore {
             // Find first non-degenerate vertex and use that as the initial direction
             for (let i = 2; i < numVertices - 1; i++) {
                 const newOffset = (startIndex + i) * 2;
-                nextPoint = {x: vertexData[newOffset], y: vertexData[newOffset + 1]};
+                nextPoint = {x: sourceVertices[newOffset], y: sourceVertices[newOffset + 1]};
                 firstDir = normalize2D(subtract2D(nextPoint, currentPoint));
                 if (isFinite(firstDir.x) && isFinite(firstDir.y)) {
                     break;
@@ -142,10 +118,10 @@ export class ContourStore {
         for (let i = 1; i < numVertices - 1; i++) {
             const index = i + startIndex;
             vertexOffset = index * 2;
-            const normalOffset = index * 4;
+            const normalOffset = index * ContourStore.VertexDataElements;
             // Middle vertices
-            currentPoint = {x: vertexData[vertexOffset], y: vertexData[vertexOffset + 1]};
-            nextPoint = {x: vertexData[vertexOffset + 2], y: vertexData[vertexOffset + 3]};
+            currentPoint = {x: sourceVertices[vertexOffset], y: sourceVertices[vertexOffset + 1]};
+            nextPoint = {x: sourceVertices[vertexOffset + 2], y: sourceVertices[vertexOffset + 3]};
 
             let currentDir = normalize2D(subtract2D(nextPoint, currentPoint));
             // Handle degenerate vertices
@@ -163,17 +139,19 @@ export class ContourStore {
             }
             const computedNormal = scale2D(tangentNormal, miterLength);
 
-            ContourStore.FillNormals(normalData, normalOffset, computedNormal);
+            ContourStore.FillVertexData(vertexData, normalOffset, currentPoint, computedNormal, cumulativeLength);
 
             prevNormal = currentNormal;
             prevDir = currentDir;
+            segmentLength = length2D(subtract2D(currentPoint, nextPoint));
+            cumulativeLength += segmentLength;
         }
 
         let firstNorm: Point2D, lastNorm: Point2D;
 
         // Test if the line is a closed loop
-        const firstPoint = {x: vertexData[startIndex * 2], y: vertexData[startIndex * 2 + 1]};
-        const lastPoint = {x: vertexData[(endIndex - 1) * 2], y: vertexData[(endIndex - 1) * 2 + 1]};
+        const firstPoint = {x: sourceVertices[startIndex * 2], y: sourceVertices[startIndex * 2 + 1]};
+        const lastPoint = {x: sourceVertices[(endIndex - 1) * 2], y: sourceVertices[(endIndex - 1) * 2 + 1]};
         const firstLastDist = length2D(subtract2D(firstPoint, lastPoint));
         const loop = firstLastDist < 1e-6;
 
@@ -190,19 +168,34 @@ export class ContourStore {
         }
 
         // Fill in first and last normals
-        ContourStore.FillNormals(normalData, startIndex * 4, firstNorm);
-        ContourStore.FillNormals(normalData, (endIndex - 1) * 4, lastNorm);
+        ContourStore.FillVertexData(vertexData, startIndex * ContourStore.VertexDataElements, firstPoint, firstNorm, 0);
+        ContourStore.FillVertexData(vertexData, (endIndex - 1) * ContourStore.VertexDataElements, lastPoint, lastNorm, cumulativeLength);
     }
 
-    private static FillNormals(normalData: Float32Array, offset: number, normal: Point2D) {
-        if (!normal) {
+    private static FillVertexData(vertexData: Float32Array, offset: number, vertex: Point2D, normal: Point2D, length: number) {
+        if (!normal || !vertex) {
             return;
         }
 
-        normalData[offset] = normal.x;
-        normalData[offset + 1] = normal.y;
-        normalData[offset + 2] = -normal.x;
-        normalData[offset + 3] = -normal.y;
+        vertexData[offset] = vertex.x;
+        vertexData[offset + 1] = vertex.y;
+        vertexData[offset + 2] = normal.x;
+        vertexData[offset + 3] = normal.y;
+        vertexData[offset + 4] = length;
+        vertexData[offset + 5] = vertex.x;
+        vertexData[offset + 6] = vertex.y;
+        vertexData[offset + 7] = -normal.x;
+        vertexData[offset + 8] = -normal.y;
+        vertexData[offset + 9] = -length;
+
+        // vertexData[offset] = vertex.x;
+        // vertexData[offset + 1] = vertex.y;
+        // vertexData[offset + 2] = normal.x;
+        // vertexData[offset + 3] = normal.y;
+        // vertexData[offset + 4] = vertex.x;
+        // vertexData[offset + 5] = vertex.y;
+        // vertexData[offset + 6] = -normal.x;
+        // vertexData[offset + 7] = -normal.y;
     }
 
     private static GenerateLineIndices(indexOffsets: Int32Array, numVertices: number) {
@@ -229,65 +222,31 @@ export class ContourStore {
         return indices;
     }
 
-    private static GenerateLengthData(vertexData: Float32Array) {
-        const N = vertexData.length;
-        const lengths = new Float32Array(N);
-        let cumulativeLength = 0;
-        let lastPoint: Point2D = null;
-
-        for (let i = 0; i < N; i += 2) {
-            const currentPoint = {x: vertexData[i], y: vertexData[i + 1]};
-            let currentLength = 0;
-            if (lastPoint) {
-                const delta = subtract2D(currentPoint, lastPoint);
-                currentLength = length2D(delta);
-            }
-
-            lastPoint = currentPoint;
-            cumulativeLength += currentLength;
-            lengths[i] = cumulativeLength;
-            lengths[i + 1] = -cumulativeLength;
-        }
-        return lengths;
-    }
-
     @action generateBuffers(gl: WebGLRenderingContext, index: number) {
-        if (!this.vertexDataBuffers) {
-            this.vertexDataBuffers = [];
-        }
-        if (!this.vertexNormalBuffers) {
-            this.vertexNormalBuffers = [];
-        }
-        if (!this.vertexLengthBuffers) {
-            this.vertexLengthBuffers = [];
+        if (!this.vertexBuffers) {
+            this.vertexBuffers = [];
         }
         if (!this.indexBuffers) {
             this.indexBuffers = [];
         }
 
         // skip this if the buffers are already generated
-        if (gl === this.gl && this.vertexDataBuffers[index] && this.vertexNormalBuffers[index] && this.vertexLengthBuffers[index] && this.indexBuffers[index]) {
+        if (gl === this.gl && this.vertexBuffers[index] && this.indexBuffers[index]) {
             return;
         }
 
-        if (this.vertexDataBuffers.length !== index) {
+        if (this.vertexBuffers.length !== index) {
             console.log(`WebGL buffer index is incorrect!`);
         }
 
         // TODO: handle buffer cleanup when no longer needed
         this.gl = gl;
         this.indexBuffers.push(this.gl.createBuffer());
-        this.vertexDataBuffers.push(this.gl.createBuffer());
-        this.vertexLengthBuffers.push(this.gl.createBuffer());
-        this.vertexNormalBuffers.push(this.gl.createBuffer());
+        this.vertexBuffers.push(this.gl.createBuffer());
         this.gl.bindBuffer(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, this.indexBuffers[index]);
         this.gl.bufferData(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, this.indices[index], WebGLRenderingContext.STATIC_DRAW);
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexDataBuffers[index]);
+        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexBuffers[index]);
         this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, this.vertexData[index], WebGLRenderingContext.STATIC_DRAW);
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexNormalBuffers[index]);
-        this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, this.normalData[index], WebGLRenderingContext.STATIC_DRAW);
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexLengthBuffers[index]);
-        this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, this.lengthData[index], WebGLRenderingContext.STATIC_DRAW);
     }
 
     @action clearData = () => {
@@ -295,17 +254,14 @@ export class ContourStore {
         this.indexOffsets = [];
         this.vertexData = [];
 
-        if (this.gl && this.vertexDataBuffers) {
-            const numBuffers = this.vertexDataBuffers.length;
+        if (this.gl && this.vertexBuffers) {
+            const numBuffers = this.vertexBuffers.length;
             for (let i = 0; i < numBuffers; i++) {
                 this.gl.deleteBuffer(this.indexBuffers[i]);
-                this.gl.deleteBuffer(this.vertexDataBuffers[i]);
-                this.gl.deleteBuffer(this.vertexNormalBuffers[i]);
-                this.gl.deleteBuffer(this.vertexLengthBuffers[i]);
+                this.gl.deleteBuffer(this.vertexBuffers[i]);
             }
             this.indexBuffers = [];
-            this.vertexDataBuffers = [];
-            this.vertexLengthBuffers = [];
+            this.vertexBuffers = [];
         }
     };
 }
