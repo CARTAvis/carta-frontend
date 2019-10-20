@@ -207,7 +207,9 @@ export class ContourStore {
 
     private static GenerateLineIndices(indexOffsets: Int32Array, numVertices: number) {
         const numPolyLines = indexOffsets.length;
-        const indices = [];
+        const indices = new Int32Array((numVertices - numPolyLines) * 6);
+
+        let destOffset = 0;
 
         for (let i = 0; i < numPolyLines; i++) {
             const startIndex = indexOffsets[i] / 2;
@@ -215,15 +217,16 @@ export class ContourStore {
 
             for (let j = startIndex; j < endIndex - 1; j++) {
                 const offset = j * 2;
-                indices.push(offset);
-                indices.push(offset + 1);
-                indices.push(offset + 3);
-                indices.push(offset + 3);
-                indices.push(offset + 2);
-                indices.push(offset);
+                indices[destOffset] = offset;
+                indices[destOffset + 1] = offset + 1;
+                indices[destOffset + 2] = offset + 3;
+                indices[destOffset + 3] = offset + 3;
+                indices[destOffset + 4] = offset + 2;
+                indices[destOffset + 5] = offset;
+                destOffset += 6;
             }
         }
-        return new Int32Array(indices);
+        return indices;
     }
 
     private static GenerateLengthData(vertexData: Float32Array) {

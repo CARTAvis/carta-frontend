@@ -1,11 +1,6 @@
 import {CARTA} from "carta-protobuf";
-
-const ZstdCodec = require("zstd-codec").ZstdCodec;
-let ZstdApi: any;
-
-ZstdCodec.run(zstd => {
-    ZstdApi = new zstd.Simple();
-});
+// @ts-ignore
+import * as CARTACompute from "carta_computation";
 
 export interface ProcessedSpatialProfile extends CARTA.ISpatialProfile {
     values: Float32Array;
@@ -76,7 +71,8 @@ export class ProtobufProcessing {
     }
 
     static ProcessContourSet(contourSet: CARTA.IContourSet): ProcessedContourSet {
-        contourSet.rawCoordinates = ZstdApi.decompress(contourSet.rawCoordinates);
+        // TODO: Probably should not assume this module is ready
+        contourSet.rawCoordinates = CARTACompute.Decompress(contourSet.rawCoordinates, contourSet.uncompressedCoordinatesSize);
 
         // TODO: This should be done in WebAssembly! Far too slow in JS. Eventually WebAssembly will also support SSE
         const floatCoordinates = new Float32Array(contourSet.rawCoordinates.buffer);

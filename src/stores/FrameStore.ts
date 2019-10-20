@@ -321,7 +321,7 @@ export class FrameStore {
     private readonly backendService: BackendService;
 
     private static readonly CursorInfoMaxPrecision = 25;
-    private static readonly ContourChunkSize = 100 * 1000;
+    private static readonly ContourChunkSize = 1000 * 1000;
 
     constructor(readonly preference: PreferenceStore, overlay: OverlayStore, logStore: LogStore, frameInfo: FrameInfo, backendService: BackendService) {
         this.overlayStore = overlay;
@@ -541,16 +541,12 @@ export class FrameStore {
     }
 
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
-        const tStart = performance.now();
         let vertexCounter = 0;
 
         const processedData = ProtobufProcessing.ProcessContourData(contourImageData);
         for (const contourSet of processedData.contourSets) {
             vertexCounter += contourSet.coordinates.length / 2;
         }
-        const tEnd = performance.now();
-        const dt = tEnd - tStart;
-        console.log(`Decompressed and un-shuffled ${vertexCounter} vertices  in ${dt} ms.`);
         this.stokes = processedData.stokes;
         this.channel = processedData.channel;
 
@@ -583,7 +579,9 @@ export class FrameStore {
         });
 
         const progress = totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
-        console.log(`Contour progress: ${toFixed(progress * 100, 0)}%. Total vertices: ${totalVertices} in ${totalChunks} chunks`);
+        if (progress >= 1) {
+            console.log(`Contours complete: ${progress}`);
+        }
     }
 
     @action setChannels(channel: number, stokes: number) {
