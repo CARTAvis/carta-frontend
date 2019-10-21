@@ -13,7 +13,7 @@ export class ContourStore {
 
     private gl: WebGLRenderingContext;
     private static MiterLimit = 1.5;
-    private static VertexDataElements = 10;
+    private static VertexDataElements = 8;
 
     @computed get hasValidData() {
         if (!this.indices || !this.vertexData) {
@@ -75,16 +75,17 @@ export class ContourStore {
         const numPolyLines = indexOffsets.length;
         const numVertices = sourceVertices.length / 2;
         const vertexData = new Float32Array(numVertices * ContourStore.VertexDataElements);
+        const vertexDataShort = new Int16Array(vertexData.buffer);
 
         for (let i = 0; i < numPolyLines; i++) {
             const startIndex = indexOffsets[i] / 2;
             const endIndex = i < numPolyLines - 1 ? indexOffsets[i + 1] / 2 : numVertices;
-            ContourStore.FillSinglePolyline(sourceVertices, startIndex, endIndex, vertexData);
+            ContourStore.FillSinglePolyline(sourceVertices, startIndex, endIndex, vertexData, vertexDataShort);
         }
         return vertexData;
     }
 
-    private static FillSinglePolyline(sourceVertices: Float32Array, startIndex: number, endIndex: number, vertexData: Float32Array) {
+    private static FillSinglePolyline(sourceVertices: Float32Array, startIndex: number, endIndex: number, vertexData: Float32Array, vertexDataShort: Int16Array) {
         const numVertices = endIndex - startIndex;
         if (numVertices < 2) {
             return;
@@ -139,7 +140,7 @@ export class ContourStore {
             }
             const computedNormal = scale2D(tangentNormal, miterLength);
 
-            ContourStore.FillVertexData(vertexData, normalOffset, currentPoint, computedNormal, cumulativeLength);
+            ContourStore.FillVertexData(vertexData, vertexDataShort, normalOffset, currentPoint, computedNormal, cumulativeLength);
 
             prevNormal = currentNormal;
             prevDir = currentDir;
@@ -168,25 +169,26 @@ export class ContourStore {
         }
 
         // Fill in first and last normals
-        ContourStore.FillVertexData(vertexData, startIndex * ContourStore.VertexDataElements, firstPoint, firstNorm, 0);
-        ContourStore.FillVertexData(vertexData, (endIndex - 1) * ContourStore.VertexDataElements, lastPoint, lastNorm, cumulativeLength);
+        ContourStore.FillVertexData(vertexData, vertexDataShort, startIndex * ContourStore.VertexDataElements, firstPoint, firstNorm, 0);
+        ContourStore.FillVertexData(vertexData, vertexDataShort, (endIndex - 1) * ContourStore.VertexDataElements, lastPoint, lastNorm, cumulativeLength);
     }
 
-    private static FillVertexData(vertexData: Float32Array, offset: number, vertex: Point2D, normal: Point2D, length: number) {
+    private static FillVertexData(vertexData: Float32Array, vertexDataShort: Int16Array, offset: number, vertex: Point2D, normal: Point2D, length: number) {
         if (!normal || !vertex) {
             return;
         }
 
         vertexData[offset] = vertex.x;
         vertexData[offset + 1] = vertex.y;
-        vertexData[offset + 2] = normal.x;
-        vertexData[offset + 3] = normal.y;
-        vertexData[offset + 4] = length;
-        vertexData[offset + 5] = vertex.x;
-        vertexData[offset + 6] = vertex.y;
-        vertexData[offset + 7] = -normal.x;
-        vertexData[offset + 8] = -normal.y;
-        vertexData[offset + 9] = -length;
+        vertexData[offset + 2] = length;
+        vertexDataShort[(offset + 3) * 2] = 16384 * normal.x;
+        vertexDataShort[(offset + 3) * 2 + 1] = 16384 * normal.y;
+
+        vertexData[offset + 4] = vertex.x;
+        vertexData[offset + 5] = vertex.y;
+        vertexData[offset + 6] = -length;
+        vertexDataShort[(offset + 7) * 2] = -16384 * normal.x;
+        vertexDataShort[(offset + 7) * 2 + 1] = -16384 * normal.y;
 
         // vertexData[offset] = vertex.x;
         // vertexData[offset + 1] = vertex.y;

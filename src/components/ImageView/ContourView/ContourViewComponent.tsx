@@ -37,7 +37,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     // Shader attribute handles
     private vertexPositionAttribute: number;
     private vertexNormalAttribute: number;
-    private vertexLengthAttribute: number;
     private shaderUniforms: ShaderUniforms;
 
     componentDidMount() {
@@ -135,9 +134,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                         const numIndices = indices.length;
 
                         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, contourStore.vertexBuffers[i]);
-                        this.gl.vertexAttribPointer(this.vertexPositionAttribute, 2, WebGLRenderingContext.FLOAT, false, 20, 0);
-                        this.gl.vertexAttribPointer(this.vertexNormalAttribute, 2, WebGLRenderingContext.FLOAT, false, 20, 8);
-                        this.gl.vertexAttribPointer(this.vertexLengthAttribute, 1, WebGLRenderingContext.FLOAT, false, 20, 16);
+                        this.gl.vertexAttribPointer(this.vertexPositionAttribute, 3, WebGLRenderingContext.FLOAT, false, 16, 0);
+                        this.gl.vertexAttribPointer(this.vertexNormalAttribute, 2, WebGLRenderingContext.SHORT, false, 16, 12);
                         this.gl.bindBuffer(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, contourStore.indexBuffers[i]);
 
                         // Render all poly-lines in this chunk using the vertex buffer and index buffer
@@ -167,8 +165,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         this.gl.enableVertexAttribArray(this.vertexPositionAttribute);
         this.vertexNormalAttribute = this.gl.getAttribLocation(shaderProgram, "aVertexNormal");
         this.gl.enableVertexAttribArray(this.vertexNormalAttribute);
-        this.vertexLengthAttribute = this.gl.getAttribLocation(shaderProgram, "aVertexLength");
-        this.gl.enableVertexAttribArray(this.vertexLengthAttribute);
 
         this.shaderUniforms = {
             Scale: this.gl.getUniformLocation(shaderProgram, "uScale"),

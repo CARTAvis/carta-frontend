@@ -580,7 +580,7 @@ export class FrameStore {
 
         const progress = totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
         if (progress >= 1) {
-            console.log(`Contours complete: ${progress}`);
+            console.log(`Contours complete: ${totalVertices} vertices in ${totalChunks} chunks`);
         }
     }
 
