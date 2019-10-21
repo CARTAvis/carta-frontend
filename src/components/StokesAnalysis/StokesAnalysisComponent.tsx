@@ -50,7 +50,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
-    @observable scatterOutRangePointsIndex: number[];
 
     @computed get widgetStore(): StokesAnalysisWidgetStore {
         if (this.props.appStore && this.props.appStore.widgetsStore.stokesAnalysisWidgets) {

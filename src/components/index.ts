@@ -1,5 +1,6 @@
 export * from "./Animator/AnimatorComponent";
 export * from "./FloatingWidget/FloatingWidgetComponent";
+export * from "./FloatingSettings/FloatingSettingsComponent";
 export * from "./FloatingWidgetManager/FloatingWidgetManagerComponent";
 export * from "./ImageView/ImageViewComponent";
 export * from "./Log/LogComponent";
@@ -13,3 +14,4 @@ export * from "./SpectralProfiler/SpectralProfilerComponent";
 export * from "./Stats/StatsComponent";
 export * from "./Histogram/HistogramComponent";
 export * from "./StokesAnalysis/StokesAnalysisComponent";
+export * from "./StokesAnalysis/StokesAnalysisSettingsPanelComponent/StokesAnalysisSettingsPanelComponent";

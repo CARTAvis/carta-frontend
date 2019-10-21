@@ -3,6 +3,7 @@ import {observer} from "mobx-react";
 import {
     AnimatorComponent,
     FloatingWidgetComponent,
+    FloatingSettingsComponent,
     HistogramComponent,
     ImageViewComponent,
     LogComponent,
@@ -13,6 +14,7 @@ import {
     SpectralProfilerComponent,
     StatsComponent,
     StokesAnalysisComponent,
+    StokesAnalysisSettingsPanelComponent
 } from "components";
 import {AppStore, WidgetConfig} from "stores";
 
@@ -56,6 +58,26 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
         }
     }
 
+    private getWidgetSettings(widgetConfig: WidgetConfig) {
+        if (widgetConfig.parentId) {
+            const appStore = this.props.appStore;
+            switch (widgetConfig.parentType) {
+                case StokesAnalysisComponent.WIDGET_CONFIG.type:
+                    return <StokesAnalysisSettingsPanelComponent appStore={appStore} id={widgetConfig.parentId} docked={false}/>;
+                default:
+                    return null;
+            }
+        }
+        return null;
+    }
+
+    private showPin(widgetConfig: WidgetConfig) {
+        if (widgetConfig.type && widgetConfig.type === FloatingSettingsComponent.WIDGET_CONFIG.type) {
+            return false;
+        }
+        return true;
+    }
+
     public render() {
         const appStore = this.props.appStore;
         const widgetConfigs = appStore.widgetsStore.floatingWidgets;
@@ -64,18 +86,28 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
             <div>
                 {widgetConfigs.map((w, index) => {
                     return (
-                        <FloatingWidgetComponent
-                            isSelected={index === widgetConfigs.length - 1}
-                            appStore={appStore}
-                            key={w.id}
-                            widgetConfig={w}
-                            zIndex={index}
-                            showPinButton={true}
-                            onSelected={() => this.onFloatingWidgetSelected(w)}
-                            onClosed={() => this.onFloatingWidgetClosed(w)}
-                        >
-                            {this.getWidgetContent(w)}
-                        </FloatingWidgetComponent>
+                        <div key={w.id}>
+                            <FloatingWidgetComponent
+                                isSelected={index === widgetConfigs.length - 1}
+                                appStore={appStore}
+                                key={w.id}
+                                widgetConfig={w}
+                                zIndex={index}
+                                showPinButton={this.showPin(w)}
+                                onSelected={() => this.onFloatingWidgetSelected(w)}
+                                onClosed={() => this.onFloatingWidgetClosed(w)}
+                                // only apply to stokes widget for now
+                                showFloatingSettingsButton={w.type === StokesAnalysisComponent.WIDGET_CONFIG.type}
+                            >
+                                {w.type === FloatingSettingsComponent.WIDGET_CONFIG.type ?
+                                    <FloatingSettingsComponent>
+                                        {this.getWidgetSettings(w)}
+                                    </FloatingSettingsComponent> 
+                                :
+                                    this.getWidgetContent(w)
+                                }
+                            </FloatingWidgetComponent>
+                    </div>
                     );
                 })}
             </div>);

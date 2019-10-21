@@ -13,7 +13,8 @@ import {
     SpectralProfilerComponent,
     StatsComponent,
     ToolbarMenuComponent,
-    StokesAnalysisComponent
+    StokesAnalysisComponent,
+    FloatingSettingsComponent
 } from "components";
 import {AppStore, LayoutStore} from "stores";
 import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
@@ -29,6 +30,8 @@ export class WidgetConfig {
     defaultY?: number;
     isCloseable: boolean;
     @observable title: string;
+    parentId?: string;
+    parentType?: string;
 }
 
 export class WidgetProps {
@@ -50,6 +53,7 @@ export class WidgetsStore {
     @observable regionListWidgets: Map<string, EmptyWidgetStore>;
     @observable animatorWidgets: Map<string, EmptyWidgetStore>;
     @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
+    @observable floatingSettingsWidgets: Map<string, string>;
 
     private appStore: AppStore;
     private layoutStore: LayoutStore;
@@ -90,6 +94,7 @@ export class WidgetsStore {
         this.logWidgets = new Map<string, EmptyWidgetStore>();
         this.regionListWidgets = new Map<string, EmptyWidgetStore>();
         this.stokesAnalysisWidgets = new Map<string, StokesAnalysisWidgetStore>();
+        this.floatingSettingsWidgets = new Map<string, string>();
 
         this.widgetsMap = new Map<string, Map<string, any>>([
             [SpatialProfilerComponent.WIDGET_CONFIG.type, this.spatialProfileWidgets],
@@ -100,7 +105,7 @@ export class WidgetsStore {
             [AnimatorComponent.WIDGET_CONFIG.type, this.animatorWidgets],
             [LogComponent.WIDGET_CONFIG.type, this.logWidgets],
             [RegionListComponent.WIDGET_CONFIG.type, this.regionListWidgets],
-            [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets],
+            [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets]
         ]);
 
         this.floatingWidgets = [];
@@ -129,6 +134,8 @@ export class WidgetsStore {
                 return RegionListComponent.WIDGET_CONFIG;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 return StokesAnalysisComponent.WIDGET_CONFIG;
+            case FloatingSettingsComponent.WIDGET_CONFIG.type:
+                return FloatingSettingsComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -168,6 +175,31 @@ export class WidgetsStore {
         }
     };
 
+    // Find the next appropriate ID in array
+    private getNextSettingId = (defaultId: string, parentId: string) => {
+        const floatingSettingsWidgets = this.floatingSettingsWidgets;
+        if (!floatingSettingsWidgets) {
+            return null;
+        }
+        let settingShowed = false;
+        floatingSettingsWidgets.forEach(values => {
+            if (values === parentId) {
+                settingShowed = true;
+            }
+        });
+        if (settingShowed) {
+            return null;
+        }
+        let nextIndex = 0;
+        while (true) {
+            const nextId = `${defaultId}-${nextIndex}`;
+            if (!floatingSettingsWidgets.has(nextId)) {
+                return nextId;
+            }
+            nextIndex++;
+        }
+    };
+
     private getFloatingWidgetOffset = (): number => {
         this.defaultFloatingWidgetOffset += 25;
         this.defaultFloatingWidgetOffset = (this.defaultFloatingWidgetOffset - 100) % 300 + 100;
@@ -178,6 +210,11 @@ export class WidgetsStore {
         const widgets = this.widgetsMap.get(widgetType);
         if (widgets) {
             widgets.delete(widgetId);
+        }
+        // remove from floating setting map
+        const floatingSettings = this.floatingSettingsWidgets.has(widgetId);
+        if (floatingSettings) {
+            this.floatingSettingsWidgets.delete(widgetId);
         }
     };
 
@@ -302,11 +339,36 @@ export class WidgetsStore {
             let unpinButton = $(`<li class="pin-icon"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);
             unpinButton.on("click", () => this.unpinWidget(stack.getActiveContentItem()));
             stack.header.controlsContainer.prepend(unpinButton);
+
+            let cogPinedButton = $(`<li class="cog-pined-icon"><span class="bp3-icon-standard bp3-icon-cog"/></li>`);
+            cogPinedButton.on("click", () => this.onCogPinedClick(stack.getActiveContentItem()));
+            stack.header.controlsContainer.prepend(cogPinedButton);
         });
         layout.on("componentCreated", this.handleItemCreation);
         layout.on("itemDestroyed", this.handleItemRemoval);
         layout.on("stateChanged", this.handleStateUpdates);
     };
+
+    @action onCogPinedClick = (item: GoldenLayout.ContentItem) => {
+        const parentItemConfig = item.config as GoldenLayout.ReactComponentConfig;
+        const parentId = parentItemConfig.id as string;
+        const parentType = parentItemConfig.component;
+        const parentTitle = parentItemConfig.title;
+
+        // only for stokes now
+        if (parentType !== StokesAnalysisComponent.WIDGET_CONFIG.type) {
+            return;
+        }
+        // Get floating settings config
+        let widgetConfig = WidgetsStore.getDefaultWidgetConfig(FloatingSettingsComponent.WIDGET_CONFIG.type);
+        widgetConfig.id = this.addFloatingSettingsWidget(null, parentId);
+        widgetConfig.title = parentTitle + " settings";
+        widgetConfig.parentId = parentId;
+        widgetConfig.parentType = parentType;
+        if (widgetConfig.id) {
+            this.addFloatingWidget(widgetConfig);   
+        }
+    }
 
     @action unpinWidget = (item: GoldenLayout.ContentItem) => {
         const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
@@ -489,6 +551,31 @@ export class WidgetsStore {
         return id;
     }
 
+    // endregion
+
+    // region Floating Settings
+    createFloatingSettingsWidget = (title: string, parentId: string, parentType: string) => {
+        let config = FloatingSettingsComponent.WIDGET_CONFIG;
+        config.id = this.addFloatingSettingsWidget(null, parentId);
+        config.title = title + " Settings";
+        config.parentId = parentId;
+        config.parentType = parentType;
+        if (config.id) {
+            this.addFloatingWidget(config);   
+        }
+    }
+
+    @action addFloatingSettingsWidget(id: string = null, parentId: string) {
+        // Generate new id if none passed in
+        if (!id) {
+            id = this.getNextSettingId(FloatingSettingsComponent.WIDGET_CONFIG.type, parentId);
+        }
+
+        if (id) {
+            this.floatingSettingsWidgets.set(id, parentId);
+        }
+        return id;
+    }
     // endregion
 
     // region Stats Widgets
