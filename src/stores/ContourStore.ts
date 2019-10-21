@@ -1,4 +1,5 @@
 import {action, computed, observable} from "mobx";
+import * as CARTACompute from "carta_computation";
 import {Point2D} from "models";
 import {add2D, dot2D, length2D, normalize2D, perpVector2D, scale2D, subtract2D} from "utilities";
 
@@ -12,7 +13,6 @@ export class ContourStore {
     indexBuffers: WebGLBuffer[];
 
     private gl: WebGLRenderingContext;
-    private static MiterLimit = 1.5;
     // Number of vertex data "float" values (normals are actually int16, so both coordinates count as one 32-bit value)
     // Each vertex is repeated twice
     private static VertexDataElements = 8;
@@ -67,140 +67,11 @@ export class ContourStore {
             this.indices = [];
         }
 
-        this.vertexData.push(ContourStore.GenerateVertexData(sourceVertices, indexOffsets));
+        this.vertexData.push(CARTACompute.GenerateVertexData(sourceVertices, indexOffsets));
         this.indexOffsets.push(indexOffsets);
         this.indices.push(ContourStore.GenerateLineIndices(indexOffsets, numVertices));
         this.progress = progress;
     };
-
-    private static GenerateVertexData(sourceVertices: Float32Array, indexOffsets: Int32Array) {
-        const numPolyLines = indexOffsets.length;
-        const numVertices = sourceVertices.length / 2;
-        const vertexData = new Float32Array(numVertices * ContourStore.VertexDataElements);
-        const vertexDataShort = new Int16Array(vertexData.buffer);
-
-        for (let i = 0; i < numPolyLines; i++) {
-            const startIndex = indexOffsets[i] / 2;
-            const endIndex = i < numPolyLines - 1 ? indexOffsets[i + 1] / 2 : numVertices;
-            ContourStore.FillSinglePolyline(sourceVertices, startIndex, endIndex, vertexData, vertexDataShort);
-        }
-        return vertexData;
-    }
-
-    private static FillSinglePolyline(sourceVertices: Float32Array, startIndex: number, endIndex: number, vertexData: Float32Array, vertexDataShort: Int16Array) {
-        const numVertices = endIndex - startIndex;
-        if (numVertices < 2) {
-            return;
-        }
-
-        // First vertex
-        let vertexOffset = startIndex * 2;
-        let currentPoint = {x: sourceVertices[vertexOffset], y: sourceVertices[vertexOffset + 1]};
-        let nextPoint = {x: sourceVertices[vertexOffset + 2], y: sourceVertices[vertexOffset + 3]};
-
-        let segmentLength = length2D(subtract2D(currentPoint, nextPoint));
-        let cumulativeLength = segmentLength;
-
-        let firstDir = normalize2D(subtract2D(nextPoint, currentPoint));
-
-        if (!isFinite(firstDir.x) || !isFinite(firstDir.y)) {
-            // Find first non-degenerate vertex and use that as the initial direction
-            for (let i = 2; i < numVertices - 1; i++) {
-                const newOffset = (startIndex + i) * 2;
-                nextPoint = {x: sourceVertices[newOffset], y: sourceVertices[newOffset + 1]};
-                firstDir = normalize2D(subtract2D(nextPoint, currentPoint));
-                if (isFinite(firstDir.x) && isFinite(firstDir.y)) {
-                    break;
-                }
-            }
-        }
-        let prevDir = firstDir;
-        let prevNormal: Point2D;
-
-        // Inner vertices
-        for (let i = 1; i < numVertices - 1; i++) {
-            const index = i + startIndex;
-            vertexOffset = index * 2;
-            const normalOffset = index * ContourStore.VertexDataElements;
-            // Middle vertices
-            currentPoint = {x: sourceVertices[vertexOffset], y: sourceVertices[vertexOffset + 1]};
-            nextPoint = {x: sourceVertices[vertexOffset + 2], y: sourceVertices[vertexOffset + 3]};
-
-            let currentDir = normalize2D(subtract2D(nextPoint, currentPoint));
-            // Handle degenerate vertices
-            if (!isFinite(currentDir.x) || !isFinite(currentDir.y)) {
-                currentDir = prevDir;
-            }
-
-            const currentNormal = perpVector2D(currentDir);
-            const tangent = normalize2D(add2D(prevDir, currentDir));
-            const tangentNormal = perpVector2D(tangent);
-            let miterLength = Math.min(1.0 / dot2D(tangent, prevDir), ContourStore.MiterLimit);
-            // Prevent mitre issues when going backwards
-            if (isNaN(miterLength)) {
-                miterLength = 1.0;
-            }
-            const computedNormal = scale2D(tangentNormal, miterLength);
-
-            ContourStore.FillVertexData(vertexData, vertexDataShort, normalOffset, currentPoint, computedNormal, cumulativeLength);
-
-            prevNormal = currentNormal;
-            prevDir = currentDir;
-            segmentLength = length2D(subtract2D(currentPoint, nextPoint));
-            cumulativeLength += segmentLength;
-        }
-
-        let firstNorm: Point2D, lastNorm: Point2D;
-
-        // Test if the line is a closed loop
-        const firstPoint = {x: sourceVertices[startIndex * 2], y: sourceVertices[startIndex * 2 + 1]};
-        const lastPoint = {x: sourceVertices[(endIndex - 1) * 2], y: sourceVertices[(endIndex - 1) * 2 + 1]};
-        const firstLastDist = length2D(subtract2D(firstPoint, lastPoint));
-        const loop = firstLastDist < 1e-6;
-
-        if (loop) {
-            // Join first and last lines
-            const tangent = normalize2D(add2D(prevDir, firstDir));
-            const tangentNormal = perpVector2D(tangent);
-            const mitreLength = Math.min(1.0 / dot2D(tangent, prevDir), ContourStore.MiterLimit);
-            firstNorm = scale2D(tangentNormal, mitreLength);
-            lastNorm = firstNorm;
-        } else {
-            firstNorm = perpVector2D(firstDir);
-            lastNorm = prevNormal;
-        }
-
-        // Fill in first and last normals
-        ContourStore.FillVertexData(vertexData, vertexDataShort, startIndex * ContourStore.VertexDataElements, firstPoint, firstNorm, 0);
-        ContourStore.FillVertexData(vertexData, vertexDataShort, (endIndex - 1) * ContourStore.VertexDataElements, lastPoint, lastNorm, cumulativeLength);
-    }
-
-    private static FillVertexData(vertexData: Float32Array, vertexDataShort: Int16Array, offset: number, vertex: Point2D, normal: Point2D, length: number) {
-        if (!normal || !vertex) {
-            return;
-        }
-
-        vertexData[offset] = vertex.x;
-        vertexData[offset + 1] = vertex.y;
-        vertexData[offset + 2] = length;
-        vertexDataShort[(offset + 3) * 2] = 16384 * normal.x;
-        vertexDataShort[(offset + 3) * 2 + 1] = 16384 * normal.y;
-
-        vertexData[offset + 4] = vertex.x;
-        vertexData[offset + 5] = vertex.y;
-        vertexData[offset + 6] = -length;
-        vertexDataShort[(offset + 7) * 2] = -16384 * normal.x;
-        vertexDataShort[(offset + 7) * 2 + 1] = -16384 * normal.y;
-
-        // vertexData[offset] = vertex.x;
-        // vertexData[offset + 1] = vertex.y;
-        // vertexData[offset + 2] = normal.x;
-        // vertexData[offset + 3] = normal.y;
-        // vertexData[offset + 4] = vertex.x;
-        // vertexData[offset + 5] = vertex.y;
-        // vertexData[offset + 6] = -normal.x;
-        // vertexData[offset + 7] = -normal.y;
-    }
 
     private static GenerateLineIndices(indexOffsets: Int32Array, numVertices: number) {
         const numPolyLines = indexOffsets.length;

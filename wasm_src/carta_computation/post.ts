@@ -1,8 +1,13 @@
+import TypedArray = NodeJS.TypedArray;
+
 declare var Module: any;
 declare var addOnPostRun: any;
 
 const decompress = Module.cwrap("ZSTD_decompress", "number", ["number", "number", "number", "number"]);
 const decodeArray = Module.cwrap("decodeArray", "number", ["number", "number", "number"]);
+const generateVertexData = Module.cwrap("generateVertexData", "number", ["number", "number", "number", "number", "number", "number"]);
+
+const VertexDataElements = 8;
 
 Module.srcAllocated = 0;
 Module.srcPtr = 0;
@@ -30,7 +35,7 @@ Module.onReady = new Promise(function (func) {
     Module.ZstdReady = true;
 });
 
-function resizeAndFillBuffers(src: Uint8Array, destSize) {
+function resizeAndFillBuffers(src: TypedArray, destSize) {
     const srcSize = src.byteLength;
 
     // resize src if buffer is not big enough
@@ -67,6 +72,23 @@ Module.Decode = (src: Uint8Array, destSize: number, decimationFactor: number): F
     const result = decompress(Module.destPtr, destSize, Module.srcPtr, srcSize);
     const destHeapFloat = new Float32Array(Module.HEAPU8.buffer, Module.destPtr, destSize / 4);
     decodeArray(Module.destPtr, destSize, decimationFactor);
+    return destHeapFloat.slice();
+};
+
+Module.GenerateVertexData = (sourceVertices: Float32Array, indexOffsets: Int32Array): Float32Array => {
+    const numPolyLines = indexOffsets.length;
+    const numVertices = sourceVertices.length / 2;
+    const destSize = numVertices * VertexDataElements * 4;
+    const srcBytes = new Uint8Array(sourceVertices.buffer);
+    resizeAndFillBuffers(srcBytes, destSize);
+    const srcIndexSize = indexOffsets.byteLength;
+    const indexPtr = Module._malloc(srcIndexSize);
+    const srcHeapIndex = new Int32Array(Module.HEAPU8.buffer, indexPtr, indexOffsets.length);
+    srcHeapIndex.set(indexOffsets);
+
+    const destHeapFloat = new Float32Array(Module.HEAPU8.buffer, Module.destPtr, destSize / 4);
+    generateVertexData(Module.destPtr, destSize / 4, Module.srcPtr, numVertices, indexPtr, numPolyLines);
+    Module._free(indexPtr);
     return destHeapFloat.slice();
 };
 
