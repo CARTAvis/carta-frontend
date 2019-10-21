@@ -13,6 +13,8 @@ export class ContourStore {
 
     private gl: WebGLRenderingContext;
     private static MiterLimit = 1.5;
+    // Number of vertex data "float" values (normals are actually int16, so both coordinates count as one 32-bit value)
+    // Each vertex is repeated twice
     private static VertexDataElements = 8;
 
     @computed get hasValidData() {
@@ -37,7 +39,7 @@ export class ContourStore {
         let count = 0;
         for (let i = 0; i < this.vertexData.length; i++) {
             // Each vertex is repeated twice, and each vertex has two coordinates
-            count += this.vertexData[i].length / 4;
+            count += this.vertexData[i].length / ContourStore.VertexDataElements;
         }
         return count;
     }
