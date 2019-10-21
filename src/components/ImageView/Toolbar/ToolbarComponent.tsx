@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {exportImage} from "components";
-import {AppStore, RegionMode} from "stores";
+import {AppStore, RegionMode, SystemType} from "stores";
 import {toFixed} from "utilities";
 import "./ToolbarComponent.css";
 
@@ -34,6 +34,10 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         this.props.appStore.activeFrame.regionSet.setNewRegionType(type);
         this.props.appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
     };
+
+    handleCoordinateSystemClicked = (coordinateSystem: string) => {
+        this.props.appStore.overlayStore.global.setSystem(coordinateSystem as SystemType);
+    }
 
     render() {
         const appStore = this.props.appStore;
@@ -66,6 +70,14 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <MenuItem icon={"square"} text="Rectangle" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.RECTANGLE)}/>
                 <MenuItem icon={"circle"} text="Ellipse" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.ELLIPSE)}/>
                 <MenuItem icon={"polygon-filter"} text="Polygon" onClick={() => this.handleRegionTypeClicked(CARTA.RegionType.POLYGON)}/>
+            </Menu>
+        );
+
+        const coordinateSystemMenu = (
+            <Menu>
+                {Object.keys(SystemType).map(key => (
+                    <MenuItem text={key} onClick={() => this.handleCoordinateSystemClicked(key)}/>
+                ))}
             </Menu>
         );
 
@@ -116,6 +128,11 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Zoom to fit{currentZoomSpan}</span>}>
                     <Button icon="zoom-to-fit" onClick={frame.fitZoom}/>
+                </Tooltip>
+                <Tooltip position={tooltipPosition} content={<span>Overlay Coordinate</span>}>
+                    <Popover content={coordinateSystemMenu} position={Position.TOP} minimal={true}>
+                        <Button text={this.props.appStore.overlayStore.global.system}/>
+                    </Popover>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content="Toggle grid">
                     <Button icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)}/>
