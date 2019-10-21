@@ -40,7 +40,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     @observable width: number;
     @observable height: number;
-   
+
     @computed get widgetStore(): RenderConfigWidgetStore {
         if (this.props.appStore && this.props.appStore.widgetsStore.renderConfigWidgets) {
             const widgetStore = this.props.appStore.widgetsStore.renderConfigWidgets.get(this.props.id);
@@ -192,6 +192,25 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             frame.renderConfig.setUseCubeHistogram(false);
         }
         this.props.appStore.cancelCubeHistogramRequest();
+    };
+
+    handleApplyContours = () => {
+        const appStore = this.props.appStore;
+        if (!appStore || !appStore.activeFrame) {
+            return;
+        }
+
+        appStore.activeFrame.applyContours();
+
+    };
+
+    handleClearContours = () => {
+        const appStore = this.props.appStore;
+        if (!appStore || !appStore.activeFrame) {
+            return;
+        }
+
+        appStore.activeFrame.clearContours();
     };
 
     onMinMoved = (x: number) => {
@@ -393,8 +412,12 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                             onBlur={this.handleScaleMaxChange}
                             onKeyDown={this.handleScaleMaxChange}
                         />
-                    </FormGroup>		   		    
-                {this.width < histogramCutoff && percentileSelectDiv}
+                    </FormGroup>
+                    {this.width < histogramCutoff && percentileSelectDiv}
+                    <ButtonGroup>
+                        <Button onClick={this.handleApplyContours}>Apply Contours</Button>
+                        <Button onClick={this.handleClearContours}>Clear</Button>
+                    </ButtonGroup>
                 </div>
                 <TaskProgressDialogComponent
                     isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}

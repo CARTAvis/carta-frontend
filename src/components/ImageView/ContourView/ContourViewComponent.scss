@@ -1,0 +1,13 @@
+.contour-div {
+    position: absolute;
+    left: 0;
+
+    &.docked {
+        z-index: 3;
+    }
+
+    .contour-canvas {
+        position: absolute;
+        z-index: 0;
+    }
+}

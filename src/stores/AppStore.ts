@@ -618,6 +618,7 @@ export class AppStore {
         this.backendService.getSpectralProfileStream().subscribe(this.handleSpectralProfileStream);
         this.backendService.getRegionHistogramStream().subscribe(this.handleRegionHistogramStream);
         this.backendService.getRasterStream().subscribe(this.handleRasterImageStream);
+        this.backendService.getContourStream().subscribe(this.handleContourImageStream);
         this.backendService.getErrorStream().subscribe(this.handleErrorStream);
         this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
         this.tileService.GetTileStream().subscribe(this.handleTileStream);
@@ -746,6 +747,13 @@ export class AppStore {
                 updatedFrame.requiredStokes = rasterImageData.stokes;
                 updatedFrame.renderType = RasterRenderType.ANIMATION;
             }
+        }
+    };
+
+    handleContourImageStream = (contourImageData: CARTA.ContourImageData) => {
+        const updatedFrame = this.getFrame(contourImageData.fileId);
+        if (updatedFrame) {
+            updatedFrame.updateFromContourData(contourImageData);
         }
     };
 
