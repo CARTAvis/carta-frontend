@@ -63,7 +63,7 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
             const appStore = this.props.appStore;
             switch (widgetConfig.parentType) {
                 case StokesAnalysisComponent.WIDGET_CONFIG.type:
-                    return <StokesAnalysisSettingsPanelComponent appStore={appStore} id={widgetConfig.parentId} docked={false}/>;
+                    return <StokesAnalysisSettingsPanelComponent appStore={appStore} id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
                 default:
                     return null;
             }

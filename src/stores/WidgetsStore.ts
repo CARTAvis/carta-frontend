@@ -38,6 +38,7 @@ export class WidgetProps {
     appStore: AppStore;
     id: string;
     docked: boolean;
+    floatingSettingsId?: string;
 }
 
 export class WidgetsStore {
@@ -182,8 +183,8 @@ export class WidgetsStore {
             return null;
         }
         let settingShowed = false;
-        floatingSettingsWidgets.forEach(values => {
-            if (values === parentId) {
+        floatingSettingsWidgets.forEach(value => {
+            if (value === parentId) {
                 settingShowed = true;
             }
         });
@@ -210,8 +211,19 @@ export class WidgetsStore {
         const widgets = this.widgetsMap.get(widgetType);
         if (widgets) {
             widgets.delete(widgetId);
+            // remove associated floating settings according current widgetId
+            if (this.floatingSettingsWidgets) {
+                let associatedFloatingSettingsId = null;
+                this.floatingSettingsWidgets.forEach((value, key) => {
+                    associatedFloatingSettingsId = value === widgetId ? key : null;
+                });
+                if (associatedFloatingSettingsId) {
+                    this.removeFloatingWidget(associatedFloatingSettingsId, true);
+                    this.floatingSettingsWidgets.delete(associatedFloatingSettingsId);
+                }
+            }
         }
-        // remove from floating setting map
+        // remove floating settings according floating settings Id
         const floatingSettings = this.floatingSettingsWidgets.has(widgetId);
         if (floatingSettings) {
             this.floatingSettingsWidgets.delete(widgetId);
@@ -362,7 +374,7 @@ export class WidgetsStore {
         // Get floating settings config
         let widgetConfig = WidgetsStore.getDefaultWidgetConfig(FloatingSettingsComponent.WIDGET_CONFIG.type);
         widgetConfig.id = this.addFloatingSettingsWidget(null, parentId);
-        widgetConfig.title = parentTitle + " settings";
+        widgetConfig.title = parentTitle + " Settings";
         widgetConfig.parentId = parentId;
         widgetConfig.parentType = parentType;
         if (widgetConfig.id) {

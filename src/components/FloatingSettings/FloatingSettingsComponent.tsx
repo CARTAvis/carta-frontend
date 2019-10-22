@@ -15,7 +15,7 @@ export class FloatingSettingsComponent extends React.Component<FloatingSettingsC
             type: "floating-settings",
             minWidth: 200,
             minHeight: 300,
-            defaultWidth: 300,
+            defaultWidth: 350,
             defaultHeight: 400,
             title: "floating-settings",
             isCloseable: true,
@@ -25,8 +25,6 @@ export class FloatingSettingsComponent extends React.Component<FloatingSettingsC
     }
 
     public render() {
-        // const appStore = this.props.appStore;
-
         return (
             <div className={"floating-settings-container"}>
                 {this.props.children}
