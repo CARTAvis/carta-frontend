@@ -31,6 +31,7 @@ const coordinateSystemTooltip = new Map<SystemType, string>([
     [SystemType.Ecliptic, "Ecliptic coordinates"],
     [SystemType.ICRS, "International Celestial Reference System"],
 ]);
+
 @observer
 export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
@@ -157,10 +158,13 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <Tooltip position={tooltipPosition} content={<span>Zoom to fit{currentZoomSpan}</span>}>
                     <Button icon="zoom-to-fit" onClick={frame.fitZoom}/>
                 </Tooltip>
-                <Tooltip position={tooltipPosition} content={<span>Overlay Coordinate <br/><small>Current: {coordinateSystemTooltip.get(coordinateSystem)}</small><br/><i><small>Double-click to Toggle grid</small></i></span>}>
+                <Tooltip position={tooltipPosition} content={<span>Overlay Coordinate <br/><small>Current: {coordinateSystemTooltip.get(coordinateSystem)}</small></span>}>
                     <Popover content={coordinateSystemMenu} position={Position.TOP} minimal={true}>
-                        <Button text={this.coordinateSystemLebel} active={grid.visible} onDoubleClick={() => grid.setVisible(!grid.visible)}/>
+                        <Button text={this.coordinateSystemLebel} />
                     </Popover>
+                </Tooltip>
+                <Tooltip position={tooltipPosition} content="Toggle grid">
+                    <Button icon="grid" active={grid.visible} onClick={() => grid.setVisible(!grid.visible)}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content="Toggle labels">
                     <Button icon="numerical" active={!overlay.labelsHidden} onClick={overlay.toggleLabels}/>
