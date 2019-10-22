@@ -199,10 +199,10 @@ export class AppStore {
             connected = true;
             this.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
 
-            // TODO: init preference/layout store after connection is built
-            if (ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_PREFERENCES) {
-            } else {
-            }
+            // Init preference/layout store after connection is built
+            const serverSupportsPreference = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_PREFERENCES ? true : false;
+            // TODO: preference
+
             const serverSupportsLayout = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_LAYOUTS ? true : false;
             this.layoutStore.init(ack.userLayouts, serverSupportsLayout);
 

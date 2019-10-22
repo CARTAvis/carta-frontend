@@ -124,7 +124,7 @@ export class LayoutStore {
         this.alertStore = alertStore;
         this.dockedLayout = null;
         this.layouts = {};
-        this.initLayoutsWithLocalStorage();
+        this.initLayoutsFromLocalStorage();
     }
 
     public layoutExist = (layoutName: string): boolean => {
@@ -135,14 +135,12 @@ export class LayoutStore {
         this.layoutNameToBeSaved = layoutName ? layoutName : "Empty";
     };
 
-    // TODO: init with server or localStorage
     public init = (layouts: { [k: string]: string; }, serverSupport: boolean) => {
         this.serverSupport = serverSupport;
         if (serverSupport) {
-
+            this.initLayoutsFromServer(layouts);
         } else {
-            // init with localStorage
-            // this.initLayoutsWithLocalStorage();
+            this.initLayoutsFromLocalStorage();
         }
     };
 
@@ -165,7 +163,10 @@ export class LayoutStore {
         }
     };
 
-    private initLayoutsWithLocalStorage = () => {
+    private initLayoutsFromServer = (layouts: { [k: string]: string; }) => {
+    };
+
+    private initLayoutsFromLocalStorage = () => {
         // 1. fill layout with presets
         PresetLayout.PRESETS.forEach((presetName) => {
             const config = PRESET_CONFIGS.get(presetName);
