@@ -702,16 +702,18 @@ export class FrameStore {
         this.backendService.setContourParameters(contourParameters);
     };
 
-    @action clearContours = () => {
+    @action clearContours = (updateBackend: boolean = true) => {
         // Clear up GPU resources
         this.contourStores.forEach(contourStore => contourStore.clearData());
         this.contourStores.clear();
-        // Send empty contour parameter message to the backend, to prevent contours from being automatically updated
-        const contourParameters: CARTA.ISetContourParameters = {
-            fileId: this.frameInfo.fileId,
-            referenceFileId: this.frameInfo.fileId,
-        };
-        this.backendService.setContourParameters(contourParameters);
+        if (updateBackend) {
+            // Send empty contour parameter message to the backend, to prevent contours from being automatically updated
+            const contourParameters: CARTA.ISetContourParameters = {
+                fileId: this.frameInfo.fileId,
+                referenceFileId: this.frameInfo.fileId,
+            };
+            this.backendService.setContourParameters(contourParameters);
+        }
     };
 
     // Tests a list of headers for valid channel information in either 3rd or 4th axis
