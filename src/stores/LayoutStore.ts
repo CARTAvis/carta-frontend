@@ -124,7 +124,7 @@ export class LayoutStore {
         this.alertStore = alertStore;
         this.dockedLayout = null;
         this.layouts = {};
-        this.initLayoutsFromLocalStorage();
+        this.initLayoutsFromPresets();
     }
 
     public layoutExist = (layoutName: string): boolean => {
@@ -135,7 +135,7 @@ export class LayoutStore {
         this.layoutNameToBeSaved = layoutName ? layoutName : "Empty";
     };
 
-    public init = (layouts: { [k: string]: string; }, serverSupport: boolean) => {
+    public initUserDefinedLayouts = (layouts: { [k: string]: string; }, serverSupport: boolean) => {
         this.serverSupport = serverSupport;
         if (serverSupport) {
             this.initLayoutsFromServer(layouts);
@@ -163,11 +163,7 @@ export class LayoutStore {
         }
     };
 
-    private initLayoutsFromServer = (layouts: { [k: string]: string; }) => {
-    };
-
-    private initLayoutsFromLocalStorage = () => {
-        // 1. fill layout with presets
+    private initLayoutsFromPresets = () => {
         PresetLayout.PRESETS.forEach((presetName) => {
             const config = PRESET_CONFIGS.get(presetName);
             this.layouts[presetName] = {
@@ -186,8 +182,12 @@ export class LayoutStore {
                 floating: []
             };
         });
+    };
 
-        // 2. add user layouts stored in local storage after validation
+    private initLayoutsFromServer = (layouts: { [k: string]: string; }) => {
+    };
+
+    private initLayoutsFromLocalStorage = () => {
         const layoutJson = localStorage.getItem(KEY);
         let userLayouts = null;
         if (layoutJson) {

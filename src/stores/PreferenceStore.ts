@@ -87,7 +87,6 @@ const DEFAULTS = {
 
 export class PreferenceStore {
     private readonly appStore: AppStore;
-    private readonly layoutStore: LayoutStore;
 
     @observable theme: string;
     @observable autoLaunch: boolean;
@@ -136,7 +135,7 @@ export class PreferenceStore {
 
     private getLayout = (): string => {
         const layout = localStorage.getItem(PREFERENCE_KEYS.layout);
-        return layout && this.layoutStore.layoutExist(layout) ? layout : DEFAULTS.layout;
+        return layout && this.appStore.layoutStore.layoutExist(layout) ? layout : DEFAULTS.layout;
     };
 
     private getCursorPosition = (): string => {
@@ -683,9 +682,8 @@ export class PreferenceStore {
         this.eventsLoggingEnabled.forEach((value, key, map) => map.set(key, DEFAULTS.eventLoggingEnabled));
     };
 
-    constructor(appStore: AppStore, layoutStore: LayoutStore) {
+    constructor(appStore: AppStore) {
         this.appStore = appStore;
-        this.layoutStore = layoutStore;
         this.theme = this.getTheme();
         this.autoLaunch = this.getAutoLaunch();
         this.layout = this.getLayout();

@@ -201,11 +201,10 @@ export class AppStore {
 
             // Init layout/preference store after connection is built
             const serverSupportsLayout = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_LAYOUTS ? true : false;
-            this.layoutStore.init(ack.userLayouts, false);
+            this.layoutStore.initUserDefinedLayouts(ack.userLayouts, false);
 
             // TODO: preference
             const serverSupportsPreference = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_PREFERENCES ? true : false;
-            this.preferenceStore.init(false);
 
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
