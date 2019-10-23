@@ -47,48 +47,67 @@ const PREFERENCE_KEYS = {
 };
 
 const DEFAULTS = {
-    theme: Theme.LIGHT,
-    autoLaunch: true,
-    layout: PresetLayout.DEFAULT,
-    cursorPosition: CursorPosition.TRACKING,
-    zoomMode: Zoom.FIT,
-    dragPanning: true,
-    scaling: FrameScaling.LINEAR,
-    colormap: "inferno",
-    percentile: 99.9,
-    scalingAlpha: 1000,
-    scalingGamma: 1,
-    nanColorHex: "#137CBD",
-    nanAlpha: 1,
-    contourSmoothingMode: CARTA.SmoothingMode.BlockAverage,
-    contourSmoothingFactor: 4,
-    contourNumLevels: 5,
-    contourThickness: 1,
-    contourColormapEnabled: false,
-    contourColor: Colors.GREEN3,
-    contourColormap: "viridis",
-    astColor: 4,
-    astGridVisible: false,
-    astLabelsVisible: true,
-    wcsType: WCSType.AUTOMATIC,
-    regionColor: "#2EE6D6",
-    regionLineWidth: 2,
-    regionDashLength: 0,
-    regionType: CARTA.RegionType.RECTANGLE,
-    regionCreationMode: RegionCreationMode.CENTER,
-    imageCompressionQuality: CompressionQuality.IMAGE_DEFAULT,
-    animationCompressionQuality: CompressionQuality.ANIMATION_DEFAULT,
-    GPUTileCache: TileCache.GPU_DEFAULT,
-    systemTileCache: TileCache.SYSTEM_DEFAULT,
-    contourDecimation: 4,
-    contourCompressionLevel: 8,
-    eventLoggingEnabled: false
+    global: {
+        theme: Theme.LIGHT,
+        autoLaunch: true,
+        layout: PresetLayout.DEFAULT,
+        cursorPosition: CursorPosition.TRACKING,
+        zoomMode: Zoom.FIT
+    },
+    renderConfig: {
+        dragPanning: true,
+        scaling: FrameScaling.LINEAR,
+        colormap: "inferno",
+        percentile: 99.9,
+        scalingAlpha: 1000,
+        scalingGamma: 1,
+        nanColorHex: "#137CBD",
+        nanAlpha: 1,
+    },
+    contourConfig: {
+        contourSmoothingMode: CARTA.SmoothingMode.BlockAverage,
+        contourSmoothingFactor: 4,
+        contourNumLevels: 5,
+        contourThickness: 1,
+        contourColormapEnabled: false,
+        contourColor: Colors.GREEN3,
+        contourColormap: "viridis",
+    },
+    wcsOverlay: {
+        astColor: 4,
+        astGridVisible: false,
+        astLabelsVisible: true,
+        wcsType: WCSType.AUTOMATIC,
+    },
+    region: {
+        regionColor: "#2EE6D6",
+        regionLineWidth: 2,
+        regionDashLength: 0,
+        regionType: CARTA.RegionType.RECTANGLE,
+        regionCreationMode: RegionCreationMode.CENTER,
+    },
+    performance: {
+        imageCompressionQuality: CompressionQuality.IMAGE_DEFAULT,
+        animationCompressionQuality: CompressionQuality.ANIMATION_DEFAULT,
+        GPUTileCache: TileCache.GPU_DEFAULT,
+        systemTileCache: TileCache.SYSTEM_DEFAULT,
+        contourDecimation: 4,
+        contourCompressionLevel: 8,
+    },
+    logEvent: {
+        eventLoggingEnabled: new Map<CARTA.EventType, boolean>();false
+    }
 };
+
+interface Preference {
+    
+}
 
 export class PreferenceStore {
     private readonly appStore: AppStore;
     private readonly layoutStore: LayoutStore;
 
+    @observable preference: any;
     @observable theme: string;
     @observable autoLaunch: boolean;
     @observable layout: string;
@@ -418,6 +437,12 @@ export class PreferenceStore {
         return events;
     };
 
+    private genDefaultLogEvents = (): Map<CARTA.EventType, boolean> => {
+        let events = new Map<CARTA.EventType, boolean>();
+        Event.EVENT_TYPES.forEach(eventType => events.set(eventType, DEFAULTS.eventLoggingEnabled));
+        return events;
+    };
+
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
         return Event.isEventTypeValid(eventType) && this.eventsLoggingEnabled.get(eventType);
     };
@@ -683,9 +708,7 @@ export class PreferenceStore {
         this.eventsLoggingEnabled.forEach((value, key, map) => map.set(key, DEFAULTS.eventLoggingEnabled));
     };
 
-    constructor(appStore: AppStore, layoutStore: LayoutStore) {
-        this.appStore = appStore;
-        this.layoutStore = layoutStore;
+    private initPreferenceFromLocalStorage = () => {
         this.theme = this.getTheme();
         this.autoLaunch = this.getAutoLaunch();
         this.layout = this.getLayout();
@@ -718,12 +741,16 @@ export class PreferenceStore {
         this.contourDecimation = this.getContourDecimation();
         this.contourCompressionLevel = this.getContourCompressionLevel();
         this.eventsLoggingEnabled = this.getLogEvents();
-
-        // setup region settings container (for AppearanceForm in PreferenceDialogComponent)
-        this.regionContainer = new RegionStore(null, -1, null, [{x: 0, y: 0}, {x: 1, y: 1}], this.getRegionType(), -1);
+        this.regionContainer.regionType = this.getRegionType();
         this.regionContainer.color = this.getRegionColor();
         this.regionContainer.lineWidth = this.getRegionLineWidth();
         this.regionContainer.dashLength = this.getRegionDashLength();
+    };
+
+    constructor(appStore: AppStore, layoutStore: LayoutStore) {
+        this.appStore = appStore;
+        this.layoutStore = layoutStore;
+        this.initPreferenceFromLocalStorage();
 
         autorun(() => {
             localStorage.setItem(PREFERENCE_KEYS.regionColor, this.regionContainer.color);
