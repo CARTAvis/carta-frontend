@@ -89,7 +89,7 @@ Module.GenerateVertexData = (sourceVertices: Float32Array, indexOffsets: Int32Ar
     const destHeapFloat = new Float32Array(Module.HEAPU8.buffer, Module.destPtr, destSize / 4);
     generateVertexData(Module.destPtr, destSize / 4, Module.srcPtr, numVertices, indexPtr, numPolyLines);
     Module._free(indexPtr);
-    return destHeapFloat.slice();
+    return destHeapFloat;
 };
 
 module.exports = Module;

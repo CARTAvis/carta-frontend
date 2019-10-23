@@ -4,13 +4,16 @@ import {Point2D} from "models";
 import {add2D, dot2D, length2D, normalize2D, perpVector2D, scale2D, subtract2D} from "utilities";
 
 export class ContourStore {
-    @observable indices: Int32Array[];
-    @observable indexOffsets: Int32Array[];
-    @observable vertexData: Float32Array[];
     @observable progress: number;
+    @observable numIndices: number[];
+    @observable vertexCount: number = 0;
+    @observable chunkCount: number = 0;
 
-    vertexBuffers: WebGLBuffer[];
-    indexBuffers: WebGLBuffer[];
+    private indices: Int32Array[];
+    private indexOffsets: Int32Array[];
+    private vertexData: Float32Array[];
+    private vertexBuffers: WebGLBuffer[];
+    private indexBuffers: WebGLBuffer[];
 
     private gl: WebGLRenderingContext;
     // Number of vertex data "float" values (normals are actually int16, so both coordinates count as one 32-bit value)
@@ -23,25 +26,6 @@ export class ContourStore {
         }
 
         return this.indices.length > 0 && this.vertexData.length > 0;
-    }
-
-    @computed get chunkCount() {
-        if (!this.vertexData) {
-            return 0;
-        }
-        return this.vertexData.length;
-    }
-
-    @computed get vertexCount() {
-        if (!this.vertexData) {
-            return 0;
-        }
-        let count = 0;
-        for (let i = 0; i < this.vertexData.length; i++) {
-            // Each vertex is repeated twice, and each vertex has two coordinates
-            count += this.vertexData[i].length / ContourStore.VertexDataElements;
-        }
-        return count;
     }
 
     @computed get isComplete() {
@@ -57,6 +41,10 @@ export class ContourStore {
     @action addContourData = (indexOffsets: Int32Array, sourceVertices: Float32Array, progress: number) => {
         const numVertices = sourceVertices.length / 2;
 
+        if (!numVertices) {
+            return;
+        }
+
         if (!this.vertexData) {
             this.vertexData = [];
         }
@@ -66,11 +54,29 @@ export class ContourStore {
         if (!this.indices) {
             this.indices = [];
         }
+        if (!this.numIndices) {
+            this.numIndices = [];
+        }
 
-        this.vertexData.push(CARTACompute.GenerateVertexData(sourceVertices, indexOffsets));
+        const vertexData = CARTACompute.GenerateVertexData(sourceVertices, indexOffsets);
+        const indexData = ContourStore.GenerateLineIndices(indexOffsets, numVertices);
+        this.vertexData.push(vertexData);
         this.indexOffsets.push(indexOffsets);
-        this.indices.push(ContourStore.GenerateLineIndices(indexOffsets, numVertices));
+        this.indices.push(indexData);
         this.progress = progress;
+
+        const index = this.vertexData.length - 1;
+        if (this.gl) {
+            // generate buffers and clear data
+            this.generateBuffers(this.gl, index);
+        } else {
+            // Copy array from WebAssembly memory space to avoid reuse
+            this.vertexData[index] = vertexData.slice();
+        }
+
+        this.vertexCount += numVertices;
+        this.chunkCount++;
+        this.numIndices.push(indexData.length);
     };
 
     private static GenerateLineIndices(indexOffsets: Int32Array, numVertices: number) {
@@ -105,8 +111,10 @@ export class ContourStore {
             this.indexBuffers = [];
         }
 
-        // skip this if the buffers are already generated
+        // just bind if the buffers are already generated
         if (gl === this.gl && this.vertexBuffers[index] && this.indexBuffers[index]) {
+            this.gl.bindBuffer(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, this.indexBuffers[index]);
+            this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexBuffers[index]);
             return;
         }
 
@@ -122,12 +130,19 @@ export class ContourStore {
         this.gl.bufferData(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, this.indices[index], WebGLRenderingContext.STATIC_DRAW);
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexBuffers[index]);
         this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, this.vertexData[index], WebGLRenderingContext.STATIC_DRAW);
+
+        // Clear CPU memory after copying to GPU
+        this.vertexData[index] = null;
+        this.indices[index] = null;
     }
 
     @action clearData = () => {
         this.indices = [];
         this.indexOffsets = [];
         this.vertexData = [];
+        this.numIndices = [];
+        this.vertexCount = 0;
+        this.chunkCount = 0;
 
         if (this.gl && this.vertexBuffers) {
             const numBuffers = this.vertexBuffers.length;
