@@ -201,7 +201,7 @@ export class AppStore {
 
             // Init layout/preference store after connection is built
             const serverSupportsLayout = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_LAYOUTS ? true : false;
-            this.layoutStore.initUserDefinedLayouts(ack.userLayouts, false);
+            this.layoutStore.initUserDefinedLayouts(serverSupportsLayout, ack.userLayouts);
 
             // TODO: preference
             const serverSupportsPreference = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_PREFERENCES ? true : false;

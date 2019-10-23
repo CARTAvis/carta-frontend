@@ -135,7 +135,7 @@ export class LayoutStore {
         this.layoutNameToBeSaved = layoutName ? layoutName : "Empty";
     };
 
-    public initUserDefinedLayouts = (layouts: { [k: string]: string; }, serverSupport: boolean) => {
+    public initUserDefinedLayouts = (serverSupport: boolean, layouts: { [k: string]: string; }) => {
         this.serverSupport = serverSupport;
         if (serverSupport) {
             this.initLayoutsFromServer(layouts);
@@ -200,6 +200,11 @@ export class LayoutStore {
             }
         }
         this.validateUserLayouts(userLayouts);
+    };
+
+    private saveLayoutToServer = (): boolean => {
+        // TODO
+        return true;
     };
 
     private saveLayoutToLocalStorage = (): boolean => {
@@ -422,11 +427,18 @@ export class LayoutStore {
             simpleConfig.floating.push(floatingConfig);
         });
 
-        // save layout to layouts[] & local storage
+        // save layout to layouts[] & server/local storage
         this.layouts[this.layoutNameToBeSaved] = simpleConfig;
-        if (!this.saveLayoutToLocalStorage()) {
-            delete this.layouts[this.layoutNameToBeSaved];
-            return;
+        if (this.serverSupport) {
+            if (!this.saveLayoutToServer()) {
+                delete this.layouts[this.layoutNameToBeSaved];
+                return;
+            }
+        } else {
+            if (!this.saveLayoutToLocalStorage()) {
+                delete this.layouts[this.layoutNameToBeSaved];
+                return;
+            }
         }
 
         this.currentLayoutName = this.layoutNameToBeSaved;
@@ -440,8 +452,14 @@ export class LayoutStore {
         }
 
         delete this.layouts[layoutName];
-        if (!this.saveLayoutToLocalStorage()) {
-            return;
+        if (this.serverSupport) {
+            if (!this.saveLayoutToServer()) {
+                return;
+            }
+        } else {
+            if (!this.saveLayoutToLocalStorage()) {
+                return;
+            }
         }
 
         if (layoutName === this.currentLayoutName) {
