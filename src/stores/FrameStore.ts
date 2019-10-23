@@ -316,12 +316,33 @@ export class FrameStore {
         return this.renderHeight * pixelRatio / imageHeight;
     }
 
+    @computed get contourProgress(): number {
+        // Use -1 when there are no contours required
+        if (!this.contourConfig.levels || !this.contourConfig.levels.length || !this.contourConfig.enabled) {
+            return -1;
+        }
+
+        // Progress is zero if we haven't received any contours yet
+        if (!this.contourStores || !this.contourStores.size) {
+            return 0;
+        }
+
+        let totalProgress = 0;
+        this.contourStores.forEach((contourStore, level) => {
+            if (this.contourConfig.levels.indexOf(level) !== -1) {
+                totalProgress += contourStore.progress;
+            }
+        });
+
+        return totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
+    }
+
     private readonly overlayStore: OverlayStore;
     private readonly logStore: LogStore;
     private readonly backendService: BackendService;
 
     private static readonly CursorInfoMaxPrecision = 25;
-    private static readonly ContourChunkSize = 30 * 1000;
+    private static readonly ContourChunkSize = 100 * 1000;
 
     constructor(readonly preference: PreferenceStore, overlay: OverlayStore, logStore: LogStore, frameInfo: FrameInfo, backendService: BackendService) {
         this.overlayStore = overlay;
@@ -681,6 +702,7 @@ export class FrameStore {
         this.contourConfig.setColor(hexStringToRgba(this.preference.contourColor));
         this.contourConfig.setColormap(this.preference.colormap);
         this.contourConfig.setColormapEnabled(this.preference.contourColormapEnabled);
+        this.contourConfig.setEnabled(true);
 
         // TODO: Allow a different reference frame
         const contourParameters: CARTA.ISetContourParameters = {
@@ -714,6 +736,7 @@ export class FrameStore {
             };
             this.backendService.setContourParameters(contourParameters);
         }
+        this.contourConfig.setEnabled(false);
     };
 
     // Tests a list of headers for valid channel information in either 3rd or 4th axis

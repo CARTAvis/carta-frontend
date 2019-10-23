@@ -24,6 +24,23 @@
             color: $red4;
         }
     }
+
+    .contour-loading-icon {
+        padding-right: 8px;
+        animation: pulse-green 2s infinite;
+
+        @keyframes pulse-green {
+            0% {
+                color: $green2;
+            }
+            50% {
+                color: $green4;
+            }
+            100% {
+                color: $green2;
+            }
+        }
+    }
 }
 
 .bp3-portal {
