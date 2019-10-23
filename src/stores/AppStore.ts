@@ -199,12 +199,13 @@ export class AppStore {
             connected = true;
             this.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
 
-            // Init preference/layout store after connection is built
-            const serverSupportsPreference = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_PREFERENCES ? true : false;
-            // TODO: preference
-
+            // Init layout/preference store after connection is built
             const serverSupportsLayout = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_LAYOUTS ? true : false;
-            this.layoutStore.init(ack.userLayouts, serverSupportsLayout);
+            this.layoutStore.init(ack.userLayouts, false);
+
+            // TODO: preference
+            const serverSupportsPreference = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_PREFERENCES ? true : false;
+            this.preferenceStore.init(false);
 
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
@@ -458,7 +459,7 @@ export class AppStore {
     constructor() {
         this.alertStore = new AlertStore();
         this.layoutStore = new LayoutStore(this, this.alertStore);
-        this.preferenceStore = new PreferenceStore(this, this.layoutStore);
+        this.preferenceStore = new PreferenceStore(this);
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore, this.preferenceStore);
         this.tileService = new TileService(this.backendService, this.preferenceStore.GPUTileCache, this.preferenceStore.systemTileCache);
@@ -473,7 +474,7 @@ export class AppStore {
         this.fileBrowserStore = new FileBrowserStore(this.backendService);
         this.animatorStore = new AnimatorStore(this);
         this.overlayStore = new OverlayStore(this.preferenceStore);
-        this.widgetsStore = new WidgetsStore(this, this.layoutStore);
+        this.widgetsStore = new WidgetsStore(this);
         this.compressionQuality = this.preferenceStore.imageCompressionQuality;
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         this.spatialRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();

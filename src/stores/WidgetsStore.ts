@@ -52,7 +52,6 @@ export class WidgetsStore {
     @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
 
     private appStore: AppStore;
-    private layoutStore: LayoutStore;
     private widgetsMap: Map<string, Map<string, any>>;
     private defaultFloatingWidgetOffset: number;
 
@@ -78,9 +77,8 @@ export class WidgetsStore {
         });
     };
 
-    constructor(appStore: AppStore, layoutStore: LayoutStore) {
+    constructor(appStore: AppStore) {
         this.appStore = appStore;
-        this.layoutStore = layoutStore;
         this.spatialProfileWidgets = new Map<string, SpatialProfileWidgetStore>();
         this.spectralProfileWidgets = new Map<string, SpectralProfileWidgetStore>();
         this.statsWidgets = new Map<string, StatsWidgetStore>();
@@ -391,8 +389,9 @@ export class WidgetsStore {
         }
 
         // Update GL title by searching for image-view components
-        if (this.layoutStore.dockedLayout && this.layoutStore.dockedLayout.root) {
-            const imageViewComponents = this.layoutStore.dockedLayout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
+        const layoutStore = this.appStore.layoutStore;
+        if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
+            const imageViewComponents = layoutStore.dockedLayout.root.getItemsByFilter((item: any) => item.config.component === ImageViewComponent.WIDGET_CONFIG.type);
             if (imageViewComponents.length) {
                 if (imageViewComponents[0].config && imageViewComponents[0].config.title !== newTitle) {
                     imageViewComponents[0].setTitle(newTitle);
@@ -408,8 +407,9 @@ export class WidgetsStore {
     }
 
     @action setWidgetTitle(id: string, title: string) {
-        if (this.layoutStore.dockedLayout && this.layoutStore.dockedLayout.root) {
-            const matchingComponents = this.layoutStore.dockedLayout.root.getItemsByFilter(item => item.config.id === id);
+        const layoutStore = this.appStore.layoutStore;
+        if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
+            const matchingComponents = layoutStore.dockedLayout.root.getItemsByFilter(item => item.config.id === id);
             if (matchingComponents.length) {
                 matchingComponents[0].setTitle(title);
             }
