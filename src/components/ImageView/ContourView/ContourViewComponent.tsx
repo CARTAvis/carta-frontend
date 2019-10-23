@@ -135,7 +135,12 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                         this.gl.vertexAttribPointer(this.vertexNormalAttribute, 2, WebGLRenderingContext.SHORT, false, 16, 12);
 
                         // Render all poly-lines in this chunk using the vertex buffer and index buffer
-                        this.gl.drawElements(WebGLRenderingContext.TRIANGLES, numIndices, WebGLRenderingContext.UNSIGNED_INT, 0);
+                        // If the number of indices is stored as a -ve, use UNSIGNED_SHORT instead of UNSIGNED_INT
+                        if (numIndices < 0) {
+                            this.gl.drawElements(WebGLRenderingContext.TRIANGLES, -numIndices, WebGLRenderingContext.UNSIGNED_SHORT, 0);
+                        } else {
+                            this.gl.drawElements(WebGLRenderingContext.TRIANGLES, numIndices, WebGLRenderingContext.UNSIGNED_INT, 0);
+                        }
                     }
                 });
             }

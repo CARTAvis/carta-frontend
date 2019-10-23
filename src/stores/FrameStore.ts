@@ -321,7 +321,7 @@ export class FrameStore {
     private readonly backendService: BackendService;
 
     private static readonly CursorInfoMaxPrecision = 25;
-    private static readonly ContourChunkSize = 1000 * 1000;
+    private static readonly ContourChunkSize = 30 * 1000;
 
     constructor(readonly preference: PreferenceStore, overlay: OverlayStore, logStore: LogStore, frameInfo: FrameInfo, backendService: BackendService) {
         this.overlayStore = overlay;

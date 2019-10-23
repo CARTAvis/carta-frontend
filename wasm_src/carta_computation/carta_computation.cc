@@ -180,9 +180,6 @@ void fillSinglePolyline(float* sourceVertices, int startIndex, int endIndex, flo
 void generateVertexData(void* dst, size_t dstCapacity, float* srcVertices, int numVertices, int* indexOffsets, int numPolyLines) {
     int16_t* vertexDataShort = (int16_t*) dst;
     float* vertexData = (float*) dst;
-//    for (int i = 0; i < numVertices * 2; i++) {
-//        std::cout<<srcVertices[i]<<std::endl;
-//    }
 
     for (int i = 0; i < numPolyLines; i++) {
         int startIndex = indexOffsets[i] / 2;

@@ -1,7 +1,6 @@
 import {action, computed, observable} from "mobx";
 import * as CARTACompute from "carta_computation";
-import {Point2D} from "models";
-import {add2D, dot2D, length2D, normalize2D, perpVector2D, scale2D, subtract2D} from "utilities";
+import TypedArray = NodeJS.TypedArray;
 
 export class ContourStore {
     @observable progress: number;
@@ -9,7 +8,7 @@ export class ContourStore {
     @observable vertexCount: number = 0;
     @observable chunkCount: number = 0;
 
-    private indices: Int32Array[];
+    private indices: (Uint16Array | Uint32Array)[];
     private indexOffsets: Int32Array[];
     private vertexData: Float32Array[];
     private vertexBuffers: WebGLBuffer[];
@@ -65,6 +64,14 @@ export class ContourStore {
         this.indices.push(indexData);
         this.progress = progress;
 
+        // Store the number of indices as negative, to indicate that the index buffer
+        // for this chunk is an UNSIGNED_SHORT type
+        if (indexData.BYTES_PER_ELEMENT === 2) {
+            this.numIndices.push(-indexData.length);
+        } else {
+            this.numIndices.push(indexData.length);
+        }
+
         const index = this.vertexData.length - 1;
         if (this.gl) {
             // generate buffers and clear data
@@ -76,12 +83,16 @@ export class ContourStore {
 
         this.vertexCount += numVertices;
         this.chunkCount++;
-        this.numIndices.push(indexData.length);
     };
 
-    private static GenerateLineIndices(indexOffsets: Int32Array, numVertices: number) {
+    private static GenerateLineIndices(indexOffsets: Int32Array, numVertices: number): Uint16Array | Uint32Array {
         const numPolyLines = indexOffsets.length;
-        const indices = new Int32Array((numVertices - numPolyLines) * 6);
+        let indices: TypedArray;
+        if (numVertices < 32767) {
+            indices = new Uint16Array((numVertices - numPolyLines) * 6);
+        } else {
+            indices = new Uint32Array((numVertices - numPolyLines) * 6);
+        }
 
         let destOffset = 0;
 
