@@ -184,7 +184,8 @@ export class LayoutStore {
         });
     };
 
-    private initLayoutsFromServer = (layouts: { [k: string]: string; }) => {
+    private initLayoutsFromServer = (userLayouts: { [k: string]: string; }) => {
+        this.validateUserLayouts(userLayouts);
     };
 
     private initLayoutsFromLocalStorage = () => {
