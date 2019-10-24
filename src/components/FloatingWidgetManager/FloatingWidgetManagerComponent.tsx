@@ -3,7 +3,6 @@ import {observer} from "mobx-react";
 import {
     AnimatorComponent,
     FloatingWidgetComponent,
-    FloatingSettingsComponent,
     HistogramComponent,
     ImageViewComponent,
     LogComponent,
@@ -20,6 +19,7 @@ import {AppStore, WidgetConfig} from "stores";
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component<{ appStore: AppStore }> {
+    private floatingSettingType = "floating-settings";
 
     onFloatingWidgetSelected = (widget: WidgetConfig) => {
         this.props.appStore.widgetsStore.selectFloatingWidget(widget.id);
@@ -72,7 +72,7 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
     }
 
     private showPin(widgetConfig: WidgetConfig) {
-        if (widgetConfig.type && widgetConfig.type === FloatingSettingsComponent.WIDGET_CONFIG.type) {
+        if (widgetConfig.type && widgetConfig.type === this.floatingSettingType) {
             return false;
         }
         return true;
@@ -85,6 +85,7 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
         return (
             <div>
                 {widgetConfigs.map((w, index) => {
+                    const showPinButton = this.showPin(w); 
                     return (
                         <div key={w.id}>
                             <FloatingWidgetComponent
@@ -93,18 +94,16 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
                                 key={w.id}
                                 widgetConfig={w}
                                 zIndex={index}
-                                showPinButton={this.showPin(w)}
+                                showPinButton={showPinButton}
                                 onSelected={() => this.onFloatingWidgetSelected(w)}
                                 onClosed={() => this.onFloatingWidgetClosed(w)}
                                 // only apply to stokes widget for now
                                 showFloatingSettingsButton={w.type === StokesAnalysisComponent.WIDGET_CONFIG.type}
                             >
-                                {w.type === FloatingSettingsComponent.WIDGET_CONFIG.type ?
-                                    <FloatingSettingsComponent>
-                                        {this.getWidgetSettings(w)}
-                                    </FloatingSettingsComponent> 
-                                :
+                                {showPinButton ?
                                     this.getWidgetContent(w)
+                                :
+                                    this.getWidgetSettings(w)
                                 }
                             </FloatingWidgetComponent>
                     </div>

@@ -14,7 +14,7 @@ import {
     StatsComponent,
     ToolbarMenuComponent,
     StokesAnalysisComponent,
-    FloatingSettingsComponent
+    StokesAnalysisSettingsPanelComponent
 } from "components";
 import {AppStore, LayoutStore} from "stores";
 import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
@@ -135,8 +135,15 @@ export class WidgetsStore {
                 return RegionListComponent.WIDGET_CONFIG;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 return StokesAnalysisComponent.WIDGET_CONFIG;
-            case FloatingSettingsComponent.WIDGET_CONFIG.type:
-                return FloatingSettingsComponent.WIDGET_CONFIG;
+            default:
+                return PlaceholderComponent.WIDGET_CONFIG;
+        }
+    }
+
+    private static getDefaultWidgetSettingsConfig(type: string) {
+        switch (type) {
+            case StokesAnalysisComponent.WIDGET_CONFIG.type:
+                return StokesAnalysisSettingsPanelComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -210,18 +217,20 @@ export class WidgetsStore {
     public removeWidget = (widgetId: string, widgetType: string) => {
         const widgets = this.widgetsMap.get(widgetType);
         if (widgets) {
-            widgets.delete(widgetId);
             // remove associated floating settings according current widgetId
             if (this.floatingSettingsWidgets) {
                 let associatedFloatingSettingsId = null;
                 this.floatingSettingsWidgets.forEach((value, key) => {
-                    associatedFloatingSettingsId = value === widgetId ? key : null;
+                    if (value === widgetId) {
+                        associatedFloatingSettingsId = key;
+                    }
                 });
                 if (associatedFloatingSettingsId) {
                     this.removeFloatingWidget(associatedFloatingSettingsId, true);
                     this.floatingSettingsWidgets.delete(associatedFloatingSettingsId);
                 }
             }
+            widgets.delete(widgetId);
         }
         // remove floating settings according floating settings Id
         const floatingSettings = this.floatingSettingsWidgets.has(widgetId);
@@ -372,8 +381,8 @@ export class WidgetsStore {
             return;
         }
         // Get floating settings config
-        let widgetConfig = WidgetsStore.getDefaultWidgetConfig(FloatingSettingsComponent.WIDGET_CONFIG.type);
-        widgetConfig.id = this.addFloatingSettingsWidget(null, parentId);
+        let widgetConfig = WidgetsStore.getDefaultWidgetSettingsConfig(parentType);
+        widgetConfig.id = this.addFloatingSettingsWidget(null, parentId, widgetConfig.type);
         widgetConfig.title = parentTitle + " Settings";
         widgetConfig.parentId = parentId;
         widgetConfig.parentType = parentType;
@@ -567,8 +576,8 @@ export class WidgetsStore {
 
     // region Floating Settings
     createFloatingSettingsWidget = (title: string, parentId: string, parentType: string) => {
-        let config = FloatingSettingsComponent.WIDGET_CONFIG;
-        config.id = this.addFloatingSettingsWidget(null, parentId);
+        let config = WidgetsStore.getDefaultWidgetSettingsConfig(parentType);
+        config.id = this.addFloatingSettingsWidget(null, parentId, config.type);
         config.title = title + " Settings";
         config.parentId = parentId;
         config.parentType = parentType;
@@ -577,10 +586,10 @@ export class WidgetsStore {
         }
     }
 
-    @action addFloatingSettingsWidget(id: string = null, parentId: string) {
+    @action addFloatingSettingsWidget(id: string = null, parentId: string, type: string) {
         // Generate new id if none passed in
         if (!id) {
-            id = this.getNextSettingId(FloatingSettingsComponent.WIDGET_CONFIG.type, parentId);
+            id = this.getNextSettingId(type, parentId);
         }
 
         if (id) {

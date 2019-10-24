@@ -77,6 +77,9 @@ const DRAG_THRESHOLD = 3;
 const MARKER_HITBOX_THICKNESS = 16;
 // Maximum pixel distance before turing an X or Y zoom into an XY zoom
 const XY_ZOOM_THRESHOLD = 20;
+// indicator default Radius
+const INNERRADIUS = 2;
+const OUTERRADIUS = 6;
 
 @observer
 export class ScatterPlotComponent extends React.Component<ScatterPlotComponentProps> {
@@ -238,9 +241,15 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     }
 
     private genCircle(id: string, markerColor: string, valueCanvasSpaceX: number, valueCanvasSpaceY: number) {
+        let innerRadius = INNERRADIUS;
+        let outerRadius = OUTERRADIUS;
+        if (this.props && this.props.pointRadius) {
+            innerRadius = this.props.pointRadius - 1 <= 0 ? INNERRADIUS : this.props.pointRadius - 1;
+            outerRadius = this.props.pointRadius + 3;  
+        }
         return (
             <Group key={id} x={valueCanvasSpaceX} y={valueCanvasSpaceY}>
-                <Ring innerRadius={2} outerRadius={6} fill={markerColor}/>
+                <Ring innerRadius={innerRadius} outerRadius={outerRadius} fill={markerColor}/>
             </Group>
         );
     }
