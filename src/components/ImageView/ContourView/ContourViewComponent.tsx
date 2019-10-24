@@ -1,6 +1,6 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {FrameStore, OverlayStore, PreferenceStore, RenderConfigStore} from "stores";
+import {AppStore, FrameStore, OverlayStore, PreferenceStore, RenderConfigStore} from "stores";
 import {getShaderFromString, loadImageTexture} from "utilities";
 import "./ContourViewComponent.css";
 import allMaps from "static/allmaps.png";
@@ -11,7 +11,7 @@ const pixelShaderDashed = require("!raw-loader!./GLSL/pixel_dashed.glsl");
 export interface ContourViewComponentProps {
     overlaySettings: OverlayStore;
     preference: PreferenceStore;
-    frame: FrameStore;
+    appStore: AppStore;
     docked: boolean;
 }
 
@@ -46,6 +46,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 if (!this.gl) {
                     return;
                 }
+                this.props.appStore.ContourContext = this.gl;
                 this.gl.getExtension("OES_element_index_uint");
             } catch (e) {
                 console.log(e);
@@ -67,7 +68,11 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     }
 
     private resizeAndClearCanvas() {
-        const frame = this.props.frame;
+        const frame = this.props.appStore.activeFrame;
+        if (!frame) {
+            return;
+        }
+
         const reqWidth = frame.renderWidth * devicePixelRatio;
         const reqHeight = frame.renderHeight * devicePixelRatio;
         // Resize canvas if necessary
@@ -82,7 +87,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     }
 
     private updateCanvas = () => {
-        const frame = this.props.frame;
+        const frame = this.props.appStore.activeFrame;
         if (frame && this.canvas && this.gl && this.shaderUniforms) {
             this.resizeAndClearCanvas();
 
@@ -128,7 +133,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                     this.gl.uniform1f(this.shaderUniforms.CmapValue, levelFraction);
                     // Update buffers
                     for (let i = 0; i < contourStore.chunkCount; i++) {
-                        contourStore.generateBuffers(this.gl, i);
+                        contourStore.generateBuffers(i);
                         const numIndices = contourStore.numIndices[i];
 
                         this.gl.vertexAttribPointer(this.vertexPositionAttribute, 3, WebGLRenderingContext.FLOAT, false, 16, 0);
@@ -186,7 +191,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
     render() {
         // dummy values to trigger React's componentDidUpdate()
-        const frame = this.props.frame;
+        const frame = this.props.appStore.activeFrame;
         if (frame) {
             const view = frame.requiredFrameView;
             const contourData = frame.contourStores;

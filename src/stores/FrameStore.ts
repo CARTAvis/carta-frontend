@@ -339,15 +339,18 @@ export class FrameStore {
 
     private readonly overlayStore: OverlayStore;
     private readonly logStore: LogStore;
+    private readonly preference: PreferenceStore;
     private readonly backendService: BackendService;
+    private readonly contourContext: WebGLRenderingContext;
 
     private static readonly CursorInfoMaxPrecision = 25;
-    private static readonly ContourChunkSize = 100 * 1000;
 
-    constructor(readonly preference: PreferenceStore, overlay: OverlayStore, logStore: LogStore, frameInfo: FrameInfo, backendService: BackendService) {
+    constructor(preference: PreferenceStore, overlay: OverlayStore, logStore: LogStore, frameInfo: FrameInfo, backendService: BackendService, gl: WebGLRenderingContext) {
         this.overlayStore = overlay;
         this.logStore = logStore;
         this.backendService = backendService;
+        this.preference = preference;
+        this.contourContext = gl;
         this.validWcs = false;
         this.frameInfo = frameInfo;
         this.renderHiDPI = true;
@@ -574,14 +577,14 @@ export class FrameStore {
         for (const contourSet of processedData.contourSets) {
             let contourStore = this.contourStores.get(contourSet.level);
             if (!contourStore) {
-                contourStore = new ContourStore();
+                contourStore = new ContourStore(this.contourContext);
                 this.contourStores.set(contourSet.level, contourStore);
             }
 
             if (!contourStore.isComplete && processedData.progress > 0) {
                 contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
             } else {
-                contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates);
+                contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
             }
         }
 
@@ -719,7 +722,7 @@ export class FrameStore {
             },
             decimationFactor: this.preference.contourDecimation,
             compressionLevel: this.preference.contourCompressionLevel,
-            contourChunkSize: FrameStore.ContourChunkSize
+            contourChunkSize: this.preference.contourChunkSize
         };
         this.backendService.setContourParameters(contourParameters);
     };

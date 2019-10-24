@@ -2,6 +2,8 @@ import {CARTA} from "carta-protobuf";
 // @ts-ignore
 import * as CARTACompute from "carta_computation";
 
+const ZstdMagicNumber = new Uint32Array([0xFD2FB528]);
+
 export interface ProcessedSpatialProfile extends CARTA.ISpatialProfile {
     values: Float32Array;
 }
@@ -71,9 +73,16 @@ export class ProtobufProcessing {
     }
 
     static ProcessContourSet(contourSet: CARTA.IContourSet): ProcessedContourSet {
-        // TODO: Probably should not assume this module is ready
-        // Decode raw coordinates from Zstd-compressed binary to a float array
-        const floatCoordinates = CARTACompute.Decode(contourSet.rawCoordinates, contourSet.uncompressedCoordinatesSize, contourSet.decimationFactor);
+        const isCompressed = contourSet.decimationFactor >= 1;
+
+        let floatCoordinates: Float32Array;
+        if (isCompressed) {
+            // Decode raw coordinates from Zstd-compressed binary to a float array
+            floatCoordinates = CARTACompute.Decode(contourSet.rawCoordinates, contourSet.uncompressedCoordinatesSize, contourSet.decimationFactor);
+        } else {
+            const u8Copy = contourSet.rawCoordinates.slice();
+            floatCoordinates = new Float32Array(u8Copy.buffer);
+        }
         // generate indices
         const indexOffsets = new Int32Array(contourSet.rawStartIndices.buffer.slice(contourSet.rawStartIndices.byteOffset, contourSet.rawStartIndices.byteOffset + contourSet.rawStartIndices.byteLength));
 

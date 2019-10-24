@@ -31,10 +31,14 @@ export class ContourStore {
         return this.progress >= 1.0;
     }
 
-    @action setContourData = (indexOffsets: Int32Array, vertexData: Float32Array) => {
+    constructor(gl: WebGLRenderingContext) {
+        this.gl = gl;
+    }
+
+    @action setContourData = (indexOffsets: Int32Array, vertexData: Float32Array, progress: number) => {
         // Clear existing data to remove data buffers
         this.clearData();
-        this.addContourData(indexOffsets, vertexData, 1.0);
+        this.addContourData(indexOffsets, vertexData, progress);
     };
 
     @action addContourData = (indexOffsets: Int32Array, sourceVertices: Float32Array, progress: number) => {
@@ -73,13 +77,7 @@ export class ContourStore {
         }
 
         const index = this.vertexData.length - 1;
-        if (this.gl) {
-            // generate buffers and clear data
-            this.generateBuffers(this.gl, index);
-        } else {
-            // Copy array from WebAssembly memory space to avoid reuse
-            this.vertexData[index] = vertexData.slice();
-        }
+        this.generateBuffers(index);
 
         this.vertexCount += numVertices;
         this.chunkCount++;
@@ -114,7 +112,7 @@ export class ContourStore {
         return indices;
     }
 
-    @action generateBuffers(gl: WebGLRenderingContext, index: number) {
+    @action generateBuffers(index: number) {
         if (!this.vertexBuffers) {
             this.vertexBuffers = [];
         }
@@ -123,7 +121,7 @@ export class ContourStore {
         }
 
         // just bind if the buffers are already generated
-        if (gl === this.gl && this.vertexBuffers[index] && this.indexBuffers[index]) {
+        if (this.vertexBuffers[index] && this.indexBuffers[index]) {
             this.gl.bindBuffer(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, this.indexBuffers[index]);
             this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexBuffers[index]);
             return;
@@ -134,7 +132,6 @@ export class ContourStore {
         }
 
         // TODO: handle buffer cleanup when no longer needed
-        this.gl = gl;
         this.indexBuffers.push(this.gl.createBuffer());
         this.vertexBuffers.push(this.gl.createBuffer());
         this.gl.bindBuffer(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, this.indexBuffers[index]);
