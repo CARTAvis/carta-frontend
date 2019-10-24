@@ -78,7 +78,7 @@ Module.Decode = (src: Uint8Array, destSize: number, decimationFactor: number): F
 Module.GenerateVertexData = (sourceVertices: Float32Array, indexOffsets: Int32Array): Float32Array => {
     const numPolyLines = indexOffsets.length;
     const numVertices = sourceVertices.length / 2;
-    const destSize = numVertices * VertexDataElements * 4;
+    const destSize = (numVertices + numPolyLines - 1) * VertexDataElements * 4;
     const srcBytes = new Uint8Array(sourceVertices.buffer);
     resizeAndFillBuffers(srcBytes, destSize);
     const srcIndexSize = indexOffsets.byteLength;
