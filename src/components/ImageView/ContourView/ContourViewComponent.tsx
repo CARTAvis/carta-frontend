@@ -133,19 +133,12 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                     this.gl.uniform1f(this.shaderUniforms.CmapValue, levelFraction);
                     // Update buffers
                     for (let i = 0; i < contourStore.chunkCount; i++) {
-                        contourStore.generateBuffers(i);
-                        const numIndices = contourStore.numIndices[i];
+                        contourStore.bindBuffer(i);
+                        const numVertices = contourStore.numGeneratedVertices[i];
 
                         this.gl.vertexAttribPointer(this.vertexPositionAttribute, 3, WebGLRenderingContext.FLOAT, false, 16, 0);
                         this.gl.vertexAttribPointer(this.vertexNormalAttribute, 2, WebGLRenderingContext.SHORT, false, 16, 12);
-
-                        // Render all poly-lines in this chunk using the vertex buffer and index buffer
-                        // If the number of indices is stored as a -ve, use UNSIGNED_SHORT instead of UNSIGNED_INT
-                        if (numIndices < 0) {
-                            this.gl.drawElements(WebGLRenderingContext.TRIANGLES, -numIndices, WebGLRenderingContext.UNSIGNED_SHORT, 0);
-                        } else {
-                            this.gl.drawElements(WebGLRenderingContext.TRIANGLES, numIndices, WebGLRenderingContext.UNSIGNED_INT, 0);
-                        }
+                        this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, numVertices);
                     }
                 });
             }

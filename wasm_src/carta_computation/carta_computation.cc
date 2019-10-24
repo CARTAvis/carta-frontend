@@ -74,6 +74,15 @@ void decodeArray(char* dst, size_t dstCapacity, int decimationFactor) {
     }
 }
 
+// Used for connecting the line strip between polylines with degenerate triangles
+void fillDegenerateData(float* vertexData, int16_t* vertexDataShort, int offset, const Point2D& vertex, const Point2D& normal, float length) {
+    vertexData[offset] = vertex.x;
+    vertexData[offset + 1] = vertex.y;
+    vertexData[offset + 2] = length;
+    vertexDataShort[(offset + 3) * 2] = 16384 * normal.x;
+    vertexDataShort[(offset + 3) * 2 + 1] = 16384 * normal.y;
+}
+
 void fillVertexData(float* vertexData, int16_t* vertexDataShort, int offset, const Point2D& vertex, const Point2D& normal, float length) {
     vertexData[offset] = vertex.x;
     vertexData[offset + 1] = vertex.y;
@@ -88,7 +97,7 @@ void fillVertexData(float* vertexData, int16_t* vertexDataShort, int offset, con
     vertexDataShort[(offset + 7) * 2 + 1] = -16384 * normal.y;
 }
 
-void fillSinglePolyline(float* sourceVertices, int startIndex, int endIndex, float* vertexData, int16_t* vertexDataShort) {
+void fillSinglePolyline(float* sourceVertices, int startIndex, int endIndex, int& dstIndex, float* vertexData, int16_t* vertexDataShort, bool duplicateFirst, bool duplicateLast) {
     int numVertices = endIndex - startIndex;
     if (numVertices < 2) {
         return;
@@ -119,6 +128,14 @@ void fillSinglePolyline(float* sourceVertices, int startIndex, int endIndex, flo
     Point2D prevDir = firstDir;
     Point2D prevNormal;
 
+    int initialDstIndex = dstIndex;
+    dstIndex += VertexDataElements;
+
+    // Move pointer forward by half the size of a generated vertex. This will be written at the end of the loop
+    if (duplicateFirst) {
+        dstIndex += VertexDataElements / 2;
+    }
+
     // Inner vertices
     for (int i = 1; i < numVertices - 1; i++) {
         int index = i + startIndex;
@@ -144,12 +161,13 @@ void fillSinglePolyline(float* sourceVertices, int startIndex, int endIndex, flo
         }
         Point2D computedNormal = scale2D(tangentNormal, miterLength);
 
-        fillVertexData(vertexData, vertexDataShort, normalOffset, currentPoint, computedNormal, cumulativeLength);
+        fillVertexData(vertexData, vertexDataShort, dstIndex, currentPoint, computedNormal, cumulativeLength);
 
         prevNormal = currentNormal;
         prevDir = currentDir;
         segmentLength = length2D(subtract2D(currentPoint, nextPoint));
         cumulativeLength += segmentLength;
+        dstIndex += VertexDataElements;
     }
 
     Point2D firstNorm, lastNorm;
@@ -173,18 +191,34 @@ void fillSinglePolyline(float* sourceVertices, int startIndex, int endIndex, flo
     }
 
     // Fill in first and last normals
-    fillVertexData(vertexData, vertexDataShort, startIndex * VertexDataElements, firstPoint, firstNorm, 0);
-    fillVertexData(vertexData, vertexDataShort, (endIndex - 1) * VertexDataElements, lastPoint, lastNorm, cumulativeLength);
+    if (duplicateFirst) {
+        // Also write a degenerate vertex to join line strip
+        fillDegenerateData(vertexData, vertexDataShort, initialDstIndex, firstPoint, firstNorm, 0);
+        fillVertexData(vertexData, vertexDataShort, initialDstIndex + VertexDataElements / 2, firstPoint, firstNorm, 0);
+    } else {
+        fillVertexData(vertexData, vertexDataShort, initialDstIndex, firstPoint, firstNorm, 0);
+    }
+
+    fillVertexData(vertexData, vertexDataShort, dstIndex, lastPoint, lastNorm, cumulativeLength);
+    dstIndex += VertexDataElements;
+
+    if (duplicateLast) {
+        // Also write a degenerate vertex to join line strip. Reverse the normal,
+        // as the vertex needs to be degenerate with the second generated vertex
+        fillDegenerateData(vertexData, vertexDataShort, dstIndex, lastPoint, scale2D(lastNorm, -1), cumulativeLength);
+        dstIndex += VertexDataElements / 2;
+    }
 }
 
 void generateVertexData(void* dst, size_t dstCapacity, float* srcVertices, int numVertices, int* indexOffsets, int numPolyLines) {
     int16_t* vertexDataShort = (int16_t*) dst;
     float* vertexData = (float*) dst;
 
+    int dstIndex = 0;
     for (int i = 0; i < numPolyLines; i++) {
         int startIndex = indexOffsets[i] / 2;
         int endIndex = i < numPolyLines - 1 ? indexOffsets[i + 1] / 2 : numVertices;
-        fillSinglePolyline(srcVertices, startIndex, endIndex, vertexData, vertexDataShort);
+        fillSinglePolyline(srcVertices, startIndex, endIndex, dstIndex, vertexData, vertexDataShort, i > 0, i < numPolyLines - 1);
     }
 }
 
