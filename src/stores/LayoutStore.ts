@@ -5,6 +5,7 @@ import * as Ajv from "ajv";
 import {LayoutSchema, PresetLayout} from "models";
 import {AppToaster} from "components/Shared";
 import {smoothStepOffset} from "utilities";
+import {BackendService} from "services";
 
 const KEY = "savedLayouts";
 const MAX_LAYOUT = 10;
@@ -110,6 +111,7 @@ export class LayoutStore {
     public static readonly TOASTER_TIMEOUT = 1500;
 
     private readonly appStore: AppStore;
+    private readonly backendService: BackendService;
     private alertStore: AlertStore;
     private layoutNameToBeSaved: string;
     private serverSupport: boolean;
@@ -121,6 +123,7 @@ export class LayoutStore {
 
     constructor(appStore: AppStore, alertStore: AlertStore) {
         this.appStore = appStore;
+        this.backendService = appStore.backendService;
         this.alertStore = alertStore;
         this.dockedLayout = null;
         this.layouts = {};
@@ -202,9 +205,17 @@ export class LayoutStore {
         this.validateUserLayouts(userLayouts);
     };
 
-    private saveLayoutToServer = (): boolean => {
-        // TODO
-        return true;
+    private saveLayoutToServer = (layoutName: string, config: string): boolean => {
+        let result = false;
+        this.backendService.setUserLayout(layoutName, config).subscribe(ack => {
+            if (ack.success) {
+                result = true;
+            } else {
+                this.alertStore.showAlert("Saving user-defined layout failed! ");
+                result = false;
+            }
+        });
+        return result;
     };
 
     private saveLayoutToLocalStorage = (): boolean => {
@@ -430,7 +441,7 @@ export class LayoutStore {
         // save layout to layouts[] & server/local storage
         this.layouts[this.layoutNameToBeSaved] = simpleConfig;
         if (this.serverSupport) {
-            if (!this.saveLayoutToServer()) {
+            if (!this.saveLayoutToServer(this.layoutNameToBeSaved, JSON.stringify(simpleConfig))) {
                 delete this.layouts[this.layoutNameToBeSaved];
                 return;
             }
@@ -453,7 +464,7 @@ export class LayoutStore {
 
         delete this.layouts[layoutName];
         if (this.serverSupport) {
-            if (!this.saveLayoutToServer()) {
+            if (!this.saveLayoutToServer(layoutName, "")) {
                 return;
             }
         } else {
