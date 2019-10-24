@@ -47,7 +47,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                     return;
                 }
                 this.props.appStore.ContourContext = this.gl;
-                this.gl.getExtension("OES_element_index_uint");
             } catch (e) {
                 console.log(e);
             }
