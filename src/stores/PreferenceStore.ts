@@ -4,7 +4,7 @@ import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
 import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
-import {AppStore, LayoutStore} from "stores";
+import {AppStore} from "stores";
 import {isColorValid, parseBoolean} from "utilities";
 
 const PREFERENCE_KEYS = {
@@ -105,7 +105,6 @@ interface Preference {
 
 export class PreferenceStore {
     private readonly appStore: AppStore;
-    private readonly layoutStore: LayoutStore;
 
     @observable preference: any;
     @observable theme: string;
@@ -155,7 +154,7 @@ export class PreferenceStore {
 
     private getLayout = (): string => {
         const layout = localStorage.getItem(PREFERENCE_KEYS.layout);
-        return layout && this.layoutStore.layoutExist(layout) ? layout : DEFAULTS.layout;
+        return layout && this.appStore.layoutStore.layoutExist(layout) ? layout : DEFAULTS.layout;
     };
 
     private getCursorPosition = (): string => {
@@ -747,9 +746,8 @@ export class PreferenceStore {
         this.regionContainer.dashLength = this.getRegionDashLength();
     };
 
-    constructor(appStore: AppStore, layoutStore: LayoutStore) {
+    constructor(appStore: AppStore) {
         this.appStore = appStore;
-        this.layoutStore = layoutStore;
         this.initPreferenceFromLocalStorage();
 
         autorun(() => {

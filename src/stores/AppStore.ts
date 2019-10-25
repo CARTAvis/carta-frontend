@@ -451,7 +451,7 @@ export class AppStore {
     constructor() {
         this.alertStore = new AlertStore();
         this.layoutStore = new LayoutStore(this, this.alertStore);
-        this.preferenceStore = new PreferenceStore(this, this.layoutStore);
+        this.preferenceStore = new PreferenceStore(this);
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore, this.preferenceStore);
         this.tileService = new TileService(this.backendService, this.preferenceStore.GPUTileCache, this.preferenceStore.systemTileCache);
