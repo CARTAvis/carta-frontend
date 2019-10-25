@@ -2,8 +2,6 @@ import {CARTA} from "carta-protobuf";
 // @ts-ignore
 import * as CARTACompute from "carta_computation";
 
-const ZstdMagicNumber = new Uint32Array([0xFD2FB528]);
-
 export interface ProcessedSpatialProfile extends CARTA.ISpatialProfile {
     values: Float32Array;
 }

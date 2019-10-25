@@ -189,10 +189,31 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         }
         connectivityClass += " online";
 
-        let contourLoadingNode: React.ReactNode;
-        if (appStore.activeFrame && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1) {
-            contourLoadingNode = (
-                <Tooltip content={`Streaming contours. ${(100 * appStore.activeFrame.contourProgress).toFixed(1)}% complete`}>
+        let loadingIndicator: React.ReactNode;
+
+        const tilesLoading = appStore.tileService.remainingTiles > 0;
+        const contoursLoading = appStore.activeFrame && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
+
+        if (tilesLoading || contoursLoading) {
+            let tilesTooltipContent;
+            if (tilesLoading) {
+                tilesTooltipContent = <span>Streaming image tiles. {appStore.tileService.remainingTiles} remaining</span>;
+            }
+            let contourTooltipContent;
+            if (contoursLoading) {
+                contourTooltipContent = <span>Streaming contours. {toFixed(100 * appStore.activeFrame.contourProgress, 1)}% complete</span>;
+            }
+
+            const tooltipFragment = (
+                <React.Fragment>
+                    {tilesTooltipContent}
+                    {contoursLoading && tilesLoading && <br/>}
+                    {contourTooltipContent}
+                </React.Fragment>
+            );
+
+            loadingIndicator = (
+                <Tooltip content={tooltipFragment}>
                     <Icon icon={"cloud-download"} className="contour-loading-icon"/>
                 </Tooltip>
             );
@@ -224,7 +245,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 <Alert isOpen={this.documentationAlertVisible} onClose={this.handleAlertDismissed} canEscapeKeyCancel={true} canOutsideClickCancel={true} confirmButtonText={"Dismiss"}>
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
-                {contourLoadingNode}
+                {loadingIndicator}
                 <Tooltip content={tooltip}>
                     <Icon icon={"symbol-circle"} className={connectivityClass}/>
                 </Tooltip>

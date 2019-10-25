@@ -1,5 +1,5 @@
 import {Subject} from "rxjs";
-import {computed, observable} from "mobx";
+import {action, computed, observable} from "mobx";
 import LRUCache from "mnemonist/lru-cache";
 import {CARTA} from "carta-protobuf";
 import {Point2D, TileCoordinate} from "models";
@@ -43,6 +43,8 @@ export class TileService {
     private pendingSynchronisedTiles: Array<number>;
     private receivedSynchronisedTiles: Array<{ coordinate: number, tile: RasterTile }>;
 
+    @observable remainingTiles: number;
+
     @computed get waitingForSync() {
         return this.pendingSynchronisedTiles && this.pendingSynchronisedTiles.length > 0;
     }
@@ -75,6 +77,7 @@ export class TileService {
         this.pendingDecompressions = new Map<number, boolean>();
 
         this.compressionRequestCounter = 0;
+        this.remainingTiles = 0;
 
         this.tileStream = new Subject<number>();
         this.backendService.getRasterTileStream().subscribe(this.handleStreamedTiles);
@@ -171,6 +174,7 @@ export class TileService {
                 } else if (!compressedTile) {
                     // Request from backend
                     this.pendingRequests.set(encodedCoordinate, true);
+                    this.updateRemainingTileCount();
                     newRequests.push(tile);
                 }
             }
@@ -210,6 +214,7 @@ export class TileService {
 
     clearRequestQueue() {
         this.pendingRequests.clear();
+        this.updateRemainingTileCount();
     }
 
     setContext(gl: WebGLRenderingContext) {
@@ -263,6 +268,10 @@ export class TileService {
         }
     }
 
+    @action updateRemainingTileCount = () => {
+        this.remainingTiles = this.pendingRequests.size;
+    };
+
     private clearTile = (tile: RasterTile, key: number) => {
         if (tile.data) {
             delete tile.data;
@@ -286,6 +295,7 @@ export class TileService {
             // Remove from the requested tile map
             if (this.pendingRequests.has(encodedCoordinate)) {
                 this.pendingRequests.delete(encodedCoordinate);
+                this.updateRemainingTileCount();
 
                 if (tileMessage.compressionType === CARTA.CompressionType.NONE) {
                     const decompressedData = new Float32Array(tile.imageData.buffer.slice(tile.imageData.byteOffset, tile.imageData.byteOffset + tile.imageData.byteLength));
