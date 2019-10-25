@@ -2,10 +2,12 @@ import {observable, computed, action, autorun} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
+import * as _ from "lodash";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
 import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore} from "stores";
 import {isColorValid, parseBoolean} from "utilities";
+import {BackendService} from "services";
 
 const PREFERENCE_KEYS = {
     theme: "theme",
@@ -47,14 +49,14 @@ const PREFERENCE_KEYS = {
 };
 
 const DEFAULTS = {
-    global: {
+    GLOBAL: {
         theme: Theme.LIGHT,
         autoLaunch: true,
         layout: PresetLayout.DEFAULT,
         cursorPosition: CursorPosition.TRACKING,
         zoomMode: Zoom.FIT
     },
-    renderConfig: {
+    RENDER_CONFIG: {
         dragPanning: true,
         scaling: FrameScaling.LINEAR,
         colormap: "inferno",
@@ -64,7 +66,7 @@ const DEFAULTS = {
         nanColorHex: "#137CBD",
         nanAlpha: 1,
     },
-    contourConfig: {
+    CONTOUR_CONFIG: {
         contourSmoothingMode: CARTA.SmoothingMode.BlockAverage,
         contourSmoothingFactor: 4,
         contourNumLevels: 5,
@@ -73,20 +75,20 @@ const DEFAULTS = {
         contourColor: Colors.GREEN3,
         contourColormap: "viridis",
     },
-    wcsOverlay: {
+    WCS_OVERLAY: {
         astColor: 4,
         astGridVisible: false,
         astLabelsVisible: true,
         wcsType: WCSType.AUTOMATIC,
     },
-    region: {
+    REGION: {
         regionColor: "#2EE6D6",
         regionLineWidth: 2,
         regionDashLength: 0,
         regionType: CARTA.RegionType.RECTANGLE,
         regionCreationMode: RegionCreationMode.CENTER,
     },
-    performance: {
+    PERFORMANCE: {
         imageCompressionQuality: CompressionQuality.IMAGE_DEFAULT,
         animationCompressionQuality: CompressionQuality.ANIMATION_DEFAULT,
         GPUTileCache: TileCache.GPU_DEFAULT,
@@ -94,17 +96,15 @@ const DEFAULTS = {
         contourDecimation: 4,
         contourCompressionLevel: 8,
     },
-    logEvent: {
-        eventLoggingEnabled: new Map<CARTA.EventType, boolean>();false
+    LOG_EVENT: {
+        eventLoggingEnabled: false
     }
 };
 
-interface Preference {
-    
-}
-
 export class PreferenceStore {
     private readonly appStore: AppStore;
+    private readonly backendService: BackendService;
+    private serverSupport: boolean;
 
     @observable preference: any;
     @observable theme: string;
@@ -652,59 +652,81 @@ export class PreferenceStore {
 
     // reset functions
     @action resetGlobalSettings = () => {
-        this.setTheme(DEFAULTS.theme);
-        this.setAutoLaunch(DEFAULTS.autoLaunch);
-        this.setLayout(DEFAULTS.layout);
-        this.setCursorPosition(DEFAULTS.cursorPosition);
-        this.setZoomMode(DEFAULTS.zoomMode);
+        this.setTheme(DEFAULTS.GLOBAL.theme);
+        this.setAutoLaunch(DEFAULTS.GLOBAL.autoLaunch);
+        this.setLayout(DEFAULTS.GLOBAL.layout);
+        this.setCursorPosition(DEFAULTS.GLOBAL.cursorPosition);
+        this.setZoomMode(DEFAULTS.GLOBAL.zoomMode);
     };
 
     @action resetRenderConfigSettings = () => {
-        this.setScaling(DEFAULTS.scaling);
-        this.setColormap(DEFAULTS.colormap);
-        this.setPercentile(DEFAULTS.percentile.toString());
-        this.setScalingAlpha(DEFAULTS.scalingAlpha);
-        this.setScalingGamma(DEFAULTS.scalingGamma);
-        this.setNaNColorHex(DEFAULTS.nanColorHex);
-        this.setNaNAlpha(DEFAULTS.nanAlpha);
+        this.setScaling(DEFAULTS.RENDER_CONFIG.scaling);
+        this.setColormap(DEFAULTS.RENDER_CONFIG.colormap);
+        this.setPercentile(DEFAULTS.RENDER_CONFIG.percentile.toString());
+        this.setScalingAlpha(DEFAULTS.RENDER_CONFIG.scalingAlpha);
+        this.setScalingGamma(DEFAULTS.RENDER_CONFIG.scalingGamma);
+        this.setNaNColorHex(DEFAULTS.RENDER_CONFIG.nanColorHex);
+        this.setNaNAlpha(DEFAULTS.RENDER_CONFIG.nanAlpha);
     };
 
     @action resetContourConfigSettings = () => {
-        this.setContourSmoothingFactor(DEFAULTS.contourSmoothingFactor);
-        this.setContourSmoothingMode(DEFAULTS.contourSmoothingMode);
-        this.setContourNumLevels(DEFAULTS.contourNumLevels);
-        this.setContourThickness(DEFAULTS.contourThickness);
-        this.setContourColor(DEFAULTS.contourColor);
-        this.setContourColormap(DEFAULTS.contourColormap);
-        this.setContourColormapEnabled(DEFAULTS.contourColormapEnabled);
+        this.setContourSmoothingFactor(DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor);
+        this.setContourSmoothingMode(DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode);
+        this.setContourNumLevels(DEFAULTS.CONTOUR_CONFIG.contourNumLevels);
+        this.setContourThickness(DEFAULTS.CONTOUR_CONFIG.contourThickness);
+        this.setContourColor(DEFAULTS.CONTOUR_CONFIG.contourColor);
+        this.setContourColormap(DEFAULTS.CONTOUR_CONFIG.contourColormap);
+        this.setContourColormapEnabled(DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled);
     };
 
     @action resetWCSOverlaySettings = () => {
-        this.setASTColor(DEFAULTS.astColor);
-        this.setASTGridVisible(DEFAULTS.astGridVisible);
-        this.setASTLabelsVisible(DEFAULTS.astLabelsVisible);
-        this.setWCSType(DEFAULTS.wcsType);
+        this.setASTColor(DEFAULTS.WCS_OVERLAY.astColor);
+        this.setASTGridVisible(DEFAULTS.WCS_OVERLAY.astGridVisible);
+        this.setASTLabelsVisible(DEFAULTS.WCS_OVERLAY.astLabelsVisible);
+        this.setWCSType(DEFAULTS.WCS_OVERLAY.wcsType);
     };
 
     @action resetRegionSettings = () => {
-        this.regionContainer.color = DEFAULTS.regionColor;
-        this.regionContainer.lineWidth = DEFAULTS.regionLineWidth;
-        this.regionContainer.dashLength = DEFAULTS.regionDashLength;
-        this.setRegionType(DEFAULTS.regionType);
-        this.setRegionCreationMode(DEFAULTS.regionCreationMode);
+        this.regionContainer.color = DEFAULTS.REGION.regionColor;
+        this.regionContainer.lineWidth = DEFAULTS.REGION.regionLineWidth;
+        this.regionContainer.dashLength = DEFAULTS.REGION.regionDashLength;
+        this.setRegionType(DEFAULTS.REGION.regionType);
+        this.setRegionCreationMode(DEFAULTS.REGION.regionCreationMode);
     };
 
     @action resetPerformanceSettings = () => {
-        this.setImageCompressionQuality(DEFAULTS.imageCompressionQuality);
-        this.setAnimationCompressionQuality(DEFAULTS.animationCompressionQuality);
-        this.setGPUTileCache(DEFAULTS.GPUTileCache);
-        this.setSystemTileCache(DEFAULTS.systemTileCache);
-        this.setContourDecimation(DEFAULTS.contourDecimation);
-        this.setContourCompressionLevel(DEFAULTS.contourCompressionLevel);
+        this.setImageCompressionQuality(DEFAULTS.PERFORMANCE.imageCompressionQuality);
+        this.setAnimationCompressionQuality(DEFAULTS.PERFORMANCE.animationCompressionQuality);
+        this.setGPUTileCache(DEFAULTS.PERFORMANCE.GPUTileCache);
+        this.setSystemTileCache(DEFAULTS.PERFORMANCE.systemTileCache);
+        this.setContourDecimation(DEFAULTS.PERFORMANCE.contourDecimation);
+        this.setContourCompressionLevel(DEFAULTS.PERFORMANCE.contourCompressionLevel);
     };
 
     @action resetLogEventSettings = () => {
-        this.eventsLoggingEnabled.forEach((value, key, map) => map.set(key, DEFAULTS.eventLoggingEnabled));
+        this.eventsLoggingEnabled.forEach((value, key, map) => map.set(key, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
+    };
+
+    public initUserDefinedPreferences = (serverSupport: boolean, preference: { [k: string]: string; }) => {
+        this.serverSupport = serverSupport;
+        if (serverSupport) {
+            this.initPreferenceFromServer(preference);
+        } else {
+            this.initPreferenceFromLocalStorage();
+        }
+    }
+
+    private initPreferenceFromDefault = () => {
+        this.regionContainer = new RegionStore(null, -1, null, [{x: 0, y: 0}, {x: 1, y: 1}], DEFAULTS.regionType, -1);
+        this.eventsLoggingEnabled = new Map<CARTA.EventType, boolean>();
+        Event.EVENT_TYPES.forEach(eventType => this.eventsLoggingEnabled.set(eventType, DEFAULTS.eventLoggingEnabled));
+
+        this.preference = _.cloneDeep(DEFAULTS);
+        // TODO: handle region, eventsLoggingEnabled in preference
+    };
+
+    private initPreferenceFromServer = (preference: { [k: string]: string; }) => {
+        // TODO
     };
 
     private initPreferenceFromLocalStorage = () => {
@@ -748,7 +770,7 @@ export class PreferenceStore {
 
     constructor(appStore: AppStore) {
         this.appStore = appStore;
-        this.initPreferenceFromLocalStorage();
+        this.initPreferenceFromDefault();
 
         autorun(() => {
             localStorage.setItem(PREFERENCE_KEYS.regionColor, this.regionContainer.color);
