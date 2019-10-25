@@ -187,12 +187,11 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 connectivityClass += " offline";
                 break;
         }
-        connectivityClass += " online";
-
-        let loadingIndicator: React.ReactNode;
 
         const tilesLoading = appStore.tileService.remainingTiles > 0;
         const contoursLoading = appStore.activeFrame && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
+        let loadingTooltipFragment;
+        let loadingIndicatorClass = "contour-loading-icon";
 
         if (tilesLoading || contoursLoading) {
             let tilesTooltipContent;
@@ -204,7 +203,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 contourTooltipContent = <span>Streaming contours. {toFixed(100 * appStore.activeFrame.contourProgress, 1)}% complete</span>;
             }
 
-            const tooltipFragment = (
+            loadingTooltipFragment = (
                 <React.Fragment>
                     {tilesTooltipContent}
                     {contoursLoading && tilesLoading && <br/>}
@@ -212,12 +211,14 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 </React.Fragment>
             );
 
-            loadingIndicator = (
-                <Tooltip content={tooltipFragment}>
-                    <Icon icon={"cloud-download"} className="contour-loading-icon"/>
-                </Tooltip>
-            );
+            loadingIndicatorClass += " icon-visible";
         }
+
+        const loadingIndicator = (
+            <Tooltip content={loadingTooltipFragment}>
+                <Icon icon={"cloud-download"} className={loadingIndicatorClass}/>
+            </Tooltip>
+        );
 
         return (
             <div className="root-menu">
