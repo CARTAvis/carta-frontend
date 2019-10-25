@@ -189,6 +189,15 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         }
         connectivityClass += " online";
 
+        let contourLoadingNode: React.ReactNode;
+        if (appStore.activeFrame && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1) {
+            contourLoadingNode = (
+                <Tooltip content={`Streaming contours. ${(100 * appStore.activeFrame.contourProgress).toFixed(1)}% complete`}>
+                    <Icon icon={"cloud-download"} className="contour-loading-icon"/>
+                </Tooltip>
+            );
+        }
+
         return (
             <div className="root-menu">
                 <Popover autoFocus={false} minimal={true} content={fileMenu} position={Position.BOTTOM_LEFT}>
@@ -215,6 +224,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 <Alert isOpen={this.documentationAlertVisible} onClose={this.handleAlertDismissed} canEscapeKeyCancel={true} canOutsideClickCancel={true} confirmButtonText={"Dismiss"}>
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
+                {contourLoadingNode}
                 <Tooltip content={tooltip}>
                     <Icon icon={"symbol-circle"} className={connectivityClass}/>
                 </Tooltip>

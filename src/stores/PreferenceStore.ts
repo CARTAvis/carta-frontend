@@ -1,10 +1,11 @@
 import {observable, computed, action, autorun} from "mobx";
+import {Colors} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
 import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore, LayoutStore} from "stores";
-import {isColorValid, parseBoolean} from "../utilities";
+import {isColorValid, parseBoolean} from "utilities";
 
 const PREFERENCE_KEYS = {
     theme: "theme",
@@ -20,6 +21,13 @@ const PREFERENCE_KEYS = {
     scalingGamma: "scalingGamma",
     nanColorHex: "nanColorHex",
     nanAlpha: "nanAlpha",
+    contourSmoothingMode: "contourSmoothingMode",
+    contourSmoothingFactor: "contourSmoothingFactor",
+    contourNumLevels: "contourNumLevels",
+    contourThickness: "contourThickness",
+    contourColormapEnabled: "contourColormapEnabled",
+    contourColor: "contourColor",
+    contourColormap: "contourColormap",
     astColor: "astColor",
     astGridVisible: "astGridVisible",
     astLabelsVisible: "astLabelsVisible",
@@ -33,6 +41,9 @@ const PREFERENCE_KEYS = {
     animationCompressionQuality: "animationCompressionQuality",
     GPUTileCache: "GPUTileCache",
     systemTileCache: "systemTileCache",
+    contourDecimation: "contourDecimation",
+    contourCompressionLevel: "contourCompressionLevel",
+    contourChunkSize: "contourChunkSize",
     logEventList: "logEventList"
 };
 
@@ -50,6 +61,13 @@ const DEFAULTS = {
     scalingGamma: 1,
     nanColorHex: "#137CBD",
     nanAlpha: 1,
+    contourSmoothingMode: CARTA.SmoothingMode.BlockAverage,
+    contourSmoothingFactor: 4,
+    contourNumLevels: 5,
+    contourThickness: 1,
+    contourColormapEnabled: false,
+    contourColor: Colors.GREEN3,
+    contourColormap: "viridis",
     astColor: 4,
     astGridVisible: false,
     astLabelsVisible: true,
@@ -63,6 +81,9 @@ const DEFAULTS = {
     animationCompressionQuality: CompressionQuality.ANIMATION_DEFAULT,
     GPUTileCache: TileCache.GPU_DEFAULT,
     systemTileCache: TileCache.SYSTEM_DEFAULT,
+    contourDecimation: 4,
+    contourCompressionLevel: 8,
+    contourChunkSize: 100000,
     eventLoggingEnabled: false
 };
 
@@ -83,6 +104,13 @@ export class PreferenceStore {
     @observable scalingGamma: number;
     @observable nanColorHex: string;
     @observable nanAlpha: number;
+    @observable contourSmoothingMode: CARTA.SmoothingMode;
+    @observable contourSmoothingFactor: number;
+    @observable contourNumLevels: number;
+    @observable contourThickness: number;
+    @observable contourColormapEnabled: boolean;
+    @observable contourColor: string;
+    @observable contourColormap: string;
     @observable astColor: number;
     @observable astGridVisible: boolean;
     @observable astLabelsVisible: boolean;
@@ -93,6 +121,9 @@ export class PreferenceStore {
     @observable animationCompressionQuality: number;
     @observable GPUTileCache: number;
     @observable systemTileCache: number;
+    @observable contourDecimation: number;
+    @observable contourCompressionLevel: number;
+    @observable contourChunkSize: number;
     @observable eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
 
     // getters for global settings
@@ -185,6 +216,86 @@ export class PreferenceStore {
 
         const value = Number(nanAlpha);
         return isFinite(value) && value >= 0 && value <= 1 ? value : DEFAULTS.nanAlpha;
+    };
+
+    // getters for Contour Config
+    private getContourColormapEnabled = (): boolean => {
+        const colormapEnabled = localStorage.getItem(PREFERENCE_KEYS.contourColormapEnabled);
+        return parseBoolean(colormapEnabled, DEFAULTS.contourColormapEnabled);
+    };
+
+    private getContourColormap = (): string => {
+        const colormap = localStorage.getItem(PREFERENCE_KEYS.contourColormap);
+        return colormap && RenderConfigStore.IsColormapValid(colormap) ? colormap : DEFAULTS.contourColormap;
+    };
+
+    private getContourColor = (): string => {
+        const contourColor = localStorage.getItem(PREFERENCE_KEYS.contourColor);
+        return contourColor && isColorValid(contourColor) ? contourColor : DEFAULTS.contourColor;
+    };
+
+    private getContourSmoothingMode = (): CARTA.SmoothingMode => {
+        const val = localStorage.getItem(PREFERENCE_KEYS.contourSmoothingMode);
+        if (!val) {
+            return DEFAULTS.contourSmoothingMode;
+        }
+
+        const value = Number(val);
+        return value >= 0 && value <= 2 ? value : DEFAULTS.contourSmoothingMode;
+    };
+
+    private getContourSmoothingFactor = (): number => {
+        const valString = localStorage.getItem(PREFERENCE_KEYS.contourSmoothingFactor);
+        if (!valString) {
+            return DEFAULTS.contourSmoothingFactor;
+        }
+        const valInt = parseInt(valString);
+        return (isFinite(valInt) && valInt >= 1 && valInt <= 33) ? valInt : DEFAULTS.contourSmoothingFactor;
+    };
+
+    private getContourNumLevels = (): number => {
+        const valString = localStorage.getItem(PREFERENCE_KEYS.contourNumLevels);
+        if (!valString) {
+            return DEFAULTS.contourNumLevels;
+        }
+        const valInt = parseInt(valString);
+        return (isFinite(valInt) && valInt >= 1 && valInt <= 15) ? valInt : DEFAULTS.contourNumLevels;
+    };
+
+    private getContourThickness = (): number => {
+        const valString = localStorage.getItem(PREFERENCE_KEYS.contourThickness);
+        if (!valString) {
+            return DEFAULTS.contourThickness;
+        }
+        const value = parseFloat(valString);
+        return (isFinite(value) && value > 0 && value <= 10) ? value : DEFAULTS.contourThickness;
+    };
+
+    private getContourDecimation = (): number => {
+        const valString = localStorage.getItem(PREFERENCE_KEYS.contourDecimation);
+        if (!valString) {
+            return DEFAULTS.contourDecimation;
+        }
+        const valInt = parseInt(valString);
+        return (isFinite(valInt) && valInt >= 1 && valInt <= 32) ? valInt : DEFAULTS.contourDecimation;
+    };
+
+    private getContourCompressionLevel = (): number => {
+        const valString = localStorage.getItem(PREFERENCE_KEYS.contourCompressionLevel);
+        if (!valString) {
+            return DEFAULTS.contourCompressionLevel;
+        }
+        const valInt = parseInt(valString);
+        return (isFinite(valInt) && valInt >= 0 && valInt <= 19) ? valInt : DEFAULTS.contourCompressionLevel;
+    };
+
+    private getContourChunkSize = (): number => {
+        const valString = localStorage.getItem(PREFERENCE_KEYS.contourChunkSize);
+        if (!valString) {
+            return DEFAULTS.contourChunkSize;
+        }
+        const valInt = parseInt(valString);
+        return (isFinite(valInt) && valInt >= 1000 && valInt <= 1000000) ? valInt : DEFAULTS.contourChunkSize;
     };
 
     // getters for WCS overlay
@@ -423,6 +534,57 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.nanAlpha, nanAlpha.toString(10));
     };
 
+    // setters for contours
+    @action setContourSmoothingMode = (val: CARTA.SmoothingMode) => {
+        this.contourSmoothingMode = val;
+        localStorage.setItem(PREFERENCE_KEYS.contourSmoothingMode, val.toString());
+    };
+
+    @action setContourSmoothingFactor = (val: number) => {
+        this.contourSmoothingFactor = val;
+        localStorage.setItem(PREFERENCE_KEYS.contourSmoothingFactor, val.toString());
+    };
+
+    @action setContourNumLevels = (val: number) => {
+        this.contourNumLevels = val;
+        localStorage.setItem(PREFERENCE_KEYS.contourNumLevels, val.toString());
+    };
+
+    @action setContourThickness = (val: number) => {
+        this.contourThickness = val;
+        localStorage.setItem(PREFERENCE_KEYS.contourThickness, val.toString());
+    };
+
+    @action setContourColor = (color: string) => {
+        this.contourColor = color;
+        localStorage.setItem(PREFERENCE_KEYS.contourColor, color);
+    };
+
+    @action setContourColormapEnabled = (val: boolean) => {
+        this.contourColormapEnabled = val;
+        localStorage.setItem(PREFERENCE_KEYS.contourColormapEnabled, String(val));
+    };
+
+    @action setContourColormap = (colormap: string) => {
+        this.contourColormap = colormap;
+        localStorage.setItem(PREFERENCE_KEYS.contourColormap, colormap);
+    };
+
+    @action setContourDecimation = (val: number) => {
+        this.contourDecimation = val;
+        localStorage.setItem(PREFERENCE_KEYS.contourDecimation, val.toString());
+    };
+
+    @action setContourCompressionLevel = (val: number) => {
+        this.contourCompressionLevel = val;
+        localStorage.setItem(PREFERENCE_KEYS.contourCompressionLevel, val.toString());
+    };
+
+    @action setContourChunkSize = (val: number) => {
+        this.contourChunkSize = val;
+        localStorage.setItem(PREFERENCE_KEYS.contourChunkSize, val.toString());
+    };
+
     // setters for WCS overlay
     @action setASTColor = (astColor: number) => {
         this.astColor = astColor;
@@ -500,6 +662,16 @@ export class PreferenceStore {
         this.setNaNAlpha(DEFAULTS.nanAlpha);
     };
 
+    @action resetContourConfigSettings = () => {
+        this.setContourSmoothingFactor(DEFAULTS.contourSmoothingFactor);
+        this.setContourSmoothingMode(DEFAULTS.contourSmoothingMode);
+        this.setContourNumLevels(DEFAULTS.contourNumLevels);
+        this.setContourThickness(DEFAULTS.contourThickness);
+        this.setContourColor(DEFAULTS.contourColor);
+        this.setContourColormap(DEFAULTS.contourColormap);
+        this.setContourColormapEnabled(DEFAULTS.contourColormapEnabled);
+    };
+
     @action resetWCSOverlaySettings = () => {
         this.setASTColor(DEFAULTS.astColor);
         this.setASTGridVisible(DEFAULTS.astGridVisible);
@@ -520,6 +692,9 @@ export class PreferenceStore {
         this.setAnimationCompressionQuality(DEFAULTS.animationCompressionQuality);
         this.setGPUTileCache(DEFAULTS.GPUTileCache);
         this.setSystemTileCache(DEFAULTS.systemTileCache);
+        this.setContourDecimation(DEFAULTS.contourDecimation);
+        this.setContourCompressionLevel(DEFAULTS.contourCompressionLevel);
+        this.setContourChunkSize(DEFAULTS.contourChunkSize);
     };
 
     @action resetLogEventSettings = () => {
@@ -542,6 +717,13 @@ export class PreferenceStore {
         this.scalingGamma = this.getScalingGamma();
         this.nanColorHex = this.getNaNColorHex();
         this.nanAlpha = this.getNaNAlpha();
+        this.contourSmoothingMode = this.getContourSmoothingMode();
+        this.contourSmoothingFactor = this.getContourSmoothingFactor();
+        this.contourNumLevels = this.getContourNumLevels();
+        this.contourThickness = this.getContourThickness();
+        this.contourColor = this.getContourColor();
+        this.contourColormap = this.getContourColormap();
+        this.contourColormapEnabled = this.getContourColormapEnabled();
         this.astColor = this.getASTColor();
         this.astGridVisible = this.getASTGridVisible();
         this.astLabelsVisible = this.getASTLabelsVisible();
@@ -551,6 +733,9 @@ export class PreferenceStore {
         this.animationCompressionQuality = this.getAnimationCompressionQuality();
         this.GPUTileCache = this.getGPUTileCache();
         this.systemTileCache = this.getSystemTileCache();
+        this.contourDecimation = this.getContourDecimation();
+        this.contourCompressionLevel = this.getContourCompressionLevel();
+        this.contourChunkSize = this.getContourChunkSize();
         this.eventsLoggingEnabled = this.getLogEvents();
 
         // setup region settings container (for AppearanceForm in PreferenceDialogComponent)

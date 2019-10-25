@@ -12,10 +12,8 @@ precision highp float;
 varying vec2 vUV;
 uniform bool uTiledRendering;
 // Textures
-uniform sampler2D
-uDataTexture;
-uniform sampler2D
-uCmapTexture;
+uniform sampler2D uDataTexture;
+uniform sampler2D uCmapTexture;
 // Render parameters
 uniform int uNumCmaps;
 uniform int uCmapIndex;
