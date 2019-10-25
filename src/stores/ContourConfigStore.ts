@@ -23,9 +23,9 @@ export class ContourConfigStore {
         if (this.manualLevelsEnabled) {
             return this.manualLevels;
         } else if (isFinite(this.lowerBound) && isFinite(this.upperBound) && this.lowerBound < this.upperBound && this.numComputedLevels >= 1) {
-            // For single contour levels, just use the lower bound
+            // For single contour levels, just use the midpoint
             if (this.numComputedLevels < 2) {
-                return [this.lowerBound];
+                return [(this.upperBound + this.lowerBound) / 2.0];
             } else {
                 // Fill in the steps linearly
                 const stepSize = (this.upperBound - this.lowerBound) / (this.numComputedLevels - 1);

@@ -1,6 +1,6 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {FrameStore, OverlayStore, PreferenceStore, RenderConfigStore} from "stores";
+import {AppStore, FrameStore, OverlayStore, PreferenceStore, RenderConfigStore} from "stores";
 import {getShaderFromString, loadImageTexture} from "utilities";
 import "./ContourViewComponent.css";
 import allMaps from "static/allmaps.png";
@@ -11,7 +11,7 @@ const pixelShaderDashed = require("!raw-loader!./GLSL/pixel_dashed.glsl");
 export interface ContourViewComponentProps {
     overlaySettings: OverlayStore;
     preference: PreferenceStore;
-    frame: FrameStore;
+    appStore: AppStore;
     docked: boolean;
 }
 
@@ -37,7 +37,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     // Shader attribute handles
     private vertexPositionAttribute: number;
     private vertexNormalAttribute: number;
-    private vertexLengthAttribute: number;
     private shaderUniforms: ShaderUniforms;
 
     componentDidMount() {
@@ -47,7 +46,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 if (!this.gl) {
                     return;
                 }
-                this.gl.getExtension("OES_element_index_uint");
+                this.props.appStore.ContourContext = this.gl;
             } catch (e) {
                 console.log(e);
             }
@@ -68,7 +67,11 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     }
 
     private resizeAndClearCanvas() {
-        const frame = this.props.frame;
+        const frame = this.props.appStore.activeFrame;
+        if (!frame) {
+            return;
+        }
+
         const reqWidth = frame.renderWidth * devicePixelRatio;
         const reqHeight = frame.renderHeight * devicePixelRatio;
         // Resize canvas if necessary
@@ -83,7 +86,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     }
 
     private updateCanvas = () => {
-        const frame = this.props.frame;
+        const frame = this.props.appStore.activeFrame;
         if (frame && this.canvas && this.gl && this.shaderUniforms) {
             this.resizeAndClearCanvas();
 
@@ -97,7 +100,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * this.props.preference.contourThickness / frame.zoomLevel);
             this.gl.uniform1i(this.shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(this.props.preference.contourColormap));
 
-            // Calculates ceiling power-of-three value as a dash factor. Not sure if this is needed
+            // Calculates ceiling power-of-three value as a dash factor.
             const dashFactor = Math.pow(3.0, Math.ceil(Math.log(1.0 / frame.zoomLevel) / Math.log(3)));
             if (frame.contourStores) {
                 const levels = [];
@@ -113,26 +116,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 }
                 this.gl.uniform1i(this.shaderUniforms.CmapEnabled, frame.contourConfig.colormapEnabled ? 1 : 0);
 
-                // Dash length in canvas pixels
-                // const dashLength = level <= 0 ? 5 : 0;
-                const dashLength = 0;
-                this.gl.uniform1f(this.shaderUniforms.DashLength, devicePixelRatio * dashLength);
-
                 frame.contourStores.forEach((contourStore, level) => {
-                    const indices = contourStore.indices;
-                    const numIndices = indices.length;
-
-                    // Update buffers
-                    contourStore.generateBuffers(this.gl);
-
-                    this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, contourStore.vertexDataBuffer);
-                    this.gl.vertexAttribPointer(this.vertexPositionAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
-                    this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, contourStore.vertexNormalBuffer);
-                    this.gl.vertexAttribPointer(this.vertexNormalAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
-                    this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, contourStore.vertexLengthBuffer);
-                    this.gl.vertexAttribPointer(this.vertexLengthAttribute, 1, WebGLRenderingContext.FLOAT, false, 0, 0);
-                    this.gl.bindBuffer(WebGLRenderingContext.ELEMENT_ARRAY_BUFFER, contourStore.indexBuffer);
-
                     let levelFraction: number;
                     if (minVal !== maxVal) {
                         levelFraction = (level - minVal) / (maxVal - minVal);
@@ -140,10 +124,21 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                         levelFraction = 1.0;
                     }
 
-                    this.gl.uniform1f(this.shaderUniforms.CmapValue, levelFraction);
+                    // Dash length in canvas pixels
+                    const dashLength = level <= 0 ? 8 : 0;
+                    // const dashLength = 0;
+                    this.gl.uniform1f(this.shaderUniforms.DashLength, devicePixelRatio * dashLength * dashFactor);
 
-                    // Render all poly-lines in this level using the vertex buffer and index buffer
-                    this.gl.drawElements(WebGLRenderingContext.TRIANGLES, numIndices, WebGLRenderingContext.UNSIGNED_INT, 0);
+                    this.gl.uniform1f(this.shaderUniforms.CmapValue, levelFraction);
+                    // Update buffers
+                    for (let i = 0; i < contourStore.chunkCount; i++) {
+                        contourStore.bindBuffer(i);
+                        const numVertices = contourStore.numGeneratedVertices[i];
+
+                        this.gl.vertexAttribPointer(this.vertexPositionAttribute, 3, WebGLRenderingContext.FLOAT, false, 16, 0);
+                        this.gl.vertexAttribPointer(this.vertexNormalAttribute, 2, WebGLRenderingContext.SHORT, false, 16, 12);
+                        this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, numVertices);
+                    }
                 });
             }
         }
@@ -168,8 +163,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         this.gl.enableVertexAttribArray(this.vertexPositionAttribute);
         this.vertexNormalAttribute = this.gl.getAttribLocation(shaderProgram, "aVertexNormal");
         this.gl.enableVertexAttribArray(this.vertexNormalAttribute);
-        this.vertexLengthAttribute = this.gl.getAttribLocation(shaderProgram, "aVertexLength");
-        this.gl.enableVertexAttribArray(this.vertexLengthAttribute);
 
         this.shaderUniforms = {
             Scale: this.gl.getUniformLocation(shaderProgram, "uScale"),
@@ -190,14 +183,13 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
     render() {
         // dummy values to trigger React's componentDidUpdate()
-        const frame = this.props.frame;
+        const frame = this.props.appStore.activeFrame;
         if (frame) {
             const view = frame.requiredFrameView;
             const contourData = frame.contourStores;
             const config = frame.contourConfig;
             contourData.forEach(contourStore => {
-                const indices = contourStore.indices;
-                const vertexData = contourStore.vertexData;
+                const numVertices = contourStore.vertexCount;
             });
             const thickness = this.props.preference.contourThickness;
         }

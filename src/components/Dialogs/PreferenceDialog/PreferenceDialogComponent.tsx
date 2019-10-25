@@ -95,7 +95,9 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 <FormGroup inline={true} label="Theme">
                     <RadioGroup
                         selectedValue={preference.theme}
-                        onChange={(ev) => { ev.currentTarget.value === Theme.LIGHT ? appStore.setLightTheme() : appStore.setDarkTheme(); }}
+                        onChange={(ev) => {
+                            ev.currentTarget.value === Theme.LIGHT ? appStore.setLightTheme() : appStore.setDarkTheme();
+                        }}
                         inline={true}
                     >
                         <Radio label="Light" value={Theme.LIGHT}/>
@@ -103,17 +105,17 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Auto-launch File Browser">
-                    <Switch checked={preference.autoLaunch} onChange={(ev) => { preference.setAutoLaunch(ev.currentTarget.checked); }}/>
+                    <Switch checked={preference.autoLaunch} onChange={(ev) => preference.setAutoLaunch(ev.currentTarget.checked)}/>
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Layout">
-                    <HTMLSelect value={preference.layout} onChange={(ev) => { preference.setLayout(ev.currentTarget.value); }}>
+                    <HTMLSelect value={preference.layout} onChange={(ev) => preference.setLayout(ev.currentTarget.value)}>
                         {layoutStore.orderedLayouts.map((layout) => <option key={layout} value={layout}>{layout}</option>)}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Cursor Position">
                     <RadioGroup
                         selectedValue={preference.cursorPosition}
-                        onChange={(ev) => { preference.setCursorPosition(ev.currentTarget.value); }}
+                        onChange={(ev) => preference.setCursorPosition(ev.currentTarget.value)}
                         inline={true}
                     >
                         <Radio label="Fixed" value={CursorPosition.FIXED}/>
@@ -123,7 +125,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 <FormGroup inline={true} label="Initial Zoom Level">
                     <RadioGroup
                         selectedValue={preference.zoomMode}
-                        onChange={(ev) => { preference.setZoomMode(ev.currentTarget.value); }}
+                        onChange={(ev) => preference.setZoomMode(ev.currentTarget.value)}
                         inline={true}
                     >
                         <Radio label="Zoom to fit" value={Zoom.FIT}/>
@@ -131,7 +133,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Enable drag-to-pan">
-                    <Switch checked={preference.dragPanning} onChange={(ev) => { preference.setDragPanning(ev.currentTarget.checked); }}/>
+                    <Switch checked={preference.dragPanning} onChange={(ev) => preference.setDragPanning(ev.currentTarget.checked)}/>
                 </FormGroup>
             </React.Fragment>
         );
@@ -139,22 +141,19 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         const renderConfigPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Default Scaling">
-                    <ScalingComponent
-                        selectedItem={preference.scaling}
-                        onItemSelect={(selected) => { preference.setScaling(selected); }}
-                    />
+                    <ScalingComponent selectedItem={preference.scaling} onItemSelect={(selected) => preference.setScaling(selected)}/>
                 </FormGroup>
                 <FormGroup inline={true} label="Default Color Map">
                     <ColormapComponent
                         inverted={false}
                         selectedItem={preference.colormap}
-                        onItemSelect={(selected) => { preference.setColormap(selected); }}
+                        onItemSelect={(selected) => preference.setColormap(selected)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default Percentile Ranks">
                     <PercentileSelect
                         activeItem={preference.percentile.toString(10)}
-                        onItemSelect={(selected) => { preference.setPercentile(selected); }}
+                        onItemSelect={(selected) => preference.setPercentile(selected)}
                         popoverProps={{minimal: true, position: "auto"}}
                         filterable={false}
                         items={RenderConfigStore.PERCENTILE_RANKS.map(String)}
@@ -211,7 +210,10 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         const contourConfigPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Smoothing Mode">
-                    <HTMLSelect value={preference.contourSmoothingMode} onChange={(ev) => { preference.setContourSmoothingMode(Number(ev.currentTarget.value)); }}>
+                    <HTMLSelect
+                        value={preference.contourSmoothingMode}
+                        onChange={(ev) => preference.setContourSmoothingMode(Number(ev.currentTarget.value))}
+                    >
                         <option key={CARTA.SmoothingMode.NoSmoothing} value={CARTA.SmoothingMode.NoSmoothing}>No Smoothing</option>
                         <option key={CARTA.SmoothingMode.BlockAverage} value={CARTA.SmoothingMode.BlockAverage}>Block</option>
                         <option key={CARTA.SmoothingMode.GaussianBlur} value={CARTA.SmoothingMode.GaussianBlur}>Gaussian</option>
@@ -260,7 +262,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     <ColormapComponent
                         inverted={false}
                         selectedItem={preference.contourColormap}
-                        onItemSelect={(selected) => { preference.setContourColormap(selected); }}
+                        onItemSelect={(selected) => preference.setContourColormap(selected)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default Color">
@@ -280,26 +282,23 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 <FormGroup inline={true} label="Color">
                     <ColorComponent
                         selectedItem={preference.astColor}
-                        onItemSelect={(selected) => { preference.setASTColor(selected); }}
+                        onItemSelect={(selected) => preference.setASTColor(selected)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Grid Visible">
                     <Switch
                         checked={preference.astGridVisible}
-                        onChange={(ev) => { preference.setASTGridVisible(ev.currentTarget.checked); }}
+                        onChange={(ev) => preference.setASTGridVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Label Visible">
                     <Switch
                         checked={preference.astLabelsVisible}
-                        onChange={(ev) => { preference.setASTLabelsVisible(ev.currentTarget.checked); }}
+                        onChange={(ev) => preference.setASTLabelsVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="WCS Format">
-                    <RadioGroup
-                        selectedValue={preference.wcsType}
-                        onChange={(ev) => { preference.setWCSType(ev.currentTarget.value); }}
-                    >
+                    <RadioGroup selectedValue={preference.wcsType} onChange={(ev) => preference.setWCSType(ev.currentTarget.value)}>
                         <Radio label="Automatic" value={WCSType.AUTOMATIC}/>
                         <Radio label="Decimal degrees" value={WCSType.DEGREES}/>
                         <Radio label="Sexagesimal" value={WCSType.SEXAGESIMAL}/>
@@ -345,14 +344,14 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Region Type">
-                    <HTMLSelect value={preference.regionContainer.regionType} onChange={(ev) => { preference.setRegionType(Number(ev.currentTarget.value)); }}>
+                    <HTMLSelect value={preference.regionContainer.regionType} onChange={(ev) => preference.setRegionType(Number(ev.currentTarget.value))}>
                         {regionTypes}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Creation Mode">
                     <RadioGroup
                         selectedValue={preference.regionCreationMode}
-                        onChange={(ev) => { preference.setRegionCreationMode(ev.currentTarget.value); }}
+                        onChange={(ev) => preference.setRegionCreationMode(ev.currentTarget.value)}
                     >
                         <Radio label="Center to corner" value={RegionCreationMode.CENTER}/>
                         <Radio label="Corner to corner" value={RegionCreationMode.CORNER}/>
@@ -419,13 +418,23 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 <FormGroup inline={true} label="Contour Compression Level">
                     <NumericInput
                         placeholder="Contour Compression Level"
-                        min={1}
+                        min={0}
                         max={19}
                         value={preference.contourCompressionLevel}
                         majorStepSize={1}
                         stepSize={1}
                         onValueChange={preference.setContourCompressionLevel}
                     />
+                </FormGroup>
+                <FormGroup inline={true} label="Contour Chunk Size">
+                    <HTMLSelect value={preference.contourChunkSize} onChange={(ev) => preference.setContourChunkSize(parseInt(ev.currentTarget.value))}>
+                        <option key={0} value={25000}>25K</option>
+                        <option key={1} value={50000}>50K</option>
+                        <option key={2} value={100000}>100K</option>
+                        <option key={3} value={250000}>250K</option>
+                        <option key={4} value={500000}>500K</option>
+                        <option key={5} value={1000000}>1M</option>
+                    </HTMLSelect>
                 </FormGroup>
             </React.Fragment>
         );
