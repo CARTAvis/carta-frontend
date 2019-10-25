@@ -100,7 +100,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * this.props.preference.contourThickness / frame.zoomLevel);
             this.gl.uniform1i(this.shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(this.props.preference.contourColormap));
 
-            // Calculates ceiling power-of-three value as a dash factor. Not sure if this is needed
+            // Calculates ceiling power-of-three value as a dash factor.
             const dashFactor = Math.pow(3.0, Math.ceil(Math.log(1.0 / frame.zoomLevel) / Math.log(3)));
             if (frame.contourStores) {
                 const levels = [];
@@ -116,11 +116,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 }
                 this.gl.uniform1i(this.shaderUniforms.CmapEnabled, frame.contourConfig.colormapEnabled ? 1 : 0);
 
-                // Dash length in canvas pixels
-                // const dashLength = level <= 0 ? 5 : 0;
-                const dashLength = 0;
-                this.gl.uniform1f(this.shaderUniforms.DashLength, devicePixelRatio * dashLength);
-
                 frame.contourStores.forEach((contourStore, level) => {
                     let levelFraction: number;
                     if (minVal !== maxVal) {
@@ -128,6 +123,11 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                     } else {
                         levelFraction = 1.0;
                     }
+
+                    // Dash length in canvas pixels
+                    const dashLength = level <= 0 ? 8 : 0;
+                    // const dashLength = 0;
+                    this.gl.uniform1f(this.shaderUniforms.DashLength, devicePixelRatio * dashLength * dashFactor);
 
                     this.gl.uniform1f(this.shaderUniforms.CmapValue, levelFraction);
                     // Update buffers
