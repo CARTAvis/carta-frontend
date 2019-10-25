@@ -13,7 +13,7 @@ import {StokesAnalysisProfilerInfoComponent} from "./ProfilerInfo/ProfilerInfoCo
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {ChannelInfo, Point2D} from "models";
-import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed} from "utilities";
+import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, minMaxPointArrayZ} from "utilities";
 import "./StokesAnalysisComponent.css";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
@@ -24,7 +24,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private pointDefaultColor = Colors.GRAY2;
     private opacityInit = 1;
     private opacityOutRange = 0.1;
-    private colorRangeEnd = 240;
     private channelBorder: { xMin: number, xMax: number };
     private minProgress = 0;
     private cursorInfo: {isMouseEntered: boolean, quValue: Point2D, channel: number, pi: number, pa: number, xUnit: string};
@@ -487,13 +486,14 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return a === b && a === c && a === d && a !== null;
     }
 
-    private getScatterColor(currentIndex: number, range: number, toColor: number, frequencyIncreases: boolean): string {
-        let percentage = currentIndex / range;
+    private getScatterColor(percentage: number, frequencyIncreases: boolean): string {
+        const colorMap = this.widgetStore.colorPixel.color;
+        const mapSize = this.widgetStore.colorPixel.size;
         if (!frequencyIncreases) {
             percentage = 1 - percentage;
         }
-        let hue = (percentage * toColor);
-        return `hsla(${hue}, 100%, 50%, ${this.opacityInit})`;
+        const index = Math.round(percentage * mapSize) * 4;  
+        return `rgba(${colorMap[index]}, ${colorMap[index + 1]}, ${colorMap[index + 2]}, ${this.opacityInit})`;
     }
 
     private frequencyIncreases(data: Point3D[]): boolean {
@@ -511,17 +511,19 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let xlinePlotRange = interactionBorder;
             const outOfRangeColor = `hsla(0, 0%, 50%, ${this.opacityOutRange})`;
             const zOrder = this.frequencyIncreases(data);
-            const dataLength = data.length;
-            const colorRangeEnd = this.colorRangeEnd;
-            data.forEach((point, i) => {
+            const minMaxZ = minMaxPointArrayZ(data);
+            for (let index = 0; index < data.length; index++) {
+                const point = data[index];
                 let pointColor = this.pointDefaultColor;
                 let outRange = true;
                 if (point.z >= xlinePlotRange.xMin && point.z <= xlinePlotRange.xMax) {
                     outRange = false;
                 }
-                pointColor = outRange ? outOfRangeColor : this.getScatterColor(i, dataLength, colorRangeEnd, zOrder);
+                const percentage = (point.z - minMaxZ.minVal) / (minMaxZ.maxVal - minMaxZ.minVal);
+                pointColor = outRange ? outOfRangeColor : this.getScatterColor(percentage, zOrder);
                 scatterColors.push(pointColor);
-            });
+                
+            }
         }
         return scatterColors;
     }

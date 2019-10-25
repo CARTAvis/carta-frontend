@@ -5,6 +5,7 @@ import {CARTA} from "carta-protobuf";
 import {PlotType} from "components/Shared";
 import {RegionWidgetStore} from "./RegionWidgetStore";
 import {FrameStore} from "stores";
+import {getColorsForValues} from "utilities";
 
 export enum StokesCoordinate {
     CurrentZ = "z",
@@ -26,7 +27,8 @@ const DEFAULTS = {
         lineWidth: 1,
         linePlotPointSize: 1,
         scatterPlotPointSize: 3,
-        equalAxes: true
+        equalAxes: true,
+        colorMap: "jet"
 };
 
 export class StokesAnalysisWidgetStore extends RegionWidgetStore {
@@ -62,6 +64,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable linePlotPointSize: number;
     @observable scatterPlotPointSize: number;
     @observable equalAxes: boolean;
+    @observable colorMap: string;
+    @observable colorPixel: { color: Uint8ClampedArray, size: number };
 
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
@@ -217,6 +221,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.linePlotPointSize = DEFAULTS.linePlotPointSize;
         this.scatterPlotPointSize = DEFAULTS.scatterPlotPointSize;
         this.equalAxes = DEFAULTS.equalAxes;
+        this.colorMap = DEFAULTS.colorMap;
+        this.colorPixel = getColorsForValues(DEFAULTS.colorMap);
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
@@ -320,6 +326,11 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @action setEqualAxesValue = (val: boolean) => {
         this.equalAxes = val;
     }
+
+    @action setColormap = (colormap: string) => {
+        this.colorMap = colormap;
+        this.colorPixel = getColorsForValues(colormap);
+    };
 
     @computed get isLinePlotsAutoScaledX() {
         return (this.sharedMinX === undefined || this.sharedMaxX === undefined);

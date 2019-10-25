@@ -1,3 +1,7 @@
+// Static assets
+import allMaps from "static/allmaps.png";
+import {RenderConfigStore} from "stores";
+
 export interface RGBA {
     r: number;
     g: number;
@@ -30,3 +34,31 @@ export function hexStringToRgba(colorString: string, alpha: number = 1): RGBA {
     };
 }
 // end stolen from https://stackoverflow.com/questions/21646738/convert-hex-to-rgba
+
+// return color map as Uint8ClampedArray according colorMap
+function initContextWithSize(size: number) {
+    const canvas = document.createElement("canvas") as HTMLCanvasElement;
+    canvas.width = size; 
+    canvas.height = size; 
+    const ctx = canvas.getContext("2d");
+    return ctx;
+}
+
+export function getColorsForValues (colorMap: string): {color: Uint8ClampedArray, size: number} {
+    const colorMaps = RenderConfigStore.COLOR_MAPS_ALL;
+    const colorMapsSize = colorMaps.length;
+    const colorMapIndex = colorMaps.indexOf(colorMap);
+    const percentage = colorMapIndex / colorMapsSize; 
+
+    const canvasSize = colorMapsSize * 20;
+    const ctx = initContextWithSize(canvasSize);
+
+    if (!allMaps) {
+        return null;
+    }
+    const imageObj = new Image();
+    imageObj.src = allMaps;
+    ctx.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height);
+    const colorMapPixel = ctx.getImageData(0, percentage * imageObj.height, (imageObj.width - 1), 1);
+    return {color: colorMapPixel.data, size: colorMapPixel.width}; 
+}

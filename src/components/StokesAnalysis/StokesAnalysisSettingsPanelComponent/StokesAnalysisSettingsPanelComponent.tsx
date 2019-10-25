@@ -4,11 +4,9 @@ import {observer} from "mobx-react";
 import {FormGroup, Switch, Colors, NumericInput} from "@blueprintjs/core";
 import {ColorResult} from "react-color";
 import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
-import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {ColorPickerComponent, PlotTypeSelectorComponent, PlotType} from "components/Shared";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {WidgetProps, RegionStore, WidgetConfig} from "stores";
-import {hexStringToRgba} from "utilities";
 import "./StokesAnalysisSettingsPanelComponent.css";
 
 @observer
@@ -143,11 +141,11 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
 
         const scatterPlotsSettings = (
             <React.Fragment>
-                <FormGroup inline={true} label="Default Color Map">
+                <FormGroup inline={true} label="Color Map">
                     <ColormapComponent
                         inverted={false}
-                        selectedItem={"inferno"}
-                        onItemSelect={(selected) => { console.log(selected); }}
+                        selectedItem={widgetStore.colorMap}
+                        onItemSelect={(selected) => { widgetStore.setColormap(selected); }}
                     />
                 </FormGroup>
                 <FormGroup  inline={true} label="Symbol Size" labelInfo="(px)">
@@ -163,11 +161,6 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
                 <FormGroup inline={true} label={"Equal Axes"}>
                     <Switch checked={widgetStore.equalAxes} onChange={this.handleEqualAxesValuesChanged}/>
                 </FormGroup>
-                {/* <FormGroup inline={true} label="Symbol Style">
-                    <HTMLSelect value={preference.layout} onChange={(ev) => { preference.setLayout(ev.currentTarget.value); }}>
-                        {layoutStore.orderedLayouts.map((layout) => <option key={layout} value={layout}>{layout}</option>)}
-                    </HTMLSelect>
-                </FormGroup> */}
             </React.Fragment>
         );
         return (
