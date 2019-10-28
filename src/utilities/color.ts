@@ -36,29 +36,26 @@ export function hexStringToRgba(colorString: string, alpha: number = 1): RGBA {
 // end stolen from https://stackoverflow.com/questions/21646738/convert-hex-to-rgba
 
 // return color map as Uint8ClampedArray according colorMap
-function initContextWithSize(size: number) {
+function initContextWithSize(width: number, height: number) {
     const canvas = document.createElement("canvas") as HTMLCanvasElement;
-    canvas.width = size; 
-    canvas.height = size; 
+    canvas.width = width; 
+    canvas.height = height; 
     const ctx = canvas.getContext("2d");
     return ctx;
 }
 
 export function getColorsForValues (colorMap: string): {color: Uint8ClampedArray, size: number} {
     const colorMaps = RenderConfigStore.COLOR_MAPS_ALL;
-    const colorMapsSize = colorMaps.length;
     const colorMapIndex = colorMaps.indexOf(colorMap);
-    const percentage = colorMapIndex / colorMapsSize; 
 
-    const canvasSize = colorMapsSize * 20;
-    const ctx = initContextWithSize(canvasSize);
-
+    // !!!colorMap image size (1024,790)
+    const ctx = initContextWithSize(1024, 1);
     if (!allMaps) {
         return null;
     }
     const imageObj = new Image();
     imageObj.src = allMaps;
-    ctx.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height);
-    const colorMapPixel = ctx.getImageData(0, percentage * imageObj.height, (imageObj.width - 1), 1);
+    ctx.drawImage(imageObj, 0, 10 * colorMapIndex + 1, 1024, 1, 0, 0, 1024, 1);
+    const colorMapPixel = ctx.getImageData(0, 0, 1023, 1);
     return {color: colorMapPixel.data, size: colorMapPixel.width}; 
 }

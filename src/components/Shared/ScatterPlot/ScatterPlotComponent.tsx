@@ -78,8 +78,8 @@ const MARKER_HITBOX_THICKNESS = 16;
 // Maximum pixel distance before turing an X or Y zoom into an XY zoom
 const XY_ZOOM_THRESHOLD = 20;
 // indicator default Radius
-const INNERRADIUS = 2;
-const OUTERRADIUS = 6;
+const INNERRADIUS = 0.5;
+const OUTERRADIUS = 3;
 
 @observer
 export class ScatterPlotComponent extends React.Component<ScatterPlotComponentProps> {
@@ -245,7 +245,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
         let outerRadius = OUTERRADIUS;
         if (this.props && this.props.pointRadius) {
             innerRadius = this.props.pointRadius - 1 <= 0 ? INNERRADIUS : this.props.pointRadius - 1;
-            outerRadius = this.props.pointRadius + 3;  
+            outerRadius = this.props.pointRadius + 2.5;  
         }
         return (
             <Group key={id} x={valueCanvasSpaceX} y={valueCanvasSpaceY}>

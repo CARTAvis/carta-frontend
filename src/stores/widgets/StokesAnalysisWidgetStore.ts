@@ -25,7 +25,7 @@ const DEFAULTS = {
         primaryLineColor: { colorHex: Colors.BLUE2, fixed: false },
         secondaryLineColor: { colorHex: Colors.ORANGE2, fixed: false },
         lineWidth: 1,
-        linePlotPointSize: 1,
+        linePlotPointSize: 1.5,
         scatterPlotPointSize: 3,
         equalAxes: true,
         colorMap: "jet"
@@ -70,7 +70,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
     static readonly MIN_LINE_POINT_SIZE = 0.5;
-    static readonly MIN_SCATTER_POINT_SIZE = 3;
+    static readonly MIN_SCATTER_POINT_SIZE = 0.5;
     static readonly MAX_POINT_SIZE = 10;
     
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
@@ -210,6 +210,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     constructor() {
         super();
+        this.colorMap = DEFAULTS.colorMap;
+        this.colorPixel = getColorsForValues(DEFAULTS.colorMap);
         this.statsType = CARTA.StatsType.Mean;
         this.plotType = PlotType.STEPS;
         this.fractionalPolVisible = DEFAULTS.fractionalPolVisible;
@@ -221,8 +223,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.linePlotPointSize = DEFAULTS.linePlotPointSize;
         this.scatterPlotPointSize = DEFAULTS.scatterPlotPointSize;
         this.equalAxes = DEFAULTS.equalAxes;
-        this.colorMap = DEFAULTS.colorMap;
-        this.colorPixel = getColorsForValues(DEFAULTS.colorMap);
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
