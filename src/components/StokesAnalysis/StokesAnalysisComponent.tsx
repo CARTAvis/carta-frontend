@@ -37,8 +37,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return {
             id: "stokes",
             type: "stokes",
-            minWidth: 300,
-            minHeight: 390,
+            minWidth: 320,
+            minHeight: 400,
             defaultWidth: 600,
             defaultHeight: 800,
             title: "Stokes Analysis",
