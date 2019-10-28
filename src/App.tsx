@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as AST from "ast_wrapper";
+import * as CARTACompute from "carta_computation";
 import {observer} from "mobx-react";
 import {autorun} from "mobx";
 import ReactResizeDetector from "react-resize-detector";
@@ -27,6 +28,8 @@ export class App extends React.Component<{ appStore: AppStore }> {
             AST.setPalette(appStore.darkTheme ? nightPalette : dayPalette);
             appStore.astReady = true;
         });
+
+        CARTACompute.onReady.then(() => "Compute module is ready!");
 
         // Log the frontend git commit hash
         appStore.logStore.addDebug(`Current frontend version: ${GitCommit.logMessage}`, ["version"]);

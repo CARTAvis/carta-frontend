@@ -43,6 +43,7 @@ const PREFERENCE_KEYS = {
     systemTileCache: "systemTileCache",
     contourDecimation: "contourDecimation",
     contourCompressionLevel: "contourCompressionLevel",
+    contourChunkSize: "contourChunkSize",
     logEventList: "logEventList"
 };
 
@@ -82,6 +83,7 @@ const DEFAULTS = {
     systemTileCache: TileCache.SYSTEM_DEFAULT,
     contourDecimation: 4,
     contourCompressionLevel: 8,
+    contourChunkSize: 100000,
     eventLoggingEnabled: false
 };
 
@@ -120,6 +122,7 @@ export class PreferenceStore {
     @observable systemTileCache: number;
     @observable contourDecimation: number;
     @observable contourCompressionLevel: number;
+    @observable contourChunkSize: number;
     @observable eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
 
     // getters for global settings
@@ -282,7 +285,16 @@ export class PreferenceStore {
             return DEFAULTS.contourCompressionLevel;
         }
         const valInt = parseInt(valString);
-        return (isFinite(valInt) && valInt >= 1 && valInt <= 19) ? valInt : DEFAULTS.contourCompressionLevel;
+        return (isFinite(valInt) && valInt >= 0 && valInt <= 19) ? valInt : DEFAULTS.contourCompressionLevel;
+    };
+
+    private getContourChunkSize = (): number => {
+        const valString = localStorage.getItem(PREFERENCE_KEYS.contourChunkSize);
+        if (!valString) {
+            return DEFAULTS.contourChunkSize;
+        }
+        const valInt = parseInt(valString);
+        return (isFinite(valInt) && valInt >= 1000 && valInt <= 1000000) ? valInt : DEFAULTS.contourChunkSize;
     };
 
     // getters for WCS overlay
@@ -567,6 +579,11 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.contourCompressionLevel, val.toString());
     };
 
+    @action setContourChunkSize = (val: number) => {
+        this.contourChunkSize = val;
+        localStorage.setItem(PREFERENCE_KEYS.contourChunkSize, val.toString());
+    };
+
     // setters for WCS overlay
     @action setASTColor = (astColor: number) => {
         this.astColor = astColor;
@@ -676,6 +693,7 @@ export class PreferenceStore {
         this.setSystemTileCache(DEFAULTS.systemTileCache);
         this.setContourDecimation(DEFAULTS.contourDecimation);
         this.setContourCompressionLevel(DEFAULTS.contourCompressionLevel);
+        this.setContourChunkSize(DEFAULTS.contourChunkSize);
     };
 
     @action resetLogEventSettings = () => {
@@ -715,6 +733,7 @@ export class PreferenceStore {
         this.systemTileCache = this.getSystemTileCache();
         this.contourDecimation = this.getContourDecimation();
         this.contourCompressionLevel = this.getContourCompressionLevel();
+        this.contourChunkSize = this.getContourChunkSize();
         this.eventsLoggingEnabled = this.getLogEvents();
 
         // setup region settings container (for AppearanceForm in PreferenceDialogComponent)
