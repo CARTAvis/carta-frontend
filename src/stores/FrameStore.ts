@@ -48,6 +48,7 @@ export class FrameStore {
     @observable overviewRasterView: FrameView;
     @observable valid: boolean;
     @observable moving: boolean;
+    @observable zooming: boolean;
     @observable regionSet: RegionSetStore;
 
     @computed get requiredFrameView(): FrameView {
@@ -342,8 +343,10 @@ export class FrameStore {
     private readonly preference: PreferenceStore;
     private readonly backendService: BackendService;
     private readonly contourContext: WebGLRenderingContext;
+    private zoomHandler;
 
     private static readonly CursorInfoMaxPrecision = 25;
+    private static readonly ZoomInertiaDuration = 50;
 
     constructor(preference: PreferenceStore, overlay: OverlayStore, logStore: LogStore, frameInfo: FrameInfo, backendService: BackendService, gl: WebGLRenderingContext) {
         this.overlayStore = overlay;
@@ -662,11 +665,23 @@ export class FrameStore {
         };
         this.zoomLevel = zoom;
         this.center = newCenter;
+        this.addZoomHandler();
+        this.zooming = true;
     }
 
     @action zoomToSelection(xMin: number, xMax: number, yMin: number, yMax: number) {
         // TODO
     }
+
+    private addZoomHandler = () => {
+        if (this.zoomHandler) {
+            clearTimeout(this.zoomHandler);
+        }
+
+        this.zoomHandler = setTimeout(() => {
+            this.zooming = false;
+        }, FrameStore.ZoomInertiaDuration);
+    };
 
     @action private initCenter = () => {
         this.center.x = this.frameInfo.fileInfoExtended.width / 2.0 + 0.5;
