@@ -712,13 +712,13 @@ export class PreferenceStore {
     };
 
     @action resetPerformanceSettings = () => {
-        this.setImageCompressionQuality(DEFAULTS.imageCompressionQuality);
-        this.setAnimationCompressionQuality(DEFAULTS.animationCompressionQuality);
-        this.setGPUTileCache(DEFAULTS.GPUTileCache);
-        this.setSystemTileCache(DEFAULTS.systemTileCache);
-        this.setContourDecimation(DEFAULTS.contourDecimation);
-        this.setContourCompressionLevel(DEFAULTS.contourCompressionLevel);
-        this.setContourChunkSize(DEFAULTS.contourChunkSize);
+        this.setImageCompressionQuality(DEFAULTS.PERFORMANCE.imageCompressionQuality);
+        this.setAnimationCompressionQuality(DEFAULTS.PERFORMANCE.animationCompressionQuality);
+        this.setGPUTileCache(DEFAULTS.PERFORMANCE.GPUTileCache);
+        this.setSystemTileCache(DEFAULTS.PERFORMANCE.systemTileCache);
+        this.setContourDecimation(DEFAULTS.PERFORMANCE.contourDecimation);
+        this.setContourCompressionLevel(DEFAULTS.PERFORMANCE.contourCompressionLevel);
+        this.setContourChunkSize(DEFAULTS.PERFORMANCE.contourChunkSize);
     };
 
     @action resetLogEventSettings = () => {
