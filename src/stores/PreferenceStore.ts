@@ -735,12 +735,45 @@ export class PreferenceStore {
     }
 
     private initPreferenceFromDefault = () => {
+        this.theme = DEFAULTS.GLOBAL.theme;
+        this.autoLaunch = DEFAULTS.GLOBAL.autoLaunch;
+        this.layout = DEFAULTS.GLOBAL.layout;
+        this.cursorPosition = DEFAULTS.GLOBAL.cursorPosition;
+        this.zoomMode = DEFAULTS.GLOBAL.zoomMode;
+        this.dragPanning = DEFAULTS.GLOBAL.dragPanning;
+        this.scaling = DEFAULTS.RENDER_CONFIG.scaling;
+        this.colormap = DEFAULTS.RENDER_CONFIG.colormap;
+        this.percentile = DEFAULTS.RENDER_CONFIG.percentile;
+        this.scalingAlpha = DEFAULTS.RENDER_CONFIG.scalingAlpha;
+        this.scalingGamma = DEFAULTS.RENDER_CONFIG.scalingGamma;
+        this.nanColorHex = DEFAULTS.RENDER_CONFIG.nanColorHex;
+        this.nanAlpha = DEFAULTS.RENDER_CONFIG.nanAlpha;
+        this.contourSmoothingMode = DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode;
+        this.contourSmoothingFactor = DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor;
+        this.contourNumLevels = DEFAULTS.CONTOUR_CONFIG.contourNumLevels;
+        this.contourThickness = DEFAULTS.CONTOUR_CONFIG.contourThickness;
+        this.contourColor = DEFAULTS.CONTOUR_CONFIG.contourColor;
+        this.contourColormap = DEFAULTS.CONTOUR_CONFIG.contourColormap;
+        this.contourColormapEnabled = DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled;
+        this.astColor = DEFAULTS.WCS_OVERLAY.astColor;
+        this.astGridVisible = DEFAULTS.WCS_OVERLAY.astGridVisible;
+        this.astLabelsVisible = DEFAULTS.WCS_OVERLAY.astLabelsVisible;
+        this.wcsType = DEFAULTS.WCS_OVERLAY.wcsType;
+        this.regionCreationMode = DEFAULTS.REGION.regionCreationMode;
         this.regionContainer = new RegionStore(null, -1, null, [{x: 0, y: 0}, {x: 1, y: 1}], DEFAULTS.REGION.regionType, -1);
+        this.regionContainer.regionType = DEFAULTS.REGION.regionType;
+        this.regionContainer.color = DEFAULTS.REGION.regionColor;
+        this.regionContainer.lineWidth = DEFAULTS.REGION.regionLineWidth;
+        this.regionContainer.dashLength = DEFAULTS.REGION.regionDashLength;
+        this.imageCompressionQuality = DEFAULTS.PERFORMANCE.imageCompressionQuality;
+        this.animationCompressionQuality = DEFAULTS.PERFORMANCE.animationCompressionQuality;
+        this.GPUTileCache = DEFAULTS.PERFORMANCE.GPUTileCache;
+        this.systemTileCache = DEFAULTS.PERFORMANCE.systemTileCache;
+        this.contourDecimation = DEFAULTS.PERFORMANCE.contourDecimation;
+        this.contourCompressionLevel = DEFAULTS.PERFORMANCE.contourCompressionLevel;
+        this.contourChunkSize = DEFAULTS.PERFORMANCE.contourChunkSize;
         this.eventsLoggingEnabled = new Map<CARTA.EventType, boolean>();
         Event.EVENT_TYPES.forEach(eventType => this.eventsLoggingEnabled.set(eventType, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
-
-        this.preference = _.cloneDeep(DEFAULTS);
-        // TODO: handle region, eventsLoggingEnabled in preference
     };
 
     private initPreferenceFromServer = (preference: { [k: string]: string; }) => {
