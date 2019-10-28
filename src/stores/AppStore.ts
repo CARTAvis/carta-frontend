@@ -534,7 +534,7 @@ export class AppStore {
 
         // Update frame view outside of animation
         autorun(() => {
-            if (this.activeFrame && (this.animatorStore.animationState === AnimationState.STOPPED || this.animatorStore.animationMode === AnimationMode.FRAME)) {
+            if (this.activeFrame && !this.activeFrame.zooming && (this.animatorStore.animationState === AnimationState.STOPPED || this.animatorStore.animationMode === AnimationMode.FRAME)) {
                 // Trigger update raster view/title when switching layout
                 const layout = this.layoutStore.dockedLayout;
                 this.widgetsStore.updateImageWidgetTitle();

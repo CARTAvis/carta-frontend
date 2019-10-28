@@ -218,7 +218,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     <ToolbarComponent
                         appStore={appStore}
                         docked={this.props.docked}
-                        visible={appStore.activeFrame.zooming}
+                        visible={appStore.imageToolbarVisible}
                         vertical={false}
                     />
                     <div style={{opacity: this.showRatioIndicator ? 1 : 0, left: imageRatioTagOffset.x, top: imageRatioTagOffset.y}} className={"tag-image-ratio"}>

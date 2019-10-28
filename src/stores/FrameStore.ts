@@ -346,7 +346,7 @@ export class FrameStore {
     private zoomHandler;
 
     private static readonly CursorInfoMaxPrecision = 25;
-    private static readonly ZoomInertiaDuration = 50;
+    private static readonly ZoomInertiaDuration = 250;
 
     constructor(preference: PreferenceStore, overlay: OverlayStore, logStore: LogStore, frameInfo: FrameInfo, backendService: BackendService, gl: WebGLRenderingContext) {
         this.overlayStore = overlay;
