@@ -1,8 +1,11 @@
 import {action, computed, observable} from "mobx";
 import {ChartArea} from "chart.js";
+import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import {PlotType} from "components/Shared";
 import {RegionWidgetStore} from "./RegionWidgetStore";
-import {FrameStore} from "stores/FrameStore";
+import {FrameStore} from "stores";
+import {getColorsForValues} from "utilities";
 
 export enum StokesCoordinate {
     CurrentZ = "z",
@@ -14,6 +17,19 @@ export enum StokesCoordinate {
     PolarizationAngle = "PAz",
     PolarizationQU = "QvsU",
 }
+
+const DEFAULTS = {
+        fractionalPolVisible: false,
+        useWcsValues: true,
+        scatterOutRangePointsZIndex: [],
+        primaryLineColor: { colorHex: Colors.BLUE2, fixed: false },
+        secondaryLineColor: { colorHex: Colors.ORANGE2, fixed: false },
+        lineWidth: 1,
+        linePlotPointSize: 1.5,
+        scatterPlotPointSize: 3,
+        equalAxes: true,
+        colorMap: "jet"
+};
 
 export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable sharedMinX: number;
@@ -30,19 +46,34 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable quScatterMaxY: number;
     @observable linePlotcursorX: number;
     @observable channel: number;
-    @observable useWcsValues: boolean;
     @observable scatterPlotCursorX: number;
     @observable scatterPlotCursorY: number;
     @observable isMouseMoveIntoScatterPlots: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
     @observable scatterChartArea: ChartArea;
-
     @observable statsType: CARTA.StatsType;
     @observable fractionalPolVisible: boolean;
     scatterOutRangePointsZIndex: Array<number>;
 
-    private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
+    // settings 
+    @observable useWcsValues: boolean;
+    @observable plotType: PlotType;
+    @observable primaryLineColor: { colorHex: string, fixed: boolean };
+    @observable secondaryLineColor: { colorHex: string, fixed: boolean };
+    @observable lineWidth: number;
+    @observable linePlotPointSize: number;
+    @observable scatterPlotPointSize: number;
+    @observable equalAxes: boolean;
+    @observable colorMap: string;
+    @observable colorPixel: { color: Uint8ClampedArray, size: number };
 
+    static readonly MIN_LINE_WIDTH = 0.5;
+    static readonly MAX_LINE_WIDTH = 10;
+    static readonly MIN_LINE_POINT_SIZE = 0.5;
+    static readonly MIN_SCATTER_POINT_SIZE = 0.5;
+    static readonly MAX_POINT_SIZE = 10;
+    
+    private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
     private static ValidStatsTypes = [
         CARTA.StatsType.Mean,
     ];
@@ -179,12 +210,19 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     constructor() {
         super();
+        this.colorMap = DEFAULTS.colorMap;
+        this.colorPixel = getColorsForValues(DEFAULTS.colorMap);
         this.statsType = CARTA.StatsType.Mean;
-
-        // Describes how the data is visualised
-        this.fractionalPolVisible = false;
-        this.useWcsValues = true;
-        this.scatterOutRangePointsZIndex = [];
+        this.plotType = PlotType.STEPS;
+        this.fractionalPolVisible = DEFAULTS.fractionalPolVisible;
+        this.useWcsValues = DEFAULTS.useWcsValues;
+        this.scatterOutRangePointsZIndex = DEFAULTS.scatterOutRangePointsZIndex;
+        this.primaryLineColor = DEFAULTS.primaryLineColor;
+        this.secondaryLineColor = DEFAULTS.secondaryLineColor;
+        this.lineWidth = DEFAULTS.lineWidth;
+        this.linePlotPointSize = DEFAULTS.linePlotPointSize;
+        this.scatterPlotPointSize = DEFAULTS.scatterPlotPointSize;
+        this.equalAxes = DEFAULTS.equalAxes;
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
@@ -252,6 +290,46 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.quScatterMaxX = maxX;
         this.quScatterMinY = minY;
         this.quScatterMaxY = maxY;
+    };
+
+    // settings
+    @action setPlotType = (val: PlotType) => {
+        this.plotType = val;
+    };
+
+    @action setPrimaryLineColor = (colorHex: string, fixed: boolean) => {
+        this.primaryLineColor = { colorHex: colorHex, fixed: fixed };
+    }
+
+    @action setSecondaryLineColor = (colorHex: string, fixed: boolean) => {
+        this.secondaryLineColor = { colorHex: colorHex, fixed: fixed };
+    }
+
+    @action setLineWidth = (val: number) => {
+        if (val >= StokesAnalysisWidgetStore.MIN_LINE_WIDTH && val <= StokesAnalysisWidgetStore.MAX_LINE_WIDTH) {
+            this.lineWidth = val;   
+        }
+    }
+
+    @action setLinePlotPointSize = (val: number) => {
+        if (val >= StokesAnalysisWidgetStore.MIN_LINE_POINT_SIZE && val <= StokesAnalysisWidgetStore.MAX_POINT_SIZE) {
+            this.linePlotPointSize = val;   
+        }
+    }
+
+    @action setScatterPlotPointSize = (val: number) => {
+        if (val >= StokesAnalysisWidgetStore.MIN_SCATTER_POINT_SIZE && val <= StokesAnalysisWidgetStore.MAX_POINT_SIZE ) {
+            this.scatterPlotPointSize = val;   
+        }
+    }
+
+    @action setEqualAxesValue = (val: boolean) => {
+        this.equalAxes = val;
+    }
+
+    @action setColormap = (colormap: string) => {
+        this.colorMap = colormap;
+        this.colorPixel = getColorsForValues(colormap);
     };
 
     @computed get isLinePlotsAutoScaledX() {

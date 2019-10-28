@@ -13,11 +13,13 @@ import {
     SpectralProfilerComponent,
     StatsComponent,
     StokesAnalysisComponent,
+    StokesAnalysisSettingsPanelComponent
 } from "components";
 import {AppStore, WidgetConfig} from "stores";
 
 @observer
 export class FloatingWidgetManagerComponent extends React.Component<{ appStore: AppStore }> {
+    private floatingSettingType = "floating-settings";
 
     onFloatingWidgetSelected = (widget: WidgetConfig) => {
         this.props.appStore.widgetsStore.selectFloatingWidget(widget.id);
@@ -56,6 +58,26 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
         }
     }
 
+    private getWidgetSettings(widgetConfig: WidgetConfig) {
+        if (widgetConfig.parentId) {
+            const appStore = this.props.appStore;
+            switch (widgetConfig.parentType) {
+                case StokesAnalysisComponent.WIDGET_CONFIG.type:
+                    return <StokesAnalysisSettingsPanelComponent appStore={appStore} id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
+                default:
+                    return null;
+            }
+        }
+        return null;
+    }
+
+    private showPin(widgetConfig: WidgetConfig) {
+        if (widgetConfig.type && widgetConfig.type === this.floatingSettingType) {
+            return false;
+        }
+        return true;
+    }
+
     public render() {
         const appStore = this.props.appStore;
         const widgetConfigs = appStore.widgetsStore.floatingWidgets;
@@ -63,19 +85,28 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
         return (
             <div>
                 {widgetConfigs.map((w, index) => {
+                    const showPinButton = this.showPin(w); 
                     return (
-                        <FloatingWidgetComponent
-                            isSelected={index === widgetConfigs.length - 1}
-                            appStore={appStore}
-                            key={w.id}
-                            widgetConfig={w}
-                            zIndex={index}
-                            showPinButton={true}
-                            onSelected={() => this.onFloatingWidgetSelected(w)}
-                            onClosed={() => this.onFloatingWidgetClosed(w)}
-                        >
-                            {this.getWidgetContent(w)}
-                        </FloatingWidgetComponent>
+                        <div key={w.id}>
+                            <FloatingWidgetComponent
+                                isSelected={index === widgetConfigs.length - 1}
+                                appStore={appStore}
+                                key={w.id}
+                                widgetConfig={w}
+                                zIndex={index}
+                                showPinButton={showPinButton}
+                                onSelected={() => this.onFloatingWidgetSelected(w)}
+                                onClosed={() => this.onFloatingWidgetClosed(w)}
+                                // only apply to stokes widget for now
+                                showFloatingSettingsButton={w.type === StokesAnalysisComponent.WIDGET_CONFIG.type}
+                            >
+                                {showPinButton ?
+                                    this.getWidgetContent(w)
+                                :
+                                    this.getWidgetSettings(w)
+                                }
+                            </FloatingWidgetComponent>
+                    </div>
                     );
                 })}
             </div>);
