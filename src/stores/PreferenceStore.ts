@@ -55,10 +55,10 @@ const DEFAULTS = {
         autoLaunch: true,
         layout: PresetLayout.DEFAULT,
         cursorPosition: CursorPosition.TRACKING,
-        zoomMode: Zoom.FIT
+        zoomMode: Zoom.FIT,
+        dragPanning: true,
     },
     RENDER_CONFIG: {
-        dragPanning: true,
         scaling: FrameScaling.LINEAR,
         colormap: "inferno",
         percentile: 99.9,
@@ -147,287 +147,287 @@ export class PreferenceStore {
     // getters for global settings
     private getTheme = (): string => {
         const theme = localStorage.getItem(PREFERENCE_KEYS.theme);
-        return theme && Theme.isValid(theme) ? theme : DEFAULTS.theme;
+        return theme && Theme.isValid(theme) ? theme : DEFAULTS.GLOBAL.theme;
     };
 
     private getAutoLaunch = (): boolean => {
         const autoLaunch = localStorage.getItem(PREFERENCE_KEYS.autoLaunch);
-        return parseBoolean(autoLaunch, DEFAULTS.autoLaunch);
+        return parseBoolean(autoLaunch, DEFAULTS.GLOBAL.autoLaunch);
     };
 
     private getLayout = (): string => {
         const layout = localStorage.getItem(PREFERENCE_KEYS.layout);
-        return layout && this.appStore.layoutStore.layoutExist(layout) ? layout : DEFAULTS.layout;
+        return layout && this.appStore.layoutStore.layoutExist(layout) ? layout : DEFAULTS.GLOBAL.layout;
     };
 
     private getCursorPosition = (): string => {
         const cursorPosition = localStorage.getItem(PREFERENCE_KEYS.cursorPosition);
-        return cursorPosition && CursorPosition.isValid(cursorPosition) ? cursorPosition : DEFAULTS.cursorPosition;
+        return cursorPosition && CursorPosition.isValid(cursorPosition) ? cursorPosition : DEFAULTS.GLOBAL.cursorPosition;
     };
 
     private getZoomMode = (): string => {
         const zoomMode = localStorage.getItem(PREFERENCE_KEYS.zoomMode);
-        return zoomMode && Zoom.isValid(zoomMode) ? zoomMode : DEFAULTS.zoomMode;
+        return zoomMode && Zoom.isValid(zoomMode) ? zoomMode : DEFAULTS.GLOBAL.zoomMode;
     };
 
     private getDragPanning = (): boolean => {
         const dragPanning = localStorage.getItem(PREFERENCE_KEYS.dragPanning);
-        return dragPanning === "false" ? false : DEFAULTS.dragPanning;
+        return dragPanning === "false" ? false : DEFAULTS.GLOBAL.dragPanning;
     };
 
     // getters for render config
     private getScaling = (): FrameScaling => {
         const scaling = localStorage.getItem(PREFERENCE_KEYS.scaling);
         if (!scaling) {
-            return DEFAULTS.scaling;
+            return DEFAULTS.RENDER_CONFIG.scaling;
         }
 
         const value = Number(scaling);
-        return isFinite(value) && RenderConfigStore.IsScalingValid(value) ? value : DEFAULTS.scaling;
+        return isFinite(value) && RenderConfigStore.IsScalingValid(value) ? value : DEFAULTS.RENDER_CONFIG.scaling;
     };
 
     private getColormap = (): string => {
         const colormap = localStorage.getItem(PREFERENCE_KEYS.colormap);
-        return colormap && RenderConfigStore.IsColormapValid(colormap) ? colormap : DEFAULTS.colormap;
+        return colormap && RenderConfigStore.IsColormapValid(colormap) ? colormap : DEFAULTS.RENDER_CONFIG.colormap;
     };
 
     private getPercentile = (): number => {
         const percentile = localStorage.getItem(PREFERENCE_KEYS.percentile);
         if (!percentile) {
-            return DEFAULTS.percentile;
+            return DEFAULTS.RENDER_CONFIG.percentile;
         }
 
         const value = Number(percentile);
-        return isFinite(value) && RenderConfigStore.IsPercentileValid(value) ? value : DEFAULTS.percentile;
+        return isFinite(value) && RenderConfigStore.IsPercentileValid(value) ? value : DEFAULTS.RENDER_CONFIG.percentile;
     };
 
     private getScalingAlpha = (): number => {
         const scalingAlpha = localStorage.getItem(PREFERENCE_KEYS.scalingAlpha);
         if (!scalingAlpha) {
-            return DEFAULTS.scalingAlpha;
+            return DEFAULTS.RENDER_CONFIG.scalingAlpha;
         }
 
         const value = Number(scalingAlpha);
-        return isFinite(value) ? value : DEFAULTS.scalingAlpha;
+        return isFinite(value) ? value : DEFAULTS.RENDER_CONFIG.scalingAlpha;
     };
 
     private getScalingGamma = (): number => {
         const scalingGamma = localStorage.getItem(PREFERENCE_KEYS.scalingGamma);
         if (!scalingGamma) {
-            return DEFAULTS.scalingGamma;
+            return DEFAULTS.RENDER_CONFIG.scalingGamma;
         }
 
         const value = Number(scalingGamma);
-        return isFinite(value) && RenderConfigStore.IsGammaValid(value) ? value : DEFAULTS.scalingGamma;
+        return isFinite(value) && RenderConfigStore.IsGammaValid(value) ? value : DEFAULTS.RENDER_CONFIG.scalingGamma;
     };
 
     private getNaNColorHex = (): string => {
         const nanColorHex = localStorage.getItem(PREFERENCE_KEYS.nanColorHex);
-        return nanColorHex && isColorValid(nanColorHex) ? nanColorHex : DEFAULTS.nanColorHex;
+        return nanColorHex && isColorValid(nanColorHex) ? nanColorHex : DEFAULTS.RENDER_CONFIG.nanColorHex;
     };
 
     private getNaNAlpha = (): number => {
         const nanAlpha = localStorage.getItem(PREFERENCE_KEYS.nanAlpha);
         if (!nanAlpha) {
-            return DEFAULTS.nanAlpha;
+            return DEFAULTS.RENDER_CONFIG.nanAlpha;
         }
 
         const value = Number(nanAlpha);
-        return isFinite(value) && value >= 0 && value <= 1 ? value : DEFAULTS.nanAlpha;
+        return isFinite(value) && value >= 0 && value <= 1 ? value : DEFAULTS.RENDER_CONFIG.nanAlpha;
     };
 
     // getters for Contour Config
     private getContourColormapEnabled = (): boolean => {
         const colormapEnabled = localStorage.getItem(PREFERENCE_KEYS.contourColormapEnabled);
-        return parseBoolean(colormapEnabled, DEFAULTS.contourColormapEnabled);
+        return parseBoolean(colormapEnabled, DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled);
     };
 
     private getContourColormap = (): string => {
         const colormap = localStorage.getItem(PREFERENCE_KEYS.contourColormap);
-        return colormap && RenderConfigStore.IsColormapValid(colormap) ? colormap : DEFAULTS.contourColormap;
+        return colormap && RenderConfigStore.IsColormapValid(colormap) ? colormap : DEFAULTS.CONTOUR_CONFIG.contourColormap;
     };
 
     private getContourColor = (): string => {
         const contourColor = localStorage.getItem(PREFERENCE_KEYS.contourColor);
-        return contourColor && isColorValid(contourColor) ? contourColor : DEFAULTS.contourColor;
+        return contourColor && isColorValid(contourColor) ? contourColor : DEFAULTS.CONTOUR_CONFIG.contourColor;
     };
 
     private getContourSmoothingMode = (): CARTA.SmoothingMode => {
         const val = localStorage.getItem(PREFERENCE_KEYS.contourSmoothingMode);
         if (!val) {
-            return DEFAULTS.contourSmoothingMode;
+            return DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode;
         }
 
         const value = Number(val);
-        return value >= 0 && value <= 2 ? value : DEFAULTS.contourSmoothingMode;
+        return value >= 0 && value <= 2 ? value : DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode;
     };
 
     private getContourSmoothingFactor = (): number => {
         const valString = localStorage.getItem(PREFERENCE_KEYS.contourSmoothingFactor);
         if (!valString) {
-            return DEFAULTS.contourSmoothingFactor;
+            return DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor;
         }
         const valInt = parseInt(valString);
-        return (isFinite(valInt) && valInt >= 1 && valInt <= 33) ? valInt : DEFAULTS.contourSmoothingFactor;
+        return (isFinite(valInt) && valInt >= 1 && valInt <= 33) ? valInt : DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor;
     };
 
     private getContourNumLevels = (): number => {
         const valString = localStorage.getItem(PREFERENCE_KEYS.contourNumLevels);
         if (!valString) {
-            return DEFAULTS.contourNumLevels;
+            return DEFAULTS.CONTOUR_CONFIG.contourNumLevels;
         }
         const valInt = parseInt(valString);
-        return (isFinite(valInt) && valInt >= 1 && valInt <= 15) ? valInt : DEFAULTS.contourNumLevels;
+        return (isFinite(valInt) && valInt >= 1 && valInt <= 15) ? valInt : DEFAULTS.CONTOUR_CONFIG.contourNumLevels;
     };
 
     private getContourThickness = (): number => {
         const valString = localStorage.getItem(PREFERENCE_KEYS.contourThickness);
         if (!valString) {
-            return DEFAULTS.contourThickness;
+            return DEFAULTS.CONTOUR_CONFIG.contourThickness;
         }
         const value = parseFloat(valString);
-        return (isFinite(value) && value > 0 && value <= 10) ? value : DEFAULTS.contourThickness;
+        return (isFinite(value) && value > 0 && value <= 10) ? value : DEFAULTS.CONTOUR_CONFIG.contourThickness;
     };
 
     private getContourDecimation = (): number => {
         const valString = localStorage.getItem(PREFERENCE_KEYS.contourDecimation);
         if (!valString) {
-            return DEFAULTS.contourDecimation;
+            return DEFAULTS.PERFORMANCE.contourDecimation;
         }
         const valInt = parseInt(valString);
-        return (isFinite(valInt) && valInt >= 1 && valInt <= 32) ? valInt : DEFAULTS.contourDecimation;
+        return (isFinite(valInt) && valInt >= 1 && valInt <= 32) ? valInt : DEFAULTS.PERFORMANCE.contourDecimation;
     };
 
     private getContourCompressionLevel = (): number => {
         const valString = localStorage.getItem(PREFERENCE_KEYS.contourCompressionLevel);
         if (!valString) {
-            return DEFAULTS.contourCompressionLevel;
+            return DEFAULTS.PERFORMANCE.contourCompressionLevel;
         }
         const valInt = parseInt(valString);
-        return (isFinite(valInt) && valInt >= 0 && valInt <= 19) ? valInt : DEFAULTS.contourCompressionLevel;
+        return (isFinite(valInt) && valInt >= 0 && valInt <= 19) ? valInt : DEFAULTS.PERFORMANCE.contourCompressionLevel;
     };
 
     private getContourChunkSize = (): number => {
         const valString = localStorage.getItem(PREFERENCE_KEYS.contourChunkSize);
         if (!valString) {
-            return DEFAULTS.contourChunkSize;
+            return DEFAULTS.PERFORMANCE.contourChunkSize;
         }
         const valInt = parseInt(valString);
-        return (isFinite(valInt) && valInt >= 1000 && valInt <= 1000000) ? valInt : DEFAULTS.contourChunkSize;
+        return (isFinite(valInt) && valInt >= 1000 && valInt <= 1000000) ? valInt : DEFAULTS.PERFORMANCE.contourChunkSize;
     };
 
     // getters for WCS overlay
     private getASTColor = (): number => {
         const astColor = localStorage.getItem(PREFERENCE_KEYS.astColor);
         if (!astColor) {
-            return DEFAULTS.astColor;
+            return DEFAULTS.WCS_OVERLAY.astColor;
         }
 
         const value = Number(astColor);
-        return isFinite(value) && value >= 0 && value < AST.colors.length ? value : DEFAULTS.astColor;
+        return isFinite(value) && value >= 0 && value < AST.colors.length ? value : DEFAULTS.WCS_OVERLAY.astColor;
     };
 
     private getASTGridVisible = (): boolean => {
         const astGridVisible = localStorage.getItem(PREFERENCE_KEYS.astGridVisible);
-        return parseBoolean(astGridVisible, DEFAULTS.astGridVisible);
+        return parseBoolean(astGridVisible, DEFAULTS.WCS_OVERLAY.astGridVisible);
     };
 
     private getASTLabelsVisible = (): boolean => {
         const astLabelsVisible = localStorage.getItem(PREFERENCE_KEYS.astLabelsVisible);
-        return parseBoolean(astLabelsVisible, DEFAULTS.astLabelsVisible);
+        return parseBoolean(astLabelsVisible, DEFAULTS.WCS_OVERLAY.astLabelsVisible);
     };
 
     private getWCSType = (): string => {
         const wcsType = localStorage.getItem(PREFERENCE_KEYS.wcsType);
-        return wcsType && WCSType.isValid(wcsType) ? wcsType : DEFAULTS.wcsType;
+        return wcsType && WCSType.isValid(wcsType) ? wcsType : DEFAULTS.WCS_OVERLAY.wcsType;
     };
 
     // getters for region
     private getRegionColor = (): string => {
         const regionColor = localStorage.getItem(PREFERENCE_KEYS.regionColor);
-        return regionColor && isColorValid(regionColor) ? regionColor : DEFAULTS.regionColor;
+        return regionColor && isColorValid(regionColor) ? regionColor : DEFAULTS.REGION.regionColor;
     };
 
     private getRegionLineWidth = (): number => {
         const regionLineWidth = localStorage.getItem(PREFERENCE_KEYS.regionLineWidth);
         if (!regionLineWidth) {
-            return DEFAULTS.regionLineWidth;
+            return DEFAULTS.REGION.regionLineWidth;
         }
 
         const value = Number(regionLineWidth);
-        return isFinite(value) && RegionStore.IsRegionLineWidthValid(value) ? value : DEFAULTS.regionLineWidth;
+        return isFinite(value) && RegionStore.IsRegionLineWidthValid(value) ? value : DEFAULTS.REGION.regionLineWidth;
     };
 
     private getRegionDashLength = (): number => {
         const regionDashLength = localStorage.getItem(PREFERENCE_KEYS.regionDashLength);
         if (!regionDashLength) {
-            return DEFAULTS.regionDashLength;
+            return DEFAULTS.REGION.regionDashLength;
         }
 
         const value = Number(regionDashLength);
-        return isFinite(value) && RegionStore.IsRegionDashLengthValid(value) ? value : DEFAULTS.regionDashLength;
+        return isFinite(value) && RegionStore.IsRegionDashLengthValid(value) ? value : DEFAULTS.REGION.regionDashLength;
     };
 
     private getRegionType = (): CARTA.RegionType => {
         const regionType = localStorage.getItem(PREFERENCE_KEYS.regionType);
         if (!regionType) {
-            return DEFAULTS.regionType;
+            return DEFAULTS.REGION.regionType;
         }
 
         const value = Number(regionType);
-        return isFinite(value) && RegionStore.IsRegionTypeValid(value) ? value : DEFAULTS.regionType;
+        return isFinite(value) && RegionStore.IsRegionTypeValid(value) ? value : DEFAULTS.REGION.regionType;
     };
 
     private getRegionCreationMode = (): string => {
         const regionCreationMode = localStorage.getItem(PREFERENCE_KEYS.regionCreationMode);
-        return regionCreationMode && RegionCreationMode.isValid(regionCreationMode) ? regionCreationMode : DEFAULTS.regionCreationMode;
+        return regionCreationMode && RegionCreationMode.isValid(regionCreationMode) ? regionCreationMode : DEFAULTS.REGION.regionCreationMode;
     };
 
     // getters for performance
     private getImageCompressionQuality = (): number => {
         const imageCompressionQuality = localStorage.getItem(PREFERENCE_KEYS.imageCompressionQuality);
         if (!imageCompressionQuality) {
-            return DEFAULTS.imageCompressionQuality;
+            return DEFAULTS.PERFORMANCE.imageCompressionQuality;
         }
 
         const value = Number(imageCompressionQuality);
-        return isFinite(value) && CompressionQuality.isImageCompressionQualityValid(value) ? value : DEFAULTS.imageCompressionQuality;
+        return isFinite(value) && CompressionQuality.isImageCompressionQualityValid(value) ? value : DEFAULTS.PERFORMANCE.imageCompressionQuality;
     };
 
     private getAnimationCompressionQuality = (): number => {
         const animationCompressionQuality = localStorage.getItem(PREFERENCE_KEYS.animationCompressionQuality);
         if (!animationCompressionQuality) {
-            return DEFAULTS.animationCompressionQuality;
+            return DEFAULTS.PERFORMANCE.animationCompressionQuality;
         }
 
         const value = Number(animationCompressionQuality);
-        return isFinite(value) && CompressionQuality.isAnimationCompressionQualityValid(value) ? value : DEFAULTS.animationCompressionQuality;
+        return isFinite(value) && CompressionQuality.isAnimationCompressionQualityValid(value) ? value : DEFAULTS.PERFORMANCE.animationCompressionQuality;
     };
 
     private getGPUTileCache = (): number => {
         const GPUTileCache = localStorage.getItem(PREFERENCE_KEYS.GPUTileCache);
         if (!GPUTileCache) {
-            return DEFAULTS.GPUTileCache;
+            return DEFAULTS.PERFORMANCE.GPUTileCache;
         }
 
         const value = Number(GPUTileCache);
-        return isFinite(value) && TileCache.isGPUTileCacheValid(value) ? value : DEFAULTS.GPUTileCache;
+        return isFinite(value) && TileCache.isGPUTileCacheValid(value) ? value : DEFAULTS.PERFORMANCE.GPUTileCache;
     };
 
     private getSystemTileCache = (): number => {
         const systemTileCache = localStorage.getItem(PREFERENCE_KEYS.systemTileCache);
         if (!systemTileCache) {
-            return DEFAULTS.systemTileCache;
+            return DEFAULTS.PERFORMANCE.systemTileCache;
         }
 
         const value = Number(systemTileCache);
-        return isFinite(value) && TileCache.isSystemTileCacheValid(value) ? value : DEFAULTS.systemTileCache;
+        return isFinite(value) && TileCache.isSystemTileCacheValid(value) ? value : DEFAULTS.PERFORMANCE.systemTileCache;
     };
 
     // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
     private getLogEvents = (): Map<CARTA.EventType, boolean> => {
         let events = new Map<CARTA.EventType, boolean>();
-        Event.EVENT_TYPES.forEach(eventType => events.set(eventType, DEFAULTS.eventLoggingEnabled));
+        Event.EVENT_TYPES.forEach(eventType => events.set(eventType, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
 
         const localStorageEventList = localStorage.getItem(PREFERENCE_KEYS.logEventList);
         if (localStorageEventList && localStorageEventList.length) {
@@ -450,7 +450,7 @@ export class PreferenceStore {
 
     private genDefaultLogEvents = (): Map<CARTA.EventType, boolean> => {
         let events = new Map<CARTA.EventType, boolean>();
-        Event.EVENT_TYPES.forEach(eventType => events.set(eventType, DEFAULTS.eventLoggingEnabled));
+        Event.EVENT_TYPES.forEach(eventType => events.set(eventType, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
         return events;
     };
 
@@ -735,9 +735,9 @@ export class PreferenceStore {
     }
 
     private initPreferenceFromDefault = () => {
-        this.regionContainer = new RegionStore(null, -1, null, [{x: 0, y: 0}, {x: 1, y: 1}], DEFAULTS.regionType, -1);
+        this.regionContainer = new RegionStore(null, -1, null, [{x: 0, y: 0}, {x: 1, y: 1}], DEFAULTS.REGION.regionType, -1);
         this.eventsLoggingEnabled = new Map<CARTA.EventType, boolean>();
-        Event.EVENT_TYPES.forEach(eventType => this.eventsLoggingEnabled.set(eventType, DEFAULTS.eventLoggingEnabled));
+        Event.EVENT_TYPES.forEach(eventType => this.eventsLoggingEnabled.set(eventType, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
 
         this.preference = _.cloneDeep(DEFAULTS);
         // TODO: handle region, eventsLoggingEnabled in preference
