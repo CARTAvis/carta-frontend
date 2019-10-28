@@ -343,7 +343,7 @@ export class FrameStore {
     private readonly preference: PreferenceStore;
     private readonly backendService: BackendService;
     private readonly contourContext: WebGLRenderingContext;
-    private zoomHandler;
+    private zoomTimeoutHandler;
 
     private static readonly CursorInfoMaxPrecision = 25;
     private static readonly ZoomInertiaDuration = 250;
@@ -367,6 +367,7 @@ export class FrameStore {
         this.contourStores = new Map<number, ContourStore>();
         this.renderType = RasterRenderType.NONE;
         this.moving = false;
+        this.zooming = false;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preference.astColor;
@@ -405,7 +406,7 @@ export class FrameStore {
         autorun(() => {
             // update zoomLevel when image viewer is available for drawing
             if (this.isRenderable && this.zoomLevel <= 0) {
-                this.zoomLevel = this.zoomLevelForFit;
+                this.setZoom(this.zoomLevelForFit);
             }
         });
     }
@@ -641,6 +642,8 @@ export class FrameStore {
 
     @action setZoom(zoom: number) {
         this.zoomLevel = zoom;
+        this.replaceZoomTimeoutHandler();
+        this.zooming = true;
     }
 
     @action setCenter(x: number, y: number) {
@@ -663,22 +666,16 @@ export class FrameStore {
             x: x + this.zoomLevel / zoom * (this.center.x - x),
             y: y + this.zoomLevel / zoom * (this.center.y - y)
         };
-        this.zoomLevel = zoom;
+        this.setZoom(zoom);
         this.center = newCenter;
-        this.addZoomHandler();
-        this.zooming = true;
     }
 
-    @action zoomToSelection(xMin: number, xMax: number, yMin: number, yMax: number) {
-        // TODO
-    }
-
-    private addZoomHandler = () => {
-        if (this.zoomHandler) {
-            clearTimeout(this.zoomHandler);
+    private replaceZoomTimeoutHandler = () => {
+        if (this.zoomTimeoutHandler) {
+            clearTimeout(this.zoomTimeoutHandler);
         }
 
-        this.zoomHandler = setTimeout(() => {
+        this.zoomTimeoutHandler = setTimeout(() => {
             this.zooming = false;
         }, FrameStore.ZoomInertiaDuration);
     };

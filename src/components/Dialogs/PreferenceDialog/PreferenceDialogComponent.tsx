@@ -436,6 +436,9 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         <option key={5} value={1000000}>1M</option>
                     </HTMLSelect>
                 </FormGroup>
+                <FormGroup inline={true} label="Stream image tiles while zooming">
+                    <Switch checked={preference.streamTilesWhileZooming} onChange={(ev) => preference.setStreamContoursWhileZooming(ev.currentTarget.checked)}/>
+                </FormGroup>
             </React.Fragment>
         );
 
@@ -472,7 +475,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} minWidth={450} minHeight={300} defaultWidth={775} defaultHeight={450} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} minWidth={450} minHeight={300} defaultWidth={775} defaultHeight={500} enableResizing={true}>
                 <div className="bp3-dialog-body">
                     <Tabs
                         id="preferenceTabs"
