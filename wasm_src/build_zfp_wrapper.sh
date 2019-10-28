@@ -7,7 +7,7 @@ npx tsc pre.ts --outFile build/pre.js
 npx tsc post.ts --outFile build/post.js
 emcc -o build/zfp_wrapper.js zfp_wrapper.c --pre-js build/pre.js --post-js build/post.js -I ../../wasm_libs/zfp/include \
     -L../../wasm_libs/zfp/build/lib -lm -lzfp -g0 -O2 -s WASM=1 -s ALLOW_MEMORY_GROWTH=1 \
-    -s NO_EXIT_RUNTIME=1 -s EXPORTED_FUNCTIONS='["_encodeFloats", "_zfpDecompress", "_malloc", "_free"]' \
+    -s NO_EXIT_RUNTIME=1 -s EXPORTED_FUNCTIONS='["_zfpDecompress", "_malloc", "_free"]' \
     -s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "cwrap"]'
 
 printf "Checking for ZFP wrapper WASM..."

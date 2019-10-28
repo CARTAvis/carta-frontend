@@ -5,7 +5,7 @@ import * as AST from "ast_wrapper";
 import {ASTSettingsString, PreferenceStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore, ContourConfigStore, ContourStore} from "stores";
 import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES, ProtobufProcessing} from "models";
 import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency, toFixed, hexStringToRgba} from "utilities";
-import {BackendService} from "../services";
+import {BackendService} from "services";
 
 export interface FrameInfo {
     fileId: number;
@@ -316,16 +316,41 @@ export class FrameStore {
         return this.renderHeight * pixelRatio / imageHeight;
     }
 
+    @computed get contourProgress(): number {
+        // Use -1 when there are no contours required
+        if (!this.contourConfig.levels || !this.contourConfig.levels.length || !this.contourConfig.enabled) {
+            return -1;
+        }
+
+        // Progress is zero if we haven't received any contours yet
+        if (!this.contourStores || !this.contourStores.size) {
+            return 0;
+        }
+
+        let totalProgress = 0;
+        this.contourStores.forEach((contourStore, level) => {
+            if (this.contourConfig.levels.indexOf(level) !== -1) {
+                totalProgress += contourStore.progress;
+            }
+        });
+
+        return totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
+    }
+
     private readonly overlayStore: OverlayStore;
     private readonly logStore: LogStore;
+    private readonly preference: PreferenceStore;
     private readonly backendService: BackendService;
+    private readonly contourContext: WebGLRenderingContext;
 
     private static readonly CursorInfoMaxPrecision = 25;
 
-    constructor(readonly preference: PreferenceStore, overlay: OverlayStore, logStore: LogStore, frameInfo: FrameInfo, backendService: BackendService) {
+    constructor(preference: PreferenceStore, overlay: OverlayStore, logStore: LogStore, frameInfo: FrameInfo, backendService: BackendService, gl: WebGLRenderingContext) {
         this.overlayStore = overlay;
         this.logStore = logStore;
         this.backendService = backendService;
+        this.preference = preference;
+        this.contourContext = gl;
         this.validWcs = false;
         this.frameInfo = frameInfo;
         this.renderHiDPI = true;
@@ -540,24 +565,46 @@ export class FrameStore {
     }
 
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
-        const tStart = performance.now();
         let vertexCounter = 0;
 
         const processedData = ProtobufProcessing.ProcessContourData(contourImageData);
         for (const contourSet of processedData.contourSets) {
             vertexCounter += contourSet.coordinates.length / 2;
         }
-        const tEnd = performance.now();
-        const dt = tEnd - tStart;
-        console.log(`Decompressed and un-shuffled ${vertexCounter} vertices  in ${dt} ms.`);
         this.stokes = processedData.stokes;
         this.channel = processedData.channel;
-        this.contourStores.clear();
 
         for (const contourSet of processedData.contourSets) {
-            const contourStore = new ContourStore();
-            contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates);
-            this.contourStores.set(contourSet.level, contourStore);
+            let contourStore = this.contourStores.get(contourSet.level);
+            if (!contourStore) {
+                contourStore = new ContourStore(this.contourContext);
+                this.contourStores.set(contourSet.level, contourStore);
+            }
+
+            if (!contourStore.isComplete && processedData.progress > 0) {
+                contourStore.addContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+            } else {
+                contourStore.setContourData(contourSet.indexOffsets, contourSet.coordinates, processedData.progress);
+            }
+        }
+
+        let totalProgress = 0;
+        let totalVertices = 0;
+        let totalChunks = 0;
+        // Clear up stale contour levels by checking against the config, and update total contour progress
+        this.contourStores.forEach((contourStore, level) => {
+            if (this.contourConfig.levels.indexOf(level) === -1) {
+                this.contourStores.delete(level);
+            } else {
+                totalProgress += contourStore.progress;
+                totalVertices += contourStore.vertexCount;
+                totalChunks += contourStore.chunkCount;
+            }
+        });
+
+        const progress = totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
+        if (progress >= 1) {
+            console.log(`Contours complete: ${totalVertices} vertices in ${totalChunks} chunks`);
         }
     }
 
@@ -658,6 +705,7 @@ export class FrameStore {
         this.contourConfig.setColor(hexStringToRgba(this.preference.contourColor));
         this.contourConfig.setColormap(this.preference.colormap);
         this.contourConfig.setColormapEnabled(this.preference.contourColormapEnabled);
+        this.contourConfig.setEnabled(true);
 
         // TODO: Allow a different reference frame
         const contourParameters: CARTA.ISetContourParameters = {
@@ -673,21 +721,25 @@ export class FrameStore {
                 yMax: this.frameInfo.fileInfoExtended.height,
             },
             decimationFactor: this.preference.contourDecimation,
-            compressionLevel: this.preference.contourCompressionLevel
+            compressionLevel: this.preference.contourCompressionLevel,
+            contourChunkSize: this.preference.contourChunkSize
         };
         this.backendService.setContourParameters(contourParameters);
     };
 
-    @action clearContours = () => {
+    @action clearContours = (updateBackend: boolean = true) => {
         // Clear up GPU resources
         this.contourStores.forEach(contourStore => contourStore.clearData());
         this.contourStores.clear();
-        // Send empty contour parameter message to the backend, to prevent contours from being automatically updated
-        const contourParameters: CARTA.ISetContourParameters = {
-            fileId: this.frameInfo.fileId,
-            referenceFileId: this.frameInfo.fileId,
-        };
-        this.backendService.setContourParameters(contourParameters);
+        if (updateBackend) {
+            // Send empty contour parameter message to the backend, to prevent contours from being automatically updated
+            const contourParameters: CARTA.ISetContourParameters = {
+                fileId: this.frameInfo.fileId,
+                referenceFileId: this.frameInfo.fileId,
+            };
+            this.backendService.setContourParameters(contourParameters);
+        }
+        this.contourConfig.setEnabled(false);
     };
 
     // Tests a list of headers for valid channel information in either 3rd or 4th axis

@@ -66,6 +66,7 @@ export class AppStore {
     @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
 
     private appContainer: HTMLElement;
+    private contourWebGLContext: WebGLRenderingContext;
 
     public getAppContainer = (): HTMLElement => {
         return this.appContainer;
@@ -74,6 +75,14 @@ export class AppStore {
     public setAppContainer = (container: HTMLElement) => {
         this.appContainer = container;
     };
+
+    public get ContourContext () {
+        return this.contourWebGLContext;
+    }
+
+    public set ContourContext (gl: WebGLRenderingContext) {
+        this.contourWebGLContext = gl;
+    }
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
@@ -280,7 +289,7 @@ export class AppStore {
             // Clear existing tile cache if it exists
             this.tileService.clearCompressedCache(fileId);
 
-            let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, this.logStore, frameInfo, this.backendService);
+            let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, this.logStore, frameInfo, this.backendService, this.ContourContext);
 
             // clear existing requirements for the frame
             this.spectralRequirements.delete(ack.fileId);
@@ -291,6 +300,7 @@ export class AppStore {
             // Place frame in frame array (replace frame with the same ID if it exists)
             const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === fileId);
             if (existingFrameIndex !== -1) {
+                this.frames[existingFrameIndex].clearContours(false);
                 this.frames[existingFrameIndex] = newFrame;
             } else {
                 this.frames.push(newFrame);
@@ -323,7 +333,8 @@ export class AppStore {
     };
 
     @action removeFrame = (fileId: number) => {
-        if (this.frames.find(f => f.frameInfo.fileId === fileId)) {
+        const frame = this.frames.find(f => f.frameInfo.fileId === fileId);
+        if (frame) {
             // adjust requirements for stores
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets, fileId);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.histogramWidgets, fileId);
@@ -334,6 +345,7 @@ export class AppStore {
                 if (this.activeFrame.frameInfo.fileId === fileId) {
                     this.activeFrame = null;
                 }
+                frame.clearContours(false);
                 this.tileService.clearCompressedCache(fileId);
                 this.frames = this.frames.filter(f => f.frameInfo.fileId !== fileId);
             }
@@ -344,6 +356,7 @@ export class AppStore {
         if (this.backendService.closeFile(-1)) {
             this.activeFrame = null;
             this.tileService.clearCompressedCache(-1);
+            this.frames.forEach(frame => frame.clearContours(false));
             this.frames = [];
             // adjust requirements for stores
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets);
