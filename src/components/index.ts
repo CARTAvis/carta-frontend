@@ -13,3 +13,4 @@ export * from "./SpectralProfiler/SpectralProfilerComponent";
 export * from "./Stats/StatsComponent";
 export * from "./Histogram/HistogramComponent";
 export * from "./StokesAnalysis/StokesAnalysisComponent";
+export * from "./StokesAnalysis/StokesAnalysisSettingsPanelComponent/StokesAnalysisSettingsPanelComponent";

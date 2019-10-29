@@ -187,16 +187,38 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 connectivityClass += " offline";
                 break;
         }
-        connectivityClass += " online";
 
-        let contourLoadingNode: React.ReactNode;
-        if (appStore.activeFrame && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1) {
-            contourLoadingNode = (
-                <Tooltip content={`Streaming contours. ${(100 * appStore.activeFrame.contourProgress).toFixed(1)}% complete`}>
-                    <Icon icon={"cloud-download"} className="contour-loading-icon"/>
-                </Tooltip>
+        const tilesLoading = appStore.tileService.remainingTiles > 0;
+        const contoursLoading = appStore.activeFrame && appStore.activeFrame.contourProgress >= 0 && appStore.activeFrame.contourProgress < 1;
+        let loadingTooltipFragment;
+        let loadingIndicatorClass = "contour-loading-icon";
+
+        if (tilesLoading || contoursLoading) {
+            let tilesTooltipContent;
+            if (tilesLoading) {
+                tilesTooltipContent = <span>Streaming image tiles. {appStore.tileService.remainingTiles} remaining</span>;
+            }
+            let contourTooltipContent;
+            if (contoursLoading) {
+                contourTooltipContent = <span>Streaming contours. {toFixed(100 * appStore.activeFrame.contourProgress, 1)}% complete</span>;
+            }
+
+            loadingTooltipFragment = (
+                <React.Fragment>
+                    {tilesTooltipContent}
+                    {contoursLoading && tilesLoading && <br/>}
+                    {contourTooltipContent}
+                </React.Fragment>
             );
+
+            loadingIndicatorClass += " icon-visible";
         }
+
+        const loadingIndicator = (
+            <Tooltip content={loadingTooltipFragment}>
+                <Icon icon={"cloud-download"} className={loadingIndicatorClass}/>
+            </Tooltip>
+        );
 
         return (
             <div className="root-menu">
@@ -224,7 +246,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 <Alert isOpen={this.documentationAlertVisible} onClose={this.handleAlertDismissed} canEscapeKeyCancel={true} canOutsideClickCancel={true} confirmButtonText={"Dismiss"}>
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
-                {contourLoadingNode}
+                {loadingIndicator}
                 <Tooltip content={tooltip}>
                     <Icon icon={"symbol-circle"} className={connectivityClass}/>
                 </Tooltip>

@@ -1,6 +1,5 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
@@ -18,8 +17,6 @@ export class ToolbarComponentProps {
 
 @observer
 export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
-    @observable coordinateSystemLabel: string = ToolbarComponent.CoordinateSystemName.get(SystemType.Native);
-
     handleZoomToActualSizeClicked = () => {
         this.props.appStore.activeFrame.setZoom(1.0);
     };
@@ -38,7 +35,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     };
 
     private static readonly CoordinateSystemName = new Map<SystemType, string>([
-        [SystemType.Native, "AUTO"],
+        [SystemType.Auto, "AUTO"],
         [SystemType.FK5, "FK5"],
         [SystemType.FK4, "FK4"],
         [SystemType.Galactic, "GAL"],
@@ -47,7 +44,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     ]);
 
     private static readonly  CoordinateSystemTooltip = new Map<SystemType, string>([
-        [SystemType.Native, "Automatically select the coordinate system based on file headers"],
+        [SystemType.Auto, "Automatically select the coordinate system based on file headers"],
         [SystemType.FK5, "FK5 coordinates, J2000.0 equinox"],
         [SystemType.FK4, "FK4 coordinates, B1950.0 equinox"],
         [SystemType.Galactic, "Galactic coordinates"],
@@ -56,13 +53,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     ]);
 
     handleCoordinateSystemClicked = (coordinateSystem: SystemType) => {
-        if (coordinateSystem === SystemType.Native) {
-            this.props.appStore.overlayStore.global.setSystem(this.props.appStore.overlayStore.global.defaultSystem);
-            this.coordinateSystemLabel = ToolbarComponent.CoordinateSystemName.get(SystemType.Native);
-        } else {
-            this.props.appStore.overlayStore.global.setSystem(coordinateSystem);
-            this.coordinateSystemLabel = ToolbarComponent.CoordinateSystemName.get(coordinateSystem);
-        }
+        this.props.appStore.overlayStore.global.setSystem(coordinateSystem);
     };
 
     render() {
@@ -103,7 +94,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         
         const coordinateSystemMenu = (
             <Menu>
-                <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Native)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Native)}/>
+                <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Auto)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Auto)}/>
                 <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.FK5)} onClick={() => this.handleCoordinateSystemClicked(SystemType.FK5)}/>
                 <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.FK4)} onClick={() => this.handleCoordinateSystemClicked(SystemType.FK4)}/>
                 <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Galactic)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Galactic)}/>
@@ -162,7 +153,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Overlay Coordinate <br/><small><i>Current: {ToolbarComponent.CoordinateSystemTooltip.get(coordinateSystem)}</i></small></span>}>
                     <Popover content={coordinateSystemMenu} position={Position.TOP} minimal={true}>
-                        <Button text={this.coordinateSystemLabel} />
+                        <Button text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)} />
                     </Popover>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content="Toggle grid">

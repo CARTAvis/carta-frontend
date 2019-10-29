@@ -5,7 +5,7 @@ import * as AST from "ast_wrapper";
 import {ASTSettingsString, PreferenceStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore, ContourConfigStore, ContourStore} from "stores";
 import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES, ProtobufProcessing} from "models";
 import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency, toFixed, hexStringToRgba} from "utilities";
-import {BackendService} from "../services";
+import {BackendService} from "services";
 
 export interface FrameInfo {
     fileId: number;
