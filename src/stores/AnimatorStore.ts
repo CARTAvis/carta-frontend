@@ -15,12 +15,20 @@ export enum AnimationState {
     PLAYING = 1
 }
 
+export enum PlayMode {
+    FORWARD = 0,
+    BACKWARD = 1,
+    BOUNCING = 2,
+    BLINK = 3
+}
+
 export class AnimatorStore {
     @observable frameRate: number;
     @observable maxFrameRate: number;
     @observable minFrameRate: number;
     @observable animationMode: AnimationMode;
     @observable animationState: AnimationState;
+    @observable playMode: PlayMode;
 
     @action setAnimationMode = (val: AnimationMode) => {
         // Prevent animation mode changes during playback
@@ -183,6 +191,7 @@ export class AnimatorStore {
         this.animationMode = AnimationMode.CHANNEL;
         this.animationState = AnimationState.STOPPED;
         this.animateHandle = null;
+        this.playMode = PlayMode.FORWARD;
         this.appStore = appStore;
     }
 
