@@ -66,17 +66,51 @@ export class AnimatorStore {
             return;
         }
 
-        const animationMessage: CARTA.IStartAnimation = {
+        let animationMessage: CARTA.IStartAnimation = {
             fileId: frame.frameInfo.fileId,
-            startFrame: animationFrames.startFrame,
-            firstFrame: animationFrames.firstFrame,
-            lastFrame: animationFrames.lastFrame,
-            deltaFrame: animationFrames.deltaFrame,
             imageView: imageView,
             looping: true,
-            reverse: this.playMode === PlayMode.BOUNCING ? true : false,
+            reverse: false,
             frameRate: this.frameRate
         };
+
+        switch (this.playMode) {
+            case PlayMode.FORWARD: default:
+                animationMessage.startFrame = animationFrames.startFrame;
+                animationMessage.firstFrame = animationFrames.firstFrame;
+                animationMessage.lastFrame = animationFrames.lastFrame;
+                animationMessage.deltaFrame = animationFrames.deltaFrame;
+                break;
+            case PlayMode.BACKWARD:
+                animationMessage.startFrame = animationFrames.lastFrame;
+                animationMessage.firstFrame = animationFrames.firstFrame;
+                animationMessage.lastFrame = animationFrames.lastFrame;
+                animationMessage.deltaFrame = animationFrames.deltaFrame;
+                if (this.animationMode === AnimationMode.CHANNEL) {
+                    animationMessage.deltaFrame.channel = -1;
+                } else if (this.animationMode === AnimationMode.STOKES) {
+                    animationMessage.deltaFrame.stokes = -1;
+                }
+                break;
+            case PlayMode.BOUNCING:
+                animationMessage.startFrame = animationFrames.startFrame;
+                animationMessage.firstFrame = animationFrames.firstFrame;
+                animationMessage.lastFrame = animationFrames.lastFrame;
+                animationMessage.deltaFrame = animationFrames.deltaFrame;
+                animationMessage.reverse = true;
+                break;
+            case PlayMode.BLINK:
+                animationMessage.startFrame = animationFrames.startFrame;
+                animationMessage.firstFrame = animationFrames.firstFrame;
+                animationMessage.lastFrame = animationFrames.lastFrame;
+                animationMessage.deltaFrame = animationFrames.deltaFrame;
+                if (this.animationMode === AnimationMode.CHANNEL) {
+                    animationMessage.deltaFrame.channel = Math.abs(animationMessage.firstFrame.channel - animationMessage.lastFrame.channel);
+                } else if (this.animationMode === AnimationMode.STOKES) {
+                    animationMessage.deltaFrame.stokes = Math.abs(animationMessage.firstFrame.stokes - animationMessage.lastFrame.stokes);
+                }
+                break;
+        }
 
         this.appStore.backendService.startAnimation(animationMessage).subscribe(ack => {
             if (ack.success) {
