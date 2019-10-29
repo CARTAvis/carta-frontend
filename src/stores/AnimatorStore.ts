@@ -207,7 +207,7 @@ export class AnimatorStore {
         };
     };
 
-    private genImageView = (frame: FrameStore) => {
+    private genImageView = (frame: FrameStore): CARTA.ISetImageView => {
         if (!frame) {
             return null;
         }
