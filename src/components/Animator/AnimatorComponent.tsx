@@ -355,7 +355,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         <Menu>
                             <MenuItem icon="circle-arrow-right" text="Play Forward" active={appStore.animatorStore.playMode === PlayMode.FORWARD} onClick={() => appStore.animatorStore.playMode = PlayMode.FORWARD}/>
                             <MenuItem icon="circle-arrow-left" text="Play Backward" active={appStore.animatorStore.playMode === PlayMode.BACKWARD} onClick={() => appStore.animatorStore.playMode = PlayMode.BACKWARD}/>
-                            <MenuItem icon="redo" text="Bouncing" active={appStore.animatorStore.playMode === PlayMode.BOUNCING} onClick={() => appStore.animatorStore.playMode = PlayMode.BOUNCING}/>
+                            <MenuItem icon="undo" text="Bouncing" active={appStore.animatorStore.playMode === PlayMode.BOUNCING} onClick={() => appStore.animatorStore.playMode = PlayMode.BOUNCING}/>
                             <MenuItem icon="refresh" text="Blink" active={appStore.animatorStore.playMode === PlayMode.BLINK} onClick={() => appStore.animatorStore.playMode = PlayMode.BLINK}/>
                         </Menu>
                     }

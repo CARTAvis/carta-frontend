@@ -74,7 +74,7 @@ export class AnimatorStore {
             deltaFrame: animationFrames.deltaFrame,
             imageView: imageView,
             looping: true,
-            reverse: false,
+            reverse: this.playMode === PlayMode.BOUNCING ? true : false,
             frameRate: this.frameRate
         };
 
