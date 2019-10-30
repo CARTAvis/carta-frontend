@@ -76,11 +76,11 @@ export class AppStore {
         this.appContainer = container;
     };
 
-    public get ContourContext () {
+    public get ContourContext() {
         return this.contourWebGLContext;
     }
 
-    public set ContourContext (gl: WebGLRenderingContext) {
+    public set ContourContext(gl: WebGLRenderingContext) {
         this.contourWebGLContext = gl;
     }
 
@@ -534,7 +534,9 @@ export class AppStore {
 
         // Update frame view outside of animation
         autorun(() => {
-            if (this.activeFrame && (this.animatorStore.animationState === AnimationState.STOPPED || this.animatorStore.animationMode === AnimationMode.FRAME)) {
+            if (this.activeFrame &&
+                (this.preferenceStore.streamTilesWhileZooming || !this.activeFrame.zooming) &&
+                (this.animatorStore.animationState === AnimationState.STOPPED || this.animatorStore.animationMode === AnimationMode.FRAME)) {
                 // Trigger update raster view/title when switching layout
                 const layout = this.layoutStore.dockedLayout;
                 this.widgetsStore.updateImageWidgetTitle();

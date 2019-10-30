@@ -46,9 +46,9 @@ export class PlotContainerProps {
     isGroupSubPlot?: boolean;
     pointRadius?: number;
     zeroLineWidth?: number;
-    interactionMode?: boolean;
     multiColorSingleLineColors?: Array<string>;
     multiColorMultiLinesColors?: Map<string, Array<string>>;
+    borderWidth?: number;
 }
 
 interface MulticolorLineChartDatasets extends ChartDataSets  {
@@ -280,7 +280,9 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             return true;
         } else if (props.zeroLineWidth !== nextProps.zeroLineWidth) {
             return true;
-        } 
+        } else if (props.borderWidth !== nextProps.borderWidth) {
+            return true;
+        }
 
         // Deep check of arrays (this should be optimised!)
         if (!props.data || !nextProps.data || props.data.length !== nextProps.data.length) {
@@ -417,27 +419,30 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             };
             if (this.props.usePointSymbols) {
                 datasetConfig.showLine = false;
-                datasetConfig.pointRadius = 1;
+                datasetConfig.pointRadius = this.props.pointRadius ? this.props.pointRadius : 1;
                 datasetConfig.pointBackgroundColor = lineColor;
             } else {
                 datasetConfig.pointRadius = 0;
                 datasetConfig.showLine = true;
                 datasetConfig.steppedLine = this.props.interpolateLines ? false : "middle";
-                datasetConfig.borderWidth = 1;
+                datasetConfig.borderWidth = this.props.borderWidth ? this.props.borderWidth : 1;
                 datasetConfig.borderColor = lineColor;
             }
 
-            if (this.props.interactionMode && this.props.multiColorSingleLineColors && this.props.multiColorSingleLineColors.length && !this.props.usePointSymbols) {
-                datasetConfig.pointRadius = 0.5;
-                datasetConfig.pointStyle = "line";
-                datasetConfig.type = "multicolorLine";
-                datasetConfig.multicolorLineColors = this.props.multiColorSingleLineColors;
+            // change line segments or points color with interaction
+            if (this.props.multiColorSingleLineColors && this.props.multiColorSingleLineColors.length) {
+                if (this.props.usePointSymbols) {
+                    datasetConfig.pointBackgroundColor = this.props.multiColorSingleLineColors;
+                } else {
+                    datasetConfig.pointRadius = 0.5;
+                    datasetConfig.pointStyle = "line";
+                    datasetConfig.type = "multicolorLine";
+                    datasetConfig.multicolorLineColors = this.props.multiColorSingleLineColors;
+                }
             }
+            // line data point background color 
             if (this.props.dataBackgroundColor) {
                 datasetConfig.pointBackgroundColor = this.props.dataBackgroundColor;
-            }
-            if (this.props.pointRadius) {
-                datasetConfig.pointRadius = this.props.pointRadius;
             }
             plotData.datasets.push(datasetConfig);
         }
@@ -457,24 +462,30 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     data: value,
                     fill: false,
                     lineTension: 0,
-                    borderColor: currentLineColor,
                     backgroundColor: currentLineColor,
-                    showLine: true,
-                    steppedLine: this.props.interpolateLines ? false : "middle",
-                    borderWidth: 1,
-                    pointRadius: 0
                 };
-                
-                if (this.props.interactionMode && this.props.multiColorMultiLinesColors && this.props.multiColorMultiLinesColors.size && !this.props.usePointSymbols) {
-                    multiPlotDatasetConfig.pointRadius = 0.5;
-                    multiPlotDatasetConfig.pointStyle = "line";
-                    multiPlotDatasetConfig.type = "multicolorLine";
-                    multiPlotDatasetConfig.multicolorLineColors = this.props.multiColorMultiLinesColors.get(key);
-                }
-                if (this.props.pointRadius) {
-                    multiPlotDatasetConfig.pointRadius = this.props.pointRadius;
+
+                if (this.props.multiColorMultiLinesColors && this.props.multiColorMultiLinesColors.size) {
+                    if (this.props.usePointSymbols) {
+                        multiPlotDatasetConfig.pointBackgroundColor = this.props.multiColorMultiLinesColors.get(key);
+                    } else {
+                        multiPlotDatasetConfig.multicolorLineColors = this.props.multiColorMultiLinesColors.get(key);
+                    }
                 }
 
+                if (this.props.usePointSymbols) {
+                    multiPlotDatasetConfig.showLine = false;
+                    multiPlotDatasetConfig.pointRadius = this.props.pointRadius ? this.props.pointRadius : 1;
+                    multiPlotDatasetConfig.borderWidth = 0;
+                } else {
+                    multiPlotDatasetConfig.showLine = true;
+                    multiPlotDatasetConfig.pointRadius = 0.5;
+                    multiPlotDatasetConfig.pointStyle = "line";
+                    multiPlotDatasetConfig.steppedLine = this.props.interpolateLines ? false : "middle";
+                    multiPlotDatasetConfig.borderWidth = this.props.borderWidth ? this.props.borderWidth : 1,
+                    multiPlotDatasetConfig.type = "multicolorLine";
+                    multiPlotDatasetConfig.borderColor = currentLineColor;
+                }
                 plotData.datasets.push(multiPlotDatasetConfig);
             });
         }

@@ -77,6 +77,9 @@ const DRAG_THRESHOLD = 3;
 const MARKER_HITBOX_THICKNESS = 16;
 // Maximum pixel distance before turing an X or Y zoom into an XY zoom
 const XY_ZOOM_THRESHOLD = 20;
+// indicator default Radius
+const INNERRADIUS = 0.5;
+const OUTERRADIUS = 3;
 
 @observer
 export class ScatterPlotComponent extends React.Component<ScatterPlotComponentProps> {
@@ -238,9 +241,15 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
     }
 
     private genCircle(id: string, markerColor: string, valueCanvasSpaceX: number, valueCanvasSpaceY: number) {
+        let innerRadius = INNERRADIUS;
+        let outerRadius = OUTERRADIUS;
+        if (this.props && this.props.pointRadius) {
+            innerRadius = this.props.pointRadius - 1 <= 0 ? INNERRADIUS : this.props.pointRadius - 1;
+            outerRadius = this.props.pointRadius + 2.5;  
+        }
         return (
             <Group key={id} x={valueCanvasSpaceX} y={valueCanvasSpaceY}>
-                <Ring innerRadius={2} outerRadius={6} fill={markerColor}/>
+                <Ring innerRadius={innerRadius} outerRadius={outerRadius} fill={markerColor}/>
             </Group>
         );
     }
@@ -578,6 +587,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 tabIndex={0}
             >
                 <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}/>
+                {this.width > 0 && this.height > 0 &&
                 <PlotContainerComponent
                     {...this.props}
                     plotRefUpdated={this.onPlotRefUpdated}
@@ -585,6 +595,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                     width={this.width}
                     height={this.height}
                 />
+                }
+                {this.width > 0 && this.height > 0 &&
                 <Stage
                     className={"annotation-stage"}
                     width={this.width}
@@ -600,6 +612,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                         {this.genSelectionRect()}
                     </Layer>
                 </Stage>
+                }
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
                     visible={this.isMouseEntered && (this.props.data !== undefined || this.props.multiPlotData !== undefined)}
