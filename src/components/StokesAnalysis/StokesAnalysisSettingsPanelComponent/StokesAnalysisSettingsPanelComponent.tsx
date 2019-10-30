@@ -19,7 +19,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             minWidth: 350,
             minHeight: 300,
             defaultWidth: 350,
-            defaultHeight: 500,
+            defaultHeight: 530,
             title: "stokes-settings",
             isCloseable: true,
             parentId: "stokes",
@@ -156,6 +156,16 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
                             value={widgetStore.scatterPlotPointSize}
                             stepSize={0.5}
                             onValueChange={(value: number) => widgetStore.setScatterPlotPointSize(value)}
+                    />
+                </FormGroup>
+                <FormGroup  inline={true} label="Transparency">
+                    <NumericInput
+                            placeholder="transparency"
+                            min={StokesAnalysisWidgetStore.MIN_POINT_TRANSPARENCY}
+                            max={StokesAnalysisWidgetStore.MAX_POINT_TRANSPARENCY}
+                            value={widgetStore.pointTransparency}
+                            stepSize={0.1}
+                            onValueChange={(value: number) => widgetStore.setPointTransparency(value)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label={"Equal Axes"}>

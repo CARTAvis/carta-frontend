@@ -1,4 +1,4 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, values} from "mobx";
 import {ChartArea} from "chart.js";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
@@ -28,7 +28,8 @@ const DEFAULTS = {
         linePlotPointSize: 1.5,
         scatterPlotPointSize: 3,
         equalAxes: true,
-        colorMap: "jet"
+        colorMap: "jet",
+        pointTransparency: 1
 };
 
 export class StokesAnalysisWidgetStore extends RegionWidgetStore {
@@ -66,12 +67,15 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable equalAxes: boolean;
     @observable colorMap: string;
     @observable colorPixel: { color: Uint8ClampedArray, size: number };
+    @observable pointTransparency: number;
 
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
     static readonly MIN_LINE_POINT_SIZE = 0.5;
     static readonly MIN_SCATTER_POINT_SIZE = 0.5;
     static readonly MAX_POINT_SIZE = 10;
+    static readonly MIN_POINT_TRANSPARENCY = 0.1;
+    static readonly MAX_POINT_TRANSPARENCY = 1;
     
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
     private static ValidStatsTypes = [
@@ -223,6 +227,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.linePlotPointSize = DEFAULTS.linePlotPointSize;
         this.scatterPlotPointSize = DEFAULTS.scatterPlotPointSize;
         this.equalAxes = DEFAULTS.equalAxes;
+        this.pointTransparency = DEFAULTS.pointTransparency;
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
@@ -331,6 +336,12 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.colorMap = colormap;
         this.colorPixel = getColorsForValues(colormap);
     };
+
+    @action setPointTransparency = (val: number) => {
+        if (val >= StokesAnalysisWidgetStore.MIN_POINT_TRANSPARENCY && val <= StokesAnalysisWidgetStore.MAX_POINT_TRANSPARENCY) {
+            this.pointTransparency = val;   
+        }
+    }
 
     @computed get isLinePlotsAutoScaledX() {
         return (this.sharedMinX === undefined || this.sharedMaxX === undefined);
