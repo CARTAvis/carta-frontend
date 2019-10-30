@@ -429,7 +429,7 @@ export class PreferenceStore {
 
     private getStreamTilesWhileZooming = (): boolean => {
         const val = localStorage.getItem(PREFERENCE_KEYS.streamContoursWhileZooming);
-        return parseBoolean(val, DEFAULTS.streamContoursWhileZooming);
+        return parseBoolean(val, DEFAULTS.PERFORMANCE.streamContoursWhileZooming);
     };
 
     // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
