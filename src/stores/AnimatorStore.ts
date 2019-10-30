@@ -66,7 +66,7 @@ export class AnimatorStore {
             return;
         }
 
-        let animationMessage: CARTA.IStartAnimation = {
+        const animationMessage: CARTA.IStartAnimation = {
             fileId: frame.frameInfo.fileId,
             startFrame: animationFrames.startFrame,
             firstFrame: animationFrames.firstFrame,
