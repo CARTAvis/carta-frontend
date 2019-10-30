@@ -227,16 +227,10 @@ export class AnimatorStore {
                 break;
             case PlayMode.BLINK:
                 if (this.animationMode === AnimationMode.CHANNEL) {
-                    startFrame.channel = Math.max((startFrame.channel + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.channel);
-                    if (startFrame.channel > lastFrame.channel) {
-                        startFrame.channel = firstFrame.channel;
-                    }
+                    startFrame.channel = firstFrame.channel;
                 } else if (this.animationMode === AnimationMode.STOKES) {
-                    startFrame.stokes = Math.max((startFrame.stokes + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.stokes);
-                    if (startFrame.stokes > lastFrame.stokes) {
-                        startFrame.stokes = firstFrame.stokes;
-                    }
-                 }
+                    startFrame.stokes = firstFrame.stokes;
+                }
                 if (this.animationMode === AnimationMode.CHANNEL) {
                     deltaFrame.channel = Math.abs(firstFrame.channel - lastFrame.channel);
                 } else if (this.animationMode === AnimationMode.STOKES) {
