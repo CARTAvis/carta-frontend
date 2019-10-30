@@ -1,4 +1,4 @@
-import {action, computed, observable, values} from "mobx";
+import {action, computed, observable} from "mobx";
 import {ChartArea} from "chart.js";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
