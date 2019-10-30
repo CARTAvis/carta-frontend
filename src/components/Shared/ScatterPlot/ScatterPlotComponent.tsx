@@ -587,6 +587,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                 tabIndex={0}
             >
                 <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}/>
+                {this.width > 0 && this.height > 0 &&
                 <PlotContainerComponent
                     {...this.props}
                     plotRefUpdated={this.onPlotRefUpdated}
@@ -594,6 +595,8 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                     width={this.width}
                     height={this.height}
                 />
+                }
+                {this.width > 0 && this.height > 0 &&
                 <Stage
                     className={"annotation-stage"}
                     width={this.width}
@@ -609,6 +612,7 @@ export class ScatterPlotComponent extends React.Component<ScatterPlotComponentPr
                         {this.genSelectionRect()}
                     </Layer>
                 </Stage>
+                }
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
                     visible={this.isMouseEntered && (this.props.data !== undefined || this.props.multiPlotData !== undefined)}

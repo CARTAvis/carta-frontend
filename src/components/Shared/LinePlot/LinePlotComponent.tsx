@@ -817,6 +817,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                 tabIndex={0}
             >
                 <ReactResizeDetector handleWidth handleHeight onResize={this.resize} refreshMode={"throttle"} refreshRate={33}/>
+                {this.width > 0 && this.height > 0 &&
                 <PlotContainerComponent
                     {...this.props}
                     plotRefUpdated={this.onPlotRefUpdated}
@@ -824,6 +825,8 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                     width={this.width}
                     height={this.height}
                 />
+                }
+                {this.width > 0 && this.height > 0 &&
                 <Stage
                     className={"annotation-stage"}
                     ref={ref => this.stageRef = ref}
@@ -841,6 +844,7 @@ export class LinePlotComponent extends React.Component<LinePlotComponentProps> {
                         {this.genBorderRect()}
                     </Layer>
                 </Stage>
+                }
                 <ToolbarComponent
                     darkMode={this.props.darkMode}
                     visible={this.isMouseEntered && (this.props.data !== undefined || (this.props.multiPlotData && this.props.multiPlotData.size > 0))}
