@@ -68,49 +68,15 @@ export class AnimatorStore {
 
         let animationMessage: CARTA.IStartAnimation = {
             fileId: frame.frameInfo.fileId,
+            startFrame: animationFrames.startFrame,
+            firstFrame: animationFrames.firstFrame,
+            lastFrame: animationFrames.lastFrame,
+            deltaFrame: animationFrames.deltaFrame,
             imageView: imageView,
             looping: true,
-            reverse: false,
+            reverse: animationFrames.reverse,
             frameRate: this.frameRate
         };
-
-        switch (this.playMode) {
-            case PlayMode.FORWARD: default:
-                animationMessage.startFrame = animationFrames.startFrame;
-                animationMessage.firstFrame = animationFrames.firstFrame;
-                animationMessage.lastFrame = animationFrames.lastFrame;
-                animationMessage.deltaFrame = animationFrames.deltaFrame;
-                break;
-            case PlayMode.BACKWARD:
-                animationMessage.startFrame = animationFrames.lastFrame;
-                animationMessage.firstFrame = animationFrames.firstFrame;
-                animationMessage.lastFrame = animationFrames.lastFrame;
-                animationMessage.deltaFrame = animationFrames.deltaFrame;
-                if (this.animationMode === AnimationMode.CHANNEL) {
-                    animationMessage.deltaFrame.channel = -1;
-                } else if (this.animationMode === AnimationMode.STOKES) {
-                    animationMessage.deltaFrame.stokes = -1;
-                }
-                break;
-            case PlayMode.BOUNCING:
-                animationMessage.startFrame = animationFrames.startFrame;
-                animationMessage.firstFrame = animationFrames.firstFrame;
-                animationMessage.lastFrame = animationFrames.lastFrame;
-                animationMessage.deltaFrame = animationFrames.deltaFrame;
-                animationMessage.reverse = true;
-                break;
-            case PlayMode.BLINK:
-                animationMessage.startFrame = animationFrames.startFrame;
-                animationMessage.firstFrame = animationFrames.firstFrame;
-                animationMessage.lastFrame = animationFrames.lastFrame;
-                animationMessage.deltaFrame = animationFrames.deltaFrame;
-                if (this.animationMode === AnimationMode.CHANNEL) {
-                    animationMessage.deltaFrame.channel = Math.abs(animationMessage.firstFrame.channel - animationMessage.lastFrame.channel);
-                } else if (this.animationMode === AnimationMode.STOKES) {
-                    animationMessage.deltaFrame.stokes = Math.abs(animationMessage.firstFrame.stokes - animationMessage.lastFrame.stokes);
-                }
-                break;
-        }
 
         this.appStore.backendService.startAnimation(animationMessage).subscribe(ack => {
             if (ack.success) {
@@ -173,17 +139,17 @@ export class AnimatorStore {
         startFrame: CARTA.IAnimationFrame,
         firstFrame: CARTA.IAnimationFrame,
         lastFrame: CARTA.IAnimationFrame,
-        deltaFrame: CARTA.IAnimationFrame
+        deltaFrame: CARTA.IAnimationFrame,
+        reverse: boolean
     } => {
         if (!frame) {
             return null;
         }
 
-        const startFrame: CARTA.IAnimationFrame = {
+        let startFrame: CARTA.IAnimationFrame = {
             channel: frame.channel,
             stokes: frame.stokes
         };
-
         let firstFrame: CARTA.IAnimationFrame, lastFrame: CARTA.IAnimationFrame, deltaFrame: CARTA.IAnimationFrame;
 
         if (this.animationMode === AnimationMode.CHANNEL) {
@@ -191,53 +157,100 @@ export class AnimatorStore {
                 channel: frame.animationChannelRange[0],
                 stokes: frame.stokes,
             };
-
             lastFrame = {
                 channel: frame.animationChannelRange[1],
                 stokes: frame.stokes
             };
-
             deltaFrame = {
                 channel: 1,
                 stokes: 0
             };
-
-            // Skip to the start of the animation range if below it.
-            // The first frame delivered by the animation should be the one after the current one
-            startFrame.channel = Math.max((startFrame.channel + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.channel);
-            // Jump back to start if outside the range
-            if (startFrame.channel > lastFrame.channel) {
-                startFrame.channel = firstFrame.channel;
-            }
         } else if (this.animationMode === AnimationMode.STOKES) {
             firstFrame = {
                 channel: frame.channel,
                 stokes: 0,
             };
-
             lastFrame = {
                 channel: frame.channel,
                 stokes: frame.frameInfo.fileInfoExtended.stokes - 1
             };
-
             deltaFrame = {
                 channel: 0,
                 stokes: 1
             };
-            // Skip to the start of the animation range if below it
-            // The first frame delivered by the animation should be the one after the current one
-            startFrame.stokes = Math.max((startFrame.stokes + 1) % frame.frameInfo.fileInfoExtended.stokes, firstFrame.stokes);
-            // Jump back to start if outside the range
-            if (startFrame.stokes > lastFrame.stokes) {
-                startFrame.stokes = firstFrame.stokes;
-            }
+        }
+
+        let reverse: boolean = false;
+        // determine start frame & delta
+        switch (this.playMode) {
+            case PlayMode.FORWARD: default:
+                if (this.animationMode === AnimationMode.CHANNEL) {
+                    startFrame.channel = Math.max((startFrame.channel + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.channel);
+                    if (startFrame.channel > lastFrame.channel) {
+                        startFrame.channel = firstFrame.channel;
+                    }
+                } else if (this.animationMode === AnimationMode.STOKES) {
+                    startFrame.stokes = Math.max((startFrame.stokes + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.stokes);
+                    if (startFrame.stokes > lastFrame.stokes) {
+                        startFrame.stokes = firstFrame.stokes;
+                    }
+                }
+                break;
+            case PlayMode.BACKWARD:
+                if (this.animationMode === AnimationMode.CHANNEL) {
+                    startFrame.channel = Math.min((startFrame.channel - 1) % frame.frameInfo.fileInfoExtended.depth, lastFrame.channel);
+                    if (startFrame.channel < firstFrame.channel) {
+                        startFrame.channel = lastFrame.channel;
+                    }
+                    deltaFrame.channel = -1;
+                } else if (this.animationMode === AnimationMode.STOKES) {
+                    startFrame.stokes = Math.min((startFrame.stokes - 1) % frame.frameInfo.fileInfoExtended.depth, lastFrame.stokes);
+                    if (startFrame.stokes < firstFrame.stokes) {
+                        startFrame.stokes = lastFrame.stokes;
+                    }
+                    deltaFrame.stokes = -1;
+                }
+                break;
+            case PlayMode.BOUNCING:
+                if (this.animationMode === AnimationMode.CHANNEL) {
+                    startFrame.channel = Math.max((startFrame.channel + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.channel);
+                    if (startFrame.channel > lastFrame.channel) {
+                        startFrame.channel = firstFrame.channel;
+                    }
+                } else if (this.animationMode === AnimationMode.STOKES) {
+                    startFrame.stokes = Math.max((startFrame.stokes + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.stokes);
+                    if (startFrame.stokes > lastFrame.stokes) {
+                        startFrame.stokes = firstFrame.stokes;
+                    }
+                }
+                reverse = true;
+                break;
+            case PlayMode.BLINK:
+                if (this.animationMode === AnimationMode.CHANNEL) {
+                    startFrame.channel = Math.max((startFrame.channel + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.channel);
+                    if (startFrame.channel > lastFrame.channel) {
+                        startFrame.channel = firstFrame.channel;
+                    }
+                } else if (this.animationMode === AnimationMode.STOKES) {
+                    startFrame.stokes = Math.max((startFrame.stokes + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.stokes);
+                    if (startFrame.stokes > lastFrame.stokes) {
+                        startFrame.stokes = firstFrame.stokes;
+                    }
+                 }
+                if (this.animationMode === AnimationMode.CHANNEL) {
+                    deltaFrame.channel = Math.abs(firstFrame.channel - lastFrame.channel);
+                } else if (this.animationMode === AnimationMode.STOKES) {
+                    deltaFrame.stokes = Math.abs(firstFrame.stokes - lastFrame.stokes);
+                }
+                break;
         }
 
         return {
             startFrame: startFrame,
             firstFrame: firstFrame,
             lastFrame: lastFrame,
-            deltaFrame: deltaFrame
+            deltaFrame: deltaFrame,
+            reverse: reverse
         };
     };
 
