@@ -37,7 +37,7 @@ export enum LabelType {
 }
 
 export enum SystemType {
-    Native = "NATIVE",
+    Auto = "AUTO",
     Ecliptic = "ECLIPTIC",
     FK4 = "FK4",
     FK5 = "FK5",
@@ -102,7 +102,7 @@ export class OverlayGlobalSettings {
             return undefined;
         }
 
-        if (this.system === SystemType.Native) {
+        if (this.system === SystemType.Auto) {
             return this.defaultSystem;
         }
 
@@ -110,12 +110,12 @@ export class OverlayGlobalSettings {
     }
 
     constructor(readonly preferenceStore: PreferenceStore) {
-        this.system = SystemType.Native;
+        this.system = SystemType.Auto;
         this.labelType = LabelType.Exterior;
         this.color = preferenceStore.astColor;
         this.tolerance = 2; // percentage
 
-        this.defaultSystem = SystemType.Native;
+        this.defaultSystem = SystemType.Auto;
         this.validWcs = false;
     }
 

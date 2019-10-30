@@ -1,6 +1,5 @@
 import {action, computed, observable} from "mobx";
 import * as CARTACompute from "carta_computation";
-import TypedArray = NodeJS.TypedArray;
 
 export class ContourStore {
     @observable progress: number;
