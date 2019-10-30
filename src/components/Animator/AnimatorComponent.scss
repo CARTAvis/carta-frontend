@@ -82,9 +82,12 @@
         width: 40px;
     }
 
+    .playback-mode {
+        margin: 0 3px 0 3px;
+    }
+
     .playback-buttons {
         flex: 3 3 auto;
-        margin-right: 10px;
         height: 20px;
 
         // Re-center button icons

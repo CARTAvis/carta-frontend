@@ -361,8 +361,9 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             playbackClass += " wrap";
         }
 
-        const playModeButton = (
+        const playbackModeButton = (
             <Popover
+                className="playback-mode"
                 content={
                     <Menu>
                         <MenuItem icon="circle-arrow-right" text="Play Forward" active={appStore.animatorStore.playMode === PlayMode.FORWARD} onClick={() => appStore.animatorStore.playMode = PlayMode.FORWARD}/>
@@ -418,7 +419,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 {activeFrame &&
                 <div className={playbackClass}>
                     {playbackButtons}
-                    {playModeButton}
+                    {playbackModeButton}
                     {frameControl}
                 </div>
                 }
