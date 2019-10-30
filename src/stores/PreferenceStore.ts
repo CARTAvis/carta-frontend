@@ -786,6 +786,7 @@ export class PreferenceStore {
         this.contourDecimation = DEFAULTS.PERFORMANCE.contourDecimation;
         this.contourCompressionLevel = DEFAULTS.PERFORMANCE.contourCompressionLevel;
         this.contourChunkSize = DEFAULTS.PERFORMANCE.contourChunkSize;
+        this.streamTilesWhileZooming = DEFAULTS.PERFORMANCE.streamContoursWhileZooming;
         this.eventsLoggingEnabled = new Map<CARTA.EventType, boolean>();
         Event.EVENT_TYPES.forEach(eventType => this.eventsLoggingEnabled.set(eventType, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
     };
