@@ -44,6 +44,7 @@ const PREFERENCE_KEYS = {
     contourDecimation: "contourDecimation",
     contourCompressionLevel: "contourCompressionLevel",
     contourChunkSize: "contourChunkSize",
+    streamContoursWhileZooming: "streamContoursWhileZooming",
     logEventList: "logEventList"
 };
 
@@ -84,6 +85,7 @@ const DEFAULTS = {
     contourDecimation: 4,
     contourCompressionLevel: 8,
     contourChunkSize: 100000,
+    streamContoursWhileZooming: false,
     eventLoggingEnabled: false
 };
 
@@ -123,6 +125,7 @@ export class PreferenceStore {
     @observable contourDecimation: number;
     @observable contourCompressionLevel: number;
     @observable contourChunkSize: number;
+    @observable streamTilesWhileZooming: boolean;
     @observable eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
 
     // getters for global settings
@@ -405,6 +408,11 @@ export class PreferenceStore {
         return isFinite(value) && TileCache.isSystemTileCacheValid(value) ? value : DEFAULTS.systemTileCache;
     };
 
+    private getStreamTilesWhileZooming = (): boolean => {
+        const val = localStorage.getItem(PREFERENCE_KEYS.streamContoursWhileZooming);
+        return parseBoolean(val, DEFAULTS.streamContoursWhileZooming);
+    };
+
     // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
     private getLogEvents = (): Map<CARTA.EventType, boolean> => {
         let events = new Map<CARTA.EventType, boolean>();
@@ -642,6 +650,11 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.systemTileCache, systemTileCache.toString(10));
     };
 
+    @action setStreamContoursWhileZooming = (val: boolean) => {
+        this.streamTilesWhileZooming = val;
+        localStorage.setItem(PREFERENCE_KEYS.streamContoursWhileZooming, String(val));
+    };
+
     // reset functions
     @action resetGlobalSettings = () => {
         this.setTheme(DEFAULTS.theme);
@@ -694,6 +707,7 @@ export class PreferenceStore {
         this.setContourDecimation(DEFAULTS.contourDecimation);
         this.setContourCompressionLevel(DEFAULTS.contourCompressionLevel);
         this.setContourChunkSize(DEFAULTS.contourChunkSize);
+        this.setStreamContoursWhileZooming(DEFAULTS.streamContoursWhileZooming);
     };
 
     @action resetLogEventSettings = () => {
@@ -734,6 +748,7 @@ export class PreferenceStore {
         this.contourDecimation = this.getContourDecimation();
         this.contourCompressionLevel = this.getContourCompressionLevel();
         this.contourChunkSize = this.getContourChunkSize();
+        this.streamTilesWhileZooming = this.getStreamTilesWhileZooming();
         this.eventsLoggingEnabled = this.getLogEvents();
 
         // setup region settings container (for AppearanceForm in PreferenceDialogComponent)
