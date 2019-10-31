@@ -101,7 +101,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     }
 
     onResize = (width: number, height: number) => {
-        console.log(`Image view component: WxH = ${width}x${height}`);
         if (width > 0 && height > 0) {
             this.props.appStore.setImageViewDimensions(width, height);
         }
