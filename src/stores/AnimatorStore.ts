@@ -74,7 +74,7 @@ export class AnimatorStore {
             deltaFrame: animationFrames.deltaFrame,
             imageView: imageView,
             looping: true,
-            reverse: animationFrames.reverse,
+            reverse: this.playMode === PlayMode.BOUNCING,
             frameRate: this.frameRate
         };
 
@@ -140,7 +140,6 @@ export class AnimatorStore {
         firstFrame: CARTA.IAnimationFrame,
         lastFrame: CARTA.IAnimationFrame,
         deltaFrame: CARTA.IAnimationFrame,
-        reverse: boolean
     } => {
         if (!frame) {
             return null;
@@ -180,10 +179,11 @@ export class AnimatorStore {
             };
         }
 
-        let reverse: boolean = false;
         // determine start frame & delta
         switch (this.playMode) {
-            case PlayMode.FORWARD: default:
+            case PlayMode.FORWARD:
+            case PlayMode.BOUNCING:
+            default:
                 if (this.animationMode === AnimationMode.CHANNEL) {
                     startFrame.channel = Math.max((startFrame.channel + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.channel);
                     if (startFrame.channel > lastFrame.channel) {
@@ -211,20 +211,6 @@ export class AnimatorStore {
                     deltaFrame.stokes = -1;
                 }
                 break;
-            case PlayMode.BOUNCING:
-                if (this.animationMode === AnimationMode.CHANNEL) {
-                    startFrame.channel = Math.max((startFrame.channel + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.channel);
-                    if (startFrame.channel > lastFrame.channel) {
-                        startFrame.channel = firstFrame.channel;
-                    }
-                } else if (this.animationMode === AnimationMode.STOKES) {
-                    startFrame.stokes = Math.max((startFrame.stokes + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.stokes);
-                    if (startFrame.stokes > lastFrame.stokes) {
-                        startFrame.stokes = firstFrame.stokes;
-                    }
-                }
-                reverse = true;
-                break;
             case PlayMode.BLINK:
                 if (this.animationMode === AnimationMode.CHANNEL) {
                     startFrame.channel = firstFrame.channel;
@@ -244,7 +230,6 @@ export class AnimatorStore {
             firstFrame: firstFrame,
             lastFrame: lastFrame,
             deltaFrame: deltaFrame,
-            reverse: reverse
         };
     };
 

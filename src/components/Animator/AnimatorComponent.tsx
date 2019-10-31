@@ -375,7 +375,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 position={Position.TOP}
             >
                 <Tooltip content="Playback Mode" position={Position.TOP}>
-                    <Button icon={this.getPlayModeIcon()}>{!iconOnly && "Mode"}</Button>
+                    <Button icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}>{!iconOnly && "Mode"}</Button>
                 </Tooltip>
             </Popover>
         );
