@@ -1,9 +1,9 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, observable} from "mobx";
-import {Button, ButtonGroup, FormGroup, NonIdealState, NumberRange, NumericInput, Radio, RangeSlider, Slider} from "@blueprintjs/core";
+import {Button, ButtonGroup, FormGroup, IconName, Menu, MenuItem, NonIdealState, NumberRange, NumericInput, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {AnimationMode, AnimationState, WidgetConfig, WidgetProps} from "stores";
+import {AnimationMode, AnimationState, PlayMode, WidgetConfig, WidgetProps} from "stores";
 import "./AnimatorComponent.css";
 
 @observer
@@ -166,6 +166,20 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 break;
             default:
                 break;
+        }
+    };
+
+    private getPlayModeIcon = (): IconName => {
+        const appStore = this.props.appStore;
+        switch (appStore.animatorStore.playMode) {
+            case PlayMode.FORWARD: default:
+                return "arrow-right";
+            case PlayMode.BACKWARD:
+                return "arrow-left";
+            case PlayMode.BOUNCING:
+                return "swap-horizontal";
+            case PlayMode.BLINK:
+                return "exchange";
         }
     };
 
@@ -347,6 +361,25 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             playbackClass += " wrap";
         }
 
+        const playbackModeButton = (
+            <Popover
+                className="playback-mode"
+                content={
+                    <Menu>
+                        <MenuItem icon="arrow-right" text="Play Forward" active={appStore.animatorStore.playMode === PlayMode.FORWARD} onClick={() => appStore.animatorStore.playMode = PlayMode.FORWARD}/>
+                        <MenuItem icon="arrow-left" text="Play Backwards" active={appStore.animatorStore.playMode === PlayMode.BACKWARD} onClick={() => appStore.animatorStore.playMode = PlayMode.BACKWARD}/>
+                        <MenuItem icon="swap-horizontal" text="Bouncing" active={appStore.animatorStore.playMode === PlayMode.BOUNCING} onClick={() => appStore.animatorStore.playMode = PlayMode.BOUNCING}/>
+                        <MenuItem icon="exchange" text="Blink" active={appStore.animatorStore.playMode === PlayMode.BLINK} onClick={() => appStore.animatorStore.playMode = PlayMode.BLINK}/>
+                    </Menu>
+                }
+                position={Position.TOP}
+            >
+                <Tooltip content="Playback Mode" position={Position.TOP}>
+                    <Button icon={this.getPlayModeIcon()} disabled={appStore.animatorStore.animationState === AnimationState.PLAYING}>{!iconOnly && "Mode"}</Button>
+                </Tooltip>
+            </Popover>
+        );
+
         const playbackButtons = (
             <ButtonGroup fill={true} className="playback-buttons">
                 <Button icon={"chevron-backward"} onClick={this.onFirstClicked}>{!iconOnly && "First"}</Button>
@@ -386,6 +419,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 {activeFrame &&
                 <div className={playbackClass}>
                     {playbackButtons}
+                    {playbackModeButton}
                     {frameControl}
                 </div>
                 }

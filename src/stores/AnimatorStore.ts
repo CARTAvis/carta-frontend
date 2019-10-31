@@ -1,6 +1,6 @@
 import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {AppStore} from "./AppStore";
+import {AppStore, FrameStore} from "stores";
 import {clamp} from "utilities";
 import {FrameView} from "models";
 
@@ -15,12 +15,20 @@ export enum AnimationState {
     PLAYING = 1
 }
 
+export enum PlayMode {
+    FORWARD = 0,
+    BACKWARD = 1,
+    BOUNCING = 2,
+    BLINK = 3
+}
+
 export class AnimatorStore {
     @observable frameRate: number;
     @observable maxFrameRate: number;
     @observable minFrameRate: number;
     @observable animationMode: AnimationMode;
     @observable animationState: AnimationState;
+    @observable playMode: PlayMode;
 
     @action setAnimationMode = (val: AnimationMode) => {
         // Prevent animation mode changes during playback
@@ -29,9 +37,11 @@ export class AnimatorStore {
         }
         this.animationMode = val;
     };
+
     @action setFrameRate = (val: number) => {
         this.frameRate = val;
     };
+
     @action startAnimation = () => {
         const frame = this.appStore.activeFrame;
         if (!frame) {
@@ -46,91 +56,25 @@ export class AnimatorStore {
             return;
         }
 
-        const startFrame: CARTA.IAnimationFrame = {
-            channel: frame.channel,
-            stokes: frame.stokes
-        };
-
-        let firstFrame: CARTA.IAnimationFrame, lastFrame: CARTA.IAnimationFrame, deltaFrame: CARTA.IAnimationFrame;
-
-        if (this.animationMode === AnimationMode.CHANNEL) {
-            firstFrame = {
-                channel: frame.animationChannelRange[0],
-                stokes: frame.stokes,
-            };
-
-            lastFrame = {
-                channel: frame.animationChannelRange[1],
-                stokes: frame.stokes
-            };
-
-            deltaFrame = {
-                channel: 1,
-                stokes: 0
-            };
-
-            // Skip to the start of the animation range if below it.
-            // The first frame delivered by the animation should be the one after the current one
-            startFrame.channel = Math.max((startFrame.channel + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.channel);
-            // Jump back to start if outside the range
-            if (startFrame.channel > lastFrame.channel) {
-                startFrame.channel = firstFrame.channel;
-            }
-        } else if (this.animationMode === AnimationMode.STOKES) {
-            firstFrame = {
-                channel: frame.channel,
-                stokes: 0,
-            };
-
-            lastFrame = {
-                channel: frame.channel,
-                stokes: frame.frameInfo.fileInfoExtended.stokes - 1
-            };
-
-            deltaFrame = {
-                channel: 0,
-                stokes: 1
-            };
-            // Skip to the start of the animation range if below it
-            // The first frame delivered by the animation should be the one after the current one
-            startFrame.stokes = Math.max((startFrame.stokes + 1) % frame.frameInfo.fileInfoExtended.stokes, firstFrame.stokes);
-            // Jump back to start if outside the range
-            if (startFrame.stokes > lastFrame.stokes) {
-                startFrame.stokes = firstFrame.stokes;
-            }
+        const animationFrames = this.genAnimationFrames(frame);
+        if (!animationFrames) {
+            return;
         }
 
-        const reqView = frame.requiredFrameView;
-
-        const croppedReq: FrameView = {
-            xMin: Math.max(0, reqView.xMin),
-            xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
-            yMin: Math.max(0, reqView.yMin),
-            yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
-            mip: reqView.mip
-        };
-
-        const imageView: CARTA.ISetImageView = {
-            imageBounds: {
-                xMin: croppedReq.xMin,
-                xMax: croppedReq.xMax,
-                yMin: croppedReq.yMin,
-                yMax: croppedReq.yMax
-            },
-            mip: croppedReq.mip,
-            compressionType: CARTA.CompressionType.ZFP,
-            compressionQuality: this.appStore.preferenceStore.animationCompressionQuality,
-        };
+        const imageView = this.genImageView(frame);
+        if (!imageView) {
+            return;
+        }
 
         const animationMessage: CARTA.IStartAnimation = {
             fileId: frame.frameInfo.fileId,
-            startFrame,
-            firstFrame,
-            lastFrame,
-            deltaFrame,
-            imageView,
+            startFrame: animationFrames.startFrame,
+            firstFrame: animationFrames.firstFrame,
+            lastFrame: animationFrames.lastFrame,
+            deltaFrame: animationFrames.deltaFrame,
+            imageView: imageView,
             looping: true,
-            reverse: false,
+            reverse: this.playMode === PlayMode.BOUNCING,
             frameRate: this.frameRate
         };
 
@@ -183,10 +127,139 @@ export class AnimatorStore {
         this.animationMode = AnimationMode.CHANNEL;
         this.animationState = AnimationState.STOPPED;
         this.animateHandle = null;
+        this.playMode = PlayMode.FORWARD;
         this.appStore = appStore;
     }
 
     @computed get frameInterval() {
         return 1000.0 / clamp(this.frameRate, this.minFrameRate, this.maxFrameRate);
     }
+
+    private genAnimationFrames = (frame: FrameStore): {
+        startFrame: CARTA.IAnimationFrame,
+        firstFrame: CARTA.IAnimationFrame,
+        lastFrame: CARTA.IAnimationFrame,
+        deltaFrame: CARTA.IAnimationFrame,
+    } => {
+        if (!frame) {
+            return null;
+        }
+
+        let startFrame: CARTA.IAnimationFrame = {
+            channel: frame.channel,
+            stokes: frame.stokes
+        };
+        let firstFrame: CARTA.IAnimationFrame, lastFrame: CARTA.IAnimationFrame, deltaFrame: CARTA.IAnimationFrame;
+
+        if (this.animationMode === AnimationMode.CHANNEL) {
+            firstFrame = {
+                channel: frame.animationChannelRange[0],
+                stokes: frame.stokes,
+            };
+            lastFrame = {
+                channel: frame.animationChannelRange[1],
+                stokes: frame.stokes
+            };
+            deltaFrame = {
+                channel: 1,
+                stokes: 0
+            };
+        } else if (this.animationMode === AnimationMode.STOKES) {
+            firstFrame = {
+                channel: frame.channel,
+                stokes: 0,
+            };
+            lastFrame = {
+                channel: frame.channel,
+                stokes: frame.frameInfo.fileInfoExtended.stokes - 1
+            };
+            deltaFrame = {
+                channel: 0,
+                stokes: 1
+            };
+        }
+
+        // determine start frame & delta
+        switch (this.playMode) {
+            case PlayMode.FORWARD:
+            case PlayMode.BOUNCING:
+            default:
+                if (this.animationMode === AnimationMode.CHANNEL) {
+                    startFrame.channel = Math.max((startFrame.channel + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.channel);
+                    if (startFrame.channel > lastFrame.channel) {
+                        startFrame.channel = firstFrame.channel;
+                    }
+                } else if (this.animationMode === AnimationMode.STOKES) {
+                    startFrame.stokes = Math.max((startFrame.stokes + 1) % frame.frameInfo.fileInfoExtended.depth, firstFrame.stokes);
+                    if (startFrame.stokes > lastFrame.stokes) {
+                        startFrame.stokes = firstFrame.stokes;
+                    }
+                }
+                break;
+            case PlayMode.BACKWARD:
+                if (this.animationMode === AnimationMode.CHANNEL) {
+                    startFrame.channel = Math.min((startFrame.channel - 1) % frame.frameInfo.fileInfoExtended.depth, lastFrame.channel);
+                    if (startFrame.channel < firstFrame.channel) {
+                        startFrame.channel = lastFrame.channel;
+                    }
+                    deltaFrame.channel = -1;
+                } else if (this.animationMode === AnimationMode.STOKES) {
+                    startFrame.stokes = Math.min((startFrame.stokes - 1) % frame.frameInfo.fileInfoExtended.depth, lastFrame.stokes);
+                    if (startFrame.stokes < firstFrame.stokes) {
+                        startFrame.stokes = lastFrame.stokes;
+                    }
+                    deltaFrame.stokes = -1;
+                }
+                break;
+            case PlayMode.BLINK:
+                if (this.animationMode === AnimationMode.CHANNEL) {
+                    startFrame.channel = firstFrame.channel;
+                } else if (this.animationMode === AnimationMode.STOKES) {
+                    startFrame.stokes = firstFrame.stokes;
+                }
+                if (this.animationMode === AnimationMode.CHANNEL) {
+                    deltaFrame.channel = Math.abs(firstFrame.channel - lastFrame.channel);
+                } else if (this.animationMode === AnimationMode.STOKES) {
+                    deltaFrame.stokes = Math.abs(firstFrame.stokes - lastFrame.stokes);
+                }
+                break;
+        }
+
+        return {
+            startFrame: startFrame,
+            firstFrame: firstFrame,
+            lastFrame: lastFrame,
+            deltaFrame: deltaFrame,
+        };
+    };
+
+    private genImageView = (frame: FrameStore): CARTA.ISetImageView => {
+        if (!frame) {
+            return null;
+        }
+
+        const reqView = frame.requiredFrameView;
+
+        const croppedReq: FrameView = {
+            xMin: Math.max(0, reqView.xMin),
+            xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
+            yMin: Math.max(0, reqView.yMin),
+            yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
+            mip: reqView.mip
+        };
+
+        const imageView: CARTA.ISetImageView = {
+            imageBounds: {
+                xMin: croppedReq.xMin,
+                xMax: croppedReq.xMax,
+                yMin: croppedReq.yMin,
+                yMax: croppedReq.yMax
+            },
+            mip: croppedReq.mip,
+            compressionType: CARTA.CompressionType.ZFP,
+            compressionQuality: this.appStore.preferenceStore.animationCompressionQuality,
+        };
+
+        return imageView;
+    };
 }
