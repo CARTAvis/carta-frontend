@@ -62,6 +62,10 @@
         &.wrap {
             flex-wrap: wrap;
 
+            .playback-mode {
+                margin-top: 10px;
+            }
+
             .playback-buttons {
                 height: auto;
                 margin-right: 0;

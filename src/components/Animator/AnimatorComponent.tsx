@@ -173,13 +173,13 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
         const appStore = this.props.appStore;
         switch (appStore.animatorStore.playMode) {
             case PlayMode.FORWARD: default:
-                return "circle-arrow-right";
+                return "arrow-right";
             case PlayMode.BACKWARD:
-                return "circle-arrow-left";
+                return "arrow-left";
             case PlayMode.BOUNCING:
-                return "undo";
+                return "swap-horizontal";
             case PlayMode.BLINK:
-                return "refresh";
+                return "exchange";
         }
     };
 
@@ -366,16 +366,16 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 className="playback-mode"
                 content={
                     <Menu>
-                        <MenuItem icon="circle-arrow-right" text="Play Forward" active={appStore.animatorStore.playMode === PlayMode.FORWARD} onClick={() => appStore.animatorStore.playMode = PlayMode.FORWARD}/>
-                        <MenuItem icon="circle-arrow-left" text="Play Backwards" active={appStore.animatorStore.playMode === PlayMode.BACKWARD} onClick={() => appStore.animatorStore.playMode = PlayMode.BACKWARD}/>
-                        <MenuItem icon="undo" text="Bouncing" active={appStore.animatorStore.playMode === PlayMode.BOUNCING} onClick={() => appStore.animatorStore.playMode = PlayMode.BOUNCING}/>
-                        <MenuItem icon="refresh" text="Blink" active={appStore.animatorStore.playMode === PlayMode.BLINK} onClick={() => appStore.animatorStore.playMode = PlayMode.BLINK}/>
+                        <MenuItem icon="arrow-right" text="Play Forward" active={appStore.animatorStore.playMode === PlayMode.FORWARD} onClick={() => appStore.animatorStore.playMode = PlayMode.FORWARD}/>
+                        <MenuItem icon="arrow-left" text="Play Backwards" active={appStore.animatorStore.playMode === PlayMode.BACKWARD} onClick={() => appStore.animatorStore.playMode = PlayMode.BACKWARD}/>
+                        <MenuItem icon="swap-horizontal" text="Bouncing" active={appStore.animatorStore.playMode === PlayMode.BOUNCING} onClick={() => appStore.animatorStore.playMode = PlayMode.BOUNCING}/>
+                        <MenuItem icon="exchange" text="Blink" active={appStore.animatorStore.playMode === PlayMode.BLINK} onClick={() => appStore.animatorStore.playMode = PlayMode.BLINK}/>
                     </Menu>
                 }
                 position={Position.TOP}
             >
-                <Tooltip content="Playback mode" position={Position.TOP}>
-                    <Button icon={this.getPlayModeIcon()}>{!iconOnly && "Playback Mode"}</Button>
+                <Tooltip content="Playback Mode" position={Position.TOP}>
+                    <Button icon={this.getPlayModeIcon()}>{!iconOnly && "Mode"}</Button>
                 </Tooltip>
             </Popover>
         );
