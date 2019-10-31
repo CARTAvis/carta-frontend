@@ -5,3 +5,4 @@ export * from "./PlotTypeSelector/PlotTypeSelectorComponent";
 export * from "./PopoverSettings/PopoverSettingsComponent";
 export * from "./ProfilerInfo/ProfilerInfoComponent";
 export * from "./ScatterPlot/ScatterPlotComponent";
+export * from "./LinePlot/PlotSettings/LinePlotSettingsPanelComponent";

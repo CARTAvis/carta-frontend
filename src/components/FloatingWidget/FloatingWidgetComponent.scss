@@ -78,4 +78,10 @@ $shadow-color: rgba($blue2, 0.1);
         width: 100%;
         height: calc(100% - #{$title-height});
     }
+
+    .floating-settings-content {
+        width: 100%;
+        height: calc(100% - #{$title-height});
+        overflow: auto;
+    }
 }

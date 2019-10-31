@@ -14,7 +14,8 @@ import {
     StatsComponent,
     ToolbarMenuComponent,
     StokesAnalysisComponent,
-    StokesAnalysisSettingsPanelComponent
+    StokesAnalysisSettingsPanelComponent,
+    SpectralProfilerSettingsPanelComponent
 } from "components";
 import {AppStore, LayoutStore} from "stores";
 import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
@@ -144,6 +145,8 @@ export class WidgetsStore {
         switch (type) {
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 return StokesAnalysisSettingsPanelComponent.WIDGET_CONFIG;
+            case SpectralProfilerComponent.WIDGET_CONFIG.type:
+                return SpectralProfilerSettingsPanelComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -376,8 +379,12 @@ export class WidgetsStore {
         const parentType = parentItemConfig.component;
         const parentTitle = parentItemConfig.title;
 
-        // only for stokes now
-        if (parentType !== StokesAnalysisComponent.WIDGET_CONFIG.type) {
+        // apply for stokes and spectral profiler
+        const floatingSettingsApplyedWidgets = [
+            StokesAnalysisComponent.WIDGET_CONFIG.type,
+            SpectralProfilerComponent.WIDGET_CONFIG.type
+        ];
+        if (floatingSettingsApplyedWidgets.indexOf(parentType) === -1) {
             return;
         }
         // Get floating settings config

@@ -13,7 +13,8 @@ import {
     SpectralProfilerComponent,
     StatsComponent,
     StokesAnalysisComponent,
-    StokesAnalysisSettingsPanelComponent
+    StokesAnalysisSettingsPanelComponent,
+    SpectralProfilerSettingsPanelComponent
 } from "components";
 import {AppStore, WidgetConfig} from "stores";
 
@@ -64,6 +65,8 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
             switch (widgetConfig.parentType) {
                 case StokesAnalysisComponent.WIDGET_CONFIG.type:
                     return <StokesAnalysisSettingsPanelComponent appStore={appStore} id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
+                case SpectralProfilerComponent.WIDGET_CONFIG.type:
+                    return <SpectralProfilerSettingsPanelComponent appStore={appStore} id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
                 default:
                     return null;
             }
@@ -76,6 +79,17 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
             return false;
         }
         return true;
+    }
+
+    private showFloatingSettingsButton(widgetConfig: WidgetConfig) {
+        switch (widgetConfig.type) {
+            case StokesAnalysisComponent.WIDGET_CONFIG.type:
+                return true;
+            case SpectralProfilerComponent.WIDGET_CONFIG.type:
+                return true;
+            default:
+                return false;
+        }
     }
 
     public render() {
@@ -97,8 +111,8 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
                                 showPinButton={showPinButton}
                                 onSelected={() => this.onFloatingWidgetSelected(w)}
                                 onClosed={() => this.onFloatingWidgetClosed(w)}
-                                // only apply to stokes widget for now
-                                showFloatingSettingsButton={w.type === StokesAnalysisComponent.WIDGET_CONFIG.type}
+                                // only apply to stokes widget, spectral profiler
+                                showFloatingSettingsButton={this.showFloatingSettingsButton(w)}
                             >
                                 {showPinButton ?
                                     this.getWidgetContent(w)

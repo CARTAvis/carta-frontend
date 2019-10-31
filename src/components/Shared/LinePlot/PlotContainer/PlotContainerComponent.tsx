@@ -419,6 +419,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             };
             if (this.props.usePointSymbols) {
                 datasetConfig.showLine = false;
+                datasetConfig.borderWidth = 0;
+                datasetConfig.borderColor = "rgba(0, 0, 0, 0)";
                 datasetConfig.pointRadius = this.props.pointRadius ? this.props.pointRadius : 1;
                 datasetConfig.pointBackgroundColor = lineColor;
             } else {

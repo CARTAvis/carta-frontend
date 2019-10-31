@@ -1,6 +1,7 @@
 import {action, computed, observable} from "mobx";
+import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {PlotType} from "components/Shared";
+import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore} from "./RegionWidgetStore";
 import {FrameStore} from "../FrameStore";
 
@@ -13,13 +14,20 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable maxY: number;
     @observable cursorX: number;
     @observable channel: number;
-    @observable plotType: PlotType;
+
     @observable settingsPanelVisible: boolean;
-    @observable meanRmsVisible: boolean;
-    @observable useWcsValues: boolean;
+
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
 
+    // settings 
+    @observable useWcsValues: boolean;
+    @observable plotType: PlotType;
+    @observable meanRmsVisible: boolean;
+    @observable primaryLineColor: { colorHex: string, fixed: boolean };
+    @observable lineWidth: number;
+    @observable linePlotPointSize: number;
+    
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
             case CARTA.StatsType.Sum:
@@ -151,6 +159,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.meanRmsVisible = false;
         this.markerTextVisible = false;
         this.useWcsValues = true;
+        this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };
+        this.linePlotPointSize = 1.5;
+        this.lineWidth = 1;
     }
 
     @computed get isAutoScaledX() {
@@ -298,5 +309,22 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         });
         // Sort list so that requirements clearing occurs first
         return diffList.sort((a, b) => a.spectralProfiles.length > b.spectralProfiles.length ? 1 : -1);
+    }
+
+    // settings
+    @action setPrimaryLineColor = (colorHex: string, fixed: boolean) => {
+        this.primaryLineColor = { colorHex: colorHex, fixed: fixed };
+    }
+
+    @action setLineWidth = (val: number) => {
+        if (val >= LineSettings.MIN_LINE_WIDTH && val <= LineSettings.MAX_LINE_WIDTH) {
+            this.lineWidth = val;   
+        }
+    }
+
+    @action setLinePlotPointSize = (val: number) => {
+        if (val >= LineSettings.MIN_LINE_POINT_SIZE && val <= LineSettings.MAX_POINT_SIZE) {
+            this.linePlotPointSize = val;   
+        }
     }
 }

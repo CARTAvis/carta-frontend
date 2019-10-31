@@ -354,7 +354,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true,
             markers: [],
-            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots
+            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
+            borderWidth: this.widgetStore.lineWidth,
+            pointRadius: this.widgetStore.linePlotPointSize,
         };
 
         if (this.profileStore && frame) {
@@ -367,6 +369,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.data = currentPlotData.values;
                 // Opacity ranges from 0.15 to 0.40 when data is in progress, and is 1.0 when finished
                 linePlotProps.opacity = currentPlotData.progress < 1.0 ? 0.15 + currentPlotData.progress / 4.0 : 1.0;
+                
+                let primaryLineColor = this.widgetStore.primaryLineColor.colorHex;
+                if (appStore.darkTheme) {
+                    if (!this.widgetStore.primaryLineColor.fixed) {
+                        primaryLineColor = Colors.BLUE4;   
+                    }
+                }
+                linePlotProps.lineColor = primaryLineColor;
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                 if (this.widgetStore.isAutoScaledX) {
                     linePlotProps.xMin = currentPlotData.xMin;
@@ -466,14 +476,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                     </div>
                 </div>
-                <PopoverSettingsComponent
+                {/* <PopoverSettingsComponent
                     isOpen={this.widgetStore.settingsPanelVisible}
                     onShowClicked={this.widgetStore.showSettingsPanel}
                     onHideClicked={this.widgetStore.hideSettingsPanel}
                     contentWidth={PANEL_CONTENT_WIDTH}
                 >
                     <SpectralProfilerSettingsPanelComponent widgetStore={this.widgetStore}/>
-                </PopoverSettingsComponent>
+                </PopoverSettingsComponent> */}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
         );
