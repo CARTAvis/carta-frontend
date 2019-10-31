@@ -212,7 +212,7 @@ export class AppStore {
                 autoFileLoaded = true;
                 this.addFrame(folderSearchParam, fileSearchParam, "", 0);
             }
-            if (this.preferenceStore.autoLaunch) {
+            if (this.preferenceStore.getAutoLaunch()) {
                 this.fileBrowserStore.showFileBrowser(BrowserMode.File);
             }
         }, err => console.log(err));

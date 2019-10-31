@@ -111,12 +111,13 @@ export class PreferenceStore {
     private serverSupport: boolean;
 
     @observable preference: any;
-    @observable theme: string;
-    @observable autoLaunch: boolean;
-    @observable layout: string;
-    @observable cursorPosition: string;
-    @observable zoomMode: string;
-    @observable dragPanning: boolean;
+    @observable global: any;
+    @observable renderConfig: any;
+    @observable contourConfig: any;
+    @observable wcsOverlay: any;
+    @observable region: any;
+    @observable performance: any;
+
     @observable scaling: FrameScaling;
     @observable colormap: string;
     @observable percentile: number;
@@ -148,34 +149,28 @@ export class PreferenceStore {
     @observable eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
 
     // getters for global settings
-    private getTheme = (): string => {
-        const theme = localStorage.getItem(PREFERENCE_KEYS.theme);
-        return theme && Theme.isValid(theme) ? theme : DEFAULTS.GLOBAL.theme;
+    public getTheme = (): string => {
+        return this.global.theme;
     };
 
-    private getAutoLaunch = (): boolean => {
-        const autoLaunch = localStorage.getItem(PREFERENCE_KEYS.autoLaunch);
-        return parseBoolean(autoLaunch, DEFAULTS.GLOBAL.autoLaunch);
+    public getAutoLaunch = (): boolean => {
+        return this.global.autoLaunch;
     };
 
-    private getLayout = (): string => {
-        const layout = localStorage.getItem(PREFERENCE_KEYS.layout);
-        return layout && this.appStore.layoutStore.layoutExist(layout) ? layout : DEFAULTS.GLOBAL.layout;
+    public getLayout = (): string => {
+        return this.global.layout;
     };
 
-    private getCursorPosition = (): string => {
-        const cursorPosition = localStorage.getItem(PREFERENCE_KEYS.cursorPosition);
-        return cursorPosition && CursorPosition.isValid(cursorPosition) ? cursorPosition : DEFAULTS.GLOBAL.cursorPosition;
+    public getCursorPosition = (): string => {
+        return this.global.cursorPosition;
     };
 
-    private getZoomMode = (): string => {
-        const zoomMode = localStorage.getItem(PREFERENCE_KEYS.zoomMode);
-        return zoomMode && Zoom.isValid(zoomMode) ? zoomMode : DEFAULTS.GLOBAL.zoomMode;
+    public getZoomMode = (): string => {
+        return this.global.zoomMode;
     };
 
-    private getDragPanning = (): boolean => {
-        const dragPanning = localStorage.getItem(PREFERENCE_KEYS.dragPanning);
-        return dragPanning === "false" ? false : DEFAULTS.GLOBAL.dragPanning;
+    public getDragPanning = (): boolean => {
+        return this.global.dragPanning;
     };
 
     // getters for render config
@@ -474,11 +469,11 @@ export class PreferenceStore {
 
     // getters for boolean(convenient)
     @computed get isDarkTheme(): boolean {
-        return this.theme === Theme.DARK;
+        return this.global.theme === Theme.DARK;
     }
 
     @computed get isZoomRAWMode(): boolean {
-        return this.zoomMode === Zoom.RAW;
+        return this.global.zoomMode === Zoom.RAW;
     }
 
     @computed get isRegionCornerMode(): boolean {
@@ -486,7 +481,7 @@ export class PreferenceStore {
     }
 
     @computed get isCursorFrozen(): boolean {
-        return this.cursorPosition === CursorPosition.FIXED;
+        return this.global.cursorPosition === CursorPosition.FIXED;
     }
 
     @computed get enabledLoggingEventNames(): string[] {
@@ -501,32 +496,32 @@ export class PreferenceStore {
 
     // setters for global
     @action setTheme = (theme: string) => {
-        this.theme = theme;
+        this.global.theme = theme;
         localStorage.setItem(PREFERENCE_KEYS.theme, theme);
     };
 
     @action setAutoLaunch = (autoLaunch: boolean) => {
-        this.autoLaunch = autoLaunch;
+        this.global.autoLaunch = autoLaunch;
         localStorage.setItem(PREFERENCE_KEYS.autoLaunch, autoLaunch ? "true" : "false");
     };
 
     @action setLayout = (layout: string) => {
-        this.layout = layout;
+        this.global.layout = layout;
         localStorage.setItem(PREFERENCE_KEYS.layout, layout);
     };
 
     @action setCursorPosition = (cursorPosition: string) => {
-        this.cursorPosition = cursorPosition;
+        this.global.cursorPosition = cursorPosition;
         localStorage.setItem(PREFERENCE_KEYS.cursorPosition, cursorPosition);
     };
 
     @action setZoomMode = (zoomMode: string) => {
-        this.zoomMode = zoomMode;
+        this.global.zoomMode = zoomMode;
         localStorage.setItem(PREFERENCE_KEYS.zoomMode, zoomMode);
     };
 
     @action setDragPanning = (dragPanning: boolean) => {
-        this.dragPanning = dragPanning;
+        this.global.dragPanning = dragPanning;
         localStorage.setItem(PREFERENCE_KEYS.dragPanning, String(dragPanning));
     };
 
@@ -749,12 +744,13 @@ export class PreferenceStore {
     }
 
     private initPreferenceFromDefault = () => {
-        this.theme = DEFAULTS.GLOBAL.theme;
-        this.autoLaunch = DEFAULTS.GLOBAL.autoLaunch;
-        this.layout = DEFAULTS.GLOBAL.layout;
-        this.cursorPosition = DEFAULTS.GLOBAL.cursorPosition;
-        this.zoomMode = DEFAULTS.GLOBAL.zoomMode;
-        this.dragPanning = DEFAULTS.GLOBAL.dragPanning;
+        this.global = Object.assign(DEFAULTS.GLOBAL);
+        this.renderConfig = Object.assign(DEFAULTS.RENDER_CONFIG);
+        this.contourConfig = Object.assign(DEFAULTS.CONTOUR_CONFIG);
+        this.wcsOverlay = Object.assign(DEFAULTS.WCS_OVERLAY);
+        this.region = Object.assign(DEFAULTS.REGION);
+        this.performance = Object.assign(DEFAULTS.PERFORMANCE);
+
         this.scaling = DEFAULTS.RENDER_CONFIG.scaling;
         this.colormap = DEFAULTS.RENDER_CONFIG.colormap;
         this.percentile = DEFAULTS.RENDER_CONFIG.percentile;
@@ -795,13 +791,30 @@ export class PreferenceStore {
         // TODO
     };
 
+    private getGlobalFromLocalStorage = () => {
+        let value;
+        value = localStorage.getItem(PREFERENCE_KEYS.theme);
+        this.global.theme = value && Theme.isValid(value) ? value : DEFAULTS.GLOBAL.theme;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.autoLaunch);
+        this.global.autoLaunch = parseBoolean(value, DEFAULTS.GLOBAL.autoLaunch);
+
+        value = localStorage.getItem(PREFERENCE_KEYS.layout);
+        this.global.layout = value && this.appStore.layoutStore.layoutExist(value) ? value : DEFAULTS.GLOBAL.layout;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.cursorPosition);
+        this.global.cursorPosition = value && CursorPosition.isValid(value) ? value : DEFAULTS.GLOBAL.cursorPosition;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.zoomMode);
+        this.global.zoomMode = value && Zoom.isValid(value) ? value : DEFAULTS.GLOBAL.zoomMode;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.dragPanning);
+        this.global.dragPanning = value === "false" ? false : DEFAULTS.GLOBAL.dragPanning;
+    };
+
     private initPreferenceFromLocalStorage = () => {
-        this.theme = this.getTheme();
-        this.autoLaunch = this.getAutoLaunch();
-        this.layout = this.getLayout();
-        this.cursorPosition = this.getCursorPosition();
-        this.zoomMode = this.getZoomMode();
-        this.dragPanning = this.getDragPanning();
+        this.getGlobalFromLocalStorage();
+
         this.scaling = this.getScaling();
         this.colormap = this.getColormap();
         this.percentile = this.getPercentile();

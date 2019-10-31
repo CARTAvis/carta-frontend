@@ -94,7 +94,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             <React.Fragment>
                 <FormGroup inline={true} label="Theme">
                     <RadioGroup
-                        selectedValue={preference.theme}
+                        selectedValue={preference.getTheme()}
                         onChange={(ev) => {
                             ev.currentTarget.value === Theme.LIGHT ? appStore.setLightTheme() : appStore.setDarkTheme();
                         }}
@@ -105,16 +105,16 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Auto-launch File Browser">
-                    <Switch checked={preference.autoLaunch} onChange={(ev) => preference.setAutoLaunch(ev.currentTarget.checked)}/>
+                    <Switch checked={preference.getAutoLaunch()} onChange={(ev) => preference.setAutoLaunch(ev.currentTarget.checked)}/>
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Layout">
-                    <HTMLSelect value={preference.layout} onChange={(ev) => preference.setLayout(ev.currentTarget.value)}>
+                    <HTMLSelect value={preference.getLayout()} onChange={(ev) => preference.setLayout(ev.currentTarget.value)}>
                         {layoutStore.orderedLayouts.map((layout) => <option key={layout} value={layout}>{layout}</option>)}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Cursor Position">
                     <RadioGroup
-                        selectedValue={preference.cursorPosition}
+                        selectedValue={preference.getCursorPosition()}
                         onChange={(ev) => preference.setCursorPosition(ev.currentTarget.value)}
                         inline={true}
                     >
@@ -124,7 +124,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </FormGroup>
                 <FormGroup inline={true} label="Initial Zoom Level">
                     <RadioGroup
-                        selectedValue={preference.zoomMode}
+                        selectedValue={preference.getZoomMode()}
                         onChange={(ev) => preference.setZoomMode(ev.currentTarget.value)}
                         inline={true}
                     >
@@ -133,7 +133,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Enable drag-to-pan">
-                    <Switch checked={preference.dragPanning} onChange={(ev) => preference.setDragPanning(ev.currentTarget.checked)}/>
+                    <Switch checked={preference.getDragPanning()} onChange={(ev) => preference.setDragPanning(ev.currentTarget.checked)}/>
                 </FormGroup>
             </React.Fragment>
         );
