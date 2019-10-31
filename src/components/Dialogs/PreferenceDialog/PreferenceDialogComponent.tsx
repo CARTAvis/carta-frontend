@@ -141,32 +141,32 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         const renderConfigPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Default Scaling">
-                    <ScalingComponent selectedItem={preference.scaling} onItemSelect={(selected) => preference.setScaling(selected)}/>
+                    <ScalingComponent selectedItem={preference.getScaling()} onItemSelect={(selected) => preference.setScaling(selected)}/>
                 </FormGroup>
                 <FormGroup inline={true} label="Default Color Map">
                     <ColormapComponent
                         inverted={false}
-                        selectedItem={preference.colormap}
+                        selectedItem={preference.getColormap()}
                         onItemSelect={(selected) => preference.setColormap(selected)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default Percentile Ranks">
                     <PercentileSelect
-                        activeItem={preference.percentile.toString(10)}
+                        activeItem={preference.getPercentile().toString(10)}
                         onItemSelect={(selected) => preference.setPercentile(selected)}
                         popoverProps={{minimal: true, position: "auto"}}
                         filterable={false}
                         items={RenderConfigStore.PERCENTILE_RANKS.map(String)}
                         itemRenderer={this.renderPercentileSelectItem}
                     >
-                        <Button text={preference.percentile.toString(10) + "%"} rightIcon="double-caret-vertical" alignText={"right"}/>
+                        <Button text={preference.getPercentile().toString(10) + "%"} rightIcon="double-caret-vertical" alignText={"right"}/>
                     </PercentileSelect>
                 </FormGroup>
-                {(preference.scaling === FrameScaling.LOG || preference.scaling === FrameScaling.POWER) &&
+                {(preference.getScaling() === FrameScaling.LOG || preference.getScaling() === FrameScaling.POWER) &&
                 <FormGroup label={"Alpha"} inline={true}>
                     <NumericInput
                         buttonPosition={"none"}
-                        value={preference.scalingAlpha}
+                        value={preference.getScalingAlpha()}
                         onValueChange={(value: number) => {
                             if (isFinite(value)) {
                                 preference.setScalingAlpha(value);
@@ -175,7 +175,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 }
-                {preference.scaling === FrameScaling.GAMMA &&
+                {preference.getScaling() === FrameScaling.GAMMA &&
                 <FormGroup label={"Gamma"} inline={true}>
                     <NumericInput
                         min={RenderConfigStore.GAMMA_MIN}
@@ -183,7 +183,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         stepSize={0.1}
                         minorStepSize={0.01}
                         majorStepSize={0.5}
-                        value={preference.scalingGamma}
+                        value={preference.getScalingGamma()}
                         onValueChange={(value: number) => {
                             if (isFinite(value)) {
                                 preference.setScalingGamma(value);
@@ -194,7 +194,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 }
                 <FormGroup inline={true} label="NaN Color">
                     <ColorPickerComponent
-                        color={hexStringToRgba(preference.nanColorHex, preference.nanAlpha)}
+                        color={hexStringToRgba(preference.getNaNColorHex(), preference.getNaNAlpha())}
                         presetColors={[...RegionStore.SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
                             preference.setNaNColorHex(color.hex === "transparent" ? "#000000" : color.hex);

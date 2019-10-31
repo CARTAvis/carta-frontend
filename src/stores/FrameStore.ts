@@ -715,7 +715,7 @@ export class FrameStore {
         this.contourConfig.setBounds(this.renderConfig.scaleMinVal, this.renderConfig.scaleMaxVal);
         this.contourConfig.setNumComputedLevels(this.preference.contourNumLevels);
         this.contourConfig.setColor(hexStringToRgba(this.preference.contourColor));
-        this.contourConfig.setColormap(this.preference.colormap);
+        this.contourConfig.setColormap(this.preference.getColormap());
         this.contourConfig.setColormapEnabled(this.preference.contourColormapEnabled);
         this.contourConfig.setEnabled(true);
 

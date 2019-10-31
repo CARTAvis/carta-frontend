@@ -118,13 +118,6 @@ export class PreferenceStore {
     @observable region: any;
     @observable performance: any;
 
-    @observable scaling: FrameScaling;
-    @observable colormap: string;
-    @observable percentile: number;
-    @observable scalingAlpha: number;
-    @observable scalingGamma: number;
-    @observable nanColorHex: string;
-    @observable nanAlpha: number;
     @observable contourSmoothingMode: CARTA.SmoothingMode;
     @observable contourSmoothingFactor: number;
     @observable contourNumLevels: number;
@@ -148,6 +141,7 @@ export class PreferenceStore {
     @observable streamTilesWhileZooming: boolean;
     @observable eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
 
+    // TODO: all getters need to prevent sending null!
     // getters for global settings
     public getTheme = (): string => {
         return this.global.theme;
@@ -174,64 +168,32 @@ export class PreferenceStore {
     };
 
     // getters for render config
-    private getScaling = (): FrameScaling => {
-        const scaling = localStorage.getItem(PREFERENCE_KEYS.scaling);
-        if (!scaling) {
-            return DEFAULTS.RENDER_CONFIG.scaling;
-        }
-
-        const value = Number(scaling);
-        return isFinite(value) && RenderConfigStore.IsScalingValid(value) ? value : DEFAULTS.RENDER_CONFIG.scaling;
+    public getScaling = (): FrameScaling => {
+        return this.renderConfig.scaling;
     };
 
-    private getColormap = (): string => {
-        const colormap = localStorage.getItem(PREFERENCE_KEYS.colormap);
-        return colormap && RenderConfigStore.IsColormapValid(colormap) ? colormap : DEFAULTS.RENDER_CONFIG.colormap;
+    public getColormap = (): string => {
+        return this.renderConfig.colormap;
     };
 
-    private getPercentile = (): number => {
-        const percentile = localStorage.getItem(PREFERENCE_KEYS.percentile);
-        if (!percentile) {
-            return DEFAULTS.RENDER_CONFIG.percentile;
-        }
-
-        const value = Number(percentile);
-        return isFinite(value) && RenderConfigStore.IsPercentileValid(value) ? value : DEFAULTS.RENDER_CONFIG.percentile;
+    public getPercentile = (): number => {
+        return this.renderConfig.percentile;
     };
 
-    private getScalingAlpha = (): number => {
-        const scalingAlpha = localStorage.getItem(PREFERENCE_KEYS.scalingAlpha);
-        if (!scalingAlpha) {
-            return DEFAULTS.RENDER_CONFIG.scalingAlpha;
-        }
-
-        const value = Number(scalingAlpha);
-        return isFinite(value) ? value : DEFAULTS.RENDER_CONFIG.scalingAlpha;
+    public getScalingAlpha = (): number => {
+        return this.renderConfig.scalingAlpha;
     };
 
-    private getScalingGamma = (): number => {
-        const scalingGamma = localStorage.getItem(PREFERENCE_KEYS.scalingGamma);
-        if (!scalingGamma) {
-            return DEFAULTS.RENDER_CONFIG.scalingGamma;
-        }
-
-        const value = Number(scalingGamma);
-        return isFinite(value) && RenderConfigStore.IsGammaValid(value) ? value : DEFAULTS.RENDER_CONFIG.scalingGamma;
+    public getScalingGamma = (): number => {
+        return this.renderConfig.scalingGamma;
     };
 
-    private getNaNColorHex = (): string => {
-        const nanColorHex = localStorage.getItem(PREFERENCE_KEYS.nanColorHex);
-        return nanColorHex && isColorValid(nanColorHex) ? nanColorHex : DEFAULTS.RENDER_CONFIG.nanColorHex;
+    public getNaNColorHex = (): string => {
+        return this.renderConfig.nanColorHex;
     };
 
-    private getNaNAlpha = (): number => {
-        const nanAlpha = localStorage.getItem(PREFERENCE_KEYS.nanAlpha);
-        if (!nanAlpha) {
-            return DEFAULTS.RENDER_CONFIG.nanAlpha;
-        }
-
-        const value = Number(nanAlpha);
-        return isFinite(value) && value >= 0 && value <= 1 ? value : DEFAULTS.RENDER_CONFIG.nanAlpha;
+    public getNaNAlpha = (): number => {
+        return this.renderConfig.nanAlpha;
     };
 
     // getters for Contour Config
@@ -527,37 +489,37 @@ export class PreferenceStore {
 
     // setters for render config
     @action setScaling = (scaling: FrameScaling) => {
-        this.scaling = scaling;
+        this.renderConfig.scaling = scaling;
         localStorage.setItem(PREFERENCE_KEYS.scaling, scaling.toString(10));
     };
 
     @action setColormap = (colormap: string) => {
-        this.colormap = colormap;
+        this.renderConfig.colormap = colormap;
         localStorage.setItem(PREFERENCE_KEYS.colormap, colormap);
     };
 
     @action setPercentile = (percentile: string) => {
-        this.percentile = Number(percentile);
+        this.renderConfig.percentile = Number(percentile);
         localStorage.setItem(PREFERENCE_KEYS.percentile, percentile);
     };
 
     @action setScalingAlpha = (scalingAlpha: number) => {
-        this.scalingAlpha = scalingAlpha;
+        this.renderConfig.scalingAlpha = scalingAlpha;
         localStorage.setItem(PREFERENCE_KEYS.scalingAlpha, scalingAlpha.toString(10));
     };
 
     @action setScalingGamma = (scalingGamma: number) => {
-        this.scalingGamma = scalingGamma;
+        this.renderConfig.scalingGamma = scalingGamma;
         localStorage.setItem(PREFERENCE_KEYS.scalingGamma, scalingGamma.toString(10));
     };
 
     @action setNaNColorHex = (nanColorHex: string) => {
-        this.nanColorHex = nanColorHex;
+        this.renderConfig.nanColorHex = nanColorHex;
         localStorage.setItem(PREFERENCE_KEYS.nanColorHex, nanColorHex);
     };
 
     @action setNaNAlpha = (nanAlpha: number) => {
-        this.nanAlpha = nanAlpha;
+        this.renderConfig.nanAlpha = nanAlpha;
         localStorage.setItem(PREFERENCE_KEYS.nanAlpha, nanAlpha.toString(10));
     };
 
@@ -751,13 +713,6 @@ export class PreferenceStore {
         this.region = Object.assign(DEFAULTS.REGION);
         this.performance = Object.assign(DEFAULTS.PERFORMANCE);
 
-        this.scaling = DEFAULTS.RENDER_CONFIG.scaling;
-        this.colormap = DEFAULTS.RENDER_CONFIG.colormap;
-        this.percentile = DEFAULTS.RENDER_CONFIG.percentile;
-        this.scalingAlpha = DEFAULTS.RENDER_CONFIG.scalingAlpha;
-        this.scalingGamma = DEFAULTS.RENDER_CONFIG.scalingGamma;
-        this.nanColorHex = DEFAULTS.RENDER_CONFIG.nanColorHex;
-        this.nanAlpha = DEFAULTS.RENDER_CONFIG.nanAlpha;
         this.contourSmoothingMode = DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode;
         this.contourSmoothingFactor = DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor;
         this.contourNumLevels = DEFAULTS.CONTOUR_CONFIG.contourNumLevels;
@@ -791,7 +746,7 @@ export class PreferenceStore {
         // TODO
     };
 
-    private getGlobalFromLocalStorage = () => {
+    private initGlobalFromLocalStorage = () => {
         let value;
         value = localStorage.getItem(PREFERENCE_KEYS.theme);
         this.global.theme = value && Theme.isValid(value) ? value : DEFAULTS.GLOBAL.theme;
@@ -812,16 +767,34 @@ export class PreferenceStore {
         this.global.dragPanning = value === "false" ? false : DEFAULTS.GLOBAL.dragPanning;
     };
 
-    private initPreferenceFromLocalStorage = () => {
-        this.getGlobalFromLocalStorage();
+    private initRenderConfigFromLocalStorage = () => {
+        let value;
+        value = localStorage.getItem(PREFERENCE_KEYS.scaling);
+        this.renderConfig.scaling = value && isFinite(Number(value)) && RenderConfigStore.IsScalingValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scaling;
 
-        this.scaling = this.getScaling();
-        this.colormap = this.getColormap();
-        this.percentile = this.getPercentile();
-        this.scalingAlpha = this.getScalingAlpha();
-        this.scalingGamma = this.getScalingGamma();
-        this.nanColorHex = this.getNaNColorHex();
-        this.nanAlpha = this.getNaNAlpha();
+        value = localStorage.getItem(PREFERENCE_KEYS.colormap);
+        this.renderConfig.colormap =  value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.RENDER_CONFIG.colormap;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.percentile);
+        this.renderConfig.percentile = value && isFinite(Number(value)) && RenderConfigStore.IsPercentileValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.percentile;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.scalingAlpha);
+        this.renderConfig.scalingAlpha = value && isFinite(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scalingAlpha;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.scalingGamma);
+        this.renderConfig.scalingGamma = value && isFinite(Number(value)) && RenderConfigStore.IsGammaValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scalingGamma;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.nanColorHex);
+        this.renderConfig.nanColorHex =  value && isColorValid(value) ? value : DEFAULTS.RENDER_CONFIG.nanColorHex;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.nanAlpha);
+        this.renderConfig.nanAlpha = value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1 ? Number(value) : DEFAULTS.RENDER_CONFIG.nanAlpha;
+    };
+
+    private initPreferenceFromLocalStorage = () => {
+        this.initGlobalFromLocalStorage();
+        this.initRenderConfigFromLocalStorage();
+
         this.contourSmoothingMode = this.getContourSmoothingMode();
         this.contourSmoothingFactor = this.getContourSmoothingFactor();
         this.contourNumLevels = this.getContourNumLevels();
