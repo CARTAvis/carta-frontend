@@ -62,7 +62,6 @@ export const exportImage = (padding, darkTheme, imageName) => {
 
 @observer
 export class ImageViewComponent extends React.Component<WidgetProps> {
-    private containerDiv: HTMLDivElement;
     private ratioIndicatorTimeoutHandle;
     private cachedImageSize: Point2D;
 
@@ -102,6 +101,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     }
 
     onResize = (width: number, height: number) => {
+        console.log(`Image view component: WxH = ${width}x${height}`);
         if (width > 0 && height > 0) {
             this.props.appStore.setImageViewDimensions(width, height);
         }
@@ -235,7 +235,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         }
 
         return (
-            <div className="image-view-div" ref={(ref) => this.containerDiv = ref} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+            <div className="image-view-div" onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                 <RasterViewComponent
                     frame={appStore.activeFrame}
                     docked={this.props.docked}
