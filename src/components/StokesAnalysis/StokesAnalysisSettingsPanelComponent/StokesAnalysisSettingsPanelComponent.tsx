@@ -1,12 +1,10 @@
 import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
-import {FormGroup, Switch, Colors, NumericInput} from "@blueprintjs/core";
-import {ColorResult} from "react-color";
-import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
-import {ColorPickerComponent, PlotTypeSelectorComponent, PlotType, LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps} from "components/Shared";
+import {Colors} from "@blueprintjs/core";
+import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent} from "components/Shared";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
-import {WidgetProps, RegionStore, WidgetConfig} from "stores";
+import {WidgetProps, WidgetConfig} from "stores";
 import "./StokesAnalysisSettingsPanelComponent.css";
 
 @observer
@@ -95,50 +93,27 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             setSecondaryLineColor: widgetStore.setSecondaryLineColor
         };
 
-        const scatterPlotsSettings = (
-            <React.Fragment>
-                <FormGroup inline={true} label="Color Map">
-                    <ColormapComponent
-                        inverted={false}
-                        selectedItem={widgetStore.colorMap}
-                        onItemSelect={(selected) => { widgetStore.setColormap(selected); }}
-                    />
-                </FormGroup>
-                <FormGroup  inline={true} label="Symbol Size" labelInfo="(px)">
-                    <NumericInput
-                            placeholder="Symbol Size"
-                            min={StokesAnalysisWidgetStore.MIN_SCATTER_POINT_SIZE}
-                            max={StokesAnalysisWidgetStore.MAX_POINT_SIZE}
-                            value={widgetStore.scatterPlotPointSize}
-                            stepSize={0.5}
-                            onValueChange={(value: number) => widgetStore.setScatterPlotPointSize(value)}
-                    />
-                </FormGroup>
-                <FormGroup  inline={true} label="Transparency">
-                    <NumericInput
-                            placeholder="transparency"
-                            min={StokesAnalysisWidgetStore.MIN_POINT_TRANSPARENCY}
-                            max={StokesAnalysisWidgetStore.MAX_POINT_TRANSPARENCY}
-                            value={widgetStore.pointTransparency}
-                            stepSize={0.1}
-                            onValueChange={(value: number) => widgetStore.setPointTransparency(value)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label={"Equal Axes"}>
-                    <Switch checked={widgetStore.equalAxes} onChange={this.handleEqualAxesValuesChanged}/>
-                </FormGroup>
-            </React.Fragment>
-        );
+        const scatterSettingsProrps: ScatterPlotSettingsPanelComponentProps = {
+            colorMap: widgetStore.colorMap,
+            scatterPlotPointSize: widgetStore.scatterPlotPointSize,
+            pointTransparency: widgetStore.pointTransparency,
+            equalAxes: widgetStore.equalAxes,
+            setPointTransparency:  widgetStore.setPointTransparency,
+            setScatterPlotPointSize: widgetStore.setScatterPlotPointSize,
+            setColormap: widgetStore.setColormap,
+            handleEqualAxesValuesChanged: this.handleEqualAxesValuesChanged
+        };
+
         return (
             <React.Fragment>
                 <div className="stokes-settings">
                     <p>Line Plots:</p>
                     <div className={"stokes-line-settings"}>
-                        {widgetStore && <LinePlotSettingsPanelComponent {...lineSettingsProps}/>}
+                        <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
                     </div>
                     <p>Scatter Plot:</p>
                     <div className={"stokes-scatter-settings"}>
-                        {widgetStore && scatterPlotsSettings}
+                        <ScatterPlotSettingsPanelComponent {...scatterSettingsProrps}/>
                     </div>
                 </div>
             </React.Fragment>

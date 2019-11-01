@@ -1,15 +1,10 @@
 import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
-import {Button, ControlGroup, FormGroup, Switch, Colors} from "@blueprintjs/core";
-// import {PlotTypeSelectorComponent} from "components/Shared";
-// import {SpectralProfileWidgetStore} from "stores/widgets";
-import {ColorResult} from "react-color";
-import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
-import {ColorPickerComponent, PlotTypeSelectorComponent, PlotType, LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
+import {Colors} from "@blueprintjs/core";
+import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {SpectralProfileWidgetStore} from "stores/widgets";
-import {WidgetProps, RegionStore, WidgetConfig} from "stores";
-// import "./SpectralProfilerSettingsPanelComponent.css";
+import {WidgetProps, WidgetConfig} from "stores";
 
 @observer
 export class SpectralProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
@@ -77,17 +72,6 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
     handleWcsValuesChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.widgetStore.setUseWcsValues(changeEvent.target.checked);
     };
-
-    // // <React.Fragment>
-    //     {/* <FormGroup className={"spectral-profile-settings-panel-form"}> */}
-    //         {/* <ControlGroup fill={true} vertical={true}> */}
-    //             {/* <Switch label={"Use WCS Values"} checked={widgetStore.useWcsValues} onChange={this.handleWcsValuesChanged}/> */}
-    //             {/* <Switch label={"Show Mean/RMS"} checked={widgetStore.meanRmsVisible} onChange={this.handleMeanRmsChanged}/> */}
-    //             {/* <PlotTypeSelectorComponent value={widgetStore.plotType} onValueChanged={widgetStore.setPlotType}/> */}
-    //             {/* <Button icon={"zoom-to-fit"} small={true} disabled={widgetStore.isAutoScaledX && widgetStore.isAutoScaledY} onClick={widgetStore.clearXYBounds}>Reset Range</Button> */}
-    //         {/* </ControlGroup> */}
-    //     {/* </FormGroup> */}
-    // // </React.Fragment>
 
     render() {
         const widgetStore = this.widgetStore;

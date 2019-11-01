@@ -5,9 +5,8 @@ import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {SpectralProfilerSettingsPanelComponent} from "./SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
@@ -476,14 +475,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                         <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                     </div>
                 </div>
-                {/* <PopoverSettingsComponent
-                    isOpen={this.widgetStore.settingsPanelVisible}
-                    onShowClicked={this.widgetStore.showSettingsPanel}
-                    onHideClicked={this.widgetStore.hideSettingsPanel}
-                    contentWidth={PANEL_CONTENT_WIDTH}
-                >
-                    <SpectralProfilerSettingsPanelComponent widgetStore={this.widgetStore}/>
-                </PopoverSettingsComponent> */}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
         );

@@ -203,7 +203,7 @@ export class WidgetsStore {
         }
         let nextIndex = 0;
         while (true) {
-            const nextId = `${defaultId}-${nextIndex}`;
+            const nextId = `${parentId}-${defaultId}-${nextIndex}`;
             if (!floatingSettingsWidgets.has(nextId)) {
                 return nextId;
             }
@@ -598,7 +598,6 @@ export class WidgetsStore {
         if (!id) {
             id = this.getNextSettingId(type, parentId);
         }
-
         if (id) {
             this.floatingSettingsWidgets.set(id, parentId);
         }

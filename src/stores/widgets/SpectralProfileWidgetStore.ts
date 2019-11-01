@@ -317,13 +317,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @action setLineWidth = (val: number) => {
-        if (val >= LineSettings.MIN_LINE_WIDTH && val <= LineSettings.MAX_LINE_WIDTH) {
+        if (val >= LineSettings.MIN_WIDTH && val <= LineSettings.MAX_WIDTH) {
             this.lineWidth = val;   
         }
     }
 
     @action setLinePlotPointSize = (val: number) => {
-        if (val >= LineSettings.MIN_LINE_POINT_SIZE && val <= LineSettings.MAX_POINT_SIZE) {
+        if (val >= LineSettings.MIN_POINT_SIZE && val <= LineSettings.MAX_POINT_SIZE) {
             this.linePlotPointSize = val;   
         }
     }
