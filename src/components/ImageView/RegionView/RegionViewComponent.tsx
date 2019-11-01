@@ -48,7 +48,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     updateCursorPos = _.throttle((x: number, y: number) => {
         if (this.props.frame.wcsInfo) {
-            this.props.frame.setCursorInfo(this.props.frame.getCursorInfo({x, y}));
+            this.props.frame.setCursorInfo(this.props.frame.getCursorInfoCanvasSpace({x, y}));
         }
     }, 100);
 
@@ -274,7 +274,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         const cursorPosCanvasSpace = {x: mouseEvent.offsetX, y: mouseEvent.offsetY};
         if (this.props.frame.wcsInfo && this.props.onClicked && (!this.props.dragPanningEnabled || isSecondaryClick)) {
-            this.props.onClicked(this.props.frame.getCursorInfo(cursorPosCanvasSpace));
+            this.props.onClicked(this.props.frame.getCursorInfoCanvasSpace(cursorPosCanvasSpace));
         }
     };
 
@@ -284,7 +284,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const delta = mouseEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? mouseEvent.deltaY : mouseEvent.deltaY * lineHeight;
         const cursorPosCanvasSpace = {x: mouseEvent.offsetX, y: mouseEvent.offsetY};
         if (this.props.frame.wcsInfo && this.props.onZoomed) {
-            this.props.onZoomed(this.props.frame.getCursorInfo(cursorPosCanvasSpace), -delta);
+            this.props.onZoomed(this.props.frame.getCursorInfoCanvasSpace(cursorPosCanvasSpace), -delta);
         }
     };
 
