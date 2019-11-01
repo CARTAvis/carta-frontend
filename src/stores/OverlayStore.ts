@@ -112,7 +112,7 @@ export class OverlayGlobalSettings {
     constructor(readonly preferenceStore: PreferenceStore) {
         this.system = SystemType.Auto;
         this.labelType = LabelType.Exterior;
-        this.color = preferenceStore.astColor;
+        this.color = preferenceStore.getASTColor();
         this.tolerance = 2; // percentage
 
         this.defaultSystem = SystemType.Auto;
@@ -232,7 +232,7 @@ export class OverlayGridSettings {
     }
 
     constructor(readonly preference: PreferenceStore) {
-        this.visible = preference.astGridVisible;
+        this.visible = preference.getASTGridVisible();
         this.customColor = false;
         this.color = AST_DEFAULT_COLOR;
         this.width = 1;
@@ -583,7 +583,7 @@ export class OverlayLabelSettings {
     @observable customLabelY: string;
 
     constructor(readonly preference: PreferenceStore) {
-        this.visible = preference.astLabelsVisible;
+        this.visible = preference.getASTLabelsVisible();
         this.hidden = false;
         this.fontSize = 15;
         this.font = 0;
@@ -700,7 +700,7 @@ export class OverlayStore {
             this.numbers.setDefaultFormatX(undefined);
             this.numbers.setDefaultFormatY(undefined);
         } else {
-            switch (this.preference.wcsType) {
+            switch (this.preference.getWCSType()) {
                 case WCSType.DEGREES:
                     this.numbers.setDefaultFormatX("d");
                     this.numbers.setDefaultFormatY("d");

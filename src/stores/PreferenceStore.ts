@@ -118,10 +118,6 @@ export class PreferenceStore {
     @observable region: any;
     @observable performance: any;
 
-    @observable astColor: number;
-    @observable astGridVisible: boolean;
-    @observable astLabelsVisible: boolean;
-    @observable wcsType: string;
     @observable regionContainer: RegionStore;
     @observable regionCreationMode: string;
     @observable imageCompressionQuality: number;
@@ -246,29 +242,20 @@ export class PreferenceStore {
     };
 
     // getters for WCS overlay
-    private getASTColor = (): number => {
-        const astColor = localStorage.getItem(PREFERENCE_KEYS.astColor);
-        if (!astColor) {
-            return DEFAULTS.WCS_OVERLAY.astColor;
-        }
-
-        const value = Number(astColor);
-        return isFinite(value) && value >= 0 && value < AST.colors.length ? value : DEFAULTS.WCS_OVERLAY.astColor;
+    public getASTColor = (): number => {
+        return this.wcsOverlay.astColor;
     };
 
-    private getASTGridVisible = (): boolean => {
-        const astGridVisible = localStorage.getItem(PREFERENCE_KEYS.astGridVisible);
-        return parseBoolean(astGridVisible, DEFAULTS.WCS_OVERLAY.astGridVisible);
+    public getASTGridVisible = (): boolean => {
+        return this.wcsOverlay.astGridVisible;
     };
 
-    private getASTLabelsVisible = (): boolean => {
-        const astLabelsVisible = localStorage.getItem(PREFERENCE_KEYS.astLabelsVisible);
-        return parseBoolean(astLabelsVisible, DEFAULTS.WCS_OVERLAY.astLabelsVisible);
+    public getASTLabelsVisible = (): boolean => {
+        return this.wcsOverlay.astLabelsVisible;
     };
 
-    private getWCSType = (): string => {
-        const wcsType = localStorage.getItem(PREFERENCE_KEYS.wcsType);
-        return wcsType && WCSType.isValid(wcsType) ? wcsType : DEFAULTS.WCS_OVERLAY.wcsType;
+    public getWCSType = (): string => {
+        return this.wcsOverlay.wcsType;
     };
 
     // getters for region
@@ -545,22 +532,22 @@ export class PreferenceStore {
 
     // setters for WCS overlay
     @action setASTColor = (astColor: number) => {
-        this.astColor = astColor;
+        this.wcsOverlay.astColor = astColor;
         localStorage.setItem(PREFERENCE_KEYS.astColor, astColor.toString(10));
     };
 
     @action setASTGridVisible = (visible: boolean) => {
-        this.astGridVisible = visible;
+        this.wcsOverlay.astGridVisible = visible;
         localStorage.setItem(PREFERENCE_KEYS.astGridVisible, visible ? "true" : "false");
     };
 
     @action setASTLabelsVisible = (visible: boolean) => {
-        this.astLabelsVisible = visible;
+        this.wcsOverlay.astLabelsVisible = visible;
         localStorage.setItem(PREFERENCE_KEYS.astLabelsVisible, visible ? "true" : "false");
     };
 
     @action setWCSType = (wcsType: string) => {
-        this.wcsType = wcsType;
+        this.wcsOverlay.wcsType = wcsType;
         localStorage.setItem(PREFERENCE_KEYS.wcsType, wcsType);
     };
 
@@ -682,10 +669,6 @@ export class PreferenceStore {
         this.region = Object.assign(DEFAULTS.REGION);
         this.performance = Object.assign(DEFAULTS.PERFORMANCE);
 
-        this.astColor = DEFAULTS.WCS_OVERLAY.astColor;
-        this.astGridVisible = DEFAULTS.WCS_OVERLAY.astGridVisible;
-        this.astLabelsVisible = DEFAULTS.WCS_OVERLAY.astLabelsVisible;
-        this.wcsType = DEFAULTS.WCS_OVERLAY.wcsType;
         this.regionCreationMode = DEFAULTS.REGION.regionCreationMode;
         this.regionContainer = new RegionStore(null, -1, null, [{x: 0, y: 0}, {x: 1, y: 1}], DEFAULTS.REGION.regionType, -1);
         this.regionContainer.regionType = DEFAULTS.REGION.regionType;
@@ -777,15 +760,27 @@ export class PreferenceStore {
         this.contourConfig.contourColormapEnabled = parseBoolean(value, DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled);
     };
 
+    private initWCSOverlayFromLocalStorage = () => {
+        let value;
+        value = localStorage.getItem(PREFERENCE_KEYS.astColor);
+        this.wcsOverlay.astColor = value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) < AST.colors.length ? Number(value) : DEFAULTS.WCS_OVERLAY.astColor;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.astGridVisible);
+        this.wcsOverlay.astGridVisible = parseBoolean(value, DEFAULTS.WCS_OVERLAY.astGridVisible);
+
+        value = localStorage.getItem(PREFERENCE_KEYS.astLabelsVisible);
+        this.wcsOverlay.astLabelsVisible = parseBoolean(value, DEFAULTS.WCS_OVERLAY.astLabelsVisible);
+
+        value = localStorage.getItem(PREFERENCE_KEYS.wcsType);
+        this.wcsOverlay.wcsType = value && WCSType.isValid(value) ? value : DEFAULTS.WCS_OVERLAY.wcsType;
+    };
+
     private initPreferenceFromLocalStorage = () => {
         this.initGlobalFromLocalStorage();
         this.initRenderConfigFromLocalStorage();
         this.initContourConfigFromLocalStorage();
+        this.initWCSOverlayFromLocalStorage();
 
-        this.astColor = this.getASTColor();
-        this.astGridVisible = this.getASTGridVisible();
-        this.astLabelsVisible = this.getASTLabelsVisible();
-        this.wcsType = this.getWCSType();
         this.regionCreationMode = this.getRegionCreationMode();
         this.imageCompressionQuality = this.getImageCompressionQuality();
         this.animationCompressionQuality = this.getAnimationCompressionQuality();

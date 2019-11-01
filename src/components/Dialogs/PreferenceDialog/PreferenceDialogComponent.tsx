@@ -281,24 +281,24 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             <React.Fragment>
                 <FormGroup inline={true} label="Color">
                     <ColorComponent
-                        selectedItem={preference.astColor}
+                        selectedItem={preference.getASTColor()}
                         onItemSelect={(selected) => preference.setASTColor(selected)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Grid Visible">
                     <Switch
-                        checked={preference.astGridVisible}
+                        checked={preference.getASTGridVisible()}
                         onChange={(ev) => preference.setASTGridVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Label Visible">
                     <Switch
-                        checked={preference.astLabelsVisible}
+                        checked={preference.getASTLabelsVisible()}
                         onChange={(ev) => preference.setASTLabelsVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="WCS Format">
-                    <RadioGroup selectedValue={preference.wcsType} onChange={(ev) => preference.setWCSType(ev.currentTarget.value)}>
+                    <RadioGroup selectedValue={preference.getWCSType()} onChange={(ev) => preference.setWCSType(ev.currentTarget.value)}>
                         <Radio label="Automatic" value={WCSType.AUTOMATIC}/>
                         <Radio label="Decimal degrees" value={WCSType.DEGREES}/>
                         <Radio label="Sexagesimal" value={WCSType.SEXAGESIMAL}/>

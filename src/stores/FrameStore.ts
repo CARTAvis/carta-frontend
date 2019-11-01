@@ -370,15 +370,15 @@ export class FrameStore {
         this.zooming = false;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
-        const astColor = preference.astColor;
+        const astColor = preference.getASTColor();
         if (astColor !== overlay.global.color) {
             overlay.global.setColor(astColor);
         }
-        const astGridVisible = preference.astGridVisible;
+        const astGridVisible = preference.getASTGridVisible();
         if (astGridVisible !== overlay.grid.visible) {
             overlay.grid.setVisible(astGridVisible);
         }
-        const astLabelsVisible = preference.astLabelsVisible;
+        const astLabelsVisible = preference.getASTLabelsVisible();
         if (astLabelsVisible !== overlay.labels.visible) {
             overlay.labels.setVisible(astLabelsVisible);
         }
