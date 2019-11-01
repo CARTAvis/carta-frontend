@@ -21,7 +21,6 @@ class CursorOverlayProps {
     showWCS?: boolean;
     showImage?: boolean;
     showValue?: boolean;
-    showCanvas?: boolean;
     showChannel?: boolean;
     showSpectral?: boolean;
 }
@@ -34,9 +33,6 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
         let infoStrings: string[] = [];
         if (this.props.showWCS && cursorInfo.infoWCS) {
             infoStrings.push(`WCS:\u00a0(${cursorInfo.infoWCS.x},\u00a0${cursorInfo.infoWCS.y})`);
-        }
-        if (this.props.showCanvas) {
-            infoStrings.push(`Canvas:\u00a0(${toFixed(cursorInfo.posCanvasSpace.x)},\u00a0${toFixed(cursorInfo.posCanvasSpace.y)})`);
         }
         if (this.props.showImage) {
             infoStrings.push(`Image:\u00a0(${toFixed(cursorInfo.posImageSpace.x)},\u00a0${toFixed(cursorInfo.posImageSpace.y)})`);

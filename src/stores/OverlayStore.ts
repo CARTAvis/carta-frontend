@@ -686,6 +686,8 @@ export class OverlayStore {
         this.numbers = new OverlayNumberSettings();
         this.labels = new OverlayLabelSettings(preference);
         this.ticks = new OverlayTickSettings();
+        this.viewHeight = 1;
+        this.viewWidth = 1;
 
         // if the system is manually selected, set new default formats
         autorun(() => {
