@@ -467,7 +467,7 @@ export class AppStore {
         this.preferenceStore = new PreferenceStore(this);
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore, this.preferenceStore);
-        this.tileService = new TileService(this.backendService, this.preferenceStore.GPUTileCache, this.preferenceStore.systemTileCache);
+        this.tileService = new TileService(this.backendService, this.preferenceStore.getGPUTileCache(), this.preferenceStore.getSystemTileCache());
         this.astReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<number, ObservableMap<number, SpectralProfileStore>>();
@@ -480,7 +480,7 @@ export class AppStore {
         this.animatorStore = new AnimatorStore(this);
         this.overlayStore = new OverlayStore(this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this, this.layoutStore);
-        this.compressionQuality = this.preferenceStore.imageCompressionQuality;
+        this.compressionQuality = this.preferenceStore.getImageCompressionQuality();
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         this.spatialRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
         this.statsRequirements = new Map<number, Array<number>>();
@@ -535,7 +535,7 @@ export class AppStore {
         // Update frame view outside of animation
         autorun(() => {
             if (this.activeFrame &&
-                (this.preferenceStore.streamTilesWhileZooming || !this.activeFrame.zooming) &&
+                (this.preferenceStore.getStreamTilesWhileZooming() || !this.activeFrame.zooming) &&
                 (this.animatorStore.animationState === AnimationState.STOPPED || this.animatorStore.animationMode === AnimationMode.FRAME)) {
                 // Trigger update raster view/title when switching layout
                 const layout = this.layoutStore.dockedLayout;
@@ -576,7 +576,7 @@ export class AppStore {
                     yMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.height, reqView.yMax),
                     mip: reqView.mip
                 };
-                throttledSetView(this.activeFrame.frameInfo.fileId, croppedReq, this.preferenceStore.animationCompressionQuality);
+                throttledSetView(this.activeFrame.frameInfo.fileId, croppedReq, this.preferenceStore.getAnimationCompressionQuality());
             }
         });
 

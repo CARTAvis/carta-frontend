@@ -120,14 +120,6 @@ export class PreferenceStore {
 
     @observable regionContainer: RegionStore;
     @observable regionCreationMode: string;
-    @observable imageCompressionQuality: number;
-    @observable animationCompressionQuality: number;
-    @observable GPUTileCache: number;
-    @observable systemTileCache: number;
-    @observable contourDecimation: number;
-    @observable contourCompressionLevel: number;
-    @observable contourChunkSize: number;
-    @observable streamTilesWhileZooming: boolean;
     @observable eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
 
     // TODO: all getters need to prevent sending null!
@@ -214,31 +206,16 @@ export class PreferenceStore {
         return this.contourConfig.contourThickness;
     };
 
-    private getContourDecimation = (): number => {
-        const valString = localStorage.getItem(PREFERENCE_KEYS.contourDecimation);
-        if (!valString) {
-            return DEFAULTS.PERFORMANCE.contourDecimation;
-        }
-        const valInt = parseInt(valString);
-        return (isFinite(valInt) && valInt >= 1 && valInt <= 32) ? valInt : DEFAULTS.PERFORMANCE.contourDecimation;
+    public getContourDecimation = (): number => {
+        return this.performance.contourDecimation;
     };
 
-    private getContourCompressionLevel = (): number => {
-        const valString = localStorage.getItem(PREFERENCE_KEYS.contourCompressionLevel);
-        if (!valString) {
-            return DEFAULTS.PERFORMANCE.contourCompressionLevel;
-        }
-        const valInt = parseInt(valString);
-        return (isFinite(valInt) && valInt >= 0 && valInt <= 19) ? valInt : DEFAULTS.PERFORMANCE.contourCompressionLevel;
+    public getContourCompressionLevel = (): number => {
+        return this.performance.contourCompressionLevel;
     };
 
-    private getContourChunkSize = (): number => {
-        const valString = localStorage.getItem(PREFERENCE_KEYS.contourChunkSize);
-        if (!valString) {
-            return DEFAULTS.PERFORMANCE.contourChunkSize;
-        }
-        const valInt = parseInt(valString);
-        return (isFinite(valInt) && valInt >= 1000 && valInt <= 1000000) ? valInt : DEFAULTS.PERFORMANCE.contourChunkSize;
+    public getContourChunkSize = (): number => {
+        return this.performance.contourChunkSize;
     };
 
     // getters for WCS overlay
@@ -300,49 +277,24 @@ export class PreferenceStore {
     };
 
     // getters for performance
-    private getImageCompressionQuality = (): number => {
-        const imageCompressionQuality = localStorage.getItem(PREFERENCE_KEYS.imageCompressionQuality);
-        if (!imageCompressionQuality) {
-            return DEFAULTS.PERFORMANCE.imageCompressionQuality;
-        }
-
-        const value = Number(imageCompressionQuality);
-        return isFinite(value) && CompressionQuality.isImageCompressionQualityValid(value) ? value : DEFAULTS.PERFORMANCE.imageCompressionQuality;
+    public getImageCompressionQuality = (): number => {
+        return this.performance.imageCompressionQuality;
     };
 
-    private getAnimationCompressionQuality = (): number => {
-        const animationCompressionQuality = localStorage.getItem(PREFERENCE_KEYS.animationCompressionQuality);
-        if (!animationCompressionQuality) {
-            return DEFAULTS.PERFORMANCE.animationCompressionQuality;
-        }
-
-        const value = Number(animationCompressionQuality);
-        return isFinite(value) && CompressionQuality.isAnimationCompressionQualityValid(value) ? value : DEFAULTS.PERFORMANCE.animationCompressionQuality;
+    public getAnimationCompressionQuality = (): number => {
+        return this.performance.animationCompressionQuality;
     };
 
-    private getGPUTileCache = (): number => {
-        const GPUTileCache = localStorage.getItem(PREFERENCE_KEYS.GPUTileCache);
-        if (!GPUTileCache) {
-            return DEFAULTS.PERFORMANCE.GPUTileCache;
-        }
-
-        const value = Number(GPUTileCache);
-        return isFinite(value) && TileCache.isGPUTileCacheValid(value) ? value : DEFAULTS.PERFORMANCE.GPUTileCache;
+    public getGPUTileCache = (): number => {
+        return this.performance.GPUTileCache;
     };
 
-    private getSystemTileCache = (): number => {
-        const systemTileCache = localStorage.getItem(PREFERENCE_KEYS.systemTileCache);
-        if (!systemTileCache) {
-            return DEFAULTS.PERFORMANCE.systemTileCache;
-        }
-
-        const value = Number(systemTileCache);
-        return isFinite(value) && TileCache.isSystemTileCacheValid(value) ? value : DEFAULTS.PERFORMANCE.systemTileCache;
+    public getSystemTileCache = (): number => {
+        return this.performance.systemTileCache;
     };
 
-    private getStreamTilesWhileZooming = (): boolean => {
-        const val = localStorage.getItem(PREFERENCE_KEYS.streamContoursWhileZooming);
-        return parseBoolean(val, DEFAULTS.PERFORMANCE.streamContoursWhileZooming);
+    public getStreamTilesWhileZooming = (): boolean => {
+        return this.performance.streamContoursWhileZooming;
     };
 
     // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
@@ -516,17 +468,17 @@ export class PreferenceStore {
     };
 
     @action setContourDecimation = (val: number) => {
-        this.contourDecimation = val;
+        this.performance.contourDecimation = val;
         localStorage.setItem(PREFERENCE_KEYS.contourDecimation, val.toString());
     };
 
     @action setContourCompressionLevel = (val: number) => {
-        this.contourCompressionLevel = val;
+        this.performance.contourCompressionLevel = val;
         localStorage.setItem(PREFERENCE_KEYS.contourCompressionLevel, val.toString());
     };
 
     @action setContourChunkSize = (val: number) => {
-        this.contourChunkSize = val;
+        this.performance.contourChunkSize = val;
         localStorage.setItem(PREFERENCE_KEYS.contourChunkSize, val.toString());
     };
 
@@ -569,27 +521,27 @@ export class PreferenceStore {
     // setters for performance
     @action setImageCompressionQuality = (imageCompressionQuality: number) => {
         this.appStore.compressionQuality = imageCompressionQuality;
-        this.imageCompressionQuality = imageCompressionQuality;
+        this.performance.imageCompressionQuality = imageCompressionQuality;
         localStorage.setItem(PREFERENCE_KEYS.imageCompressionQuality, imageCompressionQuality.toString(10));
     };
 
     @action setAnimationCompressionQuality = (animationCompressionQuality: number) => {
-        this.animationCompressionQuality = animationCompressionQuality;
+        this.performance.animationCompressionQuality = animationCompressionQuality;
         localStorage.setItem(PREFERENCE_KEYS.animationCompressionQuality, animationCompressionQuality.toString(10));
     };
 
     @action setGPUTileCache = (GPUTileCache: number) => {
-        this.GPUTileCache = GPUTileCache;
+        this.performance.GPUTileCache = GPUTileCache;
         localStorage.setItem(PREFERENCE_KEYS.GPUTileCache, GPUTileCache.toString(10));
     };
 
     @action setSystemTileCache = (systemTileCache: number) => {
-        this.systemTileCache = systemTileCache;
+        this.performance.systemTileCache = systemTileCache;
         localStorage.setItem(PREFERENCE_KEYS.systemTileCache, systemTileCache.toString(10));
     };
 
     @action setStreamContoursWhileZooming = (val: boolean) => {
-        this.streamTilesWhileZooming = val;
+        this.performance.streamTilesWhileZooming = val;
         localStorage.setItem(PREFERENCE_KEYS.streamContoursWhileZooming, String(val));
     };
 
@@ -675,14 +627,6 @@ export class PreferenceStore {
         this.regionContainer.color = DEFAULTS.REGION.regionColor;
         this.regionContainer.lineWidth = DEFAULTS.REGION.regionLineWidth;
         this.regionContainer.dashLength = DEFAULTS.REGION.regionDashLength;
-        this.imageCompressionQuality = DEFAULTS.PERFORMANCE.imageCompressionQuality;
-        this.animationCompressionQuality = DEFAULTS.PERFORMANCE.animationCompressionQuality;
-        this.GPUTileCache = DEFAULTS.PERFORMANCE.GPUTileCache;
-        this.systemTileCache = DEFAULTS.PERFORMANCE.systemTileCache;
-        this.contourDecimation = DEFAULTS.PERFORMANCE.contourDecimation;
-        this.contourCompressionLevel = DEFAULTS.PERFORMANCE.contourCompressionLevel;
-        this.contourChunkSize = DEFAULTS.PERFORMANCE.contourChunkSize;
-        this.streamTilesWhileZooming = DEFAULTS.PERFORMANCE.streamContoursWhileZooming;
         this.eventsLoggingEnabled = new Map<CARTA.EventType, boolean>();
         Event.EVENT_TYPES.forEach(eventType => this.eventsLoggingEnabled.set(eventType, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
     };
@@ -775,21 +719,45 @@ export class PreferenceStore {
         this.wcsOverlay.wcsType = value && WCSType.isValid(value) ? value : DEFAULTS.WCS_OVERLAY.wcsType;
     };
 
+    private initRegionFromLocalStorage = () => {
+        let value;
+    };
+
+    private initPerformanceFromLocalStorage = () => {
+        let value;
+        value = localStorage.getItem(PREFERENCE_KEYS.imageCompressionQuality);
+        this.performance.imageCompressionQuality = value && isFinite(Number(value)) && CompressionQuality.isImageCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.imageCompressionQuality;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.animationCompressionQuality);
+        this.performance.animationCompressionQuality = value && isFinite(Number(value)) && CompressionQuality.isAnimationCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.animationCompressionQuality;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.GPUTileCache);
+        this.performance.GPUTileCache = value && isFinite(Number(value)) && TileCache.isGPUTileCacheValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.GPUTileCache;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.systemTileCache);
+        this.performance.systemTileCache = value && isFinite(Number(value)) && TileCache.isSystemTileCacheValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.systemTileCache;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.streamContoursWhileZooming);
+        this.performance.streamContoursWhileZooming = parseBoolean(value, DEFAULTS.PERFORMANCE.streamContoursWhileZooming);
+
+        value = localStorage.getItem(PREFERENCE_KEYS.contourDecimation);
+        this.performance.contourDecimation = value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 32) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourDecimation;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.contourCompressionLevel);
+        this.performance.contourCompressionLevel = value && (isFinite(parseInt(value)) && parseInt(value) >= 0 && parseInt(value) <= 19) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourCompressionLevel;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.contourChunkSize);
+        this.performance.contourChunkSize = value && (isFinite(parseInt(value)) && parseInt(value) >= 1000 && parseInt(value) <= 1000000) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourChunkSize;
+    };
+
     private initPreferenceFromLocalStorage = () => {
         this.initGlobalFromLocalStorage();
         this.initRenderConfigFromLocalStorage();
         this.initContourConfigFromLocalStorage();
         this.initWCSOverlayFromLocalStorage();
+        this.initPerformanceFromLocalStorage();
 
         this.regionCreationMode = this.getRegionCreationMode();
-        this.imageCompressionQuality = this.getImageCompressionQuality();
-        this.animationCompressionQuality = this.getAnimationCompressionQuality();
-        this.GPUTileCache = this.getGPUTileCache();
-        this.systemTileCache = this.getSystemTileCache();
-        this.contourDecimation = this.getContourDecimation();
-        this.contourCompressionLevel = this.getContourCompressionLevel();
-        this.contourChunkSize = this.getContourChunkSize();
-        this.streamTilesWhileZooming = this.getStreamTilesWhileZooming();
         this.eventsLoggingEnabled = this.getLogEvents();
         this.regionContainer.regionType = this.getRegionType();
         this.regionContainer.color = this.getRegionColor();

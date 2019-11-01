@@ -367,7 +367,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         placeholder="Compression Quality"
                         min={CompressionQuality.IMAGE_MIN}
                         max={CompressionQuality.IMAGE_MAX}
-                        value={preference.imageCompressionQuality}
+                        value={preference.getImageCompressionQuality()}
                         stepSize={CompressionQuality.IMAGE_STEP}
                         onValueChange={this.handleImageCompressionQualityChange}
                     />
@@ -377,7 +377,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         placeholder="Compression Quality"
                         min={CompressionQuality.ANIMATION_MIN}
                         max={CompressionQuality.ANIMATION_MAX}
-                        value={preference.animationCompressionQuality}
+                        value={preference.getAnimationCompressionQuality()}
                         stepSize={CompressionQuality.ANIMATION_STEP}
                         onValueChange={this.handleAnimationCompressionQualityChange}
                     />
@@ -387,7 +387,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         placeholder="GPU Tile Cache Size"
                         min={TileCache.GPU_MIN}
                         max={TileCache.GPU_MAX}
-                        value={preference.GPUTileCache}
+                        value={preference.getGPUTileCache()}
                         majorStepSize={TileCache.GPU_STEP}
                         stepSize={TileCache.GPU_STEP}
                         onValueChange={this.handleGPUTileCacheChange}
@@ -398,7 +398,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         placeholder="System Tile Cache Size"
                         min={TileCache.SYSTEM_MIN}
                         max={TileCache.SYSTEM_MAX}
-                        value={preference.systemTileCache}
+                        value={preference.getSystemTileCache()}
                         majorStepSize={TileCache.SYSTEM_STEP}
                         stepSize={TileCache.SYSTEM_STEP}
                         onValueChange={this.handleSystemTileCacheChange}
@@ -409,7 +409,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         placeholder="Contour Rounding Factor"
                         min={1}
                         max={32}
-                        value={preference.contourDecimation}
+                        value={preference.getContourDecimation()}
                         majorStepSize={1}
                         stepSize={1}
                         onValueChange={preference.setContourDecimation}
@@ -420,14 +420,14 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         placeholder="Contour Compression Level"
                         min={0}
                         max={19}
-                        value={preference.contourCompressionLevel}
+                        value={preference.getContourCompressionLevel()}
                         majorStepSize={1}
                         stepSize={1}
                         onValueChange={preference.setContourCompressionLevel}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Contour Chunk Size">
-                    <HTMLSelect value={preference.contourChunkSize} onChange={(ev) => preference.setContourChunkSize(parseInt(ev.currentTarget.value))}>
+                    <HTMLSelect value={preference.getContourChunkSize()} onChange={(ev) => preference.setContourChunkSize(parseInt(ev.currentTarget.value))}>
                         <option key={0} value={25000}>25K</option>
                         <option key={1} value={50000}>50K</option>
                         <option key={2} value={100000}>100K</option>
@@ -437,7 +437,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Stream image tiles while zooming">
-                    <Switch checked={preference.streamTilesWhileZooming} onChange={(ev) => preference.setStreamContoursWhileZooming(ev.currentTarget.checked)}/>
+                    <Switch checked={preference.getStreamTilesWhileZooming()} onChange={(ev) => preference.setStreamContoursWhileZooming(ev.currentTarget.checked)}/>
                 </FormGroup>
             </React.Fragment>
         );

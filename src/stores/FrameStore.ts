@@ -732,9 +732,9 @@ export class FrameStore {
                 yMin: 0,
                 yMax: this.frameInfo.fileInfoExtended.height,
             },
-            decimationFactor: this.preference.contourDecimation,
-            compressionLevel: this.preference.contourCompressionLevel,
-            contourChunkSize: this.preference.contourChunkSize
+            decimationFactor: this.preference.getContourDecimation(),
+            compressionLevel: this.preference.getContourCompressionLevel(),
+            contourChunkSize: this.preference.getContourChunkSize()
         };
         this.backendService.setContourParameters(contourParameters);
     };
