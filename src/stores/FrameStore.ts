@@ -713,18 +713,18 @@ export class FrameStore {
 
         // TODO: This should be defined by the contour config widget
         this.contourConfig.setBounds(this.renderConfig.scaleMinVal, this.renderConfig.scaleMaxVal);
-        this.contourConfig.setNumComputedLevels(this.preference.contourNumLevels);
-        this.contourConfig.setColor(hexStringToRgba(this.preference.contourColor));
+        this.contourConfig.setNumComputedLevels(this.preference.getContourNumLevels());
+        this.contourConfig.setColor(hexStringToRgba(this.preference.getContourColor()));
         this.contourConfig.setColormap(this.preference.getColormap());
-        this.contourConfig.setColormapEnabled(this.preference.contourColormapEnabled);
+        this.contourConfig.setColormapEnabled(this.preference.getContourColormapEnabled());
         this.contourConfig.setEnabled(true);
 
         // TODO: Allow a different reference frame
         const contourParameters: CARTA.ISetContourParameters = {
             fileId: this.frameInfo.fileId,
             referenceFileId: this.frameInfo.fileId,
-            smoothingMode: this.preference.contourSmoothingMode,
-            smoothingFactor: this.preference.contourSmoothingFactor,
+            smoothingMode: this.preference.getContourSmoothingMode(),
+            smoothingFactor: this.preference.getContourSmoothingFactor(),
             levels: this.contourConfig.levels,
             imageBounds: {
                 xMin: 0,

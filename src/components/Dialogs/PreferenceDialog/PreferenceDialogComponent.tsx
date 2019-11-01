@@ -211,7 +211,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             <React.Fragment>
                 <FormGroup inline={true} label="Smoothing Mode">
                     <HTMLSelect
-                        value={preference.contourSmoothingMode}
+                        value={preference.getContourSmoothingMode()}
                         onChange={(ev) => preference.setContourSmoothingMode(Number(ev.currentTarget.value))}
                     >
                         <option key={CARTA.SmoothingMode.NoSmoothing} value={CARTA.SmoothingMode.NoSmoothing}>No Smoothing</option>
@@ -224,7 +224,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         placeholder="Default Smoothing Factor"
                         min={1}
                         max={33}
-                        value={preference.contourSmoothingFactor}
+                        value={preference.getContourSmoothingFactor()}
                         majorStepSize={1}
                         stepSize={1}
                         onValueChange={preference.setContourSmoothingFactor}
@@ -235,7 +235,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         placeholder="Default Contour Levels"
                         min={1}
                         max={15}
-                        value={preference.contourNumLevels}
+                        value={preference.getContourNumLevels()}
                         majorStepSize={1}
                         stepSize={1}
                         onValueChange={preference.setContourNumLevels}
@@ -246,14 +246,14 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         placeholder="Thickness"
                         min={0.5}
                         max={10}
-                        value={preference.contourThickness}
+                        value={preference.getContourThickness()}
                         majorStepSize={0.5}
                         stepSize={0.5}
                         onValueChange={preference.setContourThickness}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default Color Mode">
-                    <HTMLSelect value={preference.contourColormapEnabled ? 1 : 0} onChange={(ev) => preference.setContourColormapEnabled(parseInt(ev.currentTarget.value) > 0)}>
+                    <HTMLSelect value={preference.getContourColormapEnabled() ? 1 : 0} onChange={(ev) => preference.setContourColormapEnabled(parseInt(ev.currentTarget.value) > 0)}>
                         <option key={0} value={0}>Constant Color</option>
                         <option key={1} value={1}>Color-mapped</option>
                     </HTMLSelect>
@@ -261,13 +261,13 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 <FormGroup inline={true} label="Default Color Map">
                     <ColormapComponent
                         inverted={false}
-                        selectedItem={preference.contourColormap}
+                        selectedItem={preference.getContourColormap()}
                         onItemSelect={(selected) => preference.setContourColormap(selected)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default Color">
                     <ColorPickerComponent
-                        color={preference.contourColor}
+                        color={preference.getContourColor()}
                         presetColors={RegionStore.SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setContourColor(color.hex)}
                         disableAlpha={true}

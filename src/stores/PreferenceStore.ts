@@ -118,13 +118,6 @@ export class PreferenceStore {
     @observable region: any;
     @observable performance: any;
 
-    @observable contourSmoothingMode: CARTA.SmoothingMode;
-    @observable contourSmoothingFactor: number;
-    @observable contourNumLevels: number;
-    @observable contourThickness: number;
-    @observable contourColormapEnabled: boolean;
-    @observable contourColor: string;
-    @observable contourColormap: string;
     @observable astColor: number;
     @observable astGridVisible: boolean;
     @observable astLabelsVisible: boolean;
@@ -197,56 +190,32 @@ export class PreferenceStore {
     };
 
     // getters for Contour Config
-    private getContourColormapEnabled = (): boolean => {
-        const colormapEnabled = localStorage.getItem(PREFERENCE_KEYS.contourColormapEnabled);
-        return parseBoolean(colormapEnabled, DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled);
+    public getContourColormapEnabled = (): boolean => {
+        return this.contourConfig.contourColormapEnabled;
     };
 
-    private getContourColormap = (): string => {
-        const colormap = localStorage.getItem(PREFERENCE_KEYS.contourColormap);
-        return colormap && RenderConfigStore.IsColormapValid(colormap) ? colormap : DEFAULTS.CONTOUR_CONFIG.contourColormap;
+    public getContourColormap = (): string => {
+        return this.contourConfig.contourColormap;
     };
 
-    private getContourColor = (): string => {
-        const contourColor = localStorage.getItem(PREFERENCE_KEYS.contourColor);
-        return contourColor && isColorValid(contourColor) ? contourColor : DEFAULTS.CONTOUR_CONFIG.contourColor;
+    public getContourColor = (): string => {
+        return this.contourConfig.contourColor;
     };
 
-    private getContourSmoothingMode = (): CARTA.SmoothingMode => {
-        const val = localStorage.getItem(PREFERENCE_KEYS.contourSmoothingMode);
-        if (!val) {
-            return DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode;
-        }
-
-        const value = Number(val);
-        return value >= 0 && value <= 2 ? value : DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode;
+    public getContourSmoothingMode = (): CARTA.SmoothingMode => {
+        return this.contourConfig.contourSmoothingMode;
     };
 
-    private getContourSmoothingFactor = (): number => {
-        const valString = localStorage.getItem(PREFERENCE_KEYS.contourSmoothingFactor);
-        if (!valString) {
-            return DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor;
-        }
-        const valInt = parseInt(valString);
-        return (isFinite(valInt) && valInt >= 1 && valInt <= 33) ? valInt : DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor;
+    public getContourSmoothingFactor = (): number => {
+        return this.contourConfig.contourSmoothingFactor;
     };
 
-    private getContourNumLevels = (): number => {
-        const valString = localStorage.getItem(PREFERENCE_KEYS.contourNumLevels);
-        if (!valString) {
-            return DEFAULTS.CONTOUR_CONFIG.contourNumLevels;
-        }
-        const valInt = parseInt(valString);
-        return (isFinite(valInt) && valInt >= 1 && valInt <= 15) ? valInt : DEFAULTS.CONTOUR_CONFIG.contourNumLevels;
+    public getContourNumLevels = (): number => {
+        return this.contourConfig.contourNumLevels;
     };
 
-    private getContourThickness = (): number => {
-        const valString = localStorage.getItem(PREFERENCE_KEYS.contourThickness);
-        if (!valString) {
-            return DEFAULTS.CONTOUR_CONFIG.contourThickness;
-        }
-        const value = parseFloat(valString);
-        return (isFinite(value) && value > 0 && value <= 10) ? value : DEFAULTS.CONTOUR_CONFIG.contourThickness;
+    public getContourThickness = (): number => {
+        return this.contourConfig.contourThickness;
     };
 
     private getContourDecimation = (): number => {
@@ -525,37 +494,37 @@ export class PreferenceStore {
 
     // setters for contours
     @action setContourSmoothingMode = (val: CARTA.SmoothingMode) => {
-        this.contourSmoothingMode = val;
+        this.contourConfig.contourSmoothingMode = val;
         localStorage.setItem(PREFERENCE_KEYS.contourSmoothingMode, val.toString());
     };
 
     @action setContourSmoothingFactor = (val: number) => {
-        this.contourSmoothingFactor = val;
+        this.contourConfig.contourSmoothingFactor = val;
         localStorage.setItem(PREFERENCE_KEYS.contourSmoothingFactor, val.toString());
     };
 
     @action setContourNumLevels = (val: number) => {
-        this.contourNumLevels = val;
+        this.contourConfig.contourNumLevels = val;
         localStorage.setItem(PREFERENCE_KEYS.contourNumLevels, val.toString());
     };
 
     @action setContourThickness = (val: number) => {
-        this.contourThickness = val;
+        this.contourConfig.contourThickness = val;
         localStorage.setItem(PREFERENCE_KEYS.contourThickness, val.toString());
     };
 
     @action setContourColor = (color: string) => {
-        this.contourColor = color;
+        this.contourConfig.contourColor = color;
         localStorage.setItem(PREFERENCE_KEYS.contourColor, color);
     };
 
     @action setContourColormapEnabled = (val: boolean) => {
-        this.contourColormapEnabled = val;
+        this.contourConfig.contourColormapEnabled = val;
         localStorage.setItem(PREFERENCE_KEYS.contourColormapEnabled, String(val));
     };
 
     @action setContourColormap = (colormap: string) => {
-        this.contourColormap = colormap;
+        this.contourConfig.contourColormap = colormap;
         localStorage.setItem(PREFERENCE_KEYS.contourColormap, colormap);
     };
 
@@ -713,13 +682,6 @@ export class PreferenceStore {
         this.region = Object.assign(DEFAULTS.REGION);
         this.performance = Object.assign(DEFAULTS.PERFORMANCE);
 
-        this.contourSmoothingMode = DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode;
-        this.contourSmoothingFactor = DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor;
-        this.contourNumLevels = DEFAULTS.CONTOUR_CONFIG.contourNumLevels;
-        this.contourThickness = DEFAULTS.CONTOUR_CONFIG.contourThickness;
-        this.contourColor = DEFAULTS.CONTOUR_CONFIG.contourColor;
-        this.contourColormap = DEFAULTS.CONTOUR_CONFIG.contourColormap;
-        this.contourColormapEnabled = DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled;
         this.astColor = DEFAULTS.WCS_OVERLAY.astColor;
         this.astGridVisible = DEFAULTS.WCS_OVERLAY.astGridVisible;
         this.astLabelsVisible = DEFAULTS.WCS_OVERLAY.astLabelsVisible;
@@ -791,17 +753,35 @@ export class PreferenceStore {
         this.renderConfig.nanAlpha = value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1 ? Number(value) : DEFAULTS.RENDER_CONFIG.nanAlpha;
     };
 
+    private initContourConfigFromLocalStorage = () => {
+        let value;
+        value = localStorage.getItem(PREFERENCE_KEYS.contourSmoothingMode);
+        this.contourConfig.contourSmoothingMode = value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 2 ? Number(value) : DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.contourSmoothingFactor);
+        this.contourConfig.contourSmoothingFactor = value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 33) ? parseInt(value) : DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.contourNumLevels);
+        this.contourConfig.contourNumLevels = value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 15) ? parseInt(value) : DEFAULTS.CONTOUR_CONFIG.contourNumLevels;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.contourThickness);
+        this.contourConfig.contourThickness = value && (isFinite(parseFloat(value)) && parseFloat(value) > 0 && parseFloat(value) <= 10) ? parseFloat(value) : DEFAULTS.CONTOUR_CONFIG.contourThickness;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.contourColor);
+        this.contourConfig.contourColor = value && isColorValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColor;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.contourColormap);
+        this.contourConfig.colormap = value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColormap;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.contourColormapEnabled);
+        this.contourConfig.contourColormapEnabled = parseBoolean(value, DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled);
+    };
+
     private initPreferenceFromLocalStorage = () => {
         this.initGlobalFromLocalStorage();
         this.initRenderConfigFromLocalStorage();
+        this.initContourConfigFromLocalStorage();
 
-        this.contourSmoothingMode = this.getContourSmoothingMode();
-        this.contourSmoothingFactor = this.getContourSmoothingFactor();
-        this.contourNumLevels = this.getContourNumLevels();
-        this.contourThickness = this.getContourThickness();
-        this.contourColor = this.getContourColor();
-        this.contourColormap = this.getContourColormap();
-        this.contourColormapEnabled = this.getContourColormapEnabled();
         this.astColor = this.getASTColor();
         this.astGridVisible = this.getASTGridVisible();
         this.astLabelsVisible = this.getASTLabelsVisible();

@@ -44,10 +44,10 @@ export class ContourConfigStore {
         this.preferenceStore = preferenceStore;
         this.enabled = false;
         this.manualLevelsEnabled = false;
-        this.numComputedLevels = this.preferenceStore.contourNumLevels;
-        this.color = hexStringToRgba(this.preferenceStore.contourColor);
-        this.colormapEnabled = this.preferenceStore.contourColormapEnabled;
-        this.colormap = this.preferenceStore.contourColormap;
+        this.numComputedLevels = this.preferenceStore.getContourNumLevels();
+        this.color = hexStringToRgba(this.preferenceStore.getContourColor());
+        this.colormapEnabled = this.preferenceStore.getContourColormapEnabled();
+        this.colormap = this.preferenceStore.getContourColormap();
         this.manualLevels = [];
     }
 
