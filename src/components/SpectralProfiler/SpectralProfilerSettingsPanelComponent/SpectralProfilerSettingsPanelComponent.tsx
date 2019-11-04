@@ -13,8 +13,8 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         return {
             id: "spectral-profiler-floating-settings",
             type: "floating-settings",
-            minWidth: 300,
-            minHeight: 200,
+            minWidth: 280,
+            minHeight: 225,
             defaultWidth: 300,
             defaultHeight: 375,
             title: "spectral-profiler-settings",
@@ -54,8 +54,14 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             if (this.widgetStore) {
                 const appStore = this.props.appStore;
                 const frame = appStore.activeFrame;
-                if (frame) {
-                    let coordinateString = `Z Profile`;
+                const coordinate = this.widgetStore.coordinate;
+                if (frame && coordinate) {
+                    let coordinateString: string;
+                    if (coordinate.length === 2) {
+                        coordinateString = `Z Profile (Stokes ${coordinate[0]})`;
+                    } else {
+                        coordinateString = `Z Profile`;
+                    }
                     const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
