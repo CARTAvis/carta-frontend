@@ -117,10 +117,10 @@ export class PreferenceStore {
     @observable wcsOverlay: any;
     @observable region: any;
     @observable performance: any;
+    @observable eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
 
     @observable regionContainer: RegionStore;
     @observable regionCreationMode: string;
-    @observable eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
 
     // TODO: all getters need to prevent sending null!
     // getters for global settings
@@ -295,36 +295,6 @@ export class PreferenceStore {
 
     public getStreamTilesWhileZooming = (): boolean => {
         return this.performance.streamContoursWhileZooming;
-    };
-
-    // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
-    private getLogEvents = (): Map<CARTA.EventType, boolean> => {
-        let events = new Map<CARTA.EventType, boolean>();
-        Event.EVENT_TYPES.forEach(eventType => events.set(eventType, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
-
-        const localStorageEventList = localStorage.getItem(PREFERENCE_KEYS.logEventList);
-        if (localStorageEventList && localStorageEventList.length) {
-            try {
-                const eventNameList = JSON.parse(localStorageEventList);
-                if (eventNameList && Array.isArray(eventNameList) && eventNameList.length) {
-                    eventNameList.forEach((eventName) => {
-                        const eventType = Event.getEventTypeFromName(eventName);
-                        if (eventType !== undefined) {
-                            events.set(eventType, true);
-                        }
-                    });
-                }
-            } catch (e) {
-                console.log("Invalid event list read from local storage");
-            }
-        }
-        return events;
-    };
-
-    private genDefaultLogEvents = (): Map<CARTA.EventType, boolean> => {
-        let events = new Map<CARTA.EventType, boolean>();
-        Event.EVENT_TYPES.forEach(eventType => events.set(eventType, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
-        return events;
     };
 
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
@@ -621,14 +591,15 @@ export class PreferenceStore {
         this.region = Object.assign(DEFAULTS.REGION);
         this.performance = Object.assign(DEFAULTS.PERFORMANCE);
 
+        this.eventsLoggingEnabled = new Map<CARTA.EventType, boolean>();
+        Event.EVENT_TYPES.forEach(eventType => this.eventsLoggingEnabled.set(eventType, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
+
         this.regionCreationMode = DEFAULTS.REGION.regionCreationMode;
         this.regionContainer = new RegionStore(null, -1, null, [{x: 0, y: 0}, {x: 1, y: 1}], DEFAULTS.REGION.regionType, -1);
         this.regionContainer.regionType = DEFAULTS.REGION.regionType;
         this.regionContainer.color = DEFAULTS.REGION.regionColor;
         this.regionContainer.lineWidth = DEFAULTS.REGION.regionLineWidth;
         this.regionContainer.dashLength = DEFAULTS.REGION.regionDashLength;
-        this.eventsLoggingEnabled = new Map<CARTA.EventType, boolean>();
-        Event.EVENT_TYPES.forEach(eventType => this.eventsLoggingEnabled.set(eventType, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
     };
 
     private initPreferenceFromServer = (preference: { [k: string]: string; }) => {
@@ -750,6 +721,26 @@ export class PreferenceStore {
         this.performance.contourChunkSize = value && (isFinite(parseInt(value)) && parseInt(value) >= 1000 && parseInt(value) <= 1000000) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourChunkSize;
     };
 
+    // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
+    private initLogEventsFromLocalStorage = () => {
+        const localStorageEventList = localStorage.getItem(PREFERENCE_KEYS.logEventList);
+        if (localStorageEventList && localStorageEventList.length) {
+            try {
+                const eventNameList = JSON.parse(localStorageEventList);
+                if (eventNameList && Array.isArray(eventNameList) && eventNameList.length) {
+                    eventNameList.forEach((eventName) => {
+                        const eventType = Event.getEventTypeFromName(eventName);
+                        if (eventType !== undefined) {
+                            this.eventsLoggingEnabled.set(eventType, true);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.log("Invalid event list read from local storage");
+            }
+        }
+    };
+
     private initPreferenceFromLocalStorage = () => {
         this.initGlobalFromLocalStorage();
         this.initRenderConfigFromLocalStorage();
@@ -757,8 +748,9 @@ export class PreferenceStore {
         this.initWCSOverlayFromLocalStorage();
         this.initPerformanceFromLocalStorage();
 
+        this.initLogEventsFromLocalStorage();
+
         this.regionCreationMode = this.getRegionCreationMode();
-        this.eventsLoggingEnabled = this.getLogEvents();
         this.regionContainer.regionType = this.getRegionType();
         this.regionContainer.color = this.getRegionColor();
         this.regionContainer.lineWidth = this.getRegionLineWidth();
@@ -770,9 +762,13 @@ export class PreferenceStore {
         this.initPreferenceFromDefault();
 
         autorun(() => {
-            localStorage.setItem(PREFERENCE_KEYS.regionColor, this.regionContainer.color);
-            localStorage.setItem(PREFERENCE_KEYS.regionLineWidth, this.regionContainer.lineWidth.toString(10));
-            localStorage.setItem(PREFERENCE_KEYS.regionDashLength, this.regionContainer.dashLength.toString(10));
+            try {
+                localStorage.setItem(PREFERENCE_KEYS.regionColor, this.regionContainer.color);
+                localStorage.setItem(PREFERENCE_KEYS.regionLineWidth, this.regionContainer.lineWidth.toString(10));
+                localStorage.setItem(PREFERENCE_KEYS.regionDashLength, this.regionContainer.dashLength.toString(10));
+            } catch (e) {
+                console.log("Save region settings to local storage failed!");
+            }
         });
 
         autorun(() => {
