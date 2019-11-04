@@ -119,9 +119,6 @@ export class PreferenceStore {
     @observable performance: any;
     @observable eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
 
-    @observable regionContainer: RegionStore;
-    @observable regionCreationMode: string;
-
     // TODO: all getters need to prevent sending null!
     // getters for global settings
     public getTheme = (): string => {
@@ -235,45 +232,25 @@ export class PreferenceStore {
         return this.wcsOverlay.wcsType;
     };
 
-    // getters for region
-    private getRegionColor = (): string => {
-        const regionColor = localStorage.getItem(PREFERENCE_KEYS.regionColor);
-        return regionColor && isColorValid(regionColor) ? regionColor : DEFAULTS.REGION.regionColor;
+    // getters for region // TODO: check return this.region or this.region.regioncontainer
+    public getRegionColor = (): string => {
+        return this.region.regionContainer.color;
     };
 
-    private getRegionLineWidth = (): number => {
-        const regionLineWidth = localStorage.getItem(PREFERENCE_KEYS.regionLineWidth);
-        if (!regionLineWidth) {
-            return DEFAULTS.REGION.regionLineWidth;
-        }
-
-        const value = Number(regionLineWidth);
-        return isFinite(value) && RegionStore.IsRegionLineWidthValid(value) ? value : DEFAULTS.REGION.regionLineWidth;
+    public getRegionLineWidth = (): number => {
+        return this.region.regionContainer.lineWidth;
     };
 
-    private getRegionDashLength = (): number => {
-        const regionDashLength = localStorage.getItem(PREFERENCE_KEYS.regionDashLength);
-        if (!regionDashLength) {
-            return DEFAULTS.REGION.regionDashLength;
-        }
-
-        const value = Number(regionDashLength);
-        return isFinite(value) && RegionStore.IsRegionDashLengthValid(value) ? value : DEFAULTS.REGION.regionDashLength;
+    public getRegionDashLength = (): number => {
+        return this.region.regionContainer.dashLength;
     };
 
-    private getRegionType = (): CARTA.RegionType => {
-        const regionType = localStorage.getItem(PREFERENCE_KEYS.regionType);
-        if (!regionType) {
-            return DEFAULTS.REGION.regionType;
-        }
-
-        const value = Number(regionType);
-        return isFinite(value) && RegionStore.IsRegionTypeValid(value) ? value : DEFAULTS.REGION.regionType;
+    public getRegionType = (): CARTA.RegionType => {
+        return this.region.regionContainer.regionType;
     };
 
-    private getRegionCreationMode = (): string => {
-        const regionCreationMode = localStorage.getItem(PREFERENCE_KEYS.regionCreationMode);
-        return regionCreationMode && RegionCreationMode.isValid(regionCreationMode) ? regionCreationMode : DEFAULTS.REGION.regionCreationMode;
+    public getRegionCreationMode = (): string => {
+        return this.region.regionCreationMode;
     };
 
     // getters for performance
@@ -317,7 +294,7 @@ export class PreferenceStore {
     }
 
     @computed get isRegionCornerMode(): boolean {
-        return this.regionCreationMode === RegionCreationMode.CORNER;
+        return this.region.regionCreationMode === RegionCreationMode.CORNER;
     }
 
     @computed get isCursorFrozen(): boolean {
@@ -474,17 +451,32 @@ export class PreferenceStore {
     };
 
     // setters for region
+    @action setRegionColor = (color: string) => {
+        this.region.regionContainer.setColor(color);
+        localStorage.setItem(PREFERENCE_KEYS.regionColor, color);
+    };
+
+    @action setRegionLineWidth = (lineWidth: number) => {
+        this.region.regionContainer.setLineWidth(lineWidth);
+        localStorage.setItem(PREFERENCE_KEYS.regionLineWidth, lineWidth.toString(10));
+    };
+
+    @action setRegionDashLength = (dashLength: number) => {
+        this.region.regionContainer.setDashLengt(dashLength);
+        localStorage.setItem(PREFERENCE_KEYS.regionDashLength, dashLength.toString(10));
+    };
+
     @action setRegionType = (regionType: CARTA.RegionType) => {
         if (this.appStore.activeFrame && this.appStore.activeFrame.regionSet) {
             this.appStore.activeFrame.regionSet.setNewRegionType(regionType);
         }
 
-        this.regionContainer.regionType = regionType;
+        this.region.regionContainer.regionType = regionType;
         localStorage.setItem(PREFERENCE_KEYS.regionType, regionType.toString(10));
     };
 
     @action setRegionCreationMode = (regionCreationMode: string) => {
-        this.regionCreationMode = regionCreationMode;
+        this.region.regionCreationMode = regionCreationMode;
         localStorage.setItem(PREFERENCE_KEYS.regionCreationMode, regionCreationMode);
     };
 
@@ -552,9 +544,9 @@ export class PreferenceStore {
     };
 
     @action resetRegionSettings = () => {
-        this.regionContainer.color = DEFAULTS.REGION.regionColor;
-        this.regionContainer.lineWidth = DEFAULTS.REGION.regionLineWidth;
-        this.regionContainer.dashLength = DEFAULTS.REGION.regionDashLength;
+        this.setRegionColor(DEFAULTS.REGION.regionColor);
+        this.setRegionLineWidth(DEFAULTS.REGION.regionLineWidth);
+        this.setRegionDashLength(DEFAULTS.REGION.regionDashLength);
         this.setRegionType(DEFAULTS.REGION.regionType);
         this.setRegionCreationMode(DEFAULTS.REGION.regionCreationMode);
     };
@@ -589,21 +581,24 @@ export class PreferenceStore {
         this.contourConfig = Object.assign(DEFAULTS.CONTOUR_CONFIG);
         this.wcsOverlay = Object.assign(DEFAULTS.WCS_OVERLAY);
         this.region = Object.assign(DEFAULTS.REGION);
+        this.region.regionContainer = new RegionStore(null, -1, null, [{x: 0, y: 0}, {x: 1, y: 1}], DEFAULTS.REGION.regionType, -1);
         this.performance = Object.assign(DEFAULTS.PERFORMANCE);
-
         this.eventsLoggingEnabled = new Map<CARTA.EventType, boolean>();
         Event.EVENT_TYPES.forEach(eventType => this.eventsLoggingEnabled.set(eventType, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
-
-        this.regionCreationMode = DEFAULTS.REGION.regionCreationMode;
-        this.regionContainer = new RegionStore(null, -1, null, [{x: 0, y: 0}, {x: 1, y: 1}], DEFAULTS.REGION.regionType, -1);
-        this.regionContainer.regionType = DEFAULTS.REGION.regionType;
-        this.regionContainer.color = DEFAULTS.REGION.regionColor;
-        this.regionContainer.lineWidth = DEFAULTS.REGION.regionLineWidth;
-        this.regionContainer.dashLength = DEFAULTS.REGION.regionDashLength;
     };
 
     private initPreferenceFromServer = (preference: { [k: string]: string; }) => {
         // TODO
+    };
+
+    private initPreferenceFromLocalStorage = () => {
+        this.initGlobalFromLocalStorage();
+        this.initRenderConfigFromLocalStorage();
+        this.initContourConfigFromLocalStorage();
+        this.initWCSOverlayFromLocalStorage();
+        this.initPerformanceFromLocalStorage();
+        this.initRegionFromLocalStorage();
+        this.initLogEventsFromLocalStorage();
     };
 
     private initGlobalFromLocalStorage = () => {
@@ -692,6 +687,20 @@ export class PreferenceStore {
 
     private initRegionFromLocalStorage = () => {
         let value;
+        value = localStorage.getItem(PREFERENCE_KEYS.regionColor);
+        this.region.regionContainer.setColor(value && isColorValid(value) ? value : DEFAULTS.REGION.regionColor);
+
+        value = localStorage.getItem(PREFERENCE_KEYS.regionLineWidth);
+        this.region.regionContainer.setLineWidth(value && isFinite(Number(value)) && RegionStore.IsRegionLineWidthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionLineWidth);
+
+        value = localStorage.getItem(PREFERENCE_KEYS.regionDashLength);
+        this.region.regionContainer.setDashLength(value && isFinite(Number(value)) && RegionStore.IsRegionDashLengthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionDashLength);
+
+        value = localStorage.getItem(PREFERENCE_KEYS.regionType);
+        this.region.regionContainer.regionType = value && isFinite(Number(value)) && RegionStore.IsRegionTypeValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionType;
+
+        value = localStorage.getItem(PREFERENCE_KEYS.regionCreationMode);
+        this.region.regionCreationMode = value && RegionCreationMode.isValid(value) ? value : DEFAULTS.REGION.regionCreationMode;
     };
 
     private initPerformanceFromLocalStorage = () => {
@@ -741,31 +750,15 @@ export class PreferenceStore {
         }
     };
 
-    private initPreferenceFromLocalStorage = () => {
-        this.initGlobalFromLocalStorage();
-        this.initRenderConfigFromLocalStorage();
-        this.initContourConfigFromLocalStorage();
-        this.initWCSOverlayFromLocalStorage();
-        this.initPerformanceFromLocalStorage();
-
-        this.initLogEventsFromLocalStorage();
-
-        this.regionCreationMode = this.getRegionCreationMode();
-        this.regionContainer.regionType = this.getRegionType();
-        this.regionContainer.color = this.getRegionColor();
-        this.regionContainer.lineWidth = this.getRegionLineWidth();
-        this.regionContainer.dashLength = this.getRegionDashLength();
-    };
-
     constructor(appStore: AppStore) {
         this.appStore = appStore;
         this.initPreferenceFromDefault();
 
         autorun(() => {
             try {
-                localStorage.setItem(PREFERENCE_KEYS.regionColor, this.regionContainer.color);
-                localStorage.setItem(PREFERENCE_KEYS.regionLineWidth, this.regionContainer.lineWidth.toString(10));
-                localStorage.setItem(PREFERENCE_KEYS.regionDashLength, this.regionContainer.dashLength.toString(10));
+                localStorage.setItem(PREFERENCE_KEYS.regionColor, this.region.regionContainer.color);
+                localStorage.setItem(PREFERENCE_KEYS.regionLineWidth, this.region.regionContainer.lineWidth.toString(10));
+                localStorage.setItem(PREFERENCE_KEYS.regionDashLength, this.region.regionContainer.dashLength.toString(10));
             } catch (e) {
                 console.log("Save region settings to local storage failed!");
             }

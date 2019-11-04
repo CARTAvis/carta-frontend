@@ -383,7 +383,7 @@ export class FrameStore {
             overlay.labels.setVisible(astLabelsVisible);
         }
 
-        this.regionSet = new RegionSetStore(this, preference.regionContainer, backendService);
+        this.regionSet = new RegionSetStore(this, preference.region.regionContainer, backendService);
         this.valid = true;
         this.currentFrameView = {
             xMin: 0,

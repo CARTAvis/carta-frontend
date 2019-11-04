@@ -316,9 +316,9 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             <React.Fragment>
                 <FormGroup inline={true} label="Color">
                     <ColorPickerComponent
-                        color={preference.regionContainer.color}
+                        color={preference.getRegionColor()}
                         presetColors={RegionStore.SWATCH_COLORS}
-                        setColor={(color: ColorResult) => preference.regionContainer.setColor(color.hex)}
+                        setColor={(color: ColorResult) => preference.setRegionColor(color.hex)}
                         disableAlpha={true}
                         darkTheme={appStore.darkTheme}
                     />
@@ -328,9 +328,9 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         placeholder="Line Width"
                         min={RegionStore.MIN_LINE_WIDTH}
                         max={RegionStore.MAX_LINE_WIDTH}
-                        value={preference.regionContainer.lineWidth}
+                        value={preference.getRegionLineWidth()}
                         stepSize={0.5}
-                        onValueChange={(value: number) => preference.regionContainer.setLineWidth(Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)))}
+                        onValueChange={(value: number) => preference.setRegionLineWidth(Math.max(RegionStore.MIN_LINE_WIDTH, Math.min(RegionStore.MAX_LINE_WIDTH, value)))}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Dash Length" labelInfo="(px)">
@@ -338,19 +338,19 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         placeholder="Dash Length"
                         min={0}
                         max={RegionStore.MAX_DASH_LENGTH}
-                        value={preference.regionContainer.dashLength}
+                        value={preference.getRegionDashLength()}
                         stepSize={1}
-                        onValueChange={(value: number) => preference.regionContainer.setDashLength(Math.max(0, Math.min(RegionStore.MAX_DASH_LENGTH, value)))}
+                        onValueChange={(value: number) => preference.setRegionDashLength(Math.max(0, Math.min(RegionStore.MAX_DASH_LENGTH, value)))}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Region Type">
-                    <HTMLSelect value={preference.regionContainer.regionType} onChange={(ev) => preference.setRegionType(Number(ev.currentTarget.value))}>
+                    <HTMLSelect value={preference.getRegionType()} onChange={(ev) => preference.setRegionType(Number(ev.currentTarget.value))}>
                         {regionTypes}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Creation Mode">
                     <RadioGroup
-                        selectedValue={preference.regionCreationMode}
+                        selectedValue={preference.getRegionCreationMode()}
                         onChange={(ev) => preference.setRegionCreationMode(ev.currentTarget.value)}
                     >
                         <Radio label="Center to corner" value={RegionCreationMode.CENTER}/>
