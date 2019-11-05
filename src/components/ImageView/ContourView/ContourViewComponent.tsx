@@ -72,8 +72,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             return;
         }
 
-        const reqWidth = frame.renderWidth * devicePixelRatio;
-        const reqHeight = frame.renderHeight * devicePixelRatio;
+        const reqWidth = Math.max(1, frame.renderWidth * devicePixelRatio);
+        const reqHeight = Math.max(1, frame.renderHeight * devicePixelRatio);
         // Resize canvas if necessary
         if (this.canvas.width !== reqWidth || this.canvas.height !== reqHeight) {
             this.canvas.width = reqWidth;
@@ -206,8 +206,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                     style={{
                         top: padding.top,
                         left: padding.left,
-                        width: frame ? frame.renderWidth : 1,
-                        height: frame ? frame.renderHeight : 1
+                        width: frame ? frame.renderWidth || 1 : 1,
+                        height: frame ? frame.renderHeight || 1 : 1
                     }}
                 />
             </div>);

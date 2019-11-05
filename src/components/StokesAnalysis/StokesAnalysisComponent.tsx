@@ -22,7 +22,6 @@ type Point3D = { x: number, y: number, z?: number };
 @observer
 export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private pointDefaultColor = Colors.GRAY2;
-    private opacityInit = 1;
     private opacityOutRange = 0.1;
     private channelBorder: { xMin: number, xMax: number };
     private minProgress = 0;
@@ -39,8 +38,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             type: "stokes",
             minWidth: 320,
             minHeight: 400,
-            defaultWidth: 600,
-            defaultHeight: 800,
+            defaultWidth: 400,
+            defaultHeight: 700,
             title: "Stokes Analysis",
             isCloseable: true
         };
@@ -492,8 +491,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (!frequencyIncreases) {
             percentage = 1 - percentage;
         }
-        const index = Math.round(percentage * mapSize) * 4;  
-        return `rgba(${colorMap[index]}, ${colorMap[index + 1]}, ${colorMap[index + 2]}, ${this.opacityInit})`;
+        const index = Math.round(percentage * mapSize) * 4;
+        const opacity = this.widgetStore.pointTransparency ? this.widgetStore.pointTransparency : 1;  
+        return `rgba(${colorMap[index]}, ${colorMap[index + 1]}, ${colorMap[index + 2]}, ${opacity})`;
     }
 
     private frequencyIncreases(data: Point3D[]): boolean {
