@@ -7,45 +7,59 @@ import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, 
 import {isColorValid, parseBoolean} from "utilities";
 import {BackendService} from "services";
 
-const PREFERENCE_KEYS = {
-    theme: "theme",
-    autoLaunch: "autoLaunch",
-    layout: "layout",
-    cursorPosition: "cursorPosition",
-    zoomMode: "zoomMode",
-    dragPanning: "dragPanning",
-    scaling: "scaling",
-    colormap: "colormap",
-    percentile: "percentile",
-    scalingAlpha: "scalingAlpha",
-    scalingGamma: "scalingGamma",
-    nanColorHex: "nanColorHex",
-    nanAlpha: "nanAlpha",
-    contourSmoothingMode: "contourSmoothingMode",
-    contourSmoothingFactor: "contourSmoothingFactor",
-    contourNumLevels: "contourNumLevels",
-    contourThickness: "contourThickness",
-    contourColormapEnabled: "contourColormapEnabled",
-    contourColor: "contourColor",
-    contourColormap: "contourColormap",
-    astColor: "astColor",
-    astGridVisible: "astGridVisible",
-    astLabelsVisible: "astLabelsVisible",
-    wcsType: "wcsType",
-    regionColor: "regionColor",
-    regionLineWidth: "regionLineWidth",
-    regionDashLength: "regionDashLength",
-    regionType: "regionType",
-    regionCreationMode: "regionCreationMode",
-    imageCompressionQuality: "imageCompressionQuality",
-    animationCompressionQuality: "animationCompressionQuality",
-    GPUTileCache: "GPUTileCache",
-    systemTileCache: "systemTileCache",
-    contourDecimation: "contourDecimation",
-    contourCompressionLevel: "contourCompressionLevel",
-    contourChunkSize: "contourChunkSize",
-    streamContoursWhileZooming: "streamContoursWhileZooming",
-    logEventList: "logEventList"
+const PREFERENCE_LOCAL_STORAGE_KEYS = {
+    GLOBAL: {
+        theme: "theme",
+        autoLaunch: "autoLaunch",
+        layout: "layout",
+        cursorPosition: "cursorPosition",
+        zoomMode: "zoomMode",
+        dragPanning: "dragPanning",
+    },
+    RENDER_CONFIG: {
+        scaling: "scaling",
+        colormap: "colormap",
+        percentile: "percentile",
+        scalingAlpha: "scalingAlpha",
+        scalingGamma: "scalingGamma",
+        nanColorHex: "nanColorHex",
+        nanAlpha: "nanAlpha",
+    },
+    CONTOUR_CONFIG: {
+        contourSmoothingMode: "contourSmoothingMode",
+        contourSmoothingFactor: "contourSmoothingFactor",
+        contourNumLevels: "contourNumLevels",
+        contourThickness: "contourThickness",
+        contourColormapEnabled: "contourColormapEnabled",
+        contourColor: "contourColor",
+        contourColormap: "contourColormap",
+    },
+        WCS_OVERLAY: {
+        astColor: "astColor",
+        astGridVisible: "astGridVisible",
+        astLabelsVisible: "astLabelsVisible",
+        wcsType: "wcsType",
+    },
+    REGION: {
+        regionColor: "regionColor",
+        regionLineWidth: "regionLineWidth",
+        regionDashLength: "regionDashLength",
+        regionType: "regionType",
+        regionCreationMode: "regionCreationMode",
+    },
+    PERFORMANCE: {
+        imageCompressionQuality: "imageCompressionQuality",
+        animationCompressionQuality: "animationCompressionQuality",
+        GPUTileCache: "GPUTileCache",
+        systemTileCache: "systemTileCache",
+        contourDecimation: "contourDecimation",
+        contourCompressionLevel: "contourCompressionLevel",
+        contourChunkSize: "contourChunkSize",
+        streamContoursWhileZooming: "streamContoursWhileZooming",
+    },
+    LOG_EVENT: {
+        logEventList: "logEventList"
+    }
 };
 
 const DEFAULTS = {
@@ -367,156 +381,141 @@ export class PreferenceStore {
     // setters for global
     @action setTheme = (theme: string) => {
         this.global.theme = theme;
-        localStorage.setItem(PREFERENCE_KEYS.theme, theme);
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.GLOBAL.theme, theme);
     };
 
     @action setAutoLaunch = (autoLaunch: boolean) => {
         this.global.autoLaunch = autoLaunch;
-        localStorage.setItem(PREFERENCE_KEYS.autoLaunch, autoLaunch ? "true" : "false");
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.GLOBAL.autoLaunch, autoLaunch ? "true" : "false");
     };
 
     @action setLayout = (layout: string) => {
         this.global.layout = layout;
-        localStorage.setItem(PREFERENCE_KEYS.layout, layout);
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.GLOBAL.layout, layout);
     };
 
     @action setCursorPosition = (cursorPosition: string) => {
         this.global.cursorPosition = cursorPosition;
-        localStorage.setItem(PREFERENCE_KEYS.cursorPosition, cursorPosition);
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.GLOBAL.cursorPosition, cursorPosition);
     };
 
     @action setZoomMode = (zoomMode: string) => {
         this.global.zoomMode = zoomMode;
-        localStorage.setItem(PREFERENCE_KEYS.zoomMode, zoomMode);
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.GLOBAL.zoomMode, zoomMode);
     };
 
     @action setDragPanning = (dragPanning: boolean) => {
         this.global.dragPanning = dragPanning;
-        localStorage.setItem(PREFERENCE_KEYS.dragPanning, String(dragPanning));
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.GLOBAL.dragPanning, String(dragPanning));
     };
 
     // setters for render config
     @action setScaling = (scaling: FrameScaling) => {
         this.renderConfig.scaling = scaling;
-        localStorage.setItem(PREFERENCE_KEYS.scaling, scaling.toString(10));
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.scaling, scaling.toString(10));
     };
 
     @action setColormap = (colormap: string) => {
         this.renderConfig.colormap = colormap;
-        localStorage.setItem(PREFERENCE_KEYS.colormap, colormap);
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.colormap, colormap);
     };
 
     @action setPercentile = (percentile: number) => {
         this.renderConfig.percentile = percentile;
-        localStorage.setItem(PREFERENCE_KEYS.percentile, percentile.toString(10));
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.percentile, percentile.toString(10));
     };
 
     @action setScalingAlpha = (scalingAlpha: number) => {
         this.renderConfig.scalingAlpha = scalingAlpha;
-        localStorage.setItem(PREFERENCE_KEYS.scalingAlpha, scalingAlpha.toString(10));
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.scalingAlpha, scalingAlpha.toString(10));
     };
 
     @action setScalingGamma = (scalingGamma: number) => {
         this.renderConfig.scalingGamma = scalingGamma;
-        localStorage.setItem(PREFERENCE_KEYS.scalingGamma, scalingGamma.toString(10));
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.scalingGamma, scalingGamma.toString(10));
     };
 
     @action setNaNColorHex = (nanColorHex: string) => {
         this.renderConfig.nanColorHex = nanColorHex;
-        localStorage.setItem(PREFERENCE_KEYS.nanColorHex, nanColorHex);
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.nanColorHex, nanColorHex);
     };
 
     @action setNaNAlpha = (nanAlpha: number) => {
         this.renderConfig.nanAlpha = nanAlpha;
-        localStorage.setItem(PREFERENCE_KEYS.nanAlpha, nanAlpha.toString(10));
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.nanAlpha, nanAlpha.toString(10));
     };
 
     // setters for contours
     @action setContourSmoothingMode = (val: CARTA.SmoothingMode) => {
         this.contourConfig.contourSmoothingMode = val;
-        localStorage.setItem(PREFERENCE_KEYS.contourSmoothingMode, val.toString());
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourSmoothingMode, val.toString());
     };
 
     @action setContourSmoothingFactor = (val: number) => {
         this.contourConfig.contourSmoothingFactor = val;
-        localStorage.setItem(PREFERENCE_KEYS.contourSmoothingFactor, val.toString());
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourSmoothingFactor, val.toString());
     };
 
     @action setContourNumLevels = (val: number) => {
         this.contourConfig.contourNumLevels = val;
-        localStorage.setItem(PREFERENCE_KEYS.contourNumLevels, val.toString());
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourNumLevels, val.toString());
     };
 
     @action setContourThickness = (val: number) => {
         this.contourConfig.contourThickness = val;
-        localStorage.setItem(PREFERENCE_KEYS.contourThickness, val.toString());
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourThickness, val.toString());
     };
 
     @action setContourColor = (color: string) => {
         this.contourConfig.contourColor = color;
-        localStorage.setItem(PREFERENCE_KEYS.contourColor, color);
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourColor, color);
     };
 
     @action setContourColormapEnabled = (val: boolean) => {
         this.contourConfig.contourColormapEnabled = val;
-        localStorage.setItem(PREFERENCE_KEYS.contourColormapEnabled, String(val));
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourColormapEnabled, String(val));
     };
 
     @action setContourColormap = (colormap: string) => {
         this.contourConfig.contourColormap = colormap;
-        localStorage.setItem(PREFERENCE_KEYS.contourColormap, colormap);
-    };
-
-    @action setContourDecimation = (val: number) => {
-        this.performance.contourDecimation = val;
-        localStorage.setItem(PREFERENCE_KEYS.contourDecimation, val.toString());
-    };
-
-    @action setContourCompressionLevel = (val: number) => {
-        this.performance.contourCompressionLevel = val;
-        localStorage.setItem(PREFERENCE_KEYS.contourCompressionLevel, val.toString());
-    };
-
-    @action setContourChunkSize = (val: number) => {
-        this.performance.contourChunkSize = val;
-        localStorage.setItem(PREFERENCE_KEYS.contourChunkSize, val.toString());
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourColormap, colormap);
     };
 
     // setters for WCS overlay
     @action setASTColor = (astColor: number) => {
         this.wcsOverlay.astColor = astColor;
-        localStorage.setItem(PREFERENCE_KEYS.astColor, astColor.toString(10));
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.WCS_OVERLAY.astColor, astColor.toString(10));
     };
 
     @action setASTGridVisible = (visible: boolean) => {
         this.wcsOverlay.astGridVisible = visible;
-        localStorage.setItem(PREFERENCE_KEYS.astGridVisible, visible ? "true" : "false");
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.WCS_OVERLAY.astGridVisible, visible ? "true" : "false");
     };
 
     @action setASTLabelsVisible = (visible: boolean) => {
         this.wcsOverlay.astLabelsVisible = visible;
-        localStorage.setItem(PREFERENCE_KEYS.astLabelsVisible, visible ? "true" : "false");
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.WCS_OVERLAY.astLabelsVisible, visible ? "true" : "false");
     };
 
     @action setWCSType = (wcsType: string) => {
         this.wcsOverlay.wcsType = wcsType;
-        localStorage.setItem(PREFERENCE_KEYS.wcsType, wcsType);
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.WCS_OVERLAY.wcsType, wcsType);
     };
 
     // setters for region
     @action setRegionColor = (color: string) => {
         this.region.regionColor = color;
-        localStorage.setItem(PREFERENCE_KEYS.regionColor, color);
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.REGION.regionColor, color);
     };
 
     @action setRegionLineWidth = (lineWidth: number) => {
         this.region.regionLineWidth = lineWidth;
-        localStorage.setItem(PREFERENCE_KEYS.regionLineWidth, lineWidth.toString(10));
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.REGION.regionLineWidth, lineWidth.toString(10));
     };
 
     @action setRegionDashLength = (dashLength: number) => {
         this.region.regionDashLength = dashLength;
-        localStorage.setItem(PREFERENCE_KEYS.regionDashLength, dashLength.toString(10));
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.REGION.regionDashLength, dashLength.toString(10));
     };
 
     @action setRegionType = (regionType: CARTA.RegionType) => {
@@ -525,39 +524,54 @@ export class PreferenceStore {
         }
 
         this.region.regionType = regionType;
-        localStorage.setItem(PREFERENCE_KEYS.regionType, regionType.toString(10));
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.REGION.regionType, regionType.toString(10));
     };
 
     @action setRegionCreationMode = (regionCreationMode: string) => {
         this.region.regionCreationMode = regionCreationMode;
-        localStorage.setItem(PREFERENCE_KEYS.regionCreationMode, regionCreationMode);
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.REGION.regionCreationMode, regionCreationMode);
     };
 
     // setters for performance
     @action setImageCompressionQuality = (imageCompressionQuality: number) => {
         this.appStore.compressionQuality = imageCompressionQuality;
         this.performance.imageCompressionQuality = imageCompressionQuality;
-        localStorage.setItem(PREFERENCE_KEYS.imageCompressionQuality, imageCompressionQuality.toString(10));
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.imageCompressionQuality, imageCompressionQuality.toString(10));
     };
 
     @action setAnimationCompressionQuality = (animationCompressionQuality: number) => {
         this.performance.animationCompressionQuality = animationCompressionQuality;
-        localStorage.setItem(PREFERENCE_KEYS.animationCompressionQuality, animationCompressionQuality.toString(10));
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.animationCompressionQuality, animationCompressionQuality.toString(10));
     };
 
     @action setGPUTileCache = (GPUTileCache: number) => {
         this.performance.GPUTileCache = GPUTileCache;
-        localStorage.setItem(PREFERENCE_KEYS.GPUTileCache, GPUTileCache.toString(10));
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.GPUTileCache, GPUTileCache.toString(10));
     };
 
     @action setSystemTileCache = (systemTileCache: number) => {
         this.performance.systemTileCache = systemTileCache;
-        localStorage.setItem(PREFERENCE_KEYS.systemTileCache, systemTileCache.toString(10));
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.systemTileCache, systemTileCache.toString(10));
     };
 
     @action setStreamContoursWhileZooming = (val: boolean) => {
         this.performance.streamContoursWhileZooming = val;
-        localStorage.setItem(PREFERENCE_KEYS.streamContoursWhileZooming, String(val));
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.streamContoursWhileZooming, String(val));
+    };
+
+    @action setContourDecimation = (val: number) => {
+        this.performance.contourDecimation = val;
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.contourDecimation, val.toString());
+    };
+
+    @action setContourCompressionLevel = (val: number) => {
+        this.performance.contourCompressionLevel = val;
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.contourCompressionLevel, val.toString());
+    };
+
+    @action setContourChunkSize = (val: number) => {
+        this.performance.contourChunkSize = val;
+        localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.contourChunkSize, val.toString());
     };
 
     // reset functions
@@ -655,105 +669,105 @@ export class PreferenceStore {
 
     private initGlobalFromLocalStorage = () => {
         let value;
-        value = localStorage.getItem(PREFERENCE_KEYS.theme);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.GLOBAL.theme);
         this.setTheme(value && Theme.isValid(value) ? value : DEFAULTS.GLOBAL.theme);
-        value = localStorage.getItem(PREFERENCE_KEYS.autoLaunch);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.GLOBAL.autoLaunch);
         this.setAutoLaunch(parseBoolean(value, DEFAULTS.GLOBAL.autoLaunch));
-        value = localStorage.getItem(PREFERENCE_KEYS.layout);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.GLOBAL.layout);
         this.setLayout(value && this.appStore.layoutStore.layoutExist(value) ? value : DEFAULTS.GLOBAL.layout);
-        value = localStorage.getItem(PREFERENCE_KEYS.cursorPosition);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.GLOBAL.cursorPosition);
         this.setCursorPosition(value && CursorPosition.isValid(value) ? value : DEFAULTS.GLOBAL.cursorPosition);
-        value = localStorage.getItem(PREFERENCE_KEYS.zoomMode);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.GLOBAL.zoomMode);
         this.setZoomMode(value && Zoom.isValid(value) ? value : DEFAULTS.GLOBAL.zoomMode);
-        value = localStorage.getItem(PREFERENCE_KEYS.dragPanning);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.GLOBAL.dragPanning);
         this.setDragPanning(value === "false" ? false : DEFAULTS.GLOBAL.dragPanning);
     };
 
     private initRenderConfigFromLocalStorage = () => {
         let value;
-        value = localStorage.getItem(PREFERENCE_KEYS.scaling);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.scaling);
         this.setScaling(value && isFinite(Number(value)) && RenderConfigStore.IsScalingValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scaling);
-        value = localStorage.getItem(PREFERENCE_KEYS.colormap);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.colormap);
         this.setColormap(value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.RENDER_CONFIG.colormap);
-        value = localStorage.getItem(PREFERENCE_KEYS.percentile);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.percentile);
         this.setPercentile(value && isFinite(Number(value)) && RenderConfigStore.IsPercentileValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.percentile);
-        value = localStorage.getItem(PREFERENCE_KEYS.scalingAlpha);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.scalingAlpha);
         this.setScalingAlpha(value && isFinite(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scalingAlpha);
-        value = localStorage.getItem(PREFERENCE_KEYS.scalingGamma);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.scalingGamma);
         this.setScalingGamma(value && isFinite(Number(value)) && RenderConfigStore.IsGammaValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scalingGamma);
-        value = localStorage.getItem(PREFERENCE_KEYS.nanColorHex);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.nanColorHex);
         this.setNaNColorHex(value && isColorValid(value) ? value : DEFAULTS.RENDER_CONFIG.nanColorHex);
-        value = localStorage.getItem(PREFERENCE_KEYS.nanAlpha);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.nanAlpha);
         this.setNaNAlpha(value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1 ? Number(value) : DEFAULTS.RENDER_CONFIG.nanAlpha);
     };
 
     private initContourConfigFromLocalStorage = () => {
         let value;
-        value = localStorage.getItem(PREFERENCE_KEYS.contourSmoothingMode);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourSmoothingMode);
         this.setContourSmoothingMode(value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 2 ? Number(value) : DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode);
-        value = localStorage.getItem(PREFERENCE_KEYS.contourSmoothingFactor);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourSmoothingFactor);
         this.setContourSmoothingFactor(value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 33) ? parseInt(value) : DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor);
-        value = localStorage.getItem(PREFERENCE_KEYS.contourNumLevels);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourNumLevels);
         this.setContourNumLevels(value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 15) ? parseInt(value) : DEFAULTS.CONTOUR_CONFIG.contourNumLevels);
-        value = localStorage.getItem(PREFERENCE_KEYS.contourThickness);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourThickness);
         this.setContourThickness(value && (isFinite(parseFloat(value)) && parseFloat(value) > 0 && parseFloat(value) <= 10) ? parseFloat(value) : DEFAULTS.CONTOUR_CONFIG.contourThickness);
-        value = localStorage.getItem(PREFERENCE_KEYS.contourColor);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourColor);
         this.setContourColor(value && isColorValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColor);
-        value = localStorage.getItem(PREFERENCE_KEYS.contourColormap);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourColormap);
         this.setContourColormap(value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColormap);
-        value = localStorage.getItem(PREFERENCE_KEYS.contourColormapEnabled);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourColormapEnabled);
         this.setContourColormapEnabled(parseBoolean(value, DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled));
     };
 
     private initWCSOverlayFromLocalStorage = () => {
         let value;
-        value = localStorage.getItem(PREFERENCE_KEYS.astColor);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.WCS_OVERLAY.astColor);
         this.setASTColor(value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) < AST.colors.length ? Number(value) : DEFAULTS.WCS_OVERLAY.astColor);
-        value = localStorage.getItem(PREFERENCE_KEYS.astGridVisible);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.WCS_OVERLAY.astGridVisible);
         this.setASTGridVisible(parseBoolean(value, DEFAULTS.WCS_OVERLAY.astGridVisible));
-        value = localStorage.getItem(PREFERENCE_KEYS.astLabelsVisible);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.WCS_OVERLAY.astLabelsVisible);
         this.setASTLabelsVisible(parseBoolean(value, DEFAULTS.WCS_OVERLAY.astLabelsVisible));
-        value = localStorage.getItem(PREFERENCE_KEYS.wcsType);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.WCS_OVERLAY.wcsType);
         this.setWCSType(value && WCSType.isValid(value) ? value : DEFAULTS.WCS_OVERLAY.wcsType);
     };
 
     private initRegionFromLocalStorage = () => {
         let value;
-        value = localStorage.getItem(PREFERENCE_KEYS.regionColor);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.REGION.regionColor);
         this.setRegionColor(value && isColorValid(value) ? value : DEFAULTS.REGION.regionColor);
-        value = localStorage.getItem(PREFERENCE_KEYS.regionLineWidth);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.REGION.regionLineWidth);
         this.setRegionLineWidth(value && isFinite(Number(value)) && RegionStore.IsRegionLineWidthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionLineWidth);
-        value = localStorage.getItem(PREFERENCE_KEYS.regionDashLength);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.REGION.regionDashLength);
         this.setRegionDashLength(value && isFinite(Number(value)) && RegionStore.IsRegionDashLengthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionDashLength);
-        value = localStorage.getItem(PREFERENCE_KEYS.regionType);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.REGION.regionType);
         this.setRegionType(value && isFinite(Number(value)) && RegionStore.IsRegionTypeValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionType);
-        value = localStorage.getItem(PREFERENCE_KEYS.regionCreationMode);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.REGION.regionCreationMode);
         this.setRegionCreationMode(value && RegionCreationMode.isValid(value) ? value : DEFAULTS.REGION.regionCreationMode);
     };
 
     private initPerformanceFromLocalStorage = () => {
         let value;
-        value = localStorage.getItem(PREFERENCE_KEYS.imageCompressionQuality);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.imageCompressionQuality);
         this.setImageCompressionQuality(value && isFinite(Number(value)) && CompressionQuality.isImageCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.imageCompressionQuality);
-        value = localStorage.getItem(PREFERENCE_KEYS.animationCompressionQuality);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.animationCompressionQuality);
         this.setAnimationCompressionQuality(value && isFinite(Number(value)) && CompressionQuality.isAnimationCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.animationCompressionQuality);
-        value = localStorage.getItem(PREFERENCE_KEYS.GPUTileCache);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.GPUTileCache);
         this.setGPUTileCache(value && isFinite(Number(value)) && TileCache.isGPUTileCacheValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.GPUTileCache);
-        value = localStorage.getItem(PREFERENCE_KEYS.systemTileCache);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.systemTileCache);
         this.setSystemTileCache(value && isFinite(Number(value)) && TileCache.isSystemTileCacheValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.systemTileCache);
-        value = localStorage.getItem(PREFERENCE_KEYS.streamContoursWhileZooming);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.streamContoursWhileZooming);
         this.setStreamContoursWhileZooming(parseBoolean(value, DEFAULTS.PERFORMANCE.streamContoursWhileZooming));
-        value = localStorage.getItem(PREFERENCE_KEYS.contourDecimation);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.contourDecimation);
         this.setContourDecimation(value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 32) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourDecimation);
-        value = localStorage.getItem(PREFERENCE_KEYS.contourCompressionLevel);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.contourCompressionLevel);
         this.setContourCompressionLevel(value && (isFinite(parseInt(value)) && parseInt(value) >= 0 && parseInt(value) <= 19) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourCompressionLevel);
-        value = localStorage.getItem(PREFERENCE_KEYS.contourChunkSize);
+        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.contourChunkSize);
         this.setContourChunkSize(value && (isFinite(parseInt(value)) && parseInt(value) >= 1000 && parseInt(value) <= 1000000) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourChunkSize);
     };
 
     // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
     private initLogEventsFromLocalStorage = () => {
-        const localStorageEventList = localStorage.getItem(PREFERENCE_KEYS.logEventList);
+        const localStorageEventList = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.LOG_EVENT.logEventList);
         if (localStorageEventList && localStorageEventList.length) {
             try {
                 const eventNameList = JSON.parse(localStorageEventList);
@@ -777,7 +791,7 @@ export class PreferenceStore {
 
         autorun(() => {
             try {
-                localStorage.setItem(PREFERENCE_KEYS.logEventList, JSON.stringify(this.enabledLoggingEventNames));
+                localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.LOG_EVENT.logEventList, JSON.stringify(this.enabledLoggingEventNames));
             } catch (e) {
                 console.log("Save event list to local storage failed!");
             }
