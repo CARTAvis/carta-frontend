@@ -460,7 +460,7 @@ export class PreferenceStore {
     };
 
     @action setRegionDashLength = (dashLength: number) => {
-        this.region.regionContainer.setDashLengt(dashLength);
+        this.region.regionContainer.setDashLength(dashLength);
         localStorage.setItem(PREFERENCE_KEYS.regionDashLength, dashLength.toString(10));
     };
 
@@ -751,16 +751,6 @@ export class PreferenceStore {
     constructor(appStore: AppStore) {
         this.appStore = appStore;
         this.initPreferenceFromDefault();
-
-        autorun(() => {
-            try {
-                localStorage.setItem(PREFERENCE_KEYS.regionColor, this.region.regionContainer.color);
-                localStorage.setItem(PREFERENCE_KEYS.regionLineWidth, this.region.regionContainer.lineWidth.toString(10));
-                localStorage.setItem(PREFERENCE_KEYS.regionDashLength, this.region.regionContainer.dashLength.toString(10));
-            } catch (e) {
-                console.log("Save region settings to local storage failed!");
-            }
-        });
 
         autorun(() => {
             try {
