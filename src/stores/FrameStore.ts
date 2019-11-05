@@ -27,7 +27,6 @@ export class FrameStore {
     @observable wcsInfo: number;
     @observable validWcs: boolean;
     @observable center: Point2D;
-    @observable centerY: number;
     @observable cursorInfo: CursorInfo;
     @observable cursorValue: number;
     @observable cursorFrozen: boolean;
@@ -399,7 +398,7 @@ export class FrameStore {
         this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
 
         // need initialized wcs to get correct cursor info
-        this.cursorInfo = this.getCursorInfo({x: this.renderWidth / 2, y: this.renderHeight / 2});
+        this.cursorInfo = this.getCursorInfoImageSpace({x: 0, y: 0});
         this.cursorValue = 0;
         this.cursorFrozen = preference.isCursorFrozen;
 
@@ -470,9 +469,7 @@ export class FrameStore {
         };
     }
 
-    public getCursorInfo(cursorPosCanvasSpace: Point2D): CursorInfo {
-        const cursorPosImageSpace = this.getImagePos(cursorPosCanvasSpace.x, cursorPosCanvasSpace.y);
-
+    public getCursorInfoImageSpace(cursorPosImageSpace: Point2D) {
         let cursorPosWCS, cursorPosFormatted;
         if (this.validWcs) {
             // We need to compare X and Y coordinates in both directions
@@ -518,11 +515,15 @@ export class FrameStore {
         }
 
         return {
-            posCanvasSpace: cursorPosCanvasSpace,
             posImageSpace: cursorPosImageSpace,
             posWCS: cursorPosWCS,
             infoWCS: cursorPosFormatted,
         };
+    }
+
+    public getCursorInfoCanvasSpace(cursorPosCanvasSpace: Point2D): CursorInfo {
+        const cursorPosImageSpace = this.getImagePos(cursorPosCanvasSpace.x, cursorPosCanvasSpace.y);
+        return this.getCursorInfoImageSpace(cursorPosImageSpace);
     }
 
     @action updateFromRasterData(rasterImageData: CARTA.RasterImageData) {
