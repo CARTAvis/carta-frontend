@@ -153,7 +153,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 <FormGroup inline={true} label="Default Percentile Ranks">
                     <PercentileSelect
                         activeItem={preference.getPercentile().toString(10)}
-                        onItemSelect={(selected) => preference.setPercentile(selected)}
+                        onItemSelect={(selected) => preference.setPercentile(Number(selected))}
                         popoverProps={{minimal: true, position: "auto"}}
                         filterable={false}
                         items={RenderConfigStore.PERCENTILE_RANKS.map(String)}

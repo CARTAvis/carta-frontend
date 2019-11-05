@@ -406,9 +406,9 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.colormap, colormap);
     };
 
-    @action setPercentile = (percentile: string) => {
-        this.renderConfig.percentile = Number(percentile);
-        localStorage.setItem(PREFERENCE_KEYS.percentile, percentile);
+    @action setPercentile = (percentile: number) => {
+        this.renderConfig.percentile = percentile;
+        localStorage.setItem(PREFERENCE_KEYS.percentile, percentile.toString(10));
     };
 
     @action setScalingAlpha = (scalingAlpha: number) => {
@@ -572,7 +572,7 @@ export class PreferenceStore {
     @action resetRenderConfigSettings = () => {
         this.setScaling(DEFAULTS.RENDER_CONFIG.scaling);
         this.setColormap(DEFAULTS.RENDER_CONFIG.colormap);
-        this.setPercentile(DEFAULTS.RENDER_CONFIG.percentile.toString());
+        this.setPercentile(DEFAULTS.RENDER_CONFIG.percentile);
         this.setScalingAlpha(DEFAULTS.RENDER_CONFIG.scalingAlpha);
         this.setScalingGamma(DEFAULTS.RENDER_CONFIG.scalingGamma);
         this.setNaNColorHex(DEFAULTS.RENDER_CONFIG.nanColorHex);
@@ -672,64 +672,49 @@ export class PreferenceStore {
     private initRenderConfigFromLocalStorage = () => {
         let value;
         value = localStorage.getItem(PREFERENCE_KEYS.scaling);
-        this.renderConfig.scaling = value && isFinite(Number(value)) && RenderConfigStore.IsScalingValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scaling;
-
+        this.setScaling(value && isFinite(Number(value)) && RenderConfigStore.IsScalingValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scaling);
         value = localStorage.getItem(PREFERENCE_KEYS.colormap);
-        this.renderConfig.colormap =  value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.RENDER_CONFIG.colormap;
-
+        this.setColormap(value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.RENDER_CONFIG.colormap);
         value = localStorage.getItem(PREFERENCE_KEYS.percentile);
-        this.renderConfig.percentile = value && isFinite(Number(value)) && RenderConfigStore.IsPercentileValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.percentile;
-
+        this.setPercentile(value && isFinite(Number(value)) && RenderConfigStore.IsPercentileValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.percentile);
         value = localStorage.getItem(PREFERENCE_KEYS.scalingAlpha);
-        this.renderConfig.scalingAlpha = value && isFinite(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scalingAlpha;
-
+        this.setScalingAlpha(value && isFinite(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scalingAlpha);
         value = localStorage.getItem(PREFERENCE_KEYS.scalingGamma);
-        this.renderConfig.scalingGamma = value && isFinite(Number(value)) && RenderConfigStore.IsGammaValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scalingGamma;
-
+        this.setScalingGamma(value && isFinite(Number(value)) && RenderConfigStore.IsGammaValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scalingGamma);
         value = localStorage.getItem(PREFERENCE_KEYS.nanColorHex);
-        this.renderConfig.nanColorHex =  value && isColorValid(value) ? value : DEFAULTS.RENDER_CONFIG.nanColorHex;
-
+        this.setNaNColorHex(value && isColorValid(value) ? value : DEFAULTS.RENDER_CONFIG.nanColorHex);
         value = localStorage.getItem(PREFERENCE_KEYS.nanAlpha);
-        this.renderConfig.nanAlpha = value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1 ? Number(value) : DEFAULTS.RENDER_CONFIG.nanAlpha;
+        this.setNaNAlpha(value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1 ? Number(value) : DEFAULTS.RENDER_CONFIG.nanAlpha);
     };
 
     private initContourConfigFromLocalStorage = () => {
         let value;
         value = localStorage.getItem(PREFERENCE_KEYS.contourSmoothingMode);
-        this.contourConfig.contourSmoothingMode = value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 2 ? Number(value) : DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode;
-
+        this.setContourSmoothingMode(value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 2 ? Number(value) : DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode);
         value = localStorage.getItem(PREFERENCE_KEYS.contourSmoothingFactor);
-        this.contourConfig.contourSmoothingFactor = value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 33) ? parseInt(value) : DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor;
-
+        this.setContourSmoothingFactor(value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 33) ? parseInt(value) : DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor);
         value = localStorage.getItem(PREFERENCE_KEYS.contourNumLevels);
-        this.contourConfig.contourNumLevels = value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 15) ? parseInt(value) : DEFAULTS.CONTOUR_CONFIG.contourNumLevels;
-
+        this.setContourNumLevels(value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 15) ? parseInt(value) : DEFAULTS.CONTOUR_CONFIG.contourNumLevels);
         value = localStorage.getItem(PREFERENCE_KEYS.contourThickness);
-        this.contourConfig.contourThickness = value && (isFinite(parseFloat(value)) && parseFloat(value) > 0 && parseFloat(value) <= 10) ? parseFloat(value) : DEFAULTS.CONTOUR_CONFIG.contourThickness;
-
+        this.setContourThickness(value && (isFinite(parseFloat(value)) && parseFloat(value) > 0 && parseFloat(value) <= 10) ? parseFloat(value) : DEFAULTS.CONTOUR_CONFIG.contourThickness);
         value = localStorage.getItem(PREFERENCE_KEYS.contourColor);
-        this.contourConfig.contourColor = value && isColorValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColor;
-
+        this.setContourColor(value && isColorValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColor);
         value = localStorage.getItem(PREFERENCE_KEYS.contourColormap);
-        this.contourConfig.contourColormap = value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColormap;
-
+        this.setContourColormap(value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColormap);
         value = localStorage.getItem(PREFERENCE_KEYS.contourColormapEnabled);
-        this.contourConfig.contourColormapEnabled = parseBoolean(value, DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled);
+        this.setContourColormapEnabled(parseBoolean(value, DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled));
     };
 
     private initWCSOverlayFromLocalStorage = () => {
         let value;
         value = localStorage.getItem(PREFERENCE_KEYS.astColor);
-        this.wcsOverlay.astColor = value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) < AST.colors.length ? Number(value) : DEFAULTS.WCS_OVERLAY.astColor;
-
+        this.setASTColor(value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) < AST.colors.length ? Number(value) : DEFAULTS.WCS_OVERLAY.astColor);
         value = localStorage.getItem(PREFERENCE_KEYS.astGridVisible);
-        this.wcsOverlay.astGridVisible = parseBoolean(value, DEFAULTS.WCS_OVERLAY.astGridVisible);
-
+        this.setASTGridVisible(parseBoolean(value, DEFAULTS.WCS_OVERLAY.astGridVisible));
         value = localStorage.getItem(PREFERENCE_KEYS.astLabelsVisible);
-        this.wcsOverlay.astLabelsVisible = parseBoolean(value, DEFAULTS.WCS_OVERLAY.astLabelsVisible);
-
+        this.setASTLabelsVisible(parseBoolean(value, DEFAULTS.WCS_OVERLAY.astLabelsVisible));
         value = localStorage.getItem(PREFERENCE_KEYS.wcsType);
-        this.wcsOverlay.wcsType = value && WCSType.isValid(value) ? value : DEFAULTS.WCS_OVERLAY.wcsType;
+        this.setWCSType(value && WCSType.isValid(value) ? value : DEFAULTS.WCS_OVERLAY.wcsType);
     };
 
     private initRegionFromLocalStorage = () => {
@@ -749,28 +734,21 @@ export class PreferenceStore {
     private initPerformanceFromLocalStorage = () => {
         let value;
         value = localStorage.getItem(PREFERENCE_KEYS.imageCompressionQuality);
-        this.performance.imageCompressionQuality = value && isFinite(Number(value)) && CompressionQuality.isImageCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.imageCompressionQuality;
-
+        this.setImageCompressionQuality(value && isFinite(Number(value)) && CompressionQuality.isImageCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.imageCompressionQuality);
         value = localStorage.getItem(PREFERENCE_KEYS.animationCompressionQuality);
-        this.performance.animationCompressionQuality = value && isFinite(Number(value)) && CompressionQuality.isAnimationCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.animationCompressionQuality;
-
+        this.setAnimationCompressionQuality(value && isFinite(Number(value)) && CompressionQuality.isAnimationCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.animationCompressionQuality);
         value = localStorage.getItem(PREFERENCE_KEYS.GPUTileCache);
-        this.performance.GPUTileCache = value && isFinite(Number(value)) && TileCache.isGPUTileCacheValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.GPUTileCache;
-
+        this.setGPUTileCache(value && isFinite(Number(value)) && TileCache.isGPUTileCacheValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.GPUTileCache);
         value = localStorage.getItem(PREFERENCE_KEYS.systemTileCache);
-        this.performance.systemTileCache = value && isFinite(Number(value)) && TileCache.isSystemTileCacheValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.systemTileCache;
-
+        this.setSystemTileCache(value && isFinite(Number(value)) && TileCache.isSystemTileCacheValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.systemTileCache);
         value = localStorage.getItem(PREFERENCE_KEYS.streamContoursWhileZooming);
-        this.performance.streamContoursWhileZooming = parseBoolean(value, DEFAULTS.PERFORMANCE.streamContoursWhileZooming);
-
+        this.setStreamContoursWhileZooming(parseBoolean(value, DEFAULTS.PERFORMANCE.streamContoursWhileZooming));
         value = localStorage.getItem(PREFERENCE_KEYS.contourDecimation);
-        this.performance.contourDecimation = value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 32) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourDecimation;
-
+        this.setContourDecimation(value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 32) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourDecimation);
         value = localStorage.getItem(PREFERENCE_KEYS.contourCompressionLevel);
-        this.performance.contourCompressionLevel = value && (isFinite(parseInt(value)) && parseInt(value) >= 0 && parseInt(value) <= 19) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourCompressionLevel;
-
+        this.setContourCompressionLevel(value && (isFinite(parseInt(value)) && parseInt(value) >= 0 && parseInt(value) <= 19) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourCompressionLevel);
         value = localStorage.getItem(PREFERENCE_KEYS.contourChunkSize);
-        this.performance.contourChunkSize = value && (isFinite(parseInt(value)) && parseInt(value) >= 1000 && parseInt(value) <= 1000000) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourChunkSize;
+        this.setContourChunkSize(value && (isFinite(parseInt(value)) && parseInt(value) >= 1000 && parseInt(value) <= 1000000) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourChunkSize);
     };
 
     // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
