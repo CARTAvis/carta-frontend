@@ -16,12 +16,11 @@ export const INVALID_ANIMATION_ID = -1;
 type HandlerFunction = (eventId: number, parsedMessage: any) => void;
 
 export class BackendService {
-    private static readonly IcdVersion = 10;
+    private static readonly IcdVersion = 11;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     @observable loggingEnabled: boolean;
     @observable connectionDropped: boolean;
-    @observable sessionId: number;
     @observable endToEndPing: number;
 
     private connection: WebSocket;
@@ -31,6 +30,7 @@ export class BackendService {
     private observerRequestMap: Map<number, Observer<any>>;
     private eventCounter: number;
     private animationId: number;
+    private sessionId: number;
     private readonly rasterStream: Subject<CARTA.RasterImageData>;
     private readonly rasterTileStream: Subject<CARTA.RasterTileData>;
     private readonly histogramStream: Subject<CARTA.RegionHistogramData>;
@@ -52,6 +52,7 @@ export class BackendService {
         this.loggingEnabled = true;
         this.observerRequestMap = new Map<number, Observer<any>>();
         this.eventCounter = 1;
+        this.sessionId = 0;
         this.endToEndPing = NaN;
         this.animationId = INVALID_ANIMATION_ID;
         this.connectionStatus = ConnectionStatus.CLOSED;
@@ -71,7 +72,7 @@ export class BackendService {
 
         // Construct handler and decoder maps
         this.handlerMap = new Map<CARTA.EventType, HandlerFunction>([
-            [CARTA.EventType.REGISTER_VIEWER_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.REGISTER_VIEWER_ACK, this.onRegisterViewerAck],
             [CARTA.EventType.FILE_LIST_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.REGION_LIST_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
@@ -194,7 +195,7 @@ export class BackendService {
                 }
                 this.connectionStatus = ConnectionStatus.ACTIVE;
                 this.autoReconnect = true;
-                const message = CARTA.RegisterViewer.create({sessionId: 0, clientFeatureFlags: BackendService.DefaultFeatureFlags});
+                const message = CARTA.RegisterViewer.create({sessionId: this.sessionId, clientFeatureFlags: BackendService.DefaultFeatureFlags});
                 const requestId = this.eventCounter;
                 this.logEvent(CARTA.EventType.REGISTER_VIEWER, requestId, message, false);
                 if (this.sendEvent(CARTA.EventType.REGISTER_VIEWER, CARTA.RegisterViewer.encode(message).finish())) {
@@ -205,11 +206,6 @@ export class BackendService {
             };
 
             this.connection.onerror = (ev => observer.error(ev));
-        });
-
-        obs.subscribe(ack => {
-            console.log(`Connected with session ID ${ack.sessionId}`);
-            this.sessionId = ack.sessionId;
         });
 
         return obs;
@@ -641,6 +637,11 @@ export class BackendService {
         } else {
             console.log(`Can't find observable for request ${eventId}`);
         }
+    }
+
+    private onRegisterViewerAck(eventId: number, ack: CARTA.RegisterViewerAck) {
+        this.sessionId = ack.sessionId;
+        this.onSimpleMappedResponse(eventId, ack);
     }
 
     private onStartAnimationAck(eventId: number, ack: CARTA.StartAnimationAck) {
