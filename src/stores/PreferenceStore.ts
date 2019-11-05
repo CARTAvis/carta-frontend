@@ -2,10 +2,8 @@ import {observable, computed, action, autorun} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import * as _ from "lodash";
-import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
+import {AppStore, FrameScaling, RenderConfigStore, RegionStore} from "stores";
 import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
-import {AppStore} from "stores";
 import {isColorValid, parseBoolean} from "utilities";
 import {BackendService} from "services";
 
