@@ -2,7 +2,7 @@ import {action, computed, observable, autorun} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {ASTSettingsString, PreferenceStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore, ContourConfigStore, ContourStore} from "stores";
+import {ASTSettingsString, PreferenceStore, OverlayStore, LogStore, RegionStore, RegionSetStore, RenderConfigStore, ContourConfigStore, ContourStore} from "stores";
 import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES, ProtobufProcessing} from "models";
 import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency, toFixed, hexStringToRgba} from "utilities";
 import {BackendService} from "services";
@@ -382,7 +382,7 @@ export class FrameStore {
             overlay.labels.setVisible(astLabelsVisible);
         }
 
-        this.regionSet = new RegionSetStore(this, preference.region.regionContainer, backendService);
+        this.regionSet = new RegionSetStore(this, preference, backendService);
         this.valid = true;
         this.currentFrameView = {
             xMin: 0,

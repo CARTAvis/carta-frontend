@@ -103,18 +103,73 @@ const DEFAULTS = {
     }
 };
 
+interface Global {
+    theme: string;
+    autoLaunch: boolean;
+    layout: string;
+    cursorPosition: string;
+    zoomMode: string;
+    dragPanning: boolean;
+}
+
+interface RenderConfig {
+    scaling: FrameScaling;
+    colormap: string;
+    percentile: number;
+    scalingAlpha: number;
+    scalingGamma: number;
+    nanColorHex: string;
+    nanAlpha: number;
+}
+
+interface ContourConfig {
+    contourSmoothingMode: CARTA.SmoothingMode;
+    contourSmoothingFactor: number;
+    contourNumLevels: number;
+    contourThickness: number;
+    contourColormapEnabled: boolean;
+    contourColor: string;
+    contourColormap: string;
+}
+
+interface WCSOverlay {
+    astColor: number;
+    astGridVisible: boolean;
+    astLabelsVisible: boolean;
+    wcsType: string;
+}
+
+interface Region {
+    regionColor: string;
+    regionLineWidth: number;
+    regionDashLength: number;
+    regionType: CARTA.RegionType;
+    regionCreationMode: string;
+}
+
+interface Performance {
+    imageCompressionQuality: number;
+    animationCompressionQuality: number;
+    GPUTileCache: number;
+    systemTileCache: number;
+    contourDecimation: number;
+    contourCompressionLevel: number;
+    contourChunkSize: number;
+    streamContoursWhileZooming: boolean;
+}
+
 export class PreferenceStore {
     private readonly appStore: AppStore;
     private readonly backendService: BackendService;
     private serverSupport: boolean;
 
     @observable preference: any;
-    @observable global: any;
-    @observable renderConfig: any;
-    @observable contourConfig: any;
-    @observable wcsOverlay: any;
-    @observable region: any;
-    @observable performance: any;
+    @observable global: Global;
+    @observable renderConfig: RenderConfig;
+    @observable contourConfig: ContourConfig;
+    @observable wcsOverlay: WCSOverlay;
+    @observable region: Region;
+    @observable performance: Performance;
     @observable eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
 
     // TODO: all getters need to prevent sending null!
@@ -230,21 +285,21 @@ export class PreferenceStore {
         return this.wcsOverlay.wcsType;
     };
 
-    // getters for region // TODO: check return this.region or this.region.regioncontainer
+    // getters for region
     public getRegionColor = (): string => {
-        return this.region.regionContainer.color;
+        return this.region.regionColor;
     };
 
     public getRegionLineWidth = (): number => {
-        return this.region.regionContainer.lineWidth;
+        return this.region.regionLineWidth;
     };
 
     public getRegionDashLength = (): number => {
-        return this.region.regionContainer.dashLength;
+        return this.region.regionDashLength;
     };
 
     public getRegionType = (): CARTA.RegionType => {
-        return this.region.regionContainer.regionType;
+        return this.region.regionType;
     };
 
     public getRegionCreationMode = (): string => {
@@ -268,7 +323,7 @@ export class PreferenceStore {
         return this.performance.systemTileCache;
     };
 
-    public getStreamTilesWhileZooming = (): boolean => {
+    public getStreamContoursWhileZooming = (): boolean => {
         return this.performance.streamContoursWhileZooming;
     };
 
@@ -450,17 +505,17 @@ export class PreferenceStore {
 
     // setters for region
     @action setRegionColor = (color: string) => {
-        this.region.regionContainer.setColor(color);
+        this.region.regionColor = color;
         localStorage.setItem(PREFERENCE_KEYS.regionColor, color);
     };
 
     @action setRegionLineWidth = (lineWidth: number) => {
-        this.region.regionContainer.setLineWidth(lineWidth);
+        this.region.regionLineWidth = lineWidth;
         localStorage.setItem(PREFERENCE_KEYS.regionLineWidth, lineWidth.toString(10));
     };
 
     @action setRegionDashLength = (dashLength: number) => {
-        this.region.regionContainer.setDashLength(dashLength);
+        this.region.regionDashLength = dashLength;
         localStorage.setItem(PREFERENCE_KEYS.regionDashLength, dashLength.toString(10));
     };
 
@@ -469,7 +524,7 @@ export class PreferenceStore {
             this.appStore.activeFrame.regionSet.setNewRegionType(regionType);
         }
 
-        this.region.regionContainer.regionType = regionType;
+        this.region.regionType = regionType;
         localStorage.setItem(PREFERENCE_KEYS.regionType, regionType.toString(10));
     };
 
@@ -501,7 +556,7 @@ export class PreferenceStore {
     };
 
     @action setStreamContoursWhileZooming = (val: boolean) => {
-        this.performance.streamTilesWhileZooming = val;
+        this.performance.streamContoursWhileZooming = val;
         localStorage.setItem(PREFERENCE_KEYS.streamContoursWhileZooming, String(val));
     };
 
@@ -579,7 +634,6 @@ export class PreferenceStore {
         this.contourConfig = Object.assign(DEFAULTS.CONTOUR_CONFIG);
         this.wcsOverlay = Object.assign(DEFAULTS.WCS_OVERLAY);
         this.region = Object.assign(DEFAULTS.REGION);
-        this.region.regionContainer = new RegionStore(null, -1, null, [{x: 0, y: 0}, {x: 1, y: 1}], DEFAULTS.REGION.regionType, -1);
         this.performance = Object.assign(DEFAULTS.PERFORMANCE);
         this.eventsLoggingEnabled = new Map<CARTA.EventType, boolean>();
         Event.EVENT_TYPES.forEach(eventType => this.eventsLoggingEnabled.set(eventType, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
@@ -602,22 +656,17 @@ export class PreferenceStore {
     private initGlobalFromLocalStorage = () => {
         let value;
         value = localStorage.getItem(PREFERENCE_KEYS.theme);
-        this.global.theme = value && Theme.isValid(value) ? value : DEFAULTS.GLOBAL.theme;
-
+        this.setTheme(value && Theme.isValid(value) ? value : DEFAULTS.GLOBAL.theme);
         value = localStorage.getItem(PREFERENCE_KEYS.autoLaunch);
-        this.global.autoLaunch = parseBoolean(value, DEFAULTS.GLOBAL.autoLaunch);
-
+        this.setAutoLaunch(parseBoolean(value, DEFAULTS.GLOBAL.autoLaunch));
         value = localStorage.getItem(PREFERENCE_KEYS.layout);
-        this.global.layout = value && this.appStore.layoutStore.layoutExist(value) ? value : DEFAULTS.GLOBAL.layout;
-
+        this.setLayout(value && this.appStore.layoutStore.layoutExist(value) ? value : DEFAULTS.GLOBAL.layout);
         value = localStorage.getItem(PREFERENCE_KEYS.cursorPosition);
-        this.global.cursorPosition = value && CursorPosition.isValid(value) ? value : DEFAULTS.GLOBAL.cursorPosition;
-
+        this.setCursorPosition(value && CursorPosition.isValid(value) ? value : DEFAULTS.GLOBAL.cursorPosition);
         value = localStorage.getItem(PREFERENCE_KEYS.zoomMode);
-        this.global.zoomMode = value && Zoom.isValid(value) ? value : DEFAULTS.GLOBAL.zoomMode;
-
+        this.setZoomMode(value && Zoom.isValid(value) ? value : DEFAULTS.GLOBAL.zoomMode);
         value = localStorage.getItem(PREFERENCE_KEYS.dragPanning);
-        this.global.dragPanning = value === "false" ? false : DEFAULTS.GLOBAL.dragPanning;
+        this.setDragPanning(value === "false" ? false : DEFAULTS.GLOBAL.dragPanning);
     };
 
     private initRenderConfigFromLocalStorage = () => {
@@ -662,7 +711,7 @@ export class PreferenceStore {
         this.contourConfig.contourColor = value && isColorValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColor;
 
         value = localStorage.getItem(PREFERENCE_KEYS.contourColormap);
-        this.contourConfig.colormap = value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColormap;
+        this.contourConfig.contourColormap = value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColormap;
 
         value = localStorage.getItem(PREFERENCE_KEYS.contourColormapEnabled);
         this.contourConfig.contourColormapEnabled = parseBoolean(value, DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled);
@@ -686,19 +735,15 @@ export class PreferenceStore {
     private initRegionFromLocalStorage = () => {
         let value;
         value = localStorage.getItem(PREFERENCE_KEYS.regionColor);
-        this.region.regionContainer.setColor(value && isColorValid(value) ? value : DEFAULTS.REGION.regionColor);
-
+        this.setRegionColor(value && isColorValid(value) ? value : DEFAULTS.REGION.regionColor);
         value = localStorage.getItem(PREFERENCE_KEYS.regionLineWidth);
-        this.region.regionContainer.setLineWidth(value && isFinite(Number(value)) && RegionStore.IsRegionLineWidthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionLineWidth);
-
+        this.setRegionLineWidth(value && isFinite(Number(value)) && RegionStore.IsRegionLineWidthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionLineWidth);
         value = localStorage.getItem(PREFERENCE_KEYS.regionDashLength);
-        this.region.regionContainer.setDashLength(value && isFinite(Number(value)) && RegionStore.IsRegionDashLengthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionDashLength);
-
+        this.setRegionDashLength(value && isFinite(Number(value)) && RegionStore.IsRegionDashLengthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionDashLength);
         value = localStorage.getItem(PREFERENCE_KEYS.regionType);
-        this.region.regionContainer.regionType = value && isFinite(Number(value)) && RegionStore.IsRegionTypeValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionType;
-
+        this.setRegionType(value && isFinite(Number(value)) && RegionStore.IsRegionTypeValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionType);
         value = localStorage.getItem(PREFERENCE_KEYS.regionCreationMode);
-        this.region.regionCreationMode = value && RegionCreationMode.isValid(value) ? value : DEFAULTS.REGION.regionCreationMode;
+        this.setRegionCreationMode(value && RegionCreationMode.isValid(value) ? value : DEFAULTS.REGION.regionCreationMode);
     };
 
     private initPerformanceFromLocalStorage = () => {

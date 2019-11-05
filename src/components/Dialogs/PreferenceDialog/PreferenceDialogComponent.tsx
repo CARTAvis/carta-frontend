@@ -437,7 +437,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Stream image tiles while zooming">
-                    <Switch checked={preference.getStreamTilesWhileZooming()} onChange={(ev) => preference.setStreamContoursWhileZooming(ev.currentTarget.checked)}/>
+                    <Switch checked={preference.getStreamContoursWhileZooming()} onChange={(ev) => preference.setStreamContoursWhileZooming(ev.currentTarget.checked)}/>
                 </FormGroup>
             </React.Fragment>
         );

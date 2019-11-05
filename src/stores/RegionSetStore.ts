@@ -1,6 +1,6 @@
 import {action, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {CURSOR_REGION_ID, FrameStore, RegionStore} from "stores";
+import {CURSOR_REGION_ID, FrameStore, PreferenceStore, RegionStore} from "stores";
 import {Point2D} from "models";
 import {BackendService} from "../services";
 
@@ -17,14 +17,14 @@ export class RegionSetStore {
 
     private frame: FrameStore;
     private readonly backendService: BackendService;
-    private readonly regionPreference: RegionStore;
+    private readonly preference: PreferenceStore;
 
-    constructor(frame: FrameStore, regionPreference: RegionStore, backendService: BackendService) {
+    constructor(frame: FrameStore, preference: PreferenceStore, backendService: BackendService) {
         this.frame = frame;
         this.backendService = backendService;
-        this.regionPreference = regionPreference;
+        this.preference = preference;
         this.regions = [];
-        this.newRegionType = regionPreference.regionType;
+        this.newRegionType = preference.getRegionType();
         this.mode = RegionMode.MOVING;
         this.addPointRegion({x: 0, y: 0}, true);
         this.selectedRegion = this.regions[0];
@@ -62,7 +62,7 @@ export class RegionSetStore {
 
     private addRegion(points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId()) {
         const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, this.frame, points, regionType, regionId,
-            this.regionPreference.color, this.regionPreference.lineWidth, this.regionPreference.dashLength, rotation);
+            this.preference.getRegionColor(), this.preference.getRegionLineWidth(), this.preference.getRegionDashLength(), rotation);
         this.regions.push(region);
         if (!temporary) {
             this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
