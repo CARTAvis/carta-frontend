@@ -499,6 +499,9 @@ export class PreferenceStore {
             case PreferenceKeys.GLOBAL_THEME:
                 this.global.theme = value;
                 break;
+            case PreferenceKeys.GLOBAL_AUTOLAUNCH:
+                this.global.autoLaunch = value;
+                break;
             case PreferenceKeys.GLOBAL_LAYOUT:
                 this.global.layout = value;
                 break;
@@ -508,11 +511,44 @@ export class PreferenceStore {
             case PreferenceKeys.GLOBAL_ZOOM_MODE:
                 this.global.zoomMode = value;
                 break;
+            case PreferenceKeys.GLOBAL_DRAG_PANNING:
+                this.global.dragPanning = value;
+                break;
+            case PreferenceKeys.RENDER_CONFIG_SCALING:
+                this.renderConfig.scaling = value;
+                break;
             case PreferenceKeys.RENDER_CONFIG_COLORMAP:
                 this.renderConfig.colormap = value;
                 break;
+            case PreferenceKeys.RENDER_CONFIG_PERCENTILE:
+                this.renderConfig.percentile = value;
+                break;
+            case PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA:
+                this.renderConfig.scalingAlpha = value;
+                break;
+            case PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA:
+                this.renderConfig.scalingGamma = value;
+                break;
             case PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX:
                 this.renderConfig.nanColorHex = value;
+                break;
+            case PreferenceKeys.RENDER_CONFIG_NAN_ALPHA:
+                this.renderConfig.nanAlpha = value;
+                break;
+            case PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE:
+                this.contourConfig.contourSmoothingMode = value;
+                break;
+            case PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR:
+                this.contourConfig.contourSmoothingFactor = value;
+                break;
+            case PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS:
+                this.contourConfig.contourNumLevels = value;
+                break;
+            case PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS:
+                this.contourConfig.contourThickness = value;
+                break;
+            case PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED:
+                this.contourConfig.contourColormapEnabled = value;
                 break;
             case PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR:
                 this.contourConfig.contourColor = value;
@@ -520,14 +556,56 @@ export class PreferenceStore {
             case PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP:
                 this.contourConfig.contourColormap = value;
                 break;
+            case PreferenceKeys.WCS_OVERLAY_AST_COLOR:
+                this.wcsOverlay.astColor = value;
+                break;
+            case PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE:
+                this.wcsOverlay.astGridVisible = value;
+                break;
+            case PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE:
+                this.wcsOverlay.astLabelsVisible = value;
+                break;
             case PreferenceKeys.WCS_OVERLAY_WCS_TYPE:
                 this.wcsOverlay.wcsType = value;
                 break;
             case PreferenceKeys.REGION_COLOR:
                 this.region.regionColor = value;
                 break;
+            case PreferenceKeys.REGION_LINE_WIDTH:
+                this.region.regionLineWidth = value;
+                break;
+            case PreferenceKeys.REGION_DASH_LENGTH:
+                this.region.regionDashLength = value;
+                break;
+            case PreferenceKeys.REGION_TYPE:
+                this.region.regionType = value;
+                break;
             case PreferenceKeys.REGION_CREATION_MODE:
                 this.region.regionCreationMode = value;
+                break;
+            case PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY:
+                this.performance.imageCompressionQuality = value;
+                break;
+            case PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY:
+                this.performance.animationCompressionQuality = value;
+                break;
+            case PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE:
+                this.performance.GPUTileCache = value;
+                break;
+            case PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE:
+                this.performance.systemTileCache = value;
+                break;
+            case PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION:
+                this.performance.contourDecimation = value;
+                break;
+            case PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL:
+                this.performance.contourCompressionLevel = value;
+                break;
+            case PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE:
+                this.performance.contourChunkSize = value;
+                break;
+            case PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING:
+                this.performance.streamContoursWhileZooming = value;
                 break;
             default:
                 return;
@@ -552,6 +630,7 @@ export class PreferenceStore {
         }
     };
 
+    /*
     // setters for global
     @action setTheme = (theme: string) => {
         this.global.theme = theme;
@@ -747,6 +826,7 @@ export class PreferenceStore {
         this.performance.contourChunkSize = val;
         localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.contourChunkSize, val.toString());
     };
+    */
 
     // reset functions
     @action resetGlobalSettings = () => {
