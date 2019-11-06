@@ -494,10 +494,38 @@ export class PreferenceStore {
             case PreferenceKeys.GLOBAL_THEME:
                 this.global.theme = value;
                 break;
+            case PreferenceKeys.GLOBAL_LAYOUT:
+                this.global.layout = value;
+                break;
+            case PreferenceKeys.GLOBAL_CURSOR_POSITION:
+                this.global.cursorPosition = value;
+                break;
+            case PreferenceKeys.GLOBAL_ZOOM_MODE:
+                this.global.zoomMode = value;
+                break;
             case PreferenceKeys.RENDER_CONFIG_COLORMAP:
                 this.renderConfig.colormap = value;
                 break;
+            case PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX:
+                this.renderConfig.nanColorHex = value;
+                break;
+            case PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR:
+                this.contourConfig.contourColor = value;
+                break;
+            case PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP:
+                this.contourConfig.contourColormap = value;
+                break;
+            case PreferenceKeys.WCS_OVERLAY_WCS_TYPE:
+                this.wcsOverlay.wcsType = value;
+                break;
+            case PreferenceKeys.REGION_COLOR:
+                this.region.regionColor = value;
+                break;
+            case PreferenceKeys.REGION_CREATION_MODE:
+                this.region.regionCreationMode = value;
+                break;
             default:
+                return;
         }
 
         if (this.serverSupport) {
