@@ -7,6 +7,101 @@ import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, 
 import {isColorValid, parseBoolean} from "utilities";
 import {BackendService} from "services";
 
+export enum PreferenceKeys {
+    GLOBAL_THEME,
+    GLOBAL_AUTOLAUNCH,
+    GLOBAL_LAYOUT,
+    GLOBAL_CURSOR_POSITION,
+    GLOBAL_ZOOM_MODE,
+    GLOBAL_DRAG_PANNING,
+
+    RENDER_CONFIG_SCALING,
+    RENDER_CONFIG_COLORMAP,
+    RENDER_CONFIG_PERCENTILE,
+    RENDER_CONFIG_SCALING_ALPHA,
+    RENDER_CONFIG_SCALING_GAMMA,
+    RENDER_CONFIG_NAN_COLOR_HEX,
+    RENDER_CONFIG_NAN_ALPHA,
+
+    CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE,
+    CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR,
+    CONTOUR_CONFIG_CONTOUR_NUM_LEVELS,
+    CONTOUR_CONFIG_CONTOUR_THICKNESS,
+    CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED,
+    CONTOUR_CONFIG_CONTOUR_COLOR,
+    CONTOUR_CONFIG_CONTOUR_COLORMAP,
+
+    WCS_OVERLAY_AST_COLOR,
+    WCS_OVERLAY_AST_GRID_VISIBLE,
+    WCS_OVERLAY_AST_LABELS_VISIBLE,
+    WCS_OVERLAY_WCS_TYPE,
+
+    REGION_COLOR,
+    REGION_LINE_WIDTH,
+    REGION_DASH_LENGTH,
+    REGION_TYPE,
+    REGION_CREATION_MODE,
+
+    PERFORMANCE_IMAGE_COMPRESSION_QUALITY,
+    PERFORMANCE_ANIMATION_COMPRESSION_QUALITY,
+    PERFORMANCE_GPU_TILE_CACHE,
+    PERFORMANCE_SYSTEM_TILE_CACHE,
+    PERFORMANCE_CONTOUR_DECIMATION,
+    PERFORMANCE_CONTOUR_COMPRESSION_LEVEL,
+    PERFORMANCE_CONTOUR_CHUNK_SIZE,
+    PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
+
+    LOG_EVENT
+}
+
+const LOCAL_STORAGE_KEYS = new Map<PreferenceKeys, string>([
+    [PreferenceKeys.GLOBAL_THEME, "theme"],
+    [PreferenceKeys.GLOBAL_AUTOLAUNCH, "autoLaunch"],
+    [PreferenceKeys.GLOBAL_LAYOUT, "layout"],
+    [PreferenceKeys.GLOBAL_CURSOR_POSITION, "cursorPosition"],
+    [PreferenceKeys.GLOBAL_ZOOM_MODE, "zoomMode"],
+    [PreferenceKeys.GLOBAL_DRAG_PANNING, "dragPanning"],
+
+    [PreferenceKeys.RENDER_CONFIG_SCALING, "scaling"],
+    [PreferenceKeys.RENDER_CONFIG_COLORMAP, "colormap"],
+    [PreferenceKeys.RENDER_CONFIG_PERCENTILE, "percentile"],
+    [PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, "scalingAlpha"],
+    [PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, "scalingGamma"],
+    [PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, "nanColorHex"],
+    [PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, "nanAlpha"],
+
+    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE, "contourSmoothingMode"],
+    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, "contourSmoothingFactor"],
+    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS, "contourNumLevels"],
+    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS, "contourThickness"],
+    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED, "contourColormapEnabled"],
+    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, "contourColor"],
+    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP, "contourColormap"],
+
+    [PreferenceKeys.WCS_OVERLAY_AST_COLOR, "astColor"],
+    [PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, "astGridVisible"],
+    [PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, "astLabelsVisible"],
+    [PreferenceKeys.WCS_OVERLAY_WCS_TYPE, "wcsType"],
+
+    [PreferenceKeys.REGION_COLOR, "regionColor"],
+    [PreferenceKeys.REGION_LINE_WIDTH, "regionLineWidth"],
+    [PreferenceKeys.REGION_DASH_LENGTH, "regionDashLength"],
+    [PreferenceKeys.REGION_TYPE, "regionType"],
+    [PreferenceKeys.REGION_CREATION_MODE, "regionCreationMode"],
+
+    [PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, "imageCompressionQuality"],
+    [PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY, "animationCompressionQuality"],
+    [PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE, "GPUTileCache"],
+    [PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, "systemTileCache"],
+    [PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION, "contourDecimation"],
+    [PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL, "contourCompressionLevel"],
+    [PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, "contourChunkSize"],
+    [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, "streamContoursWhileZooming"],
+
+    [PreferenceKeys.LOG_EVENT, "logEventList"]
+]);
+
+/*
 const PREFERENCE_LOCAL_STORAGE_KEYS = {
     GLOBAL: {
         theme: "theme",
@@ -61,6 +156,7 @@ const PREFERENCE_LOCAL_STORAGE_KEYS = {
         logEventList: "logEventList"
     }
 };
+*/
 
 const DEFAULTS = {
     GLOBAL: {
@@ -172,12 +268,22 @@ interface Performance {
     streamContoursWhileZooming: boolean;
 }
 
+interface Preference {
+    global: Global;
+    renderConfig: RenderConfig;
+    contourConfig: ContourConfig;
+    wcsOverlay: WCSOverlay;
+    region: Region;
+    performance: Performance;
+    eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
+}
+
 export class PreferenceStore {
     private readonly appStore: AppStore;
     private readonly backendService: BackendService;
     private serverSupport: boolean;
 
-    @observable preference: any;
+    @observable preference: Preference;
     @observable global: Global;
     @observable renderConfig: RenderConfig;
     @observable contourConfig: ContourConfig;
@@ -186,7 +292,6 @@ export class PreferenceStore {
     @observable performance: Performance;
     @observable eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
 
-    // TODO: all getters need to prevent sending null!
     // getters for global settings
     public getTheme = (): string => {
         return this.global.theme;
@@ -377,6 +482,30 @@ export class PreferenceStore {
         });
         return eventNames;
     }
+
+    @action setPreferenceBool = (key: PreferenceKeys, value: boolean): void => {
+    };
+
+    @action setPreferenceNum = (key: PreferenceKeys, value: number): void => {
+    };
+
+    @action setPreferenceStr = (key: PreferenceKeys, value: string): void => {
+        switch (key) {
+            case PreferenceKeys.GLOBAL_THEME:
+                this.global.theme = value;
+                break;
+            case PreferenceKeys.RENDER_CONFIG_COLORMAP:
+                this.renderConfig.colormap = value;
+                break;
+            default:
+        }
+
+        if (this.serverSupport) {
+            // save to server
+        } else {
+            localStorage.setItem(LOCAL_STORAGE_KEYS.get(key), value);
+        }
+    };
 
     // setters for global
     @action setTheme = (theme: string) => {
