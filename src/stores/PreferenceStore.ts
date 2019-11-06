@@ -798,105 +798,105 @@ export class PreferenceStore {
 
     private initGlobalFromLocalStorage = () => {
         let value;
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.GLOBAL.theme);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.GLOBAL_THEME));
         this.setTheme(value && Theme.isValid(value) ? value : DEFAULTS.GLOBAL.theme);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.GLOBAL.autoLaunch);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.GLOBAL_AUTOLAUNCH));
         this.setAutoLaunch(parseBoolean(value, DEFAULTS.GLOBAL.autoLaunch));
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.GLOBAL.layout);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.GLOBAL_LAYOUT));
         this.setLayout(value && this.appStore.layoutStore.layoutExist(value) ? value : DEFAULTS.GLOBAL.layout);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.GLOBAL.cursorPosition);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.GLOBAL_CURSOR_POSITION));
         this.setCursorPosition(value && CursorPosition.isValid(value) ? value : DEFAULTS.GLOBAL.cursorPosition);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.GLOBAL.zoomMode);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.GLOBAL_ZOOM_MODE));
         this.setZoomMode(value && Zoom.isValid(value) ? value : DEFAULTS.GLOBAL.zoomMode);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.GLOBAL.dragPanning);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.GLOBAL_DRAG_PANNING));
         this.setDragPanning(value === "false" ? false : DEFAULTS.GLOBAL.dragPanning);
     };
 
     private initRenderConfigFromLocalStorage = () => {
         let value;
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.scaling);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_SCALING));
         this.setScaling(value && isFinite(Number(value)) && RenderConfigStore.IsScalingValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scaling);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.colormap);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_COLORMAP));
         this.setColormap(value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.RENDER_CONFIG.colormap);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.percentile);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_PERCENTILE));
         this.setPercentile(value && isFinite(Number(value)) && RenderConfigStore.IsPercentileValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.percentile);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.scalingAlpha);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA));
         this.setScalingAlpha(value && isFinite(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scalingAlpha);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.scalingGamma);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA));
         this.setScalingGamma(value && isFinite(Number(value)) && RenderConfigStore.IsGammaValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scalingGamma);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.nanColorHex);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX));
         this.setNaNColorHex(value && isColorValid(value) ? value : DEFAULTS.RENDER_CONFIG.nanColorHex);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.RENDER_CONFIG.nanAlpha);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA));
         this.setNaNAlpha(value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1 ? Number(value) : DEFAULTS.RENDER_CONFIG.nanAlpha);
     };
 
     private initContourConfigFromLocalStorage = () => {
         let value;
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourSmoothingMode);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE));
         this.setContourSmoothingMode(value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 2 ? Number(value) : DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourSmoothingFactor);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR));
         this.setContourSmoothingFactor(value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 33) ? parseInt(value) : DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourNumLevels);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS));
         this.setContourNumLevels(value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 15) ? parseInt(value) : DEFAULTS.CONTOUR_CONFIG.contourNumLevels);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourThickness);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS));
         this.setContourThickness(value && (isFinite(parseFloat(value)) && parseFloat(value) > 0 && parseFloat(value) <= 10) ? parseFloat(value) : DEFAULTS.CONTOUR_CONFIG.contourThickness);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourColor);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR));
         this.setContourColor(value && isColorValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColor);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourColormap);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP));
         this.setContourColormap(value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColormap);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.CONTOUR_CONFIG.contourColormapEnabled);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED));
         this.setContourColormapEnabled(parseBoolean(value, DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled));
     };
 
     private initWCSOverlayFromLocalStorage = () => {
         let value;
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.WCS_OVERLAY.astColor);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.WCS_OVERLAY_AST_COLOR));
         this.setASTColor(value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) < AST.colors.length ? Number(value) : DEFAULTS.WCS_OVERLAY.astColor);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.WCS_OVERLAY.astGridVisible);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE));
         this.setASTGridVisible(parseBoolean(value, DEFAULTS.WCS_OVERLAY.astGridVisible));
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.WCS_OVERLAY.astLabelsVisible);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE));
         this.setASTLabelsVisible(parseBoolean(value, DEFAULTS.WCS_OVERLAY.astLabelsVisible));
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.WCS_OVERLAY.wcsType);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.WCS_OVERLAY_WCS_TYPE));
         this.setWCSType(value && WCSType.isValid(value) ? value : DEFAULTS.WCS_OVERLAY.wcsType);
     };
 
     private initRegionFromLocalStorage = () => {
         let value;
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.REGION.regionColor);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.REGION_COLOR));
         this.setRegionColor(value && isColorValid(value) ? value : DEFAULTS.REGION.regionColor);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.REGION.regionLineWidth);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.REGION_LINE_WIDTH));
         this.setRegionLineWidth(value && isFinite(Number(value)) && RegionStore.IsRegionLineWidthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionLineWidth);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.REGION.regionDashLength);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.REGION_DASH_LENGTH));
         this.setRegionDashLength(value && isFinite(Number(value)) && RegionStore.IsRegionDashLengthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionDashLength);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.REGION.regionType);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.REGION_TYPE));
         this.setRegionType(value && isFinite(Number(value)) && RegionStore.IsRegionTypeValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionType);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.REGION.regionCreationMode);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.REGION_CREATION_MODE));
         this.setRegionCreationMode(value && RegionCreationMode.isValid(value) ? value : DEFAULTS.REGION.regionCreationMode);
     };
 
     private initPerformanceFromLocalStorage = () => {
         let value;
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.imageCompressionQuality);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY));
         this.setImageCompressionQuality(value && isFinite(Number(value)) && CompressionQuality.isImageCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.imageCompressionQuality);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.animationCompressionQuality);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY));
         this.setAnimationCompressionQuality(value && isFinite(Number(value)) && CompressionQuality.isAnimationCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.animationCompressionQuality);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.GPUTileCache);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE));
         this.setGPUTileCache(value && isFinite(Number(value)) && TileCache.isGPUTileCacheValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.GPUTileCache);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.systemTileCache);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE));
         this.setSystemTileCache(value && isFinite(Number(value)) && TileCache.isSystemTileCacheValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.systemTileCache);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.streamContoursWhileZooming);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING));
         this.setStreamContoursWhileZooming(parseBoolean(value, DEFAULTS.PERFORMANCE.streamContoursWhileZooming));
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.contourDecimation);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION));
         this.setContourDecimation(value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 32) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourDecimation);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.contourCompressionLevel);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL));
         this.setContourCompressionLevel(value && (isFinite(parseInt(value)) && parseInt(value) >= 0 && parseInt(value) <= 19) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourCompressionLevel);
-        value = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.PERFORMANCE.contourChunkSize);
+        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE));
         this.setContourChunkSize(value && (isFinite(parseInt(value)) && parseInt(value) >= 1000 && parseInt(value) <= 1000000) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourChunkSize);
     };
 
     // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
     private initLogEventsFromLocalStorage = () => {
-        const localStorageEventList = localStorage.getItem(PREFERENCE_LOCAL_STORAGE_KEYS.LOG_EVENT.logEventList);
+        const localStorageEventList = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.LOG_EVENT));
         if (localStorageEventList && localStorageEventList.length) {
             try {
                 const eventNameList = JSON.parse(localStorageEventList);
@@ -920,7 +920,7 @@ export class PreferenceStore {
 
         autorun(() => {
             try {
-                localStorage.setItem(PREFERENCE_LOCAL_STORAGE_KEYS.LOG_EVENT.logEventList, JSON.stringify(this.enabledLoggingEventNames));
+                localStorage.setItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
             } catch (e) {
                 console.log("Save event list to local storage failed!");
             }
