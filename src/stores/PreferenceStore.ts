@@ -489,7 +489,12 @@ export class PreferenceStore {
     @action setPreferenceNum = (key: PreferenceKeys, value: number): void => {
     };
 
-    @action setPreferenceStr = (key: PreferenceKeys, value: string): void => {
+    @action setPreference = (key: PreferenceKeys, value: any): void => {
+        const localStorageKey = LOCAL_STORAGE_KEYS.get(key);
+        if (!key || !value || !localStorageKey) {
+            return;
+        }
+
         switch (key) {
             case PreferenceKeys.GLOBAL_THEME:
                 this.global.theme = value;
@@ -531,7 +536,19 @@ export class PreferenceStore {
         if (this.serverSupport) {
             // save to server
         } else {
-            localStorage.setItem(LOCAL_STORAGE_KEYS.get(key), value);
+            switch (typeof value) {
+                case "boolean":
+                    localStorage.setItem(localStorageKey, value ? "true" : "false");
+                    break;
+                case "number":
+                    localStorage.setItem(localStorageKey, value.toString(10));
+                    break;
+                case "string":
+                    localStorage.setItem(localStorageKey, value);
+                    break;
+                default:
+                    return;
+            }
         }
     };
 
