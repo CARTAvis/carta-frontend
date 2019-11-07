@@ -550,8 +550,8 @@ export class PreferenceStore {
         }
 
         if (this.serverSupport) {
-            // save to server
-        } else {
+            // gen a single structued json & save to server
+        } else { // TODO: use a single structured json to be validated & saved to local storage
             switch (typeof value) {
                 case "boolean":
                     localStorage.setItem(localStorageKey, value ? "true" : "false");
