@@ -211,6 +211,7 @@ export class AppStore {
 
             this.preferenceStore.initUserDefinedPreferences(false, null);
             this.layoutStore.applyLayout(this.preferenceStore.getLayout());
+            this.compressionQuality = this.preferenceStore.getImageCompressionQuality();
 
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
