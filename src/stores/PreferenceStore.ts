@@ -429,7 +429,7 @@ export class PreferenceStore {
 
     @action setPreference = (key: PreferenceKeys, value: any): void => {
         const localStorageKey = LOCAL_STORAGE_KEYS.get(key);
-        if (!key || !value || !localStorageKey) {
+        if (key === null || value === null || !localStorageKey) {
             return;
         }
 
