@@ -18,6 +18,7 @@ import {
     LogStore,
     nightPalette,
     OverlayStore,
+    PreferenceKeys,
     PreferenceStore,
     RasterRenderType, RegionFileType,
     RegionStore,
@@ -441,11 +442,11 @@ export class AppStore {
     };
 
     @action setDarkTheme = () => {
-        this.preferenceStore.setTheme(Theme.DARK);
+        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.DARK);
     };
 
     @action setLightTheme = () => {
-        this.preferenceStore.setTheme(Theme.LIGHT);
+        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.LIGHT);
     };
 
     @action toggleCursorFrozen = () => {

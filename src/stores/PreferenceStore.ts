@@ -8,7 +8,7 @@ import {isColorValid, parseBoolean} from "utilities";
 import {BackendService} from "services";
 
 export enum PreferenceKeys {
-    GLOBAL_THEME,
+    GLOBAL_THEME = 1,
     GLOBAL_AUTOLAUNCH,
     GLOBAL_LAYOUT,
     GLOBAL_CURSOR_POSITION,
@@ -426,12 +426,6 @@ export class PreferenceStore {
         return eventNames;
     }
 
-    @action setPreferenceBool = (key: PreferenceKeys, value: boolean): void => {
-    };
-
-    @action setPreferenceNum = (key: PreferenceKeys, value: number): void => {
-    };
-
     @action setPreference = (key: PreferenceKeys, value: any): void => {
         const localStorageKey = LOCAL_STORAGE_KEYS.get(key);
         if (!key || !value || !localStorageKey) {
@@ -748,9 +742,11 @@ export class PreferenceStore {
     private initPerformanceFromLocalStorage = () => {
         let value;
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY));
-        this.setPreference(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, value && isFinite(Number(value)) && CompressionQuality.isImageCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.imageCompressionQuality);
+        this.setPreference(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY,
+                                                value && isFinite(Number(value)) && CompressionQuality.isImageCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.imageCompressionQuality);
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY));
-        this.setPreference(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY, value && isFinite(Number(value)) && CompressionQuality.isAnimationCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.animationCompressionQuality);
+        this.setPreference(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY,
+                                                value && isFinite(Number(value)) && CompressionQuality.isAnimationCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.animationCompressionQuality);
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE));
         this.setPreference(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE, value && isFinite(Number(value)) && TileCache.isGPUTileCacheValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.GPUTileCache);
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE));

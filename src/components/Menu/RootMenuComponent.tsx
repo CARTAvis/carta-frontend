@@ -5,7 +5,7 @@ import {Alert, Icon, Menu, Popover, Position, Tooltip, Tag} from "@blueprintjs/c
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {exportImage} from "components";
 import {PresetLayout} from "models";
-import {AppStore, BrowserMode} from "stores";
+import {AppStore, BrowserMode, PreferenceKeys} from "stores";
 import {ConnectionStatus} from "services";
 import {toFixed} from "utilities";
 import "./RootMenuComponent.css";
@@ -132,7 +132,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                                 onClick={() => {
                                     appStore.layoutStore.deleteLayout(value);
                                     if (value === appStore.preferenceStore.getLayout()) {
-                                        appStore.preferenceStore.setLayout(PresetLayout.DEFAULT);
+                                        appStore.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
                                     }
                                 }}
                             />
