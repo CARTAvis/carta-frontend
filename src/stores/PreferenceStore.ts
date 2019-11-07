@@ -396,6 +396,7 @@ export class PreferenceStore {
     public flipEventLoggingEnabled = (eventType: CARTA.EventType): void => {
         if (Event.isEventTypeValid(eventType)) {
             this.eventsLoggingEnabled.set(eventType, !this.eventsLoggingEnabled.get(eventType));
+            localStorage.setItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
         }
     };
 
@@ -784,13 +785,5 @@ export class PreferenceStore {
     constructor(appStore: AppStore) {
         this.appStore = appStore;
         this.initPreferenceFromDefault();
-
-        autorun(() => {
-            try {
-                localStorage.setItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
-            } catch (e) {
-                console.log("Save event list to local storage failed!");
-            }
-        });
     }
 }
