@@ -393,13 +393,6 @@ export class PreferenceStore {
         return Event.isEventTypeValid(eventType) && this.eventsLoggingEnabled.get(eventType);
     };
 
-    public flipEventLoggingEnabled = (eventType: CARTA.EventType): void => {
-        if (Event.isEventTypeValid(eventType)) {
-            this.eventsLoggingEnabled.set(eventType, !this.eventsLoggingEnabled.get(eventType));
-            localStorage.setItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
-        }
-    };
-
     // getters for boolean(convenient)
     @computed get isDarkTheme(): boolean {
         return this.global.theme === Theme.DARK;
@@ -545,6 +538,11 @@ export class PreferenceStore {
             case PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING:
                 this.performance.streamContoursWhileZooming = value;
                 break;
+            case PreferenceKeys.LOG_EVENT:
+                if (Event.isEventTypeValid(value)) {
+                    this.eventsLoggingEnabled.set(value, !this.eventsLoggingEnabled.get(value));
+                }
+                break;
             default:
                 return;
         }
@@ -552,18 +550,22 @@ export class PreferenceStore {
         if (this.serverSupport) {
             // gen a single structued json & save to server
         } else { // TODO: use a single structured json to be validated & saved to local storage
-            switch (typeof value) {
-                case "boolean":
-                    localStorage.setItem(localStorageKey, value ? "true" : "false");
-                    break;
-                case "number":
-                    localStorage.setItem(localStorageKey, value.toString(10));
-                    break;
-                case "string":
-                    localStorage.setItem(localStorageKey, value);
-                    break;
-                default:
-                    return;
+            if (key === PreferenceKeys.LOG_EVENT) {
+                localStorage.setItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
+            } else {
+                switch (typeof value) {
+                    case "boolean":
+                        localStorage.setItem(localStorageKey, value ? "true" : "false");
+                        break;
+                    case "number":
+                        localStorage.setItem(localStorageKey, value.toString(10));
+                        break;
+                    case "string":
+                        localStorage.setItem(localStorageKey, value);
+                        break;
+                    default:
+                        return;
+                }
             }
         }
     };
@@ -626,6 +628,7 @@ export class PreferenceStore {
 
     @action resetLogEventSettings = () => {
         this.eventsLoggingEnabled.forEach((value, key, map) => map.set(key, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
+        localStorage.setItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
     };
 
     public initUserDefinedPreferences = (serverSupport: boolean, preference: { [k: string]: string; }) => {
