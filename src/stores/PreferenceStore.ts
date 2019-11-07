@@ -227,198 +227,191 @@ export class PreferenceStore {
     private serverSupport: boolean;
 
     @observable preference: Preference;
-    @observable global: Global;
-    @observable renderConfig: RenderConfig;
-    @observable contourConfig: ContourConfig;
-    @observable wcsOverlay: WCSOverlay;
-    @observable region: Region;
-    @observable performance: Performance;
-    @observable eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
 
     // getters for global settings
     public getTheme = (): string => {
-        return this.global.theme;
+        return this.preference.global.theme;
     };
 
     public getAutoLaunch = (): boolean => {
-        return this.global.autoLaunch;
+        return this.preference.global.autoLaunch;
     };
 
     public getLayout = (): string => {
-        return this.global.layout;
+        return this.preference.global.layout;
     };
 
     public getCursorPosition = (): string => {
-        return this.global.cursorPosition;
+        return this.preference.global.cursorPosition;
     };
 
     public getZoomMode = (): string => {
-        return this.global.zoomMode;
+        return this.preference.global.zoomMode;
     };
 
     public getDragPanning = (): boolean => {
-        return this.global.dragPanning;
+        return this.preference.global.dragPanning;
     };
 
     // getters for render config
     public getScaling = (): FrameScaling => {
-        return this.renderConfig.scaling;
+        return this.preference.renderConfig.scaling;
     };
 
     public getColormap = (): string => {
-        return this.renderConfig.colormap;
+        return this.preference.renderConfig.colormap;
     };
 
     public getPercentile = (): number => {
-        return this.renderConfig.percentile;
+        return this.preference.renderConfig.percentile;
     };
 
     public getScalingAlpha = (): number => {
-        return this.renderConfig.scalingAlpha;
+        return this.preference.renderConfig.scalingAlpha;
     };
 
     public getScalingGamma = (): number => {
-        return this.renderConfig.scalingGamma;
+        return this.preference.renderConfig.scalingGamma;
     };
 
     public getNaNColorHex = (): string => {
-        return this.renderConfig.nanColorHex;
+        return this.preference.renderConfig.nanColorHex;
     };
 
     public getNaNAlpha = (): number => {
-        return this.renderConfig.nanAlpha;
+        return this.preference.renderConfig.nanAlpha;
     };
 
     // getters for Contour Config
     public getContourColormapEnabled = (): boolean => {
-        return this.contourConfig.contourColormapEnabled;
+        return this.preference.contourConfig.contourColormapEnabled;
     };
 
     public getContourColormap = (): string => {
-        return this.contourConfig.contourColormap;
+        return this.preference.contourConfig.contourColormap;
     };
 
     public getContourColor = (): string => {
-        return this.contourConfig.contourColor;
+        return this.preference.contourConfig.contourColor;
     };
 
     public getContourSmoothingMode = (): CARTA.SmoothingMode => {
-        return this.contourConfig.contourSmoothingMode;
+        return this.preference.contourConfig.contourSmoothingMode;
     };
 
     public getContourSmoothingFactor = (): number => {
-        return this.contourConfig.contourSmoothingFactor;
+        return this.preference.contourConfig.contourSmoothingFactor;
     };
 
     public getContourNumLevels = (): number => {
-        return this.contourConfig.contourNumLevels;
+        return this.preference.contourConfig.contourNumLevels;
     };
 
     public getContourThickness = (): number => {
-        return this.contourConfig.contourThickness;
+        return this.preference.contourConfig.contourThickness;
     };
 
     public getContourDecimation = (): number => {
-        return this.performance.contourDecimation;
+        return this.preference.performance.contourDecimation;
     };
 
     public getContourCompressionLevel = (): number => {
-        return this.performance.contourCompressionLevel;
+        return this.preference.performance.contourCompressionLevel;
     };
 
     public getContourChunkSize = (): number => {
-        return this.performance.contourChunkSize;
+        return this.preference.performance.contourChunkSize;
     };
 
     // getters for WCS overlay
     public getASTColor = (): number => {
-        return this.wcsOverlay.astColor;
+        return this.preference.wcsOverlay.astColor;
     };
 
     public getASTGridVisible = (): boolean => {
-        return this.wcsOverlay.astGridVisible;
+        return this.preference.wcsOverlay.astGridVisible;
     };
 
     public getASTLabelsVisible = (): boolean => {
-        return this.wcsOverlay.astLabelsVisible;
+        return this.preference.wcsOverlay.astLabelsVisible;
     };
 
     public getWCSType = (): string => {
-        return this.wcsOverlay.wcsType;
+        return this.preference.wcsOverlay.wcsType;
     };
 
     // getters for region
     public getRegionColor = (): string => {
-        return this.region.regionColor;
+        return this.preference.region.regionColor;
     };
 
     public getRegionLineWidth = (): number => {
-        return this.region.regionLineWidth;
+        return this.preference.region.regionLineWidth;
     };
 
     public getRegionDashLength = (): number => {
-        return this.region.regionDashLength;
+        return this.preference.region.regionDashLength;
     };
 
     public getRegionType = (): CARTA.RegionType => {
-        return this.region.regionType;
+        return this.preference.region.regionType;
     };
 
     public getRegionCreationMode = (): string => {
-        return this.region.regionCreationMode;
+        return this.preference.region.regionCreationMode;
     };
 
     // getters for performance
     public getImageCompressionQuality = (): number => {
-        return this.performance.imageCompressionQuality;
+        return this.preference.performance.imageCompressionQuality;
     };
 
     public getAnimationCompressionQuality = (): number => {
-        return this.performance.animationCompressionQuality;
+        return this.preference.performance.animationCompressionQuality;
     };
 
     public getGPUTileCache = (): number => {
-        return this.performance.GPUTileCache;
+        return this.preference.performance.GPUTileCache;
     };
 
     public getSystemTileCache = (): number => {
-        return this.performance.systemTileCache;
+        return this.preference.performance.systemTileCache;
     };
 
     public getStreamContoursWhileZooming = (): boolean => {
-        return this.performance.streamContoursWhileZooming;
+        return this.preference.performance.streamContoursWhileZooming;
     };
 
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
-        return Event.isEventTypeValid(eventType) && this.eventsLoggingEnabled.get(eventType);
+        return Event.isEventTypeValid(eventType) && this.preference.eventsLoggingEnabled.get(eventType);
     };
 
     public flipEventLoggingEnabled = (eventType: CARTA.EventType): void => {
         if (Event.isEventTypeValid(eventType)) {
-            this.eventsLoggingEnabled.set(eventType, !this.eventsLoggingEnabled.get(eventType));
+            this.preference.eventsLoggingEnabled.set(eventType, !this.preference.eventsLoggingEnabled.get(eventType));
         }
     };
 
     // getters for boolean(convenient)
     @computed get isDarkTheme(): boolean {
-        return this.global.theme === Theme.DARK;
+        return this.preference.global.theme === Theme.DARK;
     }
 
     @computed get isZoomRAWMode(): boolean {
-        return this.global.zoomMode === Zoom.RAW;
+        return this.preference.global.zoomMode === Zoom.RAW;
     }
 
     @computed get isRegionCornerMode(): boolean {
-        return this.region.regionCreationMode === RegionCreationMode.CORNER;
+        return this.preference.region.regionCreationMode === RegionCreationMode.CORNER;
     }
 
     @computed get isCursorFrozen(): boolean {
-        return this.global.cursorPosition === CursorPosition.FIXED;
+        return this.preference.global.cursorPosition === CursorPosition.FIXED;
     }
 
     @computed get enabledLoggingEventNames(): string[] {
         let eventNames: string[] = [];
-        this.eventsLoggingEnabled.forEach((isChecked, eventType) => {
+        this.preference.eventsLoggingEnabled.forEach((isChecked, eventType) => {
             if (isChecked) {
                 eventNames.push(Event.getEventNameFromType(eventType));
             }
@@ -434,115 +427,115 @@ export class PreferenceStore {
 
         switch (key) {
             case PreferenceKeys.GLOBAL_THEME:
-                this.global.theme = value;
+                this.preference.global.theme = value;
                 break;
             case PreferenceKeys.GLOBAL_AUTOLAUNCH:
-                this.global.autoLaunch = value;
+                this.preference.global.autoLaunch = value;
                 break;
             case PreferenceKeys.GLOBAL_LAYOUT:
-                this.global.layout = value;
+                this.preference.global.layout = value;
                 break;
             case PreferenceKeys.GLOBAL_CURSOR_POSITION:
-                this.global.cursorPosition = value;
+                this.preference.global.cursorPosition = value;
                 break;
             case PreferenceKeys.GLOBAL_ZOOM_MODE:
-                this.global.zoomMode = value;
+                this.preference.global.zoomMode = value;
                 break;
             case PreferenceKeys.GLOBAL_DRAG_PANNING:
-                this.global.dragPanning = value;
+                this.preference.global.dragPanning = value;
                 break;
             case PreferenceKeys.RENDER_CONFIG_SCALING:
-                this.renderConfig.scaling = value;
+                this.preference.renderConfig.scaling = value;
                 break;
             case PreferenceKeys.RENDER_CONFIG_COLORMAP:
-                this.renderConfig.colormap = value;
+                this.preference.renderConfig.colormap = value;
                 break;
             case PreferenceKeys.RENDER_CONFIG_PERCENTILE:
-                this.renderConfig.percentile = value;
+                this.preference.renderConfig.percentile = value;
                 break;
             case PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA:
-                this.renderConfig.scalingAlpha = value;
+                this.preference.renderConfig.scalingAlpha = value;
                 break;
             case PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA:
-                this.renderConfig.scalingGamma = value;
+                this.preference.renderConfig.scalingGamma = value;
                 break;
             case PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX:
-                this.renderConfig.nanColorHex = value;
+                this.preference.renderConfig.nanColorHex = value;
                 break;
             case PreferenceKeys.RENDER_CONFIG_NAN_ALPHA:
-                this.renderConfig.nanAlpha = value;
+                this.preference.renderConfig.nanAlpha = value;
                 break;
             case PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE:
-                this.contourConfig.contourSmoothingMode = value;
+                this.preference.contourConfig.contourSmoothingMode = value;
                 break;
             case PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR:
-                this.contourConfig.contourSmoothingFactor = value;
+                this.preference.contourConfig.contourSmoothingFactor = value;
                 break;
             case PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS:
-                this.contourConfig.contourNumLevels = value;
+                this.preference.contourConfig.contourNumLevels = value;
                 break;
             case PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS:
-                this.contourConfig.contourThickness = value;
+                this.preference.contourConfig.contourThickness = value;
                 break;
             case PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED:
-                this.contourConfig.contourColormapEnabled = value;
+                this.preference.contourConfig.contourColormapEnabled = value;
                 break;
             case PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR:
-                this.contourConfig.contourColor = value;
+                this.preference.contourConfig.contourColor = value;
                 break;
             case PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP:
-                this.contourConfig.contourColormap = value;
+                this.preference.contourConfig.contourColormap = value;
                 break;
             case PreferenceKeys.WCS_OVERLAY_AST_COLOR:
-                this.wcsOverlay.astColor = value;
+                this.preference.wcsOverlay.astColor = value;
                 break;
             case PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE:
-                this.wcsOverlay.astGridVisible = value;
+                this.preference.wcsOverlay.astGridVisible = value;
                 break;
             case PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE:
-                this.wcsOverlay.astLabelsVisible = value;
+                this.preference.wcsOverlay.astLabelsVisible = value;
                 break;
             case PreferenceKeys.WCS_OVERLAY_WCS_TYPE:
-                this.wcsOverlay.wcsType = value;
+                this.preference.wcsOverlay.wcsType = value;
                 break;
             case PreferenceKeys.REGION_COLOR:
-                this.region.regionColor = value;
+                this.preference.region.regionColor = value;
                 break;
             case PreferenceKeys.REGION_LINE_WIDTH:
-                this.region.regionLineWidth = value;
+                this.preference.region.regionLineWidth = value;
                 break;
             case PreferenceKeys.REGION_DASH_LENGTH:
-                this.region.regionDashLength = value;
+                this.preference.region.regionDashLength = value;
                 break;
             case PreferenceKeys.REGION_TYPE:
-                this.region.regionType = value;
+                this.preference.region.regionType = value;
                 break;
             case PreferenceKeys.REGION_CREATION_MODE:
-                this.region.regionCreationMode = value;
+                this.preference.region.regionCreationMode = value;
                 break;
             case PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY:
-                this.performance.imageCompressionQuality = value;
+                this.preference.performance.imageCompressionQuality = value;
                 break;
             case PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY:
-                this.performance.animationCompressionQuality = value;
+                this.preference.performance.animationCompressionQuality = value;
                 break;
             case PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE:
-                this.performance.GPUTileCache = value;
+                this.preference.performance.GPUTileCache = value;
                 break;
             case PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE:
-                this.performance.systemTileCache = value;
+                this.preference.performance.systemTileCache = value;
                 break;
             case PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION:
-                this.performance.contourDecimation = value;
+                this.preference.performance.contourDecimation = value;
                 break;
             case PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL:
-                this.performance.contourCompressionLevel = value;
+                this.preference.performance.contourCompressionLevel = value;
                 break;
             case PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE:
-                this.performance.contourChunkSize = value;
+                this.preference.performance.contourChunkSize = value;
                 break;
             case PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING:
-                this.performance.streamContoursWhileZooming = value;
+                this.preference.performance.streamContoursWhileZooming = value;
                 break;
             default:
                 return;
@@ -624,7 +617,7 @@ export class PreferenceStore {
     };
 
     @action resetLogEventSettings = () => {
-        this.eventsLoggingEnabled.forEach((value, key, map) => map.set(key, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
+        this.preference.eventsLoggingEnabled.forEach((value, key, map) => map.set(key, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
     };
 
     public initUserDefinedPreferences = (serverSupport: boolean, preference: { [k: string]: string; }) => {
@@ -637,14 +630,15 @@ export class PreferenceStore {
     }
 
     private initPreferenceFromDefault = () => {
-        this.global = Object.assign(DEFAULTS.GLOBAL);
-        this.renderConfig = Object.assign(DEFAULTS.RENDER_CONFIG);
-        this.contourConfig = Object.assign(DEFAULTS.CONTOUR_CONFIG);
-        this.wcsOverlay = Object.assign(DEFAULTS.WCS_OVERLAY);
-        this.region = Object.assign(DEFAULTS.REGION);
-        this.performance = Object.assign(DEFAULTS.PERFORMANCE);
-        this.eventsLoggingEnabled = new Map<CARTA.EventType, boolean>();
-        Event.EVENT_TYPES.forEach(eventType => this.eventsLoggingEnabled.set(eventType, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
+        this.preference = {} as Preference;
+        this.preference.global = Object.assign(DEFAULTS.GLOBAL);
+        this.preference.renderConfig = Object.assign(DEFAULTS.RENDER_CONFIG);
+        this.preference.contourConfig = Object.assign(DEFAULTS.CONTOUR_CONFIG);
+        this.preference.wcsOverlay = Object.assign(DEFAULTS.WCS_OVERLAY);
+        this.preference.region = Object.assign(DEFAULTS.REGION);
+        this.preference.performance = Object.assign(DEFAULTS.PERFORMANCE);
+        this.preference.eventsLoggingEnabled = new Map<CARTA.EventType, boolean>();
+        Event.EVENT_TYPES.forEach(eventType => this.preference.eventsLoggingEnabled.set(eventType, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
     };
 
     private initPreferenceFromServer = (preference: { [k: string]: string; }) => {
@@ -771,7 +765,7 @@ export class PreferenceStore {
                     eventNameList.forEach((eventName) => {
                         const eventType = Event.getEventTypeFromName(eventName);
                         if (eventType !== undefined) {
-                            this.eventsLoggingEnabled.set(eventType, true);
+                            this.preference.eventsLoggingEnabled.set(eventType, true);
                         }
                     });
                 }
