@@ -209,6 +209,9 @@ export class AppStore {
             connected = true;
             this.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
 
+            this.preferenceStore.initUserDefinedPreferences(false, null);
+            this.layoutStore.applyLayout(this.preferenceStore.getLayout());
+
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
                 this.addFrame(folderSearchParam, fileSearchParam, "", 0);
