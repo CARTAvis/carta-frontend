@@ -1,7 +1,7 @@
 import * as React from "react";
 import { computed, observable } from "mobx";
 import { observer } from "mobx-react";
-import { HTMLTable, Icon, NonIdealState } from "@blueprintjs/core";
+import { HTMLTable, Icon, NonIdealState, Intent } from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import { CARTA } from "carta-protobuf";
 import { RegionStore, WidgetConfig, WidgetProps } from "stores";
@@ -109,7 +109,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             
             let pixelCenterEntry;
             if (isFinite(point.x) && isFinite(point.y)) {
-                pixelCenterEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>{`(${toFixed(point.x, 1)}, ${toFixed(point.y, 1)})`}</td>;
+                pixelCenterEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.props.appStore.showRegionDialog} >{`(${toFixed(point.x, 1)}, ${toFixed(point.y, 1)})`}</td>;
             } else {
                 pixelCenterEntry = <td style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>Invalid</td>;
             }
@@ -118,12 +118,12 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (showSizeColumn) {
                 if (region.regionType === CARTA.RegionType.RECTANGLE || region.regionType === CARTA.RegionType.POLYGON) {
                     const sizePoint = region.boundingBox;
-                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>{`(${toFixed(sizePoint.x, 1)} \u00D7 ${toFixed(sizePoint.y, 1)})`}</td>;
+                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.props.appStore.showRegionDialog} >{`(${toFixed(sizePoint.x, 1)} \u00D7 ${toFixed(sizePoint.y, 1)})`}</td>;
                 } else if (region.regionType === CARTA.RegionType.ELLIPSE) {
                     const sizePoint = region.controlPoints[1];
-                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}>{`maj: ${toFixed(sizePoint.x, 1)}; min: ${toFixed(sizePoint.y, 1)}`}</td>;
+                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.props.appStore.showRegionDialog} >{`maj: ${toFixed(sizePoint.x, 1)}; min: ${toFixed(sizePoint.y, 1)}`}</td>;
                 } else {
-                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}}/>;
+                    pixelSizeEntry = <td style={{width: RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.props.appStore.showRegionDialog} />;
                 }
             }
 
@@ -146,14 +146,13 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                     className={(selectedRegion && selectedRegion.regionId === region.regionId) ? "selected" : ""}
                     key={region.regionId}
                     onClick={() => frame.regionSet.selectRegion(region)}
-                    onDoubleClick={this.props.appStore.showRegionDialog}
                 >
                     {lockEntry}{focusEntry}
-                    <td style={{width: nameWidth}}>{region.nameString}</td>
-                    <td style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>{RegionStore.RegionTypeString(region.regionType)}</td>
+                    <td style={{width: nameWidth}} onDoubleClick={this.props.appStore.showRegionDialog} >{region.nameString}</td>
+                    <td style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.props.appStore.showRegionDialog} >{RegionStore.RegionTypeString(region.regionType)}</td>
                     {pixelCenterEntry}
                     {showSizeColumn && pixelSizeEntry}
-                    {showRotationColumn && <td style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}}>{toFixed(region.rotation, 1)}</td>}
+                    {showRotationColumn && <td style={{width: RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH}} onDoubleClick={this.props.appStore.showRegionDialog} >{toFixed(region.rotation, 1)}</td>}
                 </tr>
             );
         });
@@ -163,8 +162,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 <HTMLTable style={{height: tableHeight}}>
                     <thead className={this.props.appStore.darkTheme ? "dark-theme" : ""}>
                     <tr>
-                        <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}/>
-                        <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}/>
+                        <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}><Icon intent={Intent.SUCCESS} icon={"lock"}/></th>
+                        <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}><Icon intent={Intent.SUCCESS} icon={"eye-open"}/></th>
                         <th style={{width: nameWidth}}>Name</th>
                         <th style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>Type</th>
                         <th style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>Pixel Center</th>
