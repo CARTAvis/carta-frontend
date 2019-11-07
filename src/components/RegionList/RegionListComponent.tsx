@@ -131,14 +131,14 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             if (region.regionId !== 0) {
                 lockEntry = <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={(ev) => this.handleRegionLockClicked(ev, region)}><Icon icon={region.locked ? "lock" : "unlock"}/></td>;
             } else {
-                lockEntry = <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}/>;
+                lockEntry = <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}><Icon icon={"blank"}/></td>;
             }
 
             let focusEntry: React.ReactNode;
             if (region.regionId) {
                 focusEntry = <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}} onClick={(ev) => this.handleFocusClicked(ev, region)}><Icon icon={"eye-open"}/></td>;
             } else {
-                focusEntry = <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}/>;
+                focusEntry = <td style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}><Icon icon={"blank"}/></td>;
             }
 
             return (
@@ -162,8 +162,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
                 <HTMLTable style={{height: tableHeight}}>
                     <thead className={this.props.appStore.darkTheme ? "dark-theme" : ""}>
                     <tr>
-                        <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}><Icon intent={Intent.SUCCESS} icon={"lock"}/></th>
-                        <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}><Icon intent={Intent.SUCCESS} icon={"eye-open"}/></th>
+                        <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}><Icon icon={"blank"}/></th>
+                        <th style={{width: RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH}}><Icon icon={"blank"}/></th>
                         <th style={{width: nameWidth}}>Name</th>
                         <th style={{width: RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH}}>Type</th>
                         <th style={{width: RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH}}>Pixel Center</th>
