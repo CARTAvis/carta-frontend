@@ -548,7 +548,7 @@ export class PreferenceStore {
         }
 
         if (this.serverSupport) {
-            // gen a single structued json & save to server
+            // TODO: gen a single structued json & save to server
         } else { // TODO: use a single structured json to be validated & saved to local storage
             if (key === PreferenceKeys.LOG_EVENT) {
                 localStorage.setItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
@@ -628,13 +628,17 @@ export class PreferenceStore {
 
     @action resetLogEventSettings = () => {
         this.eventsLoggingEnabled.forEach((value, key, map) => map.set(key, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
-        localStorage.setItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
+        if (this.serverSupport) {
+            // TODO: gen a single structued json & save to server
+        } else {
+            localStorage.setItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
+        }
     };
 
-    public initUserDefinedPreferences = (serverSupport: boolean, preference: { [k: string]: string; }) => {
+    public initUserDefinedPreferences = (serverSupport: boolean, serverPreference: { [k: string]: string; }) => {
         this.serverSupport = serverSupport;
         if (serverSupport) {
-            this.initPreferenceFromServer(preference);
+            this.initPreferenceFromServer(serverPreference);
         } else {
             this.initPreferenceFromLocalStorage();
         }
