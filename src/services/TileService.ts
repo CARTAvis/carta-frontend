@@ -27,8 +27,6 @@ export const NUM_PERSISTENT_TILES = 85;
 export class TileService {
     private readonly backendService: BackendService;
     private readonly persistentTiles: Map<number, RasterTile>;
-    private readonly cachedTiles: LRUCache<number, RasterTile>;
-    private readonly lruCapacitySystem: number;
     private readonly cacheMapCompressedTiles: Map<number, LRUCache<number, CompressedTile>>;
     private readonly pendingRequests: Map<number, boolean>;
     private readonly pendingDecompressions: Map<number, boolean>;
@@ -36,6 +34,8 @@ export class TileService {
     private currentFileId: number;
     private readonly tileStream: Subject<number>;
     private glContext: WebGLRenderingContext;
+    private cachedTiles: LRUCache<number, RasterTile>;
+    private lruCapacitySystem: number;
     private textureArray: Array<WebGLTexture>;
     private textureCoordinateQueue: Array<number>;
     private readonly workers: Worker[];
@@ -53,10 +53,7 @@ export class TileService {
         return this.tileStream;
     }
 
-    constructor(backendService: BackendService, lruCapacityGPU: number = 512, lruCapacitySystem: number = 4096) {
-        this.backendService = backendService;
-        this.channelMap = new Map<number, { channel: number, stokes: number }>();
-
+    public setCache = (lruCapacityGPU: number, lruCapacitySystem: number) => {
         // L1 cache: on GPU
         const minRequiredTiles = lruCapacityGPU + NUM_PERSISTENT_TILES;
         const numTilesPerTexture = (TEXTURE_SIZE * TEXTURE_SIZE) / (TILE_SIZE * TILE_SIZE);
@@ -66,13 +63,18 @@ export class TileService {
 
         this.textureArray = new Array<WebGLTexture>(numTextures);
         this.resetCoordinateQueue();
-
         this.cachedTiles = new LRUCache<number, RasterTile>(Int32Array, null, lruCapacityGPU);
-        this.persistentTiles = new Map<number, RasterTile>();
-        this.pendingRequests = new Map<number, boolean>();
 
         // L2 cache: compressed tiles on system memory
         this.lruCapacitySystem = lruCapacitySystem;
+    };
+
+    constructor(backendService: BackendService, lruCapacityGPU: number = 512, lruCapacitySystem: number = 4096) {
+        this.backendService = backendService;
+        this.channelMap = new Map<number, { channel: number, stokes: number }>();
+        this.setCache(lruCapacityGPU, lruCapacitySystem);
+        this.persistentTiles = new Map<number, RasterTile>();
+        this.pendingRequests = new Map<number, boolean>();
         this.cacheMapCompressedTiles = new Map<number, LRUCache<number, CompressedTile>>();
         this.pendingDecompressions = new Map<number, boolean>();
 

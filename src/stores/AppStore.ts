@@ -210,6 +210,7 @@ export class AppStore {
             this.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
 
             this.preferenceStore.initUserDefinedPreferences(false, null);
+            this.tileService.setCache(this.preferenceStore.getGPUTileCache(), this.preferenceStore.getSystemTileCache());
             this.layoutStore.applyLayout(this.preferenceStore.getLayout());
             this.compressionQuality = this.preferenceStore.getImageCompressionQuality();
 
