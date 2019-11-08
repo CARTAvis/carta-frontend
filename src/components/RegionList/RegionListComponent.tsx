@@ -80,8 +80,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
 
         let nameWidth = RegionListComponent.NAME_COLUMN_DEFAULT_WIDTH;
         const availableWidth = this.width - 2 * padding;
-        // tslint:disable-next-line: max-line-length
-        let fixedWidth = RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 2 + RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH + RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH + RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH + RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH;
+        let fixedWidth = RegionListComponent.ACTION_COLUMN_DEFAULT_WIDTH * 2 + RegionListComponent.TYPE_COLUMN_DEFAULT_WIDTH
+            + RegionListComponent.CENTER_COLUMN_DEFAULT_WIDTH + RegionListComponent.SIZE_COLUMN_DEFAULT_WIDTH + RegionListComponent.ROTATION_COLUMN_DEFAULT_WIDTH;
         nameWidth = availableWidth - fixedWidth;
 
         let showSizeColumn = true;
