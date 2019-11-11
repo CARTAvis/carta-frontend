@@ -101,58 +101,6 @@ const LOCAL_STORAGE_KEYS = new Map<PreferenceKeys, string>([
     [PreferenceKeys.LOG_EVENT, "logEventList"]
 ]);
 
-const PREFERENCE_VALIDATORS = new Map<PreferenceKeys, (values: string) => any>([
-    [PreferenceKeys.GLOBAL_THEME, (value: string): string => { return value && Theme.isValid(value) ? value : DEFAULTS.GLOBAL.theme; }],
-    [PreferenceKeys.GLOBAL_AUTOLAUNCH, (value: string): boolean => { return parseBoolean(value, DEFAULTS.GLOBAL.autoLaunch); }],
-    [PreferenceKeys.GLOBAL_LAYOUT, (value: string): string => { return value && this.appStore.layoutStore.layoutExist(value) ? value : DEFAULTS.GLOBAL.layout; }],
-    [PreferenceKeys.GLOBAL_CURSOR_POSITION, (value: string): string => { return value && CursorPosition.isValid(value) ? value : DEFAULTS.GLOBAL.cursorPosition; }],
-    [PreferenceKeys.GLOBAL_ZOOM_MODE, (value: string): string => { return value && Zoom.isValid(value) ? value : DEFAULTS.GLOBAL.zoomMode; }],
-    [PreferenceKeys.GLOBAL_DRAG_PANNING, (value: string): boolean => { return value === "false" ? false : DEFAULTS.GLOBAL.dragPanning; }],
-
-    [PreferenceKeys.RENDER_CONFIG_SCALING, (value: string): number => { return value && isFinite(Number(value)) && RenderConfigStore.IsScalingValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scaling; }],
-    [PreferenceKeys.RENDER_CONFIG_COLORMAP, (value: string): string => { return value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.RENDER_CONFIG.colormap; }],
-    [PreferenceKeys.RENDER_CONFIG_PERCENTILE, (value: string): number => { return value && isFinite(Number(value)) && RenderConfigStore.IsPercentileValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.percentile; }],
-    [PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, (value: string): number => { return value && isFinite(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scalingAlpha; }],
-    [PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, (value: string): number => { return value && isFinite(Number(value)) && RenderConfigStore.IsGammaValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scalingGamma; }],
-    [PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, (value: string): string => { return value && isColorValid(value) ? value : DEFAULTS.RENDER_CONFIG.nanColorHex; }],
-    [PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, (value: string): number => { return value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1 ? Number(value) : DEFAULTS.RENDER_CONFIG.nanAlpha; }],
-
-    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE, (value: string): number => { return value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 2 ? Number(value) : DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode; }],
-    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR,
-        (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 33) ? parseInt(value) : DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor; }],
-    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS,
-        (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 15) ? parseInt(value) : DEFAULTS.CONTOUR_CONFIG.contourNumLevels; }],
-    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS,
-        (value: string): number => { return value && (isFinite(parseFloat(value)) && parseFloat(value) > 0 && parseFloat(value) <= 10) ? parseFloat(value) : DEFAULTS.CONTOUR_CONFIG.contourThickness; }],
-    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED, (value: string): boolean => { return parseBoolean(value, DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled); }],
-    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, (value: string): string => { return value && isColorValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColor; }],
-    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP, (value: string): string => { return value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColormap; }],
-
-    [PreferenceKeys.WCS_OVERLAY_AST_COLOR, (value: string): number => { return value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) < AST.colors.length ? Number(value) : DEFAULTS.WCS_OVERLAY.astColor; }],
-    [PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.WCS_OVERLAY.astGridVisible); }],
-    [PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.WCS_OVERLAY.astLabelsVisible); }],
-    [PreferenceKeys.WCS_OVERLAY_WCS_TYPE, (value: string): string => { return value && WCSType.isValid(value) ? value : DEFAULTS.WCS_OVERLAY.wcsType; }],
-
-    [PreferenceKeys.REGION_COLOR, (value: string): string => { return value && isColorValid(value) ? value : DEFAULTS.REGION.regionColor; }],
-    [PreferenceKeys.REGION_LINE_WIDTH, (value: string): number => { return value && isFinite(Number(value)) && RegionStore.IsRegionLineWidthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionLineWidth; }],
-    [PreferenceKeys.REGION_DASH_LENGTH, (value: string): number => { return value && isFinite(Number(value)) && RegionStore.IsRegionDashLengthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionDashLength; }],
-    [PreferenceKeys.REGION_TYPE, (value: string): number => { return value && isFinite(Number(value)) && RegionStore.IsRegionTypeValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionType; }],
-    [PreferenceKeys.REGION_CREATION_MODE, (value: string): string => { return value && RegionCreationMode.isValid(value) ? value : DEFAULTS.REGION.regionCreationMode; }],
-
-    [PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY,
-        (value: string): number => { return value && isFinite(Number(value)) && CompressionQuality.isImageCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.imageCompressionQuality; }],
-    [PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY,
-        (value: string): number => { return value && isFinite(Number(value)) && CompressionQuality.isAnimationCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.animationCompressionQuality; }],
-    [PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE, (value: string): number => { return value && isFinite(Number(value)) && TileCache.isGPUTileCacheValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.GPUTileCache; }],
-    [PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, (value: string): number => { return value && isFinite(Number(value)) && TileCache.isSystemTileCacheValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.systemTileCache; }],
-    [PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION, (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 32) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourDecimation; }],
-    [PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL,
-        (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) >= 0 && parseInt(value) <= 19) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourCompressionLevel; }],
-    [PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE,
-        (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) >= 1000 && parseInt(value) <= 1000000) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourChunkSize; }],
-    [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, (value: string): boolean => { return parseBoolean(value, DEFAULTS.PERFORMANCE.streamContoursWhileZooming); }],
-]);
-
 const DEFAULTS = {
     GLOBAL: {
         theme: Theme.LIGHT,
@@ -286,6 +234,60 @@ export class PreferenceStore {
     @observable region: Region;
     @observable performance: Performance;
     @observable eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
+
+    private PREFERENCE_VALIDATORS = new Map<PreferenceKeys, (values: string) => any>([
+        [PreferenceKeys.GLOBAL_THEME, (value: string): string => { return value && Theme.isValid(value) ? value : DEFAULTS.GLOBAL.theme; }],
+        [PreferenceKeys.GLOBAL_AUTOLAUNCH, (value: string): boolean => { return parseBoolean(value, DEFAULTS.GLOBAL.autoLaunch); }],
+        [PreferenceKeys.GLOBAL_LAYOUT, (value: string): string => { return value && this.appStore.layoutStore.layoutExist(value) ? value : DEFAULTS.GLOBAL.layout; }],
+        [PreferenceKeys.GLOBAL_CURSOR_POSITION, (value: string): string => { return value && CursorPosition.isValid(value) ? value : DEFAULTS.GLOBAL.cursorPosition; }],
+        [PreferenceKeys.GLOBAL_ZOOM_MODE, (value: string): string => { return value && Zoom.isValid(value) ? value : DEFAULTS.GLOBAL.zoomMode; }],
+        [PreferenceKeys.GLOBAL_DRAG_PANNING, (value: string): boolean => { return value === "false" ? false : DEFAULTS.GLOBAL.dragPanning; }],
+
+        [PreferenceKeys.RENDER_CONFIG_SCALING, (value: string): number => { return value && isFinite(Number(value)) && RenderConfigStore.IsScalingValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scaling; }],
+        [PreferenceKeys.RENDER_CONFIG_COLORMAP, (value: string): string => { return value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.RENDER_CONFIG.colormap; }],
+        [PreferenceKeys.RENDER_CONFIG_PERCENTILE, (value: string): number => { return value && isFinite(Number(value)) && RenderConfigStore.IsPercentileValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.percentile; }],
+        [PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, (value: string): number => { return value && isFinite(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scalingAlpha; }],
+        [PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, (value: string): number => { return value && isFinite(Number(value)) && RenderConfigStore.IsGammaValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scalingGamma; }],
+        [PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, (value: string): string => { return value && isColorValid(value) ? value : DEFAULTS.RENDER_CONFIG.nanColorHex; }],
+        [PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, (value: string): number => { return value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1 ? Number(value) : DEFAULTS.RENDER_CONFIG.nanAlpha; }],
+
+        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE,
+            (value: string): number => { return value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 2 ? Number(value) : DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode; }],
+        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR,
+            (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 33) ? parseInt(value) : DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor; }],
+        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS,
+            (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 15) ? parseInt(value) : DEFAULTS.CONTOUR_CONFIG.contourNumLevels; }],
+        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS,
+            (value: string): number => { return value && (isFinite(parseFloat(value)) && parseFloat(value) > 0 && parseFloat(value) <= 10) ? parseFloat(value) : DEFAULTS.CONTOUR_CONFIG.contourThickness; }],
+        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED, (value: string): boolean => { return parseBoolean(value, DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled); }],
+        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, (value: string): string => { return value && isColorValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColor; }],
+        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP, (value: string): string => { return value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.CONTOUR_CONFIG.contourColormap; }],
+
+        [PreferenceKeys.WCS_OVERLAY_AST_COLOR, (value: string): number => { return value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) < AST.colors.length ? Number(value) : DEFAULTS.WCS_OVERLAY.astColor; }],
+        [PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.WCS_OVERLAY.astGridVisible); }],
+        [PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.WCS_OVERLAY.astLabelsVisible); }],
+        [PreferenceKeys.WCS_OVERLAY_WCS_TYPE, (value: string): string => { return value && WCSType.isValid(value) ? value : DEFAULTS.WCS_OVERLAY.wcsType; }],
+
+        [PreferenceKeys.REGION_COLOR, (value: string): string => { return value && isColorValid(value) ? value : DEFAULTS.REGION.regionColor; }],
+        [PreferenceKeys.REGION_LINE_WIDTH, (value: string): number => { return value && isFinite(Number(value)) && RegionStore.IsRegionLineWidthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionLineWidth; }],
+        [PreferenceKeys.REGION_DASH_LENGTH, (value: string): number => { return value && isFinite(Number(value)) && RegionStore.IsRegionDashLengthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionDashLength; }],
+        [PreferenceKeys.REGION_TYPE, (value: string): number => { return value && isFinite(Number(value)) && RegionStore.IsRegionTypeValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionType; }],
+        [PreferenceKeys.REGION_CREATION_MODE, (value: string): string => { return value && RegionCreationMode.isValid(value) ? value : DEFAULTS.REGION.regionCreationMode; }],
+
+        [PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY,
+            (value: string): number => { return value && isFinite(Number(value)) && CompressionQuality.isImageCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.imageCompressionQuality; }],
+        [PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY,
+            (value: string): number => { return value && isFinite(Number(value)) && CompressionQuality.isAnimationCompressionQualityValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.animationCompressionQuality; }],
+        [PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE, (value: string): number => { return value && isFinite(Number(value)) && TileCache.isGPUTileCacheValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.GPUTileCache; }],
+        [PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, (value: string): number => { return value && isFinite(Number(value)) && TileCache.isSystemTileCacheValid(Number(value)) ? Number(value) : DEFAULTS.PERFORMANCE.systemTileCache; }],
+        [PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION,
+            (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) >= 1 && parseInt(value) <= 32) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourDecimation; }],
+        [PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL,
+            (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) >= 0 && parseInt(value) <= 19) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourCompressionLevel; }],
+        [PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE,
+            (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) >= 1000 && parseInt(value) <= 1000000) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourChunkSize; }],
+        [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, (value: string): boolean => { return parseBoolean(value, DEFAULTS.PERFORMANCE.streamContoursWhileZooming); }],
+    ]);
 
     // getters for global settings
     public getTheme = (): string => {
@@ -724,99 +726,99 @@ export class PreferenceStore {
     private initGlobalFromLocalStorage = () => {
         let value;
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.GLOBAL_THEME));
-        this.setPreference(PreferenceKeys.GLOBAL_THEME, PREFERENCE_VALIDATORS.get(PreferenceKeys.GLOBAL_THEME)(value));
+        this.setPreference(PreferenceKeys.GLOBAL_THEME, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.GLOBAL_THEME)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.GLOBAL_AUTOLAUNCH));
-        this.setPreference(PreferenceKeys.GLOBAL_AUTOLAUNCH, PREFERENCE_VALIDATORS.get(PreferenceKeys.GLOBAL_AUTOLAUNCH)(value));
+        this.setPreference(PreferenceKeys.GLOBAL_AUTOLAUNCH, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.GLOBAL_AUTOLAUNCH)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.GLOBAL_LAYOUT));
-        this.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PREFERENCE_VALIDATORS.get(PreferenceKeys.GLOBAL_LAYOUT)(value));
+        this.setPreference(PreferenceKeys.GLOBAL_LAYOUT, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.GLOBAL_LAYOUT)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.GLOBAL_CURSOR_POSITION));
-        this.setPreference(PreferenceKeys.GLOBAL_CURSOR_POSITION, PREFERENCE_VALIDATORS.get(PreferenceKeys.GLOBAL_CURSOR_POSITION)(value));
+        this.setPreference(PreferenceKeys.GLOBAL_CURSOR_POSITION, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.GLOBAL_CURSOR_POSITION)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.GLOBAL_ZOOM_MODE));
-        this.setPreference(PreferenceKeys.GLOBAL_ZOOM_MODE, PREFERENCE_VALIDATORS.get(PreferenceKeys.GLOBAL_ZOOM_MODE)(value));
+        this.setPreference(PreferenceKeys.GLOBAL_ZOOM_MODE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.GLOBAL_ZOOM_MODE)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.GLOBAL_DRAG_PANNING));
-        this.setPreference(PreferenceKeys.GLOBAL_DRAG_PANNING, PREFERENCE_VALIDATORS.get(PreferenceKeys.GLOBAL_DRAG_PANNING)(value));
+        this.setPreference(PreferenceKeys.GLOBAL_DRAG_PANNING, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.GLOBAL_DRAG_PANNING)(value));
     };
 
     private initRenderConfigFromLocalStorage = () => {
         let value;
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_SCALING));
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING, PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_SCALING)(value));
+        this.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_SCALING)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_COLORMAP));
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_COLORMAP)(value));
+        this.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_COLORMAP)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_PERCENTILE));
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_PERCENTILE, PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_PERCENTILE)(value));
+        this.setPreference(PreferenceKeys.RENDER_CONFIG_PERCENTILE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_PERCENTILE)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA));
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA)(value));
+        this.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA));
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA)(value));
+        this.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX));
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX)(value));
+        this.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA));
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA)(value));
+        this.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA)(value));
     };
 
     private initContourConfigFromLocalStorage = () => {
         let value;
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE));
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE, PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE)(value));
+        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR));
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR)(value));
+        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS));
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS, PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS)(value));
+        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS));
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS, PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS)(value));
+        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR));
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR)(value));
+        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP));
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP, PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP)(value));
+        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED));
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED, PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED)(value));
+        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED)(value));
     };
 
     private initWCSOverlayFromLocalStorage = () => {
         let value;
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.WCS_OVERLAY_AST_COLOR));
-        this.setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, PREFERENCE_VALIDATORS.get(PreferenceKeys.WCS_OVERLAY_AST_COLOR)(value));
+        this.setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.WCS_OVERLAY_AST_COLOR)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE));
-        this.setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, PREFERENCE_VALIDATORS.get(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE)(value));
+        this.setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE));
-        this.setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, PREFERENCE_VALIDATORS.get(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE)(value));
+        this.setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.WCS_OVERLAY_WCS_TYPE));
-        this.setPreference(PreferenceKeys.WCS_OVERLAY_WCS_TYPE, PREFERENCE_VALIDATORS.get(PreferenceKeys.WCS_OVERLAY_WCS_TYPE)(value));
+        this.setPreference(PreferenceKeys.WCS_OVERLAY_WCS_TYPE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.WCS_OVERLAY_WCS_TYPE)(value));
     };
 
     private initRegionFromLocalStorage = () => {
         let value;
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.REGION_COLOR));
-        this.setPreference(PreferenceKeys.REGION_COLOR, PREFERENCE_VALIDATORS.get(PreferenceKeys.REGION_COLOR)(value));
+        this.setPreference(PreferenceKeys.REGION_COLOR, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.REGION_COLOR)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.REGION_LINE_WIDTH));
-        this.setPreference(PreferenceKeys.REGION_LINE_WIDTH, PREFERENCE_VALIDATORS.get(PreferenceKeys.REGION_LINE_WIDTH)(value));
+        this.setPreference(PreferenceKeys.REGION_LINE_WIDTH, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.REGION_LINE_WIDTH)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.REGION_DASH_LENGTH));
-        this.setPreference(PreferenceKeys.REGION_DASH_LENGTH, PREFERENCE_VALIDATORS.get(PreferenceKeys.REGION_DASH_LENGTH)(value));
+        this.setPreference(PreferenceKeys.REGION_DASH_LENGTH, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.REGION_DASH_LENGTH)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.REGION_TYPE));
-        this.setPreference(PreferenceKeys.REGION_TYPE, PREFERENCE_VALIDATORS.get(PreferenceKeys.REGION_TYPE)(value));
+        this.setPreference(PreferenceKeys.REGION_TYPE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.REGION_TYPE)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.REGION_CREATION_MODE));
-        this.setPreference(PreferenceKeys.REGION_CREATION_MODE, PREFERENCE_VALIDATORS.get(PreferenceKeys.REGION_CREATION_MODE)(value));
+        this.setPreference(PreferenceKeys.REGION_CREATION_MODE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.REGION_CREATION_MODE)(value));
     };
 
     private initPerformanceFromLocalStorage = () => {
         let value;
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY));
-        this.setPreference(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY)(value));
+        this.setPreference(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY));
-        this.setPreference(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY, PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY)(value));
+        this.setPreference(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE));
-        this.setPreference(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE, PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE)(value));
+        this.setPreference(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE));
-        this.setPreference(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE)(value));
+        this.setPreference(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION));
-        this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION, PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION)(value));
+        this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL));
-        this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL, PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL)(value));
+        this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE));
-        this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE)(value));
+        this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE)(value));
         value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING));
-        this.setPreference(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING)(value));
+        this.setPreference(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING)(value));
     };
 
     // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
