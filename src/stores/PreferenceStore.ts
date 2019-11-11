@@ -714,111 +714,15 @@ export class PreferenceStore {
     };
 
     private initPreferenceFromLocalStorage = () => {
-        this.initGlobalFromLocalStorage();
-        this.initRenderConfigFromLocalStorage();
-        this.initContourConfigFromLocalStorage();
-        this.initWCSOverlayFromLocalStorage();
-        this.initPerformanceFromLocalStorage();
-        this.initRegionFromLocalStorage();
-        this.initLogEventsFromLocalStorage();
-    };
-
-    private initGlobalFromLocalStorage = () => {
-        let value;
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.GLOBAL_THEME));
-        this.setPreference(PreferenceKeys.GLOBAL_THEME, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.GLOBAL_THEME)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.GLOBAL_AUTOLAUNCH));
-        this.setPreference(PreferenceKeys.GLOBAL_AUTOLAUNCH, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.GLOBAL_AUTOLAUNCH)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.GLOBAL_LAYOUT));
-        this.setPreference(PreferenceKeys.GLOBAL_LAYOUT, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.GLOBAL_LAYOUT)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.GLOBAL_CURSOR_POSITION));
-        this.setPreference(PreferenceKeys.GLOBAL_CURSOR_POSITION, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.GLOBAL_CURSOR_POSITION)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.GLOBAL_ZOOM_MODE));
-        this.setPreference(PreferenceKeys.GLOBAL_ZOOM_MODE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.GLOBAL_ZOOM_MODE)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.GLOBAL_DRAG_PANNING));
-        this.setPreference(PreferenceKeys.GLOBAL_DRAG_PANNING, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.GLOBAL_DRAG_PANNING)(value));
-    };
-
-    private initRenderConfigFromLocalStorage = () => {
-        let value;
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_SCALING));
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_SCALING)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_COLORMAP));
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_COLORMAP, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_COLORMAP)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_PERCENTILE));
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_PERCENTILE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_PERCENTILE)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA));
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA));
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX));
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA));
-        this.setPreference(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.RENDER_CONFIG_NAN_ALPHA)(value));
-    };
-
-    private initContourConfigFromLocalStorage = () => {
-        let value;
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE));
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR));
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS));
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS));
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR));
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP));
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED));
-        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED)(value));
-    };
-
-    private initWCSOverlayFromLocalStorage = () => {
-        let value;
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.WCS_OVERLAY_AST_COLOR));
-        this.setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.WCS_OVERLAY_AST_COLOR)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE));
-        this.setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE));
-        this.setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.WCS_OVERLAY_WCS_TYPE));
-        this.setPreference(PreferenceKeys.WCS_OVERLAY_WCS_TYPE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.WCS_OVERLAY_WCS_TYPE)(value));
-    };
-
-    private initRegionFromLocalStorage = () => {
-        let value;
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.REGION_COLOR));
-        this.setPreference(PreferenceKeys.REGION_COLOR, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.REGION_COLOR)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.REGION_LINE_WIDTH));
-        this.setPreference(PreferenceKeys.REGION_LINE_WIDTH, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.REGION_LINE_WIDTH)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.REGION_DASH_LENGTH));
-        this.setPreference(PreferenceKeys.REGION_DASH_LENGTH, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.REGION_DASH_LENGTH)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.REGION_TYPE));
-        this.setPreference(PreferenceKeys.REGION_TYPE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.REGION_TYPE)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.REGION_CREATION_MODE));
-        this.setPreference(PreferenceKeys.REGION_CREATION_MODE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.REGION_CREATION_MODE)(value));
-    };
-
-    private initPerformanceFromLocalStorage = () => {
-        let value;
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY));
-        this.setPreference(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY));
-        this.setPreference(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE));
-        this.setPreference(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE));
-        this.setPreference(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION));
-        this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL));
-        this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE));
-        this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE)(value));
-        value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING));
-        this.setPreference(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, this.PREFERENCE_VALIDATORS.get(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING)(value));
+        const keys: PreferenceKeys[] = Object.values(PreferenceKeys).filter(value => typeof value === "number") as PreferenceKeys[];
+        keys.forEach((key) => {
+            if (key === PreferenceKeys.LOG_EVENT) {
+                this.initLogEventsFromLocalStorage();
+            } else {
+                const value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(key));
+                this.setPreference(key, this.PREFERENCE_VALIDATORS.get(key)(value));
+            }
+        });
     };
 
     // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
