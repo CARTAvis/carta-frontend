@@ -475,8 +475,7 @@ export class PreferenceStore {
     }
 
     @action setPreference = (key: PreferenceKeys, value: any): void => {
-        const keyStr = KEY_TO_STRING.get(key);
-        if (key === null || value === null || !keyStr) {
+        if (key === null || value === null) {
             return;
         }
 
@@ -601,42 +600,33 @@ export class PreferenceStore {
                 return;
         }
 
+        const keyStr: string = KEY_TO_STRING.get(key);
+        if (!keyStr) {
+            return;
+        }
+        let valueStr: string;
+        if (key === PreferenceKeys.LOG_EVENT) {
+            valueStr = JSON.stringify(this.enabledLoggingEventNames);
+        } else {
+            switch (typeof value) {
+                case "boolean":
+                    valueStr = value ? "true" : "false";
+                    break;
+                case "number":
+                    valueStr = value.toString(10);
+                    break;
+                case "string":
+                    valueStr = value;
+                    break;
+                default:
+                    return;
+            }
+        }
+
         if (this.serverSupport) {
-            if (key === PreferenceKeys.LOG_EVENT) {
-                this.savePreferencesToServer(KEY_TO_STRING.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
-            } else {
-                switch (typeof value) {
-                    case "boolean":
-                        this.savePreferencesToServer(keyStr, value ? "true" : "false");
-                        break;
-                    case "number":
-                        this.savePreferencesToServer(keyStr, value.toString(10));
-                        break;
-                    case "string":
-                        this.savePreferencesToServer(keyStr, value);
-                        break;
-                    default:
-                        return;
-                }
-            }
-        } else { // TODO: use a single structured json to be validated & saved to local storage
-            if (key === PreferenceKeys.LOG_EVENT) {
-                localStorage.setItem(KEY_TO_STRING.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
-            } else {
-                switch (typeof value) {
-                    case "boolean":
-                        localStorage.setItem(keyStr, value ? "true" : "false");
-                        break;
-                    case "number":
-                        localStorage.setItem(keyStr, value.toString(10));
-                        break;
-                    case "string":
-                        localStorage.setItem(keyStr, value);
-                        break;
-                    default:
-                        return;
-                }
-            }
+            this.savePreferencesToServer(keyStr, valueStr);
+        } else {
+            localStorage.setItem(keyStr, valueStr);
         }
     };
 
