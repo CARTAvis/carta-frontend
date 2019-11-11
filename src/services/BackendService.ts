@@ -80,6 +80,7 @@ export class BackendService {
             [CARTA.EventType.IMPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.EXPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.SET_REGION_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.SET_USER_PREFERENCES_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.START_ANIMATION_ACK, this.onStartAnimationAck],
             [CARTA.EventType.RASTER_IMAGE_DATA, this.onStreamedRasterImageData],
             [CARTA.EventType.RASTER_TILE_DATA, this.onStreamedRasterTileData],
@@ -558,6 +559,24 @@ export class BackendService {
             }
         }
         return false;
+    }
+
+    @action("set user preferences")
+    setUserPreferences(preferencesMap: { [k: string]: string }): Observable<CARTA.SetUserPreferencesAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.SetUserPreferences.create({preferenceMap: preferencesMap});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.SET_USER_PREFERENCES, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.SET_USER_PREFERENCES, CARTA.SetUserPreferences.encode(message).finish())) {
+                return new Observable<CARTA.SetUserPreferencesAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
     }
 
     @action("authenticate")

@@ -101,53 +101,6 @@ const KEY_TO_STRING = new Map<PreferenceKeys, string>([
     [PreferenceKeys.LOG_EVENT, "logEventList"]
 ]);
 
-const STRING_TO_KEY = new Map<string, PreferenceKeys>([
-    ["theme", PreferenceKeys.GLOBAL_THEME],
-    ["autoLaunch", PreferenceKeys.GLOBAL_AUTOLAUNCH],
-    ["layout", PreferenceKeys.GLOBAL_LAYOUT],
-    ["cursorPosition", PreferenceKeys.GLOBAL_CURSOR_POSITION],
-    ["zoomMode", PreferenceKeys.GLOBAL_ZOOM_MODE],
-    ["dragPanning", PreferenceKeys.GLOBAL_DRAG_PANNING],
-
-    ["scaling", PreferenceKeys.RENDER_CONFIG_SCALING],
-    ["colormap", PreferenceKeys.RENDER_CONFIG_COLORMAP],
-    ["percentile", PreferenceKeys.RENDER_CONFIG_PERCENTILE],
-    ["scalingAlpha", PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA],
-    ["scalingGamma", PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA],
-    ["nanColorHex", PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX],
-    ["nanAlpha", PreferenceKeys.RENDER_CONFIG_NAN_ALPHA],
-
-    ["contourSmoothingMode", PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE],
-    ["contourSmoothingFactor", PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR],
-    ["contourNumLevels", PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS],
-    ["contourThickness", PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS],
-    ["contourColormapEnabled", PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED],
-    ["contourColor", PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR],
-    ["contourColormap", PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP],
-
-    ["astColor", PreferenceKeys.WCS_OVERLAY_AST_COLOR],
-    ["astGridVisible", PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE],
-    ["astLabelsVisible", PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE],
-    ["wcsType", PreferenceKeys.WCS_OVERLAY_WCS_TYPE],
-
-    ["regionColor", PreferenceKeys.REGION_COLOR],
-    ["regionLineWidth", PreferenceKeys.REGION_LINE_WIDTH],
-    ["regionDashLength", PreferenceKeys.REGION_DASH_LENGTH],
-    ["regionType", PreferenceKeys.REGION_TYPE],
-    ["regionCreationMode", PreferenceKeys.REGION_CREATION_MODE],
-
-    ["imageCompressionQuality", PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY],
-    ["animationCompressionQuality", PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY],
-    ["GPUTileCache", PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE],
-    ["systemTileCache", PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE],
-    ["contourDecimation", PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION],
-    ["contourCompressionLevel", PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL],
-    ["contourChunkSize", PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE],
-    ["streamContoursWhileZooming", PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING],
-
-    ["logEventList", PreferenceKeys.LOG_EVENT]
-]);
-
 const DEFAULTS = {
     GLOBAL: {
         theme: Theme.LIGHT,
@@ -522,8 +475,8 @@ export class PreferenceStore {
     }
 
     @action setPreference = (key: PreferenceKeys, value: any): void => {
-        const localStorageKey = KEY_TO_STRING.get(key);
-        if (key === null || value === null || !localStorageKey) {
+        const keyStr = KEY_TO_STRING.get(key);
+        if (key === null || value === null || !keyStr) {
             return;
         }
 
@@ -649,20 +602,36 @@ export class PreferenceStore {
         }
 
         if (this.serverSupport) {
-            // TODO: gen a single structued json & save to server
+            if (key === PreferenceKeys.LOG_EVENT) {
+                this.savePreferencesToServer(KEY_TO_STRING.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
+            } else {
+                switch (typeof value) {
+                    case "boolean":
+                        this.savePreferencesToServer(keyStr, value ? "true" : "false");
+                        break;
+                    case "number":
+                        this.savePreferencesToServer(keyStr, value.toString(10));
+                        break;
+                    case "string":
+                        this.savePreferencesToServer(keyStr, value);
+                        break;
+                    default:
+                        return;
+                }
+            }
         } else { // TODO: use a single structured json to be validated & saved to local storage
             if (key === PreferenceKeys.LOG_EVENT) {
                 localStorage.setItem(KEY_TO_STRING.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
             } else {
                 switch (typeof value) {
                     case "boolean":
-                        localStorage.setItem(localStorageKey, value ? "true" : "false");
+                        localStorage.setItem(keyStr, value ? "true" : "false");
                         break;
                     case "number":
-                        localStorage.setItem(localStorageKey, value.toString(10));
+                        localStorage.setItem(keyStr, value.toString(10));
                         break;
                     case "string":
-                        localStorage.setItem(localStorageKey, value);
+                        localStorage.setItem(keyStr, value);
                         break;
                     default:
                         return;
@@ -730,7 +699,7 @@ export class PreferenceStore {
     @action resetLogEventSettings = () => {
         this.eventsLoggingEnabled.forEach((value, key, map) => map.set(key, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
         if (this.serverSupport) {
-            // TODO: gen a single structued json & save to server
+            this.savePreferencesToServer(KEY_TO_STRING.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
         } else {
             localStorage.setItem(KEY_TO_STRING.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
         }
@@ -820,6 +789,21 @@ export class PreferenceStore {
                 console.log("Invalid event list read from local storage");
             }
         }
+    };
+
+    private savePreferencesToServer = (key: string, value: string): boolean => {
+        let result = false;
+        let obj = {};
+        obj[key] = value;
+        this.backendService.setUserPreferences(obj).subscribe(ack => {
+            if (ack.success) {
+                result = true;
+            } else {
+                this.appStore.alertStore.showAlert("Saving user-defined preferences to server failed! ");
+                result = false;
+            }
+        });
+        return result;
     };
 
     constructor(appStore: AppStore) {
