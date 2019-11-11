@@ -54,7 +54,7 @@ export enum PreferenceKeys {
     LOG_EVENT
 }
 
-const LOCAL_STORAGE_KEYS = new Map<PreferenceKeys, string>([
+const KEY_TO_STRING = new Map<PreferenceKeys, string>([
     [PreferenceKeys.GLOBAL_THEME, "theme"],
     [PreferenceKeys.GLOBAL_AUTOLAUNCH, "autoLaunch"],
     [PreferenceKeys.GLOBAL_LAYOUT, "layout"],
@@ -99,6 +99,53 @@ const LOCAL_STORAGE_KEYS = new Map<PreferenceKeys, string>([
     [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, "streamContoursWhileZooming"],
 
     [PreferenceKeys.LOG_EVENT, "logEventList"]
+]);
+
+const STRING_TO_KEY = new Map<string, PreferenceKeys>([
+    ["theme", PreferenceKeys.GLOBAL_THEME],
+    ["autoLaunch", PreferenceKeys.GLOBAL_AUTOLAUNCH],
+    ["layout", PreferenceKeys.GLOBAL_LAYOUT],
+    ["cursorPosition", PreferenceKeys.GLOBAL_CURSOR_POSITION],
+    ["zoomMode", PreferenceKeys.GLOBAL_ZOOM_MODE],
+    ["dragPanning", PreferenceKeys.GLOBAL_DRAG_PANNING],
+
+    ["scaling", PreferenceKeys.RENDER_CONFIG_SCALING],
+    ["colormap", PreferenceKeys.RENDER_CONFIG_COLORMAP],
+    ["percentile", PreferenceKeys.RENDER_CONFIG_PERCENTILE],
+    ["scalingAlpha", PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA],
+    ["scalingGamma", PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA],
+    ["nanColorHex", PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX],
+    ["nanAlpha", PreferenceKeys.RENDER_CONFIG_NAN_ALPHA],
+
+    ["contourSmoothingMode", PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE],
+    ["contourSmoothingFactor", PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR],
+    ["contourNumLevels", PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS],
+    ["contourThickness", PreferenceKeys.CONTOUR_CONFIG_CONTOUR_THICKNESS],
+    ["contourColormapEnabled", PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED],
+    ["contourColor", PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLOR],
+    ["contourColormap", PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP],
+
+    ["astColor", PreferenceKeys.WCS_OVERLAY_AST_COLOR],
+    ["astGridVisible", PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE],
+    ["astLabelsVisible", PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE],
+    ["wcsType", PreferenceKeys.WCS_OVERLAY_WCS_TYPE],
+
+    ["regionColor", PreferenceKeys.REGION_COLOR],
+    ["regionLineWidth", PreferenceKeys.REGION_LINE_WIDTH],
+    ["regionDashLength", PreferenceKeys.REGION_DASH_LENGTH],
+    ["regionType", PreferenceKeys.REGION_TYPE],
+    ["regionCreationMode", PreferenceKeys.REGION_CREATION_MODE],
+
+    ["imageCompressionQuality", PreferenceKeys.PERFORMANCE_IMAGE_COMPRESSION_QUALITY],
+    ["animationCompressionQuality", PreferenceKeys.PERFORMANCE_ANIMATION_COMPRESSION_QUALITY],
+    ["GPUTileCache", PreferenceKeys.PERFORMANCE_GPU_TILE_CACHE],
+    ["systemTileCache", PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE],
+    ["contourDecimation", PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION],
+    ["contourCompressionLevel", PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL],
+    ["contourChunkSize", PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE],
+    ["streamContoursWhileZooming", PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING],
+
+    ["logEventList", PreferenceKeys.LOG_EVENT]
 ]);
 
 const DEFAULTS = {
@@ -475,7 +522,7 @@ export class PreferenceStore {
     }
 
     @action setPreference = (key: PreferenceKeys, value: any): void => {
-        const localStorageKey = LOCAL_STORAGE_KEYS.get(key);
+        const localStorageKey = KEY_TO_STRING.get(key);
         if (key === null || value === null || !localStorageKey) {
             return;
         }
@@ -605,7 +652,7 @@ export class PreferenceStore {
             // TODO: gen a single structued json & save to server
         } else { // TODO: use a single structured json to be validated & saved to local storage
             if (key === PreferenceKeys.LOG_EVENT) {
-                localStorage.setItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
+                localStorage.setItem(KEY_TO_STRING.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
             } else {
                 switch (typeof value) {
                     case "boolean":
@@ -685,7 +732,7 @@ export class PreferenceStore {
         if (this.serverSupport) {
             // TODO: gen a single structued json & save to server
         } else {
-            localStorage.setItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
+            localStorage.setItem(KEY_TO_STRING.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
         }
     };
 
@@ -709,8 +756,38 @@ export class PreferenceStore {
         Event.EVENT_TYPES.forEach(eventType => this.eventsLoggingEnabled.set(eventType, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
     };
 
-    private initPreferenceFromServer = (preference: { [k: string]: string; }) => {
-        // TODO
+    private initPreferenceFromServer = (serverPreference: { [k: string]: string; }) => {
+        const keys: PreferenceKeys[] = Object.values(PreferenceKeys).filter(value => typeof value === "number") as PreferenceKeys[];
+        keys.forEach((key) => {
+            if (key === PreferenceKeys.LOG_EVENT) {
+                this.initLogEventsFromServer(serverPreference);
+            } else {
+                const keyStr: string = KEY_TO_STRING.get(key);
+                if (keyStr && serverPreference.hasOwnProperty(keyStr)) {
+                    this.setPreference(key, this.PREFERENCE_VALIDATORS.get(key)(serverPreference[keyStr]));
+                }
+            }
+        });
+    };
+
+    private initLogEventsFromServer = (serverPreference: { [k: string]: string; }) => {
+        const keyStr = KEY_TO_STRING.get(PreferenceKeys.LOG_EVENT);
+        if (keyStr && serverPreference.hasOwnProperty(keyStr)) {
+            const serverEventList = serverPreference[keyStr];
+            try {
+                const eventNameList = JSON.parse(serverEventList);
+                if (eventNameList && Array.isArray(eventNameList) && eventNameList.length) {
+                    eventNameList.forEach((eventName) => {
+                        const eventType = Event.getEventTypeFromName(eventName);
+                        if (eventType !== undefined) {
+                            this.eventsLoggingEnabled.set(eventType, true);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.log("Invalid event list read from server");
+            }
+        }
     };
 
     private initPreferenceFromLocalStorage = () => {
@@ -719,7 +796,7 @@ export class PreferenceStore {
             if (key === PreferenceKeys.LOG_EVENT) {
                 this.initLogEventsFromLocalStorage();
             } else {
-                const value = localStorage.getItem(LOCAL_STORAGE_KEYS.get(key));
+                const value = localStorage.getItem(KEY_TO_STRING.get(key));
                 this.setPreference(key, this.PREFERENCE_VALIDATORS.get(key)(value));
             }
         });
@@ -727,7 +804,7 @@ export class PreferenceStore {
 
     // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
     private initLogEventsFromLocalStorage = () => {
-        const localStorageEventList = localStorage.getItem(LOCAL_STORAGE_KEYS.get(PreferenceKeys.LOG_EVENT));
+        const localStorageEventList = localStorage.getItem(KEY_TO_STRING.get(PreferenceKeys.LOG_EVENT));
         if (localStorageEventList && localStorageEventList.length) {
             try {
                 const eventNameList = JSON.parse(localStorageEventList);
