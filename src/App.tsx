@@ -61,7 +61,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
     componentDidMount() {
         // initiate application layout
-        if (!this.props.appStore.layoutStore.applyLayout(this.props.appStore.preferenceStore.getLayout())) {
+        if (!this.props.appStore.layoutStore.applyLayout(this.props.appStore.preferenceStore.layout)) {
             this.props.appStore.layoutStore.applyLayout(PresetLayout.DEFAULT);
         }
     }

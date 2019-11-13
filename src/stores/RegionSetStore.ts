@@ -24,7 +24,7 @@ export class RegionSetStore {
         this.backendService = backendService;
         this.preference = preference;
         this.regions = [];
-        this.newRegionType = preference.getRegionType();
+        this.newRegionType = preference.regionType;
         this.mode = RegionMode.MOVING;
         this.addPointRegion({x: 0, y: 0}, true);
         this.selectedRegion = this.regions[0];
@@ -62,7 +62,7 @@ export class RegionSetStore {
 
     private addRegion(points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId()) {
         const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, this.frame, points, regionType, regionId,
-            this.preference.getRegionColor(), this.preference.getRegionLineWidth(), this.preference.getRegionDashLength(), rotation);
+            this.preference.regionColor, this.preference.regionLineWidth, this.preference.regionDashLength, rotation);
         this.regions.push(region);
         if (!temporary) {
             this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {

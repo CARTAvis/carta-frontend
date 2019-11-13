@@ -97,8 +97,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             // update uniforms
             this.gl.uniform2f(this.shaderUniforms.Scale, scale.x, scale.y);
             this.gl.uniform2f(this.shaderUniforms.Offset, offset.x, offset.y);
-            this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * this.props.preference.getContourThickness() / frame.zoomLevel);
-            this.gl.uniform1i(this.shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(this.props.preference.getContourColormap()));
+            this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * this.props.preference.contourThickness / frame.zoomLevel);
+            this.gl.uniform1i(this.shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(this.props.preference.contourColormap));
 
             // Calculates ceiling power-of-three value as a dash factor.
             const dashFactor = Math.pow(3.0, Math.ceil(Math.log(1.0 / frame.zoomLevel) / Math.log(3)));
@@ -191,7 +191,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             contourData.forEach(contourStore => {
                 const numVertices = contourStore.vertexCount;
             });
-            const thickness = this.props.preference.getContourThickness();
+            const thickness = this.props.preference.contourThickness;
         }
         const padding = this.props.overlaySettings.padding;
         let className = "contour-div";

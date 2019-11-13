@@ -369,15 +369,15 @@ export class FrameStore {
         this.zooming = false;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
-        const astColor = preference.getASTColor();
+        const astColor = preference.astColor;
         if (astColor !== overlay.global.color) {
             overlay.global.setColor(astColor);
         }
-        const astGridVisible = preference.getASTGridVisible();
+        const astGridVisible = preference.astGridVisible;
         if (astGridVisible !== overlay.grid.visible) {
             overlay.grid.setVisible(astGridVisible);
         }
-        const astLabelsVisible = preference.getASTLabelsVisible();
+        const astLabelsVisible = preference.astLabelsVisible;
         if (astLabelsVisible !== overlay.labels.visible) {
             overlay.labels.setVisible(astLabelsVisible);
         }
@@ -714,18 +714,18 @@ export class FrameStore {
 
         // TODO: This should be defined by the contour config widget
         this.contourConfig.setBounds(this.renderConfig.scaleMinVal, this.renderConfig.scaleMaxVal);
-        this.contourConfig.setNumComputedLevels(this.preference.getContourNumLevels());
-        this.contourConfig.setColor(hexStringToRgba(this.preference.getContourColor()));
-        this.contourConfig.setColormap(this.preference.getColormap());
-        this.contourConfig.setColormapEnabled(this.preference.getContourColormapEnabled());
+        this.contourConfig.setNumComputedLevels(this.preference.contourNumLevels);
+        this.contourConfig.setColor(hexStringToRgba(this.preference.contourColor));
+        this.contourConfig.setColormap(this.preference.colormap);
+        this.contourConfig.setColormapEnabled(this.preference.contourColormapEnabled);
         this.contourConfig.setEnabled(true);
 
         // TODO: Allow a different reference frame
         const contourParameters: CARTA.ISetContourParameters = {
             fileId: this.frameInfo.fileId,
             referenceFileId: this.frameInfo.fileId,
-            smoothingMode: this.preference.getContourSmoothingMode(),
-            smoothingFactor: this.preference.getContourSmoothingFactor(),
+            smoothingMode: this.preference.contourSmoothingMode,
+            smoothingFactor: this.preference.contourSmoothingFactor,
             levels: this.contourConfig.levels,
             imageBounds: {
                 xMin: 0,
@@ -733,9 +733,9 @@ export class FrameStore {
                 yMin: 0,
                 yMax: this.frameInfo.fileInfoExtended.height,
             },
-            decimationFactor: this.preference.getContourDecimation(),
-            compressionLevel: this.preference.getContourCompressionLevel(),
-            contourChunkSize: this.preference.getContourChunkSize()
+            decimationFactor: this.preference.contourDecimation,
+            compressionLevel: this.preference.contourCompressionLevel,
+            contourChunkSize: this.preference.contourChunkSize
         };
         this.backendService.setContourParameters(contourParameters);
     };

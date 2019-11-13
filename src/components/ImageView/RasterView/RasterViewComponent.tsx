@@ -175,7 +175,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1f(this.shaderUniforms.Gamma, renderConfig.gamma);
             this.gl.uniform1f(this.shaderUniforms.Alpha, renderConfig.alpha);
 
-            const rgba = hexStringToRgba(preference.getNaNColorHex(), preference.getNaNAlpha());
+            const rgba = hexStringToRgba(preference.nanColorHex, preference.nanAlpha);
             if (rgba) {
                 this.gl.uniform4f(this.shaderUniforms.NaNColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
             }
@@ -477,8 +477,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 gamma: frame.renderConfig.gamma,
                 alpha: frame.renderConfig.alpha,
                 inverted: frame.renderConfig.inverted,
-                nanColorHex: preference.getNaNColorHex(),
-                nanAlpha: preference.getNaNAlpha()
+                nanColorHex: preference.nanColorHex,
+                nanAlpha: preference.nanAlpha
             };
             const renderType = frame.renderType;
         }

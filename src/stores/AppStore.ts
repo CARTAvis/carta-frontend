@@ -211,15 +211,15 @@ export class AppStore {
 
             const serverSupportsPreference = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_PREFERENCES ? true : false;
             this.preferenceStore.initUserDefinedPreferences(serverSupportsPreference, ack.userPreferences);
-            this.tileService.setCache(this.preferenceStore.getGPUTileCache(), this.preferenceStore.getSystemTileCache());
-            this.layoutStore.applyLayout(this.preferenceStore.getLayout());
-            this.compressionQuality = this.preferenceStore.getImageCompressionQuality();
+            this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
+            this.layoutStore.applyLayout(this.preferenceStore.layout);
+            this.compressionQuality = this.preferenceStore.imageCompressionQuality;
 
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
                 this.addFrame(folderSearchParam, fileSearchParam, "", 0);
             }
-            if (this.preferenceStore.getAutoLaunch()) {
+            if (this.preferenceStore.autoLaunch) {
                 this.fileBrowserStore.showFileBrowser(BrowserMode.File);
             }
         }, err => console.log(err));
@@ -474,7 +474,7 @@ export class AppStore {
         this.preferenceStore = new PreferenceStore(this);
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore, this.preferenceStore);
-        this.tileService = new TileService(this.backendService, this.preferenceStore.getGPUTileCache(), this.preferenceStore.getSystemTileCache());
+        this.tileService = new TileService(this.backendService, this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
         this.astReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<number, ObservableMap<number, SpectralProfileStore>>();
@@ -487,7 +487,7 @@ export class AppStore {
         this.animatorStore = new AnimatorStore(this);
         this.overlayStore = new OverlayStore(this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this, this.layoutStore);
-        this.compressionQuality = this.preferenceStore.getImageCompressionQuality();
+        this.compressionQuality = this.preferenceStore.imageCompressionQuality;
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         this.spatialRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
         this.statsRequirements = new Map<number, Array<number>>();
@@ -542,7 +542,7 @@ export class AppStore {
         // Update frame view outside of animation
         autorun(() => {
             if (this.activeFrame &&
-                (this.preferenceStore.getStreamContoursWhileZooming() || !this.activeFrame.zooming) &&
+                (this.preferenceStore.streamContoursWhileZooming || !this.activeFrame.zooming) &&
                 (this.animatorStore.animationState === AnimationState.STOPPED || this.animatorStore.animationMode === AnimationMode.FRAME)) {
                 // Trigger update raster view/title when switching layout
                 const layout = this.layoutStore.dockedLayout;
@@ -583,7 +583,7 @@ export class AppStore {
                     yMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.height, reqView.yMax),
                     mip: reqView.mip
                 };
-                throttledSetView(this.activeFrame.frameInfo.fileId, croppedReq, this.preferenceStore.getAnimationCompressionQuality());
+                throttledSetView(this.activeFrame.frameInfo.fileId, croppedReq, this.preferenceStore.animationCompressionQuality);
             }
         });
 

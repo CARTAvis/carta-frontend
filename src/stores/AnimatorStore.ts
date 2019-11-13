@@ -257,7 +257,7 @@ export class AnimatorStore {
             },
             mip: croppedReq.mip,
             compressionType: CARTA.CompressionType.ZFP,
-            compressionQuality: this.appStore.preferenceStore.getAnimationCompressionQuality(),
+            compressionQuality: this.appStore.preferenceStore.animationCompressionQuality,
         };
 
         return imageView;

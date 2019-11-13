@@ -131,7 +131,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                                 active={value === appStore.layoutStore.currentLayoutName}
                                 onClick={() => {
                                     appStore.layoutStore.deleteLayout(value);
-                                    if (value === appStore.preferenceStore.getLayout()) {
+                                    if (value === appStore.preferenceStore.layout) {
                                         appStore.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
                                     }
                                 }}
