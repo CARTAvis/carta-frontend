@@ -5,7 +5,6 @@ import * as Ajv from "ajv";
 import {LayoutSchema, PresetLayout} from "models";
 import {AppToaster} from "components/Shared";
 import {smoothStepOffset} from "utilities";
-import {BackendService} from "services";
 
 const KEY = "savedLayouts";
 const MAX_LAYOUT = 10;
@@ -111,7 +110,6 @@ export class LayoutStore {
     public static readonly TOASTER_TIMEOUT = 1500;
 
     private readonly appStore: AppStore;
-    private readonly backendService: BackendService;
     private alertStore: AlertStore;
     private layoutNameToBeSaved: string;
     private serverSupport: boolean;
@@ -123,7 +121,6 @@ export class LayoutStore {
 
     constructor(appStore: AppStore, alertStore: AlertStore) {
         this.appStore = appStore;
-        this.backendService = appStore.backendService;
         this.alertStore = alertStore;
         this.dockedLayout = null;
         this.layouts = {};
@@ -207,7 +204,7 @@ export class LayoutStore {
 
     private saveLayoutToServer = (layoutName: string, config: string): boolean => {
         let result = false;
-        this.backendService.setUserLayout(layoutName, config).subscribe(ack => {
+        this.appStore.backendService.setUserLayout(layoutName, config).subscribe(ack => {
             if (ack.success) {
                 result = true;
             } else {
