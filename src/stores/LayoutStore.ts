@@ -202,25 +202,14 @@ export class LayoutStore {
         this.validateUserLayouts(userLayouts);
     };
 
-    private saveLayoutToServer = (layoutName: string, config: string): boolean => {
-        let result = false;
-        this.appStore.backendService.setUserLayout(layoutName, config).subscribe(ack => {
-            if (ack.success) {
-                result = true;
-            } else {
-                this.alertStore.showAlert("Saving user-defined layout failed! ");
-                result = false;
-            }
-        });
-        return result;
-    };
-
     private saveLayoutToLocalStorage = (): boolean => {
         if (this.userLayouts) {
             // save only user layouts to local storage, excluding presets
             let userLayouts = {};
             this.userLayouts.forEach((layoutName) => {
-                if (!PresetLayout.isValid(layoutName)) { userLayouts[layoutName] = this.layouts[layoutName]; }
+                if (!PresetLayout.isValid(layoutName)) {
+                    userLayouts[layoutName] = this.layouts[layoutName];
+                }
             });
 
             try {
@@ -438,19 +427,23 @@ export class LayoutStore {
         // save layout to layouts[] & server/local storage
         this.layouts[this.layoutNameToBeSaved] = simpleConfig;
         if (this.serverSupport) {
-            if (!this.saveLayoutToServer(this.layoutNameToBeSaved, JSON.stringify(simpleConfig))) {
-                delete this.layouts[this.layoutNameToBeSaved];
-                return;
-            }
+            this.appStore.backendService.setUserLayout(this.layoutNameToBeSaved, JSON.stringify(simpleConfig)).subscribe(() => this.handleSaveResult(true), err => {
+                console.log(err);
+                this.handleSaveResult(false);
+            });
         } else {
-            if (!this.saveLayoutToLocalStorage()) {
-                delete this.layouts[this.layoutNameToBeSaved];
-                return;
-            }
+            this.handleSaveResult(this.saveLayoutToLocalStorage());
         }
+    };
 
-        this.currentLayoutName = this.layoutNameToBeSaved;
-        AppToaster.show({icon: "layout-grid", message: `Layout ${this.layoutNameToBeSaved} saved successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
+    private handleSaveResult = (success: boolean) => {
+        if (success) {
+            AppToaster.show({icon: "layout-grid", message: `Layout ${this.layoutNameToBeSaved} saved successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
+            this.currentLayoutName = this.layoutNameToBeSaved;
+        } else {
+            delete this.layouts[this.layoutNameToBeSaved];
+            this.alertStore.showAlert("Saving user-defined layout failed! ");
+        }
     };
 
     @action deleteLayout = (layoutName: string) => {
@@ -460,19 +453,31 @@ export class LayoutStore {
         }
 
         delete this.layouts[layoutName];
+
         if (this.serverSupport) {
-            if (!this.saveLayoutToServer(layoutName, "")) {
-                return;
-            }
+            this.appStore.backendService.setUserLayout(layoutName, "").subscribe(() => {
+                this.handleDeleteResult(layoutName, true);
+            }, err => {
+                console.log(err);
+                this.handleDeleteResult(layoutName, false);
+            });
         } else {
-            if (!this.saveLayoutToLocalStorage()) {
-                return;
-            }
+            this.handleDeleteResult(layoutName, this.saveLayoutToLocalStorage());
         }
 
         if (layoutName === this.currentLayoutName) {
             this.currentLayoutName = "";
         }
-        AppToaster.show({icon: "layout-grid", message: `Layout ${layoutName} deleted successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
+    };
+
+    private handleDeleteResult = (layoutName: string, success: boolean) => {
+        if (success) {
+            AppToaster.show({icon: "layout-grid", message: `Layout ${layoutName} deleted successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
+            if (layoutName === this.currentLayoutName) {
+                this.currentLayoutName = "";
+            }
+        } else {
+            this.alertStore.showAlert("Saving user-defined layout failed! ");
+        }
     };
 }
