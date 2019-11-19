@@ -81,6 +81,7 @@ export class BackendService {
             [CARTA.EventType.EXPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.SET_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.SET_USER_LAYOUT_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.SET_USER_PREFERENCES_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.START_ANIMATION_ACK, this.onStartAnimationAck],
             [CARTA.EventType.RASTER_IMAGE_DATA, this.onStreamedRasterImageData],
             [CARTA.EventType.RASTER_TILE_DATA, this.onStreamedRasterTileData],
@@ -111,6 +112,8 @@ export class BackendService {
             [CARTA.EventType.SPECTRAL_PROFILE_DATA, CARTA.SpectralProfileData],
             [CARTA.EventType.REGION_STATS_DATA, CARTA.RegionStatsData],
             [CARTA.EventType.CONTOUR_IMAGE_DATA, CARTA.ContourImageData],
+            [CARTA.EventType.SET_USER_LAYOUT_ACK, CARTA.SetUserLayoutAck],
+            [CARTA.EventType.SET_USER_PREFERENCES_ACK, CARTA.SetUserPreferencesAck]
         ]);
 
         autorun(() => {
