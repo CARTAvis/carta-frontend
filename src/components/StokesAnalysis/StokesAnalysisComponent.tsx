@@ -39,7 +39,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             minWidth: 320,
             minHeight: 400,
             defaultWidth: 400,
-            defaultHeight: 700,
+            defaultHeight: 650,
             title: "Stokes Analysis",
             isCloseable: true
         };
