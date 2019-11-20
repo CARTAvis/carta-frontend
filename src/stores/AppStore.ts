@@ -636,6 +636,7 @@ export class AppStore {
         this.backendService.getContourStream().subscribe(this.handleContourImageStream);
         this.backendService.getErrorStream().subscribe(this.handleErrorStream);
         this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
+        this.backendService.getReconnectStream().subscribe(this.handleReconnectStream);
         this.tileService.GetTileStream().subscribe(this.handleTileStream);
 
         // Auth and connection
@@ -782,6 +783,27 @@ export class AppStore {
             };
             this.logStore.addLog(logEntry);
         }
+    };
+
+    handleReconnectStream = () => {
+        const images: CARTA.IImageProperties[] = [];
+        this.frames.forEach(frame => {
+            const info = frame.frameInfo;
+            images.push({
+                file: info.fileInfo.name,
+                directory: "",
+                hdu: "",
+                fileId: info.fileId,
+                renderMode: info.renderMode,
+                channel: frame.requiredChannel,
+                stokes: frame.requiredStokes,
+                regions: []
+            });
+        });
+        this.backendService.resumeSession({images}).subscribe(ack => {
+            console.log(ack);
+            console.log(`Resumed successfully`);
+        });
     };
 
     // endregion

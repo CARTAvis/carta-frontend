@@ -39,6 +39,7 @@ export class BackendService {
     private readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
     private readonly statsStream: Subject<CARTA.RegionStatsData>;
     private readonly contourStream: Subject<CARTA.ContourImageData>;
+    private readonly reconnectStream: Subject<void>;
     private readonly decompressionService: DecompressionService;
     private readonly subsetsRequired: number;
     private readonly logStore: LogStore;
@@ -64,6 +65,7 @@ export class BackendService {
         this.spectralProfileStream = new Subject<CARTA.SpectralProfileData>();
         this.statsStream = new Subject<CARTA.RegionStatsData>();
         this.contourStream = new Subject<CARTA.ContourImageData>();
+        this.reconnectStream = new Subject<void>();
 
         this.subsetsRequired = Math.min(navigator.hardwareConcurrency || 4, 4);
         if (process.env.NODE_ENV !== "test") {
@@ -81,6 +83,7 @@ export class BackendService {
             [CARTA.EventType.IMPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.EXPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.SET_REGION_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.RESUME_SESSION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.START_ANIMATION_ACK, this.onStartAnimationAck],
             [CARTA.EventType.RASTER_IMAGE_DATA, this.onStreamedRasterImageData],
             [CARTA.EventType.RASTER_TILE_DATA, this.onStreamedRasterTileData],
@@ -89,7 +92,7 @@ export class BackendService {
             [CARTA.EventType.SPATIAL_PROFILE_DATA, this.onStreamedSpatialProfileData],
             [CARTA.EventType.SPECTRAL_PROFILE_DATA, this.onStreamedSpectralProfileData],
             [CARTA.EventType.REGION_STATS_DATA, this.onStreamedRegionStatsData],
-            [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData],
+            [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData]
         ]);
 
         this.decoderMap = new Map<CARTA.EventType, any>([
@@ -102,6 +105,7 @@ export class BackendService {
             [CARTA.EventType.IMPORT_REGION_ACK, CARTA.ImportRegionAck],
             [CARTA.EventType.EXPORT_REGION_ACK, CARTA.ExportRegionAck],
             [CARTA.EventType.SET_REGION_ACK, CARTA.SetRegionAck],
+            [CARTA.EventType.RESUME_SESSION_ACK, CARTA.ResumeSessionAck],
             [CARTA.EventType.START_ANIMATION_ACK, CARTA.StartAnimationAck],
             [CARTA.EventType.RASTER_IMAGE_DATA, CARTA.RasterImageData],
             [CARTA.EventType.RASTER_TILE_DATA, CARTA.RasterTileData],
@@ -159,6 +163,10 @@ export class BackendService {
         return this.contourStream;
     }
 
+    getReconnectStream() {
+        return this.reconnectStream;
+    }
+
     @action("connect")
     connect(url: string, autoConnect: boolean = true): Observable<CARTA.RegisterViewerAck> {
         if (this.connection) {
@@ -196,6 +204,9 @@ export class BackendService {
                 this.connectionStatus = ConnectionStatus.ACTIVE;
                 this.autoReconnect = true;
                 const message = CARTA.RegisterViewer.create({sessionId: this.sessionId, clientFeatureFlags: BackendService.DefaultFeatureFlags});
+                // observer map is cleared, so that old subscriptions don't get incorrectly fired
+                this.observerRequestMap.clear();
+                this.eventCounter = 1;
                 const requestId = this.eventCounter;
                 this.logEvent(CARTA.EventType.REGISTER_VIEWER, requestId, message, false);
                 if (this.sendEvent(CARTA.EventType.REGISTER_VIEWER, CARTA.RegisterViewer.encode(message).finish())) {
@@ -556,6 +567,23 @@ export class BackendService {
         return false;
     }
 
+    @action("resume session")
+    resumeSession(message: CARTA.IResumeSession): Observable<CARTA.ResumeSessionAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.RESUME_SESSION, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.RESUME_SESSION, CARTA.ResumeSession.encode(message).finish())) {
+                return new Observable<CARTA.ResumeSessionAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
     @action("authenticate")
     authenticate = (username: string, password: string) => {
         let authUrl = `${window.location.protocol}//${window.location.hostname}/carta_auth/`;
@@ -642,6 +670,11 @@ export class BackendService {
     private onRegisterViewerAck(eventId: number, ack: CARTA.RegisterViewerAck) {
         this.sessionId = ack.sessionId;
         this.onSimpleMappedResponse(eventId, ack);
+
+        // use the reconnect stream when the session type is resumed
+        if (ack.success && ack.sessionType === CARTA.SessionType.RESUMED) {
+            this.reconnectStream.next();
+        }
     }
 
     private onStartAnimationAck(eventId: number, ack: CARTA.StartAnimationAck) {
