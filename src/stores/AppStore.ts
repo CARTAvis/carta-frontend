@@ -280,6 +280,8 @@ export class AppStore {
             this.logStore.addInfo(`Loaded file ${ack.fileInfo.name} with dimensions ${dimensionsString}`, ["file"]);
             const frameInfo: FrameInfo = {
                 fileId: ack.fileId,
+                directory,
+                hdu,
                 fileInfo: new CARTA.FileInfo(ack.fileInfo),
                 fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
                 fileFeatureFlags: ack.fileFeatureFlags,
@@ -481,10 +483,7 @@ export class AppStore {
         this.overlayStore = new OverlayStore(this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this, this.layoutStore);
         this.compressionQuality = this.preferenceStore.imageCompressionQuality;
-        this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
-        this.spatialRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
-        this.statsRequirements = new Map<number, Array<number>>();
-        this.histogramRequirements = new Map<number, Array<number>>();
+        this.initRequirements();
 
         const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
             this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
@@ -786,23 +785,43 @@ export class AppStore {
     };
 
     handleReconnectStream = () => {
-        const images: CARTA.IImageProperties[] = [];
-        this.frames.forEach(frame => {
+        // Some things should be reset when the user reconnects
+        this.animatorStore.stopAnimation();
+        this.tileService.clearRequestQueue();
+
+        const images: CARTA.IImageProperties[] = this.frames.map(frame => {
             const info = frame.frameInfo;
-            images.push({
+
+            const regions: CARTA.IRegionProperties[] = frame.regionSet.regions.map(region => {
+                const regionInfo: CARTA.IRegionInfo = {
+                    regionName: region.name,
+                    regionType: region.regionType,
+                    controlPoints: region.controlPoints,
+                    rotation: region.rotation
+                };
+
+                return {
+                    regionId: region.regionId,
+                    regionInfo
+                };
+            });
+
+            return {
                 file: info.fileInfo.name,
-                directory: "",
-                hdu: "",
+                directory: info.directory,
+                hdu: info.hdu,
                 fileId: info.fileId,
                 renderMode: info.renderMode,
                 channel: frame.requiredChannel,
                 stokes: frame.requiredStokes,
-                regions: []
-            });
+                regions
+            };
         });
-        this.backendService.resumeSession({images}).subscribe(ack => {
-            console.log(ack);
+
+        this.backendService.resumeSession({images}).subscribe(() => {
             console.log(`Resumed successfully`);
+            // Clear requirements once session has resumed
+            this.initRequirements();
         });
     };
 
@@ -878,6 +897,13 @@ export class AppStore {
     };
 
     // region requirements calculations
+
+    private initRequirements = () => {
+        this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
+        this.spatialRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
+        this.statsRequirements = new Map<number, Array<number>>();
+        this.histogramRequirements = new Map<number, Array<number>>();
+    };
 
     recalculateRequirements = () => {
         this.recalculateSpatialRequirements();
