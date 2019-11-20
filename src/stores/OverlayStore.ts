@@ -648,6 +648,42 @@ export class OverlayLabelSettings {
     };
 }
 
+export class OverlayBeamSettings {
+    @observable color: string;
+    @observable type: string;
+    @observable width: number;
+    @observable positionX: number;
+    @observable positionY: number;
+
+    constructor() {
+        this.color = "#000000";
+        this.type = "open";
+        this.width = 1;
+        this.positionX = 1;
+        this.positionY = 1;
+    }
+
+    @action setColor= (color: string) => {
+        this.color = color;
+    };
+
+    @action setType= (type: string) => {
+        this.type = type;
+    };
+
+    @action setWidth= (width: number) => {
+        this.width = width;
+    };
+
+    @action setPositionX= (positionX: number) => {
+        this.positionX = positionX;
+    };
+
+    @action setPositionY= (positionY: number) => {
+        this.positionY = positionY;
+    };
+}
+
 export class OverlayStore {
     private readonly preference: PreferenceStore;
 
@@ -664,6 +700,7 @@ export class OverlayStore {
     @observable numbers: OverlayNumberSettings;
     @observable labels: OverlayLabelSettings;
     @observable ticks: OverlayTickSettings;
+    @observable beam: OverlayBeamSettings;
 
     // Dialog
     @observable overlaySettingsDialogVisible = false;
