@@ -6,7 +6,10 @@ import {Select, ItemRenderer} from "@blueprintjs/select";
 import {Button, Switch, IDialogProps, Intent, Tab, Tabs, TabId, NumericInput, FormGroup, MenuItem, HTMLSelect, Collapse, InputGroup} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ColorComponent} from "./ColorComponent";
-import {AppStore, LabelType, SystemType} from "stores";
+import {ColorResult} from "react-color";
+import {ColorPickerComponent} from "components/Shared";
+import {AppStore, LabelType, SystemType, RegionStore} from "stores";
+import {hexStringToRgba} from "utilities";
 import "./OverlaySettingsDialogComponent.css";
 
 // Font selector
@@ -555,6 +558,61 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
             </div>
         );
 
+        const beamPanel = (
+            <div className="panel-container">
+                <FormGroup inline={true} label="Color" disabled={!labels.visible}>
+                    <ColorPickerComponent
+                        color={hexStringToRgba("#000000")}
+                        presetColors={[...RegionStore.SWATCH_COLORS, "transparent"]}
+                        setColor={(color: ColorResult) => {
+                        }}
+                        disableAlpha={false}
+                        darkTheme={this.props.appStore.darkTheme}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Type" disabled={!labels.visible}>
+                    <HTMLSelect
+                        options={["Open", "Solid", "Hatched"]}
+                        value={"Open"}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => {}}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Line width" disabled={!labels.visible}>
+                    <NumericInput
+                            placeholder="Width"
+                            min={0.001}
+                            value={0}
+                            stepSize={0.5}
+                            minorStepSize={0.1}
+                            majorStepSize={1}
+                            onValueChange={() => {;}}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Position" disabled={!labels.visible}  labelInfo="(X)">
+                    <NumericInput
+                        placeholder="X"
+                        min={0.001}
+                        value={0}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
+                        majorStepSize={1}
+                        onValueChange={() => {;}}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Position" disabled={!labels.visible}  labelInfo="(Y)">
+                    <NumericInput
+                        placeholder="Y"
+                        min={0.001}
+                        value={0}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
+                        majorStepSize={1}
+                        onValueChange={() => {;}}
+                    />
+                </FormGroup>
+            </div>
+        );
+
         let className = "overlay-settings-dialog";
         if (this.props.appStore.darkTheme) {
             className += " bp3-dark";
@@ -588,6 +646,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         <Tab id="axes" title="Axes" panel={axesPanel}/>
                         <Tab id="numbers" title="Numbers" panel={numbersPanel}/>
                         <Tab id="labels" title="Labels" panel={labelsPanel}/>
+                        <Tab id="beam" title="Beam" panel={beamPanel}/>
                     </Tabs>
                 </div>
                 <div className="bp3-dialog-footer">
