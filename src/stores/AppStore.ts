@@ -223,6 +223,7 @@ export class AppStore {
     @observable taskStartTime: number;
     @observable taskCurrentTime: number;
     @observable fileLoading: boolean;
+    @observable resumingSession: boolean;
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -785,6 +786,15 @@ export class AppStore {
     };
 
     handleReconnectStream = () => {
+        this.alertStore.showInteractiveAlert("You have reconnected to the CARTA server. Do you want to resume your session?", this.onResumeAlertClosed);
+    };
+
+    @action onResumeAlertClosed = (confirmed: boolean) => {
+        if (!confirmed) {
+            // TODO: How do we handle the situation where the user does not want to resume?
+            return;
+        }
+
         // Some things should be reset when the user reconnects
         this.animatorStore.stopAnimation();
         this.tileService.clearRequestQueue();
@@ -818,11 +828,20 @@ export class AppStore {
             };
         });
 
-        this.backendService.resumeSession({images}).subscribe(() => {
-            console.log(`Resumed successfully`);
-            // Clear requirements once session has resumed
-            this.initRequirements();
+        this.resumingSession = true;
+
+        this.backendService.resumeSession({images}).subscribe(this.onSessionResumed, err => {
+            console.error(err);
+            this.alertStore.showAlert("Error resuming session");
         });
+    };
+
+    @action private onSessionResumed = () => {
+        console.log(`Resumed successfully`);
+        // Clear requirements once session has resumed
+        this.initRequirements();
+        this.resumingSession = false;
+        this.backendService.connectionDropped = false;
     };
 
     // endregion

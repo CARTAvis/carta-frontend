@@ -7,7 +7,16 @@ import ReactResizeDetector from "react-resize-detector";
 import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget, Intent} from "@blueprintjs/core";
 import {exportImage, FloatingWidgetManagerComponent, RootMenuComponent} from "./components";
 import {AppToaster} from "./components/Shared";
-import {AboutDialogComponent, AuthDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, PreferenceDialogComponent, RegionDialogComponent, SaveLayoutDialogComponent} from "./components/Dialogs";
+import {
+    AboutDialogComponent,
+    AuthDialogComponent,
+    FileBrowserDialogComponent,
+    OverlaySettingsDialogComponent,
+    PreferenceDialogComponent,
+    RegionDialogComponent,
+    SaveLayoutDialogComponent,
+    TaskProgressDialogComponent
+} from "./components/Dialogs";
 import {AppStore, BrowserMode, dayPalette, nightPalette, RegionMode} from "./stores";
 import {ConnectionStatus} from "./services";
 import {PresetLayout} from "models";
@@ -102,15 +111,12 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     confirmButtonText="Yes"
                     cancelButtonText="Cancel"
                     intent={Intent.DANGER}
-                    onConfirm={() => {
-                        appStore.alertStore.dismissInteractiveAlert();
-                        appStore.layoutStore.saveLayout();
-                    }}
-                    onCancel={appStore.alertStore.dismissInteractiveAlert}
+                    onClose={appStore.alertStore.handleInteractiveAlertClosed}
                     canEscapeKeyCancel={true}
                 >
                     <p>{appStore.alertStore.interactiveAlertText}</p>
                 </Alert>
+                <TaskProgressDialogComponent progress={undefined} timeRemaining={0} isOpen={appStore.resumingSession} cancellable={false} text={"Resuming session..."}/>
                 <div className={glClassName} ref={ref => appStore.setAppContainer(ref)}>
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}/>
                 </div>
