@@ -1,6 +1,7 @@
 import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {PlotType} from "components/Shared";
+import {Colors} from "@blueprintjs/core";
+import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore} from "./RegionWidgetStore";
 
 export class HistogramWidgetStore extends RegionWidgetStore {
@@ -9,9 +10,13 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     @observable minY: number;
     @observable maxY: number;
     @observable cursorX: number;
+
+    // settings 
     @observable logScaleY: boolean;
     @observable plotType: PlotType;
-    @observable settingsPanelVisible: boolean;
+    @observable primaryLineColor: { colorHex: string, fixed: boolean };
+    @observable lineWidth: number;
+    @observable linePlotPointSize: number;
 
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
@@ -45,14 +50,6 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         this.maxX = undefined;
         this.minY = undefined;
         this.maxY = undefined;
-    };
-
-    @action showSettingsPanel = () => {
-        this.settingsPanelVisible = true;
-    };
-
-    @action hideSettingsPanel = () => {
-        this.settingsPanelVisible = false;
     };
 
     @action setLogScale = (logScale: boolean) => {
@@ -124,6 +121,25 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         super();
         this.logScaleY = true;
         this.plotType = PlotType.STEPS;
-        this.settingsPanelVisible = false;
+        this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };
+        this.linePlotPointSize = 1.5;
+        this.lineWidth = 1;
+    }
+
+    // settings
+    @action setPrimaryLineColor = (colorHex: string, fixed: boolean) => {
+        this.primaryLineColor = { colorHex: colorHex, fixed: fixed };
+    }
+
+    @action setLineWidth = (val: number) => {
+        if (val >= LineSettings.MIN_WIDTH && val <= LineSettings.MAX_WIDTH) {
+            this.lineWidth = val;   
+        }
+    }
+
+    @action setLinePlotPointSize = (val: number) => {
+        if (val >= LineSettings.MIN_POINT_SIZE && val <= LineSettings.MAX_POINT_SIZE) {
+            this.linePlotPointSize = val;   
+        }
     }
 }

@@ -16,7 +16,8 @@ import {
     StokesAnalysisSettingsPanelComponent,
     SpectralProfilerSettingsPanelComponent,
     SpatialProfilerSettingsPanelComponent,
-    RenderConfigSettingsPanelComponent
+    RenderConfigSettingsPanelComponent,
+    HistogramSettingsPanelComponent
 } from "components";
 import {AppStore, WidgetConfig} from "stores";
 
@@ -73,6 +74,8 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
                     return <SpatialProfilerSettingsPanelComponent appStore={appStore} id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
                 case RenderConfigComponent.WIDGET_CONFIG.type:
                     return <RenderConfigSettingsPanelComponent appStore={appStore} id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
+                case HistogramComponent.WIDGET_CONFIG.type:
+                    return <HistogramSettingsPanelComponent appStore={appStore} id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
                 default:
                     return null;
             }
@@ -96,6 +99,8 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
             case SpatialProfilerComponent.WIDGET_CONFIG.type:
                 return true;
             case RenderConfigComponent.WIDGET_CONFIG.type:
+                return true;
+            case HistogramComponent.WIDGET_CONFIG.type:
                 return true;
             default:
                 return false;
@@ -121,7 +126,6 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
                                 showPinButton={showPinButton}
                                 onSelected={() => this.onFloatingWidgetSelected(w)}
                                 onClosed={() => this.onFloatingWidgetClosed(w)}
-                                // only apply to stokes widget, spectral profiler
                                 showFloatingSettingsButton={this.showFloatingSettingsButton(w)}
                             >
                                 {showPinButton ?
