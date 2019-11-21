@@ -45,6 +45,12 @@ export enum SystemType {
     ICRS = "ICRS",
 }
 
+export enum BeamType {
+    Open = "Open",
+    Solid = "Solid",
+    Hatched = "Hatched"
+}
+
 export class Padding {
     left: number;
     right: number;
@@ -649,37 +655,43 @@ export class OverlayLabelSettings {
 }
 
 export class OverlayBeamSettings {
+    @observable visible: boolean;
     @observable color: string;
-    @observable type: string;
+    @observable type: BeamType;
     @observable width: number;
     @observable positionX: number;
     @observable positionY: number;
 
     constructor() {
+        this.visible = true;
         this.color = "#000000";
-        this.type = "open";
+        this.type = BeamType.Open;
         this.width = 1;
         this.positionX = 1;
         this.positionY = 1;
     }
 
-    @action setColor= (color: string) => {
+    @action setVisible = (visible: boolean) => {
+        this.visible = visible;
+    };
+
+    @action setColor = (color: string) => {
         this.color = color;
     };
 
-    @action setType= (type: string) => {
+    @action setType = (type: BeamType) => {
         this.type = type;
     };
 
-    @action setWidth= (width: number) => {
+    @action setWidth = (width: number) => {
         this.width = width;
     };
 
-    @action setPositionX= (positionX: number) => {
+    @action setPositionX = (positionX: number) => {
         this.positionX = positionX;
     };
 
-    @action setPositionY= (positionY: number) => {
+    @action setPositionY = (positionY: number) => {
         this.positionY = positionY;
     };
 }
@@ -723,6 +735,7 @@ export class OverlayStore {
         this.numbers = new OverlayNumberSettings();
         this.labels = new OverlayLabelSettings(preference);
         this.ticks = new OverlayTickSettings();
+        this.beam = new OverlayBeamSettings();
         this.viewHeight = 1;
         this.viewWidth = 1;
 
@@ -850,6 +863,5 @@ export class OverlayStore {
             top: base + titleGap + titleHeight,
             bottom: base + numGap + numHeight + labelGap + labelHeight
         };
-
     }
 }

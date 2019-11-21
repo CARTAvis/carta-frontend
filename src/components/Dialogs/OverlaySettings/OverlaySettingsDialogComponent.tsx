@@ -8,7 +8,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {ColorComponent} from "./ColorComponent";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent} from "components/Shared";
-import {AppStore, LabelType, SystemType, RegionStore} from "stores";
+import {AppStore, BeamType, LabelType, SystemType, RegionStore} from "stores";
 import {hexStringToRgba} from "utilities";
 import "./OverlaySettingsDialogComponent.css";
 
@@ -94,6 +94,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         const axes = overlayStore.axes;
         const numbers = overlayStore.numbers;
         const labels = overlayStore.labels;
+        const beam = overlayStore.beam;
 
         const interior: boolean = (global.labelType === LabelType.Interior);
 
@@ -560,12 +561,18 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
 
         const beamPanel = (
             <div className="panel-container">
+                <FormGroup inline={true} label="Visible" disabled={!labels.visible}>
+                    <Switch
+                        checked={beam.visible}
+                        disabled={!labels.visible}
+                        onChange={(ev) =>  beam.setVisible(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
                 <FormGroup inline={true} label="Color" disabled={!labels.visible}>
                     <ColorPickerComponent
-                        color={hexStringToRgba("#000000")}
-                        presetColors={[...RegionStore.SWATCH_COLORS, "transparent"]}
-                        setColor={(color: ColorResult) => {
-                        }}
+                        color={hexStringToRgba(beam.color)}
+                        presetColors={[...RegionStore.SWATCH_COLORS]}
+                        setColor={(color: ColorResult) => beam.setColor(color.hex)}
                         disableAlpha={false}
                         darkTheme={this.props.appStore.darkTheme}
                     />
@@ -573,41 +580,41 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup inline={true} label="Type" disabled={!labels.visible}>
                     <HTMLSelect
                         options={["Open", "Solid", "Hatched"]}
-                        value={"Open"}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => {}}
+                        value={beam.type}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => beam.setType(event.currentTarget.value as BeamType)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Line width" disabled={!labels.visible}>
                     <NumericInput
                             placeholder="Width"
                             min={0.001}
-                            value={0}
+                            value={beam.width}
                             stepSize={0.5}
                             minorStepSize={0.1}
                             majorStepSize={1}
-                            onValueChange={() => {;}}
+                            onValueChange={(value: number) => beam.setWidth(value)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Position" disabled={!labels.visible}  labelInfo="(X)">
                     <NumericInput
-                        placeholder="X"
+                        placeholder="Position X"
                         min={0.001}
-                        value={0}
+                        value={beam.positionX}
                         stepSize={0.5}
                         minorStepSize={0.1}
                         majorStepSize={1}
-                        onValueChange={() => {;}}
+                        onValueChange={(value: number) => beam.setPositionX(value)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Position" disabled={!labels.visible}  labelInfo="(Y)">
                     <NumericInput
-                        placeholder="Y"
+                        placeholder="Position Y"
                         min={0.001}
-                        value={0}
+                        value={beam.positionY}
                         stepSize={0.5}
                         minorStepSize={0.1}
                         majorStepSize={1}
-                        onValueChange={() => {;}}
+                        onValueChange={(value: number) => beam.setPositionY(value)}
                     />
                 </FormGroup>
             </div>
