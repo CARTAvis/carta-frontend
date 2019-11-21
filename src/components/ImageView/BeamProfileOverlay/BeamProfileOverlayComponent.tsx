@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Ellipse, Group, Layer, Line, Stage} from "react-konva";
-import {Colors} from "@blueprintjs/core";
+import {BeamType, OverlayBeamSettings} from "stores";
 import "./BeamProfileOverlayComponent.css";
 
 interface BeamProfileOverlayComponentProps {
@@ -13,18 +13,22 @@ interface BeamProfileOverlayComponentProps {
     beamMinor: number;
     beamAngle: number;
     zoomLevel: number;
-    color?: string;
+    overlayBeamSettings: OverlayBeamSettings;
     padding?: number;
 }
 
 export class BeamProfileOverlayComponent extends React.PureComponent<BeamProfileOverlayComponentProps> {
-
     render() {
         let className = "beam-profile-stage";
         if (this.props.docked) {
             className += " docked";
         }
-        const renderColor = this.props.color || Colors.GRAY4;
+
+        const beamSettings = this.props.overlayBeamSettings;
+        const color =  beamSettings.color;
+        const axisColor = beamSettings.type === BeamType.Solid ? "#FFFFFF" : color;
+        const type = beamSettings.type;
+        const strokeWidth = beamSettings.width;
         const paddingOffset = this.props.padding ? this.props.padding * devicePixelRatio : 0;
         const a = this.props.beamMajor / 2.0 * this.props.zoomLevel;
         const b = this.props.beamMinor / 2.0 * this.props.zoomLevel;
@@ -37,6 +41,20 @@ export class BeamProfileOverlayComponent extends React.PureComponent<BeamProfile
             x: 2 * Math.sqrt(a * a * cosTheta * cosTheta + b * b * sinTheta * sinTheta),
             y: 2 * Math.sqrt(a * a * sinTheta * sinTheta + b * b * cosTheta * cosTheta)
         };
+
+        let ellipse;
+        switch (type) {
+            case BeamType.Open: default:
+                ellipse = <Ellipse radiusX={a} radiusY={b} stroke={color} strokeWidth={strokeWidth}/>;
+                break;
+            case  BeamType.Solid:
+                ellipse = <Ellipse radiusX={a} radiusY={b} fill={color} stroke={color} strokeWidth={strokeWidth}/>;
+                break;
+            case BeamType.Hatched:
+                ellipse = <Ellipse radiusX={a} radiusY={b} stroke={color} strokeWidth={strokeWidth}/>;
+                break;
+        }
+
         return (
             <Stage className={className} width={this.props.width} height={this.props.height} style={{left: this.props.left, top: this.props.top}}>
                 <Layer hitGraphEnabled={false}>
@@ -45,9 +63,9 @@ export class BeamProfileOverlayComponent extends React.PureComponent<BeamProfile
                         y={this.props.height - boundingBox.y / 2.0 - paddingOffset}
                         rotation={theta * 180.0 / Math.PI}
                     >
-                        {a > 0 && b > 0 && <Ellipse radiusX={a} radiusY={b} stroke={renderColor} strokeWidth={1}/>}
-                        <Line points={[-a, 0, a, 0]} stroke={renderColor} strokeWidth={1}/>
-                        <Line points={[0, -b, 0, b]} stroke={renderColor} strokeWidth={1}/>
+                        {a > 0 && b > 0 && ellipse}
+                        <Line points={[-a, 0, a, 0]} stroke={axisColor} strokeWidth={strokeWidth}/>
+                        <Line points={[0, -b, 0, b]} stroke={axisColor} strokeWidth={strokeWidth}/>
                     </Group>
                 </Layer>
             </Stage>

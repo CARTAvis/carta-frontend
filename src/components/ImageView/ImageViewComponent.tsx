@@ -183,6 +183,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     />
                     }
                     {appStore.activeFrame.beamProperties &&
+                    appStore.activeFrame.beamProperties.overlayBeamSettings &&
+                    appStore.activeFrame.beamProperties.overlayBeamSettings.visible &&
                     <BeamProfileOverlayComponent
                         width={appStore.overlayStore.viewWidth - appStore.overlayStore.padding.left - appStore.overlayStore.padding.right}
                         height={appStore.overlayStore.viewHeight - appStore.overlayStore.padding.top - appStore.overlayStore.padding.bottom}
@@ -194,6 +196,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         zoomLevel={appStore.activeFrame.zoomLevel}
                         docked={this.props.docked}
                         padding={10}
+                        overlayBeamSettings={appStore.activeFrame.beamProperties.overlayBeamSettings}
                     />
                     }
                     {appStore.activeFrame &&

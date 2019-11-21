@@ -664,7 +664,7 @@ export class OverlayBeamSettings {
 
     constructor() {
         this.visible = true;
-        this.color = "#000000";
+        this.color = Colors.GRAY4;
         this.type = BeamType.Open;
         this.width = 1;
         this.positionX = 1;
