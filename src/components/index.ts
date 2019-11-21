@@ -16,3 +16,4 @@ export * from "./StokesAnalysis/StokesAnalysisComponent";
 export * from "./StokesAnalysis/StokesAnalysisSettingsPanelComponent/StokesAnalysisSettingsPanelComponent";
 export * from "./SpectralProfiler/SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
 export * from "./SpatialProfiler/SpatialProfilerSettingsPanelComponent/SpatialProfilerSettingsPanelComponent";
+export * from "./RenderConfig/RenderConfigSettingsPanelComponent/RenderConfigSettingsPanelComponent";

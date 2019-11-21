@@ -22,6 +22,8 @@ export class LinePlotSettingsPanelComponentProps {
     isAutoScaledY?: boolean;
     userSelectedCoordinate?: string;
     profileCoordinateOptions?: any;
+    logScaleY?: boolean;
+    markerTextVisible?: boolean;
     setPrimaryLineColor: (colorHex: string, fixed: boolean) => void;
     setSecondaryLineColor?: (colorHex: string, fixed: boolean) => void;
     setLineWidth: (val: number) => void;
@@ -32,6 +34,8 @@ export class LinePlotSettingsPanelComponentProps {
     clearXYBounds?: () => void;
     handleCoordinateChanged?: (changeEvent: React.ChangeEvent<HTMLSelectElement>) => void;
     handleWcsAxisChanged?: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
+    handleLogScaleChanged?: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
+    handleMarkerTextChanged?: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export enum LineSettings {
@@ -111,6 +115,16 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                                 onValueChange={(value: number) => props.setLinePlotPointSize(value)}
                         />
                     </FormGroup>
+                    { typeof props.logScaleY !== "undefined" && props.handleLogScaleChanged &&
+                        <FormGroup inline={true} label={"Log Scale"}>
+                            <Switch checked={props.logScaleY} onChange={props.handleLogScaleChanged}/>
+                        </FormGroup>
+                    }
+                    { typeof props.markerTextVisible !== "undefined" && props.handleMarkerTextChanged &&
+                        <FormGroup inline={true} label={"Show Labels"}>
+                            <Switch checked={props.markerTextVisible} onChange={props.handleMarkerTextChanged}/>
+                        </FormGroup>
+                    }
                     {typeof props.useWcsValues !== "undefined" && props.handleWcsValuesChanged &&
                         <FormGroup inline={true} label={"Use WCS Values"}>
                             <Switch checked={props.useWcsValues} onChange={props.handleWcsValuesChanged}/>
