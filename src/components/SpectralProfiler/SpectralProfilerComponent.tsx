@@ -14,9 +14,6 @@ import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
 import "./SpectralProfilerComponent.css";
 
-// The fixed size of the settings panel popover (excluding the show/hide button)
-const PANEL_CONTENT_WIDTH = 180;
-
 type PlotData = { values: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
 
 @observer
@@ -58,10 +55,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
         }
         return null;
-    }
-
-    @computed get settingsPanelWidth(): number {
-        return 20 + (this.widgetStore.settingsPanelVisible ? PANEL_CONTENT_WIDTH : 0);
     }
 
     @computed get plotData(): PlotData {
@@ -356,6 +349,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
             borderWidth: this.widgetStore.lineWidth,
             pointRadius: this.widgetStore.linePlotPointSize,
+            zeroLineWidth: 2
         };
 
         if (this.profileStore && frame) {
@@ -369,6 +363,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 // Opacity ranges from 0.15 to 0.40 when data is in progress, and is 1.0 when finished
                 linePlotProps.opacity = currentPlotData.progress < 1.0 ? 0.15 + currentPlotData.progress / 4.0 : 1.0;
                 
+                // set line color
                 let primaryLineColor = this.widgetStore.primaryLineColor.colorHex;
                 if (appStore.darkTheme) {
                     if (!this.widgetStore.primaryLineColor.fixed) {

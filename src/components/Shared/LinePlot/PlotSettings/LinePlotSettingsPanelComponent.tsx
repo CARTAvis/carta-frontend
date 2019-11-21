@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {FormGroup, Switch, NumericInput, Button} from "@blueprintjs/core";
+import {FormGroup, Switch, NumericInput, Button, HTMLSelect} from "@blueprintjs/core";
 import {ColorResult} from "react-color";
 import {RegionStore} from "../../../../stores";
 import {ColorPickerComponent, PlotTypeSelectorComponent, PlotType} from "../../../Shared";
@@ -15,18 +15,23 @@ export class LinePlotSettingsPanelComponentProps {
     lineWidth: number;
     plotType: PlotType;
     linePlotPointSize: number;
-    useWcsValues: boolean;
+    useWcsValues?: boolean;
+    showWCSAxis?: boolean;
     meanRmsVisible?: boolean;
     isAutoScaledX?: boolean;
     isAutoScaledY?: boolean;
+    userSelectedCoordinate?: string;
+    profileCoordinateOptions?: any;
     setPrimaryLineColor: (colorHex: string, fixed: boolean) => void;
     setSecondaryLineColor?: (colorHex: string, fixed: boolean) => void;
     setLineWidth: (val: number) => void;
     setLinePlotPointSize: (val: number) => void;
     setPlotType: (val: PlotType) => void;
-    handleWcsValuesChanged: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
+    handleWcsValuesChanged?: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
     handleMeanRmsChanged?: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
     clearXYBounds?: () => void;
+    handleCoordinateChanged?: (changeEvent: React.ChangeEvent<HTMLSelectElement>) => void;
+    handleWcsAxisChanged?: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export enum LineSettings {
@@ -53,6 +58,11 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
         return (
             <div className="line-settings-panel">
                 <React.Fragment>
+                    {props.userSelectedCoordinate && props.handleCoordinateChanged &&
+                        <FormGroup label={"Coordinate"} inline={true}>
+                            <HTMLSelect value={props.userSelectedCoordinate} options={props.profileCoordinateOptions} onChange={props.handleCoordinateChanged}/>
+                        </FormGroup>
+                    }
                     <FormGroup inline={true} label="Primary Color">
                         <ColorPickerComponent
                             color={this.getThemeDefaultColor(props.primaryDarkModeLineColor, props.primaryLineColor)}
@@ -101,9 +111,16 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                                 onValueChange={(value: number) => props.setLinePlotPointSize(value)}
                         />
                     </FormGroup>
-                    <FormGroup inline={true} label={"Use WCS Values"}>
-                        <Switch checked={props.useWcsValues} onChange={props.handleWcsValuesChanged}/>
-                    </FormGroup>
+                    {typeof props.useWcsValues !== "undefined" && props.handleWcsValuesChanged &&
+                        <FormGroup inline={true} label={"Use WCS Values"}>
+                            <Switch checked={props.useWcsValues} onChange={props.handleWcsValuesChanged}/>
+                        </FormGroup>
+                    }
+                    {typeof props.showWCSAxis !== "undefined" && props.handleWcsAxisChanged &&
+                        <FormGroup inline={true} label={"Show WCS Axis"}>
+                            <Switch checked={props.showWCSAxis} onChange={props.handleWcsAxisChanged}/>
+                        </FormGroup>
+                    }
                     { typeof props.meanRmsVisible !== "undefined"
                         && props.handleMeanRmsChanged
                         &&  <FormGroup inline={true} label={"Show Mean/RMS"}>

@@ -14,7 +14,8 @@ import {
     StatsComponent,
     StokesAnalysisComponent,
     StokesAnalysisSettingsPanelComponent,
-    SpectralProfilerSettingsPanelComponent
+    SpectralProfilerSettingsPanelComponent,
+    SpatialProfilerSettingsPanelComponent
 } from "components";
 import {AppStore, WidgetConfig} from "stores";
 
@@ -67,6 +68,8 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
                     return <StokesAnalysisSettingsPanelComponent appStore={appStore} id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
                 case SpectralProfilerComponent.WIDGET_CONFIG.type:
                     return <SpectralProfilerSettingsPanelComponent appStore={appStore} id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
+                case SpatialProfilerComponent.WIDGET_CONFIG.type:
+                    return <SpatialProfilerSettingsPanelComponent appStore={appStore} id={widgetConfig.parentId} docked={false} floatingSettingsId={widgetConfig.id}/>;
                 default:
                     return null;
             }
@@ -86,6 +89,8 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 return true;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:
+                return true;
+            case SpatialProfilerComponent.WIDGET_CONFIG.type:
                 return true;
             default:
                 return false;

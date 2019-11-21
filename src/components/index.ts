@@ -15,3 +15,4 @@ export * from "./Histogram/HistogramComponent";
 export * from "./StokesAnalysis/StokesAnalysisComponent";
 export * from "./StokesAnalysis/StokesAnalysisSettingsPanelComponent/StokesAnalysisSettingsPanelComponent";
 export * from "./SpectralProfiler/SpectralProfilerSettingsPanelComponent/SpectralProfilerSettingsPanelComponent";
+export * from "./SpatialProfiler/SpatialProfilerSettingsPanelComponent/SpatialProfilerSettingsPanelComponent";

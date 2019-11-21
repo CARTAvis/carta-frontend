@@ -14,9 +14,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable maxY: number;
     @observable cursorX: number;
     @observable channel: number;
-
-    @observable settingsPanelVisible: boolean;
-
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
 
@@ -109,14 +106,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.maxY = undefined;
     };
 
-    @action showSettingsPanel = () => {
-        this.settingsPanelVisible = true;
-    };
-
-    @action hideSettingsPanel = () => {
-        this.settingsPanelVisible = false;
-    };
-
     @action setMarkerTextVisible = (val: boolean) => {
         this.markerTextVisible = val;
     };
@@ -155,7 +144,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
         // Describes how the data is visualised
         this.plotType = PlotType.STEPS;
-        this.settingsPanelVisible = false;
         this.meanRmsVisible = false;
         this.markerTextVisible = false;
         this.useWcsValues = true;
