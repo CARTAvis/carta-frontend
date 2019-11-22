@@ -362,6 +362,9 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
 
         const performancePanel = (
             <React.Fragment>
+                <FormGroup inline={true} label="Low bandwidth mode">
+                    <Switch checked={preference.lowBandwidthMode} onChange={(ev) => preference.setLowBandwidthMode(ev.currentTarget.checked)}/>
+                </FormGroup>
                 <FormGroup inline={true} label="Compression Quality" labelInfo={"(Images)"}>
                     <NumericInput
                         placeholder="Compression Quality"
@@ -438,9 +441,6 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </FormGroup>
                 <FormGroup inline={true} label="Stream image tiles while zooming">
                     <Switch checked={preference.streamTilesWhileZooming} onChange={(ev) => preference.setStreamContoursWhileZooming(ev.currentTarget.checked)}/>
-                </FormGroup>
-                <FormGroup inline={true} label="Low bandwidth mode">
-                    <Switch checked={preference.lowBandwidthMode} onChange={(ev) => preference.setLowBandwidthMode(ev.currentTarget.checked)}/>
                 </FormGroup>
             </React.Fragment>
         );
