@@ -1,7 +1,7 @@
 import * as AST from "ast_wrapper";
 import {Colors} from "@blueprintjs/core";
 import {action, autorun, computed, observable} from "mobx";
-import {FrameStore, PreferenceStore} from "stores";
+import {AppStore, FrameStore, PreferenceStore} from "stores";
 import {WCSType} from "models";
 import {toFixed} from "utilities";
 
@@ -697,6 +697,7 @@ export class OverlayBeamSettings {
 }
 
 export class OverlayStore {
+    private readonly appStore: AppStore;
     private readonly preference: PreferenceStore;
 
     // View size options
@@ -713,6 +714,7 @@ export class OverlayStore {
     @observable labels: OverlayLabelSettings;
     @observable ticks: OverlayTickSettings;
     @observable beam: OverlayBeamSettings;
+    @observable selectedFrame: string;
 
     // Dialog
     @observable overlaySettingsDialogVisible = false;
@@ -725,7 +727,8 @@ export class OverlayStore {
         this.overlaySettingsDialogVisible = false;
     };
 
-    constructor(preference: PreferenceStore) {
+    constructor(appStore: AppStore, preference: PreferenceStore) {
+        this.appStore = appStore;
         this.preference = preference;
         this.global = new OverlayGlobalSettings(preference);
         this.title = new OverlayTitleSettings();
@@ -736,6 +739,7 @@ export class OverlayStore {
         this.labels = new OverlayLabelSettings(preference);
         this.ticks = new OverlayTickSettings();
         this.beam = new OverlayBeamSettings();
+        this.selectedFrame = "";
         this.viewHeight = 1;
         this.viewWidth = 1;
 
@@ -743,6 +747,12 @@ export class OverlayStore {
         autorun(() => {
             const _ = this.global.system;
             this.setFormatsFromSystem();
+        });
+
+        autorun(() => {
+            if (this.appStore.activeFrame) {
+                this.selectedFrame = this.appStore.activeFrame.frameInfo.fileInfo.name;
+            }
         });
     }
 
@@ -864,4 +874,19 @@ export class OverlayStore {
             bottom: base + numGap + numHeight + labelGap + labelHeight
         };
     }
+
+    @computed get frameNames(): string[] {
+        if (!this.appStore.frames || this.appStore.frames.length === 0) {
+            return [];
+        }
+        return this.appStore.frames.map(frame => frame.frameInfo.fileInfo.name);
+    }
+
+    @computed get beamSettingsEnabled(): boolean {
+        return this.frameNames.length > 0;
+    }
+
+    @action setSelectedFrame = (selectedFrame: string) => {
+        this.selectedFrame = selectedFrame;
+    };
 }

@@ -478,7 +478,7 @@ export class AppStore {
         this.activeFrame = null;
         this.fileBrowserStore = new FileBrowserStore(this.backendService);
         this.animatorStore = new AnimatorStore(this);
-        this.overlayStore = new OverlayStore(this.preferenceStore);
+        this.overlayStore = new OverlayStore(this, this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this, this.layoutStore);
         this.compressionQuality = this.preferenceStore.imageCompressionQuality;
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
