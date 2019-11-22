@@ -375,26 +375,16 @@ export class WidgetsStore {
             stack.header.controlsContainer.prepend(unpinButton);
 
             stack.on("activeContentItemChanged", function(contentItem: any) {
-                if (stack && stack.config && stack.config.content && stack.config.content.length) {
-                    let tabArray = [];
-                    for (let index = 0; index < stack.config.content.length; index++) {
-                        const component = stack.config.content[index];
-                        let found = showCogWidget.indexOf(component.component);
-                        tabArray.push(found);
-                        if (component && found === -1 && stack.header.controlsContainer && stack.header.controlsContainer[0].childElementCount < 4) {
-                            let cogPinedButton = $(`<li class="cog-pined-icon"><span class="bp3-icon-standard bp3-icon-cog"/></li>`);
-                            cogPinedButton.on("click", () => contentItem.config.props.appStore.widgetsStore.onCogPinedClick(stack.getActiveContentItem()));
-                            stack.header.controlsContainer.prepend(cogPinedButton);
-                        } 
-                    }
-                    let showCog = false;
-                    tabArray.forEach(element => {
-                        if (element === -1) {
-                            showCog = true;
-                        }
-                    });
-                    // remove cog
-                    if (!showCog && stack.header.controlsContainer[0].childElementCount === 4) {
+                if (stack && stack.config && stack.header.controlsContainer && stack.config.content.length) {
+                    const activeTabItem = stack.getActiveContentItem();
+                    const component = activeTabItem.config.component;
+                    const stackHeaderControlButtons = stack.header.controlsContainer[0];
+                    const found = showCogWidget.indexOf(component);
+                    if (component && found === -1 && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount < 4) {
+                        const cogPinedButton = $(`<li class="cog-pined-icon"><span class="bp3-icon-standard bp3-icon-cog"/></li>`);
+                        cogPinedButton.on("click", () => contentItem.config.props.appStore.widgetsStore.onCogPinedClick(stack.getActiveContentItem()));
+                        stack.header.controlsContainer.prepend(cogPinedButton);
+                    } else if (found !== -1 && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount === 4) {
                         stack.header.controlsContainer[0].children[0].remove();
                     }
                 }
