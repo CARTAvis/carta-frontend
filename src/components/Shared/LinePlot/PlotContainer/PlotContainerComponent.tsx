@@ -109,11 +109,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             const currentWidth = chart.width;
 
             xScale.left = 85;
-            xScale.right = currentWidth - 20;
+            xScale.right = currentWidth - 1;
             xScale.width = xScale.right - xScale.left;
 
             chart.chartArea.left = 85;
-            chart.chartArea.right = currentWidth - 20;
+            chart.chartArea.right = currentWidth - 1;
 
             yScale.right = xScale.left;
             yScale.width = yScale.right - yScale.left;
@@ -419,6 +419,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             };
             if (this.props.usePointSymbols) {
                 datasetConfig.showLine = false;
+                datasetConfig.borderWidth = 0;
+                datasetConfig.borderColor = "rgba(0, 0, 0, 0)";
                 datasetConfig.pointRadius = this.props.pointRadius ? this.props.pointRadius : 1;
                 datasetConfig.pointBackgroundColor = lineColor;
             } else {

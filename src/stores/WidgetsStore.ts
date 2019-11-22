@@ -14,7 +14,11 @@ import {
     StatsComponent,
     ToolbarMenuComponent,
     StokesAnalysisComponent,
-    StokesAnalysisSettingsPanelComponent
+    StokesAnalysisSettingsPanelComponent,
+    SpectralProfilerSettingsPanelComponent,
+    SpatialProfilerSettingsPanelComponent,
+    RenderConfigSettingsPanelComponent,
+    HistogramSettingsPanelComponent
 } from "components";
 import {AppStore, LayoutStore} from "stores";
 import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
@@ -144,6 +148,14 @@ export class WidgetsStore {
         switch (type) {
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 return StokesAnalysisSettingsPanelComponent.WIDGET_CONFIG;
+            case SpectralProfilerComponent.WIDGET_CONFIG.type:
+                return SpectralProfilerSettingsPanelComponent.WIDGET_CONFIG;
+            case SpatialProfilerComponent.WIDGET_CONFIG.type:
+                return SpatialProfilerSettingsPanelComponent.WIDGET_CONFIG;
+            case RenderConfigComponent.WIDGET_CONFIG.type:
+                return RenderConfigSettingsPanelComponent.WIDGET_CONFIG;
+            case HistogramComponent.WIDGET_CONFIG.type:
+                return HistogramSettingsPanelComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -200,7 +212,7 @@ export class WidgetsStore {
         }
         let nextIndex = 0;
         while (true) {
-            const nextId = `${defaultId}-${nextIndex}`;
+            const nextId = `${parentId}-${defaultId}-${nextIndex}`;
             if (!floatingSettingsWidgets.has(nextId)) {
                 return nextId;
             }
@@ -353,6 +365,7 @@ export class WidgetsStore {
         layout.registerComponent("animator", AnimatorComponent);
         layout.registerComponent("stokes", StokesAnalysisComponent);
 
+        const showCogWidget = ["image-view", "region-list", "animator", "log", "placeholder", "stats"];
         // add drag source buttons from ToolbarMenuComponent
         ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.CreateDragSource(this.appStore, layout, widgetConfig, id));
 
@@ -361,9 +374,31 @@ export class WidgetsStore {
             unpinButton.on("click", () => this.unpinWidget(stack.getActiveContentItem()));
             stack.header.controlsContainer.prepend(unpinButton);
 
-            let cogPinedButton = $(`<li class="cog-pined-icon"><span class="bp3-icon-standard bp3-icon-cog"/></li>`);
-            cogPinedButton.on("click", () => this.onCogPinedClick(stack.getActiveContentItem()));
-            stack.header.controlsContainer.prepend(cogPinedButton);
+            stack.on("activeContentItemChanged", function(contentItem: any) {
+                if (stack && stack.config && stack.config.content && stack.config.content.length) {
+                    let tabArray = [];
+                    for (let index = 0; index < stack.config.content.length; index++) {
+                        const component = stack.config.content[index];
+                        let found = showCogWidget.indexOf(component.component);
+                        tabArray.push(found);
+                        if (component && found === -1 && stack.header.controlsContainer && stack.header.controlsContainer[0].childElementCount < 4) {
+                            let cogPinedButton = $(`<li class="cog-pined-icon"><span class="bp3-icon-standard bp3-icon-cog"/></li>`);
+                            cogPinedButton.on("click", () => contentItem.config.props.appStore.widgetsStore.onCogPinedClick(stack.getActiveContentItem()));
+                            stack.header.controlsContainer.prepend(cogPinedButton);
+                        } 
+                    }
+                    let showCog = false;
+                    tabArray.forEach(element => {
+                        if (element === -1) {
+                            showCog = true;
+                        }
+                    });
+                    // remove cog
+                    if (!showCog && stack.header.controlsContainer[0].childElementCount === 4) {
+                        stack.header.controlsContainer[0].children[0].remove();
+                    }
+                }
+            });
         });
         layout.on("componentCreated", this.handleItemCreation);
         layout.on("itemDestroyed", this.handleItemRemoval);
@@ -376,8 +411,15 @@ export class WidgetsStore {
         const parentType = parentItemConfig.component;
         const parentTitle = parentItemConfig.title;
 
-        // only for stokes now
-        if (parentType !== StokesAnalysisComponent.WIDGET_CONFIG.type) {
+        // apply for stokes, spectral profiler, spatial profiler, Render Config, Histogram
+        const floatingSettingsApplyedWidgets = [
+            StokesAnalysisComponent.WIDGET_CONFIG.type,
+            SpectralProfilerComponent.WIDGET_CONFIG.type,
+            SpatialProfilerComponent.WIDGET_CONFIG.type,
+            RenderConfigComponent.WIDGET_CONFIG.type,
+            HistogramComponent.WIDGET_CONFIG.type
+        ];
+        if (floatingSettingsApplyedWidgets.indexOf(parentType) === -1) {
             return;
         }
         // Get floating settings config
@@ -591,7 +633,6 @@ export class WidgetsStore {
         if (!id) {
             id = this.getNextSettingId(type, parentId);
         }
-
         if (id) {
             this.floatingSettingsWidgets.set(id, parentId);
         }

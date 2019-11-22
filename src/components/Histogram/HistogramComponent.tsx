@@ -3,21 +3,16 @@ import * as _ from "lodash";
 import ReactResizeDetector from "react-resize-detector";
 import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Chart} from "chart.js";
-import {NonIdealState} from "@blueprintjs/core";
+import {NonIdealState, Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {HistogramSettingsPanelComponent} from "./HistogramSettingsPanelComponent/HistogramSettingsPanelComponent";
 import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramToolbarComponent";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {HistogramWidgetStore} from "stores/widgets";
 import {FrameStore, WidgetConfig, WidgetProps} from "stores";
 import {clamp} from "utilities";
 import {Point2D} from "models";
 import "./HistogramComponent.css";
-
-// The fixed size of the settings panel popover (excluding the show/hide button)
-const PANEL_CONTENT_WIDTH = 180;
 
 @observer
 export class HistogramComponent extends React.Component<WidgetProps> {
@@ -48,10 +43,6 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         }
         console.log("can't find store for widget");
         return new HistogramWidgetStore();
-    }
-
-    @computed get settingsPanelWidth(): number {
-        return 20 + (this.widgetStore.settingsPanelVisible ? PANEL_CONTENT_WIDTH : 0);
     }
 
     @computed get histogramData(): CARTA.IHistogram {
@@ -232,13 +223,26 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             graphZoomedXY: this.widgetStore.setXYBounds,
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
-            scrollZoom: true
+            scrollZoom: true,
+            borderWidth: this.widgetStore.lineWidth,
+            pointRadius: this.widgetStore.linePlotPointSize,
+            zeroLineWidth: 2
         };
 
         if (frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
             const currentPlotData = this.plotData;
             if (currentPlotData) {
                 linePlotProps.data = currentPlotData.values;
+
+                // set line color
+                let primaryLineColor = this.widgetStore.primaryLineColor.colorHex;
+                if (appStore.darkTheme) {
+                    if (!this.widgetStore.primaryLineColor.fixed) {
+                        primaryLineColor = Colors.BLUE4;   
+                    }
+                }
+                linePlotProps.lineColor = primaryLineColor;
+
                 // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                 if (this.widgetStore.isAutoScaledX) {
                     linePlotProps.xMin = currentPlotData.xMin;
@@ -281,14 +285,6 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                         <LinePlotComponent {...linePlotProps}/>
                     </div>
                 </div>
-                <PopoverSettingsComponent
-                    isOpen={this.widgetStore.settingsPanelVisible}
-                    onShowClicked={this.widgetStore.showSettingsPanel}
-                    onHideClicked={this.widgetStore.hideSettingsPanel}
-                    contentWidth={PANEL_CONTENT_WIDTH}
-                >
-                    <HistogramSettingsPanelComponent widgetStore={this.widgetStore}/>
-                </PopoverSettingsComponent>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"}/>
             </div>
         );

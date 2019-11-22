@@ -1,7 +1,8 @@
 import {action, computed, observable} from "mobx";
-import {PlotType} from "components/Shared";
+import {Colors} from "@blueprintjs/core";
 import {FrameStore} from "../FrameStore";
 import {CARTA} from "carta-protobuf";
+import {PlotType, LineSettings} from "components/Shared";
 
 export class SpatialProfileWidgetStore {
     @observable fileId: number;
@@ -12,12 +13,16 @@ export class SpatialProfileWidgetStore {
     @observable minY: number;
     @observable maxY: number;
     @observable cursorX: number;
-    @observable plotType: PlotType;
-    @observable settingsPanelVisible: boolean;
-    @observable meanRmsVisible: boolean;
-    @observable wcsAxisVisible: boolean;
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
+
+    // settings 
+    @observable wcsAxisVisible: boolean;
+    @observable plotType: PlotType;
+    @observable meanRmsVisible: boolean;
+    @observable primaryLineColor: { colorHex: string, fixed: boolean };
+    @observable lineWidth: number;
+    @observable linePlotPointSize: number;
 
     private static ValidCoordinates = ["x", "y", "Ix", "Iy", "Qx", "Qy", "Ux", "Uy", "Vx", "Vz"];
 
@@ -76,14 +81,6 @@ export class SpatialProfileWidgetStore {
         this.maxY = undefined;
     };
 
-    @action showSettingsPanel = () => {
-        this.settingsPanelVisible = true;
-    };
-
-    @action hideSettingsPanel = () => {
-        this.settingsPanelVisible = false;
-    };
-
     @action setMarkerTextVisible = (val: boolean) => {
         this.markerTextVisible = val;
     };
@@ -116,10 +113,12 @@ export class SpatialProfileWidgetStore {
 
         // Describes how the data is visualised
         this.plotType = PlotType.STEPS;
-        this.settingsPanelVisible = false;
         this.meanRmsVisible = false;
         this.markerTextVisible = false;
         this.wcsAxisVisible = true;
+        this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };
+        this.linePlotPointSize = 1.5;
+        this.lineWidth = 1;
     }
 
     @computed get isAutoScaledX() {
@@ -237,5 +236,22 @@ export class SpatialProfileWidgetStore {
         });
         // Sort list so that requirements clearing occurs first
         return diffList.sort((a, b) => a.spatialProfiles.length > b.spatialProfiles.length ? 1 : -1);
+    }
+
+    // settings
+    @action setPrimaryLineColor = (colorHex: string, fixed: boolean) => {
+        this.primaryLineColor = { colorHex: colorHex, fixed: fixed };
+    }
+
+    @action setLineWidth = (val: number) => {
+        if (val >= LineSettings.MIN_WIDTH && val <= LineSettings.MAX_WIDTH) {
+            this.lineWidth = val;   
+        }
+    }
+
+    @action setLinePlotPointSize = (val: number) => {
+        if (val >= LineSettings.MIN_POINT_SIZE && val <= LineSettings.MAX_POINT_SIZE) {
+            this.linePlotPointSize = val;   
+        }
     }
 }

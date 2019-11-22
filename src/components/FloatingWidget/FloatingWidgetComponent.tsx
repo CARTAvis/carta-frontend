@@ -78,11 +78,16 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         const appStore = this.props.appStore;
         const widgetsStore = appStore.widgetsStore;
         let className = "floating-widget";
+        let floatingContentClassName = "floating-content";
         let titleClass = this.props.isSelected ? "floating-header selected" : "floating-header";
 
         if (appStore.darkTheme) {
             className += " bp3-dark";
             titleClass += " bp3-dark";
+        }
+
+        if (!this.props.showPinButton) {
+            floatingContentClassName = "floating-settings-content";
         }
         const widgetConfig = this.props.widgetConfig;
         return (
@@ -138,7 +143,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     </div>
                     }
                 </div>
-                <div className="floating-content">
+                <div className={floatingContentClassName}>
                     {this.props.children}
                 </div>
             </Rnd>

@@ -1,17 +1,7 @@
-
-.stokes-settings {
-    width: 98%;
-    height: 98%;
+.scatter-settings-panel{
+    width: 100%;
     margin: 5px;
-
-    .stokes-line-settings {
-        width: 100%;
-    }
-
-    .stokes-scatter-settings {
-        width: 100%;
-    }
-
+    
     .bp3-tab-panel {
         height: 22em;
         overflow: auto;
@@ -19,7 +9,7 @@
     }
 
     .bp3-form-group .bp3-label {
-        width: 12em;
+        width: 10em;
         text-align: right;
     }
 

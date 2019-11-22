@@ -1,12 +1,10 @@
 import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
-import {FormGroup, Switch, Colors, NumericInput} from "@blueprintjs/core";
-import {ColorResult} from "react-color";
-import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
-import {ColorPickerComponent, PlotTypeSelectorComponent, PlotType} from "components/Shared";
+import {Colors} from "@blueprintjs/core";
+import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent} from "components/Shared";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
-import {WidgetProps, RegionStore, WidgetConfig} from "stores";
+import {WidgetProps, WidgetConfig} from "stores";
 import "./StokesAnalysisSettingsPanelComponent.css";
 
 @observer
@@ -75,114 +73,47 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         this.widgetStore.setEqualAxesValue(changeEvent.target.checked);
     };
 
-    private getThemeDefaultColor (darkThemeLineColor: string, lineColor: {colorHex: string, fixed: boolean}): string {
-        if (this.props.appStore.darkTheme && !lineColor.fixed) {
-            return darkThemeLineColor;
-        }
-        return lineColor.colorHex;
-    }
-
     render() {
         const widgetStore = this.widgetStore;
-        const linePlotsSettings = (
-            <React.Fragment>
-                <FormGroup inline={true} label="Primary Color">
-                    <ColorPickerComponent
-                        color={this.getThemeDefaultColor(Colors.BLUE4, widgetStore.primaryLineColor)}
-                        presetColors={[...RegionStore.SWATCH_COLORS, "transparent"]}
-                        setColor={(color: ColorResult) => {
-                            widgetStore.setPrimaryLineColor(color.hex === "transparent" ? "#000000" : color.hex, true);
-                        }}
-                        disableAlpha={true}
-                        darkTheme={this.props.appStore.darkTheme}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Secondary Color">
-                    <ColorPickerComponent
-                        color={this.getThemeDefaultColor(Colors.ORANGE4, widgetStore.secondaryLineColor)}
-                        presetColors={[...RegionStore.SWATCH_COLORS, "transparent"]}
-                        setColor={(color: ColorResult) => {
-                            widgetStore.setSecondaryLineColor(color.hex === "transparent" ? "#000000" : color.hex, true);
-                        }}
-                        disableAlpha={true}
-                        darkTheme={this.props.appStore.darkTheme}
-                    />
-                </FormGroup>
-                <FormGroup  inline={true} label="Line Width" labelInfo="(px)">
-                    <NumericInput
-                            placeholder="Line Width"
-                            min={StokesAnalysisWidgetStore.MIN_LINE_WIDTH}
-                            max={StokesAnalysisWidgetStore.MAX_LINE_WIDTH}
-                            value={widgetStore.lineWidth}
-                            stepSize={0.5}
-                            disabled={widgetStore.plotType === PlotType.POINTS}
-                            onValueChange={(value: number) => widgetStore.setLineWidth(value)}
-                    />
-                </FormGroup>
-                <FormGroup  inline={true} label="Point Size" labelInfo="(px)">
-                    <NumericInput
-                            placeholder="Point Size"
-                            min={StokesAnalysisWidgetStore.MIN_LINE_POINT_SIZE}
-                            max={StokesAnalysisWidgetStore.MAX_POINT_SIZE}
-                            value={widgetStore.linePlotPointSize}
-                            stepSize={0.5}
-                            disabled={widgetStore.plotType !== PlotType.POINTS}
-                            onValueChange={(value: number) => widgetStore.setLinePlotPointSize(value)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label={"Use WCS Values"}>
-                    <Switch checked={widgetStore.useWcsValues} onChange={this.handleWcsValuesChanged}/>
-                </FormGroup>
-                <FormGroup inline={true} label={"Line Style"}>
-                    <PlotTypeSelectorComponent value={widgetStore.plotType} onValueChanged={widgetStore.setPlotType}/>
-                </FormGroup>
-            </React.Fragment>
-        );
+        const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
+            darkMode: this.props.appStore.darkTheme,
+            primaryDarkModeLineColor: Colors.BLUE4,
+            primaryLineColor: widgetStore.primaryLineColor,
+            lineWidth: widgetStore.lineWidth,
+            plotType: widgetStore.plotType,
+            linePlotPointSize: widgetStore.linePlotPointSize,
+            useWcsValues: widgetStore.useWcsValues,
+            setPrimaryLineColor: widgetStore.setPrimaryLineColor,
+            setLineWidth: widgetStore.setLineWidth,
+            setLinePlotPointSize: widgetStore.setLinePlotPointSize,
+            handleWcsValuesChanged: this.handleWcsValuesChanged,
+            setPlotType: widgetStore.setPlotType,
+            secondaryDarkModeLineColor: Colors.ORANGE4,
+            secondaryLineColor: widgetStore.secondaryLineColor,
+            setSecondaryLineColor: widgetStore.setSecondaryLineColor
+        };
 
-        const scatterPlotsSettings = (
-            <React.Fragment>
-                <FormGroup inline={true} label="Color Map">
-                    <ColormapComponent
-                        inverted={false}
-                        selectedItem={widgetStore.colorMap}
-                        onItemSelect={(selected) => { widgetStore.setColormap(selected); }}
-                    />
-                </FormGroup>
-                <FormGroup  inline={true} label="Symbol Size" labelInfo="(px)">
-                    <NumericInput
-                            placeholder="Symbol Size"
-                            min={StokesAnalysisWidgetStore.MIN_SCATTER_POINT_SIZE}
-                            max={StokesAnalysisWidgetStore.MAX_POINT_SIZE}
-                            value={widgetStore.scatterPlotPointSize}
-                            stepSize={0.5}
-                            onValueChange={(value: number) => widgetStore.setScatterPlotPointSize(value)}
-                    />
-                </FormGroup>
-                <FormGroup  inline={true} label="Transparency">
-                    <NumericInput
-                            placeholder="transparency"
-                            min={StokesAnalysisWidgetStore.MIN_POINT_TRANSPARENCY}
-                            max={StokesAnalysisWidgetStore.MAX_POINT_TRANSPARENCY}
-                            value={widgetStore.pointTransparency}
-                            stepSize={0.1}
-                            onValueChange={(value: number) => widgetStore.setPointTransparency(value)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label={"Equal Axes"}>
-                    <Switch checked={widgetStore.equalAxes} onChange={this.handleEqualAxesValuesChanged}/>
-                </FormGroup>
-            </React.Fragment>
-        );
+        const scatterSettingsProrps: ScatterPlotSettingsPanelComponentProps = {
+            colorMap: widgetStore.colorMap,
+            scatterPlotPointSize: widgetStore.scatterPlotPointSize,
+            pointTransparency: widgetStore.pointTransparency,
+            equalAxes: widgetStore.equalAxes,
+            setPointTransparency:  widgetStore.setPointTransparency,
+            setScatterPlotPointSize: widgetStore.setScatterPlotPointSize,
+            setColormap: widgetStore.setColormap,
+            handleEqualAxesValuesChanged: this.handleEqualAxesValuesChanged
+        };
+
         return (
             <React.Fragment>
                 <div className="stokes-settings">
                     <p>Line Plots:</p>
                     <div className={"stokes-line-settings"}>
-                        {widgetStore && linePlotsSettings}
+                        <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
                     </div>
                     <p>Scatter Plot:</p>
                     <div className={"stokes-scatter-settings"}>
-                        {widgetStore && scatterPlotsSettings}
+                        <ScatterPlotSettingsPanelComponent {...scatterSettingsProrps}/>
                     </div>
                 </div>
             </React.Fragment>
