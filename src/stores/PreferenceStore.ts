@@ -45,6 +45,7 @@ const PREFERENCE_KEYS = {
     contourCompressionLevel: "contourCompressionLevel",
     contourChunkSize: "contourChunkSize",
     streamContoursWhileZooming: "streamContoursWhileZooming",
+    lowBandwidthMode: "lowBandwidthMode",
     logEventList: "logEventList"
 };
 
@@ -86,6 +87,7 @@ const DEFAULTS = {
     contourCompressionLevel: 8,
     contourChunkSize: 100000,
     streamContoursWhileZooming: false,
+    lowBandwidthMode: false,
     eventLoggingEnabled: false
 };
 
@@ -127,6 +129,7 @@ export class PreferenceStore {
     @observable contourCompressionLevel: number;
     @observable contourChunkSize: number;
     @observable streamTilesWhileZooming: boolean;
+    @observable lowBandwidthMode: boolean;
     @observable eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
 
     // getters for global settings
@@ -414,6 +417,11 @@ export class PreferenceStore {
         return parseBoolean(val, DEFAULTS.streamContoursWhileZooming);
     };
 
+    private getLowBandwidthMode = (): boolean => {
+        const val = localStorage.getItem(PREFERENCE_KEYS.lowBandwidthMode);
+        return parseBoolean(val, DEFAULTS.lowBandwidthMode);
+    };
+
     // getters for log event, the list saved in local storage should be a string array like ["REGISTER_VIEWER", "OPEN_FILE_ACK", ...]
     private getLogEvents = (): Map<CARTA.EventType, boolean> => {
         let events = new Map<CARTA.EventType, boolean>();
@@ -656,6 +664,11 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.streamContoursWhileZooming, String(val));
     };
 
+    @action setLowBandwidthMode = (val: boolean) => {
+        this.lowBandwidthMode = val;
+        localStorage.setItem(PREFERENCE_KEYS.lowBandwidthMode, String(val));
+    };
+
     // reset functions
     @action resetGlobalSettings = () => {
         this.setTheme(DEFAULTS.theme);
@@ -709,6 +722,7 @@ export class PreferenceStore {
         this.setContourCompressionLevel(DEFAULTS.contourCompressionLevel);
         this.setContourChunkSize(DEFAULTS.contourChunkSize);
         this.setStreamContoursWhileZooming(DEFAULTS.streamContoursWhileZooming);
+        this.setLowBandwidthMode(DEFAULTS.lowBandwidthMode);
     };
 
     @action resetLogEventSettings = () => {
@@ -751,6 +765,7 @@ export class PreferenceStore {
         this.contourCompressionLevel = this.getContourCompressionLevel();
         this.contourChunkSize = this.getContourChunkSize();
         this.streamTilesWhileZooming = this.getStreamTilesWhileZooming();
+        this.lowBandwidthMode = this.getLowBandwidthMode();
         this.eventsLoggingEnabled = this.getLogEvents();
 
         // setup region settings container (for AppearanceForm in PreferenceDialogComponent)
