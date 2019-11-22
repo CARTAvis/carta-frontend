@@ -14,7 +14,7 @@ mkdir -p build
 cd build
 emcc -O3 -g0 -s WASM=1 ../contrib/single_file_decoder/zstddeclib.c -o ./standalone_zstd.bc
 echo "Checking for Zstd bitcode..."
-if [[ $(find -L ./standalone_zstd.bc -type f -size +192000c 2>/dev/null) ]]; then
+if [[ $(find -L ./standalone_zstd.bc -type f -size +177000c 2>/dev/null) ]]; then
     echo "Found"
 else
     echo "Not found!"
