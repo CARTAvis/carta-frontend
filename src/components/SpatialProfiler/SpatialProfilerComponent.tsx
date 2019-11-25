@@ -5,9 +5,8 @@ import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {LinePlotComponent, LinePlotComponentProps, PlotType, PopoverSettingsComponent, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {SpatialProfilerSettingsPanelComponent} from "./SpatialProfilerSettingsPanelComponent/SpatialProfilerSettingsPanelComponent";
 import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
@@ -15,7 +14,6 @@ import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from 
 import "./SpatialProfilerComponent.css";
 
 // The fixed size of the settings panel popover (excluding the show/hide button)
-const PANEL_CONTENT_WIDTH = 180;
 const AUTOSCALE_THROTTLE_TIME = 100;
 
 @observer
@@ -72,10 +70,6 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         } else {
             return undefined;
         }
-    }
-
-    @computed get settingsPanelWidth(): number {
-        return 20 + (this.widgetStore.settingsPanelVisible ? PANEL_CONTENT_WIDTH : 0);
     }
 
     @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number } {
@@ -405,7 +399,10 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             graphZoomReset: this.widgetStore.clearXYBounds,
             graphCursorMoved: this.onGraphCursorMoved,
             scrollZoom: true,
-            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots
+            mouseEntered: this.widgetStore.setMouseMoveIntoLinePlots,
+            zeroLineWidth: 2,
+            borderWidth: this.widgetStore.lineWidth,
+            pointRadius: this.widgetStore.linePlotPointSize,
         };
 
         if (appStore.activeFrame) {
@@ -424,6 +421,16 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                 const currentPlotData = this.plotData;
                 if (currentPlotData) {
                     linePlotProps.data = currentPlotData.values;
+
+                    // set line color
+                    let primaryLineColor = this.widgetStore.primaryLineColor.colorHex;
+                    if (appStore.darkTheme) {
+                        if (!this.widgetStore.primaryLineColor.fixed) {
+                            primaryLineColor = Colors.BLUE4;   
+                        }
+                    }
+                    linePlotProps.lineColor = primaryLineColor;
+
                     // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
                     if (this.widgetStore.isAutoScaledX) {
                         linePlotProps.xMin = currentPlotData.xMin;
@@ -509,14 +516,6 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
                         <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                     </div>
                 </div>
-                <PopoverSettingsComponent
-                    isOpen={this.widgetStore.settingsPanelVisible}
-                    onShowClicked={this.widgetStore.showSettingsPanel}
-                    onHideClicked={this.widgetStore.hideSettingsPanel}
-                    contentWidth={PANEL_CONTENT_WIDTH}
-                >
-                    <SpatialProfilerSettingsPanelComponent widgetStore={this.widgetStore}/>
-                </PopoverSettingsComponent>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
         );

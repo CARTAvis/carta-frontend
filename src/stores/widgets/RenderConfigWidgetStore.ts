@@ -1,5 +1,6 @@
 import {action, computed, observable} from "mobx";
-import {PlotType} from "components/Shared";
+import {Colors} from "@blueprintjs/core";
+import {PlotType, LineSettings} from "components/Shared";
 
 export class RenderConfigWidgetStore {
     @observable minX: number;
@@ -7,9 +8,13 @@ export class RenderConfigWidgetStore {
     @observable minY: number;
     @observable maxY: number;
     @observable cursorX: number;
-    @observable logScaleY: boolean;
+
+    // settings 
     @observable plotType: PlotType;
-    @observable settingsPanelVisible: boolean;
+    @observable primaryLineColor: { colorHex: string, fixed: boolean };
+    @observable lineWidth: number;
+    @observable linePlotPointSize: number;
+    @observable logScaleY: boolean;
     @observable markerTextVisible: boolean;
 
     @action setXBounds = (minVal: number, maxVal: number) => {
@@ -46,14 +51,6 @@ export class RenderConfigWidgetStore {
         this.maxY = undefined;
     };
 
-    @action showSettingsPanel = () => {
-        this.settingsPanelVisible = true;
-    };
-
-    @action hideSettingsPanel = () => {
-        this.settingsPanelVisible = false;
-    };
-
     @action setMarkerTextVisible = (val: boolean) => {
         this.markerTextVisible = val;
     };
@@ -73,8 +70,10 @@ export class RenderConfigWidgetStore {
     constructor() {
         this.logScaleY = true;
         this.plotType = PlotType.STEPS;
-        this.settingsPanelVisible = false;
         this.markerTextVisible = true;
+        this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };
+        this.linePlotPointSize = 1.5;
+        this.lineWidth = 1;
     }
 
     @computed get isAutoScaledX() {
@@ -83,5 +82,22 @@ export class RenderConfigWidgetStore {
 
     @computed get isAutoScaledY() {
         return (this.minY === undefined || this.maxY === undefined);
+    }
+
+    // settings
+    @action setPrimaryLineColor = (colorHex: string, fixed: boolean) => {
+        this.primaryLineColor = { colorHex: colorHex, fixed: fixed };
+    }
+
+    @action setLineWidth = (val: number) => {
+        if (val >= LineSettings.MIN_WIDTH && val <= LineSettings.MAX_WIDTH) {
+            this.lineWidth = val;   
+        }
+    }
+
+    @action setLinePlotPointSize = (val: number) => {
+        if (val >= LineSettings.MIN_POINT_SIZE && val <= LineSettings.MAX_POINT_SIZE) {
+            this.linePlotPointSize = val;   
+        }
     }
 }
