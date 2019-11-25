@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {autorun, computed, observable, action} from "mobx";
+import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
@@ -39,7 +39,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             minWidth: 320,
             minHeight: 400,
             defaultWidth: 400,
-            defaultHeight: 700,
+            defaultHeight: 650,
             title: "Stokes Analysis",
             isCloseable: true
         };
