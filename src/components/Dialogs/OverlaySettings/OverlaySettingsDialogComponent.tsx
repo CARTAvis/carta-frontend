@@ -564,9 +564,9 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
             <div className="panel-container">
                 <FormGroup inline={true} label="Frame">
                     <HTMLSelect
-                        options={[...beam.frameNames, "Default"]}
-                        value={beam.selectedFrame}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => beam.setSelectedFrame(event.currentTarget.value as string)}
+                        options={beam.frameNames}
+                        value={beam.selectedFileId}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => beam.setSelectedFrame(parseInt(event.currentTarget.value))}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Visible">

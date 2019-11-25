@@ -1,5 +1,5 @@
 import * as AST from "ast_wrapper";
-import {Colors} from "@blueprintjs/core";
+import {Colors, IOptionProps} from "@blueprintjs/core";
 import {action, autorun, computed, observable} from "mobx";
 import {AppStore, FrameStore, PreferenceStore} from "stores";
 import {WCSType} from "models";
@@ -698,31 +698,45 @@ export class OverlayBeamStore {
 
 export class OverlayBeamSettings {
     private readonly appStore: AppStore;
+    private static DEFAULT_ID = -1;
 
+    @observable default: OverlayBeamStore;
     @observable settings: OverlayBeamStore;
-    @observable selectedFrame: string;
+    @observable selectedFileId: number;
 
     constructor(appStore: AppStore) {
         this.appStore = appStore;
-        this.settings = new OverlayBeamStore();
-        this.selectedFrame = "";
+        this.default =  new OverlayBeamStore();
+        this.setSelectedFrame(OverlayBeamSettings.DEFAULT_ID);
 
         autorun(() => {
             if (this.appStore.activeFrame && this.appStore.activeFrame.frameInfo && this.appStore.activeFrame.frameInfo.fileInfo) {
-                this.selectedFrame = this.appStore.activeFrame.frameInfo.fileInfo.name;
+                this.setSelectedFrame(this.appStore.activeFrame.frameInfo.fileId);
             }
         });
     }
 
-    @computed get frameNames(): string[] {
+    @computed get frameNames(): IOptionProps[] {
+        let names = [{label: "Default", value: OverlayBeamSettings.DEFAULT_ID}];
         if (!this.appStore.frames || this.appStore.frames.length === 0) {
-            return [];
+            return names;
         }
-        return this.appStore.frames.map(frame => frame.frameInfo.fileInfo.name);
+        this.appStore.frames.forEach(frame => names.push({label: frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
+        return names;
     }
 
-    @action setSelectedFrame = (selectedFrame: string) => {
-        this.selectedFrame = selectedFrame;
+    @action setSelectedFrame = (selectedFileId: number) => {
+        this.selectedFileId = selectedFileId;
+
+        // load beam settings to overlay dialog from default or customized frame settings
+        if (selectedFileId === OverlayBeamSettings.DEFAULT_ID) {
+            this.settings = this.default;
+        } else {
+            const frame = this.appStore.getFrame(selectedFileId);
+            if (frame && frame.overlayBeamSettings) {
+                this.settings = frame.overlayBeamSettings;
+            }
+        }
     };
 }
 
