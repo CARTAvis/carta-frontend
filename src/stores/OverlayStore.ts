@@ -47,8 +47,7 @@ export enum SystemType {
 
 export enum BeamType {
     Open = "Open",
-    Solid = "Solid",
-    Hatched = "Hatched"
+    Solid = "Solid"
 }
 
 export class Padding {

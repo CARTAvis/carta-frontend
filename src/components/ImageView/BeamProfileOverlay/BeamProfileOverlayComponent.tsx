@@ -50,9 +50,6 @@ export class BeamProfileOverlayComponent extends React.PureComponent<BeamProfile
             case  BeamType.Solid:
                 ellipse = <Ellipse radiusX={a} radiusY={b} fill={color} stroke={color} strokeWidth={strokeWidth}/>;
                 break;
-            case BeamType.Hatched:
-                ellipse = <Ellipse radiusX={a} radiusY={b} stroke={color} strokeWidth={strokeWidth}/>;
-                break;
         }
 
         return (

@@ -586,7 +586,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </FormGroup>
                 <FormGroup inline={true} label="Type">
                     <HTMLSelect
-                        options={["Open", "Solid", "Hatched"]}
+                        options={Object.keys(BeamType).map((key) => ({label: key, value: BeamType[key]}))}
                         value={beamSettings.type}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => beamSettings.setType(event.currentTarget.value as BeamType)}
                     />
