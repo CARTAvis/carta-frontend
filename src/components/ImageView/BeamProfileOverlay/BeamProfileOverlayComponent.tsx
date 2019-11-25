@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Ellipse, Group, Layer, Line, Stage} from "react-konva";
-import {BeamType, OverlayBeamSettings} from "stores";
+import {BeamType, OverlayBeamStore} from "stores";
 import "./BeamProfileOverlayComponent.css";
 
 interface BeamProfileOverlayComponentProps {
@@ -13,7 +13,7 @@ interface BeamProfileOverlayComponentProps {
     beamMinor: number;
     beamAngle: number;
     zoomLevel: number;
-    overlayBeamSettings: OverlayBeamSettings;
+    overlayBeamSettings: OverlayBeamStore;
     padding?: number;
 }
 

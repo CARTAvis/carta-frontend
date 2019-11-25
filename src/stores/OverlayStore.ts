@@ -654,7 +654,7 @@ export class OverlayLabelSettings {
     };
 }
 
-export class OverlayBeamSettings {
+export class OverlayBeamStore {
     @observable visible: boolean;
     @observable color: string;
     @observable type: BeamType;
@@ -696,8 +696,37 @@ export class OverlayBeamSettings {
     };
 }
 
-export class OverlayStore {
+export class OverlayBeamSettings {
     private readonly appStore: AppStore;
+
+    @observable settings: OverlayBeamStore;
+    @observable selectedFrame: string;
+
+    constructor(appStore: AppStore) {
+        this.appStore = appStore;
+        this.settings = new OverlayBeamStore();
+        this.selectedFrame = "";
+
+        autorun(() => {
+            if (this.appStore.activeFrame && this.appStore.activeFrame.frameInfo && this.appStore.activeFrame.frameInfo.fileInfo) {
+                this.selectedFrame = this.appStore.activeFrame.frameInfo.fileInfo.name;
+            }
+        });
+    }
+
+    @computed get frameNames(): string[] {
+        if (!this.appStore.frames || this.appStore.frames.length === 0) {
+            return [];
+        }
+        return this.appStore.frames.map(frame => frame.frameInfo.fileInfo.name);
+    }
+
+    @action setSelectedFrame = (selectedFrame: string) => {
+        this.selectedFrame = selectedFrame;
+    };
+}
+
+export class OverlayStore {
     private readonly preference: PreferenceStore;
 
     // View size options
@@ -714,7 +743,6 @@ export class OverlayStore {
     @observable labels: OverlayLabelSettings;
     @observable ticks: OverlayTickSettings;
     @observable beam: OverlayBeamSettings;
-    @observable selectedFrame: string;
 
     // Dialog
     @observable overlaySettingsDialogVisible = false;
@@ -728,7 +756,6 @@ export class OverlayStore {
     };
 
     constructor(appStore: AppStore, preference: PreferenceStore) {
-        this.appStore = appStore;
         this.preference = preference;
         this.global = new OverlayGlobalSettings(preference);
         this.title = new OverlayTitleSettings();
@@ -738,8 +765,7 @@ export class OverlayStore {
         this.numbers = new OverlayNumberSettings();
         this.labels = new OverlayLabelSettings(preference);
         this.ticks = new OverlayTickSettings();
-        this.beam = new OverlayBeamSettings();
-        this.selectedFrame = "";
+        this.beam = new OverlayBeamSettings(appStore);
         this.viewHeight = 1;
         this.viewWidth = 1;
 
@@ -747,12 +773,6 @@ export class OverlayStore {
         autorun(() => {
             const _ = this.global.system;
             this.setFormatsFromSystem();
-        });
-
-        autorun(() => {
-            if (this.appStore.activeFrame) {
-                this.selectedFrame = this.appStore.activeFrame.frameInfo.fileInfo.name;
-            }
         });
     }
 
@@ -874,15 +894,4 @@ export class OverlayStore {
             bottom: base + numGap + numHeight + labelGap + labelHeight
         };
     }
-
-    @computed get frameNames(): string[] {
-        if (!this.appStore.frames || this.appStore.frames.length === 0) {
-            return [];
-        }
-        return this.appStore.frames.map(frame => frame.frameInfo.fileInfo.name);
-    }
-
-    @action setSelectedFrame = (selectedFrame: string) => {
-        this.selectedFrame = selectedFrame;
-    };
 }

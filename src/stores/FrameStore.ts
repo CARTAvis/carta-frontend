@@ -2,7 +2,7 @@ import {action, computed, observable, autorun} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {ASTSettingsString, PreferenceStore, OverlayBeamSettings, OverlayStore, LogStore, RegionSetStore, RenderConfigStore, ContourConfigStore, ContourStore} from "stores";
+import {ASTSettingsString, PreferenceStore, OverlayBeamStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore, ContourConfigStore, ContourStore} from "stores";
 import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES, ProtobufProcessing} from "models";
 import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency, toFixed, hexStringToRgba} from "utilities";
 import {BackendService} from "services";
@@ -49,7 +49,7 @@ export class FrameStore {
     @observable moving: boolean;
     @observable zooming: boolean;
     @observable regionSet: RegionSetStore;
-    @observable overlayBeamSettings: OverlayBeamSettings;
+    @observable overlayBeamSettings: OverlayBeamStore;
 
     @computed get requiredFrameView(): FrameView {
         // If there isn't a valid zoom, return a dummy view
@@ -108,7 +108,7 @@ export class FrameStore {
         }
     }
 
-    @computed get beamProperties(): { x: number, y: number, angle: number, overlayBeamSettings: OverlayBeamSettings } {
+    @computed get beamProperties(): { x: number, y: number, angle: number, overlayBeamSettings: OverlayBeamStore } {
         const bMajHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("BMAJ") !== -1);
         const bMinHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("BMIN") !== -1);
         const bpaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("BPA") !== -1);
@@ -369,7 +369,7 @@ export class FrameStore {
         this.renderType = RasterRenderType.NONE;
         this.moving = false;
         this.zooming = false;
-        this.overlayBeamSettings = new OverlayBeamSettings();
+        this.overlayBeamSettings = new OverlayBeamStore();
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preference.astColor;

@@ -95,6 +95,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         const numbers = overlayStore.numbers;
         const labels = overlayStore.labels;
         const beam = overlayStore.beam;
+        const beamSettings = beam.settings;
 
         const interior: boolean = (global.labelType === LabelType.Interior);
 
@@ -563,22 +564,22 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
             <div className="panel-container">
                 <FormGroup inline={true} label="Frame">
                     <HTMLSelect
-                        options={[...overlayStore.frameNames, "Default"]}
-                        value={overlayStore.selectedFrame}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => overlayStore.setSelectedFrame(event.currentTarget.value as string)}
+                        options={[...beam.frameNames, "Default"]}
+                        value={beam.selectedFrame}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => beam.setSelectedFrame(event.currentTarget.value as string)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Visible">
                     <Switch
-                        checked={beam.visible}
-                        onChange={(ev) =>  beam.setVisible(ev.currentTarget.checked)}
+                        checked={beamSettings.visible}
+                        onChange={(ev) =>  beamSettings.setVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Color">
                     <ColorPickerComponent
-                        color={hexStringToRgba(beam.color)}
+                        color={hexStringToRgba(beamSettings.color)}
                         presetColors={[...RegionStore.SWATCH_COLORS]}
-                        setColor={(color: ColorResult) => beam.setColor(color.hex)}
+                        setColor={(color: ColorResult) => beamSettings.setColor(color.hex)}
                         disableAlpha={false}
                         darkTheme={this.props.appStore.darkTheme}
                     />
@@ -586,41 +587,41 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup inline={true} label="Type">
                     <HTMLSelect
                         options={["Open", "Solid", "Hatched"]}
-                        value={beam.type}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => beam.setType(event.currentTarget.value as BeamType)}
+                        value={beamSettings.type}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => beamSettings.setType(event.currentTarget.value as BeamType)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Line width">
                     <NumericInput
                             placeholder="Width"
                             min={0.001}
-                            value={beam.width}
+                            value={beamSettings.width}
                             stepSize={0.5}
                             minorStepSize={0.1}
                             majorStepSize={1}
-                            onValueChange={(value: number) => beam.setWidth(value)}
+                            onValueChange={(value: number) => beamSettings.setWidth(value)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Position" labelInfo="(X)">
                     <NumericInput
                         placeholder="Position X"
                         min={0.001}
-                        value={beam.positionX}
+                        value={beamSettings.positionX}
                         stepSize={0.5}
                         minorStepSize={0.1}
                         majorStepSize={1}
-                        onValueChange={(value: number) => beam.setPositionX(value)}
+                        onValueChange={(value: number) => beamSettings.setPositionX(value)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Position" labelInfo="(Y)">
                     <NumericInput
                         placeholder="Position Y"
                         min={0.001}
-                        value={beam.positionY}
+                        value={beamSettings.positionY}
                         stepSize={0.5}
                         minorStepSize={0.1}
                         majorStepSize={1}
-                        onValueChange={(value: number) => beam.setPositionY(value)}
+                        onValueChange={(value: number) => beamSettings.setPositionY(value)}
                     />
                 </FormGroup>
             </div>
