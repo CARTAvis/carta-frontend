@@ -662,13 +662,13 @@ export class OverlayBeamStore {
     @observable positionX: number;
     @observable positionY: number;
 
-    constructor() {
-        this.visible = true;
-        this.color = Colors.GRAY4;
-        this.type = BeamType.Open;
-        this.width = 1;
-        this.positionX = 1;
-        this.positionY = 1;
+    constructor(settings?: OverlayBeamStore) {
+        this.visible = settings && settings.visible || true;
+        this.color = settings && settings.color || Colors.GRAY4;
+        this.type = settings && settings.type || BeamType.Open;
+        this.width = settings && settings.width || 1;
+        this.positionX = settings && settings.positionX || 1;
+        this.positionY = settings && settings.positionY || 1;
     }
 
     @action setVisible = (visible: boolean) => {
