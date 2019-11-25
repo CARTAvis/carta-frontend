@@ -882,10 +882,6 @@ export class OverlayStore {
         return this.appStore.frames.map(frame => frame.frameInfo.fileInfo.name);
     }
 
-    @computed get beamSettingsEnabled(): boolean {
-        return this.frameNames.length > 0;
-    }
-
     @action setSelectedFrame = (selectedFrame: string) => {
         this.selectedFrame = selectedFrame;
     };

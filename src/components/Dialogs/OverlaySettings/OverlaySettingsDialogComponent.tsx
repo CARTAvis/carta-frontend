@@ -561,40 +561,36 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
 
         const beamPanel = (
             <div className="panel-container">
-                <FormGroup inline={true} label="Frame" disabled={!overlayStore.beamSettingsEnabled}>
+                <FormGroup inline={true} label="Frame">
                     <HTMLSelect
-                        options={overlayStore.frameNames}
+                        options={[...overlayStore.frameNames, "Default"]}
                         value={overlayStore.selectedFrame}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => overlayStore.setSelectedFrame(event.currentTarget.value as string)}
-                        disabled={!overlayStore.beamSettingsEnabled}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Visible" disabled={!overlayStore.beamSettingsEnabled}>
+                <FormGroup inline={true} label="Visible">
                     <Switch
                         checked={beam.visible}
-                        disabled={!overlayStore.beamSettingsEnabled}
                         onChange={(ev) =>  beam.setVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Color" disabled={!overlayStore.beamSettingsEnabled}>
+                <FormGroup inline={true} label="Color">
                     <ColorPickerComponent
                         color={hexStringToRgba(beam.color)}
                         presetColors={[...RegionStore.SWATCH_COLORS]}
                         setColor={(color: ColorResult) => beam.setColor(color.hex)}
                         disableAlpha={false}
                         darkTheme={this.props.appStore.darkTheme}
-                        disabled={!overlayStore.beamSettingsEnabled}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Type" disabled={!overlayStore.beamSettingsEnabled}>
+                <FormGroup inline={true} label="Type">
                     <HTMLSelect
                         options={["Open", "Solid", "Hatched"]}
                         value={beam.type}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => beam.setType(event.currentTarget.value as BeamType)}
-                        disabled={!overlayStore.beamSettingsEnabled}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Line width" disabled={!overlayStore.beamSettingsEnabled}>
+                <FormGroup inline={true} label="Line width">
                     <NumericInput
                             placeholder="Width"
                             min={0.001}
@@ -603,10 +599,9 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                             minorStepSize={0.1}
                             majorStepSize={1}
                             onValueChange={(value: number) => beam.setWidth(value)}
-                            disabled={!overlayStore.beamSettingsEnabled}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Position" disabled={!overlayStore.beamSettingsEnabled} labelInfo="(X)">
+                <FormGroup inline={true} label="Position" labelInfo="(X)">
                     <NumericInput
                         placeholder="Position X"
                         min={0.001}
@@ -615,10 +610,9 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         minorStepSize={0.1}
                         majorStepSize={1}
                         onValueChange={(value: number) => beam.setPositionX(value)}
-                        disabled={!overlayStore.beamSettingsEnabled}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Position" disabled={!overlayStore.beamSettingsEnabled} labelInfo="(Y)">
+                <FormGroup inline={true} label="Position" labelInfo="(Y)">
                     <NumericInput
                         placeholder="Position Y"
                         min={0.001}
@@ -627,7 +621,6 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         minorStepSize={0.1}
                         majorStepSize={1}
                         onValueChange={(value: number) => beam.setPositionY(value)}
-                        disabled={!overlayStore.beamSettingsEnabled}
                     />
                 </FormGroup>
             </div>
