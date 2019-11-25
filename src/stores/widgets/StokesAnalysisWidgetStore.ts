@@ -2,7 +2,7 @@ import {action, computed, observable} from "mobx";
 import {ChartArea} from "chart.js";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {PlotType} from "components/Shared";
+import {PlotType, LineSettings, ScatterSettings} from "components/Shared";
 import {RegionWidgetStore} from "./RegionWidgetStore";
 import {FrameStore} from "stores";
 import {getColorsForValues} from "utilities";
@@ -68,14 +68,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable colorMap: string;
     @observable colorPixel: { color: Uint8ClampedArray, size: number };
     @observable pointTransparency: number;
-
-    static readonly MIN_LINE_WIDTH = 0.5;
-    static readonly MAX_LINE_WIDTH = 10;
-    static readonly MIN_LINE_POINT_SIZE = 0.5;
-    static readonly MIN_SCATTER_POINT_SIZE = 0.5;
-    static readonly MAX_POINT_SIZE = 10;
-    static readonly MIN_POINT_TRANSPARENCY = 0.1;
-    static readonly MAX_POINT_TRANSPARENCY = 1;
     
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
     private static ValidStatsTypes = [
@@ -311,19 +303,19 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     }
 
     @action setLineWidth = (val: number) => {
-        if (val >= StokesAnalysisWidgetStore.MIN_LINE_WIDTH && val <= StokesAnalysisWidgetStore.MAX_LINE_WIDTH) {
+        if (val >= LineSettings.MIN_WIDTH && val <= LineSettings.MAX_WIDTH) {
             this.lineWidth = val;   
         }
     }
 
     @action setLinePlotPointSize = (val: number) => {
-        if (val >= StokesAnalysisWidgetStore.MIN_LINE_POINT_SIZE && val <= StokesAnalysisWidgetStore.MAX_POINT_SIZE) {
+        if (val >= LineSettings.MIN_POINT_SIZE && val <= LineSettings.MAX_POINT_SIZE) {
             this.linePlotPointSize = val;   
         }
     }
 
     @action setScatterPlotPointSize = (val: number) => {
-        if (val >= StokesAnalysisWidgetStore.MIN_SCATTER_POINT_SIZE && val <= StokesAnalysisWidgetStore.MAX_POINT_SIZE ) {
+        if (val >= ScatterSettings.MIN_POINT_SIZE && val <= ScatterSettings.MAX_POINT_SIZE ) {
             this.scatterPlotPointSize = val;   
         }
     }
@@ -338,7 +330,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     };
 
     @action setPointTransparency = (val: number) => {
-        if (val >= StokesAnalysisWidgetStore.MIN_POINT_TRANSPARENCY && val <= StokesAnalysisWidgetStore.MAX_POINT_TRANSPARENCY) {
+        if (val >= ScatterSettings.MIN_TRANSPARENCY && val <= ScatterSettings.MAX_TRANSPARENCY) {
             this.pointTransparency = val;   
         }
     }
