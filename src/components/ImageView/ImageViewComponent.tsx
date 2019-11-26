@@ -186,8 +186,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     appStore.activeFrame.beamProperties.overlayBeamSettings &&
                     appStore.activeFrame.beamProperties.overlayBeamSettings.visible &&
                     <BeamProfileOverlayComponent
-                        width={appStore.overlayStore.viewWidth - appStore.overlayStore.padding.left - appStore.overlayStore.padding.right}
-                        height={appStore.overlayStore.viewHeight - appStore.overlayStore.padding.top - appStore.overlayStore.padding.bottom}
+                        width={appStore.activeFrame.renderWidth}
+                        height={appStore.activeFrame.renderHeight}
                         top={appStore.overlayStore.padding.top}
                         left={appStore.overlayStore.padding.left}
                         beamMajor={appStore.activeFrame.beamProperties.x}

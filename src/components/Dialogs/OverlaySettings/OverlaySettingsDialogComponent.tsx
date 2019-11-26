@@ -612,11 +612,11 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         />
                         <NumericInput
                             placeholder="Position"
-                            min={0.001}
+                            min={0}
                             value={beamSettings.shift}
-                            stepSize={0.5}
-                            minorStepSize={0.1}
-                            majorStepSize={1}
+                            stepSize={10}
+                            minorStepSize={5}
+                            majorStepSize={10}
                             onValueChange={(value: number) => beamSettings.setShift(value)}
                         />
                     </ControlGroup>

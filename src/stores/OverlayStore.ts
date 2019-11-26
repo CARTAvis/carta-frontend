@@ -672,7 +672,7 @@ export class OverlayBeamStore {
         this.type = settings && settings.type || BeamType.Open;
         this.width = settings && settings.width || 1;
         this.axis = settings && settings.axis || BeamShiftAxis.X;
-        this.shift = settings && settings.shift || 1;
+        this.shift = settings && settings.shift || 0;
     }
 
     @action setVisible = (visible: boolean) => {
