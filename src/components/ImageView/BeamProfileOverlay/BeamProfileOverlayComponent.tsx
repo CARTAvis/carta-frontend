@@ -1,6 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Ellipse, Group, Layer, Line, Stage} from "react-konva";
+import {Colors} from "@blueprintjs/core";
 import {BeamType, OverlayBeamStore} from "stores";
 import "./BeamProfileOverlayComponent.css";
 
@@ -28,7 +29,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
 
         const beamSettings = this.props.overlayBeamSettings;
         const color =  beamSettings.color;
-        const axisColor = beamSettings.type === BeamType.Solid ? "#FFFFFF" : color;
+        const axisColor = beamSettings.type === BeamType.Solid ? Colors.WHITE : color;
         const type = beamSettings.type;
         const strokeWidth = beamSettings.width;
         const paddingOffset = this.props.padding ? this.props.padding * devicePixelRatio : 0;

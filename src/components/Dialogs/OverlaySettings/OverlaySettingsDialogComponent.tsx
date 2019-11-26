@@ -591,7 +591,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => beamSettings.setType(event.currentTarget.value as BeamType)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Line width">
+                <FormGroup inline={true} label="Width" labelInfo="(px)">
                     <NumericInput
                             placeholder="Width"
                             min={0.5}
