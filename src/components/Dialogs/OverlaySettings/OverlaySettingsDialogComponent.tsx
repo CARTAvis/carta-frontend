@@ -3,12 +3,12 @@ import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import {observable} from "mobx";
 import {Select, ItemRenderer} from "@blueprintjs/select";
-import {Button, Switch, IDialogProps, Intent, Tab, Tabs, TabId, NumericInput, FormGroup, MenuItem, HTMLSelect, Collapse, InputGroup} from "@blueprintjs/core";
+import {Button, Switch, IDialogProps, Intent, Tab, Tabs, TabId, NumericInput, FormGroup, ControlGroup, MenuItem, HTMLSelect, Collapse, InputGroup} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ColorComponent} from "./ColorComponent";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent} from "components/Shared";
-import {AppStore, BeamType, LabelType, SystemType, RegionStore} from "stores";
+import {AppStore, BeamShiftAxis, BeamType, LabelType, SystemType, RegionStore} from "stores";
 import {hexStringToRgba} from "utilities";
 import "./OverlaySettingsDialogComponent.css";
 
@@ -594,7 +594,8 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup inline={true} label="Line width">
                     <NumericInput
                             placeholder="Width"
-                            min={0.001}
+                            min={0.5}
+                            max={10}
                             value={beamSettings.width}
                             stepSize={0.5}
                             minorStepSize={0.1}
@@ -602,27 +603,23 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                             onValueChange={(value: number) => beamSettings.setWidth(value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Position" labelInfo="(X)">
-                    <NumericInput
-                        placeholder="Position X"
-                        min={0.001}
-                        value={beamSettings.positionX}
-                        stepSize={0.5}
-                        minorStepSize={0.1}
-                        majorStepSize={1}
-                        onValueChange={(value: number) => beamSettings.setPositionX(value)}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Position" labelInfo="(Y)">
-                    <NumericInput
-                        placeholder="Position Y"
-                        min={0.001}
-                        value={beamSettings.positionY}
-                        stepSize={0.5}
-                        minorStepSize={0.1}
-                        majorStepSize={1}
-                        onValueChange={(value: number) => beamSettings.setPositionY(value)}
-                    />
+                <FormGroup inline={true} label="Position">
+                    <ControlGroup fill={true} vertical={false}>
+                        <HTMLSelect
+                            options={Object.keys(BeamShiftAxis).map((key) => ({label: key, value: BeamShiftAxis[key]}))}
+                            value={beamSettings.axis}
+                            onChange={(event: React.FormEvent<HTMLSelectElement>) => beamSettings.setAxis(event.currentTarget.value as BeamShiftAxis)}
+                        />
+                        <NumericInput
+                            placeholder="Position"
+                            min={0.001}
+                            value={beamSettings.shift}
+                            stepSize={0.5}
+                            minorStepSize={0.1}
+                            majorStepSize={1}
+                            onValueChange={(value: number) => beamSettings.setShift(value)}
+                        />
+                    </ControlGroup>
                 </FormGroup>
             </div>
         );

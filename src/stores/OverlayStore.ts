@@ -50,6 +50,11 @@ export enum BeamType {
     Solid = "Solid"
 }
 
+export enum BeamShiftAxis {
+    X = "X",
+    Y = "Y"
+}
+
 export class Padding {
     left: number;
     right: number;
@@ -658,16 +663,16 @@ export class OverlayBeamStore {
     @observable color: string;
     @observable type: BeamType;
     @observable width: number;
-    @observable positionX: number;
-    @observable positionY: number;
+    @observable axis: BeamShiftAxis;
+    @observable shift: number;
 
     constructor(settings?: OverlayBeamStore) {
         this.visible = settings && settings.visible || true;
         this.color = settings && settings.color || Colors.GRAY4;
         this.type = settings && settings.type || BeamType.Open;
         this.width = settings && settings.width || 1;
-        this.positionX = settings && settings.positionX || 1;
-        this.positionY = settings && settings.positionY || 1;
+        this.axis = settings && settings.axis || BeamShiftAxis.X;
+        this.shift = settings && settings.shift || 1;
     }
 
     @action setVisible = (visible: boolean) => {
@@ -686,12 +691,12 @@ export class OverlayBeamStore {
         this.width = width;
     };
 
-    @action setPositionX = (positionX: number) => {
-        this.positionX = positionX;
+    @action setAxis = (axis: BeamShiftAxis) => {
+        this.axis = axis;
     };
 
-    @action setPositionY = (positionY: number) => {
-        this.positionY = positionY;
+    @action setShift = (shift: number) => {
+        this.shift = shift;
     };
 }
 
