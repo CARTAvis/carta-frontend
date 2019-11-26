@@ -24,6 +24,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable primaryLineColor: { colorHex: string, fixed: boolean };
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
+    @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
     
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
@@ -71,6 +72,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             this.coordinate = coordinate;
         }
     };
+
+    @action initXYBoundaries (minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
+        this.linePlotInitXYBoundaries = { minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal };
+    }
 
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;

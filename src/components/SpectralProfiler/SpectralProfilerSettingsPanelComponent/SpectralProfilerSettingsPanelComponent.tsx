@@ -6,6 +6,8 @@ import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} fro
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig} from "stores";
 
+const KEYCODE_ENTER = 13;
+
 @observer
 export class SpectralProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
 
@@ -79,6 +81,66 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         this.widgetStore.setUseWcsValues(changeEvent.target.checked);
     };
 
+    handleXMinChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+
+        const val = parseFloat(ev.currentTarget.value);
+        const minX = typeof this.widgetStore.minX !== "undefined" ? this.widgetStore.minX : this.widgetStore.linePlotInitXYBoundaries.minXVal;
+        const maxX = typeof this.widgetStore.maxX !== "undefined" ? this.widgetStore.maxX : this.widgetStore.linePlotInitXYBoundaries.maxXVal;
+        if (isFinite(val) && val !== minX && val < maxX) {
+            this.widgetStore.setXBounds(val, maxX);
+        } else {
+            ev.currentTarget.value = minX;
+        }
+    };
+
+    handleXMaxChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+
+        const val = parseFloat(ev.currentTarget.value);
+        const minX = typeof this.widgetStore.minX !== "undefined" ? this.widgetStore.minX : this.widgetStore.linePlotInitXYBoundaries.minXVal;
+        const maxX = typeof this.widgetStore.maxX !== "undefined" ? this.widgetStore.maxX : this.widgetStore.linePlotInitXYBoundaries.maxXVal;
+        if (isFinite(val) && val !== maxX && val > minX) {
+            this.widgetStore.setXBounds(minX, val);
+        } else {
+            ev.currentTarget.value = maxX;
+        }
+    };
+
+    handleYMinChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+
+        const val = parseFloat(ev.currentTarget.value);
+        const minY = typeof this.widgetStore.minY !== "undefined" ? this.widgetStore.minY : this.widgetStore.linePlotInitXYBoundaries.minYVal;
+        const maxY = typeof this.widgetStore.maxY !== "undefined" ? this.widgetStore.maxY : this.widgetStore.linePlotInitXYBoundaries.maxYVal;
+        if (isFinite(val) && val !== minY && val < maxY) {
+            this.widgetStore.setYBounds(val, maxY);
+        } else {
+            ev.currentTarget.value = minY;
+        }
+    };
+
+    handleYMaxChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+
+        const val = parseFloat(ev.currentTarget.value);
+        const minY = typeof this.widgetStore.minY !== "undefined" ? this.widgetStore.minY : this.widgetStore.linePlotInitXYBoundaries.minYVal;
+        const maxY = typeof this.widgetStore.maxY !== "undefined" ? this.widgetStore.maxY : this.widgetStore.linePlotInitXYBoundaries.maxYVal;
+        if (isFinite(val) && val !== maxY && val > minY) {
+            this.widgetStore.setYBounds(minY, val);
+        } else {
+            ev.currentTarget.value = maxY;
+        }
+    };
+
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
@@ -98,7 +160,15 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             handleMeanRmsChanged: this.handleMeanRmsChanged,
             isAutoScaledX: widgetStore.isAutoScaledX,
             isAutoScaledY: widgetStore.isAutoScaledY,
-            clearXYBounds: widgetStore.clearXYBounds
+            clearXYBounds: widgetStore.clearXYBounds,
+            xMinVal: typeof this.widgetStore.minX !== "undefined" ? this.widgetStore.minX : this.widgetStore.linePlotInitXYBoundaries.minXVal,
+            handleXMinChange: this.handleXMinChange,
+            xMaxVal: typeof this.widgetStore.maxX !== "undefined" ? this.widgetStore.maxX : this.widgetStore.linePlotInitXYBoundaries.maxXVal,
+            handleXMaxChange: this.handleXMaxChange,
+            yMinVal: typeof this.widgetStore.minY !== "undefined" ? this.widgetStore.minY : this.widgetStore.linePlotInitXYBoundaries.minYVal,
+            handleYMinChange: this.handleYMinChange,
+            yMaxVal: typeof this.widgetStore.maxY !== "undefined" ? this.widgetStore.maxY : this.widgetStore.linePlotInitXYBoundaries.maxYVal,
+            handleYMaxChange: this.handleYMaxChange
         };
         return (
             <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
