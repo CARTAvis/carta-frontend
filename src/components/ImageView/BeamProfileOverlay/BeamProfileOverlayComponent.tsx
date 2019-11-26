@@ -1,4 +1,5 @@
 import * as React from "react";
+import {observer} from "mobx-react";
 import {Ellipse, Group, Layer, Line, Stage} from "react-konva";
 import {BeamType, OverlayBeamStore} from "stores";
 import "./BeamProfileOverlayComponent.css";
@@ -17,7 +18,8 @@ interface BeamProfileOverlayComponentProps {
     padding?: number;
 }
 
-export class BeamProfileOverlayComponent extends React.PureComponent<BeamProfileOverlayComponentProps> {
+@observer
+export class BeamProfileOverlayComponent extends React.Component<BeamProfileOverlayComponentProps> {
     render() {
         let className = "beam-profile-stage";
         if (this.props.docked) {
