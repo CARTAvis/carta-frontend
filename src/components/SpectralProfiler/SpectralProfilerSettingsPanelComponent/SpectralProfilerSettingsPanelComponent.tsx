@@ -5,6 +5,7 @@ import {Colors} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig} from "stores";
+import {parseUndefinedValue} from "utilities";
 
 const KEYCODE_ENTER = 13;
 
@@ -87,10 +88,11 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         }
 
         const val = parseFloat(ev.currentTarget.value);
-        const minX = typeof this.widgetStore.minX !== "undefined" ? this.widgetStore.minX : this.widgetStore.linePlotInitXYBoundaries.minXVal;
-        const maxX = typeof this.widgetStore.maxX !== "undefined" ? this.widgetStore.maxX : this.widgetStore.linePlotInitXYBoundaries.maxXVal;
+        const widgetStore = this.widgetStore; 
+        const minX = parseUndefinedValue(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
+        const maxX = parseUndefinedValue(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
         if (isFinite(val) && val !== minX && val < maxX) {
-            this.widgetStore.setXBounds(val, maxX);
+            widgetStore.setXBounds(val, maxX);
         } else {
             ev.currentTarget.value = minX;
         }
@@ -102,10 +104,11 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         }
 
         const val = parseFloat(ev.currentTarget.value);
-        const minX = typeof this.widgetStore.minX !== "undefined" ? this.widgetStore.minX : this.widgetStore.linePlotInitXYBoundaries.minXVal;
-        const maxX = typeof this.widgetStore.maxX !== "undefined" ? this.widgetStore.maxX : this.widgetStore.linePlotInitXYBoundaries.maxXVal;
+        const widgetStore = this.widgetStore;
+        const minX = parseUndefinedValue(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
+        const maxX = parseUndefinedValue(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
         if (isFinite(val) && val !== maxX && val > minX) {
-            this.widgetStore.setXBounds(minX, val);
+            widgetStore.setXBounds(minX, val);
         } else {
             ev.currentTarget.value = maxX;
         }
@@ -117,10 +120,11 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         }
 
         const val = parseFloat(ev.currentTarget.value);
-        const minY = typeof this.widgetStore.minY !== "undefined" ? this.widgetStore.minY : this.widgetStore.linePlotInitXYBoundaries.minYVal;
-        const maxY = typeof this.widgetStore.maxY !== "undefined" ? this.widgetStore.maxY : this.widgetStore.linePlotInitXYBoundaries.maxYVal;
+        const widgetStore = this.widgetStore;
+        const minY = parseUndefinedValue(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
+        const maxY = parseUndefinedValue(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
         if (isFinite(val) && val !== minY && val < maxY) {
-            this.widgetStore.setYBounds(val, maxY);
+            widgetStore.setYBounds(val, maxY);
         } else {
             ev.currentTarget.value = minY;
         }
@@ -132,10 +136,11 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         }
 
         const val = parseFloat(ev.currentTarget.value);
-        const minY = typeof this.widgetStore.minY !== "undefined" ? this.widgetStore.minY : this.widgetStore.linePlotInitXYBoundaries.minYVal;
-        const maxY = typeof this.widgetStore.maxY !== "undefined" ? this.widgetStore.maxY : this.widgetStore.linePlotInitXYBoundaries.maxYVal;
+        const widgetStore = this.widgetStore;
+        const minY = parseUndefinedValue(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
+        const maxY = parseUndefinedValue(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
         if (isFinite(val) && val !== maxY && val > minY) {
-            this.widgetStore.setYBounds(minY, val);
+            widgetStore.setYBounds(minY, val);
         } else {
             ev.currentTarget.value = maxY;
         }
@@ -161,15 +166,16 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             isAutoScaledX: widgetStore.isAutoScaledX,
             isAutoScaledY: widgetStore.isAutoScaledY,
             clearXYBounds: widgetStore.clearXYBounds,
-            xMinVal: typeof this.widgetStore.minX !== "undefined" ? this.widgetStore.minX : this.widgetStore.linePlotInitXYBoundaries.minXVal,
+            xMinVal: parseUndefinedValue(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal),
             handleXMinChange: this.handleXMinChange,
-            xMaxVal: typeof this.widgetStore.maxX !== "undefined" ? this.widgetStore.maxX : this.widgetStore.linePlotInitXYBoundaries.maxXVal,
+            xMaxVal: parseUndefinedValue(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal),
             handleXMaxChange: this.handleXMaxChange,
-            yMinVal: typeof this.widgetStore.minY !== "undefined" ? this.widgetStore.minY : this.widgetStore.linePlotInitXYBoundaries.minYVal,
+            yMinVal: parseUndefinedValue(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal),
             handleYMinChange: this.handleYMinChange,
-            yMaxVal: typeof this.widgetStore.maxY !== "undefined" ? this.widgetStore.maxY : this.widgetStore.linePlotInitXYBoundaries.maxYVal,
+            yMaxVal: parseUndefinedValue(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal),
             handleYMaxChange: this.handleYMaxChange
         };
+
         return (
             <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
         );

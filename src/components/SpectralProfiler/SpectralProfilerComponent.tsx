@@ -208,7 +208,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
                     this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString} ${selectedString} ${progressString}`);
                 }
-                if (currentData && currentData.xMin && currentData.xMax && currentData.yMin && currentData.yMax) {
+                if (currentData) {
                     this.widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
                 }
             } else {

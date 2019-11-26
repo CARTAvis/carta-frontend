@@ -5,6 +5,9 @@ import {Colors} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {RenderConfigWidgetStore} from "stores/widgets/RenderConfigWidgetStore";
 import {WidgetProps, WidgetConfig} from "stores";
+import {parseUndefinedValue} from "utilities";
+
+const KEYCODE_ENTER = 13;
 
 @observer
 export class RenderConfigSettingsPanelComponent extends React.Component<WidgetProps> {
@@ -43,6 +46,70 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         this.widgetStore.setMarkerTextVisible(changeEvent.target.checked);
     };
 
+    handleXMinChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+
+        const val = parseFloat(ev.currentTarget.value);
+        const widgetStore = this.widgetStore; 
+        const minX = parseUndefinedValue(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
+        const maxX = parseUndefinedValue(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        if (isFinite(val) && val !== minX && val < maxX) {
+            widgetStore.setXBounds(val, maxX);
+        } else {
+            ev.currentTarget.value = minX;
+        }
+    };
+
+    handleXMaxChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+
+        const val = parseFloat(ev.currentTarget.value);
+        const widgetStore = this.widgetStore;
+        const minX = parseUndefinedValue(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
+        const maxX = parseUndefinedValue(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        if (isFinite(val) && val !== maxX && val > minX) {
+            widgetStore.setXBounds(minX, val);
+        } else {
+            ev.currentTarget.value = maxX;
+        }
+    };
+
+    handleYMinChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+
+        const val = parseFloat(ev.currentTarget.value);
+        const widgetStore = this.widgetStore;
+        const minY = parseUndefinedValue(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
+        const maxY = parseUndefinedValue(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        if (isFinite(val) && val !== minY && val < maxY) {
+            widgetStore.setYBounds(val, maxY);
+        } else {
+            ev.currentTarget.value = minY;
+        }
+    };
+
+    handleYMaxChange = (ev) => {
+        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
+            return;
+        }
+
+        const val = parseFloat(ev.currentTarget.value);
+        const widgetStore = this.widgetStore;
+        const minY = parseUndefinedValue(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
+        const maxY = parseUndefinedValue(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        if (isFinite(val) && val !== maxY && val > minY) {
+            widgetStore.setYBounds(minY, val);
+        } else {
+            ev.currentTarget.value = maxY;
+        }
+    };
+
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
@@ -62,8 +129,17 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
             logScaleY: widgetStore.logScaleY,
             handleLogScaleChanged: this.handleLogScaleChanged,
             markerTextVisible: widgetStore.markerTextVisible,
-            handleMarkerTextChanged: this.handleMarkerTextChanged
+            handleMarkerTextChanged: this.handleMarkerTextChanged,
+            xMinVal: parseUndefinedValue(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal),
+            handleXMinChange: this.handleXMinChange,
+            xMaxVal: parseUndefinedValue(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal),
+            handleXMaxChange: this.handleXMaxChange,
+            yMinVal: parseUndefinedValue(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal),
+            handleYMinChange: this.handleYMinChange,
+            yMaxVal: parseUndefinedValue(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal),
+            handleYMaxChange: this.handleYMaxChange
         };
+
         return (
             <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
         );

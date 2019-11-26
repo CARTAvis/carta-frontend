@@ -152,13 +152,6 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     <FormGroup inline={true} label={"Line Style"}>
                         <PlotTypeSelectorComponent value={props.plotType} onValueChanged={props.setPlotType}/>
                     </FormGroup>
-                    { typeof props.isAutoScaledX !== "undefined" 
-                        &&  typeof props.isAutoScaledY !== "undefined"
-                        &&  props.clearXYBounds
-                        &&  <FormGroup inline={true} className="reset-range-content">
-                                <Button className="reset-range-button" icon={"zoom-to-fit"} small={true} disabled={props.isAutoScaledX && props.isAutoScaledY} onClick={props.clearXYBounds}>Reset Range</Button>
-                            </FormGroup>
-                    }
                     { typeof props.xMinVal !== "undefined"  && props.handleXMinChange &&
                     <FormGroup label={"X Min"} inline={true}>
                         <NumericInput
@@ -210,6 +203,13 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                             onKeyDown={props.handleYMaxChange}
                         />
                     </FormGroup>
+                    }
+                    { typeof props.isAutoScaledX !== "undefined" 
+                        &&  typeof props.isAutoScaledY !== "undefined"
+                        &&  props.clearXYBounds
+                        &&  <FormGroup inline={true} className="reset-range-content">
+                                <Button className="reset-range-button" icon={"zoom-to-fit"} small={true} disabled={props.isAutoScaledX && props.isAutoScaledY} onClick={props.clearXYBounds}>Reset Range</Button>
+                            </FormGroup>
                     }
                 </React.Fragment>
             </div>

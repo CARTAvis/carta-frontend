@@ -107,6 +107,13 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     this.widgetStore.clearXYBounds();
                 }
             }
+            const widgetStore = this.widgetStore;
+            if (widgetStore) {
+                const currentData = this.plotData;
+                if (currentData) {
+                    widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
+                }
+            }
         });
     }
 

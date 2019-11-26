@@ -7,3 +7,11 @@ export function parseBoolean(value: string, defaultValue: boolean): boolean {
         return defaultValue;
     }
 }
+
+export function parseUndefinedValue(val: number, initVal: number): number {
+    if (typeof val !== "undefined") {
+        return val;
+    } else {
+        return initVal;
+    }
+}
