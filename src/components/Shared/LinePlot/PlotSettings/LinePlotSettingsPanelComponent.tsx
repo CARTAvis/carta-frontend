@@ -155,13 +155,14 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     { typeof props.isAutoScaledX !== "undefined" 
                         &&  typeof props.isAutoScaledY !== "undefined"
                         &&  props.clearXYBounds
-                        &&  <FormGroup inline={true} label={"Reset Range"}>
-                                <Button icon={"zoom-to-fit"} small={true} disabled={props.isAutoScaledX && props.isAutoScaledY} onClick={props.clearXYBounds}>Reset Range</Button>
+                        &&  <FormGroup inline={true} className="reset-range-content">
+                                <Button className="reset-range-button" icon={"zoom-to-fit"} small={true} disabled={props.isAutoScaledX && props.isAutoScaledY} onClick={props.clearXYBounds}>Reset Range</Button>
                             </FormGroup>
                     }
                     { typeof props.xMinVal !== "undefined"  && props.handleXMinChange &&
                     <FormGroup label={"X Min"} inline={true}>
                         <NumericInput
+                            className="line-boundary"
                             value={props.xMinVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
@@ -174,6 +175,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     { typeof props.xMaxVal !== "undefined"  && props.handleXMaxChange &&
                     <FormGroup label={"X Max"} inline={true}>
                         <NumericInput
+                            className="line-boundary"
                             value={props.xMaxVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
@@ -186,6 +188,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     { typeof props.yMinVal !== "undefined"  && props.handleYMinChange &&
                     <FormGroup label={"Y Min"} inline={true}>
                         <NumericInput
+                            className="line-boundary"
                             value={props.yMinVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
@@ -198,6 +201,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     { typeof props.yMaxVal !== "undefined"  && props.handleYMaxChange &&
                     <FormGroup label={"Y Max"} inline={true}>
                         <NumericInput
+                            className="line-boundary"
                             value={props.yMaxVal}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}

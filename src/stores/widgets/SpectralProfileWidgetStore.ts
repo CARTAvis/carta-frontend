@@ -155,6 +155,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
+        this.linePlotInitXYBoundaries ={ minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
     }
 
     @computed get isAutoScaledX() {
