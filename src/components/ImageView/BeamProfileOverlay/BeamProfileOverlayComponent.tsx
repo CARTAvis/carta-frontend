@@ -47,6 +47,18 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
             y: 2 * Math.sqrt(a * a * sinTheta * sinTheta + b * b * cosTheta * cosTheta)
         };
 
+        // limit the beam inside the beam overlay
+        const rightMost = this.props.width - boundingBox.x / 2.0;
+        let positionX = boundingBox.x / 2.0 + paddingOffset + shiftX;
+        if (positionX > rightMost) {
+            positionX = rightMost;
+        }
+        const upMost = boundingBox.y / 2.0;
+        let positionY = this.props.height - boundingBox.y / 2.0 - paddingOffset - shiftY;
+        if (positionY < upMost) {
+            positionY = upMost;
+        }
+
         let ellipse;
         switch (type) {
             case BeamType.Open: default:
@@ -61,8 +73,8 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
             <Stage className={className} width={this.props.width} height={this.props.height} style={{left: this.props.left, top: this.props.top}}>
                 <Layer hitGraphEnabled={false}>
                     <Group
-                        x={boundingBox.x / 2.0 + paddingOffset + shiftX}
-                        y={this.props.height - boundingBox.y / 2.0 - paddingOffset - shiftY}
+                        x={positionX}
+                        y={positionY}
                         rotation={theta * 180.0 / Math.PI}
                     >
                         {a > 0 && b > 0 && ellipse}
