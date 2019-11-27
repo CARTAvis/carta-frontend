@@ -2,8 +2,8 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {FormGroup, Switch, NumericInput, Button, HTMLSelect} from "@blueprintjs/core";
 import {ColorResult} from "react-color";
-import {RegionStore} from "../../../../stores";
 import {ColorPickerComponent, PlotTypeSelectorComponent, PlotType} from "../../../Shared";
+import {SWATCH_COLORS} from "utilities";
 import "./LinePlotSettingsPanelComponent.css";
 
 export class LinePlotSettingsPanelComponentProps {
@@ -70,7 +70,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                     <FormGroup inline={true} label="Primary Color">
                         <ColorPickerComponent
                             color={this.getThemeDefaultColor(props.primaryDarkModeLineColor, props.primaryLineColor)}
-                            presetColors={[...RegionStore.SWATCH_COLORS, "transparent"]}
+                            presetColors={[...SWATCH_COLORS, "transparent"]}
                             setColor={(color: ColorResult) => {
                                 props.setPrimaryLineColor(color.hex === "transparent" ? "#000000" : color.hex, true);
                             }}
@@ -84,7 +84,7 @@ export class LinePlotSettingsPanelComponent extends React.Component<LinePlotSett
                         &&  <FormGroup inline={true} label="Secondary Color">
                                 <ColorPickerComponent
                                     color={this.getThemeDefaultColor(props.secondaryDarkModeLineColor, props.secondaryLineColor)}
-                                    presetColors={[...RegionStore.SWATCH_COLORS, "transparent"]}
+                                    presetColors={[...SWATCH_COLORS, "transparent"]}
                                     setColor={(color: ColorResult) => {
                                         props.setSecondaryLineColor(color.hex === "transparent" ? "#000000" : color.hex, true);
                                     }}

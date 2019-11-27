@@ -4,16 +4,16 @@ import {observer} from "mobx-react";
 import {observable} from "mobx";
 import {Select, ItemRenderer} from "@blueprintjs/select";
 import {
-    AnchorButton, Button, Collapse, ControlGroup, FormGroup,
-    HTMLSelect, IDialogProps, InputGroup, Intent, MenuItem,
-    NumericInput, Position, Switch, Tab, Tabs, TabId, Tooltip
+    AnchorButton, Button, Collapse, FormGroup, HTMLSelect,
+    IDialogProps, InputGroup, Intent, MenuItem, NumericInput,
+    Position, Switch, Tab, Tabs, TabId, Tooltip
 } from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ColorComponent} from "./ColorComponent";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent} from "components/Shared";
-import {AppStore, BeamType, LabelType, SystemType, RegionStore} from "stores";
-import {hexStringToRgba} from "utilities";
+import {AppStore, BeamType, LabelType, SystemType} from "stores";
+import {hexStringToRgba, SWATCH_COLORS} from "utilities";
 import "./OverlaySettingsDialogComponent.css";
 
 // Font selector
@@ -582,7 +582,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup inline={true} label="Color">
                     <ColorPickerComponent
                         color={hexStringToRgba(beamSettings.color)}
-                        presetColors={[...RegionStore.SWATCH_COLORS]}
+                        presetColors={[...SWATCH_COLORS]}
                         setColor={(color: ColorResult) => beamSettings.setColor(color.hex)}
                         disableAlpha={false}
                         darkTheme={this.props.appStore.darkTheme}
@@ -651,7 +651,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={625} defaultHeight={450} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={630} defaultHeight={450} enableResizing={true}>
                 <div className="bp3-dialog-body">
                     <Tabs
                         id="overlayTabs"

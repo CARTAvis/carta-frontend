@@ -18,7 +18,7 @@ import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent"
 import {ColorPickerComponent} from "components/Shared";
 import {Theme, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore, FrameScaling, RegionStore, RenderConfigStore} from "stores";
-import {hexStringToRgba, parseBoolean} from "utilities";
+import {hexStringToRgba, SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.css";
 
 enum TABS {
@@ -195,7 +195,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 <FormGroup inline={true} label="NaN Color">
                     <ColorPickerComponent
                         color={hexStringToRgba(preference.nanColorHex, preference.nanAlpha)}
-                        presetColors={[...RegionStore.SWATCH_COLORS, "transparent"]}
+                        presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
                             preference.setNaNColorHex(color.hex === "transparent" ? "#000000" : color.hex);
                             preference.setNaNAlpha(color.rgb.a);
@@ -268,7 +268,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 <FormGroup inline={true} label="Default Color">
                     <ColorPickerComponent
                         color={preference.contourColor}
-                        presetColors={RegionStore.SWATCH_COLORS}
+                        presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setContourColor(color.hex)}
                         disableAlpha={true}
                         darkTheme={appStore.darkTheme}
@@ -317,7 +317,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 <FormGroup inline={true} label="Color">
                     <ColorPickerComponent
                         color={preference.regionContainer.color}
-                        presetColors={RegionStore.SWATCH_COLORS}
+                        presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.regionContainer.setColor(color.hex)}
                         disableAlpha={true}
                         darkTheme={appStore.darkTheme}
