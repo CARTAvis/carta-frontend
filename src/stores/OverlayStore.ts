@@ -698,6 +698,24 @@ export class OverlayBeamStore {
     @action setShift = (shift: number) => {
         this.shift = shift;
     };
+
+    @action resetToRef = (ref: OverlayBeamStore) => {
+        this.visible = ref.visible;
+        this.color = ref.color;
+        this.type = ref.type;
+        this.width = ref.width;
+        this.axis = ref.axis;
+        this.shift = ref.shift;
+    };
+
+    @action resetToDefault = () => {
+        this.visible = true;
+        this.color = Colors.GRAY4;
+        this.type = BeamType.Open;
+        this.width = 1;
+        this.axis = BeamShiftAxis.X;
+        this.shift = 0;
+    };
 }
 
 export class OverlayBeamSettings {
@@ -739,6 +757,17 @@ export class OverlayBeamSettings {
             const frame = this.appStore.getFrame(selectedFileId);
             if (frame && frame.overlayBeamSettings) {
                 this.settings = frame.overlayBeamSettings;
+            }
+        }
+    };
+
+    @action reset = () => {
+        if (this.selectedFileId === OverlayBeamSettings.DEFAULT_ID) {
+            this.default.resetToDefault();
+        } else {
+            const frame = this.appStore.getFrame(this.selectedFileId);
+            if (frame && frame.overlayBeamSettings) {
+                frame.overlayBeamSettings.resetToRef(this.default);
             }
         }
     };

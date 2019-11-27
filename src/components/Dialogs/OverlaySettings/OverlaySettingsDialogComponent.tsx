@@ -3,7 +3,11 @@ import * as AST from "ast_wrapper";
 import {observer} from "mobx-react";
 import {observable} from "mobx";
 import {Select, ItemRenderer} from "@blueprintjs/select";
-import {Button, Switch, IDialogProps, Intent, Tab, Tabs, TabId, NumericInput, FormGroup, ControlGroup, MenuItem, HTMLSelect, Collapse, InputGroup} from "@blueprintjs/core";
+import {
+    AnchorButton, Button, Collapse, ControlGroup, FormGroup,
+    HTMLSelect, IDialogProps, InputGroup, Intent, MenuItem,
+    NumericInput, Position, Switch, Tab, Tabs, TabId, Tooltip
+} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ColorComponent} from "./ColorComponent";
 import {ColorResult} from "react-color";
@@ -662,6 +666,11 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
+                        {this.selectedTab === "beam" &&
+                        <Tooltip content="Apply to current tab only." position={Position.TOP}>
+                            <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={beam.reset} text="Restore defaults"/>
+                        </Tooltip>
+                        }
                         <Button intent={Intent.PRIMARY} onClick={overlayStore.hideOverlaySettings} text="Close"/>
                     </div>
                 </div>
