@@ -73,6 +73,10 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         this.widgetStore.setEqualAxesValue(changeEvent.target.checked);
     };
 
+    handleInvertedColorMapChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        this.widgetStore.setInvertedColorMap(changeEvent.target.checked);
+    };
+
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
@@ -101,7 +105,9 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             setPointTransparency:  widgetStore.setPointTransparency,
             setScatterPlotPointSize: widgetStore.setScatterPlotPointSize,
             setColormap: widgetStore.setColormap,
-            handleEqualAxesValuesChanged: this.handleEqualAxesValuesChanged
+            handleEqualAxesValuesChanged: this.handleEqualAxesValuesChanged,
+            invertedColorMap: widgetStore.invertedColorMap,
+            handleInvertedColorMapChanged: this.handleInvertedColorMapChanged
         };
 
         return (

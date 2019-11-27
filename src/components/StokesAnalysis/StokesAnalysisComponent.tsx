@@ -488,7 +488,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     private getScatterColor(percentage: number, frequencyIncreases: boolean): string {
         const colorMap = this.widgetStore.colorPixel.color;
         const mapSize = this.widgetStore.colorPixel.size;
-        if (!frequencyIncreases) {
+        if (!frequencyIncreases || this.widgetStore.invertedColorMap) {
             percentage = 1 - percentage;
         }
         const index = Math.round(percentage * mapSize) * 4;

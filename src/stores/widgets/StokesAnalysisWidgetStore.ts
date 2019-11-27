@@ -29,7 +29,8 @@ const DEFAULTS = {
         scatterPlotPointSize: 3,
         equalAxes: true,
         colorMap: "jet",
-        pointTransparency: 1
+        pointTransparency: 1,
+        invertedColorMap: true
 };
 
 export class StokesAnalysisWidgetStore extends RegionWidgetStore {
@@ -68,6 +69,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable colorMap: string;
     @observable colorPixel: { color: Uint8ClampedArray, size: number };
     @observable pointTransparency: number;
+    @observable invertedColorMap: boolean;
     
     private static requestDataType = [StokesCoordinate.LinearPolarizationQ, StokesCoordinate.LinearPolarizationU];
     private static ValidStatsTypes = [
@@ -220,6 +222,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.scatterPlotPointSize = DEFAULTS.scatterPlotPointSize;
         this.equalAxes = DEFAULTS.equalAxes;
         this.pointTransparency = DEFAULTS.pointTransparency;
+        this.invertedColorMap  = DEFAULTS.invertedColorMap;
     }
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
@@ -290,6 +293,10 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     };
 
     // settings
+    @action setInvertedColorMap = (invertedColorMap: boolean) => {
+        this.invertedColorMap = invertedColorMap;
+    };
+
     @action setPlotType = (val: PlotType) => {
         this.plotType = val;
     };
