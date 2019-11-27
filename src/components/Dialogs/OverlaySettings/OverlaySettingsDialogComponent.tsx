@@ -12,7 +12,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {ColorComponent} from "./ColorComponent";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent} from "components/Shared";
-import {AppStore, BeamShiftAxis, BeamType, LabelType, SystemType, RegionStore} from "stores";
+import {AppStore, BeamType, LabelType, SystemType, RegionStore} from "stores";
 import {hexStringToRgba} from "utilities";
 import "./OverlaySettingsDialogComponent.css";
 
@@ -607,23 +607,29 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                             onValueChange={(value: number) => beamSettings.setWidth(value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Position">
-                    <ControlGroup fill={true} vertical={false}>
-                        <HTMLSelect
-                            options={Object.keys(BeamShiftAxis).map((key) => ({label: key, value: BeamShiftAxis[key]}))}
-                            value={beamSettings.axis}
-                            onChange={(event: React.FormEvent<HTMLSelectElement>) => beamSettings.setAxis(event.currentTarget.value as BeamShiftAxis)}
-                        />
-                        <NumericInput
-                            placeholder="Position"
-                            min={0}
-                            value={beamSettings.shift}
-                            stepSize={10}
-                            minorStepSize={5}
-                            majorStepSize={10}
-                            onValueChange={(value: number) => beamSettings.setShift(value)}
-                        />
-                    </ControlGroup>
+                <FormGroup inline={true} label="Position(X)" labelInfo="(px)">
+                    <NumericInput
+                        placeholder="Position(X)"
+                        min={0}
+                        max={overlayStore.renderWidth}
+                        value={beamSettings.shiftX}
+                        stepSize={5}
+                        minorStepSize={1}
+                        majorStepSize={10}
+                        onValueChange={(value: number) => beamSettings.setShiftX(value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Position(Y)" labelInfo="(px)">
+                    <NumericInput
+                        placeholder="Position(Y)"
+                        min={0}
+                        max={overlayStore.renderHeight}
+                        value={beamSettings.shiftY}
+                        stepSize={5}
+                        minorStepSize={1}
+                        majorStepSize={10}
+                        onValueChange={(value: number) => beamSettings.setShiftY(value)}
+                    />
                 </FormGroup>
             </div>
         );

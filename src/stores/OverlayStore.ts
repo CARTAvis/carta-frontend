@@ -50,11 +50,6 @@ export enum BeamType {
     Solid = "Solid"
 }
 
-export enum BeamShiftAxis {
-    X = "X",
-    Y = "Y"
-}
-
 export class Padding {
     left: number;
     right: number;
@@ -663,16 +658,16 @@ export class OverlayBeamStore {
     @observable color: string;
     @observable type: BeamType;
     @observable width: number;
-    @observable axis: BeamShiftAxis;
-    @observable shift: number;
+    @observable shiftX: number;
+    @observable shiftY: number;
 
     constructor(settings?: OverlayBeamStore) {
         this.visible = settings && settings.visible || true;
         this.color = settings && settings.color || Colors.GRAY4;
         this.type = settings && settings.type || BeamType.Open;
         this.width = settings && settings.width || 1;
-        this.axis = settings && settings.axis || BeamShiftAxis.X;
-        this.shift = settings && settings.shift || 0;
+        this.shiftX = settings && settings.shiftX || 0;
+        this.shiftY = settings && settings.shiftY || 0;
     }
 
     @action setVisible = (visible: boolean) => {
@@ -691,12 +686,12 @@ export class OverlayBeamStore {
         this.width = width;
     };
 
-    @action setAxis = (axis: BeamShiftAxis) => {
-        this.axis = axis;
+    @action setShiftX = (shift: number) => {
+        this.shiftX = shift;
     };
 
-    @action setShift = (shift: number) => {
-        this.shift = shift;
+    @action setShiftY = (shift: number) => {
+        this.shiftY = shift;
     };
 
     @action resetToRef = (ref: OverlayBeamStore) => {
@@ -704,8 +699,8 @@ export class OverlayBeamStore {
         this.color = ref.color;
         this.type = ref.type;
         this.width = ref.width;
-        this.axis = ref.axis;
-        this.shift = ref.shift;
+        this.shiftX = ref.shiftX;
+        this.shiftY = ref.shiftY;
     };
 
     @action resetToDefault = () => {
@@ -713,8 +708,7 @@ export class OverlayBeamStore {
         this.color = Colors.GRAY4;
         this.type = BeamType.Open;
         this.width = 1;
-        this.axis = BeamShiftAxis.X;
-        this.shift = 0;
+        this.shiftX = this.shiftY = 0;
     };
 }
 
@@ -940,5 +934,13 @@ export class OverlayStore {
             top: base + titleGap + titleHeight,
             bottom: base + numGap + numHeight + labelGap + labelHeight
         };
+    }
+
+    @computed get renderWidth() {
+        return this.viewWidth - this.padding.left - this.padding.right;
+    }
+
+    @computed get renderHeight() {
+        return this.viewHeight - this.padding.top - this.padding.bottom;
     }
 }

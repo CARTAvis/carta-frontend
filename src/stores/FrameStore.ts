@@ -84,11 +84,11 @@ export class FrameStore {
     }
 
     @computed get renderWidth() {
-        return this.overlayStore.viewWidth - this.overlayStore.padding.left - this.overlayStore.padding.right;
+        return this.overlayStore.renderWidth;
     }
 
     @computed get renderHeight() {
-        return this.overlayStore.viewHeight - this.overlayStore.padding.top - this.overlayStore.padding.bottom;
+        return this.overlayStore.renderHeight;
     }
 
     @computed get isRenderable() {

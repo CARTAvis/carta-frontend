@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {Ellipse, Group, Layer, Line, Stage} from "react-konva";
 import {Colors} from "@blueprintjs/core";
-import {BeamShiftAxis, BeamType, OverlayBeamStore} from "stores";
+import {BeamType, OverlayBeamStore} from "stores";
 import "./BeamProfileOverlayComponent.css";
 
 interface BeamProfileOverlayComponentProps {
@@ -33,8 +33,8 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         const type = beamSettings.type;
         const strokeWidth = beamSettings.width;
         const paddingOffset = this.props.padding ? this.props.padding * devicePixelRatio : 0;
-        const shiftX = beamSettings.axis === BeamShiftAxis.X ? beamSettings.shift : 0;
-        const shiftY = beamSettings.axis === BeamShiftAxis.Y ? beamSettings.shift : 0;
+        const shiftX = beamSettings.shiftX;
+        const shiftY = beamSettings.shiftY;
         const a = this.props.beamMajor / 2.0 * this.props.zoomLevel;
         const b = this.props.beamMinor / 2.0 * this.props.zoomLevel;
         const theta = (90.0 - this.props.beamAngle) * Math.PI / 180.0;
