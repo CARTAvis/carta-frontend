@@ -86,8 +86,7 @@ export class AppStore {
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
-        this.overlayStore.viewWidth = w;
-        this.overlayStore.viewHeight = h;
+        this.overlayStore.setViewDimension(w, h);
     };
 
     // Image toolbar

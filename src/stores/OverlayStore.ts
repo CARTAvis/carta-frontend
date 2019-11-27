@@ -817,6 +817,11 @@ export class OverlayStore {
         });
     }
 
+    @action setViewDimension = (width: number, height: number) => {
+        this.viewWidth = width;
+        this.viewHeight = height;
+    };
+
     @action setFormatsFromSystem() {
         if (!this.global.validWcs) {
             // TODO: check if degrees would work
