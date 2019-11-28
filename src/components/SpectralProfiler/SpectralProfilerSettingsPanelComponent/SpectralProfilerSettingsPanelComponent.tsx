@@ -5,7 +5,7 @@ import {Colors} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig} from "stores";
-import {parseUndefinedValue} from "utilities";
+import {parseNumber} from "utilities";
 
 const KEYCODE_ENTER = 13;
 
@@ -82,67 +82,67 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         this.widgetStore.setUseWcsValues(changeEvent.target.checked);
     };
 
-    handleXMinChange = (ev) => {
+    handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore; 
-        const minX = parseUndefinedValue(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
-        const maxX = parseUndefinedValue(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
+        const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
         if (isFinite(val) && val !== minX && val < maxX) {
             widgetStore.setXBounds(val, maxX);
         } else {
-            ev.currentTarget.value = minX;
+            ev.currentTarget.value = minX.toString();
         }
     };
 
-    handleXMaxChange = (ev) => {
+    handleXMaxChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minX = parseUndefinedValue(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
-        const maxX = parseUndefinedValue(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
+        const minX = parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal);
+        const maxX = parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal);
         if (isFinite(val) && val !== maxX && val > minX) {
             widgetStore.setXBounds(minX, val);
         } else {
-            ev.currentTarget.value = maxX;
+            ev.currentTarget.value = maxX.toString();
         }
     };
 
-    handleYMinChange = (ev) => {
+    handleYMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minY = parseUndefinedValue(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
-        const maxY = parseUndefinedValue(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
+        const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
         if (isFinite(val) && val !== minY && val < maxY) {
             widgetStore.setYBounds(val, maxY);
         } else {
-            ev.currentTarget.value = minY;
+            ev.currentTarget.value = minY.toString();
         }
     };
 
-    handleYMaxChange = (ev) => {
+    handleYMaxChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
 
         const val = parseFloat(ev.currentTarget.value);
         const widgetStore = this.widgetStore;
-        const minY = parseUndefinedValue(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
-        const maxY = parseUndefinedValue(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
+        const minY = parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal);
+        const maxY = parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal);
         if (isFinite(val) && val !== maxY && val > minY) {
             widgetStore.setYBounds(minY, val);
         } else {
-            ev.currentTarget.value = maxY;
+            ev.currentTarget.value = maxY.toString();
         }
     };
 
@@ -166,13 +166,13 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             isAutoScaledX: widgetStore.isAutoScaledX,
             isAutoScaledY: widgetStore.isAutoScaledY,
             clearXYBounds: widgetStore.clearXYBounds,
-            xMinVal: parseUndefinedValue(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal),
+            xMinVal: parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal),
             handleXMinChange: this.handleXMinChange,
-            xMaxVal: parseUndefinedValue(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal),
+            xMaxVal: parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal),
             handleXMaxChange: this.handleXMaxChange,
-            yMinVal: parseUndefinedValue(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal),
+            yMinVal: parseNumber(widgetStore.minY, widgetStore.linePlotInitXYBoundaries.minYVal),
             handleYMinChange: this.handleYMinChange,
-            yMaxVal: parseUndefinedValue(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal),
+            yMaxVal: parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal),
             handleYMaxChange: this.handleYMaxChange
         };
 

@@ -8,8 +8,8 @@ export function parseBoolean(value: string, defaultValue: boolean): boolean {
     }
 }
 
-export function parseUndefinedValue(val: number, initVal: number): number {
-    if (typeof val !== "undefined") {
+export function parseNumber(val: number, initVal: number): number {
+    if (isFinite(val)) {
         return val;
     } else {
         return initVal;

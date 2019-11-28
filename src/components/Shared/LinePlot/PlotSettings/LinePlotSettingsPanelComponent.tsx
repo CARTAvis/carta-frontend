@@ -40,10 +40,10 @@ export class LinePlotSettingsPanelComponentProps {
     handleWcsAxisChanged?: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
     handleLogScaleChanged?: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
     handleMarkerTextChanged?: (changeEvent: React.ChangeEvent<HTMLInputElement>) => void;
-    handleXMinChange?: (ev: any) => void;
-    handleXMaxChange?: (ev: any) => void;
-    handleYMinChange?: (ev: any) => void;
-    handleYMaxChange?: (ev: any) => void; 
+    handleXMinChange?: (ev: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => void;
+    handleXMaxChange?: (ev: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => void;
+    handleYMinChange?: (ev: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => void;
+    handleYMaxChange?: (ev: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>) => void; 
 }
 
 export enum LineSettings {
