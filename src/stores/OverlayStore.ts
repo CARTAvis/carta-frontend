@@ -663,7 +663,7 @@ export class OverlayBeamStore {
 
     constructor(settings?: OverlayBeamStore) {
         this.visible = settings && settings.visible || true;
-        this.color = settings && settings.color || Colors.GRAY4;
+        this.color = settings && settings.color || Colors.GRAY3;
         this.type = settings && settings.type || BeamType.Open;
         this.width = settings && settings.width || 1;
         this.shiftX = settings && settings.shiftX || 0;
@@ -705,7 +705,7 @@ export class OverlayBeamStore {
 
     @action resetToDefault = () => {
         this.visible = true;
-        this.color = Colors.GRAY4;
+        this.color = Colors.GRAY3;
         this.type = BeamType.Open;
         this.width = 1;
         this.shiftX = this.shiftY = 0;
