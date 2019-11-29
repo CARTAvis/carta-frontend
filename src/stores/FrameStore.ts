@@ -369,7 +369,7 @@ export class FrameStore {
         this.renderType = RasterRenderType.NONE;
         this.moving = false;
         this.zooming = false;
-        this.overlayBeamSettings = new OverlayBeamStore(overlay.beam.default);
+        this.overlayBeamSettings = new OverlayBeamStore(preference);
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preference.astColor;

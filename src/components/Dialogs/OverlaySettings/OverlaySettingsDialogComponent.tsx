@@ -99,7 +99,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         const numbers = overlayStore.numbers;
         const labels = overlayStore.labels;
         const beam = overlayStore.beam;
-        const beamSettings = beam.settings;
+        const beamSettings = beam.settingsForDisplay;
 
         const interior: boolean = (global.labelType === LabelType.Interior);
 
@@ -564,11 +564,11 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
             </div>
         );
 
-        const beamPanel = (
+        const beamPanel = beam.isSelectedFrameValid ? (
             <div className="panel-container">
                 <FormGroup inline={true} label="Frame">
                     <HTMLSelect
-                        options={beam.frameNames}
+                        options={this.props.appStore.frameNames}
                         value={beam.selectedFileId}
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => beam.setSelectedFrame(parseInt(event.currentTarget.value))}
                     />
@@ -582,9 +582,9 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 <FormGroup inline={true} label="Color">
                     <ColorPickerComponent
                         color={hexStringToRgba(beamSettings.color)}
-                        presetColors={[...SWATCH_COLORS]}
+                        presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => beamSettings.setColor(color.hex)}
-                        disableAlpha={false}
+                        disableAlpha={true}
                         darkTheme={this.props.appStore.darkTheme}
                     />
                 </FormGroup>
@@ -632,7 +632,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                     />
                 </FormGroup>
             </div>
-        );
+        ) : null;
 
         let className = "overlay-settings-dialog";
         if (this.props.appStore.darkTheme) {
@@ -667,16 +667,11 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         <Tab id="axes" title="Axes" panel={axesPanel}/>
                         <Tab id="numbers" title="Numbers" panel={numbersPanel}/>
                         <Tab id="labels" title="Labels" panel={labelsPanel}/>
-                        <Tab id="beam" title="Beam" panel={beamPanel}/>
+                        <Tab id="beam" title="Beam" panel={beamPanel} disabled={this.props.appStore.frameNum <= 0}/>
                     </Tabs>
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
-                        {this.selectedTab === "beam" &&
-                        <Tooltip content="Apply to current tab only." position={Position.TOP}>
-                            <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={beam.reset} text="Restore defaults"/>
-                        </Tooltip>
-                        }
                         <Button intent={Intent.PRIMARY} onClick={overlayStore.hideOverlaySettings} text="Close"/>
                     </div>
                 </div>

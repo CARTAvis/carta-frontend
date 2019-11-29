@@ -661,13 +661,12 @@ export class OverlayBeamStore {
     @observable shiftX: number;
     @observable shiftY: number;
 
-    constructor(settings?: OverlayBeamStore) {
-        this.visible = settings && settings.visible || true;
-        this.color = settings && settings.color || Colors.GRAY3;
-        this.type = settings && settings.type || BeamType.Open;
-        this.width = settings && settings.width || 1;
-        this.shiftX = settings && settings.shiftX || 0;
-        this.shiftY = settings && settings.shiftY || 0;
+    constructor(readonly preference: PreferenceStore) {
+        this.visible = preference.beamVisible;
+        this.color = preference.beamColor;
+        this.type = preference.beamType;
+        this.width = preference.beamWidth;
+        this.shiftX = this.shiftY = 0;
     }
 
     @action setVisible = (visible: boolean) => {
@@ -693,37 +692,18 @@ export class OverlayBeamStore {
     @action setShiftY = (shift: number) => {
         this.shiftY = shift;
     };
-
-    @action resetToRef = (ref: OverlayBeamStore) => {
-        this.visible = ref.visible;
-        this.color = ref.color;
-        this.type = ref.type;
-        this.width = ref.width;
-        this.shiftX = ref.shiftX;
-        this.shiftY = ref.shiftY;
-    };
-
-    @action resetToDefault = () => {
-        this.visible = true;
-        this.color = Colors.GRAY3;
-        this.type = BeamType.Open;
-        this.width = 1;
-        this.shiftX = this.shiftY = 0;
-    };
 }
 
 export class OverlayBeamSettings {
     private readonly appStore: AppStore;
-    private static DEFAULT_ID = -1;
 
-    @observable default: OverlayBeamStore;
-    @observable settings: OverlayBeamStore;
     @observable selectedFileId: number;
+    @observable settingsForDisplay: OverlayBeamStore;
 
     constructor(appStore: AppStore) {
         this.appStore = appStore;
-        this.default =  new OverlayBeamStore();
-        this.setSelectedFrame(OverlayBeamSettings.DEFAULT_ID);
+        this.selectedFileId = -1;
+        this.settingsForDisplay = null;
 
         autorun(() => {
             if (this.appStore.activeFrame && this.appStore.activeFrame.frameInfo && this.appStore.activeFrame.frameInfo.fileInfo) {
@@ -732,37 +712,15 @@ export class OverlayBeamSettings {
         });
     }
 
-    @computed get frameNames(): IOptionProps[] {
-        let names = [{label: "Default", value: OverlayBeamSettings.DEFAULT_ID}];
-        if (!this.appStore.frames || this.appStore.frames.length === 0) {
-            return names;
-        }
-        this.appStore.frames.forEach(frame => names.push({label: frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
-        return names;
+    @computed get isSelectedFrameValid(): boolean {
+        return this.selectedFileId >= 0 && this.settingsForDisplay !== null;
     }
 
     @action setSelectedFrame = (selectedFileId: number) => {
         this.selectedFileId = selectedFileId;
-
-        // load beam settings to overlay dialog from default or customized frame settings
-        if (selectedFileId === OverlayBeamSettings.DEFAULT_ID) {
-            this.settings = this.default;
-        } else {
-            const frame = this.appStore.getFrame(selectedFileId);
-            if (frame && frame.overlayBeamSettings) {
-                this.settings = frame.overlayBeamSettings;
-            }
-        }
-    };
-
-    @action reset = () => {
-        if (this.selectedFileId === OverlayBeamSettings.DEFAULT_ID) {
-            this.default.resetToDefault();
-        } else {
-            const frame = this.appStore.getFrame(this.selectedFileId);
-            if (frame && frame.overlayBeamSettings) {
-                frame.overlayBeamSettings.resetToRef(this.default);
-            }
+        const frame = this.appStore.getFrame(selectedFileId);
+        if (frame && frame.overlayBeamSettings) {
+            this.settingsForDisplay = frame.overlayBeamSettings;
         }
     };
 }
