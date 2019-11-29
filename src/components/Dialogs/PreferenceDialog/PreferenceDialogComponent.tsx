@@ -298,11 +298,11 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="WCS Format">
-                    <RadioGroup selectedValue={preference.wcsType} onChange={(ev) => preference.setWCSType(ev.currentTarget.value)}>
-                        <Radio label="Automatic" value={WCSType.AUTOMATIC}/>
-                        <Radio label="Decimal degrees" value={WCSType.DEGREES}/>
-                        <Radio label="Sexagesimal" value={WCSType.SEXAGESIMAL}/>
-                    </RadioGroup>
+                    <HTMLSelect
+                        options={[WCSType.AUTOMATIC, WCSType.DEGREES, WCSType.SEXAGESIMAL]}
+                        value={preference.wcsType}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => preference.setWCSType(event.currentTarget.value)}
+                    />
                 </FormGroup>
                 <FormGroup inline={true} label="Beam Visible">
                     <Switch
