@@ -84,6 +84,15 @@ export class AppStore {
         this.contourWebGLContext = gl;
     }
 
+    // Splash screen
+    @observable splashScreenVisible: boolean = true;
+    @action showSplashScreen = () => {
+        this.splashScreenVisible = true;
+    };
+    @action hideSplashScreen = () => {
+        this.splashScreenVisible = false;
+    };
+
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
         this.overlayStore.viewWidth = w;

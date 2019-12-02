@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {autorun} from "mobx";
 import ReactResizeDetector from "react-resize-detector";
 import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget, Intent} from "@blueprintjs/core";
-import {exportImage, FloatingWidgetManagerComponent, RootMenuComponent} from "./components";
+import {exportImage, FloatingWidgetManagerComponent, RootMenuComponent, SplashScreenComponent} from "./components";
 import {AppToaster} from "./components/Shared";
 import {AboutDialogComponent, AuthDialogComponent, FileBrowserDialogComponent, OverlaySettingsDialogComponent, PreferenceDialogComponent, RegionDialogComponent, SaveLayoutDialogComponent} from "./components/Dialogs";
 import {AppStore, BrowserMode, dayPalette, nightPalette, RegionMode} from "./stores";
@@ -88,6 +88,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
             <div className={className}>
                 <RootMenuComponent appStore={appStore}/>
                 <OverlaySettingsDialogComponent appStore={appStore}/>
+                <SplashScreenComponent appStore={appStore}/>
                 <AuthDialogComponent appStore={appStore}/>
                 <FileBrowserDialogComponent appStore={appStore}/>
                 <AboutDialogComponent appStore={appStore}/>
