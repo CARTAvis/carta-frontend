@@ -223,6 +223,7 @@ export class AppStore {
     @observable taskStartTime: number;
     @observable taskCurrentTime: number;
     @observable fileLoading: boolean;
+    @observable resumingSession: boolean;
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -292,6 +293,8 @@ export class AppStore {
             this.logStore.addInfo(`Loaded file ${ack.fileInfo.name} with dimensions ${dimensionsString}`, ["file"]);
             const frameInfo: FrameInfo = {
                 fileId: ack.fileId,
+                directory,
+                hdu,
                 fileInfo: new CARTA.FileInfo(ack.fileInfo),
                 fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
                 fileFeatureFlags: ack.fileFeatureFlags,
@@ -493,10 +496,7 @@ export class AppStore {
         this.overlayStore = new OverlayStore(this, this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this, this.layoutStore);
         this.compressionQuality = this.preferenceStore.imageCompressionQuality;
-        this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
-        this.spatialRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
-        this.statsRequirements = new Map<number, Array<number>>();
-        this.histogramRequirements = new Map<number, Array<number>>();
+        this.initRequirements();
 
         const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
             this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
@@ -648,6 +648,7 @@ export class AppStore {
         this.backendService.getContourStream().subscribe(this.handleContourImageStream);
         this.backendService.getErrorStream().subscribe(this.handleErrorStream);
         this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
+        this.backendService.getReconnectStream().subscribe(this.handleReconnectStream);
         this.tileService.GetTileStream().subscribe(this.handleTileStream);
 
         // Auth and connection
@@ -796,6 +797,65 @@ export class AppStore {
         }
     };
 
+    handleReconnectStream = () => {
+        this.alertStore.showInteractiveAlert("You have reconnected to the CARTA server. Do you want to resume your session?", this.onResumeAlertClosed);
+    };
+
+    @action onResumeAlertClosed = (confirmed: boolean) => {
+        if (!confirmed) {
+            // TODO: How do we handle the situation where the user does not want to resume?
+            return;
+        }
+
+        // Some things should be reset when the user reconnects
+        this.animatorStore.stopAnimation();
+        this.tileService.clearRequestQueue();
+
+        const images: CARTA.IImageProperties[] = this.frames.map(frame => {
+            const info = frame.frameInfo;
+
+            const regions: CARTA.IRegionProperties[] = frame.regionSet.regions.map(region => {
+                const regionInfo: CARTA.IRegionInfo = {
+                    regionName: region.name,
+                    regionType: region.regionType,
+                    controlPoints: region.controlPoints,
+                    rotation: region.rotation
+                };
+
+                return {
+                    regionId: region.regionId,
+                    regionInfo
+                };
+            });
+
+            return {
+                file: info.fileInfo.name,
+                directory: info.directory,
+                hdu: info.hdu,
+                fileId: info.fileId,
+                renderMode: info.renderMode,
+                channel: frame.requiredChannel,
+                stokes: frame.requiredStokes,
+                regions
+            };
+        });
+
+        this.resumingSession = true;
+
+        this.backendService.resumeSession({images}).subscribe(this.onSessionResumed, err => {
+            console.error(err);
+            this.alertStore.showAlert("Error resuming session");
+        });
+    };
+
+    @action private onSessionResumed = () => {
+        console.log(`Resumed successfully`);
+        // Clear requirements once session has resumed
+        this.initRequirements();
+        this.resumingSession = false;
+        this.backendService.connectionDropped = false;
+    };
+
     // endregion
 
     @computed get zfpReady() {
@@ -868,6 +928,13 @@ export class AppStore {
     };
 
     // region requirements calculations
+
+    private initRequirements = () => {
+        this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
+        this.spatialRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
+        this.statsRequirements = new Map<number, Array<number>>();
+        this.histogramRequirements = new Map<number, Array<number>>();
+    };
 
     recalculateRequirements = () => {
         this.recalculateSpatialRequirements();

@@ -9,6 +9,8 @@ import {BackendService} from "services";
 
 export interface FrameInfo {
     fileId: number;
+    directory: string;
+    hdu: string;
     fileInfo: CARTA.FileInfo;
     fileInfoExtended: CARTA.FileInfoExtended;
     fileFeatureFlags: number;
