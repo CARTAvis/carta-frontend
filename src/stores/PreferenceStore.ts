@@ -2,9 +2,8 @@ import {observable, computed, action, autorun} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {FrameScaling, RenderConfigStore, RegionStore} from "stores";
+import {AppStore, BeamType, FrameScaling, LayoutStore, RenderConfigStore, RegionStore} from "stores";
 import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
-import {AppStore, LayoutStore} from "stores";
 import {isColorValid, parseBoolean} from "utilities";
 
 const PREFERENCE_KEYS = {
@@ -32,6 +31,10 @@ const PREFERENCE_KEYS = {
     astGridVisible: "astGridVisible",
     astLabelsVisible: "astLabelsVisible",
     wcsType: "wcsType",
+    beamVisible: "beamVisible",
+    beamColor: "beamColor",
+    beamType: "beamType",
+    beamWidth: "beamWidth",
     regionColor: "regionColor",
     regionLineWidth: "regionLineWidth",
     regionDashLength: "regionDashLength",
@@ -73,6 +76,10 @@ const DEFAULTS = {
     astGridVisible: false,
     astLabelsVisible: true,
     wcsType: WCSType.AUTOMATIC,
+    beamVisible: true,
+    beamColor: Colors.GRAY3,
+    beamType: BeamType.Open,
+    beamWidth: 1,
     regionColor: "#2EE6D6",
     regionLineWidth: 2,
     regionDashLength: 0,
@@ -117,6 +124,10 @@ export class PreferenceStore {
     @observable astGridVisible: boolean;
     @observable astLabelsVisible: boolean;
     @observable wcsType: string;
+    @observable beamVisible: boolean;
+    @observable beamColor: string;
+    @observable beamType: BeamType;
+    @observable beamWidth: number;
     @observable regionContainer: RegionStore;
     @observable regionCreationMode: string;
     @observable imageCompressionQuality: number;
@@ -301,7 +312,7 @@ export class PreferenceStore {
         return (isFinite(valInt) && valInt >= 1000 && valInt <= 1000000) ? valInt : DEFAULTS.contourChunkSize;
     };
 
-    // getters for WCS overlay
+    // getters for overlay
     private getASTColor = (): number => {
         const astColor = localStorage.getItem(PREFERENCE_KEYS.astColor);
         if (!astColor) {
@@ -325,6 +336,30 @@ export class PreferenceStore {
     private getWCSType = (): string => {
         const wcsType = localStorage.getItem(PREFERENCE_KEYS.wcsType);
         return wcsType && WCSType.isValid(wcsType) ? wcsType : DEFAULTS.wcsType;
+    };
+
+    private getBeamVisible = (): boolean => {
+        const beamVisible = localStorage.getItem(PREFERENCE_KEYS.beamVisible);
+        return parseBoolean(beamVisible, DEFAULTS.beamVisible);
+    };
+
+    private getBeamColor = (): string => {
+        const beamColor = localStorage.getItem(PREFERENCE_KEYS.beamColor);
+        return beamColor && isColorValid(beamColor) ? beamColor : DEFAULTS.beamColor;
+    };
+
+    private getBeamType = (): BeamType => {
+        const beamType = localStorage.getItem(PREFERENCE_KEYS.beamType);
+        return beamType && (beamType === BeamType.Open || beamType === BeamType.Solid) ? beamType : DEFAULTS.beamType;
+    };
+
+    private getBeamWidth = (): number => {
+        const valString = localStorage.getItem(PREFERENCE_KEYS.beamWidth);
+        if (!valString) {
+            return DEFAULTS.beamWidth;
+        }
+        const valInt = Number(valString);
+        return (isFinite(valInt) && valInt > 0 && valInt <= 10) ? valInt : DEFAULTS.beamWidth;
     };
 
     // getters for region
@@ -593,7 +628,7 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.contourChunkSize, val.toString());
     };
 
-    // setters for WCS overlay
+    // setters for overlay
     @action setASTColor = (astColor: number) => {
         this.astColor = astColor;
         localStorage.setItem(PREFERENCE_KEYS.astColor, astColor.toString(10));
@@ -612,6 +647,26 @@ export class PreferenceStore {
     @action setWCSType = (wcsType: string) => {
         this.wcsType = wcsType;
         localStorage.setItem(PREFERENCE_KEYS.wcsType, wcsType);
+    };
+
+    @action setBeamVisible = (visible: boolean) => {
+        this.beamVisible = visible;
+        localStorage.setItem(PREFERENCE_KEYS.beamVisible, visible ? "true" : "false");
+    };
+
+    @action setBeamColor = (beamColor: string) => {
+        this.beamColor = beamColor;
+        localStorage.setItem(PREFERENCE_KEYS.beamColor, beamColor);
+    };
+
+    @action setBeamType = (beamType: BeamType) => {
+        this.beamType = beamType;
+        localStorage.setItem(PREFERENCE_KEYS.beamType, beamType);
+    };
+
+    @action setBeamWidth = (beamWidth: number) => {
+        this.beamWidth = beamWidth;
+        localStorage.setItem(PREFERENCE_KEYS.beamWidth, beamWidth.toString(10));
     };
 
     // setters for region
@@ -685,11 +740,15 @@ export class PreferenceStore {
         this.setContourColormapEnabled(DEFAULTS.contourColormapEnabled);
     };
 
-    @action resetWCSOverlaySettings = () => {
+    @action resetOverlayConfigSettings = () => {
         this.setASTColor(DEFAULTS.astColor);
         this.setASTGridVisible(DEFAULTS.astGridVisible);
         this.setASTLabelsVisible(DEFAULTS.astLabelsVisible);
         this.setWCSType(DEFAULTS.wcsType);
+        this.setBeamVisible(DEFAULTS.beamVisible);
+        this.setBeamColor(DEFAULTS.beamColor);
+        this.setBeamType(DEFAULTS.beamType);
+        this.setBeamWidth(DEFAULTS.beamWidth);
     };
 
     @action resetRegionSettings = () => {
@@ -742,6 +801,10 @@ export class PreferenceStore {
         this.astGridVisible = this.getASTGridVisible();
         this.astLabelsVisible = this.getASTLabelsVisible();
         this.wcsType = this.getWCSType();
+        this.beamVisible = this.getBeamVisible();
+        this.beamColor = this.getBeamColor();
+        this.beamType = this.getBeamType();
+        this.beamWidth = this.getBeamWidth();
         this.regionCreationMode = this.getRegionCreationMode();
         this.imageCompressionQuality = this.getImageCompressionQuality();
         this.animationCompressionQuality = this.getAnimationCompressionQuality();
