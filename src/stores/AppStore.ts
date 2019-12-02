@@ -30,6 +30,7 @@ import {BackendService, ConnectionStatus, TileService} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {AppToaster} from "../components/Shared";
+import {IOptionProps} from "@blueprintjs/core";
 
 const CURSOR_THROTTLE_TIME = 200;
 const CURSOR_THROTTLE_TIME_ROTATED = 100;
@@ -86,8 +87,7 @@ export class AppStore {
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
-        this.overlayStore.viewWidth = w;
-        this.overlayStore.viewHeight = h;
+        this.overlayStore.setViewDimension(w, h);
     };
 
     // Image toolbar
@@ -266,6 +266,18 @@ export class AppStore {
     }
 
     // Frame actions
+    @computed get frameNum(): number {
+        return this.frames.length;
+    }
+
+    @computed get frameNames(): IOptionProps [] {
+        let names: IOptionProps [] = [];
+        if (this.frameNum > 0) {
+            this.frames.forEach(frame => names.push({label: frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
+        }
+        return names;
+    }
+
     @action addFrame = (directory: string, file: string, hdu: string, fileId: number) => {
         this.fileLoading = true;
         this.backendService.loadFile(directory, file, hdu, fileId, CARTA.RenderMode.RASTER).subscribe(ack => {
@@ -478,7 +490,7 @@ export class AppStore {
         this.activeFrame = null;
         this.fileBrowserStore = new FileBrowserStore(this.backendService);
         this.animatorStore = new AnimatorStore(this);
-        this.overlayStore = new OverlayStore(this.preferenceStore);
+        this.overlayStore = new OverlayStore(this, this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this, this.layoutStore);
         this.compressionQuality = this.preferenceStore.imageCompressionQuality;
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
