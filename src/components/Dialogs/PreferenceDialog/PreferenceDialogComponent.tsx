@@ -521,7 +521,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         <Tab id={TABS.RENDER_CONFIG} title="Render Configuration" panel={renderConfigPanel}/>
                         <Tab id={TABS.CONTOUR_CONFIG} title="Contour Configuration" panel={contourConfigPanel}/>
                         <Tab id={TABS.OVERLAY_CONFIG} title="Overlay Configuration" panel={overlayConfigPanel}/>
-                        <Tab id={TABS.REGION} title="Region settings" panel={regionSettingsPanel}/>
+                        <Tab id={TABS.REGION} title="Region" panel={regionSettingsPanel}/>
                         <Tab id={TABS.PERFORMANCE} title="Performance" panel={performancePanel}/>
                         <Tab id={TABS.LOG_EVENT} title="Log Events" panel={logEventsPanel}/>
                     </Tabs>

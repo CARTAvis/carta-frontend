@@ -358,7 +358,7 @@ export class PreferenceStore {
         if (!valString) {
             return DEFAULTS.beamWidth;
         }
-        const valInt = parseInt(valString);
+        const valInt = Number(valString);
         return (isFinite(valInt) && valInt > 0 && valInt <= 10) ? valInt : DEFAULTS.beamWidth;
     };
 
