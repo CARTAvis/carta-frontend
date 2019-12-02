@@ -607,9 +607,9 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                             onValueChange={(value: number) => beamSettings.setWidth(value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Position(X)" labelInfo="(px)">
+                <FormGroup inline={true} label="Position (X)" labelInfo="(px)">
                     <NumericInput
-                        placeholder="Position(X)"
+                        placeholder="Position (X)"
                         min={0}
                         max={overlayStore.renderWidth}
                         value={beamSettings.shiftX}
@@ -619,9 +619,9 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                         onValueChange={(value: number) => beamSettings.setShiftX(value)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Position(Y)" labelInfo="(px)">
+                <FormGroup inline={true} label="Position (Y)" labelInfo="(px)">
                     <NumericInput
-                        placeholder="Position(Y)"
+                        placeholder="Position (Y)"
                         min={0}
                         max={overlayStore.renderHeight}
                         value={beamSettings.shiftY}
