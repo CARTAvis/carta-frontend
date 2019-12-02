@@ -18,4 +18,19 @@
             width: 60px;
         }
     }
+
+    .line-boundary {
+        .bp3-input-group {
+            input {
+                width: 90px;
+            }
+        }
+    }
+
+    .reset-range-content {
+        margin-left: 101px;
+        .reset-range-button{
+            width: 10em;
+        }
+    }
 }
