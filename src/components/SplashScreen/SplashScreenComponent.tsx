@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Classes, Intent, Overlay, Spinner} from "@blueprintjs/core";
-import {AppStore} from "stores";
+import {AppStore, LogStore} from "stores";
 import * as logoPng from "static/carta_logo.png";
 import "./SplashScreenComponent.css";
 
@@ -13,6 +13,8 @@ export class SplashScreenComponent extends React.Component<{ appStore: AppStore 
 
     public render() {
         const appStore = this.props.appStore;
+        const logStore = this.props.appStore.logStore;
+
         let className = "splash-screen";
         if (appStore.darkTheme) {
             className += " bp3-dark";
@@ -23,6 +25,9 @@ export class SplashScreenComponent extends React.Component<{ appStore: AppStore 
                 <div className={Classes.DIALOG_BODY}>
                     <img src={logoPng} width={100}/>
                     <Spinner intent={Intent.PRIMARY} size={30} value={null} />
+                    <p>
+                        {logStore.newestMsg}
+                    </p>
                 </div>
             </Overlay>
         );
