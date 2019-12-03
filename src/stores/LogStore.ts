@@ -22,7 +22,7 @@ export class LogStore {
     }
 
     @computed get newestMsg(): string {
-        return this.logEntries.length > 0 ? this.logEntries[this.logEntries.length-1].message : "";
+        return this.logEntries.length > 0 ? this.logEntries[this.logEntries.length - 1].message : "";
     }
 
     @action addLog(entry: LogEntry) {
