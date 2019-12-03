@@ -23,11 +23,18 @@ export class SplashScreenComponent extends React.Component<{ appStore: AppStore 
         return (
             <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} canEscapeKeyClose={true} canOutsideClickClose={false} isOpen={appStore.splashScreenVisible} usePortal={true} onClose={this.handleClose}>
                 <div className={className}>
-                    <img src={logoPng} width={180}/>
-                    <Spinner intent={Intent.PRIMARY} size={30} value={null} />
-                    <p>
-                        {logStore.newestMsg}
-                    </p>
+                    <div className={"image-div"}>
+                        <img src={logoPng} width={180}/>
+                        <h1>CARTA Viewer</h1>
+                    </div>
+                    <div className={"spinner-div"}>
+                        <Spinner intent={Intent.PRIMARY} size={30} value={null}/>
+                    </div>
+                    <div className={"info-div"}>
+                        <p>
+                            {logStore.newestMsg}
+                        </p>
+                    </div>
                 </div>
             </Overlay>
         );
