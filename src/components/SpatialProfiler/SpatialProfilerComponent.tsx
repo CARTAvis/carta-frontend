@@ -231,10 +231,14 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             if (this.widgetStore) {
                 const coordinate = this.widgetStore.coordinate;
                 const appStore = this.props.appStore;
+                const currentData = this.plotData;
                 if (appStore && coordinate) {
                     const coordinateString = `${coordinate.toUpperCase()} Profile`;
                     const regionString = this.widgetStore.regionId === 0 ? "Cursor" : `Region #${this.widgetStore.regionId}`;
                     this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString}`);
+                }
+                if (currentData) {
+                    this.widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
                 }
             } else {
                 this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `X Profile: Cursor`);

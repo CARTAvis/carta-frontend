@@ -35,9 +35,15 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
         appStore.hideSaveLayoutDialog();
         layoutStore.setLayoutToBeSaved(this.layoutName);
         if (layoutStore.layoutExist(this.layoutName)) {
-            PresetLayout.isValid(this.layoutName) ?
-            alertStore.showAlert("Layout name cannot be the same as system presets.") :
-            alertStore.showInteractiveAlert(`Are you sure to overwrite the existing layout ${this.layoutName}?`);
+            if (PresetLayout.isValid(this.layoutName)) {
+                alertStore.showAlert("Layout name cannot be the same as system presets.");
+            } else {
+                alertStore.showInteractiveAlert(`Are you sure to overwrite the existing layout ${this.layoutName}?`, (confirmed: boolean) => {
+                    if (confirmed) {
+                        layoutStore.saveLayout();
+                    }
+                });
+            }
         } else {
             layoutStore.saveLayout();
         }

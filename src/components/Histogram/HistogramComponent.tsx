@@ -168,6 +168,13 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             } else {
                 appStore.widgetsStore.setWidgetTitle(this.props.id, `Histogram`);
             }
+            const widgetStore = this.widgetStore;
+            if (widgetStore) {
+                const currentData = this.plotData;
+                if (currentData) {
+                    widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
+                }
+            }
         });
     }
 
