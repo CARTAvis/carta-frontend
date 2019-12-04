@@ -95,9 +95,9 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         return (
             <div className={className}>
+                <SplashScreenComponent appStore={appStore}/>
                 <RootMenuComponent appStore={appStore}/>
                 <OverlaySettingsDialogComponent appStore={appStore}/>
-                <SplashScreenComponent appStore={appStore}/>
                 <AuthDialogComponent appStore={appStore}/>
                 <FileBrowserDialogComponent appStore={appStore}/>
                 <AboutDialogComponent appStore={appStore}/>

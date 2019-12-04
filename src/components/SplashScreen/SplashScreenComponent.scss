@@ -8,18 +8,10 @@
     top: 50%;
     margin-left:-300px;
     margin-top:-200px;
+    background: $light-gray5;
 
     display: flex;
     flex-direction: column;
     align-items: center;
-
-    .image-div {
-        text-align: center;
-    }
-
-    .spinner-div {
-    }
-
-    .info-div {
-    }
+    justify-content: space-around;
 }
