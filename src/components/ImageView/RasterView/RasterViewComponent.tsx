@@ -315,8 +315,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 if (tile.layer > 0 && renderLowRes) {
                     const lowResTile = {
                         layer: tile.layer - 1,
-                        x: Math.ceil(tile.x / 2.0),
-                        y: Math.ceil(tile.y / 2.0),
+                        x: Math.floor(tile.x / 2.0),
+                        y: Math.floor(tile.y / 2.0),
                     };
                     placeholderTileMap.set(TileCoordinate.EncodeCoordinate(lowResTile), true);
                 }
