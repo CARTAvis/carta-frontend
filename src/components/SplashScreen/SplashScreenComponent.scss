@@ -3,12 +3,12 @@
 .splash-screen {
     user-select: none;
 
-    width: 600px;
+    width: 650px;
     height: 400px;
     position: absolute;
     left: 50%;
     top: 50%;
-    margin-left: -300px;
+    margin-left: -325px;
     margin-top: -200px;
     background: $light-gray5;
 
@@ -18,7 +18,10 @@
     justify-content: space-around;
 
     .image-div {
-        padding: 5px 0 0 0;
+        padding: 10px 0 0 0;
         text-align: center;
+        h1 {
+            margin: 10px 0 0 0;
+        }
     }
 }
