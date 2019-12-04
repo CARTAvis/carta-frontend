@@ -27,14 +27,10 @@ export class SplashScreenComponent extends React.Component<{ appStore: AppStore 
                         <img src={logoPng} width={180}/>
                         <h1>CARTA Viewer</h1>
                     </div>
-                    <div className={"spinner-div"}>
-                        <Spinner intent={Intent.PRIMARY} size={30} value={null}/>
-                    </div>
-                    <div className={"info-div"}>
-                        <p>
-                            {logStore.newestMsg}
-                        </p>
-                    </div>
+                    <Spinner intent={Intent.PRIMARY} size={30} value={null}/>
+                    <p>
+                        {logStore.newestMsg}
+                    </p>
                 </div>
             </Overlay>
         );
