@@ -32,12 +32,15 @@ export interface RegionViewComponentProps {
 }
 
 const DUPLICATE_POINT_THRESHOLD = 0.01;
+const DOUBLE_CLICK_DISTANCE = 5;
 
 @observer
 export class RegionViewComponent extends React.Component<RegionViewComponentProps> {
     @observable creatingRegion: RegionStore;
     private regionStartPoint: Point2D;
     @observable currentCursorPos: Point2D;
+    @observable mousePreviousPosition: Point2D = {x: -1000, y: -1000};
+    @observable mousePositionDistance: Point2D = {x: 0, y: 0};
 
     private dragPanning: boolean;
     private dragOffset: Point2D;
@@ -257,6 +260,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         const isSecondaryClick = mouseEvent.button !== 0 || mouseEvent.ctrlKey || mouseEvent.metaKey;
 
+        this.mousePositionDistance = {x: Math.abs(mouseEvent.x - this.mousePreviousPosition.x), y: Math.abs(mouseEvent.y - this.mousePreviousPosition.y)};
+        this.mousePreviousPosition = {x: mouseEvent.x, y: mouseEvent.y};
+
         // Ignore clicks that aren't on the stage, unless it's a secondary click
         if (konvaEvent.target !== konvaEvent.currentTarget && !isSecondaryClick) {
             return;
@@ -364,7 +370,12 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     private handleStageDoubleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const frame = this.props.frame;
-        if (frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion && this.creatingRegion.regionType === CARTA.RegionType.POLYGON) {
+        if (this.mousePositionDistance.x > DOUBLE_CLICK_DISTANCE || this.mousePositionDistance.y > DOUBLE_CLICK_DISTANCE) {
+            return;
+        }
+        console.log("Distance:" + this.mousePositionDistance.x);
+        if (frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion && 
+            this.creatingRegion.regionType === CARTA.RegionType.POLYGON) {
             // Handle region completion
             if (this.creatingRegion.isValid && this.creatingRegion.controlPoints.length > 2) {
                 this.creatingRegion.endCreating();
