@@ -260,6 +260,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         const isSecondaryClick = mouseEvent.button !== 0 || mouseEvent.ctrlKey || mouseEvent.metaKey;
 
+        // Record click position and distance
         this.mouseClickDistance = {x: Math.abs(mouseEvent.x - this.mousePreviousClick.x), y: Math.abs(mouseEvent.y - this.mousePreviousClick.y)};
         this.mousePreviousClick = {x: mouseEvent.x, y: mouseEvent.y};
 
@@ -371,9 +372,9 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private handleStageDoubleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const frame = this.props.frame;
         if (this.mouseClickDistance.x > DOUBLE_CLICK_DISTANCE || this.mouseClickDistance.y > DOUBLE_CLICK_DISTANCE) {
+            // Ignore the double click distance longer than DOUBLE_CLICK_DISTANCE
             return;
         }
-        console.log("Distance:" + this.mouseClickDistance.x);
         if (frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion && 
             this.creatingRegion.regionType === CARTA.RegionType.POLYGON) {
             // Handle region completion
