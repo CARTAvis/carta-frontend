@@ -2,6 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {Classes, Intent, Overlay, Spinner} from "@blueprintjs/core";
 import {AppStore} from "stores";
+import {CARTA_INFO} from "models";
 import * as logoPng from "static/carta_logo.png";
 import "./SplashScreenComponent.css";
 
@@ -21,8 +22,8 @@ export class SplashScreenComponent extends React.Component<{ appStore: AppStore 
                 <div className={className}>
                     <div className={"image-div"}>
                         <img src={logoPng} width={180}/>
-                        <h1>CARTA 1.3.0 (20191204)</h1>
-                        <p>Cube Analysis and Rendering Tool for Astronomy</p>
+                        <h1>{CARTA_INFO.acronym} {CARTA_INFO.version} ({CARTA_INFO.date})</h1>
+                        <p>{CARTA_INFO.fullName}</p>
                     </div>
                     <Spinner intent={Intent.PRIMARY} size={30} value={null}/>
                     <p>{logStore.newestMsg}</p>
