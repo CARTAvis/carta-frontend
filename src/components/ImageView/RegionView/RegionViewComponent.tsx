@@ -39,8 +39,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     @observable creatingRegion: RegionStore;
     private regionStartPoint: Point2D;
     @observable currentCursorPos: Point2D;
-    @observable mousePreviousPosition: Point2D = {x: -1000, y: -1000};
-    @observable mousePositionDistance: Point2D = {x: 0, y: 0};
+    @observable mousePreviousClick: Point2D = {x: -1000, y: -1000};
+    @observable mouseClickDistance: Point2D = {x: 0, y: 0};
 
     private dragPanning: boolean;
     private dragOffset: Point2D;
@@ -260,8 +260,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
         const isSecondaryClick = mouseEvent.button !== 0 || mouseEvent.ctrlKey || mouseEvent.metaKey;
 
-        this.mousePositionDistance = {x: Math.abs(mouseEvent.x - this.mousePreviousPosition.x), y: Math.abs(mouseEvent.y - this.mousePreviousPosition.y)};
-        this.mousePreviousPosition = {x: mouseEvent.x, y: mouseEvent.y};
+        this.mouseClickDistance = {x: Math.abs(mouseEvent.x - this.mousePreviousClick.x), y: Math.abs(mouseEvent.y - this.mousePreviousClick.y)};
+        this.mousePreviousClick = {x: mouseEvent.x, y: mouseEvent.y};
 
         // Ignore clicks that aren't on the stage, unless it's a secondary click
         if (konvaEvent.target !== konvaEvent.currentTarget && !isSecondaryClick) {
@@ -370,10 +370,10 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     private handleStageDoubleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const frame = this.props.frame;
-        if (this.mousePositionDistance.x > DOUBLE_CLICK_DISTANCE || this.mousePositionDistance.y > DOUBLE_CLICK_DISTANCE) {
+        if (this.mouseClickDistance.x > DOUBLE_CLICK_DISTANCE || this.mouseClickDistance.y > DOUBLE_CLICK_DISTANCE) {
             return;
         }
-        console.log("Distance:" + this.mousePositionDistance.x);
+        console.log("Distance:" + this.mouseClickDistance.x);
         if (frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion && 
             this.creatingRegion.regionType === CARTA.RegionType.POLYGON) {
             // Handle region completion
