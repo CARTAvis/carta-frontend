@@ -36,6 +36,9 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             } else {
                 this.props.appStore.appendFile(fileBrowserStore.fileList.directory, fileInfo.name, hdu);
             }
+        } else if (fileBrowserStore.browserMode === BrowserMode.Catalog) {
+            console.log("Open catalog widget; load fake data to catalog widget");
+            this.props.appStore.appendCatalog(".", ".", 0);
         } else {
             this.props.appStore.importRegion(fileBrowserStore.fileList.directory, fileInfo.name, fileInfo.type);
         }
@@ -142,6 +145,17 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         disabled={this.props.appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !this.props.appStore.activeFrame}
                         onClick={this.loadSelectedFile}
                         text="Load Region"
+                    />
+                </Tooltip>
+            );
+        } else if (browserMode === BrowserMode.Catalog) {
+            return (
+                <Tooltip content={"Load a catalog file for the currently active frame"}>
+                    <AnchorButton
+                        intent={Intent.PRIMARY}
+                        // disabled={this.props.appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !this.props.appStore.activeFrame}
+                        onClick={this.loadSelectedFile}
+                        text="Load Catalog"
                     />
                 </Tooltip>
             );

@@ -11,7 +11,8 @@ export enum FileInfoTabs {
 export enum BrowserMode {
     File,
     RegionImport,
-    RegionExport
+    RegionExport,
+    Catalog
 }
 
 export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.REG;
@@ -64,6 +65,9 @@ export class FileBrowserStore {
                 console.log(err);
                 this.loadingList = false;
             });
+        } else if (this.browserMode === BrowserMode.Catalog) {
+            console.log("requets backend File list");
+            this.fileList = new CARTA.FileListResponse();
         } else {
             this.backendService.getRegionList(directory).subscribe(res => {
                 this.fileList = res;

@@ -39,6 +39,12 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}
                 />
+                <Menu.Item
+                    text="Append catalog"
+                    label={`${modString}C`}
+                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, true)}
+                />
                 <Menu.Divider/>
                 <Menu.Item
                     text="Import regions"

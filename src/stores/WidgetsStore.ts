@@ -14,6 +14,8 @@ import {
     StatsComponent,
     ToolbarMenuComponent,
     StokesAnalysisComponent,
+    CatalogOverlayComponent,
+    // setting Panel
     StokesAnalysisSettingsPanelComponent,
     SpectralProfilerSettingsPanelComponent,
     SpatialProfilerSettingsPanelComponent,
@@ -21,7 +23,7 @@ import {
     HistogramSettingsPanelComponent
 } from "components";
 import {AppStore, LayoutStore} from "stores";
-import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
+import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore, CatalogOverlayWidgetStore} from "./widgets";
 
 export class WidgetConfig {
     id: string;
@@ -58,6 +60,7 @@ export class WidgetsStore {
     @observable regionListWidgets: Map<string, EmptyWidgetStore>;
     @observable animatorWidgets: Map<string, EmptyWidgetStore>;
     @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
+    @observable catalogOverlayWidgets: Map<string, CatalogOverlayWidgetStore>;
     @observable floatingSettingsWidgets: Map<string, string>;
 
     private appStore: AppStore;
@@ -99,6 +102,7 @@ export class WidgetsStore {
         this.logWidgets = new Map<string, EmptyWidgetStore>();
         this.regionListWidgets = new Map<string, EmptyWidgetStore>();
         this.stokesAnalysisWidgets = new Map<string, StokesAnalysisWidgetStore>();
+        this.catalogOverlayWidgets = new Map<string, CatalogOverlayWidgetStore>();
         this.floatingSettingsWidgets = new Map<string, string>();
 
         this.widgetsMap = new Map<string, Map<string, any>>([
@@ -110,7 +114,8 @@ export class WidgetsStore {
             [AnimatorComponent.WIDGET_CONFIG.type, this.animatorWidgets],
             [LogComponent.WIDGET_CONFIG.type, this.logWidgets],
             [RegionListComponent.WIDGET_CONFIG.type, this.regionListWidgets],
-            [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets]
+            [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets],
+            [CatalogOverlayComponent.WIDGET_CONFIG.type, this.catalogOverlayWidgets]
         ]);
 
         this.floatingWidgets = [];
@@ -139,6 +144,8 @@ export class WidgetsStore {
                 return RegionListComponent.WIDGET_CONFIG;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 return StokesAnalysisComponent.WIDGET_CONFIG;
+            case CatalogOverlayComponent.WIDGET_CONFIG.type:
+                return CatalogOverlayComponent.WIDGET_CONFIG;
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -284,6 +291,9 @@ export class WidgetsStore {
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 itemId = this.addStokesWidget();
                 break;
+            case CatalogOverlayComponent.WIDGET_CONFIG.type:
+                itemId = this.addCatalogOverlayWidget();
+                break;
             default:
                 // Remove it from the floating widget array, while preserving its store
                 if (this.floatingWidgets.find(w => w.id === widgetType)) {
@@ -364,8 +374,9 @@ export class WidgetsStore {
         layout.registerComponent("log", LogComponent);
         layout.registerComponent("animator", AnimatorComponent);
         layout.registerComponent("stokes", StokesAnalysisComponent);
+        layout.registerComponent("catalog-overlay", CatalogOverlayComponent);
 
-        const showCogWidget = ["image-view", "region-list", "animator", "log", "placeholder", "stats"];
+        const hideCogWidget = ["image-view", "region-list", "animator", "log", "placeholder", "stats", "catalog-overlay"];
         // add drag source buttons from ToolbarMenuComponent
         ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.CreateDragSource(this.appStore, layout, widgetConfig, id));
 
@@ -379,7 +390,7 @@ export class WidgetsStore {
                     const activeTabItem = stack.getActiveContentItem();
                     const component = activeTabItem.config.component;
                     const stackHeaderControlButtons = stack.header.controlsContainer[0];
-                    const found = showCogWidget.indexOf(component);
+                    const found = hideCogWidget.indexOf(component);
                     if (component && found === -1 && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount < 4) {
                         const cogPinedButton = $(`<li class="cog-pined-icon"><span class="bp3-icon-standard bp3-icon-cog"/></li>`);
                         cogPinedButton.on("click", () => contentItem.config.props.appStore.widgetsStore.onCogPinedClick(stack.getActiveContentItem()));
@@ -605,6 +616,26 @@ export class WidgetsStore {
     }
 
     // endregion
+
+    // region Catalog Overlay Widgets
+    createFloatingCatalogOverlayWidget = () => {
+        let config = CatalogOverlayComponent.WIDGET_CONFIG;
+        config.id = this.addCatalogOverlayWidget();
+        this.addFloatingWidget(config);
+    };
+
+    @action addCatalogOverlayWidget(id: string = null) {
+        // Generate new id if none passed in
+        if (!id) {
+            id = this.getNextId(CatalogOverlayComponent.WIDGET_CONFIG.type);
+        }
+
+        if (id) {
+            this.catalogOverlayWidgets.set(id, new CatalogOverlayWidgetStore());
+        }
+        return id;
+    }
+    // endregion 
 
     // region Floating Settings
     createFloatingSettingsWidget = (title: string, parentId: string, parentType: string) => {

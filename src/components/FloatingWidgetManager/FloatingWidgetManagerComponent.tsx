@@ -13,6 +13,7 @@ import {
     SpectralProfilerComponent,
     StatsComponent,
     StokesAnalysisComponent,
+    CatalogOverlayComponent,
     StokesAnalysisSettingsPanelComponent,
     SpectralProfilerSettingsPanelComponent,
     SpatialProfilerSettingsPanelComponent,
@@ -57,6 +58,8 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
                 return <RegionListComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 return <StokesAnalysisComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+            case CatalogOverlayComponent.WIDGET_CONFIG.type:
+                return <CatalogOverlayComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
             default:
                 return <PlaceholderComponent appStore={appStore} id={widgetConfig.id} docked={false} label={widgetConfig.title}/>;
         }

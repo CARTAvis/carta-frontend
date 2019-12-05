@@ -383,6 +383,16 @@ export class AppStore {
         this.shiftFrame(-1);
     };
 
+    // Catalog file actions
+    @action appendCatalog = (directory: string, file: string, type: CARTA.FileType) => {
+        // if (!this.activeFrame || !(type === CARTA.FileType.CRTF || type === CARTA.FileType.REG)) {
+        //     AppToaster.show({icon: "warning-sign", message: `Catalog type not supported`, intent: "danger", timeout: 3000});
+        //     return;
+        // }
+        this.widgetsStore.createFloatingCatalogOverlayWidget();
+        this.fileBrowserStore.hideFileBrowser();
+    };
+
     // Region file actions
     @action importRegion = (directory: string, file: string, type: CARTA.FileType) => {
         if (!this.activeFrame || !(type === CARTA.FileType.CRTF || type === CARTA.FileType.REG)) {

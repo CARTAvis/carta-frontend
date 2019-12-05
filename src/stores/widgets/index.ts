@@ -6,3 +6,4 @@ export * from "./StatsWidgetStore";
 export * from "./HistogramWidgetStore";
 export * from "./EmptyWidgetStore";
 export * from "./StokesAnalysisWidgetStore";
+export * from "./CatalogOverlayWidgetStore";
