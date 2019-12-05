@@ -49,20 +49,3 @@ body {
     z-index: 999 !important;
 }
 
-.pin-icon {
-    float: left;
-    cursor: pointer;
-    color: $gray3;
-    &:hover {
-        color: black;
-    }
-}
-
-.cog-pined-icon {
-    float: left;
-    cursor: pointer;
-    color: $gray3;
-    &:hover {
-        color: black;
-    }
-}

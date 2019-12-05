@@ -22,6 +22,7 @@ import {ConnectionStatus} from "./services";
 import {PresetLayout} from "models";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
+import "./layout-base.css";
 import "./layout-theme.css";
 
 @HotkeysTarget @observer
