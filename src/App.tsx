@@ -36,9 +36,13 @@ export class App extends React.Component<{ appStore: AppStore }> {
         AST.onReady.then(() => {
             AST.setPalette(appStore.darkTheme ? nightPalette : dayPalette);
             appStore.astReady = true;
+            appStore.logStore.addInfo("AST library loaded", ["ast"]);
         });
 
-        CARTACompute.onReady.then(() => "Compute module is ready!");
+        CARTACompute.onReady.then(() => {
+            appStore.cartaComputeReady = true;
+            appStore.logStore.addInfo("Compute module loaded", ["compute"]);
+        });
 
         // Log the frontend git commit hash
         appStore.logStore.addDebug(`Current frontend version: ${GitCommit.logMessage}`, ["version"]);

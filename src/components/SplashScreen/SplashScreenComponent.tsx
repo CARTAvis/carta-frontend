@@ -7,10 +7,6 @@ import "./SplashScreenComponent.css";
 
 @observer
 export class SplashScreenComponent extends React.Component<{ appStore: AppStore }> {
-    private handleClose = () => {
-        this.props.appStore.hideSplashScreen();
-    };
-
     public render() {
         const appStore = this.props.appStore;
         const logStore = this.props.appStore.logStore;
@@ -21,7 +17,7 @@ export class SplashScreenComponent extends React.Component<{ appStore: AppStore 
         }
 
         return (
-            <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={true} canOutsideClickClose={false} isOpen={appStore.splashScreenVisible} usePortal={true} onClose={this.handleClose}>
+            <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={appStore.splashScreenVisible} usePortal={true}>
                 <div className={className}>
                     <div className={"image-div"}>
                         <img src={logoPng} width={180}/>
