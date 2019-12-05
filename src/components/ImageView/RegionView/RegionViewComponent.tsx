@@ -11,7 +11,7 @@ import {PolygonRegionComponent} from "./PolygonRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
 import {CursorInfo, Point2D} from "models";
 import "./RegionViewComponent.css";
-import {add2D, average2D, length2D, subtract2D} from "../../../utilities";
+import {average2D, length2D, subtract2D, pointsDistance} from "utilities";
 import {canvasToImagePos, imageToCanvasPos} from "./shared";
 
 export interface RegionViewComponentProps {
@@ -40,7 +40,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private regionStartPoint: Point2D;
     @observable currentCursorPos: Point2D;
     @observable mousePreviousClick: Point2D = {x: -1000, y: -1000};
-    @observable mouseClickDistance: Point2D = {x: 0, y: 0};
+    @observable mouseClickDistance: number = 0;
 
     private dragPanning: boolean;
     private dragOffset: Point2D;
@@ -261,7 +261,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const isSecondaryClick = mouseEvent.button !== 0 || mouseEvent.ctrlKey || mouseEvent.metaKey;
 
         // Record click position and distance
-        this.mouseClickDistance = {x: Math.abs(mouseEvent.x - this.mousePreviousClick.x), y: Math.abs(mouseEvent.y - this.mousePreviousClick.y)};
+        this.mouseClickDistance = pointsDistance(mouseEvent, this.mousePreviousClick);
         this.mousePreviousClick = {x: mouseEvent.x, y: mouseEvent.y};
 
         // Ignore clicks that aren't on the stage, unless it's a secondary click
@@ -371,7 +371,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     private handleStageDoubleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const frame = this.props.frame;
-        if (this.mouseClickDistance.x > DOUBLE_CLICK_DISTANCE || this.mouseClickDistance.y > DOUBLE_CLICK_DISTANCE) {
+        if (this.mouseClickDistance > DOUBLE_CLICK_DISTANCE) {
             // Ignore the double click distance longer than DOUBLE_CLICK_DISTANCE
             return;
         }
