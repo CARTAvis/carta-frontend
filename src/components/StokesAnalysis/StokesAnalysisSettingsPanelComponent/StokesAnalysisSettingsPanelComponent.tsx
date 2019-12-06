@@ -17,7 +17,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             minWidth: 350,
             minHeight: 300,
             defaultWidth: 350,
-            defaultHeight: 530,
+            defaultHeight: 550,
             title: "stokes-settings",
             isCloseable: true,
             parentId: "stokes",
