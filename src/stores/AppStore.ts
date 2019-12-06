@@ -411,7 +411,7 @@ export class AppStore {
             if (frame && ack.success && ack.regions) {
                 for (const region of ack.regions) {
                     if (region.regionInfo) {
-                        frame.regionSet.addExistingRegion(region.regionInfo.controlPoints as Point2D[], region.regionInfo.rotation, region.regionInfo.regionType, region.regionId);
+                        frame.regionSet.addExistingRegion(region.regionInfo.controlPoints as Point2D[], region.regionInfo.rotation, region.regionInfo.regionType, region.regionId, region.regionInfo.regionName);
                     }
                 }
             }
