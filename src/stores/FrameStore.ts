@@ -70,7 +70,8 @@ export class FrameStore {
         const imageWidth = pixelRatio * this.renderWidth / this.zoomLevel;
         const imageHeight = pixelRatio * this.renderHeight / this.zoomLevel;
 
-        const mipExact = Math.max(1.0, 1.0 / this.zoomLevel);
+        const mipAdjustment = (this.preference.lowBandwidthMode ? 2.0 : 1.0);
+        const mipExact = Math.max(1.0, mipAdjustment / this.zoomLevel);
         const mipLog2 = Math.log2(mipExact);
         const mipLog2Rounded = Math.round(mipLog2);
         const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
