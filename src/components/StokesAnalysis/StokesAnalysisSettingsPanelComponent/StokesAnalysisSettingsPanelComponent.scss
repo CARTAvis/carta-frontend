@@ -1,7 +1,7 @@
 
 .stokes-settings {
-    width: 98%;
-    height: 98%;
+    width: calc(100% - 10px);
+    height: calc(100% - 10px);
     margin: 5px;
 
     .stokes-line-settings {

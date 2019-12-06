@@ -16,7 +16,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
             minWidth: 280,
             minHeight: 225,
             defaultWidth: 300,
-            defaultHeight: 350,
+            defaultHeight: 320,
             title: "histogram-settings",
             isCloseable: true,
             parentId: "histogram",

@@ -16,7 +16,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
             minWidth: 280,
             minHeight: 225,
             defaultWidth: 300,
-            defaultHeight: 390,
+            defaultHeight: 410,
             title: "spatial-profiler-settings",
             isCloseable: true,
             parentId: "spatial-profiler",
