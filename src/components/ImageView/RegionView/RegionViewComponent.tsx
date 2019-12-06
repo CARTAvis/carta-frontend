@@ -11,7 +11,7 @@ import {PolygonRegionComponent} from "./PolygonRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
 import {CursorInfo, Point2D} from "models";
 import "./RegionViewComponent.css";
-import {average2D, length2D, subtract2D, pointsDistance} from "utilities";
+import {average2D, length2D, subtract2D, pointDistanceSquared} from "utilities";
 import {canvasToImagePos, imageToCanvasPos} from "./shared";
 
 export interface RegionViewComponentProps {
@@ -37,11 +37,11 @@ const DOUBLE_CLICK_DISTANCE = 5;
 @observer
 export class RegionViewComponent extends React.Component<RegionViewComponentProps> {
     @observable creatingRegion: RegionStore;
-    private regionStartPoint: Point2D;
     @observable currentCursorPos: Point2D;
-    @observable mousePreviousClick: Point2D = {x: -1000, y: -1000};
-    @observable mouseClickDistance: number = 0;
 
+    private regionStartPoint: Point2D;
+    private mousePreviousClick: Point2D = {x: -1000, y: -1000};
+    private mouseClickDistance: number = 0;
     private dragPanning: boolean;
     private dragOffset: Point2D;
     private initialDragPointCanvasSpace: Point2D;
@@ -261,7 +261,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const isSecondaryClick = mouseEvent.button !== 0 || mouseEvent.ctrlKey || mouseEvent.metaKey;
 
         // Record click position and distance
-        this.mouseClickDistance = pointsDistance(mouseEvent, this.mousePreviousClick);
+        this.mouseClickDistance = pointDistanceSquared(mouseEvent, this.mousePreviousClick);
         this.mousePreviousClick = {x: mouseEvent.x, y: mouseEvent.y};
 
         // Ignore clicks that aren't on the stage, unless it's a secondary click
@@ -371,7 +371,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     private handleStageDoubleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const frame = this.props.frame;
-        if (this.mouseClickDistance > DOUBLE_CLICK_DISTANCE) {
+        if (this.mouseClickDistance > DOUBLE_CLICK_DISTANCE * DOUBLE_CLICK_DISTANCE) {
             // Ignore the double click distance longer than DOUBLE_CLICK_DISTANCE
             return;
         }
