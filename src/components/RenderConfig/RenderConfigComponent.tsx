@@ -352,7 +352,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 horizontal: false,
             }];
 
-            if (frame.renderConfig.histogram && frame.renderConfig.histogram.stdDev > 0) {
+            if (this.widgetStore.meanRmsVisible && frame.renderConfig.histogram && frame.renderConfig.histogram.stdDev > 0) {
                 linePlotProps.markers.push({
                     value: frame.renderConfig.histogram.mean,
                     id: "marker-mean",
