@@ -33,6 +33,7 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         const type = beamSettings.type;
         const strokeWidth = beamSettings.width;
         const paddingOffset = this.props.padding ? this.props.padding * devicePixelRatio : 0;
+        console.log("devicePixelRatio " + devicePixelRatio);
         const shiftX = beamSettings.shiftX;
         const shiftY = beamSettings.shiftY;
         const a = this.props.beamMajor / 2.0 * this.props.zoomLevel;
