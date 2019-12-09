@@ -33,11 +33,10 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         const type = beamSettings.type;
         const strokeWidth = beamSettings.width;
         const paddingOffset = this.props.padding ? this.props.padding * devicePixelRatio : 0;
-        console.log("devicePixelRatio " + devicePixelRatio);
         const shiftX = beamSettings.shiftX;
         const shiftY = beamSettings.shiftY;
-        const a = this.props.beamMajor / 2.0 * this.props.zoomLevel * devicePixelRatio;
-        const b = this.props.beamMinor / 2.0 * this.props.zoomLevel * devicePixelRatio;
+        const a = this.props.beamMajor / 2.0 * this.props.zoomLevel / devicePixelRatio;
+        const b = this.props.beamMinor / 2.0 * this.props.zoomLevel / devicePixelRatio;
         const theta = (90.0 - this.props.beamAngle) * Math.PI / 180.0;
 
         // Bounding box of a rotated ellipse: https://math.stackexchange.com/questions/91132/how-to-get-the-limits-of-rotated-ellipse
