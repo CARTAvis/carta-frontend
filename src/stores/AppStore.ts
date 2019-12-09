@@ -1,6 +1,7 @@
 import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable, ObservableMap} from "mobx";
+import {IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {
     AlertStore,
@@ -30,13 +31,6 @@ import {BackendService, ConnectionStatus, TileService} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {AppToaster} from "../components/Shared";
-import {IOptionProps} from "@blueprintjs/core";
-
-const CURSOR_THROTTLE_TIME = 200;
-const CURSOR_THROTTLE_TIME_ROTATED = 100;
-const IMAGE_THROTTLE_TIME = 200;
-const IMAGE_CHANNEL_THROTTLE_TIME = 500;
-const REQUIREMENTS_CHECK_INTERVAL = 200;
 
 export class AppStore {
     // Backend services
@@ -480,6 +474,12 @@ export class AppStore {
     };
 
     public static readonly DEFAULT_STATS_TYPES = [CARTA.StatsType.NumPixels, CARTA.StatsType.Sum, CARTA.StatsType.Mean, CARTA.StatsType.RMS, CARTA.StatsType.Sigma, CARTA.StatsType.SumSq, CARTA.StatsType.Min, CARTA.StatsType.Max];
+    private static readonly CursorThrottleTime = 200;
+    private static readonly CursorThrottleTimeRotated = 100;
+    private static readonly ImageThrottleTime = 200;
+    private static readonly ImageChannelThrottleTime = 500;
+    private static readonly RequirementsCheckInterval = 200;
+
     private spectralRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
     private spatialRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>;
     private statsRequirements: Map<number, Array<number>>;
@@ -511,7 +511,7 @@ export class AppStore {
 
         const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
             this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
-        }, IMAGE_THROTTLE_TIME);
+        }, AppStore.ImageThrottleTime);
 
         const throttledSetChannels = _.throttle((fileId: number, channel: number, stokes: number) => {
             const frame = this.getFrame(fileId);
@@ -539,21 +539,12 @@ export class AppStore {
             const tileSizeFullRes = reqView.mip * 256;
             const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
             this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.compressionQuality);
-        }, IMAGE_CHANNEL_THROTTLE_TIME);
+        }, AppStore.ImageChannelThrottleTime);
 
-        const throttledSetCursorRotated = _.throttle((fileId: number, x: number, y: number) => {
-            const frame = this.getFrame(fileId);
-            if (frame && frame.regionSet.regions[0]) {
-                frame.regionSet.regions[0].setControlPoint(0, {x, y});
-            }
-        }, CURSOR_THROTTLE_TIME_ROTATED);
-
-        const throttledSetCursor = _.throttle((fileId: number, x: number, y: number) => {
-            const frame = this.getFrame(fileId);
-            if (frame && frame.regionSet.regions[0]) {
-                frame.regionSet.regions[0].setControlPoint(0, {x, y});
-            }
-        }, CURSOR_THROTTLE_TIME);
+        const throttledSetCursorRotated = _.throttle(this.setCursor, AppStore.CursorThrottleTimeRotated);
+        const throttledSetCursor = _.throttle(this.setCursor, AppStore.CursorThrottleTime);
+        // Low-bandwidth mode
+        const throttledSetCursorLowBandwidth = _.throttle(this.setCursor, AppStore.CursorThrottleTime * 2);
 
         // Update frame view outside of animation
         autorun(() => {
@@ -621,7 +612,9 @@ export class AppStore {
             if (this.activeFrame && this.activeFrame.cursorInfo && this.activeFrame.cursorInfo.posImageSpace) {
                 const pos = {x: Math.round(this.activeFrame.cursorInfo.posImageSpace.x), y: Math.round(this.activeFrame.cursorInfo.posImageSpace.y)};
                 if (pos.x >= 0 && pos.x <= this.activeFrame.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y <= this.activeFrame.frameInfo.fileInfoExtended.height - 1) {
-                    if (this.activeFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
+                    if (this.preferenceStore.lowBandwidthMode) {
+                        throttledSetCursorLowBandwidth(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
+                    } else if (this.activeFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
                         throttledSetCursorRotated(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
                     } else {
                         throttledSetCursor(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
@@ -643,7 +636,7 @@ export class AppStore {
         });
 
         // Update requirements every 200 ms
-        setInterval(this.recalculateRequirements, REQUIREMENTS_CHECK_INTERVAL);
+        setInterval(this.recalculateRequirements, AppStore.RequirementsCheckInterval);
 
         // Subscribe to frontend streams
         this.backendService.getSpatialProfileStream().subscribe(this.handleSpatialProfileStream);
@@ -813,6 +806,8 @@ export class AppStore {
         this.alertStore.showInteractiveAlert("You have reconnected to the CARTA server. Do you want to resume your session?", this.onResumeAlertClosed);
     };
 
+    // endregion
+
     @action onResumeAlertClosed = (confirmed: boolean) => {
         if (!confirmed) {
             // TODO: How do we handle the situation where the user does not want to resume?
@@ -867,8 +862,6 @@ export class AppStore {
         this.resumingSession = false;
         this.backendService.connectionDropped = false;
     };
-
-    // endregion
 
     @computed get zfpReady() {
         return (this.backendService && this.backendService.zfpReady);
@@ -936,6 +929,13 @@ export class AppStore {
     @action deselectRegion = () => {
         if (this.activeFrame && this.activeFrame.regionSet) {
             this.activeFrame.regionSet.deselectRegion();
+        }
+    };
+
+    private setCursor = (fileId: number, x: number, y: number) => {
+        const frame = this.getFrame(fileId);
+        if (frame && frame.regionSet.regions[0]) {
+            frame.regionSet.regions[0].setControlPoint(0, {x, y});
         }
     };
 
