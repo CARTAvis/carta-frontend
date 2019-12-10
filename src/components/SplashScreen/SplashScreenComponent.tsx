@@ -21,7 +21,7 @@ export class SplashScreenComponent extends React.Component<{ appStore: AppStore 
             <Overlay className={Classes.OVERLAY_SCROLL_CONTAINER} autoFocus={true} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={appStore.splashScreenVisible} usePortal={true}>
                 <div className={className}>
                     <div className={"image-div"}>
-                        <img src={logoPng}/>
+                        <img src={logoPng} width={150}/>
                     </div>
                     <div className={"appInfo-div"}>
                         <h1>{CARTA_INFO.acronym} {CARTA_INFO.version} ({CARTA_INFO.date})</h1>
