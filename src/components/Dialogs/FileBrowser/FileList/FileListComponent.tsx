@@ -137,7 +137,9 @@ export class FileListComponent extends React.Component<{
     }
 
     private getFileSizeDisplay(sizeInBytes: number): string {
-        if (sizeInBytes >= 1e9) {
+        if (sizeInBytes >= 1e12) {
+            return `${toFixed(sizeInBytes / 1e12, 2)} TB`;
+        } else if (sizeInBytes >= 1e9) {
             return `${toFixed(sizeInBytes / 1e9, 1)} GB`;
         } else if (sizeInBytes >= 1e6) {
             return `${toFixed(sizeInBytes / 1e6, 1)} MB`;
