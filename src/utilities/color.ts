@@ -1,5 +1,6 @@
 // Static assets
 import allMaps from "static/allmaps.png";
+import { Colors } from "@blueprintjs/core";
 import {RenderConfigStore} from "stores";
 
 export interface RGBA {
@@ -8,6 +9,28 @@ export interface RGBA {
     b: number;
     a: number;
 }
+
+export const SWATCH_COLORS = [
+    Colors.BLUE3,
+    Colors.GREEN3,
+    Colors.ORANGE3,
+    Colors.RED3,
+    Colors.VERMILION3,
+    Colors.ROSE3,
+    Colors.VIOLET3,
+    Colors.INDIGO3,
+    Colors.COBALT3,
+    Colors.TURQUOISE3,
+    Colors.FOREST3,
+    Colors.LIME3,
+    Colors.GOLD3,
+    Colors.SEPIA3,
+    Colors.BLACK,
+    Colors.DARK_GRAY3,
+    Colors.GRAY3,
+    Colors.LIGHT_GRAY3,
+    Colors.WHITE
+];
 
 export function isColorValid(colorString: string): boolean {
     const colorHex: RegExp = /^#([A-Fa-f0-9]{3}){1,2}$/;

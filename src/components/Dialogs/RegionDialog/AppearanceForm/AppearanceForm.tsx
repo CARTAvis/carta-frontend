@@ -5,6 +5,7 @@ import {FormGroup, H5, NumericInput} from "@blueprintjs/core";
 import {ColorPickerComponent} from "components/Shared";
 import {RegionStore} from "stores";
 import {CARTA} from "carta-protobuf";
+import {SWATCH_COLORS} from "utilities";
 import "./AppearanceForm.css";
 
 export class AppearanceForm extends React.Component<{ region: RegionStore, darkTheme: boolean }> {
@@ -35,7 +36,7 @@ export class AppearanceForm extends React.Component<{ region: RegionStore, darkT
                     <FormGroup label="Color" inline={true}>
                         <ColorPickerComponent
                             color={region.color}
-                            presetColors={RegionStore.SWATCH_COLORS}
+                            presetColors={SWATCH_COLORS}
                             setColor={(color: ColorResult) => region.setColor(color.hex)}
                             disableAlpha={true}
                             darkTheme={this.props.darkTheme}

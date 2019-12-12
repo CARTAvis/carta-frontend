@@ -68,9 +68,14 @@ $shadow-color: rgba($blue2, 0.1);
             padding-right: 5px;
             padding-top: 3px;
             cursor: pointer;
-            color: $gray3;
+            opacity: 0.4;
+            color: black;
+            &.bp3-dark {
+                background-color: lighten($widget-background-dark, 10%);
+                color: white;
+            }
             &:hover {
-                color: black;
+                opacity: 1;
             }
         }
     }

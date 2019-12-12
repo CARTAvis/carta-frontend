@@ -30,28 +30,6 @@ export class RegionStore {
     static readonly MAX_LINE_WIDTH = 10;
     static readonly MAX_DASH_LENGTH = 50;
 
-    static readonly SWATCH_COLORS = [
-        Colors.BLUE3,
-        Colors.GREEN3,
-        Colors.ORANGE3,
-        Colors.RED3,
-        Colors.VERMILION3,
-        Colors.ROSE3,
-        Colors.VIOLET3,
-        Colors.INDIGO3,
-        Colors.COBALT3,
-        Colors.TURQUOISE3,
-        Colors.FOREST3,
-        Colors.LIME3,
-        Colors.GOLD3,
-        Colors.SEPIA3,
-        Colors.BLACK,
-        Colors.DARK_GRAY3,
-        Colors.GRAY3,
-        Colors.LIGHT_GRAY3,
-        Colors.WHITE
-    ];
-
     private readonly backendService: BackendService;
 
     public static RegionTypeString(regionType: CARTA.RegionType): string {

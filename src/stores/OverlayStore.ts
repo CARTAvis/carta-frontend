@@ -1,7 +1,7 @@
 import * as AST from "ast_wrapper";
-import {Colors} from "@blueprintjs/core";
+import {Colors, IOptionProps} from "@blueprintjs/core";
 import {action, autorun, computed, observable} from "mobx";
-import {FrameStore, PreferenceStore} from "stores";
+import {AppStore, FrameStore, PreferenceStore} from "stores";
 import {WCSType} from "models";
 import {toFixed} from "utilities";
 
@@ -43,6 +43,11 @@ export enum SystemType {
     FK5 = "FK5",
     Galactic = "GALACTIC",
     ICRS = "ICRS",
+}
+
+export enum BeamType {
+    Open = "Open",
+    Solid = "Solid"
 }
 
 export class Padding {
@@ -648,6 +653,78 @@ export class OverlayLabelSettings {
     };
 }
 
+export class OverlayBeamStore {
+    @observable visible: boolean;
+    @observable color: string;
+    @observable type: BeamType;
+    @observable width: number;
+    @observable shiftX: number;
+    @observable shiftY: number;
+
+    constructor(readonly preference: PreferenceStore) {
+        this.visible = preference.beamVisible;
+        this.color = preference.beamColor;
+        this.type = preference.beamType;
+        this.width = preference.beamWidth;
+        this.shiftX = this.shiftY = 0;
+    }
+
+    @action setVisible = (visible: boolean) => {
+        this.visible = visible;
+    };
+
+    @action setColor = (color: string) => {
+        this.color = color;
+    };
+
+    @action setType = (type: BeamType) => {
+        this.type = type;
+    };
+
+    @action setWidth = (width: number) => {
+        this.width = width;
+    };
+
+    @action setShiftX = (shift: number) => {
+        this.shiftX = shift;
+    };
+
+    @action setShiftY = (shift: number) => {
+        this.shiftY = shift;
+    };
+}
+
+export class OverlayBeamSettings {
+    private readonly appStore: AppStore;
+
+    @observable selectedFileId: number;
+    @observable settingsForDisplay: OverlayBeamStore;
+
+    constructor(appStore: AppStore) {
+        this.appStore = appStore;
+        this.selectedFileId = -1;
+        this.settingsForDisplay = null;
+
+        autorun(() => {
+            if (this.appStore.activeFrame && this.appStore.activeFrame.frameInfo && this.appStore.activeFrame.frameInfo.fileInfo) {
+                this.setSelectedFrame(this.appStore.activeFrame.frameInfo.fileId);
+            }
+        });
+    }
+
+    @computed get isSelectedFrameValid(): boolean {
+        return this.selectedFileId >= 0 && this.settingsForDisplay !== null;
+    }
+
+    @action setSelectedFrame = (selectedFileId: number) => {
+        this.selectedFileId = selectedFileId;
+        const frame = this.appStore.getFrame(selectedFileId);
+        if (frame && frame.overlayBeamSettings) {
+            this.settingsForDisplay = frame.overlayBeamSettings;
+        }
+    };
+}
+
 export class OverlayStore {
     private readonly preference: PreferenceStore;
 
@@ -664,6 +741,7 @@ export class OverlayStore {
     @observable numbers: OverlayNumberSettings;
     @observable labels: OverlayLabelSettings;
     @observable ticks: OverlayTickSettings;
+    @observable beam: OverlayBeamSettings;
 
     // Dialog
     @observable overlaySettingsDialogVisible = false;
@@ -676,7 +754,7 @@ export class OverlayStore {
         this.overlaySettingsDialogVisible = false;
     };
 
-    constructor(preference: PreferenceStore) {
+    constructor(appStore: AppStore, preference: PreferenceStore) {
         this.preference = preference;
         this.global = new OverlayGlobalSettings(preference);
         this.title = new OverlayTitleSettings();
@@ -686,6 +764,7 @@ export class OverlayStore {
         this.numbers = new OverlayNumberSettings();
         this.labels = new OverlayLabelSettings(preference);
         this.ticks = new OverlayTickSettings();
+        this.beam = new OverlayBeamSettings(appStore);
         this.viewHeight = 1;
         this.viewWidth = 1;
 
@@ -695,6 +774,11 @@ export class OverlayStore {
             this.setFormatsFromSystem();
         });
     }
+
+    @action setViewDimension = (width: number, height: number) => {
+        this.viewWidth = width;
+        this.viewHeight = height;
+    };
 
     @action setFormatsFromSystem() {
         if (!this.global.validWcs) {
@@ -813,6 +897,13 @@ export class OverlayStore {
             top: base + titleGap + titleHeight,
             bottom: base + numGap + numHeight + labelGap + labelHeight
         };
+    }
 
+    @computed get renderWidth() {
+        return this.viewWidth - this.padding.left - this.padding.right;
+    }
+
+    @computed get renderHeight() {
+        return this.viewHeight - this.padding.top - this.padding.bottom;
     }
 }

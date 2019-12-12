@@ -18,6 +18,8 @@ $color6: $vermilion1; // Appears 1 time
 $splitter-color: $light-gray2; // Appears 1 time
 $splitter-color-hovered: $light-gray2; // Appears 1 time
 
+$custom-pane-controls-color: black; // Appears 2 time
+
 // Dark theme
 $pane-background-dark: $pt-dark-app-background-color;
 $tab-background-dark: $pt-dark-app-background-color;
@@ -31,6 +33,8 @@ $placeholder-background-dark: $pt-dark-text-color-disabled;
 $container-background-dark: $dark-gray4;
 $splitter-color-dark: $gray2;
 $splitter-color-hovered-dark: $gray2;
+
+$custom-pane-controls-color-dark: white;
 
 .lm_goldenlayout {
     background: $container-background;
@@ -196,6 +200,19 @@ $splitter-color-hovered-dark: $gray2;
     .lm_close {
         background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAKUlEQVR4nGNgYGD4z4Af/Mdg4FKASwCnDf8JKSBoAtEmEXQTQd8RDCcA6+4Q8OvIgasAAAAASUVORK5CYII=);
     }
+
+}
+
+// Custom pane controls
+.lm_header .lm_controls {
+
+    .lm-pin {
+        color: $custom-pane-controls-color;
+    }
+    
+    .lm-settings {
+        color: $custom-pane-controls-color;
+    }
 }
 
 // If a specific Pane is maximized
@@ -242,6 +259,7 @@ $splitter-color-hovered-dark: $gray2;
         }
     }
 }
+
 
 .dark-theme {
     .lm_goldenlayout {
@@ -318,7 +336,7 @@ $splitter-color-hovered-dark: $gray2;
                 width: 16px;
                 height: 16px;
                 // bp3 cross icon
-                background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOC4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9IjAgMCAyMCAyMCIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMjAgMjAiIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPGcgaWQ9ImNyb3NzX21hcmtfNl8iPg0KCTxnPg0KCQk8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTExLjQxLDEwbDQuMjktNC4yOUMxNS44OSw1LjUzLDE2LDUuMjgsMTYsNWMwLTAuNTUtMC40NS0xLTEtMQ0KCQkJYy0wLjI4LDAtMC41MywwLjExLTAuNzEsMC4yOUwxMCw4LjU5TDUuNzEsNC4yOUM1LjUzLDQuMTEsNS4yOCw0LDUsNEM0LjQ1LDQsNCw0LjQ1LDQsNWMwLDAuMjgsMC4xMSwwLjUzLDAuMjksMC43MUw4LjU5LDEwDQoJCQlsLTQuMjksNC4yOUM0LjExLDE0LjQ3LDQsMTQuNzIsNCwxNWMwLDAuNTUsMC40NSwxLDEsMWMwLjI4LDAsMC41My0wLjExLDAuNzEtMC4yOUwxMCwxMS40MWw0LjI5LDQuMjkNCgkJCUMxNC40NywxNS44OSwxNC43MiwxNiwxNSwxNmMwLjU1LDAsMS0wLjQ1LDEtMWMwLTAuMjgtMC4xMS0wLjUzLTAuMjktMC43MUwxMS40MSwxMHoiLz4NCgk8L2c+DQo8L2c+DQo8L3N2Zz4NCg==');
+                background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOC4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9IjAgMCAxNiAxNiIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMTYgMTYiIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPGcgaWQ9ImNyb3NzX21hcmtfNV8iPg0KCTxnPg0KCQk8cGF0aCBmaWxsPSIjRkZGRkZGIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTkuNDEsOGwzLjI5LTMuMjlDMTIuODksNC41MywxMyw0LjI4LDEzLDRjMC0wLjU1LTAuNDUtMS0xLTENCgkJCWMtMC4yOCwwLTAuNTMsMC4xMS0wLjcxLDAuMjlMOCw2LjU5TDQuNzEsMy4yOUM0LjUzLDMuMTEsNC4yOCwzLDQsM0MzLjQ1LDMsMywzLjQ1LDMsNGMwLDAuMjgsMC4xMSwwLjUzLDAuMjksMC43MUw2LjU5LDgNCgkJCWwtMy4yOSwzLjI5QzMuMTEsMTEuNDcsMywxMS43MiwzLDEyYzAsMC41NSwwLjQ1LDEsMSwxYzAuMjgsMCwwLjUzLTAuMTEsMC43MS0wLjI5TDgsOS40MWwzLjI5LDMuMjlDMTEuNDcsMTIuODksMTEuNzIsMTMsMTIsMTMNCgkJCWMwLjU1LDAsMS0wLjQ1LDEtMWMwLTAuMjgtMC4xMS0wLjUzLTAuMjktMC43MUw5LjQxLDh6Ii8+DQoJPC9nPg0KPC9nPg0KPC9zdmc+DQo=');
                 background-position: center center;
                 background-repeat: no-repeat;
                 right: 4px;
@@ -376,7 +394,7 @@ $splitter-color-hovered-dark: $gray2;
 
     // Dropdown arrow for additional tabs when too many to be displayed
     .lm_header .lm_controls .lm_tabdropdown:before {
-        color: $color1;
+        color: white;
     }
 
     // Pane controls (popout, maximize, minimize, close)
@@ -396,17 +414,29 @@ $splitter-color-hovered-dark: $gray2;
 
         // Icon to PopOut Pane, so move it to a different Browser Window
         .lm_popout {
-            background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAANUlEQVR4nI2QMQoAMAwCz5L/f9mOzZIaN0E9UDyZhaaQz6atgBHgambEJ5wBKoS0WaIvfT+6K2MIECN19MAAAAAASUVORK5CYII=);
+            background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAPklEQVR4nI2Q0QoAIAwCNfr/X7aXCpGN8snBdgejJOzckpkxs9jR6K6T5JpU0nWl5pSXTk7qwh8SnNT+CAAWCgkKFpuSWsUAAAAASUVORK5CYII=);
         }
 
         // Icon to Maximize Pane, so it will fill the entire GoldenLayout Container
         .lm_maximise {
-            background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAIklEQVR4nGNkYGD4z0AAMBFSAAOETPpPlEmDUREjAxHhBABPvAQLFv3qngAAAABJRU5ErkJggg==);
+            background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAKElEQVR4nGP8////fwYCgImQAgYGBgYWKM2IR81/okwajIpgvsMbVgAwgQYRVakEKQAAAABJRU5ErkJggg==);
         }
 
         // Icon to Close Pane and so remove it from GoldenLayout Container
         .lm_close {
-            background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAKUlEQVR4nGNgYGD4z4Af/Mdg4FKASwCnDf8JKSBoAtEmEXQTQd8RDCcA6+4Q8OvIgasAAAAASUVORK5CYII=);
+            background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAQUlEQVR4nHXOQQ4AMAgCQeT/f6aXpsGK3jSTuCVJAAr7iBdoAwCKd0nwfaAdHbYERw5b44+E8JoBjEYGMBq5gAYP3usUDu2IvoUAAAAASUVORK5CYII=);
+        }
+
+    }
+
+    //Custom pane controls
+    .lm_header .lm_controls {
+        .lm-pin {
+            color: $custom-pane-controls-color-dark;
+        }
+
+        .lm-settings {
+            color: $custom-pane-controls-color-dark;
         }
     }
 
@@ -420,7 +450,7 @@ $splitter-color-hovered-dark: $gray2;
         // Pane controls are different in Maximized Mode, especially the old Icon "Maximise" that now has a different meaning, so "Minimize" (even if CSS Class did not change)
         .lm_controls {
             .lm_maximise {
-                background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAJklEQVR4nGP8//8/AyHARFDFUFbEwsDAwMDIyIgzHP7//89IlEkApSkHEScJTKoAAAAASUVORK5CYII=);
+                background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAJ0lEQVR4nGP8//8/AzGAiShVI1YhCwMDA8OsWbPwBmZaWhoj0SYCAN1lBxMAX4n0AAAAAElFTkSuQmCC);
             }
         }
     }
@@ -455,7 +485,3 @@ $splitter-color-hovered-dark: $gray2;
         }
     }
 }
-
-
-
-
