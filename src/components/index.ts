@@ -18,3 +18,4 @@ export * from "./SpectralProfiler/SpectralProfilerSettingsPanelComponent/Spectra
 export * from "./SpatialProfiler/SpatialProfilerSettingsPanelComponent/SpatialProfilerSettingsPanelComponent";
 export * from "./RenderConfig/RenderConfigSettingsPanelComponent/RenderConfigSettingsPanelComponent";
 export * from "./Histogram/HistogramSettingsPanelComponent/HistogramSettingsPanelComponent";
+export * from "./SplashScreen/SplashScreenComponent";
