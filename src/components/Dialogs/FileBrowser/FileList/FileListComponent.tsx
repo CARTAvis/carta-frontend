@@ -144,7 +144,7 @@ export class FileListComponent extends React.Component<{
         } else if (sizeInBytes >= 1e6) {
             return `${toFixed(sizeInBytes / 1e6, 1)} MB`;
         } else if (sizeInBytes >= 1e3) {
-            return `${toFixed(sizeInBytes / 1e3, 1)} <b>kB</b>`;
+            return `${toFixed(sizeInBytes / 1e3, 1)} kB`;
         } else {
             return `${sizeInBytes} B`;
         }
