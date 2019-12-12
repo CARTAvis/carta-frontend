@@ -83,7 +83,7 @@ export class FileListComponent extends React.Component<{
                             <td><Icon icon="document"/></td>
                             <td>{file.HDUList.length > 1 ? `${file.name}: HDU ${hdu}` : file.name}</td>
                             <td><Tooltip content={typeInfo.description}>{typeInfo.type}</Tooltip></td>
-                            <td>{this.getFileSizeDisplay(file.size as number)}</td>
+                            <td style={{whiteSpace: "nowrap"}}>{this.getFileSizeDisplay(file.size as number)}</td>
                         </tr>
                     );
                 });
@@ -144,7 +144,7 @@ export class FileListComponent extends React.Component<{
         } else if (sizeInBytes >= 1e6) {
             return `${toFixed(sizeInBytes / 1e6, 1)} MB`;
         } else if (sizeInBytes >= 1e3) {
-            return `${toFixed(sizeInBytes / 1e3, 1)} kB`;
+            return `${toFixed(sizeInBytes / 1e3, 1)} <b>kB</b>`;
         } else {
             return `${sizeInBytes} B`;
         }
