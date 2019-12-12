@@ -87,8 +87,8 @@ export class DecompressionService {
                 reject("Unsupported compression type");
             }
 
-            const w = Math.floor((message.imageBounds.xMax - message.imageBounds.xMin) / message.mip);
-            const h = Math.floor((message.imageBounds.yMax - message.imageBounds.yMin) / message.mip);
+            const w = Math.ceil((message.imageBounds.xMax - message.imageBounds.xMin) / message.mip);
+            const h = Math.ceil((message.imageBounds.yMax - message.imageBounds.yMin) / message.mip);
             this.submitWork(message.imageData, message.nanEncodings, message.compressionQuality, w, h).then(() => {
                 const promise = new Promise<Float32Array>(resolveWork => {
                     this.decompressedData = resolveWork;
