@@ -40,6 +40,7 @@ export class AppStore {
     @observable compressionQuality: number;
     // WebAssembly Module status
     @observable astReady: boolean;
+    @observable cartaComputeReady: boolean;
     // Frames
     @observable frames: FrameStore[];
     @observable activeFrame: FrameStore;
@@ -78,6 +79,15 @@ export class AppStore {
     public set ContourContext(gl: WebGLRenderingContext) {
         this.contourWebGLContext = gl;
     }
+
+    // Splash screen
+    @observable splashScreenVisible: boolean = true;
+    @action showSplashScreen = () => {
+        this.splashScreenVisible = true;
+    };
+    @action hideSplashScreen = () => {
+        this.splashScreenVisible = false;
+    };
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
@@ -491,6 +501,7 @@ export class AppStore {
         this.backendService = new BackendService(this.logStore, this.preferenceStore);
         this.tileService = new TileService(this.backendService, this.preferenceStore.GPUTileCache, this.preferenceStore.systemTileCache);
         this.astReady = false;
+        this.cartaComputeReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<number, ObservableMap<number, SpectralProfileStore>>();
         this.regionStats = new Map<number, ObservableMap<number, CARTA.RegionStatsData>>();
@@ -626,12 +637,6 @@ export class AppStore {
             }
         });
 
-        autorun(() => {
-            if (this.astReady) {
-                this.logStore.addInfo("AST library loaded", ["ast"]);
-            }
-        });
-
         // Set palette if theme changes
         autorun(() => {
             AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
@@ -657,6 +662,13 @@ export class AppStore {
         } else {
             this.connectToServer();
         }
+
+        // Splash screen mask
+        autorun(() => {
+            if (this.astReady && this.zfpReady && this.cartaComputeReady) {
+                setTimeout(this.hideSplashScreen, 500);
+            }
+        });
     }
 
     // region Subscription handlers

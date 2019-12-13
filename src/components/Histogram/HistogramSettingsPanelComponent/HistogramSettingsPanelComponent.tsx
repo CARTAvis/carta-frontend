@@ -80,6 +80,10 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
         this.widgetStore.setLogScale(changeEvent.target.checked);
     };
 
+    handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        this.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
+    };
+
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
@@ -162,6 +166,8 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
             clearXYBounds: widgetStore.clearXYBounds,
             logScaleY: widgetStore.logScaleY,
             handleLogScaleChanged: this.handleLogScaleChanged,
+            meanRmsVisible: widgetStore.meanRmsVisible,
+            handleMeanRmsChanged: this.handleMeanRmsChanged,
             xMinVal: parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal),
             handleXMinChange: this.handleXMinChange,
             xMaxVal: parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal),
