@@ -16,11 +16,11 @@ export function parseNumber(val: number, initVal: number): number {
     }
 }
 
-export function trimFitsHeaderValue(val: string): string {
+export function trimFitsComment(val: string): string {
     if (!val) {
         return "";
     }
 
     // replace standard Fits header comments
-    return val.replace(/\s*\/.*/, "");
+    return val.replace(/\s\/\s?.*$/, "");
 }
