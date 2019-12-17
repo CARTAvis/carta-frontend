@@ -12,8 +12,8 @@ cd zfp
 mkdir -p build
 cd build
 echo "Building ZFP using Emscripten"
-CC=emcc CXX=emcc cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-s WASM=1" -DZFP_WITH_OPENMP=OFF -DBUILD_UTILITIES=OFF -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=OFF -DZFP_ENABLE_PIC=OFF ../
-make -j4
+emconfigure cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-s WASM=1" -DZFP_WITH_OPENMP=OFF -DBUILD_UTILITIES=OFF -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=OFF -DZFP_ENABLE_PIC=OFF ../
+emmake make -j4
 echo "Checking for ZFP static lib..."
 if [[ $(find -L ./lib/libzfp.a -type f -size +192000c 2>/dev/null) ]]; then
     echo "Found"
