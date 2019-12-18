@@ -164,26 +164,26 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         );
 
         let connectivityClass = "connectivity-icon";
-        let tooltip = "";
+        let connectivityTooltip;
         const latencyString = isFinite(appStore.backendService.endToEndPing) ? `${toFixed(appStore.backendService.endToEndPing, 1)} ms` : "Unknown";
         const userString = appStore.username ? ` as ${appStore.username}` : "";
         switch (connectionStatus) {
             case ConnectionStatus.PENDING:
-                tooltip = `Connecting to server${userString}`;
+                connectivityTooltip = <span>Connecting to server${userString}</span>;
                 connectivityClass += " warning";
                 break;
             case ConnectionStatus.ACTIVE:
                 if (appStore.backendService.connectionDropped) {
-                    tooltip = `Reconnected to server${userString} after disconnect. Some errors may occur. Latency: ${latencyString}`;
+                    connectivityTooltip = <span>Reconnected to server {userString} after disconnect. Some errors may occur<br/><i><small>Latency: {latencyString}</small></i></span>;
                     connectivityClass += " warning";
                 } else {
-                    tooltip = `Connected to server${userString}. Latency: ${latencyString}`;
+                    connectivityTooltip = <span>Connected to server {userString}<br/><i><small>Latency: {latencyString}</small></i></span>;
                     connectivityClass += " online";
                 }
                 break;
             case ConnectionStatus.CLOSED:
             default:
-                tooltip = `Disconnected from server. Latency: ${latencyString}`;
+                connectivityTooltip = <span>Disconnected from server</span>;
                 connectivityClass += " offline";
                 break;
         }
@@ -247,7 +247,12 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
                 {loadingIndicator}
-                <Tooltip content={tooltip}>
+                {appStore.preferenceStore.lowBandwidthMode &&
+                <Tooltip content={<span>CARTA is running in low bandwidth mode<br/><i><small>Image resolution and cursor responsiveness will be reduced</small></i></span>}>
+                    <Icon icon={"feed"} className="connectivity-icon warning"/>
+                </Tooltip>
+                }
+                <Tooltip content={connectivityTooltip}>
                     <Icon icon={"symbol-circle"} className={connectivityClass}/>
                 </Tooltip>
             </div>

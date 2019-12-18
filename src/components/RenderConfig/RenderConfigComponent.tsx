@@ -107,6 +107,13 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     this.widgetStore.clearXYBounds();
                 }
             }
+            const widgetStore = this.widgetStore;
+            if (widgetStore) {
+                const currentData = this.plotData;
+                if (currentData) {
+                    widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
+                }
+            }
         });
     }
 
@@ -344,6 +351,27 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 dragMove: this.onMaxMoved,
                 horizontal: false,
             }];
+
+            if (this.widgetStore.meanRmsVisible && frame.renderConfig.histogram && frame.renderConfig.histogram.stdDev > 0) {
+                linePlotProps.markers.push({
+                    value: frame.renderConfig.histogram.mean,
+                    id: "marker-mean",
+                    draggable: false,
+                    horizontal: false,
+                    color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                    dash: [5]
+                });
+
+                linePlotProps.markers.push({
+                    value: frame.renderConfig.histogram.mean,
+                    id: "marker-rms",
+                    draggable: false,
+                    horizontal: false,
+                    width: frame.renderConfig.histogram.stdDev,
+                    opacity: 0.2,
+                    color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                });
+            }
         }
 
         const percentileButtonCutoff = 600;

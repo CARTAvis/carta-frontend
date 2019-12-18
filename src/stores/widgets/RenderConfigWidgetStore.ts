@@ -16,6 +16,8 @@ export class RenderConfigWidgetStore {
     @observable linePlotPointSize: number;
     @observable logScaleY: boolean;
     @observable markerTextVisible: boolean;
+    @observable meanRmsVisible: boolean;
+    @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
 
     @action setXBounds = (minVal: number, maxVal: number) => {
         this.minX = minVal;
@@ -55,6 +57,10 @@ export class RenderConfigWidgetStore {
         this.markerTextVisible = val;
     };
 
+    @action setMeanRmsVisible = (val: boolean) => {
+        this.meanRmsVisible = val;
+    };
+
     @action setLogScale = (logScale: boolean) => {
         this.logScaleY = logScale;
     };
@@ -71,9 +77,11 @@ export class RenderConfigWidgetStore {
         this.logScaleY = true;
         this.plotType = PlotType.STEPS;
         this.markerTextVisible = true;
+        this.meanRmsVisible = true;
         this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
+        this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
     }
 
     @computed get isAutoScaledX() {
@@ -87,17 +95,21 @@ export class RenderConfigWidgetStore {
     // settings
     @action setPrimaryLineColor = (colorHex: string, fixed: boolean) => {
         this.primaryLineColor = { colorHex: colorHex, fixed: fixed };
-    }
+    };
 
     @action setLineWidth = (val: number) => {
         if (val >= LineSettings.MIN_WIDTH && val <= LineSettings.MAX_WIDTH) {
             this.lineWidth = val;   
         }
-    }
+    };
 
     @action setLinePlotPointSize = (val: number) => {
         if (val >= LineSettings.MIN_POINT_SIZE && val <= LineSettings.MAX_POINT_SIZE) {
             this.linePlotPointSize = val;   
         }
+    };
+
+    @action initXYBoundaries (minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
+        this.linePlotInitXYBoundaries = { minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal };
     }
 }

@@ -1,6 +1,7 @@
 import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable, ObservableMap} from "mobx";
+import {IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {
     AlertStore,
@@ -32,12 +33,6 @@ import {FrameView, Point2D, ProtobufProcessing, Theme} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {AppToaster} from "../components/Shared";
 
-const CURSOR_THROTTLE_TIME = 200;
-const CURSOR_THROTTLE_TIME_ROTATED = 100;
-const IMAGE_THROTTLE_TIME = 200;
-const IMAGE_CHANNEL_THROTTLE_TIME = 500;
-const REQUIREMENTS_CHECK_INTERVAL = 200;
-
 export class AppStore {
     // Backend services
     backendService: BackendService;
@@ -46,6 +41,7 @@ export class AppStore {
     @observable compressionQuality: number;
     // WebAssembly Module status
     @observable astReady: boolean;
+    @observable cartaComputeReady: boolean;
     // Frames
     @observable frames: FrameStore[];
     @observable activeFrame: FrameStore;
@@ -85,10 +81,18 @@ export class AppStore {
         this.contourWebGLContext = gl;
     }
 
+    // Splash screen
+    @observable splashScreenVisible: boolean = true;
+    @action showSplashScreen = () => {
+        this.splashScreenVisible = true;
+    };
+    @action hideSplashScreen = () => {
+        this.splashScreenVisible = false;
+    };
+
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
-        this.overlayStore.viewWidth = w;
-        this.overlayStore.viewHeight = h;
+        this.overlayStore.setViewDimension(w, h);
     };
 
     // Image toolbar
@@ -230,6 +234,7 @@ export class AppStore {
     @observable taskStartTime: number;
     @observable taskCurrentTime: number;
     @observable fileLoading: boolean;
+    @observable resumingSession: boolean;
 
     @action restartTaskProgress = () => {
         this.taskProgress = 0;
@@ -273,6 +278,18 @@ export class AppStore {
     }
 
     // Frame actions
+    @computed get frameNum(): number {
+        return this.frames.length;
+    }
+
+    @computed get frameNames(): IOptionProps [] {
+        let names: IOptionProps [] = [];
+        if (this.frameNum > 0) {
+            this.frames.forEach(frame => names.push({label: frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
+        }
+        return names;
+    }
+
     @action addFrame = (directory: string, file: string, hdu: string, fileId: number) => {
         this.fileLoading = true;
         this.backendService.loadFile(directory, file, hdu, fileId, CARTA.RenderMode.RASTER).subscribe(ack => {
@@ -287,6 +304,8 @@ export class AppStore {
             this.logStore.addInfo(`Loaded file ${ack.fileInfo.name} with dimensions ${dimensionsString}`, ["file"]);
             const frameInfo: FrameInfo = {
                 fileId: ack.fileId,
+                directory,
+                hdu,
                 fileInfo: new CARTA.FileInfo(ack.fileInfo),
                 fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
                 fileFeatureFlags: ack.fileFeatureFlags,
@@ -462,6 +481,12 @@ export class AppStore {
     };
 
     public static readonly DEFAULT_STATS_TYPES = [CARTA.StatsType.NumPixels, CARTA.StatsType.Sum, CARTA.StatsType.Mean, CARTA.StatsType.RMS, CARTA.StatsType.Sigma, CARTA.StatsType.SumSq, CARTA.StatsType.Min, CARTA.StatsType.Max];
+    private static readonly CursorThrottleTime = 200;
+    private static readonly CursorThrottleTimeRotated = 100;
+    private static readonly ImageThrottleTime = 200;
+    private static readonly ImageChannelThrottleTime = 500;
+    private static readonly RequirementsCheckInterval = 200;
+
     private spectralRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
     private spatialRequirements: Map<number, Map<number, CARTA.SetSpatialRequirements>>;
     private statsRequirements: Map<number, Array<number>>;
@@ -476,6 +501,7 @@ export class AppStore {
         this.backendService = new BackendService(this.logStore, this.preferenceStore);
         this.tileService = new TileService(this.backendService, this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
         this.astReady = false;
+        this.cartaComputeReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
         this.spectralProfiles = new Map<number, ObservableMap<number, SpectralProfileStore>>();
         this.regionStats = new Map<number, ObservableMap<number, CARTA.RegionStatsData>>();
@@ -485,17 +511,14 @@ export class AppStore {
         this.activeFrame = null;
         this.fileBrowserStore = new FileBrowserStore(this.backendService);
         this.animatorStore = new AnimatorStore(this);
-        this.overlayStore = new OverlayStore(this.preferenceStore);
+        this.overlayStore = new OverlayStore(this, this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this, this.layoutStore);
         this.compressionQuality = this.preferenceStore.imageCompressionQuality;
-        this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
-        this.spatialRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
-        this.statsRequirements = new Map<number, Array<number>>();
-        this.histogramRequirements = new Map<number, Array<number>>();
+        this.initRequirements();
 
         const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
             this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
-        }, IMAGE_THROTTLE_TIME);
+        }, AppStore.ImageThrottleTime);
 
         const throttledSetChannels = _.throttle((fileId: number, channel: number, stokes: number) => {
             const frame = this.getFrame(fileId);
@@ -523,21 +546,12 @@ export class AppStore {
             const tileSizeFullRes = reqView.mip * 256;
             const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
             this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.compressionQuality);
-        }, IMAGE_CHANNEL_THROTTLE_TIME);
+        }, AppStore.ImageChannelThrottleTime);
 
-        const throttledSetCursorRotated = _.throttle((fileId: number, x: number, y: number) => {
-            const frame = this.getFrame(fileId);
-            if (frame && frame.regionSet.regions[0]) {
-                frame.regionSet.regions[0].setControlPoint(0, {x, y});
-            }
-        }, CURSOR_THROTTLE_TIME_ROTATED);
-
-        const throttledSetCursor = _.throttle((fileId: number, x: number, y: number) => {
-            const frame = this.getFrame(fileId);
-            if (frame && frame.regionSet.regions[0]) {
-                frame.regionSet.regions[0].setControlPoint(0, {x, y});
-            }
-        }, CURSOR_THROTTLE_TIME);
+        const throttledSetCursorRotated = _.throttle(this.setCursor, AppStore.CursorThrottleTimeRotated);
+        const throttledSetCursor = _.throttle(this.setCursor, AppStore.CursorThrottleTime);
+        // Low-bandwidth mode
+        const throttledSetCursorLowBandwidth = _.throttle(this.setCursor, AppStore.CursorThrottleTime * 2);
 
         // Update frame view outside of animation
         autorun(() => {
@@ -605,7 +619,9 @@ export class AppStore {
             if (this.activeFrame && this.activeFrame.cursorInfo && this.activeFrame.cursorInfo.posImageSpace) {
                 const pos = {x: Math.round(this.activeFrame.cursorInfo.posImageSpace.x), y: Math.round(this.activeFrame.cursorInfo.posImageSpace.y)};
                 if (pos.x >= 0 && pos.x <= this.activeFrame.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y <= this.activeFrame.frameInfo.fileInfoExtended.height - 1) {
-                    if (this.activeFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
+                    if (this.preferenceStore.lowBandwidthMode) {
+                        throttledSetCursorLowBandwidth(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
+                    } else if (this.activeFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
                         throttledSetCursorRotated(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
                     } else {
                         throttledSetCursor(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
@@ -621,19 +637,13 @@ export class AppStore {
             }
         });
 
-        autorun(() => {
-            if (this.astReady) {
-                this.logStore.addInfo("AST library loaded", ["ast"]);
-            }
-        });
-
         // Set palette if theme changes
         autorun(() => {
             AST.setPalette(this.darkTheme ? nightPalette : dayPalette);
         });
 
         // Update requirements every 200 ms
-        setInterval(this.recalculateRequirements, REQUIREMENTS_CHECK_INTERVAL);
+        setInterval(this.recalculateRequirements, AppStore.RequirementsCheckInterval);
 
         // Subscribe to frontend streams
         this.backendService.getSpatialProfileStream().subscribe(this.handleSpatialProfileStream);
@@ -643,6 +653,7 @@ export class AppStore {
         this.backendService.getContourStream().subscribe(this.handleContourImageStream);
         this.backendService.getErrorStream().subscribe(this.handleErrorStream);
         this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
+        this.backendService.getReconnectStream().subscribe(this.handleReconnectStream);
         this.tileService.GetTileStream().subscribe(this.handleTileStream);
 
         // Auth and connection
@@ -651,6 +662,13 @@ export class AppStore {
         } else {
             this.connectToServer();
         }
+
+        // Splash screen mask
+        autorun(() => {
+            if (this.astReady && this.zfpReady && this.cartaComputeReady) {
+                setTimeout(this.hideSplashScreen, 500);
+            }
+        });
     }
 
     // region Subscription handlers
@@ -791,7 +809,66 @@ export class AppStore {
         }
     };
 
+    handleReconnectStream = () => {
+        this.alertStore.showInteractiveAlert("You have reconnected to the CARTA server. Do you want to resume your session?", this.onResumeAlertClosed);
+    };
+
     // endregion
+
+    @action onResumeAlertClosed = (confirmed: boolean) => {
+        if (!confirmed) {
+            // TODO: How do we handle the situation where the user does not want to resume?
+            return;
+        }
+
+        // Some things should be reset when the user reconnects
+        this.animatorStore.stopAnimation();
+        this.tileService.clearRequestQueue();
+
+        const images: CARTA.IImageProperties[] = this.frames.map(frame => {
+            const info = frame.frameInfo;
+
+            const regions: CARTA.IRegionProperties[] = frame.regionSet.regions.map(region => {
+                const regionInfo: CARTA.IRegionInfo = {
+                    regionName: region.name,
+                    regionType: region.regionType,
+                    controlPoints: region.controlPoints,
+                    rotation: region.rotation
+                };
+
+                return {
+                    regionId: region.regionId,
+                    regionInfo
+                };
+            });
+
+            return {
+                file: info.fileInfo.name,
+                directory: info.directory,
+                hdu: info.hdu,
+                fileId: info.fileId,
+                renderMode: info.renderMode,
+                channel: frame.requiredChannel,
+                stokes: frame.requiredStokes,
+                regions
+            };
+        });
+
+        this.resumingSession = true;
+
+        this.backendService.resumeSession({images}).subscribe(this.onSessionResumed, err => {
+            console.error(err);
+            this.alertStore.showAlert("Error resuming session");
+        });
+    };
+
+    @action private onSessionResumed = () => {
+        console.log(`Resumed successfully`);
+        // Clear requirements once session has resumed
+        this.initRequirements();
+        this.resumingSession = false;
+        this.backendService.connectionDropped = false;
+    };
 
     @computed get zfpReady() {
         return (this.backendService && this.backendService.zfpReady);
@@ -862,7 +939,21 @@ export class AppStore {
         }
     };
 
+    private setCursor = (fileId: number, x: number, y: number) => {
+        const frame = this.getFrame(fileId);
+        if (frame && frame.regionSet.regions[0]) {
+            frame.regionSet.regions[0].setControlPoint(0, {x, y});
+        }
+    };
+
     // region requirements calculations
+
+    private initRequirements = () => {
+        this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
+        this.spatialRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
+        this.statsRequirements = new Map<number, Array<number>>();
+        this.histogramRequirements = new Map<number, Array<number>>();
+    };
 
     recalculateRequirements = () => {
         this.recalculateSpatialRequirements();

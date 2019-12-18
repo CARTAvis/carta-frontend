@@ -2,7 +2,7 @@ import {observable, computed, action} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {AppStore, FrameScaling, RenderConfigStore, RegionStore} from "stores";
+import {AppStore, BeamType, FrameScaling, RenderConfigStore, RegionStore} from "stores";
 import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {isColorValid, parseBoolean} from "utilities";
 import {BackendService} from "services";
@@ -35,6 +35,10 @@ export enum PreferenceKeys {
     WCS_OVERLAY_AST_GRID_VISIBLE,
     WCS_OVERLAY_AST_LABELS_VISIBLE,
     WCS_OVERLAY_WCS_TYPE,
+    WCS_OVERLAY_BEAM_VISIBLE,
+    WCS_OVERLAY_BEAM_COLOR,
+    WCS_OVERLAY_BEAM_TYPE,
+    WCS_OVERLAY_BEAM_WIDTH,
 
     REGION_COLOR,
     REGION_LINE_WIDTH,
@@ -50,6 +54,7 @@ export enum PreferenceKeys {
     PERFORMANCE_CONTOUR_COMPRESSION_LEVEL,
     PERFORMANCE_CONTOUR_CHUNK_SIZE,
     PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
+    PERFORMANCE_LOW_BAND_WIDTH_MODE,
 
     LOG_EVENT
 }
@@ -82,6 +87,10 @@ const KEY_TO_STRING = new Map<PreferenceKeys, string>([
     [PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, "astGridVisible"],
     [PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, "astLabelsVisible"],
     [PreferenceKeys.WCS_OVERLAY_WCS_TYPE, "wcsType"],
+    [PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE, "beamVisible"],
+    [PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, "beamColor"],
+    [PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, "beamType"],
+    [PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH, "beamWidth"],
 
     [PreferenceKeys.REGION_COLOR, "regionColor"],
     [PreferenceKeys.REGION_LINE_WIDTH, "regionLineWidth"],
@@ -97,6 +106,7 @@ const KEY_TO_STRING = new Map<PreferenceKeys, string>([
     [PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL, "contourCompressionLevel"],
     [PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, "contourChunkSize"],
     [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, "streamContoursWhileZooming"],
+    [PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, "lowBandwidthMode"],
 
     [PreferenceKeys.LOG_EVENT, "logEventList"]
 ]);
@@ -133,6 +143,10 @@ const DEFAULTS = {
         astGridVisible: false,
         astLabelsVisible: true,
         wcsType: WCSType.AUTOMATIC,
+        beamVisible: true,
+        beamColor: Colors.GRAY3,
+        beamType: BeamType.Open,
+        beamWidth: 1,
     },
     REGION: {
         regionColor: "#2EE6D6",
@@ -149,7 +163,8 @@ const DEFAULTS = {
         contourDecimation: 4,
         contourCompressionLevel: 8,
         contourChunkSize: 100000,
-        streamContoursWhileZooming: false
+        streamContoursWhileZooming: false,
+        lowBandwidthMode: false,
     },
     LOG_EVENT: {
         eventLoggingEnabled: false
@@ -195,6 +210,10 @@ export class PreferenceStore {
         [PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.WCS_OVERLAY.astGridVisible); }],
         [PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.WCS_OVERLAY.astLabelsVisible); }],
         [PreferenceKeys.WCS_OVERLAY_WCS_TYPE, (value: string): string => { return value && WCSType.isValid(value) ? value : DEFAULTS.WCS_OVERLAY.wcsType; }],
+        [PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.WCS_OVERLAY.beamVisible); }],
+        [PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, (value: string): string => { return value && isColorValid(value) ? value : DEFAULTS.WCS_OVERLAY.beamColor; }],
+        [PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, (value: BeamType): BeamType => { return value && (value === BeamType.Open || value === BeamType.Solid) ? value : DEFAULTS.WCS_OVERLAY.beamType; }],
+        [PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH, (value: string): number => { return value && (isFinite(Number(value)) && Number(value) > 0 && Number(value) <= 10) ? Number(value) : DEFAULTS.WCS_OVERLAY.beamWidth; }],
 
         [PreferenceKeys.REGION_COLOR, (value: string): string => { return value && isColorValid(value) ? value : DEFAULTS.REGION.regionColor; }],
         [PreferenceKeys.REGION_LINE_WIDTH, (value: string): number => { return value && isFinite(Number(value)) && RegionStore.IsRegionLineWidthValid(Number(value)) ? Number(value) : DEFAULTS.REGION.regionLineWidth; }],
@@ -215,6 +234,7 @@ export class PreferenceStore {
         [PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE,
             (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) >= 1000 && parseInt(value) <= 1000000) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourChunkSize; }],
         [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, (value: string): boolean => { return parseBoolean(value, DEFAULTS.PERFORMANCE.streamContoursWhileZooming); }],
+        [PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.PERFORMANCE.lowBandwidthMode); }]
     ]);
 
     // getters for global settings
@@ -329,6 +349,22 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.WCS_OVERLAY_WCS_TYPE);
     }
 
+    @computed get beamVisible(): boolean {
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE);
+    }
+
+    @computed get beamColor(): string {
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR);
+    }
+
+    @computed get beamType(): BeamType {
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_TYPE);
+    }
+
+    @computed get beamWidth(): number {
+        return this.preferences.get(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH);
+    }
+
     // getters for region
     @computed get regionColor(): string {
         return this.preferences.get(PreferenceKeys.REGION_COLOR);
@@ -369,6 +405,10 @@ export class PreferenceStore {
 
     @computed get streamContoursWhileZooming(): boolean {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING);
+    }
+
+    @computed get lowBandwidthMode(): boolean {
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE);
     }
 
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
@@ -483,11 +523,15 @@ export class PreferenceStore {
         this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED, DEFAULTS.CONTOUR_CONFIG.contourColormapEnabled);
     };
 
-    @action resetWCSOverlaySettings = () => {
+    @action resetOverlayConfigSettings = () => {
         this.setPreference(PreferenceKeys.WCS_OVERLAY_AST_COLOR, DEFAULTS.WCS_OVERLAY.astColor);
         this.setPreference(PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, DEFAULTS.WCS_OVERLAY.astGridVisible);
         this.setPreference(PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, DEFAULTS.WCS_OVERLAY.astLabelsVisible);
         this.setPreference(PreferenceKeys.WCS_OVERLAY_WCS_TYPE, DEFAULTS.WCS_OVERLAY.wcsType);
+        this.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE, DEFAULTS.WCS_OVERLAY.beamVisible);
+        this.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, DEFAULTS.WCS_OVERLAY.beamColor);
+        this.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, DEFAULTS.WCS_OVERLAY.beamType);
+        this.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH, DEFAULTS.WCS_OVERLAY.beamWidth);
     };
 
     @action resetRegionSettings = () => {
@@ -507,6 +551,7 @@ export class PreferenceStore {
         this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL, DEFAULTS.PERFORMANCE.contourCompressionLevel);
         this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, DEFAULTS.PERFORMANCE.contourChunkSize);
         this.setPreference(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, DEFAULTS.PERFORMANCE.streamContoursWhileZooming);
+        this.setPreference(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, DEFAULTS.PERFORMANCE.lowBandwidthMode);
     };
 
     @action resetLogEventSettings = () => {
@@ -556,6 +601,10 @@ export class PreferenceStore {
             [PreferenceKeys.WCS_OVERLAY_AST_GRID_VISIBLE, DEFAULTS.WCS_OVERLAY.astGridVisible],
             [PreferenceKeys.WCS_OVERLAY_AST_LABELS_VISIBLE, DEFAULTS.WCS_OVERLAY.astLabelsVisible],
             [PreferenceKeys.WCS_OVERLAY_WCS_TYPE, DEFAULTS.WCS_OVERLAY.wcsType],
+            [PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE, DEFAULTS.WCS_OVERLAY.beamVisible],
+            [PreferenceKeys.WCS_OVERLAY_BEAM_COLOR, DEFAULTS.WCS_OVERLAY.beamColor],
+            [PreferenceKeys.WCS_OVERLAY_BEAM_TYPE, DEFAULTS.WCS_OVERLAY.beamType],
+            [PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH, DEFAULTS.WCS_OVERLAY.beamWidth],
 
             [PreferenceKeys.REGION_COLOR, DEFAULTS.REGION.regionColor],
             [PreferenceKeys.REGION_LINE_WIDTH, DEFAULTS.REGION.regionLineWidth],
@@ -571,6 +620,7 @@ export class PreferenceStore {
             [PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL, DEFAULTS.PERFORMANCE.contourCompressionLevel],
             [PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, DEFAULTS.PERFORMANCE.contourChunkSize],
             [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, DEFAULTS.PERFORMANCE.streamContoursWhileZooming],
+            [PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, DEFAULTS.PERFORMANCE.lowBandwidthMode],
 
             [PreferenceKeys.LOG_EVENT, new Map<CARTA.EventType, boolean>()]
         ]);

@@ -3,6 +3,7 @@ import {observer} from "mobx-react";
 import {AnchorButton, Classes, IDialogProps, Intent} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore} from "stores";
+import {CARTA_INFO} from "models";
 import "./AboutDialogComponent.css";
 import * as logoPng from "static/carta_logo.png";
 
@@ -29,7 +30,8 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
                         <img src={logoPng} width={100}/>
-                        <h3>CARTA Viewer Version 1.2.0-beta.0 (20190814)</h3>
+                        <h3>{CARTA_INFO.acronym} {CARTA_INFO.version} ({CARTA_INFO.date})</h3>
+                        <p>{CARTA_INFO.fullName}</p>
                     </div>
 
                     <h3>Development team:</h3>
