@@ -30,6 +30,10 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         }
 
         if (fileBrowserStore.browserMode === BrowserMode.File) {
+            const imageInfoStore = this.props.appStore.imageInfoStore;
+            imageInfoStore.setFileInfo(imageInfoStore.latestFileInfoCach);
+            imageInfoStore.setHeaders(imageInfoStore.latestHeadersCach);
+
             const frames = this.props.appStore.frames;
             if (!fileBrowserStore.appendingFrame || !frames.length) {
                 this.props.appStore.openFile(fileBrowserStore.fileList.directory, fileInfo.name, hdu);

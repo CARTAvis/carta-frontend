@@ -24,7 +24,8 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore
+    WidgetsStore,
+    ImageInfoStore
 } from ".";
 import {GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, TileService} from "services";
@@ -54,6 +55,8 @@ export class AppStore {
     @observable preferenceStore: PreferenceStore;
     // Layouts
     @observable layoutStore: LayoutStore;
+    // ImageInfo
+    @observable imageInfoStore: ImageInfoStore;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -502,7 +505,8 @@ export class AppStore {
 
         this.frames = [];
         this.activeFrame = null;
-        this.fileBrowserStore = new FileBrowserStore(this.backendService);
+        this.imageInfoStore = new ImageInfoStore();
+        this.fileBrowserStore = new FileBrowserStore(this.backendService, this.imageInfoStore);
         this.animatorStore = new AnimatorStore(this);
         this.overlayStore = new OverlayStore(this, this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this, this.layoutStore);

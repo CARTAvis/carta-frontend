@@ -89,6 +89,12 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     <Menu.Item text="Next frame" icon={"chevron-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame}/>
                 </Menu.Item>
                 }
+                <Menu.Item
+                    text="Image info"
+                    icon={"info-sign"}
+                    disabled={!appStore.imageInfoStore.fileInfo && !appStore.imageInfoStore.headers}
+                    onClick={appStore.imageInfoStore.showImageInfoDialog}
+                />
             </Menu>
         );
 

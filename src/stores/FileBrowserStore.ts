@@ -2,6 +2,7 @@ import {action, computed, observable} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
+import {ImageInfoStore} from "stores";
 
 export enum FileInfoTabs {
     INFO = "tab-info",
@@ -81,6 +82,8 @@ export class FileBrowserStore {
         this.backendService.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.fileInfoExtended = res.fileInfoExtended;
+                this.imageInfoStore.setLatestFileInfoCach(this.fileInfo);
+                this.imageInfoStore.setLatestHeadersCach(this.headers);
                 this.loadingInfo = false;
             }
             this.fileInfoResp = true;
@@ -192,9 +195,11 @@ export class FileBrowserStore {
     }
 
     private backendService: BackendService;
+    private imageInfoStore: ImageInfoStore;
 
-    constructor(backendService: BackendService) {
+    constructor(backendService: BackendService, imageInfoStore: ImageInfoStore) {
         this.backendService = backendService;
+        this.imageInfoStore = imageInfoStore;
         this.exportCoordinateType = CARTA.CoordinateType.WORLD;
         this.exportFileType = CARTA.FileType.CRTF;
     }

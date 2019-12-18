@@ -1,0 +1,38 @@
+.image-info-dialog {
+    min-width: 60%;
+    height: 100%;
+    user-select: none;
+
+    .bp3-dialog-body {
+        height: 100%;
+        overflow: hidden;
+        margin-top: 10px;
+        margin-left: 25px;
+
+        .bp3-input-group {
+            margin: 10px 5px 5px;
+        }
+
+        .image-info-panes {
+            display: flex;
+            height: 100%;
+            
+            .image-info-pane {
+                width: 95%;
+                margin-left: 2%;
+                margin-bottom: 40px;
+                
+                .image-info-pre {
+                    overflow: auto;
+                    height: 100%;
+                    flex: 2 2 auto;
+                }
+                
+                .bp3-heading {
+                    flex: 0 0 auto;
+                }
+            }
+        }
+
+    }
+}
