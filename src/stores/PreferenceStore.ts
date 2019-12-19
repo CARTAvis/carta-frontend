@@ -710,6 +710,7 @@ export class PreferenceStore {
 
     constructor(appStore: AppStore) {
         this.appStore = appStore;
+        this.backendService = appStore.backendService;
         this.initPreferenceFromDefault();
     }
 }
