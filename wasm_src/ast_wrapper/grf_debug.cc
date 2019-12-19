@@ -1,10 +1,11 @@
-extern "C" {
-#include "grf.h"
-#include "ast.h"
 #include <stdio.h>
 #include <string.h>
 #include <emscripten.h>
 #include <math.h>
+
+extern "C" {
+#include "grf.h"
+#include "ast.h"
 
 #define LOG printf
 #define PI 3.14159265
