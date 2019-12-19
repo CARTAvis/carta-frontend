@@ -697,7 +697,7 @@ export class PreferenceStore {
         let result = false;
         let obj = {};
         obj[key] = value;
-        this.backendService.setUserPreferences(obj).subscribe(ack => {
+        this.appStore.backendService.setUserPreferences(obj).subscribe(ack => {
             if (ack.success) {
                 result = true;
             } else {
