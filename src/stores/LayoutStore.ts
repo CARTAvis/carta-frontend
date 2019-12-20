@@ -185,7 +185,17 @@ export class LayoutStore {
     };
 
     private initLayoutsFromServer = (userLayouts: { [k: string]: string; }) => {
-        this.validateUserLayouts(userLayouts);
+        let parsedLayouts = {};
+        Object.keys(userLayouts).forEach((layoutName) => {
+            try {
+                if (userLayouts[layoutName] !== "") {
+                    parsedLayouts[layoutName] = JSON.parse(userLayouts[layoutName]);
+                }
+            } catch (e) {
+                this.alertStore.showAlert(`Loading user-defined layout ${layoutName} failed!`);
+            }
+        });
+        this.validateUserLayouts(parsedLayouts);
     };
 
     private initLayoutsFromLocalStorage = () => {
