@@ -4,7 +4,7 @@ import * as AST from "ast_wrapper";
 import {NumberRange} from "@blueprintjs/core";
 import {ASTSettingsString, PreferenceStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore} from "stores";
 import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES} from "models";
-import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency} from "utilities";
+import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency, getHeaderNumericValue} from "utilities";
 import {BackendService} from "../services";
 
 export interface FrameInfo {
@@ -287,11 +287,11 @@ export class FrameStore {
         const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
 
         if (bMajHeader && bMinHeader && bpaHeader && unitHeader && deltaHeader) {
-            let bMaj = parseFloat(bMajHeader.value);
-            let bMin = parseFloat(bMinHeader.value);
-            const bpa = parseFloat(bpaHeader.value);
+            let bMaj = getHeaderNumericValue(bMajHeader);
+            let bMin = getHeaderNumericValue(bMinHeader);
+            const bpa = getHeaderNumericValue(bpaHeader);
             const unit = unitHeader.value.trim();
-            const delta = parseFloat(deltaHeader.value);
+            const delta = getHeaderNumericValue(deltaHeader);
 
             if (isFinite(bMaj) && bMaj > 0 && isFinite(bMin) && bMin > 0 && isFinite(bpa) && isFinite(delta) && unit === "deg" || unit === "rad") {
                 return {
@@ -311,7 +311,7 @@ export class FrameStore {
         }
         const restFreqHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`RESTFRQ`) !== -1);
         if (restFreqHeader) {
-            const restFreqVal = parseFloat(restFreqHeader.value);
+            const restFreqVal = getHeaderNumericValue(restFreqHeader);
             if (isFinite(restFreqVal)) {
                 return restFreqVal;
             }
@@ -354,9 +354,9 @@ export class FrameStore {
             const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CUNIT${channelTypeInfo.dimension}`) !== -1);
 
             if (refPixHeader && refValHeader && deltaHeader) {
-                const refPix = parseFloat(refPixHeader.value);
-                const refVal = parseFloat(refValHeader.value);
-                const delta = parseFloat(deltaHeader.value);
+                const refPix = getHeaderNumericValue(refPixHeader);
+                const refVal = getHeaderNumericValue(refValHeader);
+                const delta = getHeaderNumericValue(deltaHeader);
                 const unit = unitHeader ? unitHeader.value.trim() : "";
                 if (isFinite(refPix) && isFinite(refVal) && isFinite(delta)) {
                     // Override unit if it's specified by a header
