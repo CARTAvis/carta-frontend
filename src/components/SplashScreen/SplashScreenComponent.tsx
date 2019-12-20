@@ -28,7 +28,9 @@ export class SplashScreenComponent extends React.Component<{ appStore: AppStore 
                         <p>{CARTA_INFO.fullName}</p>
                     </div>
                     <Spinner intent={Intent.PRIMARY} size={30} value={null}/>
-                    <p>{logStore.newestMsg}</p>
+                    <div className={"loadingInfo-div"}>
+                        <p>{logStore.newestMsg}</p>
+                    </div>
                 </div>
             </Overlay>
         );
