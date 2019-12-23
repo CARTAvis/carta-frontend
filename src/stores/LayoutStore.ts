@@ -112,18 +112,19 @@ export class LayoutStore {
     private readonly appStore: AppStore;
     private alertStore: AlertStore;
     private layoutNameToBeSaved: string;
-    private serverSupport: boolean;
 
     // self-defined structure: {layoutName: config, layoutName: config, ...}
     @observable dockedLayout: GoldenLayout;
     @observable currentLayoutName: string;
     @observable private layouts: any;
+    @observable supportServer: boolean;
 
     constructor(appStore: AppStore, alertStore: AlertStore) {
         this.appStore = appStore;
         this.alertStore = alertStore;
         this.dockedLayout = null;
         this.layouts = {};
+        this.supportServer = false;
         this.initLayoutsFromPresets();
     }
 
@@ -135,9 +136,9 @@ export class LayoutStore {
         this.layoutNameToBeSaved = layoutName ? layoutName : "Empty";
     };
 
-    public initUserDefinedLayouts = (serverSupport: boolean, layouts: { [k: string]: string; }) => {
-        this.serverSupport = serverSupport;
-        if (serverSupport) {
+    public initUserDefinedLayouts = (supportServer: boolean, layouts: { [k: string]: string; }) => {
+        this.supportServer = supportServer;
+        if (supportServer) {
             this.initLayoutsFromServer(layouts);
         } else {
             this.initLayoutsFromLocalStorage();
@@ -436,7 +437,7 @@ export class LayoutStore {
 
         // save layout to layouts[] & server/local storage
         this.layouts[this.layoutNameToBeSaved] = simpleConfig;
-        if (this.serverSupport) {
+        if (this.supportServer) {
             this.appStore.backendService.setUserLayout(this.layoutNameToBeSaved, JSON.stringify(simpleConfig)).subscribe(() => this.handleSaveResult(true), err => {
                 console.log(err);
                 this.handleSaveResult(false);
@@ -464,7 +465,7 @@ export class LayoutStore {
 
         delete this.layouts[layoutName];
 
-        if (this.serverSupport) {
+        if (this.supportServer) {
             this.appStore.backendService.setUserLayout(layoutName, "").subscribe(() => {
                 this.handleDeleteResult(layoutName, true);
             }, err => {
