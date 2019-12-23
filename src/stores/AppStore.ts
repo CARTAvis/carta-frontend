@@ -52,8 +52,10 @@ export class AppStore {
     @observable logStore: LogStore;
     // User preference
     @observable preferenceStore: PreferenceStore;
+    @observable supportServerPreference: boolean;
     // Layouts
     @observable layoutStore: LayoutStore;
+    @observable supportServerLayout: boolean;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -213,11 +215,8 @@ export class AppStore {
             this.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
 
             // Init layout/preference store after connection is built
-            const serverSupportsLayout = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_LAYOUTS ? true : false;
-            this.layoutStore.initUserDefinedLayouts(serverSupportsLayout, ack.userLayouts);
-
-            // TODO: preference
-            const serverSupportsPreference = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_PREFERENCES ? true : false;
+            this.supportServerLayout = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_LAYOUTS ? true : false;
+            this.layoutStore.initUserDefinedLayouts(this.supportServerLayout, ack.userLayouts);
 
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
@@ -506,6 +505,8 @@ export class AppStore {
         this.spectralProfiles = new Map<number, ObservableMap<number, SpectralProfileStore>>();
         this.regionStats = new Map<number, ObservableMap<number, CARTA.RegionStatsData>>();
         this.regionHistograms = new Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>();
+        this.supportServerLayout = false;
+        this.supportServerPreference = false;
 
         this.frames = [];
         this.activeFrame = null;
