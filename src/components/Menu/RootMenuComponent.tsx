@@ -57,7 +57,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     disabled={!appStore.activeFrame}
                     onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
                 />
-                <Menu.Item text="Preferences" onClick={appStore.showPreferenceDialog}/>
+                <Menu.Item text="Preferences" onClick={appStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportServer && connectionStatus !== ConnectionStatus.ACTIVE}/>
             </Menu>
         );
 

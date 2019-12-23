@@ -213,8 +213,8 @@ export class AppStore {
             connected = true;
             this.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
 
-            const serverSupportsPreference = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_PREFERENCES ? true : false;
-            this.preferenceStore.initUserDefinedPreferences(serverSupportsPreference, ack.userPreferences);
+            const supportServerPreference = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_PREFERENCES ? true : false;
+            this.preferenceStore.initUserDefinedPreferences(supportServerPreference, ack.userPreferences);
             this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
             this.layoutStore.applyLayout(this.preferenceStore.layout);
             this.compressionQuality = this.preferenceStore.imageCompressionQuality;

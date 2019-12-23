@@ -5,7 +5,6 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, BeamType, FrameScaling, RenderConfigStore, RegionStore} from "stores";
 import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {isColorValid, parseBoolean} from "utilities";
-import {BackendService} from "services";
 
 export enum PreferenceKeys {
     GLOBAL_THEME = 1,
@@ -173,10 +172,9 @@ const DEFAULTS = {
 
 export class PreferenceStore {
     private readonly appStore: AppStore;
-    private readonly backendService: BackendService;
-    private serverSupport: boolean;
 
     @observable preferences: Map<PreferenceKeys, any>;
+    @observable supportServer: boolean;
 
     private PREFERENCE_VALIDATORS = new Map<PreferenceKeys, (values: string) => any>([
         [PreferenceKeys.GLOBAL_THEME, (value: string): string => { return value && Theme.isValid(value) ? value : DEFAULTS.GLOBAL.theme; }],
@@ -486,7 +484,7 @@ export class PreferenceStore {
             }
         }
 
-        if (this.serverSupport) {
+        if (this.supportServer) {
             this.savePreferencesToServer(keyStr, valueStr);
         } else {
             localStorage.setItem(keyStr, valueStr);
@@ -556,16 +554,16 @@ export class PreferenceStore {
 
     @action resetLogEventSettings = () => {
         this.preferences.get(PreferenceKeys.LOG_EVENT).forEach((value, key, map) => map.set(key, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
-        if (this.serverSupport) {
+        if (this.supportServer) {
             this.savePreferencesToServer(KEY_TO_STRING.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
         } else {
             localStorage.setItem(KEY_TO_STRING.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
         }
     };
 
-    public initUserDefinedPreferences = (serverSupport: boolean, serverPreference: { [k: string]: string; }) => {
-        this.serverSupport = serverSupport;
-        if (serverSupport) {
+    public initUserDefinedPreferences = (supportServer: boolean, serverPreference: { [k: string]: string; }) => {
+        this.supportServer = supportServer;
+        if (supportServer) {
             this.initPreferenceFromServer(serverPreference);
         } else {
             this.initPreferenceFromLocalStorage();
@@ -710,6 +708,7 @@ export class PreferenceStore {
 
     constructor(appStore: AppStore) {
         this.appStore = appStore;
+        this.supportServer = false;
         this.initPreferenceFromDefault();
     }
 }
