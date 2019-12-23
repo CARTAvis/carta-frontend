@@ -438,7 +438,9 @@ export class LayoutStore {
         // save layout to layouts[] & server/local storage
         this.layouts[this.layoutNameToBeSaved] = simpleConfig;
         if (this.supportServer) {
-            this.appStore.backendService.setUserLayout(this.layoutNameToBeSaved, JSON.stringify(simpleConfig)).subscribe(() => this.handleSaveResult(true), err => {
+            this.appStore.backendService.setUserLayout(this.layoutNameToBeSaved, JSON.stringify(simpleConfig)).subscribe(() => {
+                this.handleSaveResult(true);
+            }, err => {
                 console.log(err);
                 this.handleSaveResult(false);
             });
