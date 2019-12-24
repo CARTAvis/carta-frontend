@@ -25,9 +25,9 @@ export class FileInfoComponent extends React.Component<{
         const infoTypes = this.props.infoTypes;
         const tabEntries = infoTypes.map(infoType => {
             if (InfoType.IMAGE_FILE === infoType || InfoType.REGION_FILE === infoType) {
-                return <Tab id={infoType} title="File Information"/>;
+                return <Tab key={infoType} id={infoType} title="File Information"/>;
             } else {
-                return <Tab id={infoType} title="Header"/>;
+                return <Tab key={infoType} id={infoType} title="Header"/>;
             } 
         });
         return(
