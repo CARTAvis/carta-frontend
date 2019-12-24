@@ -6,16 +6,16 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, InfoType} from "components/FileInfo/FileInfoComponent";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
-import "./ImageInfoDialogComponent.css";
+import "./FileInfoDialogComponent.css";
 
 @observer
-export class ImageInfoDialogComponent extends React.Component<{ appStore: AppStore }> {
+export class FileInfoDialogComponent extends React.Component<{ appStore: AppStore }> {
 
     @observable fileInfoExtended: CARTA.FileInfoExtended;
 
     render() {
 
-        let className = "image-info-dialog";
+        let className = "file-info-dialog";
         if (this.props.appStore.darkTheme) {
             className += " bp3-dark";
         }
@@ -30,7 +30,7 @@ export class ImageInfoDialogComponent extends React.Component<{ appStore: AppSto
             lazy: true,
             isOpen: appStore.imageInfoDialogVisible,
             onClose: appStore.hideImageInfoDialog,
-            title: "Image Info",
+            title: "File Info",
         };
 
         if (appStore.activeFrame) {

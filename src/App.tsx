@@ -16,7 +16,7 @@ import {
     RegionDialogComponent,
     SaveLayoutDialogComponent,
     TaskProgressDialogComponent,
-    ImageInfoDialogComponent
+    FileInfoDialogComponent
 } from "./components/Dialogs";
 import {AppStore, BrowserMode, dayPalette, nightPalette, RegionMode} from "./stores";
 import {ConnectionStatus} from "./services";
@@ -133,7 +133,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                         {this.renderHotkeys()}
                     </div>
                 </Dialog>
-                <ImageInfoDialogComponent appStore={appStore}/>
+                <FileInfoDialogComponent appStore={appStore}/>
             </div>
         );
     }
