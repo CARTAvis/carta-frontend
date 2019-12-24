@@ -1,8 +1,9 @@
-extern "C" {
-#include "ast.h"
 #include <string.h>
 #include <emscripten.h>
-    
+
+extern "C" {
+#include "ast.h"
+
 char lastErrorMessage[256];
 
 EMSCRIPTEN_KEEPALIVE const char * getLastErrorMessage() {

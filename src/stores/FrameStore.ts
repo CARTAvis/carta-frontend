@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, PreferenceStore, OverlayBeamStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore, ContourConfigStore, ContourStore} from "stores";
 import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES, ProtobufProcessing} from "models";
-import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency, toFixed, hexStringToRgba} from "utilities";
+import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency, toFixed, hexStringToRgba, trimFitsComment} from "utilities";
 import {BackendService} from "services";
 
 export interface FrameInfo {
@@ -104,7 +104,7 @@ export class FrameStore {
         } else {
             const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.filter(entry => entry.name === "BUNIT");
             if (unitHeader.length) {
-                return unitHeader[0].value;
+                return trimFitsComment(unitHeader[0].value);
             } else {
                 return undefined;
             }

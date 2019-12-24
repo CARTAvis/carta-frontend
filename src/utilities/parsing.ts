@@ -15,3 +15,12 @@ export function parseNumber(val: number, initVal: number): number {
         return initVal;
     }
 }
+
+export function trimFitsComment(val: string): string {
+    if (!val) {
+        return "";
+    }
+
+    // replace standard Fits header comments
+    return val.replace(/\s\/\s?.*$/, "");
+}
