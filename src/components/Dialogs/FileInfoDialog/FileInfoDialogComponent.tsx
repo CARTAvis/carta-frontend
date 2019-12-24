@@ -28,8 +28,8 @@ export class FileInfoDialogComponent extends React.Component<{ appStore: AppStor
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.imageInfoDialogVisible,
-            onClose: appStore.hideImageInfoDialog,
+            isOpen: appStore.fileInfoDialogVisible,
+            onClose: appStore.hideFileInfoDialog,
             title: "File Info",
         };
 
@@ -41,8 +41,8 @@ export class FileInfoDialogComponent extends React.Component<{ appStore: AppStor
                             infoTypes={[InfoType.IMAGE_FILE, InfoType.IMAGE_HEADER]}
                             fileInfoExtended={appStore.activeFrame.frameInfo.fileInfoExtended} 
                             regionFileInfo={""}
-                            selectedTab={appStore.selectedImageInfoTab}
-                            handleTabChange={appStore.setSelectedImageInfoTab}
+                            selectedTab={appStore.selectedFileInfoTab}
+                            handleTabChange={appStore.setSelectedFileInfoTab}
                             isLoading={false}
                             errorMessage={""}
                         />

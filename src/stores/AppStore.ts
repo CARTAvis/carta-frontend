@@ -174,17 +174,17 @@ export class AppStore {
         this.username = username;
     };
 
-    // Image info dialog
-    @observable imageInfoDialogVisible: boolean = false;
-    @observable selectedImageInfoTab: TabId;
-    @action showImageInfoDialog = () => {
-        this.imageInfoDialogVisible = true;
+    // File info dialog
+    @observable fileInfoDialogVisible: boolean = false;
+    @observable selectedFileInfoTab: TabId;
+    @action showFileInfoDialog = () => {
+        this.fileInfoDialogVisible = true;
     };
-    @action hideImageInfoDialog = () => {
-        this.imageInfoDialogVisible = false;
+    @action hideFileInfoDialog = () => {
+        this.fileInfoDialogVisible = false;
     };
-    @action setSelectedImageInfoTab = (newId: TabId) => {
-        this.selectedImageInfoTab = newId;
+    @action setSelectedFileInfoTab = (newId: TabId) => {
+        this.selectedFileInfoTab = newId;
     }
 
     @action connectToServer = (socketName: string = "socket") => {

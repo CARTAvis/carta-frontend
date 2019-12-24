@@ -93,7 +93,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     text="File info"
                     icon={"info-sign"}
                     disabled={!appStore.activeFrame}
-                    onClick={appStore.showImageInfoDialog}
+                    onClick={appStore.showFileInfoDialog}
                 />
             </Menu>
         );
