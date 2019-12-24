@@ -1,20 +1,15 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {observable} from "mobx";
 import {IDialogProps} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, InfoType} from "components/FileInfo/FileInfoComponent";
-import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import "./FileInfoDialogComponent.css";
 
 @observer
 export class FileInfoDialogComponent extends React.Component<{ appStore: AppStore }> {
 
-    @observable fileInfoExtended: CARTA.FileInfoExtended;
-
     render() {
-
         let className = "file-info-dialog";
         if (this.props.appStore.darkTheme) {
             className += " bp3-dark";

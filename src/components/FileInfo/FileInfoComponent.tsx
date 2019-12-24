@@ -26,9 +26,11 @@ export class FileInfoComponent extends React.Component<{
         const tabEntries = infoTypes.map(infoType => {
             if (InfoType.IMAGE_FILE === infoType || InfoType.REGION_FILE === infoType) {
                 return <Tab key={infoType} id={infoType} title="File Information"/>;
-            } else {
+            } else if (InfoType.IMAGE_HEADER === infoType) {
                 return <Tab key={infoType} id={infoType} title="Header"/>;
-            } 
+            } else {
+                return <Tab key={infoType} id={infoType} title="Region Information"/>;
+            }
         });
         return(
             <Tabs id="file-info-tabs" onChange={(value) => this.props.handleTabChange(value)} selectedTabId={this.selectedTab}>
@@ -38,7 +40,6 @@ export class FileInfoComponent extends React.Component<{
     }
 
     private renderInfoPanel = () => {
-        
         if (this.props.isLoading) {
             return <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner"/>} title="Loading file info..."/>;
         } else if (this.props.errorMessage) {
