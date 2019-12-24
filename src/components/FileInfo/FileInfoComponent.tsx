@@ -2,7 +2,7 @@ import * as React from "react";
 import {observable} from "mobx";
 import {Pre, Tab, TabId, Tabs, NonIdealState, Spinner} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import "./FileInfoDialogComponent.css";
+import "./FileInfoComponent.css";
 
 export enum InfoType {
     IMAGE_FILE = "image-file",
