@@ -1,7 +1,7 @@
 import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable, ObservableMap} from "mobx";
-import {IOptionProps} from "@blueprintjs/core";
+import {IOptionProps, TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {
     AlertStore,
@@ -24,8 +24,7 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore,
-    ImageInfoStore
+    WidgetsStore
 } from ".";
 import {GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, TileService} from "services";
@@ -55,8 +54,6 @@ export class AppStore {
     @observable preferenceStore: PreferenceStore;
     // Layouts
     @observable layoutStore: LayoutStore;
-    // ImageInfo
-    @observable imageInfoStore: ImageInfoStore;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -176,6 +173,19 @@ export class AppStore {
     @action setUsername = (username: string) => {
         this.username = username;
     };
+
+    // Image info dialog
+    @observable imageInfoDialogVisible: boolean = false;
+    @observable selectedImageInfoTab: TabId;
+    @action showImageInfoDialog = () => {
+        this.imageInfoDialogVisible = true;
+    };
+    @action hideImageInfoDialog = () => {
+        this.imageInfoDialogVisible = false;
+    };
+    @action setSelectedImageInfoTab = (newId: TabId) => {
+        this.selectedImageInfoTab = newId;
+    }
 
     @action connectToServer = (socketName: string = "socket") => {
         let wsURL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}/${socketName}`;
@@ -505,8 +515,7 @@ export class AppStore {
 
         this.frames = [];
         this.activeFrame = null;
-        this.imageInfoStore = new ImageInfoStore();
-        this.fileBrowserStore = new FileBrowserStore(this.backendService, this.imageInfoStore);
+        this.fileBrowserStore = new FileBrowserStore(this.backendService);
         this.animatorStore = new AnimatorStore(this);
         this.overlayStore = new OverlayStore(this, this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this, this.layoutStore);

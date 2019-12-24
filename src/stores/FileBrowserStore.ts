@@ -2,12 +2,6 @@ import {action, computed, observable} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
-import {ImageInfoStore} from "stores";
-
-export enum FileInfoTabs {
-    INFO = "tab-info",
-    HEADER = "tab-header"
-}
 
 export enum BrowserMode {
     File,
@@ -27,7 +21,7 @@ export class FileBrowserStore {
     @observable selectedHDU: string;
     @observable fileInfoExtended: CARTA.IFileInfoExtended;
     @observable regionFileInfo: string[];
-    @observable selectedTab: TabId = FileInfoTabs.INFO;
+    @observable selectedTab: TabId;
     @observable loadingList = false;
     @observable loadingInfo = false;
     @observable fileInfoResp = false;
@@ -42,7 +36,6 @@ export class FileBrowserStore {
         this.browserMode = mode;
         this.fileBrowserDialogVisible = true;
         this.fileList = null;
-        this.selectedTab = FileInfoTabs.INFO;
         this.exportFilename = "";
         this.getFileList(this.startingDirectory);
     };
@@ -79,11 +72,10 @@ export class FileBrowserStore {
         this.loadingInfo = true;
         this.fileInfoResp = false;
         this.fileInfoExtended = null;
+        this.responseErrorMessage = "";
         this.backendService.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.fileInfoExtended = res.fileInfoExtended;
-                this.imageInfoStore.setLatestFileInfoCach(this.fileInfo);
-                this.imageInfoStore.setLatestHeadersCach(this.headers);
                 this.loadingInfo = false;
             }
             this.fileInfoResp = true;
@@ -100,6 +92,7 @@ export class FileBrowserStore {
         this.loadingInfo = true;
         this.fileInfoResp = false;
         this.regionFileInfo = null;
+        this.responseErrorMessage = "";
         this.backendService.getRegionFileInfo(directory, file).subscribe((res: CARTA.IRegionFileInfoResponse) => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.loadingInfo = false;
@@ -195,11 +188,9 @@ export class FileBrowserStore {
     }
 
     private backendService: BackendService;
-    private imageInfoStore: ImageInfoStore;
 
-    constructor(backendService: BackendService, imageInfoStore: ImageInfoStore) {
+    constructor(backendService: BackendService) {
         this.backendService = backendService;
-        this.imageInfoStore = imageInfoStore;
         this.exportCoordinateType = CARTA.CoordinateType.WORLD;
         this.exportFileType = CARTA.FileType.CRTF;
     }

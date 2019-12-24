@@ -1,0 +1,12 @@
+.image-info-dialog {
+    min-width: 60%;
+    height: 100%;
+    user-select: none;
+
+    .bp3-dialog-body {
+        height: 100%;
+        overflow: hidden;
+        margin-top: 10px;
+        margin-left: 25px;
+    }
+}

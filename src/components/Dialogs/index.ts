@@ -7,4 +7,4 @@ export * from "./RegionDialog/RegionDialogComponent";
 export * from "./PreferenceDialog/PreferenceDialogComponent";
 export * from "./LayoutDialog/SaveLayoutDialogComponent";
 export * from "./AuthDialog/AuthDialogComponent";
-export * from "./ImageInfo/ImageInfoDialogComponent";
+export * from "./ImageInfoDialog/ImageInfoDialogComponent";
