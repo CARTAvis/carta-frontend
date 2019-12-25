@@ -149,8 +149,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     private updateTexture() {
         const frame = this.props.frame;
-        const w = Math.floor((frame.currentFrameView.xMax - frame.currentFrameView.xMin) / frame.currentFrameView.mip);
-        const h = Math.floor((frame.currentFrameView.yMax - frame.currentFrameView.yMin) / frame.currentFrameView.mip);
+        const w = Math.ceil((frame.currentFrameView.xMax - frame.currentFrameView.xMin) / frame.currentFrameView.mip);
+        const h = Math.ceil((frame.currentFrameView.yMax - frame.currentFrameView.yMin) / frame.currentFrameView.mip);
         if (!frame.rasterData || frame.rasterData.length !== w * h) {
             console.log(`Data mismatch! L=${frame.rasterData ? frame.rasterData.length : "null"}, WxH = ${w}x${h}=${w * h}`);
             return;
@@ -216,8 +216,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const fullHeight = full.yMax - full.yMin;
 
         // Bounds need to be adjusted because of MIP level
-        const adjustedXMax = current.xMin + Math.floor((current.xMax - current.xMin) / current.mip) * current.mip;
-        const adjustedYMax = current.yMin + Math.floor((current.yMax - current.yMin) / current.mip) * current.mip;
+        const adjustedXMax = current.xMin + Math.ceil((current.xMax - current.xMin) / current.mip) * current.mip;
+        const adjustedYMax = current.yMin + Math.ceil((current.yMax - current.yMin) / current.mip) * current.mip;
 
         const LT = {x: (0.5 + current.xMin - full.xMin) / fullWidth, y: (0.5 + current.yMin - full.yMin) / fullHeight};
         const RB = {x: (0.5 + adjustedXMax - full.xMin) / fullWidth, y: (0.5 + adjustedYMax - full.yMin) / fullHeight};

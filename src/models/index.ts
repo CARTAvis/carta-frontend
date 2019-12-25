@@ -15,3 +15,4 @@ export * from "./CompressionQuality";
 export * from "./TileCache";
 export * from "./Processed";
 export * from "./Event";
+export * from "./CARTAInfo";

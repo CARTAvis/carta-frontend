@@ -46,6 +46,10 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
         this.widgetStore.setMarkerTextVisible(changeEvent.target.checked);
     };
 
+    handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        this.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
+    };
+
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
@@ -130,6 +134,8 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
             handleLogScaleChanged: this.handleLogScaleChanged,
             markerTextVisible: widgetStore.markerTextVisible,
             handleMarkerTextChanged: this.handleMarkerTextChanged,
+            meanRmsVisible: widgetStore.meanRmsVisible,
+            handleMeanRmsChanged: this.handleMeanRmsChanged,
             xMinVal: parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal),
             handleXMinChange: this.handleXMinChange,
             xMaxVal: parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal),

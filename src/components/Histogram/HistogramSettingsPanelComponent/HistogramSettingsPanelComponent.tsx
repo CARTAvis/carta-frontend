@@ -19,7 +19,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
             minWidth: 280,
             minHeight: 225,
             defaultWidth: 300,
-            defaultHeight: 350,
+            defaultHeight: 320,
             title: "histogram-settings",
             isCloseable: true,
             parentId: "histogram",
@@ -78,6 +78,10 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
 
     private handleLogScaleChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.widgetStore.setLogScale(changeEvent.target.checked);
+    };
+
+    handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        this.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
     };
 
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
@@ -162,6 +166,8 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
             clearXYBounds: widgetStore.clearXYBounds,
             logScaleY: widgetStore.logScaleY,
             handleLogScaleChanged: this.handleLogScaleChanged,
+            meanRmsVisible: widgetStore.meanRmsVisible,
+            handleMeanRmsChanged: this.handleMeanRmsChanged,
             xMinVal: parseNumber(widgetStore.minX, widgetStore.linePlotInitXYBoundaries.minXVal),
             handleXMinChange: this.handleXMinChange,
             xMaxVal: parseNumber(widgetStore.maxX, widgetStore.linePlotInitXYBoundaries.maxXVal),

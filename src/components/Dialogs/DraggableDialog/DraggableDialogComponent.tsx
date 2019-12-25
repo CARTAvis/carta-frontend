@@ -52,7 +52,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
                     minHeight={this.props.minHeight}
                     dragHandleClassName={"bp3-dialog-header"}
                 >
-                    <Dialog hasBackdrop={false} usePortal={false} {...this.props.dialogProps} children={this.props.children}/>
+                    <Dialog hasBackdrop={false} usePortal={false} {...this.props.dialogProps} children={this.props.children} enforceFocus={false} autoFocus={false}/>
                 </Rnd>
                 }
             </div>
