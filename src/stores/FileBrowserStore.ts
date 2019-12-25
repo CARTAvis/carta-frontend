@@ -2,6 +2,7 @@ import {action, computed, observable} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
+import {FileInfoType} from "components";
 
 export enum BrowserMode {
     File,
@@ -21,7 +22,7 @@ export class FileBrowserStore {
     @observable selectedHDU: string;
     @observable fileInfoExtended: CARTA.IFileInfoExtended;
     @observable regionFileInfo: string[];
-    @observable selectedTab: TabId;
+    @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
     @observable loadingList = false;
     @observable loadingInfo = false;
     @observable fileInfoResp = false;
@@ -36,6 +37,8 @@ export class FileBrowserStore {
         this.browserMode = mode;
         this.fileBrowserDialogVisible = true;
         this.fileList = null;
+        this.selectedTab = (BrowserMode.File === mode) ? FileInfoType.IMAGE_FILE : FileInfoType.REGION_FILE;
+        this.responseErrorMessage = "";
         this.exportFilename = "";
         this.getFileList(this.startingDirectory);
     };

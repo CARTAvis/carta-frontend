@@ -4,14 +4,14 @@ import {Pre, Tab, TabId, Tabs, NonIdealState, Spinner} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import "./FileInfoComponent.css";
 
-export enum InfoType {
+export enum FileInfoType {
     IMAGE_FILE = "image-file",
     IMAGE_HEADER = "image-header",
     REGION_FILE = "region-file"
 }
 
 export class FileInfoComponent extends React.Component<{
-    infoTypes: InfoType[],
+    infoTypes: FileInfoType[],
     fileInfoExtended: CARTA.IFileInfoExtended,
     regionFileInfo: string,
     selectedTab: TabId,
@@ -19,21 +19,21 @@ export class FileInfoComponent extends React.Component<{
     isLoading: boolean,
     errorMessage: string,
 }> {
-    @observable selectedTab: TabId;
+    @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
 
     private renderInfoTabs = () => {
         const infoTypes = this.props.infoTypes;
         const tabEntries = infoTypes.map(infoType => {
-            if (InfoType.IMAGE_FILE === infoType || InfoType.REGION_FILE === infoType) {
+            if (FileInfoType.IMAGE_FILE === infoType) {
                 return <Tab key={infoType} id={infoType} title="File Information"/>;
-            } else if (InfoType.IMAGE_HEADER === infoType) {
+            } else if (FileInfoType.IMAGE_HEADER === infoType) {
                 return <Tab key={infoType} id={infoType} title="Header"/>;
             } else {
                 return <Tab key={infoType} id={infoType} title="Region Information"/>;
             }
         });
         return(
-            <Tabs id="file-info-tabs" onChange={(value) => this.props.handleTabChange(value)} selectedTabId={this.selectedTab}>
+            <Tabs id="file-info-tabs" onChange={(value) => this.props.handleTabChange(value)} selectedTabId={this.props.selectedTab}>
                 {tabEntries}
             </Tabs>
         );
@@ -48,12 +48,12 @@ export class FileInfoComponent extends React.Component<{
             return <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected" description="Select a file from the list on the left"/>;
         }
         
-        switch (this.selectedTab) {
-            case InfoType.IMAGE_FILE:
+        switch (this.props.selectedTab) {
+            case FileInfoType.IMAGE_FILE:
                 return <Pre className="file-info-pre">{this.getImageFileInfo(this.props.fileInfoExtended)}</Pre>;
-            case InfoType.IMAGE_HEADER:
+            case FileInfoType.IMAGE_HEADER:
                 return <Pre className="file-info-pre">{this.getImageHeaders(this.props.fileInfoExtended)}</Pre>;
-            case InfoType.REGION_FILE:
+            case FileInfoType.REGION_FILE:
                 return <Pre className="file-info-pre">{this.props.regionFileInfo}</Pre>;
             default:
                 return "";
@@ -61,8 +61,6 @@ export class FileInfoComponent extends React.Component<{
     }
 
     render() {
-        this.selectedTab = (this.props.infoTypes.filter( infoType => infoType === this.props.selectedTab ).length > 0) ? this.props.selectedTab : this.props.infoTypes[0];
-
         return (
             <div className="file-info">
                 {this.renderInfoTabs()}

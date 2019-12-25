@@ -31,6 +31,7 @@ import {BackendService, ConnectionStatus, TileService} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {AppToaster} from "../components/Shared";
+import {FileInfoType} from "../components";
 
 export class AppStore {
     // Backend services
@@ -176,7 +177,7 @@ export class AppStore {
 
     // File info dialog
     @observable fileInfoDialogVisible: boolean = false;
-    @observable selectedFileInfoTab: TabId;
+    @observable selectedFileInfoTab: TabId = FileInfoType.IMAGE_FILE;
     @action showFileInfoDialog = () => {
         this.fileInfoDialogVisible = true;
     };

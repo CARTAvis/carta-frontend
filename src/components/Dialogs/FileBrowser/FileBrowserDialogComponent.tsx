@@ -4,7 +4,7 @@ import {action, computed, observable} from "mobx";
 import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, Popover, Position, TabId, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FileListComponent} from "./FileList/FileListComponent";
-import {FileInfoComponent, InfoType} from "components/FileInfo/FileInfoComponent";
+import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore, BrowserMode} from "stores";
 import "./FileBrowserDialogComponent.css";
@@ -246,10 +246,10 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         </div>
                         <div className="file-info-pane">
                             <FileInfoComponent
-                                infoTypes={fileBrowserStore.browserMode === BrowserMode.File ? [InfoType.IMAGE_FILE, InfoType.IMAGE_HEADER] : [InfoType.REGION_FILE]}
+                                infoTypes={fileBrowserStore.browserMode === BrowserMode.File ? [FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER] : [FileInfoType.REGION_FILE]}
                                 fileInfoExtended={fileBrowserStore.fileInfoExtended}
                                 regionFileInfo={fileBrowserStore.regionFileInfo ? fileBrowserStore.regionFileInfo.join("\n") : ""}
-                                selectedTab={fileBrowserStore.selectedTab}
+                                selectedTab={fileBrowserStore.selectedTab as FileInfoType}
                                 handleTabChange={this.handleTabChange}
                                 isLoading={fileBrowserStore.loadingInfo}
                                 errorMessage={fileBrowserStore.responseErrorMessage}

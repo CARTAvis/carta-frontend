@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {IDialogProps} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {FileInfoComponent, InfoType} from "components/FileInfo/FileInfoComponent";
+import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {AppStore} from "stores";
 import "./FileInfoDialogComponent.css";
 
@@ -33,10 +33,10 @@ export class FileInfoDialogComponent extends React.Component<{ appStore: AppStor
                 <DraggableDialogComponent dialogProps={dialogProps} minWidth={400} minHeight={400} defaultWidth={800} defaultHeight={600} enableResizing={true}>
                     <div className="bp3-dialog-body">
                         <FileInfoComponent 
-                            infoTypes={[InfoType.IMAGE_FILE, InfoType.IMAGE_HEADER]}
+                            infoTypes={[FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER]}
                             fileInfoExtended={appStore.activeFrame.frameInfo.fileInfoExtended} 
                             regionFileInfo={""}
-                            selectedTab={appStore.selectedFileInfoTab}
+                            selectedTab={appStore.selectedFileInfoTab as FileInfoType}
                             handleTabChange={appStore.setSelectedFileInfoTab}
                             isLoading={false}
                             errorMessage={""}
