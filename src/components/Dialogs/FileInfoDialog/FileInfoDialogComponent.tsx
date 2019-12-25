@@ -28,24 +28,20 @@ export class FileInfoDialogComponent extends React.Component<{ appStore: AppStor
             title: "File Info",
         };
 
-        if (appStore.activeFrame) {
-            return (
-                <DraggableDialogComponent dialogProps={dialogProps} minWidth={400} minHeight={400} defaultWidth={800} defaultHeight={600} enableResizing={true}>
-                    <div className="bp3-dialog-body">
-                        <FileInfoComponent 
-                            infoTypes={[FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER]}
-                            fileInfoExtended={appStore.activeFrame.frameInfo.fileInfoExtended} 
-                            regionFileInfo={""}
-                            selectedTab={appStore.selectedFileInfoTab as FileInfoType}
-                            handleTabChange={appStore.setSelectedFileInfoTab}
-                            isLoading={false}
-                            errorMessage={""}
-                        />
-                    </div>
-                </DraggableDialogComponent>
-            );
-        } else {
-            return"";
-        }
+        return (
+            <DraggableDialogComponent dialogProps={dialogProps} minWidth={400} minHeight={400} defaultWidth={800} defaultHeight={600} enableResizing={true}>
+                <div className="bp3-dialog-body">
+                    <FileInfoComponent
+                        infoTypes={[FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER]}
+                        fileInfoExtended={appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfoExtended : null}
+                        regionFileInfo={""}
+                        selectedTab={appStore.selectedFileInfoTab as FileInfoType}
+                        handleTabChange={appStore.setSelectedFileInfoTab}
+                        isLoading={false}
+                        errorMessage={""}
+                    />
+                </div>
+            </DraggableDialogComponent>
+        );
     }
 }

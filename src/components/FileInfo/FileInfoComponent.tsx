@@ -1,5 +1,4 @@
 import * as React from "react";
-import {observable} from "mobx";
 import {Pre, Tab, TabId, Tabs, NonIdealState, Spinner} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import "./FileInfoComponent.css";
@@ -42,9 +41,9 @@ export class FileInfoComponent extends React.Component<{
         if (this.props.isLoading) {
             return <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner"/>} title="Loading file info..."/>;
         } else if (this.props.errorMessage) {
-            return <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={this.props.errorMessage + " Select another file from the list on the left"}/>;
+            return <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={this.props.errorMessage + " Select another file from the folder"}/>;
         } else if (!this.props.fileInfoExtended && !this.props.regionFileInfo) {
-            return <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected" description="Select a file from the list on the left"/>;
+            return <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected" description="Select a file from the folder"/>;
         }
         
         switch (this.props.selectedTab) {
