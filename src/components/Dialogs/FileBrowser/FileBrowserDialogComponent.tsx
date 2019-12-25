@@ -246,10 +246,18 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             <DraggableDialogComponent dialogProps={dialogProps} minWidth={400} minHeight={400} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
                 <div className="file-path">
                     {this.pathItems &&
-                    <Breadcrumbs
-                        breadcrumbRenderer={this.renderBreadcrumb}
-                        items={this.pathItems}
-                    />
+                    <React.Fragment>
+                        <Button
+                            icon="refresh"
+                            title="refresh current directory"
+                            onClick={() => fileBrowserStore.selectFolder(fileBrowserStore.fileList.directory, true)}
+                            style={{marginRight: "10px"}}
+                        />
+                        <Breadcrumbs
+                            breadcrumbRenderer={this.renderBreadcrumb}
+                            items={this.pathItems}
+                        />
+                    </React.Fragment>
                     }
                 </div>
                 <div className="bp3-dialog-body">
