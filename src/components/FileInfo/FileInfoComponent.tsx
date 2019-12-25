@@ -19,7 +19,6 @@ export class FileInfoComponent extends React.Component<{
     isLoading: boolean,
     errorMessage: string,
 }> {
-    @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
 
     private renderInfoTabs = () => {
         const infoTypes = this.props.infoTypes;
