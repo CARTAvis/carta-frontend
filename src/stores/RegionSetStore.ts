@@ -56,13 +56,13 @@ export class RegionSetStore {
         return this.addRegion(points, 0, CARTA.RegionType.POLYGON, temporary);
     };
 
-    @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number) => {
-        return this.addRegion(points, rotation, regionType, true, regionId);
+    @action addExistingRegion = (points: Point2D[], rotation: number, regionType: CARTA.RegionType, regionId: number, regionName: string) => {
+        return this.addRegion(points, rotation, regionType, true, regionId, regionName);
     };
 
-    private addRegion(points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId()) {
+    private addRegion(points: Point2D[], rotation: number, regionType: CARTA.RegionType, temporary: boolean = false, regionId: number = this.getTempRegionId(), regionName: string = "") {
         const region = new RegionStore(this.backendService, this.frame.frameInfo.fileId, this.frame, points, regionType, regionId,
-            this.regionPreference.color, this.regionPreference.lineWidth, this.regionPreference.dashLength, rotation);
+            this.regionPreference.color, this.regionPreference.lineWidth, this.regionPreference.dashLength, rotation, regionName);
         this.regions.push(region);
         if (!temporary) {
             this.backendService.setRegion(this.frame.frameInfo.fileId, -1, region).subscribe(ack => {
