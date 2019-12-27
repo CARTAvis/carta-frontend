@@ -110,6 +110,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 <RegionDialogComponent appStore={appStore}/>
                 <PreferenceDialogComponent appStore={appStore}/>
                 <SaveLayoutDialogComponent appStore={appStore}/>
+                <FileInfoDialogComponent appStore={appStore}/>
                 <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>
@@ -133,7 +134,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
                         {this.renderHotkeys()}
                     </div>
                 </Dialog>
-                <FileInfoDialogComponent appStore={appStore}/>
             </div>
         );
     }
