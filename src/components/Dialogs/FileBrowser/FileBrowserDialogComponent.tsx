@@ -247,17 +247,18 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                 <div className="file-path">
                     {this.pathItems &&
                     <React.Fragment>
-                        <Button
-                            icon="repeat"
-                            title="Refresh current directory"
-                            onClick={() => fileBrowserStore.selectFolder(fileBrowserStore.fileList.directory, true)}
-                            minimal={true}
-                            style={{marginRight: "10px"}}
-                        />
+                        <Tooltip content={"Refresh current directory"}>
+                            <Button
+                                icon="repeat"
+                                onClick={() => fileBrowserStore.selectFolder(fileBrowserStore.fileList.directory, true)}
+                                minimal={true}
+                                style={{marginRight: "10px"}}
+                            />
+                        </Tooltip>
                         <Breadcrumbs
                             breadcrumbRenderer={this.renderBreadcrumb}
                             items={this.pathItems}
-                        />
+                            />
                     </React.Fragment>
                     }
                 </div>
