@@ -102,7 +102,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         );
         const layoutMenu = (
             <Menu className="layout-menu">
-                <Menu.Item text="Layouts" icon={"layout-grid"} disabled={layoutStore.supportServer && connectionStatus !== ConnectionStatus.ACTIVE}>
+                <Menu.Item text="Layouts" icon={"layout-grid"} disabled={layoutStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}>
                     <Menu.Item text="Existing Layouts" disabled={!presetLayouts && !userLayouts}>
                         <Menu.Item text="Presets" disabled={!presetLayouts || presetLayouts.length <= 0}>
                             {presetLayouts && presetLayouts.length > 0 && presetLayouts.map((value) =>

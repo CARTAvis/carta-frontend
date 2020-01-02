@@ -117,14 +117,14 @@ export class LayoutStore {
     @observable dockedLayout: GoldenLayout;
     @observable currentLayoutName: string;
     @observable private layouts: any;
-    @observable supportServer: boolean;
+    @observable supportsServer: boolean;
 
     constructor(appStore: AppStore, alertStore: AlertStore) {
         this.appStore = appStore;
         this.alertStore = alertStore;
         this.dockedLayout = null;
         this.layouts = {};
-        this.supportServer = false;
+        this.supportsServer = false;
         this.initLayoutsFromPresets();
     }
 
@@ -136,9 +136,9 @@ export class LayoutStore {
         this.layoutNameToBeSaved = layoutName ? layoutName : "Empty";
     };
 
-    public initUserDefinedLayouts = (supportServer: boolean, layouts: { [k: string]: string; }) => {
-        this.supportServer = supportServer;
-        if (supportServer) {
+    public initUserDefinedLayouts = (supportsServer: boolean, layouts: { [k: string]: string; }) => {
+        this.supportsServer = supportsServer;
+        if (supportsServer) {
             this.initLayoutsFromServer(layouts);
         } else {
             this.initLayoutsFromLocalStorage();
@@ -437,7 +437,7 @@ export class LayoutStore {
 
         // save layout to layouts[] & server/local storage
         this.layouts[this.layoutNameToBeSaved] = simpleConfig;
-        if (this.supportServer) {
+        if (this.supportsServer) {
             this.appStore.backendService.setUserLayout(this.layoutNameToBeSaved, JSON.stringify(simpleConfig)).subscribe(() => {
                 this.handleSaveResult(true);
             }, err => {
@@ -467,7 +467,7 @@ export class LayoutStore {
 
         delete this.layouts[layoutName];
 
-        if (this.supportServer) {
+        if (this.supportsServer) {
             this.appStore.backendService.setUserLayout(layoutName, "").subscribe(() => {
                 this.handleDeleteResult(layoutName, true);
             }, err => {
