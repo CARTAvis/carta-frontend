@@ -32,9 +32,30 @@ export class LayoutSchema {
                 },
                 "floating": {
                     "type": "array",
-                    "items": {
-                        "type": "object"
-                    }
+                    "items": [
+                        {
+                            "type": "object",
+                            "required": ["type"],
+                            "properties": {
+                                "type": {
+                                    "type": "string"
+                                },
+                                "defaultWidth": {
+                                    "type": "integer"
+                                },
+                                "defaultHeight": {
+                                    "type": "integer"
+                                },
+                                "defaultX": {
+                                    "type": "integer"
+                                },
+                                "defaultY": {
+                                    "type": "integer"
+                                }
+                                // TODO: extend with widget properties
+                            }
+                        }
+                    ]
                 }
             }
         }

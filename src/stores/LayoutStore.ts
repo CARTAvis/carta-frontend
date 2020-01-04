@@ -147,7 +147,7 @@ export class LayoutStore {
 
     private validateUserLayouts = (userLayouts) => {
         if (userLayouts) {
-            const jsonValidator = new Ajv();
+            const jsonValidator = new Ajv({removeAdditional: true});
             Object.keys(userLayouts).forEach((layoutName) => {
                 // skip user layouts which have the same name as presets & those dont have correct key 'layoutVersion' as integer
                 if (!PresetLayout.isValid(layoutName) &&
