@@ -269,7 +269,7 @@ export class FrameStore {
                 let specSysValue = "";
                 const specSysHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`SPECSYS`) !== -1);
                 if (specSysHeader && specSysHeader.value) {
-                    specSysValue = specSysHeader.value;
+                    specSysValue = trimFitsComment(specSysHeader.value);
                 }
                 spectralInfo.channelType = channelInfo.channelType;
                 let spectralName;
