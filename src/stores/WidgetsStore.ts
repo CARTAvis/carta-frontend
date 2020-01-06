@@ -393,6 +393,35 @@ export class WidgetsStore {
         layout.on("stateChanged", this.handleStateUpdates);
     };
 
+    public toWidgetConfig = (widget: WidgetConfig) => {
+        if (!widget || !widget.id || !widget.type) {
+            return null;
+        }
+
+        let widgetStore = null;
+        switch (widget.type) {
+            case RenderConfigComponent.WIDGET_CONFIG.type:
+                widgetStore = this.renderConfigWidgets.get(widget.id);
+                break;
+            case SpatialProfilerComponent.WIDGET_CONFIG.type:
+                widgetStore = this.spatialProfileWidgets.get(widget.id);
+                break;
+            case SpectralProfilerComponent.WIDGET_CONFIG.type:
+                widgetStore = this.spectralProfileWidgets.get(widget.id);
+                break;
+            case HistogramComponent.WIDGET_CONFIG.type:
+                widgetStore = this.histogramWidgets.get(widget.id);
+                break;
+            case StokesAnalysisComponent.WIDGET_CONFIG.type:
+                widgetStore = this.stokesAnalysisWidgets.get(widget.id);
+                break;
+            default:
+                break;
+        }
+
+        return widgetStore &&  widgetStore.toConfig ? widgetStore.toConfig() : null;
+    };
+
     @action onCogPinedClick = (item: GoldenLayout.ContentItem) => {
         const parentItemConfig = item.config as GoldenLayout.ReactComponentConfig;
         const parentId = parentItemConfig.id as string;

@@ -112,4 +112,20 @@ export class RenderConfigWidgetStore {
     @action initXYBoundaries (minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
         this.linePlotInitXYBoundaries = { minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal };
     }
+
+    public toConfig = () => {
+        return {
+            primaryLineColor: this.primaryLineColor.colorHex,
+            lineWidth: this.lineWidth,
+            linePlotPointSize: this.linePlotPointSize,
+            logScaleY: this.logScaleY,
+            markerTextVisible: this.markerTextVisible,
+            meanRmsVisible: this.meanRmsVisible,
+            plotType: this.plotType,
+            minXVal: this.linePlotInitXYBoundaries.minXVal,
+            maxXVal: this.linePlotInitXYBoundaries.maxXVal,
+            minYVal: this.linePlotInitXYBoundaries.minYVal,
+            maxYVal: this.linePlotInitXYBoundaries.maxYVal
+        };
+    };
 }

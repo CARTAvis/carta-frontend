@@ -432,6 +432,11 @@ export class LayoutStore {
             if (config.type === "spatial-profiler") {
                 floatingConfig["coord"] = config.title && config.title.indexOf("Y") >= 0 ? "y" : "x";
             }
+            // add widget settings
+            const widgetConfig = this.appStore.widgetsStore.toWidgetConfig(config);
+            if (widgetConfig) {
+                floatingConfig["widgetConfig"] = widgetConfig;
+            }
             simpleConfig.floating.push(floatingConfig);
         });
 
