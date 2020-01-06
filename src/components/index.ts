@@ -19,3 +19,4 @@ export * from "./SpatialProfiler/SpatialProfilerSettingsPanelComponent/SpatialPr
 export * from "./RenderConfig/RenderConfigSettingsPanelComponent/RenderConfigSettingsPanelComponent";
 export * from "./Histogram/HistogramSettingsPanelComponent/HistogramSettingsPanelComponent";
 export * from "./SplashScreen/SplashScreenComponent";
+export * from "./FileInfo/FileInfoComponent";

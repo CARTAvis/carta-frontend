@@ -1,11 +1,12 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, computed, observable} from "mobx";
-import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, NonIdealState, Popover, Position, Pre, Spinner, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
+import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, Popover, Position, TabId, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FileListComponent} from "./FileList/FileListComponent";
+import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, BrowserMode, FileInfoTabs} from "stores";
+import {AppStore, BrowserMode} from "stores";
 import "./FileBrowserDialogComponent.css";
 
 @observer
@@ -85,28 +86,6 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         const forbiddenRegex = /(\.\.)|(\\)+/gm;
         return (filename && filename.length && !filename.match(forbiddenRegex));
     }
-
-    private renderInfoPanel = () => {
-        const fileBrowserStore = this.props.appStore.fileBrowserStore;
-        if (fileBrowserStore.selectedFile) {
-            if (fileBrowserStore.loadingInfo) {
-                return <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner"/>} title="Loading file info..."/>;
-            } else {
-                if (fileBrowserStore.browserMode === BrowserMode.File && fileBrowserStore.fileInfoResp) {
-                    if (fileBrowserStore.selectedTab === FileInfoTabs.INFO) {
-                        return <Pre className="file-info-pre">{fileBrowserStore.fileInfo}</Pre>;
-                    } else if (fileBrowserStore.selectedTab === FileInfoTabs.HEADER) {
-                        return <Pre className="file-info-pre">{fileBrowserStore.headers}</Pre>;
-                    } // probably more tabs will be added in the future
-                } else if ((fileBrowserStore.browserMode === BrowserMode.RegionImport || fileBrowserStore.browserMode === BrowserMode.RegionExport) && fileBrowserStore.regionFileInfo) {
-                    return <Pre className="file-info-pre">{fileBrowserStore.regionFileInfo.join("\n")}</Pre>;
-                } else {
-                    return <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={fileBrowserStore.responseErrorMessage + " Select another file from the list on the left"}/>;
-                }
-            }
-        }
-        return <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected" description="Select a file from the list on the left"/>;
-    };
 
     private renderActionButton(browserMode: BrowserMode, appending: boolean) {
         const fileBrowserStore = this.props.appStore.fileBrowserStore;
@@ -276,13 +255,15 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                             />
                         </div>
                         <div className="file-info-pane">
-                            <Tabs id="info-tabs" onChange={this.handleTabChange} selectedTabId={fileBrowserStore.selectedTab}>
-                                <Tab id={FileInfoTabs.INFO} title="File Information"/>
-                                {fileBrowserStore.browserMode === BrowserMode.File &&
-                                <Tab id={FileInfoTabs.HEADER} title="Header"/>
-                                }
-                            </Tabs>
-                            {this.renderInfoPanel()}
+                            <FileInfoComponent
+                                infoTypes={fileBrowserStore.browserMode === BrowserMode.File ? [FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER] : [FileInfoType.REGION_FILE]}
+                                fileInfoExtended={fileBrowserStore.fileInfoExtended}
+                                regionFileInfo={fileBrowserStore.regionFileInfo ? fileBrowserStore.regionFileInfo.join("\n") : ""}
+                                selectedTab={fileBrowserStore.selectedTab as FileInfoType}
+                                handleTabChange={this.handleTabChange}
+                                isLoading={fileBrowserStore.loadingInfo}
+                                errorMessage={fileBrowserStore.responseErrorMessage}
+                            />
                         </div>
                     </div>
                     {exportFileInput}
