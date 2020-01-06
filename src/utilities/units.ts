@@ -1,3 +1,5 @@
+import {CARTA} from "carta-protobuf";
+
 export function velocityFromFrequency(freq: number, refFreq: number): number {
     const c = 299792458;
     return c * (1.0 - freq / refFreq);
@@ -26,7 +28,7 @@ export function frequencyStringFromVelocity(velocity: number, refFreq: number): 
 
 export function toExponential(val: number, decimals: number = 0): string {
     if (isFinite(val) && isFinite(decimals) && decimals >= 0 && decimals <= 20) {
-      return val.toExponential(decimals);
+        return val.toExponential(decimals);
     }
     // leave undefined or non-finite values as is (+- INF, NaN and undefined will still appear properly)
     return String(val);
@@ -35,7 +37,7 @@ export function toExponential(val: number, decimals: number = 0): string {
 // According to MDN, toFixed only works for up to 20 decimals
 export function toFixed(val: number, decimals: number = 0): string {
     if (isFinite(val) && isFinite(decimals) && decimals >= 0 && decimals <= 20) {
-      return val.toFixed(decimals);
+        return val.toFixed(decimals);
     }
     // leave undefined or non-finite values as is (+- INF, NaN and undefined will still appear properly)
     return String(val);
@@ -65,4 +67,16 @@ export function formattedExponential(val: number, digits: number, unit: string =
         valString = `${valString} ${unit}`;
     }
     return valString;
+}
+
+export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
+    if (!headerEntry) {
+        return NaN;
+    }
+
+    if (headerEntry.entryType === CARTA.EntryType.FLOAT || headerEntry.entryType === CARTA.EntryType.INT) {
+        return headerEntry.numericValue;
+    } else {
+        return parseFloat(headerEntry.value);
+    }
 }
