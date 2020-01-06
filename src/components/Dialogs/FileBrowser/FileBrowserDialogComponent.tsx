@@ -218,14 +218,15 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             className += " bp3-dark";
         }
 
-        const fileBrowserStore = this.props.appStore.fileBrowserStore;
+        const appStore = this.props.appStore;
+        const fileBrowserStore = appStore.fileBrowserStore;
         const dialogProps: IDialogProps = {
             icon: "folder-open",
             className: className,
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: fileBrowserStore.fileBrowserDialogVisible,
+            isOpen: appStore.dialogStore.fileBrowserDialogVisible,
             onClose: fileBrowserStore.hideFileBrowser,
             onOpened: () => this.refreshFileList(),
             title: "File Browser",

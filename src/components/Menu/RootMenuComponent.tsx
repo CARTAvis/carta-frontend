@@ -57,7 +57,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     disabled={!appStore.activeFrame}
                     onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
                 />
-                <Menu.Item text="Preferences" onClick={appStore.showPreferenceDialog}/>
+                <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog}/>
             </Menu>
         );
 
@@ -122,7 +122,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                             />
                         )}
                     </Menu.Item>
-                    <Menu.Item text="Save Layout" onClick={appStore.showSaveLayoutDialog}/>
+                    <Menu.Item text="Save Layout" onClick={appStore.dialogStore.showSaveLayoutDialog}/>
                     <Menu.Item text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
                         {userLayouts && userLayouts.length > 0 && userLayouts.map((value) =>
                             <Menu.Item
@@ -158,8 +158,8 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         const helpMenu = (
             <Menu>
                 <Menu.Item text="Online Manual" icon={"help"} onClick={this.handleDocumentationClicked}/>
-                <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={appStore.showHotkeyDialog}/>
-                <Menu.Item text="About" icon={"info-sign"} onClick={appStore.showAboutDialog}/>
+                <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog}/>
+                <Menu.Item text="About" icon={"info-sign"} onClick={appStore.dialogStore.showAboutDialog}/>
             </Menu>
         );
 

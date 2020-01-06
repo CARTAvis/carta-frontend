@@ -141,7 +141,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             const frame = appStore.getFrame(region.fileId);
             if (frame) {
                 frame.regionSet.selectRegion(region);
-                appStore.showRegionDialog();
+                appStore.dialogStore.showRegionDialog();
             }
         }
     };
