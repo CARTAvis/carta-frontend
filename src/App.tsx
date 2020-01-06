@@ -15,7 +15,8 @@ import {
     PreferenceDialogComponent,
     RegionDialogComponent,
     SaveLayoutDialogComponent,
-    TaskProgressDialogComponent
+    TaskProgressDialogComponent,
+    FileInfoDialogComponent
 } from "./components/Dialogs";
 import {AppStore, BrowserMode, dayPalette, nightPalette, RegionMode} from "./stores";
 import {ConnectionStatus} from "./services";
@@ -109,6 +110,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 <RegionDialogComponent appStore={appStore}/>
                 <PreferenceDialogComponent appStore={appStore}/>
                 <SaveLayoutDialogComponent appStore={appStore}/>
+                <FileInfoDialogComponent appStore={appStore}/>
                 <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>

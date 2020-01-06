@@ -1,7 +1,7 @@
 import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable, ObservableMap} from "mobx";
-import {IOptionProps} from "@blueprintjs/core";
+import {IOptionProps, TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {
     AlertStore,
@@ -31,6 +31,7 @@ import {BackendService, ConnectionStatus, TileService} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {AppToaster} from "../components/Shared";
+import {FileInfoType} from "../components";
 
 export class AppStore {
     // Backend services
@@ -173,6 +174,19 @@ export class AppStore {
     @action setUsername = (username: string) => {
         this.username = username;
     };
+
+    // File info dialog
+    @observable fileInfoDialogVisible: boolean = false;
+    @observable selectedFileInfoTab: TabId = FileInfoType.IMAGE_FILE;
+    @action showFileInfoDialog = () => {
+        this.fileInfoDialogVisible = true;
+    };
+    @action hideFileInfoDialog = () => {
+        this.fileInfoDialogVisible = false;
+    };
+    @action setSelectedFileInfoTab = (newId: TabId) => {
+        this.selectedFileInfoTab = newId;
+    }
 
     @action connectToServer = (socketName: string = "socket") => {
         let wsURL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}/${socketName}`;
