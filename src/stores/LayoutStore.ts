@@ -274,9 +274,9 @@ export class LayoutStore {
                         simpleChild["height"] = child.height;
                     }
                     // add widget settings
-                    const widgetConfig = this.appStore.widgetsStore.toWidgetConfig(widgetType, child.id);
-                    if (widgetConfig) {
-                        simpleChild["widgetConfig"] = widgetConfig;
+                    const widgetSettingsConfig = this.appStore.widgetsStore.toWidgetSettingsConfig(widgetType, child.id);
+                    if (widgetSettingsConfig) {
+                        simpleChild["widgetSettings"] = widgetSettingsConfig;
                     }
                     newParentContent.push(simpleChild);
                 }
@@ -438,9 +438,9 @@ export class LayoutStore {
                 floatingConfig["coord"] = config.title && config.title.indexOf("Y") >= 0 ? "y" : "x";
             }
             // add widget settings
-            const widgetConfig = this.appStore.widgetsStore.toWidgetConfig(config.type, config.id);
-            if (widgetConfig) {
-                floatingConfig["widgetConfig"] = widgetConfig;
+            const widgetSettingsConfig = this.appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id);
+            if (widgetSettingsConfig) {
+                floatingConfig["widgetSettings"] = widgetSettingsConfig;
             }
             simpleConfig.floating.push(floatingConfig);
         });

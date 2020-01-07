@@ -393,7 +393,7 @@ export class WidgetsStore {
         layout.on("stateChanged", this.handleStateUpdates);
     };
 
-    public toWidgetConfig = (widgetType: string, widgetID: string) => {
+    public toWidgetSettingsConfig = (widgetType: string, widgetID: string) => {
         if (!widgetType || !widgetID) {
             return null;
         }
