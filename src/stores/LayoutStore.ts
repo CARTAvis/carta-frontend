@@ -258,12 +258,12 @@ export class LayoutStore {
                         this.genSimpleConfig(simpleChild.content, child.content);
                     }
                 } else if (child.type === "component" && child.id) {
-                    const trimmed = (child.id).replace(/\-\d+$/, "");
+                    const widgetType = (child.id).replace(/\-\d+$/, "");
                     let simpleChild = {
                         type: child.type,
-                        id: trimmed
+                        id: widgetType
                     };
-                    if (trimmed === "spatial-profiler") {
+                    if (widgetType === "spatial-profiler") {
                         // TODO: use better way to reveal coord property in config
                         simpleChild["coord"] = child.title && child.title.indexOf("Y") >= 0 ? "y" : "x";
                     }
@@ -272,6 +272,11 @@ export class LayoutStore {
                     }
                     if (child.height) {
                         simpleChild["height"] = child.height;
+                    }
+                    // add widget settings
+                    const widgetConfig = this.appStore.widgetsStore.toWidgetConfig(widgetType, child.id);
+                    if (widgetConfig) {
+                        simpleChild["widgetConfig"] = widgetConfig;
                     }
                     newParentContent.push(simpleChild);
                 }
@@ -433,7 +438,7 @@ export class LayoutStore {
                 floatingConfig["coord"] = config.title && config.title.indexOf("Y") >= 0 ? "y" : "x";
             }
             // add widget settings
-            const widgetConfig = this.appStore.widgetsStore.toWidgetConfig(config);
+            const widgetConfig = this.appStore.widgetsStore.toWidgetConfig(config.type, config.id);
             if (widgetConfig) {
                 floatingConfig["widgetConfig"] = widgetConfig;
             }

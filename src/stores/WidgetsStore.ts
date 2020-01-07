@@ -393,27 +393,27 @@ export class WidgetsStore {
         layout.on("stateChanged", this.handleStateUpdates);
     };
 
-    public toWidgetConfig = (widget: WidgetConfig) => {
-        if (!widget || !widget.id || !widget.type) {
+    public toWidgetConfig = (widgetType: string, widgetID: string) => {
+        if (!widgetType || !widgetID) {
             return null;
         }
 
         let widgetStore = null;
-        switch (widget.type) {
+        switch (widgetType) {
             case RenderConfigComponent.WIDGET_CONFIG.type:
-                widgetStore = this.renderConfigWidgets.get(widget.id);
+                widgetStore = this.renderConfigWidgets.get(widgetID);
                 break;
             case SpatialProfilerComponent.WIDGET_CONFIG.type:
-                widgetStore = this.spatialProfileWidgets.get(widget.id);
+                widgetStore = this.spatialProfileWidgets.get(widgetID);
                 break;
             case SpectralProfilerComponent.WIDGET_CONFIG.type:
-                widgetStore = this.spectralProfileWidgets.get(widget.id);
+                widgetStore = this.spectralProfileWidgets.get(widgetID);
                 break;
             case HistogramComponent.WIDGET_CONFIG.type:
-                widgetStore = this.histogramWidgets.get(widget.id);
+                widgetStore = this.histogramWidgets.get(widgetID);
                 break;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
-                widgetStore = this.stokesAnalysisWidgets.get(widget.id);
+                widgetStore = this.stokesAnalysisWidgets.get(widgetID);
                 break;
             default:
                 break;
