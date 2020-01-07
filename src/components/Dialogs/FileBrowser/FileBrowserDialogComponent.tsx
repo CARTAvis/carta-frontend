@@ -238,7 +238,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         <Breadcrumbs
                             breadcrumbRenderer={this.renderBreadcrumb}
                             items={this.pathItems}
-                            />
+                        />
                     </React.Fragment>
                     }
                 </div>

@@ -1,5 +1,7 @@
 import {action, observable} from "mobx";
 import {AppStore} from "stores";
+import {TabId} from "@blueprintjs/core";
+import {FileInfoType} from "../components";
 
 export class DialogStore {
     private readonly appStore: AppStore;
@@ -74,6 +76,19 @@ export class DialogStore {
     @action hideFileBrowserDialog = () => {
         this.fileBrowserDialogVisible = false;
     };
+
+    // File Info
+    @observable fileInfoDialogVisible: boolean = false;
+    @observable selectedFileInfoDialogTab: TabId = FileInfoType.IMAGE_FILE;
+    @action showFileInfoDialog = () => {
+        this.fileInfoDialogVisible = true;
+    };
+    @action hideFileInfoDialog = () => {
+        this.fileInfoDialogVisible = false;
+    };
+    @action setSelectedFileInfoDialogTab = (newId: TabId) => {
+        this.selectedFileInfoDialogTab = newId;
+    }
 
     constructor(appStore: AppStore) {
         this.appStore = appStore;
