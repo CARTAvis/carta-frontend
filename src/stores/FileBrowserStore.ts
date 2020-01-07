@@ -3,11 +3,7 @@ import {TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
 import { AppStore } from "stores";
-
-export enum FileInfoTabs {
-    INFO = "tab-info",
-    HEADER = "tab-header"
-}
+import {FileInfoType} from "components";
 
 export enum BrowserMode {
     File,
@@ -28,7 +24,7 @@ export class FileBrowserStore {
     @observable selectedHDU: string;
     @observable fileInfoExtended: CARTA.IFileInfoExtended;
     @observable regionFileInfo: string[];
-    @observable selectedTab: TabId = FileInfoTabs.INFO;
+    @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
     @observable loadingList = false;
     @observable loadingInfo = false;
     @observable fileInfoResp = false;
@@ -43,7 +39,8 @@ export class FileBrowserStore {
         this.browserMode = mode;
         this.appStore.dialogStore.showFileBrowserDialog();
         this.fileList = null;
-        this.selectedTab = FileInfoTabs.INFO;
+        this.selectedTab = (BrowserMode.File === mode) ? FileInfoType.IMAGE_FILE : FileInfoType.REGION_FILE;
+        this.responseErrorMessage = "";
         this.exportFilename = "";
         this.getFileList(this.startingDirectory);
     };
@@ -80,6 +77,7 @@ export class FileBrowserStore {
         this.loadingInfo = true;
         this.fileInfoResp = false;
         this.fileInfoExtended = null;
+        this.responseErrorMessage = "";
         this.backendService.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.fileInfoExtended = res.fileInfoExtended;
@@ -99,6 +97,7 @@ export class FileBrowserStore {
         this.loadingInfo = true;
         this.fileInfoResp = false;
         this.regionFileInfo = null;
+        this.responseErrorMessage = "";
         this.backendService.getRegionFileInfo(directory, file).subscribe((res: CARTA.IRegionFileInfoResponse) => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.loadingInfo = false;

@@ -6,6 +6,7 @@
     .file-path {
         margin-top: 20px;
         margin-left: 25px;
+        display: flex;
     }
 
     .bp3-dialog-body {
@@ -34,19 +35,8 @@
             }
 
             .file-info-pane {
-                width: 40%;
+                width: 38%;
                 margin-left: 2%;
-                margin-bottom: 40px;
-
-                .file-info-pre {
-                    overflow: auto;
-                    height: 100%;
-                    flex: 2 2 auto;
-                }
-
-                .bp3-heading {
-                    flex: 0 0 auto;
-                }
             }
         }
 
