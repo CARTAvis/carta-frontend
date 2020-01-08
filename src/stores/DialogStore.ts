@@ -90,6 +90,17 @@ export class DialogStore {
         this.selectedFileInfoDialogTab = newId;
     }
 
+    // Overlay Settings
+    @observable overlaySettingsDialogVisible = false;
+
+    @action showOverlaySettings = () => {
+        this.overlaySettingsDialogVisible = true;
+    };
+
+    @action hideOverlaySettings = () => {
+        this.overlaySettingsDialogVisible = false;
+    };
+
     constructor(appStore: AppStore) {
         this.appStore = appStore;
     }

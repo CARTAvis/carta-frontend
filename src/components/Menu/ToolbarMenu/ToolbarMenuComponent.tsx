@@ -77,7 +77,7 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
                         <Button icon={"properties"} onClick={dialogStore.showPreferenceDialog} className={dialogStore.preferenceDialogVisible ? "bp3-active" : ""}/>
                     </Tooltip>
                     <Tooltip content={<span>Overlay Settings</span>}>
-                        <Button icon={"settings"} onClick={this.props.appStore.overlayStore.showOverlaySettings} className={this.props.appStore.overlayStore.overlaySettingsDialogVisible ? "bp3-active" : ""}/>
+                        <Button icon={"settings"} onClick={dialogStore.showOverlaySettings} className={dialogStore.overlaySettingsDialogVisible ? "bp3-active" : ""}/>
                     </Tooltip>
                 </ButtonGroup>
             </React.Fragment>
