@@ -117,10 +117,39 @@ export class RenderConfigWidgetStore {
         if (!widgetSettings) {
             return;
         }
-
-        // TODO: add validations
-        if (widgetSettings.primaryLineColor) {
+        // TODO: validations
+        if ("primaryLineColor" in widgetSettings) {
             this.primaryLineColor = widgetSettings.primaryLineColor;
+        }
+        if ("lineWidth" in widgetSettings) {
+            this.lineWidth = widgetSettings.lineWidth;
+        }
+        if ("linePlotPointSize" in widgetSettings) {
+            this.linePlotPointSize = widgetSettings.linePlotPointSize;
+        }
+        if ("logScaleY" in widgetSettings) {
+            this.logScaleY = widgetSettings.logScaleY;
+        }
+        if ("markerTextVisible" in widgetSettings) {
+            this.markerTextVisible = widgetSettings.markerTextVisible;
+        }
+        if ("meanRmsVisible" in widgetSettings) {
+            this.meanRmsVisible = widgetSettings.meanRmsVisible;
+        }
+        if ("plotType" in widgetSettings) {
+            this.plotType = widgetSettings.plotType;
+        }
+        if ("minXVal" in widgetSettings) {
+            this.minXVal = widgetSettings.minXVal;
+        }
+        if ("maxXVal" in widgetSettings) {
+            this.maxXVal = widgetSettings.maxXVal;
+        }
+        if ("minYVal" in widgetSettings) {
+            this.minYVal = widgetSettings.minYVal;
+        }
+        if ("maxYVal" in widgetSettings) {
+            this.maxYVal = widgetSettings.maxYVal;
         }
     };
 
