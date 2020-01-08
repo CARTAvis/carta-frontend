@@ -249,14 +249,14 @@ export class WidgetsStore {
         }
     };
 
-    private addWidgetByType = (widgetType: string, coord: string = null): string => {
+    private addWidgetByType = (widgetType: string, widgetSettings: object = null): string => {
         let itemId;
         switch (widgetType) {
             case ImageViewComponent.WIDGET_CONFIG.type:
                 itemId = ImageViewComponent.WIDGET_CONFIG.id;
                 break;
             case RenderConfigComponent.WIDGET_CONFIG.type:
-                itemId = this.addRenderConfigWidget();
+                itemId = this.addRenderConfigWidget(widgetSettings);
                 break;
             case SpatialProfilerComponent.WIDGET_CONFIG.type:
                 itemId = this.addSpatialProfileWidget(null, coord && coord === "y" ? "y" : "x", -1, 0);
@@ -708,13 +708,17 @@ export class WidgetsStore {
         this.addFloatingWidget(config);
     };
 
-    @action addRenderConfigWidget(id: string = null) {
+    @action addRenderConfigWidget(id: string = null, widgetSettings: object = null) {
         if (!id) {
             id = this.getNextId(RenderConfigComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            this.renderConfigWidgets.set(id, new RenderConfigWidgetStore());
+            const widgetStore = new RenderConfigWidgetStore();
+            if (!widgetSettings) {
+                widgetStore.init(widgetSettings);
+            }
+            this.renderConfigWidgets.set(id, widgetStore);
         }
         return id;
     }

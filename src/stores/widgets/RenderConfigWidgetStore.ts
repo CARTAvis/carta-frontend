@@ -113,6 +113,17 @@ export class RenderConfigWidgetStore {
         this.linePlotInitXYBoundaries = { minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal };
     }
 
+    public init = (widgetSettings: object) => {
+        if (!widgetSettings) {
+            return;
+        }
+
+        // TODO: add validations
+        if (widgetSettings.primaryLineColor) {
+            this.primaryLineColor = widgetSettings.primaryLineColor;
+        }
+    };
+
     public toConfig = () => {
         return {
             primaryLineColor: this.primaryLineColor.colorHex,
