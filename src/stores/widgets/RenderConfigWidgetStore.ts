@@ -113,13 +113,13 @@ export class RenderConfigWidgetStore {
         this.linePlotInitXYBoundaries = { minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal };
     }
 
+    // TODO: validations
     public init = (widgetSettings: object) => {
         if (!widgetSettings) {
             return;
         }
-        // TODO: validations
         if ("primaryLineColor" in widgetSettings) {
-            this.primaryLineColor = widgetSettings.primaryLineColor;
+            this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
         }
         if ("lineWidth" in widgetSettings) {
             this.lineWidth = widgetSettings.lineWidth;
@@ -140,16 +140,16 @@ export class RenderConfigWidgetStore {
             this.plotType = widgetSettings.plotType;
         }
         if ("minXVal" in widgetSettings) {
-            this.minXVal = widgetSettings.minXVal;
+            this.linePlotInitXYBoundaries.minXVal = widgetSettings.minXVal;
         }
         if ("maxXVal" in widgetSettings) {
-            this.maxXVal = widgetSettings.maxXVal;
+            this.linePlotInitXYBoundaries.maxXVal = widgetSettings.maxXVal;
         }
         if ("minYVal" in widgetSettings) {
-            this.minYVal = widgetSettings.minYVal;
+            this.linePlotInitXYBoundaries.minYVal = widgetSettings.minYVal;
         }
         if ("maxYVal" in widgetSettings) {
-            this.maxYVal = widgetSettings.maxYVal;
+            this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
         }
     };
 
