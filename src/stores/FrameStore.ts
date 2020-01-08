@@ -721,9 +721,6 @@ export class FrameStore {
         // TODO: This should be defined by the contour config widget
         this.contourConfig.setBounds(this.renderConfig.scaleMinVal, this.renderConfig.scaleMaxVal);
         this.contourConfig.setNumComputedLevels(this.preference.contourNumLevels);
-        this.contourConfig.setColor(hexStringToRgba(this.preference.contourColor));
-        this.contourConfig.setColormap(this.preference.colormap);
-        this.contourConfig.setColormapEnabled(this.preference.contourColormapEnabled);
         this.contourConfig.setEnabled(true);
 
         // TODO: Allow a different reference frame

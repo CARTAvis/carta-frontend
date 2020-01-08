@@ -1,5 +1,6 @@
 export * from "./toaster";
 export * from "./ColorPicker/ColorPickerComponent";
+export * from "./ColormapComponent/ColormapComponent";
 export * from "./LinePlot/LinePlotComponent";
 export * from "./PlotTypeSelector/PlotTypeSelectorComponent";
 export * from "./PopoverSettings/PopoverSettingsComponent";

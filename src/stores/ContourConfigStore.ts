@@ -1,17 +1,24 @@
 import {action, computed, observable} from "mobx";
 import {RGBColor} from "react-color";
 import {PreferenceStore} from "./PreferenceStore";
-import {hexStringToRgba} from "../utilities";
+import {hexStringToRgba, RGBA} from "../utilities";
+
+export enum ContourDashMode {
+    None,
+    Dashed,
+    NegativeOnly
+}
 
 export class ContourConfigStore {
     @observable enabled: boolean;
     @observable numComputedLevels: number;
     @observable lowerBound: number;
     @observable upperBound: number;
-    @observable color: RGBColor;
+    @observable color: RGBA;
     @observable colormapEnabled: boolean;
     @observable colormap: string;
-    @observable dashLength: number;
+    @observable dashMode: ContourDashMode;
+    @observable thickness: number;
     @observable manualLevelsEnabled: boolean;
     @observable manualLevels: number[];
 
@@ -48,6 +55,8 @@ export class ContourConfigStore {
         this.color = hexStringToRgba(this.preferenceStore.contourColor);
         this.colormapEnabled = this.preferenceStore.contourColormapEnabled;
         this.colormap = this.preferenceStore.contourColormap;
+        this.thickness = 1.0;
+        this.dashMode = ContourDashMode.NegativeOnly;
         this.manualLevels = [];
     }
 
@@ -75,13 +84,17 @@ export class ContourConfigStore {
     }
 
     // Styling
-    @action setColor = (color: RGBColor) => {
+    @action setColor = (color: RGBA) => {
         this.color = color;
     };
 
-    @action setDashLength(length: number) {
-        this.dashLength = length;
-    }
+    @action setDashMode = (mode: ContourDashMode) => {
+        this.dashMode = mode;
+    };
+
+    @action setThickness = (val: number) => {
+        this.thickness = val;
+    };
 
     @action setColormap = (colormap: string) => {
         this.colormap = colormap;

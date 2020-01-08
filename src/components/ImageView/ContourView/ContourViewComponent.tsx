@@ -1,6 +1,6 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {AppStore, FrameStore, OverlayStore, PreferenceStore, RenderConfigStore} from "stores";
+import {AppStore, ContourDashMode, OverlayStore, RenderConfigStore} from "stores";
 import {getShaderFromString, loadImageTexture} from "utilities";
 import "./ContourViewComponent.css";
 import allMaps from "static/allmaps.png";
@@ -10,7 +10,6 @@ const pixelShaderDashed = require("!raw-loader!./GLSL/pixel_dashed.glsl");
 
 export interface ContourViewComponentProps {
     overlaySettings: OverlayStore;
-    preference: PreferenceStore;
     appStore: AppStore;
     docked: boolean;
 }
@@ -97,8 +96,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             // update uniforms
             this.gl.uniform2f(this.shaderUniforms.Scale, scale.x, scale.y);
             this.gl.uniform2f(this.shaderUniforms.Offset, offset.x, offset.y);
-            this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * this.props.preference.contourThickness / frame.zoomLevel);
-            this.gl.uniform1i(this.shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(this.props.preference.contourColormap));
+            this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / frame.zoomLevel);
+            this.gl.uniform1i(this.shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(frame.contourConfig.colormap));
 
             // Calculates ceiling power-of-three value as a dash factor.
             const dashFactor = Math.pow(3.0, Math.ceil(Math.log(1.0 / frame.zoomLevel) / Math.log(3)));
@@ -125,8 +124,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                     }
 
                     // Dash length in canvas pixels
-                    const dashLength = level <= 0 ? 8 : 0;
-                    // const dashLength = 0;
+                    const dashMode = frame.contourConfig.dashMode;
+                    const dashLength = (dashMode === ContourDashMode.Dashed || (dashMode === ContourDashMode.NegativeOnly && level < 0)) ? 8 : 0;
                     this.gl.uniform1f(this.shaderUniforms.DashLength, devicePixelRatio * dashLength * dashFactor);
 
                     this.gl.uniform1f(this.shaderUniforms.CmapValue, levelFraction);
@@ -188,10 +187,13 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             const view = frame.requiredFrameView;
             const contourData = frame.contourStores;
             const config = frame.contourConfig;
+            const thickness = config.thickness;
+            const color = config.colormapEnabled ? config.colormap : config.color;
+            const dashMode = config.dashMode;
+
             contourData.forEach(contourStore => {
                 const numVertices = contourStore.vertexCount;
             });
-            const thickness = this.props.preference.contourThickness;
         }
         const padding = this.props.overlaySettings.padding;
         let className = "contour-div";

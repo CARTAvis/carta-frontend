@@ -4,8 +4,8 @@ import {observer} from "mobx-react";
 import {Alert, Button, FormGroup, IPopoverProps, MenuItem, NumericInput, Switch} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {FrameScaling, RenderConfigStore} from "stores/RenderConfigStore";
+import {ColormapComponent} from "components/Shared";
 import {ScalingComponent} from "./ScalingComponent";
-import {ColormapComponent} from "./ColormapComponent";
 
 const HistogramSelect = Select.ofType<boolean>();
 
