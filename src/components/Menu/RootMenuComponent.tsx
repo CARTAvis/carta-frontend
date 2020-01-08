@@ -95,6 +95,11 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     disabled={!appStore.activeFrame}
                     onClick={appStore.showFileInfoDialog}
                 />
+                <Menu.Item
+                    text="Contours"
+                    icon={"heatmap"}
+                    onClick={appStore.showContourDialog}
+                />
             </Menu>
         );
 

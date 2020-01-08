@@ -186,7 +186,16 @@ export class AppStore {
     };
     @action setSelectedFileInfoTab = (newId: TabId) => {
         this.selectedFileInfoTab = newId;
-    }
+    };
+
+    // Contour dialog
+    @observable contourDialogVisible: boolean = false;
+    @action showContourDialog = () => {
+        this.contourDialogVisible = true;
+    };
+    @action hideContourDialog = () => {
+        this.contourDialogVisible = false;
+    };
 
     @action connectToServer = (socketName: string = "socket") => {
         let wsURL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}/${socketName}`;

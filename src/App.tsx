@@ -25,6 +25,7 @@ import GitCommit from "./static/gitInfo";
 import "./App.css";
 import "./layout-base.css";
 import "./layout-theme.css";
+import {ContourDialogComponent} from "./components/Dialogs/ContourDialog/ContourDialogComponent";
 
 @HotkeysTarget @observer
 export class App extends React.Component<{ appStore: AppStore }> {
@@ -111,6 +112,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 <PreferenceDialogComponent appStore={appStore}/>
                 <SaveLayoutDialogComponent appStore={appStore}/>
                 <FileInfoDialogComponent appStore={appStore}/>
+                <ContourDialogComponent appStore={appStore}/>
                 <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>
