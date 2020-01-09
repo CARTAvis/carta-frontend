@@ -1,7 +1,6 @@
 import {observable, computed, action} from "mobx";
 import {AppStore, AlertStore, WidgetConfig} from "stores";
 import * as GoldenLayout from "golden-layout";
-import * as Ajv from "ajv";
 import {LayoutSchema, PresetLayout} from "models";
 import {AppToaster} from "components/Shared";
 import {smoothStepOffset} from "utilities";
@@ -146,22 +145,17 @@ export class LayoutStore {
     };
 
     private validateUserLayouts = (userLayouts) => {
-        if (userLayouts) {
-            const jsonValidator = new Ajv({removeAdditional: true});
-            Object.keys(userLayouts).forEach((layoutName) => {
-                // skip user layouts which have the same name as presets & those dont have correct key 'layoutVersion' as integer
-                if (!PresetLayout.isValid(layoutName) &&
-                    "layoutVersion" in userLayouts[layoutName] &&
-                    typeof userLayouts[layoutName].layoutVersion === "number" &&
-                    LayoutSchema.isLayoutVersionValid(userLayouts[layoutName].layoutVersion)
-                ) {
-                    const version = userLayouts[layoutName].layoutVersion;
-                    if (jsonValidator.validate(LayoutSchema.LAYOUT_SCHEMAS[version], userLayouts[layoutName])) {
-                        this.layouts[layoutName] = userLayouts[layoutName];
-                    }
-                }
-            });
+        if (!userLayouts) {
+            return;
         }
+
+        const layoutNames = Object.keys(userLayouts);
+        layoutNames.forEach((layoutName) => {
+            const layoutConfig = userLayouts[layoutName];
+            if (LayoutSchema.isUserLayoutValid(layoutName, layoutConfig)) {
+                this.layouts[layoutName] = layoutConfig;
+            }
+        });
     };
 
     private initLayoutsFromPresets = () => {
@@ -218,7 +212,7 @@ export class LayoutStore {
             // save only user layouts to local storage, excluding presets
             let userLayouts = {};
             this.userLayouts.forEach((layoutName) => {
-                if (!PresetLayout.isValid(layoutName)) {
+                if (!PresetLayout.isPreset(layoutName)) {
                     userLayouts[layoutName] = this.layouts[layoutName];
                 }
             });
@@ -329,7 +323,7 @@ export class LayoutStore {
     }
 
     @computed get userLayouts(): string[] {
-        return this.layouts ? Object.keys(this.layouts).filter((layoutName) => !PresetLayout.isValid(layoutName)) : [];
+        return this.layouts ? Object.keys(this.layouts).filter((layoutName) => !PresetLayout.isPreset(layoutName)) : [];
     }
 
     @computed get orderedLayouts(): string[] {
@@ -393,7 +387,7 @@ export class LayoutStore {
             return;
         }
 
-        if (PresetLayout.isValid(this.layoutNameToBeSaved)) {
+        if (PresetLayout.isPreset(this.layoutNameToBeSaved)) {
             this.alertStore.showAlert("Layout name cannot be the same as system presets.");
             return;
         }
