@@ -358,4 +358,15 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @computed get isPolAngleAutoScaledY() {
         return (this.polAngleMinY === undefined || this.polAngleMaxY === undefined);
     }
+
+    public init = (widgetSettings): void => {
+        if (!widgetSettings) {
+            return;
+        }
+    };
+
+    public toConfig = () => {
+        return {
+        };
+    };
 }

@@ -114,7 +114,7 @@ export class RenderConfigWidgetStore {
     }
 
     // TODO: validations
-    public init = (widgetSettings: object) => {
+    public init = (widgetSettings): void => {
         if (!widgetSettings) {
             return;
         }

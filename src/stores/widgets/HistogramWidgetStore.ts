@@ -153,4 +153,15 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     @action initXYBoundaries (minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
         this.linePlotInitXYBoundaries = { minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal };
     }
+
+    public init = (widgetSettings): void => {
+        if (!widgetSettings) {
+            return;
+        }
+    };
+
+    public toConfig = () => {
+        return {
+        };
+    };
 }
