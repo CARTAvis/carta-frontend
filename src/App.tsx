@@ -5,19 +5,9 @@ import {observer} from "mobx-react";
 import {autorun} from "mobx";
 import ReactResizeDetector from "react-resize-detector";
 import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget, Intent} from "@blueprintjs/core";
-import {exportImage, FloatingWidgetManagerComponent, RootMenuComponent, SplashScreenComponent} from "./components";
+import {UIControllerComponent, exportImage, FloatingWidgetManagerComponent} from "./components";
 import {AppToaster} from "./components/Shared";
-import {
-    AboutDialogComponent,
-    AuthDialogComponent,
-    FileBrowserDialogComponent,
-    OverlaySettingsDialogComponent,
-    PreferenceDialogComponent,
-    RegionDialogComponent,
-    SaveLayoutDialogComponent,
-    TaskProgressDialogComponent,
-    FileInfoDialogComponent
-} from "./components/Dialogs";
+import {TaskProgressDialogComponent} from "./components/Dialogs";
 import {AppStore, BrowserMode, dayPalette, nightPalette, RegionMode} from "./stores";
 import {ConnectionStatus} from "./services";
 import {PresetLayout} from "models";
@@ -101,16 +91,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         return (
             <div className={className}>
-                <SplashScreenComponent appStore={appStore}/>
-                <RootMenuComponent appStore={appStore}/>
-                <OverlaySettingsDialogComponent appStore={appStore}/>
-                <AuthDialogComponent appStore={appStore}/>
-                <FileBrowserDialogComponent appStore={appStore}/>
-                <AboutDialogComponent appStore={appStore}/>
-                <RegionDialogComponent appStore={appStore}/>
-                <PreferenceDialogComponent appStore={appStore}/>
-                <SaveLayoutDialogComponent appStore={appStore}/>
-                <FileInfoDialogComponent appStore={appStore}/>
+                <UIControllerComponent appStore={appStore}/>
                 <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>
