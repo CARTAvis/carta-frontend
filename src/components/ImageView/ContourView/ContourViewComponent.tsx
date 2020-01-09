@@ -25,6 +25,8 @@ interface ShaderUniforms {
     CmapTexture: WebGLUniformLocation;
     NumCmaps: WebGLUniformLocation;
     CmapIndex: WebGLUniformLocation;
+    Bias: WebGLUniformLocation;
+    Contrast: WebGLUniformLocation;
 }
 
 @observer
@@ -97,7 +99,13 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             this.gl.uniform2f(this.shaderUniforms.Scale, scale.x, scale.y);
             this.gl.uniform2f(this.shaderUniforms.Offset, offset.x, offset.y);
             this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / frame.zoomLevel);
-            this.gl.uniform1i(this.shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(frame.contourConfig.colormap));
+
+            this.gl.uniform1i(this.shaderUniforms.CmapEnabled, frame.contourConfig.colormapEnabled ? 1 : 0);
+            if (frame.contourConfig.colormapEnabled) {
+                this.gl.uniform1i(this.shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(frame.contourConfig.colormap));
+                this.gl.uniform1f(this.shaderUniforms.Bias, frame.contourConfig.colormapBias);
+                this.gl.uniform1f(this.shaderUniforms.Contrast, frame.contourConfig.colormapContrast);
+            }
 
             // Calculates ceiling power-of-three value as a dash factor.
             const dashFactor = Math.pow(3.0, Math.ceil(Math.log(1.0 / frame.zoomLevel) / Math.log(3)));
@@ -113,14 +121,16 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 } else {
                     this.gl.uniform4f(this.shaderUniforms.LineColor, 1, 1, 1, 1);
                 }
-                this.gl.uniform1i(this.shaderUniforms.CmapEnabled, frame.contourConfig.colormapEnabled ? 1 : 0);
 
                 frame.contourStores.forEach((contourStore, level) => {
-                    let levelFraction: number;
-                    if (minVal !== maxVal) {
-                        levelFraction = (level - minVal) / (maxVal - minVal);
-                    } else {
-                        levelFraction = 1.0;
+                    if (frame.contourConfig.colormapEnabled) {
+                        let levelFraction: number;
+                        if (minVal !== maxVal) {
+                            levelFraction = (level - minVal) / (maxVal - minVal);
+                        } else {
+                            levelFraction = 1.0;
+                        }
+                        this.gl.uniform1f(this.shaderUniforms.CmapValue, levelFraction);
                     }
 
                     // Dash length in canvas pixels
@@ -128,12 +138,10 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                     const dashLength = (dashMode === ContourDashMode.Dashed || (dashMode === ContourDashMode.NegativeOnly && level < 0)) ? 8 : 0;
                     this.gl.uniform1f(this.shaderUniforms.DashLength, devicePixelRatio * dashLength * dashFactor);
 
-                    this.gl.uniform1f(this.shaderUniforms.CmapValue, levelFraction);
                     // Update buffers
                     for (let i = 0; i < contourStore.chunkCount; i++) {
                         contourStore.bindBuffer(i);
                         const numVertices = contourStore.numGeneratedVertices[i];
-
                         this.gl.vertexAttribPointer(this.vertexPositionAttribute, 3, WebGLRenderingContext.FLOAT, false, 16, 0);
                         this.gl.vertexAttribPointer(this.vertexNormalAttribute, 2, WebGLRenderingContext.SHORT, false, 16, 12);
                         this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, numVertices);
@@ -174,6 +182,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             CmapTexture: this.gl.getUniformLocation(shaderProgram, "uCmapTexture"),
             NumCmaps: this.gl.getUniformLocation(shaderProgram, "uNumCmaps"),
             CmapIndex: this.gl.getUniformLocation(shaderProgram, "uCmapIndex"),
+            Contrast: this.gl.getUniformLocation(shaderProgram, "uContrast"),
+            Bias: this.gl.getUniformLocation(shaderProgram, "uBias"),
         };
 
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
@@ -190,6 +200,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             const thickness = config.thickness;
             const color = config.colormapEnabled ? config.colormap : config.color;
             const dashMode = config.dashMode;
+            const bias = config.colormapBias;
+            const contrast = config.colormapContrast;
 
             contourData.forEach(contourStore => {
                 const numVertices = contourStore.vertexCount;

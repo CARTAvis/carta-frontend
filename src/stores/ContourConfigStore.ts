@@ -17,6 +17,8 @@ export class ContourConfigStore {
     @observable color: RGBA;
     @observable colormapEnabled: boolean;
     @observable colormap: string;
+    @observable colormapContrast: number;
+    @observable colormapBias: number;
     @observable dashMode: ContourDashMode;
     @observable thickness: number;
     @observable manualLevelsEnabled: boolean;
@@ -55,6 +57,8 @@ export class ContourConfigStore {
         this.color = hexStringToRgba(this.preferenceStore.contourColor);
         this.colormapEnabled = this.preferenceStore.contourColormapEnabled;
         this.colormap = this.preferenceStore.contourColormap;
+        this.colormapBias = 0.0;
+        this.colormapContrast = 1.0;
         this.thickness = 1.0;
         this.dashMode = ContourDashMode.NegativeOnly;
         this.manualLevels = [];
@@ -102,5 +106,13 @@ export class ContourConfigStore {
 
     @action setColormapEnabled = (val: boolean) => {
         this.colormapEnabled = val;
+    };
+
+    @action setColormapBias = (val: number) => {
+        this.colormapBias = val;
+    };
+
+    @action setColormapContrast = (val: number) => {
+        this.colormapContrast = val;
     };
 }

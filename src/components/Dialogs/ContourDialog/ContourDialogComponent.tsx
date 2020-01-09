@@ -130,6 +130,30 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                                 onItemSelect={frame.contourConfig.setColormap}
                             />
                         </FormGroup>
+                        <FormGroup inline={true} label="Bias" disabled={!frame.contourConfig.colormapEnabled}>
+                            <NumericInput
+                                disabled={!frame.contourConfig.colormapEnabled}
+                                placeholder="Bias"
+                                min={-1.0}
+                                max={1.0}
+                                value={frame.contourConfig.colormapBias}
+                                majorStepSize={0.1}
+                                stepSize={0.1}
+                                onValueChange={frame.contourConfig.setColormapBias}
+                            />
+                        </FormGroup>
+                        <FormGroup inline={true} label="Contrast" disabled={!frame.contourConfig.colormapEnabled}>
+                            <NumericInput
+                                disabled={!frame.contourConfig.colormapEnabled}
+                                placeholder="Contrast"
+                                min={0.0}
+                                max={3.0}
+                                value={frame.contourConfig.colormapContrast}
+                                majorStepSize={0.1}
+                                stepSize={0.1}
+                                onValueChange={frame.contourConfig.setColormapContrast}
+                            />
+                        </FormGroup>
                         <FormGroup inline={true} label="Color" disabled={frame.contourConfig.colormapEnabled}>
                             <ColorPickerComponent
                                 color={frame.contourConfig.color}
