@@ -18,7 +18,7 @@ interface ColormapConfigProps {
     disableHistogramSelect: boolean;
 }
 
-const SCALING_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
+export const SCALING_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 
 @observer
 export class ColormapConfigComponent extends React.Component<ColormapConfigProps> {

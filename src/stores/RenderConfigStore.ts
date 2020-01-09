@@ -65,6 +65,7 @@ export class RenderConfigStore {
     @observable channelHistogram: CARTA.IHistogram;
     @observable cubeHistogram: CARTA.IHistogram;
     @observable useCubeHistogram: boolean;
+    @observable useCubeHistogramContours: boolean;
     @observable cubeHistogramProgress: number;
     @observable selectedPercentile: number[];
     @observable stokes: number;
@@ -128,6 +129,14 @@ export class RenderConfigStore {
         }
     }
 
+    @computed get contourHistogram() {
+        if (this.useCubeHistogramContours && this.cubeHistogram) {
+            return this.cubeHistogram;
+        } else {
+            return this.channelHistogram;
+        }
+    }
+
     @computed get scaleMinVal() {
         return this.scaleMin[this.stokes];
     }
@@ -151,6 +160,10 @@ export class RenderConfigStore {
                 this.setPercentileRank(this.selectedPercentile[this.stokes]);
             }
         }
+    };
+
+    @action setUseCubeHistogramContours = (val: boolean) => {
+        this.useCubeHistogramContours = val;
     };
 
     @computed get histogramMin() {

@@ -256,14 +256,14 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         const plotName = `channel ${frame.channel} histogram`;
         let linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
-            yLabel: "Count",
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: plotName,
             logY: this.widgetStore.logScaleY,
             usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
             interpolateLines: this.widgetStore.plotType === PlotType.LINES,
-            tickTypeY: TickType.Scientific,
+            showYAxisTicks: false,
+            showYAxisLabel: false,
             graphClicked: this.onMinMoved,
             graphRightClicked: this.onMaxMoved,
             graphZoomedX: this.widgetStore.setXBounds,

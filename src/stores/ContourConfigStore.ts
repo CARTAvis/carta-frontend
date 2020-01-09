@@ -2,6 +2,7 @@ import {action, computed, observable} from "mobx";
 import {RGBColor} from "react-color";
 import {PreferenceStore} from "./PreferenceStore";
 import {hexStringToRgba, RGBA} from "../utilities";
+import {CARTA} from "carta-protobuf";
 
 export enum ContourDashMode {
     None,

@@ -1,7 +1,10 @@
 .contour-dialog {
     .bp3-dialog-body {
-        display: flex;
-        align-items: stretch;
         user-select: none;
+
+        .histogram-plot {
+            height: 200px;
+            position: relative;
+        }
     }
 }
