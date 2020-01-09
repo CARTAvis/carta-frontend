@@ -71,40 +71,6 @@ const COMPONENT_CONFIG = new Map<string, any>([
     }]
 ]);
 
-const PRESET_CONFIGS = new Map<string, any>([
-    [PresetLayout.DEFAULT, {
-        leftBottomContent: {
-            type: "stack",
-            content: [{type: "component", id: "render-config"}]
-        },
-        rightColumnContent: [{type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "x"}}, {type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "y"}}, {
-            type: "stack",
-            content: [{type: "component", id: "animator"}, {type: "component", id: "region-list"}]
-        }]
-    }],
-    [PresetLayout.CUBEVIEW, {
-        leftBottomContent: {
-            type: "stack",
-            content: [{type: "component", id: "animator"}, {type: "component", id: "render-config"}, {type: "component", id: "region-list"}]
-        },
-        rightColumnContent: [{type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "x"}}, {type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "y"}}, {type: "component", id: "spectral-profiler"}]
-    }],
-    [PresetLayout.CUBEANALYSIS, {
-        leftBottomContent: {
-            type: "stack",
-            content: [{type: "component", id: "animator"}, {type: "component", id: "render-config"}, {type: "component", id: "region-list"}]
-        },
-        rightColumnContent: [{type: "component", id: "spectral-profiler"}, {type: "component", id: "stats"}]
-    }],
-    [PresetLayout.CONTINUUMANALYSIS, {
-        leftBottomContent: {
-            type: "stack",
-            content: [{type: "component", id: "render-config"}, {type: "component", id: "region-list"}, {type: "component", id: "animator"}]
-        },
-        rightColumnContent: [{type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "x"}}, {type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "y"}}, {type: "component", id: "stats"}]
-    }]
-]);
-
 export class LayoutStore {
     public static readonly TOASTER_TIMEOUT = 1500;
 
@@ -160,7 +126,7 @@ export class LayoutStore {
 
     private initLayoutsFromPresets = () => {
         PresetLayout.PRESETS.forEach((presetName) => {
-            const config = PRESET_CONFIGS.get(presetName);
+            const config = PresetLayout.PRESET_CONFIGS.get(presetName);
             this.layouts[presetName] = {
                 layoutVersion: LayoutSchema.CURRENT_LAYOUT_SCHEMA_VERSION,
                 docked: {
