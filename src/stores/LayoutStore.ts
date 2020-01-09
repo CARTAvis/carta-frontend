@@ -118,7 +118,7 @@ export class LayoutStore {
         const layoutNames = Object.keys(userLayouts);
         layoutNames.forEach((layoutName) => {
             const layoutConfig = userLayouts[layoutName];
-            if (LayoutSchema.isUserLayoutValid(layoutName, layoutConfig)) {
+            if (LayoutSchema.IsUserLayoutValid(layoutName, layoutConfig)) {
                 this.layouts[layoutName] = layoutConfig;
             }
         });
