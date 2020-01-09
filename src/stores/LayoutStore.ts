@@ -78,7 +78,7 @@ const PRESET_CONFIGS = new Map<string, any>([
             type: "stack",
             content: [{type: "component", id: "render-config"}]
         },
-        rightColumnContent: [{type: "component", id: "spatial-profiler", coord: "x"}, {type: "component", id: "spatial-profiler", coord: "y"}, {
+        rightColumnContent: [{type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "x"}}, {type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "y"}}, {
             type: "stack",
             content: [{type: "component", id: "animator"}, {type: "component", id: "region-list"}]
         }]
@@ -88,7 +88,7 @@ const PRESET_CONFIGS = new Map<string, any>([
             type: "stack",
             content: [{type: "component", id: "animator"}, {type: "component", id: "render-config"}, {type: "component", id: "region-list"}]
         },
-        rightColumnContent: [{type: "component", id: "spatial-profiler", coord: "x"}, {type: "component", id: "spatial-profiler", coord: "y"}, {type: "component", id: "spectral-profiler"}]
+        rightColumnContent: [{type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "x"}}, {type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "y"}}, {type: "component", id: "spectral-profiler"}]
     }],
     [PresetLayout.CUBEANALYSIS, {
         leftBottomContent: {
@@ -102,7 +102,7 @@ const PRESET_CONFIGS = new Map<string, any>([
             type: "stack",
             content: [{type: "component", id: "render-config"}, {type: "component", id: "region-list"}, {type: "component", id: "animator"}]
         },
-        rightColumnContent: [{type: "component", id: "spatial-profiler", coord: "x"}, {type: "component", id: "spatial-profiler", coord: "y"}, {type: "component", id: "stats"}]
+        rightColumnContent: [{type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "x"}}, {type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "y"}}, {type: "component", id: "stats"}]
     }]
 ]);
 
@@ -263,10 +263,6 @@ export class LayoutStore {
                         type: child.type,
                         id: widgetType
                     };
-                    if (widgetType === "spatial-profiler") {
-                        // TODO: use better way to reveal coord property in config
-                        simpleChild["coord"] = child.title && child.title.indexOf("Y") >= 0 ? "y" : "x";
-                    }
                     if (child.width) {
                         simpleChild["width"] = child.width;
                     }
@@ -307,17 +303,17 @@ export class LayoutStore {
                         this.fillComponents(simpleChild.content, child.content, componentConfigs);
                     }
                 } else if (child.type === "component" && child.id) {
-                    const trimmed = (child.id).replace(/\-\d+$/, "");
-                    if (COMPONENT_CONFIG.has(trimmed)) {
-                        let componentConfig = Object.assign({}, COMPONENT_CONFIG.get(trimmed));
-                        if (trimmed === "spatial-profiler") {
-                            componentConfig["coord"] = child.coord ? child.coord : "x";
-                        }
+                    const widgetType = (child.id).replace(/\-\d+$/, "");
+                    if (COMPONENT_CONFIG.has(widgetType)) {
+                        let componentConfig = Object.assign({}, COMPONENT_CONFIG.get(widgetType));
                         if (child.width) {
                             componentConfig["width"] = child.width;
                         }
                         if (child.height) {
                             componentConfig["height"] = child.height;
+                        }
+                        if ("widgetSettings" in child) {
+                            componentConfig["widgetSettings"] = child.widgetSettings;
                         }
                         componentConfig.props = {appStore: this.appStore, id: "", docked: true};
                         componentConfigs.push(componentConfig);
@@ -434,9 +430,6 @@ export class LayoutStore {
                 defaultX: config.defaultX ? config.defaultX : "",
                 defaultY: config.defaultY ? config.defaultY : ""
             };
-            if (config.type === "spatial-profiler") {
-                floatingConfig["coord"] = config.title && config.title.indexOf("Y") >= 0 ? "y" : "x";
-            }
             // add widget settings
             const widgetSettingsConfig = this.appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id);
             if (widgetSettingsConfig) {

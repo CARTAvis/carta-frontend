@@ -265,6 +265,9 @@ export class SpatialProfileWidgetStore {
         if (!widgetSettings) {
             return;
         }
+        if ("coordinate" in widgetSettings) {
+            this.coordinate = widgetSettings.coordinate;
+        }
     };
 
     public toConfig = () => {
