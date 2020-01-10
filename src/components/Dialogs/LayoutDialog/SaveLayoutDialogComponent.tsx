@@ -32,7 +32,7 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
         const layoutStore = this.props.appStore.layoutStore;
         const alertStore = this.props.appStore.alertStore;
 
-        appStore.hideSaveLayoutDialog();
+        appStore.dialogStore.hideSaveLayoutDialog();
         layoutStore.setLayoutToBeSaved(this.layoutName);
         if (layoutStore.layoutExist(this.layoutName)) {
             if (PresetLayout.isPreset(this.layoutName)) {
@@ -68,8 +68,8 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
             className: className,
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.saveLayoutDialogVisible,
-            onClose: appStore.hideSaveLayoutDialog,
+            isOpen: appStore.dialogStore.saveLayoutDialogVisible,
+            onClose: appStore.dialogStore.hideSaveLayoutDialog,
             title: "Save Layout",
         };
 
@@ -89,7 +89,7 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
                             intent={Intent.NONE}
                             text="Close"
                             onClick={() => {
-                                appStore.hideSaveLayoutDialog();
+                                appStore.dialogStore.hideSaveLayoutDialog();
                                 this.clearInput();
                             }}
                         />
