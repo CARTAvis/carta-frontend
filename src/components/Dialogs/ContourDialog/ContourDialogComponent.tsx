@@ -1,15 +1,18 @@
 import * as React from "react";
+import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, AnchorButton, Button, Classes, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, NonIdealState, NumericInput, Tab, Tabs} from "@blueprintjs/core";
+import {Alert, AnchorButton, Button, Classes, Colors, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, NonIdealState, NumericInput, Tab, Tabs} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {ColorResult} from "react-color";
+import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
 import {ColormapComponent, ColorPickerComponent, LinePlotComponent, LinePlotComponentProps, PlotType} from "components/Shared";
 import {AppStore, ContourDashMode, FrameStore} from "stores";
-import {SWATCH_COLORS} from "utilities";
-import "./ContourDialogComponent.css";
-import {observable} from "mobx";
+import {RenderConfigWidgetStore} from "stores/widgets";
+import {Point2D} from "models";
+import {clamp, SWATCH_COLORS} from "utilities";
 import {SCALING_POPOVER_PROPS} from "../../RenderConfig/ColormapConfigComponent/ColormapConfigComponent";
+import "./ContourDialogComponent.css";
 
 const DataSourceSelect = Select.ofType<FrameStore>();
 const DashModeSelect = Select.ofType<ContourDashMode>();
@@ -25,8 +28,76 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     @observable showCubeHistogramAlert: boolean;
     @observable currentTab: ContourDialogTabs = ContourDialogTabs.Levels;
 
+    private readonly widgetStore: RenderConfigWidgetStore;
+    private cachedFrame: FrameStore;
+    private cachedHistogram: CARTA.IHistogram;
+
     constructor(props: { appStore: AppStore }) {
         super(props);
+
+        this.widgetStore = new RenderConfigWidgetStore();
+
+        autorun(() => {
+            if (this.props.appStore.activeFrame) {
+                const newHist = this.props.appStore.activeFrame.renderConfig.histogram;
+                if (newHist !== this.cachedHistogram) {
+                    this.cachedHistogram = newHist;
+                    this.widgetStore.clearXYBounds();
+                }
+            }
+            const widgetStore = this.widgetStore;
+            if (widgetStore) {
+                const currentData = this.plotData;
+                if (currentData) {
+                    widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
+                }
+            }
+        });
+    }
+
+    componentDidUpdate() {
+        const frame = this.props.appStore.activeFrame;
+
+        if (frame !== this.cachedFrame) {
+            this.cachedFrame = frame;
+            this.widgetStore.clearXYBounds();
+        }
+    }
+
+    @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number } {
+        const frame = this.props.appStore.activeFrame;
+        if (frame && frame.renderConfig.contourHistogram && frame.renderConfig.contourHistogram.bins && frame.renderConfig.contourHistogram.bins.length) {
+            const histogram = frame.renderConfig.contourHistogram;
+            let minIndex = 0;
+            let maxIndex = histogram.bins.length - 1;
+
+            // Truncate array if zoomed in (sidestepping ChartJS bug with off-canvas rendering and speeding up layout)
+            if (!this.widgetStore.isAutoScaledX) {
+                minIndex = Math.floor((this.widgetStore.minX - histogram.firstBinCenter) / histogram.binWidth);
+                minIndex = clamp(minIndex, 0, histogram.bins.length - 1);
+                maxIndex = Math.ceil((this.widgetStore.maxX - histogram.firstBinCenter) / histogram.binWidth);
+                maxIndex = clamp(maxIndex, 0, histogram.bins.length - 1);
+            }
+
+            let xMin = histogram.firstBinCenter + histogram.binWidth * minIndex;
+            let xMax = histogram.firstBinCenter + histogram.binWidth * maxIndex;
+            let yMin = histogram.bins[minIndex];
+            let yMax = yMin;
+
+            let values: Array<{ x: number, y: number }>;
+            const N = maxIndex - minIndex;
+            if (N > 0 && !isNaN(N)) {
+                values = new Array(maxIndex - minIndex);
+
+                for (let i = minIndex; i <= maxIndex; i++) {
+                    values[i - minIndex] = {x: histogram.firstBinCenter + histogram.binWidth * i, y: histogram.bins[i]};
+                    yMin = Math.min(yMin, histogram.bins[i]);
+                    yMax = Math.max(yMax, histogram.bins[i]);
+                }
+            }
+            return {values, xMin, xMax, yMin, yMax};
+        }
+        return null;
     }
 
     private renderDataSourceSelectItem = (frame: FrameStore, {handleClick, modifiers, query}) => {
@@ -126,16 +197,75 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
 
         const frame = appStore.activeFrame;
 
-        let linePlotProps: LinePlotComponentProps = {
-            xLabel: "Test",
+        let unitString = "Value";
+        if (frame && frame.unit) {
+            unitString = `Value (${frame.unit})`;
+        }
+
+        const linePlotProps: LinePlotComponentProps = {
+            xLabel: unitString,
             darkMode: appStore.darkTheme,
-            logY: true,
+            logY: this.widgetStore.logScaleY,
+            usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
+            interpolateLines: this.widgetStore.plotType === PlotType.LINES,
             showYAxisTicks: false,
             showYAxisLabel: false,
+            // graphClicked: this.onMinMoved,
+            // graphRightClicked: this.onMaxMoved,
+            graphZoomedX: this.widgetStore.setXBounds,
+            graphZoomedY: this.widgetStore.setYBounds,
+            graphZoomedXY: this.widgetStore.setXYBounds,
+            graphZoomReset: this.widgetStore.clearXYBounds,
             scrollZoom: true,
-            borderWidth: 1,
+            borderWidth: this.widgetStore.lineWidth,
+            pointRadius: this.widgetStore.linePlotPointSize,
             zeroLineWidth: 2
         };
+
+        const currentPlotData = this.plotData;
+        if (currentPlotData) {
+            // set line color
+            let primaryLineColor = this.widgetStore.primaryLineColor.colorHex;
+            if (appStore.darkTheme) {
+                if (!this.widgetStore.primaryLineColor.fixed) {
+                    primaryLineColor = Colors.BLUE4;
+                }
+            }
+            linePlotProps.lineColor = primaryLineColor;
+
+            // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
+            if (this.widgetStore.isAutoScaledX) {
+                const xRange = currentPlotData.xMax - currentPlotData.xMin;
+                linePlotProps.xMin = currentPlotData.xMin - 0.01 * xRange;
+                linePlotProps.xMax = currentPlotData.xMax + 0.01 * xRange;
+            } else {
+                linePlotProps.xMin = this.widgetStore.minX;
+                linePlotProps.xMax = this.widgetStore.maxX;
+            }
+
+            if (this.widgetStore.isAutoScaledY) {
+                linePlotProps.yMin = currentPlotData.yMin;
+                linePlotProps.yMax = currentPlotData.yMax;
+            } else {
+                linePlotProps.yMin = this.widgetStore.minY;
+                linePlotProps.yMax = this.widgetStore.maxY;
+            }
+            // Fix log plot min bounds for entries with zeros in them
+            if (this.widgetStore.logScaleY && linePlotProps.yMin <= 0) {
+                linePlotProps.yMin = 0.5;
+            }
+
+            linePlotProps.data = currentPlotData.values;
+        }
+
+        if (frame.contourConfig.levels && frame.contourConfig.levels.length) {
+            linePlotProps.markers = frame.contourConfig.levels.map(level => ({
+                value: level,
+                id: `marker-${level}`,
+                draggable: false,
+                horizontal: false,
+            }));
+        }
 
         const levelPanel = (
             <div className="contour-level-panel">
