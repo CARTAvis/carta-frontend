@@ -1,7 +1,7 @@
 import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable, ObservableMap} from "mobx";
-import {IOptionProps, TabId} from "@blueprintjs/core";
+import {IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {
     AlertStore,
@@ -24,14 +24,14 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore
+    WidgetsStore,
+    DialogStore
 } from ".";
 import {GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, TileService} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {AppToaster} from "../components/Shared";
-import {FileInfoType} from "../components";
 
 export class AppStore {
     // Backend services
@@ -55,6 +55,12 @@ export class AppStore {
     @observable preferenceStore: PreferenceStore;
     // Layouts
     @observable layoutStore: LayoutStore;
+    // Dialogs
+    @observable dialogStore: DialogStore;
+    // Overlay
+    @observable overlayStore: OverlayStore;
+    // File Browser
+    @observable fileBrowserStore: FileBrowserStore;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -104,89 +110,11 @@ export class AppStore {
         this.imageToolbarVisible = false;
     };
 
-    // Region dialog
-    @observable regionDialogVisible: boolean;
-    @action showRegionDialog = () => {
-        console.log(`Showing dialog for ${this.activeFrame.regionSet.selectedRegion}`);
-        this.regionDialogVisible = true;
-    };
-    @action hideRegionDialog = () => {
-        this.regionDialogVisible = false;
-    };
-
-    // Overlay
-    @observable overlayStore: OverlayStore;
-    // File Browser
-    @observable fileBrowserStore: FileBrowserStore;
-
-    // Hotkey dialog
-    @observable hotkeyDialogVisible: boolean;
-    @action showHotkeyDialog = () => {
-        this.hotkeyDialogVisible = true;
-    };
-    @action hideHotkeyDialog = () => {
-        this.hotkeyDialogVisible = false;
-    };
-
-    // About dialog
-    @observable aboutDialogVisible: boolean;
-    @action showAboutDialog = () => {
-        this.aboutDialogVisible = true;
-    };
-    @action hideAboutDialog = () => {
-        this.aboutDialogVisible = false;
-    };
-
-    // User preference dialog
-    @observable preferenceDialogVisible: boolean;
-    @action showPreferenceDialog = () => {
-        this.preferenceDialogVisible = true;
-    };
-    @action hidePreferenceDialog = () => {
-        this.preferenceDialogVisible = false;
-    };
-
-    // Layout related dialogs
-    @observable saveLayoutDialogVisible: boolean;
-    @observable deleteLayoutDialogVisible: boolean;
-    @action showSaveLayoutDialog = () => {
-        this.saveLayoutDialogVisible = true;
-    };
-    @action hideSaveLayoutDialog = () => {
-        this.saveLayoutDialogVisible = false;
-    };
-    @action showDeleteLayoutDialog = () => {
-        this.deleteLayoutDialogVisible = true;
-    };
-    @action hideDeleteLayoutDialog = () => {
-        this.deleteLayoutDialogVisible = false;
-    };
-
-    // Auth dialog
-    @observable authDialogVisible: boolean = false;
+    // Auth
     @observable username: string = "";
-    @action showAuthDialog = () => {
-        this.authDialogVisible = true;
-    };
-    @action hideAuthDialog = () => {
-        this.authDialogVisible = false;
-    };
     @action setUsername = (username: string) => {
         this.username = username;
     };
-
-    // File info dialog
-    @observable fileInfoDialogVisible: boolean = false;
-    @observable selectedFileInfoTab: TabId = FileInfoType.IMAGE_FILE;
-    @action showFileInfoDialog = () => {
-        this.fileInfoDialogVisible = true;
-    };
-    @action hideFileInfoDialog = () => {
-        this.fileInfoDialogVisible = false;
-    };
-    @action setSelectedFileInfoTab = (newId: TabId) => {
-        this.selectedFileInfoTab = newId;
-    }
 
     @action connectToServer = (socketName: string = "socket") => {
         let wsURL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}/${socketName}`;
@@ -516,12 +444,13 @@ export class AppStore {
 
         this.frames = [];
         this.activeFrame = null;
-        this.fileBrowserStore = new FileBrowserStore(this.backendService);
+        this.fileBrowserStore = new FileBrowserStore(this, this.backendService);
         this.animatorStore = new AnimatorStore(this);
         this.overlayStore = new OverlayStore(this, this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this, this.layoutStore);
         this.compressionQuality = this.preferenceStore.imageCompressionQuality;
         this.initRequirements();
+        this.dialogStore = new DialogStore(this);
 
         const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
             this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
@@ -665,7 +594,7 @@ export class AppStore {
 
         // Auth and connection
         if (process.env.REACT_APP_AUTHENTICATION === "true") {
-            this.authDialogVisible = true;
+            this.dialogStore.showAuthDialog();
         } else {
             this.connectToServer();
         }

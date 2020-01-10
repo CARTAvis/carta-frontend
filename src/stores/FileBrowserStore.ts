@@ -2,6 +2,7 @@ import {action, computed, observable} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
+import { AppStore } from "stores";
 import {FileInfoType} from "components";
 
 export enum BrowserMode {
@@ -14,7 +15,8 @@ export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
 
 export class FileBrowserStore {
-    @observable fileBrowserDialogVisible = false;
+    private readonly appStore: AppStore;
+
     @observable browserMode: BrowserMode = BrowserMode.File;
     @observable appendingFrame = false;
     @observable fileList: CARTA.IFileListResponse;
@@ -35,7 +37,7 @@ export class FileBrowserStore {
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
         this.browserMode = mode;
-        this.fileBrowserDialogVisible = true;
+        this.appStore.dialogStore.showFileBrowserDialog();
         this.fileList = null;
         this.selectedTab = (BrowserMode.File === mode) ? FileInfoType.IMAGE_FILE : FileInfoType.REGION_FILE;
         this.responseErrorMessage = "";
@@ -44,7 +46,7 @@ export class FileBrowserStore {
     };
 
     @action hideFileBrowser = () => {
-        this.fileBrowserDialogVisible = false;
+        this.appStore.dialogStore.hideFileBrowserDialog();
     };
 
     @action getFileList = (directory: string) => {
@@ -192,7 +194,8 @@ export class FileBrowserStore {
 
     private backendService: BackendService;
 
-    constructor(backendService: BackendService) {
+    constructor(appStore: AppStore, backendService: BackendService) {
+        this.appStore = appStore;
         this.backendService = backendService;
         this.exportCoordinateType = CARTA.CoordinateType.WORLD;
         this.exportFileType = CARTA.FileType.CRTF;

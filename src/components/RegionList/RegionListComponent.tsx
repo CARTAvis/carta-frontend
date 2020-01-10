@@ -58,7 +58,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     private handleRegionListDoubleClick = () => {
-        this.props.appStore.showRegionDialog();
+        this.props.appStore.dialogStore.showRegionDialog();
     };
 
     render() {
