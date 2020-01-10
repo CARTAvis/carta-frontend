@@ -20,6 +20,7 @@ const HistogramSelect = Select.ofType<boolean>();
 
 enum ContourDialogTabs {
     Levels,
+    Configuration,
     Styling
 }
 
@@ -268,7 +269,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
         }
 
         const levelPanel = (
-            <div className="contour-level-panel">
+            <React.Fragment>
                 <FormGroup label={"Histogram"} inline={true}>
                     <HistogramSelect
                         activeItem={frame.renderConfig.useCubeHistogramContours}
@@ -285,11 +286,36 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                     <LinePlotComponent {...linePlotProps}/>
                 </div>
                 <p>Placeholder</p>
-            </div>
+            </React.Fragment>
         );
 
+        const configPanel = (
+            <React.Fragment>
+                <FormGroup inline={true} label="Smoothing Mode">
+                    <HTMLSelect
+                        value={frame.contourConfig.smoothingMode}
+                        onChange={(ev) => frame.contourConfig.setSmoothingMode(Number(ev.currentTarget.value))}
+                    >
+                        <option key={CARTA.SmoothingMode.NoSmoothing} value={CARTA.SmoothingMode.NoSmoothing}>No Smoothing</option>
+                        <option key={CARTA.SmoothingMode.BlockAverage} value={CARTA.SmoothingMode.BlockAverage}>Block</option>
+                        <option key={CARTA.SmoothingMode.GaussianBlur} value={CARTA.SmoothingMode.GaussianBlur}>Gaussian</option>
+                    </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="Smoothing Factor">
+                    <NumericInput
+                        placeholder="Smoothing Factor"
+                        min={1}
+                        max={33}
+                        value={frame.contourConfig.smoothingFactor}
+                        majorStepSize={1}
+                        stepSize={1}
+                        onValueChange={frame.contourConfig.setSmoothingFactor}
+                    />
+                </FormGroup>
+            </React.Fragment>
+        );
         const stylePanel = (
-            <div className="contour-style-panel">
+            <React.Fragment>
                 <FormGroup inline={true} label="Thickness">
                     <NumericInput
                         placeholder="Thickness"
@@ -361,7 +387,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                         darkTheme={appStore.darkTheme}
                     />
                 </FormGroup>
-            </div>
+            </React.Fragment>
         );
 
         return (
@@ -380,8 +406,9 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                         </DataSourceSelect>
                     </FormGroup>
                     <Tabs defaultSelectedTabId={ContourDialogTabs.Levels} renderActiveTabPanelOnly={true}>
-                        <Tab id={ContourDialogTabs.Levels} title="Levels" panel={levelPanel}/>
-                        <Tab id={ContourDialogTabs.Styling} title="Styling" panel={stylePanel}/>
+                        <Tab id={ContourDialogTabs.Levels} title="Levels" panel={levelPanel} panelClassName="contour-level-panel"/>
+                        <Tab id={ContourDialogTabs.Configuration} title="Configuration" panel={configPanel} panelClassName="contour-config-panel"/>
+                        <Tab id={ContourDialogTabs.Styling} title="Styling" panel={stylePanel} panelClassName="contour-style-panel"/>
                     </Tabs>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>

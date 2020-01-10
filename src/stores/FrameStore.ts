@@ -727,8 +727,8 @@ export class FrameStore {
         const contourParameters: CARTA.ISetContourParameters = {
             fileId: this.frameInfo.fileId,
             referenceFileId: this.frameInfo.fileId,
-            smoothingMode: this.preference.contourSmoothingMode,
-            smoothingFactor: this.preference.contourSmoothingFactor,
+            smoothingMode: this.contourConfig.smoothingMode,
+            smoothingFactor: this.contourConfig.smoothingFactor,
             levels: this.contourConfig.levels,
             imageBounds: {
                 xMin: 0,

@@ -1,8 +1,7 @@
 import {action, computed, observable} from "mobx";
-import {RGBColor} from "react-color";
+import {CARTA} from "carta-protobuf";
 import {PreferenceStore} from "./PreferenceStore";
 import {hexStringToRgba, RGBA} from "../utilities";
-import {CARTA} from "carta-protobuf";
 
 export enum ContourDashMode {
     None,
@@ -15,6 +14,11 @@ export class ContourConfigStore {
     @observable numComputedLevels: number;
     @observable lowerBound: number;
     @observable upperBound: number;
+    @observable manualLevelsEnabled: boolean;
+    @observable manualLevels: number[];
+    @observable smoothingMode: CARTA.SmoothingMode;
+    @observable smoothingFactor: number;
+
     @observable color: RGBA;
     @observable colormapEnabled: boolean;
     @observable colormap: string;
@@ -22,8 +26,6 @@ export class ContourConfigStore {
     @observable colormapBias: number;
     @observable dashMode: ContourDashMode;
     @observable thickness: number;
-    @observable manualLevelsEnabled: boolean;
-    @observable manualLevels: number[];
 
     private readonly preferenceStore: PreferenceStore;
 
@@ -55,6 +57,11 @@ export class ContourConfigStore {
         this.enabled = false;
         this.manualLevelsEnabled = false;
         this.numComputedLevels = this.preferenceStore.contourNumLevels;
+        this.manualLevels = [];
+
+        this.smoothingMode = this.preferenceStore.contourSmoothingMode;
+        this.smoothingFactor = this.preferenceStore.contourSmoothingFactor;
+
         this.color = hexStringToRgba(this.preferenceStore.contourColor);
         this.colormapEnabled = this.preferenceStore.contourColormapEnabled;
         this.colormap = this.preferenceStore.contourColormap;
@@ -62,7 +69,6 @@ export class ContourConfigStore {
         this.colormapContrast = 1.0;
         this.thickness = 1.0;
         this.dashMode = ContourDashMode.NegativeOnly;
-        this.manualLevels = [];
     }
 
     @action setEnabled(val: boolean) {
@@ -87,6 +93,16 @@ export class ContourConfigStore {
     @action setNumComputedLevels(N: number) {
         this.numComputedLevels = N;
     }
+
+    // Configuration
+
+    @action setSmoothingMode = (mode: CARTA.SmoothingMode) => {
+        this.smoothingMode = mode;
+    };
+
+    @action setSmoothingFactor = (val: number) => {
+        this.smoothingFactor = val;
+    };
 
     // Styling
     @action setColor = (color: RGBA) => {
