@@ -1,7 +1,7 @@
 @import "../../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
 
 .toolbar-menu {
-    margin: 4px auto 4px 10px;
+    margin: 4px 4px 4px 10px;
     user-select: none;
     .profiler-button {
         width: 30px;
@@ -20,4 +20,9 @@
             color: $gray5;
         }
     }
+}
+
+.dialog-toolbar-menu {
+    margin: 4px auto 4px 10px;
+    user-select: none;
 }

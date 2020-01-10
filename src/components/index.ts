@@ -20,3 +20,4 @@ export * from "./RenderConfig/RenderConfigSettingsPanelComponent/RenderConfigSet
 export * from "./Histogram/HistogramSettingsPanelComponent/HistogramSettingsPanelComponent";
 export * from "./SplashScreen/SplashScreenComponent";
 export * from "./FileInfo/FileInfoComponent";
+export * from "./App/UIControllerComponent";
