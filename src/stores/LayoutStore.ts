@@ -114,11 +114,10 @@ export class LayoutStore {
         if (!userLayouts) {
             return;
         }
-
         const layoutNames = Object.keys(userLayouts);
         layoutNames.forEach((layoutName) => {
             const layoutConfig = userLayouts[layoutName];
-            if (LayoutSchema.IsUserLayoutValid(layoutName, layoutConfig)) {
+            if (layoutConfig && LayoutSchema.IsUserLayoutValid(layoutName, layoutConfig)) {
                 this.layouts[layoutName] = layoutConfig;
             }
         });
@@ -126,22 +125,10 @@ export class LayoutStore {
 
     private initLayoutsFromPresets = () => {
         PresetLayout.PRESETS.forEach((presetName) => {
-            const config = PresetLayout.PRESET_CONFIGS.get(presetName);
-            this.layouts[presetName] = {
-                layoutVersion: LayoutSchema.CURRENT_LAYOUT_SCHEMA_VERSION,
-                docked: {
-                    type: "row",
-                    content: [{
-                        type: "column",
-                        width: 60,
-                        content: [{type: "component", id: "image-view"}, config.leftBottomContent]
-                    }, {
-                        type: "column",
-                        content: config.rightColumnContent
-                    }]
-                },
-                floating: []
-            };
+            const presetConfig = LayoutSchema.GetPresetConfig(presetName);
+            if (presetConfig) {
+                this.layouts[presetName] = presetConfig;
+            }
         });
     };
 

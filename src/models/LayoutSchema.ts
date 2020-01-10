@@ -145,6 +145,33 @@ export class LayoutSchema {
         return true;
     };
 
+    public static GetPresetConfig = (presetName: string) => {
+        if (!presetName) {
+            return null;
+        }
+
+        const config = PresetLayout.PRESET_CONFIGS.get(presetName);
+        if (!config) {
+            return null;
+        }
+
+        return {
+            layoutVersion: LayoutSchema.CURRENT_LAYOUT_SCHEMA_VERSION,
+            docked: {
+                type: "row",
+                content: [{
+                    type: "column",
+                    width: 60,
+                    content: [{type: "component", id: "image-view"}, config.leftBottomContent]
+                }, {
+                    type: "column",
+                    content: config.rightColumnContent
+                }]
+            },
+            floating: []
+        };
+    };
+
     private static TransformVer1ToCurrentVer = (layoutConfig: object): boolean => {
         //TODO
         return true;
