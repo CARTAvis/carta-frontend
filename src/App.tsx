@@ -92,8 +92,6 @@ export class App extends React.Component<{ appStore: AppStore }> {
         return (
             <div className={className}>
                 <UIControllerComponent appStore={appStore}/>
-                {/*TODO: move to dialog store after merge*/}
-                <ContourDialogComponent appStore={appStore}/>
                 <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>

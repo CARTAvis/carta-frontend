@@ -9,7 +9,8 @@ import {
     PreferenceDialogComponent,
     RegionDialogComponent,
     SaveLayoutDialogComponent,
-    FileInfoDialogComponent
+    FileInfoDialogComponent,
+    ContourDialogComponent
 } from "components/Dialogs";
 import { AppStore } from "stores";
 
@@ -31,6 +32,7 @@ export class UIControllerComponent extends React.Component<{appStore: AppStore}>
                 <PreferenceDialogComponent appStore={appStore}/>
                 <SaveLayoutDialogComponent appStore={appStore}/>
                 <FileInfoDialogComponent appStore={appStore}/>
+                <ContourDialogComponent appStore={appStore}/>
             </React.Fragment>
         );
     }

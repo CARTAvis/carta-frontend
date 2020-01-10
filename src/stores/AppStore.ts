@@ -116,29 +116,6 @@ export class AppStore {
         this.username = username;
     };
 
-    // TODO: move this to dialog store after merge
-    // File info dialog
-    @observable fileInfoDialogVisible: boolean = false;
-    @observable selectedFileInfoTab: TabId = FileInfoType.IMAGE_FILE;
-    @action showFileInfoDialog = () => {
-        this.fileInfoDialogVisible = true;
-    };
-    @action hideFileInfoDialog = () => {
-        this.fileInfoDialogVisible = false;
-    };
-    @action setSelectedFileInfoTab = (newId: TabId) => {
-        this.selectedFileInfoTab = newId;
-    };
-
-    // Contour dialog
-    @observable contourDialogVisible: boolean = false;
-    @action showContourDialog = () => {
-        this.contourDialogVisible = true;
-    };
-    @action hideContourDialog = () => {
-        this.contourDialogVisible = false;
-    };
-
     @action connectToServer = (socketName: string = "socket") => {
         let wsURL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}/${socketName}`;
         if (process.env.NODE_ENV === "development") {

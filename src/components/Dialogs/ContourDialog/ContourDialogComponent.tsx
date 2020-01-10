@@ -109,8 +109,8 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.contourDialogVisible,
-            onClose: appStore.hideContourDialog,
+            isOpen: appStore.dialogStore.contourDialogVisible,
+            onClose: appStore.dialogStore.hideContourDialog,
             className: "contour-dialog",
             canEscapeKeyClose: false,
             title: "Contour Configuration",
@@ -258,7 +258,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton intent={Intent.WARNING} onClick={this.handleClearContours} text="Clear"/>
                         <AnchorButton intent={Intent.SUCCESS} onClick={this.handleApplyContours} text="Apply"/>
-                        <AnchorButton intent={Intent.NONE} onClick={appStore.hideContourDialog} text="Close"/>
+                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideContourDialog} text="Close"/>
                     </div>
                 </div>
                 <Alert icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>
