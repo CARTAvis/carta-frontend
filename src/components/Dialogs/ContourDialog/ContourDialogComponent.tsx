@@ -337,6 +337,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
 
         const levelPanel = (
             <React.Fragment>
+                {frame.frameInfo.fileInfoExtended.depth > 1 &&
                 <FormGroup label={"Histogram"} inline={true}>
                     <HistogramSelect
                         activeItem={frame.renderConfig.useCubeHistogramContours}
@@ -349,6 +350,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                         <Button text={frame.renderConfig.useCubeHistogramContours ? "Per-Cube" : "Per-Channel"} rightIcon="double-caret-vertical" alignText={"right"}/>
                     </HistogramSelect>
                 </FormGroup>
+                }
                 <div className="histogram-plot">
                     <LinePlotComponent {...linePlotProps}/>
                 </div>
