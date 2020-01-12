@@ -11,11 +11,7 @@ export enum ContourDashMode {
 
 export class ContourConfigStore {
     @observable enabled: boolean;
-    @observable numComputedLevels: number;
-    @observable lowerBound: number;
-    @observable upperBound: number;
-    @observable manualLevelsEnabled: boolean;
-    @observable manualLevels: number[];
+    @observable levels: number[];
     @observable smoothingMode: CARTA.SmoothingMode;
     @observable smoothingFactor: number;
 
@@ -29,36 +25,33 @@ export class ContourConfigStore {
 
     private readonly preferenceStore: PreferenceStore;
 
-    // Returns computed or manual contour levels
-    @computed get levels(): number[] {
-        // Default to manual levels if they are enabled
-        if (this.manualLevelsEnabled) {
-            return this.manualLevels;
-        } else if (isFinite(this.lowerBound) && isFinite(this.upperBound) && this.lowerBound < this.upperBound && this.numComputedLevels >= 1) {
-            // For single contour levels, just use the midpoint
-            if (this.numComputedLevels < 2) {
-                return [(this.upperBound + this.lowerBound) / 2.0];
-            } else {
-                // Fill in the steps linearly
-                const stepSize = (this.upperBound - this.lowerBound) / (this.numComputedLevels - 1);
-                const levelArray = new Array<number>(this.numComputedLevels);
-                for (let i = 0; i < levelArray.length; i++) {
-                    levelArray[i] = this.upperBound - i * stepSize;
-                }
-                return levelArray;
-            }
-        }
-
-        return [];
-    }
+    // // Returns computed or manual contour levels
+    // @computed get levels(): number[] {
+    //     // Default to manual levels if they are enabled
+    //     if (this.manualLevelsEnabled) {
+    //         return this.manualLevels;
+    //     } else if (isFinite(this.lowerBound) && isFinite(this.upperBound) && this.lowerBound < this.upperBound && this.numComputedLevels >= 1) {
+    //         // For single contour levels, just use the midpoint
+    //         if (this.numComputedLevels < 2) {
+    //             return [(this.upperBound + this.lowerBound) / 2.0];
+    //         } else {
+    //             // Fill in the steps linearly
+    //             const stepSize = (this.upperBound - this.lowerBound) / (this.numComputedLevels - 1);
+    //             const levelArray = new Array<number>(this.numComputedLevels);
+    //             for (let i = 0; i < levelArray.length; i++) {
+    //                 levelArray[i] = this.upperBound - i * stepSize;
+    //             }
+    //             return levelArray;
+    //         }
+    //     }
+    //
+    //     return [];
+    // }
 
     constructor(preferenceStore: PreferenceStore) {
         this.preferenceStore = preferenceStore;
         this.enabled = false;
-        this.manualLevelsEnabled = false;
-        this.numComputedLevels = this.preferenceStore.contourNumLevels;
-        this.manualLevels = [];
-
+        this.levels = [];
         this.smoothingMode = this.preferenceStore.contourSmoothingMode;
         this.smoothingFactor = this.preferenceStore.contourSmoothingFactor;
 
@@ -75,33 +68,10 @@ export class ContourConfigStore {
         this.enabled = val;
     }
 
-    // Manual levels
-    @action setManualLevelsEnabled(val: boolean) {
-        this.manualLevelsEnabled = val;
-    }
-
-    @action setManualLevels(levelValues: number[]) {
-        this.manualLevels = levelValues;
-    }
-
-    // Computed levels
-    @action setBounds(lower: number, upper: number) {
-        this.lowerBound = lower;
-        this.upperBound = upper;
-    }
-
-    @action setNumComputedLevels(N: number) {
-        this.numComputedLevels = N;
-    }
-
-    // Configuration
-
-    @action setSmoothingMode = (mode: CARTA.SmoothingMode) => {
-        this.smoothingMode = mode;
-    };
-
-    @action setSmoothingFactor = (val: number) => {
-        this.smoothingFactor = val;
+    @action setContourConfiguration = (levels: number[], smoothingMode: CARTA.SmoothingMode, smoothingFactor: number) => {
+        this.levels = levels;
+        this.smoothingMode = smoothingMode;
+        this.smoothingFactor = smoothingFactor;
     };
 
     // Styling

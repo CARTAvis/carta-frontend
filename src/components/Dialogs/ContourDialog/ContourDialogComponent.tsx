@@ -1,5 +1,5 @@
 import * as React from "react";
-import {autorun, computed, observable} from "mobx";
+import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Alert, AnchorButton, Button, Classes, Colors, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, NonIdealState, NumericInput, Tab, Tabs} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
@@ -28,6 +28,9 @@ enum ContourDialogTabs {
 export class ContourDialogComponent extends React.Component<{ appStore: AppStore }> {
     @observable showCubeHistogramAlert: boolean;
     @observable currentTab: ContourDialogTabs = ContourDialogTabs.Levels;
+    @observable levels: number[];
+    @observable smoothingMode: CARTA.SmoothingMode;
+    @observable smoothingFactor: number;
 
     private readonly widgetStore: RenderConfigWidgetStore;
     private cachedFrame: FrameStore;
@@ -35,12 +38,13 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
 
     constructor(props: { appStore: AppStore }) {
         super(props);
-
         this.widgetStore = new RenderConfigWidgetStore();
+        this.setDefaultContourParameters();
 
         autorun(() => {
-            if (this.props.appStore.activeFrame) {
-                const newHist = this.props.appStore.activeFrame.renderConfig.histogram;
+            const appStore = this.props.appStore;
+            if (appStore.activeFrame) {
+                const newHist = appStore.activeFrame.renderConfig.histogram;
                 if (newHist !== this.cachedHistogram) {
                     this.cachedHistogram = newHist;
                     this.widgetStore.clearXYBounds();
@@ -56,13 +60,47 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
         });
     }
 
+    @action setDefaultContourParameters() {
+        const frame = this.props.appStore.activeFrame;
+        if (frame) {
+            this.levels = frame.contourConfig.levels.slice();
+            this.smoothingMode = frame.contourConfig.smoothingMode;
+            this.smoothingFactor = frame.contourConfig.smoothingFactor;
+        } else {
+            this.levels = [];
+            this.smoothingMode = this.props.appStore.preferenceStore.contourSmoothingMode;
+            this.smoothingFactor = this.props.appStore.preferenceStore.contourSmoothingFactor;
+        }
+    }
+
     componentDidUpdate() {
         const frame = this.props.appStore.activeFrame;
-
         if (frame !== this.cachedFrame) {
             this.cachedFrame = frame;
             this.widgetStore.clearXYBounds();
+            this.setDefaultContourParameters();
         }
+    }
+
+    @computed get contourConfigChanged(): boolean {
+        const frame = this.props.appStore.activeFrame;
+        if (frame) {
+            const numContourLevels = this.levels.length;
+            if (frame.contourConfig.smoothingMode !== this.smoothingMode) {
+                return true;
+            } else if (frame.contourConfig.smoothingFactor !== this.smoothingFactor) {
+                return true;
+            } else if (frame.contourConfig.levels.length !== numContourLevels) {
+                return true;
+            }
+
+            for (let i = 0; i < numContourLevels; i++) {
+                if (frame.contourConfig.levels[i] !== this.levels[i]) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number } {
@@ -156,12 +194,11 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     };
 
     private handleApplyContours = () => {
-        const appStore = this.props.appStore;
-        if (!appStore || !appStore.activeFrame) {
-            return;
+        const frame = this.props.appStore.activeFrame;
+        if (frame) {
+            frame.contourConfig.setContourConfiguration(this.levels.slice(), this.smoothingMode, this.smoothingFactor);
+            frame.applyContours();
         }
-
-        appStore.activeFrame.applyContours();
     };
 
     private handleClearContours = () => {
@@ -171,6 +208,35 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
         }
 
         appStore.activeFrame.clearContours();
+    };
+
+    private handleGraphClicked = (x: number) => {
+        this.levels.push(x);
+    };
+
+    private handleGraphRightClicked = (x: number) => {
+        let closestIndex = -1;
+        let minDistance = Number.MAX_VALUE;
+
+        // Find closest level
+        for (let i = 0; i < this.levels.length; i++) {
+            const currentDist = Math.abs(x - this.levels[i]);
+            if (currentDist < minDistance) {
+                minDistance = currentDist;
+                closestIndex = i;
+            }
+        }
+
+        // remove it from the array
+        if (closestIndex >= 0) {
+            this.levels.splice(closestIndex, 1);
+        }
+    };
+
+    private handleLevelDragged = (index: number) => (val: number) => {
+        if (index >= 0 && index < this.levels.length) {
+            this.levels[index] = val;
+        }
     };
 
     public render() {
@@ -211,8 +277,8 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
             interpolateLines: this.widgetStore.plotType === PlotType.LINES,
             showYAxisTicks: false,
             showYAxisLabel: false,
-            // graphClicked: this.onMinMoved,
-            // graphRightClicked: this.onMaxMoved,
+            graphClicked: this.handleGraphClicked,
+            graphRightClicked: this.handleGraphRightClicked,
             graphZoomedX: this.widgetStore.setXBounds,
             graphZoomedY: this.widgetStore.setYBounds,
             graphZoomedXY: this.widgetStore.setXYBounds,
@@ -259,11 +325,12 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
             linePlotProps.data = currentPlotData.values;
         }
 
-        if (frame.contourConfig.levels && frame.contourConfig.levels.length) {
-            linePlotProps.markers = frame.contourConfig.levels.map(level => ({
+        if (this.levels && this.levels.length) {
+            linePlotProps.markers = this.levels.map((level, index) => ({
                 value: level,
-                id: `marker-${level}`,
-                draggable: false,
+                id: `marker-${index}`,
+                draggable: true,
+                dragMove: this.handleLevelDragged(index),
                 horizontal: false,
             }));
         }
@@ -293,8 +360,8 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
             <React.Fragment>
                 <FormGroup inline={true} label="Smoothing Mode">
                     <HTMLSelect
-                        value={frame.contourConfig.smoothingMode}
-                        onChange={(ev) => frame.contourConfig.setSmoothingMode(Number(ev.currentTarget.value))}
+                        value={this.smoothingMode}
+                        onChange={(ev) => this.smoothingMode = (Number(ev.currentTarget.value))}
                     >
                         <option key={CARTA.SmoothingMode.NoSmoothing} value={CARTA.SmoothingMode.NoSmoothing}>No Smoothing</option>
                         <option key={CARTA.SmoothingMode.BlockAverage} value={CARTA.SmoothingMode.BlockAverage}>Block</option>
@@ -306,10 +373,10 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                         placeholder="Smoothing Factor"
                         min={1}
                         max={33}
-                        value={frame.contourConfig.smoothingFactor}
+                        value={this.smoothingFactor}
                         majorStepSize={1}
                         stepSize={1}
-                        onValueChange={frame.contourConfig.setSmoothingFactor}
+                        onValueChange={val => this.smoothingFactor = val}
                     />
                 </FormGroup>
             </React.Fragment>
@@ -413,8 +480,8 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.WARNING} onClick={this.handleClearContours} text="Clear"/>
-                        <AnchorButton intent={Intent.SUCCESS} onClick={this.handleApplyContours} text="Apply"/>
+                        <AnchorButton intent={Intent.WARNING} onClick={this.handleClearContours} disabled={!frame.contourConfig.enabled} text="Clear"/>
+                        <AnchorButton intent={Intent.SUCCESS} onClick={this.handleApplyContours} disabled={!this.contourConfigChanged && frame.contourConfig.enabled} text="Apply"/>
                         <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideContourDialog} text="Close"/>
                     </div>
                 </div>

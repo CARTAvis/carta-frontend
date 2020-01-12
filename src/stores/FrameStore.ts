@@ -719,8 +719,8 @@ export class FrameStore {
         }
 
         // TODO: This should be defined by the contour config widget
-        this.contourConfig.setBounds(this.renderConfig.scaleMinVal, this.renderConfig.scaleMaxVal);
-        this.contourConfig.setNumComputedLevels(this.preference.contourNumLevels);
+        // this.contourConfig.setBounds(this.renderConfig.scaleMinVal, this.renderConfig.scaleMaxVal);
+        // this.contourConfig.setNumComputedLevels(this.preference.contourNumLevels);
         this.contourConfig.setEnabled(true);
 
         // TODO: Allow a different reference frame
