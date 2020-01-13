@@ -1,28 +1,29 @@
 import * as React from "react";
 import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, AnchorButton, Button, Classes, Colors, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, NonIdealState, NumericInput, Tab, Tabs, Tag, TagInput} from "@blueprintjs/core";
+import {Alert, AnchorButton, Button, Classes, Colors, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, NonIdealState, NumericInput, Tab, Tabs, Tag, TagInput, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
-import {ColorResult} from "react-color";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
-import {ColormapComponent, ColorPickerComponent, LinePlotComponent, LinePlotComponentProps, PlotType} from "components/Shared";
-import {AppStore, ContourDashMode, FrameStore} from "stores";
+import {LinePlotComponent, LinePlotComponentProps, PlotType} from "components/Shared";
+import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelComponent";
+import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGeneratorPanelComponent";
+import {AppStore, FrameStore} from "stores";
 import {RenderConfigWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp, SWATCH_COLORS, toExponential, toFixed} from "utilities";
 import {SCALING_POPOVER_PROPS} from "../../RenderConfig/ColormapConfigComponent/ColormapConfigComponent";
-import "./ContourDialogComponent.css";
 
-const DataSourceSelect = Select.ofType<FrameStore>();
-const DashModeSelect = Select.ofType<ContourDashMode>();
-const HistogramSelect = Select.ofType<boolean>();
+import "./ContourDialogComponent.css";
 
 enum ContourDialogTabs {
     Levels,
     Configuration,
     Styling
 }
+
+const DataSourceSelect = Select.ofType<FrameStore>();
+const HistogramSelect = Select.ofType<boolean>();
 
 @observer
 export class ContourDialogComponent extends React.Component<{ appStore: AppStore }> {
@@ -31,6 +32,9 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     @observable levels: number[];
     @observable smoothingMode: CARTA.SmoothingMode;
     @observable smoothingFactor: number;
+
+    private static readonly DefaultWidth = 560;
+    private static readonly DefaultHeight = 660;
 
     private readonly widgetStore: RenderConfigWidgetStore;
     private cachedFrame: FrameStore;
@@ -44,7 +48,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
         autorun(() => {
             const appStore = this.props.appStore;
             if (appStore.activeFrame) {
-                const newHist = appStore.activeFrame.renderConfig.histogram;
+                const newHist = appStore.activeFrame.renderConfig.contourHistogram;
                 if (newHist !== this.cachedHistogram) {
                     this.cachedHistogram = newHist;
                     this.widgetStore.clearXYBounds();
@@ -146,15 +150,11 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
         return <MenuItem text={frame.frameInfo.fileInfo.name} onClick={handleClick} key={frame.frameInfo.fileId}/>;
     };
 
-    private renderDashModeSelectItem = (mode: ContourDashMode, {handleClick, modifiers, query}) => {
-        return <MenuItem text={ContourDashMode[mode]} onClick={handleClick} key={mode}/>;
-    };
-
     private handleDataSourceSelected = (frame: FrameStore) => {
         this.props.appStore.setActiveFrame(frame.frameInfo.fileId);
     };
 
-    renderHistogramSelectItem = (isCube: boolean, {handleClick, modifiers, query}) => {
+    private renderHistogramSelectItem = (isCube: boolean, {handleClick, modifiers, query}) => {
         return <MenuItem text={isCube ? "Per-Cube" : "Per-Channel"} onClick={handleClick} key={isCube ? "cube" : "channel"}/>;
     };
 
@@ -233,10 +233,14 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
         }
     };
 
-    private handleLevelDragged = (index: number) => (val: number) => {
+    @action private handleLevelDragged = (index: number) => (val: number) => {
         if (index >= 0 && index < this.levels.length) {
             this.levels[index] = val;
         }
+    };
+
+    @action private handleLevelsGenerated = (levels: number[]) => {
+        this.levels = levels.slice();
     };
 
     public render() {
@@ -256,7 +260,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
 
         if (!appStore || !appStore.activeFrame) {
             return (
-                <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={520} defaultHeight={620} enableResizing={true}>
+                <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={ContourDialogComponent.DefaultWidth} defaultHeight={ContourDialogComponent.DefaultHeight} enableResizing={true}>
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
                 </DraggableDialogComponent>
             );
@@ -381,7 +385,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                 <div className="histogram-plot">
                     <LinePlotComponent {...linePlotProps}/>
                 </div>
-                <p>Placeholder</p>
+                <ContourGeneratorPanelComponent frame={frame} onLevelsGenerated={this.handleLevelsGenerated}/>
                 <FormGroup label={"Levels"} inline={true}>
                     <TagInput
                         fill={true}
@@ -420,84 +424,8 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
             </React.Fragment>
         );
 
-        const stylePanel = (
-            <React.Fragment>
-                <FormGroup inline={true} label="Thickness">
-                    <NumericInput
-                        placeholder="Thickness"
-                        min={0.5}
-                        max={10}
-                        value={frame.contourConfig.thickness}
-                        majorStepSize={0.5}
-                        stepSize={0.5}
-                        onValueChange={frame.contourConfig.setThickness}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Dashes">
-                    <DashModeSelect
-                        activeItem={frame.contourConfig.dashMode}
-                        onItemSelect={frame.contourConfig.setDashMode}
-                        popoverProps={{minimal: true, position: "bottom"}}
-                        filterable={false}
-                        items={[ContourDashMode.None, ContourDashMode.Dashed, ContourDashMode.NegativeOnly]}
-                        itemRenderer={this.renderDashModeSelectItem}
-                    >
-                        <Button text={ContourDashMode[frame.contourConfig.dashMode]} rightIcon="double-caret-vertical" alignText={"right"}/>
-                    </DashModeSelect>
-                </FormGroup>
-                <FormGroup inline={true} label="Color Mode">
-                    <HTMLSelect value={frame.contourConfig.colormapEnabled ? 1 : 0} onChange={(ev) => frame.contourConfig.setColormapEnabled(parseInt(ev.currentTarget.value) > 0)}>
-                        <option key={0} value={0}>Constant Color</option>
-                        <option key={1} value={1}>Color-mapped</option>
-                    </HTMLSelect>
-                </FormGroup>
-                <FormGroup inline={true} label="Color Map" disabled={!frame.contourConfig.colormapEnabled}>
-                    <ColormapComponent
-                        inverted={false}
-                        disabled={!frame.contourConfig.colormapEnabled}
-                        selectedItem={frame.contourConfig.colormap}
-                        onItemSelect={frame.contourConfig.setColormap}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Bias" disabled={!frame.contourConfig.colormapEnabled}>
-                    <NumericInput
-                        disabled={!frame.contourConfig.colormapEnabled}
-                        placeholder="Bias"
-                        min={-1.0}
-                        max={1.0}
-                        value={frame.contourConfig.colormapBias}
-                        majorStepSize={0.1}
-                        stepSize={0.1}
-                        onValueChange={frame.contourConfig.setColormapBias}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Contrast" disabled={!frame.contourConfig.colormapEnabled}>
-                    <NumericInput
-                        disabled={!frame.contourConfig.colormapEnabled}
-                        placeholder="Contrast"
-                        min={0.0}
-                        max={3.0}
-                        value={frame.contourConfig.colormapContrast}
-                        majorStepSize={0.1}
-                        stepSize={0.1}
-                        onValueChange={frame.contourConfig.setColormapContrast}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} label="Color" disabled={frame.contourConfig.colormapEnabled}>
-                    <ColorPickerComponent
-                        color={frame.contourConfig.color}
-                        presetColors={SWATCH_COLORS}
-                        setColor={(color: ColorResult) => frame.contourConfig.setColor(color.rgb)}
-                        disableAlpha={true}
-                        disabled={frame.contourConfig.colormapEnabled}
-                        darkTheme={appStore.darkTheme}
-                    />
-                </FormGroup>
-            </React.Fragment>
-        );
-
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={520} defaultHeight={620} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={ContourDialogComponent.DefaultWidth} defaultHeight={ContourDialogComponent.DefaultHeight} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data Source">
                         <DataSourceSelect
@@ -514,7 +442,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                     <Tabs defaultSelectedTabId={ContourDialogTabs.Levels} renderActiveTabPanelOnly={true}>
                         <Tab id={ContourDialogTabs.Levels} title="Levels" panel={levelPanel} panelClassName="contour-level-panel"/>
                         <Tab id={ContourDialogTabs.Configuration} title="Configuration" panel={configPanel} panelClassName="contour-config-panel"/>
-                        <Tab id={ContourDialogTabs.Styling} title="Styling" panel={stylePanel} panelClassName="contour-style-panel"/>
+                        <Tab id={ContourDialogTabs.Styling} title="Styling" panel={<ContourStylePanelComponent frame={frame} darkTheme={appStore.darkTheme}/>}/>
                     </Tabs>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>

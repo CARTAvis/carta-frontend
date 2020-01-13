@@ -1,3 +1,5 @@
+import {CARTA} from "carta-protobuf";
+
 export function smoothStepOffset(val: number, edge0: number, edge1: number, level0: number, level1: number) {
     const stepVal = smoothStep(val, edge0, edge1);
     return level0 + (level1 - level0) * stepVal;
@@ -32,4 +34,43 @@ export function polarizationAngle(q: number, u: number) {
 // normalising a by b
 export function normalising(a: number, b: number) {
     return (a / b) * 100;
+}
+
+export function getPercentiles(histogram: CARTA.IHistogram, ranks: number[]): number[] {
+    if (!ranks || !ranks.length || !histogram || !histogram.bins.length) {
+        return [];
+    }
+
+    const minVal = histogram.firstBinCenter - histogram.binWidth / 2.0;
+    const dx = histogram.binWidth;
+    const vals = histogram.bins;
+    let remainingRanks = ranks.slice();
+    let cumulativeSum = 0;
+
+    let totalSum = 0;
+    for (let i = 0; i < vals.length; i++) {
+        totalSum += vals[i];
+    }
+
+    if (totalSum === 0) {
+        return [];
+    }
+
+    let calculatedPercentiles = [];
+
+    for (let i = 0; i < vals.length && remainingRanks.length; i++) {
+        const currentFraction = cumulativeSum / totalSum;
+        const nextFraction = (cumulativeSum + vals[i]) / totalSum;
+        let nextRank = remainingRanks[0] / 100.0;
+        while (nextFraction >= nextRank && remainingRanks.length) {
+            // Assumes a locally uniform distribution between bins
+            const portion = (nextRank - currentFraction) / (nextFraction - currentFraction);
+            calculatedPercentiles.push(minVal + dx * (i + portion));
+            // Move to next rank
+            remainingRanks.shift();
+            nextRank = remainingRanks[0] / 100.0;
+        }
+        cumulativeSum += vals[i];
+    }
+    return calculatedPercentiles;
 }

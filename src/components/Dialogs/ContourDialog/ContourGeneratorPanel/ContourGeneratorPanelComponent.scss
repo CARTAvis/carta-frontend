@@ -1,0 +1,21 @@
+.contour-generator-panel {
+    .generator-select-row {
+        display: flex;
+
+        .generate-button {
+            height: 30px;
+        }
+    }
+
+    .generator-parameters-row {
+        display: flex;
+
+        .bp3-numeric-input {
+            .bp3-input-group {
+                input {
+                    width: 90px;
+                }
+            }
+        }
+    }
+}
