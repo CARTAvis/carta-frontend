@@ -363,10 +363,50 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         if (!widgetSettings) {
             return;
         }
+        if ("primaryLineColor" in widgetSettings) {
+            this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
+        }
+        if ("secondaryLineColor" in widgetSettings) {
+            this.secondaryLineColor.colorHex = widgetSettings.secondaryLineColor;
+        }
+        if ("lineWidth" in widgetSettings) {
+            this.lineWidth = widgetSettings.lineWidth;
+        }
+        if ("linePlotPointSize" in widgetSettings) {
+            this.linePlotPointSize = widgetSettings.linePlotPointSize;
+        }
+        if ("useWcsValues" in widgetSettings) {
+            this.useWcsValues = widgetSettings.useWcsValues;
+        }
+        if ("plotType" in widgetSettings) {
+            this.plotType = widgetSettings.plotType;
+        }
+        if ("colorMap" in widgetSettings) {
+            this.colorMap = widgetSettings.colorMap;
+        }
+        if ("scatterPlotPointSize" in widgetSettings) {
+            this.scatterPlotPointSize = widgetSettings.scatterPlotPointSize;
+        }
+        if ("pointTransparency" in widgetSettings) {
+            this.pointTransparency = widgetSettings.pointTransparency;
+        }
+        if ("equalAxes" in widgetSettings) {
+            this.equalAxes = widgetSettings.equalAxes;
+        }
     };
 
     public toConfig = () => {
         return {
+            primaryLineColor: this.primaryLineColor.colorHex,
+            secondaryLineColor: this.secondaryLineColor.colorHex,
+            lineWidth: this.lineWidth,
+            linePlotPointSize: this.linePlotPointSize,
+            useWcsValues: this.useWcsValues,
+            plotType: this.plotType,
+            colorMap: this.colorMap,
+            scatterPlotPointSize: this.scatterPlotPointSize,
+            pointTransparency: this.pointTransparency,
+            equalAxes: this.equalAxes
         };
     };
 }
