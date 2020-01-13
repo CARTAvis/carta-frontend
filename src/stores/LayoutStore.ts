@@ -3,73 +3,9 @@ import {AppStore, AlertStore, WidgetConfig} from "stores";
 import * as GoldenLayout from "golden-layout";
 import {LayoutSchema, PresetLayout} from "models";
 import {AppToaster} from "components/Shared";
-import {smoothStepOffset} from "utilities";
 
 const KEY = "savedLayouts";
 const MAX_LAYOUT = 10;
-const COMPONENT_CONFIG = new Map<string, any>([
-    ["image-view", {
-        type: "react-component",
-        component: "image-view",
-        title: "No image loaded",
-        height: smoothStepOffset(window.innerHeight, 720, 1080, 65, 75), // image view fraction: adjust layout properties based on window dimensions
-        id: "image-view",
-        isClosable: false
-    }],
-    ["render-config", {
-        type: "react-component",
-        component: "render-config",
-        title: "Render Configuration",
-        id: "render-config"
-    }],
-    ["region-list", {
-        type: "react-component",
-        component: "region-list",
-        title: "Region List",
-        id: "region-list"
-    }],
-    ["animator", {
-        type: "react-component",
-        component: "animator",
-        title: "Animator",
-        id: "animator"
-    }],
-    ["spatial-profiler", {
-        type: "react-component",
-        component: "spatial-profiler",
-        id: "spatial-profiler"
-    }],
-    ["spectral-profiler", {
-        type: "react-component",
-        component: "spectral-profiler",
-        id: "spectral-profiler",
-        title: "Z Profile: Cursor"
-    }],
-    ["stokes", {
-        type: "react-component",
-        component: "stokes",
-        id: "stokes",
-        title: "Stokes Analysis"
-    }],
-    ["histogram", {
-        type: "react-component",
-        component: "histogram",
-        title: "Histogram",
-        id: "histogram"
-    }],
-    ["stats", {
-        type: "react-component",
-        component: "stats",
-        title: "Statistics",
-        id: "stats"
-    }],
-    ["log", {
-        type: "react-component",
-        component: "log",
-        title: "Log",
-        id: "log"
-    }]
-]);
 
 export class LayoutStore {
     public static readonly TOASTER_TIMEOUT = 1500;
@@ -227,50 +163,6 @@ export class LayoutStore {
         });
     };
 
-    private fillComponents = (newParentContent, parentContent, componentConfigs: any[]) => {
-        if (!newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
-            return;
-        }
-
-        parentContent.forEach((child) => {
-            if (child.type) {
-                if (child.type === "stack" || child.type === "row" || child.type === "column") {
-                    let simpleChild = {
-                        type: child.type,
-                        content: []
-                    };
-                    if (child.width) {
-                        simpleChild["width"] = child.width;
-                    }
-                    if (child.height) {
-                        simpleChild["height"] = child.height;
-                    }
-                    newParentContent.push(simpleChild);
-                    if (child.content) {
-                        this.fillComponents(simpleChild.content, child.content, componentConfigs);
-                    }
-                } else if (child.type === "component" && child.id) {
-                    const widgetType = (child.id).replace(/\-\d+$/, "");
-                    if (COMPONENT_CONFIG.has(widgetType)) {
-                        let componentConfig = Object.assign({}, COMPONENT_CONFIG.get(widgetType));
-                        if (child.width) {
-                            componentConfig["width"] = child.width;
-                        }
-                        if (child.height) {
-                            componentConfig["height"] = child.height;
-                        }
-                        if ("widgetSettings" in child) {
-                            componentConfig["widgetSettings"] = child.widgetSettings;
-                        }
-                        componentConfig.props = {appStore: this.appStore, id: "", docked: true};
-                        componentConfigs.push(componentConfig);
-                        newParentContent.push(componentConfig);
-                    }
-                }
-            }
-        });
-    };
-
     @computed get allLayouts(): string[] {
         return this.layouts ? Object.keys(this.layouts) : [];
     }
@@ -308,7 +200,7 @@ export class LayoutStore {
             content: []
         };
         let dockedComponentConfigs = [];
-        this.fillComponents(dockedConfig.content, config.docked.content, dockedComponentConfigs);
+        LayoutSchema.fillComponents(this.appStore, dockedConfig.content, config.docked.content, dockedComponentConfigs);
 
         // use component configs to init widget stores, IDs in componentConfigs will be updated
         this.appStore.widgetsStore.initWidgets(dockedComponentConfigs, config.floating);
