@@ -155,7 +155,7 @@ export class LayoutStore {
             content: []
         };
         let dockedComponentConfigs = [];
-        LayoutSchema.fillComponents(this.appStore, dockedConfig.content, config.docked.content, dockedComponentConfigs);
+        LayoutSchema.createConfigToApply(this.appStore, dockedConfig.content, config.docked.content, dockedComponentConfigs);
 
         // use component configs to init widget stores, IDs in componentConfigs will be updated
         this.appStore.widgetsStore.initWidgets(dockedComponentConfigs, config.floating);
@@ -213,7 +213,7 @@ export class LayoutStore {
             },
             floating: []
         };
-        LayoutSchema.genSimpleConfig(this.appStore, simpleConfig.docked.content, rootConfig.content);
+        LayoutSchema.createConfigToSave(this.appStore, simpleConfig.docked.content, rootConfig.content);
 
         // 2. handle floating widgets
         this.appStore.widgetsStore.floatingWidgets.forEach((config: WidgetConfig) => {
