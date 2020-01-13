@@ -46,19 +46,6 @@ export class LayoutStore {
         }
     };
 
-    private validateUserLayouts = (userLayouts) => {
-        if (!userLayouts) {
-            return;
-        }
-        const layoutNames = Object.keys(userLayouts);
-        layoutNames.forEach((layoutName) => {
-            const layoutConfig = userLayouts[layoutName];
-            if (layoutConfig && LayoutSchema.IsUserLayoutValid(layoutName, layoutConfig)) {
-                this.layouts[layoutName] = layoutConfig;
-            }
-        });
-    };
-
     private initLayoutsFromPresets = () => {
         PresetLayout.PRESETS.forEach((presetName) => {
             const presetConfig = LayoutSchema.GetPresetConfig(presetName);
@@ -94,6 +81,19 @@ export class LayoutStore {
             }
         }
         this.validateUserLayouts(userLayouts);
+    };
+
+    private validateUserLayouts = (userLayouts) => {
+        if (!userLayouts) {
+            return;
+        }
+        const layoutNames = Object.keys(userLayouts);
+        layoutNames.forEach((layoutName) => {
+            const layoutConfig = userLayouts[layoutName];
+            if (layoutConfig && LayoutSchema.IsUserLayoutValid(layoutName, layoutConfig)) {
+                this.layouts[layoutName] = layoutConfig;
+            }
+        });
     };
 
     private saveLayoutToLocalStorage = (): boolean => {
