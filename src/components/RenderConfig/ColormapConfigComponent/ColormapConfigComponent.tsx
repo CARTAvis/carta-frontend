@@ -1,10 +1,10 @@
 import * as React from "react";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, Button, FormGroup, IPopoverProps, MenuItem, NumericInput, Switch} from "@blueprintjs/core";
+import {Alert, Button, FormGroup, MenuItem, NumericInput, Switch} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {FrameScaling, RenderConfigStore} from "stores/RenderConfigStore";
-import {ColormapComponent, ScalingSelectComponent} from "components/Shared";
+import {ColormapComponent, ScalingSelectComponent, SCALING_POPOVER_PROPS} from "components/Shared";
 
 const HistogramSelect = Select.ofType<boolean>();
 
@@ -16,8 +16,6 @@ interface ColormapConfigProps {
     showHistogramSelect: boolean;
     disableHistogramSelect: boolean;
 }
-
-export const SCALING_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 
 @observer
 export class ColormapConfigComponent extends React.Component<ColormapConfigProps> {

@@ -1,21 +1,18 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {action, computed, observable} from "mobx";
-import {Button, FormGroup, MenuItem, NumericInput, Tooltip} from "@blueprintjs/core";
+import {computed, observable} from "mobx";
+import {Button, FormGroup, MenuItem, NumericInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {FrameScaling, FrameStore} from "stores";
-import {SCALING_POPOVER_PROPS} from "../../../RenderConfig/ColormapConfigComponent/ColormapConfigComponent";
+import {ScalingSelectComponent, ClearableNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
 import {getPercentiles, scaleValue} from "utilities";
-import {ScalingSelectComponent} from "components/Shared";
 import "./ContourGeneratorPanelComponent.css";
 
 enum ContourGeneratorType {
-    StartStepPower = "start-step-power-n",
-    MinMaxNScaling = "min-max-n-scaling",
-    PercentagesRefN = "percentages-ref.value-n",
+    StartStepMultiplier = "start-step-multiplier",
+    MinMaxNScaling = "min-max-scaling",
+    PercentagesRefValue = "percentages-ref.value",
 }
-
-const KEYCODE_ENTER = 13;
 
 const GeneratorSelect = Select.ofType<ContourGeneratorType>();
 
@@ -23,9 +20,11 @@ const GeneratorSelect = Select.ofType<ContourGeneratorType>();
 export class ContourGeneratorPanelComponent extends React.Component<{ frame: FrameStore, onLevelsGenerated: (levels: number[]) => void }> {
     @observable generator: ContourGeneratorType = ContourGeneratorType.MinMaxNScaling;
 
+    @observable numLevels: number = 5;
+
+    // region min-max-scaling
     @observable enteredMinValue: number | undefined;
     @observable enteredMaxValue: number | undefined;
-    @observable numLevels: number = 5;
     @observable scalingType: FrameScaling = FrameScaling.LINEAR;
 
     @computed get minValue() {
@@ -44,74 +43,260 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
         }
     }
 
-    @action setMinValue = (val: number) => {
-        if (val !== this.minValue) {
-            this.enteredMinValue = val;
+    private renderMinMaxParameterRow() {
+        const frame = this.props.frame;
+        if (!frame) {
+            return null;
+        }
+
+        return (
+            <div className="generator-parameters-row">
+                <ClearableNumericInput
+                    label="Min"
+                    value={this.minValue}
+                    onValueChanged={val => this.enteredMinValue = val}
+                    onValueCleared={() => this.enteredMinValue = undefined}
+                />
+                <ClearableNumericInput
+                    label="Max"
+                    value={this.maxValue}
+                    onValueChanged={val => this.enteredMaxValue = val}
+                    onValueCleared={() => this.enteredMaxValue = undefined}
+                />
+                <FormGroup label="N" inline={true}>
+                    <NumericInput
+                        value={this.numLevels}
+                        min={1}
+                        max={20}
+                        step={1}
+                        className="narrow"
+                        onValueChange={val => this.numLevels = Math.floor(val)}
+                    />
+                </FormGroup>
+                <FormGroup>
+                    <ScalingSelectComponent selectedItem={this.scalingType} onItemSelect={val => this.scalingType = val}/>
+                </FormGroup>
+            </div>
+        );
+    }
+
+    private generateMinMaxLevels = (): number [] => {
+        if (this.numLevels <= 1) {
+            return [(this.maxValue + this.minValue) / 2.0];
+        } else {
+            const range = this.maxValue - this.minValue;
+            const numIntervals = this.numLevels - 1;
+            const levels = [];
+            for (let i = 0; i < this.numLevels; i++) {
+                const fraction = scaleValue(i / numIntervals, this.scalingType);
+                levels.push(this.minValue + range * fraction);
+            }
+            return levels;
         }
     };
 
-    @action clearMinValue = () => {
-        this.enteredMinValue = undefined;
-    };
+    // endregion
 
-    @action setMaxValue = (val: number) => {
-        if (val !== this.maxValue) {
-            this.enteredMaxValue = val;
+    // region start-step-multiplier
+    @observable enteredStartValue: number | undefined;
+    @observable enteredStepValue: number | undefined;
+    @observable multiplierValue: number = 1;
+
+    @computed get startValue() {
+        if (this.enteredStartValue === undefined && this.props.frame && this.props.frame.renderConfig.contourHistogram && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
+            return this.props.frame.renderConfig.contourHistogram.mean + 5.0 * this.props.frame.renderConfig.contourHistogram.stdDev;
+        } else {
+            return this.enteredStartValue;
+        }
+    }
+
+    @computed get stepValue() {
+        if (this.enteredStepValue === undefined && this.props.frame && this.props.frame.renderConfig.contourHistogram && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
+            return 4.0 * this.props.frame.renderConfig.contourHistogram.stdDev;
+        } else {
+            return this.enteredStepValue;
+        }
+    }
+
+    private renderStartStepParameterRow() {
+        const frame = this.props.frame;
+        if (!frame) {
+            return null;
+        }
+
+        return (
+            <div className="generator-parameters-row">
+                <ClearableNumericInput
+                    label="Start"
+                    value={this.startValue}
+                    onValueChanged={val => this.enteredStartValue = val}
+                    onValueCleared={() => this.enteredStartValue = undefined}
+                />
+                <ClearableNumericInput
+                    label="Step"
+                    value={this.stepValue}
+                    onValueChanged={val => this.enteredStepValue = val}
+                    onValueCleared={() => this.enteredStepValue = undefined}
+                />
+                <FormGroup label="N" inline={true}>
+                    <NumericInput
+                        value={this.numLevels}
+                        min={1}
+                        max={20}
+                        step={1}
+                        className="narrow"
+                        onValueChange={val => this.numLevels = Math.floor(val)}
+                    />
+                </FormGroup>
+                <FormGroup label="Multiplier" inline={true}>
+                    <NumericInput
+                        value={this.multiplierValue}
+                        min={0.1}
+                        step={1}
+                        className="narrow"
+                        onValueChange={val => this.multiplierValue = val}
+                    />
+                </FormGroup>
+            </div>
+        );
+    }
+
+    private generateStartStepLevels = () => {
+        if (this.numLevels <= 1) {
+            return [(this.startValue)];
+        } else {
+            let step = this.stepValue;
+            let value = this.startValue;
+            const levels = [];
+            for (let i = 0; i < this.numLevels; i++) {
+                levels.push(value);
+                value += step;
+                step *= this.multiplierValue;
+            }
+            return levels;
         }
     };
 
-    @action clearMaxValue = () => {
-        this.enteredMaxValue = undefined;
+    // endregion
+
+    // region percentages-ref
+    @observable enteredRefValue: number | undefined;
+    @observable lowerPercentage: number = 60;
+    @observable upperPercentage: number = 100;
+
+    @computed get refValue() {
+        if (this.enteredRefValue === undefined && this.props.frame && this.props.frame.renderConfig.contourHistogram) {
+            return getPercentiles(this.props.frame.renderConfig.contourHistogram, [99.9])[0];
+        } else {
+            return this.enteredRefValue;
+        }
+    }
+
+    private renderPercentageRefParameterRow() {
+        const frame = this.props.frame;
+        if (!frame) {
+            return null;
+        }
+
+        return (
+            <div className="generator-parameters-row">
+                <ClearableNumericInput
+                    label="Reference"
+                    value={this.refValue}
+                    onValueChanged={val => this.enteredRefValue = val}
+                    onValueCleared={() => this.enteredRefValue = undefined}
+                />
+                <FormGroup label="Lower (%)" inline={true}>
+                    <NumericInput
+                        value={this.lowerPercentage}
+                        min={0}
+                        max={100}
+                        step={1}
+                        className="narrow"
+                        onValueChange={val => this.lowerPercentage = val}
+                    />
+                </FormGroup>
+                <FormGroup label="Upper (%)" inline={true}>
+                    <NumericInput
+                        value={this.upperPercentage}
+                        min={0}
+                        max={100}
+                        step={1}
+                        className="narrow"
+                        onValueChange={val => this.upperPercentage = val}
+                    />
+                </FormGroup>
+                <FormGroup label="N" inline={true}>
+                    <NumericInput
+                        value={this.numLevels}
+                        min={1}
+                        max={20}
+                        step={1}
+                        className="narrow"
+                        onValueChange={val => this.numLevels = Math.floor(val)}
+                    />
+                </FormGroup>
+            </div>
+        );
+    }
+
+    private generatePercentageRefLevels = () => {
+        if (this.numLevels <= 1) {
+            return [(this.refValue)];
+        } else {
+            const range = (this.upperPercentage - this.lowerPercentage);
+            const numIntervals = this.numLevels - 1;
+            const interval = range / numIntervals;
+            const levels = [];
+            for (let i = 0; i < this.numLevels; i++) {
+                levels.push(this.refValue * (this.lowerPercentage + interval * i) / 100.0);
+            }
+            return levels;
+        }
     };
 
-    handleMinChange = (ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-
-        const val = parseFloat(ev.currentTarget.value);
-        if (isFinite(val) && val !== this.minValue) {
-            this.enteredMinValue = val;
-        }
-    };
-
-    handleMaxChange = (ev) => {
-        if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
-            return;
-        }
-
-        const val = parseFloat(ev.currentTarget.value);
-        if (isFinite(val) && val !== this.maxValue) {
-            this.enteredMaxValue = val;
-        }
-    };
+    // endregion
 
     private renderGeneratorSelectItem = (generator: ContourGeneratorType, {handleClick, modifiers, query}) => {
         return <MenuItem text={generator} onClick={handleClick} key={generator}/>;
     };
 
     private generateLevels = () => {
-        const levels = [];
-
-        // Return midpoint if only one level is selected
-        if (this.numLevels <= 1) {
-            levels.push((this.maxValue + this.minValue) / 2.0);
-        } else {
-            const range = this.maxValue - this.minValue;
-            const numIntervals = this.numLevels - 1;
-            for (let i = 0; i < this.numLevels; i++) {
-                const fraction = scaleValue(i / numIntervals, this.scalingType);
-                levels.push(this.minValue + range * fraction);
-            }
+        switch (this.generator) {
+            case ContourGeneratorType.MinMaxNScaling:
+                this.props.onLevelsGenerated(this.generateMinMaxLevels());
+                break;
+            case ContourGeneratorType.StartStepMultiplier:
+                this.props.onLevelsGenerated(this.generateStartStepLevels());
+                break;
+            case ContourGeneratorType.PercentagesRefValue:
+                this.props.onLevelsGenerated(this.generatePercentageRefLevels());
+                break;
+            default:
+                break;
         }
-
-        this.props.onLevelsGenerated(levels);
     };
 
     render() {
         const frame = this.props.frame;
         if (!frame) {
             return null;
+        }
+
+        let generatorParameters: React.ReactNode;
+
+        switch (this.generator) {
+            case ContourGeneratorType.MinMaxNScaling:
+                generatorParameters = this.renderMinMaxParameterRow();
+                break;
+            case ContourGeneratorType.StartStepMultiplier:
+                generatorParameters = this.renderStartStepParameterRow();
+                break;
+            case ContourGeneratorType.PercentagesRefValue:
+                generatorParameters = this.renderPercentageRefParameterRow();
+                break;
+            default:
+                break;
         }
 
         return (
@@ -122,7 +307,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                             activeItem={this.generator}
                             popoverProps={SCALING_POPOVER_PROPS}
                             filterable={false}
-                            items={[ContourGeneratorType.StartStepPower, ContourGeneratorType.MinMaxNScaling, ContourGeneratorType.PercentagesRefN]}
+                            items={[ContourGeneratorType.StartStepMultiplier, ContourGeneratorType.MinMaxNScaling, ContourGeneratorType.PercentagesRefValue]}
                             onItemSelect={val => this.generator = val}
                             itemRenderer={this.renderGeneratorSelectItem}
                         >
@@ -131,47 +316,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                     </FormGroup>
                     <Button intent="success" className="generate-button" onClick={this.generateLevels}>Generate</Button>
                 </div>
-                <div className="generator-parameters-row">
-                    <FormGroup label="Min" inline={true}>
-                        <NumericInput
-                            value={this.minValue}
-                            onBlur={this.handleMinChange}
-                            onKeyDown={this.handleMinChange}
-                            buttonPosition="none"
-                            rightElement={
-                                <Tooltip content="Reset value to default">
-                                    <Button icon="refresh" minimal={true} onClick={this.clearMinValue}/>
-                                </Tooltip>
-                            }
-                        />
-                    </FormGroup>
-                    <FormGroup label="Max" inline={true}>
-                        <NumericInput
-                            value={this.maxValue}
-                            onBlur={this.handleMaxChange}
-                            onKeyDown={this.handleMaxChange}
-                            buttonPosition="none"
-                            rightElement={
-                                <Tooltip content="Reset value to default">
-                                    <Button icon="refresh" minimal={true} onClick={this.clearMaxValue}/>
-                                </Tooltip>
-                            }
-                        />
-                    </FormGroup>
-                    <FormGroup label="N" inline={true}>
-                        <NumericInput
-                            value={this.numLevels}
-                            min={1}
-                            max={20}
-                            step={1}
-                            onValueChange={val => this.numLevels = Math.floor(val)}
-                        />
-                    </FormGroup>
-                    <FormGroup>
-                        <ScalingSelectComponent selectedItem={this.scalingType} onItemSelect={val => this.scalingType = val}/>
-                    </FormGroup>
-                </div>
-
+                {generatorParameters}
             </div>
         );
     }

@@ -22,6 +22,14 @@
                     width: 90px;
                 }
             }
+
+            &.narrow {
+                .bp3-input-group {
+                    input {
+                        width: 50px;
+                    }
+                }
+            }
         }
     }
 }

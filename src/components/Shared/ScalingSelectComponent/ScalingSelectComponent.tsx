@@ -27,7 +27,7 @@ const equationPngMap = new Map([
 
 const ScalingSelect = Select.ofType<FrameScaling>();
 const SCALING_KEYS = Array.from(RenderConfigStore.SCALING_TYPES.keys());
-const SCALING_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
+export const SCALING_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 
 export const ScalingSelectComponent: React.FC<ScalingComponentProps> = (props) => {
     const renderScalingSelectItem = (scaling: FrameScaling, {handleClick, modifiers, query}) => {
