@@ -139,10 +139,39 @@ export class LayoutSchema {
 
         // transform config in different version to current version
         if (version === 1) {
-            return LayoutSchema.TransformVer1ToCurrentVer(layoutConfig);
+            return LayoutSchema.ConvertV1ToV2(layoutConfig);
         }
 
         return true;
+    };
+
+    private static ConvertV1ToV2 = (layoutConfig): boolean => {
+        // traverse docked widgets
+        const docked = layoutConfig.docked.content;
+        LayoutSchema.ConvertV1ToV2Docked(docked);
+
+        // traverse floating widgets
+        const floating = layoutConfig.floating;
+        floating.forEach((config) => {
+            if (config.type.match(/spatial\-profiler/)) {
+                config["widgetSettings"] = config.coord === "y" ? {coordinate: "y"} : {coordinate: "x"};
+            }
+        });
+        return true;
+    };
+
+    private static ConvertV1ToV2Docked = (parentContent) => {
+        parentContent.forEach((child) => {
+            if (child.type === "component") {
+                if (child.id.match(/spatial\-profiler/)) {
+                    child["widgetSettings"] = child.coord === "y" ? {coordinate: "y"} : {coordinate: "x"};
+                }
+            } else {
+                if (child.content) {
+                    LayoutSchema.ConvertV1ToV2Docked(child.content);
+                }
+            }
+        });
     };
 
     public static GetPresetConfig = (presetName: string) => {
@@ -170,10 +199,5 @@ export class LayoutSchema {
             },
             floating: []
         };
-    };
-
-    private static TransformVer1ToCurrentVer = (layoutConfig: object): boolean => {
-        //TODO
-        return true;
     };
 }
