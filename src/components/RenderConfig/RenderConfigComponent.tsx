@@ -4,15 +4,14 @@ import ReactResizeDetector from "react-resize-detector";
 import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, FormGroup, HTMLSelect, IOptionProps, NonIdealState, NumericInput, Colors} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent} from "components/Shared";
-import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
 import {AnimationState, FrameScaling, FrameStore, RenderConfigStore, WidgetConfig, WidgetProps} from "stores";
-import {clamp, toExponential, toFixed} from "utilities";
 import {Point2D} from "models";
-import {CARTA} from "carta-protobuf";
+import {clamp, toExponential, toFixed} from "utilities";
 import "./RenderConfigComponent.css";
 
 const KEYCODE_ENTER = 13;
