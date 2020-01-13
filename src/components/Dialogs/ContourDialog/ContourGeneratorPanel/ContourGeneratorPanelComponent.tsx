@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {computed, observable} from "mobx";
-import {Button, FormGroup, MenuItem, NumericInput} from "@blueprintjs/core";
+import {action, computed, observable} from "mobx";
+import {Button, FormGroup, MenuItem, NumericInput, TagInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {FrameScaling, FrameStore} from "stores";
 import {ScalingSelectComponent, ClearableNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
@@ -12,6 +12,7 @@ enum ContourGeneratorType {
     StartStepMultiplier = "start-step-multiplier",
     MinMaxNScaling = "min-max-scaling",
     PercentagesRefValue = "percentages-ref.value",
+    MeanSigmaList = "mean-sigma-list"
 }
 
 const GeneratorSelect = Select.ofType<ContourGeneratorType>();
@@ -257,6 +258,86 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
 
     // endregion
 
+    // region mean-sigma-list
+    @observable enteredMeanValue: number | undefined;
+    @observable enteredSigmaValue: number | undefined;
+    @observable sigmaLevels: number[] = [-5, 5, 9, 13, 17];
+
+    @computed get meanValue() {
+        if (this.enteredMeanValue === undefined && this.props.frame && this.props.frame.renderConfig.contourHistogram && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
+            return this.props.frame.renderConfig.contourHistogram.mean;
+        } else {
+            return this.enteredMeanValue;
+        }
+    }
+
+    @computed get sigmaValue() {
+        if (this.enteredSigmaValue === undefined && this.props.frame && this.props.frame.renderConfig.contourHistogram && this.props.frame.renderConfig.contourHistogram.stdDev > 0) {
+            return this.props.frame.renderConfig.contourHistogram.stdDev;
+        } else {
+            return this.enteredSigmaValue;
+        }
+    }
+
+    @action private handleLevelAdded = (values: string[]) => {
+        try {
+            for (const valueString of values) {
+                const val = parseFloat(valueString);
+                if (isFinite(val)) {
+                    this.sigmaLevels.push(val);
+                }
+            }
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
+    @action private handleLevelRemoved = (value: string, index: number) => {
+        this.sigmaLevels.splice(index, 1);
+    };
+
+    private renderMeanSigmaParameterRow() {
+        const frame = this.props.frame;
+        if (!frame) {
+            return null;
+        }
+
+        return (
+            <div className="generator-parameters-row">
+                <ClearableNumericInput
+                    label="Mean"
+                    value={this.meanValue}
+                    onValueChanged={val => this.enteredMeanValue = val}
+                    onValueCleared={() => this.enteredMeanValue = undefined}
+                />
+                <ClearableNumericInput
+                    label="Sigma"
+                    value={this.sigmaValue}
+                    onValueChanged={val => this.enteredSigmaValue = val}
+                    onValueCleared={() => this.enteredSigmaValue = undefined}
+                />
+                <FormGroup label={"Sigma List"} inline={true}>
+                    <TagInput
+                        addOnBlur={true}
+                        fill={true}
+                        tagProps={{
+                            minimal: true,
+                        }}
+                        onAdd={this.handleLevelAdded}
+                        onRemove={this.handleLevelRemoved}
+                        values={this.sigmaLevels}
+                    />
+                </FormGroup>
+            </div>
+        );
+    }
+
+    private generateMeanSigmaLevels = () => {
+        return this.sigmaLevels.map(level => (this.meanValue + this.sigmaValue * level));
+    };
+
+    // endregion
+
     private renderGeneratorSelectItem = (generator: ContourGeneratorType, {handleClick, modifiers, query}) => {
         return <MenuItem text={generator} onClick={handleClick} key={generator}/>;
     };
@@ -271,6 +352,9 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                 break;
             case ContourGeneratorType.PercentagesRefValue:
                 this.props.onLevelsGenerated(this.generatePercentageRefLevels());
+                break;
+            case ContourGeneratorType.MeanSigmaList:
+                this.props.onLevelsGenerated(this.generateMeanSigmaLevels());
                 break;
             default:
                 break;
@@ -295,6 +379,9 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
             case ContourGeneratorType.PercentagesRefValue:
                 generatorParameters = this.renderPercentageRefParameterRow();
                 break;
+            case ContourGeneratorType.MeanSigmaList:
+                generatorParameters = this.renderMeanSigmaParameterRow();
+                break;
             default:
                 break;
         }
@@ -307,7 +394,12 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                             activeItem={this.generator}
                             popoverProps={SCALING_POPOVER_PROPS}
                             filterable={false}
-                            items={[ContourGeneratorType.StartStepMultiplier, ContourGeneratorType.MinMaxNScaling, ContourGeneratorType.PercentagesRefValue]}
+                            items={[
+                                ContourGeneratorType.StartStepMultiplier,
+                                ContourGeneratorType.MinMaxNScaling,
+                                ContourGeneratorType.PercentagesRefValue,
+                                ContourGeneratorType.MeanSigmaList
+                            ]}
                             onItemSelect={val => this.generator = val}
                             itemRenderer={this.renderGeneratorSelectItem}
                         >

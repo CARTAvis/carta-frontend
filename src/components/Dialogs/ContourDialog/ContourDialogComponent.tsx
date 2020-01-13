@@ -162,7 +162,12 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
             return;
         }
         if (value && !appStore.activeFrame.renderConfig.cubeHistogram) {
-            this.showCubeHistogramAlert = true;
+            // skip alert and warning for HDF5 files
+            if (appStore.activeFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) {
+                this.handleAlertConfirm();
+            } else {
+                this.showCubeHistogramAlert = true;
+            }
         } else {
             appStore.activeFrame.renderConfig.setUseCubeHistogramContours(value);
         }
@@ -229,6 +234,23 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
         if (closestIndex >= 0) {
             this.levels.splice(closestIndex, 1);
         }
+    };
+
+    @action private handleLevelAdded = (values: string[]) => {
+        try {
+            for (const valueString of values) {
+                const val = parseFloat(valueString);
+                if (isFinite(val)) {
+                    this.levels.push(val);
+                }
+            }
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
+    @action private handleLevelRemoved = (value: string, index: number) => {
+        this.levels.splice(index, 1);
     };
 
     @action private handleLevelDragged = (index: number) => (val: number) => {
@@ -388,10 +410,13 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                 <ContourGeneratorPanelComponent frame={frame} onLevelsGenerated={this.handleLevelsGenerated}/>
                 <FormGroup label={"Levels"} inline={true}>
                     <TagInput
+                        addOnBlur={true}
                         fill={true}
                         tagProps={{
                             minimal: true,
                         }}
+                        onAdd={this.handleLevelAdded}
+                        onRemove={this.handleLevelRemoved}
                         values={sortedLevels}
                     />
                 </FormGroup>

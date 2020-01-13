@@ -13,6 +13,7 @@ interface ColormapConfigProps {
     onCubeHistogramSelected: () => void;
     onCubeHistogramCancelled?: () => void;
     darkTheme: boolean;
+    warnOnCubeHistogram: boolean;
     showHistogramSelect: boolean;
     disableHistogramSelect: boolean;
 }
@@ -44,7 +45,11 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
 
     handleHistogramChange = (value: boolean) => {
         if (value && !this.props.renderConfig.cubeHistogram) {
-            this.showCubeHistogramAlert = true;
+            if (this.props.warnOnCubeHistogram) {
+                this.showCubeHistogramAlert = true;
+            } else {
+                this.handleAlertConfirm();
+            }
         } else {
             this.props.renderConfig.setUseCubeHistogram(value);
         }

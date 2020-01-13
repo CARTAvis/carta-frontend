@@ -286,7 +286,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 let primaryLineColor = this.widgetStore.primaryLineColor.colorHex;
                 if (appStore.darkTheme) {
                     if (!this.widgetStore.primaryLineColor.fixed) {
-                        primaryLineColor = Colors.BLUE4;   
+                        primaryLineColor = Colors.BLUE4;
                     }
                 }
                 linePlotProps.lineColor = primaryLineColor;
@@ -408,6 +408,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                         onCubeHistogramSelected={this.handleCubeHistogramSelected}
                         showHistogramSelect={frame.frameInfo.fileInfoExtended.depth > 1}
                         disableHistogramSelect={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                        warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
                     />
                     <FormGroup label={"Clip Min"} inline={true}>
                         <NumericInput
