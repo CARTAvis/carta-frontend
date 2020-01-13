@@ -4,8 +4,7 @@ import {observer} from "mobx-react";
 import {Alert, Button, FormGroup, IPopoverProps, MenuItem, NumericInput, Switch} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {FrameScaling, RenderConfigStore} from "stores/RenderConfigStore";
-import {ColormapComponent} from "components/Shared";
-import {ScalingComponent} from "./ScalingComponent";
+import {ColormapComponent, ScalingSelectComponent} from "components/Shared";
 
 const HistogramSelect = Select.ofType<boolean>();
 
@@ -77,7 +76,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 </FormGroup>
                 }
                 <FormGroup label={"Scaling"} inline={true}>
-                    <ScalingComponent
+                    <ScalingSelectComponent
                         selectedItem={renderConfig.scaling}
                         onItemSelect={renderConfig.setScaling}
                     />

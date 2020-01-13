@@ -1,4 +1,5 @@
 import {CARTA} from "carta-protobuf";
+import {FrameScaling} from "../stores";
 
 export function smoothStepOffset(val: number, edge0: number, edge1: number, level0: number, level1: number) {
     const stepVal = smoothStep(val, edge0, edge1);
@@ -73,4 +74,21 @@ export function getPercentiles(histogram: CARTA.IHistogram, ranks: number[]): nu
         cumulativeSum += vals[i];
     }
     return calculatedPercentiles;
+}
+
+export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 1000, gamma: number = 1.5) {
+    switch (scaling) {
+        case FrameScaling.SQUARE:
+            return x * x;
+        case FrameScaling.SQRT:
+            return Math.sqrt(x);
+        case FrameScaling.LOG:
+            return clamp(Math.log(alpha * x + 1.0) / Math.log(alpha), 0.0, 1.0);
+        case FrameScaling.POWER:
+            return (Math.pow(alpha, x) - 1.0) / alpha;
+        case FrameScaling.GAMMA:
+            return Math.pow(x, gamma);
+        default:
+            return x;
+    }
 }

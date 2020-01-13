@@ -1,7 +1,7 @@
 import * as React from "react";
 import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, AnchorButton, Button, Classes, Colors, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, NonIdealState, NumericInput, Tab, Tabs, Tag, TagInput, Tooltip} from "@blueprintjs/core";
+import {Alert, AnchorButton, Button, Classes, Colors, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, NonIdealState, NumericInput, Tab, Tabs, TagInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/Dialogs";
@@ -11,7 +11,7 @@ import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGen
 import {AppStore, FrameStore} from "stores";
 import {RenderConfigWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
-import {clamp, SWATCH_COLORS, toExponential, toFixed} from "utilities";
+import {clamp, toExponential, toFixed} from "utilities";
 import {SCALING_POPOVER_PROPS} from "../../RenderConfig/ColormapConfigComponent/ColormapConfigComponent";
 
 import "./ContourDialogComponent.css";
@@ -33,7 +33,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     @observable smoothingMode: CARTA.SmoothingMode;
     @observable smoothingFactor: number;
 
-    private static readonly DefaultWidth = 560;
+    private static readonly DefaultWidth = 660;
     private static readonly DefaultHeight = 660;
 
     private readonly widgetStore: RenderConfigWidgetStore;

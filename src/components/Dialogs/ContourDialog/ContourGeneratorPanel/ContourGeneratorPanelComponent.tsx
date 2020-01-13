@@ -3,9 +3,10 @@ import {observer} from "mobx-react";
 import {action, computed, observable} from "mobx";
 import {Button, FormGroup, MenuItem, NumericInput, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
-import {FrameStore} from "stores";
+import {FrameScaling, FrameStore} from "stores";
 import {SCALING_POPOVER_PROPS} from "../../../RenderConfig/ColormapConfigComponent/ColormapConfigComponent";
-import {getPercentiles} from "utilities";
+import {getPercentiles, scaleValue} from "utilities";
+import {ScalingSelectComponent} from "components/Shared";
 import "./ContourGeneratorPanelComponent.css";
 
 enum ContourGeneratorType {
@@ -25,6 +26,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
     @observable enteredMinValue: number | undefined;
     @observable enteredMaxValue: number | undefined;
     @observable numLevels: number = 5;
+    @observable scalingType: FrameScaling = FrameScaling.LINEAR;
 
     @computed get minValue() {
         if (this.enteredMinValue === undefined && this.props.frame && this.props.frame.renderConfig.contourHistogram) {
@@ -96,9 +98,10 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
             levels.push((this.maxValue + this.minValue) / 2.0);
         } else {
             const range = this.maxValue - this.minValue;
-            const interval = range / (this.numLevels - 1);
+            const numIntervals = this.numLevels - 1;
             for (let i = 0; i < this.numLevels; i++) {
-                levels.push(this.minValue + interval * i);
+                const fraction = scaleValue(i / numIntervals, this.scalingType);
+                levels.push(this.minValue + range * fraction);
             }
         }
 
@@ -163,6 +166,9 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                             step={1}
                             onValueChange={val => this.numLevels = Math.floor(val)}
                         />
+                    </FormGroup>
+                    <FormGroup>
+                        <ScalingSelectComponent selectedItem={this.scalingType} onItemSelect={val => this.scalingType = val}/>
                     </FormGroup>
                 </div>
 
