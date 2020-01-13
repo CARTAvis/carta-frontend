@@ -268,10 +268,51 @@ export class SpatialProfileWidgetStore {
         if ("coordinate" in widgetSettings) {
             this.coordinate = widgetSettings.coordinate;
         }
+        if ("primaryLineColor" in widgetSettings) {
+            this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
+        }
+        if ("lineWidth" in widgetSettings) {
+            this.lineWidth = widgetSettings.lineWidth;
+        }
+        if ("linePlotPointSize" in widgetSettings) {
+            this.linePlotPointSize = widgetSettings.linePlotPointSize;
+        }
+        if ("wcsAxisVisible" in widgetSettings) {
+            this.wcsAxisVisible = widgetSettings.wcsAxisVisible;
+        }
+        if ("meanRmsVisible" in widgetSettings) {
+            this.meanRmsVisible = widgetSettings.meanRmsVisible;
+        }
+        if ("plotType" in widgetSettings) {
+            this.plotType = widgetSettings.plotType;
+        }
+        if ("minXVal" in widgetSettings) {
+            this.linePlotInitXYBoundaries.minXVal = widgetSettings.minXVal;
+        }
+        if ("maxXVal" in widgetSettings) {
+            this.linePlotInitXYBoundaries.maxXVal = widgetSettings.maxXVal;
+        }
+        if ("minYVal" in widgetSettings) {
+            this.linePlotInitXYBoundaries.minYVal = widgetSettings.minYVal;
+        }
+        if ("maxYVal" in widgetSettings) {
+            this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
+        }
     };
 
     public toConfig = () => {
         return {
+            coordinate: this.coordinate,
+            primaryLineColor: this.primaryLineColor.colorHex,
+            lineWidth: this.lineWidth,
+            linePlotPointSize: this.linePlotPointSize,
+            wcsAxisVisible: this.wcsAxisVisible,
+            meanRmsVisible: this.meanRmsVisible,
+            plotType: this.plotType,
+            minXVal: this.linePlotInitXYBoundaries.minXVal,
+            maxXVal: this.linePlotInitXYBoundaries.maxXVal,
+            minYVal: this.linePlotInitXYBoundaries.minYVal,
+            maxYVal: this.linePlotInitXYBoundaries.maxYVal
         };
     };
 }
