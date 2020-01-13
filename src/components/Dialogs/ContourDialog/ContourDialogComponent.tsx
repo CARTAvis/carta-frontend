@@ -306,9 +306,11 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
 
             // Determine scale in X and Y directions. If auto-scaling, use the bounds of the current data
             if (this.widgetStore.isAutoScaledX) {
-                const xRange = currentPlotData.xMax - currentPlotData.xMin;
-                linePlotProps.xMin = currentPlotData.xMin - 0.01 * xRange;
-                linePlotProps.xMax = currentPlotData.xMax + 0.01 * xRange;
+                const minVal = Math.min(currentPlotData.xMin, ...this.levels);
+                const maxVal = Math.max(currentPlotData.xMax, ...this.levels);
+                const xRange = maxVal - minVal;
+                linePlotProps.xMin = minVal - 0.01 * xRange;
+                linePlotProps.xMax = maxVal + 0.01 * xRange;
             } else {
                 linePlotProps.xMin = this.widgetStore.minX;
                 linePlotProps.xMax = this.widgetStore.maxX;
