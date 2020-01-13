@@ -333,7 +333,34 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                 dragMove: this.handleLevelDragged(index),
                 horizontal: false,
             }));
+        } else {
+            linePlotProps.markers = [];
         }
+
+        if (this.widgetStore.meanRmsVisible && frame.renderConfig.contourHistogram && frame.renderConfig.contourHistogram.stdDev > 0) {
+            linePlotProps.markers.push({
+                value: frame.renderConfig.contourHistogram.mean,
+                id: "marker-mean",
+                draggable: false,
+                horizontal: false,
+                color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                dash: [5]
+            });
+
+            linePlotProps.markers.push({
+                value: frame.renderConfig.contourHistogram.mean,
+                id: "marker-rms",
+                draggable: false,
+                horizontal: false,
+                width: frame.renderConfig.contourHistogram.stdDev,
+                opacity: 0.2,
+                color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+            });
+        }
+
+        let sortedLevels = this.levels.slice()
+            .sort((a, b) => a - b)
+            .map(level => Math.abs(level) < 0.1 ? toExponential(level, 2) : toFixed(level, 2));
 
         const levelPanel = (
             <React.Fragment>
@@ -361,7 +388,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                         tagProps={{
                             minimal: true,
                         }}
-                        values={this.levels.map(level => Math.abs(level) < 0.1 ? toExponential(level, 2) : toFixed(level, 2))}
+                        values={sortedLevels}
                     />
                 </FormGroup>
             </React.Fragment>
@@ -392,6 +419,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                 </FormGroup>
             </React.Fragment>
         );
+
         const stylePanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Thickness">
