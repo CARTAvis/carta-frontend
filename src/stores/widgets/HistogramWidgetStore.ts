@@ -158,10 +158,46 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         if (!widgetSettings) {
             return;
         }
+        if ("primaryLineColor" in widgetSettings) {
+            this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
+        }
+        if ("lineWidth" in widgetSettings) {
+            this.lineWidth = widgetSettings.lineWidth;
+        }
+        if ("linePlotPointSize" in widgetSettings) {
+            this.linePlotPointSize = widgetSettings.linePlotPointSize;
+        }
+        if ("logScaleY" in widgetSettings) {
+            this.logScaleY = widgetSettings.logScaleY;
+        }
+        if ("plotType" in widgetSettings) {
+            this.plotType = widgetSettings.plotType;
+        }
+        if ("minXVal" in widgetSettings) {
+            this.linePlotInitXYBoundaries.minXVal = widgetSettings.minXVal;
+        }
+        if ("maxXVal" in widgetSettings) {
+            this.linePlotInitXYBoundaries.maxXVal = widgetSettings.maxXVal;
+        }
+        if ("minYVal" in widgetSettings) {
+            this.linePlotInitXYBoundaries.minYVal = widgetSettings.minYVal;
+        }
+        if ("maxYVal" in widgetSettings) {
+            this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
+        }
     };
 
     public toConfig = () => {
         return {
+            primaryLineColor: this.primaryLineColor.colorHex,
+            lineWidth: this.lineWidth,
+            linePlotPointSize: this.linePlotPointSize,
+            logScaleY: this.logScaleY,
+            plotType: this.plotType,
+            minXVal: this.linePlotInitXYBoundaries.minXVal,
+            maxXVal: this.linePlotInitXYBoundaries.maxXVal,
+            minYVal: this.linePlotInitXYBoundaries.minYVal,
+            maxYVal: this.linePlotInitXYBoundaries.maxYVal
         };
     };
 }
