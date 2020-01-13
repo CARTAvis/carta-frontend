@@ -267,6 +267,51 @@ export class LayoutSchema {
         });
     };
 
+    public static genSimpleConfig = (appStore: AppStore, newParentContent: any, parentContent: any): void => {
+        if (!appStore || !newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
+            return;
+        }
+
+        parentContent.forEach((child) => {
+            if (child.type) {
+                if (child.type === "stack" || child.type === "row" || child.type === "column") {
+                    let simpleChild = {
+                        type: child.type,
+                        content: []
+                    };
+                    if (child.width) {
+                        simpleChild["width"] = child.width;
+                    }
+                    if (child.height) {
+                        simpleChild["height"] = child.height;
+                    }
+                    newParentContent.push(simpleChild);
+                    if (child.content) {
+                        LayoutSchema.genSimpleConfig(appStore, simpleChild.content, child.content);
+                    }
+                } else if (child.type === "component" && child.id) {
+                    const widgetType = (child.id).replace(/\-\d+$/, "");
+                    let simpleChild = {
+                        type: child.type,
+                        id: widgetType
+                    };
+                    if (child.width) {
+                        simpleChild["width"] = child.width;
+                    }
+                    if (child.height) {
+                        simpleChild["height"] = child.height;
+                    }
+                    // add widget settings
+                    const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(widgetType, child.id);
+                    if (widgetSettingsConfig) {
+                        simpleChild["widgetSettings"] = widgetSettingsConfig;
+                    }
+                    newParentContent.push(simpleChild);
+                }
+            }
+        });
+    };
+
     public static fillComponents = (appStore: AppStore, newParentContent: any, parentContent: any, componentConfigs: any[]) => {
         if (!appStore || !newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
             return;
