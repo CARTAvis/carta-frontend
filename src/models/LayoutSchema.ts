@@ -267,7 +267,7 @@ export class LayoutSchema {
         });
     };
 
-    public static createConfigToSave = (appStore: AppStore, newParentContent: any, parentContent: any): void => {
+    public static CreateConfigToSave = (appStore: AppStore, newParentContent: any, parentContent: any): void => {
         if (!appStore || !newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
             return;
         }
@@ -287,7 +287,7 @@ export class LayoutSchema {
                     }
                     newParentContent.push(simpleChild);
                     if (child.content) {
-                        LayoutSchema.createConfigToSave(appStore, simpleChild.content, child.content);
+                        LayoutSchema.CreateConfigToSave(appStore, simpleChild.content, child.content);
                     }
                 } else if (child.type === "component" && child.id) {
                     const widgetType = (child.id).replace(/\-\d+$/, "");
@@ -312,7 +312,7 @@ export class LayoutSchema {
         });
     };
 
-    public static createConfigToApply = (appStore: AppStore, newParentContent: any, parentContent: any, componentConfigs: any[]) => {
+    public static CreateConfigToApply = (appStore: AppStore, newParentContent: any, parentContent: any, componentConfigs: any[]) => {
         if (!appStore || !newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
             return;
         }
@@ -332,7 +332,7 @@ export class LayoutSchema {
                     }
                     newParentContent.push(simpleChild);
                     if (child.content) {
-                        LayoutSchema.createConfigToApply(appStore, simpleChild.content, child.content, componentConfigs);
+                        LayoutSchema.CreateConfigToApply(appStore, simpleChild.content, child.content, componentConfigs);
                     }
                 } else if (child.type === "component" && child.id) {
                     const widgetType = (child.id).replace(/\-\d+$/, "");
