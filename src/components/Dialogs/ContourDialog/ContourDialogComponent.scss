@@ -2,6 +2,10 @@
     .bp3-dialog-body {
         user-select: none;
 
+        .bp3-tabs {
+            margin: 2px;
+        }
+
         .histogram-plot {
             height: 200px;
             position: relative;

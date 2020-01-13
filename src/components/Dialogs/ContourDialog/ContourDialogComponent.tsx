@@ -351,7 +351,9 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
             linePlotProps.data = currentPlotData.values;
         }
 
-        if (this.levels && this.levels.length) {
+        const hasLevels = this.levels && this.levels.length;
+
+        if (hasLevels) {
             linePlotProps.markers = this.levels.map((level, index) => ({
                 value: level,
                 id: `marker-${index}`,
@@ -473,7 +475,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton intent={Intent.WARNING} onClick={this.handleClearContours} disabled={!frame.contourConfig.enabled} text="Clear"/>
-                        <AnchorButton intent={Intent.SUCCESS} onClick={this.handleApplyContours} disabled={!this.contourConfigChanged && frame.contourConfig.enabled} text="Apply"/>
+                        <AnchorButton intent={Intent.SUCCESS} onClick={this.handleApplyContours} disabled={!hasLevels || (!this.contourConfigChanged && frame.contourConfig.enabled)} text="Apply"/>
                         <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideContourDialog} text="Close"/>
                     </div>
                 </div>
