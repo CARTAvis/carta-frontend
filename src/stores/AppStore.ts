@@ -25,7 +25,8 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore
+    WidgetsStore,
+    DialogStore
 } from ".";
 import {GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, TileService} from "services";
@@ -55,6 +56,12 @@ export class AppStore {
     @observable preferenceStore: PreferenceStore;
     // Layouts
     @observable layoutStore: LayoutStore;
+    // Dialogs
+    @observable dialogStore: DialogStore;
+    // Overlay
+    @observable overlayStore: OverlayStore;
+    // File Browser
+    @observable fileBrowserStore: FileBrowserStore;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -104,73 +111,8 @@ export class AppStore {
         this.imageToolbarVisible = false;
     };
 
-    // Region dialog
-    @observable regionDialogVisible: boolean;
-    @action showRegionDialog = () => {
-        console.log(`Showing dialog for ${this.activeFrame.regionSet.selectedRegion}`);
-        this.regionDialogVisible = true;
-    };
-    @action hideRegionDialog = () => {
-        this.regionDialogVisible = false;
-    };
-
-    // Overlay
-    @observable overlayStore: OverlayStore;
-    // File Browser
-    @observable fileBrowserStore: FileBrowserStore;
-
-    // Hotkey dialog
-    @observable hotkeyDialogVisible: boolean;
-    @action showHotkeyDialog = () => {
-        this.hotkeyDialogVisible = true;
-    };
-    @action hideHotkeyDialog = () => {
-        this.hotkeyDialogVisible = false;
-    };
-
-    // About dialog
-    @observable aboutDialogVisible: boolean;
-    @action showAboutDialog = () => {
-        this.aboutDialogVisible = true;
-    };
-    @action hideAboutDialog = () => {
-        this.aboutDialogVisible = false;
-    };
-
-    // User preference dialog
-    @observable preferenceDialogVisible: boolean;
-    @action showPreferenceDialog = () => {
-        this.preferenceDialogVisible = true;
-    };
-    @action hidePreferenceDialog = () => {
-        this.preferenceDialogVisible = false;
-    };
-
-    // Layout related dialogs
-    @observable saveLayoutDialogVisible: boolean;
-    @observable deleteLayoutDialogVisible: boolean;
-    @action showSaveLayoutDialog = () => {
-        this.saveLayoutDialogVisible = true;
-    };
-    @action hideSaveLayoutDialog = () => {
-        this.saveLayoutDialogVisible = false;
-    };
-    @action showDeleteLayoutDialog = () => {
-        this.deleteLayoutDialogVisible = true;
-    };
-    @action hideDeleteLayoutDialog = () => {
-        this.deleteLayoutDialogVisible = false;
-    };
-
-    // Auth dialog
-    @observable authDialogVisible: boolean = false;
+    // Auth
     @observable username: string = "";
-    @action showAuthDialog = () => {
-        this.authDialogVisible = true;
-    };
-    @action hideAuthDialog = () => {
-        this.authDialogVisible = false;
-    };
     @action setUsername = (username: string) => {
         this.username = username;
     };
@@ -422,7 +364,7 @@ export class AppStore {
             if (frame && ack.success && ack.regions) {
                 for (const region of ack.regions) {
                     if (region.regionInfo) {
-                        frame.regionSet.addExistingRegion(region.regionInfo.controlPoints as Point2D[], region.regionInfo.rotation, region.regionInfo.regionType, region.regionId);
+                        frame.regionSet.addExistingRegion(region.regionInfo.controlPoints as Point2D[], region.regionInfo.rotation, region.regionInfo.regionType, region.regionId, region.regionInfo.regionName);
                     }
                 }
             }
@@ -509,12 +451,13 @@ export class AppStore {
 
         this.frames = [];
         this.activeFrame = null;
-        this.fileBrowserStore = new FileBrowserStore(this.backendService);
+        this.fileBrowserStore = new FileBrowserStore(this, this.backendService);
         this.animatorStore = new AnimatorStore(this);
         this.overlayStore = new OverlayStore(this, this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this, this.layoutStore);
         this.compressionQuality = this.preferenceStore.imageCompressionQuality;
         this.initRequirements();
+        this.dialogStore = new DialogStore(this);
 
         const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
             this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
@@ -658,7 +601,7 @@ export class AppStore {
 
         // Auth and connection
         if (process.env.REACT_APP_AUTHENTICATION === "true") {
-            this.authDialogVisible = true;
+            this.dialogStore.showAuthDialog();
         } else {
             this.connectToServer();
         }

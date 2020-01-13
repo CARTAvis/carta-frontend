@@ -89,7 +89,8 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
     }
 
     public render() {
-        const overlayStore = this.props.appStore.overlayStore;
+        const appStore = this.props.appStore;
+        const overlayStore = appStore.overlayStore;
         const global = overlayStore.global;
         const title = overlayStore.title;
         const grid = overlayStore.grid;
@@ -645,8 +646,8 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
             className: className,
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: overlayStore.overlaySettingsDialogVisible,
-            onClose: overlayStore.hideOverlaySettings,
+            isOpen: appStore.dialogStore.overlaySettingsDialogVisible,
+            onClose: appStore.dialogStore.hideOverlaySettings,
             title: "Overlay Settings",
         };
 
@@ -672,7 +673,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
                 </div>
                 <div className="bp3-dialog-footer">
                     <div className="bp3-dialog-footer-actions">
-                        <Button intent={Intent.PRIMARY} onClick={overlayStore.hideOverlaySettings} text="Close"/>
+                        <Button intent={Intent.PRIMARY} onClick={appStore.dialogStore.hideOverlaySettings} text="Close"/>
                     </div>
                 </div>
             </DraggableDialogComponent>
