@@ -19,7 +19,7 @@ export class BackendService {
     private static readonly IcdVersion = 11;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
-    @observable loggingEnabled: boolean;
+    readonly loggingEnabled: boolean;
     @observable connectionDropped: boolean;
     @observable endToEndPing: number;
 

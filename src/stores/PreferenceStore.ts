@@ -130,7 +130,7 @@ export class PreferenceStore {
     @observable beamColor: string;
     @observable beamType: BeamType;
     @observable beamWidth: number;
-    @observable regionContainer: RegionStore;
+    readonly regionContainer: RegionStore;
     @observable regionCreationMode: string;
     @observable imageCompressionQuality: number;
     @observable animationCompressionQuality: number;
@@ -141,7 +141,7 @@ export class PreferenceStore {
     @observable contourChunkSize: number;
     @observable streamTilesWhileZooming: boolean;
     @observable lowBandwidthMode: boolean;
-    @observable eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
+    readonly eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
 
     // getters for global settings
     private getTheme = (): string => {

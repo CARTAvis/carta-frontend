@@ -49,16 +49,16 @@ export class WidgetsStore {
     // Floating widgets
     @observable floatingWidgets: WidgetConfig[];
     // Widget Stores
-    @observable renderConfigWidgets: Map<string, RenderConfigWidgetStore>;
-    @observable spatialProfileWidgets: Map<string, SpatialProfileWidgetStore>;
-    @observable spectralProfileWidgets: Map<string, SpectralProfileWidgetStore>;
-    @observable statsWidgets: Map<string, StatsWidgetStore>;
-    @observable histogramWidgets: Map<string, HistogramWidgetStore>;
-    @observable logWidgets: Map<string, EmptyWidgetStore>;
-    @observable regionListWidgets: Map<string, EmptyWidgetStore>;
-    @observable animatorWidgets: Map<string, EmptyWidgetStore>;
-    @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
-    @observable floatingSettingsWidgets: Map<string, string>;
+    readonly renderConfigWidgets: Map<string, RenderConfigWidgetStore>;
+    readonly spatialProfileWidgets: Map<string, SpatialProfileWidgetStore>;
+    readonly spectralProfileWidgets: Map<string, SpectralProfileWidgetStore>;
+    readonly statsWidgets: Map<string, StatsWidgetStore>;
+    readonly histogramWidgets: Map<string, HistogramWidgetStore>;
+    readonly logWidgets: Map<string, EmptyWidgetStore>;
+    readonly regionListWidgets: Map<string, EmptyWidgetStore>;
+    readonly animatorWidgets: Map<string, EmptyWidgetStore>;
+    readonly stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
+    readonly floatingSettingsWidgets: Map<string, string>;
 
     private appStore: AppStore;
     private layoutStore: LayoutStore;

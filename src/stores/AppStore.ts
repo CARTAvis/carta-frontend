@@ -46,27 +46,29 @@ export class AppStore {
     @observable frames: FrameStore[];
     @observable activeFrame: FrameStore;
     // Animation
-    @observable animatorStore: AnimatorStore;
+    readonly animatorStore: AnimatorStore;
     // Error alerts
-    @observable alertStore: AlertStore;
+    readonly alertStore: AlertStore;
     // Logs
-    @observable logStore: LogStore;
+    readonly logStore: LogStore;
     // User preference
-    @observable preferenceStore: PreferenceStore;
+    readonly preferenceStore: PreferenceStore;
     // Layouts
-    @observable layoutStore: LayoutStore;
+    readonly layoutStore: LayoutStore;
     // Dialogs
-    @observable dialogStore: DialogStore;
+    readonly dialogStore: DialogStore;
     // Overlay
-    @observable overlayStore: OverlayStore;
+    readonly overlayStore: OverlayStore;
     // File Browser
-    @observable fileBrowserStore: FileBrowserStore;
+    readonly fileBrowserStore: FileBrowserStore;
+    // Widgets
+    readonly widgetsStore: WidgetsStore;
 
     // Profiles and region data
-    @observable spatialProfiles: Map<string, SpatialProfileStore>;
-    @observable spectralProfiles: Map<number, ObservableMap<number, SpectralProfileStore>>;
-    @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
-    @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
+    readonly spatialProfiles: Map<string, SpatialProfileStore>;
+    readonly spectralProfiles: Map<number, ObservableMap<number, SpectralProfileStore>>;
+    readonly regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
+    readonly regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
 
     private appContainer: HTMLElement;
     private contourWebGLContext: WebGLRenderingContext;
@@ -203,9 +205,6 @@ export class AppStore {
         }
         return "alt + ";
     }
-
-    // Widgets
-    @observable widgetsStore: WidgetsStore;
 
     // Dark theme
     @computed get darkTheme(): boolean {

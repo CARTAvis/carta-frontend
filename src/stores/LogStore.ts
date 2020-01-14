@@ -12,7 +12,7 @@ export class LogStore {
     @observable logEntries: LogEntry[];
     @observable hiddenTags: string[];
     @observable logLevel: CARTA.ErrorSeverity;
-    @observable logLimit: number;
+    readonly logLimit: number;
 
     constructor() {
         this.logEntries = [];

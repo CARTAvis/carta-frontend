@@ -117,7 +117,7 @@ export class LayoutStore {
     // self-defined structure: {layoutName: config, layoutName: config, ...}
     @observable dockedLayout: GoldenLayout;
     @observable currentLayoutName: string;
-    @observable private layouts: any;
+    private readonly layouts: any;
 
     constructor(appStore: AppStore, alertStore: AlertStore) {
         this.appStore = appStore;
