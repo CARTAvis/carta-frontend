@@ -25,29 +25,6 @@ export class ContourConfigStore {
 
     private readonly preferenceStore: PreferenceStore;
 
-    // // Returns computed or manual contour levels
-    // @computed get levels(): number[] {
-    //     // Default to manual levels if they are enabled
-    //     if (this.manualLevelsEnabled) {
-    //         return this.manualLevels;
-    //     } else if (isFinite(this.lowerBound) && isFinite(this.upperBound) && this.lowerBound < this.upperBound && this.numComputedLevels >= 1) {
-    //         // For single contour levels, just use the midpoint
-    //         if (this.numComputedLevels < 2) {
-    //             return [(this.upperBound + this.lowerBound) / 2.0];
-    //         } else {
-    //             // Fill in the steps linearly
-    //             const stepSize = (this.upperBound - this.lowerBound) / (this.numComputedLevels - 1);
-    //             const levelArray = new Array<number>(this.numComputedLevels);
-    //             for (let i = 0; i < levelArray.length; i++) {
-    //                 levelArray[i] = this.upperBound - i * stepSize;
-    //             }
-    //             return levelArray;
-    //         }
-    //     }
-    //
-    //     return [];
-    // }
-
     constructor(preferenceStore: PreferenceStore) {
         this.preferenceStore = preferenceStore;
         this.enabled = false;
