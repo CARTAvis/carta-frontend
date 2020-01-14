@@ -1,5 +1,5 @@
 import {observable, computed, action} from "mobx";
-import {AppStore, AlertStore, WidgetConfig} from "stores";
+import {AppStore, AlertStore} from "stores";
 import * as GoldenLayout from "golden-layout";
 import {LayoutConfig, PresetLayout} from "models";
 import {AppToaster} from "components/Shared";
