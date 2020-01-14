@@ -111,13 +111,13 @@ const DOCKED_SCHEMA = {
             },
             "id": {
                 "type": "string",
-                "pattern": "animator|histogram|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
+                "pattern": "animator|histogram|image-view|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
             },
             "coord": {
                 "type": "string",
                 "pattern": "x|y"
             },
-            "contents": {
+            "content": {
                 "type": "array",
                 "items": {
                     "type": "object"
@@ -140,9 +140,9 @@ const DOCKED_SCHEMA = {
             },
             "id": {
                 "type": "string",
-                "pattern": "animator|histogram|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
+                "pattern": "animator|histogram|image-view|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
             },
-            "contents": {
+            "content": {
                 "type": "array",
                 "items": {
                     "type": "object"
@@ -266,36 +266,74 @@ export class LayoutConfig {
         // 2. validate config details according to version
         const version = layoutConfig.layoutVersion;
         if (version === 1) {
-            return LayoutConfig.LayoutV1Handler(layoutConfig);
+            return LayoutConfig.LayoutHandlerV1(layoutConfig);
         } else {
-            return LayoutConfig.LayoutV2Handler(layoutConfig);
+            return LayoutConfig.LayoutHandlerV2(layoutConfig);
         }
     };
 
-    private static LayoutV1Handler = (config: any): boolean => {
+    private static LayoutHandlerV1 = (config: any): boolean => {
         if (!config) {
             return false;
         }
-        // validate docked part
+
+        // validate docked part & convert v1 to v2
+        const dockedV1 = config.docked;
+        if (false === LayoutConfig.DockedValidatorV1(dockedV1)) {
+            return false;
+        }
+
         // validate floating part & convert v1 to v2
         const floatingV1 = config.floating;
         let floatingV2 = [];
         floatingV1.forEach((widgetConfig) => {
-            if(true === LayoutConfig.jsonValidator.validate(FLOATING_WIDGET_SCHEMA["1"], widgetConfig)) {
+            if (true === LayoutConfig.jsonValidator.validate(FLOATING_WIDGET_SCHEMA["1"], widgetConfig)) {
                 if (widgetConfig.type === "spatial-profiler") {
                     widgetConfig["widgetSettings"] = widgetConfig.coord === "y" ? {coordinate: "y"} : {coordinate: "x"};
                     if (widgetConfig.coord) {
-                        delete widgetConfig["coord"];
+                        delete widgetConfig.coord;
                     }
                 }
                 floatingV2.push(widgetConfig);
             }
         });
         config.floating = floatingV2;
+
         return true;
     };
 
-    private static LayoutV2Handler = (config: any): boolean => {
+    private static DockedValidatorV1 = (dockedNode: any): boolean => {
+        // validate self node
+        if (false === LayoutConfig.jsonValidator.validate(DOCKED_SCHEMA["1"], dockedNode)) {
+            return false;
+        }
+
+        // validate child node if not end node(type = component)
+        if ("content" in dockedNode) {
+            let result: boolean = true;
+            dockedNode.content.forEach((child) => {
+                result = result && LayoutConfig.DockedValidatorV1(child);
+            });
+            return result;
+        }
+
+        // validate end node - component
+        if (dockedNode.type !== "component" || !dockedNode.id) {
+            console.log(dockedNode.type + " " + dockedNode.id);
+            return false;
+        }
+
+        // convert v1 to v2
+        if (dockedNode.id === "spatial-profiler") {
+            dockedNode["widgetSettings"] = dockedNode.coord === "y" ? {coordinate: "y"} : {coordinate: "x"};
+            if (dockedNode.coord) {
+                delete dockedNode.coord;
+            }
+        }
+        return true;
+    };
+
+    private static LayoutHandlerV2 = (config: any): boolean => {
         if (!config) {
             return false;
         }
@@ -304,7 +342,7 @@ export class LayoutConfig {
         const floating = config.floating;
         let floatingValid = [];
         floating.forEach((widgetConfig) => {
-            if(true === LayoutConfig.jsonValidator.validate(FLOATING_WIDGET_SCHEMA["2"], widgetConfig)) {
+            if (true === LayoutConfig.jsonValidator.validate(FLOATING_WIDGET_SCHEMA["2"], widgetConfig)) {
                 floatingValid.push(widgetConfig);
             }
         });
