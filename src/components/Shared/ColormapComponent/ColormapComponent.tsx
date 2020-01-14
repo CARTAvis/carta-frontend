@@ -6,6 +6,7 @@ import {RenderConfigStore} from "stores/RenderConfigStore";
 interface ColormapComponentProps {
     selectedItem: string;
     inverted: boolean;
+    disabled?: boolean;
     onItemSelect: (selected: string) => void;
 }
 
@@ -53,6 +54,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = (props) => {
 
     return (
         <ColorMapSelect
+            disabled={props.disabled}
             activeItem={props.selectedItem}
             popoverProps={COLORMAP_POPOVER_PROPS}
             filterable={false}
@@ -60,7 +62,7 @@ export const ColormapComponent: React.FC<ColormapComponentProps> = (props) => {
             onItemSelect={props.onItemSelect}
             itemRenderer={renderColormapSelectItem}
         >
-            <Button text={renderColormapBlock(props.selectedItem)} rightIcon="double-caret-vertical" alignText={"right"}/>
+            <Button disabled={props.disabled} text={renderColormapBlock(props.selectedItem)} rightIcon="double-caret-vertical" alignText={"right"}/>
         </ColorMapSelect>
     );
 };
