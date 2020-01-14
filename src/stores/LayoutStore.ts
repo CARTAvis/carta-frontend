@@ -1,7 +1,7 @@
 import {observable, computed, action} from "mobx";
 import {AppStore, AlertStore, WidgetConfig} from "stores";
 import * as GoldenLayout from "golden-layout";
-import {LayoutSchema, PresetLayout} from "models";
+import {LayoutConfig, PresetLayout} from "models";
 import {AppToaster} from "components/Shared";
 
 const KEY = "savedLayouts";
@@ -48,7 +48,7 @@ export class LayoutStore {
 
     private initLayoutsFromPresets = () => {
         PresetLayout.PRESETS.forEach((presetName) => {
-            const presetConfig = LayoutSchema.GetPresetConfig(presetName);
+            const presetConfig = LayoutConfig.GetPresetConfig(presetName);
             if (presetConfig) {
                 this.layouts[presetName] = presetConfig;
             }
@@ -90,7 +90,7 @@ export class LayoutStore {
         const layoutNames = Object.keys(userLayouts);
         layoutNames.forEach((layoutName) => {
             const layoutConfig = userLayouts[layoutName];
-            if (layoutConfig && LayoutSchema.IsUserLayoutValid(layoutName, layoutConfig)) {
+            if (layoutConfig && LayoutConfig.IsUserLayoutValid(layoutName, layoutConfig)) {
                 this.layouts[layoutName] = layoutConfig;
             }
         });
@@ -155,7 +155,7 @@ export class LayoutStore {
             content: []
         };
         let dockedComponentConfigs = [];
-        LayoutSchema.CreateConfigToApply(this.appStore, dockedConfig.content, config.docked.content, dockedComponentConfigs);
+        LayoutConfig.CreateConfigToApply(this.appStore, dockedConfig.content, config.docked.content, dockedComponentConfigs);
 
         // use component configs to init widget stores, IDs in componentConfigs will be updated
         this.appStore.widgetsStore.initWidgets(dockedComponentConfigs, config.floating);
@@ -206,14 +206,14 @@ export class LayoutStore {
         // 1. generate simple config from current docked widgets
         const rootConfig = currentConfig.content[0];
         let simpleConfig = {
-            layoutVersion: LayoutSchema.CURRENT_LAYOUT_SCHEMA_VERSION,
+            layoutVersion: LayoutConfig.CURRENT_LAYOUT_SCHEMA_VERSION,
             docked: {
                 type: rootConfig.type,
                 content: []
             },
             floating: []
         };
-        LayoutSchema.CreateConfigToSave(this.appStore, simpleConfig.docked.content, rootConfig.content);
+        LayoutConfig.CreateConfigToSave(this.appStore, simpleConfig.docked.content, rootConfig.content);
 
         // 2. handle floating widgets
         this.appStore.widgetsStore.floatingWidgets.forEach((config: WidgetConfig) => {

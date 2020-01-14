@@ -67,7 +67,7 @@ const COMPONENT_CONFIG = new Map<string, any>([
     }]
 ]);
 
-export class LayoutSchema {
+export class LayoutConfig {
     public static readonly INITIAL_LAYOUT_SCHEMA_VERSION = 1;
     public static readonly CURRENT_LAYOUT_SCHEMA_VERSION = 2;
 
@@ -79,8 +79,8 @@ export class LayoutSchema {
             "properties": {
                 "layoutVersion": {
                     "type": "integer",
-                    "minimum": LayoutSchema.INITIAL_LAYOUT_SCHEMA_VERSION,
-                    "maximum": LayoutSchema.CURRENT_LAYOUT_SCHEMA_VERSION
+                    "minimum": LayoutConfig.INITIAL_LAYOUT_SCHEMA_VERSION,
+                    "maximum": LayoutConfig.CURRENT_LAYOUT_SCHEMA_VERSION
                 },
                 "docked":  {
                     "type": "object",
@@ -130,8 +130,8 @@ export class LayoutSchema {
             "properties": {
                 "layoutVersion": {
                     "type": "integer",
-                    "minimum": LayoutSchema.INITIAL_LAYOUT_SCHEMA_VERSION,
-                    "maximum": LayoutSchema.CURRENT_LAYOUT_SCHEMA_VERSION
+                    "minimum": LayoutConfig.INITIAL_LAYOUT_SCHEMA_VERSION,
+                    "maximum": LayoutConfig.CURRENT_LAYOUT_SCHEMA_VERSION
                 },
                 "docked":  {
                     "type": "object",
@@ -189,7 +189,7 @@ export class LayoutSchema {
         }
 
         return {
-            layoutVersion: LayoutSchema.CURRENT_LAYOUT_SCHEMA_VERSION,
+            layoutVersion: LayoutConfig.CURRENT_LAYOUT_SCHEMA_VERSION,
             docked: {
                 type: "row",
                 content: [{
@@ -220,19 +220,19 @@ export class LayoutSchema {
             return false;
         }
         const version = layoutConfig["layoutVersion"];
-        if (!Number.isInteger(version) || version < LayoutSchema.INITIAL_LAYOUT_SCHEMA_VERSION || version > LayoutSchema.CURRENT_LAYOUT_SCHEMA_VERSION) {
+        if (!Number.isInteger(version) || version < LayoutConfig.INITIAL_LAYOUT_SCHEMA_VERSION || version > LayoutConfig.CURRENT_LAYOUT_SCHEMA_VERSION) {
             return false;
         }
 
         // check schema
         const jsonValidator = new Ajv({removeAdditional: true});
-        if (false === jsonValidator.validate(LayoutSchema.LAYOUT_SCHEMAS[version], layoutConfig)) {
+        if (false === jsonValidator.validate(LayoutConfig.LAYOUT_SCHEMAS[version], layoutConfig)) {
             return false;
         }
 
         // transform config in different version to current version
         if (version === 1) {
-            return LayoutSchema.ConvertV1ToV2(layoutConfig);
+            return LayoutConfig.ConvertV1ToV2(layoutConfig);
         }
 
         return true;
@@ -241,7 +241,7 @@ export class LayoutSchema {
     private static ConvertV1ToV2 = (layoutConfig: any): boolean => {
         // traverse docked widgets
         const docked = layoutConfig.docked.content;
-        LayoutSchema.ConvertV1ToV2Docked(docked);
+        LayoutConfig.ConvertV1ToV2Docked(docked);
 
         // traverse floating widgets
         const floating = layoutConfig.floating;
@@ -261,7 +261,7 @@ export class LayoutSchema {
                 }
             } else {
                 if (child.content) {
-                    LayoutSchema.ConvertV1ToV2Docked(child.content);
+                    LayoutConfig.ConvertV1ToV2Docked(child.content);
                 }
             }
         });
@@ -287,7 +287,7 @@ export class LayoutSchema {
                     }
                     newParentContent.push(simpleChild);
                     if (child.content) {
-                        LayoutSchema.CreateConfigToSave(appStore, simpleChild.content, child.content);
+                        LayoutConfig.CreateConfigToSave(appStore, simpleChild.content, child.content);
                     }
                 } else if (child.type === "component" && child.id) {
                     const widgetType = (child.id).replace(/\-\d+$/, "");
@@ -332,7 +332,7 @@ export class LayoutSchema {
                     }
                     newParentContent.push(simpleChild);
                     if (child.content) {
-                        LayoutSchema.CreateConfigToApply(appStore, simpleChild.content, child.content, componentConfigs);
+                        LayoutConfig.CreateConfigToApply(appStore, simpleChild.content, child.content, componentConfigs);
                     }
                 } else if (child.type === "component" && child.id) {
                     const widgetType = (child.id).replace(/\-\d+$/, "");
