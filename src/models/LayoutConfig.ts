@@ -73,7 +73,6 @@ export class LayoutConfig {
 
     // key: layout schema version, value: schema
     public static readonly LAYOUT_SCHEMAS = {
-        // TODO: details of schema
         "1" : {
             "required": ["layoutVersion", "docked", "floating"],
             "properties": {
@@ -101,31 +100,40 @@ export class LayoutConfig {
                     "items": [
                         {
                             "type": "object",
-                            "required": ["type"],
+                            "required": ["type", "defaultWidth", "defaultHeight", "defaultX", "defaultY"],
                             "properties": {
                                 "type": {
-                                    "type": "string"
+                                    "type": "string",
+                                    "pattern": "animator|histogram|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
+                                },
+                                "coord": {
+                                    "type": "string",
+                                    "pattern": "x | y",
+                                    "default": "x"
                                 },
                                 "defaultWidth": {
-                                    "type": "integer"
+                                    "type": "integer",
+                                    "minimum": 1
                                 },
                                 "defaultHeight": {
-                                    "type": "integer"
+                                    "type": "integer",
+                                    "minimum": 1
                                 },
                                 "defaultX": {
-                                    "type": "integer"
+                                    "type": "integer",
+                                    "minimum": 1
                                 },
                                 "defaultY": {
-                                    "type": "integer"
+                                    "type": "integer",
+                                    "minimum": 1
                                 }
-                                // TODO: extend with widget properties
                             }
                         }
                     ]
                 }
             }
         },
-        "2" : {
+        "2" : {// TODO: complete ver 2
             "required": ["layoutVersion", "docked", "floating"],
             "properties": {
                 "layoutVersion": {
@@ -169,7 +177,6 @@ export class LayoutConfig {
                                 "defaultY": {
                                     "type": "integer"
                                 }
-                                // TODO: extend with widget properties
                             }
                         }
                     ]
