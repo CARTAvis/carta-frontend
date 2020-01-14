@@ -70,120 +70,159 @@ const COMPONENT_CONFIG = new Map<string, any>([
 const INITIAL_LAYOUT_SCHEMA_VERSION = 1;
 const CURRENT_LAYOUT_SCHEMA_VERSION = 2;
 
-const LAYOUT_SCHEMAS = {
-    "1" : {
-        "required": ["layoutVersion", "docked", "floating"],
-        "properties": {
-            "layoutVersion": {
-                "type": "integer",
-                "minimum": INITIAL_LAYOUT_SCHEMA_VERSION,
-                "maximum": CURRENT_LAYOUT_SCHEMA_VERSION
-            },
-            "docked":  {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string"
-                    },
-                    "content": {
-                        "type": "array",
-                        "items": {
-                            "type": "object"
-                        }
+const LAYOUT_SCHEMA = {
+    "required": ["layoutVersion", "docked", "floating"],
+    "properties": {
+        "layoutVersion": {
+            "type": "integer",
+            "minimum": INITIAL_LAYOUT_SCHEMA_VERSION,
+            "maximum": CURRENT_LAYOUT_SCHEMA_VERSION
+        },
+        "docked":  {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "array",
+                    "items": {
+                        "type": "object"
                     }
                 }
+            }
+        },
+        "floating": {
+            "type": "array",
+            "items": {
+                "type": "object"
+            }
+        }
+    }
+};
+
+const DOCKED_SCHEMA = {
+    "1": {
+        "required": ["type"],
+        "properties": {
+            "type": {
+                "type": "string",
+                "pattern": "row|column|stack|component"
             },
-            "floating": {
+            "id": {
+                "type": "string",
+                "pattern": "animator|histogram|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
+            },
+            "coord": {
+                "type": "string",
+                "pattern": "x|y"
+            },
+            "contents": {
                 "type": "array",
-                "items": [
-                    {
-                        "type": "object",
-                        "required": ["type", "defaultWidth", "defaultHeight", "defaultX", "defaultY"],
-                        "properties": {
-                            "type": {
-                                "type": "string",
-                                "pattern": "animator|histogram|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
-                            },
-                            "coord": {
-                                "type": "string",
-                                "pattern": "x|y",
-                                "default": "x"
-                            },
-                            "defaultWidth": {
-                                "type": "integer",
-                                "minimum": 1
-                            },
-                            "defaultHeight": {
-                                "type": "integer",
-                                "minimum": 1
-                            },
-                            "defaultX": {
-                                "type": "integer",
-                                "minimum": 1
-                            },
-                            "defaultY": {
-                                "type": "integer",
-                                "minimum": 1
-                            }
-                        }
-                    }
-                ]
+                "items": {
+                    "type": "object"
+                }
+            },
+            "width": {
+                "type": "number"
+            },
+            "height": {
+                "type": "number"
             }
         }
     },
-    "2" : {// TODO: complete ver 2
-        "required": ["layoutVersion", "docked", "floating"],
+    "2": {
+        "required": ["type"],
         "properties": {
-            "layoutVersion": {
-                "type": "integer",
-                "minimum": INITIAL_LAYOUT_SCHEMA_VERSION,
-                "maximum": CURRENT_LAYOUT_SCHEMA_VERSION
+            "type": {
+                "type": "string",
+                "pattern": "row|column|stack|component"
             },
-            "docked":  {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string"
-                    },
-                    "content": {
-                        "type": "array",
-                        "items": {
-                            "type": "object"
-                        }
-                    }
+            "id": {
+                "type": "string",
+                "pattern": "animator|histogram|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
+            },
+            "contents": {
+                "type": "array",
+                "items": {
+                    "type": "object"
                 }
             },
-            "floating": {
-                "type": "array",
-                "items": [
-                    {
-                        "type": "object",
-                        "required": ["type"],
-                        "properties": {
-                            "type": {
-                                "type": "string"
-                            },
-                            "defaultWidth": {
-                                "type": "integer"
-                            },
-                            "defaultHeight": {
-                                "type": "integer"
-                            },
-                            "defaultX": {
-                                "type": "integer"
-                            },
-                            "defaultY": {
-                                "type": "integer"
-                            }
-                        }
-                    }
-                ]
+            "width": {
+                "type": "number"
+            },
+            "height": {
+                "type": "number"
+            }
+        }
+    }
+};
+
+const FLOATING_WIDGET_SCHEMA = {
+    "1": {
+        "type": "object",
+        "required": ["type", "defaultWidth", "defaultHeight", "defaultX", "defaultY"],
+        "properties": {
+            "type": {
+                "type": "string",
+                "pattern": "animator|histogram|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
+            },
+            "coord": {
+                "type": "string",
+                "pattern": "x|y"
+            },
+            "defaultWidth": {
+                "type": "integer",
+                "minimum": 1
+            },
+            "defaultHeight": {
+                "type": "integer",
+                "minimum": 1
+            },
+            "defaultX": {
+                "type": "integer",
+                "minimum": 1
+            },
+            "defaultY": {
+                "type": "integer",
+                "minimum": 1
+            }
+        }
+    },
+    "2": {
+        "type": "object",
+        "required": ["type", "defaultWidth", "defaultHeight", "defaultX", "defaultY"],
+        "properties": {
+            "type": {
+                "type": "string",
+                "pattern": "animator|histogram|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
+            },
+            "widgetSettings": {
+                "type": "object"
+            },
+            "defaultWidth": {
+                "type": "integer",
+                "minimum": 1
+            },
+            "defaultHeight": {
+                "type": "integer",
+                "minimum": 1
+            },
+            "defaultX": {
+                "type": "integer",
+                "minimum": 1
+            },
+            "defaultY": {
+                "type": "integer",
+                "minimum": 1
             }
         }
     }
 };
 
 export class LayoutConfig {
+    private static jsonValidator = new Ajv({removeAdditional: true});
+
     public static GetPresetConfig = (presetName: string) => {
         if (!presetName) {
             return null;
@@ -211,66 +250,66 @@ export class LayoutConfig {
         };
     };
 
-    public static IsUserLayoutValid = (layoutName: string, layoutConfig: object): boolean => {
+    // Note: layoutConfig is formalized(modified) during validation if valid
+    public static IsUserLayoutValid = (layoutName: string, layoutConfig: any): boolean => {
         if (!layoutName || !layoutConfig ) {
             return false;
         }
-
         // exclude conflict with presets
         if (PresetLayout.isPreset(layoutName)) {
             return false;
         }
-
-        // check version
-        if (!("layoutVersion" in layoutConfig)) {
+        // 1. validate initial structure
+        if (false === LayoutConfig.jsonValidator.validate(LAYOUT_SCHEMA, layoutConfig)) {
             return false;
         }
-        const version = layoutConfig["layoutVersion"];
-        if (!Number.isInteger(version) || version < INITIAL_LAYOUT_SCHEMA_VERSION || version > CURRENT_LAYOUT_SCHEMA_VERSION) {
-            return false;
-        }
-
-        // check schema
-        const jsonValidator = new Ajv({removeAdditional: true});
-        if (false === jsonValidator.validate(LAYOUT_SCHEMAS[version], layoutConfig)) {
-            return false;
-        }
-
-        // transform config in different version to current version
+        // 2. validate config details according to version
+        const version = layoutConfig.layoutVersion;
         if (version === 1) {
-            return LayoutConfig.ConvertV1ToV2(layoutConfig);
+            return LayoutConfig.LayoutV1Handler(layoutConfig);
+        } else {
+            return LayoutConfig.LayoutV2Handler(layoutConfig);
         }
+    };
 
+    private static LayoutV1Handler = (config: any): boolean => {
+        if (!config) {
+            return false;
+        }
+        // validate docked part
+        // validate floating part & convert v1 to v2
+        const floatingV1 = config.floating;
+        let floatingV2 = [];
+        floatingV1.forEach((widgetConfig) => {
+            if(true === LayoutConfig.jsonValidator.validate(FLOATING_WIDGET_SCHEMA["1"], widgetConfig)) {
+                if (widgetConfig.type === "spatial-profiler") {
+                    widgetConfig["widgetSettings"] = widgetConfig.coord === "y" ? {coordinate: "y"} : {coordinate: "x"};
+                    if (widgetConfig.coord) {
+                        delete widgetConfig["coord"];
+                    }
+                }
+                floatingV2.push(widgetConfig);
+            }
+        });
+        config.floating = floatingV2;
         return true;
     };
 
-    private static ConvertV1ToV2 = (layoutConfig: any): boolean => {
-        // traverse docked widgets
-        const docked = layoutConfig.docked.content;
-        LayoutConfig.ConvertV1ToV2Docked(docked);
-
-        // traverse floating widgets
-        const floating = layoutConfig.floating;
-        floating.forEach((config) => {
-            if (config.type.match(/spatial\-profiler/)) {
-                config["widgetSettings"] = config.coord === "y" ? {coordinate: "y"} : {coordinate: "x"};
+    private static LayoutV2Handler = (config: any): boolean => {
+        if (!config) {
+            return false;
+        }
+        // validate docked part
+        // validate floating part & remove invalid widget config
+        const floating = config.floating;
+        let floatingValid = [];
+        floating.forEach((widgetConfig) => {
+            if(true === LayoutConfig.jsonValidator.validate(FLOATING_WIDGET_SCHEMA["2"], widgetConfig)) {
+                floatingValid.push(widgetConfig);
             }
         });
+        config.floating = floatingValid;
         return true;
-    };
-
-    private static ConvertV1ToV2Docked = (parentContent) => {
-        parentContent.forEach((child) => {
-            if (child.type === "component") {
-                if (child.id.match(/spatial\-profiler/)) {
-                    child["widgetSettings"] = child.coord === "y" ? {coordinate: "y"} : {coordinate: "x"};
-                }
-            } else {
-                if (child.content) {
-                    LayoutConfig.ConvertV1ToV2Docked(child.content);
-                }
-            }
-        });
     };
 
     public static CreateConfigToSave = (appStore: AppStore, rootConfig: any) => {
