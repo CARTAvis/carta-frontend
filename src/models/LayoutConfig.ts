@@ -1,5 +1,5 @@
 import * as Ajv from "ajv";
-import {AppStore} from "stores";
+import {AppStore, WidgetConfig} from "stores";
 import {PresetLayout} from "models";
 import {smoothStepOffset} from "utilities";
 
@@ -67,124 +67,123 @@ const COMPONENT_CONFIG = new Map<string, any>([
     }]
 ]);
 
-export class LayoutConfig {
-    public static readonly INITIAL_LAYOUT_SCHEMA_VERSION = 1;
-    public static readonly CURRENT_LAYOUT_SCHEMA_VERSION = 2;
+const INITIAL_LAYOUT_SCHEMA_VERSION = 1;
+const CURRENT_LAYOUT_SCHEMA_VERSION = 2;
 
-    // key: layout schema version, value: schema
-    public static readonly LAYOUT_SCHEMAS = {
-        "1" : {
-            "required": ["layoutVersion", "docked", "floating"],
-            "properties": {
-                "layoutVersion": {
-                    "type": "integer",
-                    "minimum": LayoutConfig.INITIAL_LAYOUT_SCHEMA_VERSION,
-                    "maximum": LayoutConfig.CURRENT_LAYOUT_SCHEMA_VERSION
-                },
-                "docked":  {
-                    "type": "object",
-                    "properties": {
-                        "type": {
-                            "type": "string"
-                        },
-                        "content": {
-                            "type": "array",
-                            "items": {
-                                "type": "object"
+const LAYOUT_SCHEMAS = {
+    "1" : {
+        "required": ["layoutVersion", "docked", "floating"],
+        "properties": {
+            "layoutVersion": {
+                "type": "integer",
+                "minimum": INITIAL_LAYOUT_SCHEMA_VERSION,
+                "maximum": CURRENT_LAYOUT_SCHEMA_VERSION
+            },
+            "docked":  {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string"
+                    },
+                    "content": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "floating": {
+                "type": "array",
+                "items": [
+                    {
+                        "type": "object",
+                        "required": ["type", "defaultWidth", "defaultHeight", "defaultX", "defaultY"],
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "pattern": "animator|histogram|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
+                            },
+                            "coord": {
+                                "type": "string",
+                                "pattern": "x|y",
+                                "default": "x"
+                            },
+                            "defaultWidth": {
+                                "type": "integer",
+                                "minimum": 1
+                            },
+                            "defaultHeight": {
+                                "type": "integer",
+                                "minimum": 1
+                            },
+                            "defaultX": {
+                                "type": "integer",
+                                "minimum": 1
+                            },
+                            "defaultY": {
+                                "type": "integer",
+                                "minimum": 1
                             }
                         }
                     }
-                },
-                "floating": {
-                    "type": "array",
-                    "items": [
-                        {
-                            "type": "object",
-                            "required": ["type", "defaultWidth", "defaultHeight", "defaultX", "defaultY"],
-                            "properties": {
-                                "type": {
-                                    "type": "string",
-                                    "pattern": "animator|histogram|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
-                                },
-                                "coord": {
-                                    "type": "string",
-                                    "pattern": "x | y",
-                                    "default": "x"
-                                },
-                                "defaultWidth": {
-                                    "type": "integer",
-                                    "minimum": 1
-                                },
-                                "defaultHeight": {
-                                    "type": "integer",
-                                    "minimum": 1
-                                },
-                                "defaultX": {
-                                    "type": "integer",
-                                    "minimum": 1
-                                },
-                                "defaultY": {
-                                    "type": "integer",
-                                    "minimum": 1
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
-        },
-        "2" : {// TODO: complete ver 2
-            "required": ["layoutVersion", "docked", "floating"],
-            "properties": {
-                "layoutVersion": {
-                    "type": "integer",
-                    "minimum": LayoutConfig.INITIAL_LAYOUT_SCHEMA_VERSION,
-                    "maximum": LayoutConfig.CURRENT_LAYOUT_SCHEMA_VERSION
-                },
-                "docked":  {
-                    "type": "object",
-                    "properties": {
-                        "type": {
-                            "type": "string"
-                        },
-                        "content": {
-                            "type": "array",
-                            "items": {
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "floating": {
-                    "type": "array",
-                    "items": [
-                        {
-                            "type": "object",
-                            "required": ["type"],
-                            "properties": {
-                                "type": {
-                                    "type": "string"
-                                },
-                                "defaultWidth": {
-                                    "type": "integer"
-                                },
-                                "defaultHeight": {
-                                    "type": "integer"
-                                },
-                                "defaultX": {
-                                    "type": "integer"
-                                },
-                                "defaultY": {
-                                    "type": "integer"
-                                }
-                            }
-                        }
-                    ]
-                }
+                ]
             }
         }
-    };
+    },
+    "2" : {// TODO: complete ver 2
+        "required": ["layoutVersion", "docked", "floating"],
+        "properties": {
+            "layoutVersion": {
+                "type": "integer",
+                "minimum": INITIAL_LAYOUT_SCHEMA_VERSION,
+                "maximum": CURRENT_LAYOUT_SCHEMA_VERSION
+            },
+            "docked":  {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string"
+                    },
+                    "content": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "floating": {
+                "type": "array",
+                "items": [
+                    {
+                        "type": "object",
+                        "required": ["type"],
+                        "properties": {
+                            "type": {
+                                "type": "string"
+                            },
+                            "defaultWidth": {
+                                "type": "integer"
+                            },
+                            "defaultHeight": {
+                                "type": "integer"
+                            },
+                            "defaultX": {
+                                "type": "integer"
+                            },
+                            "defaultY": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    }
+};
 
+export class LayoutConfig {
     public static GetPresetConfig = (presetName: string) => {
         if (!presetName) {
             return null;
@@ -196,7 +195,7 @@ export class LayoutConfig {
         }
 
         return {
-            layoutVersion: LayoutConfig.CURRENT_LAYOUT_SCHEMA_VERSION,
+            layoutVersion: CURRENT_LAYOUT_SCHEMA_VERSION,
             docked: {
                 type: "row",
                 content: [{
@@ -227,13 +226,13 @@ export class LayoutConfig {
             return false;
         }
         const version = layoutConfig["layoutVersion"];
-        if (!Number.isInteger(version) || version < LayoutConfig.INITIAL_LAYOUT_SCHEMA_VERSION || version > LayoutConfig.CURRENT_LAYOUT_SCHEMA_VERSION) {
+        if (!Number.isInteger(version) || version < INITIAL_LAYOUT_SCHEMA_VERSION || version > CURRENT_LAYOUT_SCHEMA_VERSION) {
             return false;
         }
 
         // check schema
         const jsonValidator = new Ajv({removeAdditional: true});
-        if (false === jsonValidator.validate(LayoutConfig.LAYOUT_SCHEMAS[version], layoutConfig)) {
+        if (false === jsonValidator.validate(LAYOUT_SCHEMAS[version], layoutConfig)) {
             return false;
         }
 
@@ -274,7 +273,44 @@ export class LayoutConfig {
         });
     };
 
-    public static CreateConfigToSave = (appStore: AppStore, newParentContent: any, parentContent: any): void => {
+    public static CreateConfigToSave = (appStore: AppStore, rootConfig: any) => {
+        if (!appStore || !rootConfig || !("type" in rootConfig) || !("content" in rootConfig)) {
+            return null;
+        }
+
+        let configToSave = {
+            layoutVersion: CURRENT_LAYOUT_SCHEMA_VERSION,
+            docked: {
+                type: rootConfig.type,
+                content: []
+            },
+            floating: []
+        };
+
+        // 1. generate config from current docked widgets
+        LayoutConfig.GenSimpleConfigToSave(appStore, configToSave.docked.content, rootConfig.content);
+
+        // 2. handle floating widgets
+        appStore.widgetsStore.floatingWidgets.forEach((config: WidgetConfig) => {
+            let floatingConfig = {
+                type: config.type,
+                defaultWidth: config.defaultWidth ? config.defaultWidth : "",
+                defaultHeight: config.defaultHeight ? config.defaultHeight : "",
+                defaultX: config.defaultX ? config.defaultX : "",
+                defaultY: config.defaultY ? config.defaultY : ""
+            };
+            // add widget settings
+            const widgetSettingsConfig = appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id);
+            if (widgetSettingsConfig) {
+                floatingConfig["widgetSettings"] = widgetSettingsConfig;
+            }
+            configToSave.floating.push(floatingConfig);
+        });
+
+        return configToSave;
+    };
+
+    private static GenSimpleConfigToSave = (appStore: AppStore, newParentContent: any, parentContent: any): void => {
         if (!appStore || !newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
             return;
         }
@@ -294,7 +330,7 @@ export class LayoutConfig {
                     }
                     newParentContent.push(simpleChild);
                     if (child.content) {
-                        LayoutConfig.CreateConfigToSave(appStore, simpleChild.content, child.content);
+                        LayoutConfig.GenSimpleConfigToSave(appStore, simpleChild.content, child.content);
                     }
                 } else if (child.type === "component" && child.id) {
                     const widgetType = (child.id).replace(/\-\d+$/, "");

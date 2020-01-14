@@ -198,44 +198,21 @@ export class LayoutStore {
         }
 
         const currentConfig = this.dockedLayout.toConfig();
-        if (!currentConfig || !currentConfig.content || currentConfig.content.length <= 0 || !currentConfig.content[0].type || !currentConfig.content[0].content) {
+        if (!currentConfig || !currentConfig.content || currentConfig.content.length <= 0) {
             this.alertStore.showAlert("Saving layout failed! Something is wrong with current layout.");
             return;
         }
 
-        // 1. generate simple config from current docked widgets
-        const rootConfig = currentConfig.content[0];
-        let simpleConfig = {
-            layoutVersion: LayoutConfig.CURRENT_LAYOUT_SCHEMA_VERSION,
-            docked: {
-                type: rootConfig.type,
-                content: []
-            },
-            floating: []
-        };
-        LayoutConfig.CreateConfigToSave(this.appStore, simpleConfig.docked.content, rootConfig.content);
-
-        // 2. handle floating widgets
-        this.appStore.widgetsStore.floatingWidgets.forEach((config: WidgetConfig) => {
-            let floatingConfig = {
-                type: config.type,
-                defaultWidth: config.defaultWidth ? config.defaultWidth : "",
-                defaultHeight: config.defaultHeight ? config.defaultHeight : "",
-                defaultX: config.defaultX ? config.defaultX : "",
-                defaultY: config.defaultY ? config.defaultY : ""
-            };
-            // add widget settings
-            const widgetSettingsConfig = this.appStore.widgetsStore.toWidgetSettingsConfig(config.type, config.id);
-            if (widgetSettingsConfig) {
-                floatingConfig["widgetSettings"] = widgetSettingsConfig;
-            }
-            simpleConfig.floating.push(floatingConfig);
-        });
+        const configToSave = LayoutConfig.CreateConfigToSave(this.appStore, currentConfig.content[0]);
+        if (!configToSave) {
+            this.alertStore.showAlert("Saving layout failed! Creat layout configuration for saving failed.");
+            return;
+        }
 
         // save layout to layouts[] & server/local storage
-        this.layouts[this.layoutNameToBeSaved] = simpleConfig;
+        this.layouts[this.layoutNameToBeSaved] = configToSave;
         if (this.supportsServer) {
-            this.appStore.backendService.setUserLayout(this.layoutNameToBeSaved, JSON.stringify(simpleConfig)).subscribe(() => {
+            this.appStore.backendService.setUserLayout(this.layoutNameToBeSaved, JSON.stringify(configToSave)).subscribe(() => {
                 this.handleSaveResult(true);
             }, err => {
                 console.log(err);
