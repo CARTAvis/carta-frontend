@@ -142,6 +142,9 @@ const DOCKED_SCHEMA = {
                 "type": "string",
                 "pattern": "animator|histogram|image-view|log|region\-list|render\-config|spatial\-profiler|spectral\-profiler|stats|stokes"
             },
+            "widgetSettings": {
+                "type": "object"
+            },
             "content": {
                 "type": "array",
                 "items": {
@@ -278,8 +281,7 @@ export class LayoutConfig {
         }
 
         // validate docked part & convert v1 to v2
-        const dockedV1 = config.docked;
-        if (false === LayoutConfig.DockedValidatorV1(dockedV1)) {
+        if (false === LayoutConfig.DockedValidatorV1(config.docked)) {
             return false;
         }
 
@@ -319,7 +321,6 @@ export class LayoutConfig {
 
         // validate end node - component
         if (dockedNode.type !== "component" || !dockedNode.id) {
-            console.log(dockedNode.type + " " + dockedNode.id);
             return false;
         }
 
@@ -337,7 +338,12 @@ export class LayoutConfig {
         if (!config) {
             return false;
         }
+
         // validate docked part
+        if (false === LayoutConfig.DockedValidatorV2(config.docked)) {
+            return false;
+        }
+
         // validate floating part & remove invalid widget config
         const floating = config.floating;
         let floatingValid = [];
@@ -347,6 +353,28 @@ export class LayoutConfig {
             }
         });
         config.floating = floatingValid;
+        return true;
+    };
+
+    private static DockedValidatorV2 = (dockedNode: any): boolean => {
+        // validate self node
+        if (false === LayoutConfig.jsonValidator.validate(DOCKED_SCHEMA["2"], dockedNode)) {
+            return false;
+        }
+
+        // validate child node if not end node(type = component)
+        if ("content" in dockedNode) {
+            let result: boolean = true;
+            dockedNode.content.forEach((child) => {
+                result = result && LayoutConfig.DockedValidatorV2(child);
+            });
+            return result;
+        }
+
+        // validate end node - component
+        if (dockedNode.type !== "component" || !dockedNode.id) {
+            return false;
+        }
         return true;
     };
 
