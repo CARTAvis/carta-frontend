@@ -351,7 +351,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
             linePlotProps.data = currentPlotData.values;
         }
 
-        const hasLevels = this.levels && this.levels.length;
+        const hasLevels = this.levels && this.levels.filter(level => isFinite(level)).length;
 
         if (hasLevels) {
             linePlotProps.markers = this.levels.map((level, index) => ({
