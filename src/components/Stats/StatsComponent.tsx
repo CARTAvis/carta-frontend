@@ -164,6 +164,12 @@ export class StatsComponent extends React.Component<WidgetProps> {
                             unitString = "pixel(s)";
                         } else if (type === CARTA.StatsType.SumSq) {
                             unitString = `(${unit})^2`;
+                        } else if (type === CARTA.StatsType.FluxDensity) {
+                            if (unit === "Jy/beam") {
+                                unitString = "Jy(s)";
+                            } else {
+                                return;
+                            }
                         } else {
                             unitString = unit;
                         }
