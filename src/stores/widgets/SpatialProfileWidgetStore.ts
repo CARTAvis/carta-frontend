@@ -3,6 +3,7 @@ import {Colors} from "@blueprintjs/core";
 import {FrameStore} from "../FrameStore";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
+import {isColorValid} from "utilities";
 
 export class SpatialProfileWidgetStore {
     @observable fileId: number;
@@ -41,7 +42,7 @@ export class SpatialProfileWidgetStore {
 
     @action setCoordinate = (coordinate: string) => {
         // Check coordinate validity
-        if (SpatialProfileWidgetStore.ValidCoordinates.indexOf(coordinate) !== -1) {
+        if (SpatialProfileWidgetStore.ValidCoordinates.includes(coordinate)) {
             // Reset zoom when changing between coordinates
             this.clearXYBounds();
             this.coordinate = coordinate;
@@ -265,37 +266,38 @@ export class SpatialProfileWidgetStore {
         if (!widgetSettings) {
             return;
         }
-        if ("coordinate" in widgetSettings) {
+        if ("coordinate" in widgetSettings && typeof widgetSettings.coordinate === "string" && SpatialProfileWidgetStore.ValidCoordinates.includes(widgetSettings.coordinate)) {
             this.coordinate = widgetSettings.coordinate;
         }
-        if ("primaryLineColor" in widgetSettings) {
+        if ("primaryLineColor" in widgetSettings && typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
             this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
         }
-        if ("lineWidth" in widgetSettings) {
+        if ("lineWidth" in widgetSettings && typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;
         }
-        if ("linePlotPointSize" in widgetSettings) {
+        if ("linePlotPointSize" in widgetSettings && typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE &&
+            widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
             this.linePlotPointSize = widgetSettings.linePlotPointSize;
         }
-        if ("wcsAxisVisible" in widgetSettings) {
+        if ("wcsAxisVisible" in widgetSettings && typeof widgetSettings.wcsAxisVisible === "boolean") {
             this.wcsAxisVisible = widgetSettings.wcsAxisVisible;
         }
-        if ("meanRmsVisible" in widgetSettings) {
+        if ("meanRmsVisible" in widgetSettings && typeof widgetSettings.meanRmsVisible === "boolean") {
             this.meanRmsVisible = widgetSettings.meanRmsVisible;
         }
-        if ("plotType" in widgetSettings) {
+        if ("plotType" in widgetSettings && typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
-        if ("minXVal" in widgetSettings) {
+        if ("minXVal" in widgetSettings && typeof widgetSettings.minXVal === "number") {
             this.linePlotInitXYBoundaries.minXVal = widgetSettings.minXVal;
         }
-        if ("maxXVal" in widgetSettings) {
+        if ("maxXVal" in widgetSettings && typeof widgetSettings.maxXVal === "number") {
             this.linePlotInitXYBoundaries.maxXVal = widgetSettings.maxXVal;
         }
-        if ("minYVal" in widgetSettings) {
+        if ("minYVal" in widgetSettings && typeof widgetSettings.minYVal === "number") {
             this.linePlotInitXYBoundaries.minYVal = widgetSettings.minYVal;
         }
-        if ("maxYVal" in widgetSettings) {
+        if ("maxYVal" in widgetSettings && typeof widgetSettings.maxYVal === "number") {
             this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
         }
     };
