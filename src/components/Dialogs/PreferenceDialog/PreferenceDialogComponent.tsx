@@ -506,8 +506,8 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             className: className,
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.preferenceDialogVisible,
-            onClose: appStore.hidePreferenceDialog,
+            isOpen: appStore.dialogStore.preferenceDialogVisible,
+            onClose: appStore.dialogStore.hidePreferenceDialog,
             title: "Preferences",
         };
 
@@ -534,7 +534,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         <Tooltip content="Apply to current tab only." position={Position.TOP}>
                             <AnchorButton intent={Intent.WARNING} icon={"refresh"} onClick={this.reset} text="Restore defaults"/>
                         </Tooltip>
-                        <Button intent={Intent.NONE} onClick={appStore.hidePreferenceDialog} text="Close"/>
+                        <Button intent={Intent.NONE} onClick={appStore.dialogStore.hidePreferenceDialog} text="Close"/>
                     </div>
                 </div>
             </DraggableDialogComponent>

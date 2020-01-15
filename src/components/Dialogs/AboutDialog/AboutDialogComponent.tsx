@@ -18,8 +18,8 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: true,
             lazy: true,
-            isOpen: appStore.aboutDialogVisible,
-            onClose: appStore.hideAboutDialog,
+            isOpen: appStore.dialogStore.aboutDialogVisible,
+            onClose: appStore.dialogStore.hideAboutDialog,
             className: "about-dialog",
             canEscapeKeyClose: true,
             title: "About CARTA",
@@ -57,7 +57,7 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.NONE} onClick={appStore.hideAboutDialog} text="Close"/>
+                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideAboutDialog} text="Close"/>
                     </div>
                 </div>
             </DraggableDialogComponent>
