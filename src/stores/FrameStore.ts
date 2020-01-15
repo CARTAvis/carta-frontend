@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, PreferenceStore, OverlayBeamStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore, ContourConfigStore, ContourStore} from "stores";
 import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES, ProtobufProcessing} from "models";
-import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency, toFixed, hexStringToRgba, trimFitsComment, getHeaderNumericValue} from "utilities";
+import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency, toFixed, hexStringToRgba, trimFitsComment, getHeaderNumericValue, subtract2D} from "utilities";
 import {BackendService} from "services";
 
 export interface FrameInfo {
@@ -52,6 +52,7 @@ export class FrameStore {
     @observable zooming: boolean;
     @observable regionSet: RegionSetStore;
     @observable overlayBeamSettings: OverlayBeamStore;
+    @observable spatialReference: FrameStore;
 
     @computed get requiredFrameView(): FrameView {
         // If there isn't a valid zoom, return a dummy view
@@ -347,6 +348,7 @@ export class FrameStore {
     private readonly preference: PreferenceStore;
     private readonly backendService: BackendService;
     private readonly contourContext: WebGLRenderingContext;
+    private spatialTransform: number;
     private zoomTimeoutHandler;
 
     private static readonly CursorInfoMaxPrecision = 25;
@@ -373,6 +375,8 @@ export class FrameStore {
         this.moving = false;
         this.zooming = false;
         this.overlayBeamSettings = new OverlayBeamStore(preference);
+        this.spatialReference = null;
+        this.spatialTransform = null;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preference.astColor;
@@ -483,7 +487,7 @@ export class FrameStore {
             const offsetBlock = [[0, 0], [1, 1], [-1, -1]];
 
             // Shift image space coordinates to 1-indexed when passing to AST
-            const cursorNeighbourhood = offsetBlock.map((offset) => AST.pixToWCS(this.wcsInfo, cursorPosImageSpace.x + 1 + offset[0], cursorPosImageSpace.y + 1 + offset[1]));
+            const cursorNeighbourhood = offsetBlock.map((offset) => AST.transformPoint(this.wcsInfo, cursorPosImageSpace.x + 1 + offset[0], cursorPosImageSpace.y + 1 + offset[1]));
 
             cursorPosWCS = cursorNeighbourhood[0];
 
@@ -758,6 +762,45 @@ export class FrameStore {
         this.contourConfig.setEnabled(false);
     };
 
+    // Spatial WCS Matching
+    @action setSpatialReference = (frame: FrameStore) => {
+        if (frame === this) {
+            this.spatialReference = null;
+            this.spatialTransform = null;
+            console.log(`Skipping spatial self-reference`);
+        }
+        console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
+        this.spatialReference = frame;
+
+        const copySrc = AST.copy(this.wcsInfo);
+        const copyDest = AST.copy(frame.wcsInfo);
+        AST.invert(copySrc);
+        AST.invert(copyDest);
+        this.spatialTransform = AST.convert(copySrc, copyDest, "");
+        if (!this.spatialTransform) {
+            console.log("Error creating spatial transform between ");
+        }
+
+        // TODO: Remove debug transform
+        const refPixel = FrameStore.FindRefPixel(this.frameInfo.fileInfoExtended.headerEntries);
+        if (refPixel) {
+            const transformedRef = this.getTransformedCoordinates(refPixel.x, refPixel.y, true);
+            const delta = subtract2D(refPixel, transformedRef);
+            console.log(delta);
+        }
+    };
+
+    @action clearSpatialReference = () => {
+        this.spatialReference = null;
+        this.spatialTransform = null;
+    };
+
+    getTransformedCoordinates = (x: number, y: number, forward: boolean = true) => {
+        const transformed: Point2D = AST.transformPoint(this.spatialTransform, x, y, forward);
+        console.log(`(${x}, ${y}) => (${transformed.x}, ${transformed.y})`);
+        return transformed;
+    };
+
     // Tests a list of headers for valid channel information in either 3rd or 4th axis
     private static FindChannelType(entries: CARTA.IHeaderEntry[]) {
         if (!entries || !entries.length) {
@@ -788,5 +831,19 @@ export class FrameStore {
         }
 
         return undefined;
+    }
+
+    private static FindRefPixel(entries: CARTA.IHeaderEntry[]) {
+        if (!entries || !entries.length) {
+            return undefined;
+        }
+
+        const pixVal1 = entries.find(entry => entry.name.includes("CRPIX1"));
+        const pixVal2 = entries.find(entry => entry.name.includes("CRPIX2"));
+        if (!pixVal1 && !pixVal2) {
+            return undefined;
+        }
+
+        return {x: getHeaderNumericValue(pixVal1), y: getHeaderNumericValue(pixVal2)};
     }
 }

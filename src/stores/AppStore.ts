@@ -68,6 +68,9 @@ export class AppStore {
     @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
     @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
 
+    // Spatial WCS reference
+    @observable referenceFrame: FrameStore;
+
     private appContainer: HTMLElement;
     private contourWebGLContext: WebGLRenderingContext;
 
@@ -265,6 +268,10 @@ export class AppStore {
                 this.frames[existingFrameIndex] = newFrame;
             } else {
                 this.frames.push(newFrame);
+                // TODO: remove this debug bit
+                if (this.frames.length > 1) {
+                    newFrame.setSpatialReference(this.frames[0]);
+                }
             }
             this.setActiveFrame(newFrame.frameInfo.fileId);
             this.fileBrowserStore.hideFileBrowser();
@@ -879,6 +886,19 @@ export class AppStore {
         const frame = this.getFrame(fileId);
         if (frame && frame.regionSet.regions[0]) {
             frame.regionSet.regions[0].setControlPoint(0, {x, y});
+        }
+    };
+
+    @action setSpatialReference = (frame: FrameStore) => {
+        this.referenceFrame = frame;
+
+        for (const f of this.frames) {
+            // The reference image can't reference itself
+            if (f === frame) {
+                f.clearSpatialReference();
+            } else if (f.spatialReference) {
+                f.setSpatialReference(frame);
+            }
         }
     };
 

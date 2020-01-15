@@ -197,6 +197,26 @@ EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const doubl
     return 0;
 }
 
+EMSCRIPTEN_KEEPALIVE void deleteObject(AstFrameSet* src)
+{
+    astDelete(src);
+}
+
+EMSCRIPTEN_KEEPALIVE AstFrameSet* copy(AstFrameSet* src)
+{
+    return static_cast<AstFrameSet*> astCopy(src);
+}
+
+EMSCRIPTEN_KEEPALIVE void invert(AstFrameSet* src)
+{
+    astInvert(src);
+}
+
+EMSCRIPTEN_KEEPALIVE AstFrameSet* convert(AstFrameSet* from, AstFrameSet* to, const char* domainlist)
+{
+    return static_cast<AstFrameSet*> astConvert(from, to, domainlist);
+}
+
 EMSCRIPTEN_KEEPALIVE double axDistance(AstFrameSet* wcsinfo, int axis, double v1, double v2)
 {
     return astAxDistance(wcsinfo, axis, v1, v2);

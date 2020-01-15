@@ -43,7 +43,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         [SystemType.ICRS, "ICRS"],
     ]);
 
-    private static readonly  CoordinateSystemTooltip = new Map<SystemType, string>([
+    private static readonly CoordinateSystemTooltip = new Map<SystemType, string>([
         [SystemType.Auto, "Automatically select the coordinate system based on file headers"],
         [SystemType.FK5, "FK5 coordinates, J2000.0 equinox"],
         [SystemType.FK4, "FK4 coordinates, B1950.0 equinox"],
@@ -91,7 +91,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         );
 
         let coordinateSystem = this.props.appStore.overlayStore.global.system;
-        
+
         const coordinateSystemMenu = (
             <Menu>
                 <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Auto)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Auto)}/>
@@ -151,9 +151,12 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <Tooltip position={tooltipPosition} content={<span>Zoom to fit{currentZoomSpan}</span>}>
                     <Button icon="zoom-to-fit" onClick={frame.fitZoom}/>
                 </Tooltip>
+                <Tooltip position={tooltipPosition} content={<span>Debug: Toggle WCS ref</span>}>
+                    <Button icon="zoom-to-fit" active={frame.spatialReference !== null}/>
+                </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Overlay Coordinate <br/><small><i>Current: {ToolbarComponent.CoordinateSystemTooltip.get(coordinateSystem)}</i></small></span>}>
                     <Popover content={coordinateSystemMenu} position={Position.TOP} minimal={true}>
-                        <Button text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)} />
+                        <Button text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)}/>
                     </Popover>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content="Toggle grid">
