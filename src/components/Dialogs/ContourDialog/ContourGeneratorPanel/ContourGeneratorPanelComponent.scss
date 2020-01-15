@@ -1,0 +1,35 @@
+.contour-generator-panel {
+    .generator-select-row {
+        display: flex;
+
+        .generate-button {
+            height: 30px;
+            margin-left: 10px;
+        }
+    }
+
+    .generator-parameters-row {
+        display: flex;
+        flex-wrap: wrap;
+
+        .bp3-form-group {
+            padding-right: 10px;
+        }
+
+        .bp3-numeric-input {
+            .bp3-input-group {
+                input {
+                    width: 90px;
+                }
+            }
+
+            &.narrow {
+                .bp3-input-group {
+                    input {
+                        width: 50px;
+                    }
+                }
+            }
+        }
+    }
+}

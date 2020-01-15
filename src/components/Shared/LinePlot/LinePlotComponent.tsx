@@ -78,6 +78,8 @@ export class LinePlotComponentProps {
     multiPlotData?: Map<string, { x: number, y: number }[]>;
     showXAxisTicks?: boolean;
     showXAxisLabel?: boolean;
+    showYAxisTicks?: boolean;
+    showYAxisLabel?: boolean;
     xZeroLineColor?: string;
     yZeroLineColor?: string;
     showLegend?: boolean;
