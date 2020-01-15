@@ -166,7 +166,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
                             unitString = `(${unit})^2`;
                         } else if (type === CARTA.StatsType.FluxDensity) {
                             if (unit === "Jy/beam") {
-                                unitString = "Jy(s)";
+                                unitString = "Jy";
                             } else {
                                 return;
                             }
