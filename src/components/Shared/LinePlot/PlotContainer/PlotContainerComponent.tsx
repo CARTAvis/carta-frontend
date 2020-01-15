@@ -36,6 +36,8 @@ export class PlotContainerProps {
     multiPlotData?: Map<string, { x: number, y: number }[]>;
     showXAxisTicks?: boolean;
     showXAxisLabel?: boolean;
+    showYAxisTicks?: boolean;
+    showYAxisLabel?: boolean;
     xZeroLineColor?: string;
     yZeroLineColor?: string;
     showLegend?: boolean;
@@ -373,14 +375,14 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     id: "y-axis-0",
                     scaleLabel: {
                         fontColor: labelColor,
-                        display: true,
+                        display: this.props.showYAxisLabel === undefined ? true : this.props.showYAxisLabel,
                         labelString: this.props.yLabel
                     },
                     ticks: {
                         minor: {
                             fontColor: labelColor,
                         },
-                        display: true,
+                        display: this.props.showYAxisTicks === undefined ? true : this.props.showYAxisTicks,
                         min: this.props.yMin,
                         max: this.props.yMax,
                         callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeY)

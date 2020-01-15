@@ -12,10 +12,9 @@ import {Select} from "@blueprintjs/select";
 import {ColorResult} from "react-color";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {ScalingComponent} from "components/RenderConfig/ColormapConfigComponent/ScalingComponent";
-import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent/ColormapComponent";
+import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/ScalingSelectComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
-import {ColorPickerComponent} from "components/Shared";
+import {ColorPickerComponent, ColormapComponent} from "components/Shared";
 import {Theme, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore, BeamType, FrameScaling, RegionStore, RenderConfigStore} from "stores";
 import {hexStringToRgba, SWATCH_COLORS} from "utilities";
@@ -141,7 +140,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         const renderConfigPanel = (
             <React.Fragment>
                 <FormGroup inline={true} label="Default Scaling">
-                    <ScalingComponent selectedItem={preference.scaling} onItemSelect={(selected) => preference.setScaling(selected)}/>
+                    <ScalingSelectComponent selectedItem={preference.scaling} onItemSelect={(selected) => preference.setScaling(selected)}/>
                 </FormGroup>
                 <FormGroup inline={true} label="Default Color Map">
                     <ColormapComponent
