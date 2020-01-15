@@ -300,6 +300,7 @@ export class LayoutConfig {
             }
         });
         config.floating = floatingV2;
+        config.layoutVersion = 2;
 
         return true;
     };
