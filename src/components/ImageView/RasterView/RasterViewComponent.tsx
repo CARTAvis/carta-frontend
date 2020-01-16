@@ -373,13 +373,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
         let bottomLeft = {x: (0.5 + tileImageView.xMin - full.xMin) / fullWidth, y: (0.5 + tileImageView.yMin - full.yMin) / fullHeight};
 
-        // TODO: Extremely experimental!
-        console.log(bottomLeft);
+        // TODO: Experimental code to handle WCS translations
         if (frame.spatialReference && frame.spatialTranslation) {
             bottomLeft = add2D(bottomLeft, {x: frame.spatialTranslation.x / fullWidth, y: frame.spatialTranslation.y / fullHeight});
         }
-
-        console.log({bottomLeft, trans: frame.spatialTranslation});
 
         this.gl.uniform2f(this.shaderUniforms.TileSize, rasterTile.width / TILE_SIZE, rasterTile.height / TILE_SIZE);
         this.gl.uniform2f(this.shaderUniforms.TileOffset, bottomLeft.x, bottomLeft.y);
