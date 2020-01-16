@@ -53,6 +53,7 @@ export class FrameStore {
     @observable regionSet: RegionSetStore;
     @observable overlayBeamSettings: OverlayBeamStore;
     @observable spatialReference: FrameStore;
+    @observable spatialTranslation: Point2D;
 
     @computed get requiredFrameView(): FrameView {
         // If there isn't a valid zoom, return a dummy view
@@ -765,8 +766,7 @@ export class FrameStore {
     // Spatial WCS Matching
     @action setSpatialReference = (frame: FrameStore) => {
         if (frame === this) {
-            this.spatialReference = null;
-            this.spatialTransform = null;
+            this.clearSpatialReference();
             console.log(`Skipping spatial self-reference`);
         }
         console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
@@ -777,6 +777,9 @@ export class FrameStore {
         AST.invert(copySrc);
         AST.invert(copyDest);
         this.spatialTransform = AST.convert(copySrc, copyDest, "");
+        // TODO: does this work?
+        AST.delete(copySrc);
+        AST.delete(copyDest);
         if (!this.spatialTransform) {
             console.log("Error creating spatial transform between ");
         }
@@ -785,14 +788,17 @@ export class FrameStore {
         const refPixel = FrameStore.FindRefPixel(this.frameInfo.fileInfoExtended.headerEntries);
         if (refPixel) {
             const transformedRef = this.getTransformedCoordinates(refPixel.x, refPixel.y, true);
-            const delta = subtract2D(refPixel, transformedRef);
-            console.log(delta);
+            this.spatialTranslation = subtract2D(transformedRef, refPixel);
         }
     };
 
     @action clearSpatialReference = () => {
         this.spatialReference = null;
+        if (this.spatialTransform) {
+            AST.delete(this.spatialTransform);
+        }
         this.spatialTransform = null;
+        this.spatialTranslation = null;
     };
 
     getTransformedCoordinates = (x: number, y: number, forward: boolean = true) => {

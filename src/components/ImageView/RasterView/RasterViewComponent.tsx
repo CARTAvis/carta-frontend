@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {FrameStore, OverlayStore, PreferenceStore, RasterRenderType} from "stores";
 import {FrameView, TileCoordinate} from "models";
 import {RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService} from "services/TileService";
-import {GetRequiredTiles, getShaderProgram, GL, LayerToMip, loadFP32Texture, loadImageTexture, hexStringToRgba} from "utilities";
+import {GetRequiredTiles, getShaderProgram, GL, LayerToMip, loadFP32Texture, loadImageTexture, hexStringToRgba, add2D, scale2D} from "utilities";
 import "./RasterViewComponent.css";
 import allMaps from "static/allmaps.png";
 
@@ -370,7 +370,12 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             mip: 1
         };
 
-        const bottomLeft = {x: (0.5 + tileImageView.xMin - full.xMin) / fullWidth, y: (0.5 + tileImageView.yMin - full.yMin) / fullHeight};
+        let bottomLeft = {x: (0.5 + tileImageView.xMin - full.xMin) / fullWidth, y: (0.5 + tileImageView.yMin - full.yMin) / fullHeight};
+
+        // TODO: Extremely experimental!
+        if (frame.spatialReference && frame.spatialTranslation) {
+            bottomLeft = add2D(bottomLeft, scale2D(frame.spatialTranslation, 1.0 / fullWidth));
+        }
 
         this.gl.uniform2f(this.shaderUniforms.TileSize, rasterTile.width / TILE_SIZE, rasterTile.height / TILE_SIZE);
         this.gl.uniform2f(this.shaderUniforms.TileOffset, bottomLeft.x, bottomLeft.y);
@@ -481,6 +486,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 nanAlpha: preference.nanAlpha
             };
             const renderType = frame.renderType;
+            const spatialReference = frame.spatialReference;
         }
         const padding = this.props.overlaySettings.padding;
         let className = "raster-div";

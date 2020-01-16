@@ -69,7 +69,7 @@ export class AppStore {
     @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
 
     // Spatial WCS reference
-    @observable referenceFrame: FrameStore;
+    @observable spatialReference: FrameStore;
 
     private appContainer: HTMLElement;
     private contourWebGLContext: WebGLRenderingContext;
@@ -268,11 +268,13 @@ export class AppStore {
                 this.frames[existingFrameIndex] = newFrame;
             } else {
                 this.frames.push(newFrame);
-                // TODO: remove this debug bit
-                if (this.frames.length > 1) {
-                    newFrame.setSpatialReference(this.frames[0]);
-                }
             }
+
+            // First image defaults to spatial reference
+            if (this.frames.length === 1) {
+                this.setSpatialReference(this.frames[0]);
+            }
+
             this.setActiveFrame(newFrame.frameInfo.fileId);
             this.fileBrowserStore.hideFileBrowser();
         }, err => {
@@ -890,7 +892,7 @@ export class AppStore {
     };
 
     @action setSpatialReference = (frame: FrameStore) => {
-        this.referenceFrame = frame;
+        this.spatialReference = frame;
 
         for (const f of this.frames) {
             // The reference image can't reference itself
@@ -899,6 +901,18 @@ export class AppStore {
             } else if (f.spatialReference) {
                 f.setSpatialReference(frame);
             }
+        }
+    };
+
+    @action toggleSpatialMatching = (frame: FrameStore) => {
+        if (!frame) {
+            return;
+        }
+
+        if (frame.spatialReference) {
+            frame.clearSpatialReference();
+        } else {
+            frame.setSpatialReference(this.spatialReference);
         }
     };
 

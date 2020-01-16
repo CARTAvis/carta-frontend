@@ -102,7 +102,7 @@ Module.transform = Module.cwrap("transform", "number", ["number", "number", "num
 Module.getLastErrorMessage = Module.cwrap("getLastErrorMessage", "string");
 Module.clearLastErrorMessage = Module.cwrap("clearLastErrorMessage", null);
 Module.copy = Module.cwrap("copy", null, ["number"]);
-Module.celete = Module.cwrap("deleteObject", null, ["number"]);
+Module.delete = Module.cwrap("deleteObject", null, ["number"]);
 Module.invert = Module.cwrap("invert", "number", ["number"]);
 Module.convert = Module.cwrap("convert", "number", ["number", "number", "string"]);
 
