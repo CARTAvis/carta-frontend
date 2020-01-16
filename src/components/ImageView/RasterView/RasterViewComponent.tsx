@@ -376,7 +376,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         // TODO: Extremely experimental!
         console.log(bottomLeft);
         if (frame.spatialReference && frame.spatialTranslation) {
-            bottomLeft = add2D(bottomLeft, scale2D(frame.spatialTranslation, 1.0 / fullWidth));
+            bottomLeft = add2D(bottomLeft, {x: frame.spatialTranslation.x / fullWidth, y: frame.spatialTranslation.y / fullHeight});
         }
 
         console.log({bottomLeft, trans: frame.spatialTranslation});
