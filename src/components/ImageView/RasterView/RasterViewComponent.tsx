@@ -356,7 +356,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform2f(this.shaderUniforms.TileTextureOffset, textureParameters.offset.x, textureParameters.offset.y);
         }
 
-        const full = frame.requiredFrameView;
+        const spatialRef = frame.spatialReference || frame;
+        const full = spatialRef.requiredFrameView;
 
         const fullWidth = full.xMax - full.xMin;
         const fullHeight = full.yMax - full.yMin;
@@ -373,13 +374,16 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         let bottomLeft = {x: (0.5 + tileImageView.xMin - full.xMin) / fullWidth, y: (0.5 + tileImageView.yMin - full.yMin) / fullHeight};
 
         // TODO: Extremely experimental!
+        console.log(bottomLeft);
         if (frame.spatialReference && frame.spatialTranslation) {
             bottomLeft = add2D(bottomLeft, scale2D(frame.spatialTranslation, 1.0 / fullWidth));
         }
 
+        console.log({bottomLeft, trans: frame.spatialTranslation});
+
         this.gl.uniform2f(this.shaderUniforms.TileSize, rasterTile.width / TILE_SIZE, rasterTile.height / TILE_SIZE);
         this.gl.uniform2f(this.shaderUniforms.TileOffset, bottomLeft.x, bottomLeft.y);
-        this.gl.uniform2f(this.shaderUniforms.TileScaling, (mip * TILE_SIZE * frame.zoomLevel) / (frame.renderWidth * devicePixelRatio), (mip * TILE_SIZE * frame.zoomLevel) / (frame.renderHeight * devicePixelRatio));
+        this.gl.uniform2f(this.shaderUniforms.TileScaling, (mip * TILE_SIZE * spatialRef.zoomLevel) / (spatialRef.renderWidth * devicePixelRatio), (mip * TILE_SIZE * spatialRef.zoomLevel) / (spatialRef.renderHeight * devicePixelRatio));
         this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
     }
 
