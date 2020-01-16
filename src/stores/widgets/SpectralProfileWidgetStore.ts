@@ -31,6 +31,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         switch (statsType) {
             case CARTA.StatsType.Sum:
                 return "Sum";
+            case CARTA.StatsType.FluxDensity:
+                return "FluxDensity";
             case CARTA.StatsType.Mean:
                 return "Mean";
             case CARTA.StatsType.Sigma:
