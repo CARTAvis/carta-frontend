@@ -32,6 +32,8 @@ interface ShaderUniforms {
     CmapTexture: WebGLUniformLocation;
     NumCmaps: WebGLUniformLocation;
     CmapIndex: WebGLUniformLocation;
+    CanvasWidth: WebGLUniformLocation;
+    CanvasHeight: WebGLUniformLocation;
     TiledRendering: WebGLUniformLocation;
     TileSize: WebGLUniformLocation;
     TileScaling: WebGLUniformLocation;
@@ -162,7 +164,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     private updateUniforms() {
-        const renderConfig = this.props.frame.renderConfig;
+        const frame = this.props.frame;
+        const renderConfig = frame.renderConfig;
         const preference = this.props.preference;
         if (renderConfig && preference && this.shaderUniforms) {
             this.gl.uniform1f(this.shaderUniforms.MinVal, renderConfig.scaleMinVal);
@@ -174,6 +177,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1f(this.shaderUniforms.Contrast, renderConfig.contrast);
             this.gl.uniform1f(this.shaderUniforms.Gamma, renderConfig.gamma);
             this.gl.uniform1f(this.shaderUniforms.Alpha, renderConfig.alpha);
+            this.gl.uniform1f(this.shaderUniforms.CanvasWidth, frame.renderWidth * devicePixelRatio);
+            this.gl.uniform1f(this.shaderUniforms.CanvasHeight, frame.renderHeight * devicePixelRatio);
 
             const rgba = hexStringToRgba(preference.nanColorHex, preference.nanAlpha);
             if (rgba) {
@@ -371,16 +376,19 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             mip: 1
         };
 
-        let bottomLeft = {x: (0.5 + tileImageView.xMin - full.xMin) / fullWidth, y: (0.5 + tileImageView.yMin - full.yMin) / fullHeight};
+        let bottomLeft = {x: (0.5 + tileImageView.xMin - full.xMin), y: (0.5 + tileImageView.yMin - full.yMin)};
 
         // TODO: Experimental code to handle WCS translations
         if (frame.spatialReference && frame.spatialTranslation) {
-            bottomLeft = add2D(bottomLeft, {x: frame.spatialTranslation.x / fullWidth, y: frame.spatialTranslation.y / fullHeight});
+            bottomLeft = add2D(bottomLeft, {x: frame.spatialTranslation.x, y: frame.spatialTranslation.y});
         }
 
-        this.gl.uniform2f(this.shaderUniforms.TileSize, rasterTile.width / TILE_SIZE, rasterTile.height / TILE_SIZE);
+        // take zoom level
+        bottomLeft = scale2D(bottomLeft, spatialRef.zoomLevel);
+
+        this.gl.uniform2f(this.shaderUniforms.TileSize, rasterTile.width, rasterTile.height);
         this.gl.uniform2f(this.shaderUniforms.TileOffset, bottomLeft.x, bottomLeft.y);
-        this.gl.uniform2f(this.shaderUniforms.TileScaling, (mip * TILE_SIZE * spatialRef.zoomLevel) / (spatialRef.renderWidth * devicePixelRatio), (mip * TILE_SIZE * spatialRef.zoomLevel) / (spatialRef.renderHeight * devicePixelRatio));
+        this.gl.uniform2f(this.shaderUniforms.TileScaling, (mip * spatialRef.zoomLevel), (mip * spatialRef.zoomLevel));
         this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
     }
 
@@ -407,6 +415,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             CmapTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapTexture"),
             NumCmaps: this.gl.getUniformLocation(this.shaderProgram, "uNumCmaps"),
             CmapIndex: this.gl.getUniformLocation(this.shaderProgram, "uCmapIndex"),
+            CanvasWidth: this.gl.getUniformLocation(this.shaderProgram, "uCanvasWidth"),
+            CanvasHeight: this.gl.getUniformLocation(this.shaderProgram, "uCanvasHeight"),
             TiledRendering: this.gl.getUniformLocation(this.shaderProgram, "uTiledRendering"),
             TileSize: this.gl.getUniformLocation(this.shaderProgram, "uTileSize"),
             TileScaling: this.gl.getUniformLocation(this.shaderProgram, "uTileScaling"),
