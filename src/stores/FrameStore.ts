@@ -1,10 +1,10 @@
-import {action, computed, observable, autorun} from "mobx";
+import {action, computed, observable, autorun, toJS} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, PreferenceStore, OverlayBeamStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore, ContourConfigStore, ContourStore} from "stores";
-import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES, ProtobufProcessing} from "models";
-import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency, toFixed, hexStringToRgba, trimFitsComment, getHeaderNumericValue, subtract2D, add2D, normalize2D, dot2D, length2D} from "utilities";
+import {CursorInfo, Point2D, Transform2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES, ProtobufProcessing} from "models";
+import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency, toFixed, trimFitsComment, getHeaderNumericValue, subtract2D, add2D, length2D, findRefPixel, findChannelType, getTransformedCoordinates, getTransform} from "utilities";
 import {BackendService} from "services";
 
 export interface FrameInfo {
@@ -15,12 +15,6 @@ export interface FrameInfo {
     fileInfoExtended: CARTA.FileInfoExtended;
     fileFeatureFlags: number;
     renderMode: CARTA.RenderMode;
-}
-
-export interface Transform2D {
-    translation: Point2D;
-    rotation: number;
-    scale: Point2D;
 }
 
 export enum RasterRenderType {
@@ -187,7 +181,7 @@ export class FrameStore {
         };
 
         // By default, we try to use the WCS information to determine channel info.
-        const channelTypeInfo = FrameStore.FindChannelType(this.frameInfo.fileInfoExtended.headerEntries);
+        const channelTypeInfo = findChannelType(this.frameInfo.fileInfoExtended.headerEntries);
         if (channelTypeInfo) {
             const refPixHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${channelTypeInfo.dimension}`) !== -1);
             const refValHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRVAL${channelTypeInfo.dimension}`) !== -1);
@@ -414,7 +408,7 @@ export class FrameStore {
         this.initWCS();
         this.initCenter();
         this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
-        this.referencePixel = FrameStore.FindRefPixel(this.frameInfo.fileInfoExtended.headerEntries) || {x: this.frameInfo.fileInfoExtended.width / 2.0, y: this.frameInfo.fileInfoExtended.height};
+        this.referencePixel = findRefPixel(this.frameInfo.fileInfoExtended.headerEntries) || {x: this.frameInfo.fileInfoExtended.width / 2.0, y: this.frameInfo.fileInfoExtended.height};
 
         // need initialized wcs to get correct cursor info
         this.cursorInfo = this.getCursorInfoImageSpace({x: 0, y: 0});
@@ -661,13 +655,23 @@ export class FrameStore {
     }
 
     @action setZoom(zoom: number) {
-        this.zoomLevel = zoom;
-        this.replaceZoomTimeoutHandler();
-        this.zooming = true;
+        if (this.spatialReference) {
+            // Adjust zoom by scaling factor
+            this.spatialReference.setZoom(zoom / this.spatialTransform.scale.x);
+        } else {
+            this.zoomLevel = zoom;
+            this.replaceZoomTimeoutHandler();
+            this.zooming = true;
+        }
     }
 
     @action setCenter(x: number, y: number) {
-        this.center = {x, y};
+        if (this.spatialReference) {
+            // TODO: center on correct point of spatial reference
+            this.spatialReference.setCenter(x, y);
+        } else {
+            this.center = {x, y};
+        }
     }
 
     @action setCursorInfo(cursorInfo: CursorInfo) {
@@ -682,12 +686,17 @@ export class FrameStore {
 
     // Sets a new zoom level and pans to keep the given point fixed
     @action zoomToPoint(x: number, y: number, zoom: number) {
-        const newCenter = {
-            x: x + this.zoomLevel / zoom * (this.center.x - x),
-            y: y + this.zoomLevel / zoom * (this.center.y - y)
-        };
-        this.setZoom(zoom);
-        this.center = newCenter;
+        if (this.spatialReference) {
+            // TODO: zoom to correct point of spatial reference
+            this.spatialReference.zoomToPoint(x, y, zoom / this.spatialTransform.scale.x);
+        } else {
+            const newCenter = {
+                x: x + this.zoomLevel / zoom * (this.center.x - x),
+                y: y + this.zoomLevel / zoom * (this.center.y - y)
+            };
+            this.setZoom(zoom);
+            this.center = newCenter;
+        }
     }
 
     private replaceZoomTimeoutHandler = () => {
@@ -706,8 +715,13 @@ export class FrameStore {
     };
 
     @action fitZoom = () => {
-        this.zoomLevel = this.zoomLevelForFit;
-        this.initCenter();
+        // TODO: This currently zooms to fit the _reference_ image
+        if (this.spatialReference) {
+            this.spatialReference.fitZoom();
+        } else {
+            this.zoomLevel = this.zoomLevelForFit;
+            this.initCenter();
+        }
     };
 
     @action setAnimationRange = (range: NumberRange) => {
@@ -788,22 +802,7 @@ export class FrameStore {
             console.log("Error creating spatial transform between ");
         }
 
-        // Calculate transform
-        const transformedRef = this.getTransformedCoordinates(this.referencePixel, true);
-        const delta = 1.0;
-        const refTop = add2D(this.referencePixel, {x: 0, y: delta / 2.0});
-        const refBottom = add2D(this.referencePixel, {x: 0, y: -delta / 2.0});
-        const northVector = subtract2D(refTop, refBottom);
-        const transformedRefTop = this.getTransformedCoordinates(refTop, true);
-        const transformedRefBottom = this.getTransformedCoordinates(refBottom, true);
-        const transformedNorthVector = subtract2D(transformedRefTop, transformedRefBottom);
-        const scaling = length2D(transformedNorthVector) / length2D(northVector);
-        const theta = Math.atan2(northVector.y, northVector.x) - Math.atan2(transformedNorthVector.y, transformedNorthVector.x);
-        this.spatialTransform = {
-            translation: subtract2D(transformedRef, this.referencePixel),
-            scale: {x: scaling, y: scaling},
-            rotation: theta
-        };
+        this.spatialTransform = getTransform(this.spatialTransformAST, this.referencePixel);
     };
 
     @action clearSpatialReference = () => {
@@ -814,55 +813,4 @@ export class FrameStore {
         this.spatialTransformAST = null;
         this.spatialTransform = null;
     };
-
-    getTransformedCoordinates = (point: Point2D, forward: boolean = true) => {
-        const transformed: Point2D = AST.transformPoint(this.spatialTransformAST, point.x, point.y, forward);
-        return transformed;
-    };
-
-    // Tests a list of headers for valid channel information in either 3rd or 4th axis
-    private static FindChannelType(entries: CARTA.IHeaderEntry[]) {
-        if (!entries || !entries.length) {
-            return undefined;
-        }
-
-        const typeHeader3 = entries.find(entry => entry.name.includes("CTYPE3"));
-        const typeHeader4 = entries.find(entry => entry.name.includes("CTYPE4"));
-        if (!typeHeader3 && !typeHeader4) {
-            return undefined;
-        }
-
-        // Test each header entry to see if it has a valid channel type
-        if (typeHeader3) {
-            const headerVal = typeHeader3.value.trim().toUpperCase();
-            const channelType = CHANNEL_TYPES.find(type => headerVal.indexOf(type.code) !== -1);
-            if (channelType) {
-                return {dimension: 3, type: {name: channelType.name, code: channelType.code, unit: channelType.unit}};
-            }
-        }
-
-        if (typeHeader4) {
-            const headerVal = typeHeader4.value.trim().toUpperCase();
-            const channelType = CHANNEL_TYPES.find(type => headerVal.indexOf(type.code) !== -1);
-            if (channelType) {
-                return {dimension: 4, type: {name: channelType.name, code: channelType.code, unit: channelType.unit}};
-            }
-        }
-
-        return undefined;
-    }
-
-    private static FindRefPixel(entries: CARTA.IHeaderEntry[]) {
-        if (!entries || !entries.length) {
-            return undefined;
-        }
-
-        const pixVal1 = entries.find(entry => entry.name.includes("CRPIX1"));
-        const pixVal2 = entries.find(entry => entry.name.includes("CRPIX2"));
-        if (!pixVal1 && !pixVal2) {
-            return undefined;
-        }
-
-        return {x: getHeaderNumericValue(pixVal1), y: getHeaderNumericValue(pixVal2)};
-    }
 }

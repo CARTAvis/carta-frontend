@@ -498,10 +498,13 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     render() {
         // dummy values to trigger React's componentDidUpdate()
         const frame = this.props.frame;
-        const frameView = frame ? frame.requiredFrameView : null;
-        const currentView = frame ? frame.currentFrameView : null;
         const preference = this.props.preference;
         if (frame) {
+            const spatialReference = frame.spatialReference || frame;
+            const frameView = spatialReference.requiredFrameView;
+            const currentView = spatialReference.currentFrameView;
+            const renderType = frame.renderType;
+
             const colorMapping = {
                 min: frame.renderConfig.scaleMinVal,
                 max: frame.renderConfig.scaleMaxVal,
@@ -515,8 +518,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 nanColorHex: preference.nanColorHex,
                 nanAlpha: preference.nanAlpha
             };
-            const renderType = frame.renderType;
-            const spatialReference = frame.spatialReference;
         }
         const padding = this.props.overlaySettings.padding;
         let className = "raster-div";
