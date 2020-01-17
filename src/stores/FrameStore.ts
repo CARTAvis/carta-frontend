@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, PreferenceStore, OverlayBeamStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore, ContourConfigStore, ContourStore} from "stores";
 import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES, ProtobufProcessing} from "models";
-import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency, toFixed, hexStringToRgba, trimFitsComment, getHeaderNumericValue, subtract2D} from "utilities";
+import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency, toFixed, hexStringToRgba, trimFitsComment, getHeaderNumericValue, subtract2D, add2D, normalize2D, dot2D, length2D} from "utilities";
 import {BackendService} from "services";
 
 export interface FrameInfo {
@@ -15,6 +15,12 @@ export interface FrameInfo {
     fileInfoExtended: CARTA.FileInfoExtended;
     fileFeatureFlags: number;
     renderMode: CARTA.RenderMode;
+}
+
+export interface Transform2D {
+    translation: Point2D;
+    rotation: number;
+    scale: Point2D;
 }
 
 export enum RasterRenderType {
@@ -53,7 +59,7 @@ export class FrameStore {
     @observable regionSet: RegionSetStore;
     @observable overlayBeamSettings: OverlayBeamStore;
     @observable spatialReference: FrameStore;
-    @observable spatialTranslation: Point2D;
+    @observable spatialTransform: Transform2D;
 
     @computed get requiredFrameView(): FrameView {
         // If there isn't a valid zoom, return a dummy view
@@ -349,8 +355,9 @@ export class FrameStore {
     private readonly preference: PreferenceStore;
     private readonly backendService: BackendService;
     private readonly contourContext: WebGLRenderingContext;
-    private spatialTransform: number;
+    private spatialTransformAST: number;
     private zoomTimeoutHandler;
+    public readonly referencePixel: Point2D;
 
     private static readonly CursorInfoMaxPrecision = 25;
     private static readonly ZoomInertiaDuration = 250;
@@ -376,8 +383,8 @@ export class FrameStore {
         this.moving = false;
         this.zooming = false;
         this.overlayBeamSettings = new OverlayBeamStore(preference);
-        this.spatialReference = null;
         this.spatialTransform = null;
+        this.spatialTransformAST = null;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preference.astColor;
@@ -407,6 +414,7 @@ export class FrameStore {
         this.initWCS();
         this.initCenter();
         this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
+        this.referencePixel = FrameStore.FindRefPixel(this.frameInfo.fileInfoExtended.headerEntries) || {x: this.frameInfo.fileInfoExtended.width / 2.0, y: this.frameInfo.fileInfoExtended.height};
 
         // need initialized wcs to get correct cursor info
         this.cursorInfo = this.getCursorInfoImageSpace({x: 0, y: 0});
@@ -723,9 +731,6 @@ export class FrameStore {
             return;
         }
 
-        // TODO: This should be defined by the contour config widget
-        // this.contourConfig.setBounds(this.renderConfig.scaleMinVal, this.renderConfig.scaleMaxVal);
-        // this.contourConfig.setNumComputedLevels(this.preference.contourNumLevels);
         this.contourConfig.setEnabled(true);
 
         // TODO: Allow a different reference frame
@@ -776,34 +781,42 @@ export class FrameStore {
         const copyDest = AST.copy(frame.wcsInfo);
         AST.invert(copySrc);
         AST.invert(copyDest);
-        this.spatialTransform = AST.convert(copySrc, copyDest, "");
-        // TODO: does this work?
+        this.spatialTransformAST = AST.convert(copySrc, copyDest, "");
         AST.delete(copySrc);
         AST.delete(copyDest);
-        if (!this.spatialTransform) {
+        if (!this.spatialTransformAST) {
             console.log("Error creating spatial transform between ");
         }
 
-        // TODO: Remove debug transform
-        const refPixel = FrameStore.FindRefPixel(this.frameInfo.fileInfoExtended.headerEntries);
-        if (refPixel) {
-            const transformedRef = this.getTransformedCoordinates(refPixel.x, refPixel.y, true);
-            this.spatialTranslation = subtract2D(transformedRef, refPixel);
-        }
+        // Calculate transform
+        const transformedRef = this.getTransformedCoordinates(this.referencePixel, true);
+        const delta = 1.0;
+        const refTop = add2D(this.referencePixel, {x: 0, y: delta / 2.0});
+        const refBottom = add2D(this.referencePixel, {x: 0, y: -delta / 2.0});
+        const northVector = subtract2D(refTop, refBottom);
+        const transformedRefTop = this.getTransformedCoordinates(refTop, true);
+        const transformedRefBottom = this.getTransformedCoordinates(refBottom, true);
+        const transformedNorthVector = subtract2D(transformedRefTop, transformedRefBottom);
+        const scaling = length2D(transformedNorthVector) / length2D(northVector);
+        const theta = Math.atan2(northVector.y, northVector.x) - Math.atan2(transformedNorthVector.y, transformedNorthVector.x);
+        this.spatialTransform = {
+            translation: subtract2D(transformedRef, this.referencePixel),
+            scale: {x: scaling, y: scaling},
+            rotation: theta
+        };
     };
 
     @action clearSpatialReference = () => {
         this.spatialReference = null;
-        if (this.spatialTransform) {
-            AST.delete(this.spatialTransform);
+        if (this.spatialTransformAST) {
+            AST.delete(this.spatialTransformAST);
         }
+        this.spatialTransformAST = null;
         this.spatialTransform = null;
-        this.spatialTranslation = null;
     };
 
-    getTransformedCoordinates = (x: number, y: number, forward: boolean = true) => {
-        const transformed: Point2D = AST.transformPoint(this.spatialTransform, x, y, forward);
-        console.log(`(${x}, ${y}) => (${transformed.x}, ${transformed.y})`);
+    getTransformedCoordinates = (point: Point2D, forward: boolean = true) => {
+        const transformed: Point2D = AST.transformPoint(this.spatialTransformAST, point.x, point.y, forward);
         return transformed;
     };
 

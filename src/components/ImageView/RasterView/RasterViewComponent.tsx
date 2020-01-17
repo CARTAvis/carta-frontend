@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {FrameStore, OverlayStore, PreferenceStore, RasterRenderType} from "stores";
-import {FrameView, TileCoordinate} from "models";
+import {FrameView, Point2D, TileCoordinate} from "models";
 import {RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService} from "services/TileService";
 import {GetRequiredTiles, getShaderProgram, GL, LayerToMip, loadFP32Texture, loadImageTexture, hexStringToRgba, add2D, scale2D} from "utilities";
 import "./RasterViewComponent.css";
@@ -34,6 +34,9 @@ interface ShaderUniforms {
     CmapIndex: WebGLUniformLocation;
     CanvasWidth: WebGLUniformLocation;
     CanvasHeight: WebGLUniformLocation;
+    RotationOrigin: WebGLUniformLocation;
+    RotationAngle: WebGLUniformLocation;
+    ScaleAdjustment: WebGLUniformLocation;
     TiledRendering: WebGLUniformLocation;
     TileSize: WebGLUniformLocation;
     TileScaling: WebGLUniformLocation;
@@ -377,18 +380,31 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         };
 
         let bottomLeft = {x: (0.5 + tileImageView.xMin - full.xMin), y: (0.5 + tileImageView.yMin - full.yMin)};
+        let tileScaling = scale2D({x: 1, y: 1}, mip * spatialRef.zoomLevel);
 
-        // TODO: Experimental code to handle WCS translations
-        if (frame.spatialReference && frame.spatialTranslation) {
-            bottomLeft = add2D(bottomLeft, {x: frame.spatialTranslation.x, y: frame.spatialTranslation.y});
+        // Experimental code to handle WCS spatial transforms
+        if (frame.spatialReference && frame.spatialTransform) {
+            bottomLeft = add2D(bottomLeft, frame.spatialTransform.translation);
+            // set origin of rotation to image center
+            const rotationOriginImageSpace: Point2D = add2D(frame.referencePixel, frame.spatialTransform.translation);
+            const rotationOriginCanvasSpace: Point2D = {
+                x: spatialRef.zoomLevel * (rotationOriginImageSpace.x - full.xMin),
+                y: spatialRef.zoomLevel * (rotationOriginImageSpace.y - full.yMin),
+            };
+            this.gl.uniform2f(this.shaderUniforms.RotationOrigin, rotationOriginCanvasSpace.x, rotationOriginCanvasSpace.y);
+            this.gl.uniform1f(this.shaderUniforms.RotationAngle, frame.spatialTransform.rotation);
+            this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, frame.spatialTransform.scale.x);
+        } else {
+            this.gl.uniform1f(this.shaderUniforms.RotationAngle, 0);
+            this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, 1);
         }
 
-        // take zoom level
+        // take zoom level into account to convert from image space to canvas space
         bottomLeft = scale2D(bottomLeft, spatialRef.zoomLevel);
 
         this.gl.uniform2f(this.shaderUniforms.TileSize, rasterTile.width, rasterTile.height);
         this.gl.uniform2f(this.shaderUniforms.TileOffset, bottomLeft.x, bottomLeft.y);
-        this.gl.uniform2f(this.shaderUniforms.TileScaling, (mip * spatialRef.zoomLevel), (mip * spatialRef.zoomLevel));
+        this.gl.uniform2f(this.shaderUniforms.TileScaling, tileScaling.x, tileScaling.y);
         this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
     }
 
@@ -417,6 +433,9 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             CmapIndex: this.gl.getUniformLocation(this.shaderProgram, "uCmapIndex"),
             CanvasWidth: this.gl.getUniformLocation(this.shaderProgram, "uCanvasWidth"),
             CanvasHeight: this.gl.getUniformLocation(this.shaderProgram, "uCanvasHeight"),
+            ScaleAdjustment: this.gl.getUniformLocation(this.shaderProgram, "uScaleAdjustment"),
+            RotationOrigin: this.gl.getUniformLocation(this.shaderProgram, "uRotationOrigin"),
+            RotationAngle: this.gl.getUniformLocation(this.shaderProgram, "uRotationAngle"),
             TiledRendering: this.gl.getUniformLocation(this.shaderProgram, "uTiledRendering"),
             TileSize: this.gl.getUniformLocation(this.shaderProgram, "uTileSize"),
             TileScaling: this.gl.getUniformLocation(this.shaderProgram, "uTileScaling"),
