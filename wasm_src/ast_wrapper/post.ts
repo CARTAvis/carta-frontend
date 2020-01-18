@@ -105,6 +105,8 @@ Module.copy = Module.cwrap("copy", null, ["number"]);
 Module.delete = Module.cwrap("deleteObject", null, ["number"]);
 Module.invert = Module.cwrap("invert", "number", ["number"]);
 Module.convert = Module.cwrap("convert", "number", ["number", "number", "string"]);
+Module.shiftMap2D = Module.cwrap("shiftMap2D", "number", ["number", "number"]);
+Module.createTransformedFrameset = Module.cwrap("createTransformedFrameset", "number", ["number", "number", "number", "number", "number", "number"]);
 
 Module.currentFormatStrings = [];
 
@@ -113,8 +115,7 @@ Module.getFormattedCoordinates = function (wcsInfo: number, x: number, y: number
     if (tempFormat) {
         prevString = Module.currentFormatStrings[wcsInfo];
         Module.set(wcsInfo, formatString);
-    }
-    else if (formatString && Module.currentFormatStrings[wcsInfo] !== formatString) {
+    } else if (formatString && Module.currentFormatStrings[wcsInfo] !== formatString) {
         Module.set(wcsInfo, formatString);
         Module.currentFormatStrings[wcsInfo] = formatString;
     }

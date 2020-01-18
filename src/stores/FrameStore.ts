@@ -4,7 +4,22 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, PreferenceStore, OverlayBeamStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore, ContourConfigStore, ContourStore} from "stores";
 import {CursorInfo, Point2D, Transform2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES, ProtobufProcessing} from "models";
-import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency, toFixed, trimFitsComment, getHeaderNumericValue, subtract2D, add2D, length2D, findRefPixel, findChannelType, getTransformedCoordinates, getTransform} from "utilities";
+import {
+    clamp,
+    frequencyStringFromVelocity,
+    velocityStringFromFrequency,
+    toFixed,
+    trimFitsComment,
+    getHeaderNumericValue,
+    subtract2D,
+    add2D,
+    length2D,
+    findRefPixel,
+    findChannelType,
+    getTransformedCoordinates,
+    getTransform,
+    rotate2D
+} from "utilities";
 import {BackendService} from "services";
 
 export interface FrameInfo {
@@ -54,6 +69,7 @@ export class FrameStore {
     @observable overlayBeamSettings: OverlayBeamStore;
     @observable spatialReference: FrameStore;
     @observable spatialTransform: Transform2D;
+    @observable transformedWcsInfo: number;
 
     @computed get requiredFrameView(): FrameView {
         // If there isn't a valid zoom, return a dummy view
@@ -379,6 +395,7 @@ export class FrameStore {
         this.overlayBeamSettings = new OverlayBeamStore(preference);
         this.spatialTransform = null;
         this.spatialTransformAST = null;
+        this.transformedWcsInfo = null;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preference.astColor;
@@ -803,6 +820,18 @@ export class FrameStore {
         }
 
         this.spatialTransform = getTransform(this.spatialTransformAST, this.referencePixel);
+        console.log(toJS(this.spatialTransform));
+        let adjTranslation: Point2D = {
+            x: (this.spatialTransform.scale.x - 1) * (this.frameInfo.fileInfoExtended.width / 2.0 + 1) - this.spatialTransform.translation.x,
+            y: (this.spatialTransform.scale.y - 1) * (this.frameInfo.fileInfoExtended.height / 2.0 + 1) - this.spatialTransform.translation.y,
+        };
+
+        adjTranslation = rotate2D(adjTranslation, this.spatialTransform.rotation);
+
+        this.transformedWcsInfo = AST.createTransformedFrameset(this.wcsInfo,
+            adjTranslation.x, adjTranslation.y,
+            this.spatialTransform.rotation,
+            1.0 / this.spatialTransform.scale.x, 1.0 / this.spatialTransform.scale.y);
     };
 
     @action clearSpatialReference = () => {

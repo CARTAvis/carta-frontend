@@ -50,6 +50,12 @@ export function average2D(points: Point2D[]) {
     return scale2D(sum, 1.0 / points.length);
 }
 
+export function rotate2D(point: Point2D, theta: number) {
+    const sinTheta = Math.sin(theta);
+    const cosTheta = Math.cos(theta);
+    return {x: cosTheta * point.x - sinTheta * point.y, y: sinTheta * point.x + cosTheta * point.y};
+}
+
 export function minMax2D(points: Point2D[]): { maxPoint: Point2D, minPoint: Point2D } {
     let maxPoint = {x: -Number.MAX_VALUE, y: -Number.MAX_VALUE};
     let minPoint = {x: Number.MAX_VALUE, y: Number.MAX_VALUE};

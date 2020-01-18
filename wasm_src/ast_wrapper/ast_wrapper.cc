@@ -1,5 +1,6 @@
 #include <string.h>
 #include <emscripten.h>
+#include <cmath>
 
 extern "C" {
 #include "ast.h"
@@ -75,10 +76,41 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
         cout << "check FITS header (astlib)" << endl;
         return nullptr;
     }
+
     return wcsinfo;
 }
 
-EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame() {
+EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY, double angle, double scaleX, double scaleY)
+{
+    AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, 1);
+    AstFrame* pixFrameCopy = static_cast<AstFrame*> astCopy(pixFrame);
+    AstFrame* skyFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, 2);
+    AstMapping* pixToSkyMapping = static_cast<AstMapping*> astGetMapping(wcsinfo, 1, 2);
+
+    AstFrameSet* wcsInfoTransformed = astFrameSet(pixFrame, "");
+
+    // 2D scale and rotation matrix
+    double sinTheta = sin(angle);
+    double cosTheta = cos(angle);
+    double matrixElements[] = {cosTheta * scaleX, -sinTheta, sinTheta, cosTheta * scaleY};
+    AstMatrixMap* matrixMap = astMatrixMap(2, 2, 0, matrixElements, "");
+
+    // 2D shift
+    double offsets[] = {offsetX, offsetY};
+    AstShiftMap* shiftMap = astShiftMap(2, offsets, "");
+
+    //  Combined mapping
+    AstCmpMap* combinedMap = astCmpMap(shiftMap, matrixMap, 1, "");
+
+    astAddFrame(wcsInfoTransformed, 1, combinedMap, pixFrameCopy);
+    astAddFrame(wcsInfoTransformed, 2, pixToSkyMapping, skyFrame);
+    astSetI(wcsInfoTransformed, "Current", 3);
+    astShow(wcsInfoTransformed);
+    return wcsInfoTransformed;
+}
+
+EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame()
+{
     double offsets[] = {-1, -1};
     AstFrameSet* frameSet = astFrameSet(astFrame(2, ""), "");
     astAddFrame(frameSet, 1, astShiftMap(2, offsets, ""), astFrame(2, "Label(1)=X Coordinate,Label(2)=Y Coordinate,Domain=PIXEL"));
@@ -92,6 +124,7 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double i
     {
         return 1;
     }
+
 	AstPlot* plot;
 	double hi = 1, lo = -1, scale, x1 = paddingLeft, x2 = width - paddingRight, xleft, xright, xscale;
 	double y1 = paddingBottom, y2 = height - paddingTop, ybottom, yscale, ytop;
@@ -215,6 +248,12 @@ EMSCRIPTEN_KEEPALIVE void invert(AstFrameSet* src)
 EMSCRIPTEN_KEEPALIVE AstFrameSet* convert(AstFrameSet* from, AstFrameSet* to, const char* domainlist)
 {
     return static_cast<AstFrameSet*> astConvert(from, to, domainlist);
+}
+
+EMSCRIPTEN_KEEPALIVE AstShiftMap* shiftMap2D(double x, double y)
+{
+    double coords[] = {x, y};
+    return astShiftMap(2, coords, "");
 }
 
 EMSCRIPTEN_KEEPALIVE double axDistance(AstFrameSet* wcsinfo, int axis, double v1, double v2)

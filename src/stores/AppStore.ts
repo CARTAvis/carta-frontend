@@ -905,7 +905,7 @@ export class AppStore {
     };
 
     @action toggleSpatialMatching = (frame: FrameStore) => {
-        if (!frame) {
+        if (!frame || frame === this.spatialReference) {
             return;
         }
 

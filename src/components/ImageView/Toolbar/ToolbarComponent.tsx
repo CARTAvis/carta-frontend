@@ -157,7 +157,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                     <Button icon="zoom-to-fit" onClick={frame.fitZoom}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Debug: Toggle WCS ref</span>}>
-                    <Button icon="link" active={!!frame.spatialReference} disabled={frame === appStore.spatialReference} onClick={this.handleSpatialReferenceToggled}/>
+                    <Button icon="link" active={!!frame.spatialReference} onClick={this.handleSpatialReferenceToggled}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Overlay Coordinate <br/><small><i>Current: {ToolbarComponent.CoordinateSystemTooltip.get(coordinateSystem)}</i></small></span>}>
                     <Popover content={coordinateSystemMenu} position={Position.TOP} minimal={true}>
