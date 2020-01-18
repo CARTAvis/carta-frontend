@@ -822,8 +822,8 @@ export class FrameStore {
         this.spatialTransform = getTransform(this.spatialTransformAST, this.referencePixel);
         console.log(toJS(this.spatialTransform));
         let adjTranslation: Point2D = {
-            x: (this.spatialTransform.scale.x - 1) * (this.frameInfo.fileInfoExtended.width / 2.0 + 1) - this.spatialTransform.translation.x,
-            y: (this.spatialTransform.scale.y - 1) * (this.frameInfo.fileInfoExtended.height / 2.0 + 1) - this.spatialTransform.translation.y,
+            x: (this.spatialTransform.scale.x - 1) * (this.referencePixel.x) - this.spatialTransform.translation.x,
+            y: (this.spatialTransform.scale.y - 1) * (this.referencePixel.y) - this.spatialTransform.translation.y,
         };
 
         adjTranslation = rotate2D(adjTranslation, this.spatialTransform.rotation);
