@@ -159,32 +159,31 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         if (!widgetSettings) {
             return;
         }
-        if ("primaryLineColor" in widgetSettings && typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
+        if (typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
             this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
         }
-        if ("lineWidth" in widgetSettings && typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
+        if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;
         }
-        if ("linePlotPointSize" in widgetSettings && typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE &&
-            widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
+        if (typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE && widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
             this.linePlotPointSize = widgetSettings.linePlotPointSize;
         }
-        if ("logScaleY" in widgetSettings && typeof widgetSettings.logScaleY === "boolean") {
+        if (typeof widgetSettings.logScaleY === "boolean") {
             this.logScaleY = widgetSettings.logScaleY;
         }
-        if ("plotType" in widgetSettings && typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
+        if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
-        if ("minXVal" in widgetSettings && typeof widgetSettings.minXVal === "number") {
+        if (typeof widgetSettings.minXVal === "number") {
             this.linePlotInitXYBoundaries.minXVal = widgetSettings.minXVal;
         }
-        if ("maxXVal" in widgetSettings && typeof widgetSettings.maxXVal === "number") {
+        if (typeof widgetSettings.maxXVal === "number") {
             this.linePlotInitXYBoundaries.maxXVal = widgetSettings.maxXVal;
         }
-        if ("minYVal" in widgetSettings && typeof widgetSettings.minYVal === "number") {
+        if (typeof widgetSettings.minYVal === "number") {
             this.linePlotInitXYBoundaries.minYVal = widgetSettings.minYVal;
         }
-        if ("maxYVal" in widgetSettings && typeof widgetSettings.maxYVal === "number") {
+        if (typeof widgetSettings.maxYVal === "number") {
             this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
         }
     };

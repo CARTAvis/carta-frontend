@@ -363,37 +363,34 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         if (!widgetSettings) {
             return;
         }
-        if ("primaryLineColor" in widgetSettings && typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
+        if (typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
             this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
         }
-        if ("secondaryLineColor" in widgetSettings && typeof widgetSettings.secondaryLineColor === "string" && isColorValid(widgetSettings.secondaryLineColor)) {
+        if (typeof widgetSettings.secondaryLineColor === "string" && isColorValid(widgetSettings.secondaryLineColor)) {
             this.secondaryLineColor.colorHex = widgetSettings.secondaryLineColor;
         }
-        if ("lineWidth" in widgetSettings && typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
+        if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
             this.lineWidth = widgetSettings.lineWidth;
         }
-        if ("linePlotPointSize" in widgetSettings && typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE &&
-            widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
+        if (typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE && widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
             this.linePlotPointSize = widgetSettings.linePlotPointSize;
         }
-        if ("useWcsValues" in widgetSettings && typeof widgetSettings.useWcsValues === "boolean") {
+        if (typeof widgetSettings.useWcsValues === "boolean") {
             this.useWcsValues = widgetSettings.useWcsValues;
         }
-        if ("plotType" in widgetSettings && typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
+        if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
-        if ("colorMap" in widgetSettings && typeof widgetSettings.colorMap === "string") {
+        if (typeof widgetSettings.colorMap === "string") {
             this.colorMap = widgetSettings.colorMap;
         }
-        if ("scatterPlotPointSize" in widgetSettings && typeof widgetSettings.scatterPlotPointSize === "number" &&
-            widgetSettings.scatterPlotPointSize >= ScatterSettings.MIN_POINT_SIZE && widgetSettings.scatterPlotPointSize <= ScatterSettings.MAX_POINT_SIZE ) {
+        if (typeof widgetSettings.scatterPlotPointSize === "number" && widgetSettings.scatterPlotPointSize >= ScatterSettings.MIN_POINT_SIZE && widgetSettings.scatterPlotPointSize <= ScatterSettings.MAX_POINT_SIZE ) {
             this.scatterPlotPointSize = widgetSettings.scatterPlotPointSize;
         }
-        if ("pointTransparency" in widgetSettings && typeof widgetSettings.pointTransparency === "number" &&
-            widgetSettings.pointTransparency >= ScatterSettings.MIN_TRANSPARENCY && widgetSettings.pointTransparency <= ScatterSettings.MAX_TRANSPARENCY) {
+        if (typeof widgetSettings.pointTransparency === "number" && widgetSettings.pointTransparency >= ScatterSettings.MIN_TRANSPARENCY && widgetSettings.pointTransparency <= ScatterSettings.MAX_TRANSPARENCY) {
             this.pointTransparency = widgetSettings.pointTransparency;
         }
-        if ("equalAxes" in widgetSettings && typeof widgetSettings.equalAxes === "boolean") {
+        if (typeof widgetSettings.equalAxes === "boolean") {
             this.equalAxes = widgetSettings.equalAxes;
         }
     };
