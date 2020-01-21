@@ -80,7 +80,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
     return wcsinfo;
 }
 
-EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY, double angle, double scaleX, double scaleY)
+EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY, double angle, double originX, double originY, double scaleX, double scaleY)
 {
     AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, 1);
     AstFrame* pixFrameCopy = static_cast<AstFrame*> astCopy(pixFrame);
@@ -95,14 +95,17 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo
     double matrixElements[] = {cosTheta * scaleX, -sinTheta, sinTheta, cosTheta * scaleY};
     AstMatrixMap* matrixMap = astMatrixMap(2, 2, 0, matrixElements, "");
 
-    // 2D shift
-    double offsets[] = {offsetX, offsetY};
-    AstShiftMap* shiftMap = astShiftMap(2, offsets, "");
+    // 2D shifts
+    double offsetToOrigin[] = {-originX, -originY};
+    double offsetFromOrigin[] = {originX + offsetX, originY + offsetY};
+    AstShiftMap* shiftMapToOrigin = astShiftMap(2, offsetToOrigin, "");
+    AstShiftMap* shiftMapFromOrigin = astShiftMap(2, offsetFromOrigin, "");
 
     //  Combined mapping
-    AstCmpMap* combinedMap = astCmpMap(shiftMap, matrixMap, 1, "");
+    AstCmpMap* combinedMap = astCmpMap(shiftMapToOrigin, matrixMap, 1, "");
+    AstCmpMap* combinedMap2 = astCmpMap(combinedMap, shiftMapFromOrigin, 1, "");
 
-    astAddFrame(wcsInfoTransformed, 1, combinedMap, pixFrameCopy);
+    astAddFrame(wcsInfoTransformed, 1, combinedMap2, pixFrameCopy);
     astAddFrame(wcsInfoTransformed, 2, pixToSkyMapping, skyFrame);
     astSetI(wcsInfoTransformed, "Current", 3);
     astShow(wcsInfoTransformed);
