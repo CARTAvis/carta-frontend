@@ -375,7 +375,7 @@ export class WidgetsStore {
         layout.registerComponent("animator", AnimatorComponent);
         layout.registerComponent("stokes", StokesAnalysisComponent);
 
-        const showCogWidget = ["image-view", "region-list", "animator", "layer-list", "log", "placeholder", "stats"];
+        const showCogWidgets = ["spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes"];
         // add drag source buttons from ToolbarMenuComponent
         ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.CreateDragSource(this.appStore, layout, widgetConfig, id));
 
@@ -389,12 +389,11 @@ export class WidgetsStore {
                     const activeTabItem = stack.getActiveContentItem();
                     const component = activeTabItem.config.component;
                     const stackHeaderControlButtons = stack.header.controlsContainer[0];
-                    const found = showCogWidget.indexOf(component);
-                    if (component && found === -1 && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount < 4) {
+                    if (component && showCogWidgets.includes(component) && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount < 4) {
                         const cogPinedButton = $(`<li class="lm_settings" title="settings"><span class="bp3-icon-standard bp3-icon-cog"/></li>`);
                         cogPinedButton.on("click", () => contentItem.config.props.appStore.widgetsStore.onCogPinedClick(stack.getActiveContentItem()));
                         stack.header.controlsContainer.prepend(cogPinedButton);
-                    } else if (found !== -1 && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount === 4) {
+                    } else if (!showCogWidgets.includes(component) && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount === 4) {
                         stack.header.controlsContainer[0].children[0].remove();
                     }
                 }
