@@ -2,7 +2,7 @@ import * as React from "react";
 import { observable } from "mobx";
 import { observer } from "mobx-react";
 import { NonIdealState } from "@blueprintjs/core";
-import { Cell, Column, SelectionModes, Table } from "@blueprintjs/table";
+import { Cell, Column, RowHeaderCell, SelectionModes, Table } from "@blueprintjs/table";
 import ReactResizeDetector from "react-resize-detector";
 import { WidgetConfig, WidgetProps } from "stores";
 import "./LayerListComponent.css";
@@ -38,6 +38,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     };
 
     render() {
+        const frames = this.props.appStore.frames;
         const frameNum = this.props.appStore.frameNum;
         const frameNames = this.props.appStore.frameNames;
 
@@ -50,22 +51,34 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             );
         }
 
+        const rowHeaderCellRenderer = (rowIndex: number) => {
+            return <RowHeaderCell name={rowIndex.toString()}/>;
+        };
         const fileNameRenderer = (rowIndex: number) => {
-            return <Cell>{rowIndex >= 0 && rowIndex < frameNum ? frameNames[rowIndex].label  : ""}</Cell>;
+            return <Cell>{rowIndex >= 0 && rowIndex < frameNum && frameNames[rowIndex] ? frameNames[rowIndex].label  : ""}</Cell>;
+        };
+        const channelRenderer = (rowIndex: number) => {
+            return <Cell>{rowIndex >= 0 && rowIndex < frameNum && frames[rowIndex] ? frames[rowIndex].channel  : ""}</Cell>;
+        };
+        const stokesRenderer = (rowIndex: number) => {
+            return <Cell>{rowIndex >= 0 && rowIndex < frameNum && frames[rowIndex] ? frames[rowIndex].stokes  : ""}</Cell>;
         };
 
         return (
             <div className="layer-list-widget">
                 <Table
                     numRows={frameNum}
-                    selectionModes={SelectionModes.ROWS_ONLY}
+                    rowHeaderCellRenderer={rowHeaderCellRenderer}
+                    enableRowHeader={true}
                     enableRowReordering={true}
+                    selectionModes={SelectionModes.ROWS_ONLY}
+                    enableMultipleSelection={true}
                     onRowsReordered={this.handleFileReordered}
                 >
                     <Column name="File name" cellRenderer={fileNameRenderer}/>
                     <Column name="Type"/>
-                    <Column name="Channel"/>
-                    <Column name="Stokes"/>
+                    <Column name="Channel" cellRenderer={channelRenderer}/>
+                    <Column name="Stokes" cellRenderer={stokesRenderer}/>
                     <Column name=""/>
                 </Table>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
