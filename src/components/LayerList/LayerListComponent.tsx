@@ -1,8 +1,9 @@
 import * as React from "react";
+import {CSSProperties} from "react";
 import { observable } from "mobx";
 import { observer } from "mobx-react";
 import { NonIdealState } from "@blueprintjs/core";
-import { Cell, Column, RowHeaderCell, SelectionModes, Table } from "@blueprintjs/table";
+import { Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table } from "@blueprintjs/table";
 import ReactResizeDetector from "react-resize-detector";
 import { WidgetConfig, WidgetProps } from "stores";
 import "./LayerListComponent.css";
@@ -64,6 +65,11 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             return <Cell>{rowIndex >= 0 && rowIndex < frameNum && frames[rowIndex] ? frames[rowIndex].stokes  : ""}</Cell>;
         };
 
+        const columnHeaderStyleProps: CSSProperties = {
+            fontSize: "12",
+            fontWeight: "bold"
+        };
+
         return (
             <div className="layer-list-widget">
                 <Table
@@ -71,15 +77,30 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     rowHeaderCellRenderer={rowHeaderCellRenderer}
                     enableRowHeader={true}
                     enableRowReordering={true}
+                    enableRowResizing={false}
                     selectionModes={SelectionModes.ROWS_ONLY}
                     enableMultipleSelection={true}
                     onRowsReordered={this.handleFileReordered}
+                    columnWidths={[150, 60, 80, 80, 240]}
                 >
-                    <Column name="File name" cellRenderer={fileNameRenderer}/>
-                    <Column name="Type"/>
-                    <Column name="Channel" cellRenderer={channelRenderer}/>
-                    <Column name="Stokes" cellRenderer={stokesRenderer}/>
-                    <Column name=""/>
+                    <Column
+                        columnHeaderCellRenderer={(columnIndex: number) => <ColumnHeaderCell name="File name" style={columnHeaderStyleProps}/>}
+                        cellRenderer={fileNameRenderer}
+                    />
+                    <Column
+                        columnHeaderCellRenderer={(columnIndex: number) => <ColumnHeaderCell name="Type" style={columnHeaderStyleProps}/>}
+                    />
+                    <Column
+                        columnHeaderCellRenderer={(columnIndex: number) => <ColumnHeaderCell name="Channel" style={columnHeaderStyleProps}/>}
+                        cellRenderer={channelRenderer}
+                    />
+                    <Column
+                        columnHeaderCellRenderer={(columnIndex: number) => <ColumnHeaderCell name="Stokes" style={columnHeaderStyleProps}/>}
+                        cellRenderer={stokesRenderer}
+                    />
+                    <Column
+                        columnHeaderCellRenderer={(columnIndex: number) => <ColumnHeaderCell name="" style={columnHeaderStyleProps}/>}
+                    />
                 </Table>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
             </div>
