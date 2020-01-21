@@ -2,6 +2,7 @@ import * as React from "react";
 import { observable } from "mobx";
 import { observer } from "mobx-react";
 import { NonIdealState } from "@blueprintjs/core";
+import { Cell, Column, SelectionModes, Table } from "@blueprintjs/table";
 import ReactResizeDetector from "react-resize-detector";
 import { WidgetConfig, WidgetProps } from "stores";
 import "./LayerListComponent.css";
@@ -29,10 +30,18 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         this.height = height;
     };
 
-    render() {
-        const frames = this.props.appStore.frames;
+    private handleFileReordered = (oldIndex: number, newIndex: number, length: number) => {
+        if (oldIndex === newIndex) {
+            return;
+        }
+        this.props.appStore.reorderFrame(oldIndex, newIndex, length);
+    };
 
-        if (frames.length === 0) {
+    render() {
+        const frameNum = this.props.appStore.frameNum;
+        const frameNames = this.props.appStore.frameNames;
+
+        if (frameNum <= 0) {
             return (
                 <div className="layer-list-widget">
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>;
@@ -41,8 +50,26 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             );
         }
 
+        const fileNameRenderer = (rowIndex: number) => {
+            return <Cell>{rowIndex >= 0 && rowIndex < frameNum ? frameNames[rowIndex].label  : ""}</Cell>;
+        };
+
         return (
             <div className="layer-list-widget">
+                <Table
+                    numRows={frameNum}
+                    selectionModes={SelectionModes.ROWS_ONLY}
+                    enableRowReordering={true}
+                    onRowsReordered={this.handleFileReordered}
+                >
+                    <Column name="File name" cellRenderer={fileNameRenderer}/>
+                    <Column name="Type" />
+                    <Column name="Match FoV" />
+                    <Column name="Match Channel" />
+                    <Column name="Channel" />
+                    <Column name="Stokes" />
+                    <Column name="" />
+                </Table>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
             </div>
         );

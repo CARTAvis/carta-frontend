@@ -2,6 +2,7 @@ import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable, ObservableMap} from "mobx";
 import {IOptionProps} from "@blueprintjs/core";
+import {Utils} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {
     AlertStore,
@@ -342,6 +343,16 @@ export class AppStore {
 
     @action prevFrame = () => {
         this.shiftFrame(-1);
+    };
+
+    @action reorderFrame = (oldIndex: number, newIndex: number, length: number) => {
+        if (!Number.isInteger(oldIndex) || oldIndex < 0 || oldIndex >= this.frameNum ||
+            !Number.isInteger(newIndex) || newIndex < 0 || newIndex >= this.frameNum ||
+            !Number.isInteger(length) || length <= 0 || length >= this.frameNum ||
+            oldIndex === newIndex) {
+            return;
+        }
+        this.frames = Utils.reorderArray(this.frames, oldIndex, newIndex, length);
     };
 
     // Region file actions
