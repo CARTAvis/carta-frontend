@@ -63,12 +63,10 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     onRowsReordered={this.handleFileReordered}
                 >
                     <Column name="File name" cellRenderer={fileNameRenderer}/>
-                    <Column name="Type" />
-                    <Column name="Match FoV" />
-                    <Column name="Match Channel" />
-                    <Column name="Channel" />
-                    <Column name="Stokes" />
-                    <Column name="" />
+                    <Column name="Type"/>
+                    <Column name="Channel"/>
+                    <Column name="Stokes"/>
+                    <Column name=""/>
                 </Table>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
             </div>
