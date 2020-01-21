@@ -820,13 +820,11 @@ export class FrameStore {
         }
 
         this.spatialTransform = getTransform(this.spatialTransformAST, this.referencePixel);
-        console.log(toJS(this.spatialTransform));
         // Translation is applied after scaling / rotation matrix, so it needs to be adjusted by the inverse matrix
         let adjTranslation: Point2D = {
             x: -this.spatialTransform.translation.x / this.spatialTransform.scale.x,
             y: -this.spatialTransform.translation.y / this.spatialTransform.scale.y,
         };
-
         adjTranslation = rotate2D(adjTranslation, this.spatialTransform.rotation);
 
         this.transformedWcsInfo = AST.createTransformedFrameset(this.wcsInfo,

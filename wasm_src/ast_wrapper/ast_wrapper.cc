@@ -108,7 +108,6 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo
     astAddFrame(wcsInfoTransformed, 1, combinedMap2, pixFrameCopy);
     astAddFrame(wcsInfoTransformed, 2, pixToSkyMapping, skyFrame);
     astSetI(wcsInfoTransformed, "Current", 3);
-    astShow(wcsInfoTransformed);
     return wcsInfoTransformed;
 }
 
