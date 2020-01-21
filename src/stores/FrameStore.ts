@@ -827,7 +827,7 @@ export class FrameStore {
             y: -this.spatialTransform.translation.y / this.spatialTransform.scale.y,
         };
 
-        adjTranslation = rotate2D(adjTranslation, -this.spatialTransform.rotation);
+        adjTranslation = rotate2D(adjTranslation, this.spatialTransform.rotation);
 
         this.transformedWcsInfo = AST.createTransformedFrameset(this.wcsInfo,
             adjTranslation.x, adjTranslation.y,

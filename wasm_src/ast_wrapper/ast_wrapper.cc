@@ -92,7 +92,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo
     // 2D scale and rotation matrix
     double sinTheta = sin(angle);
     double cosTheta = cos(angle);
-    double matrixElements[] = {cosTheta * scaleX, -sinTheta, sinTheta, cosTheta * scaleY};
+    double matrixElements[] = {cosTheta * scaleX, -sinTheta * scaleX, sinTheta * scaleY, cosTheta * scaleY};
     AstMatrixMap* matrixMap = astMatrixMap(2, 2, 0, matrixElements, "");
 
     // 2D shifts
