@@ -39,9 +39,11 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     };
 
     render() {
-        const frames = this.props.appStore.frames;
-        const frameNum = this.props.appStore.frameNum;
-        const frameNames = this.props.appStore.frameNames;
+        const appStore = this.props.appStore;
+        const frameNum = appStore.frameNum;
+        const frameNames = appStore.frameNames;
+        const frameChannels = appStore.frameChannels;
+        const frameStokes = appStore.frameStokes;
 
         if (frameNum <= 0) {
             return (
@@ -56,13 +58,13 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             return <RowHeaderCell name={rowIndex.toString()}/>;
         };
         const fileNameRenderer = (rowIndex: number) => {
-            return <Cell>{rowIndex >= 0 && rowIndex < frameNum && frameNames[rowIndex] ? frameNames[rowIndex].label  : ""}</Cell>;
+            return <Cell>{rowIndex >= 0 && rowIndex < frameNum ? frameNames[rowIndex].label  : ""}</Cell>;
         };
         const channelRenderer = (rowIndex: number) => {
-            return <Cell>{rowIndex >= 0 && rowIndex < frameNum && frames[rowIndex] ? frames[rowIndex].channel  : ""}</Cell>;
+            return <Cell>{rowIndex >= 0 && rowIndex < frameNum ? frameChannels[rowIndex]  : ""}</Cell>;
         };
         const stokesRenderer = (rowIndex: number) => {
-            return <Cell>{rowIndex >= 0 && rowIndex < frameNum && frames[rowIndex] ? frames[rowIndex].stokes  : ""}</Cell>;
+            return <Cell>{rowIndex >= 0 && rowIndex < frameNum ? frameStokes[rowIndex]  : ""}</Cell>;
         };
 
         const columnHeaderStyleProps: CSSProperties = {

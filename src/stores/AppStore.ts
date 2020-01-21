@@ -226,6 +226,14 @@ export class AppStore {
         return names;
     }
 
+    @computed get frameChannels(): number [] {
+        return this.frames.map(frame => frame.channel);
+    }
+
+    @computed get frameStokes(): number [] {
+        return this.frames.map(frame => frame.stokes);
+    }
+
     @action addFrame = (directory: string, file: string, hdu: string, fileId: number) => {
         this.fileLoading = true;
         this.backendService.loadFile(directory, file, hdu, fileId, CARTA.RenderMode.RASTER).subscribe(ack => {
