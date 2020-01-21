@@ -5,6 +5,7 @@ import {
     AnimatorComponent,
     HistogramComponent,
     ImageViewComponent,
+    LayerListComponent,
     LogComponent,
     PlaceholderComponent,
     RegionListComponent,
@@ -54,6 +55,7 @@ export class WidgetsStore {
     @observable spectralProfileWidgets: Map<string, SpectralProfileWidgetStore>;
     @observable statsWidgets: Map<string, StatsWidgetStore>;
     @observable histogramWidgets: Map<string, HistogramWidgetStore>;
+    @observable layerListWidgets: Map<string, EmptyWidgetStore>;
     @observable logWidgets: Map<string, EmptyWidgetStore>;
     @observable regionListWidgets: Map<string, EmptyWidgetStore>;
     @observable animatorWidgets: Map<string, EmptyWidgetStore>;
@@ -96,6 +98,7 @@ export class WidgetsStore {
         this.histogramWidgets = new Map<string, HistogramWidgetStore>();
         this.renderConfigWidgets = new Map<string, RenderConfigWidgetStore>();
         this.animatorWidgets = new Map<string, EmptyWidgetStore>();
+        this.layerListWidgets  = new Map<string, EmptyWidgetStore>();
         this.logWidgets = new Map<string, EmptyWidgetStore>();
         this.regionListWidgets = new Map<string, EmptyWidgetStore>();
         this.stokesAnalysisWidgets = new Map<string, StokesAnalysisWidgetStore>();
@@ -108,6 +111,7 @@ export class WidgetsStore {
             [HistogramComponent.WIDGET_CONFIG.type, this.histogramWidgets],
             [RenderConfigComponent.WIDGET_CONFIG.type, this.renderConfigWidgets],
             [AnimatorComponent.WIDGET_CONFIG.type, this.animatorWidgets],
+            [LayerListComponent.WIDGET_CONFIG.type, this.layerListWidgets],
             [LogComponent.WIDGET_CONFIG.type, this.logWidgets],
             [RegionListComponent.WIDGET_CONFIG.type, this.regionListWidgets],
             [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets]
@@ -123,6 +127,8 @@ export class WidgetsStore {
                 return ImageViewComponent.WIDGET_CONFIG;
             case RenderConfigComponent.WIDGET_CONFIG.type:
                 return RenderConfigComponent.WIDGET_CONFIG;
+            case LayerListComponent.WIDGET_CONFIG.type:
+                return LayerListComponent.WIDGET_CONFIG;
             case LogComponent.WIDGET_CONFIG.type:
                 return LogComponent.WIDGET_CONFIG;
             case AnimatorComponent.WIDGET_CONFIG.type:
@@ -275,6 +281,9 @@ export class WidgetsStore {
             case AnimatorComponent.WIDGET_CONFIG.type:
                 itemId = this.addAnimatorWidget();
                 break;
+            case LayerListComponent.WIDGET_CONFIG.type:
+                itemId = this.addLayerListWidget();
+                break;
             case LogComponent.WIDGET_CONFIG.type:
                 itemId = this.addLogWidget();
                 break;
@@ -361,11 +370,12 @@ export class WidgetsStore {
         layout.registerComponent("histogram", HistogramComponent);
         layout.registerComponent("render-config", RenderConfigComponent);
         layout.registerComponent("region-list", RegionListComponent);
+        layout.registerComponent("layer-list", LayerListComponent);
         layout.registerComponent("log", LogComponent);
         layout.registerComponent("animator", AnimatorComponent);
         layout.registerComponent("stokes", StokesAnalysisComponent);
 
-        const showCogWidget = ["image-view", "region-list", "animator", "log", "placeholder", "stats"];
+        const showCogWidget = ["image-view", "region-list", "animator", "layer-list", "log", "placeholder", "stats"];
         // add drag source buttons from ToolbarMenuComponent
         ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.CreateDragSource(this.appStore, layout, widgetConfig, id));
 
@@ -692,7 +702,7 @@ export class WidgetsStore {
 
     // endregion
 
-    // region Basic widget types (log, animator, region list)
+    // region Basic widget types (log, animator, region list, layer list)
 
     createFloatingLogWidget = () => {
         const config = LogComponent.WIDGET_CONFIG;
@@ -741,6 +751,23 @@ export class WidgetsStore {
 
         if (id) {
             this.regionListWidgets.set(id, new EmptyWidgetStore());
+        }
+        return id;
+    }
+
+    createFloatingLayerListWidget = () => {
+        const config = LayerListComponent.WIDGET_CONFIG;
+        config.id = this.addLayerListWidget();
+        this.addFloatingWidget(config);
+    };
+
+    @action addLayerListWidget(id: string = null) {
+        if (!id) {
+            id = this.getNextId(LayerListComponent.WIDGET_CONFIG.type);
+        }
+
+        if (id) {
+            this.layerListWidgets.set(id, new EmptyWidgetStore());
         }
         return id;
     }
