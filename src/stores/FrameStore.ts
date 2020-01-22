@@ -18,7 +18,7 @@ import {
     findChannelType,
     getTransformedCoordinates,
     getTransform,
-    rotate2D
+    rotate2D, getApproximateCoordinates
 } from "utilities";
 import {BackendService} from "services";
 
@@ -491,12 +491,23 @@ export class FrameStore {
     };
 
     public getImagePos(canvasX: number, canvasY: number): Point2D {
-        const frameView = this.requiredFrameView;
-        return {
-            x: (canvasX / this.renderWidth) * (frameView.xMax - frameView.xMin) + frameView.xMin - 1,
-            // y coordinate is flipped in image space
-            y: (canvasY / this.renderHeight) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
-        };
+        if (this.spatialReference) {
+            const frameView = this.spatialReference.requiredFrameView;
+            // TODO: apply transform
+            const imagePosRefImage = {
+                x: (canvasX / this.spatialReference.renderWidth) * (frameView.xMax - frameView.xMin) + frameView.xMin - 1,
+                // y coordinate is flipped in image space
+                y: (canvasY / this.spatialReference.renderHeight) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
+            };
+            return getApproximateCoordinates(this.spatialTransform, imagePosRefImage, false);
+        } else {
+            const frameView = this.requiredFrameView;
+            return {
+                x: (canvasX / this.renderWidth) * (frameView.xMax - frameView.xMin) + frameView.xMin - 1,
+                // y coordinate is flipped in image space
+                y: (canvasY / this.renderHeight) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
+            };
+        }
     }
 
     public getCursorInfoImageSpace(cursorPosImageSpace: Point2D) {
@@ -685,7 +696,8 @@ export class FrameStore {
     @action setCenter(x: number, y: number) {
         if (this.spatialReference) {
             // TODO: center on correct point of spatial reference
-            this.spatialReference.setCenter(x, y);
+            const centerPointRefImage = getApproximateCoordinates(this.spatialTransform, {x, y}, true);
+            this.spatialReference.setCenter(centerPointRefImage.x, centerPointRefImage.y);
         } else {
             this.center = {x, y};
         }
@@ -830,7 +842,7 @@ export class FrameStore {
         this.transformedWcsInfo = AST.createTransformedFrameset(this.wcsInfo,
             adjTranslation.x, adjTranslation.y,
             this.spatialTransform.rotation,
-            this.referencePixel.x, this.referencePixel.y,
+            this.spatialTransform.origin.x, this.spatialTransform.origin.y,
             1.0 / this.spatialTransform.scale.x, 1.0 / this.spatialTransform.scale.y);
     };
 

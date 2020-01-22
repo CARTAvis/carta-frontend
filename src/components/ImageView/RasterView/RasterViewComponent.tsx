@@ -386,7 +386,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         if (frame.spatialReference && frame.spatialTransform) {
             bottomLeft = add2D(bottomLeft, frame.spatialTransform.translation);
             // set origin of rotation to image center
-            const rotationOriginImageSpace: Point2D = add2D(frame.referencePixel, frame.spatialTransform.translation);
+            const rotationOriginImageSpace: Point2D = add2D(frame.spatialTransform.origin, frame.spatialTransform.translation);
             const rotationOriginCanvasSpace: Point2D = {
                 x: spatialRef.zoomLevel * (rotationOriginImageSpace.x - full.xMin),
                 y: spatialRef.zoomLevel * (rotationOriginImageSpace.y - full.yMin),

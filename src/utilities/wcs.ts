@@ -80,6 +80,19 @@ export function getTransform(astTransform: number, refPixel: Point2D): Transform
     return {
         translation: subtract2D(transformedRef, refPixel),
         scale: {x: scaling, y: scaling},
+        origin: {x: refPixel.x, y: refPixel.y},
         rotation: theta
     };
+}
+
+export function getApproximateCoordinates(transform: Transform2D, point: Point2D, forward: boolean = true) {
+    if (forward) {
+        // Move point from the original frame to the reference frame, using the supplied transform
+        // TODO: Scale and rotate
+        return add2D(point, transform.translation);
+    } else {
+        // Move point from the reference frame to the original frame, using the supplied transform
+        // TODO: Scale and rotate
+        return subtract2D(point, transform.translation);
+    }
 }
