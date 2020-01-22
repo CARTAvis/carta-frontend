@@ -1,7 +1,7 @@
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {CHANNEL_TYPES, Point2D, Transform2D} from "models";
-import {add2D, length2D, subtract2D} from "./math2d";
+import {add2D, length2D, scaleAboutPoint2D, scaleAndRotateAboutPoint2D, subtract2D} from "./math2d";
 
 export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
     if (!headerEntry) {
@@ -76,7 +76,7 @@ export function getTransform(astTransform: number, refPixel: Point2D): Transform
     const transformedRefBottom = getTransformedCoordinates(astTransform, refBottom, true);
     const transformedNorthVector = subtract2D(transformedRefTop, transformedRefBottom);
     const scaling = length2D(transformedNorthVector) / length2D(northVector);
-    const theta = Math.atan2(northVector.y, northVector.x) - Math.atan2(transformedNorthVector.y, transformedNorthVector.x);
+    const theta = Math.atan2(transformedNorthVector.y, transformedNorthVector.x) - Math.atan2(northVector.y, northVector.x);
     return {
         translation: subtract2D(transformedRef, refPixel),
         scale: {x: scaling, y: scaling},
@@ -88,11 +88,11 @@ export function getTransform(astTransform: number, refPixel: Point2D): Transform
 export function getApproximateCoordinates(transform: Transform2D, point: Point2D, forward: boolean = true) {
     if (forward) {
         // Move point from the original frame to the reference frame, using the supplied transform
-        // TODO: Scale and rotate
-        return add2D(point, transform.translation);
+        const scaledPoint = scaleAndRotateAboutPoint2D(point, transform.origin, transform.scale.x, transform.rotation);
+        return add2D(scaledPoint, transform.translation);
     } else {
         // Move point from the reference frame to the original frame, using the supplied transform
-        // TODO: Scale and rotate
-        return subtract2D(point, transform.translation);
+        const shiftedPoint = subtract2D(point, transform.translation);
+        return scaleAndRotateAboutPoint2D(shiftedPoint, transform.origin, 1.0 / transform.scale.x, -transform.rotation);
     }
 }

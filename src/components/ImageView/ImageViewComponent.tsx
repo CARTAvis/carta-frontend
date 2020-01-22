@@ -108,10 +108,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
     onClicked = (cursorInfo: CursorInfo) => {
         const appStore = this.props.appStore;
-        if (appStore.activeFrame
-            && 0 < cursorInfo.posImageSpace.x && cursorInfo.posImageSpace.x < appStore.activeFrame.frameInfo.fileInfoExtended.width
-            && 0 < cursorInfo.posImageSpace.y && cursorInfo.posImageSpace.y < appStore.activeFrame.frameInfo.fileInfoExtended.height
-        ) {
+        if (appStore.activeFrame) {
             // Shift from one-indexed image space position to zero-indexed
             appStore.activeFrame.setCenter(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1);
         }

@@ -392,7 +392,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 y: spatialRef.zoomLevel * (rotationOriginImageSpace.y - full.yMin),
             };
             this.gl.uniform2f(this.shaderUniforms.RotationOrigin, rotationOriginCanvasSpace.x, rotationOriginCanvasSpace.y);
-            this.gl.uniform1f(this.shaderUniforms.RotationAngle, frame.spatialTransform.rotation);
+            this.gl.uniform1f(this.shaderUniforms.RotationAngle, -frame.spatialTransform.rotation);
             this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, frame.spatialTransform.scale.x);
         } else {
             this.gl.uniform1f(this.shaderUniforms.RotationAngle, 0);

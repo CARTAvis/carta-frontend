@@ -684,7 +684,7 @@ export class FrameStore {
     @action setZoom(zoom: number, absolute: boolean = false) {
         if (this.spatialReference) {
             // Adjust zoom by scaling factor if zoom level is not absolute
-            const adjustedZoom = absolute ? zoom: zoom/ this.spatialTransform.scale.x;
+            const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale.x;
             this.spatialReference.setZoom(adjustedZoom);
         } else {
             this.zoomLevel = zoom;
@@ -716,7 +716,7 @@ export class FrameStore {
     @action zoomToPoint(x: number, y: number, zoom: number, absolute: boolean = false) {
         if (this.spatialReference) {
             // Adjust zoom by scaling factor if zoom level is not absolute
-            const adjustedZoom = absolute ? zoom: zoom/ this.spatialTransform.scale.x;
+            const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale.x;
             const pointRefImage = getApproximateCoordinates(this.spatialTransform, {x, y}, true);
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
@@ -838,11 +838,11 @@ export class FrameStore {
             x: -this.spatialTransform.translation.x / this.spatialTransform.scale.x,
             y: -this.spatialTransform.translation.y / this.spatialTransform.scale.y,
         };
-        adjTranslation = rotate2D(adjTranslation, this.spatialTransform.rotation);
+        adjTranslation = rotate2D(adjTranslation, -this.spatialTransform.rotation);
 
         this.transformedWcsInfo = AST.createTransformedFrameset(this.wcsInfo,
             adjTranslation.x, adjTranslation.y,
-            this.spatialTransform.rotation,
+            -this.spatialTransform.rotation,
             this.spatialTransform.origin.x, this.spatialTransform.origin.y,
             1.0 / this.spatialTransform.scale.x, 1.0 / this.spatialTransform.scale.y);
     };

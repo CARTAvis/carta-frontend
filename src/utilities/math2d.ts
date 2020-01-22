@@ -64,6 +64,10 @@ export function scaleAboutPoint2D(point: Point2D, origin: Point2D, scale: number
     return add2D(scale2D(subtract2D(point, origin), scale), origin);
 }
 
+export function scaleAndRotateAboutPoint2D(point: Point2D, origin: Point2D, scale: number, theta: number) {
+    return add2D(scale2D(rotate2D(subtract2D(point, origin), theta), scale), origin);
+}
+
 export function minMax2D(points: Point2D[]): { maxPoint: Point2D, minPoint: Point2D } {
     let maxPoint = {x: -Number.MAX_VALUE, y: -Number.MAX_VALUE};
     let minPoint = {x: Number.MAX_VALUE, y: Number.MAX_VALUE};
