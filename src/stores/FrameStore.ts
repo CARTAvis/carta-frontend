@@ -18,7 +18,7 @@ import {
     findChannelType,
     getTransformedCoordinates,
     getTransform,
-    rotate2D, getApproximateCoordinates
+    rotate2D, getApproximateCoordinates, minMax2D
 } from "utilities";
 import {BackendService} from "services";
 
@@ -745,9 +745,21 @@ export class FrameStore {
     };
 
     @action fitZoom = () => {
-        // TODO: This currently zooms to fit the _reference_ image
         if (this.spatialReference) {
-            this.spatialReference.fitZoom();
+            // Calculate bounding box for transformed image
+            const corners = [
+                getApproximateCoordinates(this.spatialTransform, {x: 0, y: 0}, true),
+                getApproximateCoordinates(this.spatialTransform, {x: 0, y: this.frameInfo.fileInfoExtended.height}, true),
+                getApproximateCoordinates(this.spatialTransform, {x: this.frameInfo.fileInfoExtended.width, y: this.frameInfo.fileInfoExtended.height}, true),
+                getApproximateCoordinates(this.spatialTransform, {x: this.frameInfo.fileInfoExtended.width, y: 0}, true)
+            ];
+            const {minPoint, maxPoint} = minMax2D(corners);
+            const rangeX = maxPoint.x - minPoint.x;
+            const rangeY = maxPoint.y - minPoint.y;
+            const zoomX = this.spatialReference.renderWidth / rangeX;
+            const zoomY = this.spatialReference.renderHeight / rangeY;
+            this.spatialReference.setZoom(Math.min(zoomX, zoomY), true);
+            this.spatialReference.setCenter((maxPoint.x + minPoint.x) / 2.0, (maxPoint.y + minPoint.y) / 2.0);
         } else {
             this.zoomLevel = this.zoomLevelForFit;
             this.initCenter();
