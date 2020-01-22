@@ -56,6 +56,14 @@ export function rotate2D(point: Point2D, theta: number) {
     return {x: cosTheta * point.x - sinTheta * point.y, y: sinTheta * point.x + cosTheta * point.y};
 }
 
+export function rotateAboutPoint2D(point: Point2D, origin: Point2D, theta: number) {
+    return add2D(rotate2D(subtract2D(point, origin), theta), origin);
+}
+
+export function scaleAboutPoint2D(point: Point2D, origin: Point2D, scale: number) {
+    return add2D(scale2D(subtract2D(point, origin), scale), origin);
+}
+
 export function minMax2D(points: Point2D[]): { maxPoint: Point2D, minPoint: Point2D } {
     let maxPoint = {x: -Number.MAX_VALUE, y: -Number.MAX_VALUE};
     let minPoint = {x: Number.MAX_VALUE, y: Number.MAX_VALUE};
