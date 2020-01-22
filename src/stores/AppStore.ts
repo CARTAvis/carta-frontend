@@ -2,6 +2,7 @@ import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import {action, autorun, computed, observable, ObservableMap} from "mobx";
 import {IOptionProps} from "@blueprintjs/core";
+import {Utils} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {
     AlertStore,
@@ -216,6 +217,13 @@ export class AppStore {
     }
 
     // Frame actions
+    @computed get getActiveFrameIndex(): number {
+        if (!this.activeFrame) {
+            return -1;
+        }
+        return this.frames.findIndex((frame) => frame.frameInfo.fileId === this.activeFrame.frameInfo.fileId);
+    }
+
     @computed get frameNum(): number {
         return this.frames.length;
     }
@@ -226,6 +234,14 @@ export class AppStore {
             this.frames.forEach(frame => names.push({label: frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
         }
         return names;
+    }
+
+    @computed get frameChannels(): number [] {
+        return this.frames.map(frame => frame.channel);
+    }
+
+    @computed get frameStokes(): number [] {
+        return this.frames.map(frame => frame.stokes);
     }
 
     @action addFrame = (directory: string, file: string, hdu: string, fileId: number) => {
@@ -353,6 +369,16 @@ export class AppStore {
         this.shiftFrame(-1);
     };
 
+    @action reorderFrame = (oldIndex: number, newIndex: number, length: number) => {
+        if (!Number.isInteger(oldIndex) || oldIndex < 0 || oldIndex >= this.frameNum ||
+            !Number.isInteger(newIndex) || newIndex < 0 || newIndex >= this.frameNum ||
+            !Number.isInteger(length) || length <= 0 || length >= this.frameNum ||
+            oldIndex === newIndex) {
+            return;
+        }
+        this.frames = Utils.reorderArray(this.frames, oldIndex, newIndex, length);
+    };
+
     // Region file actions
     @action importRegion = (directory: string, file: string, type: CARTA.FileType) => {
         if (!this.activeFrame || !(type === CARTA.FileType.CRTF || type === CARTA.FileType.REG)) {
@@ -424,7 +450,17 @@ export class AppStore {
         }
     };
 
-    public static readonly DEFAULT_STATS_TYPES = [CARTA.StatsType.NumPixels, CARTA.StatsType.Sum, CARTA.StatsType.Mean, CARTA.StatsType.RMS, CARTA.StatsType.Sigma, CARTA.StatsType.SumSq, CARTA.StatsType.Min, CARTA.StatsType.Max];
+    public static readonly DEFAULT_STATS_TYPES = [
+        CARTA.StatsType.NumPixels,
+        CARTA.StatsType.Sum,
+        CARTA.StatsType.FluxDensity,
+        CARTA.StatsType.Mean,
+        CARTA.StatsType.RMS,
+        CARTA.StatsType.Sigma,
+        CARTA.StatsType.SumSq,
+        CARTA.StatsType.Min,
+        CARTA.StatsType.Max
+    ];
     private static readonly CursorThrottleTime = 200;
     private static readonly CursorThrottleTimeRotated = 100;
     private static readonly ImageThrottleTime = 200;
