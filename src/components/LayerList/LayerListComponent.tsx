@@ -53,6 +53,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const frameNames = appStore.frameNames;
         const frameChannels = appStore.frameChannels;
         const frameStokes = appStore.frameStokes;
+        const activeFrameIndex = this.props.appStore.getActiveFrameIndex;
 
         if (frameNum <= 0) {
             return (
@@ -63,17 +64,21 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             );
         }
 
+        const activeFrameStyleProps: CSSProperties = {
+            fontWeight: "bold"
+        };
+
         const rowHeaderCellRenderer = (rowIndex: number) => {
-            return <RowHeaderCell name={rowIndex.toString()}/>;
+            return <RowHeaderCell name={rowIndex.toString()} style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}/>;
         };
         const fileNameRenderer = (rowIndex: number) => {
-            return <Cell>{rowIndex >= 0 && rowIndex < frameNum ? frameNames[rowIndex].label  : ""}</Cell>;
+            return <Cell style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}>{rowIndex >= 0 && rowIndex < frameNum ? frameNames[rowIndex].label  : ""}</Cell>;
         };
         const channelRenderer = (rowIndex: number) => {
-            return <Cell>{rowIndex >= 0 && rowIndex < frameNum ? frameChannels[rowIndex]  : ""}</Cell>;
+            return <Cell style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}>{rowIndex >= 0 && rowIndex < frameNum ? frameChannels[rowIndex]  : ""}</Cell>;
         };
         const stokesRenderer = (rowIndex: number) => {
-            return <Cell>{rowIndex >= 0 && rowIndex < frameNum ? frameStokes[rowIndex]  : ""}</Cell>;
+            return <Cell style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}>{rowIndex >= 0 && rowIndex < frameNum ? frameStokes[rowIndex]  : ""}</Cell>;
         };
 
         const columnHeaderStyleProps: CSSProperties = {

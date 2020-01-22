@@ -214,6 +214,13 @@ export class AppStore {
     }
 
     // Frame actions
+    @computed get getActiveFrameIndex(): number {
+        if (!this.activeFrame) {
+            return -1;
+        }
+        return this.frames.findIndex((frame) => frame.frameInfo.fileId === this.activeFrame.frameInfo.fileId);
+    }
+
     @computed get frameNum(): number {
         return this.frames.length;
     }
