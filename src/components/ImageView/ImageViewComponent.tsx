@@ -126,12 +126,11 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             if (appStore.activeFrame.spatialReference) {
                 const newZoom = appStore.activeFrame.spatialReference.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
                 // Shift from one-indexed image space position to zero-indexed
-                // TODO: apply zoom point properly based on rotated, scaled and translated cursor location
-                appStore.activeFrame.spatialReference.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom);
+                appStore.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom, true);
             } else {
                 const newZoom = appStore.activeFrame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
                 // Shift from one-indexed image space position to zero-indexed
-                appStore.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom);
+                appStore.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom, true);
             }
         }
     };

@@ -40,11 +40,13 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     };
 
     handleZoomInClicked = () => {
-        this.props.appStore.activeFrame.setZoom(this.props.appStore.activeFrame.zoomLevel * 2.0);
+        const frame = this.props.appStore.activeFrame.spatialReference || this.props.appStore.activeFrame;
+        frame.setZoom(frame.zoomLevel * 2.0, true);
     };
 
     handleZoomOutClicked = () => {
-        this.props.appStore.activeFrame.setZoom(this.props.appStore.activeFrame.zoomLevel / 2.0);
+        const frame = this.props.appStore.activeFrame.spatialReference || this.props.appStore.activeFrame;
+        frame.setZoom(frame.zoomLevel / 2.0, true);
     };
 
     handleRegionTypeClicked = (type: CARTA.RegionType) => {

@@ -493,7 +493,6 @@ export class FrameStore {
     public getImagePos(canvasX: number, canvasY: number): Point2D {
         if (this.spatialReference) {
             const frameView = this.spatialReference.requiredFrameView;
-            // TODO: apply transform
             const imagePosRefImage = {
                 x: (canvasX / this.spatialReference.renderWidth) * (frameView.xMax - frameView.xMin) + frameView.xMin - 1,
                 // y coordinate is flipped in image space
@@ -682,10 +681,11 @@ export class FrameStore {
         this.setChannels(newChannel, newStokes);
     }
 
-    @action setZoom(zoom: number) {
+    @action setZoom(zoom: number, absolute: boolean = false) {
         if (this.spatialReference) {
-            // Adjust zoom by scaling factor
-            this.spatialReference.setZoom(zoom / this.spatialTransform.scale.x);
+            // Adjust zoom by scaling factor if zoom level is not absolute
+            const adjustedZoom = absolute ? zoom: zoom/ this.spatialTransform.scale.x;
+            this.spatialReference.setZoom(adjustedZoom);
         } else {
             this.zoomLevel = zoom;
             this.replaceZoomTimeoutHandler();
@@ -695,7 +695,6 @@ export class FrameStore {
 
     @action setCenter(x: number, y: number) {
         if (this.spatialReference) {
-            // TODO: center on correct point of spatial reference
             const centerPointRefImage = getApproximateCoordinates(this.spatialTransform, {x, y}, true);
             this.spatialReference.setCenter(centerPointRefImage.x, centerPointRefImage.y);
         } else {
@@ -714,10 +713,12 @@ export class FrameStore {
     }
 
     // Sets a new zoom level and pans to keep the given point fixed
-    @action zoomToPoint(x: number, y: number, zoom: number) {
+    @action zoomToPoint(x: number, y: number, zoom: number, absolute: boolean = false) {
         if (this.spatialReference) {
-            // TODO: zoom to correct point of spatial reference
-            this.spatialReference.zoomToPoint(x, y, zoom / this.spatialTransform.scale.x);
+            // Adjust zoom by scaling factor if zoom level is not absolute
+            const adjustedZoom = absolute ? zoom: zoom/ this.spatialTransform.scale.x;
+            const pointRefImage = getApproximateCoordinates(this.spatialTransform, {x, y}, true);
+            this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
             const newCenter = {
                 x: x + this.zoomLevel / zoom * (this.center.x - x),
