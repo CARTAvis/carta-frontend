@@ -12,6 +12,7 @@ import "./LayerListComponent.css";
 export class LayerListComponent extends React.Component<WidgetProps> {
     @observable width: number = 0;
     @observable height: number = 0;
+    private columnWidths = [150, 60, 150, 150];
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -25,6 +26,14 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             isCloseable: true
         };
     }
+
+    private onColumnWidthsChange = (index: number, size: number) => {
+        if (!Number.isInteger(index) || index < 0 || index >= this.columnWidths.length || size <= 0) {
+            return;
+        }
+        this.columnWidths[index] = size;
+        this.forceUpdate();
+    };
 
     private onResize = (width: number, height: number) => {
         this.width = width;
@@ -83,7 +92,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     selectionModes={SelectionModes.ROWS_ONLY}
                     enableMultipleSelection={true}
                     onRowsReordered={this.handleFileReordered}
-                    columnWidths={[150, 60, 80, 80, 240]}
+                    columnWidths={this.columnWidths}
+                    enableColumnResizing={true}
+                    onColumnWidthChanged={this.onColumnWidthsChange}
                 >
                     <Column
                         columnHeaderCellRenderer={(columnIndex: number) => <ColumnHeaderCell name="File name" style={columnHeaderStyleProps}/>}
@@ -99,9 +110,6 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     <Column
                         columnHeaderCellRenderer={(columnIndex: number) => <ColumnHeaderCell name="Stokes" style={columnHeaderStyleProps}/>}
                         cellRenderer={stokesRenderer}
-                    />
-                    <Column
-                        columnHeaderCellRenderer={(columnIndex: number) => <ColumnHeaderCell name="" style={columnHeaderStyleProps}/>}
                     />
                 </Table>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
