@@ -12,7 +12,7 @@ import "./LayerListComponent.css";
 export class LayerListComponent extends React.Component<WidgetProps> {
     @observable width: number = 0;
     @observable height: number = 0;
-    private columnWidths = [150, 60, 150, 150];
+    private columnWidths = [150, 60, 80, 70];
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
