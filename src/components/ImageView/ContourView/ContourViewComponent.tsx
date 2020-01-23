@@ -91,7 +91,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         if (frame && this.canvas && this.gl && this.shaderUniforms) {
             this.resizeAndClearCanvas();
 
-            const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel / frame.spatialTransform.scale.x : frame.zoomLevel;
+            const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale.x : frame.zoomLevel;
 
             const fullWidth = frame.requiredFrameView.xMax - frame.requiredFrameView.xMin;
             const fullHeight = frame.requiredFrameView.yMax - frame.requiredFrameView.yMin;
