@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
 import {AppStore, WidgetConfig} from "stores";
-import {AnimatorComponent, HistogramComponent, LogComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent, StatsComponent, StokesAnalysisComponent} from "components";
+import {AnimatorComponent, HistogramComponent, LayerListComponent, LogComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent, StatsComponent, StokesAnalysisComponent} from "components";
 import "./ToolbarMenuComponent.css";
 
 @observer
@@ -10,6 +10,7 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
     public static get DRAGSOURCE_WIDGETCONFIG_MAP(): Map<string, WidgetConfig> {
         return new Map<string, WidgetConfig>([
             ["renderConfigButton", RenderConfigComponent.WIDGET_CONFIG],
+            ["layerListButton", LayerListComponent.WIDGET_CONFIG],
             ["logButton", LogComponent.WIDGET_CONFIG],
             ["animatorButton", AnimatorComponent.WIDGET_CONFIG],
             ["regionListButton", RegionListComponent.WIDGET_CONFIG],
@@ -67,6 +68,9 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
                         <Button icon={"pulse"} id="stokesAnalysisButton" className={"profiler-button"} onClick={this.props.appStore.widgetsStore.createFloatingStokesWidget}>
                             &nbsp;s
                         </Button>
+                    </Tooltip>
+                    <Tooltip content={<span>Layer List Widget{commonTooltip}</span>}>
+                        <Button icon={"layers"} id="layerListButton" onClick={this.props.appStore.widgetsStore.createFloatingLayerListWidget}/>
                     </Tooltip>
                 </ButtonGroup>
                 <ButtonGroup className={dialogClassName}>
