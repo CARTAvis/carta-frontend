@@ -759,7 +759,7 @@ export class FrameStore {
             const zoomX = this.spatialReference.renderWidth / rangeX;
             const zoomY = this.spatialReference.renderHeight / rangeY;
             this.spatialReference.setZoom(Math.min(zoomX, zoomY), true);
-            this.spatialReference.setCenter((maxPoint.x + minPoint.x) / 2.0, (maxPoint.y + minPoint.y) / 2.0);
+            this.spatialReference.setCenter((maxPoint.x + minPoint.x) / 2.0 + 0.5, (maxPoint.y + minPoint.y) / 2.0 + 0.5);
         } else {
             this.zoomLevel = this.zoomLevelForFit;
             this.initCenter();
@@ -845,6 +845,7 @@ export class FrameStore {
         }
 
         this.spatialTransform = getTransform(this.spatialTransformAST, this.referencePixel);
+        console.log(toJS(this.spatialTransform));
         // Translation is applied after scaling / rotation matrix, so it needs to be adjusted by the inverse matrix
         let adjTranslation: Point2D = {
             x: -this.spatialTransform.translation.x / this.spatialTransform.scale.x,

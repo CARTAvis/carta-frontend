@@ -12,6 +12,7 @@ import {
     BrowserMode,
     CURSOR_REGION_ID,
     dayPalette,
+    DialogStore,
     FileBrowserStore,
     FrameInfo,
     FrameStore,
@@ -21,14 +22,14 @@ import {
     nightPalette,
     OverlayStore,
     PreferenceStore,
-    RasterRenderType, RegionFileType,
+    RasterRenderType,
+    RegionFileType,
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore,
-    DialogStore
+    WidgetsStore
 } from ".";
-import {GetRequiredTiles} from "utilities";
+import {getApproximateCoordinates, GetRequiredTiles, minMax2D} from "utilities";
 import {BackendService, ConnectionStatus, TileService} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
@@ -543,10 +544,43 @@ export class AppStore {
                 const layout = this.layoutStore.dockedLayout;
                 this.widgetsStore.updateImageWidgetTitle();
 
-                // Calculate new required frame view (cropped to file size)
-                const reqView = this.activeFrame.requiredFrameView;
+                let reqView: FrameView;
 
-                const croppedReq: FrameView = {
+                if (this.activeFrame.spatialReference) {
+                    const frame = this.activeFrame;
+                    const refFrame = frame.spatialReference;
+                    // Required view of reference frame
+                    const refView = refFrame.requiredFrameView;
+
+                    // Get the position of the ref frame's corners in the secondary frame's pixel space
+                    const corners = [
+                        getApproximateCoordinates(frame.spatialTransform, {x: 0, y: 0}, false),
+                        getApproximateCoordinates(frame.spatialTransform, {x: 0, y: refFrame.frameInfo.fileInfoExtended.height}, false),
+                        getApproximateCoordinates(frame.spatialTransform, {x: refFrame.frameInfo.fileInfoExtended.width, y: refFrame.frameInfo.fileInfoExtended.height}, false),
+                        getApproximateCoordinates(frame.spatialTransform, {x: refFrame.frameInfo.fileInfoExtended.width, y: 0}, false)
+                    ];
+
+                    const {minPoint, maxPoint} = minMax2D(corners);
+
+                    // Manually get adjusted zoom level
+                    const mipAdjustment = frame.spatialTransform.scale.x * (this.preferenceStore.lowBandwidthMode ? 2.0 : 1.0);
+                    const mipExact = Math.max(1.0, mipAdjustment / refFrame.zoomLevel);
+                    const mipLog2 = Math.log2(mipExact);
+                    const mipLog2Rounded = Math.round(mipLog2);
+
+                    reqView = {
+                        xMin: minPoint.x,
+                        xMax: maxPoint.x,
+                        yMin: minPoint.y,
+                        yMax: maxPoint.y,
+                        mip: Math.pow(2, mipLog2Rounded)
+                    };
+                } else {
+                    // Calculate new required frame view (cropped to file size)
+                    reqView = this.activeFrame.requiredFrameView;
+                }
+
+                let croppedReq: FrameView = {
                     xMin: Math.max(0, reqView.xMin),
                     xMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.width, reqView.xMax),
                     yMin: Math.max(0, reqView.yMin),
