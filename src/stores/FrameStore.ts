@@ -853,11 +853,10 @@ export class FrameStore {
         AST.delete(copySrc);
         AST.delete(copyDest);
         if (!this.spatialTransformAST) {
-            console.log("Error creating spatial transform between ");
+            console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
         }
 
         this.spatialTransform = getTransform(this.spatialTransformAST, this.referencePixel);
-        console.log(toJS(this.spatialTransform));
         // Translation is applied after scaling / rotation matrix, so it needs to be adjusted by the inverse matrix
         let adjTranslation: Point2D = {
             x: -this.spatialTransform.translation.x / this.spatialTransform.scale.x,
