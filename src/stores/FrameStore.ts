@@ -1,25 +1,10 @@
-import {action, computed, observable, autorun, toJS} from "mobx";
+import {action, autorun, computed, observable, toJS} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {ASTSettingsString, PreferenceStore, OverlayBeamStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore, ContourConfigStore, ContourStore} from "stores";
-import {CursorInfo, Point2D, Transform2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES, ProtobufProcessing} from "models";
-import {
-    clamp,
-    frequencyStringFromVelocity,
-    velocityStringFromFrequency,
-    toFixed,
-    trimFitsComment,
-    getHeaderNumericValue,
-    subtract2D,
-    add2D,
-    length2D,
-    findRefPixel,
-    findChannelType,
-    getTransformedCoordinates,
-    getTransform,
-    rotate2D, getApproximateCoordinates, minMax2D
-} from "utilities";
+import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
+import {ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, Transform2D} from "models";
+import {clamp, findChannelType, findRefPixel, frequencyStringFromVelocity, getApproximateCoordinates, getHeaderNumericValue, getTransform, minMax2D, rotate2D, toFixed, trimFitsComment, velocityStringFromFrequency} from "utilities";
 import {BackendService} from "services";
 
 export interface FrameInfo {
@@ -72,36 +57,63 @@ export class FrameStore {
     @observable transformedWcsInfo: number;
 
     @computed get requiredFrameView(): FrameView {
-        // If there isn't a valid zoom, return a dummy view
-        if (this.zoomLevel <= 0 || !this.isRenderable) {
+        if (this.spatialReference) {
+            const refFrame = this.spatialReference;
+            // Required view of reference frame
+            const refView = refFrame.requiredFrameView;
+            // Get the position of the ref frame's view in the secondary frame's pixel space
+            const corners = [
+                getApproximateCoordinates(this.spatialTransform, {x: refView.xMin, y: refView.yMin}, false),
+                getApproximateCoordinates(this.spatialTransform, {x: refView.xMin, y: refView.yMax}, false),
+                getApproximateCoordinates(this.spatialTransform, {x: refView.xMax, y: refView.yMax}, false),
+                getApproximateCoordinates(this.spatialTransform, {x: refView.xMax, y: refView.yMin}, false)
+            ];
+
+            const {minPoint, maxPoint} = minMax2D(corners);
+
+            // Manually get adjusted zoom level
+            const mipAdjustment = this.spatialTransform.scale.x * (this.preference.lowBandwidthMode ? 2.0 : 1.0);
+            const mipExact = Math.max(1.0, mipAdjustment / refFrame.zoomLevel);
+            const mipLog2 = Math.log2(mipExact);
+            const mipLog2Rounded = Math.round(mipLog2);
+
             return {
-                xMin: 0,
-                xMax: 1,
-                yMin: 0,
-                yMax: 1,
-                mip: 1,
+                xMin: minPoint.x,
+                xMax: maxPoint.x,
+                yMin: minPoint.y,
+                yMax: maxPoint.y,
+                mip: Math.pow(2, mipLog2Rounded)
+            };
+        } else {
+            // If there isn't a valid zoom, return a dummy view
+            if (this.zoomLevel <= 0 || !this.isRenderable) {
+                return {
+                    xMin: 0,
+                    xMax: 1,
+                    yMin: 0,
+                    yMax: 1,
+                    mip: 1,
+                };
+            }
+
+            const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
+            // Required image dimensions
+            const imageWidth = pixelRatio * this.renderWidth / this.zoomLevel;
+            const imageHeight = pixelRatio * this.renderHeight / this.zoomLevel;
+
+            const mipAdjustment = (this.preference.lowBandwidthMode ? 2.0 : 1.0);
+            const mipExact = Math.max(1.0, mipAdjustment / this.zoomLevel);
+            const mipLog2 = Math.log2(mipExact);
+            const mipLog2Rounded = Math.round(mipLog2);
+            const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
+            return {
+                xMin: this.center.x - imageWidth / 2.0,
+                xMax: this.center.x + imageWidth / 2.0,
+                yMin: this.center.y - imageHeight / 2.0,
+                yMax: this.center.y + imageHeight / 2.0,
+                mip: mipRoundedPow2
             };
         }
-
-        const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
-        // Required image dimensions
-        const imageWidth = pixelRatio * this.renderWidth / this.zoomLevel;
-        const imageHeight = pixelRatio * this.renderHeight / this.zoomLevel;
-
-        const mipAdjustment = (this.preference.lowBandwidthMode ? 2.0 : 1.0);
-        const mipExact = Math.max(1.0, mipAdjustment / this.zoomLevel);
-        const mipLog2 = Math.log2(mipExact);
-        const mipLog2Rounded = Math.round(mipLog2);
-        const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
-        const frameView = {
-            xMin: this.center.x - imageWidth / 2.0,
-            xMax: this.center.x + imageWidth / 2.0,
-            yMin: this.center.y - imageHeight / 2.0,
-            yMax: this.center.y + imageHeight / 2.0,
-            mip: mipRoundedPow2
-        };
-
-        return frameView;
     }
 
     @computed get renderWidth() {
