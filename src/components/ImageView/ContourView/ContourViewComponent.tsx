@@ -91,6 +91,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         if (frame && this.canvas && this.gl && this.shaderUniforms) {
             this.resizeAndClearCanvas();
 
+            const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel / frame.spatialTransform.scale.x : frame.zoomLevel;
+
             const fullWidth = frame.requiredFrameView.xMax - frame.requiredFrameView.xMin;
             const fullHeight = frame.requiredFrameView.yMax - frame.requiredFrameView.yMin;
             const scale = {x: 2.0 / fullWidth, y: 2.0 / fullHeight};
@@ -98,7 +100,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             // update uniforms
             this.gl.uniform2f(this.shaderUniforms.Scale, scale.x, scale.y);
             this.gl.uniform2f(this.shaderUniforms.Offset, offset.x, offset.y);
-            this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / frame.zoomLevel);
+            this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / zoomLevel);
 
             this.gl.uniform1i(this.shaderUniforms.CmapEnabled, frame.contourConfig.colormapEnabled ? 1 : 0);
             if (frame.contourConfig.colormapEnabled) {
@@ -108,7 +110,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             }
 
             // Calculates ceiling power-of-three value as a dash factor.
-            const dashFactor = Math.pow(3.0, Math.ceil(Math.log(1.0 / frame.zoomLevel) / Math.log(3)));
+            const dashFactor = Math.pow(3.0, Math.ceil(Math.log(1.0 / zoomLevel) / Math.log(3)));
             if (frame.contourStores) {
                 const levels = [];
                 frame.contourStores.forEach((v, level) => levels.push(level));
