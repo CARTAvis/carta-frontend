@@ -872,7 +872,13 @@ export class FrameStore {
     };
 
     @action clearSpatialReference = () => {
-        this.spatialReference = null;
+        // Adjust center and zoom based on existing spatial reference
+        if (this.spatialReference) {
+            this.center = getApproximateCoordinates(this.spatialTransform, this.spatialReference.center, false);
+            this.zoomLevel = this.spatialReference.zoomLevel * this.spatialTransform.scale.x;
+            this.spatialReference = null;
+        }
+
         if (this.spatialTransformAST) {
             AST.delete(this.spatialTransformAST);
         }
