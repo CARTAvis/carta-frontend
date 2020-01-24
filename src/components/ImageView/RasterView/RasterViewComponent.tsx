@@ -367,9 +367,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         const spatialRef = frame.spatialReference || frame;
         const full = spatialRef.requiredFrameView;
 
-        const fullWidth = full.xMax - full.xMin;
-        const fullHeight = full.yMax - full.yMin;
-
         const tileSizeAdjusted = mip * TILE_SIZE;
         const tileImageView: FrameView = {
             xMin: tile.x * tileSizeAdjusted,

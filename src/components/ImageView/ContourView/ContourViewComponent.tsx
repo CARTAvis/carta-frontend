@@ -1,7 +1,7 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {AppStore, ContourDashMode, OverlayStore, RenderConfigStore} from "stores";
-import {getShaderFromString, loadImageTexture} from "utilities";
+import {getApproximateCoordinates, getShaderFromString, loadImageTexture} from "utilities";
 import "./ContourViewComponent.css";
 import allMaps from "static/allmaps.png";
 
@@ -17,6 +17,9 @@ export interface ContourViewComponentProps {
 interface ShaderUniforms {
     Scale: WebGLUniformLocation;
     Offset: WebGLUniformLocation;
+    RotationOrigin: WebGLUniformLocation;
+    RotationAngle: WebGLUniformLocation;
+    ScaleAdjustment: WebGLUniformLocation;
     DashLength: WebGLUniformLocation;
     LineColor: WebGLUniformLocation;
     LineThickness: WebGLUniformLocation;
@@ -102,6 +105,17 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             this.gl.uniform2f(this.shaderUniforms.Offset, offset.x, offset.y);
             this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / zoomLevel);
 
+            if (frame.spatialReference) {
+                let rotationOrigin = frame.referencePixel;
+                this.gl.uniform2f(this.shaderUniforms.RotationOrigin, rotationOrigin.x, rotationOrigin.y);
+                this.gl.uniform1f(this.shaderUniforms.RotationAngle, -frame.spatialTransform.rotation);
+                this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, frame.spatialTransform.scale.x);
+                console.log(frame.spatialTransform.scale.x);
+            } else {
+                this.gl.uniform1f(this.shaderUniforms.RotationAngle, 0.0);
+                this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, 1.0);
+
+            }
             this.gl.uniform1i(this.shaderUniforms.CmapEnabled, frame.contourConfig.colormapEnabled ? 1 : 0);
             if (frame.contourConfig.colormapEnabled) {
                 this.gl.uniform1i(this.shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(frame.contourConfig.colormap));
@@ -176,6 +190,9 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         this.shaderUniforms = {
             Scale: this.gl.getUniformLocation(shaderProgram, "uScale"),
             Offset: this.gl.getUniformLocation(shaderProgram, "uOffset"),
+            RotationOrigin: this.gl.getUniformLocation(shaderProgram, "uRotationOrigin"),
+            RotationAngle: this.gl.getUniformLocation(shaderProgram, "uRotationAngle"),
+            ScaleAdjustment: this.gl.getUniformLocation(shaderProgram, "uScaleAdjustment"),
             DashLength: this.gl.getUniformLocation(shaderProgram, "uDashLength"),
             LineColor: this.gl.getUniformLocation(shaderProgram, "uLineColor"),
             LineThickness: this.gl.getUniformLocation(shaderProgram, "uLineThickness"),
