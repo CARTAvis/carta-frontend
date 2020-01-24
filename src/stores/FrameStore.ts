@@ -854,6 +854,12 @@ export class FrameStore {
         AST.delete(copyDest);
         if (!this.spatialTransformAST) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
+        } else {
+            const tStart = performance.now();
+            const grid = AST.getTransformGrid(this.spatialTransformAST, 0.5, this.frameInfo.fileInfoExtended.width + 0.5, 200, 0.5, this.frameInfo.fileInfoExtended.height + 0.5, 200, 1);
+            const tEnd = performance.now();
+            const dt = tEnd - tStart;
+            console.log(`Created transform grid in ${dt} ms`);
         }
 
         this.spatialTransform = getTransform(this.spatialTransformAST, this.referencePixel);

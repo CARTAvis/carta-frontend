@@ -262,4 +262,55 @@ EMSCRIPTEN_KEEPALIVE double axDistance(AstFrameSet* wcsinfo, int axis, double v1
 {
     return astAxDistance(wcsinfo, axis, v1, v2);
 }
+
+EMSCRIPTEN_KEEPALIVE float* fillTransformGrid(AstFrameSet* wcsInfo, double xMin, double xMax, int nx, double yMin, double yMax, int ny, int forward)
+{
+    if (!wcsInfo)
+    {
+        return nullptr;
+    }
+    
+    int N = nx * ny;
+    double deltaX = (xMax - xMin) / nx;
+    double deltaY = (yMax - yMin) / ny;
+    double* pixAx = new double[N];
+    double* pixAy = new double[N];
+    double* pixBx = new double[N];
+    double* pixBy = new double[N];
+    float* out = new float[N * 2];
+
+    // Fill input array
+    for (auto i = 0; i < nx; i++) {
+        for (auto j = 0; j < ny; j++) {
+            pixAx[j * nx + i] = xMin + i * deltaX;
+            pixAy[j * nx + i] = yMin + j * deltaY;
+        }
+    }
+
+    // Debug: pass-through
+    if (forward < 0)
+    {
+        memcpy(pixBx, pixAx, N * sizeof(double));
+        memcpy(pixBy, pixAy, N * sizeof(double));
+    }
+    else
+    {
+        astTran2(wcsInfo, N, pixAx, pixAy, forward, pixBx, pixBy);
+    }
+
+    // Convert to float and fill output array
+    for (auto i = 0; i < N; i++)
+    {
+        out[i * 2] = pixBx[i];
+        out[i * 2 + 1] = pixBy[i];
+    }
+
+    // Clean up temp double precision pixels
+    delete[] pixAx;
+    delete[] pixAy;
+    delete[] pixBx;
+    delete[] pixBy;
+
+    return out;
+}
 }

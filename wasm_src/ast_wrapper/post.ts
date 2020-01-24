@@ -107,6 +107,7 @@ Module.invert = Module.cwrap("invert", "number", ["number"]);
 Module.convert = Module.cwrap("convert", "number", ["number", "number", "string"]);
 Module.shiftMap2D = Module.cwrap("shiftMap2D", "number", ["number", "number"]);
 Module.createTransformedFrameset = Module.cwrap("createTransformedFrameset", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
+Module.fillTransformGrid = Module.cwrap("fillTransformGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
 
 Module.currentFormatStrings = [];
 
@@ -177,6 +178,17 @@ Module.normalizeCoordinates = function (wcsInfo, xIn, yIn) {
     Module.norm(wcsInfo, Module.xIn);
     const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xIn, 2);
     return {x: xOut[0], y: xOut[1]};
+};
+
+Module.getTransformGrid = function (transformFrameSet: number, xMin: number, xMax: number, nx: number, yMin: number, yMax: number, ny: number, forward: number) {
+    const out = Module.fillTransformGrid(transformFrameSet, xMin, xMax, nx, yMin, yMax, ny, forward);
+    if (out) {
+        const outArray = new Float32Array(Module.HEAPF32.buffer, out, nx * ny * 2).slice();
+        Module._free(out);
+        return outArray;
+    } else {
+        return null;
+    }
 };
 
 Module.onReady = new Promise(function (func) {
