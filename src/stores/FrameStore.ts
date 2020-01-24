@@ -57,10 +57,10 @@ export class FrameStore {
     @observable transformedWcsInfo: number;
 
     @computed get requiredFrameView(): FrameView {
+        // use spatial reference frame to calculate frame view, if it exists
         if (this.spatialReference) {
-            const refFrame = this.spatialReference;
             // Required view of reference frame
-            const refView = refFrame.requiredFrameView;
+            const refView = this.spatialReference.requiredFrameView;
             // Get the position of the ref frame's view in the secondary frame's pixel space
             const corners = [
                 getApproximateCoordinates(this.spatialTransform, {x: refView.xMin, y: refView.yMin}, false),
@@ -70,9 +70,9 @@ export class FrameStore {
             ];
 
             const {minPoint, maxPoint} = minMax2D(corners);
-            // Manually get adjusted zoom level
+            // Manually get adjusted zoom level and round to a power of 2
             const mipAdjustment = (this.preference.lowBandwidthMode ? 2.0 : 1.0) / this.spatialTransform.scale.x;
-            const mipExact = Math.max(1.0, mipAdjustment / refFrame.zoomLevel);
+            const mipExact = Math.max(1.0, mipAdjustment / this.spatialReference.zoomLevel);
             const mipLog2 = Math.log2(mipExact);
             const mipLog2Rounded = Math.round(mipLog2);
 
