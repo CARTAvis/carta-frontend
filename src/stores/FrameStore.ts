@@ -70,9 +70,8 @@ export class FrameStore {
             ];
 
             const {minPoint, maxPoint} = minMax2D(corners);
-
             // Manually get adjusted zoom level
-            const mipAdjustment = this.spatialTransform.scale.x * (this.preference.lowBandwidthMode ? 2.0 : 1.0);
+            const mipAdjustment = (this.preference.lowBandwidthMode ? 2.0 : 1.0) / this.spatialTransform.scale.x;
             const mipExact = Math.max(1.0, mipAdjustment / refFrame.zoomLevel);
             const mipLog2 = Math.log2(mipExact);
             const mipLog2Rounded = Math.round(mipLog2);
@@ -106,6 +105,7 @@ export class FrameStore {
             const mipLog2 = Math.log2(mipExact);
             const mipLog2Rounded = Math.round(mipLog2);
             const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
+
             return {
                 xMin: this.center.x - imageWidth / 2.0,
                 xMax: this.center.x + imageWidth / 2.0,
