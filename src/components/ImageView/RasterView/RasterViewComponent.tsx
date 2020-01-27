@@ -390,7 +390,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             };
             this.gl.uniform2f(this.shaderUniforms.RotationOrigin, rotationOriginCanvasSpace.x, rotationOriginCanvasSpace.y);
             this.gl.uniform1f(this.shaderUniforms.RotationAngle, -frame.spatialTransform.rotation);
-            this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, frame.spatialTransform.scale.x);
+            this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, frame.spatialTransform.scale);
         } else {
             this.gl.uniform1f(this.shaderUniforms.RotationAngle, 0);
             this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, 1);

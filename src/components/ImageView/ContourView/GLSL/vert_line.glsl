@@ -4,12 +4,14 @@ precision highp float;
 attribute vec3 aVertexPosition;
 attribute vec2 aVertexNormal;
 
-uniform vec2 uScale;
-uniform vec2 uOffset;
+uniform vec2 uFrameMin;
+uniform vec2 uFrameMax;
 uniform vec2 uRotationOrigin;
 uniform float uRotationAngle;
-uniform float uLineThickness;
 uniform float uScaleAdjustment;
+uniform vec2 uOffset;
+
+uniform float uLineThickness;
 
 varying float vLinePosition;
 varying float vLineSide;
@@ -29,11 +31,18 @@ vec2 scaleAboutPoint2D(vec2 vector, vec2 origin, float scale) {
 }
 
 void main(void) {
-    // Convert position to GL space
+    // Extrude point along normal
     vec2 posImageSpace = (aVertexPosition.xy + (aVertexNormal / 16384.0) * uLineThickness * 0.5);
+    // Scale and rotate
     vec2 posRefSpace = scaleAboutPoint2D(rotateAboutPoint2D(posImageSpace, uRotationOrigin, uRotationAngle), uRotationOrigin, uScaleAdjustment);
-    vec2 pos = posRefSpace * uScale + uOffset;
+    // Shift
+    vec2 pos = posRefSpace + uOffset;
+
+    // Convert from image space to GL space [-1, 1]
+    vec2 range = uFrameMax - uFrameMin;
+    vec2 adjustedPosition = vec2((pos.x - uFrameMin.x) / range.x, (pos.y - uFrameMin.y) / range.y) * 2.0 - 1.0;
+
     vLineSide = sign(aVertexPosition.z);
     vLinePosition = abs(aVertexPosition.z);
-    gl_Position =  vec4(pos.x, pos.y, 0.0, 1.0);
+    gl_Position =  vec4(adjustedPosition.x, adjustedPosition.y, 0.0, 1.0);
 }

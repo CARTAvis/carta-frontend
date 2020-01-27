@@ -1,7 +1,7 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {AppStore, ContourDashMode, OverlayStore, RenderConfigStore} from "stores";
-import {getApproximateCoordinates, getShaderFromString, loadImageTexture} from "utilities";
+import {getShaderFromString, loadImageTexture} from "utilities";
 import "./ContourViewComponent.css";
 import allMaps from "static/allmaps.png";
 
@@ -15,11 +15,12 @@ export interface ContourViewComponentProps {
 }
 
 interface ShaderUniforms {
-    Scale: WebGLUniformLocation;
-    Offset: WebGLUniformLocation;
+    FrameMin: WebGLUniformLocation;
+    FrameMax: WebGLUniformLocation;
     RotationOrigin: WebGLUniformLocation;
     RotationAngle: WebGLUniformLocation;
     ScaleAdjustment: WebGLUniformLocation;
+    Offset: WebGLUniformLocation;
     DashLength: WebGLUniformLocation;
     LineColor: WebGLUniformLocation;
     LineThickness: WebGLUniformLocation;
@@ -94,27 +95,25 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         if (frame && this.canvas && this.gl && this.shaderUniforms) {
             this.resizeAndClearCanvas();
 
-            const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale.x : frame.zoomLevel;
-
-            const fullWidth = frame.requiredFrameView.xMax - frame.requiredFrameView.xMin;
-            const fullHeight = frame.requiredFrameView.yMax - frame.requiredFrameView.yMin;
-            const scale = {x: 2.0 / fullWidth, y: 2.0 / fullHeight};
-            const offset = {x: -1.0 - frame.requiredFrameView.xMin * scale.x, y: -1.0 - frame.requiredFrameView.yMin * scale.y};
+            const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
             // update uniforms
-            this.gl.uniform2f(this.shaderUniforms.Scale, scale.x, scale.y);
-            this.gl.uniform2f(this.shaderUniforms.Offset, offset.x, offset.y);
+
             this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / zoomLevel);
 
             if (frame.spatialReference) {
                 let rotationOrigin = frame.referencePixel;
+                this.gl.uniform2f(this.shaderUniforms.FrameMin, frame.spatialReference.requiredFrameView.xMin, frame.spatialReference.requiredFrameView.yMin);
+                this.gl.uniform2f(this.shaderUniforms.FrameMax, frame.spatialReference.requiredFrameView.xMax, frame.spatialReference.requiredFrameView.yMax);
                 this.gl.uniform2f(this.shaderUniforms.RotationOrigin, rotationOrigin.x, rotationOrigin.y);
                 this.gl.uniform1f(this.shaderUniforms.RotationAngle, -frame.spatialTransform.rotation);
-                this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, frame.spatialTransform.scale.x);
-                console.log(frame.spatialTransform.scale.x);
+                this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, frame.spatialTransform.scale);
+                this.gl.uniform2f(this.shaderUniforms.Offset, frame.spatialTransform.translation.x, frame.spatialTransform.translation.y);
             } else {
+                this.gl.uniform2f(this.shaderUniforms.FrameMin, frame.requiredFrameView.xMin, frame.requiredFrameView.yMin);
+                this.gl.uniform2f(this.shaderUniforms.FrameMax, frame.requiredFrameView.xMax, frame.requiredFrameView.yMax);
                 this.gl.uniform1f(this.shaderUniforms.RotationAngle, 0.0);
                 this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, 1.0);
-
+                this.gl.uniform2f(this.shaderUniforms.Offset, 0, 0);
             }
             this.gl.uniform1i(this.shaderUniforms.CmapEnabled, frame.contourConfig.colormapEnabled ? 1 : 0);
             if (frame.contourConfig.colormapEnabled) {
@@ -188,11 +187,12 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         this.gl.enableVertexAttribArray(this.vertexNormalAttribute);
 
         this.shaderUniforms = {
-            Scale: this.gl.getUniformLocation(shaderProgram, "uScale"),
-            Offset: this.gl.getUniformLocation(shaderProgram, "uOffset"),
+            FrameMin: this.gl.getUniformLocation(shaderProgram, "uFrameMin"),
+            FrameMax: this.gl.getUniformLocation(shaderProgram, "uFrameMax"),
+            ScaleAdjustment: this.gl.getUniformLocation(shaderProgram, "uScaleAdjustment"),
             RotationOrigin: this.gl.getUniformLocation(shaderProgram, "uRotationOrigin"),
             RotationAngle: this.gl.getUniformLocation(shaderProgram, "uRotationAngle"),
-            ScaleAdjustment: this.gl.getUniformLocation(shaderProgram, "uScaleAdjustment"),
+            Offset: this.gl.getUniformLocation(shaderProgram, "uOffset"),
             DashLength: this.gl.getUniformLocation(shaderProgram, "uDashLength"),
             LineColor: this.gl.getUniformLocation(shaderProgram, "uLineColor"),
             LineThickness: this.gl.getUniformLocation(shaderProgram, "uLineThickness"),

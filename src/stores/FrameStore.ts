@@ -71,7 +71,7 @@ export class FrameStore {
 
             const {minPoint, maxPoint} = minMax2D(corners);
             // Manually get adjusted zoom level and round to a power of 2
-            const mipAdjustment = (this.preference.lowBandwidthMode ? 2.0 : 1.0) / this.spatialTransform.scale.x;
+            const mipAdjustment = (this.preference.lowBandwidthMode ? 2.0 : 1.0) / this.spatialTransform.scale;
             const mipExact = Math.max(1.0, mipAdjustment / this.spatialReference.zoomLevel);
             const mipLog2 = Math.log2(mipExact);
             const mipLog2Rounded = Math.round(mipLog2);
@@ -696,7 +696,7 @@ export class FrameStore {
     @action setZoom(zoom: number, absolute: boolean = false) {
         if (this.spatialReference) {
             // Adjust zoom by scaling factor if zoom level is not absolute
-            const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale.x;
+            const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
             this.spatialReference.setZoom(adjustedZoom);
         } else {
             this.zoomLevel = zoom;
@@ -728,7 +728,7 @@ export class FrameStore {
     @action zoomToPoint(x: number, y: number, zoom: number, absolute: boolean = false) {
         if (this.spatialReference) {
             // Adjust zoom by scaling factor if zoom level is not absolute
-            const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale.x;
+            const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
             const pointRefImage = getApproximateCoordinates(this.spatialTransform, {x, y}, true);
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
@@ -865,8 +865,8 @@ export class FrameStore {
         this.spatialTransform = getTransform(this.spatialTransformAST, this.referencePixel);
         // Translation is applied after scaling / rotation matrix, so it needs to be adjusted by the inverse matrix
         let adjTranslation: Point2D = {
-            x: -this.spatialTransform.translation.x / this.spatialTransform.scale.x,
-            y: -this.spatialTransform.translation.y / this.spatialTransform.scale.y,
+            x: -this.spatialTransform.translation.x / this.spatialTransform.scale,
+            y: -this.spatialTransform.translation.y / this.spatialTransform.scale,
         };
         adjTranslation = rotate2D(adjTranslation, -this.spatialTransform.rotation);
 
@@ -874,14 +874,14 @@ export class FrameStore {
             adjTranslation.x, adjTranslation.y,
             -this.spatialTransform.rotation,
             this.spatialTransform.origin.x, this.spatialTransform.origin.y,
-            1.0 / this.spatialTransform.scale.x, 1.0 / this.spatialTransform.scale.y);
+            1.0 / this.spatialTransform.scale, 1.0 / this.spatialTransform.scale);
     };
 
     @action clearSpatialReference = () => {
         // Adjust center and zoom based on existing spatial reference
         if (this.spatialReference) {
             this.center = getApproximateCoordinates(this.spatialTransform, this.spatialReference.center, false);
-            this.zoomLevel = this.spatialReference.zoomLevel * this.spatialTransform.scale.x;
+            this.zoomLevel = this.spatialReference.zoomLevel * this.spatialTransform.scale;
             this.spatialReference = null;
         }
 
