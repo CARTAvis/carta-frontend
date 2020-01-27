@@ -1,5 +1,5 @@
 import * as React from "react";
-import { observer } from "mobx-react";
+import {observer} from "mobx-react";
 import {RootMenuComponent, SplashScreenComponent} from "components";
 import {
     AboutDialogComponent,
@@ -10,13 +10,14 @@ import {
     RegionDialogComponent,
     SaveLayoutDialogComponent,
     FileInfoDialogComponent,
-    ContourDialogComponent
+    ContourDialogComponent,
+    DebugExecutionDialogComponent
 } from "components/Dialogs";
-import { AppStore } from "stores";
+import {AppStore} from "stores";
 
 @observer
-export class UIControllerComponent extends React.Component<{appStore: AppStore}> {
- 
+export class UIControllerComponent extends React.Component<{ appStore: AppStore }> {
+
     render() {
         const appStore = this.props.appStore;
 
@@ -33,6 +34,7 @@ export class UIControllerComponent extends React.Component<{appStore: AppStore}>
                 <SaveLayoutDialogComponent appStore={appStore}/>
                 <FileInfoDialogComponent appStore={appStore}/>
                 <ContourDialogComponent appStore={appStore}/>
+                <DebugExecutionDialogComponent appStore={appStore}/>
             </React.Fragment>
         );
     }

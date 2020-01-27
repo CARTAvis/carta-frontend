@@ -9,7 +9,6 @@ export class DialogStore {
     // Region
     @observable regionDialogVisible: boolean;
     @action showRegionDialog = () => {
-        console.log(`Showing dialog for ${this.appStore.activeFrame.regionSet.selectedRegion}`);
         this.regionDialogVisible = true;
     };
     @action hideRegionDialog = () => {
@@ -108,6 +107,15 @@ export class DialogStore {
     };
     @action hideContourDialog = () => {
         this.contourDialogVisible = false;
+    };
+
+    // Debug execution dialog
+    @observable debugExecutionDialogVisible: boolean = false;
+    @action showDebugExecutionDialog = () => {
+        this.debugExecutionDialogVisible = true;
+    };
+    @action hideDebugExecutionDialog = () => {
+        this.debugExecutionDialogVisible = false;
     };
 
     constructor(appStore: AppStore) {

@@ -86,6 +86,9 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
                     <Tooltip content={<span>Contours</span>}>
                         <Button icon={"heatmap"} onClick={dialogStore.showContourDialog} className={dialogStore.contourDialogVisible ? "bp3-active" : ""}/>
                     </Tooltip>
+                    <Tooltip content={<span>Debug Execution</span>}>
+                        <Button icon={"console"} onClick={dialogStore.showDebugExecutionDialog} className={dialogStore.debugExecutionDialogVisible ? "bp3-active" : ""}/>
+                    </Tooltip>
                 </ButtonGroup>
             </React.Fragment>
         );

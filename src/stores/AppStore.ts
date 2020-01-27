@@ -846,7 +846,7 @@ export class AppStore {
         return (this.backendService && this.backendService.zfpReady);
     }
 
-    @action setActiveFrame(fileId: number) {
+    @action setActiveFrame = (fileId: number) => {
         // Disable rendering of old frame
         if (this.activeFrame && this.activeFrame.frameInfo.fileId !== fileId) {
             this.activeFrame.renderType = RasterRenderType.NONE;
@@ -858,15 +858,15 @@ export class AppStore {
         } else {
             console.log(`Can't find required frame ${fileId}`);
         }
-    }
+    };
 
-    @action setActiveFrameByIndex(index: number) {
+    @action setActiveFrameByIndex = (index: number) => {
         if (index >= 0 && this.frames.length > index) {
             this.changeActiveFrame(this.frames[index]);
         } else {
             console.log(`Invalid frame index ${index}`);
         }
-    }
+    };
 
     private changeActiveFrame(frame: FrameStore) {
         if (frame !== this.activeFrame) {
@@ -877,12 +877,12 @@ export class AppStore {
         this.widgetsStore.updateImageWidgetTitle();
     }
 
-    getFrame(fileId: number) {
+    getFrame = (fileId: number) => {
         if (fileId === -1) {
             return this.activeFrame;
         }
         return this.frames.find(f => f.frameInfo.fileId === fileId);
-    }
+    };
 
     @action deleteSelectedRegion = () => {
         if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && !this.activeFrame.regionSet.selectedRegion.locked) {
