@@ -242,51 +242,55 @@ export class AppStore {
     }
 
     @action addFrame = (directory: string, file: string, hdu: string, fileId: number) => {
-        this.fileLoading = true;
-        this.backendService.loadFile(directory, file, hdu, fileId, CARTA.RenderMode.RASTER).subscribe(ack => {
-            this.fileLoading = false;
-            let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
-            if (ack.fileInfoExtended.dimensions > 2) {
-                dimensionsString += `\u00D7${ack.fileInfoExtended.depth}`;
-                if (ack.fileInfoExtended.dimensions > 3) {
-                    dimensionsString += ` (${ack.fileInfoExtended.stokes} Stokes cubes)`;
+        return new Promise<boolean>((resolve, reject) => {
+            this.fileLoading = true;
+            this.backendService.loadFile(directory, file, hdu, fileId, CARTA.RenderMode.RASTER).subscribe(ack => {
+                this.fileLoading = false;
+                let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
+                if (ack.fileInfoExtended.dimensions > 2) {
+                    dimensionsString += `\u00D7${ack.fileInfoExtended.depth}`;
+                    if (ack.fileInfoExtended.dimensions > 3) {
+                        dimensionsString += ` (${ack.fileInfoExtended.stokes} Stokes cubes)`;
+                    }
                 }
-            }
-            this.logStore.addInfo(`Loaded file ${ack.fileInfo.name} with dimensions ${dimensionsString}`, ["file"]);
-            const frameInfo: FrameInfo = {
-                fileId: ack.fileId,
-                directory,
-                hdu,
-                fileInfo: new CARTA.FileInfo(ack.fileInfo),
-                fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
-                fileFeatureFlags: ack.fileFeatureFlags,
-                renderMode: CARTA.RenderMode.RASTER
-            };
+                this.logStore.addInfo(`Loaded file ${ack.fileInfo.name} with dimensions ${dimensionsString}`, ["file"]);
+                const frameInfo: FrameInfo = {
+                    fileId: ack.fileId,
+                    directory,
+                    hdu,
+                    fileInfo: new CARTA.FileInfo(ack.fileInfo),
+                    fileInfoExtended: new CARTA.FileInfoExtended(ack.fileInfoExtended),
+                    fileFeatureFlags: ack.fileFeatureFlags,
+                    renderMode: CARTA.RenderMode.RASTER
+                };
 
-            // Clear existing tile cache if it exists
-            this.tileService.clearCompressedCache(fileId);
+                // Clear existing tile cache if it exists
+                this.tileService.clearCompressedCache(fileId);
 
-            let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, this.logStore, frameInfo, this.backendService, this.ContourContext);
+                let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, this.logStore, frameInfo, this.backendService, this.ContourContext);
 
-            // clear existing requirements for the frame
-            this.spectralRequirements.delete(ack.fileId);
-            this.spatialRequirements.delete(ack.fileId);
-            this.statsRequirements.delete(ack.fileId);
-            this.histogramRequirements.delete(ack.fileId);
+                // clear existing requirements for the frame
+                this.spectralRequirements.delete(ack.fileId);
+                this.spatialRequirements.delete(ack.fileId);
+                this.statsRequirements.delete(ack.fileId);
+                this.histogramRequirements.delete(ack.fileId);
 
-            // Place frame in frame array (replace frame with the same ID if it exists)
-            const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === fileId);
-            if (existingFrameIndex !== -1) {
-                this.frames[existingFrameIndex].clearContours(false);
-                this.frames[existingFrameIndex] = newFrame;
-            } else {
-                this.frames.push(newFrame);
-            }
-            this.setActiveFrame(newFrame.frameInfo.fileId);
-            this.fileBrowserStore.hideFileBrowser();
-        }, err => {
-            this.alertStore.showAlert(`Error loading file: ${err}`);
-            this.fileLoading = false;
+                // Place frame in frame array (replace frame with the same ID if it exists)
+                const existingFrameIndex = this.frames.findIndex(f => f.frameInfo.fileId === fileId);
+                if (existingFrameIndex !== -1) {
+                    this.frames[existingFrameIndex].clearContours(false);
+                    this.frames[existingFrameIndex] = newFrame;
+                } else {
+                    this.frames.push(newFrame);
+                }
+                this.setActiveFrame(newFrame.frameInfo.fileId);
+                this.fileBrowserStore.hideFileBrowser();
+                resolve(true);
+            }, err => {
+                this.alertStore.showAlert(`Error loading file: ${err}`);
+                this.fileLoading = false;
+                reject(err);
+            });
         });
     };
 
@@ -297,7 +301,7 @@ export class AppStore {
         }
         const currentIdList = this.frames.map(frame => frame.frameInfo.fileId).sort((a, b) => a - b);
         const newId = currentIdList.pop() + 1;
-        this.addFrame(directory, file, hdu, newId);
+        return this.addFrame(directory, file, hdu, newId);
     };
 
     @action openFile = (directory: string, file: string, hdu: string) => {
@@ -306,7 +310,7 @@ export class AppStore {
             this.animatorStore.stopAnimation();
         }
         this.removeAllFrames();
-        this.addFrame(directory, file, hdu, 0);
+        return this.addFrame(directory, file, hdu, 0);
     };
 
     @action removeFrame = (fileId: number) => {

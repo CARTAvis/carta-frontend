@@ -1,44 +1,82 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, computed, observable} from "mobx";
-import {AnchorButton, Classes, Dialog, FormGroup, IDialogProps, InputGroup, Intent} from "@blueprintjs/core";
+import {AnchorButton, Classes, Dialog, EditableText, FormGroup, IDialogProps, InputGroup, Intent} from "@blueprintjs/core";
 import {AppStore} from "stores";
 import "./DebugExecutionDialogComponent.css";
 import {DraggableDialogComponent} from "..";
 
 const KEYCODE_ENTER = 13;
 
+class ExecutionEntry {
+    action: any;
+    parameters: any[];
+    valid: boolean;
+    async: boolean;
+
+    constructor(entry: string, appStore: AppStore) {
+        entry = entry.trim();
+        if (entry.length && entry.charAt(0) === "+") {
+            this.async = true;
+            entry = entry.substring(1);
+        }
+        const entryRegex = /^(\S+)\((.*)\)$/gm;
+        if (!entryRegex.test(entry)) {
+            this.valid = false;
+            return;
+        } else {
+            const actionString = entry.substring(0, entry.indexOf("("));
+            this.action = appStore[actionString];
+            if (!this.action || typeof (this.action) !== "function") {
+                this.valid = false;
+                return;
+            }
+            const parameterString = entry.substring(entry.indexOf("(") + 1, entry.lastIndexOf(")"));
+
+            if (parameterString) {
+                try {
+                    this.parameters = JSON.parse(`[${parameterString}]`);
+                    if (!Array.isArray(this.parameters) || !this.parameters.length) {
+                        console.log("Invalid parameter array");
+                        this.valid = false;
+                        return;
+                    }
+                } catch (e) {
+                    console.log(e);
+                    this.valid = false;
+                    return;
+                }
+            }
+
+            this.valid = true;
+        }
+    }
+}
+
 @observer
 export class DebugExecutionDialogComponent extends React.Component<{ appStore: AppStore }> {
-    @observable action: string = "";
-    @observable parameters: string = "";
+    @observable inputString: string = "";
     @observable isExecuting: boolean;
     @observable errorString: string = "";
 
-    @computed get validInput() {
-        const enteredAction = this.props.appStore[this.action];
-        if (!enteredAction || typeof (enteredAction) !== "function") {
-            return false;
-        }
+    @computed get executionEntries() {
+        const appStore = this.props.appStore;
+        let entries = this.inputString.split(";");
+        let executionStrings = new Array<ExecutionEntry>();
 
-        // Empty parameters are automatically valid
-        const parameterString = this.parameters.trim();
-        if (!parameterString) {
-            return true;
-        }
-
-        try {
-            const parameterArray = JSON.parse(`[${parameterString}]`);
-            if (!Array.isArray(parameterArray) || !parameterArray.length) {
-                console.log("Invalid parameter array");
-                return false;
+        for (let entry of entries) {
+            if (!entry) {
+                continue;
             }
-        } catch (e) {
-            console.log(e);
-            return false;
+            const executionEntry = new ExecutionEntry(entry, appStore);
+            if (!executionEntry.valid) {
+                return [];
+            } else {
+                executionStrings.push(executionEntry);
+            }
         }
 
-        return true;
+        return executionStrings;
     }
 
     public render() {
@@ -58,17 +96,16 @@ export class DebugExecutionDialogComponent extends React.Component<{ appStore: A
             title: "Execute a command"
         };
 
+        const validInput = (this.executionEntries && this.executionEntries.length);
+
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={500} defaultHeight={230} enableResizing={false}>
+            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={500} defaultHeight={300} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
-                    <FormGroup helperText={this.errorString} intent={this.errorString ? "danger" : "none"}>
-                        <InputGroup placeholder="Action" value={this.action} onChange={this.handleActionInput} onKeyDown={this.handleKeyDown} autoFocus={true}/>
-                        <InputGroup placeholder="Parameters" value={this.parameters} onChange={this.handleParameterInput} onKeyDown={this.handleKeyDown}/>
-                    </FormGroup>
+                    <EditableText className="input-text" onChange={this.handleActionInput} value={this.inputString} minLines={5} intent={!validInput ? "warning" : "success"} placeholder="Enter execution string" multiline={true}/>
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.PRIMARY} onClick={this.onExecuteClicked} disabled={!this.validInput || this.isExecuting} text="Execute"/>
+                        <AnchorButton intent={Intent.PRIMARY} onClick={this.onExecuteClicked} disabled={!validInput || this.isExecuting} text="Execute"/>
                         <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideDebugExecutionDialog} text="Close"/>
                     </div>
                 </div>
@@ -76,40 +113,37 @@ export class DebugExecutionDialogComponent extends React.Component<{ appStore: A
         );
     }
 
-    private handleKeyDown = (ev) => {
-        if (ev.keyCode === KEYCODE_ENTER && this.validInput && !this.isExecuting) {
-            this.onExecuteClicked();
-        }
+    @action handleActionInput = (newValue: string) => {
+        this.inputString = newValue;
     };
 
-    @action handleActionInput = (ev: React.FormEvent<HTMLInputElement>) => {
-        this.action = ev.currentTarget.value;
-    };
-
-    @action handleParameterInput = (ev: React.FormEvent<HTMLInputElement>) => {
-        this.parameters = ev.currentTarget.value;
-    };
-
-    @action onExecuteClicked = () => {
-        if (!this.validInput) {
+    onExecuteClicked = async () => {
+        if (!this.executionEntries || !this.executionEntries.length) {
             return;
         }
 
         this.isExecuting = true;
 
-        try {
-            const enteredAction = this.props.appStore[this.action];
-            const parameterString = this.parameters.trim();
-            const parameterArray = JSON.parse(`[${parameterString}]`);
-            let response;
-            if (parameterArray && parameterArray.length) {
-                response = enteredAction(...parameterArray);
-            } else {
-                response = enteredAction();
+        for (const entry of this.executionEntries) {
+            try {
+                let response;
+                if (entry.parameters && entry.parameters.length) {
+                    if (entry.async) {
+                        response = await entry.action(...entry.parameters);
+                    } else {
+                        response = entry.action(...entry.parameters);
+                    }
+                } else {
+                    if (entry.async) {
+                        response = await entry.action();
+                    } else {
+                        response = entry.action();
+                    }
+                }
+                console.log(response);
+            } catch (e) {
+                console.log(e);
             }
-            console.log(response);
-        } catch (e) {
-            console.log(e);
         }
 
         this.isExecuting = false;
