@@ -52,7 +52,7 @@ export class FileListComponent extends React.Component<{
                     </tr>
                 );
             }));
-            
+
             let sortedFiles = [];
             if (fileList.files && fileList.files.length) {
                 sortedFiles = fileList.files.slice();
@@ -78,11 +78,12 @@ export class FileListComponent extends React.Component<{
                     }
 
                     const typeInfo = this.getFileTypeDisplay(file.type);
+                    const fileName = file.HDUList.length > 1 ? `${file.name}: HDU ${hdu}` : file.name;
                     return (
                         <tr key={`${file.name}:${hdu}`} onDoubleClick={() => this.props.onFileDoubleClicked(file, hdu)} onClick={() => this.props.onFileClicked(file, hdu)} className={className}>
                             <td><Icon icon="document"/></td>
-                            <td>{file.HDUList.length > 1 ? `${file.name}: HDU ${hdu}` : file.name}</td>
-                            <td><Tooltip content={typeInfo.description}>{typeInfo.type}</Tooltip></td>
+                            <td><Tooltip hoverOpenDelay={1000} content={fileName}>{fileName}</Tooltip></td>
+                            <td><Tooltip hoverOpenDelay={1000} content={typeInfo.description}>{typeInfo.type}</Tooltip></td>
                             <td style={{whiteSpace: "nowrap"}}>{this.getFileSizeDisplay(file.size as number)}</td>
                         </tr>
                     );
