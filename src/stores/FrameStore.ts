@@ -4,7 +4,23 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
 import {ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, Transform2D} from "models";
-import {clamp, findChannelType, findRefPixel, frequencyStringFromVelocity, getApproximateCoordinates, getHeaderNumericValue, getTransform, minMax2D, rotate2D, toFixed, trimFitsComment, velocityStringFromFrequency} from "utilities";
+import {
+    clamp,
+    findChannelType,
+    findRefPixel,
+    frequencyStringFromVelocity,
+    getApproximateCoordinates,
+    getHeaderNumericValue,
+    getTransform,
+    getTransformedCoordinates,
+    length2D,
+    minMax2D,
+    rotate2D,
+    subtract2D,
+    toFixed,
+    trimFitsComment,
+    velocityStringFromFrequency
+} from "utilities";
 import {BackendService} from "services";
 
 export interface FrameInfo {
@@ -855,11 +871,31 @@ export class FrameStore {
         if (!this.spatialTransformAST) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
         } else {
+            const nx = 200;
+            const ny = 200;
+            const paddingX = Math.ceil(this.frameInfo.fileInfoExtended.width / nx);
+            const paddingY = Math.ceil(this.frameInfo.fileInfoExtended.height / ny);
             const tStart = performance.now();
-            const grid = AST.getTransformGrid(this.spatialTransformAST, 0.5, this.frameInfo.fileInfoExtended.width + 0.5, 200, 0.5, this.frameInfo.fileInfoExtended.height + 0.5, 200, 1);
+            const grid = AST.getTransformGrid(this.spatialTransformAST, -paddingX, this.frameInfo.fileInfoExtended.width + paddingX, nx, -paddingY, this.frameInfo.fileInfoExtended.height + paddingY, ny, 1);
             const tEnd = performance.now();
             const dt = tEnd - tStart;
             console.log(`Created transform grid in ${dt} ms`);
+
+            const numTrials = 10000;
+
+            let maxError = 0;
+            for (let i = 0; i < numTrials; i++) {
+                const point = {x: Math.random() * this.frameInfo.fileInfoExtended.width, y: Math.random() * this.frameInfo.fileInfoExtended.height};
+                const actualCoords = getTransformedCoordinates(this.spatialTransformAST, point, true);
+                const mappedCoords = this.getTransformedCoordinate(point, grid, nx, ny, paddingX, paddingY);
+                const delta = subtract2D(actualCoords, mappedCoords);
+                const deltaLength = length2D(delta);
+                maxError = Math.max(maxError, deltaLength);
+                if (deltaLength > 0.05 || !isFinite(deltaLength)) {
+                    console.log(`Large error (${deltaLength.toFixed(2)} px) when transforming point (${point.x}, ${point.y}) => (${actualCoords.x}, ${actualCoords.y}). Mapped point: (${mappedCoords.x}, ${mappedCoords.y})`);
+                }
+            }
+            console.log(`Ran ${numTrials} of transforming points using control points. Maximum absolute error: ${maxError} px`);
         }
 
         this.spatialTransform = getTransform(this.spatialTransformAST, this.referencePixel);
@@ -876,6 +912,36 @@ export class FrameStore {
             this.spatialTransform.origin.x, this.spatialTransform.origin.y,
             1.0 / this.spatialTransform.scale, 1.0 / this.spatialTransform.scale);
     };
+
+    private getTransformedCoordinate(point: Point2D, grid: Float32Array, nx: number, ny: number, paddingX: number, paddingY: number) {
+        if (!grid || grid.length !== 2 * nx * ny) {
+            console.log("Mismatched grid size");
+            return null;
+        }
+
+        const index2D: Point2D = {
+            x: nx * (point.x + paddingX) / (this.frameInfo.fileInfoExtended.width + 2 * paddingX),
+            y: ny * (point.y + paddingY) / (this.frameInfo.fileInfoExtended.height + 2 * paddingY),
+        };
+
+        const indexFloor = {x: Math.floor(index2D.x), y: Math.floor(index2D.y)};
+        const step = {x: index2D.x - indexFloor.x, y: index2D.y - indexFloor.y};
+
+        // Get the four samples
+        const index00 = indexFloor.y * nx + indexFloor.x;
+        const index01 = (indexFloor.y + 1) * nx + indexFloor.x;
+        const index10 = indexFloor.y * nx + indexFloor.x + 1;
+        const index11 = (indexFloor.y + 1) * nx + indexFloor.x + 1;
+        const f00 = {x: grid[2 * index00], y: grid[2 * index00 + 1]};
+        const f01 = {x: grid[2 * index01], y: grid[2 * index01 + 1]};
+        const f10 = {x: grid[2 * index10], y: grid[2 * index10 + 1]};
+        const f11 = {x: grid[2 * index11], y: grid[2 * index11 + 1]};
+
+        return {
+            x: f00.x * (1 - step.x) * (1 - step.y) + f10.x * step.x * (1 - step.y) + f01.x * (1 - step.x) * step.y + f11.x * step.x * step.y,
+            y: f00.y * (1 - step.x) * (1 - step.y) + f10.y * step.x * (1 - step.y) + f01.y * (1 - step.x) * step.y + f11.y * step.x * step.y
+        };
+    }
 
     @action clearSpatialReference = () => {
         // Adjust center and zoom based on existing spatial reference
