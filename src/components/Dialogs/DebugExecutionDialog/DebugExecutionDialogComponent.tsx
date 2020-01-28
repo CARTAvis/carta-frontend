@@ -31,6 +31,7 @@ class ExecutionEntry {
                 this.valid = false;
                 return;
             }
+            this.action.bind(appStore);
             const parameterString = entry.substring(entry.indexOf("(") + 1, entry.lastIndexOf(")"));
 
             if (parameterString) {
@@ -117,6 +118,13 @@ export class DebugExecutionDialogComponent extends React.Component<{ appStore: A
         this.inputString = newValue;
     };
 
+    private static Delay = (timeout: number) => {
+        return new Promise<void>(resolve => {
+            setTimeout(resolve, timeout);
+        });
+    };
+
+    // TODO: This should be moved to a scripting service
     onExecuteClicked = async () => {
         if (!this.executionEntries || !this.executionEntries.length) {
             return;
@@ -130,12 +138,14 @@ export class DebugExecutionDialogComponent extends React.Component<{ appStore: A
                 if (entry.parameters && entry.parameters.length) {
                     if (entry.async) {
                         response = await entry.action(...entry.parameters);
+                        await DebugExecutionDialogComponent.Delay(10);
                     } else {
                         response = entry.action(...entry.parameters);
                     }
                 } else {
                     if (entry.async) {
                         response = await entry.action();
+                        await DebugExecutionDialogComponent.Delay(10);
                     } else {
                         response = entry.action();
                     }
