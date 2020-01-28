@@ -35,7 +35,7 @@ export class FileInfoComponent extends React.Component<{
                 {tabEntries}
             </Tabs>
         );
-    }
+    };
 
     private renderInfoPanel = () => {
         if (this.props.isLoading) {
@@ -56,7 +56,7 @@ export class FileInfoComponent extends React.Component<{
             default:
                 return "";
         }
-    }
+    };
 
     render() {
         return (
