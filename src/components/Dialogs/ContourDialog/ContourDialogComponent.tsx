@@ -274,7 +274,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
             isOpen: appStore.dialogStore.contourDialogVisible,
             onClose: appStore.dialogStore.hideContourDialog,
             className: "contour-dialog",
-            canEscapeKeyClose: false,
+            canEscapeKeyClose: true,
             title: "Contour Configuration",
         };
 

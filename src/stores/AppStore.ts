@@ -12,6 +12,7 @@ import {
     BrowserMode,
     CURSOR_REGION_ID,
     dayPalette,
+    DialogStore,
     FileBrowserStore,
     FrameInfo,
     FrameStore,
@@ -21,14 +22,14 @@ import {
     nightPalette,
     OverlayStore,
     PreferenceStore,
-    RasterRenderType, RegionFileType,
+    RasterRenderType,
+    RegionFileType,
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore,
-    DialogStore
+    WidgetsStore
 } from ".";
-import {GetRequiredTiles} from "utilities";
+import {getApproximateCoordinates, GetRequiredTiles, minMax2D} from "utilities";
 import {BackendService, ConnectionStatus, TileService} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
@@ -68,6 +69,9 @@ export class AppStore {
     @observable spectralProfiles: Map<number, ObservableMap<number, SpectralProfileStore>>;
     @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
     @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
+
+    // Spatial WCS reference
+    @observable spatialReference: FrameStore;
 
     private appContainer: HTMLElement;
     private contourWebGLContext: WebGLRenderingContext;
@@ -283,6 +287,12 @@ export class AppStore {
                 } else {
                     this.frames.push(newFrame);
                 }
+
+                // First image defaults to spatial reference
+                if (this.frames.length === 1) {
+                    this.setSpatialReference(this.frames[0]);
+                }
+
                 this.setActiveFrame(newFrame.frameInfo.fileId);
                 this.fileBrowserStore.hideFileBrowser();
                 resolve(true);
@@ -538,10 +548,8 @@ export class AppStore {
                 const layout = this.layoutStore.dockedLayout;
                 this.widgetsStore.updateImageWidgetTitle();
 
-                // Calculate new required frame view (cropped to file size)
                 const reqView = this.activeFrame.requiredFrameView;
-
-                const croppedReq: FrameView = {
+                let croppedReq: FrameView = {
                     xMin: Math.max(0, reqView.xMin),
                     xMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.width, reqView.xMax),
                     yMin: Math.max(0, reqView.yMin),
@@ -919,6 +927,31 @@ export class AppStore {
         const frame = this.getFrame(fileId);
         if (frame && frame.regionSet.regions[0]) {
             frame.regionSet.regions[0].setControlPoint(0, {x, y});
+        }
+    };
+
+    @action setSpatialReference = (frame: FrameStore) => {
+        this.spatialReference = frame;
+
+        for (const f of this.frames) {
+            // The reference image can't reference itself
+            if (f === frame) {
+                f.clearSpatialReference();
+            } else if (f.spatialReference) {
+                f.setSpatialReference(frame);
+            }
+        }
+    };
+
+    @action toggleSpatialMatching = (frame: FrameStore) => {
+        if (!frame || frame === this.spatialReference) {
+            return;
+        }
+
+        if (frame.spatialReference) {
+            frame.clearSpatialReference();
+        } else {
+            frame.setSpatialReference(this.spatialReference);
         }
     };
 

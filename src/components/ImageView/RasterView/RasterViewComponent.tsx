@@ -1,9 +1,9 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {FrameStore, OverlayStore, PreferenceStore, RasterRenderType} from "stores";
-import {FrameView, TileCoordinate} from "models";
+import {FrameView, Point2D, TileCoordinate} from "models";
 import {RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService} from "services/TileService";
-import {GetRequiredTiles, getShaderProgram, GL, LayerToMip, loadFP32Texture, loadImageTexture, hexStringToRgba} from "utilities";
+import {GetRequiredTiles, getShaderProgram, GL, LayerToMip, loadFP32Texture, loadImageTexture, hexStringToRgba, add2D, scale2D} from "utilities";
 import "./RasterViewComponent.css";
 import allMaps from "static/allmaps.png";
 
@@ -32,6 +32,11 @@ interface ShaderUniforms {
     CmapTexture: WebGLUniformLocation;
     NumCmaps: WebGLUniformLocation;
     CmapIndex: WebGLUniformLocation;
+    CanvasWidth: WebGLUniformLocation;
+    CanvasHeight: WebGLUniformLocation;
+    RotationOrigin: WebGLUniformLocation;
+    RotationAngle: WebGLUniformLocation;
+    ScaleAdjustment: WebGLUniformLocation;
     TiledRendering: WebGLUniformLocation;
     TileSize: WebGLUniformLocation;
     TileScaling: WebGLUniformLocation;
@@ -162,7 +167,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     }
 
     private updateUniforms() {
-        const renderConfig = this.props.frame.renderConfig;
+        const frame = this.props.frame;
+        const renderConfig = frame.renderConfig;
         const preference = this.props.preference;
         if (renderConfig && preference && this.shaderUniforms) {
             this.gl.uniform1f(this.shaderUniforms.MinVal, renderConfig.scaleMinVal);
@@ -174,6 +180,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform1f(this.shaderUniforms.Contrast, renderConfig.contrast);
             this.gl.uniform1f(this.shaderUniforms.Gamma, renderConfig.gamma);
             this.gl.uniform1f(this.shaderUniforms.Alpha, renderConfig.alpha);
+            this.gl.uniform1f(this.shaderUniforms.CanvasWidth, frame.renderWidth * devicePixelRatio);
+            this.gl.uniform1f(this.shaderUniforms.CanvasHeight, frame.renderHeight * devicePixelRatio);
 
             const rgba = hexStringToRgba(preference.nanColorHex, preference.nanAlpha);
             if (rgba) {
@@ -356,10 +364,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.uniform2f(this.shaderUniforms.TileTextureOffset, textureParameters.offset.x, textureParameters.offset.y);
         }
 
-        const full = frame.requiredFrameView;
-
-        const fullWidth = full.xMax - full.xMin;
-        const fullHeight = full.yMax - full.yMin;
+        const spatialRef = frame.spatialReference || frame;
+        const full = spatialRef.requiredFrameView;
 
         const tileSizeAdjusted = mip * TILE_SIZE;
         const tileImageView: FrameView = {
@@ -370,11 +376,32 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             mip: 1
         };
 
-        const bottomLeft = {x: (0.5 + tileImageView.xMin - full.xMin) / fullWidth, y: (0.5 + tileImageView.yMin - full.yMin) / fullHeight};
+        let bottomLeft = {x: (0.5 + tileImageView.xMin - full.xMin), y: (0.5 + tileImageView.yMin - full.yMin)};
+        let tileScaling = scale2D({x: 1, y: 1}, mip * spatialRef.zoomLevel);
 
-        this.gl.uniform2f(this.shaderUniforms.TileSize, rasterTile.width / TILE_SIZE, rasterTile.height / TILE_SIZE);
+        // Experimental code to handle WCS spatial transforms
+        if (frame.spatialReference && frame.spatialTransform) {
+            bottomLeft = add2D(bottomLeft, frame.spatialTransform.translation);
+            // set origin of rotation to image center
+            const rotationOriginImageSpace: Point2D = add2D(frame.spatialTransform.origin, frame.spatialTransform.translation);
+            const rotationOriginCanvasSpace: Point2D = {
+                x: spatialRef.zoomLevel * (rotationOriginImageSpace.x - full.xMin),
+                y: spatialRef.zoomLevel * (rotationOriginImageSpace.y - full.yMin),
+            };
+            this.gl.uniform2f(this.shaderUniforms.RotationOrigin, rotationOriginCanvasSpace.x, rotationOriginCanvasSpace.y);
+            this.gl.uniform1f(this.shaderUniforms.RotationAngle, -frame.spatialTransform.rotation);
+            this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, frame.spatialTransform.scale);
+        } else {
+            this.gl.uniform1f(this.shaderUniforms.RotationAngle, 0);
+            this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, 1);
+        }
+
+        // take zoom level into account to convert from image space to canvas space
+        bottomLeft = scale2D(bottomLeft, spatialRef.zoomLevel);
+
+        this.gl.uniform2f(this.shaderUniforms.TileSize, rasterTile.width, rasterTile.height);
         this.gl.uniform2f(this.shaderUniforms.TileOffset, bottomLeft.x, bottomLeft.y);
-        this.gl.uniform2f(this.shaderUniforms.TileScaling, (mip * TILE_SIZE * frame.zoomLevel) / (frame.renderWidth * devicePixelRatio), (mip * TILE_SIZE * frame.zoomLevel) / (frame.renderHeight * devicePixelRatio));
+        this.gl.uniform2f(this.shaderUniforms.TileScaling, tileScaling.x, tileScaling.y);
         this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
     }
 
@@ -401,6 +428,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             CmapTexture: this.gl.getUniformLocation(this.shaderProgram, "uCmapTexture"),
             NumCmaps: this.gl.getUniformLocation(this.shaderProgram, "uNumCmaps"),
             CmapIndex: this.gl.getUniformLocation(this.shaderProgram, "uCmapIndex"),
+            CanvasWidth: this.gl.getUniformLocation(this.shaderProgram, "uCanvasWidth"),
+            CanvasHeight: this.gl.getUniformLocation(this.shaderProgram, "uCanvasHeight"),
+            ScaleAdjustment: this.gl.getUniformLocation(this.shaderProgram, "uScaleAdjustment"),
+            RotationOrigin: this.gl.getUniformLocation(this.shaderProgram, "uRotationOrigin"),
+            RotationAngle: this.gl.getUniformLocation(this.shaderProgram, "uRotationAngle"),
             TiledRendering: this.gl.getUniformLocation(this.shaderProgram, "uTiledRendering"),
             TileSize: this.gl.getUniformLocation(this.shaderProgram, "uTileSize"),
             TileScaling: this.gl.getUniformLocation(this.shaderProgram, "uTileScaling"),
@@ -463,10 +495,13 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     render() {
         // dummy values to trigger React's componentDidUpdate()
         const frame = this.props.frame;
-        const frameView = frame ? frame.requiredFrameView : null;
-        const currentView = frame ? frame.currentFrameView : null;
         const preference = this.props.preference;
         if (frame) {
+            const spatialReference = frame.spatialReference || frame;
+            const frameView = spatialReference.requiredFrameView;
+            const currentView = spatialReference.currentFrameView;
+            const renderType = frame.renderType;
+
             const colorMapping = {
                 min: frame.renderConfig.scaleMinVal,
                 max: frame.renderConfig.scaleMaxVal,
@@ -480,7 +515,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 nanColorHex: preference.nanColorHex,
                 nanAlpha: preference.nanAlpha
             };
-            const renderType = frame.renderType;
         }
         const padding = this.props.overlaySettings.padding;
         let className = "raster-div";

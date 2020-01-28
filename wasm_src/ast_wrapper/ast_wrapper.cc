@@ -1,5 +1,6 @@
 #include <string.h>
 #include <emscripten.h>
+#include <cmath>
 
 extern "C" {
 #include "ast.h"
@@ -75,10 +76,43 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
         cout << "check FITS header (astlib)" << endl;
         return nullptr;
     }
+
     return wcsinfo;
 }
 
-EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame() {
+EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY, double angle, double originX, double originY, double scaleX, double scaleY)
+{
+    AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, 1);
+    AstFrame* pixFrameCopy = static_cast<AstFrame*> astCopy(pixFrame);
+    AstFrame* skyFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, 2);
+    AstMapping* pixToSkyMapping = static_cast<AstMapping*> astGetMapping(wcsinfo, 1, 2);
+
+    AstFrameSet* wcsInfoTransformed = astFrameSet(pixFrame, "");
+
+    // 2D scale and rotation matrix
+    double sinTheta = sin(angle);
+    double cosTheta = cos(angle);
+    double matrixElements[] = {cosTheta * scaleX, -sinTheta * scaleX, sinTheta * scaleY, cosTheta * scaleY};
+    AstMatrixMap* matrixMap = astMatrixMap(2, 2, 0, matrixElements, "");
+
+    // 2D shifts
+    double offsetToOrigin[] = {-originX, -originY};
+    double offsetFromOrigin[] = {originX + offsetX, originY + offsetY};
+    AstShiftMap* shiftMapToOrigin = astShiftMap(2, offsetToOrigin, "");
+    AstShiftMap* shiftMapFromOrigin = astShiftMap(2, offsetFromOrigin, "");
+
+    //  Combined mapping
+    AstCmpMap* combinedMap = astCmpMap(shiftMapToOrigin, matrixMap, 1, "");
+    AstCmpMap* combinedMap2 = astCmpMap(combinedMap, shiftMapFromOrigin, 1, "");
+
+    astAddFrame(wcsInfoTransformed, 1, combinedMap2, pixFrameCopy);
+    astAddFrame(wcsInfoTransformed, 2, pixToSkyMapping, skyFrame);
+    astSetI(wcsInfoTransformed, "Current", 3);
+    return wcsInfoTransformed;
+}
+
+EMSCRIPTEN_KEEPALIVE AstFrameSet* initDummyFrame()
+{
     double offsets[] = {-1, -1};
     AstFrameSet* frameSet = astFrameSet(astFrame(2, ""), "");
     astAddFrame(frameSet, 1, astShiftMap(2, offsets, ""), astFrame(2, "Label(1)=X Coordinate,Label(2)=Y Coordinate,Domain=PIXEL"));
@@ -92,6 +126,7 @@ EMSCRIPTEN_KEEPALIVE int plotGrid(AstFrameSet* wcsinfo, double imageX1, double i
     {
         return 1;
     }
+
 	AstPlot* plot;
 	double hi = 1, lo = -1, scale, x1 = paddingLeft, x2 = width - paddingRight, xleft, xright, xscale;
 	double y1 = paddingBottom, y2 = height - paddingTop, ybottom, yscale, ytop;
@@ -197,8 +232,85 @@ EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const doubl
     return 0;
 }
 
+EMSCRIPTEN_KEEPALIVE void deleteObject(AstFrameSet* src)
+{
+    astDelete(src);
+}
+
+EMSCRIPTEN_KEEPALIVE AstFrameSet* copy(AstFrameSet* src)
+{
+    return static_cast<AstFrameSet*> astCopy(src);
+}
+
+EMSCRIPTEN_KEEPALIVE void invert(AstFrameSet* src)
+{
+    astInvert(src);
+}
+
+EMSCRIPTEN_KEEPALIVE AstFrameSet* convert(AstFrameSet* from, AstFrameSet* to, const char* domainlist)
+{
+    return static_cast<AstFrameSet*> astConvert(from, to, domainlist);
+}
+
+EMSCRIPTEN_KEEPALIVE AstShiftMap* shiftMap2D(double x, double y)
+{
+    double coords[] = {x, y};
+    return astShiftMap(2, coords, "");
+}
+
 EMSCRIPTEN_KEEPALIVE double axDistance(AstFrameSet* wcsinfo, int axis, double v1, double v2)
 {
     return astAxDistance(wcsinfo, axis, v1, v2);
+}
+
+EMSCRIPTEN_KEEPALIVE float* fillTransformGrid(AstFrameSet* wcsInfo, double xMin, double xMax, int nx, double yMin, double yMax, int ny, int forward)
+{
+    if (!wcsInfo)
+    {
+        return nullptr;
+    }
+    
+    int N = nx * ny;
+    double deltaX = (xMax - xMin) / nx;
+    double deltaY = (yMax - yMin) / ny;
+    double* pixAx = new double[N];
+    double* pixAy = new double[N];
+    double* pixBx = new double[N];
+    double* pixBy = new double[N];
+    float* out = new float[N * 2];
+
+    // Fill input array
+    for (auto i = 0; i < nx; i++) {
+        for (auto j = 0; j < ny; j++) {
+            pixAx[j * nx + i] = xMin + i * deltaX;
+            pixAy[j * nx + i] = yMin + j * deltaY;
+        }
+    }
+
+    // Debug: pass-through
+    if (forward < 0)
+    {
+        memcpy(pixBx, pixAx, N * sizeof(double));
+        memcpy(pixBy, pixAy, N * sizeof(double));
+    }
+    else
+    {
+        astTran2(wcsInfo, N, pixAx, pixAy, forward, pixBx, pixBy);
+    }
+
+    // Convert to float and fill output array
+    for (auto i = 0; i < N; i++)
+    {
+        out[i * 2] = pixBx[i];
+        out[i * 2 + 1] = pixBy[i];
+    }
+
+    // Clean up temp double precision pixels
+    delete[] pixAx;
+    delete[] pixAy;
+    delete[] pixBx;
+    delete[] pixBy;
+
+    return out;
 }
 }
