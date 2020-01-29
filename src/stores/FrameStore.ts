@@ -55,8 +55,6 @@ export class FrameStore {
     @observable overlayBeamSettings: OverlayBeamStore;
     @observable spatialReference: FrameStore;
     @observable secondaryImages: FrameStore[];
-    @observable spatialTransform: Transform2D;
-    @observable transformedWcsInfo: number;
 
     @computed get requiredFrameView(): FrameView {
         // use spatial reference frame to calculate frame view, if it exists
@@ -116,6 +114,35 @@ export class FrameStore {
                 mip: mipRoundedPow2
             };
         }
+    }
+
+    @computed get spatialTransform() {
+        if (this.spatialReference && this.spatialTransformAST) {
+            const center = getTransformedCoordinates(this.spatialTransformAST, this.spatialReference.center, false);
+            return new Transform2D(this.spatialTransformAST, center);
+        }
+        return null;
+    }
+
+    @computed get transformedWcsInfo() {
+        if (this.spatialTransform) {
+            let adjTranslation: Point2D = {
+                x: -this.spatialTransform.translation.x / this.spatialTransform.scale,
+                y: -this.spatialTransform.translation.y / this.spatialTransform.scale,
+            };
+            adjTranslation = rotate2D(adjTranslation, -this.spatialTransform.rotation);
+            if (this.cachedTransformedWcsInfo >= 0) {
+                AST.delete(this.cachedTransformedWcsInfo);
+            }
+
+            this.cachedTransformedWcsInfo = AST.createTransformedFrameset(this.wcsInfo,
+                adjTranslation.x, adjTranslation.y,
+                -this.spatialTransform.rotation,
+                this.spatialTransform.origin.x, this.spatialTransform.origin.y,
+                1.0 / this.spatialTransform.scale, 1.0 / this.spatialTransform.scale);
+            return this.cachedTransformedWcsInfo;
+        }
+        return null;
     }
 
     @computed get renderWidth() {
@@ -380,6 +407,7 @@ export class FrameStore {
     private readonly backendService: BackendService;
     private readonly contourContext: WebGLRenderingContext;
     private spatialTransformAST: number;
+    private cachedTransformedWcsInfo: number = -1;
     private zoomTimeoutHandler;
     public readonly referencePixel: Point2D;
 
@@ -407,9 +435,7 @@ export class FrameStore {
         this.moving = false;
         this.zooming = false;
         this.overlayBeamSettings = new OverlayBeamStore(preference);
-        this.spatialTransform = null;
         this.spatialTransformAST = null;
-        this.transformedWcsInfo = null;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preference.astColor;
@@ -879,20 +905,6 @@ export class FrameStore {
             }
             console.log(`Ran ${numTrials} of transforming points using control points. Maximum absolute error: ${maxError} px`);
         }
-
-        this.spatialTransform = new Transform2D(this.spatialTransformAST, this.referencePixel);
-        // Translation is applied after scaling / rotation matrix, so it needs to be adjusted by the inverse matrix
-        let adjTranslation: Point2D = {
-            x: -this.spatialTransform.translation.x / this.spatialTransform.scale,
-            y: -this.spatialTransform.translation.y / this.spatialTransform.scale,
-        };
-        adjTranslation = rotate2D(adjTranslation, -this.spatialTransform.rotation);
-
-        this.transformedWcsInfo = AST.createTransformedFrameset(this.wcsInfo,
-            adjTranslation.x, adjTranslation.y,
-            -this.spatialTransform.rotation,
-            this.spatialTransform.origin.x, this.spatialTransform.origin.y,
-            1.0 / this.spatialTransform.scale, 1.0 / this.spatialTransform.scale);
     };
 
     @action clearSpatialReference = () => {
@@ -908,7 +920,6 @@ export class FrameStore {
             AST.delete(this.spatialTransformAST);
         }
         this.spatialTransformAST = null;
-        this.spatialTransform = null;
     };
 
     @action addSecondaryImage = (frame: FrameStore) => {
