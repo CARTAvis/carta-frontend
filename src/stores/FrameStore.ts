@@ -69,6 +69,7 @@ export class FrameStore {
     @observable regionSet: RegionSetStore;
     @observable overlayBeamSettings: OverlayBeamStore;
     @observable spatialReference: FrameStore;
+    @observable secondaryImages: FrameStore[];
     @observable spatialTransform: Transform2D;
     @observable transformedWcsInfo: number;
 
@@ -860,6 +861,9 @@ export class FrameStore {
         }
         console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
         this.spatialReference = frame;
+        this.spatialReference.addSecondaryImage(this);
+
+        console.log(toJS(this.spatialReference.secondaryImages));
 
         const copySrc = AST.copy(this.wcsInfo);
         const copyDest = AST.copy(frame.wcsInfo);
@@ -882,12 +886,13 @@ export class FrameStore {
             console.log(`Created transform grid in ${dt} ms`);
 
             const numTrials = 10000;
-
             let maxError = 0;
             for (let i = 0; i < numTrials; i++) {
                 const point = {x: Math.random() * this.frameInfo.fileInfoExtended.width, y: Math.random() * this.frameInfo.fileInfoExtended.height};
                 const actualCoords = getTransformedCoordinates(this.spatialTransformAST, point, true);
-                const mappedCoords = this.getTransformedCoordinate(point, grid, nx, ny, paddingX, paddingY);
+                const minPoint = {x: -paddingX, y: -paddingY};
+                const maxPoint = {x: paddingX + this.frameInfo.fileInfoExtended.width, y: paddingY + this.frameInfo.fileInfoExtended.height};
+                const mappedCoords = this.getTransformedCoordinate(point, grid, nx, ny, minPoint, maxPoint);
                 const delta = subtract2D(actualCoords, mappedCoords);
                 const deltaLength = length2D(delta);
                 maxError = Math.max(maxError, deltaLength);
@@ -913,15 +918,17 @@ export class FrameStore {
             1.0 / this.spatialTransform.scale, 1.0 / this.spatialTransform.scale);
     };
 
-    private getTransformedCoordinate(point: Point2D, grid: Float32Array, nx: number, ny: number, paddingX: number, paddingY: number) {
+    private getTransformedCoordinate(point: Point2D, grid: Float32Array, nx: number, ny: number, minPoint: Point2D, maxPoint: Point2D) {
         if (!grid || grid.length !== 2 * nx * ny) {
             console.log("Mismatched grid size");
             return null;
         }
 
+        const range = subtract2D(maxPoint, minPoint);
+        const shiftedPoint = subtract2D(point, minPoint);
         const index2D: Point2D = {
-            x: nx * (point.x + paddingX) / (this.frameInfo.fileInfoExtended.width + 2 * paddingX),
-            y: ny * (point.y + paddingY) / (this.frameInfo.fileInfoExtended.height + 2 * paddingY),
+            x: nx * shiftedPoint.x / range.x,
+            y: ny * shiftedPoint.y / range.y,
         };
 
         const indexFloor = {x: Math.floor(index2D.x), y: Math.floor(index2D.y)};
@@ -948,6 +955,7 @@ export class FrameStore {
         if (this.spatialReference) {
             this.center = getApproximateCoordinates(this.spatialTransform, this.spatialReference.center, false);
             this.zoomLevel = this.spatialReference.zoomLevel * this.spatialTransform.scale;
+            this.spatialReference.removeSecondaryImage(this);
             this.spatialReference = null;
         }
 
@@ -956,5 +964,19 @@ export class FrameStore {
         }
         this.spatialTransformAST = null;
         this.spatialTransform = null;
+    };
+
+    @action addSecondaryImage = (frame: FrameStore) => {
+        if (!this.secondaryImages) {
+            this.secondaryImages = [frame];
+        } else if (!this.secondaryImages.find(f => f.frameInfo.fileId === frame.frameInfo.fileId)) {
+            this.secondaryImages.push(frame);
+        }
+    };
+
+    @action removeSecondaryImage = (frame: FrameStore) => {
+        if (this.secondaryImages) {
+            this.secondaryImages = this.secondaryImages.filter(f => f.frameInfo.fileId !== frame.frameInfo.fileId);
+        }
     };
 }
