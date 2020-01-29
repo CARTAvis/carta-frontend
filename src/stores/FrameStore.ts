@@ -4,23 +4,7 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
 import {ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, Transform2D} from "models";
-import {
-    clamp,
-    findChannelType,
-    findRefPixel,
-    frequencyStringFromVelocity,
-    getApproximateCoordinates,
-    getHeaderNumericValue,
-    getTransform,
-    getTransformedCoordinates,
-    length2D,
-    minMax2D,
-    rotate2D,
-    subtract2D,
-    toFixed,
-    trimFitsComment,
-    velocityStringFromFrequency
-} from "utilities";
+import {clamp, findChannelType, findRefPixel, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates, length2D, minMax2D, rotate2D, subtract2D, toFixed, trimFitsComment, velocityStringFromFrequency} from "utilities";
 import {BackendService} from "services";
 import {ControlMap} from "../models/ControlMap";
 
@@ -81,10 +65,10 @@ export class FrameStore {
             const refView = this.spatialReference.requiredFrameView;
             // Get the position of the ref frame's view in the secondary frame's pixel space
             const corners = [
-                getApproximateCoordinates(this.spatialTransform, {x: refView.xMin, y: refView.yMin}, false),
-                getApproximateCoordinates(this.spatialTransform, {x: refView.xMin, y: refView.yMax}, false),
-                getApproximateCoordinates(this.spatialTransform, {x: refView.xMax, y: refView.yMax}, false),
-                getApproximateCoordinates(this.spatialTransform, {x: refView.xMax, y: refView.yMin}, false)
+                this.spatialTransform.transformCoordinate({x: refView.xMin, y: refView.yMin}, false),
+                this.spatialTransform.transformCoordinate({x: refView.xMin, y: refView.yMax}, false),
+                this.spatialTransform.transformCoordinate({x: refView.xMax, y: refView.yMax}, false),
+                this.spatialTransform.transformCoordinate({x: refView.xMax, y: refView.yMin}, false)
             ];
 
             const {minPoint, maxPoint} = minMax2D(corners);
@@ -528,7 +512,7 @@ export class FrameStore {
                 // y coordinate is flipped in image space
                 y: (canvasY / this.spatialReference.renderHeight) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
             };
-            return getApproximateCoordinates(this.spatialTransform, imagePosRefImage, false);
+            return this.spatialTransform.transformCoordinate(imagePosRefImage, false);
         } else {
             const frameView = this.requiredFrameView;
             return {
@@ -725,7 +709,7 @@ export class FrameStore {
 
     @action setCenter(x: number, y: number) {
         if (this.spatialReference) {
-            const centerPointRefImage = getApproximateCoordinates(this.spatialTransform, {x, y}, true);
+            const centerPointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
             this.spatialReference.setCenter(centerPointRefImage.x, centerPointRefImage.y);
         } else {
             this.center = {x, y};
@@ -747,7 +731,7 @@ export class FrameStore {
         if (this.spatialReference) {
             // Adjust zoom by scaling factor if zoom level is not absolute
             const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
-            const pointRefImage = getApproximateCoordinates(this.spatialTransform, {x, y}, true);
+            const pointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
             const newCenter = {
@@ -778,10 +762,10 @@ export class FrameStore {
         if (this.spatialReference) {
             // Calculate bounding box for transformed image
             const corners = [
-                getApproximateCoordinates(this.spatialTransform, {x: 0, y: 0}, true),
-                getApproximateCoordinates(this.spatialTransform, {x: 0, y: this.frameInfo.fileInfoExtended.height}, true),
-                getApproximateCoordinates(this.spatialTransform, {x: this.frameInfo.fileInfoExtended.width, y: this.frameInfo.fileInfoExtended.height}, true),
-                getApproximateCoordinates(this.spatialTransform, {x: this.frameInfo.fileInfoExtended.width, y: 0}, true)
+                this.spatialTransform.transformCoordinate({x: 0, y: 0}, true),
+                this.spatialTransform.transformCoordinate({x: 0, y: this.frameInfo.fileInfoExtended.height}, true),
+                this.spatialTransform.transformCoordinate({x: this.frameInfo.fileInfoExtended.width, y: this.frameInfo.fileInfoExtended.height}, true),
+                this.spatialTransform.transformCoordinate({x: this.frameInfo.fileInfoExtended.width, y: 0}, true)
             ];
             const {minPoint, maxPoint} = minMax2D(corners);
             const rangeX = maxPoint.x - minPoint.x;
@@ -896,7 +880,7 @@ export class FrameStore {
             console.log(`Ran ${numTrials} of transforming points using control points. Maximum absolute error: ${maxError} px`);
         }
 
-        this.spatialTransform = getTransform(this.spatialTransformAST, this.referencePixel);
+        this.spatialTransform = new Transform2D(this.spatialTransformAST, this.referencePixel);
         // Translation is applied after scaling / rotation matrix, so it needs to be adjusted by the inverse matrix
         let adjTranslation: Point2D = {
             x: -this.spatialTransform.translation.x / this.spatialTransform.scale,
@@ -914,7 +898,7 @@ export class FrameStore {
     @action clearSpatialReference = () => {
         // Adjust center and zoom based on existing spatial reference
         if (this.spatialReference) {
-            this.center = getApproximateCoordinates(this.spatialTransform, this.spatialReference.center, false);
+            this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
             this.zoomLevel = this.spatialReference.zoomLevel * this.spatialTransform.scale;
             this.spatialReference.removeSecondaryImage(this);
             this.spatialReference = null;

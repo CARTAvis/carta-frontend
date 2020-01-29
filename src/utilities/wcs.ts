@@ -65,34 +65,3 @@ export function getTransformedCoordinates(astTransform: number, point: Point2D, 
     const transformed: Point2D = AST.transformPoint(astTransform, point.x, point.y, forward);
     return transformed;
 }
-
-export function getTransform(astTransform: number, refPixel: Point2D): Transform2D {
-    const transformedRef = getTransformedCoordinates(astTransform, refPixel, true);
-    const delta = 1.0;
-    const refTop = add2D(refPixel, {x: 0, y: delta / 2.0});
-    const refBottom = add2D(refPixel, {x: 0, y: -delta / 2.0});
-    const northVector = subtract2D(refTop, refBottom);
-    const transformedRefTop = getTransformedCoordinates(astTransform, refTop, true);
-    const transformedRefBottom = getTransformedCoordinates(astTransform, refBottom, true);
-    const transformedNorthVector = subtract2D(transformedRefTop, transformedRefBottom);
-    const scaling = length2D(transformedNorthVector) / length2D(northVector);
-    const theta = Math.atan2(transformedNorthVector.y, transformedNorthVector.x) - Math.atan2(northVector.y, northVector.x);
-    return {
-        translation: subtract2D(transformedRef, refPixel),
-        origin: {x: refPixel.x, y: refPixel.y},
-        scale: scaling,
-        rotation: theta
-    };
-}
-
-export function getApproximateCoordinates(transform: Transform2D, point: Point2D, forward: boolean = true) {
-    if (forward) {
-        // Move point from the original frame to the reference frame, using the supplied transform
-        const scaledPoint = scaleAndRotateAboutPoint2D(point, transform.origin, transform.scale, transform.rotation);
-        return add2D(scaledPoint, transform.translation);
-    } else {
-        // Move point from the reference frame to the original frame, using the supplied transform
-        const shiftedPoint = subtract2D(point, transform.translation);
-        return scaleAndRotateAboutPoint2D(shiftedPoint, transform.origin, 1.0 / transform.scale, -transform.rotation);
-    }
-}
