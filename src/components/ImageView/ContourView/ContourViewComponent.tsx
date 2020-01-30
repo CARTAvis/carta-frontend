@@ -4,6 +4,7 @@ import {AppStore, ContourDashMode, FrameStore, OverlayStore, RenderConfigStore} 
 import {getShaderFromString, GL, loadImageTexture} from "utilities";
 import "./ContourViewComponent.css";
 import allMaps from "static/allmaps.png";
+import {observable} from "mobx";
 
 const vertexShaderLine = require("!raw-loader!./GLSL/vert_line.glsl");
 const pixelShaderDashed = require("!raw-loader!./GLSL/pixel_dashed.glsl");
@@ -250,7 +251,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             ControlMapMin: this.gl.getUniformLocation(shaderProgram, "uControlMapMin"),
             ControlMapMax: this.gl.getUniformLocation(shaderProgram, "uControlMapMax"),
             ControlMapTextureX: this.gl.getUniformLocation(shaderProgram, "uControlMapTextureX"),
-            ControlMapTextureY: this.gl.getUniformLocation(shaderProgram, "uControlMapTextureY")
+            ControlMapTextureY: this.gl.getUniformLocation(shaderProgram, "uControlMapTextureY"),
         };
 
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);

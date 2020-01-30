@@ -36,6 +36,49 @@ vec2 rotateAboutPoint2D(vec2 vector, vec2 origin, float theta) {
 vec2 scaleAboutPoint2D(vec2 vector, vec2 origin, float scale) {
     return (vector - origin) * scale + origin;
 }
+vec4 cubic(float x) {
+    float x2 = x * x;
+    float x3 = x2 * x;
+    vec4 w;
+    w.x =   -x3 + 3.0*x2 - 3.0*x + 1.0;
+    w.y =  3.0*x3 - 6.0*x2       + 4.0;
+    w.z = -3.0*x3 + 3.0*x2 + 3.0*x + 1.0;
+    w.w =  x3;
+    return w / 6.0;
+}
+
+vec4 bicubicFilter(sampler2D texture, vec2 texcoord, vec2 texscale) {
+    float fx = fract(texcoord.x);
+    float fy = fract(texcoord.y);
+    texcoord.x -= fx;
+    texcoord.y -= fy;
+
+    vec4 xcubic = cubic(fx);
+    vec4 ycubic = cubic(fy);
+
+    vec4 c = vec4(texcoord.x - 0.5, texcoord.x + 1.5, texcoord.y -
+    0.5, texcoord.y + 1.5);
+    vec4 s = vec4(xcubic.x + xcubic.y, xcubic.z + xcubic.w, ycubic.x +
+    ycubic.y, ycubic.z + ycubic.w);
+    vec4 offset = c + vec4(xcubic.y, xcubic.w, ycubic.y, ycubic.w) /
+    s;
+
+    vec4 sample0 = texture2D(texture, vec2(offset.x, offset.z) *
+    texscale);
+    vec4 sample1 = texture2D(texture, vec2(offset.y, offset.z) *
+    texscale);
+    vec4 sample2 = texture2D(texture, vec2(offset.x, offset.w) *
+    texscale);
+    vec4 sample3 = texture2D(texture, vec2(offset.y, offset.w) *
+    texscale);
+
+    float sx = s.x / (s.x + s.y);
+    float sy = s.z / (s.z + s.w);
+
+    return mix(
+    mix(sample3, sample2, sx),
+    mix(sample1, sample0, sx), sy);
+}
 
 void main(void) {
     // Extrude point along normal
@@ -45,10 +88,11 @@ void main(void) {
 
     // If there's a control map, use it to look up location using bilinear filtering
     if (uControlMapEnabled > 0) {
+        vec2 texScale = 1.0 / uControlMapSize;
         vec2 range = uControlMapMax - uControlMapMin;
         vec2 shiftedPoint = posImageSpace - uControlMapMin;
-        vec2 index = (shiftedPoint) / range + 0.5 / uControlMapSize;
-        posImageSpace = vec2(texture2D(uControlMapTextureX, index).r, texture2D(uControlMapTextureY, index).r);
+        vec2 index = uControlMapSize * (shiftedPoint) / range;
+        posImageSpace = vec2(bicubicFilter(uControlMapTextureX, index, texScale).r, bicubicFilter(uControlMapTextureY, index, texScale).r);
     }
 
     // Scale and rotate
