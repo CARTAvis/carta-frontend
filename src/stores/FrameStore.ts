@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
 import {ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, Transform2D} from "models";
-import {clamp, findChannelType, findRefPixel, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates, length2D, minMax2D, rotate2D, subtract2D, toFixed, trimFitsComment, velocityStringFromFrequency} from "utilities";
+import {clamp, findChannelType, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates, length2D, minMax2D, rotate2D, subtract2D, toFixed, trimFitsComment, velocityStringFromFrequency} from "utilities";
 import {BackendService} from "services";
 import {ControlMap} from "../models/ControlMap";
 
@@ -409,7 +409,6 @@ export class FrameStore {
     private spatialTransformAST: number;
     private cachedTransformedWcsInfo: number = -1;
     private zoomTimeoutHandler;
-    public readonly referencePixel: Point2D;
 
     private static readonly CursorInfoMaxPrecision = 25;
     private static readonly ZoomInertiaDuration = 250;
@@ -465,7 +464,6 @@ export class FrameStore {
         this.initWCS();
         this.initCenter();
         this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
-        this.referencePixel = findRefPixel(this.frameInfo.fileInfoExtended.headerEntries) || {x: this.frameInfo.fileInfoExtended.width / 2.0, y: this.frameInfo.fileInfoExtended.height};
 
         // need initialized wcs to get correct cursor info
         this.cursorInfo = this.getCursorInfoImageSpace({x: 0, y: 0});

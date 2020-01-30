@@ -101,7 +101,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / zoomLevel);
 
             if (frame.spatialReference) {
-                let rotationOrigin = frame.referencePixel;
+                let rotationOrigin = frame.spatialTransform.origin;
                 this.gl.uniform2f(this.shaderUniforms.FrameMin, frame.spatialReference.requiredFrameView.xMin, frame.spatialReference.requiredFrameView.yMin);
                 this.gl.uniform2f(this.shaderUniforms.FrameMax, frame.spatialReference.requiredFrameView.xMax, frame.spatialReference.requiredFrameView.yMax);
                 this.gl.uniform2f(this.shaderUniforms.RotationOrigin, rotationOrigin.x, rotationOrigin.y);

@@ -47,20 +47,6 @@ export function findChannelType(entries: CARTA.IHeaderEntry[]) {
     return undefined;
 }
 
-export function findRefPixel(entries: CARTA.IHeaderEntry[]) {
-    if (!entries || !entries.length) {
-        return undefined;
-    }
-
-    const pixVal1 = entries.find(entry => entry.name.includes("CRPIX1"));
-    const pixVal2 = entries.find(entry => entry.name.includes("CRPIX2"));
-    if (!pixVal1 && !pixVal2) {
-        return undefined;
-    }
-
-    return {x: getHeaderNumericValue(pixVal1), y: getHeaderNumericValue(pixVal2)};
-}
-
 export function getTransformedCoordinates(astTransform: number, point: Point2D, forward: boolean = true) {
     const transformed: Point2D = AST.transformPoint(astTransform, point.x, point.y, forward);
     return transformed;
