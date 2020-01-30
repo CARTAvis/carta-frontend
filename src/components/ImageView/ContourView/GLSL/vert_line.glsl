@@ -16,6 +16,7 @@ uniform float uLineThickness;
 uniform int uControlMapEnabled;
 uniform vec2 uControlMapMin;
 uniform vec2 uControlMapMax;
+uniform vec2 uControlMapSize;
 uniform sampler2D uControlMapTextureX;
 uniform sampler2D uControlMapTextureY;
 
@@ -39,12 +40,14 @@ vec2 scaleAboutPoint2D(vec2 vector, vec2 origin, float scale) {
 void main(void) {
     // Extrude point along normal
     vec2 posImageSpace = (aVertexPosition.xy + (aVertexNormal / 16384.0) * uLineThickness * 0.5);
+    // Shift by half a pixel to account for position of pixel center
+    posImageSpace += 0.5;
 
     // If there's a control map, use it to look up location using bilinear filtering
     if (uControlMapEnabled > 0) {
         vec2 range = uControlMapMax - uControlMapMin;
         vec2 shiftedPoint = posImageSpace - uControlMapMin;
-        vec2 index = shiftedPoint / range;
+        vec2 index = (shiftedPoint) / range + 0.5 / uControlMapSize;
         posImageSpace = vec2(texture2D(uControlMapTextureX, index).r, texture2D(uControlMapTextureY, index).r);
     }
 

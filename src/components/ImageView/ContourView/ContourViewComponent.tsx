@@ -32,6 +32,7 @@ interface ShaderUniforms {
     Bias: WebGLUniformLocation;
     Contrast: WebGLUniformLocation;
     ControlMapEnabled: WebGLUniformLocation;
+    ControlMapSize: WebGLUniformLocation;
     ControlMapTextureX: WebGLUniformLocation;
     ControlMapTextureY: WebGLUniformLocation;
     ControlMapMin: WebGLUniformLocation;
@@ -149,6 +150,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             this.gl.uniform1i(this.shaderUniforms.ControlMapEnabled, 1);
             this.gl.uniform2f(this.shaderUniforms.ControlMapMin, controlMap.minPoint.x, controlMap.minPoint.y);
             this.gl.uniform2f(this.shaderUniforms.ControlMapMax, controlMap.maxPoint.x, controlMap.maxPoint.y);
+            this.gl.uniform2f(this.shaderUniforms.ControlMapSize, controlMap.width, controlMap.height);
             this.gl.activeTexture(GL.TEXTURE1);
             this.gl.bindTexture(GL.TEXTURE_2D, controlMap.getTextureX(this.gl));
             this.gl.uniform1i(this.shaderUniforms.ControlMapTextureX, 1);
@@ -244,6 +246,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             Contrast: this.gl.getUniformLocation(shaderProgram, "uContrast"),
             Bias: this.gl.getUniformLocation(shaderProgram, "uBias"),
             ControlMapEnabled: this.gl.getUniformLocation(shaderProgram, "uControlMapEnabled"),
+            ControlMapSize: this.gl.getUniformLocation(shaderProgram, "uControlMapSize"),
             ControlMapMin: this.gl.getUniformLocation(shaderProgram, "uControlMapMin"),
             ControlMapMax: this.gl.getUniformLocation(shaderProgram, "uControlMapMax"),
             ControlMapTextureX: this.gl.getUniformLocation(shaderProgram, "uControlMapTextureX"),

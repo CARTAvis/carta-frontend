@@ -886,26 +886,9 @@ export class FrameStore {
         } else {
             const tStart = performance.now();
             this.controlMaps.set(this.spatialReference, new ControlMap(this, this.spatialReference, this.spatialTransformAST, 200, 200));
-
             const tEnd = performance.now();
             const dt = tEnd - tStart;
             console.log(`Created transform grid in ${dt} ms`);
-
-            const numTrials = 1000;
-            let maxError = 0;
-            const controlMap = this.controlMaps.get(this.spatialReference);
-            for (let i = 0; i < numTrials; i++) {
-                const point = {x: Math.random() * this.frameInfo.fileInfoExtended.width, y: Math.random() * this.frameInfo.fileInfoExtended.height};
-                const actualCoords = getTransformedCoordinates(this.spatialTransformAST, point, true);
-                const mappedCoords = controlMap.getTransformedCoordinate(point);
-                const delta = subtract2D(actualCoords, mappedCoords);
-                const deltaLength = length2D(delta);
-                maxError = Math.max(maxError, deltaLength);
-                if (deltaLength > 0.05 || !isFinite(deltaLength)) {
-                    console.log(`Large error (${deltaLength.toFixed(2)} px) when transforming point (${point.x}, ${point.y}) => (${actualCoords.x}, ${actualCoords.y}). Mapped point: (${mappedCoords.x}, ${mappedCoords.y})`);
-                }
-            }
-            console.log(`Ran ${numTrials} of transforming points using control points. Maximum absolute error: ${maxError} px`);
         }
     };
 
