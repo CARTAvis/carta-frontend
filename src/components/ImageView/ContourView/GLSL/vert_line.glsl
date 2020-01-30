@@ -36,6 +36,12 @@ vec2 rotateAboutPoint2D(vec2 vector, vec2 origin, float theta) {
 vec2 scaleAboutPoint2D(vec2 vector, vec2 origin, float scale) {
     return (vector - origin) * scale + origin;
 }
+
+// Based on NVIDIA GPU Gems 2 Chapter "Fast Third-Order Texture Filtering"
+// Adapted from GLSL code available at https://stackoverflow.com/questions/13501081/efficient-bicubic-filtering-code-in-glsl/13502446#13502446
+// The basic idea is to utilise the GPU's fixed-function bilinear filtering to perform four samples at once,
+// rather than sampling the texture 16 times. This should help GPU performance on lower-end hardware
+
 vec4 cubic(float x) {
     float x2 = x * x;
     float x3 = x2 * x;
@@ -46,6 +52,7 @@ vec4 cubic(float x) {
     w.w =  x3;
     return w / 6.0;
 }
+
 
 vec4 bicubicFilter(sampler2D texture, vec2 texcoord, vec2 texscale) {
     float fx = fract(texcoord.x);
