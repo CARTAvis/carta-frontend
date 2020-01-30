@@ -52,7 +52,7 @@ export class PointRegionForm extends React.Component<{ region: RegionStore, wcsI
 
     private getFormattedString(wcsInfo: number, pixelCoords: Point2D) {
         if (wcsInfo) {
-            const pointWCS = AST.pixToWCS(this.props.wcsInfo, pixelCoords.x, pixelCoords.y);
+            const pointWCS = AST.transformPoint(this.props.wcsInfo, pixelCoords.x, pixelCoords.y);
             const normVals = AST.normalizeCoordinates(this.props.wcsInfo, pointWCS.x, pointWCS.y);
             const wcsCoords = AST.getFormattedCoordinates(this.props.wcsInfo, normVals.x, normVals.y);
             if (wcsCoords) {
