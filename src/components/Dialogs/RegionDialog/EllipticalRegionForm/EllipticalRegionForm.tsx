@@ -100,7 +100,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
 
     private getFormattedString(wcsInfo: number, pixelCoords: Point2D) {
         if (wcsInfo) {
-            const pointWCS = AST.pixToWCS(this.props.wcsInfo, pixelCoords.x, pixelCoords.y);
+            const pointWCS = AST.transformPoint(this.props.wcsInfo, pixelCoords.x, pixelCoords.y);
             const normVals = AST.normalizeCoordinates(this.props.wcsInfo, pointWCS.x, pointWCS.y);
             const wcsCoords = AST.getFormattedCoordinates(this.props.wcsInfo, normVals.x, normVals.y);
             if (wcsCoords) {
@@ -112,9 +112,9 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
 
     private getSizeString(wcsInfo: number, centerPixel: Point2D, cornerPixel: Point2D) {
         if (wcsInfo) {
-            const centerWCS = AST.pixToWCS(this.props.wcsInfo, centerPixel.x, centerPixel.y);
-            const horizontalEdgeWCS = AST.pixToWCS(this.props.wcsInfo, cornerPixel.x, centerPixel.y);
-            const verticalEdgeWCS = AST.pixToWCS(this.props.wcsInfo, centerPixel.x, cornerPixel.y);
+            const centerWCS = AST.transformPoint(this.props.wcsInfo, centerPixel.x, centerPixel.y);
+            const horizontalEdgeWCS = AST.transformPoint(this.props.wcsInfo, cornerPixel.x, centerPixel.y);
+            const verticalEdgeWCS = AST.transformPoint(this.props.wcsInfo, centerPixel.x, cornerPixel.y);
             const hDist = Math.abs(AST.axDistance(this.props.wcsInfo, 1, centerWCS.x, horizontalEdgeWCS.x));
             const vDist = Math.abs(AST.axDistance(this.props.wcsInfo, 2, centerWCS.y, verticalEdgeWCS.y));
             const wcsDistStrings = AST.getFormattedCoordinates(this.props.wcsInfo, hDist, vDist, "Format(1)=m.5, Format(2)=m.5", true);

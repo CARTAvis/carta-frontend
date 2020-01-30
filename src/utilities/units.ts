@@ -68,15 +68,3 @@ export function formattedExponential(val: number, digits: number, unit: string =
     }
     return valString;
 }
-
-export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
-    if (!headerEntry) {
-        return NaN;
-    }
-
-    if (headerEntry.entryType === CARTA.EntryType.FLOAT || headerEntry.entryType === CARTA.EntryType.INT) {
-        return headerEntry.numericValue;
-    } else {
-        return parseFloat(headerEntry.value);
-    }
-}

@@ -1,7 +1,7 @@
 import * as React from "react";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
-import {Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {exportImage} from "components";
 import {AppStore, RegionMode, SystemType} from "stores";
@@ -17,23 +17,6 @@ export class ToolbarComponentProps {
 
 @observer
 export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
-    handleZoomToActualSizeClicked = () => {
-        this.props.appStore.activeFrame.setZoom(1.0);
-    };
-
-    handleZoomInClicked = () => {
-        this.props.appStore.activeFrame.setZoom(this.props.appStore.activeFrame.zoomLevel * 2.0);
-    };
-
-    handleZoomOutClicked = () => {
-        this.props.appStore.activeFrame.setZoom(this.props.appStore.activeFrame.zoomLevel / 2.0);
-    };
-
-    handleRegionTypeClicked = (type: CARTA.RegionType) => {
-        this.props.appStore.activeFrame.regionSet.setNewRegionType(type);
-        this.props.appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
-    };
-
     private static readonly CoordinateSystemName = new Map<SystemType, string>([
         [SystemType.Auto, "AUTO"],
         [SystemType.FK5, "FK5"],
@@ -43,7 +26,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         [SystemType.ICRS, "ICRS"],
     ]);
 
-    private static readonly  CoordinateSystemTooltip = new Map<SystemType, string>([
+    private static readonly CoordinateSystemTooltip = new Map<SystemType, string>([
         [SystemType.Auto, "Automatically select the coordinate system based on file headers"],
         [SystemType.FK5, "FK5 coordinates, J2000.0 equinox"],
         [SystemType.FK4, "FK4 coordinates, B1950.0 equinox"],
@@ -52,8 +35,31 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         [SystemType.ICRS, "International Celestial Reference System"],
     ]);
 
+    handleZoomToActualSizeClicked = () => {
+        this.props.appStore.activeFrame.setZoom(1.0);
+    };
+
+    handleZoomInClicked = () => {
+        const frame = this.props.appStore.activeFrame.spatialReference || this.props.appStore.activeFrame;
+        frame.setZoom(frame.zoomLevel * 2.0, true);
+    };
+
+    handleZoomOutClicked = () => {
+        const frame = this.props.appStore.activeFrame.spatialReference || this.props.appStore.activeFrame;
+        frame.setZoom(frame.zoomLevel / 2.0, true);
+    };
+
+    handleRegionTypeClicked = (type: CARTA.RegionType) => {
+        this.props.appStore.activeFrame.regionSet.setNewRegionType(type);
+        this.props.appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
+    };
+
     handleCoordinateSystemClicked = (coordinateSystem: SystemType) => {
         this.props.appStore.overlayStore.global.setSystem(coordinateSystem);
+    };
+
+    handleSpatialReferenceToggled = () => {
+        this.props.appStore.toggleSpatialMatching(this.props.appStore.activeFrame);
     };
 
     render() {
@@ -78,7 +84,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             className += " docked";
         }
 
-        const currentZoomSpan = <span><br/><i><small>Current: {toFixed(frame.zoomLevel, 2)}x</small></i></span>;
+        const zoomLevel = (frame.spatialReference && frame.spatialTransform) ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
+        const currentZoomSpan = <span><br/><i><small>Current: {toFixed(zoomLevel, 2)}x</small></i></span>;
         const tooltipPosition: PopoverPosition = this.props.vertical ? "left" : "bottom";
 
         const regionMenu = (
@@ -91,7 +98,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         );
 
         let coordinateSystem = this.props.appStore.overlayStore.global.system;
-        
+
         const coordinateSystemMenu = (
             <Menu>
                 <MenuItem text={ToolbarComponent.CoordinateSystemName.get(SystemType.Auto)} onClick={() => this.handleCoordinateSystemClicked(SystemType.Auto)}/>
@@ -151,9 +158,12 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <Tooltip position={tooltipPosition} content={<span>Zoom to fit{currentZoomSpan}</span>}>
                     <Button icon="zoom-to-fit" onClick={frame.fitZoom}/>
                 </Tooltip>
+                <Tooltip position={tooltipPosition} content={<span>Debug: Toggle WCS ref</span>}>
+                    <Button icon="link" active={!!frame.spatialReference} onClick={this.handleSpatialReferenceToggled}/>
+                </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Overlay Coordinate <br/><small><i>Current: {ToolbarComponent.CoordinateSystemTooltip.get(coordinateSystem)}</i></small></span>}>
                     <Popover content={coordinateSystemMenu} position={Position.TOP} minimal={true}>
-                        <Button text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)} />
+                        <Button text={ToolbarComponent.CoordinateSystemName.get(coordinateSystem)}/>
                     </Popover>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content="Toggle grid">
