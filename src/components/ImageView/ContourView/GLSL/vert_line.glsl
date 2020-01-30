@@ -12,6 +12,13 @@ uniform float uScaleAdjustment;
 uniform vec2 uOffset;
 uniform float uLineThickness;
 
+// Control-map based transformation
+uniform int uControlMapEnabled;
+uniform vec2 uControlMapMin;
+uniform vec2 uControlMapMax;
+uniform sampler2D uControlMapTextureX;
+uniform sampler2D uControlMapTextureY;
+
 varying float vLinePosition;
 varying float vLineSide;
 
@@ -32,6 +39,15 @@ vec2 scaleAboutPoint2D(vec2 vector, vec2 origin, float scale) {
 void main(void) {
     // Extrude point along normal
     vec2 posImageSpace = (aVertexPosition.xy + (aVertexNormal / 16384.0) * uLineThickness * 0.5);
+
+    // If there's a control map, use it to look up location using bilinear filtering
+    if (uControlMapEnabled > 0) {
+        vec2 range = uControlMapMax - uControlMapMin;
+        vec2 shiftedPoint = posImageSpace - uControlMapMin;
+        vec2 index = shiftedPoint / range;
+        posImageSpace = vec2(texture2D(uControlMapTextureX, index).r, texture2D(uControlMapTextureY, index).r);
+    }
+
     // Scale and rotate
     vec2 posRefSpace = scaleAboutPoint2D(rotateAboutPoint2D(posImageSpace, uRotationOrigin, uRotationAngle), uRotationOrigin, uScaleAdjustment) + uOffset;
 

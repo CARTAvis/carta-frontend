@@ -54,6 +54,7 @@ export class FrameStore {
     @observable regionSet: RegionSetStore;
     @observable overlayBeamSettings: OverlayBeamStore;
     @observable spatialReference: FrameStore;
+    @observable controlMaps: Map<FrameStore, ControlMap>;
     @observable secondaryImages: FrameStore[];
 
     @computed get requiredFrameView(): FrameView {
@@ -435,6 +436,7 @@ export class FrameStore {
         this.zooming = false;
         this.overlayBeamSettings = new OverlayBeamStore(preference);
         this.spatialTransformAST = null;
+        this.controlMaps = new Map<FrameStore, ControlMap>();
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preference.astColor;
@@ -883,13 +885,15 @@ export class FrameStore {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
         } else {
             const tStart = performance.now();
-            const controlMap = new ControlMap(this, this.spatialReference, this.spatialTransformAST, 200, 200);
+            this.controlMaps.set(this.spatialReference, new ControlMap(this, this.spatialReference, this.spatialTransformAST, 200, 200));
+
             const tEnd = performance.now();
             const dt = tEnd - tStart;
             console.log(`Created transform grid in ${dt} ms`);
 
             const numTrials = 1000;
             let maxError = 0;
+            const controlMap = this.controlMaps.get(this.spatialReference);
             for (let i = 0; i < numTrials; i++) {
                 const point = {x: Math.random() * this.frameInfo.fileInfoExtended.width, y: Math.random() * this.frameInfo.fileInfoExtended.height};
                 const actualCoords = getTransformedCoordinates(this.spatialTransformAST, point, true);
