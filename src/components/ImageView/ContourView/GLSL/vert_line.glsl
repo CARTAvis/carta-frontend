@@ -17,8 +17,7 @@ uniform int uControlMapEnabled;
 uniform vec2 uControlMapMin;
 uniform vec2 uControlMapMax;
 uniform vec2 uControlMapSize;
-uniform sampler2D uControlMapTextureX;
-uniform sampler2D uControlMapTextureY;
+uniform sampler2D uControlMapTexture;
 
 varying float vLinePosition;
 varying float vLineSide;
@@ -46,13 +45,12 @@ vec4 cubic(float x) {
     float x2 = x * x;
     float x3 = x2 * x;
     vec4 w;
-    w.x =   -x3 + 3.0*x2 - 3.0*x + 1.0;
-    w.y =  3.0*x3 - 6.0*x2       + 4.0;
-    w.z = -3.0*x3 + 3.0*x2 + 3.0*x + 1.0;
-    w.w =  x3;
+    w.x = -x3 + 3.0 * x2 - 3.0 * x + 1.0;
+    w.y = 3.0 * x3 - 6.0 * x2 + 4.0;
+    w.z = -3.0 * x3 + 3.0 * x2 + 3.0 * x + 1.0;
+    w.w = x3;
     return w / 6.0;
 }
-
 
 vec4 bicubicFilter(sampler2D texture, vec2 texcoord, vec2 texscale) {
     float fx = fract(texcoord.x);
@@ -63,38 +61,29 @@ vec4 bicubicFilter(sampler2D texture, vec2 texcoord, vec2 texscale) {
     vec4 xcubic = cubic(fx);
     vec4 ycubic = cubic(fy);
 
-    vec4 c = vec4(texcoord.x - 0.5, texcoord.x + 1.5, texcoord.y -
-    0.5, texcoord.y + 1.5);
-    vec4 s = vec4(xcubic.x + xcubic.y, xcubic.z + xcubic.w, ycubic.x +
-    ycubic.y, ycubic.z + ycubic.w);
-    vec4 offset = c + vec4(xcubic.y, xcubic.w, ycubic.y, ycubic.w) /
-    s;
+    vec4 c = vec4(texcoord.x - 0.5, texcoord.x + 1.5, texcoord.y - 0.5, texcoord.y + 1.5);
+    vec4 s = vec4(xcubic.x + xcubic.y, xcubic.z + xcubic.w, ycubic.x + ycubic.y, ycubic.z + ycubic.w);
+    vec4 offset = c + vec4(xcubic.y, xcubic.w, ycubic.y, ycubic.w) / s;
 
-    vec4 sample0 = texture2D(texture, vec2(offset.x, offset.z) *
-    texscale);
-    vec4 sample1 = texture2D(texture, vec2(offset.y, offset.z) *
-    texscale);
-    vec4 sample2 = texture2D(texture, vec2(offset.x, offset.w) *
-    texscale);
-    vec4 sample3 = texture2D(texture, vec2(offset.y, offset.w) *
-    texscale);
+    vec4 sample0 = texture2D(texture, vec2(offset.x, offset.z) * texscale);
+    vec4 sample1 = texture2D(texture, vec2(offset.y, offset.z) * texscale);
+    vec4 sample2 = texture2D(texture, vec2(offset.x, offset.w) * texscale);
+    vec4 sample3 = texture2D(texture, vec2(offset.y, offset.w) * texscale);
 
     float sx = s.x / (s.x + s.y);
     float sy = s.z / (s.z + s.w);
 
-    return mix(
-    mix(sample3, sample2, sx),
-    mix(sample1, sample0, sx), sy);
+    return mix(mix(sample3, sample2, sx), mix(sample1, sample0, sx), sy);
 }
 
-// end adaapted from NVIDIA GPU Gems
+// end adapted from NVIDIA GPU Gems 2
 
 vec2 controlMapLookup(vec2 pos) {
     vec2 texScale = 1.0 / uControlMapSize;
     vec2 range = uControlMapMax - uControlMapMin;
     vec2 shiftedPoint = pos - uControlMapMin;
     vec2 index = uControlMapSize * (shiftedPoint) / range;
-    return vec2(bicubicFilter(uControlMapTextureX, index, texScale).r, bicubicFilter(uControlMapTextureY, index, texScale).r);
+    return bicubicFilter(uControlMapTexture, index, texScale).ra;
 }
 
 void main(void) {
@@ -128,5 +117,5 @@ void main(void) {
 
     vLineSide = sign(aVertexPosition.z);
     vLinePosition = abs(aVertexPosition.z);
-    gl_Position =  vec4(adjustedPosition.x, adjustedPosition.y, 0.0, 1.0);
+    gl_Position = vec4(adjustedPosition.x, adjustedPosition.y, 0.0, 1.0);
 }

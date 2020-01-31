@@ -2,7 +2,7 @@ import * as React from "react";
 import {CSSProperties} from "react";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {Button, NonIdealState} from "@blueprintjs/core";
+import {AnchorButton, NonIdealState, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import ReactResizeDetector from "react-resize-detector";
 import {WidgetConfig, WidgetProps} from "stores";
@@ -69,16 +69,16 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         };
 
         const rowHeaderCellRenderer = (rowIndex: number) => {
-            return <RowHeaderCell name={rowIndex.toString()} style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}/>;
+            return <RowHeaderCell name={rowIndex.toString()} className={rowIndex === activeFrameIndex ? "active-row-cell" : ""}/>;
         };
         const fileNameRenderer = (rowIndex: number) => {
-            return <Cell style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}>{rowIndex >= 0 && rowIndex < frameNum ? frameNames[rowIndex].label : ""}</Cell>;
+            return <Cell className={rowIndex === activeFrameIndex ? "active-row-cell" : ""}>{rowIndex >= 0 && rowIndex < frameNum ? frameNames[rowIndex].label : ""}</Cell>;
         };
         const channelRenderer = (rowIndex: number) => {
-            return <Cell style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}>{rowIndex >= 0 && rowIndex < frameNum ? frameChannels[rowIndex] : ""}</Cell>;
+            return <Cell className={rowIndex === activeFrameIndex ? "active-row-cell" : ""}>{rowIndex >= 0 && rowIndex < frameNum ? frameChannels[rowIndex] : ""}</Cell>;
         };
         const stokesRenderer = (rowIndex: number) => {
-            return <Cell style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}>{rowIndex >= 0 && rowIndex < frameNum ? frameStokes[rowIndex] : ""}</Cell>;
+            return <Cell className={rowIndex === activeFrameIndex ? "active-row-cell" : ""}>{rowIndex >= 0 && rowIndex < frameNum ? frameStokes[rowIndex] : ""}</Cell>;
         };
         const typeRenderer = (rowIndex: number) => {
             if (rowIndex < 0 || rowIndex >= frameNum) {
@@ -88,11 +88,17 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             const frame = appStore.frames[rowIndex];
 
             return (
-                <Cell style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}>
-                    <Button minimal={true} small={true} intent={frame.renderConfig.visible ? "success" : "none"} onClick={frame.renderConfig.toggleVisibility}>R</Button>
-                    {frame.contourConfig.enabled &&
-                    <Button minimal={true} small={true} intent={frame.contourConfig.visible ? "success" : "none"} onClick={frame.contourConfig.toggleVisibility}>C</Button>
-                    }
+                <Cell className={rowIndex === activeFrameIndex ? "active-row-cell" : ""}>
+                    <React.Fragment>
+                        <Tooltip content={<span>Raster image<br/><i><small>Click to {frame.renderConfig.visible ? "hide" : "show"}</small></i></span>}>
+                            <AnchorButton minimal={true} small={true} intent={frame.renderConfig.visible ? "success" : "none"} onClick={frame.renderConfig.toggleVisibility}>R</AnchorButton>
+                        </Tooltip>
+                        {frame.contourConfig.enabled &&
+                        <Tooltip content={<span>Contour image<br/><i><small>Click to {frame.contourConfig.visible ? "hide" : "show"}</small></i></span>}>
+                            <AnchorButton minimal={true} small={true} intent={frame.contourConfig.visible ? "success" : "none"} onClick={frame.contourConfig.toggleVisibility}>C</AnchorButton>
+                        </Tooltip>
+                        }
+                    </React.Fragment>
                 </Cell>
             );
         };

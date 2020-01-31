@@ -34,8 +34,7 @@ interface ShaderUniforms {
     Contrast: WebGLUniformLocation;
     ControlMapEnabled: WebGLUniformLocation;
     ControlMapSize: WebGLUniformLocation;
-    ControlMapTextureX: WebGLUniformLocation;
-    ControlMapTextureY: WebGLUniformLocation;
+    ControlMapTexture: WebGLUniformLocation;
     ControlMapMin: WebGLUniformLocation;
     ControlMapMax: WebGLUniformLocation;
 }
@@ -131,8 +130,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
         if (isActive) {
             this.gl.uniform1i(this.shaderUniforms.ControlMapEnabled, 0);
-            this.gl.uniform1i(this.shaderUniforms.ControlMapTextureX, 0);
-            this.gl.uniform1i(this.shaderUniforms.ControlMapTextureY, 0);
+            this.gl.uniform1i(this.shaderUniforms.ControlMapTexture, 0);
             this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / zoomLevel);
 
             if (frame.spatialReference) {
@@ -158,10 +156,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             this.gl.uniform2f(this.shaderUniforms.ControlMapSize, controlMap.width, controlMap.height);
             this.gl.activeTexture(GL.TEXTURE1);
             this.gl.bindTexture(GL.TEXTURE_2D, controlMap.getTextureX(this.gl));
-            this.gl.uniform1i(this.shaderUniforms.ControlMapTextureX, 1);
-            this.gl.activeTexture(GL.TEXTURE2);
-            this.gl.bindTexture(GL.TEXTURE_2D, controlMap.getTextureY(this.gl));
-            this.gl.uniform1i(this.shaderUniforms.ControlMapTextureY, 2);
+            this.gl.uniform1i(this.shaderUniforms.ControlMapTexture, 1);
 
             this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / frame.spatialReference.zoomLevel);
             this.gl.uniform2f(this.shaderUniforms.FrameMin, frame.spatialReference.requiredFrameView.xMin, frame.spatialReference.requiredFrameView.yMin);
@@ -255,8 +250,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             ControlMapSize: this.gl.getUniformLocation(shaderProgram, "uControlMapSize"),
             ControlMapMin: this.gl.getUniformLocation(shaderProgram, "uControlMapMin"),
             ControlMapMax: this.gl.getUniformLocation(shaderProgram, "uControlMapMax"),
-            ControlMapTextureX: this.gl.getUniformLocation(shaderProgram, "uControlMapTextureX"),
-            ControlMapTextureY: this.gl.getUniformLocation(shaderProgram, "uControlMapTextureY"),
+            ControlMapTexture: this.gl.getUniformLocation(shaderProgram, "uControlMapTexture"),
         };
 
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
