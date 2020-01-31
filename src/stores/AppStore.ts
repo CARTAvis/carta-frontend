@@ -159,6 +159,10 @@ export class AppStore {
             connected = true;
             this.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
 
+            // Init layout/preference store after connection is built
+            const supportsServerLayout = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_LAYOUTS ? true : false;
+            this.layoutStore.initUserDefinedLayouts(supportsServerLayout, ack.userLayouts);
+
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
                 this.addFrame(folderSearchParam, fileSearchParam, "", 0);
@@ -477,7 +481,7 @@ export class AppStore {
     constructor() {
         this.alertStore = new AlertStore();
         this.layoutStore = new LayoutStore(this, this.alertStore);
-        this.preferenceStore = new PreferenceStore(this, this.layoutStore);
+        this.preferenceStore = new PreferenceStore(this);
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore, this.preferenceStore);
         this.tileService = new TileService(this.backendService, this.preferenceStore.GPUTileCache, this.preferenceStore.systemTileCache);
@@ -493,7 +497,7 @@ export class AppStore {
         this.fileBrowserStore = new FileBrowserStore(this, this.backendService);
         this.animatorStore = new AnimatorStore(this);
         this.overlayStore = new OverlayStore(this, this.preferenceStore);
-        this.widgetsStore = new WidgetsStore(this, this.layoutStore);
+        this.widgetsStore = new WidgetsStore(this);
         this.compressionQuality = this.preferenceStore.imageCompressionQuality;
         this.initRequirements();
         this.dialogStore = new DialogStore(this);

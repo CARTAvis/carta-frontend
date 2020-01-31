@@ -83,6 +83,8 @@ export class BackendService {
             [CARTA.EventType.IMPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.EXPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.SET_REGION_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.SET_USER_LAYOUT_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.SET_USER_PREFERENCES_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.RESUME_SESSION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.START_ANIMATION_ACK, this.onStartAnimationAck],
             [CARTA.EventType.RASTER_IMAGE_DATA, this.onStreamedRasterImageData],
@@ -115,6 +117,8 @@ export class BackendService {
             [CARTA.EventType.SPECTRAL_PROFILE_DATA, CARTA.SpectralProfileData],
             [CARTA.EventType.REGION_STATS_DATA, CARTA.RegionStatsData],
             [CARTA.EventType.CONTOUR_IMAGE_DATA, CARTA.ContourImageData],
+            [CARTA.EventType.SET_USER_LAYOUT_ACK, CARTA.SetUserLayoutAck],
+            [CARTA.EventType.SET_USER_PREFERENCES_ACK, CARTA.SetUserPreferencesAck]
         ]);
 
         autorun(() => {
@@ -565,6 +569,24 @@ export class BackendService {
             }
         }
         return false;
+    }
+
+    @action("set user layout")
+    setUserLayout(name: string, value: string): Observable<CARTA.SetUserLayoutAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.SetUserLayout.create({name, value});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.SET_USER_LAYOUT, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.SET_USER_LAYOUT, CARTA.SetUserLayout.encode(message).finish())) {
+                return new Observable<CARTA.SetUserLayoutAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
     }
 
     @action("resume session")
