@@ -87,19 +87,36 @@ vec4 bicubicFilter(sampler2D texture, vec2 texcoord, vec2 texscale) {
     mix(sample1, sample0, sx), sy);
 }
 
+// end adaapted from NVIDIA GPU Gems
+
+vec2 controlMapLookup(vec2 pos) {
+    vec2 texScale = 1.0 / uControlMapSize;
+    vec2 range = uControlMapMax - uControlMapMin;
+    vec2 shiftedPoint = pos - uControlMapMin;
+    vec2 index = uControlMapSize * (shiftedPoint) / range;
+    return vec2(bicubicFilter(uControlMapTextureX, index, texScale).r, bicubicFilter(uControlMapTextureY, index, texScale).r);
+}
+
 void main(void) {
-    // Extrude point along normal
-    vec2 posImageSpace = (aVertexPosition.xy + (aVertexNormal / 16384.0) * uLineThickness * 0.5);
+
     // Shift by half a pixel to account for position of pixel center
-    posImageSpace += 0.5;
+    vec2 posImageSpace = aVertexPosition.xy + 0.5;
+
+    // Calculate extrusion vector and distance
+    vec2 extrudeOffet = (aVertexNormal / 16384.0) * uLineThickness * 0.5;
+    float extrudeDistance = length(extrudeOffet);
 
     // If there's a control map, use it to look up location using bilinear filtering
     if (uControlMapEnabled > 0) {
-        vec2 texScale = 1.0 / uControlMapSize;
-        vec2 range = uControlMapMax - uControlMapMin;
-        vec2 shiftedPoint = posImageSpace - uControlMapMin;
-        vec2 index = uControlMapSize * (shiftedPoint) / range;
-        posImageSpace = vec2(bicubicFilter(uControlMapTextureX, index, texScale).r, bicubicFilter(uControlMapTextureY, index, texScale).r);
+        // Use 0.1 pixel offset to estimate direction of normal
+        vec2 extrudedPoint = controlMapLookup(posImageSpace + normalize(extrudeOffet) * 0.1);
+        posImageSpace = controlMapLookup(posImageSpace);
+        vec2 transformedNormal = extrudedPoint - posImageSpace;
+        // Ensure consistent extrusion distance
+        posImageSpace += extrudeDistance * normalize(transformedNormal);
+    } else {
+        // Extrude point along normal
+        posImageSpace = (posImageSpace + extrudeOffet);
     }
 
     // Scale and rotate

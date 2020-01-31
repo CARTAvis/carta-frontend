@@ -118,7 +118,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
 
         // update uniforms
-        this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / zoomLevel);
         this.gl.uniform1i(this.shaderUniforms.CmapEnabled, frame.contourConfig.colormapEnabled ? 1 : 0);
         if (frame.contourConfig.colormapEnabled) {
             this.gl.uniform1i(this.shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(frame.contourConfig.colormap));
@@ -130,6 +129,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             this.gl.uniform1i(this.shaderUniforms.ControlMapEnabled, 0);
             this.gl.uniform1i(this.shaderUniforms.ControlMapTextureX, 0);
             this.gl.uniform1i(this.shaderUniforms.ControlMapTextureY, 0);
+            this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / zoomLevel);
 
             if (frame.spatialReference) {
                 let rotationOrigin = frame.spatialTransform.origin;
@@ -159,6 +159,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             this.gl.bindTexture(GL.TEXTURE_2D, controlMap.getTextureY(this.gl));
             this.gl.uniform1i(this.shaderUniforms.ControlMapTextureY, 2);
 
+            this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / frame.spatialReference.zoomLevel);
             this.gl.uniform2f(this.shaderUniforms.FrameMin, frame.spatialReference.requiredFrameView.xMin, frame.spatialReference.requiredFrameView.yMin);
             this.gl.uniform2f(this.shaderUniforms.FrameMax, frame.spatialReference.requiredFrameView.xMax, frame.spatialReference.requiredFrameView.yMax);
             this.gl.uniform1f(this.shaderUniforms.RotationAngle, 0.0);
