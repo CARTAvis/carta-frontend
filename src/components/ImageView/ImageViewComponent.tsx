@@ -242,7 +242,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         }
 
         return (
-            <div className="image-view-div" onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+            <div className="image-view-div" onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                 <RasterViewComponent
                     frame={appStore.activeFrame}
                     docked={this.props.docked}
