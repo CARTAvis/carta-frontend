@@ -885,7 +885,7 @@ export class FrameStore {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
         } else {
             const tStart = performance.now();
-            this.controlMaps.set(this.spatialReference, new ControlMap(this, this.spatialReference, this.spatialTransformAST, 200, 200));
+            this.controlMaps.set(this.spatialReference, new ControlMap(this, this.spatialReference, this.spatialTransformAST, 256, 256));
             const tEnd = performance.now();
             const dt = tEnd - tStart;
             console.log(`Created transform grid in ${dt} ms`);
