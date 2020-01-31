@@ -70,4 +70,8 @@ export class ControlMap {
             y: f00.y * (1 - step.x) * (1 - step.y) + f10.y * step.x * (1 - step.y) + f01.y * (1 - step.x) * step.y + f11.y * step.x * step.y
         };
     }
+
+    static IsWidthValid(width: number) {
+        return (width >= 128 && width <= 1024);
+    }
 }
