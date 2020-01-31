@@ -102,6 +102,11 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             fontWeight: "bold"
         };
 
+        // This is a necessary hack in order to trigger a re-rendering when values change, because the cell renderer is in its own function
+        // There is probably a neater way to do this, though
+        const dummyVisibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
+        const dummyVisibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
+
         return (
             <div className="layer-list-widget">
                 <Table
