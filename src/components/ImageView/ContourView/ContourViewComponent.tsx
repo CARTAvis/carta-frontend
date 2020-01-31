@@ -105,10 +105,14 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         const frame = this.props.appStore.activeFrame;
         if (frame && this.canvas && this.gl && this.shaderUniforms) {
             this.resizeAndClearCanvas();
-            this.renderFrameContours(frame, true);
+            if (frame.contourConfig.visible && frame.contourConfig.enabled) {
+                this.renderFrameContours(frame, true);
+            }
             if (frame.secondaryImages) {
                 for (const secondaryFrame of frame.secondaryImages) {
-                    this.renderFrameContours(secondaryFrame, false);
+                    if (secondaryFrame.contourConfig.visible && secondaryFrame.contourConfig.enabled) {
+                        this.renderFrameContours(secondaryFrame, false);
+                    }
                 }
             }
         }
@@ -271,6 +275,12 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             const dashMode = config.dashMode;
             const bias = config.colormapBias;
             const contrast = config.colormapContrast;
+
+            if (frame.secondaryImages) {
+                const visibleSecondaries = frame.secondaryImages.map(f => f.contourConfig.enabled && f.contourConfig.visible);
+            }
+
+            const visible = frame.contourConfig.enabled && frame.contourConfig.visible;
 
             contourData.forEach(contourStore => {
                 const numVertices = contourStore.vertexCount;

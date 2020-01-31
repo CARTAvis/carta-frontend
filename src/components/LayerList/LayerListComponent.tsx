@@ -1,18 +1,18 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import { observable } from "mobx";
-import { observer } from "mobx-react";
-import { NonIdealState } from "@blueprintjs/core";
-import { Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table } from "@blueprintjs/table";
+import {observable} from "mobx";
+import {observer} from "mobx-react";
+import {Button, NonIdealState} from "@blueprintjs/core";
+import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import ReactResizeDetector from "react-resize-detector";
-import { WidgetConfig, WidgetProps } from "stores";
+import {WidgetConfig, WidgetProps} from "stores";
 import "./LayerListComponent.css";
 
 @observer
 export class LayerListComponent extends React.Component<WidgetProps> {
     @observable width: number = 0;
     @observable height: number = 0;
-    private columnWidths = [150, 60, 80, 70];
+    private columnWidths = [150, 80, 80, 70];
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -72,13 +72,29 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             return <RowHeaderCell name={rowIndex.toString()} style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}/>;
         };
         const fileNameRenderer = (rowIndex: number) => {
-            return <Cell style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}>{rowIndex >= 0 && rowIndex < frameNum ? frameNames[rowIndex].label  : ""}</Cell>;
+            return <Cell style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}>{rowIndex >= 0 && rowIndex < frameNum ? frameNames[rowIndex].label : ""}</Cell>;
         };
         const channelRenderer = (rowIndex: number) => {
-            return <Cell style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}>{rowIndex >= 0 && rowIndex < frameNum ? frameChannels[rowIndex]  : ""}</Cell>;
+            return <Cell style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}>{rowIndex >= 0 && rowIndex < frameNum ? frameChannels[rowIndex] : ""}</Cell>;
         };
         const stokesRenderer = (rowIndex: number) => {
-            return <Cell style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}>{rowIndex >= 0 && rowIndex < frameNum ? frameStokes[rowIndex]  : ""}</Cell>;
+            return <Cell style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}>{rowIndex >= 0 && rowIndex < frameNum ? frameStokes[rowIndex] : ""}</Cell>;
+        };
+        const typeRenderer = (rowIndex: number) => {
+            if (rowIndex < 0 || rowIndex >= frameNum) {
+                return null;
+            }
+
+            const frame = appStore.frames[rowIndex];
+
+            return (
+                <Cell style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}>
+                    <Button minimal={true} small={true} intent={frame.renderConfig.visible ? "success" : "none"} onClick={frame.renderConfig.toggleVisibility}>R</Button>
+                    {frame.contourConfig.enabled &&
+                    <Button minimal={true} small={true} intent={frame.contourConfig.visible ? "success" : "none"} onClick={frame.contourConfig.toggleVisibility}>C</Button>
+                    }
+                </Cell>
+            );
         };
 
         const columnHeaderStyleProps: CSSProperties = {
@@ -107,6 +123,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     />
                     <Column
                         columnHeaderCellRenderer={(columnIndex: number) => <ColumnHeaderCell name="Type" style={columnHeaderStyleProps}/>}
+                        cellRenderer={typeRenderer}
                     />
                     <Column
                         columnHeaderCellRenderer={(columnIndex: number) => <ColumnHeaderCell name="Channel" style={columnHeaderStyleProps}/>}
