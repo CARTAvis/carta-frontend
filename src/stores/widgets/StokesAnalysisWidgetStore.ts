@@ -5,7 +5,7 @@ import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, ScatterSettings} from "components/Shared";
 import {RegionWidgetStore} from "./RegionWidgetStore";
 import {FrameStore} from "stores";
-import {getColorsForValues} from "utilities";
+import {getColorsForValues, isColorValid} from "utilities";
 
 export enum StokesCoordinate {
     CurrentZ = "z",
@@ -358,4 +358,55 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @computed get isPolAngleAutoScaledY() {
         return (this.polAngleMinY === undefined || this.polAngleMaxY === undefined);
     }
+
+    public init = (widgetSettings): void => {
+        if (!widgetSettings) {
+            return;
+        }
+        if (typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
+            this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
+        }
+        if (typeof widgetSettings.secondaryLineColor === "string" && isColorValid(widgetSettings.secondaryLineColor)) {
+            this.secondaryLineColor.colorHex = widgetSettings.secondaryLineColor;
+        }
+        if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
+            this.lineWidth = widgetSettings.lineWidth;
+        }
+        if (typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE && widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
+            this.linePlotPointSize = widgetSettings.linePlotPointSize;
+        }
+        if (typeof widgetSettings.useWcsValues === "boolean") {
+            this.useWcsValues = widgetSettings.useWcsValues;
+        }
+        if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
+            this.plotType = widgetSettings.plotType;
+        }
+        if (typeof widgetSettings.colorMap === "string") {
+            this.colorMap = widgetSettings.colorMap;
+        }
+        if (typeof widgetSettings.scatterPlotPointSize === "number" && widgetSettings.scatterPlotPointSize >= ScatterSettings.MIN_POINT_SIZE && widgetSettings.scatterPlotPointSize <= ScatterSettings.MAX_POINT_SIZE ) {
+            this.scatterPlotPointSize = widgetSettings.scatterPlotPointSize;
+        }
+        if (typeof widgetSettings.pointTransparency === "number" && widgetSettings.pointTransparency >= ScatterSettings.MIN_TRANSPARENCY && widgetSettings.pointTransparency <= ScatterSettings.MAX_TRANSPARENCY) {
+            this.pointTransparency = widgetSettings.pointTransparency;
+        }
+        if (typeof widgetSettings.equalAxes === "boolean") {
+            this.equalAxes = widgetSettings.equalAxes;
+        }
+    };
+
+    public toConfig = () => {
+        return {
+            primaryLineColor: this.primaryLineColor.colorHex,
+            secondaryLineColor: this.secondaryLineColor.colorHex,
+            lineWidth: this.lineWidth,
+            linePlotPointSize: this.linePlotPointSize,
+            useWcsValues: this.useWcsValues,
+            plotType: this.plotType,
+            colorMap: this.colorMap,
+            scatterPlotPointSize: this.scatterPlotPointSize,
+            pointTransparency: this.pointTransparency,
+            equalAxes: this.equalAxes
+        };
+    };
 }
