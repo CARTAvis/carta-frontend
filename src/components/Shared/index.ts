@@ -7,3 +7,4 @@ export * from "./ProfilerInfo/ProfilerInfoComponent";
 export * from "./ScatterPlot/ScatterPlotComponent";
 export * from "./LinePlot/PlotSettings/LinePlotSettingsPanelComponent";
 export * from "./ScatterPlot/PlotSettings/ScatterPlotSettingsPanelComponent";
+export * from "./TableComponent/TableComponent";

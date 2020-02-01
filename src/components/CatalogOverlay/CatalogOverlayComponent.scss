@@ -1,0 +1,115 @@
+// @import "../../../node_modules/@blueprintjs/core/lib/scss/variables.scss";
+// @import "@blueprintjs/table/src/table.scss";
+
+.catalog-overlay {
+    height: 100%;
+    width: 100%;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    overflow-y: auto;
+
+    .catalog-overlay-column-header-container{
+        overflow: auto;
+        height: 40%;
+        width: 100%;
+        padding: 5px;
+        .bp3-table-container{
+            // height: fit-content;
+            width: 100%;
+        }
+    }
+
+    .catalog-overlay-filter-settings{
+        height: 35px;
+        width: 100%;
+        padding: 5px;
+        overflow-x: auto;
+        display: inline-flex;
+
+        .bp3-tab-panel {
+            height: 22em;
+            overflow: auto;
+            width: 100%;
+        }
+    
+        .bp3-form-group .bp3-label {
+            width: 5em;
+            text-align: right;
+        }
+    
+        .bp3-numeric-input {
+            .bp3-input-group {
+                width: 60px;
+            }
+        }
+    
+        .line-boundary {
+            .bp3-input-group {
+                input {
+                    width: 90px;
+                }
+            }
+        }
+    
+        .reset-range-content {
+            margin-left: 101px;
+            .reset-range-button{
+                width: 10em;
+            }
+        }
+
+        .catalog-overlay-filter{
+            display: inline-flex;
+            height: 100%;
+        }
+
+        .catalog-overlay-plot-settings{
+            display: inline-flex;
+            height: 100%;
+        }
+    }
+
+    .catalog-overlay-data-container{
+        overflow: auto;
+        height: calc(60% - 70px);
+        width: 100%;
+        padding: 5px;
+
+        .bp3-table-container{
+            width: 100%;
+
+            .bp3-table-editable-name.bp3-editable-text::before {
+                right: 0px;
+                left: 0px;
+            }
+
+            .bp3-editable-text::before {
+                right: 0px;
+                left: 0px;
+            }
+            .column-filter {
+                width: inherit;
+                height: inherit;
+            }
+            // .header-filter {
+            //     .bp3-editable-text-input, .bp3-editable-text-content {
+            //         display: contents;
+            //         position: relative;
+            //         min-width: inherit;
+            //         max-width: inherit;
+            //         vertical-align: top;
+            //         text-transform: inherit;
+            //         letter-spacing: inherit;
+            //         color: inherit;
+            //         font: inherit;
+            //         resize: none;
+            //     }
+            // }
+        }
+    }
+    
+    .bp3-dialog-footer{
+        margin: 0;
+        width: calc(100% - 5px);
+    }
+}

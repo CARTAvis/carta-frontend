@@ -1,5 +1,6 @@
 import * as GoldenLayout from "golden-layout";
 import * as $ from "jquery";
+import {CARTA} from "carta-protobuf";
 import {action, observable} from "mobx";
 import {
     AnimatorComponent,
@@ -292,7 +293,7 @@ export class WidgetsStore {
                 itemId = this.addStokesWidget();
                 break;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                itemId = this.addCatalogOverlayWidget();
+                // itemId = this.addCatalogOverlayWidget();
                 break;
             default:
                 // Remove it from the floating widget array, while preserving its store
@@ -381,7 +382,7 @@ export class WidgetsStore {
         ToolbarMenuComponent.DRAGSOURCE_WIDGETCONFIG_MAP.forEach((widgetConfig, id) => WidgetsStore.CreateDragSource(this.appStore, layout, widgetConfig, id));
 
         layout.on("stackCreated", (stack) => {
-            let unpinButton = $(`<li class="pin-icon"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);
+            let unpinButton = $(`<li class="lm-pin" title="detach"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);
             unpinButton.on("click", () => this.unpinWidget(stack.getActiveContentItem()));
             stack.header.controlsContainer.prepend(unpinButton);
 
@@ -392,7 +393,7 @@ export class WidgetsStore {
                     const stackHeaderControlButtons = stack.header.controlsContainer[0];
                     const found = hideCogWidget.indexOf(component);
                     if (component && found === -1 && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount < 4) {
-                        const cogPinedButton = $(`<li class="cog-pined-icon"><span class="bp3-icon-standard bp3-icon-cog"/></li>`);
+                        const cogPinedButton = $(`<li class="lm_settings" title="settings"><span class="bp3-icon-standard bp3-icon-cog"/></li>`);
                         cogPinedButton.on("click", () => contentItem.config.props.appStore.widgetsStore.onCogPinedClick(stack.getActiveContentItem()));
                         stack.header.controlsContainer.prepend(cogPinedButton);
                     } else if (found !== -1 && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount === 4) {
@@ -618,20 +619,20 @@ export class WidgetsStore {
     // endregion
 
     // region Catalog Overlay Widgets
-    createFloatingCatalogOverlayWidget = () => {
+    createFloatingCatalogOverlayWidget = (catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData) => {
         let config = CatalogOverlayComponent.WIDGET_CONFIG;
-        config.id = this.addCatalogOverlayWidget();
+        config.id = this.addCatalogOverlayWidget(catalogHeader, catalogData);
         this.addFloatingWidget(config);
     };
 
-    @action addCatalogOverlayWidget(id: string = null) {
+    @action addCatalogOverlayWidget(catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData, id: string = null) {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(CatalogOverlayComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            this.catalogOverlayWidgets.set(id, new CatalogOverlayWidgetStore());
+            this.catalogOverlayWidgets.set(id, new CatalogOverlayWidgetStore(catalogHeader, catalogData));
         }
         return id;
     }

@@ -17,15 +17,15 @@ import {ColormapComponent} from "components/RenderConfig/ColormapConfigComponent
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {ColorPickerComponent} from "components/Shared";
 import {Theme, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
-import {AppStore, FrameScaling, RegionStore, RenderConfigStore} from "stores";
-import {hexStringToRgba, parseBoolean} from "utilities";
+import {AppStore, BeamType, FrameScaling, RegionStore, RenderConfigStore} from "stores";
+import {hexStringToRgba, SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.css";
 
 enum TABS {
     GLOBAL,
     RENDER_CONFIG,
     CONTOUR_CONFIG,
-    WCS_OVERLAY,
+    OVERLAY_CONFIG,
     REGION,
     PERFORMANCE,
     LOG_EVENT
@@ -66,8 +66,8 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             case TABS.CONTOUR_CONFIG:
                 preference.resetContourConfigSettings();
                 break;
-            case TABS.WCS_OVERLAY:
-                preference.resetWCSOverlaySettings();
+            case TABS.OVERLAY_CONFIG:
+                preference.resetOverlayConfigSettings();
                 break;
             case TABS.REGION:
                 preference.resetRegionSettings();
@@ -195,7 +195,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 <FormGroup inline={true} label="NaN Color">
                     <ColorPickerComponent
                         color={hexStringToRgba(preference.nanColorHex, preference.nanAlpha)}
-                        presetColors={[...RegionStore.SWATCH_COLORS, "transparent"]}
+                        presetColors={[...SWATCH_COLORS, "transparent"]}
                         setColor={(color: ColorResult) => {
                             preference.setNaNColorHex(color.hex === "transparent" ? "#000000" : color.hex);
                             preference.setNaNAlpha(color.rgb.a);
@@ -268,7 +268,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 <FormGroup inline={true} label="Default Color">
                     <ColorPickerComponent
                         color={preference.contourColor}
-                        presetColors={RegionStore.SWATCH_COLORS}
+                        presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.setContourColor(color.hex)}
                         disableAlpha={true}
                         darkTheme={appStore.darkTheme}
@@ -277,32 +277,66 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
             </React.Fragment>
         );
 
-        const wcsOverlayPanel = (
+        const overlayConfigPanel = (
             <React.Fragment>
-                <FormGroup inline={true} label="Color">
+                <FormGroup inline={true} label="AST Color">
                     <ColorComponent
                         selectedItem={preference.astColor}
                         onItemSelect={(selected) => preference.setASTColor(selected)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Grid Visible">
+                <FormGroup inline={true} label="AST Grid Visible">
                     <Switch
                         checked={preference.astGridVisible}
                         onChange={(ev) => preference.setASTGridVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
-                <FormGroup inline={true} label="Label Visible">
+                <FormGroup inline={true} label="AST Label Visible">
                     <Switch
                         checked={preference.astLabelsVisible}
                         onChange={(ev) => preference.setASTLabelsVisible(ev.currentTarget.checked)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="WCS Format">
-                    <RadioGroup selectedValue={preference.wcsType} onChange={(ev) => preference.setWCSType(ev.currentTarget.value)}>
-                        <Radio label="Automatic" value={WCSType.AUTOMATIC}/>
-                        <Radio label="Decimal degrees" value={WCSType.DEGREES}/>
-                        <Radio label="Sexagesimal" value={WCSType.SEXAGESIMAL}/>
-                    </RadioGroup>
+                    <HTMLSelect
+                        options={[WCSType.AUTOMATIC, WCSType.DEGREES, WCSType.SEXAGESIMAL]}
+                        value={preference.wcsType}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => preference.setWCSType(event.currentTarget.value)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Beam Visible">
+                    <Switch
+                        checked={preference.beamVisible}
+                        onChange={(ev) =>  preference.setBeamVisible(ev.currentTarget.checked)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Beam Color">
+                    <ColorPickerComponent
+                        color={hexStringToRgba(preference.beamColor)}
+                        presetColors={SWATCH_COLORS}
+                        setColor={(color: ColorResult) => preference.setBeamColor(color.hex)}
+                        disableAlpha={true}
+                        darkTheme={this.props.appStore.darkTheme}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Beam Type">
+                    <HTMLSelect
+                        options={Object.keys(BeamType).map((key) => ({label: key, value: BeamType[key]}))}
+                        value={preference.beamType}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => preference.setBeamType(event.currentTarget.value as BeamType)}
+                    />
+                </FormGroup>
+                <FormGroup inline={true} label="Beam Width" labelInfo="(px)">
+                    <NumericInput
+                            placeholder="Beam Width"
+                            min={0.5}
+                            max={10}
+                            value={preference.beamWidth}
+                            stepSize={0.5}
+                            minorStepSize={0.1}
+                            majorStepSize={1}
+                            onValueChange={(value: number) => preference.setBeamWidth(value)}
+                    />
                 </FormGroup>
             </React.Fragment>
         );
@@ -317,7 +351,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 <FormGroup inline={true} label="Color">
                     <ColorPickerComponent
                         color={preference.regionContainer.color}
-                        presetColors={RegionStore.SWATCH_COLORS}
+                        presetColors={SWATCH_COLORS}
                         setColor={(color: ColorResult) => preference.regionContainer.setColor(color.hex)}
                         disableAlpha={true}
                         darkTheme={appStore.darkTheme}
@@ -362,6 +396,9 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
 
         const performancePanel = (
             <React.Fragment>
+                <FormGroup inline={true} label="Low bandwidth mode">
+                    <Switch checked={preference.lowBandwidthMode} onChange={(ev) => preference.setLowBandwidthMode(ev.currentTarget.checked)}/>
+                </FormGroup>
                 <FormGroup inline={true} label="Compression Quality" labelInfo={"(Images)"}>
                     <NumericInput
                         placeholder="Compression Quality"
@@ -486,8 +523,8 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         <Tab id={TABS.GLOBAL} title="Global" panel={globalPanel}/>
                         <Tab id={TABS.RENDER_CONFIG} title="Render Configuration" panel={renderConfigPanel}/>
                         <Tab id={TABS.CONTOUR_CONFIG} title="Contour Configuration" panel={contourConfigPanel}/>
-                        <Tab id={TABS.WCS_OVERLAY} title="Default WCS Overlay" panel={wcsOverlayPanel}/>
-                        <Tab id={TABS.REGION} title="Default Region settings" panel={regionSettingsPanel}/>
+                        <Tab id={TABS.OVERLAY_CONFIG} title="Overlay Configuration" panel={overlayConfigPanel}/>
+                        <Tab id={TABS.REGION} title="Region" panel={regionSettingsPanel}/>
                         <Tab id={TABS.PERFORMANCE} title="Performance" panel={performancePanel}/>
                         <Tab id={TABS.LOG_EVENT} title="Log Events" panel={logEventsPanel}/>
                     </Tabs>

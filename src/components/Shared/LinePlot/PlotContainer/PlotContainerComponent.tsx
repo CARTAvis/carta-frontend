@@ -115,8 +115,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             xScale.left = 85;
             xScale.right = currentWidth - 1;
             xScale.width = xScale.right - xScale.left;
-            xScale._startPixel = 85;
+            xScale._startPixel = xScale.left;
             xScale._length = xScale.width;
+
+            chart.chartArea.left = 85;
+            chart.chartArea.right = currentWidth - 1;
 
             yScale.right = xScale.left;
             yScale.width = yScale.right - yScale.left;
@@ -473,6 +476,8 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                 if (this.props.multiColorMultiLinesColors && this.props.multiColorMultiLinesColors.size) {
                     if (this.props.usePointSymbols) {
                         multiPlotDatasetConfig.pointBackgroundColor = this.props.multiColorMultiLinesColors.get(key);
+                        multiPlotDatasetConfig.borderColor = currentLineColor;
+                        multiPlotDatasetConfig.pointBorderColor = "rgba(0, 0, 0, 0)";
                     } else {
                         multiPlotDatasetConfig.multicolorLineColors = this.props.multiColorMultiLinesColors.get(key);
                     }

@@ -43,7 +43,7 @@ export class TaskProgressDialogComponent extends React.Component<TaskProgressDia
                 isOpen={this.props.isOpen}
             >
                 <div className={Classes.DIALOG_BODY}>
-                    <ProgressBar value={this.props.progress} animate={false} stripes={false} intent={"primary"}/>
+                    <ProgressBar value={this.props.progress} animate={!isFinite(this.props.progress)} stripes={!isFinite(this.props.progress)} intent={"primary"}/>
                 </div>
                 {this.props.cancellable &&
                 <div className={Classes.DIALOG_FOOTER}>

@@ -16,12 +16,11 @@ export const INVALID_ANIMATION_ID = -1;
 type HandlerFunction = (eventId: number, parsedMessage: any) => void;
 
 export class BackendService {
-    private static readonly IcdVersion = 10;
+    private static readonly IcdVersion = 11;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     @observable loggingEnabled: boolean;
     @observable connectionDropped: boolean;
-    @observable sessionId: number;
     @observable endToEndPing: number;
 
     private connection: WebSocket;
@@ -31,6 +30,7 @@ export class BackendService {
     private observerRequestMap: Map<number, Observer<any>>;
     private eventCounter: number;
     private animationId: number;
+    private sessionId: number;
     private readonly rasterStream: Subject<CARTA.RasterImageData>;
     private readonly rasterTileStream: Subject<CARTA.RasterTileData>;
     private readonly histogramStream: Subject<CARTA.RegionHistogramData>;
@@ -39,6 +39,7 @@ export class BackendService {
     private readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
     private readonly statsStream: Subject<CARTA.RegionStatsData>;
     private readonly contourStream: Subject<CARTA.ContourImageData>;
+    private readonly reconnectStream: Subject<void>;
     private readonly decompressionService: DecompressionService;
     private readonly subsetsRequired: number;
     private readonly logStore: LogStore;
@@ -52,6 +53,7 @@ export class BackendService {
         this.loggingEnabled = true;
         this.observerRequestMap = new Map<number, Observer<any>>();
         this.eventCounter = 1;
+        this.sessionId = 0;
         this.endToEndPing = NaN;
         this.animationId = INVALID_ANIMATION_ID;
         this.connectionStatus = ConnectionStatus.CLOSED;
@@ -63,6 +65,7 @@ export class BackendService {
         this.spectralProfileStream = new Subject<CARTA.SpectralProfileData>();
         this.statsStream = new Subject<CARTA.RegionStatsData>();
         this.contourStream = new Subject<CARTA.ContourImageData>();
+        this.reconnectStream = new Subject<void>();
 
         this.subsetsRequired = Math.min(navigator.hardwareConcurrency || 4, 4);
         if (process.env.NODE_ENV !== "test") {
@@ -71,15 +74,19 @@ export class BackendService {
 
         // Construct handler and decoder maps
         this.handlerMap = new Map<CARTA.EventType, HandlerFunction>([
-            [CARTA.EventType.REGISTER_VIEWER_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.REGISTER_VIEWER_ACK, this.onRegisterViewerAck],
             [CARTA.EventType.FILE_LIST_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.REGION_LIST_RESPONSE, this.onSimpleMappedResponse],
+            [CARTA.EventType.CATALOG_LIST_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.REGION_FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
+            [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.OPEN_FILE_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.OPEN_CATALOG_FILE_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.IMPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.EXPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.SET_REGION_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.RESUME_SESSION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.START_ANIMATION_ACK, this.onStartAnimationAck],
             [CARTA.EventType.RASTER_IMAGE_DATA, this.onStreamedRasterImageData],
             [CARTA.EventType.RASTER_TILE_DATA, this.onStreamedRasterTileData],
@@ -88,19 +95,23 @@ export class BackendService {
             [CARTA.EventType.SPATIAL_PROFILE_DATA, this.onStreamedSpatialProfileData],
             [CARTA.EventType.SPECTRAL_PROFILE_DATA, this.onStreamedSpectralProfileData],
             [CARTA.EventType.REGION_STATS_DATA, this.onStreamedRegionStatsData],
-            [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData],
+            [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData]
         ]);
 
         this.decoderMap = new Map<CARTA.EventType, any>([
             [CARTA.EventType.REGISTER_VIEWER_ACK, CARTA.RegisterViewerAck],
             [CARTA.EventType.FILE_LIST_RESPONSE, CARTA.FileListResponse],
             [CARTA.EventType.REGION_LIST_RESPONSE, CARTA.RegionListResponse],
+            [CARTA.EventType.CATALOG_LIST_RESPONSE, CARTA.CatalogListResponse],
             [CARTA.EventType.FILE_INFO_RESPONSE, CARTA.FileInfoResponse],
             [CARTA.EventType.REGION_FILE_INFO_RESPONSE, CARTA.RegionFileInfoResponse],
+            [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, CARTA.CatalogFileInfoResponse],
             [CARTA.EventType.OPEN_FILE_ACK, CARTA.OpenFileAck],
+            [CARTA.EventType.OPEN_CATALOG_FILE_ACK, CARTA.OpenCatalogFileAck],
             [CARTA.EventType.IMPORT_REGION_ACK, CARTA.ImportRegionAck],
             [CARTA.EventType.EXPORT_REGION_ACK, CARTA.ExportRegionAck],
             [CARTA.EventType.SET_REGION_ACK, CARTA.SetRegionAck],
+            [CARTA.EventType.RESUME_SESSION_ACK, CARTA.ResumeSessionAck],
             [CARTA.EventType.START_ANIMATION_ACK, CARTA.StartAnimationAck],
             [CARTA.EventType.RASTER_IMAGE_DATA, CARTA.RasterImageData],
             [CARTA.EventType.RASTER_TILE_DATA, CARTA.RasterTileData],
@@ -158,6 +169,10 @@ export class BackendService {
         return this.contourStream;
     }
 
+    getReconnectStream() {
+        return this.reconnectStream;
+    }
+
     @action("connect")
     connect(url: string, autoConnect: boolean = true): Observable<CARTA.RegisterViewerAck> {
         if (this.connection) {
@@ -194,7 +209,10 @@ export class BackendService {
                 }
                 this.connectionStatus = ConnectionStatus.ACTIVE;
                 this.autoReconnect = true;
-                const message = CARTA.RegisterViewer.create({sessionId: 0, clientFeatureFlags: BackendService.DefaultFeatureFlags});
+                const message = CARTA.RegisterViewer.create({sessionId: this.sessionId, clientFeatureFlags: BackendService.DefaultFeatureFlags});
+                // observer map is cleared, so that old subscriptions don't get incorrectly fired
+                this.observerRequestMap.clear();
+                this.eventCounter = 1;
                 const requestId = this.eventCounter;
                 this.logEvent(CARTA.EventType.REGISTER_VIEWER, requestId, message, false);
                 if (this.sendEvent(CARTA.EventType.REGISTER_VIEWER, CARTA.RegisterViewer.encode(message).finish())) {
@@ -205,11 +223,6 @@ export class BackendService {
             };
 
             this.connection.onerror = (ev => observer.error(ev));
-        });
-
-        obs.subscribe(ack => {
-            console.log(`Connected with session ID ${ack.sessionId}`);
-            this.sessionId = ack.sessionId;
         });
 
         return obs;
@@ -237,6 +250,7 @@ export class BackendService {
             if (this.sendEvent(CARTA.EventType.FILE_LIST_REQUEST, CARTA.FileListRequest.encode(message).finish())) {
                 return new Observable<CARTA.FileListResponse>(observer => {
                     this.observerRequestMap.set(requestId, observer);
+                    // console.log(observer)
                 });
             } else {
                 return throwError(new Error("Could not send event"));
@@ -255,6 +269,26 @@ export class BackendService {
             if (this.sendEvent(CARTA.EventType.REGION_LIST_REQUEST, CARTA.RegionListRequest.encode(message).finish())) {
                 return new Observable<CARTA.RegionListResponse>(observer => {
                     this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("catalog list")
+    getCatalogList(directory: string): Observable<CARTA.CatalogListResponse> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.CatalogListRequest.create({directory});
+            // console.log(message)
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.CATALOG_LIST_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.CATALOG_LIST_REQUEST, CARTA.CatalogListRequest.encode(message).finish())) {
+                return new Observable<CARTA.CatalogListResponse>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                    // console.log(observer)
                 });
             } else {
                 return throwError(new Error("Could not send event"));
@@ -290,6 +324,24 @@ export class BackendService {
             this.logEvent(CARTA.EventType.REGION_FILE_INFO_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.REGION_FILE_INFO_REQUEST, CARTA.RegionFileInfoRequest.encode(message).finish())) {
                 return new Observable<CARTA.RegionFileInfoResponse>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("catalog info")
+    getCatalogFileInfo(directory: string, name: string): Observable<CARTA.CatalogFileInfoResponse> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.CatalogFileInfoRequest.create({directory, name});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.CATALOG_FILE_INFO_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.CATALOG_FILE_INFO_REQUEST, CARTA.CatalogFileInfoRequest.encode(message).finish())) {
+                return new Observable<CARTA.CatalogFileInfoResponse>(observer => {
                     this.observerRequestMap.set(requestId, observer);
                 });
             } else {
@@ -344,6 +396,24 @@ export class BackendService {
             this.logEvent(CARTA.EventType.OPEN_FILE, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.OPEN_FILE, CARTA.OpenFile.encode(message).finish())) {
                 return new Observable<CARTA.OpenFileAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("load catalog file")
+    loadCatalogFile(directory: string, name: string, fileId: number, previewDataSize: number): Observable<CARTA.OpenCatalogFileAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.OpenCatalogFile.create({directory, name, fileId, previewDataSize});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.OPEN_CATALOG_FILE, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.OPEN_CATALOG_FILE, CARTA.OpenCatalogFile.encode(message).finish())) {
+                return new Observable<CARTA.OpenCatalogFileAck>(observer => {
                     this.observerRequestMap.set(requestId, observer);
                 });
             } else {
@@ -560,6 +630,23 @@ export class BackendService {
         return false;
     }
 
+    @action("resume session")
+    resumeSession(message: CARTA.IResumeSession): Observable<CARTA.ResumeSessionAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.RESUME_SESSION, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.RESUME_SESSION, CARTA.ResumeSession.encode(message).finish())) {
+                return new Observable<CARTA.ResumeSessionAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
     @action("authenticate")
     authenticate = (username: string, password: string) => {
         let authUrl = `${window.location.protocol}//${window.location.hostname}/carta_auth/`;
@@ -640,6 +727,16 @@ export class BackendService {
             this.observerRequestMap.delete(eventId);
         } else {
             console.log(`Can't find observable for request ${eventId}`);
+        }
+    }
+
+    private onRegisterViewerAck(eventId: number, ack: CARTA.RegisterViewerAck) {
+        this.sessionId = ack.sessionId;
+        this.onSimpleMappedResponse(eventId, ack);
+
+        // use the reconnect stream when the session type is resumed
+        if (ack.success && ack.sessionType === CARTA.SessionType.RESUMED) {
+            this.reconnectStream.next();
         }
     }
 

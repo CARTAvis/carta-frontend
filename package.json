@@ -7,7 +7,7 @@
         "@blueprintjs/core": "^3.19.1",
         "@blueprintjs/icons": "^3.11.0",
         "@blueprintjs/select": "^3.11.1",
-        "@blueprintjs/table": "^3.8.2",
+        "@blueprintjs/table": "3.7.1",
         "chart.js": "^2.9.3",
         "chartjs-plugin-annotation": "^0.5.7",
         "golden-layout": "^1.5.9",
@@ -46,12 +46,12 @@
         "eject": "react-scripts-ts eject"
     },
     "devDependencies": {
-        "@types/chart.js": "^2.8.7",
+        "@types/chart.js": "^2.9.3",
         "@types/jest": "^24.0.19",
         "@types/jquery": "^3.3.30",
         "@types/lodash": "^4.14.144",
         "@types/node": "^11.13.22",
-        "@types/react": "^16.9.7",
+        "@types/react": "^16.9.4",
         "@types/react-color": "^3.0.1",
         "@types/react-dom": "^16.9.2",
         "@types/react-resize-detector": "^3.1.1",

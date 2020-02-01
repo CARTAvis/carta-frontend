@@ -1,16 +1,18 @@
 import * as React from "react";
 import {Icon, NonIdealState, Spinner, HTMLTable, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import {BrowserMode} from "stores/FileBrowserStore";
 import {toFixed} from "utilities";
 import "./FileListComponent.css";
 
 export class FileListComponent extends React.Component<{
     darkTheme: boolean,
-    files: CARTA.IFileListResponse,
-    selectedFile: CARTA.IFileInfo,
+    files: CARTA.IFileListResponse | CARTA.ICatalogListResponse,
+    selectedFile: CARTA.IFileInfo | CARTA.ICatalogFileInfo,
     selectedHDU: string,
-    onFileClicked: (file: CARTA.FileInfo, hdu: string) => void,
-    onFileDoubleClicked: (file: CARTA.FileInfo, hdu: string) => void,
+    fileBrowserMode: BrowserMode;
+    onFileClicked: (file: CARTA.FileInfo | CARTA.CatalogFileInfo, hdu?: string) => void,
+    onFileDoubleClicked: (file: CARTA.FileInfo | CARTA.CatalogFileInfo, hdu?: string) => void,
     onFolderClicked: (folder: string, absolute: boolean) => void
 }, { sortColumn: string, sortDirection: number }> {
 
@@ -23,6 +25,10 @@ export class FileListComponent extends React.Component<{
         [CARTA.FileType.REG, {type: "DS9", description: "DS9 Region Format"}],
     ]);
 
+    private static readonly CatalogFileTypeMap = new Map<CARTA.CatalogFileType, { type: string, description: string }>([
+        [CARTA.CatalogFileType.VOTable, {type: "VOTable", description: "XML-Based Table Format"}],
+    ]);
+
     constructor(props: any) {
         super(props);
         this.state = {sortColumn: "name", sortDirection: 1};
@@ -31,6 +37,7 @@ export class FileListComponent extends React.Component<{
     public render() {
         const fileEntries = [];
         const fileList = this.props.files;
+        const mode = this.props.fileBrowserMode;
         if (fileList) {
             let sortedDirectories = [];
             if (fileList.subdirectories && fileList.subdirectories.length) {
@@ -69,25 +76,43 @@ export class FileListComponent extends React.Component<{
                         break;
                 }
             }
-
-            fileEntries.push(sortedFiles.map((file: CARTA.FileInfo) => {
-                return file.HDUList.map(hdu => {
+            if (mode === BrowserMode.Catalog) {
+                fileEntries.push(sortedFiles.map((catalog: CARTA.CatalogFileInfo) => {
                     let className = "file-table-entry";
-                    if (file === this.props.selectedFile && hdu === this.props.selectedHDU) {
+                    if (catalog === this.props.selectedFile) {
                         className += " file-table-entry-selected";
                     }
 
-                    const typeInfo = this.getFileTypeDisplay(file.type);
+                    const typeInfo = this.geCatalogFileTypeDisplay(catalog.type);
                     return (
-                        <tr key={`${file.name}:${hdu}`} onDoubleClick={() => this.props.onFileDoubleClicked(file, hdu)} onClick={() => this.props.onFileClicked(file, hdu)} className={className}>
+                        <tr key={`${catalog.name}`} onDoubleClick={() => this.props.onFileDoubleClicked(catalog)} onClick={() => this.props.onFileClicked(catalog)} className={className}>
                             <td><Icon icon="document"/></td>
-                            <td>{file.HDUList.length > 1 ? `${file.name}: HDU ${hdu}` : file.name}</td>
+                            <td>{catalog.name}</td>
                             <td><Tooltip content={typeInfo.description}>{typeInfo.type}</Tooltip></td>
-                            <td>{this.getFileSizeDisplay(file.size as number)}</td>
+                            <td>{this.getFileSizeDisplay(catalog.fileSize as number)}</td>
                         </tr>
                     );
-                });
-            }));
+                }));  
+            } else {
+                fileEntries.push(sortedFiles.map((file: CARTA.FileInfo) => {                
+                    return file.HDUList.map(hdu => {
+                        let className = "file-table-entry";
+                        if (file === this.props.selectedFile && hdu === this.props.selectedHDU) {
+                            className += " file-table-entry-selected";
+                        }
+
+                        const typeInfo = this.getFileTypeDisplay(file.type);
+                        return (
+                            <tr key={`${file.name}:${hdu}`} onDoubleClick={() => this.props.onFileDoubleClicked(file, hdu)} onClick={() => this.props.onFileClicked(file, hdu)} className={className}>
+                                <td><Icon icon="document"/></td>
+                                <td>{file.HDUList.length > 1 ? `${file.name}: HDU ${hdu}` : file.name}</td>
+                                <td><Tooltip content={typeInfo.description}>{typeInfo.type}</Tooltip></td>
+                                <td>{this.getFileSizeDisplay(file.size as number)}</td>
+                            </tr>
+                        );
+                    });
+                }));
+            }
         }
 
         if (fileList) {
@@ -150,5 +175,9 @@ export class FileListComponent extends React.Component<{
 
     private getFileTypeDisplay(type: CARTA.FileType) {
         return FileListComponent.FileTypeMap.get(type) || {type: "Unknown", description: "An unknown file format"};
+    }
+
+    private geCatalogFileTypeDisplay(type: CARTA.CatalogFileType) {
+        return FileListComponent.CatalogFileTypeMap.get(type) || {type: "Unknown", description: "An unknown file format"};
     }
 }
