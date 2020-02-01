@@ -160,8 +160,11 @@ export class AppStore {
             connected = true;
             this.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
 
+            // Init layout/preference store after connection is built
             const supportServerPreference = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_PREFERENCES ? true : false;
             this.preferenceStore.initUserDefinedPreferences(supportServerPreference, ack.userPreferences);
+            const supportsServerLayout = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_LAYOUTS ? true : false;
+            this.layoutStore.initUserDefinedLayouts(supportsServerLayout, ack.userLayouts);
             this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
             this.layoutStore.applyLayout(this.preferenceStore.layout);
             this.compressionQuality = this.preferenceStore.imageCompressionQuality;
@@ -500,7 +503,7 @@ export class AppStore {
         this.fileBrowserStore = new FileBrowserStore(this, this.backendService);
         this.animatorStore = new AnimatorStore(this);
         this.overlayStore = new OverlayStore(this, this.preferenceStore);
-        this.widgetsStore = new WidgetsStore(this, this.layoutStore);
+        this.widgetsStore = new WidgetsStore(this);
         this.compressionQuality = this.preferenceStore.imageCompressionQuality;
         this.initRequirements();
         this.dialogStore = new DialogStore(this);

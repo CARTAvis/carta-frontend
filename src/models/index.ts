@@ -17,3 +17,4 @@ export * from "./TileCache";
 export * from "./Processed";
 export * from "./Event";
 export * from "./CARTAInfo";
+export * from "./LayoutConfig";

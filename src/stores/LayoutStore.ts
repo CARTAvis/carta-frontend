@@ -1,120 +1,14 @@
 import {observable, computed, action} from "mobx";
-import {AppStore, AlertStore, WidgetConfig} from "stores";
+import {AppStore, AlertStore} from "stores";
 import * as GoldenLayout from "golden-layout";
-import {PresetLayout} from "models";
+import {LayoutConfig, PresetLayout} from "models";
 import {AppToaster} from "components/Shared";
-import {smoothStepOffset} from "utilities";
 
-const INITIAL_LAYOUT_VERSION = 1;
 const KEY = "savedLayouts";
 const MAX_LAYOUT = 10;
-const COMPONENT_CONFIG = new Map<string, any>([
-    ["image-view", {
-        type: "react-component",
-        component: "image-view",
-        title: "No image loaded",
-        height: smoothStepOffset(window.innerHeight, 720, 1080, 65, 75), // image view fraction: adjust layout properties based on window dimensions
-        id: "image-view",
-        isClosable: false
-    }],
-    ["render-config", {
-        type: "react-component",
-        component: "render-config",
-        title: "Render Configuration",
-        id: "render-config"
-    }],
-    ["region-list", {
-        type: "react-component",
-        component: "region-list",
-        title: "Region List",
-        id: "region-list"
-    }],
-    ["animator", {
-        type: "react-component",
-        component: "animator",
-        title: "Animator",
-        id: "animator"
-    }],
-    ["spatial-profiler", {
-        type: "react-component",
-        component: "spatial-profiler",
-        id: "spatial-profiler"
-    }],
-    ["spectral-profiler", {
-        type: "react-component",
-        component: "spectral-profiler",
-        id: "spectral-profiler",
-        title: "Z Profile: Cursor"
-    }],
-    ["stokes", {
-        type: "react-component",
-        component: "stokes",
-        id: "stokes",
-        title: "Stokes Analysis"
-    }],
-    ["histogram", {
-        type: "react-component",
-        component: "histogram",
-        title: "Histogram",
-        id: "histogram"
-    }],
-    ["stats", {
-        type: "react-component",
-        component: "stats",
-        title: "Statistics",
-        id: "stats"
-    }],
-    ["layer-list", {
-        type: "react-component",
-        component: "layer-list",
-        title: "Layer List",
-        id: "layer-list"
-    }],
-    ["log", {
-        type: "react-component",
-        component: "log",
-        title: "Log",
-        id: "log"
-    }]
-]);
-
-const PRESET_CONFIGS = new Map<string, any>([
-    [PresetLayout.DEFAULT, {
-        leftBottomContent: {
-            type: "stack",
-            content: [{type: "component", id: "render-config"}]
-        },
-        rightColumnContent: [{type: "component", id: "spatial-profiler", coord: "x"}, {type: "component", id: "spatial-profiler", coord: "y"}, {
-            type: "stack",
-            content: [{type: "component", id: "animator"}, {type: "component", id: "region-list"}]
-        }]
-    }],
-    [PresetLayout.CUBEVIEW, {
-        leftBottomContent: {
-            type: "stack",
-            content: [{type: "component", id: "animator"}, {type: "component", id: "render-config"}, {type: "component", id: "region-list"}]
-        },
-        rightColumnContent: [{type: "component", id: "spatial-profiler", coord: "x"}, {type: "component", id: "spatial-profiler", coord: "y"}, {type: "component", id: "spectral-profiler"}]
-    }],
-    [PresetLayout.CUBEANALYSIS, {
-        leftBottomContent: {
-            type: "stack",
-            content: [{type: "component", id: "animator"}, {type: "component", id: "render-config"}, {type: "component", id: "region-list"}]
-        },
-        rightColumnContent: [{type: "component", id: "spectral-profiler"}, {type: "component", id: "stats"}]
-    }],
-    [PresetLayout.CONTINUUMANALYSIS, {
-        leftBottomContent: {
-            type: "stack",
-            content: [{type: "component", id: "render-config"}, {type: "component", id: "region-list"}, {type: "component", id: "animator"}]
-        },
-        rightColumnContent: [{type: "component", id: "spatial-profiler", coord: "x"}, {type: "component", id: "spatial-profiler", coord: "y"}, {type: "component", id: "stats"}]
-    }]
-]);
 
 export class LayoutStore {
-    public static TOASTER_TIMEOUT = 1500;
-    private static readonly LayoutVersion = 1;
+    public static readonly TOASTER_TIMEOUT = 1500;
 
     private readonly appStore: AppStore;
     private alertStore: AlertStore;
@@ -124,13 +18,15 @@ export class LayoutStore {
     @observable dockedLayout: GoldenLayout;
     @observable currentLayoutName: string;
     @observable private layouts: any;
+    @observable supportsServer: boolean;
 
     constructor(appStore: AppStore, alertStore: AlertStore) {
         this.appStore = appStore;
         this.alertStore = alertStore;
         this.dockedLayout = null;
         this.layouts = {};
-        this.initLayouts();
+        this.supportsServer = false;
+        this.initLayoutsFromPresets();
     }
 
     public layoutExist = (layoutName: string): boolean => {
@@ -141,28 +37,39 @@ export class LayoutStore {
         this.layoutNameToBeSaved = layoutName ? layoutName : "Empty";
     };
 
-    private initLayouts = () => {
-        // 1. fill layout with presets
-        PresetLayout.PRESETS.forEach((presetName) => {
-            const config = PRESET_CONFIGS.get(presetName);
-            this.layouts[presetName] = {
-                layoutVersion: LayoutStore.LayoutVersion,
-                docked: {
-                    type: "row",
-                    content: [{
-                        type: "column",
-                        width: 60,
-                        content: [{type: "component", id: "image-view"}, config.leftBottomContent]
-                    }, {
-                        type: "column",
-                        content: config.rightColumnContent
-                    }]
-                },
-                floating: []
-            };
-        });
+    public initUserDefinedLayouts = (supportsServer: boolean, layouts: { [k: string]: string; }) => {
+        this.supportsServer = supportsServer;
+        if (supportsServer) {
+            this.initLayoutsFromServer(layouts);
+        } else {
+            this.initLayoutsFromLocalStorage();
+        }
+    };
 
-        // 2. add user layouts stored in local storage
+    private initLayoutsFromPresets = () => {
+        PresetLayout.PRESETS.forEach((presetName) => {
+            const presetConfig = LayoutConfig.GetPresetConfig(presetName);
+            if (presetConfig) {
+                this.layouts[presetName] = presetConfig;
+            }
+        });
+    };
+
+    private initLayoutsFromServer = (userLayouts: { [k: string]: string; }) => {
+        let parsedLayouts = {};
+        Object.keys(userLayouts).forEach((layoutName) => {
+            try {
+                if (userLayouts[layoutName] !== "") {
+                    parsedLayouts[layoutName] = JSON.parse(userLayouts[layoutName]);
+                }
+            } catch (e) {
+                this.alertStore.showAlert(`Loading user-defined layout ${layoutName} failed!`);
+            }
+        });
+        this.validateUserLayouts(parsedLayouts);
+    };
+
+    private initLayoutsFromLocalStorage = () => {
         const layoutJson = localStorage.getItem(KEY);
         let userLayouts = null;
         if (layoutJson) {
@@ -173,13 +80,20 @@ export class LayoutStore {
                 userLayouts = null;
             }
         }
+        this.validateUserLayouts(userLayouts);
+    };
 
-        if (userLayouts) {
-            // skip user layouts which have the same name as presets
-            Object.keys(userLayouts).forEach((userLayout) => {
-                if (!PresetLayout.isValid(userLayout)) { this.layouts[userLayout] = userLayouts[userLayout]; }
-            });
+    private validateUserLayouts = (userLayouts) => {
+        if (!userLayouts) {
+            return;
         }
+        const layoutNames = Object.keys(userLayouts);
+        layoutNames.forEach((layoutName) => {
+            const layoutConfig = userLayouts[layoutName];
+            if (layoutConfig && LayoutConfig.IsUserLayoutValid(layoutName, layoutConfig)) {
+                this.layouts[layoutName] = layoutConfig;
+            }
+        });
     };
 
     private saveLayoutToLocalStorage = (): boolean => {
@@ -187,7 +101,9 @@ export class LayoutStore {
             // save only user layouts to local storage, excluding presets
             let userLayouts = {};
             this.userLayouts.forEach((layoutName) => {
-                if (!PresetLayout.isValid(layoutName)) { userLayouts[layoutName] = this.layouts[layoutName]; }
+                if (!PresetLayout.isPreset(layoutName)) {
+                    userLayouts[layoutName] = this.layouts[layoutName];
+                }
             });
 
             try {
@@ -202,100 +118,12 @@ export class LayoutStore {
         return true;
     };
 
-    private genSimpleConfig = (newParentContent, parentContent): void => {
-        if (!newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
-            return;
-        }
-
-        parentContent.forEach((child) => {
-            if (child.type) {
-                if (child.type === "stack" || child.type === "row" || child.type === "column") {
-                    let simpleChild = {
-                        type: child.type,
-                        content: []
-                    };
-                    if (child.width) {
-                        simpleChild["width"] = child.width;
-                    }
-                    if (child.height) {
-                        simpleChild["height"] = child.height;
-                    }
-                    newParentContent.push(simpleChild);
-                    if (child.content) {
-                        this.genSimpleConfig(simpleChild.content, child.content);
-                    }
-                } else if (child.type === "component" && child.id) {
-                    const trimmed = (child.id).replace(/\-\d+$/, "");
-                    let simpleChild = {
-                        type: child.type,
-                        id: trimmed
-                    };
-                    if (trimmed === "spatial-profiler") {
-                        // TODO: use better way to reveal coord property in config
-                        simpleChild["coord"] = child.title && child.title.indexOf("Y") >= 0 ? "y" : "x";
-                    }
-                    if (child.width) {
-                        simpleChild["width"] = child.width;
-                    }
-                    if (child.height) {
-                        simpleChild["height"] = child.height;
-                    }
-                    newParentContent.push(simpleChild);
-                }
-            }
-        });
-    };
-
-    private fillComponents = (newParentContent, parentContent, componentConfigs: any[]) => {
-        if (!newParentContent || !Array.isArray(newParentContent) || !parentContent || !Array.isArray(parentContent)) {
-            return;
-        }
-
-        parentContent.forEach((child) => {
-            if (child.type) {
-                if (child.type === "stack" || child.type === "row" || child.type === "column") {
-                    let simpleChild = {
-                        type: child.type,
-                        content: []
-                    };
-                    if (child.width) {
-                        simpleChild["width"] = child.width;
-                    }
-                    if (child.height) {
-                        simpleChild["height"] = child.height;
-                    }
-                    newParentContent.push(simpleChild);
-                    if (child.content) {
-                        this.fillComponents(simpleChild.content, child.content, componentConfigs);
-                    }
-                } else if (child.type === "component" && child.id) {
-                    const trimmed = (child.id).replace(/\-\d+$/, "");
-                    if (COMPONENT_CONFIG.has(trimmed)) {
-                        let componentConfig = Object.assign({}, COMPONENT_CONFIG.get(trimmed));
-                        if (trimmed === "spatial-profiler") {
-                            componentConfig["coord"] = child.coord ? child.coord : "x";
-                        }
-                        if (child.width) {
-                            componentConfig["width"] = child.width;
-                        }
-                        if (child.height) {
-                            componentConfig["height"] = child.height;
-                        }
-                        componentConfig.props = {appStore: this.appStore, id: "", docked: true};
-                        componentConfigs.push(componentConfig);
-                        newParentContent.push(componentConfig);
-                    }
-                }
-            }
-        });
-    };
-
     @computed get allLayouts(): string[] {
         return this.layouts ? Object.keys(this.layouts) : [];
     }
 
     @computed get userLayouts(): string[] {
-        return this.layouts ? Object.keys(this.layouts).filter((layoutName) => !PresetLayout.isValid(layoutName)) : [];
+        return this.layouts ? Object.keys(this.layouts).filter((layoutName) => !PresetLayout.isPreset(layoutName)) : [];
     }
 
     @computed get orderedLayouts(): string[] {
@@ -314,15 +142,6 @@ export class LayoutStore {
         }
 
         const config = this.layouts[layoutName];
-        if (!config || !config.layoutVersion || !config.docked || !config.docked.type || !config.docked.content || !config.floating) {
-            this.alertStore.showAlert(`Applying layout failed! Something is wrong with layout ${layoutName}.`);
-            return false;
-        }
-
-        if (isNaN(config.layoutVersion) || config.layoutVersion > LayoutStore.LayoutVersion || config.layoutVersion < INITIAL_LAYOUT_VERSION) {
-            this.alertStore.showAlert(`Invalid layout version.`);
-            return false;
-        }
 
         // destroy old layout & clear floating widgets
         if (this.dockedLayout) {
@@ -336,7 +155,7 @@ export class LayoutStore {
             content: []
         };
         let dockedComponentConfigs = [];
-        this.fillComponents(dockedConfig.content, config.docked.content, dockedComponentConfigs);
+        LayoutConfig.CreateConfigToApply(this.appStore, dockedConfig.content, config.docked.content, dockedComponentConfigs);
 
         // use component configs to init widget stores, IDs in componentConfigs will be updated
         this.appStore.widgetsStore.initWidgets(dockedComponentConfigs, config.floating);
@@ -368,7 +187,7 @@ export class LayoutStore {
             return;
         }
 
-        if (PresetLayout.isValid(this.layoutNameToBeSaved)) {
+        if (PresetLayout.isPreset(this.layoutNameToBeSaved)) {
             this.alertStore.showAlert("Layout name cannot be the same as system presets.");
             return;
         }
@@ -379,47 +198,39 @@ export class LayoutStore {
         }
 
         const currentConfig = this.dockedLayout.toConfig();
-        if (!currentConfig || !currentConfig.content || currentConfig.content.length <= 0 || !currentConfig.content[0].type || !currentConfig.content[0].content) {
+        if (!currentConfig || !currentConfig.content || currentConfig.content.length <= 0) {
             this.alertStore.showAlert("Saving layout failed! Something is wrong with current layout.");
             return;
         }
 
-        // 1. generate simple config from current docked widgets
-        const rootConfig = currentConfig.content[0];
-        let simpleConfig = {
-            layoutVersion: LayoutStore.LayoutVersion,
-            docked: {
-                type: rootConfig.type,
-                content: []
-            },
-            floating: []
-        };
-        this.genSimpleConfig(simpleConfig.docked.content, rootConfig.content);
-
-        // 2. handle floating widgets
-        this.appStore.widgetsStore.floatingWidgets.forEach((config: WidgetConfig) => {
-            let floatingConfig = {
-                type: config.type,
-                defaultWidth: config.defaultWidth ? config.defaultWidth : "",
-                defaultHeight: config.defaultHeight ? config.defaultHeight : "",
-                defaultX: config.defaultX ? config.defaultX : "",
-                defaultY: config.defaultY ? config.defaultY : ""
-            };
-            if (config.type === "spatial-profiler") {
-                floatingConfig["coord"] = config.title && config.title.indexOf("Y") >= 0 ? "y" : "x";
-            }
-            simpleConfig.floating.push(floatingConfig);
-        });
-
-        // save layout to layouts[] & local storage
-        this.layouts[this.layoutNameToBeSaved] = simpleConfig;
-        if (!this.saveLayoutToLocalStorage()) {
-            delete this.layouts[this.layoutNameToBeSaved];
+        const configToSave = LayoutConfig.CreateConfigToSave(this.appStore, currentConfig.content[0]);
+        if (!configToSave) {
+            this.alertStore.showAlert("Saving layout failed! Creat layout configuration for saving failed.");
             return;
         }
 
-        this.currentLayoutName = this.layoutNameToBeSaved;
-        AppToaster.show({icon: "layout-grid", message: `Layout ${this.layoutNameToBeSaved} saved successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
+        // save layout to layouts[] & server/local storage
+        this.layouts[this.layoutNameToBeSaved] = configToSave;
+        if (this.supportsServer) {
+            this.appStore.backendService.setUserLayout(this.layoutNameToBeSaved, JSON.stringify(configToSave)).subscribe(() => {
+                this.handleSaveResult(true);
+            }, err => {
+                console.log(err);
+                this.handleSaveResult(false);
+            });
+        } else {
+            this.handleSaveResult(this.saveLayoutToLocalStorage());
+        }
+    };
+
+    private handleSaveResult = (success: boolean) => {
+        if (success) {
+            AppToaster.show({icon: "layout-grid", message: `Layout ${this.layoutNameToBeSaved} saved successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
+            this.currentLayoutName = this.layoutNameToBeSaved;
+        } else {
+            delete this.layouts[this.layoutNameToBeSaved];
+            this.alertStore.showAlert("Saving user-defined layout failed! ");
+        }
     };
 
     @action deleteLayout = (layoutName: string) => {
@@ -429,13 +240,31 @@ export class LayoutStore {
         }
 
         delete this.layouts[layoutName];
-        if (!this.saveLayoutToLocalStorage()) {
-            return;
+
+        if (this.supportsServer) {
+            this.appStore.backendService.setUserLayout(layoutName, "").subscribe(() => {
+                this.handleDeleteResult(layoutName, true);
+            }, err => {
+                console.log(err);
+                this.handleDeleteResult(layoutName, false);
+            });
+        } else {
+            this.handleDeleteResult(layoutName, this.saveLayoutToLocalStorage());
         }
 
         if (layoutName === this.currentLayoutName) {
             this.currentLayoutName = "";
         }
-        AppToaster.show({icon: "layout-grid", message: `Layout ${layoutName} deleted successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
+    };
+
+    private handleDeleteResult = (layoutName: string, success: boolean) => {
+        if (success) {
+            AppToaster.show({icon: "layout-grid", message: `Layout ${layoutName} deleted successfully.`, intent: "success", timeout: LayoutStore.TOASTER_TIMEOUT});
+            if (layoutName === this.currentLayoutName) {
+                this.currentLayoutName = "";
+            }
+        } else {
+            this.alertStore.showAlert("Saving user-defined layout failed! ");
+        }
     };
 }
