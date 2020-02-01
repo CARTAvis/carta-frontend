@@ -83,10 +83,7 @@ export class BackendService {
             [CARTA.EventType.IMPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.EXPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.SET_REGION_ACK, this.onSimpleMappedResponse],
-<<<<<<< HEAD
-=======
             [CARTA.EventType.SET_USER_LAYOUT_ACK, this.onSimpleMappedResponse],
->>>>>>> dev
             [CARTA.EventType.SET_USER_PREFERENCES_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.RESUME_SESSION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.START_ANIMATION_ACK, this.onStartAnimationAck],
