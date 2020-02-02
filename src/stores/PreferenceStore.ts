@@ -174,7 +174,7 @@ export class PreferenceStore {
     private readonly appStore: AppStore;
 
     @observable preferences: Map<PreferenceKeys, any>;
-    @observable supportServer: boolean;
+    @observable supportsServer: boolean;
 
     private PREFERENCE_VALIDATORS = new Map<PreferenceKeys, (values: string) => any>([
         [PreferenceKeys.GLOBAL_THEME, (value: string): string => { return value && Theme.isValid(value) ? value : DEFAULTS.GLOBAL.theme; }],
@@ -484,7 +484,7 @@ export class PreferenceStore {
             }
         }
 
-        if (this.supportServer) {
+        if (this.supportsServer) {
             this.savePreferencesToServer(keyStr, valueStr);
         } else {
             localStorage.setItem(keyStr, valueStr);
@@ -554,16 +554,16 @@ export class PreferenceStore {
 
     @action resetLogEventSettings = () => {
         this.preferences.get(PreferenceKeys.LOG_EVENT).forEach((value, key, map) => map.set(key, DEFAULTS.LOG_EVENT.eventLoggingEnabled));
-        if (this.supportServer) {
+        if (this.supportsServer) {
             this.savePreferencesToServer(KEY_TO_STRING.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
         } else {
             localStorage.setItem(KEY_TO_STRING.get(PreferenceKeys.LOG_EVENT), JSON.stringify(this.enabledLoggingEventNames));
         }
     };
 
-    public initUserDefinedPreferences = (supportServer: boolean, serverPreference: { [k: string]: string; }) => {
-        this.supportServer = supportServer;
-        if (supportServer) {
+    public initUserDefinedPreferences = (supportsServer: boolean, serverPreference: { [k: string]: string; }) => {
+        this.supportsServer = supportsServer;
+        if (supportsServer) {
             this.initPreferenceFromServer(serverPreference);
         } else {
             this.initPreferenceFromLocalStorage();
@@ -708,7 +708,7 @@ export class PreferenceStore {
 
     constructor(appStore: AppStore) {
         this.appStore = appStore;
-        this.supportServer = false;
+        this.supportsServer = false;
         this.initPreferenceFromDefault();
     }
 }
