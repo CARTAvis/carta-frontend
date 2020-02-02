@@ -4,8 +4,9 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
 import {ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, Transform2D} from "models";
-import {clamp, findChannelType, findRefPixel, frequencyStringFromVelocity, getApproximateCoordinates, getHeaderNumericValue, getTransform, minMax2D, rotate2D, toFixed, trimFitsComment, velocityStringFromFrequency} from "utilities";
+import {clamp, findChannelType, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates, length2D, minMax2D, rotate2D, subtract2D, toFixed, trimFitsComment, velocityStringFromFrequency} from "utilities";
 import {BackendService} from "services";
+import {ControlMap} from "../models/ControlMap";
 
 export interface FrameInfo {
     fileId: number;
@@ -53,8 +54,8 @@ export class FrameStore {
     @observable regionSet: RegionSetStore;
     @observable overlayBeamSettings: OverlayBeamStore;
     @observable spatialReference: FrameStore;
-    @observable spatialTransform: Transform2D;
-    @observable transformedWcsInfo: number;
+    @observable controlMaps: Map<FrameStore, ControlMap>;
+    @observable secondaryImages: FrameStore[];
 
     @computed get requiredFrameView(): FrameView {
         // use spatial reference frame to calculate frame view, if it exists
@@ -63,10 +64,10 @@ export class FrameStore {
             const refView = this.spatialReference.requiredFrameView;
             // Get the position of the ref frame's view in the secondary frame's pixel space
             const corners = [
-                getApproximateCoordinates(this.spatialTransform, {x: refView.xMin, y: refView.yMin}, false),
-                getApproximateCoordinates(this.spatialTransform, {x: refView.xMin, y: refView.yMax}, false),
-                getApproximateCoordinates(this.spatialTransform, {x: refView.xMax, y: refView.yMax}, false),
-                getApproximateCoordinates(this.spatialTransform, {x: refView.xMax, y: refView.yMin}, false)
+                this.spatialTransform.transformCoordinate({x: refView.xMin, y: refView.yMin}, false),
+                this.spatialTransform.transformCoordinate({x: refView.xMin, y: refView.yMax}, false),
+                this.spatialTransform.transformCoordinate({x: refView.xMax, y: refView.yMax}, false),
+                this.spatialTransform.transformCoordinate({x: refView.xMax, y: refView.yMin}, false)
             ];
 
             const {minPoint, maxPoint} = minMax2D(corners);
@@ -114,6 +115,35 @@ export class FrameStore {
                 mip: mipRoundedPow2
             };
         }
+    }
+
+    @computed get spatialTransform() {
+        if (this.spatialReference && this.spatialTransformAST) {
+            const center = getTransformedCoordinates(this.spatialTransformAST, this.spatialReference.center, false);
+            return new Transform2D(this.spatialTransformAST, center);
+        }
+        return null;
+    }
+
+    @computed get transformedWcsInfo() {
+        if (this.spatialTransform) {
+            let adjTranslation: Point2D = {
+                x: -this.spatialTransform.translation.x / this.spatialTransform.scale,
+                y: -this.spatialTransform.translation.y / this.spatialTransform.scale,
+            };
+            adjTranslation = rotate2D(adjTranslation, -this.spatialTransform.rotation);
+            if (this.cachedTransformedWcsInfo >= 0) {
+                AST.delete(this.cachedTransformedWcsInfo);
+            }
+
+            this.cachedTransformedWcsInfo = AST.createTransformedFrameset(this.wcsInfo,
+                adjTranslation.x, adjTranslation.y,
+                -this.spatialTransform.rotation,
+                this.spatialTransform.origin.x, this.spatialTransform.origin.y,
+                1.0 / this.spatialTransform.scale, 1.0 / this.spatialTransform.scale);
+            return this.cachedTransformedWcsInfo;
+        }
+        return null;
     }
 
     @computed get renderWidth() {
@@ -378,8 +408,8 @@ export class FrameStore {
     private readonly backendService: BackendService;
     private readonly contourContext: WebGLRenderingContext;
     private spatialTransformAST: number;
+    private cachedTransformedWcsInfo: number = -1;
     private zoomTimeoutHandler;
-    public readonly referencePixel: Point2D;
 
     private static readonly CursorInfoMaxPrecision = 25;
     private static readonly ZoomInertiaDuration = 250;
@@ -405,9 +435,8 @@ export class FrameStore {
         this.moving = false;
         this.zooming = false;
         this.overlayBeamSettings = new OverlayBeamStore(preference);
-        this.spatialTransform = null;
         this.spatialTransformAST = null;
-        this.transformedWcsInfo = null;
+        this.controlMaps = new Map<FrameStore, ControlMap>();
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preference.astColor;
@@ -437,7 +466,6 @@ export class FrameStore {
         this.initWCS();
         this.initCenter();
         this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
-        this.referencePixel = findRefPixel(this.frameInfo.fileInfoExtended.headerEntries) || {x: this.frameInfo.fileInfoExtended.width / 2.0, y: this.frameInfo.fileInfoExtended.height};
 
         // need initialized wcs to get correct cursor info
         this.cursorInfo = this.getCursorInfoImageSpace({x: 0, y: 0});
@@ -510,7 +538,7 @@ export class FrameStore {
                 // y coordinate is flipped in image space
                 y: (canvasY / this.spatialReference.renderHeight) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
             };
-            return getApproximateCoordinates(this.spatialTransform, imagePosRefImage, false);
+            return this.spatialTransform.transformCoordinate(imagePosRefImage, false);
         } else {
             const frameView = this.requiredFrameView;
             return {
@@ -707,7 +735,7 @@ export class FrameStore {
 
     @action setCenter(x: number, y: number) {
         if (this.spatialReference) {
-            const centerPointRefImage = getApproximateCoordinates(this.spatialTransform, {x, y}, true);
+            const centerPointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
             this.spatialReference.setCenter(centerPointRefImage.x, centerPointRefImage.y);
         } else {
             this.center = {x, y};
@@ -729,7 +757,7 @@ export class FrameStore {
         if (this.spatialReference) {
             // Adjust zoom by scaling factor if zoom level is not absolute
             const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
-            const pointRefImage = getApproximateCoordinates(this.spatialTransform, {x, y}, true);
+            const pointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
             const newCenter = {
@@ -760,10 +788,10 @@ export class FrameStore {
         if (this.spatialReference) {
             // Calculate bounding box for transformed image
             const corners = [
-                getApproximateCoordinates(this.spatialTransform, {x: 0, y: 0}, true),
-                getApproximateCoordinates(this.spatialTransform, {x: 0, y: this.frameInfo.fileInfoExtended.height}, true),
-                getApproximateCoordinates(this.spatialTransform, {x: this.frameInfo.fileInfoExtended.width, y: this.frameInfo.fileInfoExtended.height}, true),
-                getApproximateCoordinates(this.spatialTransform, {x: this.frameInfo.fileInfoExtended.width, y: 0}, true)
+                this.spatialTransform.transformCoordinate({x: 0, y: 0}, true),
+                this.spatialTransform.transformCoordinate({x: 0, y: this.frameInfo.fileInfoExtended.height}, true),
+                this.spatialTransform.transformCoordinate({x: this.frameInfo.fileInfoExtended.width, y: this.frameInfo.fileInfoExtended.height}, true),
+                this.spatialTransform.transformCoordinate({x: this.frameInfo.fileInfoExtended.width, y: 0}, true)
             ];
             const {minPoint, maxPoint} = minMax2D(corners);
             const rangeX = maxPoint.x - minPoint.x;
@@ -844,6 +872,7 @@ export class FrameStore {
         }
         console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
         this.spatialReference = frame;
+        this.spatialReference.addSecondaryImage(this);
 
         const copySrc = AST.copy(this.wcsInfo);
         const copyDest = AST.copy(frame.wcsInfo);
@@ -856,32 +885,19 @@ export class FrameStore {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
         } else {
             const tStart = performance.now();
-            const grid = AST.getTransformGrid(this.spatialTransformAST, 0.5, this.frameInfo.fileInfoExtended.width + 0.5, 200, 0.5, this.frameInfo.fileInfoExtended.height + 0.5, 200, 1);
+            this.controlMaps.set(this.spatialReference, new ControlMap(this, this.spatialReference, this.spatialTransformAST, this.preference.contourControlMapWidth, this.preference.contourControlMapWidth));
             const tEnd = performance.now();
             const dt = tEnd - tStart;
-            console.log(`Created transform grid in ${dt} ms`);
+            console.log(`Created ${this.preference.contourControlMapWidth}x${this.preference.contourControlMapWidth} transform grid in ${dt} ms`);
         }
-
-        this.spatialTransform = getTransform(this.spatialTransformAST, this.referencePixel);
-        // Translation is applied after scaling / rotation matrix, so it needs to be adjusted by the inverse matrix
-        let adjTranslation: Point2D = {
-            x: -this.spatialTransform.translation.x / this.spatialTransform.scale,
-            y: -this.spatialTransform.translation.y / this.spatialTransform.scale,
-        };
-        adjTranslation = rotate2D(adjTranslation, -this.spatialTransform.rotation);
-
-        this.transformedWcsInfo = AST.createTransformedFrameset(this.wcsInfo,
-            adjTranslation.x, adjTranslation.y,
-            -this.spatialTransform.rotation,
-            this.spatialTransform.origin.x, this.spatialTransform.origin.y,
-            1.0 / this.spatialTransform.scale, 1.0 / this.spatialTransform.scale);
     };
 
     @action clearSpatialReference = () => {
         // Adjust center and zoom based on existing spatial reference
         if (this.spatialReference) {
-            this.center = getApproximateCoordinates(this.spatialTransform, this.spatialReference.center, false);
+            this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
             this.zoomLevel = this.spatialReference.zoomLevel * this.spatialTransform.scale;
+            this.spatialReference.removeSecondaryImage(this);
             this.spatialReference = null;
         }
 
@@ -889,6 +905,19 @@ export class FrameStore {
             AST.delete(this.spatialTransformAST);
         }
         this.spatialTransformAST = null;
-        this.spatialTransform = null;
+    };
+
+    @action addSecondaryImage = (frame: FrameStore) => {
+        if (!this.secondaryImages) {
+            this.secondaryImages = [frame];
+        } else if (!this.secondaryImages.find(f => f.frameInfo.fileId === frame.frameInfo.fileId)) {
+            this.secondaryImages.push(frame);
+        }
+    };
+
+    @action removeSecondaryImage = (frame: FrameStore) => {
+        if (this.secondaryImages) {
+            this.secondaryImages = this.secondaryImages.filter(f => f.frameInfo.fileId !== frame.frameInfo.fileId);
+        }
     };
 }

@@ -301,8 +301,8 @@ EMSCRIPTEN_KEEPALIVE float* fillTransformGrid(AstFrameSet* wcsInfo, double xMin,
     // Convert to float and fill output array
     for (auto i = 0; i < N; i++)
     {
-        out[i * 2] = pixBx[i];
-        out[i * 2 + 1] = pixBy[i];
+        out[2* i] = pixBx[i];
+        out[2 * i + 1] = pixBy[i];
     }
 
     // Clean up temp double precision pixels
