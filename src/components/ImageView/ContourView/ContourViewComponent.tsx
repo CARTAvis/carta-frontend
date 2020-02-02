@@ -1,10 +1,9 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {AppStore, ContourDashMode, FrameStore, OverlayStore, RenderConfigStore} from "stores";
-import {getShaderFromString, GL, loadImageTexture} from "utilities";
+import {getShaderFromString, GL, loadImageTexture, rotate2D, scale2D, subtract2D} from "utilities";
 import "./ContourViewComponent.css";
 import allMaps from "static/allmaps.png";
-import {observable} from "mobx";
 
 const vertexShaderLine = require("!raw-loader!./GLSL/vert_line.glsl");
 const pixelShaderDashed = require("!raw-loader!./GLSL/pixel_dashed.glsl");
@@ -16,8 +15,8 @@ export interface ContourViewComponentProps {
 }
 
 interface ShaderUniforms {
-    FrameMin: WebGLUniformLocation;
-    FrameMax: WebGLUniformLocation;
+    RangeScale: WebGLUniformLocation;
+    RangeOffset: WebGLUniformLocation;
     RotationOrigin: WebGLUniformLocation;
     RotationAngle: WebGLUniformLocation;
     ScaleAdjustment: WebGLUniformLocation;
@@ -119,7 +118,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
     private renderFrameContours = (frame: FrameStore, isActive: boolean) => {
         const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
-
         // update uniforms
         this.gl.uniform1i(this.shaderUniforms.CmapEnabled, frame.contourConfig.colormapEnabled ? 1 : 0);
         if (frame.contourConfig.colormapEnabled) {
@@ -131,19 +129,42 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         if (isActive) {
             this.gl.uniform1i(this.shaderUniforms.ControlMapEnabled, 0);
             this.gl.uniform1i(this.shaderUniforms.ControlMapTexture, 0);
-            this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / zoomLevel);
+            const thickness = devicePixelRatio * frame.contourConfig.thickness / zoomLevel;
+            this.gl.uniform1f(this.shaderUniforms.LineThickness, thickness);
 
             if (frame.spatialReference) {
                 let rotationOrigin = frame.spatialTransform.origin;
-                this.gl.uniform2f(this.shaderUniforms.FrameMin, frame.spatialReference.requiredFrameView.xMin, frame.spatialReference.requiredFrameView.yMin);
-                this.gl.uniform2f(this.shaderUniforms.FrameMax, frame.spatialReference.requiredFrameView.xMax, frame.spatialReference.requiredFrameView.yMax);
+                const rangeScale = {
+                    x: 1.0 / (frame.spatialReference.requiredFrameView.xMax - frame.spatialReference.requiredFrameView.xMin),
+                    y: 1.0 / (frame.spatialReference.requiredFrameView.yMax - frame.spatialReference.requiredFrameView.yMin),
+                };
+
+                // Instead of rotating and scaling about an origin on the GPU (float32), we take this out of the shader, and perform beforehand (float64, and consistent)
+                const originAdjustedOffset = subtract2D(frame.spatialTransform.origin, scale2D(rotate2D(frame.spatialTransform.origin, frame.spatialTransform.rotation), frame.spatialTransform.scale));
+
+                const rangeOffset = {
+                    x: (frame.spatialTransform.translation.x - frame.spatialReference.requiredFrameView.xMin + originAdjustedOffset.x) * rangeScale.x,
+                    y: (frame.spatialTransform.translation.y - frame.spatialReference.requiredFrameView.yMin + originAdjustedOffset.y) * rangeScale.y
+                };
+
+                this.gl.uniform2f(this.shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
+                this.gl.uniform2f(this.shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
                 this.gl.uniform2f(this.shaderUniforms.RotationOrigin, rotationOrigin.x, rotationOrigin.y);
                 this.gl.uniform1f(this.shaderUniforms.RotationAngle, -frame.spatialTransform.rotation);
                 this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, frame.spatialTransform.scale);
-                this.gl.uniform2f(this.shaderUniforms.Offset, frame.spatialTransform.translation.x, frame.spatialTransform.translation.y);
+
             } else {
-                this.gl.uniform2f(this.shaderUniforms.FrameMin, frame.requiredFrameView.xMin, frame.requiredFrameView.yMin);
-                this.gl.uniform2f(this.shaderUniforms.FrameMax, frame.requiredFrameView.xMax, frame.requiredFrameView.yMax);
+                const rangeScale = {
+                    x: 1.0 / (frame.requiredFrameView.xMax - frame.requiredFrameView.xMin),
+                    y: 1.0 / (frame.requiredFrameView.yMax - frame.requiredFrameView.yMin),
+                };
+                const rangeOffset = {
+                    x: -frame.requiredFrameView.xMin * rangeScale.x,
+                    y: -frame.requiredFrameView.yMin * rangeScale.y
+                };
+
+                this.gl.uniform2f(this.shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
+                this.gl.uniform2f(this.shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
                 this.gl.uniform1f(this.shaderUniforms.RotationAngle, 0.0);
                 this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, 1.0);
                 this.gl.uniform2f(this.shaderUniforms.Offset, 0, 0);
@@ -158,9 +179,20 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             this.gl.bindTexture(GL.TEXTURE_2D, controlMap.getTextureX(this.gl));
             this.gl.uniform1i(this.shaderUniforms.ControlMapTexture, 1);
 
+            const rangeScale = {
+                x: 1.0 / (frame.spatialReference.requiredFrameView.xMax - frame.spatialReference.requiredFrameView.xMin),
+                y: 1.0 / (frame.spatialReference.requiredFrameView.yMax - frame.spatialReference.requiredFrameView.yMin),
+            };
+
+            const rangeOffset = {
+                x: -frame.spatialReference.requiredFrameView.xMin * rangeScale.x,
+                y: -frame.spatialReference.requiredFrameView.yMin * rangeScale.y
+            };
+
+            this.gl.uniform2f(this.shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
+            this.gl.uniform2f(this.shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
+
             this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / frame.spatialReference.zoomLevel);
-            this.gl.uniform2f(this.shaderUniforms.FrameMin, frame.spatialReference.requiredFrameView.xMin, frame.spatialReference.requiredFrameView.yMin);
-            this.gl.uniform2f(this.shaderUniforms.FrameMax, frame.spatialReference.requiredFrameView.xMax, frame.spatialReference.requiredFrameView.yMax);
             this.gl.uniform1f(this.shaderUniforms.RotationAngle, 0.0);
             this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, 1.0);
             this.gl.uniform2f(this.shaderUniforms.Offset, 0, 0);
@@ -230,8 +262,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         this.gl.enableVertexAttribArray(this.vertexNormalAttribute);
 
         this.shaderUniforms = {
-            FrameMin: this.gl.getUniformLocation(shaderProgram, "uFrameMin"),
-            FrameMax: this.gl.getUniformLocation(shaderProgram, "uFrameMax"),
+            RangeScale: this.gl.getUniformLocation(shaderProgram, "uRangeScale"),
+            RangeOffset: this.gl.getUniformLocation(shaderProgram, "uRangeOffset"),
             ScaleAdjustment: this.gl.getUniformLocation(shaderProgram, "uScaleAdjustment"),
             RotationOrigin: this.gl.getUniformLocation(shaderProgram, "uRotationOrigin"),
             RotationAngle: this.gl.getUniformLocation(shaderProgram, "uRotationAngle"),
