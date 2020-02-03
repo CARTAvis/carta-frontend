@@ -20,7 +20,6 @@ interface ShaderUniforms {
     RotationOrigin: WebGLUniformLocation;
     RotationAngle: WebGLUniformLocation;
     ScaleAdjustment: WebGLUniformLocation;
-    Offset: WebGLUniformLocation;
     DashLength: WebGLUniformLocation;
     LineColor: WebGLUniformLocation;
     LineThickness: WebGLUniformLocation;
@@ -60,13 +59,13 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             } catch (e) {
                 console.log(e);
             }
-            if (!this.gl) {
-                console.log("Could not initialise WebGL");
-            }
 
             const extTextureFloat = this.gl.getExtension("OES_texture_float");
-            // TODO: manual bilinear or bicubic sampling to avoid this extension
             const extTextureFloatLinear = this.gl.getExtension("OES_texture_float_linear");
+
+            if (!this.gl || !extTextureFloat || !extTextureFloatLinear) {
+                console.error("Could not initialise WebGL");
+            }
 
             this.initShaders();
             loadImageTexture(this.gl, allMaps, WebGLRenderingContext.TEXTURE0).then(texture => {
@@ -167,7 +166,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 this.gl.uniform2f(this.shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
                 this.gl.uniform1f(this.shaderUniforms.RotationAngle, 0.0);
                 this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, 1.0);
-                this.gl.uniform2f(this.shaderUniforms.Offset, 0, 0);
             }
         } else {
             const controlMap = frame.controlMaps.get(frame.spatialReference);
@@ -191,11 +189,9 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
             this.gl.uniform2f(this.shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
             this.gl.uniform2f(this.shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
-
             this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / frame.spatialReference.zoomLevel);
             this.gl.uniform1f(this.shaderUniforms.RotationAngle, 0.0);
             this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, 1.0);
-            this.gl.uniform2f(this.shaderUniforms.Offset, 0, 0);
         }
 
         // Calculates ceiling power-of-three value as a dash factor.
@@ -267,7 +263,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             ScaleAdjustment: this.gl.getUniformLocation(shaderProgram, "uScaleAdjustment"),
             RotationOrigin: this.gl.getUniformLocation(shaderProgram, "uRotationOrigin"),
             RotationAngle: this.gl.getUniformLocation(shaderProgram, "uRotationAngle"),
-            Offset: this.gl.getUniformLocation(shaderProgram, "uOffset"),
             DashLength: this.gl.getUniformLocation(shaderProgram, "uDashLength"),
             LineColor: this.gl.getUniformLocation(shaderProgram, "uLineColor"),
             LineThickness: this.gl.getUniformLocation(shaderProgram, "uLineThickness"),

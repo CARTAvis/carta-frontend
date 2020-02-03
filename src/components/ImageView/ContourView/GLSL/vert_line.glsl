@@ -9,7 +9,6 @@ uniform vec2 uRangeOffset;
 uniform vec2 uRotationOrigin;
 uniform float uRotationAngle;
 uniform float uScaleAdjustment;
-uniform vec2 uOffset;
 uniform float uLineThickness;
 
 // Control-map based transformation
