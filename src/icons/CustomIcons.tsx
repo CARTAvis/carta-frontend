@@ -17,6 +17,7 @@ export class CustomIcon extends React.Component<{icon: CustomIconName}> {
     }
 }
 
+// copy content of tag <path/> in svg, and turn attributes fill-rule/clip-rule into fillRule/clipRule.
 const contourSvg = (
     <path  
         fillRule="evenodd" 
