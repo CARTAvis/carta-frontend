@@ -80,13 +80,7 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
                         <Button icon={"settings"} onClick={dialogStore.showOverlaySettings} className={dialogStore.overlaySettingsDialogVisible ? "bp3-active" : ""}/>
                     </Tooltip>
                     <Tooltip content={<span>Contours</span>}>
-                        <Button icon={"heatmap"} onClick={dialogStore.showContourDialog} className={dialogStore.contourDialogVisible ? "bp3-active" : ""}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Contours</span>}>
-                        <Button icon={<CustomIcon icon={"contour1"}/>} onClick={dialogStore.showContourDialog} className={dialogStore.contourDialogVisible ? "bp3-active" : ""}/>
-                    </Tooltip>
-                    <Tooltip content={<span>Contours</span>}>
-                        <Button icon={<CustomIcon icon={"contour2"}/>} onClick={dialogStore.showContourDialog} className={dialogStore.contourDialogVisible ? "bp3-active" : ""}/>
+                        <Button icon={<CustomIcon icon={"contour"}/>} onClick={dialogStore.showContourDialog} className={dialogStore.contourDialogVisible ? "bp3-active" : ""}/>
                     </Tooltip>
                 </ButtonGroup>
             </React.Fragment>
