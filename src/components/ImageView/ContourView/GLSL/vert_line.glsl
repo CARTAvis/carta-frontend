@@ -93,7 +93,9 @@ void main(void) {
     // If there's a control map, use it to look up location using bilinear filtering
     if (uControlMapEnabled > 0) {
         // Use an offset of 10% of the grid spacing to estimate the direction of the normal
-        float delta = 0.1 * (uControlMapMax.x - uControlMapMin.x) / uControlMapSize.x;
+        vec2 deltaVec = 0.1 * (uControlMapMax - uControlMapMin) / uControlMapSize;
+        // Use a minimum of 10% in X and 10% in Y directions
+        float delta = min(deltaVec.x, deltaVec.y);
         vec2 extrudedPoint = controlMapLookup(posImageSpace + normalize(extrudeOffet) * delta);
         posImageSpace = controlMapLookup(posImageSpace);
         vec2 transformedNormal = extrudedPoint - posImageSpace;
