@@ -5,6 +5,7 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, BeamType, FrameScaling, LayoutStore, RenderConfigStore, RegionStore} from "stores";
 import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {isColorValid, parseBoolean} from "utilities";
+import {ControlMap} from "../models/ControlMap";
 
 const PREFERENCE_KEYS = {
     theme: "theme",
@@ -47,6 +48,7 @@ const PREFERENCE_KEYS = {
     contourDecimation: "contourDecimation",
     contourCompressionLevel: "contourCompressionLevel",
     contourChunkSize: "contourChunkSize",
+    contourControlMapWidth: "contourControlMapWidth",
     streamContoursWhileZooming: "streamContoursWhileZooming",
     lowBandwidthMode: "lowBandwidthMode",
     logEventList: "logEventList"
@@ -93,6 +95,7 @@ const DEFAULTS = {
     contourDecimation: 4,
     contourCompressionLevel: 8,
     contourChunkSize: 100000,
+    contourControlMapWidth: 256,
     streamContoursWhileZooming: false,
     lowBandwidthMode: false,
     eventLoggingEnabled: false
@@ -100,7 +103,6 @@ const DEFAULTS = {
 
 export class PreferenceStore {
     private readonly appStore: AppStore;
-    private readonly layoutStore: LayoutStore;
 
     @observable theme: string;
     @observable autoLaunch: boolean;
@@ -139,6 +141,7 @@ export class PreferenceStore {
     @observable contourDecimation: number;
     @observable contourCompressionLevel: number;
     @observable contourChunkSize: number;
+    @observable contourControlMapWidth: number;
     @observable streamTilesWhileZooming: boolean;
     @observable lowBandwidthMode: boolean;
     @observable eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
@@ -156,7 +159,7 @@ export class PreferenceStore {
 
     private getLayout = (): string => {
         const layout = localStorage.getItem(PREFERENCE_KEYS.layout);
-        return layout && this.layoutStore.layoutExist(layout) ? layout : DEFAULTS.layout;
+        return layout && this.appStore.layoutStore.layoutExist(layout) ? layout : DEFAULTS.layout;
     };
 
     private getCursorPosition = (): string => {
@@ -447,6 +450,16 @@ export class PreferenceStore {
         return isFinite(value) && TileCache.isSystemTileCacheValid(value) ? value : DEFAULTS.systemTileCache;
     };
 
+    private getContourControlMapWidth = (): number => {
+        const contourControlMapWidth = localStorage.getItem(PREFERENCE_KEYS.contourControlMapWidth);
+        if (!contourControlMapWidth) {
+            return DEFAULTS.contourControlMapWidth;
+        }
+
+        const value = Number(contourControlMapWidth);
+        return isFinite(value) && ControlMap.IsWidthValid(value) ? value : DEFAULTS.contourControlMapWidth;
+    };
+
     private getStreamTilesWhileZooming = (): boolean => {
         const val = localStorage.getItem(PREFERENCE_KEYS.streamContoursWhileZooming);
         return parseBoolean(val, DEFAULTS.streamContoursWhileZooming);
@@ -714,6 +727,11 @@ export class PreferenceStore {
         localStorage.setItem(PREFERENCE_KEYS.systemTileCache, systemTileCache.toString(10));
     };
 
+    @action setContourControlMapWidth = (contourControlMapWidth: number) => {
+        this.contourControlMapWidth = contourControlMapWidth;
+        localStorage.setItem(PREFERENCE_KEYS.contourControlMapWidth, contourControlMapWidth.toString(10));
+    };
+
     @action setStreamContoursWhileZooming = (val: boolean) => {
         this.streamTilesWhileZooming = val;
         localStorage.setItem(PREFERENCE_KEYS.streamContoursWhileZooming, String(val));
@@ -780,6 +798,7 @@ export class PreferenceStore {
         this.setContourDecimation(DEFAULTS.contourDecimation);
         this.setContourCompressionLevel(DEFAULTS.contourCompressionLevel);
         this.setContourChunkSize(DEFAULTS.contourChunkSize);
+        this.setContourControlMapWidth(DEFAULTS.contourControlMapWidth);
         this.setStreamContoursWhileZooming(DEFAULTS.streamContoursWhileZooming);
         this.setLowBandwidthMode(DEFAULTS.lowBandwidthMode);
     };
@@ -788,9 +807,8 @@ export class PreferenceStore {
         this.eventsLoggingEnabled.forEach((value, key, map) => map.set(key, DEFAULTS.eventLoggingEnabled));
     };
 
-    constructor(appStore: AppStore, layoutStore: LayoutStore) {
+    constructor(appStore: AppStore) {
         this.appStore = appStore;
-        this.layoutStore = layoutStore;
         this.theme = this.getTheme();
         this.autoLaunch = this.getAutoLaunch();
         this.layout = this.getLayout();
@@ -827,6 +845,7 @@ export class PreferenceStore {
         this.contourDecimation = this.getContourDecimation();
         this.contourCompressionLevel = this.getContourCompressionLevel();
         this.contourChunkSize = this.getContourChunkSize();
+        this.contourControlMapWidth = this.getContourControlMapWidth();
         this.streamTilesWhileZooming = this.getStreamTilesWhileZooming();
         this.lowBandwidthMode = this.getLowBandwidthMode();
         this.eventsLoggingEnabled = this.getLogEvents();

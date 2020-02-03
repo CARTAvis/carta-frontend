@@ -82,7 +82,9 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
     }
 
     private generateMinMaxLevels = (): number [] => {
-        if (this.numLevels <= 1) {
+        if (!isFinite(this.minValue) || !isFinite(this.maxValue) || !isFinite(this.numLevels)) {
+            return [];
+        } else if (this.numLevels <= 1) {
             return [(this.maxValue + this.minValue) / 2.0];
         } else {
             const range = this.maxValue - this.minValue;
@@ -163,7 +165,9 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
     }
 
     private generateStartStepLevels = () => {
-        if (this.numLevels <= 1) {
+        if (!isFinite(this.startValue) || !isFinite(this.stepValue) || !isFinite(this.multiplierValue) || !isFinite(this.numLevels)) {
+            return [];
+        } else if (this.numLevels <= 1) {
             return [(this.startValue)];
         } else {
             let step = this.stepValue;
@@ -242,7 +246,9 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
     }
 
     private generatePercentageRefLevels = () => {
-        if (this.numLevels <= 1) {
+        if (!isFinite(this.upperPercentage) || !isFinite(this.lowerPercentage) || !isFinite(this.refValue) || !isFinite(this.numLevels)) {
+            return [];
+        } else if (this.numLevels <= 1) {
             return [(this.refValue)];
         } else {
             const range = (this.upperPercentage - this.lowerPercentage);
@@ -333,7 +339,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
     }
 
     private generateMeanSigmaLevels = () => {
-        return this.sigmaLevels.map(level => (this.meanValue + this.sigmaValue * level));
+        return this.sigmaLevels.map(level => (this.meanValue + this.sigmaValue * level)).filter(level => isFinite(level));
     };
 
     // endregion

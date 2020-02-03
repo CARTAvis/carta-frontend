@@ -123,8 +123,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
                 this.dragPanning = true;
 
                 let cursorPoint = konvaEvent.target.getStage().getPointerPosition();
-                const frame = this.props.frame;
-                if (frame) {
+                if (this.props.frame) {
+                    const frame = this.props.frame.spatialReference || this.props.frame;
                     this.initialDragPointCanvasSpace = cursorPoint;
                     this.initialDragCenter = frame.center;
                     frame.startMoving();
@@ -206,8 +206,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         if (!offset || !isFinite(offset.x) || !isFinite(offset.y)) {
             return;
         }
-        const frame = this.props.frame;
-        if (frame) {
+        if (this.props.frame) {
+            const frame = this.props.frame.spatialReference || this.props.frame;
             if (!this.dragOffset) {
                 this.dragOffset = {x: 0, y: 0};
             } else {
@@ -375,7 +375,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             // Ignore the double click distance longer than DOUBLE_CLICK_DISTANCE
             return;
         }
-        if (frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion && 
+        if (frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion &&
             this.creatingRegion.regionType === CARTA.RegionType.POLYGON) {
             // Handle region completion
             if (this.creatingRegion.isValid && this.creatingRegion.controlPoints.length > 2) {

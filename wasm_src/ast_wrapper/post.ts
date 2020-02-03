@@ -89,6 +89,9 @@ Module.setCanvas = function (canvas) {
     Module.gridContext.font = Module.font;
 };
 
+Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
+Module.initFrame = Module.cwrap("initFrame", "number", ["string"]);
+Module.initDummyFrame = Module.cwrap("initDummyFrame", "number", []);
 Module.set = Module.cwrap("set", "number", ["number", "string"]);
 Module.getString = Module.cwrap("getString", "string", ["number", "string"]);
 Module.dump = Module.cwrap("dump", null, ["number"]);
@@ -98,6 +101,13 @@ Module.format = Module.cwrap("format", "string", ["number", "number", "number"])
 Module.transform = Module.cwrap("transform", "number", ["number", "number", "number", "number", "number", "number", "number"]);
 Module.getLastErrorMessage = Module.cwrap("getLastErrorMessage", "string");
 Module.clearLastErrorMessage = Module.cwrap("clearLastErrorMessage", null);
+Module.copy = Module.cwrap("copy", null, ["number"]);
+Module.delete = Module.cwrap("deleteObject", null, ["number"]);
+Module.invert = Module.cwrap("invert", "number", ["number"]);
+Module.convert = Module.cwrap("convert", "number", ["number", "number", "string"]);
+Module.shiftMap2D = Module.cwrap("shiftMap2D", "number", ["number", "number"]);
+Module.createTransformedFrameset = Module.cwrap("createTransformedFrameset", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
+Module.fillTransformGrid = Module.cwrap("fillTransformGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number"]);
 
 Module.currentFormatStrings = [];
 
@@ -106,8 +116,7 @@ Module.getFormattedCoordinates = function (wcsInfo: number, x: number, y: number
     if (tempFormat) {
         prevString = Module.currentFormatStrings[wcsInfo];
         Module.set(wcsInfo, formatString);
-    }
-    else if (formatString && Module.currentFormatStrings[wcsInfo] !== formatString) {
+    } else if (formatString && Module.currentFormatStrings[wcsInfo] !== formatString) {
         Module.set(wcsInfo, formatString);
         Module.currentFormatStrings[wcsInfo] = formatString;
     }
@@ -153,12 +162,12 @@ Module.pixToWCSVector = function (wcsInfo, xIn, yIn) {
     return {x: xOut.slice(0), y: yOut.slice(0)};
 };
 
-Module.pixToWCS = function (wcsInfo, xIn, yIn) {
+Module.transformPoint = function (transformFrameSet: number, xIn: number, yIn: number, forward: boolean = true) {
     // Return empty array if arguments are invalid
     const N = 1;
     Module.HEAPF64.set(new Float64Array([xIn]), Module.xIn / 8);
     Module.HEAPF64.set(new Float64Array([yIn]), Module.yIn / 8);
-    Module.transform(wcsInfo, N, Module.xIn, Module.yIn, 1, Module.xOut, Module.yOut);
+    Module.transform(transformFrameSet, N, Module.xIn, Module.yIn, forward, Module.xOut, Module.yOut);
     const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N);
     const yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N);
     return {x: xOut[0], y: yOut[0]};
@@ -171,10 +180,16 @@ Module.normalizeCoordinates = function (wcsInfo, xIn, yIn) {
     return {x: xOut[0], y: xOut[1]};
 };
 
-Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
-
-Module.initFrame = Module.cwrap("initFrame", "number", ["string"]);
-Module.initDummyFrame = Module.cwrap("initDummyFrame", "number", []);
+Module.getTransformGrid = function (transformFrameSet: number, xMin: number, xMax: number, nx: number, yMin: number, yMax: number, ny: number, forward: number) {
+    const out = Module.fillTransformGrid(transformFrameSet, xMin, xMax, nx, yMin, yMax, ny, forward);
+    if (out) {
+        const outArray = new Float32Array(Module.HEAPF32.buffer, out, nx * ny * 2).slice();
+        Module._free(out);
+        return outArray;
+    } else {
+        return null;
+    }
+};
 
 Module.onReady = new Promise(function (func) {
     if (Module["calledRun"]) {

@@ -1,9 +1,10 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {AppStore, ContourDashMode, OverlayStore, RenderConfigStore} from "stores";
-import {getShaderFromString, loadImageTexture} from "utilities";
+import {AppStore, ContourDashMode, FrameStore, OverlayStore, RenderConfigStore} from "stores";
+import {getShaderFromString, GL, loadImageTexture} from "utilities";
 import "./ContourViewComponent.css";
 import allMaps from "static/allmaps.png";
+import {observable} from "mobx";
 
 const vertexShaderLine = require("!raw-loader!./GLSL/vert_line.glsl");
 const pixelShaderDashed = require("!raw-loader!./GLSL/pixel_dashed.glsl");
@@ -15,7 +16,11 @@ export interface ContourViewComponentProps {
 }
 
 interface ShaderUniforms {
-    Scale: WebGLUniformLocation;
+    FrameMin: WebGLUniformLocation;
+    FrameMax: WebGLUniformLocation;
+    RotationOrigin: WebGLUniformLocation;
+    RotationAngle: WebGLUniformLocation;
+    ScaleAdjustment: WebGLUniformLocation;
     Offset: WebGLUniformLocation;
     DashLength: WebGLUniformLocation;
     LineColor: WebGLUniformLocation;
@@ -27,6 +32,11 @@ interface ShaderUniforms {
     CmapIndex: WebGLUniformLocation;
     Bias: WebGLUniformLocation;
     Contrast: WebGLUniformLocation;
+    ControlMapEnabled: WebGLUniformLocation;
+    ControlMapSize: WebGLUniformLocation;
+    ControlMapTexture: WebGLUniformLocation;
+    ControlMapMin: WebGLUniformLocation;
+    ControlMapMax: WebGLUniformLocation;
 }
 
 @observer
@@ -55,8 +65,12 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 console.log("Could not initialise WebGL");
             }
 
+            const extTextureFloat = this.gl.getExtension("OES_texture_float");
+            // TODO: manual bilinear or bicubic sampling to avoid this extension
+            const extTextureFloatLinear = this.gl.getExtension("OES_texture_float_linear");
+
             this.initShaders();
-            loadImageTexture(this.gl, allMaps, WebGLRenderingContext.TEXTURE1).then(texture => {
+            loadImageTexture(this.gl, allMaps, WebGLRenderingContext.TEXTURE0).then(texture => {
                 this.cmapTexture = texture;
                 this.updateCanvas();
             });
@@ -90,64 +104,108 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         const frame = this.props.appStore.activeFrame;
         if (frame && this.canvas && this.gl && this.shaderUniforms) {
             this.resizeAndClearCanvas();
+            if (frame.contourConfig.visible && frame.contourConfig.enabled) {
+                this.renderFrameContours(frame, true);
+            }
+            if (frame.secondaryImages) {
+                for (const secondaryFrame of frame.secondaryImages) {
+                    if (secondaryFrame.contourConfig.visible && secondaryFrame.contourConfig.enabled) {
+                        this.renderFrameContours(secondaryFrame, false);
+                    }
+                }
+            }
+        }
+    };
 
-            const fullWidth = frame.requiredFrameView.xMax - frame.requiredFrameView.xMin;
-            const fullHeight = frame.requiredFrameView.yMax - frame.requiredFrameView.yMin;
-            const scale = {x: 2.0 / fullWidth, y: 2.0 / fullHeight};
-            const offset = {x: -1.0 - frame.requiredFrameView.xMin * scale.x, y: -1.0 - frame.requiredFrameView.yMin * scale.y};
-            // update uniforms
-            this.gl.uniform2f(this.shaderUniforms.Scale, scale.x, scale.y);
-            this.gl.uniform2f(this.shaderUniforms.Offset, offset.x, offset.y);
-            this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / frame.zoomLevel);
+    private renderFrameContours = (frame: FrameStore, isActive: boolean) => {
+        const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
 
-            this.gl.uniform1i(this.shaderUniforms.CmapEnabled, frame.contourConfig.colormapEnabled ? 1 : 0);
-            if (frame.contourConfig.colormapEnabled) {
-                this.gl.uniform1i(this.shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(frame.contourConfig.colormap));
-                this.gl.uniform1f(this.shaderUniforms.Bias, frame.contourConfig.colormapBias);
-                this.gl.uniform1f(this.shaderUniforms.Contrast, frame.contourConfig.colormapContrast);
+        // update uniforms
+        this.gl.uniform1i(this.shaderUniforms.CmapEnabled, frame.contourConfig.colormapEnabled ? 1 : 0);
+        if (frame.contourConfig.colormapEnabled) {
+            this.gl.uniform1i(this.shaderUniforms.CmapIndex, RenderConfigStore.COLOR_MAPS_ALL.indexOf(frame.contourConfig.colormap));
+            this.gl.uniform1f(this.shaderUniforms.Bias, frame.contourConfig.colormapBias);
+            this.gl.uniform1f(this.shaderUniforms.Contrast, frame.contourConfig.colormapContrast);
+        }
+
+        if (isActive) {
+            this.gl.uniform1i(this.shaderUniforms.ControlMapEnabled, 0);
+            this.gl.uniform1i(this.shaderUniforms.ControlMapTexture, 0);
+            this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / zoomLevel);
+
+            if (frame.spatialReference) {
+                let rotationOrigin = frame.spatialTransform.origin;
+                this.gl.uniform2f(this.shaderUniforms.FrameMin, frame.spatialReference.requiredFrameView.xMin, frame.spatialReference.requiredFrameView.yMin);
+                this.gl.uniform2f(this.shaderUniforms.FrameMax, frame.spatialReference.requiredFrameView.xMax, frame.spatialReference.requiredFrameView.yMax);
+                this.gl.uniform2f(this.shaderUniforms.RotationOrigin, rotationOrigin.x, rotationOrigin.y);
+                this.gl.uniform1f(this.shaderUniforms.RotationAngle, -frame.spatialTransform.rotation);
+                this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, frame.spatialTransform.scale);
+                this.gl.uniform2f(this.shaderUniforms.Offset, frame.spatialTransform.translation.x, frame.spatialTransform.translation.y);
+            } else {
+                this.gl.uniform2f(this.shaderUniforms.FrameMin, frame.requiredFrameView.xMin, frame.requiredFrameView.yMin);
+                this.gl.uniform2f(this.shaderUniforms.FrameMax, frame.requiredFrameView.xMax, frame.requiredFrameView.yMax);
+                this.gl.uniform1f(this.shaderUniforms.RotationAngle, 0.0);
+                this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, 1.0);
+                this.gl.uniform2f(this.shaderUniforms.Offset, 0, 0);
+            }
+        } else {
+            const controlMap = frame.controlMaps.get(frame.spatialReference);
+            this.gl.uniform1i(this.shaderUniforms.ControlMapEnabled, 1);
+            this.gl.uniform2f(this.shaderUniforms.ControlMapMin, controlMap.minPoint.x, controlMap.minPoint.y);
+            this.gl.uniform2f(this.shaderUniforms.ControlMapMax, controlMap.maxPoint.x, controlMap.maxPoint.y);
+            this.gl.uniform2f(this.shaderUniforms.ControlMapSize, controlMap.width, controlMap.height);
+            this.gl.activeTexture(GL.TEXTURE1);
+            this.gl.bindTexture(GL.TEXTURE_2D, controlMap.getTextureX(this.gl));
+            this.gl.uniform1i(this.shaderUniforms.ControlMapTexture, 1);
+
+            this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / frame.spatialReference.zoomLevel);
+            this.gl.uniform2f(this.shaderUniforms.FrameMin, frame.spatialReference.requiredFrameView.xMin, frame.spatialReference.requiredFrameView.yMin);
+            this.gl.uniform2f(this.shaderUniforms.FrameMax, frame.spatialReference.requiredFrameView.xMax, frame.spatialReference.requiredFrameView.yMax);
+            this.gl.uniform1f(this.shaderUniforms.RotationAngle, 0.0);
+            this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, 1.0);
+            this.gl.uniform2f(this.shaderUniforms.Offset, 0, 0);
+        }
+
+        // Calculates ceiling power-of-three value as a dash factor.
+        const dashFactor = Math.pow(3.0, Math.ceil(Math.log(1.0 / zoomLevel) / Math.log(3)));
+        if (frame.contourStores) {
+            const levels = [];
+            frame.contourStores.forEach((v, level) => levels.push(level));
+            const minVal = Math.min(...levels);
+            const maxVal = Math.max(...levels);
+
+            const color = frame.contourConfig.color;
+            if (color) {
+                this.gl.uniform4f(this.shaderUniforms.LineColor, color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a || 1.0);
+            } else {
+                this.gl.uniform4f(this.shaderUniforms.LineColor, 1, 1, 1, 1);
             }
 
-            // Calculates ceiling power-of-three value as a dash factor.
-            const dashFactor = Math.pow(3.0, Math.ceil(Math.log(1.0 / frame.zoomLevel) / Math.log(3)));
-            if (frame.contourStores) {
-                const levels = [];
-                frame.contourStores.forEach((v, level) => levels.push(level));
-                const minVal = Math.min(...levels);
-                const maxVal = Math.max(...levels);
-
-                const color = frame.contourConfig.color;
-                if (color) {
-                    this.gl.uniform4f(this.shaderUniforms.LineColor, color.r / 255.0, color.g / 255.0, color.b / 255.0, color.a || 1.0);
-                } else {
-                    this.gl.uniform4f(this.shaderUniforms.LineColor, 1, 1, 1, 1);
+            frame.contourStores.forEach((contourStore, level) => {
+                if (frame.contourConfig.colormapEnabled) {
+                    let levelFraction: number;
+                    if (minVal !== maxVal) {
+                        levelFraction = (level - minVal) / (maxVal - minVal);
+                    } else {
+                        levelFraction = 1.0;
+                    }
+                    this.gl.uniform1f(this.shaderUniforms.CmapValue, levelFraction);
                 }
 
-                frame.contourStores.forEach((contourStore, level) => {
-                    if (frame.contourConfig.colormapEnabled) {
-                        let levelFraction: number;
-                        if (minVal !== maxVal) {
-                            levelFraction = (level - minVal) / (maxVal - minVal);
-                        } else {
-                            levelFraction = 1.0;
-                        }
-                        this.gl.uniform1f(this.shaderUniforms.CmapValue, levelFraction);
-                    }
+                // Dash length in canvas pixels
+                const dashMode = frame.contourConfig.dashMode;
+                const dashLength = (dashMode === ContourDashMode.Dashed || (dashMode === ContourDashMode.NegativeOnly && level < 0)) ? 8 : 0;
+                this.gl.uniform1f(this.shaderUniforms.DashLength, devicePixelRatio * dashLength * dashFactor);
 
-                    // Dash length in canvas pixels
-                    const dashMode = frame.contourConfig.dashMode;
-                    const dashLength = (dashMode === ContourDashMode.Dashed || (dashMode === ContourDashMode.NegativeOnly && level < 0)) ? 8 : 0;
-                    this.gl.uniform1f(this.shaderUniforms.DashLength, devicePixelRatio * dashLength * dashFactor);
-
-                    // Update buffers
-                    for (let i = 0; i < contourStore.chunkCount; i++) {
-                        contourStore.bindBuffer(i);
-                        const numVertices = contourStore.numGeneratedVertices[i];
-                        this.gl.vertexAttribPointer(this.vertexPositionAttribute, 3, WebGLRenderingContext.FLOAT, false, 16, 0);
-                        this.gl.vertexAttribPointer(this.vertexNormalAttribute, 2, WebGLRenderingContext.SHORT, false, 16, 12);
-                        this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, numVertices);
-                    }
-                });
-            }
+                // Update buffers
+                for (let i = 0; i < contourStore.chunkCount; i++) {
+                    contourStore.bindBuffer(i);
+                    const numVertices = contourStore.numGeneratedVertices[i];
+                    this.gl.vertexAttribPointer(this.vertexPositionAttribute, 3, WebGLRenderingContext.FLOAT, false, 16, 0);
+                    this.gl.vertexAttribPointer(this.vertexNormalAttribute, 2, WebGLRenderingContext.SHORT, false, 16, 12);
+                    this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, numVertices);
+                }
+            });
         }
     };
 
@@ -172,7 +230,11 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         this.gl.enableVertexAttribArray(this.vertexNormalAttribute);
 
         this.shaderUniforms = {
-            Scale: this.gl.getUniformLocation(shaderProgram, "uScale"),
+            FrameMin: this.gl.getUniformLocation(shaderProgram, "uFrameMin"),
+            FrameMax: this.gl.getUniformLocation(shaderProgram, "uFrameMax"),
+            ScaleAdjustment: this.gl.getUniformLocation(shaderProgram, "uScaleAdjustment"),
+            RotationOrigin: this.gl.getUniformLocation(shaderProgram, "uRotationOrigin"),
+            RotationAngle: this.gl.getUniformLocation(shaderProgram, "uRotationAngle"),
             Offset: this.gl.getUniformLocation(shaderProgram, "uOffset"),
             DashLength: this.gl.getUniformLocation(shaderProgram, "uDashLength"),
             LineColor: this.gl.getUniformLocation(shaderProgram, "uLineColor"),
@@ -184,10 +246,15 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             CmapIndex: this.gl.getUniformLocation(shaderProgram, "uCmapIndex"),
             Contrast: this.gl.getUniformLocation(shaderProgram, "uContrast"),
             Bias: this.gl.getUniformLocation(shaderProgram, "uBias"),
+            ControlMapEnabled: this.gl.getUniformLocation(shaderProgram, "uControlMapEnabled"),
+            ControlMapSize: this.gl.getUniformLocation(shaderProgram, "uControlMapSize"),
+            ControlMapMin: this.gl.getUniformLocation(shaderProgram, "uControlMapMin"),
+            ControlMapMax: this.gl.getUniformLocation(shaderProgram, "uControlMapMax"),
+            ControlMapTexture: this.gl.getUniformLocation(shaderProgram, "uControlMapTexture"),
         };
 
         this.gl.uniform1i(this.shaderUniforms.NumCmaps, 79);
-        this.gl.uniform1i(this.shaderUniforms.CmapTexture, 1);
+        this.gl.uniform1i(this.shaderUniforms.CmapTexture, 0);
     }
 
     render() {
@@ -202,6 +269,12 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             const dashMode = config.dashMode;
             const bias = config.colormapBias;
             const contrast = config.colormapContrast;
+
+            if (frame.secondaryImages) {
+                const visibleSecondaries = frame.secondaryImages.map(f => f.contourConfig.enabled && f.contourConfig.visible);
+            }
+
+            const visible = frame.contourConfig.enabled && frame.contourConfig.visible;
 
             contourData.forEach(contourStore => {
                 const numVertices = contourStore.vertexCount;
