@@ -5,6 +5,7 @@ import {
     FloatingWidgetComponent,
     HistogramComponent,
     ImageViewComponent,
+    LayerListComponent,
     LogComponent,
     PlaceholderComponent,
     RegionListComponent,
@@ -39,6 +40,8 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
         switch (widgetConfig.type) {
             case ImageViewComponent.WIDGET_CONFIG.type:
                 return <ImageViewComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+            case LayerListComponent.WIDGET_CONFIG.type:
+                return <LayerListComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
             case LogComponent.WIDGET_CONFIG.type:
                 return <LogComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
             case RenderConfigComponent.WIDGET_CONFIG.type:

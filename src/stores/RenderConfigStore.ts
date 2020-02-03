@@ -71,6 +71,7 @@ export class RenderConfigStore {
     @observable stokes: number;
     @observable scaleMin: number[];
     @observable scaleMax: number[];
+    @observable visible: boolean;
 
     constructor(readonly preference: PreferenceStore) {
         const percentile = preference.percentile;
@@ -86,6 +87,7 @@ export class RenderConfigStore {
         this.stokes = 0;
         this.scaleMin = [0, 0, 0, 0];
         this.scaleMax = [1, 1, 1, 1];
+        this.visible = true;
     }
 
     public static IsScalingValid(scaling: FrameScaling): boolean {
@@ -252,5 +254,13 @@ export class RenderConfigStore {
 
     @action setInverted = (inverted: boolean) => {
         this.inverted = inverted;
+    };
+
+    @action setVisible = (visible: boolean) => {
+        this.visible = visible;
+    };
+
+    @action toggleVisibility = () => {
+        this.visible = !this.visible;
     };
 }

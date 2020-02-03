@@ -41,14 +41,17 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
         const pixelRatio = devicePixelRatio;
 
         if (frame.wcsInfo) {
+            const wcsInfo = frame.spatialReference ? frame.transformedWcsInfo : frame.wcsInfo;
+            const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+
             this.updateImageDimensions();
             AST.setCanvas(this.canvas);
 
             const plot = (styleString: string) => {
                 AST.plot(
-                    frame.wcsInfo,
-                    frame.requiredFrameView.xMin, frame.requiredFrameView.xMax,
-                    frame.requiredFrameView.yMin, frame.requiredFrameView.yMax,
+                    wcsInfo,
+                    frameView.xMin, frameView.xMax,
+                    frameView.yMin, frameView.yMax,
                     settings.viewWidth * pixelRatio, settings.viewHeight * pixelRatio,
                     settings.padding.left * pixelRatio, settings.padding.right * pixelRatio, settings.padding.top * pixelRatio, settings.padding.bottom * pixelRatio,
                     styleString);
@@ -75,8 +78,10 @@ export class OverlayComponent extends React.Component<OverlayComponentProps> {
     render() {
         const styleString = this.props.overlaySettings.styleString;
 
+        const refFrame = this.props.frame.spatialReference || this.props.frame;
         // changing the frame view, padding or width/height triggers a re-render
-        const frameView = this.props.frame.requiredFrameView;
+        const frameView = refFrame.requiredFrameView;
+
         const framePadding = this.props.overlaySettings.padding;
         const w = this.props.overlaySettings.viewWidth;
         const h = this.props.overlaySettings.viewHeight;

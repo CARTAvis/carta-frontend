@@ -104,7 +104,8 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         );
 
         const presetLayouts: string[] = PresetLayout.PRESETS;
-        const userLayouts: string[] = appStore.layoutStore.userLayouts;
+        const layoutStore = appStore.layoutStore;
+        const userLayouts: string[] = layoutStore.userLayouts;
         const stokesIcon = (
             <Tag icon={"pulse"} className={"stokes-icon-button"}>
                 &nbsp;s
@@ -112,7 +113,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         );
         const layoutMenu = (
             <Menu className="layout-menu">
-                <Menu.Item text="Layouts" icon={"layout-grid"}>
+                <Menu.Item text="Layouts" icon={"layout-grid"} disabled={layoutStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}>
                     <Menu.Item text="Existing Layouts" disabled={!presetLayouts && !userLayouts}>
                         <Menu.Item text="Presets" disabled={!presetLayouts || presetLayouts.length <= 0}>
                             {presetLayouts && presetLayouts.length > 0 && presetLayouts.map((value) =>

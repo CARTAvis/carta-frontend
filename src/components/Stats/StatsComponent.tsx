@@ -70,6 +70,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
     private static readonly STATS_NAME_MAP = new Map<CARTA.StatsType, string>([
         [CARTA.StatsType.NumPixels, "NumPixels"],
         [CARTA.StatsType.Sum, "Sum"],
+        [CARTA.StatsType.FluxDensity, "FluxDensity"],
         [CARTA.StatsType.Mean, "Mean"],
         [CARTA.StatsType.Sigma, "StdDev"],
         [CARTA.StatsType.Min, "Min"],
@@ -163,6 +164,12 @@ export class StatsComponent extends React.Component<WidgetProps> {
                             unitString = "pixel(s)";
                         } else if (type === CARTA.StatsType.SumSq) {
                             unitString = `(${unit})^2`;
+                        } else if (type === CARTA.StatsType.FluxDensity) {
+                            if (unit === "Jy/beam") {
+                                unitString = "Jy";
+                            } else {
+                                return;
+                            }
                         } else {
                             unitString = unit;
                         }
