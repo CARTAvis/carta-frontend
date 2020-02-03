@@ -141,7 +141,7 @@ export class PreferenceStore {
     @observable contourChunkSize: number;
     @observable streamTilesWhileZooming: boolean;
     @observable lowBandwidthMode: boolean;
-    readonly eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
+    @observable eventsLoggingEnabled: Map<CARTA.EventType, boolean>;
 
     // getters for global settings
     private getTheme = (): string => {

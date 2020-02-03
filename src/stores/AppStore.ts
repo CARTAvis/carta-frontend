@@ -65,10 +65,10 @@ export class AppStore {
     readonly widgetsStore: WidgetsStore;
 
     // Profiles and region data
-    readonly spatialProfiles: Map<string, SpatialProfileStore>;
-    readonly spectralProfiles: Map<number, ObservableMap<number, SpectralProfileStore>>;
-    readonly regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
-    readonly regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
+    @observable spatialProfiles: Map<string, SpatialProfileStore>;
+    @observable spectralProfiles: Map<number, ObservableMap<number, SpectralProfileStore>>;
+    @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
+    @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
 
     private appContainer: HTMLElement;
     private contourWebGLContext: WebGLRenderingContext;
