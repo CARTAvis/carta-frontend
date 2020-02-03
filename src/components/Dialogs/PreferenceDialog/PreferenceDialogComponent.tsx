@@ -306,7 +306,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 <FormGroup inline={true} label="Beam Visible">
                     <Switch
                         checked={preference.beamVisible}
-                        onChange={(ev) =>  preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE, ev.currentTarget.checked)}
+                        onChange={(ev) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_VISIBLE, ev.currentTarget.checked)}
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Beam Color">
@@ -327,14 +327,14 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </FormGroup>
                 <FormGroup inline={true} label="Beam Width" labelInfo="(px)">
                     <NumericInput
-                            placeholder="Beam Width"
-                            min={0.5}
-                            max={10}
-                            value={preference.beamWidth}
-                            stepSize={0.5}
-                            minorStepSize={0.1}
-                            majorStepSize={1}
-                            onValueChange={(value: number) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH, value)}
+                        placeholder="Beam Width"
+                        min={0.5}
+                        max={10}
+                        value={preference.beamWidth}
+                        stepSize={0.5}
+                        minorStepSize={0.1}
+                        majorStepSize={1}
+                        onValueChange={(value: number) => preference.setPreference(PreferenceKeys.WCS_OVERLAY_BEAM_WIDTH, value)}
                     />
                 </FormGroup>
             </React.Fragment>
@@ -470,6 +470,14 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         <option key={3} value={250000}>250K</option>
                         <option key={4} value={500000}>500K</option>
                         <option key={5} value={1000000}>1M</option>
+                    </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="Contour Control Map Resolution">
+                    <HTMLSelect value={preference.contourControlMapWidth} onChange={(ev) => preference.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, parseInt(ev.currentTarget.value))}>
+                        <option key={0} value={128}>128&times;128 (128 KB)</option>
+                        <option key={1} value={256}>256&times;256 (512 KB)</option>
+                        <option key={2} value={512}>512&times;512 (2 MB)</option>
+                        <option key={3} value={1024}>1024&times;1024 (8 MB)</option>
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Stream image tiles while zooming">

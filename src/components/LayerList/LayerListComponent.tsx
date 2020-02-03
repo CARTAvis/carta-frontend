@@ -1,18 +1,18 @@
 import * as React from "react";
 import {CSSProperties} from "react";
-import { observable } from "mobx";
-import { observer } from "mobx-react";
-import { NonIdealState } from "@blueprintjs/core";
-import { Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table } from "@blueprintjs/table";
+import {observable} from "mobx";
+import {observer} from "mobx-react";
+import {AnchorButton, NonIdealState, Tooltip} from "@blueprintjs/core";
+import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import ReactResizeDetector from "react-resize-detector";
-import { WidgetConfig, WidgetProps } from "stores";
+import {WidgetConfig, WidgetProps} from "stores";
 import "./LayerListComponent.css";
 
 @observer
 export class LayerListComponent extends React.Component<WidgetProps> {
     @observable width: number = 0;
     @observable height: number = 0;
-    private columnWidths = [150, 60, 80, 70];
+    private columnWidths = [150, 80, 80, 70];
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -69,22 +69,49 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         };
 
         const rowHeaderCellRenderer = (rowIndex: number) => {
-            return <RowHeaderCell name={rowIndex.toString()} style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}/>;
+            return <RowHeaderCell name={rowIndex.toString()} className={rowIndex === activeFrameIndex ? "active-row-cell" : ""}/>;
         };
         const fileNameRenderer = (rowIndex: number) => {
-            return <Cell style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}>{rowIndex >= 0 && rowIndex < frameNum ? frameNames[rowIndex].label  : ""}</Cell>;
+            return <Cell className={rowIndex === activeFrameIndex ? "active-row-cell" : ""}>{rowIndex >= 0 && rowIndex < frameNum ? frameNames[rowIndex].label : ""}</Cell>;
         };
         const channelRenderer = (rowIndex: number) => {
-            return <Cell style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}>{rowIndex >= 0 && rowIndex < frameNum ? frameChannels[rowIndex]  : ""}</Cell>;
+            return <Cell className={rowIndex === activeFrameIndex ? "active-row-cell" : ""}>{rowIndex >= 0 && rowIndex < frameNum ? frameChannels[rowIndex] : ""}</Cell>;
         };
         const stokesRenderer = (rowIndex: number) => {
-            return <Cell style={rowIndex === activeFrameIndex ? activeFrameStyleProps : null}>{rowIndex >= 0 && rowIndex < frameNum ? frameStokes[rowIndex]  : ""}</Cell>;
+            return <Cell className={rowIndex === activeFrameIndex ? "active-row-cell" : ""}>{rowIndex >= 0 && rowIndex < frameNum ? frameStokes[rowIndex] : ""}</Cell>;
+        };
+        const typeRenderer = (rowIndex: number) => {
+            if (rowIndex < 0 || rowIndex >= frameNum) {
+                return null;
+            }
+
+            const frame = appStore.frames[rowIndex];
+
+            return (
+                <Cell className={rowIndex === activeFrameIndex ? "active-row-cell" : ""}>
+                    <React.Fragment>
+                        <Tooltip content={<span>Raster image<br/><i><small>Click to {frame.renderConfig.visible ? "hide" : "show"}</small></i></span>}>
+                            <AnchorButton minimal={true} small={true} intent={frame.renderConfig.visible ? "success" : "none"} onClick={frame.renderConfig.toggleVisibility}>R</AnchorButton>
+                        </Tooltip>
+                        {frame.contourConfig.enabled &&
+                        <Tooltip content={<span>Contour image<br/><i><small>Click to {frame.contourConfig.visible ? "hide" : "show"}</small></i></span>}>
+                            <AnchorButton minimal={true} small={true} intent={frame.contourConfig.visible ? "success" : "none"} onClick={frame.contourConfig.toggleVisibility}>C</AnchorButton>
+                        </Tooltip>
+                        }
+                    </React.Fragment>
+                </Cell>
+            );
         };
 
         const columnHeaderStyleProps: CSSProperties = {
             fontSize: "12",
             fontWeight: "bold"
         };
+
+        // This is a necessary hack in order to trigger a re-rendering when values change, because the cell renderer is in its own function
+        // There is probably a neater way to do this, though
+        const dummyVisibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
+        const dummyVisibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
 
         return (
             <div className="layer-list-widget">
@@ -107,6 +134,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     />
                     <Column
                         columnHeaderCellRenderer={(columnIndex: number) => <ColumnHeaderCell name="Type" style={columnHeaderStyleProps}/>}
+                        cellRenderer={typeRenderer}
                     />
                     <Column
                         columnHeaderCellRenderer={(columnIndex: number) => <ColumnHeaderCell name="Channel" style={columnHeaderStyleProps}/>}

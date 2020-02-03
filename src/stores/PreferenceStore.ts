@@ -5,6 +5,7 @@ import {CARTA} from "carta-protobuf";
 import {AppStore, BeamType, FrameScaling, RenderConfigStore, RegionStore} from "stores";
 import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {isColorValid, parseBoolean} from "utilities";
+import {ControlMap} from "../models/ControlMap";
 
 export enum PreferenceKeys {
     GLOBAL_THEME = 1,
@@ -52,6 +53,7 @@ export enum PreferenceKeys {
     PERFORMANCE_CONTOUR_DECIMATION,
     PERFORMANCE_CONTOUR_COMPRESSION_LEVEL,
     PERFORMANCE_CONTOUR_CHUNK_SIZE,
+    PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH,
     PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
     PERFORMANCE_LOW_BAND_WIDTH_MODE,
 
@@ -104,6 +106,7 @@ const KEY_TO_STRING = new Map<PreferenceKeys, string>([
     [PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION, "contourDecimation"],
     [PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL, "contourCompressionLevel"],
     [PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, "contourChunkSize"],
+    [PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, "contourControlMapWidth"],
     [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, "streamContoursWhileZooming"],
     [PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, "lowBandwidthMode"],
 
@@ -162,6 +165,7 @@ const DEFAULTS = {
         contourDecimation: 4,
         contourCompressionLevel: 8,
         contourChunkSize: 100000,
+        contourControlMapWidth: 256,
         streamContoursWhileZooming: false,
         lowBandwidthMode: false,
     },
@@ -231,6 +235,8 @@ export class PreferenceStore {
             (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) >= 0 && parseInt(value) <= 19) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourCompressionLevel; }],
         [PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE,
             (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) >= 1000 && parseInt(value) <= 1000000) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourChunkSize; }],
+        [PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH,
+            (value: string): number => { return value && isFinite(parseInt(value)) && ControlMap.IsWidthValid(parseInt(value)) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourControlMapWidth; }],
         [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, (value: string): boolean => { return parseBoolean(value, DEFAULTS.PERFORMANCE.streamContoursWhileZooming); }],
         [PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.PERFORMANCE.lowBandwidthMode); }]
     ]);
@@ -401,6 +407,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_SYSTEM_TILE_CACHE);
     }
 
+    @computed get contourControlMapWidth(): number {
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH);
+    }
+
     @computed get streamContoursWhileZooming(): boolean {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING);
     }
@@ -548,6 +558,7 @@ export class PreferenceStore {
         this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION, DEFAULTS.PERFORMANCE.contourDecimation);
         this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL, DEFAULTS.PERFORMANCE.contourCompressionLevel);
         this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, DEFAULTS.PERFORMANCE.contourChunkSize);
+        this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, DEFAULTS.PERFORMANCE.contourControlMapWidth);
         this.setPreference(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, DEFAULTS.PERFORMANCE.streamContoursWhileZooming);
         this.setPreference(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, DEFAULTS.PERFORMANCE.lowBandwidthMode);
     };
@@ -617,6 +628,7 @@ export class PreferenceStore {
             [PreferenceKeys.PERFORMANCE_CONTOUR_DECIMATION, DEFAULTS.PERFORMANCE.contourDecimation],
             [PreferenceKeys.PERFORMANCE_CONTOUR_COMPRESSION_LEVEL, DEFAULTS.PERFORMANCE.contourCompressionLevel],
             [PreferenceKeys.PERFORMANCE_CONTOUR_CHUNK_SIZE, DEFAULTS.PERFORMANCE.contourChunkSize],
+            [PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, DEFAULTS.PERFORMANCE.contourControlMapWidth],
             [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, DEFAULTS.PERFORMANCE.streamContoursWhileZooming],
             [PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, DEFAULTS.PERFORMANCE.lowBandwidthMode],
 

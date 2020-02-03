@@ -207,6 +207,10 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             this.gl.enable(WebGLRenderingContext.DEPTH_TEST);
             this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
 
+            // Skip rendering if frame is hidden
+            if (!frame.renderConfig.visible) {
+                return;
+            }
             if (frame.renderType === RasterRenderType.TILED) {
                 this.renderTiledCanvas();
             } else {
@@ -512,6 +516,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 gamma: frame.renderConfig.gamma,
                 alpha: frame.renderConfig.alpha,
                 inverted: frame.renderConfig.inverted,
+                visibility: frame.renderConfig.visible,
                 nanColorHex: preference.nanColorHex,
                 nanAlpha: preference.nanAlpha
             };

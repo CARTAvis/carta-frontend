@@ -30,7 +30,7 @@ import {
     SpectralProfileStore,
     WidgetsStore
 } from ".";
-import {getApproximateCoordinates, GetRequiredTiles, minMax2D} from "utilities";
+import {GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, TileService} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
