@@ -213,6 +213,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
                 this.gl.uniform2f(this.shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
                 this.gl.uniform2f(this.shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
+                const zoomLevel = baseFrame.spatialReference.zoomLevel * baseFrame.spatialTransform.scale;
+                this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / zoomLevel);
                 this.gl.uniform2f(this.shaderUniforms.RotationOrigin, rotationOrigin.x, rotationOrigin.y);
                 this.gl.uniform1f(this.shaderUniforms.RotationAngle, -baseFrame.spatialTransform.rotation);
                 this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, baseFrame.spatialTransform.scale);
@@ -230,8 +232,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
                 this.gl.uniform2f(this.shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
                 this.gl.uniform2f(this.shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
-                // TODO: Should this be the base frame's zoom or the base frame's reference's zoom level?
-                this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / baseFrame.zoomLevel);
+                const zoomLevel = baseFrame.zoomLevel;
+                this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / zoomLevel);
                 this.gl.uniform1f(this.shaderUniforms.RotationAngle, 0.0);
                 this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, 1.0);
             }
