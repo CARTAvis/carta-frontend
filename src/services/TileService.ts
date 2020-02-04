@@ -62,6 +62,9 @@ export class TileService {
         console.log(`lruGPU capacity rounded to : ${lruCapacityGPU}`);
 
         this.textureArray = new Array<WebGLTexture>(numTextures);
+        if (this.textureArray && this.glContext) {
+            this.initTextures();
+        }
         this.resetCoordinateQueue();
         this.cachedTiles = new LRUCache<number, RasterTile>(Int32Array, null, lruCapacityGPU);
 
@@ -69,10 +72,9 @@ export class TileService {
         this.lruCapacitySystem = lruCapacitySystem;
     };
 
-    constructor(backendService: BackendService, lruCapacityGPU: number = 512, lruCapacitySystem: number = 4096) {
+    constructor(backendService: BackendService) {
         this.backendService = backendService;
         this.channelMap = new Map<number, { channel: number, stokes: number }>();
-        this.setCache(lruCapacityGPU, lruCapacitySystem);
         this.persistentTiles = new Map<number, RasterTile>();
         this.pendingRequests = new Map<number, boolean>();
         this.cacheMapCompressedTiles = new Map<number, LRUCache<number, CompressedTile>>();
@@ -221,10 +223,16 @@ export class TileService {
 
     setContext(gl: WebGLRenderingContext) {
         this.glContext = gl;
+        if (this.textureArray && this.glContext) {
+            this.initTextures();
+        }
+    }
+
+    private initTextures() {
         const textureSizeMb = TEXTURE_SIZE * TEXTURE_SIZE * 4 / 1024 / 1024;
         console.log(`Creating ${this.textureArray.length} tile textures of size ${textureSizeMb} MB each (${textureSizeMb * this.textureArray.length} MB total)`);
         for (let i = 0; i < this.textureArray.length; i++) {
-            this.textureArray[i] = createFP32Texture(gl, TEXTURE_SIZE, TEXTURE_SIZE, WebGLRenderingContext.TEXTURE0);
+            this.textureArray[i] = createFP32Texture(this.glContext, TEXTURE_SIZE, TEXTURE_SIZE, WebGLRenderingContext.TEXTURE0);
         }
     }
 
