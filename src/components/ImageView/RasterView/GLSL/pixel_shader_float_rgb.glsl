@@ -9,6 +9,8 @@ precision highp float;
 #define EXP 6
 #define CUSTOM 7
 
+#define FLT_MAX 3.402823466e+38
+
 varying vec2 vUV;
 uniform bool uTiledRendering;
 // Textures
@@ -33,8 +35,9 @@ uniform vec2 uTileTextureOffset;
 uniform float uTextureSize;
 uniform float uTileTextureSize;
 
+// Some shader compilers have trouble with NaN checks, so we instead use a dummy value of -FLT_MAX
 bool isnan(float val) {
-    return (val < 0.0 || 0.0 < val || val == 0.0) ? false : true;
+    return val <= -FLT_MAX;
 }
 
 void main(void) {
