@@ -168,11 +168,15 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, 1.0);
             }
         } else {
-            const controlMap = frame.controlMaps.get(frame.spatialReference);
-            this.gl.uniform1i(this.shaderUniforms.ControlMapEnabled, 1);
-            this.gl.uniform2f(this.shaderUniforms.ControlMapMin, controlMap.minPoint.x, controlMap.minPoint.y);
-            this.gl.uniform2f(this.shaderUniforms.ControlMapMax, controlMap.maxPoint.x, controlMap.maxPoint.y);
-            this.gl.uniform2f(this.shaderUniforms.ControlMapSize, controlMap.width, controlMap.height);
+            const controlMap = frame.getControlMap(frame.spatialReference);
+            if (controlMap) {
+                this.gl.uniform1i(this.shaderUniforms.ControlMapEnabled, 1);
+                this.gl.uniform2f(this.shaderUniforms.ControlMapMin, controlMap.minPoint.x, controlMap.minPoint.y);
+                this.gl.uniform2f(this.shaderUniforms.ControlMapMax, controlMap.maxPoint.x, controlMap.maxPoint.y);
+                this.gl.uniform2f(this.shaderUniforms.ControlMapSize, controlMap.width, controlMap.height);
+            } else {
+                console.error("Could not generate control map for contours");
+            }
             this.gl.activeTexture(GL.TEXTURE1);
             this.gl.bindTexture(GL.TEXTURE_2D, controlMap.getTextureX(this.gl));
             this.gl.uniform1i(this.shaderUniforms.ControlMapTexture, 1);
