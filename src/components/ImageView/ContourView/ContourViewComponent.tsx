@@ -102,20 +102,34 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         const frame = this.props.appStore.activeFrame;
         if (frame && this.canvas && this.gl && this.shaderUniforms) {
             this.resizeAndClearCanvas();
+            // Render base frame
             if (frame.contourConfig.visible && frame.contourConfig.enabled) {
-                this.renderFrameContours(frame, true);
+                this.renderFrameContours(frame, frame);
             }
+            // Render secondary images if this is the reference frame
             if (frame.secondaryImages) {
                 for (const secondaryFrame of frame.secondaryImages) {
                     if (secondaryFrame.contourConfig.visible && secondaryFrame.contourConfig.enabled) {
-                        this.renderFrameContours(secondaryFrame, false);
+                        this.renderFrameContours(secondaryFrame, frame);
+                    }
+                }
+            } else if (frame.spatialReference) {
+                // Render reference image
+                if (frame.spatialReference.contourConfig.visible && frame.spatialReference.contourConfig.enabled) {
+                    this.renderFrameContours(frame.spatialReference, frame);
+                }
+                // Render siblings (with the same reference image)
+                for (const secondaryFrame of frame.spatialReference.secondaryImages) {
+                    if (secondaryFrame !== frame && secondaryFrame.contourConfig.visible && secondaryFrame.contourConfig.enabled) {
+                        this.renderFrameContours(secondaryFrame, frame);
                     }
                 }
             }
         }
     };
 
-    private renderFrameContours = (frame: FrameStore, isActive: boolean) => {
+    private renderFrameContours = (frame: FrameStore, baseFrame: FrameStore) => {
+        const isActive = frame === baseFrame;
         const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         // update uniforms
         this.gl.uniform1i(this.shaderUniforms.CmapEnabled, frame.contourConfig.colormapEnabled ? 1 : 0);
@@ -168,7 +182,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                 this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, 1.0);
             }
         } else {
-            const controlMap = frame.getControlMap(frame.spatialReference);
+            const controlMap = frame.getControlMap(baseFrame);
             if (controlMap) {
                 this.gl.uniform1i(this.shaderUniforms.ControlMapEnabled, 1);
                 this.gl.uniform2f(this.shaderUniforms.ControlMapMin, controlMap.minPoint.x, controlMap.minPoint.y);
@@ -181,21 +195,47 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             this.gl.bindTexture(GL.TEXTURE_2D, controlMap.getTextureX(this.gl));
             this.gl.uniform1i(this.shaderUniforms.ControlMapTexture, 1);
 
-            const rangeScale = {
-                x: 1.0 / (frame.spatialReference.requiredFrameView.xMax - frame.spatialReference.requiredFrameView.xMin),
-                y: 1.0 / (frame.spatialReference.requiredFrameView.yMax - frame.spatialReference.requiredFrameView.yMin),
-            };
+            // TODO: Clean this up!
+            if (baseFrame.spatialReference) {
+                let rotationOrigin = baseFrame.spatialTransform.origin;
+                const rangeScale = {
+                    x: 1.0 / (baseFrame.spatialReference.requiredFrameView.xMax - baseFrame.spatialReference.requiredFrameView.xMin),
+                    y: 1.0 / (baseFrame.spatialReference.requiredFrameView.yMax - baseFrame.spatialReference.requiredFrameView.yMin),
+                };
 
-            const rangeOffset = {
-                x: -frame.spatialReference.requiredFrameView.xMin * rangeScale.x,
-                y: -frame.spatialReference.requiredFrameView.yMin * rangeScale.y
-            };
+                // Instead of rotating and scaling about an origin on the GPU (float32), we take this out of the shader, and perform beforehand (float64, and consistent)
+                const originAdjustedOffset = subtract2D(baseFrame.spatialTransform.origin, scale2D(rotate2D(baseFrame.spatialTransform.origin, baseFrame.spatialTransform.rotation), baseFrame.spatialTransform.scale));
 
-            this.gl.uniform2f(this.shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
-            this.gl.uniform2f(this.shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
-            this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / frame.spatialReference.zoomLevel);
-            this.gl.uniform1f(this.shaderUniforms.RotationAngle, 0.0);
-            this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, 1.0);
+                const rangeOffset = {
+                    x: (baseFrame.spatialTransform.translation.x - baseFrame.spatialReference.requiredFrameView.xMin + originAdjustedOffset.x) * rangeScale.x,
+                    y: (baseFrame.spatialTransform.translation.y - baseFrame.spatialReference.requiredFrameView.yMin + originAdjustedOffset.y) * rangeScale.y
+                };
+
+                this.gl.uniform2f(this.shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
+                this.gl.uniform2f(this.shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
+                this.gl.uniform2f(this.shaderUniforms.RotationOrigin, rotationOrigin.x, rotationOrigin.y);
+                this.gl.uniform1f(this.shaderUniforms.RotationAngle, -baseFrame.spatialTransform.rotation);
+                this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, baseFrame.spatialTransform.scale);
+            } else {
+                const baseRequiredView = baseFrame.requiredFrameView;
+                const rangeScale = {
+                    x: 1.0 / (baseRequiredView.xMax - baseRequiredView.xMin),
+                    y: 1.0 / (baseRequiredView.yMax - baseRequiredView.yMin),
+                };
+
+                const rangeOffset = {
+                    x: -baseRequiredView.xMin * rangeScale.x,
+                    y: -baseRequiredView.yMin * rangeScale.y
+                };
+
+                this.gl.uniform2f(this.shaderUniforms.RangeOffset, rangeOffset.x, rangeOffset.y);
+                this.gl.uniform2f(this.shaderUniforms.RangeScale, rangeScale.x, rangeScale.y);
+                // TODO: Should this be the base frame's zoom or the base frame's reference's zoom level?
+                this.gl.uniform1f(this.shaderUniforms.LineThickness, devicePixelRatio * frame.contourConfig.thickness / baseFrame.zoomLevel);
+                this.gl.uniform1f(this.shaderUniforms.RotationAngle, 0.0);
+                this.gl.uniform1f(this.shaderUniforms.ScaleAdjustment, 1.0);
+            }
+
         }
 
         // Calculates ceiling power-of-three value as a dash factor.
@@ -303,6 +343,11 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
             if (frame.secondaryImages) {
                 const visibleSecondaries = frame.secondaryImages.map(f => f.contourConfig.enabled && f.contourConfig.visible);
+            }
+
+            if (frame.spatialReference) {
+                const visibleSiblings = frame.secondaryImages ? frame.secondaryImages.map(f => f !== frame && f.contourConfig.enabled && f.contourConfig.visible) : undefined;
+                const visibleReference = frame.spatialReference.contourConfig.enabled && frame.spatialReference.contourConfig.visible;
             }
 
             const visible = frame.contourConfig.enabled && frame.contourConfig.visible;
