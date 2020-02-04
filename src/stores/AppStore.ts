@@ -48,13 +48,13 @@ export class AppStore {
     @observable frames: FrameStore[];
     @observable activeFrame: FrameStore;
     // Animation
-    readonly animatorStore: AnimatorStore;
+    @observable animatorStore: AnimatorStore;
     // Error alerts
     readonly alertStore: AlertStore;
     // Logs
     readonly logStore: LogStore;
     // User preference
-    readonly preferenceStore: PreferenceStore;
+    @observable preferenceStore: PreferenceStore;
     // Layouts
     readonly layoutStore: LayoutStore;
     // Dialogs

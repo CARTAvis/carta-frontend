@@ -132,7 +132,7 @@ export class PreferenceStore {
     @observable beamColor: string;
     @observable beamType: BeamType;
     @observable beamWidth: number;
-    readonly regionContainer: RegionStore;
+    @observable regionContainer: RegionStore;
     @observable regionCreationMode: string;
     @observable imageCompressionQuality: number;
     @observable animationCompressionQuality: number;

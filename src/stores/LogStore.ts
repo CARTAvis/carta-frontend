@@ -12,13 +12,12 @@ export class LogStore {
     @observable logEntries: LogEntry[];
     @observable hiddenTags: string[];
     @observable logLevel: CARTA.ErrorSeverity;
-    readonly logLimit: number;
+    readonly logLimit = 1000;
 
     constructor() {
         this.logEntries = [];
         this.hiddenTags = [];
         this.logLevel = CARTA.ErrorSeverity.INFO;
-        this.logLimit = 1000;
     }
 
     @computed get newestMsg(): string {

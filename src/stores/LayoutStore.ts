@@ -17,7 +17,7 @@ export class LayoutStore {
     // self-defined structure: {layoutName: config, layoutName: config, ...}
     @observable dockedLayout: GoldenLayout;
     @observable currentLayoutName: string;
-    @observable private readonly layouts: any;
+    @observable private layouts: any;
     @observable supportsServer: boolean;
 
     constructor(appStore: AppStore, alertStore: AlertStore) {
