@@ -1,7 +1,7 @@
 declare var Module: any;
 declare var addOnPostRun: any;
 const ctx: Worker = self as any;
-
+const FLT_MAX = 3.402823466e+38;
 // Allocate a 4 MB uncompressed buffer and 1 MB uncompressed buffer
 Module.nDataBytes = 4e6;
 Module.nDataBytesCompressed = 1e6;
@@ -93,7 +93,8 @@ ctx.onmessage = (event => {
 
             for (let L of eventArgs.nanEncodings) {
                 if (fillVal) {
-                    outputView.fill(NaN, decodedIndex, decodedIndex + L);
+                    // Some shader compilers have trouble with NaN checks, so we instead use a dummy value of -FLT_MAX
+                    outputView.fill(-FLT_MAX, decodedIndex, decodedIndex + L);
                 }
                 fillVal = !fillVal;
                 decodedIndex += L;

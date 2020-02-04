@@ -4,12 +4,11 @@ precision highp float;
 attribute vec3 aVertexPosition;
 attribute vec2 aVertexNormal;
 
-uniform vec2 uFrameMin;
-uniform vec2 uFrameMax;
+uniform vec2 uRangeScale;
+uniform vec2 uRangeOffset;
 uniform vec2 uRotationOrigin;
 uniform float uRotationAngle;
 uniform float uScaleAdjustment;
-uniform vec2 uOffset;
 uniform float uLineThickness;
 
 // Control-map based transformation
@@ -28,12 +27,8 @@ vec2 rotate2D(vec2 vector, float theta) {
     return mat2(cosTheta, -sinTheta, sinTheta, cosTheta) * vector;
 }
 
-vec2 rotateAboutPoint2D(vec2 vector, vec2 origin, float theta) {
-    return rotate2D(vector - origin, theta) + origin;
-}
-
-vec2 scaleAboutPoint2D(vec2 vector, vec2 origin, float scale) {
-    return (vector - origin) * scale + origin;
+vec2 scaleAndRotate2D(vec2 vector, float theta, float scale) {
+    return rotate2D(vector, theta) * scale;
 }
 
 // Based on NVIDIA GPU Gems 2 Chapter "Fast Third-Order Texture Filtering"
@@ -97,23 +92,25 @@ void main(void) {
 
     // If there's a control map, use it to look up location using bilinear filtering
     if (uControlMapEnabled > 0) {
-        // Use 0.1 pixel offset to estimate direction of normal
-        vec2 extrudedPoint = controlMapLookup(posImageSpace + normalize(extrudeOffet) * 0.1);
+        // Use an offset of 10% of the grid spacing to estimate the direction of the normal
+        vec2 deltaVec = 0.1 * (uControlMapMax - uControlMapMin) / uControlMapSize;
+        // Use a minimum of 10% in X and 10% in Y directions
+        float delta = min(deltaVec.x, deltaVec.y);
+        vec2 extrudedPoint = controlMapLookup(posImageSpace + normalize(extrudeOffet) * delta);
         posImageSpace = controlMapLookup(posImageSpace);
         vec2 transformedNormal = extrudedPoint - posImageSpace;
         // Ensure consistent extrusion distance
         posImageSpace += extrudeDistance * normalize(transformedNormal);
     } else {
         // Extrude point along normal
-        posImageSpace = (posImageSpace + extrudeOffet);
+        posImageSpace += extrudeOffet;
     }
 
     // Scale and rotate
-    vec2 posRefSpace = scaleAboutPoint2D(rotateAboutPoint2D(posImageSpace, uRotationOrigin, uRotationAngle), uRotationOrigin, uScaleAdjustment) + uOffset;
+    vec2 posRefSpace = scaleAndRotate2D(posImageSpace, uRotationAngle, uScaleAdjustment);
 
     // Convert from image space to GL space [-1, 1]
-    vec2 range = uFrameMax - uFrameMin;
-    vec2 adjustedPosition = vec2((posRefSpace.x - uFrameMin.x) / range.x, (posRefSpace.y - uFrameMin.y) / range.y) * 2.0 - 1.0;
+    vec2 adjustedPosition = (posRefSpace * uRangeScale + uRangeOffset) * 2.0 - 1.0;
 
     vLineSide = sign(aVertexPosition.z);
     vLinePosition = abs(aVertexPosition.z);
