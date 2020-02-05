@@ -571,6 +571,24 @@ export class BackendService {
         return false;
     }
 
+    @action("set user preferences")
+    setUserPreferences(preferencesMap: { [k: string]: string }): Observable<CARTA.SetUserPreferencesAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.SetUserPreferences.create({preferenceMap: preferencesMap});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.SET_USER_PREFERENCES, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.SET_USER_PREFERENCES, CARTA.SetUserPreferences.encode(message).finish())) {
+                return new Observable<CARTA.SetUserPreferencesAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
     @action("set user layout")
     setUserLayout(name: string, value: string): Observable<CARTA.SetUserLayoutAck> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
