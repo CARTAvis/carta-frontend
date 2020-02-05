@@ -453,7 +453,7 @@ export class FrameStore {
             overlay.labels.setVisible(astLabelsVisible);
         }
 
-        this.regionSet = new RegionSetStore(this, preference.regionContainer, backendService);
+        this.regionSet = new RegionSetStore(this, preference, backendService);
         this.valid = true;
         this.currentFrameView = {
             xMin: 0,
@@ -469,7 +469,7 @@ export class FrameStore {
         this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
 
         // need initialized wcs to get correct cursor info
-        this.cursorInfo = this.getCursorInfoImageSpace({x: 0, y: 0});
+        this.cursorInfo = this.getCursorInfoImageSpace(this.center);
         this.cursorValue = 0;
         this.cursorFrozen = preference.isCursorFrozen;
 

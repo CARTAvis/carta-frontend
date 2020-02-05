@@ -21,6 +21,7 @@ import {
     LogStore,
     nightPalette,
     OverlayStore,
+    PreferenceKeys,
     PreferenceStore,
     RasterRenderType,
     RegionFileType,
@@ -162,6 +163,11 @@ export class AppStore {
             // Init layout/preference store after connection is built
             const supportsServerLayout = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_LAYOUTS ? true : false;
             this.layoutStore.initUserDefinedLayouts(supportsServerLayout, ack.userLayouts);
+            const supportsServerPreference = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_PREFERENCES ? true : false;
+            this.preferenceStore.initUserDefinedPreferences(supportsServerPreference, ack.userPreferences);
+            this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
+            this.layoutStore.applyLayout(this.preferenceStore.layout);
+            this.compressionQuality = this.preferenceStore.imageCompressionQuality;
 
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
@@ -442,11 +448,11 @@ export class AppStore {
     };
 
     @action setDarkTheme = () => {
-        this.preferenceStore.setTheme(Theme.DARK);
+        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.DARK);
     };
 
     @action setLightTheme = () => {
-        this.preferenceStore.setTheme(Theme.LIGHT);
+        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.LIGHT);
     };
 
     @action toggleCursorFrozen = () => {
@@ -484,7 +490,7 @@ export class AppStore {
         this.preferenceStore = new PreferenceStore(this);
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore, this.preferenceStore);
-        this.tileService = new TileService(this.backendService, this.preferenceStore.GPUTileCache, this.preferenceStore.systemTileCache);
+        this.tileService = new TileService(this.backendService);
         this.astReady = false;
         this.cartaComputeReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
@@ -542,7 +548,7 @@ export class AppStore {
         // Update frame view outside of animation
         autorun(() => {
             if (this.activeFrame &&
-                (this.preferenceStore.streamTilesWhileZooming || !this.activeFrame.zooming) &&
+                (this.preferenceStore.streamContoursWhileZooming || !this.activeFrame.zooming) &&
                 (this.animatorStore.animationState === AnimationState.STOPPED || this.animatorStore.animationMode === AnimationMode.FRAME)) {
                 // Trigger update raster view/title when switching layout
                 const layout = this.layoutStore.dockedLayout;
