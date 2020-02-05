@@ -3,6 +3,12 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore} from "./RegionWidgetStore";
 
+export interface CatalogInfo {
+    fileId: number;
+    fileInfo: CARTA.ICatalogFileInfo;
+    dataSize: number;
+}
+
 export enum CatalogOverlay {
     X = "X",
     Y = "Y",
@@ -19,26 +25,20 @@ export enum CatalogOverlayShape {
 
 export type ControlHeader = { columnIndex: number, dataIndex: number, display: boolean, representAs: CatalogOverlay, filter: string };
 
-const DEFAULTS = {
-    numVisibleRows : 50,
-    loadingData : true,
-    catalogColor: Colors.RED2,
-    catalogSize: 1
-};
-
 export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     // @observable channel: number;
-    // @observable progress: number;
-
     // private vertexData: Float32Array[];
     // private vertexBuffers: WebGLBuffer[];
-    // @observable catalogControlHeader: Array<ControlHeader>;
 
-    private xColumn: string;
-    private yColumn: string;
-    private sizeColumn: string;
-    private shapeColumn: string;
+    public static readonly InitTableRows = 20;
 
+    @observable xColumn: string;
+    @observable yColumn: string;
+    @observable sizeColumn: string;
+    @observable shapeColumn: string;
+    
+    @observable progress: number;
+    @observable catalogInfo: CatalogInfo;
     @observable catalogControlHeader: Map<string, ControlHeader>;
     @observable catalogHeader: Array<CARTA.ICatalogHeader>;
     @observable catalogData: CARTA.ICatalogColumnsData;
@@ -51,16 +51,16 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable catalogColor: string;
     @observable catalogShape: CatalogOverlayShape;
 
-    constructor(catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData) {
+    constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData) {
         super();
-        this.catalogHeader = catalogHeader.sort((a, b) => { return a.columnIndex - b.columnIndex});
+        this.catalogInfo = catalogInfo;
+        this.catalogHeader = catalogHeader.sort((a, b) => { return (a.columnIndex - b.columnIndex); });
         this.catalogData = catalogData;
         this.catalogControlHeader = this.initCatalogControlHeader;
-        this.numVisibleRows = DEFAULTS.numVisibleRows;
-        this.loadingData = DEFAULTS.loadingData;
-        this.catalogColor = DEFAULTS.catalogColor;
-        this.catalogSize = DEFAULTS.catalogSize;
-        this.maxRow = 50;
+        this.numVisibleRows = CatalogOverlayWidgetStore.InitTableRows;
+        this.loadingData = false;
+        this.catalogColor = Colors.RED2;
+        this.catalogSize = catalogInfo.dataSize;
         this.xColumn = undefined;
         this.yColumn = undefined;
         this.sizeColumn = undefined;
@@ -77,11 +77,15 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     //     this.channel = channel;
     // };
 
+    @action setProgress(val: number) {
+        this.progress = val;
+    }
+
     @action setCatalogHeader(catalogHeader: Array<CARTA.CatalogHeader>) {
         this.catalogHeader = catalogHeader;
     }
 
-    @action setCatalogData(catalogData: CARTA.CatalogColumnsData) {
+    @action setCatalogData(catalogData: CARTA.ICatalogColumnsData) {
         this.catalogData = catalogData;
     }
 
@@ -123,17 +127,13 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         }
     }
 
-    @action setLoadingData(val: boolean) {
+    @action setLoadingDataStatus(val: boolean) {
         this.loadingData = val;
     }
 
     @action setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
     };
-
-    @action setMaxRow (val: number) {
-        this.maxRow = val;
-    }
 
     @action setHeaderTableColumnWidts(vals: Array<number>) {
         this.headerTableColumnWidts = vals;
@@ -155,13 +155,25 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogShape = shape;
     }
 
+    @action.bound reset() {
+        this.catalogControlHeader = this.initCatalogControlHeader;
+        this.numVisibleRows = CatalogOverlayWidgetStore.InitTableRows;
+        this.loadingData = false;
+        this.catalogColor = Colors.RED2;
+        this.catalogSize = this.catalogInfo.dataSize;
+        this.xColumn = undefined;
+        this.yColumn = undefined;
+        this.sizeColumn = undefined;
+        this.shapeColumn = undefined;
+    }
+
     @computed get initCatalogControlHeader() {
         const controlHeaders = new Map<string, ControlHeader>();
         const catalogHeader = this.catalogHeader;
         if (catalogHeader.length) {
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
-                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: true, representAs: CatalogOverlay.NULL, filter: "Filter"};
+                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: true, representAs: CatalogOverlay.NULL, filter: undefined};
                 controlHeaders.set(header.name, controlHeader);
             }
         }
@@ -188,7 +200,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         return displayedColumnHeaders;
     }
 
-    private setXColumn(columnName: string) {
+    @action setXColumn(columnName: string) {
         if (this.xColumn) {
             let representAs = this.catalogControlHeader.get(this.xColumn).representAs;
             if (representAs === CatalogOverlay.X) {
@@ -198,7 +210,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.xColumn = columnName; 
     }
 
-    private setYColumn(columnName: string) {
+    @action setYColumn(columnName: string) {
         if (this.yColumn) {
             let representAs = this.catalogControlHeader.get(this.yColumn).representAs;
             if (representAs === CatalogOverlay.Y) {
@@ -208,7 +220,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.yColumn = columnName; 
     }
 
-    private setSizeColumn(columnName: string) {
+    @action setSizeColumn(columnName: string) {
         if (this.sizeColumn) {
             let representAs = this.catalogControlHeader.get(this.sizeColumn).representAs;
             if (representAs === CatalogOverlay.PlotSize) {
@@ -218,7 +230,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.sizeColumn = columnName; 
     }
 
-    private setShapColumn(columnName: string) {
+    @action setShapColumn(columnName: string) {
         if (this.shapeColumn) {
             let representAs = this.catalogControlHeader.get(this.shapeColumn).representAs;
             if (representAs === CatalogOverlay.PlotShape) {

@@ -15,7 +15,7 @@ export class CatalogOverlayFilterComponent extends React.Component<{widgetStore:
     };
 
     private handleMaxRowChange = (value: number) => {
-        this.props.widgetStore.setMaxRow(value);
+        this.props.widgetStore.setNumVisibleRows(value);
     };
 
     public render() {
@@ -46,8 +46,7 @@ export class CatalogOverlayFilterComponent extends React.Component<{widgetStore:
                 </FormGroup>
                 <FormGroup label={"Max Row"} inline={true}>
                         <NumericInput
-                            // className="line-boundary"
-                            value={widgetStore.maxRow}
+                            value={widgetStore.numVisibleRows}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
                             allowNumericCharactersOnly={true}

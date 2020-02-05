@@ -24,7 +24,17 @@ import {
     HistogramSettingsPanelComponent
 } from "components";
 import {AppStore, LayoutStore} from "stores";
-import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore, CatalogOverlayWidgetStore} from "./widgets";
+import {
+    EmptyWidgetStore, 
+    HistogramWidgetStore, 
+    RegionWidgetStore, 
+    RenderConfigWidgetStore, 
+    SpatialProfileWidgetStore, 
+    SpectralProfileWidgetStore, 
+    StatsWidgetStore, 
+    StokesAnalysisWidgetStore, 
+    CatalogOverlayWidgetStore, CatalogInfo
+} from "./widgets";
 
 export class WidgetConfig {
     id: string;
@@ -291,9 +301,6 @@ export class WidgetsStore {
                 break;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 itemId = this.addStokesWidget();
-                break;
-            case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                // itemId = this.addCatalogOverlayWidget();
                 break;
             default:
                 // Remove it from the floating widget array, while preserving its store
@@ -619,20 +626,21 @@ export class WidgetsStore {
     // endregion
 
     // region Catalog Overlay Widgets
-    createFloatingCatalogOverlayWidget = (catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData) => {
+    createFloatingCatalogOverlayWidget = (catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData): string => {
         let config = CatalogOverlayComponent.WIDGET_CONFIG;
-        config.id = this.addCatalogOverlayWidget(catalogHeader, catalogData);
+        config.id = this.addCatalogOverlayWidget(catalogInfo, catalogHeader, catalogData);
         this.addFloatingWidget(config);
+        return config.id;
     };
 
-    @action addCatalogOverlayWidget(catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData, id: string = null) {
+    @action addCatalogOverlayWidget(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData, id: string = null) {
         // Generate new id if none passed in
         if (!id) {
             id = this.getNextId(CatalogOverlayComponent.WIDGET_CONFIG.type);
         }
 
         if (id) {
-            this.catalogOverlayWidgets.set(id, new CatalogOverlayWidgetStore(catalogHeader, catalogData));
+            this.catalogOverlayWidgets.set(id, new CatalogOverlayWidgetStore(catalogInfo, catalogHeader, catalogData));
         }
         return id;
     }
@@ -809,6 +817,10 @@ export class WidgetsStore {
                 return;
             }
 
+            // close catalog file
+            if (this.catalogOverlayWidgets.get(id)) {
+                this.appStore.reomveCatalog(id);
+            }
             this.removeWidget(id, widget.type);
         }
     };

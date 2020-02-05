@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Cell, Column, Table, Utils, SelectionModes, RenderMode, ColumnHeaderCell, EditableCell} from "@blueprintjs/table";
+import {Cell, Column, Table, Utils, SelectionModes, RenderMode, ColumnHeaderCell, EditableCell, TableLoadingOption} from "@blueprintjs/table";
 import {ControlHeader} from "stores/widgets";
 import {CARTA} from "carta-protobuf";
 
@@ -21,6 +21,10 @@ export class TableComponentProps {
     updateRef?: (ref: Table) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
     setNumVisibleRows?: (val: number) => void;
+    updateTable?: (updateRowNumber: number) => void;
+    loadingCell?: boolean;
+    updateSpeed?: number;
+    tableSize?: number;
 }
 
 @observer
@@ -68,12 +72,6 @@ export class TableComponent extends React.Component<TableComponentProps> {
                         key={"column-filter-" + columnIndex}
                         intent={"primary"}
                         onChange={((value: string) => this.props.updateColumnFilter(value, columnName))}
-                        // disabled={false}
-                        // leftIcon="filter"
-                        // onChange={this.handleFilterChange}
-                        // placeholder="Filter histogram..."
-                        // rightElement={maybeSpinner}
-                        // small={true}
                         value={controlheader.filter}
                     />
                 </ColumnHeaderCell> 
@@ -83,12 +81,23 @@ export class TableComponent extends React.Component<TableComponentProps> {
         );
     }
 
-    private infiniteLoad(rowIndexEnd: number, numVisibleRows: number) {
-        // incorrect rowIndices, bliuprintjs table bug https://github.com/palantir/blueprint/issues/3341
-        if (rowIndexEnd + 1 >= numVisibleRows) {
-            this.props.setNumVisibleRows(numVisibleRows + 20);
+    private getLoadingOptions() {
+        const loadingOptions: TableLoadingOption[] = [];
+        if (this.props.loadingCell) {
+            loadingOptions.push(TableLoadingOption.CELLS);
         }
+        return loadingOptions;
     }
+
+    // private infiniteLoad(rowIndexEnd: number, numVisibleRows: number) {
+    //     // incorrect rowIndices, bliuprintjs table bug https://github.com/palantir/blueprint/issues/3341
+    //     const props = this.props;
+    //     // console.log(rowIndexEnd)
+    //     if (props.updateTable && props.updateSpeed && rowIndexEnd + 1 >= numVisibleRows) {
+    //         props.updateTable(numVisibleRows + props.updateSpeed);
+    //         props.setNumVisibleRows(numVisibleRows + props.updateSpeed);
+    //     }
+    // }
 
     private renderDataColumn(columnName: string, coloumnData: any) {
         return (
@@ -105,8 +114,6 @@ export class TableComponent extends React.Component<TableComponentProps> {
     render() {
         const table = this.props;
         const tableColumns = [];
-        // console.log(this.props)
-        
         const tableData = table.dataset;
         for (let index = 0; index < table.columnHeaders.length; index++) {
             const header = table.columnHeaders[index];
@@ -130,11 +137,9 @@ export class TableComponent extends React.Component<TableComponentProps> {
                     numRows={table.numVisibleRows}
                     renderMode={RenderMode.BATCH}
                     enableRowReordering={false}
-                    selectionModes={SelectionModes.NONE} 
-                    // minRowHeight={10}
-                    // minColumnWidth={30}
-                    // enableGhostCells={true}
-                    onVisibleCellsChange={(rowIndices) => this.infiniteLoad(rowIndices.rowIndexEnd, table.numVisibleRows)}
+                    selectionModes={SelectionModes.NONE}
+                    loadingOptions={this.getLoadingOptions()}
+                    // onVisibleCellsChange={(rowIndices) => this.infiniteLoad(rowIndices.rowIndexEnd, table.numVisibleRows)}
                     columnWidths={table.columnWidts}
                 >
                     {tableColumns}

@@ -1,6 +1,6 @@
 import * as _ from "lodash";
 import * as AST from "ast_wrapper";
-import {action, autorun, computed, observable, ObservableMap} from "mobx";
+import {action, autorun, computed, observable, ObservableMap, values} from "mobx";
 import {IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {
@@ -29,7 +29,15 @@ import {
 import {GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, TileService} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme} from "models";
-import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
+import {
+    HistogramWidgetStore, 
+    RegionWidgetStore, 
+    SpatialProfileWidgetStore, 
+    SpectralProfileWidgetStore, 
+    StatsWidgetStore, 
+    StokesAnalysisWidgetStore, 
+    CatalogInfo
+} from "./widgets";
 import {AppToaster} from "../components/Shared";
 
 export class AppStore {
@@ -53,6 +61,8 @@ export class AppStore {
     @observable preferenceStore: PreferenceStore;
     // Layouts
     @observable layoutStore: LayoutStore;
+    // catalog map catalog widget with file
+    @observable catalogs: Map<string, number>;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -265,6 +275,11 @@ export class AppStore {
         return this.frames.length;
     }
 
+    // catalog 
+    @computed get catalogNum(): number {
+        return this.catalogs.size;
+    }
+
     @computed get frameNames(): IOptionProps [] {
         let names: IOptionProps [] = [];
         if (this.frameNum > 0) {
@@ -392,7 +407,7 @@ export class AppStore {
         this.shiftFrame(-1);
     };
 
-    // Catalog file actions
+    // Open catalog file
     @action appendCatalog = (directory: string, file: string, previewDataSize: number, type: CARTA.CatalogFileType) => {
         if (!this.activeFrame || !(type === CARTA.CatalogFileType.VOTable)) {
             AppToaster.show({icon: "warning-sign", message: `Catalog type not supported`, intent: "danger", timeout: 3000});
@@ -400,10 +415,12 @@ export class AppStore {
         }
 
         const frame = this.activeFrame;
-        this.backendService.loadCatalogFile(directory, file, frame.frameInfo.fileId, previewDataSize).subscribe(ack => {
-            console.log(ack)
+        const fileId = this.catalogNum + 1;
+        this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => {
             if (frame && ack.success && ack.dataSize) {
-                this.widgetsStore.createFloatingCatalogOverlayWidget(ack.headers, ack.columnsData);
+                let catalogInfo: CatalogInfo = {fileId : fileId, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
+                const catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);
+                this.catalogs.set(catalogWidgetId, fileId);
                 this.fileBrowserStore.hideFileBrowser();
             }
         }, error => {
@@ -411,6 +428,23 @@ export class AppStore {
             AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
         });
     };
+
+    @action reomveCatalog(catalogId: string) {
+        const fileId = this.catalogs.get(catalogId);
+        if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
+            // Todo clean catalog data from image viewer
+            this.catalogs.delete(catalogId);
+            console.log(fileId + " fild closed");
+            // console.log(this.catalogs)
+        }
+    }
+
+    @action sendCatalogFilter(catalogFilter: CARTA.CatalogFilterRequest) {
+        if (!this.activeFrame) {
+            return;
+        }
+        this.backendService.setCatalogFilterRequest(catalogFilter);
+    }
 
     // Region file actions
     @action importRegion = (directory: string, file: string, type: CARTA.FileType | CARTA.CatalogFileType) => {
@@ -510,6 +544,7 @@ export class AppStore {
         this.regionHistograms = new Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>();
 
         this.frames = [];
+        this.catalogs = new Map();
         this.activeFrame = null;
         this.fileBrowserStore = new FileBrowserStore(this.backendService);
         this.animatorStore = new AnimatorStore(this);
@@ -663,6 +698,7 @@ export class AppStore {
         this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
         this.backendService.getReconnectStream().subscribe(this.handleReconnectStream);
         this.tileService.GetTileStream().subscribe(this.handleTileStream);
+        this.backendService.getCatalogStream().subscribe(this.handleCatalogFilterStream);
 
         // Auth and connection
         if (process.env.REACT_APP_AUTHENTICATION === "true") {
@@ -797,6 +833,29 @@ export class AppStore {
             updatedFrame.updateFromContourData(contourImageData);
         }
     };
+
+    handleCatalogFilterStream = (catalogFilter: CARTA.CatalogFilterResponse) => {
+        let catalogWidgetId = null;
+        this.catalogs.forEach((value, key) => {
+            if (value === catalogFilter.fileId) {
+                catalogWidgetId = key;
+            }
+        });
+
+        const catalogWidgetStore = this.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
+        const progress = catalogFilter.progress;
+        // console.log(progress)
+        if (progress < 1) {
+            catalogWidgetStore.setLoadingDataStatus(true);
+        }
+
+        if (catalogWidgetId && progress === 1) {
+            catalogWidgetStore.setCatalogData(catalogFilter.columnsData);
+            catalogWidgetStore.setLoadingDataStatus(false);
+        }
+
+        catalogWidgetStore.setProgress(progress);
+    }
 
     handleErrorStream = (errorData: CARTA.ErrorData) => {
         if (errorData) {

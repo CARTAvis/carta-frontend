@@ -2,7 +2,6 @@ import {action, computed, observable} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
-// import {TableDataSet} from "components/Shared";
 
 export enum FileInfoTabs {
     INFO = "tab-info",
@@ -43,7 +42,6 @@ export class FileBrowserStore {
     @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
     @observable catalogFileInfor: CARTA.ICatalogFileInfo;
     @observable catalogHeaders: Array<CARTA.ICatalogHeader>;
-    // @observable catalogFileInfoResp:
 
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
@@ -139,7 +137,7 @@ export class FileBrowserStore {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.loadingInfo = false;
                 this.catalogFileInfor = res.fileInfo;
-                this.catalogHeaders = res.headers.sort((a, b) => { return a.columnIndex - b.columnIndex});
+                this.catalogHeaders = res.headers.sort((a, b) => { return a.columnIndex - b.columnIndex; });
             }
             this.fileInfoResp = res.success;
         }, err => {
@@ -203,8 +201,6 @@ export class FileBrowserStore {
         if (this.browserMode === BrowserMode.Catalog) {
             this.startingDirectory = this.catalogFileList.directory;
         } else {
-            // bug in backend dirctory, different return formate between CatalogListResponse and FileListResponse
-            this.startingDirectory = "/./" + this.fileList.directory;
             this.startingDirectory = this.fileList.directory;
         }
     }

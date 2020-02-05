@@ -95,7 +95,7 @@ const DEFAULTS = {
     contourChunkSize: 100000,
     streamContoursWhileZooming: false,
     lowBandwidthMode: false,
-    eventLoggingEnabled: false
+    eventLoggingEnabled: true
 };
 
 export class PreferenceStore {

@@ -1,19 +1,17 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {autorun, computed, observable} from "mobx";
+import {autorun, computed, observable, keys} from "mobx";
 import {observer} from "mobx-react";
-import {Colors, NonIdealState, Switch, HTMLSelect, AnchorButton, Intent, Tooltip, InputGroup} from "@blueprintjs/core";
-import {Cell, Column, Table, Utils, SelectionModes, RenderMode, ColumnHeaderCell, EditableName, EditableCell} from "@blueprintjs/table";
+import {Switch, HTMLSelect, AnchorButton, Intent, Tooltip} from "@blueprintjs/core";
+import {Cell, Column, Table, SelectionModes, RenderMode} from "@blueprintjs/table";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {TableComponent, TableComponentProps, ColumnFilter, TableType} from "components/Shared";
+import {TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {CatalogOverlayFilterComponent} from "./CatalogOverlayFilterComponent/CatalogOverlayFilterComponent";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
-// import {} from "./CatalogOverlayTableComponent/TableComponent";
 import {WidgetConfig, WidgetProps} from "stores";
 import {CatalogOverlayWidgetStore, CatalogOverlay} from "stores/widgets";
-import {ChannelInfo, Point2D} from "models";
-import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, minMaxPointArrayZ} from "utilities";
+import {toFixed} from "utilities";
 import "./CatalogOverlayComponent.css";
 
 enum HeaderTableColumnName {
@@ -21,6 +19,17 @@ enum HeaderTableColumnName {
     Display = "Display",
     RepresentAs = "Represent As",
     Description = "Description"
+}
+
+enum ComparisonOperator {
+   EqualTo = "==", 
+   NotEqualTo = "!=",
+   LessThan = "<", 
+   GreaterThan = ">",
+   LessThanOrEqualTo = "<=",
+   GreaterThanOrEqualTo = ">=",
+   BetweenAnd = "...",
+   FromTo = ".."
 }
 
 @observer
@@ -59,20 +68,40 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return widgetStore;
     }
 
-    // @computed get profileStore(): SpectralProfileStore {
-    //     if (this.props.appStore && this.props.appStore.activeFrame) {
-    //         let fileId = this.props.appStore.activeFrame.frameInfo.fileId;
-    //         const regionId = this.widgetStore.regionIdMap.get(fileId) || 0;
-    //         const frameMap = this.props.appStore.spectralProfiles.get(fileId);
-    //         if (frameMap) {
-    //             return frameMap.get(regionId);
-    //         }
-    //     }
-    //     return null;
-    // }
+    @computed get matchesSelectedRegion() {
+        const appStore = this.props.appStore;
+        const frame = appStore.activeFrame;
+        if (frame) {
+            const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
+            if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
+                return widgetRegion === frame.regionSet.selectedRegion.regionId;
+            }
+        }
+        return false;
+    }
 
     constructor(props: WidgetProps) {
         super(props);
+        autorun(() => {
+            if (this.widgetStore) {
+                let progressString = "";
+                const fileName = this.widgetStore.catalogInfo.fileInfo.name || "";
+                const appStore = this.props.appStore;
+                const frame = appStore.activeFrame;
+                const progress = this.widgetStore.progress;
+                if (progress && isFinite(progress) && progress < 1) {
+                    progressString = `[${toFixed(progress * 100)}% complete]`;
+                }
+                if (frame) {
+                    const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
+                    const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
+                    const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
+                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Catalog ${fileName} : ${regionString} ${selectedString} ${progressString}`);
+                }
+            } else {
+                this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Catalog : Cursor`);
+            }
+        });
     }
 
     onCatalogdataTableRefUpdated = (ref) => {
@@ -201,11 +230,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         );
     }
 
-    // private updateColumnFilter(value: string, columnName: string) {
-    //     // send filter request
-    //     this.widgetStore.setColumnFilter(value, columnName);
-    // }
-
     private columnWidts = (ref, numColumns: number, fixedWidth?: number, fixedIndex?: number) => {
         const viewportRect = ref.locator.getViewportRect();
         const tableRect = ref.locator.getTableRect();
@@ -227,7 +251,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         columnWidth = minColumnWidth;
                     }
                 }
-                // console.log(columnWidth)
                 totalMinSizeReq += columnWidth;
                 cumulativeColumnWidths.push(columnWidth);
             }
@@ -247,10 +270,134 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
+    private getUserFilters(): CARTA.FilterConfig[] {
+        let userFilters: CARTA.FilterConfig[] = [];
+        const filters = this.widgetStore.catalogControlHeader;
+        filters.forEach((value, key) => {
+            if (value.filter !== undefined) {
+                let filter = new CARTA.FilterConfig();
+                const dataType = this.widgetStore.catalogHeader[value.dataIndex].dataType;
+                filter.columnName = key;
+                if (dataType === CARTA.EntryType.STRING) {
+                    filter.subString = value.filter;
+                    filter.comparisonOperator = null;
+                    filter.max = null;
+                    filter.min = null;
+                    userFilters.push(filter);
+                } else {
+                    const result = this.getComparisonOperatorAndValue(value.filter);
+                    if (result.operator !== -1 && result.values.length > 0) {
+                        filter.comparisonOperator = result.operator;
+                        switch (result.values.length) {
+                            case 2:
+                                filter.min = Math.min(result.values[0], result.values[1]);
+                                filter.max = Math.max(result.values[0], result.values[1]);
+                                break;
+                            default:
+                                filter.min = result.values[0];
+                                filter.max = result.values[0];
+                                break;
+                        }
+                        userFilters.push(filter);
+                    } 
+                }
+            }
+            
+        });
+        return userFilters;
+    }
+
+    private getComparisonOperatorAndValue(filterString: string): {operator: number, values: number[]} {
+        for (let operator in ComparisonOperator) {
+            const filter = filterString.replace(/\s/g, "");
+            if (filter.includes(ComparisonOperator[operator])) {
+                let result = {operator: -1, values: []};
+                switch (ComparisonOperator[operator]) {
+                    case ComparisonOperator.EqualTo:
+                        const equalTo = filter.replace(/[^0-9.+-\.]+/g, "");
+                        result.operator = CARTA.ComparisonOperator.EqualTo;
+                        result.values.push(Number(equalTo));
+                        return result;
+                    case ComparisonOperator.NotEqualTo:
+                        const notEqualTo = filter.replace(/[^0-9.+-\.]+/g, "");
+                        result.operator = CARTA.ComparisonOperator.NotEqualTo;
+                        result.values.push(Number(notEqualTo));
+                        return result;
+                    case ComparisonOperator.LessThan:
+                        const lessThan = filter.replace(/[^0-9.+-\.]+/g, "");
+                        result.operator = CARTA.ComparisonOperator.LessThan;
+                        result.values.push(Number(lessThan));
+                        return result;
+                    case ComparisonOperator.GreaterThan:
+                        const greaterThan = filter.replace(/[^0-9.+-\.]+/g, "");
+                        result.operator = CARTA.ComparisonOperator.GreaterThan;
+                        result.values.push(Number(greaterThan));
+                        return result;
+                    case ComparisonOperator.LessThanOrEqualTo:
+                        const lessThanOrEqualTo = filter.replace(/[^0-9.+-\.]+/g, "");
+                        result.values.push(Number(lessThanOrEqualTo));
+                        result.operator = CARTA.ComparisonOperator.LessThanOrEqualTo;
+                        return result;
+                    case ComparisonOperator.GreaterThanOrEqualTo:
+                        const greaterThanOrEqualTo = filter.replace(/[^0-9.+-\.]+/g, "");
+                        result.values.push(Number(greaterThanOrEqualTo));
+                        result.operator = CARTA.ComparisonOperator.GreaterThanOrEqualTo;
+                        return result;
+                    case ComparisonOperator.BetweenAnd:
+                        const betweenAnd = filter.split(ComparisonOperator.BetweenAnd, 2);
+                        result.values.push(Number(betweenAnd[0]));
+                        result.values.push(Number(betweenAnd[1]));
+                        result.operator = CARTA.ComparisonOperator.BetweenAnd;
+                        return result;
+                    case ComparisonOperator.FromTo:
+                        const fromTo = filter.split(ComparisonOperator.FromTo, 2);
+                        result.values.push(Number(fromTo[0]));
+                        result.values.push(Number(fromTo[1]));
+                        result.operator = CARTA.ComparisonOperator.FromTo;
+                        return result;                                                                                
+                    default:
+                        return result;
+                }
+            }
+        }
+        return {operator: -1, values: []};
+    }
+
+    private handleFilterClick = () => {
+        let catalogFilter: CARTA.CatalogFilterRequest = new CARTA.CatalogFilterRequest();
+        const widgetStore = this.widgetStore;
+        const appStore = this.props.appStore;
+        const frame = appStore.activeFrame;
+        let regionId = 0;
+        let imageBounds: CARTA.CatalogImageBounds = new CARTA.CatalogImageBounds();
+
+        if (frame) {
+            regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
+            imageBounds.xColumnName = widgetStore.xColumn;
+            imageBounds.yColumnName = widgetStore.yColumn;
+            imageBounds.imageBounds = frame.requiredFrameView;
+        }
+
+        catalogFilter.fileId = widgetStore.catalogInfo.fileId;
+        // bugs with backend?
+        catalogFilter.filterConfigs = this.getUserFilters();
+        // control in fronend
+        catalogFilter.hidedHeaders = null;
+        // return all data for test;
+        catalogFilter.subsetDataSize = -1;
+        // Todo user setting for start index
+        catalogFilter.subsetStartIndex = 0;
+        // bugs with backend?
+        catalogFilter.imageBounds = imageBounds;
+        // bugs with backend?
+        catalogFilter.regionId = regionId;
+        appStore.sendCatalogFilter(catalogFilter);
+    };
+
     public render() {
         const appStore = this.props.appStore;
         const widgetStore = this.widgetStore;
-        console.log(widgetStore)
+        console.log(widgetStore);
         const dataTableProps: TableComponentProps = {
             type: TableType.ColumnFilter,
             dataset: widgetStore.catalogData,
@@ -261,6 +408,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             updateRef: this.onCatalogdataTableRefUpdated,
             updateColumnFilter: widgetStore.setColumnFilter,
             setNumVisibleRows: widgetStore.setNumVisibleRows,
+            // updateTable: this.updateTableData.bind(this),
+            // updateSpeed: 5,
+            tableSize: widgetStore.catalogSize,
+            loadingCell: widgetStore.loadingData
         };
 
         return (
@@ -281,12 +432,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             text="Filter"
+                            onClick={this.handleFilterClick}
                         />
                         </Tooltip>
                         <Tooltip content={"Clear filter"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             text="Clear"
+                            onClick={widgetStore.reset}
                         />
                         </Tooltip>
                         <Tooltip content={"Load"}>

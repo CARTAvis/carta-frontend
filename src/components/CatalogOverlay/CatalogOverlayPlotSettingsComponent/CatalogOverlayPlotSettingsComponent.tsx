@@ -35,9 +35,9 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
                         darkTheme={appStore.darkTheme}
                     />
                 </FormGroup>
-                <FormGroup  inline={true} label="Shape" labelInfo="(px)">
+                <FormGroup  inline={true} label="Shape">
                     <HTMLSelect className="bp3-fill" value={widgetStore.catalogShape} onChange={changeEvent => this.handleHeaderRepresentationChange(changeEvent)}>
-                        { Object.keys(CatalogOverlayShape).map( key => <option key={key} value={CatalogOverlayShape[key]}>{CatalogOverlayShape[key]}</option>)}
+                        {Object.keys(CatalogOverlayShape).map(key => <option key={key} value={CatalogOverlayShape[key]}>{CatalogOverlayShape[key]}</option>)}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup  inline={true} label="Size" labelInfo="(px)">
