@@ -20,11 +20,27 @@ export class ControlMap {
         this.width = width;
         this.height = height;
 
+        let cleanUpTransform: boolean = false;
+
+        if (astTransform < 0) {
+            const copySrc = AST.copy(src.wcsInfo);
+            const copyDest = AST.copy(dst.wcsInfo);
+            AST.invert(copySrc);
+            AST.invert(copyDest);
+            astTransform = AST.convert(copySrc, copyDest, "");
+            AST.delete(copySrc);
+            AST.delete(copyDest);
+            cleanUpTransform = true;
+        }
+
         const paddingX = Math.ceil(src.frameInfo.fileInfoExtended.width / width);
         const paddingY = Math.ceil(src.frameInfo.fileInfoExtended.height / height);
         this.minPoint = {x: -paddingX, y: -paddingY};
         this.maxPoint = {x: paddingX + src.frameInfo.fileInfoExtended.width, y: paddingY + src.frameInfo.fileInfoExtended.height};
         this.grid = AST.getTransformGrid(astTransform, this.minPoint.x, this.maxPoint.x, width, this.minPoint.y, this.maxPoint.y, height, 1);
+        if (cleanUpTransform) {
+            AST.delete(astTransform);
+        }
     }
 
     getTextureX = (gl: WebGLRenderingContext) => {
@@ -42,6 +58,10 @@ export class ControlMap {
         }
 
         return this.texture;
+    };
+
+    hasTextureForContext = (gl: WebGLRenderingContext) => {
+        return gl === this.gl && this.texture && gl.isTexture(this.texture);
     };
 
     getTransformedCoordinate(point: Point2D) {

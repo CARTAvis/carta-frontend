@@ -255,6 +255,30 @@ export class AppStore {
         return this.frames.map(frame => frame.stokes);
     }
 
+    @computed get spatialGroup(): FrameStore[] {
+        if (!this.frames || !this.frames.length || !this.activeFrame) {
+            return [];
+        }
+
+        const activeGroupFrames = [];
+        for (const frame of this.frames) {
+            const groupMember = (frame === this.activeFrame)                                                 // Frame is active
+                || (frame === this.activeFrame.spatialReference)                                             // Frame is the active frame's reference
+                || (frame.spatialReference === this.activeFrame)                                             // Frame is a secondary image of the active frame
+                || (frame.spatialReference && frame.spatialReference === this.activeFrame.spatialReference); // Frame has the same reference as the active frame
+
+            if (groupMember) {
+                activeGroupFrames.push(frame);
+            }
+        }
+
+        return activeGroupFrames;
+    }
+
+    @computed get contourFrames(): FrameStore[] {
+        return this.spatialGroup.filter(f => f.contourConfig.enabled && f.contourConfig.visible);
+    }
+
     @action addFrame = (directory: string, file: string, hdu: string, fileId: number) => {
         this.fileLoading = true;
         this.backendService.loadFile(directory, file, hdu, fileId, CARTA.RenderMode.RASTER).subscribe(ack => {
