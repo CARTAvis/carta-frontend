@@ -20,7 +20,7 @@ export class ControlMap {
         this.width = width;
         this.height = height;
 
-        let cleanUpTransform: boolean;
+        let cleanUpTransform: boolean = false;
 
         if (astTransform < 0) {
             const copySrc = AST.copy(src.wcsInfo);
