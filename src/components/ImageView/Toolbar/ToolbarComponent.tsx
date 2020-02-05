@@ -18,7 +18,7 @@ export class ToolbarComponentProps {
 @observer
 export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     private static readonly CoordinateSystemName = new Map<SystemType, string>([
-        [SystemType.Auto, "AUTO"],
+        [SystemType.Auto, "WCS"],
         [SystemType.FK5, "FK5"],
         [SystemType.FK4, "FK4"],
         [SystemType.Galactic, "GAL"],
