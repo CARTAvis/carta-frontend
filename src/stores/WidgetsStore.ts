@@ -37,6 +37,7 @@ export class WidgetConfig {
     @observable title: string;
     parentId?: string;
     parentType?: string;
+    helpContext?: string;
 }
 
 export class WidgetProps {
@@ -370,17 +371,21 @@ export class WidgetsStore {
             let unpinButton = $(`<li class="lm-pin" title="detach"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);
             unpinButton.on("click", () => this.unpinWidget(stack.getActiveContentItem()));
             stack.header.controlsContainer.prepend(unpinButton);
+            const appStore = this.appStore;
+            let helpButton = $(`<li class="lm-help" title="help"><span class="bp3-icon-standard bp3-icon-help"/></li>`);
+            helpButton.on("click", () => appStore.helpStore.showHelpDrawer(stack.getActiveContentItem().config.title));
+            stack.header.controlsContainer.prepend(helpButton);
 
             stack.on("activeContentItemChanged", function(contentItem: any) {
                 if (stack && stack.config && stack.header.controlsContainer && stack.config.content.length) {
                     const activeTabItem = stack.getActiveContentItem();
                     const component = activeTabItem.config.component;
                     const stackHeaderControlButtons = stack.header.controlsContainer[0];
-                    if (component && showCogWidgets.includes(component) && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount < 4) {
+                    if (component && showCogWidgets.includes(component) && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount < 5) {
                         const cogPinedButton = $(`<li class="lm_settings" title="settings"><span class="bp3-icon-standard bp3-icon-cog"/></li>`);
                         cogPinedButton.on("click", () => contentItem.config.props.appStore.widgetsStore.onCogPinedClick(stack.getActiveContentItem()));
                         stack.header.controlsContainer.prepend(cogPinedButton);
-                    } else if (!showCogWidgets.includes(component) && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount === 4) {
+                    } else if (!showCogWidgets.includes(component) && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount === 5) {
                         stack.header.controlsContainer[0].children[0].remove();
                     }
                 }

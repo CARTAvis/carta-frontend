@@ -22,3 +22,4 @@ export * from "./Histogram/HistogramSettingsPanelComponent/HistogramSettingsPane
 export * from "./SplashScreen/SplashScreenComponent";
 export * from "./FileInfo/FileInfoComponent";
 export * from "./App/UIControllerComponent";
+export * from "./HelpDrawer/HelpDrawerComponent";

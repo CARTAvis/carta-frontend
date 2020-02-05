@@ -27,7 +27,8 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore
+    WidgetsStore,
+    HelpStore
 } from ".";
 import {GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, TileService} from "services";
@@ -63,6 +64,8 @@ export class AppStore {
     @observable overlayStore: OverlayStore;
     // File Browser
     @observable fileBrowserStore: FileBrowserStore;
+    // Help
+    @observable helpStore: HelpStore;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -501,6 +504,7 @@ export class AppStore {
         this.compressionQuality = this.preferenceStore.imageCompressionQuality;
         this.initRequirements();
         this.dialogStore = new DialogStore(this);
+        this.helpStore = new HelpStore();
 
         const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
             this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
