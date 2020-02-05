@@ -50,8 +50,8 @@ export class ControlMap {
             this.texture = this.gl.createTexture();
             this.gl.activeTexture(GL.TEXTURE1);
             this.gl.bindTexture(GL.TEXTURE_2D, this.texture);
-            this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR);
-            this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
+            this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
+            this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
             this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
             this.gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
             this.gl.texImage2D(GL.TEXTURE_2D, 0, GL.LUMINANCE_ALPHA, this.width, this.height, 0, GL.LUMINANCE_ALPHA, GL.FLOAT, this.grid);

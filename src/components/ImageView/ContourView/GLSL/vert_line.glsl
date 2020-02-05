@@ -16,7 +16,7 @@ uniform int uControlMapEnabled;
 uniform vec2 uControlMapMin;
 uniform vec2 uControlMapMax;
 uniform vec2 uControlMapSize;
-uniform sampler2D uControlMapTexture;
+uniform highp sampler2D uControlMapTexture;
 
 varying float vLinePosition;
 varying float vLineSide;
@@ -30,6 +30,61 @@ vec2 rotate2D(vec2 vector, float theta) {
 vec2 scaleAndRotate2D(vec2 vector, float theta, float scale) {
     return rotate2D(vector, theta) * scale;
 }
+
+// Adapted from https://www.shadertoy.com/view/MllSzX
+//=======================================================================================
+vec4 CubicHermite (vec4 A, vec4 B, vec4 C, vec4 D, float t)
+{
+    float t2 = t*t;
+    float t3 = t*t*t;
+    vec4 a = -A/2.0 + (3.0*B)/2.0 - (3.0*C)/2.0 + D/2.0;
+    vec4 b = A - (5.0*B)/2.0 + 2.0*C - D / 2.0;
+    vec4 c = -A/2.0 + C/2.0;
+    vec4 d = B;
+
+    return a*t3 + b*t2 + c*t + d;
+}
+
+//=======================================================================================
+vec4 BicubicHermiteTextureSample (sampler2D texture, vec2 P)
+{
+    float c_onePixel = 1.0 / uControlMapSize.x;
+    float c_twoPixels = 2.0 / uControlMapSize.x;
+
+    vec2 pixel = P * uControlMapSize.x + 0.5;
+
+    vec2 frac = fract(pixel);
+    pixel = floor(pixel) / uControlMapSize.x - vec2(c_onePixel/2.0);
+
+    vec4 C00 = texture2D(texture, pixel + vec2(-c_onePixel ,-c_onePixel));
+    vec4 C10 = texture2D(texture, pixel + vec2( 0.0        ,-c_onePixel));
+    vec4 C20 = texture2D(texture, pixel + vec2( c_onePixel ,-c_onePixel));
+    vec4 C30 = texture2D(texture, pixel + vec2( c_twoPixels,-c_onePixel));
+
+    vec4 C01 = texture2D(texture, pixel + vec2(-c_onePixel , 0.0));
+    vec4 C11 = texture2D(texture, pixel + vec2( 0.0        , 0.0));
+    vec4 C21 = texture2D(texture, pixel + vec2( c_onePixel , 0.0));
+    vec4 C31 = texture2D(texture, pixel + vec2( c_twoPixels, 0.0));
+
+    vec4 C02 = texture2D(texture, pixel + vec2(-c_onePixel , c_onePixel));
+    vec4 C12 = texture2D(texture, pixel + vec2( 0.0        , c_onePixel));
+    vec4 C22 = texture2D(texture, pixel + vec2( c_onePixel , c_onePixel));
+    vec4 C32 = texture2D(texture, pixel + vec2( c_twoPixels, c_onePixel));
+
+    vec4 C03 = texture2D(texture, pixel + vec2(-c_onePixel , c_twoPixels));
+    vec4 C13 = texture2D(texture, pixel + vec2( 0.0        , c_twoPixels));
+    vec4 C23 = texture2D(texture, pixel + vec2( c_onePixel , c_twoPixels));
+    vec4 C33 = texture2D(texture, pixel + vec2( c_twoPixels, c_twoPixels));
+
+    vec4 CP0X = CubicHermite(C00, C10, C20, C30, frac.x);
+    vec4 CP1X = CubicHermite(C01, C11, C21, C31, frac.x);
+    vec4 CP2X = CubicHermite(C02, C12, C22, C32, frac.x);
+    vec4 CP3X = CubicHermite(C03, C13, C23, C33, frac.x);
+
+    return CubicHermite(CP0X, CP1X, CP2X, CP3X, frac.y);
+}
+
+// end adapted from https://www.shadertoy.com/view/MllSzX
 
 // Based on NVIDIA GPU Gems 2 Chapter "Fast Third-Order Texture Filtering"
 // Adapted from GLSL code available at https://stackoverflow.com/questions/13501081/efficient-bicubic-filtering-code-in-glsl/13502446#13502446
@@ -77,8 +132,9 @@ vec2 controlMapLookup(vec2 pos) {
     vec2 texScale = 1.0 / uControlMapSize;
     vec2 range = uControlMapMax - uControlMapMin;
     vec2 shiftedPoint = pos - uControlMapMin;
-    vec2 index = uControlMapSize * (shiftedPoint) / range;
-    return bicubicFilter(uControlMapTexture, index, texScale).ra;
+    vec2 index = (shiftedPoint) / range;
+    return BicubicHermiteTextureSample(uControlMapTexture, index).ra;
+    //return bicubicFilter(uControlMapTexture, index, texScale).ra;
 }
 
 void main(void) {
