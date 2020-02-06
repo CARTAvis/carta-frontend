@@ -844,12 +844,12 @@ export class AppStore {
 
         const catalogWidgetStore = this.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
         const progress = catalogFilter.progress;
-        // console.log(progress)
         if (progress < 1) {
             catalogWidgetStore.setLoadingDataStatus(true);
         }
 
         if (catalogWidgetId && progress === 1) {
+            // Todo Update dataset with progress
             catalogWidgetStore.setCatalogData(catalogFilter.columnsData);
             catalogWidgetStore.setLoadingDataStatus(false);
         }

@@ -1,4 +1,4 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, values} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore} from "./RegionWidgetStore";
@@ -30,7 +30,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     // private vertexData: Float32Array[];
     // private vertexBuffers: WebGLBuffer[];
 
-    public static readonly InitTableRows = 20;
+    public static readonly InitTableRows = 50;
 
     @observable xColumn: string;
     @observable yColumn: string;
@@ -51,6 +51,9 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable catalogColor: string;
     @observable catalogShape: CatalogOverlayShape;
 
+    // Todo send same filter to backend when user click load (maybe we can cashing data in backend with filter id?)
+    @observable userFilters: CARTA.CatalogFilterRequest; 
+
     constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData) {
         super();
         this.catalogInfo = catalogInfo;
@@ -58,9 +61,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogData = catalogData;
         this.catalogControlHeader = this.initCatalogControlHeader;
         this.numVisibleRows = CatalogOverlayWidgetStore.InitTableRows;
+        this.maxRow = CatalogOverlayWidgetStore.InitTableRows;
         this.loadingData = false;
         this.catalogColor = Colors.RED2;
-        this.catalogSize = catalogInfo.dataSize;
+        this.catalogSize = 1;
         this.xColumn = undefined;
         this.yColumn = undefined;
         this.sizeColumn = undefined;
@@ -77,8 +81,16 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     //     this.channel = channel;
     // };
 
+    @action setUserFilter(userFilters: CARTA.CatalogFilterRequest) {
+        this.userFilters = userFilters;
+    }
+
     @action setProgress(val: number) {
         this.progress = val;
+    }
+
+    @action setMaxRow(val: number) {
+        this.maxRow = val;
     }
 
     @action setCatalogHeader(catalogHeader: Array<CARTA.CatalogHeader>) {
@@ -155,12 +167,15 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogShape = shape;
     }
 
-    @action.bound reset() {
+    @action.bound reset(dataTableColumnWidts: number[]) {
+        // Todo clear catalog data in image viewer
         this.catalogControlHeader = this.initCatalogControlHeader;
         this.numVisibleRows = CatalogOverlayWidgetStore.InitTableRows;
+        this.maxRow = CatalogOverlayWidgetStore.InitTableRows;
+        this.dataTableColumnWidts = dataTableColumnWidts;
         this.loadingData = false;
         this.catalogColor = Colors.RED2;
-        this.catalogSize = this.catalogInfo.dataSize;
+        this.catalogSize = 1;
         this.xColumn = undefined;
         this.yColumn = undefined;
         this.sizeColumn = undefined;

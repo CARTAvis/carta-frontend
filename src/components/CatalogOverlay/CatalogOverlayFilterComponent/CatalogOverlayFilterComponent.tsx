@@ -15,7 +15,12 @@ export class CatalogOverlayFilterComponent extends React.Component<{widgetStore:
     };
 
     private handleMaxRowChange = (value: number) => {
-        this.props.widgetStore.setNumVisibleRows(value);
+        if (isNaN(value) || value < 0) {
+            // return all data
+            this.props.widgetStore.setMaxRow(-1);
+        } else {
+            this.props.widgetStore.setMaxRow(value);
+        }
     };
 
     public render() {
@@ -24,7 +29,6 @@ export class CatalogOverlayFilterComponent extends React.Component<{widgetStore:
 
         let enableRegionSelect = false;
         let regionId = 0;
-        // Fill region select options with all non-temporary regions that are closed or point type
         let profileRegionOptions: IOptionProps[];
         if (appStore.activeFrame && appStore.activeFrame.regionSet) {
             let fileId = appStore.activeFrame.frameInfo.fileId;
@@ -46,9 +50,11 @@ export class CatalogOverlayFilterComponent extends React.Component<{widgetStore:
                 </FormGroup>
                 <FormGroup label={"Max Row"} inline={true}>
                         <NumericInput
-                            value={widgetStore.numVisibleRows}
+                            value={widgetStore.maxRow}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
+                            max={widgetStore.catalogInfo.dataSize}
+                            min={-1}
                             allowNumericCharactersOnly={true}
                             onValueChange={(value: number) => this.handleMaxRowChange(value)}
                         />

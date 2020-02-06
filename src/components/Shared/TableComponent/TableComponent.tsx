@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Cell, Column, Table, Utils, SelectionModes, RenderMode, ColumnHeaderCell, EditableCell, TableLoadingOption} from "@blueprintjs/table";
+import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, EditableCell, TableLoadingOption} from "@blueprintjs/table";
 import {ControlHeader} from "stores/widgets";
 import {CARTA} from "carta-protobuf";
 
@@ -21,7 +21,6 @@ export class TableComponentProps {
     updateRef?: (ref: Table) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
     setNumVisibleRows?: (val: number) => void;
-    updateTable?: (updateRowNumber: number) => void;
     loadingCell?: boolean;
     updateSpeed?: number;
     tableSize?: number;
@@ -72,7 +71,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                         key={"column-filter-" + columnIndex}
                         intent={"primary"}
                         onChange={((value: string) => this.props.updateColumnFilter(value, columnName))}
-                        value={controlheader.filter}
+                        value={controlheader.filter ? controlheader.filter : ""}
                     />
                 </ColumnHeaderCell> 
                 <ColumnHeaderCell name={columnName}/>
@@ -89,15 +88,13 @@ export class TableComponent extends React.Component<TableComponentProps> {
         return loadingOptions;
     }
 
-    // private infiniteLoad(rowIndexEnd: number, numVisibleRows: number) {
-    //     // incorrect rowIndices, bliuprintjs table bug https://github.com/palantir/blueprint/issues/3341
-    //     const props = this.props;
-    //     // console.log(rowIndexEnd)
-    //     if (props.updateTable && props.updateSpeed && rowIndexEnd + 1 >= numVisibleRows) {
-    //         props.updateTable(numVisibleRows + props.updateSpeed);
-    //         props.setNumVisibleRows(numVisibleRows + props.updateSpeed);
-    //     }
-    // }
+    private infiniteLoad(rowIndexEnd: number, numVisibleRows: number) {
+        // incorrect rowIndices, bliuprintjs table bug https://github.com/palantir/blueprint/issues/3341
+        const props = this.props;
+        if (props.updateSpeed && rowIndexEnd + 1 >= numVisibleRows && rowIndexEnd <= (props.tableSize - 4)) { 
+            props.setNumVisibleRows(numVisibleRows + props.updateSpeed);
+        }
+    }
 
     private renderDataColumn(columnName: string, coloumnData: any) {
         return (
@@ -139,7 +136,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                     enableRowReordering={false}
                     selectionModes={SelectionModes.NONE}
                     loadingOptions={this.getLoadingOptions()}
-                    // onVisibleCellsChange={(rowIndices) => this.infiniteLoad(rowIndices.rowIndexEnd, table.numVisibleRows)}
+                    onVisibleCellsChange={(rowIndices) => this.infiniteLoad(rowIndices.rowIndexEnd, table.numVisibleRows)}
                     columnWidths={table.columnWidts}
                 >
                     {tableColumns}
