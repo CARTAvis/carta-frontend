@@ -15,7 +15,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/ScalingSelectComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {ColorPickerComponent, ColormapComponent} from "components/Shared";
-import {Theme, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
+import {Theme, CursorPosition, Zoom, ZoomPoint, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {AppStore, BeamType, FrameScaling, PreferenceKeys, RegionStore, RenderConfigStore} from "stores";
 import {hexStringToRgba, SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.css";
@@ -129,6 +129,16 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     >
                         <Radio label="Zoom to fit" value={Zoom.FIT}/>
                         <Radio label="Zoom to 1.0x" value={Zoom.RAW}/>
+                    </RadioGroup>
+                </FormGroup>
+                <FormGroup inline={true} label="Zoom In/Out On">
+                    <RadioGroup
+                        selectedValue={preference.zoomPoint}
+                        onChange={(ev) => preference.setPreference(PreferenceKeys.GLOBAL_ZOOM_POINT, ev.currentTarget.value)}
+                        inline={true}
+                    >
+                        <Radio label="Cursor" value={ZoomPoint.CURSOR}/>
+                        <Radio label="Current Center" value={ZoomPoint.CENTER}/>
                     </RadioGroup>
                 </FormGroup>
                 <FormGroup inline={true} label="Enable drag-to-pan">
