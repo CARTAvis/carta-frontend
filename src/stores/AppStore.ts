@@ -352,9 +352,17 @@ export class AppStore {
         this.addFrame(directory, file, hdu, 0);
     };
 
-    @action removeFrame = (fileId: number) => {
-        const frame = this.frames.find(f => f.frameInfo.fileId === fileId);
+    @action removeFrame = (frame: FrameStore) => {
         if (frame) {
+            // Remove any associated secondary images
+            if (frame.secondaryImages) {
+                for (const f of frame.secondaryImages) {
+                    f.clearSpatialReference();
+                    this.removeFrame(f);
+                }
+            }
+
+            const fileId = frame.frameInfo.fileId;
             // adjust requirements for stores
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets, fileId);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.histogramWidgets, fileId);
@@ -362,12 +370,13 @@ export class AppStore {
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets, fileId);
 
             if (this.backendService.closeFile(fileId)) {
-                if (this.activeFrame.frameInfo.fileId === fileId) {
-                    this.activeFrame = null;
-                }
+                frame.clearSpatialReference();
                 frame.clearContours(false);
                 this.tileService.clearCompressedCache(fileId);
                 this.frames = this.frames.filter(f => f.frameInfo.fileId !== fileId);
+                if (this.activeFrame.frameInfo.fileId === fileId) {
+                    this.activeFrame = this.frames.length ? this.frames[0] : null;
+                }
             }
         }
     };
