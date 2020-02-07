@@ -51,19 +51,21 @@ export class AppStore {
     // Animation
     @observable animatorStore: AnimatorStore;
     // Error alerts
-    @observable alertStore: AlertStore;
+    readonly alertStore: AlertStore;
     // Logs
-    @observable logStore: LogStore;
+    readonly logStore: LogStore;
     // User preference
     @observable preferenceStore: PreferenceStore;
     // Layouts
-    @observable layoutStore: LayoutStore;
+    readonly layoutStore: LayoutStore;
     // Dialogs
-    @observable dialogStore: DialogStore;
+    readonly dialogStore: DialogStore;
     // Overlay
-    @observable overlayStore: OverlayStore;
+    readonly overlayStore: OverlayStore;
     // File Browser
-    @observable fileBrowserStore: FileBrowserStore;
+    readonly fileBrowserStore: FileBrowserStore;
+    // Widgets
+    readonly widgetsStore: WidgetsStore;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -218,9 +220,6 @@ export class AppStore {
         }
         return "alt + ";
     }
-
-    // Widgets
-    @observable widgetsStore: WidgetsStore;
 
     // Dark theme
     @computed get darkTheme(): boolean {

@@ -51,7 +51,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
     componentDidMount() {
         if (this.canvas) {
             try {
-                this.gl = this.canvas.getContext("webgl");
+                this.gl = this.canvas.getContext("webgl", {preserveDrawingBuffer: true});
                 if (!this.gl) {
                     return;
                 }
@@ -61,9 +61,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             }
 
             const extTextureFloat = this.gl.getExtension("OES_texture_float");
-            const extTextureFloatLinear = this.gl.getExtension("OES_texture_float_linear");
 
-            if (!this.gl || !extTextureFloat || !extTextureFloatLinear) {
+            if (!this.gl || !extTextureFloat) {
                 console.error("Could not initialise WebGL");
             }
 
@@ -303,6 +302,7 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         return (
             <div className={className}>
                 <canvas
+                    id="contour-canvas"
                     className="contour-canvas"
                     ref={(ref) => this.canvas = ref}
                     style={{

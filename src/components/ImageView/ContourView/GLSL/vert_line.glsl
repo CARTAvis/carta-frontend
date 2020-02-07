@@ -16,7 +16,7 @@ uniform int uControlMapEnabled;
 uniform vec2 uControlMapMin;
 uniform vec2 uControlMapMax;
 uniform vec2 uControlMapSize;
-uniform sampler2D uControlMapTexture;
+uniform highp sampler2D uControlMapTexture;
 
 varying float vLinePosition;
 varying float vLineSide;
@@ -31,54 +31,65 @@ vec2 scaleAndRotate2D(vec2 vector, float theta, float scale) {
     return rotate2D(vector, theta) * scale;
 }
 
-// Based on NVIDIA GPU Gems 2 Chapter "Fast Third-Order Texture Filtering"
-// Adapted from GLSL code available at https://stackoverflow.com/questions/13501081/efficient-bicubic-filtering-code-in-glsl/13502446#13502446
-// The basic idea is to utilise the GPU's fixed-function bilinear filtering to perform four samples at once,
-// rather than sampling the texture 16 times. This should help GPU performance on lower-end hardware
+// Adapted from https://www.shadertoy.com/view/MllSzX to work with non-square vec4 textures of variable size
 
-vec4 cubic(float x) {
-    float x2 = x * x;
-    float x3 = x2 * x;
-    vec4 w;
-    w.x = -x3 + 3.0 * x2 - 3.0 * x + 1.0;
-    w.y = 3.0 * x3 - 6.0 * x2 + 4.0;
-    w.z = -3.0 * x3 + 3.0 * x2 + 3.0 * x + 1.0;
-    w.w = x3;
-    return w / 6.0;
+vec4 cubic(vec4 A, vec4 B, vec4 C, vec4 D, float t) {
+    float t2 = t * t;
+    float t3 = t * t * t;
+    vec4 a = -A / 2.0 + (3.0 * B) / 2.0 - (3.0 * C) / 2.0 + D / 2.0;
+    vec4 b = A - (5.0 * B) / 2.0 + 2.0 * C - D / 2.0;
+    vec4 c = -A / 2.0 + C / 2.0;
+    vec4 d = B;
+
+    return a * t3 + b * t2 + c * t + d;
 }
 
-vec4 bicubicFilter(sampler2D texture, vec2 texcoord, vec2 texscale) {
-    float fx = fract(texcoord.x);
-    float fy = fract(texcoord.y);
-    texcoord.x -= fx;
-    texcoord.y -= fy;
+vec4 bicubicFilter(sampler2D texture, vec2 P) {
+    // Calculate offset and base pixel coordiante
+    vec2 pixelSize = 1.0 / uControlMapSize;
+    vec2 pixel = P * uControlMapSize + 0.5;
+    vec2 frac = fract(pixel);
+    pixel = floor(pixel) / uControlMapSize - pixelSize / 2.0;
 
-    vec4 xcubic = cubic(fx);
-    vec4 ycubic = cubic(fy);
+    // Texture lookups
+    vec4 C00 = texture2D(texture, pixel + pixelSize * vec2(-1.0, -1.0));
+    vec4 C10 = texture2D(texture, pixel + pixelSize * vec2(0.0, -1.0));
+    vec4 C20 = texture2D(texture, pixel + pixelSize * vec2(1.0, -1.0));
+    vec4 C30 = texture2D(texture, pixel + pixelSize * vec2(2.0, -1.0));
 
-    vec4 c = vec4(texcoord.x - 0.5, texcoord.x + 1.5, texcoord.y - 0.5, texcoord.y + 1.5);
-    vec4 s = vec4(xcubic.x + xcubic.y, xcubic.z + xcubic.w, ycubic.x + ycubic.y, ycubic.z + ycubic.w);
-    vec4 offset = c + vec4(xcubic.y, xcubic.w, ycubic.y, ycubic.w) / s;
+    vec4 C01 = texture2D(texture, pixel + pixelSize * vec2(-1.0, 0.0));
+    vec4 C11 = texture2D(texture, pixel + pixelSize * vec2(0.0, 0.0));
+    vec4 C21 = texture2D(texture, pixel + pixelSize * vec2(1.0, 0.0));
+    vec4 C31 = texture2D(texture, pixel + pixelSize * vec2(2.0, 0.0));
 
-    vec4 sample0 = texture2D(texture, vec2(offset.x, offset.z) * texscale);
-    vec4 sample1 = texture2D(texture, vec2(offset.y, offset.z) * texscale);
-    vec4 sample2 = texture2D(texture, vec2(offset.x, offset.w) * texscale);
-    vec4 sample3 = texture2D(texture, vec2(offset.y, offset.w) * texscale);
+    vec4 C02 = texture2D(texture, pixel + pixelSize * vec2(-1.0, 1.0));
+    vec4 C12 = texture2D(texture, pixel + pixelSize * vec2(0.0, 1.0));
+    vec4 C22 = texture2D(texture, pixel + pixelSize * vec2(1.0, 1.0));
+    vec4 C32 = texture2D(texture, pixel + pixelSize * vec2(2.0, 1.0));
 
-    float sx = s.x / (s.x + s.y);
-    float sy = s.z / (s.z + s.w);
+    vec4 C03 = texture2D(texture, pixel + pixelSize * vec2(-1.0, 2.0));
+    vec4 C13 = texture2D(texture, pixel + pixelSize * vec2(0.0, 2.0));
+    vec4 C23 = texture2D(texture, pixel + pixelSize * vec2(1.0, 2.0));
+    vec4 C33 = texture2D(texture, pixel + pixelSize * vec2(2.0, 2.0));
 
-    return mix(mix(sample3, sample2, sx), mix(sample1, sample0, sx), sy);
+    // Cubic along x
+    vec4 CP0X = cubic(C00, C10, C20, C30, frac.x);
+    vec4 CP1X = cubic(C01, C11, C21, C31, frac.x);
+    vec4 CP2X = cubic(C02, C12, C22, C32, frac.x);
+    vec4 CP3X = cubic(C03, C13, C23, C33, frac.x);
+
+    // Final cubic along y
+    return cubic(CP0X, CP1X, CP2X, CP3X, frac.y);
 }
 
-// end adapted from NVIDIA GPU Gems 2
+// end adapted from https://www.shadertoy.com/view/MllSzX
 
 vec2 controlMapLookup(vec2 pos) {
     vec2 texScale = 1.0 / uControlMapSize;
     vec2 range = uControlMapMax - uControlMapMin;
     vec2 shiftedPoint = pos - uControlMapMin;
-    vec2 index = uControlMapSize * (shiftedPoint) / range;
-    return bicubicFilter(uControlMapTexture, index, texScale).ra;
+    vec2 index = shiftedPoint / range + 0.5 / uControlMapSize;
+    return bicubicFilter(uControlMapTexture, index).ra;
 }
 
 void main(void) {
