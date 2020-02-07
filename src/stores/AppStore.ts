@@ -352,6 +352,10 @@ export class AppStore {
         this.addFrame(directory, file, hdu, 0);
     };
 
+    @action closeCurrentFile = () => {
+        this.removeFrame(this.activeFrame);
+    };
+
     @action removeFrame = (frame: FrameStore) => {
         if (frame) {
             // Remove any associated secondary images

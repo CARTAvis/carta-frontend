@@ -43,7 +43,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     text="Close image"
                     label={`${modString}W`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
-                    onClick={() => appStore.removeFrame(appStore.activeFrame)}
+                    onClick={appStore.closeCurrentFile}
                 />
                 <Menu.Divider/>
                 <Menu.Item
