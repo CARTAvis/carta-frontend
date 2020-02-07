@@ -227,7 +227,7 @@ export class AppStore {
     }
 
     // Frame actions
-    @computed get getActiveFrameIndex(): number {
+    @computed get activeFrameIndex(): number {
         if (!this.activeFrame) {
             return -1;
         }
@@ -240,9 +240,7 @@ export class AppStore {
 
     @computed get frameNames(): IOptionProps [] {
         let names: IOptionProps [] = [];
-        if (this.frameNum > 0) {
-            this.frames.forEach(frame => names.push({label: frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
-        }
+        this.frames.forEach(frame => names.push({label: frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
         return names;
     }
 
