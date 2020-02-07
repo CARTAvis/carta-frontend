@@ -97,7 +97,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                 </Alert>
                 <Alert
                     isOpen={appStore.alertStore.interactiveAlertVisible}
-                    confirmButtonText="Yes"
+                    confirmButtonText="OK"
                     cancelButtonText="Cancel"
                     intent={Intent.DANGER}
                     onClose={appStore.alertStore.handleInteractiveAlertClosed}
@@ -231,7 +231,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
         const fileHotkeys = [
             <Hotkey key={0} group={fileGroupTitle} global={true} combo={`${modString}O`} label="Open image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File)}/>,
             <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}L`} label="Append image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}/>,
-            <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}W`} label="Close image" onKeyDown={() => appStore.removeFrame(appStore.activeFrame)}/>,
+            <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}W`} label="Close image" onKeyDown={() => appStore.closeCurrentFile(true)}/>,
             <Hotkey key={2} group={fileGroupTitle} global={true} combo={`${modString}E`} label="Export image" onKeyDown={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>
         ];
 

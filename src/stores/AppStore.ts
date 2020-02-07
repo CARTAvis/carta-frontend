@@ -352,8 +352,18 @@ export class AppStore {
         this.addFrame(directory, file, hdu, 0);
     };
 
-    @action closeCurrentFile = () => {
-        this.removeFrame(this.activeFrame);
+    @action closeCurrentFile = (confirmClose: boolean = true) => {
+        // Display confirmation if image has secondary images
+        if (confirmClose && this.activeFrame && this.activeFrame.secondaryImages && this.activeFrame.secondaryImages.length) {
+            const numSecondaries = this.activeFrame.secondaryImages.length;
+            this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} spatially matched to this image will also be closed`, (confirmed => {
+                if (confirmed) {
+                    this.removeFrame(this.activeFrame);
+                }
+            }));
+        } else {
+            this.removeFrame(this.activeFrame);
+        }
     };
 
     @action removeFrame = (frame: FrameStore) => {
