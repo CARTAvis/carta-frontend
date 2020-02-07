@@ -79,6 +79,34 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                 <FormGroup label={"Stokes"} inline={true} disabled={!enableStokesSelect}>
                     <HTMLSelect value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect}/>
                 </FormGroup>
+                <FormGroup label={"X coordinate"} inline={true}>
+                    <HTMLSelect value={"radion velocity (km/s)"} onChange={() => {}}>
+                        <option key={0} value={"radio velocity (km/s)"}>radio velocity (km/s)</option>
+                        <option key={1} value={"radio velocity (m/s)"}>radio velocity (m/s)</option>
+                        <option key={2} value={"optical velocity (km/s)"}>optical velocity (km/s)</option>
+                        <option key={3} value={"optical velocity (m/s)"}>optical velocity (m/s)</option>
+                        <option key={4} value={"frequency (GHz)"}>frequency (GHz)</option>
+                        <option key={5} value={"frequency (MHz)"}>frequency (MHz)</option>
+                        <option key={6} value={"frequency (kHz)"}>frequency (kHz)</option>
+                        <option key={7} value={"wave length (mm)"}>wave length (mm)</option>
+                        <option key={8} value={"wave length (um)"}>wave length (um)</option>
+                        <option key={9} value={"wave length (nm)"}>wave length (nm)</option>
+                        <option key={10} value={"wave length (Angstrom)"}>wave length (Angstrom)</option>
+                        <option key={11} value={"air wave length (mm)"}>air wave length (mm)</option>
+                        <option key={12} value={"air wave length (um)"}>air wave length (um)</option>
+                        <option key={13} value={"air wave length (nm)"}>air wave length (nm)</option>
+                        <option key={14} value={"air wave length (Angstrom)"}>air wave length (Angstrom)</option>
+                        <option key={15} value={"channel"}>channel</option>
+                    </HTMLSelect>
+                </FormGroup>
+                <FormGroup label={"Spectral frame"} inline={true}>
+                    <HTMLSelect value={"LSRK"} onChange={() => {}}>
+                        <option key={0} value={"LSRK"}>LSRK</option>
+                        <option key={1} value={"LSRD"}>LSRD</option>
+                        <option key={2} value={"BARY"}>BARY</option>
+                        <option key={3} value={"TOPO"}>TOPO</option>
+                    </HTMLSelect>
+                </FormGroup>
             </div>
         );
     }
