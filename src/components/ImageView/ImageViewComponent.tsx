@@ -18,7 +18,9 @@ import {ContourViewComponent} from "./ContourView/ContourViewComponent";
 
 export const exportImage = (padding, darkTheme, imageName) => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
+    const contourCanvas = document.getElementById("contour-canvas") as HTMLCanvasElement;
     const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
+
     let regionCanvas: HTMLCanvasElement;
     let beamProfileCanvas: HTMLCanvasElement;
     const beamProfileQuery = $(".beam-profile-stage").children().children("canvas");
@@ -39,6 +41,7 @@ export const exportImage = (padding, darkTheme, imageName) => {
     ctx.fillStyle = "rgba(255, 255, 255, 0.0)";
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
     ctx.drawImage(rasterCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
+    ctx.drawImage(contourCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     if (beamProfileCanvas) {
         ctx.drawImage(beamProfileCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     }
@@ -198,7 +201,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         beamMajor={appStore.activeFrame.beamProperties.x}
                         beamMinor={appStore.activeFrame.beamProperties.y}
                         beamAngle={appStore.activeFrame.beamProperties.angle}
-                        zoomLevel={appStore.activeFrame.zoomLevel}
+                        zoomLevel={appStore.activeFrame.spatialReference ? appStore.activeFrame.spatialReference.zoomLevel : appStore.activeFrame.zoomLevel}
                         docked={this.props.docked}
                         padding={10}
                         overlayBeamSettings={appStore.activeFrame.beamProperties.overlayBeamSettings}
