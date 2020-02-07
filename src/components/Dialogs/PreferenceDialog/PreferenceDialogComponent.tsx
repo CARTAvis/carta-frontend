@@ -131,7 +131,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         <Radio label="Zoom to 1.0x" value={Zoom.RAW}/>
                     </RadioGroup>
                 </FormGroup>
-                <FormGroup inline={true} label="Zoom In/Out On">
+                <FormGroup inline={true} label="Zoom to">
                     <RadioGroup
                         selectedValue={preference.zoomPoint}
                         onChange={(ev) => preference.setPreference(PreferenceKeys.GLOBAL_ZOOM_POINT, ev.currentTarget.value)}
