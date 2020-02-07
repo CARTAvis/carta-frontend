@@ -201,7 +201,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         beamMajor={appStore.activeFrame.beamProperties.x}
                         beamMinor={appStore.activeFrame.beamProperties.y}
                         beamAngle={appStore.activeFrame.beamProperties.angle}
-                        zoomLevel={appStore.activeFrame.spatialReference ? appStore.activeFrame.spatialReference.zoomLevel : appStore.activeFrame.zoomLevel}
+                        zoomLevel={appStore.activeFrame.spatialReference ? appStore.activeFrame.spatialReference.zoomLevel * appStore.activeFrame.spatialTransform.scale : appStore.activeFrame.zoomLevel}
                         docked={this.props.docked}
                         padding={10}
                         overlayBeamSettings={appStore.activeFrame.beamProperties.overlayBeamSettings}
