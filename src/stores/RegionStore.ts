@@ -3,14 +3,14 @@ import { CARTA } from "carta-protobuf";
 import { Colors } from "@blueprintjs/core";
 import { Point2D } from "models";
 import { BackendService } from "services";
-import { minMax2D, midpoint2D, scale2D, simplePolygonTest, simplePolygonPointTest, toFixed } from "utilities";
+import { minMax2D, midpoint2D, scale2D, subtract2D, simplePolygonTest, simplePolygonPointTest, toFixed } from "utilities";
 import { FrameStore } from "stores";
 
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
 
 export class RegionStore {
-    @observable fileId: number;
+    readonly fileId: number;
     @observable regionId: number;
     @observable name: string;
     @observable color: string;
@@ -98,7 +98,7 @@ export class RegionStore {
                 return scale2D(this.controlPoints[1], 2);
             case CARTA.RegionType.POLYGON:
                 const boundingBox = minMax2D(this.controlPoints);
-                return {x: boundingBox.maxPoint.x - boundingBox.minPoint.x, y: boundingBox.maxPoint.y - boundingBox.minPoint.y};
+                return subtract2D(boundingBox.maxPoint, boundingBox.minPoint);
             default:
                 return {x: 0, y: 0};
         }
@@ -144,7 +144,7 @@ export class RegionStore {
     @computed get nameString(): string {
         if (this.regionId === CURSOR_REGION_ID) {
             return "Cursor";
-        } else if (this.name) {
+        } else if (this.name && this.name !== "") {
             return this.name;
         } else {
             return `Region ${this.regionId}`;

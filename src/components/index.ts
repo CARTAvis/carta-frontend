@@ -3,6 +3,7 @@ export * from "./FloatingWidget/FloatingWidgetComponent";
 export * from "./FloatingWidgetManager/FloatingWidgetManagerComponent";
 export * from "./ImageView/ImageViewComponent";
 export * from "./Log/LogComponent";
+export * from "./LayerList/LayerListComponent";
 export * from "./Menu/RootMenuComponent";
 export * from "./Menu/ToolbarMenu/ToolbarMenuComponent";
 export * from "./Placeholder/PlaceholderComponent";
@@ -19,3 +20,6 @@ export * from "./SpectralProfiler/SpectralProfilerSettingsPanelComponent/Spectra
 export * from "./SpatialProfiler/SpatialProfilerSettingsPanelComponent/SpatialProfilerSettingsPanelComponent";
 export * from "./RenderConfig/RenderConfigSettingsPanelComponent/RenderConfigSettingsPanelComponent";
 export * from "./Histogram/HistogramSettingsPanelComponent/HistogramSettingsPanelComponent";
+export * from "./SplashScreen/SplashScreenComponent";
+export * from "./FileInfo/FileInfoComponent";
+export * from "./App/UIControllerComponent";

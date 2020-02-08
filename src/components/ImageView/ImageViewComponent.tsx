@@ -18,7 +18,9 @@ import {ContourViewComponent} from "./ContourView/ContourViewComponent";
 
 export const exportImage = (padding, darkTheme, imageName) => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
+    const contourCanvas = document.getElementById("contour-canvas") as HTMLCanvasElement;
     const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
+
     let regionCanvas: HTMLCanvasElement;
     let beamProfileCanvas: HTMLCanvasElement;
     const beamProfileQuery = $(".beam-profile-stage").children().children("canvas");
@@ -39,6 +41,7 @@ export const exportImage = (padding, darkTheme, imageName) => {
     ctx.fillStyle = "rgba(255, 255, 255, 0.0)";
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
     ctx.drawImage(rasterCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
+    ctx.drawImage(contourCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     if (beamProfileCanvas) {
         ctx.drawImage(beamProfileCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     }
@@ -108,10 +111,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
     onClicked = (cursorInfo: CursorInfo) => {
         const appStore = this.props.appStore;
-        if (appStore.activeFrame
-            && 0 < cursorInfo.posImageSpace.x && cursorInfo.posImageSpace.x < appStore.activeFrame.frameInfo.fileInfoExtended.width
-            && 0 < cursorInfo.posImageSpace.y && cursorInfo.posImageSpace.y < appStore.activeFrame.frameInfo.fileInfoExtended.height
-        ) {
+        if (appStore.activeFrame) {
             // Shift from one-indexed image space position to zero-indexed
             appStore.activeFrame.setCenter(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1);
         }
@@ -121,9 +121,17 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         const appStore = this.props.appStore;
         if (appStore.activeFrame) {
             const zoomSpeed = 1 + Math.abs(delta / 750.0);
-            const newZoom = appStore.activeFrame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
-            // Shift from one-indexed image space position to zero-indexed
-            appStore.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom);
+
+            // If frame is spatially matched, apply zoom to the reference frame, rather than the active frame
+            if (appStore.activeFrame.spatialReference) {
+                const newZoom = appStore.activeFrame.spatialReference.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
+                // Shift from one-indexed image space position to zero-indexed
+                appStore.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom, true);
+            } else {
+                const newZoom = appStore.activeFrame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
+                // Shift from one-indexed image space position to zero-indexed
+                appStore.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom, true);
+            }
         }
     };
 
@@ -141,7 +149,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             const frame = appStore.getFrame(region.fileId);
             if (frame) {
                 frame.regionSet.selectRegion(region);
-                appStore.showRegionDialog();
+                appStore.dialogStore.showRegionDialog();
             }
         }
     };
@@ -193,7 +201,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         beamMajor={appStore.activeFrame.beamProperties.x}
                         beamMinor={appStore.activeFrame.beamProperties.y}
                         beamAngle={appStore.activeFrame.beamProperties.angle}
-                        zoomLevel={appStore.activeFrame.zoomLevel}
+                        zoomLevel={appStore.activeFrame.spatialReference ? appStore.activeFrame.spatialReference.zoomLevel * appStore.activeFrame.spatialTransform.scale : appStore.activeFrame.zoomLevel}
                         docked={this.props.docked}
                         padding={10}
                         overlayBeamSettings={appStore.activeFrame.beamProperties.overlayBeamSettings}
@@ -237,7 +245,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         }
 
         return (
-            <div className="image-view-div" onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+            <div className="image-view-div" onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                 <RasterViewComponent
                     frame={appStore.activeFrame}
                     docked={this.props.docked}
@@ -248,7 +256,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                 <ContourViewComponent
                     appStore={appStore}
                     docked={this.props.docked}
-                    preference={appStore.preferenceStore}
                     overlaySettings={appStore.overlayStore}
                 />
                 {divContents}

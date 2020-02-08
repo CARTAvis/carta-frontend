@@ -4,6 +4,7 @@ import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore} from "./RegionWidgetStore";
 import {FrameStore} from "../FrameStore";
+import {isColorValid} from "utilities";
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
@@ -30,6 +31,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         switch (statsType) {
             case CARTA.StatsType.Sum:
                 return "Sum";
+            case CARTA.StatsType.FluxDensity:
+                return "FluxDensity";
             case CARTA.StatsType.Mean:
                 return "Mean";
             case CARTA.StatsType.Sigma:
@@ -321,4 +324,55 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @action initXYBoundaries (minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
         this.linePlotInitXYBoundaries = { minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal };
     }
+
+    public init = (widgetSettings): void => {
+        if (!widgetSettings) {
+            return;
+        }
+        if (typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
+            this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
+        }
+        if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
+            this.lineWidth = widgetSettings.lineWidth;
+        }
+        if (typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE && widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
+            this.linePlotPointSize = widgetSettings.linePlotPointSize;
+        }
+        if (typeof widgetSettings.useWcsValues === "boolean") {
+            this.useWcsValues = widgetSettings.useWcsValues;
+        }
+        if (typeof widgetSettings.meanRmsVisible === "boolean") {
+            this.meanRmsVisible = widgetSettings.meanRmsVisible;
+        }
+        if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
+            this.plotType = widgetSettings.plotType;
+        }
+        if (typeof widgetSettings.minXVal === "number") {
+            this.linePlotInitXYBoundaries.minXVal = widgetSettings.minXVal;
+        }
+        if (typeof widgetSettings.maxXVal === "number") {
+            this.linePlotInitXYBoundaries.maxXVal = widgetSettings.maxXVal;
+        }
+        if (typeof widgetSettings.minYVal === "number") {
+            this.linePlotInitXYBoundaries.minYVal = widgetSettings.minYVal;
+        }
+        if (typeof widgetSettings.maxYVal === "number") {
+            this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
+        }
+    };
+
+    public toConfig = () => {
+        return {
+            primaryLineColor: this.primaryLineColor.colorHex,
+            lineWidth: this.lineWidth,
+            linePlotPointSize: this.linePlotPointSize,
+            useWcsValues: this.useWcsValues,
+            meanRmsVisible: this.meanRmsVisible,
+            plotType: this.plotType,
+            minXVal: this.linePlotInitXYBoundaries.minXVal,
+            maxXVal: this.linePlotInitXYBoundaries.maxXVal,
+            minYVal: this.linePlotInitXYBoundaries.minYVal,
+            maxYVal: this.linePlotInitXYBoundaries.maxYVal
+        };
+    };
 }

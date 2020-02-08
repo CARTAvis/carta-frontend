@@ -5,18 +5,9 @@ import {observer} from "mobx-react";
 import {autorun} from "mobx";
 import ReactResizeDetector from "react-resize-detector";
 import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget, Intent} from "@blueprintjs/core";
-import {exportImage, FloatingWidgetManagerComponent, RootMenuComponent} from "./components";
+import {UIControllerComponent, exportImage, FloatingWidgetManagerComponent} from "./components";
 import {AppToaster} from "./components/Shared";
-import {
-    AboutDialogComponent,
-    AuthDialogComponent,
-    FileBrowserDialogComponent,
-    OverlaySettingsDialogComponent,
-    PreferenceDialogComponent,
-    RegionDialogComponent,
-    SaveLayoutDialogComponent,
-    TaskProgressDialogComponent
-} from "./components/Dialogs";
+import {TaskProgressDialogComponent} from "./components/Dialogs";
 import {AppStore, BrowserMode, dayPalette, nightPalette, RegionMode} from "./stores";
 import {ConnectionStatus} from "./services";
 import {PresetLayout} from "models";
@@ -37,9 +28,13 @@ export class App extends React.Component<{ appStore: AppStore }> {
         AST.onReady.then(() => {
             AST.setPalette(appStore.darkTheme ? nightPalette : dayPalette);
             appStore.astReady = true;
+            appStore.logStore.addInfo("AST library loaded", ["ast"]);
         });
 
-        CARTACompute.onReady.then(() => "Compute module is ready!");
+        CARTACompute.onReady.then(() => {
+            appStore.cartaComputeReady = true;
+            appStore.logStore.addInfo("Compute module loaded", ["compute"]);
+        });
 
         // Log the frontend git commit hash
         appStore.logStore.addDebug(`Current frontend version: ${GitCommit.logMessage}`, ["version"]);
@@ -96,14 +91,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
 
         return (
             <div className={className}>
-                <RootMenuComponent appStore={appStore}/>
-                <OverlaySettingsDialogComponent appStore={appStore}/>
-                <AuthDialogComponent appStore={appStore}/>
-                <FileBrowserDialogComponent appStore={appStore}/>
-                <AboutDialogComponent appStore={appStore}/>
-                <RegionDialogComponent appStore={appStore}/>
-                <PreferenceDialogComponent appStore={appStore}/>
-                <SaveLayoutDialogComponent appStore={appStore}/>
+                <UIControllerComponent appStore={appStore}/>
                 <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>
@@ -122,7 +110,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}/>
                 </div>
                 <FloatingWidgetManagerComponent appStore={appStore}/>
-                <Dialog isOpen={appStore.hotkeyDialogVisible} className={"bp3-hotkey-dialog"} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.hideHotkeyDialog}>
+                <Dialog isOpen={appStore.dialogStore.hotkeyDialogVisible} className={"bp3-hotkey-dialog"} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.dialogStore.hideHotkeyDialog}>
                     <div className={Classes.DIALOG_BODY}>
                         {this.renderHotkeys()}
                     </div>

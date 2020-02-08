@@ -2,11 +2,8 @@ import {action, computed, observable} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
-
-export enum FileInfoTabs {
-    INFO = "tab-info",
-    HEADER = "tab-header"
-}
+import { AppStore } from "stores";
+import {FileInfoType} from "components";
 
 export enum BrowserMode {
     File,
@@ -20,7 +17,8 @@ export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.Fi
 export type CatalogFileType = CARTA.CatalogFileType.VOTable;
 
 export class FileBrowserStore {
-    @observable fileBrowserDialogVisible = false;
+    private readonly appStore: AppStore;
+
     @observable browserMode: BrowserMode = BrowserMode.File;
     @observable appendingFrame = false;
     @observable fileList: CARTA.IFileListResponse;
@@ -28,7 +26,7 @@ export class FileBrowserStore {
     @observable selectedHDU: string;
     @observable fileInfoExtended: CARTA.IFileInfoExtended;
     @observable regionFileInfo: string[];
-    @observable selectedTab: TabId = FileInfoTabs.INFO;
+    @observable selectedTab: TabId = FileInfoType.IMAGE_FILE;
     @observable loadingList = false;
     @observable loadingInfo = false;
     @observable fileInfoResp = false;
@@ -46,16 +44,17 @@ export class FileBrowserStore {
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
         this.browserMode = mode;
-        this.fileBrowserDialogVisible = true;
+        this.appStore.dialogStore.showFileBrowserDialog();
         this.fileList = null;
-        this.selectedTab = FileInfoTabs.INFO;
+        this.selectedTab = (BrowserMode.File === mode) ? FileInfoType.IMAGE_FILE : FileInfoType.REGION_FILE;
+        this.responseErrorMessage = "";
         this.exportFilename = "";
         this.catalogFileList = null;
         this.getFileList(this.startingDirectory);
     };
 
     @action hideFileBrowser = () => {
-        this.fileBrowserDialogVisible = false;
+        this.appStore.dialogStore.hideFileBrowserDialog();
     };
 
     @action getFileList = (directory: string) => {
@@ -93,6 +92,7 @@ export class FileBrowserStore {
         this.loadingInfo = true;
         this.fileInfoResp = false;
         this.fileInfoExtended = null;
+        this.responseErrorMessage = "";
         this.backendService.getFileInfo(directory, file, hdu).subscribe((res: CARTA.FileInfoResponse) => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.fileInfoExtended = res.fileInfoExtended;
@@ -112,6 +112,7 @@ export class FileBrowserStore {
         this.loadingInfo = true;
         this.fileInfoResp = false;
         this.regionFileInfo = null;
+        this.responseErrorMessage = "";
         this.backendService.getRegionFileInfo(directory, file).subscribe((res: CARTA.IRegionFileInfoResponse) => {
             if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
                 this.loadingInfo = false;
@@ -271,7 +272,8 @@ export class FileBrowserStore {
 
     private backendService: BackendService;
 
-    constructor(backendService: BackendService) {
+    constructor(appStore: AppStore, backendService: BackendService) {
+        this.appStore = appStore;
         this.backendService = backendService;
         this.exportCoordinateType = CARTA.CoordinateType.WORLD;
         this.exportFileType = CARTA.FileType.CRTF;

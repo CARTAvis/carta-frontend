@@ -3,6 +3,7 @@ import {observer} from "mobx-react";
 import {AnchorButton, Classes, IDialogProps, Intent} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore} from "stores";
+import {CARTA_INFO} from "models";
 import "./AboutDialogComponent.css";
 import * as logoPng from "static/carta_logo.png";
 
@@ -17,8 +18,8 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: true,
             lazy: true,
-            isOpen: appStore.aboutDialogVisible,
-            onClose: appStore.hideAboutDialog,
+            isOpen: appStore.dialogStore.aboutDialogVisible,
+            onClose: appStore.dialogStore.hideAboutDialog,
             className: "about-dialog",
             canEscapeKeyClose: true,
             title: "About CARTA",
@@ -29,7 +30,8 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
                         <img src={logoPng} width={100}/>
-                        <h3>CARTA Viewer Version 1.2.0-beta.0 (20190814)</h3>
+                        <h3>{CARTA_INFO.acronym} {CARTA_INFO.version} ({CARTA_INFO.date})</h3>
+                        <p>{CARTA_INFO.fullName}</p>
                     </div>
 
                     <h3>Development team:</h3>
@@ -55,7 +57,7 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-                        <AnchorButton intent={Intent.NONE} onClick={appStore.hideAboutDialog} text="Close"/>
+                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideAboutDialog} text="Close"/>
                     </div>
                 </div>
             </DraggableDialogComponent>

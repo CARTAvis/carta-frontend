@@ -176,10 +176,10 @@ wasm_src/zfp_wrapper/post.js
 public/zfp_wrapper.wasm
 # ZSTD
 wasm_libs/zstd/*
-wasm_libs/zstd-dev.zip
+wasm_libs/zstd-1.4.4.tar.gz
 wasm_src/carta_computation/build/*
 wasm_src/carta_computation/post.js
-public/carta_contouring.wasm
+public/carta_computation.wasm
 
 # Protocol buffers
 protobuf/build/*
@@ -188,5 +188,4 @@ protobuf/build/*
 src/static/gitInfo.ts
 # NPM package lock (ignored while in active development)
 /package-lock.json
-/wasm_libs/zstd-dev.tar.gz
-/public/carta_computation.wasm
+

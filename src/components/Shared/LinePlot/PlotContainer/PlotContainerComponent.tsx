@@ -36,6 +36,8 @@ export class PlotContainerProps {
     multiPlotData?: Map<string, { x: number, y: number }[]>;
     showXAxisTicks?: boolean;
     showXAxisLabel?: boolean;
+    showYAxisTicks?: boolean;
+    showYAxisLabel?: boolean;
     xZeroLineColor?: string;
     yZeroLineColor?: string;
     showLegend?: boolean;
@@ -51,7 +53,7 @@ export class PlotContainerProps {
     borderWidth?: number;
 }
 
-interface MulticolorLineChartDatasets extends ChartDataSets  {
+interface MulticolorLineChartDatasets extends ChartDataSets {
     multicolorLineColors?: Array<string>;
 }
 
@@ -61,14 +63,14 @@ interface MulticolorLineChartDatasets extends ChartDataSets  {
 const Chart = require("react-chartjs-2").Chart;
 Chart.defaults.multicolorLine = Chart.defaults.line;
 Chart.controllers.multicolorLine = Chart.controllers.line.extend({
-    draw: function(ease: any) {
+    draw: function (ease: any) {
 
         let startIndex = 0;
         const meta = this.getMeta();
         const points = meta.data || [];
         const colors = this.getDataset().multicolorLineColors;
         const area = this.chart.chartArea;
-        const originalDatasets = meta.dataset._children.filter(function(data: any) {
+        const originalDatasets = meta.dataset._children.filter(function (data: any) {
             return true;
         });
 
@@ -85,11 +87,11 @@ Chart.controllers.multicolorLine = Chart.controllers.line.extend({
             if (colors[i - 1] !== colors[i]) {
                 _setColor(colors[i - 1], meta);
                 meta.dataset._children = originalDatasets.slice(startIndex, i);
-                meta.dataset.draw(ease);   
+                meta.dataset.draw(ease);
                 startIndex = i - 1;
             }
         }
-        
+
         // draw data point
         for (let index = 0; index < points.length; index++) {
             const point = points[index];
@@ -377,14 +379,14 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     id: "y-axis-0",
                     scaleLabel: {
                         fontColor: labelColor,
-                        display: true,
+                        display: this.props.showYAxisLabel === undefined ? true : this.props.showYAxisLabel,
                         labelString: this.props.yLabel
                     },
                     ticks: {
                         minor: {
                             fontColor: labelColor,
                         },
-                        display: true,
+                        display: this.props.showYAxisTicks === undefined ? true : this.props.showYAxisTicks,
                         min: this.props.yMin,
                         max: this.props.yMax,
                         callback: PlotContainerComponent.GetCallbackForTickType(this.props.tickTypeY)
@@ -414,7 +416,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             plotOptions.scales.yAxes[0].type = "linear";
         }
 
-        let plotData: Partial<ChartData> = {datasets: []};
+        let plotData: ChartDataSets[] = [];
         if (this.props.data && this.props.data.length) {
             const datasetConfig: MulticolorLineChartDatasets = {
                 label: "LineGraph",
@@ -452,7 +454,7 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             if (this.props.dataBackgroundColor) {
                 datasetConfig.pointBackgroundColor = this.props.dataBackgroundColor;
             }
-            plotData.datasets.push(datasetConfig);
+            plotData.push(datasetConfig);
         }
 
         if (this.props.multiPlotData) {
@@ -492,11 +494,11 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
                     multiPlotDatasetConfig.pointRadius = 0.5;
                     multiPlotDatasetConfig.pointStyle = "line";
                     multiPlotDatasetConfig.steppedLine = this.props.interpolateLines ? false : "middle";
-                    multiPlotDatasetConfig.borderWidth = this.props.borderWidth ? this.props.borderWidth : 1,
+                    multiPlotDatasetConfig.borderWidth = this.props.borderWidth ? this.props.borderWidth : 1;
                     multiPlotDatasetConfig.type = "multicolorLine";
                     multiPlotDatasetConfig.borderColor = currentLineColor;
                 }
-                plotData.datasets.push(multiPlotDatasetConfig);
+                plotData.push(multiPlotDatasetConfig);
             });
         }
 
@@ -504,6 +506,6 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
             afterLayout: this.afterChartLayout,
         }];
 
-        return <Scatter data={plotData} options={plotOptions} plugins={plugins} ref={this.onRef}/>;
+        return <Scatter data={{datasets: plotData}} options={plotOptions} plugins={plugins} ref={this.onRef}/>;
     }
 }

@@ -7,7 +7,7 @@ export interface RGBA {
     r: number;
     g: number;
     b: number;
-    a: number;
+    a?: number;
 }
 
 export const SWATCH_COLORS = [

@@ -5,7 +5,7 @@ import {Alert, Icon, Menu, Popover, Position, Tooltip, Tag} from "@blueprintjs/c
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {exportImage} from "components";
 import {PresetLayout} from "models";
-import {AppStore, BrowserMode} from "stores";
+import {AppStore, BrowserMode, PreferenceKeys} from "stores";
 import {ConnectionStatus} from "services";
 import {toFixed} from "utilities";
 import "./RootMenuComponent.css";
@@ -63,7 +63,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     disabled={!appStore.activeFrame}
                     onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
                 />
-                <Menu.Item text="Preferences" onClick={appStore.showPreferenceDialog}/>
+                <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}/>
             </Menu>
         );
 
@@ -85,7 +85,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     <Menu.Item text="Dark" icon={"moon"} onClick={appStore.setDarkTheme}/>
                 </Menu.Item>
                 <Menu.Item text="Overlay" icon={"widget"}>
-                    <Menu.Item text="Customize..." icon={"settings"} onClick={appStore.overlayStore.showOverlaySettings}/>
+                    <Menu.Item text="Customize..." icon={"settings"} onClick={appStore.dialogStore.showOverlaySettings}/>
                 </Menu.Item>
                 {layerItems.length > 0 &&
                 <Menu.Item text="Frames" icon={"layers"}>
@@ -95,11 +95,23 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     <Menu.Item text="Next frame" icon={"chevron-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame}/>
                 </Menu.Item>
                 }
+                <Menu.Item
+                    text="File info"
+                    icon={"info-sign"}
+                    disabled={!appStore.activeFrame}
+                    onClick={appStore.dialogStore.showFileInfoDialog}
+                />
+                <Menu.Item
+                    text="Contours"
+                    icon={"heatmap"}
+                    onClick={appStore.dialogStore.showContourDialog}
+                />
             </Menu>
         );
 
         const presetLayouts: string[] = PresetLayout.PRESETS;
-        const userLayouts: string[] = appStore.layoutStore.userLayouts;
+        const layoutStore = appStore.layoutStore;
+        const userLayouts: string[] = layoutStore.userLayouts;
         const stokesIcon = (
             <Tag icon={"pulse"} className={"stokes-icon-button"}>
                 &nbsp;s
@@ -107,7 +119,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         );
         const layoutMenu = (
             <Menu className="layout-menu">
-                <Menu.Item text="Layouts" icon={"layout-grid"}>
+                <Menu.Item text="Layouts" icon={"layout-grid"} disabled={layoutStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}>
                     <Menu.Item text="Existing Layouts" disabled={!presetLayouts && !userLayouts}>
                         <Menu.Item text="Presets" disabled={!presetLayouts || presetLayouts.length <= 0}>
                             {presetLayouts && presetLayouts.length > 0 && presetLayouts.map((value) =>
@@ -128,7 +140,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                             />
                         )}
                     </Menu.Item>
-                    <Menu.Item text="Save Layout" onClick={appStore.showSaveLayoutDialog}/>
+                    <Menu.Item text="Save Layout" onClick={appStore.dialogStore.showSaveLayoutDialog}/>
                     <Menu.Item text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
                         {userLayouts && userLayouts.length > 0 && userLayouts.map((value) =>
                             <Menu.Item
@@ -138,7 +150,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                                 onClick={() => {
                                     appStore.layoutStore.deleteLayout(value);
                                     if (value === appStore.preferenceStore.layout) {
-                                        appStore.preferenceStore.setLayout(PresetLayout.DEFAULT);
+                                        appStore.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
                                     }
                                 }}
                             />
@@ -164,8 +176,8 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         const helpMenu = (
             <Menu>
                 <Menu.Item text="Online Manual" icon={"help"} onClick={this.handleDocumentationClicked}/>
-                <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={appStore.showHotkeyDialog}/>
-                <Menu.Item text="About" icon={"info-sign"} onClick={appStore.showAboutDialog}/>
+                <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog}/>
+                <Menu.Item text="About" icon={"info-sign"} onClick={appStore.dialogStore.showAboutDialog}/>
             </Menu>
         );
 

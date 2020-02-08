@@ -1,4 +1,4 @@
-import {action, observable} from "mobx";
+import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 
 export class LogEntry {
@@ -12,13 +12,16 @@ export class LogStore {
     @observable logEntries: LogEntry[];
     @observable hiddenTags: string[];
     @observable logLevel: CARTA.ErrorSeverity;
-    @observable logLimit: number;
+    readonly logLimit = 1000;
 
     constructor() {
         this.logEntries = [];
         this.hiddenTags = [];
         this.logLevel = CARTA.ErrorSeverity.INFO;
-        this.logLimit = 1000;
+    }
+
+    @computed get newestMsg(): string {
+        return this.logEntries.length > 0 ? this.logEntries[this.logEntries.length - 1].message : "";
     }
 
     @action addLog(entry: LogEntry) {

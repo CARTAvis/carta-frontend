@@ -4,9 +4,10 @@ import {action, computed, observable} from "mobx";
 import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, NonIdealState, Popover, Position, Pre, Spinner, Tab, TabId, Tabs, Tooltip, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FileListComponent} from "./FileList/FileListComponent";
+import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {TableComponent, TableComponentProps, TableType} from "components/Shared";
-import {AppStore, BrowserMode, FileInfoTabs} from "stores";
+import {AppStore, BrowserMode} from "stores";
 import {CatalogOverlayWidgetStore} from "stores/widgets";
 import "./FileBrowserDialogComponent.css";
 
@@ -89,52 +90,6 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         const forbiddenRegex = /(\.\.)|(\\)+/gm;
         return (filename && filename.length && !filename.match(forbiddenRegex));
     }
-
-    private renderInfoPanel = () => {
-        const fileBrowserStore = this.props.appStore.fileBrowserStore;
-        const fileBrowserMode = fileBrowserStore.browserMode;
-        const respStatus =  fileBrowserStore.fileInfoResp;
-
-        if (fileBrowserStore.selectedFile) {
-            if (fileBrowserStore.loadingInfo) {
-                return <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner"/>} title="Loading file info..."/>;
-            } else {
-                if (fileBrowserMode === BrowserMode.File && respStatus) {
-                    if (fileBrowserStore.selectedTab === FileInfoTabs.INFO) {
-                        return <Pre className="file-info-pre">{fileBrowserStore.fileInfo}</Pre>;
-                    } else if (fileBrowserStore.selectedTab === FileInfoTabs.HEADER) {
-                        return <Pre className="file-info-pre">{fileBrowserStore.headers}</Pre>;
-                    } // probably more tabs will be added in the future
-                } else if ((fileBrowserMode === BrowserMode.RegionImport || fileBrowserMode === BrowserMode.RegionExport) && fileBrowserStore.regionFileInfo) {
-                    return <Pre className="file-info-pre">{fileBrowserStore.regionFileInfo.join("\n")}</Pre>;
-                } else if (fileBrowserMode === BrowserMode.Catalog && respStatus && fileBrowserStore.catalogFileInfor) {
-                    if (fileBrowserStore.selectedTab === FileInfoTabs.INFO) {
-                        return (
-                            <Pre className="file-info-pre">
-                                <Text>{fileBrowserStore.catalogFileInfor.description}</Text>
-                            </Pre>
-                        );
-                    } else if (fileBrowserStore.selectedTab === FileInfoTabs.HEADER) {
-                        const table = fileBrowserStore.catalogHeaderDataset;
-                        const tableProps: TableComponentProps = {
-                            type: TableType.Normal,
-                            dataset: table.columnsData,
-                            columnHeaders: table.columnHeaders,
-                            numVisibleRows: fileBrowserStore.catalogHeaders.length
-                        };
-                        return (
-                            <Pre className="file-header-pre-table">
-                                <TableComponent {... tableProps}/>
-                            </Pre>);
-                    }
-                } 
-                else {
-                    return <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={fileBrowserStore.responseErrorMessage + " Select another file from the list on the left"}/>;
-                }
-            }
-        }
-        return <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected" description="Select a file from the list on the left"/>;
-    };
 
     private renderActionButton(browserMode: BrowserMode, appending: boolean) {
         const fileBrowserStore = this.props.appStore.fileBrowserStore;
@@ -263,14 +218,15 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             className += " bp3-dark";
         }
 
-        const fileBrowserStore = this.props.appStore.fileBrowserStore;
+        const appStore = this.props.appStore;
+        const fileBrowserStore = appStore.fileBrowserStore;
         const dialogProps: IDialogProps = {
             icon: "folder-open",
             className: className,
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: fileBrowserStore.fileBrowserDialogVisible,
+            isOpen: appStore.dialogStore.fileBrowserDialogVisible,
             onClose: fileBrowserStore.hideFileBrowser,
             onOpened: () => this.refreshFileList(),
             title: "File Browser",
@@ -291,10 +247,20 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             <DraggableDialogComponent dialogProps={dialogProps} minWidth={400} minHeight={400} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
                 <div className="file-path">
                     {this.pathItems &&
-                    <Breadcrumbs
-                        breadcrumbRenderer={this.renderBreadcrumb}
-                        items={this.pathItems}
-                    />
+                    <React.Fragment>
+                        <Tooltip content={"Refresh current directory"}>
+                            <Button
+                                icon="repeat"
+                                onClick={() => fileBrowserStore.selectFolder(fileBrowserStore.fileList.directory, true)}
+                                minimal={true}
+                                style={{marginRight: "10px"}}
+                            />
+                        </Tooltip>
+                        <Breadcrumbs
+                            breadcrumbRenderer={this.renderBreadcrumb}
+                            items={this.pathItems}
+                        />
+                    </React.Fragment>
                     }
                 </div>
                 <div className="bp3-dialog-body">
@@ -312,13 +278,15 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                             />
                         </div>
                         <div className="file-info-pane">
-                            <Tabs id="info-tabs" onChange={this.handleTabChange} selectedTabId={fileBrowserStore.selectedTab}>
-                                <Tab id={FileInfoTabs.INFO} title="File Information"/>
-                                {(fileBrowserStore.browserMode === BrowserMode.File || fileBrowserStore.browserMode === BrowserMode.Catalog) &&
-                                <Tab id={FileInfoTabs.HEADER} title="Header"/>
-                                }
-                            </Tabs>
-                            {this.renderInfoPanel()}
+                            <FileInfoComponent
+                                infoTypes={fileBrowserStore.browserMode === BrowserMode.File ? [FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER] : [FileInfoType.REGION_FILE]}
+                                fileInfoExtended={fileBrowserStore.fileInfoExtended}
+                                regionFileInfo={fileBrowserStore.regionFileInfo ? fileBrowserStore.regionFileInfo.join("\n") : ""}
+                                selectedTab={fileBrowserStore.selectedTab as FileInfoType}
+                                handleTabChange={this.handleTabChange}
+                                isLoading={fileBrowserStore.loadingInfo}
+                                errorMessage={fileBrowserStore.responseErrorMessage}
+                            />
                         </div>
                     </div>
                     {exportFileInput}

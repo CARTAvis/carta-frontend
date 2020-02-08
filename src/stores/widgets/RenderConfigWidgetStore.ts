@@ -1,6 +1,7 @@
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {PlotType, LineSettings} from "components/Shared";
+import {isColorValid} from "utilities";
 
 export class RenderConfigWidgetStore {
     @observable minX: number;
@@ -16,6 +17,7 @@ export class RenderConfigWidgetStore {
     @observable linePlotPointSize: number;
     @observable logScaleY: boolean;
     @observable markerTextVisible: boolean;
+    @observable meanRmsVisible: boolean;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
 
     @action setXBounds = (minVal: number, maxVal: number) => {
@@ -56,6 +58,10 @@ export class RenderConfigWidgetStore {
         this.markerTextVisible = val;
     };
 
+    @action setMeanRmsVisible = (val: boolean) => {
+        this.meanRmsVisible = val;
+    };
+
     @action setLogScale = (logScale: boolean) => {
         this.logScaleY = logScale;
     };
@@ -72,6 +78,7 @@ export class RenderConfigWidgetStore {
         this.logScaleY = true;
         this.plotType = PlotType.STEPS;
         this.markerTextVisible = true;
+        this.meanRmsVisible = true;
         this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
@@ -89,21 +96,76 @@ export class RenderConfigWidgetStore {
     // settings
     @action setPrimaryLineColor = (colorHex: string, fixed: boolean) => {
         this.primaryLineColor = { colorHex: colorHex, fixed: fixed };
-    }
+    };
 
     @action setLineWidth = (val: number) => {
         if (val >= LineSettings.MIN_WIDTH && val <= LineSettings.MAX_WIDTH) {
             this.lineWidth = val;   
         }
-    }
+    };
 
     @action setLinePlotPointSize = (val: number) => {
         if (val >= LineSettings.MIN_POINT_SIZE && val <= LineSettings.MAX_POINT_SIZE) {
             this.linePlotPointSize = val;   
         }
-    }
+    };
 
     @action initXYBoundaries (minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
         this.linePlotInitXYBoundaries = { minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal };
     }
+
+    public init = (widgetSettings): void => {
+        if (!widgetSettings) {
+            return;
+        }
+        if (typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
+            this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
+        }
+        if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
+            this.lineWidth = widgetSettings.lineWidth;
+        }
+        if (typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE && widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
+            this.linePlotPointSize = widgetSettings.linePlotPointSize;
+        }
+        if (typeof widgetSettings.logScaleY === "boolean") {
+            this.logScaleY = widgetSettings.logScaleY;
+        }
+        if (typeof widgetSettings.markerTextVisible === "boolean") {
+            this.markerTextVisible = widgetSettings.markerTextVisible;
+        }
+        if (typeof widgetSettings.meanRmsVisible === "boolean") {
+            this.meanRmsVisible = widgetSettings.meanRmsVisible;
+        }
+        if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
+            this.plotType = widgetSettings.plotType;
+        }
+        if (typeof widgetSettings.minXVal === "number") {
+            this.linePlotInitXYBoundaries.minXVal = widgetSettings.minXVal;
+        }
+        if (typeof widgetSettings.maxXVal === "number") {
+            this.linePlotInitXYBoundaries.maxXVal = widgetSettings.maxXVal;
+        }
+        if (typeof widgetSettings.minYVal === "number") {
+            this.linePlotInitXYBoundaries.minYVal = widgetSettings.minYVal;
+        }
+        if (typeof widgetSettings.maxYVal === "number") {
+            this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
+        }
+    };
+
+    public toConfig = () => {
+        return {
+            primaryLineColor: this.primaryLineColor.colorHex,
+            lineWidth: this.lineWidth,
+            linePlotPointSize: this.linePlotPointSize,
+            logScaleY: this.logScaleY,
+            markerTextVisible: this.markerTextVisible,
+            meanRmsVisible: this.meanRmsVisible,
+            plotType: this.plotType,
+            minXVal: this.linePlotInitXYBoundaries.minXVal,
+            maxXVal: this.linePlotInitXYBoundaries.maxXVal,
+            minYVal: this.linePlotInitXYBoundaries.minYVal,
+            maxYVal: this.linePlotInitXYBoundaries.maxYVal
+        };
+    };
 }

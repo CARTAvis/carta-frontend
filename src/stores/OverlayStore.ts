@@ -743,17 +743,6 @@ export class OverlayStore {
     @observable ticks: OverlayTickSettings;
     @observable beam: OverlayBeamSettings;
 
-    // Dialog
-    @observable overlaySettingsDialogVisible = false;
-
-    @action showOverlaySettings = () => {
-        this.overlaySettingsDialogVisible = true;
-    };
-
-    @action hideOverlaySettings = () => {
-        this.overlaySettingsDialogVisible = false;
-    };
-
     constructor(appStore: AppStore, preference: PreferenceStore) {
         this.preference = preference;
         this.global = new OverlayGlobalSettings(preference);

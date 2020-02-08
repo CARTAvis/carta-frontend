@@ -3,8 +3,8 @@ import {CARTA} from "carta-protobuf";
 import {ProcessedSpatialProfile, ProtobufProcessing} from "models";
 
 export class SpatialProfileStore {
-    @observable regionId: number;
-    @observable fileId: number;
+    readonly regionId: number;
+    readonly fileId: number;
     @observable stokes: number;
     @observable channel: number;
     @observable x: number;
