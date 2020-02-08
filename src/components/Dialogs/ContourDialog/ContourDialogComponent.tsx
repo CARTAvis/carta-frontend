@@ -30,6 +30,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     @observable levels: number[];
     @observable smoothingMode: CARTA.SmoothingMode;
     @observable smoothingFactor: number;
+    @observable dataSource: FrameStore;
 
     private static readonly DefaultWidth = 660;
     private static readonly DefaultHeight = 660;
@@ -41,16 +42,18 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     constructor(props: { appStore: AppStore }) {
         super(props);
         this.widgetStore = new RenderConfigWidgetStore();
+        this.dataSource = this.props.appStore.activeFrame;
         this.setDefaultContourParameters();
 
         autorun(() => {
-            const appStore = this.props.appStore;
-            if (appStore.activeFrame) {
-                const newHist = appStore.activeFrame.renderConfig.contourHistogram;
+            if (this.dataSource) {
+                const newHist = this.dataSource.renderConfig.contourHistogram;
                 if (newHist !== this.cachedHistogram) {
                     this.cachedHistogram = newHist;
                     this.widgetStore.clearXYBounds();
                 }
+            } else {
+                this.dataSource = this.props.appStore.activeFrame;
             }
             const widgetStore = this.widgetStore;
             if (widgetStore) {
@@ -63,7 +66,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     }
 
     @action setDefaultContourParameters() {
-        const frame = this.props.appStore.activeFrame;
+        const frame = this.dataSource;
         if (frame) {
             this.levels = frame.contourConfig.levels.slice();
             this.smoothingMode = frame.contourConfig.smoothingMode;
@@ -76,16 +79,15 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     }
 
     componentDidUpdate() {
-        const frame = this.props.appStore.activeFrame;
-        if (frame !== this.cachedFrame) {
-            this.cachedFrame = frame;
+        if (this.dataSource !== this.cachedFrame) {
+            this.cachedFrame = this.dataSource;
             this.widgetStore.clearXYBounds();
             this.setDefaultContourParameters();
         }
     }
 
     @computed get contourConfigChanged(): boolean {
-        const frame = this.props.appStore.activeFrame;
+        const frame = this.dataSource;
         if (frame) {
             const numContourLevels = this.levels.length;
             if (frame.contourConfig.smoothingMode !== this.smoothingMode) {
@@ -106,7 +108,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     }
 
     @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number } {
-        const frame = this.props.appStore.activeFrame;
+        const frame = this.dataSource;
         if (frame && frame.renderConfig.contourHistogram && frame.renderConfig.contourHistogram.bins && frame.renderConfig.contourHistogram.bins.length) {
             const histogram = frame.renderConfig.contourHistogram;
             let minIndex = 0;
@@ -149,6 +151,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     };
 
     private handleDataSourceSelected = (frame: FrameStore) => {
+        this.dataSource = frame;
         this.props.appStore.setActiveFrame(frame.frameInfo.fileId);
     };
 
@@ -158,27 +161,27 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
 
     private handleHistogramChange = (value: boolean) => {
         const appStore = this.props.appStore;
-        if (!appStore || !appStore.activeFrame) {
+        if (!appStore || !this.dataSource) {
             return;
         }
-        if (value && !appStore.activeFrame.renderConfig.cubeHistogram) {
+        if (value && !this.dataSource.renderConfig.cubeHistogram) {
             // skip alert and warning for HDF5 files
-            if (appStore.activeFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) {
+            if (this.dataSource.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) {
                 this.handleAlertConfirm();
             } else {
                 this.showCubeHistogramAlert = true;
             }
         } else {
-            appStore.activeFrame.renderConfig.setUseCubeHistogramContours(value);
+            this.dataSource.renderConfig.setUseCubeHistogramContours(value);
         }
     };
 
     private handleAlertConfirm = () => {
-        const frame = this.props.appStore.activeFrame;
+        const frame = this.dataSource;
         if (frame && frame.renderConfig) {
             frame.renderConfig.setUseCubeHistogramContours(true);
             if (frame.renderConfig.cubeHistogramProgress < 1.0) {
-                this.props.appStore.requestCubeHistogram();
+                this.props.appStore.requestCubeHistogram(frame.frameInfo.fileId);
             }
         }
         this.showCubeHistogramAlert = false;
@@ -189,15 +192,15 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     };
 
     private handleCubeHistogramCancelled = () => {
-        const frame = this.props.appStore.activeFrame;
+        const frame = this.dataSource;
         if (frame && frame.renderConfig) {
             frame.renderConfig.setUseCubeHistogramContours(false);
         }
-        this.props.appStore.cancelCubeHistogramRequest();
+        this.props.appStore.cancelCubeHistogramRequest(frame.frameInfo.fileId);
     };
 
     private handleApplyContours = () => {
-        const frame = this.props.appStore.activeFrame;
+        const frame = this.dataSource;
         if (frame) {
             frame.contourConfig.setContourConfiguration(this.levels.slice(), this.smoothingMode, this.smoothingFactor);
             frame.applyContours();
@@ -205,12 +208,11 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     };
 
     private handleClearContours = () => {
-        const appStore = this.props.appStore;
-        if (!appStore || !appStore.activeFrame) {
+        if (!this.dataSource) {
             return;
         }
 
-        appStore.activeFrame.clearContours();
+        this.dataSource.clearContours();
     };
 
     private handleGraphClicked = (x: number) => {
@@ -278,7 +280,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
             title: "Contour Configuration",
         };
 
-        if (!appStore || !appStore.activeFrame) {
+        if (!appStore || !this.dataSource) {
             return (
                 <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={ContourDialogComponent.DefaultWidth} defaultHeight={ContourDialogComponent.DefaultHeight} enableResizing={true}>
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
@@ -286,7 +288,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
             );
         }
 
-        const frame = appStore.activeFrame;
+        const frame = this.dataSource;
 
         let unitString = "Value";
         if (frame && frame.unit) {

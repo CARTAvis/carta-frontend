@@ -277,23 +277,28 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
     render() {
         // dummy values to trigger React's componentDidUpdate()
-        const frame = this.props.appStore.activeFrame;
-        if (frame) {
-            const view = frame.requiredFrameView;
-            const contourData = frame.contourStores;
-            const config = frame.contourConfig;
-            const thickness = config.thickness;
-            const color = config.colormapEnabled ? config.colormap : config.color;
-            const dashMode = config.dashMode;
-            const bias = config.colormapBias;
-            const contrast = config.colormapContrast;
-
-            const contourFrames = this.props.appStore.contourFrames;
-
-            contourData.forEach(contourStore => {
-                const numVertices = contourStore.vertexCount;
-            });
+        const baseFrame = this.props.appStore.activeFrame;
+        if (baseFrame) {
+            const view = baseFrame.requiredFrameView;
         }
+
+        const contourFrames = this.props.appStore.contourFrames;
+        for (const frame of contourFrames) {
+            if (frame) {
+                const contourData = frame.contourStores;
+                const config = frame.contourConfig;
+                const thickness = config.thickness;
+                const color = config.colormapEnabled ? config.colormap : config.color;
+                const dashMode = config.dashMode;
+                const bias = config.colormapBias;
+                const contrast = config.colormapContrast;
+
+                contourData.forEach(contourStore => {
+                    const numVertices = contourStore.vertexCount;
+                });
+            }
+        }
+
         const padding = this.props.overlaySettings.padding;
         let className = "contour-div";
         if (this.props.docked) {
@@ -308,8 +313,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                     style={{
                         top: padding.top,
                         left: padding.left,
-                        width: frame ? frame.renderWidth || 1 : 1,
-                        height: frame ? frame.renderHeight || 1 : 1
+                        width: baseFrame ? baseFrame.renderWidth || 1 : 1,
+                        height: baseFrame ? baseFrame.renderHeight || 1 : 1
                     }}
                 />
             </div>);
