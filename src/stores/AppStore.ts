@@ -354,11 +354,13 @@ export class AppStore {
         // Display confirmation if image has secondary images
         if (confirmClose && this.activeFrame && this.activeFrame.secondaryImages && this.activeFrame.secondaryImages.length) {
             const numSecondaries = this.activeFrame.secondaryImages.length;
-            this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} spatially matched to this image will also be closed`, (confirmed => {
-                if (confirmed) {
-                    this.removeFrame(this.activeFrame);
-                }
-            }));
+            this.alertStore.showInteractiveAlert(
+                `${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} spatially matched to this image will be unmatched and regions will be removed.`,
+                (confirmed => {
+                    if (confirmed) {
+                        this.removeFrame(this.activeFrame);
+                    }
+                }));
         } else {
             this.removeFrame(this.activeFrame);
         }
@@ -366,15 +368,18 @@ export class AppStore {
 
     @action removeFrame = (frame: FrameStore) => {
         if (frame) {
-            // Remove any associated secondary images
+            // Unlink any associated secondary images
             if (frame.secondaryImages) {
-                for (const f of frame.secondaryImages) {
+                // Create a copy of the array, since clearing the spatial reference will modify it
+                const secondaryImages = frame.secondaryImages.slice();
+                for (const f of secondaryImages) {
                     f.clearSpatialReference();
-                    this.removeFrame(f);
                 }
             }
 
+            const removedFrameIsSpatialReference = frame === this.spatialReference;
             const fileId = frame.frameInfo.fileId;
+
             // adjust requirements for stores
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets, fileId);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.histogramWidgets, fileId);
@@ -386,8 +391,18 @@ export class AppStore {
                 frame.clearContours(false);
                 this.tileService.clearCompressedCache(fileId);
                 this.frames = this.frames.filter(f => f.frameInfo.fileId !== fileId);
+                // Clean up if frame is active
                 if (this.activeFrame.frameInfo.fileId === fileId) {
                     this.activeFrame = this.frames.length ? this.frames[0] : null;
+                }
+                // Clean up if frame is currently spatial reference
+                if (removedFrameIsSpatialReference) {
+                    const newReference = this.frames.length ? this.frames[0] : null;
+                    if (newReference) {
+                        this.setSpatialReference(newReference);
+                    } else {
+                        this.clearSpatialReference();
+                    }
                 }
             }
         }
@@ -990,6 +1005,13 @@ export class AppStore {
             } else if (f.spatialReference) {
                 f.setSpatialReference(frame);
             }
+        }
+    };
+
+    @action clearSpatialReference = () => {
+        this.spatialReference = null;
+        for (const f of this.frames) {
+            f.clearSpatialReference();
         }
     };
 
