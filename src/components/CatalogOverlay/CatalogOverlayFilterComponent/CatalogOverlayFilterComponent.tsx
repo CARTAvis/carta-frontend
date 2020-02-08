@@ -15,11 +15,12 @@ export class CatalogOverlayFilterComponent extends React.Component<{widgetStore:
     };
 
     private handleMaxRowChange = (value: number) => {
-        if (isNaN(value) || value < 0) {
-            // return all data
-            this.props.widgetStore.setMaxRow(-1);
+        const widgetStore = this.props.widgetStore;
+        const fileDataSize = widgetStore.catalogInfo.dataSize;
+        if (isNaN(value) || value < 0 || value > fileDataSize) {
+            widgetStore.setMaxRow(fileDataSize);
         } else {
-            this.props.widgetStore.setMaxRow(value);
+            widgetStore.setMaxRow(value);
         }
     };
 
@@ -54,7 +55,9 @@ export class CatalogOverlayFilterComponent extends React.Component<{widgetStore:
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
                             max={widgetStore.catalogInfo.dataSize}
-                            min={-1}
+                            min={1}
+                            stepSize={10}
+                            disabled={widgetStore.loadingData}
                             allowNumericCharactersOnly={true}
                             onValueChange={(value: number) => this.handleMaxRowChange(value)}
                         />

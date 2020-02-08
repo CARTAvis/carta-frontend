@@ -264,7 +264,6 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         }
 
         const fileBrowserStore = this.props.appStore.fileBrowserStore;
-        // console.log(fileBrowserStore)
         const dialogProps: IDialogProps = {
             icon: "folder-open",
             className: className,
@@ -357,12 +356,9 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
     };
 
     @computed get pathItems() {
-        // catalog file list root formate "/."
         let pathItems: IBreadcrumbProps[] = [{icon: "desktop", target: "."}];
         const fileList = this.props.appStore.fileBrowserStore.getfileListByMode;
-        // console.log(fileList);
         if (fileList) {
-            // console.log(fileList.directory)
             const path = fileList.directory;
             if (path && path !== ".") {
                 const dirNames = path.split("/");

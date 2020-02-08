@@ -258,7 +258,6 @@ export class BackendService {
             if (this.sendEvent(CARTA.EventType.FILE_LIST_REQUEST, CARTA.FileListRequest.encode(message).finish())) {
                 return new Observable<CARTA.FileListResponse>(observer => {
                     this.observerRequestMap.set(requestId, observer);
-                    // console.log(observer)
                 });
             } else {
                 return throwError(new Error("Could not send event"));
@@ -439,19 +438,6 @@ export class BackendService {
         }
         return false;
     }
-
-    // @action("send catalog filter request")
-    // sendCatalogFilterRequest(filterMessage: CARTA.ICatalogFilterRequest): Observable<CARTA.CatalogFilterResponse> {
-    //     if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-    //         this.logEvent(CARTA.EventType.CATALOG_FILTER_REQUEST, this.eventCounter, filterMessage, false);
-    //         if (this.sendEvent(CARTA.EventType.CATALOG_FILTER_REQUEST, CARTA.CatalogFilterRequest.encode(filterMessage).finish())) {
-    //             return new observable<CARTA.CatalogFilterResponse> {
-
-    //             };
-    //         }
-    //     }
-    //     return false;
-    // }
 
     @action("close file")
     closeFile(fileId: number): boolean {

@@ -370,17 +370,19 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     private handleFilterClick = () => {
-        let catalogFilter: CARTA.CatalogFilterRequest = new CARTA.CatalogFilterRequest();
         const widgetStore = this.widgetStore;
         const appStore = this.props.appStore;
         const frame = appStore.activeFrame;
+        let catalogFilter = widgetStore.updateSubsetDataSize;
         let regionId = 0;
-        let imageBounds: CARTA.CatalogImageBounds = new CARTA.CatalogImageBounds();
+        widgetStore.clearData();
+        widgetStore.setNumVisibleRows(0);
+        widgetStore.setLoadingDataStatus(true);
 
         if (frame) {
             regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
-            imageBounds.xColumnName = widgetStore.xColumn;
-            imageBounds.yColumnName = widgetStore.yColumn;
+            catalogFilter.imageBounds.xColumnName = widgetStore.xColumn;
+            catalogFilter.imageBounds.yColumnName = widgetStore.yColumn;
 
             const requiredFrameView = frame.requiredFrameView;
             const imageSize = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
@@ -392,28 +394,29 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 mip: requiredFrameView.mip
             };
 
-            imageBounds.imageBounds = boundedView;
+            catalogFilter.imageBounds.imageBounds = boundedView;
         }
-        const previewDataSize = widgetStore.maxRow;
+        
         catalogFilter.fileId = widgetStore.catalogInfo.fileId;
         catalogFilter.filterConfigs = this.getUserFilters();
         // control in fronend
         catalogFilter.hidedHeaders = null;
-        catalogFilter.subsetDataSize = previewDataSize;
-        // Todo user setting for start index
         catalogFilter.subsetStartIndex = 0;
-        catalogFilter.imageBounds = imageBounds;
         // backend filter by region not implement 
         catalogFilter.regionId = regionId;
         appStore.sendCatalogFilter(catalogFilter);
-        widgetStore.setUserFilter(catalogFilter);
-        if (previewDataSize >= 0) {
-            widgetStore.setNumVisibleRows(previewDataSize);   
-        } else {
-            widgetStore.setNumVisibleRows(CatalogOverlayWidgetStore.InitTableRows);
-            widgetStore.setMaxRow(widgetStore.catalogInfo.dataSize);
-        }
     };
+
+    private updateTableData = (rowIndexEnd: number) => {
+        const widgetStore = this.widgetStore;
+        if (widgetStore.loadingData === false) {
+            const filter = this.widgetStore.updateSubsetDataSize;
+            if (widgetStore.shouldUpdateTableData) {
+                this.props.appStore.sendCatalogFilter(filter);
+                widgetStore.setLoadingDataStatus(true);
+            }
+        }
+    }
 
     private handleClearClick = () => {
         const widgetStore = this.widgetStore;
@@ -445,13 +448,20 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             columnHeaders: widgetStore.displayedColumnHeaders,
             numVisibleRows: widgetStore.numVisibleRows,
             columnWidts: widgetStore.dataTableColumnWidts,
-            updateRef: this.onCatalogdataTableRefUpdated,
+            upTableRef: this.onCatalogdataTableRefUpdated,
             updateColumnFilter: widgetStore.setColumnFilter,
-            setNumVisibleRows: widgetStore.setNumVisibleRows,
-            updateSpeed: 5,
-            tableSize: widgetStore.maxRow,
-            loadingCell: widgetStore.loadingData
+            maxRowIndex: widgetStore.maxRow,
+            loadingCell: widgetStore.loadingData,
+            updateTableData: this.updateTableData
         };
+
+        let tableInfo = (widgetStore.catalogInfo.dataSize) ? (
+            <tr>
+                <td className="td-label">
+                    <pre>{"Table Size: " + widgetStore.catalogInfo.dataSize}</pre>
+                </td>
+            </tr>
+        ) : null;
 
         return (
             <div className={"catalog-overlay"}>
@@ -466,6 +476,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     <TableComponent {...dataTableProps}/>
                 </div>
                 <div className="bp3-dialog-footer">
+                    <div className={"table-info"}>
+                        <table className="info-display">
+                            <tbody>
+                                {tableInfo}
+                            </tbody>
+                        </table>
+                    </div>
                     <div className="bp3-dialog-footer-actions">
                         <Tooltip content={"Apply filter"}>
                         <AnchorButton

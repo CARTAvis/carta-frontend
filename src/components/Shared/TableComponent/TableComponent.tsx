@@ -18,12 +18,11 @@ export class TableComponentProps {
     numVisibleRows: number;
     columnWidts?: Array<number>;
     type: TableType;
-    updateRef?: (ref: Table) => void;
-    updateColumnFilter?: (value: string, columnName: string) => void;
-    setNumVisibleRows?: (val: number) => void;
     loadingCell?: boolean;
-    updateSpeed?: number;
-    tableSize?: number;
+    maxRowIndex?: number;
+    upTableRef?: (ref: Table) => void;
+    updateColumnFilter?: (value: string, columnName: string) => void;
+    updateTableData?: (rowIndexEnd: number) => void;
 }
 
 @observer
@@ -89,10 +88,10 @@ export class TableComponent extends React.Component<TableComponentProps> {
     }
 
     private infiniteLoad(rowIndexEnd: number, numVisibleRows: number) {
-        // incorrect rowIndices, bliuprintjs table bug https://github.com/palantir/blueprint/issues/3341
         const props = this.props;
-        if (props.updateSpeed && rowIndexEnd + 1 >= numVisibleRows && rowIndexEnd <= (props.tableSize - 4)) { 
-            props.setNumVisibleRows(numVisibleRows + props.updateSpeed);
+        const currentIndex = rowIndexEnd + 1;
+        if (props.maxRowIndex && rowIndexEnd > 0 && currentIndex >= numVisibleRows && currentIndex < props.maxRowIndex && !this.props.loadingCell) {
+            this.props.updateTableData(rowIndexEnd);
         }
     }
 
@@ -130,9 +129,9 @@ export class TableComponent extends React.Component<TableComponentProps> {
         if (table.type === TableType.ColumnFilter) {
             return (
                 <Table
-                    ref={(ref) => table.updateRef(ref)}
+                    ref={(ref) => table.upTableRef(ref)}
                     numRows={table.numVisibleRows}
-                    renderMode={RenderMode.BATCH}
+                    renderMode={RenderMode.NONE}
                     enableRowReordering={false}
                     selectionModes={SelectionModes.NONE}
                     loadingOptions={this.getLoadingOptions()}

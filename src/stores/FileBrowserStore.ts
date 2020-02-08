@@ -73,7 +73,6 @@ export class FileBrowserStore {
                 this.loadingList = false;
             });
         } else if (this.browserMode === BrowserMode.Catalog) {
-            // console.log(directory)
             this.backendService.getCatalogList(directory).subscribe(res => {
                 this.catalogFileList = res;
             }, err => {
@@ -168,7 +167,6 @@ export class FileBrowserStore {
     };
 
     @action selectFolder = (folder: string, absolutePath: boolean) => {
-        // console.log(folder)
         if (absolutePath) {
             this.getFileList(folder);
             return;

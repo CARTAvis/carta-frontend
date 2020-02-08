@@ -434,8 +434,6 @@ export class AppStore {
         if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
             // Todo clean catalog data from image viewer
             this.catalogs.delete(catalogId);
-            console.log(fileId + " fild closed");
-            // console.log(this.catalogs)
         }
     }
 
@@ -844,13 +842,9 @@ export class AppStore {
 
         const catalogWidgetStore = this.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
         const progress = catalogFilter.progress;
-        if (progress < 1) {
-            catalogWidgetStore.setLoadingDataStatus(true);
-        }
 
         if (catalogWidgetId && progress === 1) {
-            // Todo Update dataset with progress
-            catalogWidgetStore.setCatalogData(catalogFilter.columnsData);
+            catalogWidgetStore.setCatalogData(catalogFilter.columnsData, catalogFilter.subsetDataSize, catalogFilter.subsetEndIndex);
             catalogWidgetStore.setLoadingDataStatus(false);
         }
 
