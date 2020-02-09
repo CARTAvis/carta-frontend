@@ -3,7 +3,7 @@ import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
-import {ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, Transform2D} from "models";
+import {ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, Transform2D, ZoomPoint} from "models";
 import {clamp, findChannelType, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates, length2D, minMax2D, rotate2D, subtract2D, toFixed, trimFitsComment, velocityStringFromFrequency} from "utilities";
 import {BackendService} from "services";
 import {ControlMap} from "../models/ControlMap";
@@ -784,12 +784,14 @@ export class FrameStore {
             const pointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
-            const newCenter = {
-                x: x + this.zoomLevel / zoom * (this.center.x - x),
-                y: y + this.zoomLevel / zoom * (this.center.y - y)
-            };
+            if (this.preference.zoomPoint === ZoomPoint.CURSOR) {
+                const newCenter = {
+                    x: x + this.zoomLevel / zoom * (this.center.x - x),
+                    y: y + this.zoomLevel / zoom * (this.center.y - y)
+                };
+                this.center = newCenter;
+            }
             this.setZoom(zoom);
-            this.center = newCenter;
         }
     }
 
