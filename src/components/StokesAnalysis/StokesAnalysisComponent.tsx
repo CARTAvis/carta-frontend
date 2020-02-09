@@ -734,26 +734,26 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return cursorInfo;
     };
 
-    private genProfilerInfo = (cursorInfo): string[] => {
+    private genProfilerInfo = (): string[] => {
         let profilerInfo: string[] = [];
-        if (!cursorInfo || cursorInfo.quValue.x === null || this.cursorInfo.quValue.y === null ||
-            isNaN(cursorInfo.quValue.x) || isNaN(cursorInfo.quValue.y)) {
+        if (!this.cursorInfo || this.cursorInfo.quValue.x === null || this.cursorInfo.quValue.y === null ||
+            isNaN(this.cursorInfo.quValue.x) || isNaN(this.cursorInfo.quValue.y)) {
             return profilerInfo;
         }
-        const xLabel = cursorInfo.xUnit === "Channel" ?
-                    "Channel " + toFixed(cursorInfo.channel) :
-                    formattedNotation(cursorInfo.channel) + " " + cursorInfo.xUnit;
+        const xLabel = this.cursorInfo.xUnit === "Channel" ?
+                    "Channel " + toFixed(this.cursorInfo.channel) :
+                    formattedNotation(this.cursorInfo.channel) + " " + this.cursorInfo.xUnit;
         const fractionalPol = this.widgetStore.fractionalPolVisible;
         const qLabel = fractionalPol ? ", Q/I: " : ", Q: ";
         const uLabel = fractionalPol ? ", U/I: " : ", U: ";
         const piLabel = fractionalPol ? ", PI/I: " : ", PI: ";
         const cursorString = "(" + xLabel
-            + qLabel + toExponential(cursorInfo.quValue.x, 2)
-            + uLabel + toExponential(cursorInfo.quValue.y, 2)
-            + piLabel + toExponential(cursorInfo.pi, 2)
-            + ", PA: " + toFixed(cursorInfo.pa, 2)
+            + qLabel + toExponential(this.cursorInfo.quValue.x, 2)
+            + uLabel + toExponential(this.cursorInfo.quValue.y, 2)
+            + piLabel + toExponential(this.cursorInfo.pi, 2)
+            + ", PA: " + toFixed(this.cursorInfo.pa, 2)
             + ")";
-        profilerInfo.push(`${cursorInfo.isMouseEntered ? "Cursor:" : "Data:"} ${cursorString}`);
+        profilerInfo.push(`${this.cursorInfo.isMouseEntered ? "Cursor:" : "Data:"} ${cursorString}`);
         return profilerInfo;
     };
     
@@ -1123,7 +1123,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     <div className="profile-plot-qvsu">
                         <ScatterPlotComponent {...quScatterPlotProps}/>
                     </div>
-                    {this.cursorInfo && <ProfilerInfoComponent info={this.genProfilerInfo(this.cursorInfo)}/>}
+                    <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
