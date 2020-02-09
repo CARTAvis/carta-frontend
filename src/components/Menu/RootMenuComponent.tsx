@@ -173,6 +173,14 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
             </Menu>
         );
 
+        const debugMenu = (
+            <Menu>
+                <Menu.Item icon={appStore.syncFrameToContour ? "tick" : "blank"} text="syncFrameToContour" onClick={() => appStore.syncFrameToContour = !appStore.syncFrameToContour}/>
+                <Menu.Item icon={appStore.syncContourToFrame ? "tick" : "blank"} text="syncContourToFrame" onClick={() => appStore.syncContourToFrame = !appStore.syncContourToFrame}/>
+                <Menu.Item icon={appStore.frameLockedToContour ? "tick" : "blank"} text="Lock frame to contour" onClick={appStore.toggleFrameContourLock}/>
+            </Menu>
+        );
+
         const helpMenu = (
             <Menu>
                 <Menu.Item text="Online Manual" icon={"help"} onClick={this.handleDocumentationClicked}/>
@@ -253,6 +261,11 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 <Popover autoFocus={false} minimal={true} content={layoutMenu} position={Position.BOTTOM_LEFT}>
                     <Menu className="root-menu-entry">
                         <Menu.Item text="Layout"/>
+                    </Menu>
+                </Popover>
+                <Popover autoFocus={false} minimal={true} content={debugMenu} position={Position.BOTTOM_LEFT}>
+                    <Menu className="root-menu-entry">
+                        <Menu.Item text="Debug"/>
                     </Menu>
                 </Popover>
                 <Popover autoFocus={false} minimal={true} content={helpMenu} position={Position.BOTTOM_LEFT}>

@@ -48,6 +48,10 @@ export class AppStore {
     // Frames
     @observable frames: FrameStore[];
     @observable activeFrame: FrameStore;
+    @observable contourDataSource: FrameStore;
+    @observable syncContourToFrame: boolean;
+    @observable syncFrameToContour: boolean;
+
     // Animation
     @observable animatorStore: AnimatorStore;
     // Error alerts
@@ -318,9 +322,10 @@ export class AppStore {
                 this.frames.push(newFrame);
             }
 
-            // First image defaults to spatial reference
+            // First image defaults to spatial reference and contour source
             if (this.frames.length === 1) {
                 this.setSpatialReference(this.frames[0]);
+                this.setContourDataSource(this.frames[0]);
             }
 
             this.setActiveFrame(newFrame.frameInfo.fileId);
@@ -391,13 +396,18 @@ export class AppStore {
                 frame.clearContours(false);
                 this.tileService.clearCompressedCache(fileId);
                 this.frames = this.frames.filter(f => f.frameInfo.fileId !== fileId);
+                const firstFrame = this.frames.length ? this.frames[0] : null;
                 // Clean up if frame is active
                 if (this.activeFrame.frameInfo.fileId === fileId) {
-                    this.activeFrame = this.frames.length ? this.frames[0] : null;
+                    this.activeFrame = firstFrame;
+                }
+                // Clean up if frame is contour data source
+                if (this.contourDataSource.frameInfo.fileId === fileId) {
+                    this.contourDataSource = firstFrame;
                 }
                 // Clean up if frame is currently spatial reference
                 if (removedFrameIsSpatialReference) {
-                    const newReference = this.frames.length ? this.frames[0] : null;
+                    const newReference = firstFrame;
                     if (newReference) {
                         this.setSpatialReference(newReference);
                     } else {
@@ -952,7 +962,32 @@ export class AppStore {
         }
         this.activeFrame = frame;
         this.widgetsStore.updateImageWidgetTitle();
+        if (this.syncContourToFrame) {
+            this.contourDataSource = frame;
+        }
     }
+
+    @action setContourDataSource = (frame: FrameStore) => {
+        this.contourDataSource = frame;
+        if (this.syncFrameToContour) {
+            this.setActiveFrame(frame.frameInfo.fileId);
+        }
+    };
+
+    @computed get frameLockedToContour() {
+        return this.syncFrameToContour && this.syncContourToFrame;
+    }
+
+    @action toggleFrameContourLock = () => {
+        if (this.frameLockedToContour) {
+            this.syncFrameToContour = false;
+            this.syncContourToFrame = false;
+        } else {
+            this.syncContourToFrame = true;
+            this.syncFrameToContour = true;
+            this.contourDataSource = this.activeFrame;
+        }
+    };
 
     getFrame(fileId: number) {
         if (fileId === -1) {
