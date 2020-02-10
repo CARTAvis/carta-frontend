@@ -40,10 +40,10 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}
                 />
                 <Menu.Item
-                    text="Append catalog"
-                    label={`${modString}C`}
+                    text="Close image"
+                    label={`${modString}W`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
-                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}
+                    onClick={() => appStore.closeCurrentFile(true)}
                 />
                 <Menu.Divider/>
                 <Menu.Item
@@ -55,6 +55,13 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     text="Export regions"
                     disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionExport, false)}
+                />
+                <Menu.Divider/>
+                <Menu.Item
+                    text="Append catalog"
+                    label={`${modString}C`}
+                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}
                 />
                 <Menu.Divider/>
                 <Menu.Item
