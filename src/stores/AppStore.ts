@@ -455,7 +455,11 @@ export class AppStore {
 
     // Open catalog file
     @action appendCatalog = (directory: string, file: string, previewDataSize: number, type: CARTA.CatalogFileType) => {
-        if (!this.activeFrame || !(type === CARTA.CatalogFileType.VOTable)) {
+        if (!this.activeFrame) {
+            AppToaster.show({icon: "warning-sign", message: `Please load the image file`, intent: "danger", timeout: 3000});
+            return;
+        }
+        if (!(type === CARTA.CatalogFileType.VOTable)) {
             AppToaster.show({icon: "warning-sign", message: `Catalog type not supported`, intent: "danger", timeout: 3000});
             return;
         }
