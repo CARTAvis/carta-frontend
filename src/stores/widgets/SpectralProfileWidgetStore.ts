@@ -6,6 +6,32 @@ import {RegionWidgetStore} from "./RegionWidgetStore";
 import {FrameStore} from "../FrameStore";
 import {isColorValid} from "utilities";
 
+export enum SpectralSystem {
+    LSRK = "LSRK",
+    LSRD = "LSRD",
+    BARY = "BARY",
+    TOPO = "TOPO"
+}
+
+export enum SpectralCoordinate {
+    RVK = "radio velocity (km/s)",
+    RVM = "radio velocity (m/s)",
+    OVK = "optical velocity (km/s)",
+    OVM = "optical velocity (m/s)",
+    FQG = "frequency (GHz)",
+    FQM = "frequency (MHz)",
+    FQK = "frequency (kHz)",
+    WLM = "wave length (mm)",
+    WLU = "wave length (um)",
+    WLN = "wave length (nm)",
+    WLA = "wave length (Angstrom)",
+    AWLM = "air wave length (mm)",
+    AWLU = "air wave length (um)",
+    AWLN = "air wave length (nm)",
+    AWLA = "air wave length (Angstrom)",
+    CH = "channel"
+}
+
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
     @observable statsType: CARTA.StatsType;
@@ -15,6 +41,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable maxY: number;
     @observable cursorX: number;
     @observable channel: number;
+    @observable spectralCoordinate: SpectralCoordinate;
+    @observable spectralSystem: SpectralSystem;
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
 
@@ -74,6 +102,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             this.clearXYBounds();
             this.coordinate = coordinate;
         }
+    };
+
+    @action setSpectralCoordinate = (spectralCoordinate: SpectralCoordinate) => {
+        this.spectralCoordinate = spectralCoordinate;
+    };
+
+    @action setSpectralSystem = (specsys: SpectralSystem) => {
+        this.spectralSystem = specsys;
     };
 
     @action setXBounds = (minVal: number, maxVal: number) => {
@@ -145,6 +181,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         super();
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
+        this.spectralCoordinate = SpectralCoordinate.RVK;
+        this.spectralSystem = SpectralSystem.LSRK;
 
         // Describes how the data is visualised
         this.plotType = PlotType.STEPS;
