@@ -215,6 +215,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Z Profile: Cursor`);
             }
         });
+
+        autorun(() => {
+            if (this.widgetStore) {
+                console.log(this.widgetStore.spectralSystem);
+            }
+        });
     }
 
     onResize = (width: number, height: number) => {

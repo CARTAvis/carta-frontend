@@ -80,6 +80,54 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
     return wcsinfo;
 }
 
+EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(const char* header)
+{
+    AstFitsChan* fitschan = nullptr;
+    AstSpecFrame* spectralInfo = nullptr;
+    int status = 0;
+    if (spectralInfo)
+    {
+        astEnd;
+    }
+	astClearStatus;
+    astBegin;
+
+    fitschan = astFitsChan(NULL, NULL, "");
+    if (!fitschan)
+    {
+        cout << "astFitsChan returned null :(" << endl;
+        astClearStatus;
+        return nullptr;
+    }
+    if (!header)
+    {
+        cout << "Missing header argument." << endl;
+        return nullptr;
+    }
+
+    astPutCards(fitschan, header);
+    spectralInfo = static_cast<AstSpecFrame*>(astRead(fitschan));
+
+    if (!astOK)
+    {
+        cout << "Some AST LIB error, check logs." << endl;
+        astClearStatus;
+        return nullptr;
+    }
+    else if (spectralInfo == AST__NULL)
+    {
+        cout << "No spectral axis" << endl;
+        return nullptr;
+    }
+    else if (strcmp(astGetC(spectralInfo, "Class"), "FrameSet"))
+    {
+        cout << "check FITS header (astlib)" << endl;
+        return nullptr;
+    }
+
+    return spectralInfo;
+}
+
 EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY, double angle, double originX, double originY, double scaleX, double scaleY)
 {
     AstFrame* pixFrame = static_cast<AstFrame*> astGetFrame(wcsinfo, 1);
@@ -224,6 +272,31 @@ EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const doubl
     }
 
     astTran2(wcsinfo, npoint, xin, yin, forward, xout, yout);
+    if (!astOK)
+    {
+        astClearStatus;
+        return 1;
+    }
+    return 0;
+}
+
+EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrame, int npoint, const double xin[], const double yin[], int forward, double xout[], double yout[])
+{
+    if (!specFrame)
+    {
+        return 1;
+    }
+
+    AstSpecFrame* specFrameTo = nullptr;
+    specFrameTo = astCopy(specFrame);
+    astSet(specFrameTo, "System=freq");
+    astSet(specFrameTo, "Unit=GHz");
+    astSet(specFrameTo, "StdOfRest=Topocentric");
+
+    AstFrameSet *cvt;
+    cvt = astConvert(specFrame, specFrameTo, "");
+
+    astTran2(cvt, npoint, xin, yin, forward, xout, yout);
     if (!astOK)
     {
         astClearStatus;

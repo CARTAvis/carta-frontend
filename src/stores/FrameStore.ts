@@ -28,6 +28,8 @@ export class FrameStore {
     @observable frameInfo: FrameInfo;
     @observable renderHiDPI: boolean;
     @observable wcsInfo: number;
+    @observable spectralFrame: number;
+    @observable specsys: string;
     @observable validWcs: boolean;
     @observable center: Point2D;
     @observable cursorInfo: CursorInfo;
@@ -421,6 +423,7 @@ export class FrameStore {
         this.backendService = backendService;
         this.preference = preference;
         this.contourContext = gl;
+        this.specsys = "";
         this.validWcs = false;
         this.frameInfo = frameInfo;
         this.renderHiDPI = true;
@@ -465,6 +468,7 @@ export class FrameStore {
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
         this.initWCS();
+        this.initSpectralFrame();
         this.initCenter();
         this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
 
@@ -528,6 +532,66 @@ export class FrameStore {
             this.validWcs = true;
             this.overlayStore.setDefaultsFromAST(this);
             console.log("Initialised WCS info from frame");
+        }
+    };
+
+    @action private initSpectralFrame = () => {
+        let headerString = "";
+
+        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
+            // Skip empty header entries
+            if (!entry.value.length) {
+                continue;
+            }
+
+            // Skip lower & higher dimensions, only preserve spectral axis
+            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[1-2]/) ||
+                entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[4-9]/)) {
+                continue;
+            }
+
+            let name = entry.name;
+            let value = trimFitsComment(entry.value);
+            if (entry.name.toUpperCase() === "NAXIS") {
+                value = "1";
+            } else if (entry.name.toUpperCase() === "NAXIS3") {
+                name = "NAXIS1";
+            } else if (entry.name.toUpperCase() === "CTYPE3") {
+                name = "CTYPE1";
+            } else if (entry.name.toUpperCase() === "CDELT3") {
+                name = "CDELT1";
+            } else if (entry.name.toUpperCase() === "CRPIX3") {
+                name = "CRPIX1";
+            } else if (entry.name.toUpperCase() === "CRVAL3") {
+                name = "CRVAL1";
+            } else if (entry.name.toUpperCase() === "CUNIT3") {
+                name = "CUNIT1";
+            } else if (entry.name.toUpperCase() === "CROTA3") {
+                name = "CROTA1";
+            } else if (entry.name.toUpperCase() === "SPECSYS") {
+                this.specsys = value;
+            }
+
+            if (entry.entryType === CARTA.EntryType.STRING) {
+                value = `'${value}'`;
+            }
+
+            while (name.length < 8) {
+                name += " ";
+            }
+
+            let entryString = `${name}=  ${value}`;
+            while (entryString.length < 80) {
+                entryString += " ";
+            }
+            headerString += entryString;
+        }
+        const initResult = AST.initSpectralFrame(headerString);
+        if (!initResult) {
+            this.spectralFrame = null;
+        } else {
+            this.spectralFrame = initResult;
+            console.log("Initialised spectral info from frame");
         }
     };
 
