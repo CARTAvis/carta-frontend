@@ -3,7 +3,7 @@ import {Colors} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {AppStore, BeamType, FrameScaling, RenderConfigStore, RegionStore} from "stores";
-import {Theme, PresetLayout, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
+import {Theme, PresetLayout, CursorPosition, Zoom, ZoomPoint, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {isColorValid, parseBoolean} from "utilities";
 import {ControlMap} from "../models/ControlMap";
 
@@ -13,6 +13,7 @@ export enum PreferenceKeys {
     GLOBAL_LAYOUT,
     GLOBAL_CURSOR_POSITION,
     GLOBAL_ZOOM_MODE,
+    GLOBAL_ZOOM_POINT,
     GLOBAL_DRAG_PANNING,
 
     RENDER_CONFIG_SCALING,
@@ -66,6 +67,7 @@ const KEY_TO_STRING = new Map<PreferenceKeys, string>([
     [PreferenceKeys.GLOBAL_LAYOUT, "layout"],
     [PreferenceKeys.GLOBAL_CURSOR_POSITION, "cursorPosition"],
     [PreferenceKeys.GLOBAL_ZOOM_MODE, "zoomMode"],
+    [PreferenceKeys.GLOBAL_ZOOM_POINT, "zoomPoint"],
     [PreferenceKeys.GLOBAL_DRAG_PANNING, "dragPanning"],
 
     [PreferenceKeys.RENDER_CONFIG_SCALING, "scaling"],
@@ -120,6 +122,7 @@ const DEFAULTS = {
         layout: PresetLayout.DEFAULT,
         cursorPosition: CursorPosition.TRACKING,
         zoomMode: Zoom.FIT,
+        zoomPoint: ZoomPoint.CURSOR,
         dragPanning: true,
     },
     RENDER_CONFIG: {
@@ -186,6 +189,7 @@ export class PreferenceStore {
         [PreferenceKeys.GLOBAL_LAYOUT, (value: string): string => { return value && this.appStore.layoutStore.layoutExist(value) ? value : DEFAULTS.GLOBAL.layout; }],
         [PreferenceKeys.GLOBAL_CURSOR_POSITION, (value: string): string => { return value && CursorPosition.isValid(value) ? value : DEFAULTS.GLOBAL.cursorPosition; }],
         [PreferenceKeys.GLOBAL_ZOOM_MODE, (value: string): string => { return value && Zoom.isValid(value) ? value : DEFAULTS.GLOBAL.zoomMode; }],
+        [PreferenceKeys.GLOBAL_ZOOM_POINT, (value: string): string => { return value && ZoomPoint.isValid(value) ? value : DEFAULTS.GLOBAL.zoomPoint; }],
         [PreferenceKeys.GLOBAL_DRAG_PANNING, (value: string): boolean => { return value === "false" ? false : DEFAULTS.GLOBAL.dragPanning; }],
 
         [PreferenceKeys.RENDER_CONFIG_SCALING, (value: string): number => { return value && isFinite(Number(value)) && RenderConfigStore.IsScalingValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scaling; }],
@@ -260,6 +264,10 @@ export class PreferenceStore {
 
     @computed get zoomMode(): string {
         return this.preferences.get(PreferenceKeys.GLOBAL_ZOOM_MODE);
+    }
+
+    @computed get zoomPoint(): string {
+        return this.preferences.get(PreferenceKeys.GLOBAL_ZOOM_POINT);
     }
 
     @computed get dragPanning(): boolean {
@@ -508,6 +516,7 @@ export class PreferenceStore {
         this.setPreference(PreferenceKeys.GLOBAL_LAYOUT, DEFAULTS.GLOBAL.layout);
         this.setPreference(PreferenceKeys.GLOBAL_CURSOR_POSITION, DEFAULTS.GLOBAL.cursorPosition);
         this.setPreference(PreferenceKeys.GLOBAL_ZOOM_MODE, DEFAULTS.GLOBAL.zoomMode);
+        this.setPreference(PreferenceKeys.GLOBAL_ZOOM_POINT, DEFAULTS.GLOBAL.zoomPoint);
         this.setPreference(PreferenceKeys.GLOBAL_DRAG_PANNING, DEFAULTS.GLOBAL.dragPanning);
     };
 
@@ -588,6 +597,7 @@ export class PreferenceStore {
             [PreferenceKeys.GLOBAL_LAYOUT, DEFAULTS.GLOBAL.layout],
             [PreferenceKeys.GLOBAL_CURSOR_POSITION, DEFAULTS.GLOBAL.cursorPosition],
             [PreferenceKeys.GLOBAL_ZOOM_MODE, DEFAULTS.GLOBAL.zoomMode],
+            [PreferenceKeys.GLOBAL_ZOOM_POINT, DEFAULTS.GLOBAL.zoomPoint],
             [PreferenceKeys.GLOBAL_DRAG_PANNING, DEFAULTS.GLOBAL.dragPanning],
 
             [PreferenceKeys.RENDER_CONFIG_SCALING, DEFAULTS.RENDER_CONFIG.scaling],

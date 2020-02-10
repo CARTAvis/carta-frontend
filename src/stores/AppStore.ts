@@ -227,7 +227,7 @@ export class AppStore {
     }
 
     // Frame actions
-    @computed get getActiveFrameIndex(): number {
+    @computed get activeFrameIndex(): number {
         if (!this.activeFrame) {
             return -1;
         }
@@ -240,9 +240,7 @@ export class AppStore {
 
     @computed get frameNames(): IOptionProps [] {
         let names: IOptionProps [] = [];
-        if (this.frameNum > 0) {
-            this.frames.forEach(frame => names.push({label: frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
-        }
+        this.frames.forEach(frame => names.push({label: frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
         return names;
     }
 
@@ -352,9 +350,36 @@ export class AppStore {
         this.addFrame(directory, file, hdu, 0);
     };
 
-    @action removeFrame = (fileId: number) => {
-        const frame = this.frames.find(f => f.frameInfo.fileId === fileId);
+    @action closeCurrentFile = (confirmClose: boolean = true) => {
+        // Display confirmation if image has secondary images
+        if (confirmClose && this.activeFrame && this.activeFrame.secondaryImages && this.activeFrame.secondaryImages.length) {
+            const numSecondaries = this.activeFrame.secondaryImages.length;
+            this.alertStore.showInteractiveAlert(
+                `${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} spatially matched to this image will be unmatched and regions will be removed.`,
+                (confirmed => {
+                    if (confirmed) {
+                        this.removeFrame(this.activeFrame);
+                    }
+                }));
+        } else {
+            this.removeFrame(this.activeFrame);
+        }
+    };
+
+    @action removeFrame = (frame: FrameStore) => {
         if (frame) {
+            // Unlink any associated secondary images
+            if (frame.secondaryImages) {
+                // Create a copy of the array, since clearing the spatial reference will modify it
+                const secondaryImages = frame.secondaryImages.slice();
+                for (const f of secondaryImages) {
+                    f.clearSpatialReference();
+                }
+            }
+
+            const removedFrameIsSpatialReference = frame === this.spatialReference;
+            const fileId = frame.frameInfo.fileId;
+
             // adjust requirements for stores
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets, fileId);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.histogramWidgets, fileId);
@@ -362,12 +387,23 @@ export class AppStore {
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets, fileId);
 
             if (this.backendService.closeFile(fileId)) {
-                if (this.activeFrame.frameInfo.fileId === fileId) {
-                    this.activeFrame = null;
-                }
+                frame.clearSpatialReference();
                 frame.clearContours(false);
                 this.tileService.clearCompressedCache(fileId);
                 this.frames = this.frames.filter(f => f.frameInfo.fileId !== fileId);
+                // Clean up if frame is active
+                if (this.activeFrame.frameInfo.fileId === fileId) {
+                    this.activeFrame = this.frames.length ? this.frames[0] : null;
+                }
+                // Clean up if frame is currently spatial reference
+                if (removedFrameIsSpatialReference) {
+                    const newReference = this.frames.length ? this.frames[0] : null;
+                    if (newReference) {
+                        this.setSpatialReference(newReference);
+                    } else {
+                        this.clearSpatialReference();
+                    }
+                }
             }
         }
     };
@@ -969,6 +1005,13 @@ export class AppStore {
             } else if (f.spatialReference) {
                 f.setSpatialReference(frame);
             }
+        }
+    };
+
+    @action clearSpatialReference = () => {
+        this.spatialReference = null;
+        for (const f of this.frames) {
+            f.clearSpatialReference();
         }
     };
 

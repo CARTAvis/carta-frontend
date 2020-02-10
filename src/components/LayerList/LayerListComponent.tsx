@@ -47,13 +47,89 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         this.props.appStore.reorderFrame(oldIndex, newIndex, length);
     };
 
+    private rowHeaderCellRenderer = (rowIndex: number) => {
+        return <RowHeaderCell name={rowIndex.toString()} className={rowIndex === this.props.appStore.activeFrameIndex ? "active-row-cell" : ""}/>;
+    };
+
+    private fileNameRenderer = (rowIndex: number) => {
+        const appStore = this.props.appStore;
+        if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
+            return <Cell/>;
+        }
+
+        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].frameInfo.fileInfo.name}</Cell>;
+    };
+
+    private channelRenderer = (rowIndex: number) => {
+        const appStore = this.props.appStore;
+        if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
+            return <Cell/>;
+        }
+        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].channel}</Cell>;
+    };
+
+    private stokesRenderer = (rowIndex: number) => {
+        const appStore = this.props.appStore;
+        if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
+            return <Cell/>;
+        }
+        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].stokes}</Cell>;
+    };
+
+    private typeRenderer = (rowIndex: number) => {
+        const appStore = this.props.appStore;
+        if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
+            return <Cell/>;
+        }
+
+        const frame = appStore.frames[rowIndex];
+
+        return (
+            <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
+                <React.Fragment>
+                    <Tooltip content={<span>Raster image<br/><i><small>Click to {frame.renderConfig.visible ? "hide" : "show"}</small></i></span>}>
+                        <AnchorButton minimal={true} small={true} intent={frame.renderConfig.visible ? "success" : "none"} onClick={frame.renderConfig.toggleVisibility}>R</AnchorButton>
+                    </Tooltip>
+                    {frame.contourConfig.enabled &&
+                    <Tooltip content={<span>Contour image<br/><i><small>Click to {frame.contourConfig.visible ? "hide" : "show"}</small></i></span>}>
+                        <AnchorButton minimal={true} small={true} intent={frame.contourConfig.visible ? "success" : "none"} onClick={frame.contourConfig.toggleVisibility}>C</AnchorButton>
+                    </Tooltip>
+                    }
+                </React.Fragment>
+            </Cell>
+        );
+    };
+
+    private columnHeaderRenderer = (columnIndex: number) => {
+        let name: string;
+        switch (columnIndex) {
+            case 0:
+                name = "File name";
+                break;
+            case 1:
+                name = "Type";
+                break;
+            case 2:
+                name = "Channel";
+                break;
+            case 3:
+                name = "Stokes";
+                break;
+            default:
+                break;
+        }
+
+        const columnHeaderStyleProps: CSSProperties = {
+            fontSize: "12",
+            fontWeight: "bold"
+        };
+
+        return <ColumnHeaderCell name={name} style={columnHeaderStyleProps}/>;
+    };
+
     render() {
         const appStore = this.props.appStore;
         const frameNum = appStore.frameNum;
-        const frameNames = appStore.frameNames;
-        const frameChannels = appStore.frameChannels;
-        const frameStokes = appStore.frameStokes;
-        const activeFrameIndex = this.props.appStore.getActiveFrameIndex;
 
         if (frameNum <= 0) {
             return (
@@ -64,60 +140,19 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             );
         }
 
-        const activeFrameStyleProps: CSSProperties = {
-            fontWeight: "bold"
-        };
-
-        const rowHeaderCellRenderer = (rowIndex: number) => {
-            return <RowHeaderCell name={rowIndex.toString()} className={rowIndex === activeFrameIndex ? "active-row-cell" : ""}/>;
-        };
-        const fileNameRenderer = (rowIndex: number) => {
-            return <Cell className={rowIndex === activeFrameIndex ? "active-row-cell" : ""}>{rowIndex >= 0 && rowIndex < frameNum ? frameNames[rowIndex].label : ""}</Cell>;
-        };
-        const channelRenderer = (rowIndex: number) => {
-            return <Cell className={rowIndex === activeFrameIndex ? "active-row-cell" : ""}>{rowIndex >= 0 && rowIndex < frameNum ? frameChannels[rowIndex] : ""}</Cell>;
-        };
-        const stokesRenderer = (rowIndex: number) => {
-            return <Cell className={rowIndex === activeFrameIndex ? "active-row-cell" : ""}>{rowIndex >= 0 && rowIndex < frameNum ? frameStokes[rowIndex] : ""}</Cell>;
-        };
-        const typeRenderer = (rowIndex: number) => {
-            if (rowIndex < 0 || rowIndex >= frameNum) {
-                return null;
-            }
-
-            const frame = appStore.frames[rowIndex];
-
-            return (
-                <Cell className={rowIndex === activeFrameIndex ? "active-row-cell" : ""}>
-                    <React.Fragment>
-                        <Tooltip content={<span>Raster image<br/><i><small>Click to {frame.renderConfig.visible ? "hide" : "show"}</small></i></span>}>
-                            <AnchorButton minimal={true} small={true} intent={frame.renderConfig.visible ? "success" : "none"} onClick={frame.renderConfig.toggleVisibility}>R</AnchorButton>
-                        </Tooltip>
-                        {frame.contourConfig.enabled &&
-                        <Tooltip content={<span>Contour image<br/><i><small>Click to {frame.contourConfig.visible ? "hide" : "show"}</small></i></span>}>
-                            <AnchorButton minimal={true} small={true} intent={frame.contourConfig.visible ? "success" : "none"} onClick={frame.contourConfig.toggleVisibility}>C</AnchorButton>
-                        </Tooltip>
-                        }
-                    </React.Fragment>
-                </Cell>
-            );
-        };
-
-        const columnHeaderStyleProps: CSSProperties = {
-            fontSize: "12",
-            fontWeight: "bold"
-        };
-
         // This is a necessary hack in order to trigger a re-rendering when values change, because the cell renderer is in its own function
         // There is probably a neater way to do this, though
-        const dummyVisibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
-        const dummyVisibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
+        const frameChannels = appStore.frameChannels;
+        const frameStokes = appStore.frameStokes;
+        const activeFrameIndex = this.props.appStore.activeFrameIndex;
+        const visibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
+        const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
 
         return (
             <div className="layer-list-widget">
                 <Table
                     numRows={frameNum}
-                    rowHeaderCellRenderer={rowHeaderCellRenderer}
+                    rowHeaderCellRenderer={this.rowHeaderCellRenderer}
                     enableRowHeader={true}
                     enableRowReordering={true}
                     enableRowResizing={false}
@@ -129,20 +164,20 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     onColumnWidthChanged={this.onColumnWidthsChange}
                 >
                     <Column
-                        columnHeaderCellRenderer={(columnIndex: number) => <ColumnHeaderCell name="File name" style={columnHeaderStyleProps}/>}
-                        cellRenderer={fileNameRenderer}
+                        columnHeaderCellRenderer={this.columnHeaderRenderer}
+                        cellRenderer={this.fileNameRenderer}
                     />
                     <Column
-                        columnHeaderCellRenderer={(columnIndex: number) => <ColumnHeaderCell name="Type" style={columnHeaderStyleProps}/>}
-                        cellRenderer={typeRenderer}
+                        columnHeaderCellRenderer={this.columnHeaderRenderer}
+                        cellRenderer={this.typeRenderer}
                     />
                     <Column
-                        columnHeaderCellRenderer={(columnIndex: number) => <ColumnHeaderCell name="Channel" style={columnHeaderStyleProps}/>}
-                        cellRenderer={channelRenderer}
+                        columnHeaderCellRenderer={this.columnHeaderRenderer}
+                        cellRenderer={this.channelRenderer}
                     />
                     <Column
-                        columnHeaderCellRenderer={(columnIndex: number) => <ColumnHeaderCell name="Stokes" style={columnHeaderStyleProps}/>}
-                        cellRenderer={stokesRenderer}
+                        columnHeaderCellRenderer={this.columnHeaderRenderer}
+                        cellRenderer={this.stokesRenderer}
                     />
                 </Table>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
