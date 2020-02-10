@@ -14,22 +14,22 @@ export enum SpectralSystem {
 }
 
 export enum SpectralCoordinate {
-    RVK = "radio velocity (km/s)",
-    RVM = "radio velocity (m/s)",
-    OVK = "optical velocity (km/s)",
-    OVM = "optical velocity (m/s)",
-    FQG = "frequency (GHz)",
-    FQM = "frequency (MHz)",
-    FQK = "frequency (kHz)",
-    WLM = "wave length (mm)",
-    WLU = "wave length (um)",
-    WLN = "wave length (nm)",
-    WLA = "wave length (Angstrom)",
-    AWLM = "air wave length (mm)",
-    AWLU = "air wave length (um)",
-    AWLN = "air wave length (nm)",
-    AWLA = "air wave length (Angstrom)",
-    CH = "channel"
+    RVK = "Radio velocity (km/s)",
+    RVM = "Radio velocity (m/s)",
+    OVK = "Optical velocity (km/s)",
+    OVM = "Optical velocity (m/s)",
+    FQG = "Frequency (GHz)",
+    FQM = "Frequency (MHz)",
+    FQK = "Frequency (kHz)",
+    WLM = "Wave length (mm)",
+    WLU = "Wave length (um)",
+    WLN = "Wave length (nm)",
+    WLA = "Wave length (Angstrom)",
+    AWLM = "Air wave length (mm)",
+    AWLU = "Air wave length (um)",
+    AWLN = "Air wave length (nm)",
+    AWLA = "Air wave length (Angstrom)",
+    CH = "Channel"
 }
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
