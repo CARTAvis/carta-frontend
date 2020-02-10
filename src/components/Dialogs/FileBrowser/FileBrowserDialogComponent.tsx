@@ -1,12 +1,12 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, computed, observable} from "mobx";
-import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, NonIdealState, Popover, Position, Pre, Spinner, Tab, TabId, Tabs, Tooltip, Text} from "@blueprintjs/core";
+import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, NonIdealState, Popover, Position, Pre, Spinner, Tab, TabId, Tabs, Tooltip, Text, Switch} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FileListComponent} from "./FileList/FileListComponent";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {TableComponent, TableComponentProps, TableType} from "components/Shared";
+import {TableComponentProps, TableType} from "components/Shared";
 import {AppStore, BrowserMode} from "stores";
 import {CatalogOverlayWidgetStore} from "stores/widgets";
 import "./FileBrowserDialogComponent.css";
@@ -243,6 +243,17 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             paneClassName += " extended";
         }
 
+        let tableProps: TableComponentProps = null;
+        if (fileBrowserStore.browserMode === BrowserMode.Catalog && fileBrowserStore.catalogHeaders && fileBrowserStore.catalogHeaders.length) {
+            const table = fileBrowserStore.catalogHeaderDataset;
+            tableProps = {
+                type: TableType.Normal,
+                dataset: table.columnsData,
+                columnHeaders: table.columnHeaders,
+                numVisibleRows: fileBrowserStore.catalogHeaders.length
+            };
+        }
+
         return (
             <DraggableDialogComponent dialogProps={dialogProps} minWidth={400} minHeight={400} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
                 <div className="file-path">
@@ -279,13 +290,15 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         </div>
                         <div className="file-info-pane">
                             <FileInfoComponent
-                                infoTypes={fileBrowserStore.browserMode === BrowserMode.File ? [FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER] : [FileInfoType.REGION_FILE]}
+                                infoTypes={this.getFileInfoTypes(fileBrowserStore.browserMode)}
                                 fileInfoExtended={fileBrowserStore.fileInfoExtended}
                                 regionFileInfo={fileBrowserStore.regionFileInfo ? fileBrowserStore.regionFileInfo.join("\n") : ""}
+                                catalogFileInfo={fileBrowserStore.catalogFileInfor}
                                 selectedTab={fileBrowserStore.selectedTab as FileInfoType}
                                 handleTabChange={this.handleTabChange}
                                 isLoading={fileBrowserStore.loadingInfo}
                                 errorMessage={fileBrowserStore.responseErrorMessage}
+                                catalogHeaderTable={tableProps}
                             />
                         </div>
                     </div>
@@ -322,6 +335,17 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             </Breadcrumb>
         );
     };
+
+    private getFileInfoTypes(fileBrowserMode: BrowserMode): Array<FileInfoType> {
+        switch (fileBrowserMode) {
+            case BrowserMode.File:
+                return [FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER];
+            case BrowserMode.Catalog:
+                return [FileInfoType.CATALOG_FILE, FileInfoType.CATALOG_HEADER];
+            default:
+                return [FileInfoType.REGION_FILE];
+        }
+    }
 
     @computed get pathItems() {
         let pathItems: IBreadcrumbProps[] = [{icon: "desktop", target: "."}];

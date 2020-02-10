@@ -36,6 +36,7 @@ export class FileInfoDialogComponent extends React.Component<{ appStore: AppStor
                         infoTypes={[FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER]}
                         fileInfoExtended={appStore.activeFrame ? appStore.activeFrame.frameInfo.fileInfoExtended : null}
                         regionFileInfo={""}
+                        catalogFileInfo={null}
                         selectedTab={dialogStore.selectedFileInfoDialogTab as FileInfoType}
                         handleTabChange={dialogStore.setSelectedFileInfoDialogTab}
                         isLoading={false}

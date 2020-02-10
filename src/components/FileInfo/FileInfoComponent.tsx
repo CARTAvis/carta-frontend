@@ -1,22 +1,27 @@
 import * as React from "react";
-import {Pre, Tab, TabId, Tabs, NonIdealState, Spinner} from "@blueprintjs/core";
+import {Pre, Tab, TabId, Tabs, NonIdealState, Spinner, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
+import {TableComponent, TableComponentProps, TableType} from "components/Shared";
 import "./FileInfoComponent.css";
 
 export enum FileInfoType {
     IMAGE_FILE = "image-file",
     IMAGE_HEADER = "image-header",
-    REGION_FILE = "region-file"
+    REGION_FILE = "region-file",
+    CATALOG_FILE = "catalog-file",
+    CATALOG_HEADER = "catalog-header"
 }
 
 export class FileInfoComponent extends React.Component<{
     infoTypes: FileInfoType[],
     fileInfoExtended: CARTA.IFileInfoExtended,
     regionFileInfo: string,
+    catalogFileInfo: CARTA.ICatalogFileInfo,
     selectedTab: TabId,
     handleTabChange: (tab: TabId) => void;
     isLoading: boolean,
     errorMessage: string,
+    catalogHeaderTable?: TableComponentProps
 }> {
 
     private renderInfoTabs = () => {
@@ -26,7 +31,12 @@ export class FileInfoComponent extends React.Component<{
                 return <Tab key={infoType} id={infoType} title="File Information"/>;
             } else if (FileInfoType.IMAGE_HEADER === infoType) {
                 return <Tab key={infoType} id={infoType} title="Header"/>;
-            } else {
+            } else if (FileInfoType.CATALOG_FILE === infoType) {
+                return <Tab key={infoType} id={infoType} title="Catalog Information"/>;    
+            } else if (FileInfoType.CATALOG_HEADER === infoType) {
+                return <Tab key={infoType} id={infoType} title="Catalog Header"/>;
+            }
+            else {
                 return <Tab key={infoType} id={infoType} title="Region Information"/>;
             }
         });
@@ -42,10 +52,9 @@ export class FileInfoComponent extends React.Component<{
             return <NonIdealState className="non-ideal-state-file" icon={<Spinner className="astLoadingSpinner"/>} title="Loading file info..."/>;
         } else if (this.props.errorMessage) {
             return <NonIdealState className="non-ideal-state-file" icon="document" title="Cannot open file!" description={this.props.errorMessage + " Select another file from the folder."}/>;
-        } else if (!this.props.fileInfoExtended && !this.props.regionFileInfo) {
+        } else if (!this.props.fileInfoExtended && !this.props.regionFileInfo && !this.props.catalogFileInfo) {
             return <NonIdealState className="non-ideal-state-file" icon="document" title="No file selected." description="Select a file from the folder."/>;
         }
-        
         switch (this.props.selectedTab) {
             case FileInfoType.IMAGE_FILE:
                 return <Pre className="file-info-pre">{this.getImageFileInfo(this.props.fileInfoExtended)}</Pre>;
@@ -53,6 +62,21 @@ export class FileInfoComponent extends React.Component<{
                 return <Pre className="file-info-pre">{this.getImageHeaders(this.props.fileInfoExtended)}</Pre>;
             case FileInfoType.REGION_FILE:
                 return <Pre className="file-info-pre">{this.props.regionFileInfo}</Pre>;
+            case FileInfoType.CATALOG_FILE:
+                return (
+                        <Pre className="file-info-pre">
+                            <Text>{this.props.catalogFileInfo.description}</Text>
+                        </Pre>
+                );
+            case FileInfoType.CATALOG_HEADER:
+                if (this.props.catalogHeaderTable) {            
+                    return (
+                        <Pre className="file-header-table">
+                            <TableComponent {... this.props.catalogHeaderTable}/>
+                        </Pre>
+                    ); 
+                }
+                return "";
             default:
                 return "";
         }

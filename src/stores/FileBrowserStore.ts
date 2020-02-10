@@ -46,7 +46,7 @@ export class FileBrowserStore {
         this.browserMode = mode;
         this.appStore.dialogStore.showFileBrowserDialog();
         this.fileList = null;
-        this.selectedTab = (BrowserMode.File === mode) ? FileInfoType.IMAGE_FILE : FileInfoType.REGION_FILE;
+        this.selectedTab = this.getBrowserMode;
         this.responseErrorMessage = "";
         this.exportFilename = "";
         this.catalogFileList = null;
@@ -246,6 +246,17 @@ export class FileBrowserStore {
                 return this.catalogFileList;
             default:
                 return this.fileList;
+        }
+    }
+
+    @computed get getBrowserMode(): FileInfoType {
+        switch (this.browserMode) {
+            case BrowserMode.File:
+                return FileInfoType.IMAGE_FILE;
+            case BrowserMode.Catalog:
+                return FileInfoType.CATALOG_FILE;
+            default:
+                return FileInfoType.REGION_FILE;
         }
     }
 
