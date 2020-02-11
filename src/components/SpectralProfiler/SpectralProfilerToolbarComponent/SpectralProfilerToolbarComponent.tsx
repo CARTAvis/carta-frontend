@@ -84,7 +84,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                         disabled={this.props.appStore.activeFrame && this.props.appStore.activeFrame.spectralFrame ? false : true}
                         value={widgetStore.spectralCoordinate}
                         options={Object.keys(SpectralCoordinate).map((key) => ({label: SpectralCoordinate[key], value: SpectralCoordinate[key]}))}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => {widgetStore.setSpectralCoordinate(event.currentTarget.value as SpectralCoordinate)}}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setSpectralCoordinate(event.currentTarget.value as SpectralCoordinate)}
                     /> 
                 </FormGroup>
                 <FormGroup label={"Spectral frame"} inline={true} disabled={this.props.appStore.activeFrame && this.props.appStore.activeFrame.spectralFrame ? false : true}>
@@ -92,7 +92,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                         disabled={this.props.appStore.activeFrame && this.props.appStore.activeFrame.spectralFrame ? false : true}
                         value={widgetStore.spectralSystem}
                         options={Object.keys(SpectralSystem).map((key) => ({label: key, value: SpectralSystem[key]}))}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => {widgetStore.setSpectralSystem(event.currentTarget.value as SpectralSystem)}}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setSpectralSystem(event.currentTarget.value as SpectralSystem)}
                     />
                 </FormGroup>
             </div>
