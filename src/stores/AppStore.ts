@@ -567,10 +567,6 @@ export class AppStore {
         this.initRequirements();
         this.dialogStore = new DialogStore(this);
 
-        const throttledSetView = _.throttle((fileId: number, view: FrameView, quality: number) => {
-            this.backendService.setImageView(fileId, Math.floor(view.xMin), Math.ceil(view.xMax), Math.floor(view.yMin), Math.ceil(view.yMax), view.mip, quality);
-        }, AppStore.ImageThrottleTime);
-
         const throttledSetChannels = _.throttle((fileId: number, channel: number, stokes: number) => {
             const frame = this.getFrame(fileId);
             if (!frame) {
@@ -634,21 +630,22 @@ export class AppStore {
         });
 
         // Update frame view during animation
-        autorun(() => {
-            if (this.activeFrame && (this.animatorStore.animationState !== AnimationState.STOPPED && this.animatorStore.animationMode !== AnimationMode.FRAME)) {
-                // Calculate new required frame view (cropped to file size)
-                const reqView = this.activeFrame.requiredFrameView;
-
-                const croppedReq: FrameView = {
-                    xMin: Math.max(0, reqView.xMin),
-                    xMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.width, reqView.xMax),
-                    yMin: Math.max(0, reqView.yMin),
-                    yMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.height, reqView.yMax),
-                    mip: reqView.mip
-                };
-                throttledSetView(this.activeFrame.frameInfo.fileId, croppedReq, this.preferenceStore.animationCompressionQuality);
-            }
-        });
+        // TODO: fix this
+        // autorun(() => {
+        //     if (this.activeFrame && (this.animatorStore.animationState !== AnimationState.STOPPED && this.animatorStore.animationMode !== AnimationMode.FRAME)) {
+        //         // Calculate new required frame view (cropped to file size)
+        //         const reqView = this.activeFrame.requiredFrameView;
+        //
+        //         const croppedReq: FrameView = {
+        //             xMin: Math.max(0, reqView.xMin),
+        //             xMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.width, reqView.xMax),
+        //             yMin: Math.max(0, reqView.yMin),
+        //             yMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.height, reqView.yMax),
+        //             mip: reqView.mip
+        //         };
+        //         throttledSetView(this.activeFrame.frameInfo.fileId, croppedReq, this.preferenceStore.animationCompressionQuality);
+        //     }
+        // });
 
         // TODO: Move setChannels actions to AppStore and remove this autorun
         // Update channels when manually changed
@@ -698,7 +695,6 @@ export class AppStore {
         this.backendService.getSpatialProfileStream().subscribe(this.handleSpatialProfileStream);
         this.backendService.getSpectralProfileStream().subscribe(this.handleSpectralProfileStream);
         this.backendService.getRegionHistogramStream().subscribe(this.handleRegionHistogramStream);
-        this.backendService.getRasterStream().subscribe(this.handleRasterImageStream);
         this.backendService.getContourStream().subscribe(this.handleContourImageStream);
         this.backendService.getErrorStream().subscribe(this.handleErrorStream);
         this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
@@ -826,19 +822,6 @@ export class AppStore {
         frameStatsMap.set(regionStatsData.regionId, regionStatsData);
     };
 
-    handleRasterImageStream = (rasterImageData: CARTA.RasterImageData) => {
-        // Only handle animation stream when in animating state, to prevent extraneous frames from being rendered
-        if (this.animatorStore.animationState === AnimationState.PLAYING && this.animatorStore.animationMode !== AnimationMode.FRAME) {
-            const updatedFrame = this.getFrame(rasterImageData.fileId);
-            if (updatedFrame) {
-                updatedFrame.updateFromRasterData(rasterImageData);
-                updatedFrame.requiredChannel = rasterImageData.channel;
-                updatedFrame.requiredStokes = rasterImageData.stokes;
-                updatedFrame.renderType = RasterRenderType.ANIMATION;
-            }
-        }
-    };
-
     handleContourImageStream = (contourImageData: CARTA.ContourImageData) => {
         const updatedFrame = this.getFrame(contourImageData.fileId);
         if (updatedFrame) {
@@ -920,7 +903,8 @@ export class AppStore {
     };
 
     @computed get zfpReady() {
-        return (this.backendService && this.backendService.zfpReady);
+        // TODO: Check tile service's ZFP workers to see if they're ready
+        return (this.backendService && this.tileService);
     }
 
     @action setActiveFrame(fileId: number) {

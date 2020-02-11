@@ -630,49 +630,6 @@ export class FrameStore {
         this.controlMaps.delete(frame);
     }
 
-    @action updateFromRasterData(rasterImageData: CARTA.RasterImageData) {
-        this.stokes = rasterImageData.stokes;
-        this.channel = rasterImageData.channel;
-        this.currentCompressionQuality = rasterImageData.compressionQuality;
-        // if there's a valid channel histogram bundled into the message, update it
-        if (rasterImageData.channelHistogramData) {
-            // Update channel histograms
-            if (rasterImageData.channelHistogramData.regionId === -1 && rasterImageData.channelHistogramData.histograms.length) {
-                this.renderConfig.updateChannelHistogram(rasterImageData.channelHistogramData.histograms[0]);
-            }
-        }
-
-        this.currentFrameView = {
-            xMin: rasterImageData.imageBounds.xMin,
-            xMax: rasterImageData.imageBounds.xMax,
-            yMin: rasterImageData.imageBounds.yMin,
-            yMax: rasterImageData.imageBounds.yMax,
-            mip: rasterImageData.mip
-        };
-
-        const rawData = rasterImageData.imageData[0];
-        // Don't need to copy buffer when dealing with compressed data
-        if (rasterImageData.compressionType !== CARTA.CompressionType.NONE) {
-            this.rasterData = new Float32Array(rawData.buffer);
-        } else {
-            this.rasterData = new Float32Array(rawData.buffer.slice(rawData.byteOffset, rawData.byteOffset + rawData.byteLength));
-        }
-
-        // Cache a copy of the approximate full image data
-        if (rasterImageData.imageBounds.xMin === 0 && rasterImageData.imageBounds.yMin === 0
-            && rasterImageData.imageBounds.xMax === this.frameInfo.fileInfoExtended.width
-            && rasterImageData.imageBounds.yMax === this.frameInfo.fileInfoExtended.height) {
-            this.overviewRasterData = this.rasterData.slice(0);
-            this.overviewRasterView = {
-                xMin: rasterImageData.imageBounds.xMin,
-                xMax: rasterImageData.imageBounds.xMax,
-                yMin: rasterImageData.imageBounds.yMin,
-                yMax: rasterImageData.imageBounds.yMax,
-                mip: rasterImageData.mip
-            };
-        }
-    }
-
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
         let vertexCounter = 0;
 
