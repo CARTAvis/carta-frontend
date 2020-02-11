@@ -12,7 +12,7 @@ const GeneratorSelect = Select.ofType<ContourGeneratorType>();
 
 @observer
 export class ContourGeneratorPanelComponent extends React.Component<{ frame: FrameStore, generatorType: ContourGeneratorType, onLevelsGenerated: (levels: number[]) => void }> {
-    @observable generator: ContourGeneratorType = this.props.generatorType;
+    @observable generator: ContourGeneratorType = this.props.generatorType ? this.props.generatorType : ContourGeneratorType.StartStepMultiplier;
 
     @observable numLevels: number = 5;
 
