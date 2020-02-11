@@ -37,7 +37,6 @@ interface ShaderUniforms {
     RotationOrigin: WebGLUniformLocation;
     RotationAngle: WebGLUniformLocation;
     ScaleAdjustment: WebGLUniformLocation;
-    TiledRendering: WebGLUniformLocation;
     TileSize: WebGLUniformLocation;
     TileScaling: WebGLUniformLocation;
     TileOffset: WebGLUniformLocation;
@@ -53,11 +52,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private gl: WebGLRenderingContext;
     private hasFloatExtension: boolean;
     // GL buffers
-    private rasterDataBuffer: ArrayBufferLike;
     private cmapTexture: WebGLTexture;
-    private animationDataTexture: WebGLTexture;
     private vertexPositionBuffer: WebGLBuffer;
-    private animationVertexPositionBuffer: WebGLBuffer;
     private vertexUVBuffer: WebGLBuffer;
     // Shader attribute handles
     private vertexPositionAttribute: number;
@@ -100,9 +96,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         }
 
         this.gl.deleteTexture(this.cmapTexture);
-        this.gl.deleteTexture(this.animationDataTexture);
         this.gl.deleteBuffer(this.vertexPositionBuffer);
-        this.gl.deleteBuffer(this.animationVertexPositionBuffer);
         this.gl.deleteBuffer(this.vertexUVBuffer);
         this.gl.deleteProgram(this.shaderProgram);
 
@@ -142,29 +136,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     private updateCanvas = () => {
         const frame = this.props.frame;
         if (frame && this.canvas && this.gl && this.cmapTexture) {
-            if (frame.renderType === RasterRenderType.ANIMATION && frame.rasterData && frame.rasterData.buffer !== this.rasterDataBuffer) {
-                this.updateTexture();
-            }
-
             this.updateCanvasSize();
             this.updateUniforms();
             this.renderCanvas();
         }
     };
-
-    private updateTexture() {
-        const frame = this.props.frame;
-        const w = Math.ceil((frame.currentFrameView.xMax - frame.currentFrameView.xMin) / frame.currentFrameView.mip);
-        const h = Math.ceil((frame.currentFrameView.yMax - frame.currentFrameView.yMin) / frame.currentFrameView.mip);
-        if (!frame.rasterData || frame.rasterData.length !== w * h) {
-            console.log(`Data mismatch! L=${frame.rasterData ? frame.rasterData.length : "null"}, WxH = ${w}x${h}=${w * h}`);
-            return;
-        } else {
-            this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, this.animationDataTexture);
-            loadFP32Texture(this.gl, frame.rasterData, w, h, w, h, WebGLRenderingContext.TEXTURE0);
-            this.rasterDataBuffer = frame.rasterData.buffer;
-        }
-    }
 
     private updateUniforms() {
         const frame = this.props.frame;
@@ -213,44 +189,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             }
             if (frame.renderType === RasterRenderType.TILED) {
                 this.renderTiledCanvas();
-            } else {
-                this.renderAnimationCanvas();
             }
         }
-    }
-
-    private renderAnimationCanvas() {
-        const frame = this.props.frame;
-
-        const current = frame.currentFrameView;
-        const full = frame.requiredFrameView;
-        const fullWidth = full.xMax - full.xMin;
-        const fullHeight = full.yMax - full.yMin;
-
-        // Bounds need to be adjusted because of MIP level
-        const adjustedXMax = current.xMin + Math.ceil((current.xMax - current.xMin) / current.mip) * current.mip;
-        const adjustedYMax = current.yMin + Math.ceil((current.yMax - current.yMin) / current.mip) * current.mip;
-
-        const LT = {x: (0.5 + current.xMin - full.xMin) / fullWidth, y: (0.5 + current.yMin - full.yMin) / fullHeight};
-        const RB = {x: (0.5 + adjustedXMax - full.xMin) / fullWidth, y: (0.5 + adjustedYMax - full.yMin) / fullHeight};
-
-        // Vertices are mapped from [0-1] -> [-1, 1]
-        const vertices = new Float32Array([
-            LT.x, LT.y, 0,
-            RB.x, LT.y, 0,
-            LT.x, RB.y, 0,
-            RB.x, RB.y, 0
-        ].map(v => -1 + 2 * v));
-
-        this.gl.activeTexture(WebGLRenderingContext.TEXTURE0);
-        this.gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, this.animationDataTexture);
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexUVBuffer);
-        this.gl.vertexAttribPointer(this.vertexUVAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.animationVertexPositionBuffer);
-        this.gl.vertexAttribPointer(this.vertexPositionAttribute, 3, WebGLRenderingContext.FLOAT, false, 0, 0);
-        this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, new Float32Array(vertices), WebGLRenderingContext.DYNAMIC_DRAW);
-        this.gl.uniform1i(this.shaderUniforms.TiledRendering, 0);
-        this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4);
     }
 
     private renderTiledCanvas() {
@@ -260,7 +200,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.gl.vertexAttribPointer(this.vertexUVAttribute, 2, WebGLRenderingContext.FLOAT, false, 0, 0);
         this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.vertexPositionBuffer);
         this.gl.vertexAttribPointer(this.vertexPositionAttribute, 3, WebGLRenderingContext.FLOAT, false, 0, 0);
-        this.gl.uniform1i(this.shaderUniforms.TiledRendering, 1);
 
         const imageSize = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
         const boundedView: FrameView = {
@@ -437,7 +376,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             ScaleAdjustment: this.gl.getUniformLocation(this.shaderProgram, "uScaleAdjustment"),
             RotationOrigin: this.gl.getUniformLocation(this.shaderProgram, "uRotationOrigin"),
             RotationAngle: this.gl.getUniformLocation(this.shaderProgram, "uRotationAngle"),
-            TiledRendering: this.gl.getUniformLocation(this.shaderProgram, "uTiledRendering"),
             TileSize: this.gl.getUniformLocation(this.shaderProgram, "uTileSize"),
             TileScaling: this.gl.getUniformLocation(this.shaderProgram, "uTileScaling"),
             TileOffset: this.gl.getUniformLocation(this.shaderProgram, "uTileOffset"),
@@ -458,7 +396,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         this.gl.uniform1f(this.shaderUniforms.Gamma, 1);
         this.gl.uniform1f(this.shaderUniforms.Alpha, 1000);
         this.gl.uniform1i(this.shaderUniforms.Inverted, 0);
-        this.gl.uniform1i(this.shaderUniforms.TiledRendering, 1);
         this.gl.uniform1f(this.shaderUniforms.TileBorder, 0 / TILE_SIZE);
         this.gl.uniform2f(this.shaderUniforms.TileSize, 1, 1);
         this.gl.uniform2f(this.shaderUniforms.TileScaling, 1, 1);
@@ -489,11 +426,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             1.0, 1.0
         ]);
         this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, uvs, WebGLRenderingContext.STATIC_DRAW);
-
-        this.animationVertexPositionBuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.animationVertexPositionBuffer);
-        this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, vertices, WebGLRenderingContext.DYNAMIC_DRAW);
-        this.animationDataTexture = this.gl.createTexture();
     }
 
     render() {

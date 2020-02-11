@@ -903,8 +903,7 @@ export class AppStore {
     };
 
     @computed get zfpReady() {
-        // TODO: Check tile service's ZFP workers to see if they're ready
-        return (this.backendService && this.tileService);
+        return (this.tileService && this.tileService.workersReady);
     }
 
     @action setActiveFrame(fileId: number) {

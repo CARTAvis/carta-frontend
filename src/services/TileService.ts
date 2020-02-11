@@ -31,6 +31,8 @@ export class TileService {
     private readonly pendingRequests: Map<number, boolean>;
     private readonly pendingDecompressions: Map<number, boolean>;
     private readonly channelMap: Map<number, { channel: number, stokes: number }>;
+    private readonly inProgressChannels: Map<number, number[]>;
+    private readonly completedChannels: Map<number, number[]>;
     private currentFileId: number;
     private readonly tileStream: Subject<number>;
     private glContext: WebGLRenderingContext;
@@ -42,16 +44,26 @@ export class TileService {
     private compressionRequestCounter: number;
     private pendingSynchronisedTiles: Array<number>;
     private receivedSynchronisedTiles: Array<{ coordinate: number, tile: RasterTile }>;
+    private animationEnabled: boolean;
 
     @observable remainingTiles: number;
+    @observable workersReady: boolean[];
 
-    @computed get waitingForSync() {
+    @computed get zfpReady() {
+        return this.workersReady && this.workersReady.every(v => v);
+    }
+
+    get waitingForSync() {
         return this.pendingSynchronisedTiles && this.pendingSynchronisedTiles.length > 0;
     }
 
     public GetTileStream() {
         return this.tileStream;
     }
+
+    public setAnimationEnabled = (val: boolean) => {
+        this.animationEnabled = val;
+    };
 
     public setCache = (lruCapacityGPU: number, lruCapacitySystem: number) => {
         // L1 cache: on GPU
@@ -79,6 +91,8 @@ export class TileService {
         this.pendingRequests = new Map<number, boolean>();
         this.cacheMapCompressedTiles = new Map<number, LRUCache<number, CompressedTile>>();
         this.pendingDecompressions = new Map<number, boolean>();
+        this.inProgressChannels = new Map<number, number[]>();
+        this.completedChannels = new Map<number, number[]>();
 
         this.compressionRequestCounter = 0;
         this.remainingTiles = 0;
@@ -88,10 +102,13 @@ export class TileService {
 
         const ZFPWorker = require("worker-loader!zfp_wrapper");
         this.workers = new Array<Worker>(Math.min(navigator.hardwareConcurrency || 4, 4));
+        this.workersReady = new Array<boolean>(this.workers.length);
+
         for (let i = 0; i < this.workers.length; i++) {
             this.workers[i] = new ZFPWorker();
             this.workers[i].onmessage = (event: MessageEvent) => {
                 if (event.data[0] === "ready") {
+                    this.workersReady[i] = true;
                     console.log(`Tile Worker ${i} ready`);
                 } else if (event.data[0] === "decompress") {
                     const buffer = event.data[1];
@@ -138,7 +155,7 @@ export class TileService {
     }
 
     requestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number) {
-        let channelsChanged = false;
+        let channelsChanged;
         let fileChanged = this.currentFileId !== fileId;
         const currentChannels = this.channelMap.get(fileId);
         if (currentChannels) {

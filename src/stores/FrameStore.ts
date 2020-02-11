@@ -20,7 +20,6 @@ export interface FrameInfo {
 
 export enum RasterRenderType {
     NONE,
-    ANIMATION,
     TILED
 }
 
@@ -45,9 +44,6 @@ export class FrameStore {
     @observable renderConfig: RenderConfigStore;
     @observable contourConfig: ContourConfigStore;
     @observable contourStores: Map<number, ContourStore>;
-    @observable rasterData: Float32Array;
-    @observable overviewRasterData: Float32Array;
-    @observable overviewRasterView: FrameView;
     @observable valid: boolean;
     @observable moving: boolean;
     @observable zooming: boolean;
