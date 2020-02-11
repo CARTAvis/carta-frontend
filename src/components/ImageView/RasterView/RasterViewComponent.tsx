@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {FrameStore, OverlayStore, PreferenceStore, RasterRenderType} from "stores";
 import {FrameView, Point2D, TileCoordinate} from "models";
 import {RasterTile, TEXTURE_SIZE, TILE_SIZE, TileService} from "services/TileService";
-import {GetRequiredTiles, getShaderProgram, GL, LayerToMip, loadFP32Texture, loadImageTexture, hexStringToRgba, add2D, scale2D} from "utilities";
+import {GetRequiredTiles, getShaderProgram, GL, LayerToMip, loadImageTexture, hexStringToRgba, add2D, scale2D} from "utilities";
 import "./RasterViewComponent.css";
 import allMaps from "static/allmaps.png";
 
