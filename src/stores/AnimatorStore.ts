@@ -93,6 +93,7 @@ export class AnimatorStore {
 
         this.appStore.backendService.startAnimation(animationMessage).subscribe(ack => {
             if (ack.success) {
+                this.appStore.tileService.setAnimationEnabled(true);
                 console.log("Animation started successfully");
             }
         });
@@ -121,6 +122,7 @@ export class AnimatorStore {
             this.appStore.backendService.stopAnimation(stopMessage);
         }
         this.animationState = AnimationState.STOPPED;
+        this.appStore.tileService.setAnimationEnabled(false);
     };
 
     @action animate = () => {

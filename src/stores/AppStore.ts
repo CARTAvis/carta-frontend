@@ -1,5 +1,6 @@
 import * as _ from "lodash";
 import * as AST from "ast_wrapper";
+import * as Long from "long";
 import {action, autorun, computed, observable, ObservableMap} from "mobx";
 import {IOptionProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
@@ -41,7 +42,6 @@ export class AppStore {
     backendService: BackendService;
     tileService: TileService;
 
-    @observable compressionQuality: number;
     // WebAssembly Module status
     @observable astReady: boolean;
     @observable cartaComputeReady: boolean;
@@ -169,7 +169,6 @@ export class AppStore {
             this.preferenceStore.initUserDefinedPreferences(supportsServerPreference, ack.userPreferences);
             this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
             this.layoutStore.applyLayout(this.preferenceStore.layout);
-            this.compressionQuality = this.preferenceStore.imageCompressionQuality;
 
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
@@ -563,7 +562,6 @@ export class AppStore {
         this.animatorStore = new AnimatorStore(this);
         this.overlayStore = new OverlayStore(this, this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this);
-        this.compressionQuality = this.preferenceStore.imageCompressionQuality;
         this.initRequirements();
         this.dialogStore = new DialogStore(this);
 
@@ -592,7 +590,28 @@ export class AppStore {
             // TODO: dynamic tile size
             const tileSizeFullRes = reqView.mip * 256;
             const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-            this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.compressionQuality);
+            this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.preferenceStore.imageCompressionQuality);
+        }, AppStore.ImageChannelThrottleTime);
+
+        const throttledSetView = _.throttle((fileId: number) => {
+            const frame = this.getFrame(fileId);
+            if (!frame) {
+                return;
+            }
+
+            // Calculate new required frame view (cropped to file size)
+            const reqView = frame.requiredFrameView;
+
+            const croppedReq: FrameView = {
+                xMin: Math.max(0, reqView.xMin),
+                xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
+                yMin: Math.max(0, reqView.yMin),
+                yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
+                mip: reqView.mip
+            };
+            const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
+            const tileCoordinates = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256}).map(tile => tile.encode());
+            this.backendService.addRequiredTiles(fileId, tileCoordinates, this.preferenceStore.animationCompressionQuality);
         }, AppStore.ImageChannelThrottleTime);
 
         const throttledSetCursorRotated = _.throttle(this.setCursor, AppStore.CursorThrottleTimeRotated);
@@ -625,27 +644,17 @@ export class AppStore {
                 const tileSizeFullRes = reqView.mip * 256;
                 const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
                 // TODO: throttle tile requests somehow
-                this.tileService.requestTiles(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords, this.compressionQuality);
+                this.tileService.requestTiles(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords, this.preferenceStore.imageCompressionQuality);
             }
         });
 
         // Update frame view during animation
         // TODO: fix this
-        // autorun(() => {
-        //     if (this.activeFrame && (this.animatorStore.animationState !== AnimationState.STOPPED && this.animatorStore.animationMode !== AnimationMode.FRAME)) {
-        //         // Calculate new required frame view (cropped to file size)
-        //         const reqView = this.activeFrame.requiredFrameView;
-        //
-        //         const croppedReq: FrameView = {
-        //             xMin: Math.max(0, reqView.xMin),
-        //             xMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.width, reqView.xMax),
-        //             yMin: Math.max(0, reqView.yMin),
-        //             yMax: Math.min(this.activeFrame.frameInfo.fileInfoExtended.height, reqView.yMax),
-        //             mip: reqView.mip
-        //         };
-        //         throttledSetView(this.activeFrame.frameInfo.fileId, croppedReq, this.preferenceStore.animationCompressionQuality);
-        //     }
-        // });
+        autorun(() => {
+            if (this.activeFrame && (this.animatorStore.animationState !== AnimationState.STOPPED && this.animatorStore.animationMode !== AnimationMode.FRAME)) {
+                throttledSetView(this.activeFrame.frameInfo.fileId);
+            }
+        });
 
         // TODO: Move setChannels actions to AppStore and remove this autorun
         // Update channels when manually changed
@@ -791,14 +800,36 @@ export class AppStore {
         }
     };
 
-    handleTileStream = (newTileCount: number) => {
+    @action handleTileStream = (streamedTiles: { tileCount: number, fileId: number, channel: number, stokes: number }) => {
         // Apply pending channel histogram
-        if (this.pendingHistogram && this.pendingHistogram.regionId === -1 && this.pendingHistogram.histograms && this.pendingHistogram.histograms.length) {
+        if (this.pendingHistogram && this.pendingHistogram.fileId === streamedTiles.fileId && this.pendingHistogram.regionId === -1 && this.pendingHistogram.histograms && this.pendingHistogram.histograms.length) {
             const updatedFrame = this.getFrame(this.pendingHistogram.fileId);
             const channelHist = this.pendingHistogram.histograms.find(hist => hist.channel === updatedFrame.requiredChannel);
             if (updatedFrame && channelHist) {
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
                 this.pendingHistogram = null;
+            }
+        }
+
+        if (this.animatorStore.animationState === AnimationState.PLAYING && this.animatorStore.animationMode !== AnimationMode.FRAME) {
+            // Flow control
+            const flowControlMessage: CARTA.IAnimationFlowControl = {
+                fileId: streamedTiles.fileId,
+                animationId: 0,
+                receivedFrame: {
+                    channel: streamedTiles.channel,
+                    stokes: streamedTiles.stokes
+                },
+                timestamp: Long.fromNumber(Date.now())
+            };
+
+            this.backendService.sendAnimationFlowControl(flowControlMessage);
+
+            const frame = this.getFrame(streamedTiles.fileId);
+            if (frame) {
+                frame.setChannels(streamedTiles.channel, streamedTiles.stokes);
+                frame.channel = streamedTiles.channel;
+                frame.stokes = streamedTiles.stokes;
             }
         }
 
