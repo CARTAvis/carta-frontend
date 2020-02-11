@@ -100,6 +100,7 @@ Module.norm = Module.cwrap("norm", "number", ["number", "number"]);
 Module.axDistance = Module.cwrap("axDistance", "number", ["number", "number", "number", "number"]);
 Module.format = Module.cwrap("format", "string", ["number", "number", "number"]);
 Module.transform = Module.cwrap("transform", "number", ["number", "number", "number", "number", "number", "number", "number"]);
+Module.spectralTransform = Module.cwrap("transform", "number", ["number", "number", "number", "number", "number"]);
 Module.getLastErrorMessage = Module.cwrap("getLastErrorMessage", "string");
 Module.clearLastErrorMessage = Module.cwrap("clearLastErrorMessage", null);
 Module.copy = Module.cwrap("copy", null, ["number"]);
@@ -172,6 +173,15 @@ Module.transformPoint = function (transformFrameSet: number, xIn: number, yIn: n
     const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N);
     const yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N);
     return {x: xOut[0], y: yOut[0]};
+};
+
+Module.transformSpectralPoint = function (transformSpectralFrame: number, xIn: number, forward: boolean = true) {
+    // Return empty array if arguments are invalid
+    const N = 1;
+    Module.HEAPF64.set(new Float64Array([xIn]), Module.xIn / 8);
+    Module.spectralTransform(transformSpectralFrame, N, Module.xIn, forward, Module.xOut);
+    const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N);
+    return {x: xOut[0]};
 };
 
 Module.normalizeCoordinates = function (wcsInfo, xIn, yIn) {
