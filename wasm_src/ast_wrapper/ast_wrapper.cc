@@ -280,21 +280,21 @@ EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const doubl
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrame, int npoint, const double xin[], const double yin[], int forward, double xout[], double yout[])
+EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, int npoint, const double xin[], const double yin[], int forward, double xout[], double yout[])
 {
-    if (!specFrame)
+    if (!specFrameFrom)
     {
         return 1;
     }
 
     AstSpecFrame* specFrameTo = nullptr;
-    specFrameTo = astCopy(specFrame);
+    specFrameTo = static_cast<AstSpecFrame*> astCopy(specFrameFrom);
     astSet(specFrameTo, "System=freq");
     astSet(specFrameTo, "Unit=GHz");
     astSet(specFrameTo, "StdOfRest=Topocentric");
 
     AstFrameSet *cvt;
-    cvt = astConvert(specFrame, specFrameTo, "");
+    cvt = static_cast<AstFrameSet*> astConvert(specFrameFrom, specFrameTo, "");
 
     astTran2(cvt, npoint, xin, yin, forward, xout, yout);
     if (!astOK)
