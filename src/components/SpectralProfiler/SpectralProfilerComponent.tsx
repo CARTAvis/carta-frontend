@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
+import * as AST from "ast_wrapper";
 import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, NonIdealState} from "@blueprintjs/core";
@@ -101,7 +102,12 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             for (let i = 0; i < channelValues.length; i++) {
                 let index = isIncremental ? i : channelValues.length - 1 - i;
                 const x = channelValues[index];
-                const y = coordinateData.values[index];
+                let y = coordinateData.values[index];
+                if (frame.specsys === this.widgetStore.spectralSystem) {
+                } else {
+                    const transformed = AST.transformSpectralPoint(frame.spectralFrame, this.widgetStore.spectralSystem, coordinateData.values[index]);
+                    console.log("(y, t) = (" + y + ", " + transformed.z + ")");
+                }
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
                 if (x < xMin || x > xMax) {
@@ -213,12 +219,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
             } else {
                 this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Z Profile: Cursor`);
-            }
-        });
-
-        autorun(() => {
-            if (this.widgetStore) {
-                console.log(this.widgetStore.spectralSystem);
             }
         });
     }

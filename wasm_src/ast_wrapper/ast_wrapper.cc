@@ -280,7 +280,7 @@ EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const doubl
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, int npoint, const double spectralIn[], int forward, double spectralOut[])
+EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, char* specsysTo, int npoint, const double zIn[], int forward, double zOut[])
 {
     if (!specFrameFrom)
     {
@@ -296,7 +296,7 @@ EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, int npoi
     AstFrameSet *cvt;
     cvt = static_cast<AstFrameSet*> astConvert(specFrameFrom, specFrameTo, "");
 
-    astTran1(cvt, npoint, spectralIn, forward, spectralOut);
+    astTran1(cvt, npoint, zIn, forward, zOut);
     if (!astOK)
     {
         astClearStatus;
