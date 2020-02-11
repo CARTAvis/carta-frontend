@@ -102,11 +102,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             for (let i = 0; i < channelValues.length; i++) {
                 let index = isIncremental ? i : channelValues.length - 1 - i;
                 const x = channelValues[index];
-                let y = coordinateData.values[index];
+                const y = coordinateData.values[index];
                 if (frame.specsys === this.widgetStore.spectralSystem) {
                 } else {
-                    const transformed = AST.transformSpectralPoint(frame.spectralFrame, this.widgetStore.spectralSystem, coordinateData.values[index]);
-                    console.log("(y, t) = (" + y + ", " + transformed.z + ")");
+                    const transformed = AST.transformSpectralPoint(frame.spectralFrame, this.widgetStore.spectralSystem, x);
+                    console.log("(x, tx) = (" + x + ", " + transformed.z + ")");
                 }
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
