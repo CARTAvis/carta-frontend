@@ -11,8 +11,8 @@ import "./ContourGeneratorPanelComponent.css";
 const GeneratorSelect = Select.ofType<ContourGeneratorType>();
 
 @observer
-export class ContourGeneratorPanelComponent extends React.Component<{ frame: FrameStore, onLevelsGenerated: (levels: number[]) => void }> {
-    @observable generator: ContourGeneratorType = ContourGeneratorType.MinMaxNScaling;
+export class ContourGeneratorPanelComponent extends React.Component<{ frame: FrameStore, generatorType: ContourGeneratorType, onLevelsGenerated: (levels: number[]) => void }> {
+    @observable generator: ContourGeneratorType = this.props.generatorType;
 
     @observable numLevels: number = 5;
 
