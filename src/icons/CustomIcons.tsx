@@ -4,7 +4,6 @@ import { Icon } from "@blueprintjs/core";
 export declare type CustomIconName = "contour";
 
 export class CustomIcon extends React.Component<{icon: CustomIconName, size?: number }> {
-
     static readonly SIZE_STANDARD = 16;
     static readonly SIZE_LARGE = 20;
 
