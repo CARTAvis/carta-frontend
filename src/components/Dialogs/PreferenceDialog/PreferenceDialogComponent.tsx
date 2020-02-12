@@ -16,7 +16,7 @@ import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/S
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {ColorPickerComponent, ColormapComponent} from "components/Shared";
 import {Theme, CursorPosition, Zoom, ZoomPoint, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
-import {AppStore, BeamType, FrameScaling, PreferenceKeys, RegionStore, RenderConfigStore} from "stores";
+import {AppStore, BeamType, ContourGeneratorType, FrameScaling, PreferenceKeys, RegionStore, RenderConfigStore} from "stores";
 import {hexStringToRgba, SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.css";
 
@@ -218,6 +218,13 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
 
         const contourConfigPanel = (
             <React.Fragment>
+                <FormGroup inline={true} label="Generator Type">
+                    <HTMLSelect
+                        value={preference.contourGeneratorType}
+                        options={Object.keys(ContourGeneratorType).map((key) => ({label: ContourGeneratorType[key], value: ContourGeneratorType[key]}))}
+                        onChange={(ev) => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, ev.currentTarget.value as ContourGeneratorType)}
+                    />
+                </FormGroup>
                 <FormGroup inline={true} label="Smoothing Mode">
                     <HTMLSelect
                         value={preference.contourSmoothingMode}

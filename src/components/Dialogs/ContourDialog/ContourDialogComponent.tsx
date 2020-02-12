@@ -410,7 +410,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                 <div className="histogram-plot">
                     <LinePlotComponent {...linePlotProps}/>
                 </div>
-                <ContourGeneratorPanelComponent frame={frame} onLevelsGenerated={this.handleLevelsGenerated}/>
+                <ContourGeneratorPanelComponent frame={frame} generatorType={appStore.preferenceStore.contourGeneratorType} onLevelsGenerated={this.handleLevelsGenerated}/>
                 <FormGroup label={"Levels"} inline={true}>
                     <TagInput
                         addOnBlur={true}
