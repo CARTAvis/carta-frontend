@@ -3,17 +3,20 @@ import { Icon } from "@blueprintjs/core";
 
 export declare type CustomIconName = "contour";
 
-export class CustomIcon extends React.Component<{icon: CustomIconName}> {
+export class CustomIcon extends React.Component<{icon: CustomIconName, size?: number }> {
+    static readonly SIZE_STANDARD = 16;
+    static readonly SIZE_LARGE = 20;
 
     public render() {
+        const size = (this.props.size ? this.props.size : CustomIcon.SIZE_STANDARD) + "px";
         const content = (
             <span className="bp3-icon">
-                <svg width="16px" height="16px" viewBox="0 0 16 16">
+                <svg width={size} height={size} viewBox="0 0 16 16">
                     {icons[this.props.icon]}
                 </svg>
             </span>
         );
-        return <Icon icon={content}/>;
+        return <Icon icon={content} />;
     }
 }
 

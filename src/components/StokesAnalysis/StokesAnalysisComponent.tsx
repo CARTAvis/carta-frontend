@@ -6,14 +6,13 @@ import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {ChartArea} from "chart.js";
 import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING, PlotType} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING, PlotType} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {StokesAnalysisProfilerInfoComponent} from "./ProfilerInfo/ProfilerInfoComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {ChannelInfo, Point2D} from "models";
-import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, minMaxPointArrayZ} from "utilities";
+import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation} from "utilities";
 import "./StokesAnalysisComponent.css";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
@@ -38,7 +37,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             type: "stokes",
             minWidth: 320,
             minHeight: 400,
-            defaultWidth: 400,
+            defaultWidth: 520,
             defaultHeight: 650,
             title: "Stokes Analysis",
             isCloseable: true
@@ -734,6 +733,29 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         }
         return cursorInfo;
     };
+
+    private genProfilerInfo = (): string[] => {
+        let profilerInfo: string[] = [];
+        if (!this.cursorInfo || this.cursorInfo.quValue.x === null || this.cursorInfo.quValue.y === null ||
+            isNaN(this.cursorInfo.quValue.x) || isNaN(this.cursorInfo.quValue.y)) {
+            return profilerInfo;
+        }
+        const xLabel = this.cursorInfo.xUnit === "Channel" ?
+                    "Channel " + toFixed(this.cursorInfo.channel) :
+                    formattedNotation(this.cursorInfo.channel) + " " + this.cursorInfo.xUnit;
+        const fractionalPol = this.widgetStore.fractionalPolVisible;
+        const qLabel = fractionalPol ? ", Q/I: " : ", Q: ";
+        const uLabel = fractionalPol ? ", U/I: " : ", U: ";
+        const piLabel = fractionalPol ? ", PI/I: " : ", PI: ";
+        const cursorString = "(" + xLabel
+            + qLabel + toExponential(this.cursorInfo.quValue.x, 2)
+            + uLabel + toExponential(this.cursorInfo.quValue.y, 2)
+            + piLabel + toExponential(this.cursorInfo.pi, 2)
+            + ", PA: " + toFixed(this.cursorInfo.pa, 2)
+            + ")";
+        profilerInfo.push(`${this.cursorInfo.isMouseEntered ? "Cursor:" : "Data:"} ${cursorString}`);
+        return profilerInfo;
+    };
     
     render() {
         const appStore = this.props.appStore;
@@ -1101,13 +1123,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     <div className="profile-plot-qvsu">
                         <ScatterPlotComponent {...quScatterPlotProps}/>
                     </div>
-                    {this.cursorInfo &&
-                    <StokesAnalysisProfilerInfoComponent
-                        darkMode={appStore.darkTheme}
-                        cursorInfo={this.cursorInfo}
-                        fractionalPol={this.widgetStore.fractionalPolVisible}
-                    />
-                    }
+                    <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
