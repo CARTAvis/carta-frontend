@@ -77,17 +77,17 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         let channelInfo = frame.channelInfo;
         if (coordinateData && channelInfo && coordinateData.values && coordinateData.values.length && coordinateData.values.length === channelInfo.values.length) {
             let channelValues;
-            if (this.widgetStore.useWcsValues) {
-                if (!this.isSpectralPropsEqual()) { // transform x if widget's spectral props are different from frame's spectral props
+            if (this.widgetStore.spectralCoordinate === "Channel" || !this.widgetStore.useWcsValues) {
+                channelValues = channelInfo.indexes;
+            } else {
+                if (this.isSpectralPropsEqual()) {
+                    channelValues = channelInfo.values;
+                } else {  // transform x if widget's spectral props are different from frame's spectral props
                     channelValues = [...channelInfo.values];
                     for (let i = 0; i < channelValues.length; i++) {
                         channelValues[i] = AST.transformSpectralPoint(frame.spectralFrame, this.widgetStore.spectralType, this.widgetStore.spectralUnit, this.widgetStore.spectralSystem, channelValues[i]);
                     }
-                } else {
-                    channelValues = channelInfo.values;
                 }
-            } else {
-                channelValues = channelInfo.indexes;
             }
             let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
             let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1]);

@@ -88,7 +88,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.AWAV) + " (" + SpectralUnit.MM + ")", {type: SpectralType.AWAV, unit: SpectralUnit.MM}],
         [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.AWAV) + " (" + SpectralUnit.UM + ")", {type: SpectralType.AWAV, unit: SpectralUnit.UM}],
         [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.AWAV) + " (" + SpectralUnit.NM + ")", {type: SpectralType.AWAV, unit: SpectralUnit.NM}],
-        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.AWAV) + " (" + SpectralUnit.ANGSTROM + ")", {type: SpectralType.AWAV, unit: SpectralUnit.ANGSTROM}]
+        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.AWAV) + " (" + SpectralUnit.ANGSTROM + ")", {type: SpectralType.AWAV, unit: SpectralUnit.ANGSTROM}],
+        ["Channel", {type: null, unit: null}]
     ]);
     
     public static StatsTypeString(statsType: CARTA.StatsType) {
@@ -245,7 +246,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get spectralCoordinate() {
-        return SpectralProfileWidgetStore.SpectralTypeString.get(this.spectralType) + " (" + this.spectralUnit + ")"; 
+        return this.spectralType && this.spectralUnit ? SpectralProfileWidgetStore.SpectralTypeString.get(this.spectralType) + " (" + this.spectralUnit + ")" : "Channel";
     }
 
     public static CalculateRequirementsMap(frame: FrameStore, widgetsMap: Map<string, SpectralProfileWidgetStore>) {
