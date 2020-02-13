@@ -541,6 +541,7 @@ export class FrameStore {
         }
     };
 
+    // TODO: iterate whole CYTPEi to find spectral frame
     @action private initSpectralFrame = () => {
         let headerString = "";
 
