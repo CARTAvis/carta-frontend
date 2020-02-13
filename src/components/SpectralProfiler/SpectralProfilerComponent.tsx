@@ -76,7 +76,21 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         let channelInfo = frame.channelInfo;
         if (coordinateData && channelInfo && coordinateData.values && coordinateData.values.length && coordinateData.values.length === channelInfo.values.length) {
-            let channelValues = this.widgetStore.useWcsValues ? channelInfo.values : channelInfo.indexes;
+            const isSpectralEqual = this.compareSpectralProps();
+            let channelValues;
+            if (this.widgetStore.useWcsValues) {
+                if (isSpectralEqual) {
+                    channelValues = channelInfo.values;
+                } else {
+                    // transform x if widget's spectral props are different to frame's spectral props
+                    channelValues = [...channelInfo.values];
+                    for (let i = 0; i < channelValues.length; i++) {
+                        channelValues[i] = AST.transformSpectralPoint(frame.spectralFrame, this.widgetStore.spectralType, this.widgetStore.spectralUnit, this.widgetStore.spectralSystem, channelValues[i]);
+                    }
+                }
+            } else {
+                channelValues = channelInfo.indexes;
+            }
             let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
             let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1]);
 
@@ -99,20 +113,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             // values are needed to be sorted in incremental order for binary search
             let values: Array<{ x: number, y: number }> = [];
             let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1];
-            const isSpectralEqual = this.compareSpectralProps();
             for (let i = 0; i < channelValues.length; i++) {
                 let index = isIncremental ? i : channelValues.length - 1 - i;
-
-                // transform x if widget's spectral props are different to frame's spectral props
-                let x = channelValues[index];
+                const x = channelValues[index];
                 const y = coordinateData.values[index];
-                if (!isSpectralEqual) {
-                    const tx = AST.transformSpectralPoint(frame.spectralFrame, this.widgetStore.spectralType, this.widgetStore.spectralUnit, this.widgetStore.spectralSystem, x);
-                    if (!isNaN(tx)) {
-                        console.log(x + " " + tx);
-                        x = tx;
-                    }
-                }
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
                 if (x < xMin || x > xMax) {
