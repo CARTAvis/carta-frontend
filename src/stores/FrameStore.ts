@@ -36,7 +36,6 @@ export class FrameStore {
     @observable wcsInfo: number;
     @observable spectralFrame: number;
     @observable spectralAxis: SpectralAxis;
-    @observable specsys: string;
     @observable validWcs: boolean;
     @observable center: Point2D;
     @observable cursorInfo: CursorInfo;
@@ -431,7 +430,6 @@ export class FrameStore {
         this.preference = preference;
         this.contourContext = gl;
         this.spectralAxis = {type: null, unit: null, specsys: null};
-        this.specsys = "";
         this.validWcs = false;
         this.frameInfo = frameInfo;
         this.renderHiDPI = true;
@@ -580,7 +578,6 @@ export class FrameStore {
                 name = "CROTA1";
             } else if (entry.name.toUpperCase() === "SPECSYS") {
                 this.spectralAxis.specsys = value;
-                this.specsys = value;
             }
 
             if (entry.entryType === CARTA.EntryType.STRING) {
