@@ -1,12 +1,13 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {autorun, computed, observable} from "mobx";
-import {FormGroup, HTMLSelect, HTMLTable, IOptionProps, NonIdealState} from "@blueprintjs/core";
+import {HTMLTable, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {WidgetConfig, WidgetProps} from "stores";
 import {StatsWidgetStore} from "stores/widgets";
 import {toExponential} from "utilities";
+import {RegionSelectorComponent, RegionSelectorType} from "components";
 import "./StatsComponent.css";
 
 @observer
@@ -117,13 +118,6 @@ export class StatsComponent extends React.Component<WidgetProps> {
         });
     }
 
-    private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        const appStore = this.props.appStore;
-        if (appStore.activeFrame) {
-            this.widgetStore.setRegionId(appStore.activeFrame.frameInfo.fileId, parseInt(changeEvent.target.value));
-        }
-    };
-
     private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
@@ -131,22 +125,6 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
     public render() {
         const appStore = this.props.appStore;
-
-        let enableRegionSelect = false;
-        // Fill region select options with all non-temporary regions that are closed
-        let profileRegionOptions: IOptionProps[] = [{value: -1, label: "Image"}];
-        let regionId = -1;
-        if (appStore.activeFrame && appStore.activeFrame.regionSet) {
-            let fileId = appStore.activeFrame.frameInfo.fileId;
-            regionId = this.widgetStore.regionIdMap.get(fileId) || -1;
-            profileRegionOptions = profileRegionOptions.concat(this.props.appStore.activeFrame.regionSet.regions.filter(r => !r.isTemporary && r.isClosedRegion).map(r => {
-                return {
-                    value: r.regionId,
-                    label: r.nameString
-                };
-            }));
-            enableRegionSelect = profileRegionOptions.length > 1;
-        }
 
         let formContent;
         if (this.statsData) {
@@ -214,9 +192,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
         return (
             <div className={className}>
-                <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
-                    <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect}/>
-                </FormGroup>
+                <RegionSelectorComponent widgetStore={this.widgetStore} appStore={this.props.appStore} type={RegionSelectorType.CLOSED_REGIONS}/>
                 <div className="stats-display">
                     {formContent}
                 </div>
