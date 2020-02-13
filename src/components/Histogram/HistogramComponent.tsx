@@ -42,7 +42,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             }
         }
         console.log("can't find store for widget");
-        return new HistogramWidgetStore();
+        return new HistogramWidgetStore(this.props.appStore);
     }
 
     @computed get histogramData(): CARTA.IHistogram {
@@ -145,7 +145,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         } else {
             if (!this.props.appStore.widgetsStore.histogramWidgets.has(this.props.id)) {
                 console.log(`can't find store for widget with id=${this.props.id}`);
-                this.props.appStore.widgetsStore.histogramWidgets.set(this.props.id, new HistogramWidgetStore());
+                this.props.appStore.widgetsStore.histogramWidgets.set(this.props.id, new HistogramWidgetStore(this.props.appStore));
             }
         }
         // Update widget title when region or coordinate changes

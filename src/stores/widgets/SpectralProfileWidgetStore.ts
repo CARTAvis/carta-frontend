@@ -2,6 +2,7 @@ import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
+import {AppStore} from "../AppStore";
 import {RegionWidgetStore} from "./RegionWidgetStore";
 import {FrameStore} from "../FrameStore";
 import {isColorValid} from "utilities";
@@ -141,8 +142,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.isMouseMoveIntoLinePlots = val;
     };
 
-    constructor(coordinate: string = "z") {
-        super();
+    constructor(appStore: AppStore, coordinate: string = "z") {
+        super(appStore);
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
 

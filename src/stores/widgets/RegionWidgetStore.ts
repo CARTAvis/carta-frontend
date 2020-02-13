@@ -1,11 +1,15 @@
 import {action, observable} from "mobx";
+import {AppStore} from "../AppStore";
 import {FrameStore} from "../FrameStore";
 
 export class RegionWidgetStore {
     @observable regionIdMap: Map<number, number>;
 
-    constructor() {
+    constructor(appStore: AppStore) {
         this.regionIdMap = new Map<number, number>();
+        if (appStore.selectedRegion) {
+            this.setRegionId(appStore.activeFrame.frameInfo.fileId, appStore.selectedRegion.regionId);
+        }
     }
 
     @action clearFrameEntry = (fileId: number) => {

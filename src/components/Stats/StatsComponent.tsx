@@ -36,7 +36,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             }
         }
         console.log("can't find store for widget");
-        return new StatsWidgetStore();
+        return new StatsWidgetStore(this.props.appStore);
     }
 
     @computed get statsData(): CARTA.RegionStatsData {
@@ -91,7 +91,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         } else {
             if (!this.props.appStore.widgetsStore.statsWidgets.has(this.props.id)) {
                 console.log(`can't find store for widget with id=${this.props.id}`);
-                this.props.appStore.widgetsStore.statsWidgets.set(this.props.id, new StatsWidgetStore());
+                this.props.appStore.widgetsStore.statsWidgets.set(this.props.id, new StatsWidgetStore(this.props.appStore));
             }
         }
         // Update widget title when region or coordinate changes

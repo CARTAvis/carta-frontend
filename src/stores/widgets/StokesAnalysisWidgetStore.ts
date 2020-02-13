@@ -3,6 +3,7 @@ import {ChartArea} from "chart.js";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, ScatterSettings} from "components/Shared";
+import {AppStore} from "../AppStore";
 import {RegionWidgetStore} from "./RegionWidgetStore";
 import {FrameStore} from "stores";
 import {getColorsForValues, isColorValid} from "utilities";
@@ -204,8 +205,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.useWcsValues = val;
     };
 
-    constructor() {
-        super();
+    constructor(appStore: AppStore) {
+        super(appStore);
         this.colorMap = DEFAULTS.colorMap;
         this.colorPixel = getColorsForValues(DEFAULTS.colorMap);
         this.statsType = CARTA.StatsType.Mean;
