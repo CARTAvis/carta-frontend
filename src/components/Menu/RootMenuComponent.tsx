@@ -8,6 +8,7 @@ import {PresetLayout} from "models";
 import {AppStore, BrowserMode, PreferenceKeys} from "stores";
 import {ConnectionStatus} from "services";
 import {toFixed} from "utilities";
+import {CustomIcon} from "icons/CustomIcons";
 import "./RootMenuComponent.css";
 
 @observer
@@ -103,7 +104,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 />
                 <Menu.Item
                     text="Contours"
-                    icon={"heatmap"}
+                    icon={<CustomIcon icon="contour"/>}
                     onClick={appStore.dialogStore.showContourDialog}
                 />
             </Menu>

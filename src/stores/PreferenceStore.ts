@@ -2,7 +2,7 @@ import {observable, computed, action} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {AppStore, BeamType, FrameScaling, RenderConfigStore, RegionStore} from "stores";
+import {AppStore, BeamType, ContourGeneratorType, FrameScaling, RenderConfigStore, RegionStore} from "stores";
 import {Theme, PresetLayout, CursorPosition, Zoom, ZoomPoint, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {isColorValid, parseBoolean} from "utilities";
 import {ControlMap} from "../models/ControlMap";
@@ -24,6 +24,7 @@ export enum PreferenceKeys {
     RENDER_CONFIG_NAN_COLOR_HEX,
     RENDER_CONFIG_NAN_ALPHA,
 
+    CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE,
     CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE,
     CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR,
     CONTOUR_CONFIG_CONTOUR_NUM_LEVELS,
@@ -78,6 +79,7 @@ const KEY_TO_STRING = new Map<PreferenceKeys, string>([
     [PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, "nanColorHex"],
     [PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, "nanAlpha"],
 
+    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, "contourGeneratorType"],
     [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE, "contourSmoothingMode"],
     [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, "contourSmoothingFactor"],
     [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS, "contourNumLevels"],
@@ -135,6 +137,7 @@ const DEFAULTS = {
         nanAlpha: 1,
     },
     CONTOUR_CONFIG: {
+        contourGeneratorType: ContourGeneratorType.StartStepMultiplier,
         contourSmoothingMode: CARTA.SmoothingMode.BlockAverage,
         contourSmoothingFactor: 4,
         contourNumLevels: 5,
@@ -200,6 +203,10 @@ export class PreferenceStore {
         [PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, (value: string): string => { return value && isColorValid(value) ? value : DEFAULTS.RENDER_CONFIG.nanColorHex; }],
         [PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, (value: string): number => { return value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1 ? Number(value) : DEFAULTS.RENDER_CONFIG.nanAlpha; }],
 
+        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, (value: ContourGeneratorType): ContourGeneratorType => {
+            return value && (value === ContourGeneratorType.StartStepMultiplier || value === ContourGeneratorType.MinMaxNScaling || value === ContourGeneratorType.PercentagesRefValue ||
+                value === ContourGeneratorType.MeanSigmaList) ? value : DEFAULTS.CONTOUR_CONFIG.contourGeneratorType;
+        }],
         [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE,
             (value: string): number => { return value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 2 ? Number(value) : DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode; }],
         [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR,
@@ -304,6 +311,10 @@ export class PreferenceStore {
     }
 
     // getters for Contour Config
+    @computed get contourGeneratorType(): ContourGeneratorType {
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE);
+    }
+
     @computed get contourColormapEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED);
     }
@@ -531,6 +542,7 @@ export class PreferenceStore {
     };
 
     @action resetContourConfigSettings = () => {
+        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, DEFAULTS.CONTOUR_CONFIG.contourGeneratorType);
         this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE, DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode);
         this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor);
         this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS, DEFAULTS.CONTOUR_CONFIG.contourNumLevels);
@@ -608,6 +620,7 @@ export class PreferenceStore {
             [PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, DEFAULTS.RENDER_CONFIG.nanColorHex],
             [PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, DEFAULTS.RENDER_CONFIG.nanAlpha],
 
+            [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, DEFAULTS.CONTOUR_CONFIG.contourGeneratorType],
             [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE, DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode],
             [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor],
             [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS, DEFAULTS.CONTOUR_CONFIG.contourNumLevels],
