@@ -105,13 +105,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
                 // transform x if widget's spectral props are different to frame's spectral props
                 let x = channelValues[index];
+                const y = coordinateData.values[index];
                 if (!isSpectralEqual) {
                     const tx = AST.transformSpectralPoint(frame.spectralFrame, this.widgetStore.spectralType, this.widgetStore.spectralUnit, this.widgetStore.spectralSystem, x);
                     if (!isNaN(tx)) {
+                        console.log(x + " " + tx);
                         x = tx;
                     }
                 }
-                const y = coordinateData.values[index];
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
                 if (x < xMin || x > xMax) {
