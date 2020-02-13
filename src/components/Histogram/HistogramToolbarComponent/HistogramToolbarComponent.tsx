@@ -9,8 +9,15 @@ import "./HistogramToolbarComponent.css";
 export class HistogramToolbarComponent extends React.Component<{ widgetStore: HistogramWidgetStore, appStore: AppStore }> {
 
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        if (this.props.appStore.activeFrame) {
-            this.props.widgetStore.setRegionId(this.props.appStore.activeFrame.frameInfo.fileId, parseInt(changeEvent.target.value));
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame) {
+            let regionId: number;
+            if (changeEvent.target.value === "active-region") {
+                regionId = appStore.selectedRegion.regionId;
+            } else {
+                regionId = parseInt(changeEvent.target.value);
+            }
+            this.props.widgetStore.setRegionId(appStore.activeFrame.frameInfo.fileId, regionId);
         }
     };
 
@@ -25,6 +32,9 @@ export class HistogramToolbarComponent extends React.Component<{ widgetStore: Hi
         if (appStore.activeFrame && appStore.activeFrame.regionSet) {
             let fileId = appStore.activeFrame.frameInfo.fileId;
             regionId = widgetStore.regionIdMap.get(fileId) || -1;
+            if (appStore.selectedRegion) {
+                profileRegionOptions = profileRegionOptions.concat([{value: "active-region", label: "active region", disabled: appStore.selectedRegion.regionId === regionId }]);
+            }
             profileRegionOptions = profileRegionOptions.concat(this.props.appStore.activeFrame.regionSet.regions.filter(r => !r.isTemporary && r.isClosedRegion).map(r => {
                 return {
                     value: r.regionId,
