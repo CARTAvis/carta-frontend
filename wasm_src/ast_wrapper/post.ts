@@ -177,13 +177,13 @@ Module.transformPoint = function (transformFrameSet: number, xIn: number, yIn: n
     return {x: xOut[0], y: yOut[0]};
 };
 
-Module.transformSpectralPoint = function (spectralFrameFrom: number, spectralSystemTo: string, zIn: number, forward: boolean = true) {
+Module.transformSpectralPoint = function (spectralFrameFrom: number, specType: string, specUnit: string, specSys: string, zIn: number, forward: boolean = true) {
     // Return empty array if arguments are invalid
     const N = 1;
     Module.HEAPF64.set(new Float64Array([zIn]), Module.zIn / 8);
-    Module.spectralTransform(spectralFrameFrom, spectralSystemTo, N, Module.zIn, forward, Module.zOut);
+    Module.spectralTransform(spectralFrameFrom, specType, specUnit, specSys, N, Module.zIn, forward, Module.zOut);
     const zOut = new Float64Array(Module.HEAPF64.buffer, Module.zOut, N);
-    return {z: zOut[0]};
+    return zOut[0];
 };
 
 Module.normalizeCoordinates = function (wcsInfo, xIn, yIn) {

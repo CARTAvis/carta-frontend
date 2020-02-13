@@ -24,11 +24,18 @@ export enum RasterRenderType {
     TILED
 }
 
+interface SpectralAxis {
+    type: string;
+    unit: string;
+    specsys: string;
+}
+
 export class FrameStore {
     @observable frameInfo: FrameInfo;
     @observable renderHiDPI: boolean;
     @observable wcsInfo: number;
     @observable spectralFrame: number;
+    @observable spectralAxis: SpectralAxis;
     @observable specsys: string;
     @observable validWcs: boolean;
     @observable center: Point2D;
@@ -423,6 +430,7 @@ export class FrameStore {
         this.backendService = backendService;
         this.preference = preference;
         this.contourContext = gl;
+        this.spectralAxis = {type: null, unit: null, specsys: null};
         this.specsys = "";
         this.validWcs = false;
         this.frameInfo = frameInfo;
@@ -558,6 +566,7 @@ export class FrameStore {
                 name = "NAXIS1";
             } else if (entry.name.toUpperCase() === "CTYPE3") {
                 name = "CTYPE1";
+                this.spectralAxis.type = value;
             } else if (entry.name.toUpperCase() === "CDELT3") {
                 name = "CDELT1";
             } else if (entry.name.toUpperCase() === "CRPIX3") {
@@ -566,9 +575,11 @@ export class FrameStore {
                 name = "CRVAL1";
             } else if (entry.name.toUpperCase() === "CUNIT3") {
                 name = "CUNIT1";
+                this.spectralAxis.unit = value;
             } else if (entry.name.toUpperCase() === "CROTA3") {
                 name = "CROTA1";
             } else if (entry.name.toUpperCase() === "SPECSYS") {
+                this.spectralAxis.specsys = value;
                 this.specsys = value;
             }
 

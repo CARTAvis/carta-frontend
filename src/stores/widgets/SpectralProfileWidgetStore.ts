@@ -13,7 +13,7 @@ export enum SpectralSystem {
     TOPO = "TOPO"
 }
 
-export enum SpectralCoordinate {
+export enum SpectralCoordinateX {
     RVK = "Radio velocity (km/s)",
     RVM = "Radio velocity (m/s)",
     OVK = "Optical velocity (km/s)",
@@ -41,7 +41,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable maxY: number;
     @observable cursorX: number;
     @observable channel: number;
-    @observable spectralCoordinate: SpectralCoordinate;
+    @observable spectralCoordinateX: SpectralCoordinateX;
     @observable spectralSystem: SpectralSystem;
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
@@ -104,8 +104,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action setSpectralCoordinate = (spectralCoordinate: SpectralCoordinate) => {
-        this.spectralCoordinate = spectralCoordinate;
+    @action setSpectralCoordinateX = (spectralCoordinateX: SpectralCoordinateX) => {
+        this.spectralCoordinateX = spectralCoordinateX;
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
@@ -181,7 +181,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         super();
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
-        this.spectralCoordinate = SpectralCoordinate.RVK;
+        this.spectralCoordinateX = SpectralCoordinateX.RVK;
         this.spectralSystem = SpectralSystem.LSRK;
 
         // Describes how the data is visualised

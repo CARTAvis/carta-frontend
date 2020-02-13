@@ -280,18 +280,26 @@ EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const doubl
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, char* specsysTo, int npoint, const double zIn[], int forward, double zOut[])
+EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, char* specTypeTo, char* specUnitTo, char* specSysTo, int npoint, const double zIn[], int forward, double zOut[])
 {
-    if (!specFrameFrom)
+    if (!specFrameFrom || !specTypeTo ||!specUnitTo || !specSysTo)
     {
         return 1;
     }
 
+    // assemble parameter strings
+    char specTypeStr[128];
+    (void) sprintf(specTypeStr, "System=%s", specTypeTo);
+    char specUnitStr[128];
+    (void) sprintf(specUnitStr, "Unit=%s", specUnitTo);
+    char specSysStr[128];
+    (void) sprintf(specSysStr, "StdOfRest=%s", specSysTo);
+
     AstSpecFrame* specFrameTo = nullptr;
     specFrameTo = static_cast<AstSpecFrame*> astCopy(specFrameFrom);
-    astSet(specFrameTo, "System=freq");
-    astSet(specFrameTo, "Unit=GHz");
-    astSet(specFrameTo, "StdOfRest=Topocentric");
+    astSet(specFrameTo, specTypeStr);
+    astSet(specFrameTo, specUnitStr);
+    astSet(specFrameTo, specSysStr);
 
     AstFrameSet *cvt;
     cvt = static_cast<AstFrameSet*> astConvert(specFrameFrom, specFrameTo, "");
