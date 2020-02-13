@@ -278,19 +278,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return null;
     };
 
-    private getChannelLabel = (): string => {
-        const frame = this.props.appStore.activeFrame;
-        if (this.widgetStore.useWcsValues && frame.channelInfo) {
-            const channelInfo = frame.channelInfo;
-            let channelLabel = channelInfo.channelType.name;
-            if (channelInfo.channelType.unit && channelInfo.channelType.unit.length) {
-                channelLabel += ` (${channelInfo.channelType.unit})`;
-            }
-            return channelLabel;
-        }
-        return null;
-    };
-
     private getChannelUnit = (): string => {
         const frame = this.props.appStore.activeFrame;
         if (this.widgetStore.useWcsValues && frame.channelInfo && frame.channelInfo.channelType.unit) {
@@ -386,6 +373,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         };
 
         if (this.profileStore && frame) {
+            if (this.widgetStore.useWcsValues) {
+                linePlotProps.xLabel = this.widgetStore.spectralCoordinate;
+            }
             if (frame.unit) {
                 linePlotProps.yLabel = `Value (${frame.unit})`;
             }
@@ -420,11 +410,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     linePlotProps.yMin = this.widgetStore.minY;
                     linePlotProps.yMax = this.widgetStore.maxY;
                 }
-            }
-
-            const wcsLabel = this.getChannelLabel();
-            if (wcsLabel) {
-                linePlotProps.xLabel = this.getChannelLabel();
             }
 
             const cursorX = {
