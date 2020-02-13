@@ -10,7 +10,7 @@ import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoCompone
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
-import {SpectralCoordinateX, SpectralProfileWidgetStore} from "stores/widgets";
+import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
 import "./SpectralProfilerComponent.css";
@@ -99,15 +99,14 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             // values are needed to be sorted in incremental order for binary search
             let values: Array<{ x: number, y: number }> = [];
             let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1];
-            const spectralCompare = this.compareSpectralProps();
-            if (spectralCompare) { console.log("Equal: " + spectralCompare.isEqual + ", type: ", spectralCompare.type + ", unit: " + spectralCompare.unit + ", specsys: " + spectralCompare.specsys); }
+            const isSpectralEqual = this.compareSpectralProps();
             for (let i = 0; i < channelValues.length; i++) {
                 let index = isIncremental ? i : channelValues.length - 1 - i;
 
                 // transform x if widget's spectral props are different to frame's spectral props
                 let x = channelValues[index];
-                if (spectralCompare && !spectralCompare.isEqual) {
-                    const tx = AST.transformSpectralPoint(frame.spectralFrame, spectralCompare.type, spectralCompare.unit, spectralCompare.specsys, x);
+                if (!isSpectralEqual) {
+                    const tx = AST.transformSpectralPoint(frame.spectralFrame, this.widgetStore.spectralType, this.widgetStore.spectralUnit, this.widgetStore.spectralSystem, x);
                     if (!isNaN(tx)) {
                         x = tx;
                     }
@@ -335,132 +334,17 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     // compare active frame's spectral props with selected spectral props in widget
-    private compareSpectralProps = (): {isEqual: boolean, type: string, unit: string, specsys: string} => {
+    private compareSpectralProps = (): boolean => {
         const appStore = this.props.appStore;
         const frame = appStore.activeFrame;
-        let result = null;
-
+        let result = true;
         if (frame && this.widgetStore) {
-            const selectedCoordX = this.widgetStore.spectralCoordinateX;
-            const selectedSpecsys = this.widgetStore.spectralSystem;
-            result = {isEqual: true, type: frame.spectralAxis.type, unit: frame.spectralAxis.unit, specsys: frame.spectralAxis.specsys};
-
-            // compare specsys
-            if (frame.spectralAxis.specsys !== selectedSpecsys) {
-                result.isEqual = false;
-                result.specsys = selectedSpecsys;
-            }
-            // compare x coordinate
-            switch (selectedCoordX) {
-                case SpectralCoordinateX.RVK:
-                    if (frame.spectralAxis.type.toUpperCase() !== "VRAD" || frame.spectralAxis.unit.toLowerCase() !== "km/s") {
-                        result.isEqual = false;
-                        result.type = "VRAD";
-                        result.unit = "km/s";
-                    }
-                    break;
-                case SpectralCoordinateX.RVM:
-                    if (frame.spectralAxis.type.toUpperCase() !== "VRAD" || frame.spectralAxis.unit.toLowerCase() !== "m/s") {
-                        result.isEqual = false;
-                        result.type = "VRAD";
-                        result.unit = "m/s";
-                    }
-                    break;
-                case SpectralCoordinateX.OVK:
-                    if (frame.spectralAxis.type.toUpperCase() !== "VOPT" || frame.spectralAxis.unit.toLowerCase() !== "km/s") {
-                        result.isEqual = false;
-                        result.type = "VOPT";
-                        result.unit = "km/s";
-                    }
-                    break;
-                case SpectralCoordinateX.OVM:
-                    if (frame.spectralAxis.type.toUpperCase() !== "VOPT" || frame.spectralAxis.unit.toLowerCase() !== "m/s") {
-                        result.isEqual = false;
-                        result.type = "VOPT";
-                        result.unit = "m/s";
-                    }
-                    break;
-                case SpectralCoordinateX.FQG:
-                    if (frame.spectralAxis.type.toUpperCase() !== "FREQ" || frame.spectralAxis.unit.toLowerCase() !== "ghz") {
-                        result.isEqual = false;
-                        result.type = "FREQ";
-                        result.unit = "GHz";
-                    }
-                    break;
-                case SpectralCoordinateX.FQM:
-                    if (frame.spectralAxis.type.toUpperCase() !== "FREQ" || frame.spectralAxis.unit.toLowerCase() !== "mhz") {
-                        result.isEqual = false;
-                        result.type = "FREQ";
-                        result.unit = "MHz";
-                    }
-                    break;
-                case SpectralCoordinateX.FQK:
-                    if (frame.spectralAxis.type.toUpperCase() !== "FREQ" || frame.spectralAxis.unit.toLowerCase() !== "khz") {
-                        result.isEqual = false;
-                        result.type = "FREQ";
-                        result.unit = "kHz";
-                    }
-                    break;
-                case SpectralCoordinateX.WLM:
-                    if (frame.spectralAxis.type.toUpperCase() !== "WAVE" || frame.spectralAxis.unit.toLowerCase() !== "mm") {
-                        result.isEqual = false;
-                        result.type = "WAVE";
-                        result.unit = "mm";
-                    }
-                    break;
-                case SpectralCoordinateX.WLU:
-                    if (frame.spectralAxis.type.toUpperCase() !== "WAVE" || frame.spectralAxis.unit.toLowerCase() !== "um") {
-                        result.isEqual = false;
-                        result.type = "WAVE";
-                        result.unit = "um";
-                    }
-                    break;
-                case SpectralCoordinateX.WLN:
-                    if (frame.spectralAxis.type.toUpperCase() !== "WAVE" || frame.spectralAxis.unit.toLowerCase() !== "nm") {
-                        result.isEqual = false;
-                        result.type = "WAVE";
-                        result.unit = "nm";
-                    }
-                    break;
-                case SpectralCoordinateX.WLA:
-                    if (frame.spectralAxis.type.toUpperCase() !== "WAVE" || frame.spectralAxis.unit.toLowerCase() !== "Angstrom") {
-                        result.isEqual = false;
-                        result.type = "WAVE";
-                        result.unit = "Angstrom";
-                    }
-                    break;
-                case SpectralCoordinateX.AWLM:
-                    if (frame.spectralAxis.type.toUpperCase() !== "AWAV" || frame.spectralAxis.unit.toLowerCase() !== "mm") {
-                        result.isEqual = false;
-                        result.type = "AWAV";
-                        result.unit = "mm";
-                    }
-                    break;
-                case SpectralCoordinateX.AWLU:
-                    if (frame.spectralAxis.type.toUpperCase() !== "AWAV" || frame.spectralAxis.unit.toLowerCase() !== "um") {
-                        result.isEqual = false;
-                        result.type = "AWAV";
-                        result.unit = "um";
-                    }
-                    break;
-                case SpectralCoordinateX.AWLN:
-                    if (frame.spectralAxis.type.toUpperCase() !== "AWAV" || frame.spectralAxis.unit.toLowerCase() !== "nm") {
-                        result.isEqual = false;
-                        result.type = "AWAV";
-                        result.unit = "nm";
-                    }
-                    break;
-                case SpectralCoordinateX.AWLA:
-                    if (frame.spectralAxis.type.toUpperCase() !== "AWAV" || frame.spectralAxis.unit.toLowerCase() !== "Angstrom") {
-                        result.isEqual = false;
-                        result.type = "AWAV";
-                        result.unit = "Angstrom";
-                    }
-                    break;
-                case SpectralCoordinateX.CH:
-                    break;
-                default:
-                    break;
+            const typeRegex = new RegExp(SpectralProfileWidgetStore.SpectralTypeAcronym.get(this.widgetStore.spectralType), "i");
+            const isTypeEqual = frame.spectralAxis.type.match(typeRegex);
+            const isUnitEqual = frame.spectralAxis.unit.toLowerCase() === this.widgetStore.spectralUnit.toLowerCase();
+            const isSpecsysEqual = frame.spectralAxis.specsys.toUpperCase() === this.widgetStore.spectralSystem;
+            if (!isTypeEqual || !isUnitEqual || !isSpecsysEqual) {
+                result = false;
             }
         }
         return result;

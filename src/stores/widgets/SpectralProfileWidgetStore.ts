@@ -6,30 +6,31 @@ import {RegionWidgetStore} from "./RegionWidgetStore";
 import {FrameStore} from "../FrameStore";
 import {isColorValid} from "utilities";
 
+export enum SpectralType {
+    VRAD = "VRAD",
+    VOPT = "VOPT",
+    FREQ = "FREQ",
+    WAVE = "WAVE",
+    AWAV = "AWAV"
+}
+
+export enum SpectralUnit {
+    KMS = "km/s",
+    MS = "m/s",
+    GHZ = "GHz",
+    MHZ = "MHz",
+    KHZ = "kHz",
+    MM = "mm",
+    UM = "um",
+    NM = "nm",
+    ANGSTROM  = "Angstrom"
+}
+
 export enum SpectralSystem {
     LSRK = "LSRK",
     LSRD = "LSRD",
     BARY = "BARY",
     TOPO = "TOPO"
-}
-
-export enum SpectralCoordinateX {
-    RVK = "Radio velocity (km/s)",
-    RVM = "Radio velocity (m/s)",
-    OVK = "Optical velocity (km/s)",
-    OVM = "Optical velocity (m/s)",
-    FQG = "Frequency (GHz)",
-    FQM = "Frequency (MHz)",
-    FQK = "Frequency (kHz)",
-    WLM = "Wave length (mm)",
-    WLU = "Wave length (um)",
-    WLN = "Wave length (nm)",
-    WLA = "Wave length (Angstrom)",
-    AWLM = "Air wave length (mm)",
-    AWLU = "Air wave length (um)",
-    AWLN = "Air wave length (nm)",
-    AWLA = "Air wave length (Angstrom)",
-    CH = "Channel"
 }
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
@@ -41,7 +42,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable maxY: number;
     @observable cursorX: number;
     @observable channel: number;
-    @observable spectralCoordinateX: SpectralCoordinateX;
+    @observable spectralType: SpectralType;
+    @observable spectralUnit: SpectralUnit;
     @observable spectralSystem: SpectralSystem;
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
@@ -54,6 +56,40 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
+
+    public static readonly SpectralTypeAcronym = new Map<SpectralType, string>([
+        [SpectralType.VRAD, "VRAD|VRADIO"],
+        [SpectralType.VOPT, "VOPT|VOPTICAL"],
+        [SpectralType.FREQ, "FREQ"],
+        [SpectralType.WAVE, "WAVE|WAVELEN"],
+        [SpectralType.AWAV, "AWAV|AIRWAVE"]
+    ]);
+
+     private static readonly SpectralTypeString = new Map<SpectralType, string>([
+        [SpectralType.VRAD, "Radio velocity"],
+        [SpectralType.VOPT, "Optical velocity"],
+        [SpectralType.FREQ, "Frequency"],
+        [SpectralType.WAVE, "Wave length"],
+        [SpectralType.AWAV, "Air wave length"]
+    ]);
+
+    public static readonly SpectralCoordSupported = new Map<string, {type: SpectralType, unit: SpectralUnit}>([
+        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.VRAD) + " (" + SpectralUnit.KMS + ")", {type: SpectralType.VRAD, unit: SpectralUnit.KMS}],
+        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.VRAD) + " (" + SpectralUnit.MS + ")", {type: SpectralType.VRAD, unit: SpectralUnit.MS}],
+        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.VOPT) + " (" + SpectralUnit.KMS + ")", {type: SpectralType.VOPT, unit: SpectralUnit.KMS}],
+        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.VOPT) + " (" + SpectralUnit.MS + ")", {type: SpectralType.VOPT, unit: SpectralUnit.MS}],
+        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.FREQ) + " (" + SpectralUnit.GHZ + ")", {type: SpectralType.FREQ, unit: SpectralUnit.GHZ}],
+        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.FREQ) + " (" + SpectralUnit.MHZ + ")", {type: SpectralType.FREQ, unit: SpectralUnit.MHZ}],
+        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.FREQ) + " (" + SpectralUnit.KHZ + ")", {type: SpectralType.FREQ, unit: SpectralUnit.KHZ}],
+        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.WAVE) + " (" + SpectralUnit.MM + ")", {type: SpectralType.WAVE, unit: SpectralUnit.MM}],
+        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.WAVE) + " (" + SpectralUnit.UM + ")", {type: SpectralType.WAVE, unit: SpectralUnit.UM}],
+        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.WAVE) + " (" + SpectralUnit.NM + ")", {type: SpectralType.WAVE, unit: SpectralUnit.NM}],
+        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.WAVE) + " (" + SpectralUnit.ANGSTROM + ")", {type: SpectralType.WAVE, unit: SpectralUnit.ANGSTROM}],
+        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.AWAV) + " (" + SpectralUnit.MM + ")", {type: SpectralType.AWAV, unit: SpectralUnit.MM}],
+        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.AWAV) + " (" + SpectralUnit.UM + ")", {type: SpectralType.AWAV, unit: SpectralUnit.UM}],
+        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.AWAV) + " (" + SpectralUnit.NM + ")", {type: SpectralType.AWAV, unit: SpectralUnit.NM}],
+        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.AWAV) + " (" + SpectralUnit.ANGSTROM + ")", {type: SpectralType.AWAV, unit: SpectralUnit.ANGSTROM}]
+    ]);
     
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
@@ -104,8 +140,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
-    @action setSpectralCoordinateX = (spectralCoordinateX: SpectralCoordinateX) => {
-        this.spectralCoordinateX = spectralCoordinateX;
+    @action setSpectralCoordinate = (coordStr: string) => {
+        if (SpectralProfileWidgetStore.SpectralCoordSupported.has(coordStr)) {
+            const coord: {type: SpectralType, unit: SpectralUnit} = SpectralProfileWidgetStore.SpectralCoordSupported.get(coordStr);
+            this.spectralType = coord.type;
+            this.spectralUnit = coord.unit;
+        }
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
@@ -181,7 +221,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         super();
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
-        this.spectralCoordinateX = SpectralCoordinateX.RVK;
+        this.spectralType = SpectralType.VRAD;
+        this.spectralUnit = SpectralUnit.KMS;
         this.spectralSystem = SpectralSystem.LSRK;
 
         // Describes how the data is visualised
@@ -201,6 +242,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get isAutoScaledY() {
         return (this.minY === undefined || this.maxY === undefined);
+    }
+
+    @computed get spectralCoordinate() {
+        return SpectralProfileWidgetStore.SpectralTypeString.get(this.spectralType) + " (" + this.spectralUnit + ")"; 
     }
 
     public static CalculateRequirementsMap(frame: FrameStore, widgetsMap: Map<string, SpectralProfileWidgetStore>) {
