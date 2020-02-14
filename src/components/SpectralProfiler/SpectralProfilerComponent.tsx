@@ -77,7 +77,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         let channelInfo = frame.channelInfo;
         if (coordinateData && channelInfo && coordinateData.values && coordinateData.values.length && coordinateData.values.length === channelInfo.values.length) {
             let channelValues;
-            if (this.widgetStore.spectralCoordinate === "Channel" || !this.widgetStore.useWcsValues) {
+            if (this.widgetStore.isCoordChannel || !this.widgetStore.useWcsValues) {
                 channelValues = channelInfo.indexes;
             } else {
                 if (this.isSpectralPropsEqual()) {
@@ -279,11 +279,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     private getChannelUnit = (): string => {
-        const frame = this.props.appStore.activeFrame;
-        if (this.widgetStore.useWcsValues && frame.channelInfo && frame.channelInfo.channelType.unit) {
-            return frame.channelInfo.channelType.unit;
+        if (this.widgetStore.isCoordChannel || !this.widgetStore.useWcsValues) {
+            return "Channel";
+        } else {
+            return this.widgetStore.spectralUnit;
         }
-        return "Channel";
     };
 
     onGraphCursorMoved = _.throttle((x) => {

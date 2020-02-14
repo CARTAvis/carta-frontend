@@ -274,6 +274,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return this.spectralType && this.spectralUnit ? SpectralProfileWidgetStore.GenCoordinateXLabel(this.spectralType, this.spectralUnit) : "Channel";
     }
 
+    @computed get isCoordChannel() {
+        return this.spectralCoordinate === "Channel";
+    }
+
     public static CalculateRequirementsMap(frame: FrameStore, widgetsMap: Map<string, SpectralProfileWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         widgetsMap.forEach(widgetStore => {
