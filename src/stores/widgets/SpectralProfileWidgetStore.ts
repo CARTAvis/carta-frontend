@@ -1,9 +1,9 @@
-import {action, computed, observable} from "mobx";
+import {action, autorun, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore} from "./RegionWidgetStore";
-import {FrameStore} from "../FrameStore";
+import {AppStore, FrameStore} from "..";
 import {isColorValid} from "utilities";
 
 export enum SpectralType {
@@ -121,6 +121,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         CARTA.StatsType.Sum, CARTA.StatsType.FluxDensity, CARTA.StatsType.Mean, CARTA.StatsType.Sigma,
         CARTA.StatsType.Min, CARTA.StatsType.Max, CARTA.StatsType.RMS, CARTA.StatsType.SumSq];
 
+    private static IsSpectralSupported = (type: string, unit: string, specsys: string): boolean => {
+        return type && unit && specsys && (<any> Object).values(SpectralType).includes(type) &&
+            (<any> Object).values(SpectralUnit).includes(unit) &&
+            (<any> Object).values(SpectralSystem).includes(specsys) ? true : false;
+    };
+
     @action setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
         this.clearXYBounds();
@@ -218,7 +224,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.isMouseMoveIntoLinePlots = val;
     };
 
-    constructor(coordinate: string = "z") {
+    constructor(appStore: AppStore, coordinate: string = "z") {
         super();
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
@@ -235,6 +241,21 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
+
+        autorun(() => {
+            if (appStore.activeFrame && appStore.activeFrame.spectralAxis) {
+                const spectralAxis = appStore.activeFrame.spectralAxis;
+                if (SpectralProfileWidgetStore.IsSpectralSupported(spectralAxis.type, spectralAxis.unit, spectralAxis.specsys)) {
+                    this.spectralType = spectralAxis.type as SpectralType;
+                    this.spectralUnit = spectralAxis.unit as SpectralUnit;
+                    this.spectralSystem = spectralAxis.specsys as SpectralSystem;
+                } else {
+                    this.spectralType = null;
+                    this.spectralUnit = null;
+                    this.spectralSystem = SpectralSystem.LSRK;
+                }
+            }
+        });
     }
 
     @computed get isAutoScaledX() {

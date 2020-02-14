@@ -43,7 +43,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
         }
         console.log("can't find store for widget");
-        return new SpectralProfileWidgetStore();
+        return new SpectralProfileWidgetStore(this.props.appStore);
     }
 
     @computed get profileStore(): SpectralProfileStore {

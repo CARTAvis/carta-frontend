@@ -607,7 +607,7 @@ export class WidgetsStore {
         }
 
         if (id) {
-            const widgetStore = new SpectralProfileWidgetStore();
+            const widgetStore = new SpectralProfileWidgetStore(this.appStore);
             if (widgetSettings) {
                 widgetStore.init(widgetSettings);
             }
