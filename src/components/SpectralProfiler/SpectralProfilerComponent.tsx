@@ -187,6 +187,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
         // Update widget title when region or coordinate changes
         autorun(() => {
+            if (this.widgetStore && this.props.appStore.selectedRegion) {
+                this.widgetStore.syncRegionIdIfActive(0);
+            }
             if (this.widgetStore) {
                 const coordinate = this.widgetStore.coordinate;
                 const appStore = this.props.appStore;

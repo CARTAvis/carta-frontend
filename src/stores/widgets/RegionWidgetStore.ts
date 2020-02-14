@@ -3,13 +3,13 @@ import {AppStore} from "../AppStore";
 import {FrameStore} from "../FrameStore";
 
 export class RegionWidgetStore {
+    private readonly appStore: AppStore;
     @observable regionIdMap: Map<number, number>;
+    @observable isActive: boolean = true;
 
     constructor(appStore: AppStore) {
+        this.appStore = appStore;
         this.regionIdMap = new Map<number, number>();
-        if (appStore.selectedRegion) {
-            this.setRegionId(appStore.activeFrame.frameInfo.fileId, appStore.selectedRegion.regionId);
-        }
     }
 
     @action clearFrameEntry = (fileId: number) => {
@@ -20,9 +20,28 @@ export class RegionWidgetStore {
         this.regionIdMap.clear();
     };
 
+    @action syncRegionIdIfActive = (defaultRegionId: number) => {
+        if (this.appStore.activeFrame && this.isActive) {
+            const fileId = this.appStore.activeFrame.frameInfo.fileId;
+            if (this.appStore.selectedRegion) {
+                this.setRegionId(fileId, this.appStore.selectedRegion.regionId);
+            } else {
+                this.setRegionId(fileId, defaultRegionId);
+            }
+        }
+    }
+
     @action setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
     };
+
+    @action enableActive = () => {
+        this.isActive = true;
+    }
+
+    @action disableActive = () => {
+        this.isActive = false;
+    }
 
     public static CalculateRequirementsArray(frame: FrameStore, widgetsMap: Map<string, RegionWidgetStore>) {
         const updatedRequirements = new Map<number, Array<number>>();

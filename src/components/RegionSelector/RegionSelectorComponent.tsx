@@ -18,8 +18,21 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
 
     private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         const appStore = this.props.appStore;
+        const widget = this.props.widgetStore;
+        const type = this.props.type;
         if (appStore.activeFrame) {
-            let regionId = changeEvent.target.value === this.ACTIVE_REGION_VALUE ? appStore.selectedRegion.regionId : parseInt(changeEvent.target.value);
+            let regionId: number;
+            if (changeEvent.target.value === this.ACTIVE_REGION_VALUE) {
+                widget.enableActive();
+                if (appStore.selectedRegion) {
+                    regionId = appStore.selectedRegion.regionId;
+                } else {
+                    regionId = (type === RegionSelectorType.CLOSED_REGIONS) ? -1 : 0;
+                }
+            } else {
+                widget.disableActive();
+                regionId = parseInt(changeEvent.target.value);
+            }
             this.props.widgetStore.setRegionId(appStore.activeFrame.frameInfo.fileId, regionId);
         }
     };
@@ -30,19 +43,15 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
         const type = this.props.type;
 
         let enableRegionSelect = false;
-        let regionId = (type === RegionSelectorType.CLOSED_REGIONS) ? -1 : 0;
-        let regionOptions: IOptionProps[] = (type === RegionSelectorType.CLOSED_REGIONS) ? [{value: -1, label: "Image"}] : [];
+        let selectedValue: number|string = this.ACTIVE_REGION_VALUE;
+        let regionOptions: IOptionProps[] = [{value: this.ACTIVE_REGION_VALUE, label: "Active"}];
+        if (type === RegionSelectorType.CLOSED_REGIONS) {
+            regionOptions = regionOptions.concat([{value: -1, label: "Image"}]);
+        }
 
         if (appStore.activeFrame && appStore.activeFrame.regionSet) {
-            let fileId = appStore.activeFrame.frameInfo.fileId;
-            regionId = widgetStore.regionIdMap.get(fileId) || regionId;
-            
-            if (appStore.selectedRegion) {
-                regionOptions = regionOptions.concat([{
-                    value: this.ACTIVE_REGION_VALUE,
-                    label: "active region",
-                    disabled: appStore.selectedRegion.regionId === regionId
-                }]);
+            if (!widgetStore.isActive) {
+                selectedValue = widgetStore.regionIdMap.get(appStore.activeFrame.frameInfo.fileId);
             }
 
             let fiteredRegions: RegionStore[];
@@ -59,12 +68,12 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
             }
             regionOptions = regionOptions.concat(fiteredRegions.map(r => {return {value: r.regionId, label: r.nameString}; }));
 
-            enableRegionSelect = regionOptions.length > 1;
+            enableRegionSelect = regionOptions.length > 2;
         }
 
         return (
             <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
-                <HTMLSelect value={regionId} options={regionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect}/>
+                <HTMLSelect value={selectedValue} options={regionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect}/>
             </FormGroup>
         );
     }
