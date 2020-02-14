@@ -240,6 +240,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.imageCoordinates = [];
     }
 
+    @computed get loading() {
+        return (this.loadingData || this.plotingData);
+    }
+
     @computed get initCatalogControlHeader() {
         const controlHeaders = new Map<string, ControlHeader>();
         const catalogHeader = this.catalogHeader;

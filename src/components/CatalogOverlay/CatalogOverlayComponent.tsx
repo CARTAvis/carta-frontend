@@ -437,7 +437,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             columnWidts: widgetStore.dataTableColumnWidts,
             upTableRef: this.onCatalogdataTableRefUpdated,
             updateColumnFilter: widgetStore.setColumnFilter,
-            loadingCell: widgetStore.loadingData,
+            loadingCell: widgetStore.loading,
             updateTableData: this.updateTableData
         };
 
