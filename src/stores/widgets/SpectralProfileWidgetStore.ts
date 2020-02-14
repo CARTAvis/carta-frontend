@@ -73,22 +73,26 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         [SpectralType.AWAV, "Air wave length"]
     ]);
 
+    private static GenCoordinateXLabel = (type: SpectralType, unit: SpectralUnit): string => {
+        return type && unit ? SpectralProfileWidgetStore.SpectralTypeString.get(type) + " (" + unit + ")" : "";
+    }
+
     public static readonly SpectralCoordSupported = new Map<string, {type: SpectralType, unit: SpectralUnit}>([
-        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.VRAD) + " (" + SpectralUnit.KMS + ")", {type: SpectralType.VRAD, unit: SpectralUnit.KMS}],
-        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.VRAD) + " (" + SpectralUnit.MS + ")", {type: SpectralType.VRAD, unit: SpectralUnit.MS}],
-        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.VOPT) + " (" + SpectralUnit.KMS + ")", {type: SpectralType.VOPT, unit: SpectralUnit.KMS}],
-        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.VOPT) + " (" + SpectralUnit.MS + ")", {type: SpectralType.VOPT, unit: SpectralUnit.MS}],
-        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.FREQ) + " (" + SpectralUnit.GHZ + ")", {type: SpectralType.FREQ, unit: SpectralUnit.GHZ}],
-        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.FREQ) + " (" + SpectralUnit.MHZ + ")", {type: SpectralType.FREQ, unit: SpectralUnit.MHZ}],
-        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.FREQ) + " (" + SpectralUnit.KHZ + ")", {type: SpectralType.FREQ, unit: SpectralUnit.KHZ}],
-        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.WAVE) + " (" + SpectralUnit.MM + ")", {type: SpectralType.WAVE, unit: SpectralUnit.MM}],
-        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.WAVE) + " (" + SpectralUnit.UM + ")", {type: SpectralType.WAVE, unit: SpectralUnit.UM}],
-        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.WAVE) + " (" + SpectralUnit.NM + ")", {type: SpectralType.WAVE, unit: SpectralUnit.NM}],
-        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.WAVE) + " (" + SpectralUnit.ANGSTROM + ")", {type: SpectralType.WAVE, unit: SpectralUnit.ANGSTROM}],
-        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.AWAV) + " (" + SpectralUnit.MM + ")", {type: SpectralType.AWAV, unit: SpectralUnit.MM}],
-        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.AWAV) + " (" + SpectralUnit.UM + ")", {type: SpectralType.AWAV, unit: SpectralUnit.UM}],
-        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.AWAV) + " (" + SpectralUnit.NM + ")", {type: SpectralType.AWAV, unit: SpectralUnit.NM}],
-        [SpectralProfileWidgetStore.SpectralTypeString.get(SpectralType.AWAV) + " (" + SpectralUnit.ANGSTROM + ")", {type: SpectralType.AWAV, unit: SpectralUnit.ANGSTROM}],
+        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.VRAD, SpectralUnit.KMS), {type: SpectralType.VRAD, unit: SpectralUnit.KMS}],
+        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.VRAD, SpectralUnit.MS), {type: SpectralType.VRAD, unit: SpectralUnit.MS}],
+        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.VOPT, SpectralUnit.KMS), {type: SpectralType.VOPT, unit: SpectralUnit.KMS}],
+        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.VOPT, SpectralUnit.MS), {type: SpectralType.VOPT, unit: SpectralUnit.MS}],
+        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.FREQ, SpectralUnit.GHZ), {type: SpectralType.FREQ, unit: SpectralUnit.GHZ}],
+        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.FREQ, SpectralUnit.MHZ), {type: SpectralType.FREQ, unit: SpectralUnit.MHZ}],
+        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.FREQ, SpectralUnit.KHZ), {type: SpectralType.FREQ, unit: SpectralUnit.KHZ}],
+        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.WAVE, SpectralUnit.MM), {type: SpectralType.WAVE, unit: SpectralUnit.MM}],
+        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.WAVE, SpectralUnit.UM), {type: SpectralType.WAVE, unit: SpectralUnit.UM}],
+        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.WAVE, SpectralUnit.NM), {type: SpectralType.WAVE, unit: SpectralUnit.NM}],
+        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.WAVE, SpectralUnit.ANGSTROM), {type: SpectralType.WAVE, unit: SpectralUnit.ANGSTROM}],
+        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.AWAV, SpectralUnit.MM), {type: SpectralType.AWAV, unit: SpectralUnit.MM}],
+        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.AWAV, SpectralUnit.UM), {type: SpectralType.AWAV, unit: SpectralUnit.UM}],
+        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.AWAV, SpectralUnit.NM), {type: SpectralType.AWAV, unit: SpectralUnit.NM}],
+        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.AWAV, SpectralUnit.ANGSTROM), {type: SpectralType.AWAV, unit: SpectralUnit.ANGSTROM}],
         ["Channel", {type: null, unit: null}]
     ]);
     
@@ -267,7 +271,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get spectralCoordinate() {
-        return this.spectralType && this.spectralUnit ? SpectralProfileWidgetStore.SpectralTypeString.get(this.spectralType) + " (" + this.spectralUnit + ")" : "Channel";
+        return this.spectralType && this.spectralUnit ? SpectralProfileWidgetStore.GenCoordinateXLabel(this.spectralType, this.spectralUnit) : "Channel";
     }
 
     public static CalculateRequirementsMap(frame: FrameStore, widgetsMap: Map<string, SpectralProfileWidgetStore>) {
