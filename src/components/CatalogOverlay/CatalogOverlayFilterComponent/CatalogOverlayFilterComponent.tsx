@@ -15,13 +15,7 @@ export class CatalogOverlayFilterComponent extends React.Component<{widgetStore:
     };
 
     private handleMaxRowChange = (value: number) => {
-        const widgetStore = this.props.widgetStore;
-        const fileDataSize = widgetStore.catalogInfo.dataSize;
-        if (isNaN(value) || value < 0 || value > fileDataSize) {
-            widgetStore.setMaxRow(fileDataSize);
-        } else {
-            widgetStore.setMaxRow(value);
-        }
+        // Todo user settings for preview data size
     };
 
     public render() {
@@ -51,7 +45,7 @@ export class CatalogOverlayFilterComponent extends React.Component<{widgetStore:
                 </FormGroup>
                 <FormGroup label={"Max Row"} inline={true}>
                         <NumericInput
-                            value={widgetStore.maxRow}
+                            value={50}
                             selectAllOnFocus={true}
                             buttonPosition={"none"}
                             max={widgetStore.catalogInfo.dataSize}

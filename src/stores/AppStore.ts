@@ -40,7 +40,8 @@ import {
     SpectralProfileWidgetStore, 
     StatsWidgetStore, 
     StokesAnalysisWidgetStore, 
-    CatalogInfo
+    CatalogInfo,
+    CatalogUpdateMode
 } from "./widgets";
 import {AppToaster} from "../components/Shared";
 
@@ -756,11 +757,11 @@ export class AppStore {
         this.backendService.getRegionHistogramStream().subscribe(this.handleRegionHistogramStream);
         this.backendService.getRasterStream().subscribe(this.handleRasterImageStream);
         this.backendService.getContourStream().subscribe(this.handleContourImageStream);
+        this.backendService.getCatalogStream().subscribe(this.handleCatalogFilterStream);
         this.backendService.getErrorStream().subscribe(this.handleErrorStream);
         this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
         this.backendService.getReconnectStream().subscribe(this.handleReconnectStream);
         this.tileService.GetTileStream().subscribe(this.handleTileStream);
-        this.backendService.getCatalogStream().subscribe(this.handleCatalogFilterStream);
 
         // Auth and connection
         if (process.env.REACT_APP_AUTHENTICATION === "true") {
@@ -903,7 +904,7 @@ export class AppStore {
         }
     };
 
-    handleCatalogFilterStream = (catalogFilter: CARTA.CatalogFilterResponse) => {
+    @action handleCatalogFilterStream = (catalogFilter: CARTA.CatalogFilterResponse) => {
         let catalogWidgetId = null;
         this.catalogs.forEach((value, key) => {
             if (value === catalogFilter.fileId) {
@@ -911,15 +912,22 @@ export class AppStore {
             }
         });
 
+        const progress = catalogFilter.progress; 
         const catalogWidgetStore = this.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
-        const progress = catalogFilter.progress;
+        if (catalogWidgetStore) {
+            catalogWidgetStore.updateCatalogData(catalogFilter);
+            catalogWidgetStore.setProgress(progress);
+            if (progress === 1) {
+                catalogWidgetStore.setOffset(0);
+                catalogWidgetStore.setLoadingDataStatus(false);
+                catalogWidgetStore.setPlotingData(false);
+            }
 
-        if (catalogWidgetId && progress === 1) {
-            catalogWidgetStore.setCatalogData(catalogFilter.columnsData, catalogFilter.subsetDataSize, catalogFilter.subsetEndIndex);
-            catalogWidgetStore.setLoadingDataStatus(false);
+            if (catalogWidgetStore.updateMode === CatalogUpdateMode.ViewUpdate) { 
+                // Todo plot catalog
+                console.log(catalogWidgetStore.imageCoordinates);
+            }
         }
-
-        catalogWidgetStore.setProgress(progress);
     }
 
     handleErrorStream = (errorData: CARTA.ErrorData) => {

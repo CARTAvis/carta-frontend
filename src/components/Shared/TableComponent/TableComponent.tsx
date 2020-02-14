@@ -1,8 +1,9 @@
 import * as React from "react";
+import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
 import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, EditableCell, TableLoadingOption} from "@blueprintjs/table";
 import {ControlHeader} from "stores/widgets";
-import {CARTA} from "carta-protobuf";
+import {getTableDataByType} from "utilities";
 
 export type ColumnFilter = { index: number, columnFilter: string };
 
@@ -19,7 +20,6 @@ export class TableComponentProps {
     columnWidts?: Array<number>;
     type: TableType;
     loadingCell?: boolean;
-    maxRowIndex?: number;
     upTableRef?: (ref: Table) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
     updateTableData?: (rowIndexEnd: number) => void;
@@ -27,25 +27,6 @@ export class TableComponentProps {
 
 @observer
 export class TableComponent extends React.Component<TableComponentProps> {
-    
-    private getDataByType (columnsData: CARTA.ICatalogColumnsData, dataType: CARTA.EntryType, index: number) {
-        switch (dataType) {
-            case CARTA.EntryType.INT:
-                return columnsData.intColumn[index].intColumn;
-            case CARTA.EntryType.STRING:
-                return columnsData.stringColumn[index].stringColumn;
-            case CARTA.EntryType.BOOL:
-                return columnsData.boolColumn[index].boolColumn;
-            case CARTA.EntryType.DOUBLE:
-                    return columnsData.doubleColumn[index].doubleColumn;
-            case CARTA.EntryType.FLOAT:
-                return columnsData.floatColumn[index].floatColumn;   
-            case CARTA.EntryType.LONGLONG:
-                return columnsData.llColumn[index].llColumn;      
-            default:
-                return [];
-        }
-    }
 
     private renderDataColumnWithFilter = (columnName: string, coloumnData: any) => {
         return (
@@ -88,9 +69,8 @@ export class TableComponent extends React.Component<TableComponentProps> {
     }
 
     private infiniteLoad(rowIndexEnd: number, numVisibleRows: number) {
-        const props = this.props;
         const currentIndex = rowIndexEnd + 1;
-        if (props.maxRowIndex && rowIndexEnd > 0 && currentIndex >= numVisibleRows && currentIndex < props.maxRowIndex && !this.props.loadingCell) {
+        if (rowIndexEnd > 0 && currentIndex >= numVisibleRows && !this.props.loadingCell) {
             this.props.updateTableData(rowIndexEnd);
         }
     }
@@ -115,7 +95,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
             const header = table.columnHeaders[index];
             const dataType = header.dataType;
             const dataIndex = header.dataTypeIndex;
-            const dataArray = this.getDataByType(tableData, dataType, dataIndex);
+            const dataArray = getTableDataByType(tableData, dataType, dataIndex);
 
             if (table.type === TableType.ColumnFilter) {
                 const column = this.renderDataColumnWithFilter(header.name, dataArray);

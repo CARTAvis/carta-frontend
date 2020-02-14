@@ -7,6 +7,7 @@ import {ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, Spectra
 import {clamp, findChannelType, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates, length2D, minMax2D, rotate2D, subtract2D, toFixed, trimFitsComment, velocityStringFromFrequency} from "utilities";
 import {BackendService} from "services";
 import {ControlMap} from "../models/ControlMap";
+import {CatalogOverlayWidgetStore} from "./widgets";
 
 export interface FrameInfo {
     fileId: number;

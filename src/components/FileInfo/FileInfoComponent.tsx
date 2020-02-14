@@ -1,7 +1,7 @@
 import * as React from "react";
 import {Pre, Tab, TabId, Tabs, NonIdealState, Spinner, Text} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {TableComponent, TableComponentProps, TableType} from "components/Shared";
+import {TableComponent, TableComponentProps} from "components/Shared";
 import "./FileInfoComponent.css";
 
 export enum FileInfoType {

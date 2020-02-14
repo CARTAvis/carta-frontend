@@ -100,7 +100,7 @@ export class BackendService {
             [CARTA.EventType.SPECTRAL_PROFILE_DATA, this.onStreamedSpectralProfileData],
             [CARTA.EventType.REGION_STATS_DATA, this.onStreamedRegionStatsData],
             [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData],
-            [CARTA.EventType.CATALOG_FILTER_RESPONSE, this.onStreamedCatalogData]
+            [CARTA.EventType.CATALOG_FILTER_RESPONSE, this.onStreamedCatalogData],
         ]);
 
         this.decoderMap = new Map<CARTA.EventType, any>([
@@ -761,7 +761,6 @@ export class BackendService {
         if (eventIcdVersion !== BackendService.IcdVersion) {
             console.warn(`Server event has ICD version ${eventIcdVersion}, which differs from frontend version ${BackendService.IcdVersion}. Errors may occur`);
         }
-
         try {
             const messageClass = this.decoderMap.get(eventType);
             if (messageClass) {
