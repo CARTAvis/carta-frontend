@@ -110,7 +110,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         }
 
         autorun(() => {
-            if (this.widgetStore && this.props.appStore.selectedRegion) {
+            if (this.props.appStore.selectedRegion || !this.props.appStore.selectedRegion) {
                 this.widgetStore.syncRegionIdIfActive(0);
             }
             if (this.widgetStore) {
