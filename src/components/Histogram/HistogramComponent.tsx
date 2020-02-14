@@ -151,6 +151,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         // Update widget title when region or coordinate changes
         autorun(() => {
             const appStore = this.props.appStore;
+            if (this.widgetStore && appStore.selectedRegion) {
+                this.widgetStore.syncRegionIdIfActive(-1);
+            }
             if (this.widgetStore && appStore.activeFrame) {
                 let regionString = "Unknown";
                 const regionId = this.widgetStore.regionIdMap.get(appStore.activeFrame.frameInfo.fileId) || -1;
