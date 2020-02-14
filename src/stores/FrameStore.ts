@@ -663,16 +663,10 @@ export class FrameStore {
                 totalChunks += contourStore.chunkCount;
             }
         });
-
-        const progress = totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
-        if (progress >= 1) {
-            console.log(`Contours complete: ${totalVertices} vertices in ${totalChunks} chunks`);
-        }
     }
 
     @action setChannels(channel: number, stokes: number) {
         // Automatically switch to per-channel histograms when Stokes parameter changes
-        this.renderConfig.setStokes(stokes);
         if (this.requiredStokes !== stokes) {
             this.renderConfig.setUseCubeHistogram(false);
             this.renderConfig.updateCubeHistogram(null, 0);

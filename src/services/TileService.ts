@@ -4,7 +4,7 @@ import LRUCache from "mnemonist/lru-cache";
 import {CARTA} from "carta-protobuf";
 import {Point2D, TileCoordinate} from "models";
 import {BackendService} from "services";
-import {copyToFP32Texture, createFP32Texture} from "../utilities";
+import {copyToFP32Texture, createFP32Texture} from "utilities";
 
 export interface RasterTile {
     data: Float32Array;
@@ -16,6 +16,14 @@ export interface RasterTile {
 export interface CompressedTile {
     tile: CARTA.ITileData;
     compressionQuality: number;
+}
+
+export interface TileStreamDetails {
+    tileCount: number;
+    fileId: number;
+    channel: number;
+    stokes: number;
+    flush: boolean;
 }
 
 export const TEXTURE_SIZE = 4096;
@@ -33,7 +41,7 @@ export class TileService {
     private readonly channelMap: Map<number, { channel: number, stokes: number }>;
     private readonly completedChannels: Map<number, number[]>;
     private currentFileId: number;
-    private readonly tileStream: Subject<{ tileCount: number, fileId: number, channel: number, stokes: number }>;
+    private readonly tileStream: Subject<TileStreamDetails>;
     private glContext: WebGLRenderingContext;
     private cachedTiles: LRUCache<number, RasterTile>;
     private lruCapacitySystem: number;
@@ -95,7 +103,7 @@ export class TileService {
         this.compressionRequestCounter = 0;
         this.remainingTiles = 0;
 
-        this.tileStream = new Subject<{ tileCount: number, fileId: number, channel: number, stokes: number }>();
+        this.tileStream = new Subject<TileStreamDetails>();
         this.backendService.getRasterTileStream().subscribe(this.handleStreamedTiles);
 
         const ZFPWorker = require("worker-loader!zfp_wrapper");
@@ -410,7 +418,7 @@ export class TileService {
                     }
                 }
                 this.receivedSynchronisedTiles = [];
-                this.tileStream.next({tileCount, fileId, channel, stokes});
+                this.tileStream.next({tileCount, fileId, channel, stokes, flush: true});
             }
         } else {
             // Handle single tile, no sync required
@@ -430,7 +438,7 @@ export class TileService {
                 }
             }
             this.pendingDecompressions.delete(encodedCoordinate);
-            this.tileStream.next({tileCount: 1, fileId, channel, stokes});
+            this.tileStream.next({tileCount: 1, fileId, channel, stokes, flush: false});
         }
     }
 }
