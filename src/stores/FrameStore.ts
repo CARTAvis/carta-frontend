@@ -265,24 +265,12 @@ export class FrameStore {
                         channelTypeInfo.type.unit = unit;
                     }
 
-                    let scalingFactor = 1.0;
-                    // Use km/s by default for m/s values
-                    if (channelTypeInfo.type.unit === "m/s") {
-                        scalingFactor = 1e-3;
-                        channelTypeInfo.type.unit = "km/s";
-                    }
-                    // Use GHz by default for Hz values
-                    if (channelTypeInfo.type.unit === "Hz") {
-                        scalingFactor = 1e-9;
-                        channelTypeInfo.type.unit = "GHz";
-                    }
-
                     for (let i = 0; i < N; i++) {
                         // FITS standard uses 1 for the first pixel
                         const channelOffset = i + 1 - refPix;
                         indexes[i] = i;
                         rawValues[i] = (channelOffset * delta + refVal);
-                        values[i] = rawValues[i] * scalingFactor;
+                        values[i] = rawValues[i];
                     }
                     return {
                         fromWCS: true,
@@ -295,7 +283,7 @@ export class FrameStore {
                                 return null;
                             }
 
-                            const index = (value / scalingFactor - refVal) / delta + refPix - 1;
+                            const index = (value - refVal) / delta + refPix - 1;
                             if (index < 0) {
                                 return 0;
                             } else if (index > values.length - 1) {
