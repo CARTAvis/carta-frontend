@@ -105,12 +105,12 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         const subsetEndIndex = catalogFilter.subsetEndIndex;
         if (this.subsetEndIndex <= this.catalogInfo.dataSize) {
             let numVisibleRows = this.numVisibleRows + subsetDataSize - this.offset;
-            this.addSubsetBoolData(this.catalogData.boolColumn, catalogData.boolColumn, this.offset);
-            this.addSubsetDoubleData(this.catalogData.doubleColumn, catalogData.doubleColumn, this.offset);
-            this.addSubsetFloatData(this.catalogData.floatColumn, catalogData.floatColumn, this.offset);
-            this.addSubsetIntData(this.catalogData.intColumn, catalogData.intColumn, this.offset);
-            this.addSubsetLLData(this.catalogData.llColumn, catalogData.llColumn, this.offset);
-            this.addSubsetStringData(this.catalogData.stringColumn, catalogData.stringColumn, this.offset);
+            this.addSubsetBoolData(this.catalogData.boolColumn, catalogData.boolColumn);
+            this.addSubsetDoubleData(this.catalogData.doubleColumn, catalogData.doubleColumn);
+            this.addSubsetFloatData(this.catalogData.floatColumn, catalogData.floatColumn);
+            this.addSubsetIntData(this.catalogData.intColumn, catalogData.intColumn);
+            this.addSubsetLLData(this.catalogData.llColumn, catalogData.llColumn);
+            this.addSubsetStringData(this.catalogData.stringColumn, catalogData.stringColumn);
             this.setNumVisibleRows(numVisibleRows);
             if (this.xColumnRepresentation && this.yColumnRepresentation && this.plotingData) {
                 this.imageCoordinates.push(Float32Array.from(this.transformCatalogData(this.wcs, this.offset + this.initDatasize)));    
@@ -316,7 +316,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     }
 
     @computed get enableLoadButton(): boolean {
-        return (this.xColumnRepresentation !== null && this.yColumnRepresentation !== null && !this.loadingData && !this.plotingData && this.catalogInfo.dataSize !== this.subsetEndIndex);
+        return (this.xColumnRepresentation !== null && this.yColumnRepresentation !== null && !this.loadingData && !this.plotingData);
     }
 
     @computed get xColumnRepresentation(): string {
@@ -359,51 +359,51 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         return shapeColumn;
     }
 
-    private addSubsetDoubleData(initData: Array<CARTA.IDoubleColumn>, sourceData:  Array<CARTA.IDoubleColumn>, start: number) {
+    private addSubsetDoubleData(initData: Array<CARTA.IDoubleColumn>, sourceData:  Array<CARTA.IDoubleColumn>) {
         for (let index = 0; index < initData.length; index++) {
             const init = initData[index];
             const source = sourceData[index];
-            init.doubleColumn.push(...source.doubleColumn.slice(start));
+            init.doubleColumn.push(...source.doubleColumn);
         }
     }
 
-    private addSubsetBoolData(initData: Array<CARTA.IBoolColumn>, sourceData:  Array<CARTA.IBoolColumn>, start: number) {
+    private addSubsetBoolData(initData: Array<CARTA.IBoolColumn>, sourceData:  Array<CARTA.IBoolColumn>) {
         for (let index = 0; index < initData.length; index++) {
             const init = initData[index];
             const source = sourceData[index];
-            init.boolColumn.push(...source.boolColumn.slice(start));
+            init.boolColumn.push(...source.boolColumn);
         }
     }
 
-    private addSubsetFloatData(initData: Array<CARTA.IFloatColumn>, sourceData:  Array<CARTA.IFloatColumn>, start: number) {
+    private addSubsetFloatData(initData: Array<CARTA.IFloatColumn>, sourceData:  Array<CARTA.IFloatColumn>) {
         for (let index = 0; index < initData.length; index++) {
             const init = initData[index];
             const source = sourceData[index];
-            init.floatColumn.push(...source.floatColumn.slice(start));
+            init.floatColumn.push(...source.floatColumn);
         }
     }
 
-    private addSubsetStringData(initData: Array<CARTA.IStringColumn>, sourceData:  Array<CARTA.IStringColumn>, start: number) {
+    private addSubsetStringData(initData: Array<CARTA.IStringColumn>, sourceData:  Array<CARTA.IStringColumn>) {
         for (let index = 0; index < initData.length; index++) {
             const init = initData[index];
             const source = sourceData[index];
-            init.stringColumn.push(...source.stringColumn.slice(start));
+            init.stringColumn.push(...source.stringColumn);
         }
     }
 
-    private addSubsetIntData(initData: Array<CARTA.IIntColumn>, sourceData:  Array<CARTA.IIntColumn>, start: number) {
+    private addSubsetIntData(initData: Array<CARTA.IIntColumn>, sourceData:  Array<CARTA.IIntColumn>) {
         for (let index = 0; index < initData.length; index++) {
             const init = initData[index];
             const source = sourceData[index];
-            init.intColumn.push(...source.intColumn.slice(start));
+            init.intColumn.push(...source.intColumn);
         }
     }
 
-    private addSubsetLLData(initData: Array<CARTA.ILLColumn>, sourceData:  Array<CARTA.ILLColumn>, start: number) {
+    private addSubsetLLData(initData: Array<CARTA.ILLColumn>, sourceData:  Array<CARTA.ILLColumn>) {
         for (let index = 0; index < initData.length; index++) {
             const init = initData[index];
             const source = sourceData[index];
-            init.llColumn.push(...source.llColumn.slice(start));
+            init.llColumn.push(...source.llColumn);
         }
     }
 
