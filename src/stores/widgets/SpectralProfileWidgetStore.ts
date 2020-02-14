@@ -50,7 +50,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable isMouseMoveIntoLinePlots: boolean;
 
     // settings 
-    @observable useWcsValues: boolean;
     @observable plotType: PlotType;
     @observable meanRmsVisible: boolean;
     @observable primaryLineColor: { colorHex: string, fixed: boolean };
@@ -158,10 +157,12 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             const coord: {type: SpectralType, unit: SpectralUnit} = SpectralProfileWidgetStore.SpectralCoordSupported.get(coordStr);
             this.spectralType = coord.type;
             this.spectralUnit = coord.unit;
+            this.clearXBounds();
         }
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
+        this.clearXBounds();
         this.spectralSystem = specsys;
     };
 
@@ -207,13 +208,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.meanRmsVisible = val;
     };
 
-    @action setUseWcsValues = (val: boolean) => {
-        if (val !== this.useWcsValues) {
-            this.clearXBounds();
-        }
-        this.useWcsValues = val;
-    };
-
     @action setPlotType = (val: PlotType) => {
         this.plotType = val;
     };
@@ -242,7 +236,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.plotType = PlotType.STEPS;
         this.meanRmsVisible = false;
         this.markerTextVisible = false;
-        this.useWcsValues = true;
         this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
@@ -453,9 +446,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE && widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
             this.linePlotPointSize = widgetSettings.linePlotPointSize;
         }
-        if (typeof widgetSettings.useWcsValues === "boolean") {
-            this.useWcsValues = widgetSettings.useWcsValues;
-        }
         if (typeof widgetSettings.meanRmsVisible === "boolean") {
             this.meanRmsVisible = widgetSettings.meanRmsVisible;
         }
@@ -481,7 +471,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             primaryLineColor: this.primaryLineColor.colorHex,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
-            useWcsValues: this.useWcsValues,
             meanRmsVisible: this.meanRmsVisible,
             plotType: this.plotType,
             minXVal: this.linePlotInitXYBoundaries.minXVal,

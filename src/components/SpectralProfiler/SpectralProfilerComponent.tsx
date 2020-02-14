@@ -77,7 +77,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         let channelInfo = frame.channelInfo;
         if (coordinateData && channelInfo && coordinateData.values && coordinateData.values.length && coordinateData.values.length === channelInfo.values.length) {
             let channelValues;
-            if (this.widgetStore.isCoordChannel || !this.widgetStore.useWcsValues) {
+            if (this.widgetStore.isCoordChannel) {
                 channelValues = channelInfo.indexes;
             } else {
                 if (this.isSpectralPropsEqual()) {
@@ -243,43 +243,51 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         if (frame && frame.channelInfo) {
             let channelInfo = frame.channelInfo;
-            let nearestIndex = (this.widgetStore.useWcsValues && channelInfo.getChannelIndexWCS) ?
-                channelInfo.getChannelIndexWCS(x) :
-                channelInfo.getChannelIndexSimple(x);
+            let nearestIndex;
+            if (this.widgetStore.isCoordChannel) {
+                nearestIndex = channelInfo.getChannelIndexSimple(x);
+            } else {
+                if (this.isSpectralPropsEqual()) {
+                    nearestIndex = channelInfo.getChannelIndexWCS(x);
+                } else {
+                    // TODO: convert x in selected wcs back to frame's wcs tx
+                    const tx = x;
+                    nearestIndex = channelInfo.getChannelIndexWCS(tx);
+                }
+            }
             if (nearestIndex !== null && nearestIndex !== undefined) {
                 frame.setChannels(nearestIndex, frame.requiredStokes);
             }
         }
     };
 
+    // TODO: merge getRequiredChannelValue() & getCurrentChannelValue()
     private getRequiredChannelValue = (): number => {
         const frame = this.props.appStore.activeFrame;
-        if (frame) {
-            const channel = frame.requiredChannel;
-            if (this.widgetStore.useWcsValues && frame.channelInfo &&
-                channel >= 0 && channel < frame.channelInfo.values.length) {
-                return frame.channelInfo.values[channel];
+        if (frame && this.plotData) {
+            const channelIndex = frame.requiredChannel;
+            if (!this.widgetStore.isCoordChannel && channelIndex >= 0 && channelIndex < this.plotData.values.length) {
+                return this.plotData.values[channelIndex].x;
             }
-            return channel;
+            return channelIndex;
         }
         return null;
     };
 
     private getCurrentChannelValue = (): number => {
         const frame = this.props.appStore.activeFrame;
-        if (frame) {
-            const channel = frame.channel;
-            if (this.widgetStore.useWcsValues && frame.channelInfo &&
-                channel >= 0 && channel < frame.channelInfo.values.length) {
-                return frame.channelInfo.values[channel];
+        if (frame && this.plotData) {
+            const channelIndex = frame.channel;
+            if (!this.widgetStore.isCoordChannel && channelIndex >= 0 && channelIndex < this.plotData.values.length) {
+                return this.plotData.values[channelIndex].x;
             }
-            return channel;
+            return channelIndex;
         }
         return null;
     };
 
     private getChannelUnit = (): string => {
-        if (this.widgetStore.isCoordChannel || !this.widgetStore.useWcsValues) {
+        if (this.widgetStore.isCoordChannel) {
             return "Channel";
         } else {
             return this.widgetStore.spectralUnit;
@@ -373,7 +381,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         };
 
         if (this.profileStore && frame) {
-            if (this.widgetStore.useWcsValues) {
+            if (!this.widgetStore.isCoordChannel) {
                 linePlotProps.xLabel = this.widgetStore.spectralCoordinate;
             }
             if (frame.unit) {

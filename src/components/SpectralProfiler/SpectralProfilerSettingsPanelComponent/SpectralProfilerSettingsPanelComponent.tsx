@@ -78,10 +78,6 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         this.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
     };
 
-    handleWcsValuesChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.widgetStore.setUseWcsValues(changeEvent.target.checked);
-    };
-
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
@@ -155,11 +151,9 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
-            useWcsValues: widgetStore.useWcsValues,
             setPrimaryLineColor: widgetStore.setPrimaryLineColor,
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
-            handleWcsValuesChanged: this.handleWcsValuesChanged,
             setPlotType: widgetStore.setPlotType,
             meanRmsVisible: widgetStore.meanRmsVisible,
             handleMeanRmsChanged: this.handleMeanRmsChanged,
