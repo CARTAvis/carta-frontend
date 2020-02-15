@@ -4,7 +4,7 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
 import {ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, Transform2D, ZoomPoint} from "models";
-import {clamp, findChannelType, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates, length2D, minMax2D, rotate2D, subtract2D, toFixed, trimFitsComment, velocityStringFromFrequency} from "utilities";
+import {clamp, findChannelType, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates, minMax2D, rotate2D, toFixed, trimFitsComment, velocityStringFromFrequency, degree2hms, degree2dms, obsCoordinate} from "utilities";
 import {BackendService} from "services";
 import {ControlMap} from "../models/ControlMap";
 
@@ -529,8 +529,52 @@ export class FrameStore {
         }
     };
 
-    // TODO: iterate whole CYTPEi to find spectral frame
     @action private initSpectralFrame = () => {
+        this.spectralFrame = null;
+
+        const entries = this.frameInfo.fileInfoExtended.headerEntries;
+        const channelTypeInfo = findChannelType(entries);
+        if (channelTypeInfo) {
+            const system = channelTypeInfo.type.code;
+            const unit = channelTypeInfo.type.unit;
+            let found;
+            found = entries.find(entry => entry.name.includes("DATE-OBS"));
+            const epoch = found ? trimFitsComment(found.value) : "";
+
+            // find obsLon, obsLat
+            found = entries.find(entry => entry.name.includes("OBSGEO-X"));
+            const x = found ? trimFitsComment(found.value) : "";
+            found = entries.find(entry => entry.name.includes("OBSGEO-Y"));
+            const y = found ? trimFitsComment(found.value) : "";
+            found = entries.find(entry => entry.name.includes("OBSGEO-Z"));
+            const z = found ? trimFitsComment(found.value) : "";
+            const obsCoord = obsCoordinate(Number(x), Number(y), Number(z));
+            const obsLon = obsCoord.obsLon.toString();
+            const obsLat = obsCoord.obsLat.toString();
+
+            found = entries.find(entry => entry.name.includes("OBSRA"));
+            const refRAStr = found ? trimFitsComment(found.value) : "";
+            const refRA = degree2hms(Number(refRAStr));
+            found = entries.find(entry => entry.name.includes("OBSDEC"));
+            const refDecStr = found ? trimFitsComment(found.value) : "";
+            const refDec = degree2dms(Number(refDecStr));
+            found = entries.find(entry => entry.name.includes("RESTFRQ"));
+            const restFreq = found ? trimFitsComment(found.value) + " Hz" : "";
+            found = entries.find(entry => entry.name.includes("SPECSYS"));
+            const stdOfRest = found ? trimFitsComment(found.value) : "";
+
+            this.spectralAxis.type = system;
+            this.spectralAxis.unit = unit;
+            this.spectralAxis.specsys = stdOfRest;
+
+            const initResult = AST.initSpectralFrame(system, unit, epoch, obsLon, obsLat, refRA, refDec, restFreq, stdOfRest);
+            if (initResult) {
+                this.spectralFrame = initResult;
+                console.log("Initialised spectral info from frame");
+            }
+        }
+
+        /*
         let headerString = "";
 
         for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
@@ -590,6 +634,7 @@ export class FrameStore {
             this.spectralFrame = initResult;
             console.log("Initialised spectral info from frame");
         }
+        */
     };
 
     public getImagePos(canvasX: number, canvasY: number): Point2D {

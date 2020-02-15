@@ -80,6 +80,72 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
     return wcsinfo;
 }
 
+EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(
+    const char* system, const char* unit, const char* epoch,
+    const char* obsLon, const char* obsLat, const char* refRA,
+    const char* refDec, const char* restFreq, const char* stdOfRest
+)
+{
+    if (!system || !unit || !epoch || !obsLon || !obsLat || !refRA || !refDec || !restFreq || !stdOfRest)
+    {
+        return nullptr;
+    }
+
+    AstSpecFrame *specframe = nullptr;
+    if (specframe)
+    {
+        astEnd;
+    }
+	astClearStatus;
+    astBegin;
+
+    // assemble parameter strings
+    char systemStr[128];
+    (void) sprintf(systemStr, "System=%s", system);
+    char unitStr[128];
+    (void) sprintf(unitStr, "Unit=%s", unit);
+    char epochStr[128];
+    (void) sprintf(epochStr, "Epoch=%s", epoch);
+    char obsLonStr[128];
+    (void) sprintf(obsLonStr, "ObsLon=%s", obsLon);
+    char obsLatStr[128];
+    (void) sprintf(obsLatStr, "ObsLat=%s", obsLat);
+    char refRAStr[128];
+    (void) sprintf(refRAStr, "RefRA=%s", refRA);
+    char refDecStr[128];
+    (void) sprintf(refDecStr, "RefDec=%s", refDec);
+    char restFreqStr[128];
+    (void) sprintf(restFreqStr, "RestFreq=%s", restFreq);
+     char stdOfRestStr[128];
+    (void) sprintf(stdOfRestStr, "StdOfRest=%s", stdOfRest);
+
+    specframe = astSpecFrame("");
+    astSet(specframe, systemStr);
+    astSet(specframe, unitStr);
+    astSet(specframe, epochStr);
+    astSet(specframe, obsLonStr);
+    astSet(specframe, obsLatStr);
+    astSet(specframe, refRAStr);
+    astSet(specframe, refDecStr);
+    astSet(specframe, restFreqStr);
+    astSet(specframe, stdOfRestStr);
+
+    if (!astOK)
+    {
+        cout << "Some AST LIB error, check logs." << endl;
+        astClearStatus;
+        return nullptr;
+    }
+    else if (specframe == AST__NULL)
+    {
+        cout << "No spectral axis" << endl;
+        return nullptr;
+    }
+
+    return specframe;
+}
+
+/*
 EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(const char* header)
 {
     AstFitsChan* fitschan = nullptr;
@@ -127,6 +193,7 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(const char* header)
 
     return spectralInfo;
 }
+*/
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY, double angle, double originX, double originY, double scaleX, double scaleY)
 {
