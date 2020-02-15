@@ -29,12 +29,13 @@ export enum CatalogUpdateMode {
     ViewUpdate = "ViewUpdate"
 }
 
-export type ControlHeader = { columnIndex: number, dataIndex: number, display: boolean, representAs: CatalogOverlay, filter: string };
+export type ControlHeader = { columnIndex: number, dataIndex: number, display: boolean, representAs: CatalogOverlay, filter: string, columnWidth: number };
 
 export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     public static readonly InitTableRows = 50;
     private static readonly DataChunkSize = 100;
+    private static readonly InitialedDisplayColumnsKeyWords = ["ra", "dec", "de", "glon", "glat", "ang", "angular", "source"];
     private wcs = 0;
     private initDatasize = 0;
     
@@ -72,6 +73,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.imageCoordinates = [];
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.offset = 0;
+        this.headerTableColumnWidts = [75, 75, 65, 100, null];
 
         const initTableRows = CatalogOverlayWidgetStore.InitTableRows;
         if (catalogInfo.dataSize < initTableRows) {
@@ -175,9 +177,20 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                 default:
                     break;
             }
-            const newHeader: ControlHeader = {columnIndex: current.columnIndex, dataIndex: current.dataIndex, display: current.display, representAs: val, filter: current.filter };
+            const newHeader: ControlHeader = {
+                columnIndex: current.columnIndex, 
+                dataIndex: current.dataIndex, 
+                display: current.display, 
+                representAs: val, 
+                filter: current.filter, 
+                columnWidth: current.columnWidth  
+            };
             this.catalogControlHeader.set(columnName, newHeader); 
         }
+    }
+
+    @action.bound setTableColumnWidth(width: number, columnName: string) {
+        this.catalogControlHeader.get(columnName).columnWidth = width;
     }
 
     @action.bound setColumnFilter(filter: string, columnName: string) {
@@ -224,12 +237,11 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.plotingData = val;
     }
 
-    @action.bound reset(dataTableColumnWidts: number[]) {
+    @action.bound reset() {
         this.clearData();
         this.setNumVisibleRows(0);
         this.setLoadingDataStatus(true);
-        this.catalogControlHeader = this.initCatalogControlHeader;
-        this.dataTableColumnWidts = dataTableColumnWidts;
+        this.resetFilter();
         this.loadingData = false;
         this.catalogColor = Colors.RED2;
         this.catalogSize = 1;
@@ -250,11 +262,22 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         if (catalogHeader.length) {
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
-                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: true, representAs: CatalogOverlay.NULL, filter: undefined};
+                let display = false;
+                if (this.findKeywords(header.name)) {
+                    display = true;
+                }
+                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, representAs: CatalogOverlay.NULL, filter: undefined, columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
         }
         return controlHeaders;
+    }
+
+    @action resetFilter() {
+        const controlHeaders = this.catalogControlHeader;
+        controlHeaders.forEach((value, key) => {
+            value.filter = undefined;
+        });
     }
 
     @computed get numOfDisplayedColumn() {
@@ -275,6 +298,16 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             }
         });
         return displayedColumnHeaders;
+    }
+
+    @computed get tableColumnWidts(): Array<number> {
+        const columnWidts = [];
+        this.catalogControlHeader.forEach((value, key) => {
+            if (value.display) {
+                columnWidts.push(value.columnWidth);
+            }
+        });
+        return columnWidts;
     }
 
     @computed get initUserFilters(): CARTA.CatalogFilterRequest {
@@ -361,6 +394,17 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             }
         });
         return shapeColumn;
+    }
+
+    private findKeywords(val: string): boolean {
+       const keyWords = CatalogOverlayWidgetStore.InitialedDisplayColumnsKeyWords;
+       for (let index = 0; index < keyWords.length; index++) {
+           const subString = keyWords[index];
+           if (val.toLocaleLowerCase().includes(subString)) {
+               return true;
+           }
+       }
+       return false;
     }
 
     private addSubsetDoubleData(initData: Array<CARTA.IDoubleColumn>, sourceData:  Array<CARTA.IDoubleColumn>) {

@@ -23,6 +23,7 @@ export class TableComponentProps {
     upTableRef?: (ref: Table) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
     updateTableData?: (rowIndexEnd: number) => void;
+    updateTableColumnWidth?: (width: number, columnName: string) => void;
 }
 
 @observer
@@ -87,6 +88,13 @@ export class TableComponent extends React.Component<TableComponentProps> {
         );
     }
 
+    private updateTableColumnWidth = (index: number, size: number) => {
+        const header = this.props.columnHeaders[index];
+        if (header) {
+            this.props.updateTableColumnWidth(size, header.name);
+        }
+    }
+
     render() {
         const table = this.props;
         const tableColumns = [];
@@ -96,7 +104,6 @@ export class TableComponent extends React.Component<TableComponentProps> {
             const dataType = header.dataType;
             const dataIndex = header.dataTypeIndex;
             const dataArray = getTableDataByType(tableData, dataType, dataIndex);
-
             if (table.type === TableType.ColumnFilter) {
                 const column = this.renderDataColumnWithFilter(header.name, dataArray);
                 tableColumns.push(column); 
@@ -117,6 +124,8 @@ export class TableComponent extends React.Component<TableComponentProps> {
                     loadingOptions={this.getLoadingOptions()}
                     onVisibleCellsChange={(rowIndices) => this.infiniteLoad(rowIndices.rowIndexEnd, table.numVisibleRows)}
                     columnWidths={table.columnWidts}
+                    onColumnWidthChanged={this.updateTableColumnWidth}
+                    enableGhostCells={true}
                 >
                     {tableColumns}
                 </Table>

@@ -15,6 +15,7 @@ import "./CatalogOverlayComponent.css";
 
 enum HeaderTableColumnName {
     Name = "Name",
+    Unit = "Unit",
     Display = "Display",
     RepresentAs = "Represent As",
     Description = "Description"
@@ -115,24 +116,18 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         this.width = width;
         this.height = height;
         const widgetStore = this.widgetStore;
-        // retrun column width according context length
+        // fixed bug from blueprintjs, only display 4 rows.
         if (widgetStore && this.controlHeaderTableRef) {
-            const columnWidths = this.columnWidts(this.controlHeaderTableRef, 4, 100, 2);
-            widgetStore.setHeaderTableColumnWidts(columnWidths); 
+            this.updateTableSize(this.controlHeaderTableRef); 
         }
         if (widgetStore && this.catalogdataTableRef) {
-            const numOfDisplayedColumn = widgetStore.numOfDisplayedColumn;
-            const columnWidths = this.columnWidts(this.catalogdataTableRef, numOfDisplayedColumn);
-            widgetStore.setDataTableColumnWidts(columnWidths); 
+            this.updateTableSize(this.catalogdataTableRef);
         }
     };
 
     private handleHeaderDisplayChange(changeEvent: any, columnName: string) {
         const val = changeEvent.target.checked;
         this.widgetStore.setHeaderDisplay(val, columnName);
-        const numOfDisplayedColumn = this.widgetStore.numOfDisplayedColumn;
-        const columnWidths = this.columnWidts(this.catalogdataTableRef, numOfDisplayedColumn);
-        this.widgetStore.setDataTableColumnWidts(columnWidths);
     }
 
     private handleHeaderRepresentationChange(changeEvent: any, columnName: string) {
@@ -194,15 +189,19 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const tableColumns = [];
         const headerNames = [];
         const headerDescriptions = [];
+        const units = [];
         const headerDataset = this.widgetStore.catalogHeader;
         const numResultsRows = headerDataset.length;
         for (let index = 0; index < headerDataset.length; index++) {
             const header = headerDataset[index];
             headerNames.push(header.name);
             headerDescriptions.push(header.description);
+            units.push(header.units);
         }
         const columnName = this.renderDataColumn(HeaderTableColumnName.Name, headerNames);
         tableColumns.push(columnName);
+        const columnUnit = this.renderDataColumn(HeaderTableColumnName.Unit, units);
+        tableColumns.push(columnUnit);
         const columnDisplaySwitch = this.renderButtonColumns(HeaderTableColumnName.Display, headerNames);
         tableColumns.push(columnDisplaySwitch);
         const columnRepresentation = this.renderButtonColumns(HeaderTableColumnName.RepresentAs, headerNames);
@@ -223,51 +222,23 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 enableGhostCells={true}
                 numFrozenColumns={1}
                 columnWidths={this.widgetStore.headerTableColumnWidts}
+                onColumnWidthChanged={this.updateHeaderTableColumnSize}
             >
                 {tableColumns}
             </Table>
         );
     }
 
-    // return column widths according text length
-    private columnWidts = (ref, numColumns: number, fixedWidth?: number, fixedIndex?: number) => {
-        const viewportRect = ref.locator.getViewportRect();
-        const tableRect = ref.locator.getTableRect();
-        ref.updateViewportRect(viewportRect); 
-        const tableWidth = tableRect.width;
-        const minColumnWidth = 100;
-
-        let cumulativeColumnWidths = [];
-        if (ref) { 
-            let totalMinSizeReq = 0;
-            for (let index = 0; index < numColumns; index++) {
-                let columnWidth = 0;
-                if (fixedWidth && fixedIndex === index) {
-                    columnWidth = fixedWidth;
-                } else {
-                    columnWidth = ref.locator.getWidestVisibleCellInColumn(index);
-                    // ref.locator.getColumnCellSelector(index) return nodelist [], bugs from blueprint table
-                    if (columnWidth === 0 ) {
-                        columnWidth = minColumnWidth;
-                    }
-                }
-                totalMinSizeReq += columnWidth;
-                cumulativeColumnWidths.push(columnWidth);
-            }
-
-            if (totalMinSizeReq > tableWidth) {
-                return cumulativeColumnWidths;
-            } else {
-                let diff = ((tableWidth - totalMinSizeReq) / numColumns);
-                return cumulativeColumnWidths.map(columnWidt => columnWidt + diff);
-            }
-        } else {
-            const defaultWidth = tableWidth / numColumns;
-            for (let index = 0; index < numColumns; index++) {
-                cumulativeColumnWidths.push(defaultWidth);
-            }
-            return cumulativeColumnWidths;
+    private updateHeaderTableColumnSize = (index: number, size: number) => {
+        const widgetsStore = this.widgetStore;
+        if (widgetsStore.headerTableColumnWidts) {
+            widgetsStore.headerTableColumnWidts[index] = size;
         }
+    }
+
+    private updateTableSize(ref: any) {
+        const viewportRect = ref.locator.getViewportRect();
+        ref.updateViewportRect(viewportRect); 
     }
 
     private getUserFilters(): CARTA.FilterConfig[] {
@@ -389,7 +360,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private updateTableData = () => {
         const widgetStore = this.widgetStore;
-        if (widgetStore.loadingData === false) {
+        if (widgetStore.loadingData === false && widgetStore.updateMode === CatalogUpdateMode.TableUpdate) {
             const filter = this.widgetStore.updateRequestDataSize;
             if (widgetStore.shouldUpdateTableData) {
                 this.props.appStore.sendCatalogFilter(filter);
@@ -402,9 +373,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         const appStore = this.props.appStore;
         if (widgetStore && this.catalogdataTableRef) {
-            const numOfDisplayedColumn = widgetStore.catalogHeader.length;
-            const columnWidths = this.columnWidts(this.catalogdataTableRef, numOfDisplayedColumn);
-            widgetStore.reset(columnWidths);
+            widgetStore.reset();
             const catalogFilter = widgetStore.initUserFilters;
             appStore.sendCatalogFilter(catalogFilter); 
         }
@@ -434,11 +403,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             filter: widgetStore.catalogControlHeader,
             columnHeaders: widgetStore.displayedColumnHeaders,
             numVisibleRows: widgetStore.numVisibleRows,
-            columnWidts: widgetStore.dataTableColumnWidts,
+            columnWidts: widgetStore.tableColumnWidts,
             upTableRef: this.onCatalogdataTableRefUpdated,
             updateColumnFilter: widgetStore.setColumnFilter,
-            loadingCell: widgetStore.loading,
-            updateTableData: this.updateTableData
+            loadingCell: widgetStore.loadingData,
+            updateTableData: this.updateTableData,
+            updateTableColumnWidth: widgetStore.setTableColumnWidth
         };
 
         let tableInfo = (widgetStore.catalogInfo.dataSize) ? (
@@ -474,7 +444,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             intent={Intent.PRIMARY}
                             text="Filter"
                             onClick={this.handleFilterClick}
-                            disabled={widgetStore.loadingData}
+                            disabled={widgetStore.loading}
                         />
                         </Tooltip>
                         <Tooltip content={"Clear filter"}>
@@ -482,6 +452,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             intent={Intent.PRIMARY}
                             text="Clear"
                             onClick={this.handleClearClick}
+                            disabled={widgetStore.loading}
                         />
                         </Tooltip>
                         <Tooltip content={"Load"}>
