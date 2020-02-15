@@ -16,12 +16,11 @@ export const INVALID_ANIMATION_ID = -1;
 type HandlerFunction = (eventId: number, parsedMessage: any) => void;
 
 export class BackendService {
-    private static readonly IcdVersion = 10;
+    private static readonly IcdVersion = 11;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
-    @observable loggingEnabled: boolean;
+    readonly loggingEnabled: boolean;
     @observable connectionDropped: boolean;
-    @observable sessionId: number;
     @observable endToEndPing: number;
 
     private connection: WebSocket;
@@ -31,6 +30,7 @@ export class BackendService {
     private observerRequestMap: Map<number, Observer<any>>;
     private eventCounter: number;
     private animationId: number;
+    private sessionId: number;
     private readonly rasterStream: Subject<CARTA.RasterImageData>;
     private readonly rasterTileStream: Subject<CARTA.RasterTileData>;
     private readonly histogramStream: Subject<CARTA.RegionHistogramData>;
@@ -39,6 +39,7 @@ export class BackendService {
     private readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
     private readonly statsStream: Subject<CARTA.RegionStatsData>;
     private readonly contourStream: Subject<CARTA.ContourImageData>;
+    private readonly reconnectStream: Subject<void>;
     private readonly decompressionService: DecompressionService;
     private readonly subsetsRequired: number;
     private readonly logStore: LogStore;
@@ -52,6 +53,7 @@ export class BackendService {
         this.loggingEnabled = true;
         this.observerRequestMap = new Map<number, Observer<any>>();
         this.eventCounter = 1;
+        this.sessionId = 0;
         this.endToEndPing = NaN;
         this.animationId = INVALID_ANIMATION_ID;
         this.connectionStatus = ConnectionStatus.CLOSED;
@@ -63,6 +65,7 @@ export class BackendService {
         this.spectralProfileStream = new Subject<CARTA.SpectralProfileData>();
         this.statsStream = new Subject<CARTA.RegionStatsData>();
         this.contourStream = new Subject<CARTA.ContourImageData>();
+        this.reconnectStream = new Subject<void>();
 
         this.subsetsRequired = Math.min(navigator.hardwareConcurrency || 4, 4);
         if (process.env.NODE_ENV !== "test") {
@@ -71,7 +74,7 @@ export class BackendService {
 
         // Construct handler and decoder maps
         this.handlerMap = new Map<CARTA.EventType, HandlerFunction>([
-            [CARTA.EventType.REGISTER_VIEWER_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.REGISTER_VIEWER_ACK, this.onRegisterViewerAck],
             [CARTA.EventType.FILE_LIST_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.REGION_LIST_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
@@ -80,6 +83,9 @@ export class BackendService {
             [CARTA.EventType.IMPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.EXPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.SET_REGION_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.SET_USER_LAYOUT_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.SET_USER_PREFERENCES_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.RESUME_SESSION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.START_ANIMATION_ACK, this.onStartAnimationAck],
             [CARTA.EventType.RASTER_IMAGE_DATA, this.onStreamedRasterImageData],
             [CARTA.EventType.RASTER_TILE_DATA, this.onStreamedRasterTileData],
@@ -88,7 +94,7 @@ export class BackendService {
             [CARTA.EventType.SPATIAL_PROFILE_DATA, this.onStreamedSpatialProfileData],
             [CARTA.EventType.SPECTRAL_PROFILE_DATA, this.onStreamedSpectralProfileData],
             [CARTA.EventType.REGION_STATS_DATA, this.onStreamedRegionStatsData],
-            [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData],
+            [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData]
         ]);
 
         this.decoderMap = new Map<CARTA.EventType, any>([
@@ -101,6 +107,7 @@ export class BackendService {
             [CARTA.EventType.IMPORT_REGION_ACK, CARTA.ImportRegionAck],
             [CARTA.EventType.EXPORT_REGION_ACK, CARTA.ExportRegionAck],
             [CARTA.EventType.SET_REGION_ACK, CARTA.SetRegionAck],
+            [CARTA.EventType.RESUME_SESSION_ACK, CARTA.ResumeSessionAck],
             [CARTA.EventType.START_ANIMATION_ACK, CARTA.StartAnimationAck],
             [CARTA.EventType.RASTER_IMAGE_DATA, CARTA.RasterImageData],
             [CARTA.EventType.RASTER_TILE_DATA, CARTA.RasterTileData],
@@ -110,6 +117,8 @@ export class BackendService {
             [CARTA.EventType.SPECTRAL_PROFILE_DATA, CARTA.SpectralProfileData],
             [CARTA.EventType.REGION_STATS_DATA, CARTA.RegionStatsData],
             [CARTA.EventType.CONTOUR_IMAGE_DATA, CARTA.ContourImageData],
+            [CARTA.EventType.SET_USER_LAYOUT_ACK, CARTA.SetUserLayoutAck],
+            [CARTA.EventType.SET_USER_PREFERENCES_ACK, CARTA.SetUserPreferencesAck]
         ]);
 
         autorun(() => {
@@ -158,6 +167,10 @@ export class BackendService {
         return this.contourStream;
     }
 
+    getReconnectStream() {
+        return this.reconnectStream;
+    }
+
     @action("connect")
     connect(url: string, autoConnect: boolean = true): Observable<CARTA.RegisterViewerAck> {
         if (this.connection) {
@@ -194,7 +207,10 @@ export class BackendService {
                 }
                 this.connectionStatus = ConnectionStatus.ACTIVE;
                 this.autoReconnect = true;
-                const message = CARTA.RegisterViewer.create({sessionId: 0, clientFeatureFlags: BackendService.DefaultFeatureFlags});
+                const message = CARTA.RegisterViewer.create({sessionId: this.sessionId, clientFeatureFlags: BackendService.DefaultFeatureFlags});
+                // observer map is cleared, so that old subscriptions don't get incorrectly fired
+                this.observerRequestMap.clear();
+                this.eventCounter = 1;
                 const requestId = this.eventCounter;
                 this.logEvent(CARTA.EventType.REGISTER_VIEWER, requestId, message, false);
                 if (this.sendEvent(CARTA.EventType.REGISTER_VIEWER, CARTA.RegisterViewer.encode(message).finish())) {
@@ -205,11 +221,6 @@ export class BackendService {
             };
 
             this.connection.onerror = (ev => observer.error(ev));
-        });
-
-        obs.subscribe(ack => {
-            console.log(`Connected with session ID ${ack.sessionId}`);
-            this.sessionId = ack.sessionId;
         });
 
         return obs;
@@ -560,6 +571,59 @@ export class BackendService {
         return false;
     }
 
+    @action("set user preferences")
+    setUserPreferences(preferencesMap: { [k: string]: string }): Observable<CARTA.SetUserPreferencesAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.SetUserPreferences.create({preferenceMap: preferencesMap});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.SET_USER_PREFERENCES, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.SET_USER_PREFERENCES, CARTA.SetUserPreferences.encode(message).finish())) {
+                return new Observable<CARTA.SetUserPreferencesAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("set user layout")
+    setUserLayout(name: string, value: string): Observable<CARTA.SetUserLayoutAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.SetUserLayout.create({name, value});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.SET_USER_LAYOUT, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.SET_USER_LAYOUT, CARTA.SetUserLayout.encode(message).finish())) {
+                return new Observable<CARTA.SetUserLayoutAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("resume session")
+    resumeSession(message: CARTA.IResumeSession): Observable<CARTA.ResumeSessionAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.RESUME_SESSION, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.RESUME_SESSION, CARTA.ResumeSession.encode(message).finish())) {
+                return new Observable<CARTA.ResumeSessionAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
     @action("authenticate")
     authenticate = (username: string, password: string) => {
         let authUrl = `${window.location.protocol}//${window.location.hostname}/carta_auth/`;
@@ -640,6 +704,16 @@ export class BackendService {
             this.observerRequestMap.delete(eventId);
         } else {
             console.log(`Can't find observable for request ${eventId}`);
+        }
+    }
+
+    private onRegisterViewerAck(eventId: number, ack: CARTA.RegisterViewerAck) {
+        this.sessionId = ack.sessionId;
+        this.onSimpleMappedResponse(eventId, ack);
+
+        // use the reconnect stream when the session type is resumed
+        if (ack.success && ack.sessionType === CARTA.SessionType.RESUMED) {
+            this.reconnectStream.next();
         }
     }
 

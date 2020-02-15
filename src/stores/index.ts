@@ -15,3 +15,4 @@ export * from "./PreferenceStore";
 export * from "./LayoutStore";
 export * from "./ContourStore";
 export * from "./ContourConfigStore";
+export * from "./DialogStore";

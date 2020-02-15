@@ -26,7 +26,7 @@ export class AuthDialogComponent extends React.Component<{ appStore: AppStore }>
         }
 
         return (
-            <Dialog icon="key" className={className} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={appStore.authDialogVisible} isCloseButtonShown={false} title="Sign In">
+            <Dialog icon="key" className={className} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={appStore.dialogStore.authDialogVisible} isCloseButtonShown={false} title="Sign In">
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup helperText={this.errorString} intent={this.errorString ? "danger" : "none"}>
                         <InputGroup placeholder="Username" value={this.username} onChange={this.handleUsernameInput} onKeyDown={this.handleKeyDown} autoFocus={true}/>
@@ -69,7 +69,7 @@ export class AuthDialogComponent extends React.Component<{ appStore: AppStore }>
                             appStore.backendService.setAuthToken(responseData.token);
                             appStore.setUsername(responseData.username);
                             appStore.connectToServer(responseData.socket);
-                            appStore.hideAuthDialog();
+                            appStore.dialogStore.hideAuthDialog();
                         }, 50);
                     }
                 }, parseError => {

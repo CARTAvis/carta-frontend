@@ -3,14 +3,14 @@ import { CARTA } from "carta-protobuf";
 import { Colors } from "@blueprintjs/core";
 import { Point2D } from "models";
 import { BackendService } from "services";
-import { minMax2D, midpoint2D, scale2D, simplePolygonTest, simplePolygonPointTest, toFixed } from "utilities";
+import { minMax2D, midpoint2D, scale2D, subtract2D, simplePolygonTest, simplePolygonPointTest, toFixed } from "utilities";
 import { FrameStore } from "stores";
 
 export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
 
 export class RegionStore {
-    @observable fileId: number;
+    readonly fileId: number;
     @observable regionId: number;
     @observable name: string;
     @observable color: string;
@@ -29,28 +29,6 @@ export class RegionStore {
     static readonly MIN_LINE_WIDTH = 0.5;
     static readonly MAX_LINE_WIDTH = 10;
     static readonly MAX_DASH_LENGTH = 50;
-
-    static readonly SWATCH_COLORS = [
-        Colors.BLUE3,
-        Colors.GREEN3,
-        Colors.ORANGE3,
-        Colors.RED3,
-        Colors.VERMILION3,
-        Colors.ROSE3,
-        Colors.VIOLET3,
-        Colors.INDIGO3,
-        Colors.COBALT3,
-        Colors.TURQUOISE3,
-        Colors.FOREST3,
-        Colors.LIME3,
-        Colors.GOLD3,
-        Colors.SEPIA3,
-        Colors.BLACK,
-        Colors.DARK_GRAY3,
-        Colors.GRAY3,
-        Colors.LIGHT_GRAY3,
-        Colors.WHITE
-    ];
 
     private readonly backendService: BackendService;
 
@@ -120,7 +98,7 @@ export class RegionStore {
                 return scale2D(this.controlPoints[1], 2);
             case CARTA.RegionType.POLYGON:
                 const boundingBox = minMax2D(this.controlPoints);
-                return {x: boundingBox.maxPoint.x - boundingBox.minPoint.x, y: boundingBox.maxPoint.y - boundingBox.minPoint.y};
+                return subtract2D(boundingBox.maxPoint, boundingBox.minPoint);
             default:
                 return {x: 0, y: 0};
         }
@@ -166,7 +144,7 @@ export class RegionStore {
     @computed get nameString(): string {
         if (this.regionId === CURSOR_REGION_ID) {
             return "Cursor";
-        } else if (this.name) {
+        } else if (this.name && this.name !== "") {
             return this.name;
         } else {
             return `Region ${this.regionId}`;

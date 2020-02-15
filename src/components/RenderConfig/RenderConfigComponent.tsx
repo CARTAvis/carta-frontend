@@ -4,15 +4,14 @@ import ReactResizeDetector from "react-resize-detector";
 import {action, autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, FormGroup, HTMLSelect, IOptionProps, NonIdealState, NumericInput, Colors} from "@blueprintjs/core";
+import {CARTA} from "carta-protobuf";
 import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigComponent";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent} from "components/Shared";
-import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
 import {AnimationState, FrameScaling, FrameStore, RenderConfigStore, WidgetConfig, WidgetProps} from "stores";
-import {clamp, toExponential, toFixed} from "utilities";
 import {Point2D} from "models";
-import {CARTA} from "carta-protobuf";
+import {clamp, toExponential, toFixed} from "utilities";
 import "./RenderConfigComponent.css";
 
 const KEYCODE_ENTER = 13;
@@ -107,6 +106,13 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                     this.widgetStore.clearXYBounds();
                 }
             }
+            const widgetStore = this.widgetStore;
+            if (widgetStore) {
+                const currentData = this.plotData;
+                if (currentData) {
+                    widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
+                }
+            }
         });
     }
 
@@ -187,25 +193,6 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         this.props.appStore.cancelCubeHistogramRequest();
     };
 
-    handleApplyContours = () => {
-        const appStore = this.props.appStore;
-        if (!appStore || !appStore.activeFrame) {
-            return;
-        }
-
-        appStore.activeFrame.applyContours();
-
-    };
-
-    handleClearContours = () => {
-        const appStore = this.props.appStore;
-        if (!appStore || !appStore.activeFrame) {
-            return;
-        }
-
-        appStore.activeFrame.clearContours();
-    };
-
     onMinMoved = (x: number) => {
         const frame = this.props.appStore.activeFrame;
         // Check bounds first, to make sure the max isn't being moved below the min
@@ -268,14 +255,14 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         const plotName = `channel ${frame.channel} histogram`;
         let linePlotProps: LinePlotComponentProps = {
             xLabel: unitString,
-            yLabel: "Count",
             darkMode: appStore.darkTheme,
             imageName: imageName,
             plotName: plotName,
             logY: this.widgetStore.logScaleY,
             usePointSymbols: this.widgetStore.plotType === PlotType.POINTS,
             interpolateLines: this.widgetStore.plotType === PlotType.LINES,
-            tickTypeY: TickType.Scientific,
+            showYAxisTicks: false,
+            showYAxisLabel: false,
             graphClicked: this.onMinMoved,
             graphRightClicked: this.onMaxMoved,
             graphZoomedX: this.widgetStore.setXBounds,
@@ -298,7 +285,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 let primaryLineColor = this.widgetStore.primaryLineColor.colorHex;
                 if (appStore.darkTheme) {
                     if (!this.widgetStore.primaryLineColor.fixed) {
-                        primaryLineColor = Colors.BLUE4;   
+                        primaryLineColor = Colors.BLUE4;
                     }
                 }
                 linePlotProps.lineColor = primaryLineColor;
@@ -344,6 +331,27 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 dragMove: this.onMaxMoved,
                 horizontal: false,
             }];
+
+            if (this.widgetStore.meanRmsVisible && frame.renderConfig.histogram && frame.renderConfig.histogram.stdDev > 0) {
+                linePlotProps.markers.push({
+                    value: frame.renderConfig.histogram.mean,
+                    id: "marker-mean",
+                    draggable: false,
+                    horizontal: false,
+                    color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2,
+                    dash: [5]
+                });
+
+                linePlotProps.markers.push({
+                    value: frame.renderConfig.histogram.mean,
+                    id: "marker-rms",
+                    draggable: false,
+                    horizontal: false,
+                    width: frame.renderConfig.histogram.stdDev,
+                    opacity: 0.2,
+                    color: appStore.darkTheme ? Colors.GREEN4 : Colors.GREEN2
+                });
+            }
         }
 
         const percentileButtonCutoff = 600;
@@ -399,6 +407,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                         onCubeHistogramSelected={this.handleCubeHistogramSelected}
                         showHistogramSelect={frame.frameInfo.fileInfoExtended.depth > 1}
                         disableHistogramSelect={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                        warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
                     />
                     <FormGroup label={"Clip Min"} inline={true}>
                         <NumericInput
@@ -420,10 +429,6 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                         />
                     </FormGroup>
                     {this.width < histogramCutoff && percentileSelectDiv}
-                    <ButtonGroup>
-                        <Button onClick={this.handleApplyContours}>Apply Contours</Button>
-                        <Button onClick={this.handleClearContours}>Clear</Button>
-                    </ButtonGroup>
                 </div>
                 <TaskProgressDialogComponent
                     isOpen={frame.renderConfig.useCubeHistogram && frame.renderConfig.cubeHistogramProgress < 1.0}

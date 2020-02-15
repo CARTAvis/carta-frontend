@@ -6,7 +6,7 @@ export class Event {
     public static readonly EVENT_NUMBER = Event.EVENT_TYPES.length;
 
     public static isEventTypeValid = (eventType: CARTA.EventType): boolean => {
-        return eventType && Event.EVENT_TYPES.includes(eventType);
+        return Event.EVENT_TYPES.includes(eventType);
     };
 
     public static getEventTypeFromName = (eventName: string): CARTA.EventType => {

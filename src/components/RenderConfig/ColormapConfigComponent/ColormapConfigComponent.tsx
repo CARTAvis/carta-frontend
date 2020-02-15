@@ -1,11 +1,10 @@
 import * as React from "react";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {Alert, Button, FormGroup, IPopoverProps, MenuItem, NumericInput, Switch} from "@blueprintjs/core";
+import {Alert, Button, FormGroup, MenuItem, NumericInput, Switch} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {FrameScaling, RenderConfigStore} from "stores/RenderConfigStore";
-import {ScalingComponent} from "./ScalingComponent";
-import {ColormapComponent} from "./ColormapComponent";
+import {ColormapComponent, ScalingSelectComponent, SCALING_POPOVER_PROPS} from "components/Shared";
 
 const HistogramSelect = Select.ofType<boolean>();
 
@@ -14,11 +13,10 @@ interface ColormapConfigProps {
     onCubeHistogramSelected: () => void;
     onCubeHistogramCancelled?: () => void;
     darkTheme: boolean;
+    warnOnCubeHistogram: boolean;
     showHistogramSelect: boolean;
     disableHistogramSelect: boolean;
 }
-
-const SCALING_POPOVER_PROPS: Partial<IPopoverProps> = {minimal: true, position: "auto-end", popoverClassName: "colormap-select-popover"};
 
 @observer
 export class ColormapConfigComponent extends React.Component<ColormapConfigProps> {
@@ -47,7 +45,11 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
 
     handleHistogramChange = (value: boolean) => {
         if (value && !this.props.renderConfig.cubeHistogram) {
-            this.showCubeHistogramAlert = true;
+            if (this.props.warnOnCubeHistogram) {
+                this.showCubeHistogramAlert = true;
+            } else {
+                this.handleAlertConfirm();
+            }
         } else {
             this.props.renderConfig.setUseCubeHistogram(value);
         }
@@ -77,7 +79,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 </FormGroup>
                 }
                 <FormGroup label={"Scaling"} inline={true}>
-                    <ScalingComponent
+                    <ScalingSelectComponent
                         selectedItem={renderConfig.scaling}
                         onItemSelect={renderConfig.setScaling}
                     />

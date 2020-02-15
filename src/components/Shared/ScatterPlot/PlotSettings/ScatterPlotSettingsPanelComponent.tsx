@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {FormGroup, Switch, NumericInput} from "@blueprintjs/core";
-import {ColormapComponent} from "../../../RenderConfig/ColormapConfigComponent/ColormapComponent";
+import {ColormapComponent} from "../../ColormapComponent/ColormapComponent";
 import "./ScatterPlotSettingsPanelComponent.css";
 
 export class ScatterPlotSettingsPanelComponentProps {

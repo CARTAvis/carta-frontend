@@ -80,10 +80,12 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         let className = "floating-widget";
         let floatingContentClassName = "floating-content";
         let titleClass = this.props.isSelected ? "floating-header selected" : "floating-header";
+        let buttonClass = "floating-header-button";
 
         if (appStore.darkTheme) {
             className += " bp3-dark";
             titleClass += " bp3-dark";
+            buttonClass += " bp3-dark";
         }
 
         if (!this.props.showPinButton) {
@@ -124,21 +126,21 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                         {widgetConfig.title}
                     </div>
                     {this.props.showFloatingSettingsButton &&
-                    <div className="floating-header-button" onClick={() => appStore.widgetsStore.createFloatingSettingsWidget(widgetConfig.title, widgetConfig.id, widgetConfig.type)}>
+                    <div className={buttonClass} onClick={() => appStore.widgetsStore.createFloatingSettingsWidget(widgetConfig.title, widgetConfig.id, widgetConfig.type)}>
                         <Tooltip content="Settings" position={Position.BOTTOM_RIGHT}>
                             <Icon icon={"cog"}/>
                         </Tooltip>
                     </div>
                     }
                     {this.props.showPinButton &&
-                    <div className="floating-header-button" ref={ref => this.pinElementRef = ref} onClick={() => console.log("pin!")}>
+                    <div className={buttonClass} ref={ref => this.pinElementRef = ref} onClick={() => console.log("pin!")}>
                         <Tooltip content="Drag pin to dock this widget" position={Position.BOTTOM_RIGHT}>
                             <Icon icon={"pin"}/>
                         </Tooltip>
                     </div>
                     }
                     {widgetConfig.isCloseable &&
-                    <div onMouseDown={this.props.onClosed} className="floating-header-button">
+                    <div onMouseDown={this.props.onClosed} className={buttonClass}>
                         <Icon icon={"cross"}/>
                     </div>
                     }

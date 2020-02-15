@@ -1,14 +1,17 @@
-import {action, computed, observable, autorun} from "mobx";
+import {action, autorun, computed, observable, toJS} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {ASTSettingsString, PreferenceStore, OverlayStore, LogStore, RegionSetStore, RenderConfigStore, ContourConfigStore, ContourStore} from "stores";
-import {CursorInfo, Point2D, FrameView, SpectralInfo, ChannelInfo, CHANNEL_TYPES, ProtobufProcessing} from "models";
-import {clamp, frequencyStringFromVelocity, velocityStringFromFrequency, toFixed, hexStringToRgba} from "utilities";
+import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
+import {ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, Transform2D, ZoomPoint} from "models";
+import {clamp, findChannelType, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates, length2D, minMax2D, rotate2D, subtract2D, toFixed, trimFitsComment, velocityStringFromFrequency} from "utilities";
 import {BackendService} from "services";
+import {ControlMap} from "../models/ControlMap";
 
 export interface FrameInfo {
     fileId: number;
+    directory: string;
+    hdu: string;
     fileInfo: CARTA.FileInfo;
     fileInfoExtended: CARTA.FileInfoExtended;
     fileFeatureFlags: number;
@@ -49,45 +52,106 @@ export class FrameStore {
     @observable moving: boolean;
     @observable zooming: boolean;
     @observable regionSet: RegionSetStore;
+    @observable overlayBeamSettings: OverlayBeamStore;
+    @observable spatialReference: FrameStore;
+
+    @observable secondaryImages: FrameStore[];
 
     @computed get requiredFrameView(): FrameView {
-        // If there isn't a valid zoom, return a dummy view
-        if (this.zoomLevel <= 0 || !this.isRenderable) {
+        // use spatial reference frame to calculate frame view, if it exists
+        if (this.spatialReference) {
+            // Required view of reference frame
+            const refView = this.spatialReference.requiredFrameView;
+            // Get the position of the ref frame's view in the secondary frame's pixel space
+            const corners = [
+                this.spatialTransform.transformCoordinate({x: refView.xMin, y: refView.yMin}, false),
+                this.spatialTransform.transformCoordinate({x: refView.xMin, y: refView.yMax}, false),
+                this.spatialTransform.transformCoordinate({x: refView.xMax, y: refView.yMax}, false),
+                this.spatialTransform.transformCoordinate({x: refView.xMax, y: refView.yMin}, false)
+            ];
+
+            const {minPoint, maxPoint} = minMax2D(corners);
+            // Manually get adjusted zoom level and round to a power of 2
+            const mipAdjustment = (this.preference.lowBandwidthMode ? 2.0 : 1.0) / this.spatialTransform.scale;
+            const mipExact = Math.max(1.0, mipAdjustment / this.spatialReference.zoomLevel);
+            const mipLog2 = Math.log2(mipExact);
+            const mipLog2Rounded = Math.round(mipLog2);
+
             return {
-                xMin: 0,
-                xMax: 1,
-                yMin: 0,
-                yMax: 1,
-                mip: 1,
+                xMin: minPoint.x,
+                xMax: maxPoint.x,
+                yMin: minPoint.y,
+                yMax: maxPoint.y,
+                mip: Math.pow(2, mipLog2Rounded)
+            };
+        } else {
+            // If there isn't a valid zoom, return a dummy view
+            if (this.zoomLevel <= 0 || !this.isRenderable) {
+                return {
+                    xMin: 0,
+                    xMax: 1,
+                    yMin: 0,
+                    yMax: 1,
+                    mip: 1,
+                };
+            }
+
+            const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
+            // Required image dimensions
+            const imageWidth = pixelRatio * this.renderWidth / this.zoomLevel;
+            const imageHeight = pixelRatio * this.renderHeight / this.zoomLevel;
+
+            const mipAdjustment = (this.preference.lowBandwidthMode ? 2.0 : 1.0);
+            const mipExact = Math.max(1.0, mipAdjustment / this.zoomLevel);
+            const mipLog2 = Math.log2(mipExact);
+            const mipLog2Rounded = Math.round(mipLog2);
+            const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
+
+            return {
+                xMin: this.center.x - imageWidth / 2.0,
+                xMax: this.center.x + imageWidth / 2.0,
+                yMin: this.center.y - imageHeight / 2.0,
+                yMax: this.center.y + imageHeight / 2.0,
+                mip: mipRoundedPow2
             };
         }
+    }
 
-        const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
-        // Required image dimensions
-        const imageWidth = pixelRatio * this.renderWidth / this.zoomLevel;
-        const imageHeight = pixelRatio * this.renderHeight / this.zoomLevel;
+    @computed get spatialTransform() {
+        if (this.spatialReference && this.spatialTransformAST) {
+            const center = getTransformedCoordinates(this.spatialTransformAST, this.spatialReference.center, false);
+            return new Transform2D(this.spatialTransformAST, center);
+        }
+        return null;
+    }
 
-        const mipExact = Math.max(1.0, 1.0 / this.zoomLevel);
-        const mipLog2 = Math.log2(mipExact);
-        const mipLog2Rounded = Math.round(mipLog2);
-        const mipRoundedPow2 = Math.pow(2, mipLog2Rounded);
-        const frameView = {
-            xMin: this.center.x - imageWidth / 2.0,
-            xMax: this.center.x + imageWidth / 2.0,
-            yMin: this.center.y - imageHeight / 2.0,
-            yMax: this.center.y + imageHeight / 2.0,
-            mip: mipRoundedPow2
-        };
+    @computed get transformedWcsInfo() {
+        if (this.spatialTransform) {
+            let adjTranslation: Point2D = {
+                x: -this.spatialTransform.translation.x / this.spatialTransform.scale,
+                y: -this.spatialTransform.translation.y / this.spatialTransform.scale,
+            };
+            adjTranslation = rotate2D(adjTranslation, -this.spatialTransform.rotation);
+            if (this.cachedTransformedWcsInfo >= 0) {
+                AST.delete(this.cachedTransformedWcsInfo);
+            }
 
-        return frameView;
+            this.cachedTransformedWcsInfo = AST.createTransformedFrameset(this.wcsInfo,
+                adjTranslation.x, adjTranslation.y,
+                -this.spatialTransform.rotation,
+                this.spatialTransform.origin.x, this.spatialTransform.origin.y,
+                1.0 / this.spatialTransform.scale, 1.0 / this.spatialTransform.scale);
+            return this.cachedTransformedWcsInfo;
+        }
+        return null;
     }
 
     @computed get renderWidth() {
-        return this.overlayStore.viewWidth - this.overlayStore.padding.left - this.overlayStore.padding.right;
+        return this.overlayStore.renderWidth;
     }
 
     @computed get renderHeight() {
-        return this.overlayStore.viewHeight - this.overlayStore.padding.top - this.overlayStore.padding.bottom;
+        return this.overlayStore.renderHeight;
     }
 
     @computed get isRenderable() {
@@ -100,14 +164,14 @@ export class FrameStore {
         } else {
             const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.filter(entry => entry.name === "BUNIT");
             if (unitHeader.length) {
-                return unitHeader[0].value;
+                return trimFitsComment(unitHeader[0].value);
             } else {
                 return undefined;
             }
         }
     }
 
-    @computed get beamProperties(): { x: number, y: number, angle: number } {
+    @computed get beamProperties(): { x: number, y: number, angle: number, overlayBeamSettings: OverlayBeamStore } {
         const bMajHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("BMAJ") !== -1);
         const bMinHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("BMIN") !== -1);
         const bpaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("BPA") !== -1);
@@ -115,17 +179,18 @@ export class FrameStore {
         const deltaHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf("CDELT1") !== -1);
 
         if (bMajHeader && bMinHeader && bpaHeader && unitHeader && deltaHeader) {
-            let bMaj = parseFloat(bMajHeader.value);
-            let bMin = parseFloat(bMinHeader.value);
-            const bpa = parseFloat(bpaHeader.value);
+            let bMaj = getHeaderNumericValue(bMajHeader);
+            let bMin = getHeaderNumericValue(bMinHeader);
+            const bpa = getHeaderNumericValue(bpaHeader);
             const unit = unitHeader.value.trim();
-            const delta = parseFloat(deltaHeader.value);
+            const delta = getHeaderNumericValue(deltaHeader);
 
             if (isFinite(bMaj) && bMaj > 0 && isFinite(bMin) && bMin > 0 && isFinite(bpa) && isFinite(delta) && unit === "deg" || unit === "rad") {
                 return {
                     x: bMaj / Math.abs(delta),
                     y: bMin / Math.abs(delta),
-                    angle: bpa
+                    angle: bpa,
+                    overlayBeamSettings: this.overlayBeamSettings
                 };
             }
             return null;
@@ -139,7 +204,7 @@ export class FrameStore {
         }
         const restFreqHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`RESTFRQ`) !== -1);
         if (restFreqHeader) {
-            const restFreqVal = parseFloat(restFreqHeader.value);
+            const restFreqVal = getHeaderNumericValue(restFreqHeader);
             if (isFinite(restFreqVal)) {
                 return restFreqVal;
             }
@@ -174,7 +239,7 @@ export class FrameStore {
         };
 
         // By default, we try to use the WCS information to determine channel info.
-        const channelTypeInfo = FrameStore.FindChannelType(this.frameInfo.fileInfoExtended.headerEntries);
+        const channelTypeInfo = findChannelType(this.frameInfo.fileInfoExtended.headerEntries);
         if (channelTypeInfo) {
             const refPixHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRPIX${channelTypeInfo.dimension}`) !== -1);
             const refValHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CRVAL${channelTypeInfo.dimension}`) !== -1);
@@ -182,9 +247,9 @@ export class FrameStore {
             const unitHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`CUNIT${channelTypeInfo.dimension}`) !== -1);
 
             if (refPixHeader && refValHeader && deltaHeader) {
-                const refPix = parseFloat(refPixHeader.value);
-                const refVal = parseFloat(refValHeader.value);
-                const delta = parseFloat(deltaHeader.value);
+                const refPix = getHeaderNumericValue(refPixHeader);
+                const refVal = getHeaderNumericValue(refValHeader);
+                const delta = getHeaderNumericValue(deltaHeader);
                 const unit = unitHeader ? unitHeader.value.trim() : "";
                 if (isFinite(refPix) && isFinite(refVal) && isFinite(delta)) {
                     // Override unit if it's specified by a header
@@ -264,7 +329,7 @@ export class FrameStore {
                 let specSysValue = "";
                 const specSysHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`SPECSYS`) !== -1);
                 if (specSysHeader && specSysHeader.value) {
-                    specSysValue = specSysHeader.value;
+                    specSysValue = trimFitsComment(specSysHeader.value);
                 }
                 spectralInfo.channelType = channelInfo.channelType;
                 let spectralName;
@@ -342,6 +407,9 @@ export class FrameStore {
     private readonly preference: PreferenceStore;
     private readonly backendService: BackendService;
     private readonly contourContext: WebGLRenderingContext;
+    private readonly controlMaps: Map<FrameStore, ControlMap>;
+    private spatialTransformAST: number;
+    private cachedTransformedWcsInfo: number = -1;
     private zoomTimeoutHandler;
 
     private static readonly CursorInfoMaxPrecision = 25;
@@ -367,6 +435,9 @@ export class FrameStore {
         this.renderType = RasterRenderType.NONE;
         this.moving = false;
         this.zooming = false;
+        this.overlayBeamSettings = new OverlayBeamStore(preference);
+        this.spatialTransformAST = null;
+        this.controlMaps = new Map<FrameStore, ControlMap>();
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preference.astColor;
@@ -382,7 +453,7 @@ export class FrameStore {
             overlay.labels.setVisible(astLabelsVisible);
         }
 
-        this.regionSet = new RegionSetStore(this, preference.regionContainer, backendService);
+        this.regionSet = new RegionSetStore(this, preference, backendService);
         this.valid = true;
         this.currentFrameView = {
             xMin: 0,
@@ -398,7 +469,7 @@ export class FrameStore {
         this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
 
         // need initialized wcs to get correct cursor info
-        this.cursorInfo = this.getCursorInfoImageSpace({x: 0, y: 0});
+        this.cursorInfo = this.getCursorInfoImageSpace(this.center);
         this.cursorValue = 0;
         this.cursorFrozen = preference.isCursorFrozen;
 
@@ -461,12 +532,22 @@ export class FrameStore {
     };
 
     public getImagePos(canvasX: number, canvasY: number): Point2D {
-        const frameView = this.requiredFrameView;
-        return {
-            x: (canvasX / this.renderWidth) * (frameView.xMax - frameView.xMin) + frameView.xMin - 1,
-            // y coordinate is flipped in image space
-            y: (canvasY / this.renderHeight) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
-        };
+        if (this.spatialReference) {
+            const frameView = this.spatialReference.requiredFrameView;
+            const imagePosRefImage = {
+                x: (canvasX / this.spatialReference.renderWidth) * (frameView.xMax - frameView.xMin) + frameView.xMin - 1,
+                // y coordinate is flipped in image space
+                y: (canvasY / this.spatialReference.renderHeight) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
+            };
+            return this.spatialTransform.transformCoordinate(imagePosRefImage, false);
+        } else {
+            const frameView = this.requiredFrameView;
+            return {
+                x: (canvasX / this.renderWidth) * (frameView.xMax - frameView.xMin) + frameView.xMin - 1,
+                // y coordinate is flipped in image space
+                y: (canvasY / this.renderHeight) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
+            };
+        }
     }
 
     public getCursorInfoImageSpace(cursorPosImageSpace: Point2D) {
@@ -477,7 +558,7 @@ export class FrameStore {
             const offsetBlock = [[0, 0], [1, 1], [-1, -1]];
 
             // Shift image space coordinates to 1-indexed when passing to AST
-            const cursorNeighbourhood = offsetBlock.map((offset) => AST.pixToWCS(this.wcsInfo, cursorPosImageSpace.x + 1 + offset[0], cursorPosImageSpace.y + 1 + offset[1]));
+            const cursorNeighbourhood = offsetBlock.map((offset) => AST.transformPoint(this.wcsInfo, cursorPosImageSpace.x + 1 + offset[0], cursorPosImageSpace.y + 1 + offset[1]));
 
             cursorPosWCS = cursorNeighbourhood[0];
 
@@ -524,6 +605,29 @@ export class FrameStore {
     public getCursorInfoCanvasSpace(cursorPosCanvasSpace: Point2D): CursorInfo {
         const cursorPosImageSpace = this.getImagePos(cursorPosCanvasSpace.x, cursorPosCanvasSpace.y);
         return this.getCursorInfoImageSpace(cursorPosImageSpace);
+    }
+
+    public getControlMap(frame: FrameStore) {
+        let controlMap = this.controlMaps.get(frame);
+        if (!controlMap) {
+            const tStart = performance.now();
+            controlMap = new ControlMap(this, frame, -1, this.preference.contourControlMapWidth, this.preference.contourControlMapWidth);
+            this.controlMaps.set(frame, controlMap);
+            const tEnd = performance.now();
+            const dt = tEnd - tStart;
+            console.log(`Created ${this.preference.contourControlMapWidth}x${this.preference.contourControlMapWidth} transform grid for ${this.frameInfo.fileId} -> ${frame.frameInfo.fileId} in ${dt} ms`);
+        }
+
+        return controlMap;
+    }
+
+    public removeControlMap(frame: FrameStore) {
+        const controlMap = this.controlMaps.get(frame);
+        if (controlMap && this.contourContext && controlMap.hasTextureForContext(this.contourContext)) {
+            const texture = controlMap.getTextureX(this.contourContext);
+            this.contourContext.deleteTexture(texture);
+        }
+        this.controlMaps.delete(frame);
     }
 
     @action updateFromRasterData(rasterImageData: CARTA.RasterImageData) {
@@ -641,14 +745,25 @@ export class FrameStore {
         this.setChannels(newChannel, newStokes);
     }
 
-    @action setZoom(zoom: number) {
-        this.zoomLevel = zoom;
-        this.replaceZoomTimeoutHandler();
-        this.zooming = true;
+    @action setZoom(zoom: number, absolute: boolean = false) {
+        if (this.spatialReference) {
+            // Adjust zoom by scaling factor if zoom level is not absolute
+            const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
+            this.spatialReference.setZoom(adjustedZoom);
+        } else {
+            this.zoomLevel = zoom;
+            this.replaceZoomTimeoutHandler();
+            this.zooming = true;
+        }
     }
 
     @action setCenter(x: number, y: number) {
-        this.center = {x, y};
+        if (this.spatialReference) {
+            const centerPointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
+            this.spatialReference.setCenter(centerPointRefImage.x, centerPointRefImage.y);
+        } else {
+            this.center = {x, y};
+        }
     }
 
     @action setCursorInfo(cursorInfo: CursorInfo) {
@@ -662,13 +777,22 @@ export class FrameStore {
     }
 
     // Sets a new zoom level and pans to keep the given point fixed
-    @action zoomToPoint(x: number, y: number, zoom: number) {
-        const newCenter = {
-            x: x + this.zoomLevel / zoom * (this.center.x - x),
-            y: y + this.zoomLevel / zoom * (this.center.y - y)
-        };
-        this.setZoom(zoom);
-        this.center = newCenter;
+    @action zoomToPoint(x: number, y: number, zoom: number, absolute: boolean = false) {
+        if (this.spatialReference) {
+            // Adjust zoom by scaling factor if zoom level is not absolute
+            const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
+            const pointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
+            this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
+        } else {
+            if (this.preference.zoomPoint === ZoomPoint.CURSOR) {
+                const newCenter = {
+                    x: x + this.zoomLevel / zoom * (this.center.x - x),
+                    y: y + this.zoomLevel / zoom * (this.center.y - y)
+                };
+                this.center = newCenter;
+            }
+            this.setZoom(zoom);
+        }
     }
 
     private replaceZoomTimeoutHandler = () => {
@@ -687,8 +811,25 @@ export class FrameStore {
     };
 
     @action fitZoom = () => {
-        this.zoomLevel = this.zoomLevelForFit;
-        this.initCenter();
+        if (this.spatialReference) {
+            // Calculate bounding box for transformed image
+            const corners = [
+                this.spatialTransform.transformCoordinate({x: 0, y: 0}, true),
+                this.spatialTransform.transformCoordinate({x: 0, y: this.frameInfo.fileInfoExtended.height}, true),
+                this.spatialTransform.transformCoordinate({x: this.frameInfo.fileInfoExtended.width, y: this.frameInfo.fileInfoExtended.height}, true),
+                this.spatialTransform.transformCoordinate({x: this.frameInfo.fileInfoExtended.width, y: 0}, true)
+            ];
+            const {minPoint, maxPoint} = minMax2D(corners);
+            const rangeX = maxPoint.x - minPoint.x;
+            const rangeY = maxPoint.y - minPoint.y;
+            const zoomX = this.spatialReference.renderWidth / rangeX;
+            const zoomY = this.spatialReference.renderHeight / rangeY;
+            this.spatialReference.setZoom(Math.min(zoomX, zoomY), true);
+            this.spatialReference.setCenter((maxPoint.x + minPoint.x) / 2.0 + 0.5, (maxPoint.y + minPoint.y) / 2.0 + 0.5);
+        } else {
+            this.zoomLevel = this.zoomLevelForFit;
+            this.initCenter();
+        }
     };
 
     @action setAnimationRange = (range: NumberRange) => {
@@ -712,20 +853,14 @@ export class FrameStore {
             return;
         }
 
-        // TODO: This should be defined by the contour config widget
-        this.contourConfig.setBounds(this.renderConfig.scaleMinVal, this.renderConfig.scaleMaxVal);
-        this.contourConfig.setNumComputedLevels(this.preference.contourNumLevels);
-        this.contourConfig.setColor(hexStringToRgba(this.preference.contourColor));
-        this.contourConfig.setColormap(this.preference.colormap);
-        this.contourConfig.setColormapEnabled(this.preference.contourColormapEnabled);
         this.contourConfig.setEnabled(true);
 
         // TODO: Allow a different reference frame
         const contourParameters: CARTA.ISetContourParameters = {
             fileId: this.frameInfo.fileId,
             referenceFileId: this.frameInfo.fileId,
-            smoothingMode: this.preference.contourSmoothingMode,
-            smoothingFactor: this.preference.contourSmoothingFactor,
+            smoothingMode: this.contourConfig.smoothingMode,
+            smoothingFactor: this.contourConfig.smoothingFactor,
             levels: this.contourConfig.levels,
             imageBounds: {
                 xMin: 0,
@@ -755,35 +890,66 @@ export class FrameStore {
         this.contourConfig.setEnabled(false);
     };
 
-    // Tests a list of headers for valid channel information in either 3rd or 4th axis
-    private static FindChannelType(entries: CARTA.IHeaderEntry[]) {
-        if (!entries || !entries.length) {
-            return undefined;
+    // Spatial WCS Matching
+    @action setSpatialReference = (frame: FrameStore) => {
+        if (frame === this) {
+            this.clearSpatialReference();
+            console.log(`Skipping spatial self-reference`);
+        }
+        console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
+        this.spatialReference = frame;
+        this.spatialReference.addSecondaryImage(this);
+
+        const copySrc = AST.copy(this.wcsInfo);
+        const copyDest = AST.copy(frame.wcsInfo);
+        AST.invert(copySrc);
+        AST.invert(copyDest);
+        this.spatialTransformAST = AST.convert(copySrc, copyDest, "");
+        AST.delete(copySrc);
+        AST.delete(copyDest);
+        if (!this.spatialTransformAST) {
+            console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
+        }
+    };
+
+    @action clearSpatialReference = () => {
+        // Adjust center and zoom based on existing spatial reference
+        if (this.spatialReference) {
+            this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
+            this.zoomLevel = this.spatialReference.zoomLevel * this.spatialTransform.scale;
+            this.spatialReference.removeSecondaryImage(this);
+            this.spatialReference = null;
         }
 
-        const typeHeader3 = entries.find(entry => entry.name.includes("CTYPE3"));
-        const typeHeader4 = entries.find(entry => entry.name.includes("CTYPE4"));
-        if (!typeHeader3 && !typeHeader4) {
-            return undefined;
+        if (this.spatialTransformAST) {
+            AST.delete(this.spatialTransformAST);
         }
-
-        // Test each header entry to see if it has a valid channel type
-        if (typeHeader3) {
-            const headerVal = typeHeader3.value.trim().toUpperCase();
-            const channelType = CHANNEL_TYPES.find(type => headerVal.indexOf(type.code) !== -1);
-            if (channelType) {
-                return {dimension: 3, type: {name: channelType.name, code: channelType.code, unit: channelType.unit}};
-            }
+        this.spatialTransformAST = null;
+        if (this.contourContext) {
+            this.controlMaps.forEach(controlMap => {
+                if (controlMap.hasTextureForContext(this.contourContext)) {
+                    const texture = controlMap.getTextureX(this.contourContext);
+                    this.contourContext.deleteTexture(texture);
+                }
+            });
         }
+        this.controlMaps.forEach((controlMap, frame) => {
+            this.removeControlMap(frame);
+        });
+        this.controlMaps.clear();
+    };
 
-        if (typeHeader4) {
-            const headerVal = typeHeader4.value.trim().toUpperCase();
-            const channelType = CHANNEL_TYPES.find(type => headerVal.indexOf(type.code) !== -1);
-            if (channelType) {
-                return {dimension: 4, type: {name: channelType.name, code: channelType.code, unit: channelType.unit}};
-            }
+    @action addSecondaryImage = (frame: FrameStore) => {
+        if (!this.secondaryImages) {
+            this.secondaryImages = [frame];
+        } else if (!this.secondaryImages.find(f => f.frameInfo.fileId === frame.frameInfo.fileId)) {
+            this.secondaryImages.push(frame);
         }
+    };
 
-        return undefined;
-    }
+    @action removeSecondaryImage = (frame: FrameStore) => {
+        if (this.secondaryImages) {
+            this.secondaryImages = this.secondaryImages.filter(f => f.frameInfo.fileId !== frame.frameInfo.fileId);
+        }
+    };
 }

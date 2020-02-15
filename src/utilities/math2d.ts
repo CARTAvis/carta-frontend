@@ -50,6 +50,24 @@ export function average2D(points: Point2D[]) {
     return scale2D(sum, 1.0 / points.length);
 }
 
+export function rotate2D(point: Point2D, theta: number) {
+    const sinTheta = Math.sin(theta);
+    const cosTheta = Math.cos(theta);
+    return {x: cosTheta * point.x - sinTheta * point.y, y: sinTheta * point.x + cosTheta * point.y};
+}
+
+export function rotateAboutPoint2D(point: Point2D, origin: Point2D, theta: number) {
+    return add2D(rotate2D(subtract2D(point, origin), theta), origin);
+}
+
+export function scaleAboutPoint2D(point: Point2D, origin: Point2D, scale: number) {
+    return add2D(scale2D(subtract2D(point, origin), scale), origin);
+}
+
+export function scaleAndRotateAboutPoint2D(point: Point2D, origin: Point2D, scale: number, theta: number) {
+    return add2D(scale2D(rotate2D(subtract2D(point, origin), theta), scale), origin);
+}
+
 export function minMax2D(points: Point2D[]): { maxPoint: Point2D, minPoint: Point2D } {
     let maxPoint = {x: -Number.MAX_VALUE, y: -Number.MAX_VALUE};
     let minPoint = {x: Number.MAX_VALUE, y: Number.MAX_VALUE};
@@ -184,7 +202,7 @@ export function simplePolygonPointTest(points: Point2D[], pointIndex: number) {
 type Point3D = { x: number, y: number, z?: number };
 
 // get distance between two points
-export function pointsDistance(p1: Point3D, p2: Point3D) {
+export function pointDistanceSquared(p1: Point3D, p2: Point3D) {
     const distance = subtract2D(p1, p2);
     return distance.x * distance.x + distance.y * distance.y;
 }
@@ -195,7 +213,7 @@ export function closestPointIndexToCursor(cursor: Point3D, points: readonly Poin
     let minIndex = 0;
     for (let index = 0; index < points.length; index++) {
         const point = points[index];
-        const distance = pointsDistance(cursor, point);
+        const distance = pointDistanceSquared(cursor, point);
         if (distance < minDistanceSquared) {
             minDistanceSquared = distance;
             minIndex = index;

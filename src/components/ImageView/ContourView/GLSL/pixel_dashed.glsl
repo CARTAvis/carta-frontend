@@ -11,6 +11,8 @@ uniform sampler2D uCmapTexture;
 uniform float uCmapValue;
 uniform int uNumCmaps;
 uniform int uCmapIndex;
+uniform float uBias;
+uniform float uContrast;
 
 void main(void) {
     float dashStrength;
@@ -18,6 +20,9 @@ void main(void) {
     if (uDashLength > 1e-3) {
         float dashRepeatLength = 2.0 * uDashLength;
         dashStrength = mod(vLinePosition, dashRepeatLength) / dashRepeatLength <= 0.75 ? 1.0: 0.0;
+        if (dashStrength == 0.0) {
+            discard;
+        }
     }
     else {
         dashStrength = 1.0;
@@ -25,8 +30,12 @@ void main(void) {
 
     vec4 color;
     if (uCmapEnabled > 0) {
+        // bias mod
+        float x = clamp(uCmapValue - uBias, 0.0, 1.0);
+        // contrast mod
+        x = clamp((x - 0.5) * uContrast + 0.5, 0.0, 1.0);
         float cmapYVal = (float(uCmapIndex) + 0.5) / float(uNumCmaps);
-        vec2 cmapCoords = vec2(uCmapValue, cmapYVal);
+        vec2 cmapCoords = vec2(x, cmapYVal);
         color = texture2D(uCmapTexture, cmapCoords);
     } else {
         color = uLineColor;

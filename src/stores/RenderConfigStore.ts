@@ -1,7 +1,7 @@
 import {action, computed, observable} from "mobx";
 import {PreferenceStore} from "stores";
 import {CARTA} from "carta-protobuf";
-import {clamp} from "utilities";
+import {clamp, getPercentiles} from "utilities";
 
 export enum FrameScaling {
     LINEAR = 0,
@@ -65,11 +65,13 @@ export class RenderConfigStore {
     @observable channelHistogram: CARTA.IHistogram;
     @observable cubeHistogram: CARTA.IHistogram;
     @observable useCubeHistogram: boolean;
+    @observable useCubeHistogramContours: boolean;
     @observable cubeHistogramProgress: number;
     @observable selectedPercentile: number[];
     @observable stokes: number;
     @observable scaleMin: number[];
     @observable scaleMax: number[];
+    @observable visible: boolean;
 
     constructor(readonly preference: PreferenceStore) {
         const percentile = preference.percentile;
@@ -85,6 +87,7 @@ export class RenderConfigStore {
         this.stokes = 0;
         this.scaleMin = [0, 0, 0, 0];
         this.scaleMax = [1, 1, 1, 1];
+        this.visible = true;
     }
 
     public static IsScalingValid(scaling: FrameScaling): boolean {
@@ -128,6 +131,14 @@ export class RenderConfigStore {
         }
     }
 
+    @computed get contourHistogram() {
+        if (this.useCubeHistogramContours && this.cubeHistogram) {
+            return this.cubeHistogram;
+        } else {
+            return this.channelHistogram;
+        }
+    }
+
     @computed get scaleMinVal() {
         return this.scaleMin[this.stokes];
     }
@@ -151,6 +162,10 @@ export class RenderConfigStore {
                 this.setPercentileRank(this.selectedPercentile[this.stokes]);
             }
         }
+    };
+
+    @action setUseCubeHistogramContours = (val: boolean) => {
+        this.useCubeHistogramContours = val;
     };
 
     @computed get histogramMin() {
@@ -181,7 +196,7 @@ export class RenderConfigStore {
         }
 
         const rankComplement = 100 - rank;
-        const percentiles = this.getPercentiles([rankComplement, rank]);
+        const percentiles = getPercentiles(this.histogram, [rankComplement, rank]);
         if (percentiles.length === 2) {
             this.scaleMin[this.stokes] = percentiles[0];
             this.scaleMax[this.stokes] = percentiles[1];
@@ -241,42 +256,11 @@ export class RenderConfigStore {
         this.inverted = inverted;
     };
 
-    private getPercentiles(ranks: number[]): number[] {
-        if (!ranks || !ranks.length || !this.histogram || !this.histogram.bins.length) {
-            return [];
-        }
+    @action setVisible = (visible: boolean) => {
+        this.visible = visible;
+    };
 
-        const minVal = this.histogram.firstBinCenter - this.histogram.binWidth / 2.0;
-        const dx = this.histogram.binWidth;
-        const vals = this.histogram.bins;
-        let remainingRanks = ranks.slice();
-        let cumulativeSum = 0;
-
-        let totalSum = 0;
-        for (let i = 0; i < vals.length; i++) {
-            totalSum += vals[i];
-        }
-
-        if (totalSum === 0) {
-            return [];
-        }
-
-        let calculatedPercentiles = [];
-
-        for (let i = 0; i < vals.length && remainingRanks.length; i++) {
-            const currentFraction = cumulativeSum / totalSum;
-            const nextFraction = (cumulativeSum + vals[i]) / totalSum;
-            let nextRank = remainingRanks[0] / 100.0;
-            while (nextFraction >= nextRank && remainingRanks.length) {
-                // Assumes a locally uniform distribution between bins
-                const portion = (nextRank - currentFraction) / (nextFraction - currentFraction);
-                calculatedPercentiles.push(minVal + dx * (i + portion));
-                // Move to next rank
-                remainingRanks.shift();
-                nextRank = remainingRanks[0] / 100.0;
-            }
-            cumulativeSum += vals[i];
-        }
-        return calculatedPercentiles;
-    }
+    @action toggleVisibility = () => {
+        this.visible = !this.visible;
+    };
 }

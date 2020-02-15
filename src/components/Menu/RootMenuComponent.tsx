@@ -5,7 +5,7 @@ import {Alert, Icon, Menu, Popover, Position, Tooltip, Tag} from "@blueprintjs/c
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {exportImage} from "components";
 import {PresetLayout} from "models";
-import {AppStore, BrowserMode} from "stores";
+import {AppStore, BrowserMode, PreferenceKeys} from "stores";
 import {ConnectionStatus} from "services";
 import {toFixed} from "utilities";
 import "./RootMenuComponent.css";
@@ -39,6 +39,12 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}
                 />
+                <Menu.Item
+                    text="Close image"
+                    label={`${modString}W`}
+                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
+                    onClick={() => appStore.closeCurrentFile(true)}
+                />
                 <Menu.Divider/>
                 <Menu.Item
                     text="Import regions"
@@ -57,7 +63,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     disabled={!appStore.activeFrame}
                     onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
                 />
-                <Menu.Item text="Preferences" onClick={appStore.showPreferenceDialog}/>
+                <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}/>
             </Menu>
         );
 
@@ -79,7 +85,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     <Menu.Item text="Dark" icon={"moon"} onClick={appStore.setDarkTheme}/>
                 </Menu.Item>
                 <Menu.Item text="Overlay" icon={"widget"}>
-                    <Menu.Item text="Customize..." icon={"settings"} onClick={appStore.overlayStore.showOverlaySettings}/>
+                    <Menu.Item text="Customize..." icon={"settings"} onClick={appStore.dialogStore.showOverlaySettings}/>
                 </Menu.Item>
                 {layerItems.length > 0 &&
                 <Menu.Item text="Frames" icon={"layers"}>
@@ -89,11 +95,23 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     <Menu.Item text="Next frame" icon={"chevron-forward"} disabled={layerItems.length < 2} onClick={appStore.nextFrame}/>
                 </Menu.Item>
                 }
+                <Menu.Item
+                    text="File info"
+                    icon={"info-sign"}
+                    disabled={!appStore.activeFrame}
+                    onClick={appStore.dialogStore.showFileInfoDialog}
+                />
+                <Menu.Item
+                    text="Contours"
+                    icon={"heatmap"}
+                    onClick={appStore.dialogStore.showContourDialog}
+                />
             </Menu>
         );
 
         const presetLayouts: string[] = PresetLayout.PRESETS;
-        const userLayouts: string[] = appStore.layoutStore.userLayouts;
+        const layoutStore = appStore.layoutStore;
+        const userLayouts: string[] = layoutStore.userLayouts;
         const stokesIcon = (
             <Tag icon={"pulse"} className={"stokes-icon-button"}>
                 &nbsp;s
@@ -101,7 +119,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         );
         const layoutMenu = (
             <Menu className="layout-menu">
-                <Menu.Item text="Layouts" icon={"layout-grid"}>
+                <Menu.Item text="Layouts" icon={"layout-grid"} disabled={layoutStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}>
                     <Menu.Item text="Existing Layouts" disabled={!presetLayouts && !userLayouts}>
                         <Menu.Item text="Presets" disabled={!presetLayouts || presetLayouts.length <= 0}>
                             {presetLayouts && presetLayouts.length > 0 && presetLayouts.map((value) =>
@@ -122,7 +140,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                             />
                         )}
                     </Menu.Item>
-                    <Menu.Item text="Save Layout" onClick={appStore.showSaveLayoutDialog}/>
+                    <Menu.Item text="Save Layout" onClick={appStore.dialogStore.showSaveLayoutDialog}/>
                     <Menu.Item text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
                         {userLayouts && userLayouts.length > 0 && userLayouts.map((value) =>
                             <Menu.Item
@@ -132,7 +150,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                                 onClick={() => {
                                     appStore.layoutStore.deleteLayout(value);
                                     if (value === appStore.preferenceStore.layout) {
-                                        appStore.preferenceStore.setLayout(PresetLayout.DEFAULT);
+                                        appStore.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
                                     }
                                 }}
                             />
@@ -158,32 +176,32 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         const helpMenu = (
             <Menu>
                 <Menu.Item text="Online Manual" icon={"help"} onClick={this.handleDocumentationClicked}/>
-                <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={appStore.showHotkeyDialog}/>
-                <Menu.Item text="About" icon={"info-sign"} onClick={appStore.showAboutDialog}/>
+                <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog}/>
+                <Menu.Item text="About" icon={"info-sign"} onClick={appStore.dialogStore.showAboutDialog}/>
             </Menu>
         );
 
         let connectivityClass = "connectivity-icon";
-        let tooltip = "";
+        let connectivityTooltip;
         const latencyString = isFinite(appStore.backendService.endToEndPing) ? `${toFixed(appStore.backendService.endToEndPing, 1)} ms` : "Unknown";
         const userString = appStore.username ? ` as ${appStore.username}` : "";
         switch (connectionStatus) {
             case ConnectionStatus.PENDING:
-                tooltip = `Connecting to server${userString}`;
+                connectivityTooltip = <span>Connecting to server${userString}</span>;
                 connectivityClass += " warning";
                 break;
             case ConnectionStatus.ACTIVE:
                 if (appStore.backendService.connectionDropped) {
-                    tooltip = `Reconnected to server${userString} after disconnect. Some errors may occur. Latency: ${latencyString}`;
+                    connectivityTooltip = <span>Reconnected to server {userString} after disconnect. Some errors may occur<br/><i><small>Latency: {latencyString}</small></i></span>;
                     connectivityClass += " warning";
                 } else {
-                    tooltip = `Connected to server${userString}. Latency: ${latencyString}`;
+                    connectivityTooltip = <span>Connected to server {userString}<br/><i><small>Latency: {latencyString}</small></i></span>;
                     connectivityClass += " online";
                 }
                 break;
             case ConnectionStatus.CLOSED:
             default:
-                tooltip = `Disconnected from server. Latency: ${latencyString}`;
+                connectivityTooltip = <span>Disconnected from server</span>;
                 connectivityClass += " offline";
                 break;
         }
@@ -247,7 +265,12 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
                 {loadingIndicator}
-                <Tooltip content={tooltip}>
+                {appStore.preferenceStore.lowBandwidthMode &&
+                <Tooltip content={<span>CARTA is running in low bandwidth mode<br/><i><small>Image resolution and cursor responsiveness will be reduced</small></i></span>}>
+                    <Icon icon={"feed"} className="connectivity-icon warning"/>
+                </Tooltip>
+                }
+                <Tooltip content={connectivityTooltip}>
                     <Icon icon={"symbol-circle"} className={connectivityClass}/>
                 </Tooltip>
             </div>
