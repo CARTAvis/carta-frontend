@@ -48,7 +48,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     @computed get profileStore(): SpectralProfileStore {
         if (this.props.appStore && this.props.appStore.activeFrame) {
             let fileId = this.props.appStore.activeFrame.frameInfo.fileId;
-            const regionId = this.widgetStore.regionIdMap.get(fileId) || 0;
+            const regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
             const frameMap = this.props.appStore.spectralProfiles.get(fileId);
             if (frameMap) {
                 return frameMap.get(regionId);
@@ -65,7 +65,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         const fileId = frame.frameInfo.fileId;
         let coordinateData: ProcessedSpectralProfile;
-        let regionId = this.widgetStore.regionIdMap.get(fileId) || 0;
+        let regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
         if (frame.regionSet) {
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (region && this.profileStore) {
@@ -141,23 +141,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    @computed get matchesSelectedRegion() {
-        const appStore = this.props.appStore;
-        const frame = appStore.activeFrame;
-        if (frame) {
-            const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
-            if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
-                return widgetRegion === frame.regionSet.selectedRegion.regionId;
-            }
-        }
-        return false;
-    }
-
     @computed get exportHeaders(): string[] {
         let headerString = [];
         const frame = this.props.appStore.activeFrame;
         if (frame && frame.frameInfo && frame.regionSet) {
-            const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
+            const regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
 
             // statistic type, ignore when region == cursor
@@ -187,9 +175,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
         // Update widget title when region or coordinate changes
         autorun(() => {
-            if (this.props.appStore.selectedRegion || !this.props.appStore.selectedRegion) {
-                this.widgetStore.syncRegionIdIfActive(0);
-            }
             if (this.widgetStore) {
                 const coordinate = this.widgetStore.coordinate;
                 const appStore = this.props.appStore;
@@ -206,9 +191,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     } else {
                         coordinateString = `Z Profile`;
                     }
-                    const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
+                    const regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
+                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Selected)" : "";
                     this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString} ${selectedString} ${progressString}`);
                 }
                 if (currentData) {
@@ -459,7 +444,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         let className = "spectral-profiler-widget";
-        if (this.matchesSelectedRegion) {
+        if (this.widgetStore.matchesSelectedRegion) {
             className += " linked-to-selected";
         }
 

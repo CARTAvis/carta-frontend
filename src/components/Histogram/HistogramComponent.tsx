@@ -50,7 +50,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
         if (appStore.activeFrame) {
             let fileId = appStore.activeFrame.frameInfo.fileId;
-            let regionId = this.widgetStore.regionIdMap.get(fileId) || -1;
+            let regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
 
             // // Image histograms handled slightly differently
             // if (regionId === -1) {
@@ -107,25 +107,13 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    @computed get matchesSelectedRegion() {
-        const appStore = this.props.appStore;
-        const frame = appStore.activeFrame;
-        if (frame) {
-            const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
-            if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
-                return widgetRegion === frame.regionSet.selectedRegion.regionId;
-            }
-        }
-        return false;
-    }
-
     @computed get exportHeaders(): string[] {
         let headerString = [];
 
         // region info
         const frame = this.props.appStore.activeFrame;
         if (frame && frame.frameInfo && frame.regionSet) {
-            const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
+            const regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (region) {
                 headerString.push(region.regionProperties);
@@ -151,12 +139,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         // Update widget title when region or coordinate changes
         autorun(() => {
             const appStore = this.props.appStore;
-            if (appStore.selectedRegion || !appStore.selectedRegion) {
-                this.widgetStore.syncRegionIdIfActive(-1);
-            }
             if (this.widgetStore && appStore.activeFrame) {
                 let regionString = "Unknown";
-                const regionId = this.widgetStore.regionIdMap.get(appStore.activeFrame.frameInfo.fileId) || -1;
+                const regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
 
                 if (regionId === -1) {
                     regionString = "Image";
@@ -166,7 +151,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                         regionString = region.nameString;
                     }
                 }
-                const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
+                const selectedString = this.widgetStore.matchesSelectedRegion ? "(Selected)" : "";
                 appStore.widgetsStore.setWidgetTitle(this.props.id, `Histogram: ${regionString} ${selectedString}`);
             } else {
                 appStore.widgetsStore.setWidgetTitle(this.props.id, `Histogram`);
@@ -279,7 +264,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         }
 
         let className = "histogram-widget";
-        if (this.matchesSelectedRegion) {
+        if (this.widgetStore.matchesSelectedRegion) {
             className += " linked-to-selected";
         }
 

@@ -4,7 +4,7 @@ import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
-import {RegionSelectorComponent, RegionSelectorType} from "components";
+import {RegionSelectorComponent} from "components";
 import "./SpectralProfilerToolbarComponent.css";
 
 @observer
@@ -27,7 +27,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
         let regionId = 0;
         if (appStore.activeFrame && appStore.activeFrame.regionSet) {
             let fileId = appStore.activeFrame.frameInfo.fileId;
-            regionId = widgetStore.regionIdMap.get(fileId) || 0;
+            regionId = widgetStore.regionIdAdjustedWithSelectedRegion;
 
             const selectedRegion = appStore.activeFrame.regionSet.regions.find(r => r.regionId === regionId);
             enableStatsSelect = (selectedRegion && selectedRegion.isClosedRegion);
@@ -55,7 +55,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
 
         return (
             <div className="spectral-profiler-toolbar">
-                <RegionSelectorComponent widgetStore={widgetStore} appStore={appStore} type={RegionSelectorType.CLOSED_AND_POINT_REGIONS}/>
+                <RegionSelectorComponent widgetStore={widgetStore} appStore={appStore}/>
                 <FormGroup label={"Statistic"} inline={true} disabled={!enableStatsSelect}>
                     <HTMLSelect value={enableStatsSelect ? widgetStore.statsType : CARTA.StatsType.Mean} options={profileStatsOptions} onChange={this.handleStatsChanged} disabled={!enableStatsSelect}/>
                 </FormGroup>

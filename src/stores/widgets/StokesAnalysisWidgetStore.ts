@@ -4,7 +4,7 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, ScatterSettings} from "components/Shared";
 import {AppStore} from "../AppStore";
-import {RegionWidgetStore} from "./RegionWidgetStore";
+import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {FrameStore} from "stores";
 import {getColorsForValues, isColorValid} from "utilities";
 
@@ -91,7 +91,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         : Map<number, Map<number, CARTA.SetSpectralRequirements>> {
         widgetsMap.forEach(widgetStore => {
             const fileId = frame.frameInfo.fileId;
-            const regionId = widgetStore.regionIdMap.get(fileId) || 0;
+            const regionId = widgetStore.regionIdAdjustedWithSelectedRegion;
             const coordinates = StokesAnalysisWidgetStore.requiredCoordinate(widgetStore);
             let statsType = widgetStore.statsType;
 
@@ -206,7 +206,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     };
 
     constructor(appStore: AppStore) {
-        super(appStore);
+        super(appStore, RegionsType.CLOSED_AND_POINT);
         this.colorMap = DEFAULTS.colorMap;
         this.colorPixel = getColorsForValues(DEFAULTS.colorMap);
         this.statsType = CARTA.StatsType.Mean;

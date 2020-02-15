@@ -3,7 +3,7 @@ import * as React from "react";
 import {FormGroup, Switch} from "@blueprintjs/core";
 import {AppStore} from "stores";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
-import {RegionSelectorComponent, RegionSelectorType} from "components";
+import {RegionSelectorComponent} from "components";
 import "./StokesAnalysisToolbarComponent.css";
 
 @observer
@@ -24,7 +24,7 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
 
         return (
             <div className="stokes-analysis-toolbar">
-                <RegionSelectorComponent widgetStore={this.props.widgetStore} appStore={this.props.appStore} type={RegionSelectorType.CLOSED_AND_POINT_REGIONS}/>
+                <RegionSelectorComponent widgetStore={this.props.widgetStore} appStore={this.props.appStore}/>
                 <FormGroup label={"Frac. Pol."} inline={true} disabled={!enableFractionalPol}>
                     <Switch checked={widgetStore.fractionalPolVisible} onChange={this.handleFractionalPolChanged} disabled={!enableFractionalPol}/>
                 </FormGroup>

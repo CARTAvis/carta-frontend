@@ -7,7 +7,7 @@ import {CARTA} from "carta-protobuf";
 import {WidgetConfig, WidgetProps} from "stores";
 import {StatsWidgetStore} from "stores/widgets";
 import {toExponential} from "utilities";
-import {RegionSelectorComponent, RegionSelectorType} from "components";
+import {RegionSelectorComponent} from "components";
 import "./StatsComponent.css";
 
 @observer
@@ -45,7 +45,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
         if (appStore.activeFrame) {
             let fileId = appStore.activeFrame.frameInfo.fileId;
-            let regionId = this.widgetStore.regionIdMap.get(fileId) || -1;
+            let regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
 
             const frameMap = appStore.regionStats.get(fileId);
             if (!frameMap) {
@@ -54,18 +54,6 @@ export class StatsComponent extends React.Component<WidgetProps> {
             return frameMap.get(regionId);
         }
         return null;
-    }
-
-    @computed get matchesSelectedRegion() {
-        const appStore = this.props.appStore;
-        const frame = appStore.activeFrame;
-        if (frame) {
-            const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
-            if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
-                return widgetRegion === frame.regionSet.selectedRegion.regionId;
-            }
-        }
-        return false;
     }
 
     private static readonly STATS_NAME_MAP = new Map<CARTA.StatsType, string>([
@@ -98,14 +86,11 @@ export class StatsComponent extends React.Component<WidgetProps> {
         // Update widget title when region or coordinate changes
         autorun(() => {
             const appStore = this.props.appStore;
-            if (appStore.selectedRegion || !appStore.selectedRegion) {
-                this.widgetStore.syncRegionIdIfActive(-1);
-            }
             if (this.widgetStore && appStore.activeFrame) {
                 let regionString = "Unknown";
 
-                const regionId = this.widgetStore.regionIdMap.get(appStore.activeFrame.frameInfo.fileId) || -1;
-                const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
+                const regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
+                const selectedString = this.widgetStore.matchesSelectedRegion ? "(Selected)" : "";
                 if (regionId === -1) {
                     regionString = "Image";
                 } else if (appStore.activeFrame && appStore.activeFrame.regionSet) {
@@ -185,7 +170,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         }
 
         let className = "stats-widget";
-        if (this.matchesSelectedRegion) {
+        if (this.widgetStore.matchesSelectedRegion) {
             className += " linked-to-selected";
         }
 
@@ -195,7 +180,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
         return (
             <div className={className}>
-                <RegionSelectorComponent widgetStore={this.widgetStore} appStore={this.props.appStore} type={RegionSelectorType.CLOSED_REGIONS}/>
+                <RegionSelectorComponent widgetStore={this.widgetStore} appStore={this.props.appStore}/>
                 <div className="stats-display">
                     {formContent}
                 </div>

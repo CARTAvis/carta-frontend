@@ -38,18 +38,6 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         return null;
     }
 
-    @computed get matchesSelectedRegion() {
-        const appStore = this.props.appStore;
-        const frame = appStore.activeFrame;
-        if (frame) {
-            const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
-            if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
-                return widgetRegion === frame.regionSet.selectedRegion.regionId;
-            }
-        }
-        return false;
-    }
-
     constructor(props: WidgetProps) {
         super(props);
 
@@ -65,9 +53,9 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                     } else {
                         coordinateString = `Z Profile`;
                     }
-                    const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
+                    const regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
+                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Selected)" : "";
                     this.props.appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Settings: ${regionString} ${selectedString}`);
                 }
             }

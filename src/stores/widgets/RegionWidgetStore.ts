@@ -1,14 +1,25 @@
-import {action, observable} from "mobx";
+import {action, observable, computed} from "mobx";
 import {AppStore} from "../AppStore";
 import {FrameStore} from "../FrameStore";
 
+export enum RegionId {
+    ACTIVE = -3,
+    IMAGE = -1,
+    CURSOR = 0
+}
+
+export enum RegionsType {
+    CLOSED,
+    CLOSED_AND_POINT
+}
 export class RegionWidgetStore {
     private readonly appStore: AppStore;
     @observable regionIdMap: Map<number, number>;
-    @observable isActive: boolean = true;
+    @observable type: RegionsType;
 
-    constructor(appStore: AppStore) {
+    constructor(appStore: AppStore, type: RegionsType) {
         this.appStore = appStore;
+        this.type = type;
         this.regionIdMap = new Map<number, number>();
     }
 
@@ -20,27 +31,32 @@ export class RegionWidgetStore {
         this.regionIdMap.clear();
     };
 
-    @action syncRegionIdIfActive = (defaultRegionId: number) => {
-        if (this.appStore.activeFrame && this.isActive) {
-            const fileId = this.appStore.activeFrame.frameInfo.fileId;
-            if (this.appStore.selectedRegion) {
-                this.setRegionId(fileId, this.appStore.selectedRegion.regionId);
-            } else {
-                this.setRegionId(fileId, defaultRegionId);
-            }
-        }
-    }
-
     @action setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
     };
 
-    @action enableActive = () => {
-        this.isActive = true;
+    @computed get regionIdAdjustedWithSelectedRegion() {
+        let regionId: number;
+        if (this.appStore.activeFrame) {
+            regionId = this.regionIdMap.get(this.appStore.activeFrame.frameInfo.fileId);
+            if (regionId === -3 || regionId === undefined) {
+                const selectedRegion = this.appStore.selectedRegion;
+                if (selectedRegion) {
+                    return (this.type === RegionsType.CLOSED && !selectedRegion.isClosedRegion) ? RegionId.IMAGE : selectedRegion.regionId;
+                } else {
+                    return this.type === RegionsType.CLOSED ? RegionId.IMAGE : RegionId.CURSOR;
+                }
+            }
+            return regionId;
+        }
+        return this.type === RegionsType.CLOSED ? RegionId.IMAGE : RegionId.CURSOR;
     }
 
-    @action disableActive = () => {
-        this.isActive = false;
+    @computed get matchesSelectedRegion() {
+        if (this.appStore.selectedRegion) {
+            return this.regionIdAdjustedWithSelectedRegion === this.appStore.selectedRegion.regionId;
+        }
+        return false;
     }
 
     public static CalculateRequirementsArray(frame: FrameStore, widgetsMap: Map<string, RegionWidgetStore>) {
@@ -48,7 +64,7 @@ export class RegionWidgetStore {
         const fileId = frame.frameInfo.fileId;
 
         widgetsMap.forEach(widgetStore => {
-            const regionId = widgetStore.regionIdMap.get(fileId) || -1;
+            const regionId = widgetStore.regionIdAdjustedWithSelectedRegion;
             if (!frame.regionSet) {
                 return;
             }

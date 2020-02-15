@@ -3,7 +3,7 @@ import {CARTA} from "carta-protobuf";
 import {Colors} from "@blueprintjs/core";
 import {PlotType, LineSettings} from "components/Shared";
 import {AppStore} from "../AppStore";
-import {RegionWidgetStore} from "./RegionWidgetStore";
+import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {isColorValid} from "utilities";
 
 export class HistogramWidgetStore extends RegionWidgetStore {
@@ -122,7 +122,7 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     }
 
     constructor(appStore: AppStore) {
-        super(appStore);
+        super(appStore, RegionsType.CLOSED);
         this.logScaleY = true;
         this.plotType = PlotType.STEPS;
         this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };
