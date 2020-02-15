@@ -162,8 +162,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
-        this.clearXBounds();
         this.spectralSystem = specsys;
+        this.clearXBounds();
     };
 
     @action setXBounds = (minVal: number, maxVal: number) => {

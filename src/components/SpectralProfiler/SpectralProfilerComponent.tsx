@@ -15,7 +15,7 @@ import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
 import "./SpectralProfilerComponent.css";
 
-type PlotData = { values: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
+type PlotData = { isIncremental: boolean, values: Point2D[], xMin: number, xMax: number, yMin: number, yMax: number, yMean: number, yRms: number, progress: number };
 
 @observer
 export class SpectralProfilerComponent extends React.Component<WidgetProps> {
@@ -110,7 +110,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
             // values are needed to be sorted in incremental order for binary search
             let values: Array<{ x: number, y: number }> = [];
-            let isIncremental = channelValues[0] <= channelValues[channelValues.length - 1];
+            const isIncremental = channelValues[0] <= channelValues[channelValues.length - 1];
             for (let i = 0; i < channelValues.length; i++) {
                 let index = isIncremental ? i : channelValues.length - 1 - i;
                 const x = channelValues[index];
@@ -149,7 +149,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 yMin -= range * VERTICAL_RANGE_PADDING;
                 yMax += range * VERTICAL_RANGE_PADDING;
             }
-            return {values, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
+            return {isIncremental, values, xMin, xMax, yMin, yMax, yMean, yRms, progress: coordinateData.progress};
         }
         return null;
     }
@@ -261,37 +261,34 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
     };
 
-    // TODO: merge getRequiredChannelValue() & getCurrentChannelValue()
-    private getRequiredChannelValue = (): number => {
+    @computed get currentChannelValue(): number {
         const frame = this.props.appStore.activeFrame;
-        if (frame && this.plotData) {
-            const channelIndex = frame.requiredChannel;
-            if (!this.widgetStore.isCoordChannel && channelIndex >= 0 && channelIndex < this.plotData.values.length) {
-                return this.plotData.values[channelIndex].x;
-            }
-            return channelIndex;
+        if (!frame || !this.plotData) {
+            return null;
         }
-        return null;
-    };
+        const channel = frame.channel;
+        const index = this.plotData.isIncremental ? channel : this.plotData.values.length - 1 - channel;
+        if (index < 0 || index >= this.plotData.values.length) {
+            return null;
+        }
+        return this.widgetStore.isCoordChannel ? index : this.plotData.values[index].x;
+    }
 
-    private getCurrentChannelValue = (): number => {
+    @computed get requiredChannelValue(): number {
         const frame = this.props.appStore.activeFrame;
-        if (frame && this.plotData) {
-            const channelIndex = frame.channel;
-            if (!this.widgetStore.isCoordChannel && channelIndex >= 0 && channelIndex < this.plotData.values.length) {
-                return this.plotData.values[channelIndex].x;
-            }
-            return channelIndex;
+        if (!frame || !this.plotData) {
+            return null;
         }
-        return null;
-    };
+        const channel = frame.requiredChannel;
+        const index = this.plotData.isIncremental ? channel : this.plotData.values.length - 1 - channel;
+        if (index < 0 || index >= this.plotData.values.length) {
+            return null;
+        }
+        return this.widgetStore.isCoordChannel ? index : this.plotData.values[index].x;
+    }
 
     private getChannelUnit = (): string => {
-        if (this.widgetStore.isCoordChannel) {
-            return "Channel";
-        } else {
-            return this.widgetStore.spectralUnit;
-        }
+        return this.widgetStore.isCoordChannel ? "Channel" : this.widgetStore.spectralUnit;
     };
 
     onGraphCursorMoved = _.throttle((x) => {
@@ -300,10 +297,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     private genProfilerInfo = (): string[] => {
         let profilerInfo: string[] = [];
-        if (this.plotData) {
+        const frame = this.props.appStore.activeFrame;
+        if (frame && this.plotData) {
             const cursorX = {
                 profiler: this.widgetStore.cursorX,
-                image: this.getCurrentChannelValue(),
+                image: this.currentChannelValue,
                 unit: this.getChannelUnit()
             };
             const data = this.plotData.values;
@@ -420,15 +418,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
 
-            const cursorX = {
-                profiler: this.widgetStore.cursorX,
-                image: this.getCurrentChannelValue(),
-                unit: this.getChannelUnit()
-            };
             linePlotProps.markers = [];
-            if (cursorX.profiler !== null) {
+            if (!isNaN(this.widgetStore.cursorX)) {
                 linePlotProps.markers.push({
-                    value: cursorX.profiler,
+                    value: this.widgetStore.cursorX,
                     id: "marker-profiler-cursor",
                     draggable: false,
                     horizontal: false,
@@ -437,16 +430,18 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     isMouseMove: true,
                 });
             }
-            if (cursorX.image !== null) {
+            if (!isNaN(this.currentChannelValue)) {
                 linePlotProps.markers.push({
-                    value: cursorX.image,
+                    value: this.currentChannelValue,
                     id: "marker-channel-current",
                     opacity: 0.4,
                     draggable: false,
                     horizontal: false,
                 });
+            }
+            if (!isNaN(this.requiredChannelValue)) {
                 linePlotProps.markers.push({
-                    value: this.getRequiredChannelValue(),
+                    value: this.requiredChannelValue,
                     id: "marker-channel-required",
                     draggable: appStore.animatorStore.animationState !== AnimationState.PLAYING,
                     dragMove: this.onChannelChanged,
