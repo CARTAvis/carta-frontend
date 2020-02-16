@@ -69,34 +69,35 @@ export function formattedExponential(val: number, digits: number, unit: string =
     return valString;
 }
 
-export function degree2hms(degree: number): string {
-    if (isNaN(degree)) {
+export function time2HMS(time: number): string {
+    if (isNaN(time) || time < 0) {
         return "";
     }
-    const h = Math.floor(degree / 15);
-    const m = Math.floor((degree - h * 15 ) * 60 / 15);
-    const s = toFixed((degree - h * 15 - m / 60 * 15 ) * 3600 / 15, 2);
+    const h = Math.floor(time / 15);
+    const m = Math.floor((time - h * 15 ) * 60 / 15);
+    const s = toFixed((time - h * 15 - m / 60 * 15 ) * 3600 / 15, 2);
     return h.toString() + ":" + m.toString() + ":" + s;
 }
 
-export function degree2dms(degree: number): string {
+export function degree2DMS(degree: number): string {
     if (isNaN(degree)) {
         return "";
     }
     const sign = degree < 0 ? -1 : 1;
-    const positive = degree * sign;
+    const positive = Math.abs(degree);
     const d = Math.floor(positive);
     const m = Math.floor((positive - d) * 60);
     const s = toFixed((positive - d - m / 60) * 3600, 2);
     return (d * sign).toString() + ":" + m.toString() + ":" + s;
 }
 
-export function obsCoordinate(x: number, y: number, z: number): {obsLon: number, obsLat: number} {
-    if (isNaN(x) || isNaN(y) || isNaN(z)) {
-        return {obsLon: 0, obsLat:  0};
+// convert 3D Cartesian coordinate (X, Y, Z) to Horizontal coordinate (Longitude, Latitude)
+export function cartesian2Horizontal(x: number, y: number, z: number): {longitude: number, latitude: number} {
+    if (isNaN(x) || isNaN(y) || isNaN(z) || (x === 0 && y === 0 && z === 0)) {
+        return {longitude: 0, latitude:  0};
     }
     const r = Math.sqrt(x * x + y * y + z * z);
     const theta = Math.acos(z / r);
-    const phi = Math.atan(y / x);
-    return {obsLon: phi / Math.PI * 180, obsLat:  90.0 - theta / Math.PI * 180};
+    const phi = Math.atan2(y, x);
+    return {longitude: phi / Math.PI * 180, latitude:  90.0 - theta / Math.PI * 180};
 }

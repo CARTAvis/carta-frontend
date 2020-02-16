@@ -4,7 +4,11 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
 import {ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, Transform2D, ZoomPoint} from "models";
-import {clamp, findChannelType, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates, minMax2D, rotate2D, toFixed, trimFitsComment, velocityStringFromFrequency, degree2hms, degree2dms, obsCoordinate} from "utilities";
+import {
+    cartesian2Horizontal, clamp, degree2DMS, findChannelType, frequencyStringFromVelocity,
+    getHeaderNumericValue, getTransformedCoordinates, minMax2D, rotate2D, time2HMS,
+    toFixed, trimFitsComment, velocityStringFromFrequency
+} from "utilities";
 import {BackendService} from "services";
 import {ControlMap} from "../models/ControlMap";
 
@@ -538,30 +542,32 @@ export class FrameStore {
             const system = channelTypeInfo.type.code;
             const unit = channelTypeInfo.type.unit;
             let found;
+            // find DATE-OBS, RESTFRQ, SPECSYS
             found = entries.find(entry => entry.name.includes("DATE-OBS"));
             const epoch = found ? trimFitsComment(found.value) : "";
+            found = entries.find(entry => entry.name.includes("RESTFRQ"));
+            const restFreq = found ? trimFitsComment(found.value) + " Hz" : "";
+            found = entries.find(entry => entry.name.includes("SPECSYS"));
+            const stdOfRest = found ? trimFitsComment(found.value) : "";
 
-            // find obsLon, obsLat
+            // find horizontal coordinate from OBSGEO-X, OBSGEO-Y, OBSGEO-Z
             found = entries.find(entry => entry.name.includes("OBSGEO-X"));
             const x = found ? trimFitsComment(found.value) : "";
             found = entries.find(entry => entry.name.includes("OBSGEO-Y"));
             const y = found ? trimFitsComment(found.value) : "";
             found = entries.find(entry => entry.name.includes("OBSGEO-Z"));
             const z = found ? trimFitsComment(found.value) : "";
-            const obsCoord = obsCoordinate(Number(x), Number(y), Number(z));
-            const obsLon = obsCoord.obsLon.toString();
-            const obsLat = obsCoord.obsLat.toString();
+            const horizontalCoord = cartesian2Horizontal(Number(x), Number(y), Number(z));
+            const obsLon = horizontalCoord.longitude.toString();
+            const obsLat = horizontalCoord.latitude.toString();
 
+            // find reference point in explicit FK5, J2000 coordinate from OBSRA, OBSDEC
             found = entries.find(entry => entry.name.includes("OBSRA"));
             const refRAStr = found ? trimFitsComment(found.value) : "";
-            const refRA = degree2hms(Number(refRAStr));
+            const refRA = time2HMS(Number(refRAStr));
             found = entries.find(entry => entry.name.includes("OBSDEC"));
             const refDecStr = found ? trimFitsComment(found.value) : "";
-            const refDec = degree2dms(Number(refDecStr));
-            found = entries.find(entry => entry.name.includes("RESTFRQ"));
-            const restFreq = found ? trimFitsComment(found.value) + " Hz" : "";
-            found = entries.find(entry => entry.name.includes("SPECSYS"));
-            const stdOfRest = found ? trimFitsComment(found.value) : "";
+            const refDec = degree2DMS(Number(refDecStr));
 
             this.spectralAxis.type = system;
             this.spectralAxis.unit = unit;
@@ -573,68 +579,6 @@ export class FrameStore {
                 console.log("Initialised spectral info from frame");
             }
         }
-
-        /*
-        let headerString = "";
-
-        for (let entry of this.frameInfo.fileInfoExtended.headerEntries) {
-            // Skip empty header entries
-            if (!entry.value.length) {
-                continue;
-            }
-
-            // Skip lower & higher dimensions, only preserve spectral axis
-            if (entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[1-2]/) ||
-                entry.name.match(/(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[4-9]/)) {
-                continue;
-            }
-
-            let name = entry.name;
-            let value = trimFitsComment(entry.value);
-            if (entry.name.toUpperCase() === "NAXIS") {
-                value = "1";
-            } else if (entry.name.toUpperCase() === "NAXIS3") {
-                name = "NAXIS1";
-            } else if (entry.name.toUpperCase() === "CTYPE3") {
-                name = "CTYPE1";
-                this.spectralAxis.type = value;
-            } else if (entry.name.toUpperCase() === "CDELT3") {
-                name = "CDELT1";
-            } else if (entry.name.toUpperCase() === "CRPIX3") {
-                name = "CRPIX1";
-            } else if (entry.name.toUpperCase() === "CRVAL3") {
-                name = "CRVAL1";
-            } else if (entry.name.toUpperCase() === "CUNIT3") {
-                name = "CUNIT1";
-                this.spectralAxis.unit = value;
-            } else if (entry.name.toUpperCase() === "CROTA3") {
-                name = "CROTA1";
-            } else if (entry.name.toUpperCase() === "SPECSYS") {
-                this.spectralAxis.specsys = value;
-            }
-
-            if (entry.entryType === CARTA.EntryType.STRING) {
-                value = `'${value}'`;
-            }
-
-            while (name.length < 8) {
-                name += " ";
-            }
-
-            let entryString = `${name}=  ${value}`;
-            while (entryString.length < 80) {
-                entryString += " ";
-            }
-            headerString += entryString;
-        }
-        const initResult = AST.initSpectralFrame(headerString);
-        if (!initResult) {
-            this.spectralFrame = null;
-        } else {
-            this.spectralFrame = initResult;
-            console.log("Initialised spectral info from frame");
-        }
-        */
     };
 
     public getImagePos(canvasX: number, canvasY: number): Point2D {
