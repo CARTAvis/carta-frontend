@@ -91,13 +91,24 @@ export function degree2DMS(degree: number): string {
     return (d * sign).toString() + ":" + m.toString() + ":" + s;
 }
 
-// convert 3D Cartesian coordinate (X, Y, Z) to Horizontal coordinate (Longitude, Latitude)
-export function cartesian2Horizontal(x: number, y: number, z: number): {longitude: number, latitude: number} {
+// convert 3D Cartesian coordinate (X, Y, Z) to Geodetic coordinate (Longitude, Latitude, Altitude)
+export function cartesian2Geodetic(x: number, y: number, z: number): {longitude: number, latitude: number, altitude: number} {
     if (isNaN(x) || isNaN(y) || isNaN(z) || (x === 0 && y === 0 && z === 0)) {
-        return {longitude: 0, latitude:  0};
+        return {longitude: 0, latitude:  0, altitude: 0};
     }
     const r = Math.sqrt(x * x + y * y + z * z);
     const theta = Math.acos(z / r);
     const phi = Math.atan2(y, x);
-    return {longitude: phi / Math.PI * 180, latitude:  90.0 - theta / Math.PI * 180};
+
+    const longitude = phi / Math.PI * 180;
+    const latitude = 90.0 - theta / Math.PI * 180;
+
+    const cosLat = Math.cos(0.5 * Math.PI - theta);
+    const sinLat = Math.sin(0.5 * Math.PI - theta);
+    const r0 = Math.sqrt(
+                            (Math.pow(6378137.0, 4) * Math.pow(cosLat, 2) + Math.pow(6356752.3, 4) * Math.pow(sinLat, 2)) /
+                            (Math.pow(6378137.0, 2) * Math.pow(cosLat, 2) + Math.pow(6356752.3, 2) * Math.pow(sinLat, 2))
+                        );
+    const altitude = r - r0;
+    return {longitude: longitude, latitude:  latitude, altitude: altitude};
 }

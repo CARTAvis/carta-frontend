@@ -82,11 +82,11 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
 
 EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(
     const char* system, const char* unit, const char* epoch,
-    const char* obsLon, const char* obsLat, const char* refRA,
-    const char* refDec, const char* restFreq, const char* stdOfRest
+    const char* obsLon, const char* obsLat, const char* obsAlt,
+    const char* refRA, const char* refDec, const char* restFreq, const char* stdOfRest
 )
 {
-    if (!system || !unit || !epoch || !obsLon || !obsLat || !refRA || !refDec || !restFreq || !stdOfRest)
+    if (!system || !unit || !epoch || !obsLon || !obsLat || !obsAlt || !refRA || !refDec || !restFreq || !stdOfRest)
     {
         return nullptr;
     }
@@ -110,6 +110,8 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(
     (void) sprintf(obsLonStr, "ObsLon=%s", obsLon);
     char obsLatStr[128];
     (void) sprintf(obsLatStr, "ObsLat=%s", obsLat);
+     char obsAltStr[128];
+    (void) sprintf(obsAltStr, "ObsAlt=%s", obsAlt);
     char refRAStr[128];
     (void) sprintf(refRAStr, "RefRA=%s", refRA);
     char refDecStr[128];
@@ -125,6 +127,7 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(
     astSet(specframe, epochStr);
     astSet(specframe, obsLonStr);
     astSet(specframe, obsLatStr);
+    astSet(specframe, obsAltStr);
     astSet(specframe, refRAStr);
     astSet(specframe, refDecStr);
     astSet(specframe, restFreqStr);
@@ -144,56 +147,6 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(
 
     return specframe;
 }
-
-/*
-EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(const char* header)
-{
-    AstFitsChan* fitschan = nullptr;
-    AstSpecFrame* spectralInfo = nullptr;
-    int status = 0;
-    if (spectralInfo)
-    {
-        astEnd;
-    }
-	astClearStatus;
-    astBegin;
-
-    fitschan = astFitsChan(NULL, NULL, "");
-    if (!fitschan)
-    {
-        cout << "astFitsChan returned null :(" << endl;
-        astClearStatus;
-        return nullptr;
-    }
-    if (!header)
-    {
-        cout << "Missing header argument." << endl;
-        return nullptr;
-    }
-
-    astPutCards(fitschan, header);
-    spectralInfo = static_cast<AstSpecFrame*>(astRead(fitschan));
-
-    if (!astOK)
-    {
-        cout << "Some AST LIB error, check logs." << endl;
-        astClearStatus;
-        return nullptr;
-    }
-    else if (spectralInfo == AST__NULL)
-    {
-        cout << "No spectral axis" << endl;
-        return nullptr;
-    }
-    else if (strcmp(astGetC(spectralInfo, "Class"), "FrameSet"))
-    {
-        cout << "check FITS header (astlib)" << endl;
-        return nullptr;
-    }
-
-    return spectralInfo;
-}
-*/
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY, double angle, double originX, double originY, double scaleX, double scaleY)
 {

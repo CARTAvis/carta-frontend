@@ -5,7 +5,7 @@ import * as AST from "ast_wrapper";
 import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
 import {ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, Transform2D, ZoomPoint} from "models";
 import {
-    cartesian2Horizontal, clamp, degree2DMS, findChannelType, frequencyStringFromVelocity,
+    cartesian2Geodetic, clamp, degree2DMS, findChannelType, frequencyStringFromVelocity,
     getHeaderNumericValue, getTransformedCoordinates, minMax2D, rotate2D, time2HMS,
     toFixed, trimFitsComment, velocityStringFromFrequency
 } from "utilities";
@@ -557,9 +557,10 @@ export class FrameStore {
             const y = found ? trimFitsComment(found.value) : "";
             found = entries.find(entry => entry.name.includes("OBSGEO-Z"));
             const z = found ? trimFitsComment(found.value) : "";
-            const horizontalCoord = cartesian2Horizontal(Number(x), Number(y), Number(z));
-            const obsLon = horizontalCoord.longitude.toString();
-            const obsLat = horizontalCoord.latitude.toString();
+            const geodetic = cartesian2Geodetic(Number(x), Number(y), Number(z));
+            const obsLon = geodetic.longitude.toString();
+            const obsLat = geodetic.latitude.toString();
+            const obsAlt = geodetic.altitude.toString();
 
             // find reference point in explicit FK5, J2000 coordinate from OBSRA, OBSDEC
             found = entries.find(entry => entry.name.includes("OBSRA"));
@@ -573,7 +574,7 @@ export class FrameStore {
             this.spectralAxis.unit = unit;
             this.spectralAxis.specsys = stdOfRest;
 
-            const initResult = AST.initSpectralFrame(system, unit, epoch, obsLon, obsLat, refRA, refDec, restFreq, stdOfRest);
+            const initResult = AST.initSpectralFrame(system, unit, epoch, obsLon, obsLat, obsAlt, refRA, refDec, restFreq, stdOfRest);
             if (initResult) {
                 this.spectralFrame = initResult;
                 console.log("Initialised spectral info from frame");
