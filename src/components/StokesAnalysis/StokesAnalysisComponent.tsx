@@ -55,13 +55,13 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
         }
         console.log("can't find store for widget");
-        return new StokesAnalysisWidgetStore();
+        return new StokesAnalysisWidgetStore(this.props.appStore);
     }
 
     @computed get profileStore(): SpectralProfileStore {
         if (this.props.appStore && this.props.appStore.activeFrame) {
             let fileId = this.props.appStore.activeFrame.frameInfo.fileId;
-            const regionId = this.widgetStore.regionIdMap.get(fileId) || 0;
+            const regionId = this.widgetStore.effectiveRegionId;
             const frameMap = this.props.appStore.spectralProfiles.get(fileId);
             if (frameMap) {
                 return frameMap.get(regionId);
@@ -74,7 +74,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         let headerString = [];
         const frame = this.props.appStore.activeFrame;
         if (frame && frame.frameInfo && frame.regionSet) {
-            const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
+            const regionId = this.widgetStore.effectiveRegionId;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
 
             if (region) {
@@ -82,18 +82,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
         }
         return headerString;
-    }
-
-    @computed get matchesSelectedRegion() {
-        const appStore = this.props.appStore;
-        const frame = appStore.activeFrame;
-        if (frame) {
-            const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
-            if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
-                return widgetRegion === frame.regionSet.selectedRegion.regionId;
-            }
-        }
-        return false;
     }
 
     constructor(props: WidgetProps) {
@@ -104,7 +92,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         } else {
             if (!this.props.appStore.widgetsStore.stokesAnalysisWidgets.has(this.props.id)) {
                 console.log(`can't find store for widget with id=${this.props.id}`);
-                this.props.appStore.widgetsStore.stokesAnalysisWidgets.set(this.props.id, new StokesAnalysisWidgetStore());
+                this.props.appStore.widgetsStore.stokesAnalysisWidgets.set(this.props.id, new StokesAnalysisWidgetStore(this.props.appStore));
             }
         }
 
@@ -122,9 +110,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     this.minProgress = minProgress;
                 }
                 if (frame) {
-                    const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
+                    const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
+                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
                     this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
                 }
             } else {
@@ -618,7 +606,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             uProgress: number,
             iProgress: number
         };
-        let regionId = this.widgetStore.regionIdMap.get(fileId) || 0;
+        let regionId = this.widgetStore.effectiveRegionId;
         if (frame.regionSet) {
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (region) {

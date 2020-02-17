@@ -1,8 +1,13 @@
 import {CARTA} from "carta-protobuf";
 import {AppStore} from "stores";
-import {RegionWidgetStore} from "stores/widgets";
+import {RegionWidgetStore, RegionsType} from "stores/widgets";
 
 export class StatsWidgetStore extends RegionWidgetStore {
+
+    constructor(appStore: AppStore) {
+        super(appStore, RegionsType.CLOSED);
+    }
+
     public static DiffRequirementsArray(originalRequirements: Map<number, Array<number>>, updatedRequirements: Map<number, Array<number>>) {
         const diffList: CARTA.SetStatsRequirements[] = [];
 

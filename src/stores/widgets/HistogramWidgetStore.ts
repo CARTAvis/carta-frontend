@@ -2,7 +2,8 @@ import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Colors} from "@blueprintjs/core";
 import {PlotType, LineSettings} from "components/Shared";
-import {RegionWidgetStore} from "./RegionWidgetStore";
+import {AppStore} from "../AppStore";
+import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {isColorValid} from "utilities";
 
 export class HistogramWidgetStore extends RegionWidgetStore {
@@ -120,8 +121,8 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         return diffList;
     }
 
-    constructor() {
-        super();
+    constructor(appStore: AppStore) {
+        super(appStore, RegionsType.CLOSED);
         this.logScaleY = true;
         this.plotType = PlotType.STEPS;
         this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };
