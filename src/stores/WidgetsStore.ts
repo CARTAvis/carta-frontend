@@ -631,7 +631,7 @@ export class WidgetsStore {
         }
 
         if (id) {
-            const widgetStore = new StokesAnalysisWidgetStore();
+            const widgetStore = new StokesAnalysisWidgetStore(this.appStore);
             if (widgetSettings) {
                 widgetStore.init(widgetSettings);
             }
@@ -680,7 +680,7 @@ export class WidgetsStore {
         }
 
         if (id) {
-            this.statsWidgets.set(id, new StatsWidgetStore());
+            this.statsWidgets.set(id, new StatsWidgetStore(this.appStore));
         }
         return id;
     }
@@ -700,7 +700,7 @@ export class WidgetsStore {
         }
 
         if (id) {
-            const widgetStore = new HistogramWidgetStore();
+            const widgetStore = new HistogramWidgetStore(this.appStore);
             if (widgetSettings) {
                 widgetStore.init(widgetSettings);
             }

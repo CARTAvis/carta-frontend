@@ -2,7 +2,7 @@ import {action, autorun, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
-import {RegionWidgetStore} from "./RegionWidgetStore";
+import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {AppStore, FrameStore} from "..";
 import {isColorValid} from "utilities";
 
@@ -35,7 +35,6 @@ export enum SpectralSystem {
 }
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
-    private readonly appStore: AppStore;
     @observable coordinate: string;
     @observable statsType: CARTA.StatsType;
     @observable minX: number;
@@ -213,8 +212,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     constructor(appStore: AppStore, coordinate: string = "z") {
-        super();
-        this.appStore = appStore;
+        super(appStore, RegionsType.CLOSED_AND_POINT);
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
         this.spectralType = SpectralType.VRAD;
@@ -280,7 +278,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         widgetsMap.forEach(widgetStore => {
             const fileId = frame.frameInfo.fileId;
-            const regionId = widgetStore.regionIdMap.get(fileId) || 0;
+            const regionId = widgetStore.effectiveRegionId;
             const coordinate = widgetStore.coordinate;
             let statsType = widgetStore.statsType;
 
