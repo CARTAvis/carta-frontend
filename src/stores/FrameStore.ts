@@ -1,13 +1,12 @@
-import {action, autorun, computed, observable, toJS} from "mobx";
+import {action, autorun, computed, observable} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
 import {ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, Transform2D, ZoomPoint} from "models";
 import {
-    cartesian2Geodetic, clamp, degree2DMS, findChannelType, frequencyStringFromVelocity,
-    getHeaderNumericValue, getTransformedCoordinates, minMax2D, rotate2D, time2HMS,
-    toFixed, trimFitsComment, velocityStringFromFrequency
+    clamp, findChannelType, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates,
+    minMax2D, rotate2D, toFixed, trimFitsComment, velocityStringFromFrequency
 } from "utilities";
 import {BackendService} from "services";
 import {ControlMap} from "../models/ControlMap";
