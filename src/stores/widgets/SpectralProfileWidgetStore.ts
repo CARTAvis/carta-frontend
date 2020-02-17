@@ -57,14 +57,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
 
-    public static readonly SpectralTypeAcronym = new Map<SpectralType, string>([
-        [SpectralType.VRAD, "VRAD|VRADIO"],
-        [SpectralType.VOPT, "VOPT|VOPTICAL"],
-        [SpectralType.FREQ, "FREQ"],
-        [SpectralType.WAVE, "WAVE|WAVELEN"],
-        [SpectralType.AWAV, "AWAV|AIRWAVE"]
-    ]);
-
      private static readonly SpectralTypeString = new Map<SpectralType, string>([
         [SpectralType.VRAD, "Radio velocity"],
         [SpectralType.VOPT, "Optical velocity"],
@@ -241,17 +233,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
 
+        // Sync widget settings with frame spectral settings when switching activeframe
         autorun(() => {
-            if (appStore.activeFrame && appStore.activeFrame.spectralAxis) {
-                const spectralAxis = appStore.activeFrame.spectralAxis;
-                if (SpectralProfileWidgetStore.IsSpectralSupported(spectralAxis.type, spectralAxis.unit, spectralAxis.specsys)) {
-                    this.spectralType = spectralAxis.type as SpectralType;
-                    this.spectralUnit = spectralAxis.unit as SpectralUnit;
-                    this.spectralSystem = spectralAxis.specsys as SpectralSystem;
-                } else {
-                    this.spectralType = null;
-                    this.spectralUnit = null;
-                    this.spectralSystem = SpectralSystem.LSRK;
+            const frame = appStore.activeFrame;
+            if (frame && frame.spectralInfo) {
+                if (SpectralProfileWidgetStore.IsSpectralSupported(frame.spectralInfo.channelType.code, frame.spectralInfo.channelType.unit, frame.spectralInfo.specsys)) {
+                    this.spectralType = frame.spectralInfo.channelType.code as SpectralType;
+                    this.spectralUnit = frame.spectralInfo.channelType.unit as SpectralUnit;
+                    this.spectralSystem = frame.spectralInfo.specsys as SpectralSystem;
                 }
             }
         });

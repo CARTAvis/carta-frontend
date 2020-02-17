@@ -334,14 +334,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         const appStore = this.props.appStore;
         const frame = appStore.activeFrame;
         let result = true;
-        if (frame && this.widgetStore) {
-            const typeRegex = new RegExp(SpectralProfileWidgetStore.SpectralTypeAcronym.get(this.widgetStore.spectralType), "i");
-            const isTypeEqual = frame.spectralAxis.type.match(typeRegex);
-            const isUnitEqual = frame.spectralAxis.unit.toLowerCase() === this.widgetStore.spectralUnit.toLowerCase();
-            const isSpecsysEqual = frame.spectralAxis.specsys.toUpperCase() === this.widgetStore.spectralSystem;
-            if (!isTypeEqual || !isUnitEqual || !isSpecsysEqual) {
-                result = false;
-            }
+        if (frame && frame.spectralInfo && this.widgetStore) {
+            const isTypeEqual = frame.spectralInfo.channelType.code === (this.widgetStore.spectralType as string);
+            const isUnitEqual = frame.spectralInfo.channelType.unit === (this.widgetStore.spectralUnit as string);
+            const isSpecsysEqual = frame.spectralInfo.specsys === (this.widgetStore.spectralSystem as string);
+            result = isTypeEqual && isUnitEqual && isSpecsysEqual;
         }
         return result;
     };

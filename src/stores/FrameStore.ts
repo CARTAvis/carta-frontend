@@ -27,18 +27,11 @@ export enum RasterRenderType {
     TILED
 }
 
-interface SpectralAxis {
-    type: string;
-    unit: string;
-    specsys: string;
-}
-
 export class FrameStore {
     @observable frameInfo: FrameInfo;
     @observable renderHiDPI: boolean;
     @observable wcsInfo: number;
     @observable spectralFrame: number;
-    @observable spectralAxis: SpectralAxis;
     @observable validWcs: boolean;
     @observable center: Point2D;
     @observable cursorInfo: CursorInfo;
@@ -310,7 +303,7 @@ export class FrameStore {
             rawValues[i] = i;
         }
         return {
-            fromWCS: false, channelType: {code: "", name: "Channel"}, indexes, values, rawValues,
+            fromWCS: false, channelType: {code: "", name: "Channel", unit: ""}, indexes, values, rawValues,
             getChannelIndexWCS: null, getChannelIndexSimple: getChannelIndexSimple
         };
     }
@@ -318,7 +311,8 @@ export class FrameStore {
     @computed get spectralInfo(): SpectralInfo {
         const spectralInfo: SpectralInfo = {
             channel: this.channel,
-            channelType: {code: "", name: "Channel"},
+            channelType: {code: "", name: "Channel", unit: ""},
+            specsys: "",
             spectralString: ""
         };
 
@@ -333,6 +327,7 @@ export class FrameStore {
                 spectralInfo.channelType = channelInfo.channelType;
                 let spectralName;
                 if (specSysValue) {
+                    spectralInfo.specsys = specSysValue.toUpperCase();
                     spectralName = `${channelInfo.channelType.name}\u00a0(${specSysValue})`;
                 } else {
                     spectralName = channelInfo.channelType.name;
@@ -420,7 +415,7 @@ export class FrameStore {
         this.backendService = backendService;
         this.preference = preference;
         this.contourContext = gl;
-        this.spectralAxis = {type: null, unit: null, specsys: null};
+        this.spectralFrame = null;
         this.validWcs = false;
         this.frameInfo = frameInfo;
         this.renderHiDPI = true;
@@ -539,8 +534,6 @@ export class FrameStore {
         if (!channelTypeInfo) {
             return;
         }
-        this.spectralAxis.type = channelTypeInfo.type.code;
-        this.spectralAxis.unit = channelTypeInfo.type.unit;
 
         const dimension = channelTypeInfo.dimension;
         const skipRegex = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[^1|2|${dimension.toString()}]`, "i");
@@ -564,9 +557,6 @@ export class FrameStore {
             }
             if (entry.name.match(spectralAxisRegex)) {
                 name = entry.name.replace(dimension.toString(), "3");
-            }
-            if  (entry.name.toUpperCase() === "SPECSYS") {
-                this.spectralAxis.specsys = value;
             }
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;

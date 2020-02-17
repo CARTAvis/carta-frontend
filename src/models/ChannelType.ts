@@ -1,6 +1,6 @@
 export interface ChannelType {
     code: string;
-    unit?: string;
+    unit: string;
     name: string;
 }
 
@@ -12,8 +12,8 @@ export const CHANNEL_TYPES: ChannelType[] = [
     {code: "VRAD", name: "Velocity", unit: "m/s"},
     {code: "WAVE", name: "Vacuum wavelength", unit: "m"},
     {code: "VOPT", name: "Velocity\u00a0(OPT)", unit: "m/s"},
-    {code: "ZOPT", name: "Redshift"},
+    {code: "ZOPT", name: "Redshift", unit: ""},
     {code: "AWAV", name: "Air wavelength", unit: "m"},
     {code: "VELO", name: "Velocity\u00a0(Radial)", unit: "m/s"},
-    {code: "BETA", name: "Beta"},
+    {code: "BETA", name: "Beta", unit: ""},
 ];
