@@ -80,58 +80,119 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
     return wcsinfo;
 }
 
-EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(
-    const char* system, const char* unit, const char* epoch,
-    const char* obsLon, const char* obsLat, const char* obsAlt,
-    const char* refRA, const char* refDec, const char* restFreq, const char* stdOfRest
-)
+EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(const char* header, const char *system, const char *unit)
 {
-    if (!system || !unit || !epoch || !obsLon || !obsLat || !obsAlt || !refRA || !refDec || !restFreq || !stdOfRest)
+     if (!header || !system || !unit)
     {
+        cout << "Missing header argument." << endl;
         return nullptr;
     }
 
-    AstSpecFrame *specframe = nullptr;
-    if (specframe)
+    AstFitsChan* fitschan = nullptr;
+    AstFrameSet* frame = nullptr;
+    int status = 0;
+    if (frame)
     {
         astEnd;
     }
 	astClearStatus;
     astBegin;
 
-    // assemble parameter strings
-    char systemStr[128];
-    (void) sprintf(systemStr, "System=%s", system);
-    char unitStr[128];
-    (void) sprintf(unitStr, "Unit=%s", unit);
-    char epochStr[128];
-    (void) sprintf(epochStr, "Epoch=%s", epoch);
-    char obsLonStr[128];
-    (void) sprintf(obsLonStr, "ObsLon=%s", obsLon);
-    char obsLatStr[128];
-    (void) sprintf(obsLatStr, "ObsLat=%s", obsLat);
-     char obsAltStr[128];
-    (void) sprintf(obsAltStr, "ObsAlt=%s", obsAlt);
-    char refRAStr[128];
-    (void) sprintf(refRAStr, "RefRA=%s", refRA);
-    char refDecStr[128];
-    (void) sprintf(refDecStr, "RefDec=%s", refDec);
-    char restFreqStr[128];
-    (void) sprintf(restFreqStr, "RestFreq=%s", restFreq);
-     char stdOfRestStr[128];
-    (void) sprintf(stdOfRestStr, "StdOfRest=%s", stdOfRest);
+    fitschan = astFitsChan(NULL, NULL, "");
+    if (!fitschan)
+    {
+        cout << "astFitsChan returned null :(" << endl;
+        astClearStatus;
+        return nullptr;
+    }
 
+    astPutCards(fitschan, header);
+    frame = static_cast<AstFrameSet*>(astRead(fitschan));
+    if (!astOK)
+    {
+        cout << "Some AST LIB error, check logs." << endl;
+        astClearStatus;
+        return nullptr;
+    }
+    else if (frame == AST__NULL)
+    {
+        cout << "No WCS found" << endl;
+        return nullptr;
+    }
+    else if (strcmp(astGetC(frame, "Class"), "FrameSet"))
+    {
+        cout << "check FITS header (astlib)" << endl;
+        return nullptr;
+    }
+
+    // create a simple 1D spectral frame through astSet() for spectral conversion
+    AstSpecFrame *specframe = nullptr;
     specframe = astSpecFrame("");
-    astSet(specframe, systemStr);
-    astSet(specframe, unitStr);
-    astSet(specframe, epochStr);
-    astSet(specframe, obsLonStr);
-    astSet(specframe, obsLatStr);
-    astSet(specframe, obsAltStr);
-    astSet(specframe, refRAStr);
-    astSet(specframe, refDecStr);
-    astSet(specframe, restFreqStr);
-    astSet(specframe, stdOfRestStr);
+    if (!specframe)
+    {
+        cout << "Create empty spectral frame failed." << endl;
+        astClearStatus;
+        return nullptr;
+    }
+
+    // set spectral system, unit from parameter (CTYPE, CUNIT)
+    char buffer[128];
+    (void) snprintf(buffer, sizeof(buffer), "System=%s", system);
+    astSet(specframe, buffer);
+    (void) snprintf(buffer, sizeof(buffer), "Unit=%s", unit);
+    astSet(specframe, buffer);
+
+    // get Epoch, ObsLon, ObsLat, ObsAlt, RefRA, RefDec, RestFreq, StdOfRest attributes from AST compound frame
+    // due to observation coordinate (ObsLon/ObsLat/ObsAlt) has to be geodetic, RefRA/RefDec has to be FK5, J2000.
+    // RefRA/RefDec will be 0 if skyframe is not provided, & the conversion will be imprecise.
+    const char *epoch = astGetC(frame, "Epoch");
+    if (epoch)
+    {
+        (void) snprintf(buffer, sizeof(buffer), "Epoch=%s", epoch);
+        astSet(specframe, buffer);
+    }
+    const char *obsLon = astGetC(frame, "ObsLon");
+    if (obsLon)
+    {
+        (void) snprintf(buffer, sizeof(buffer), "ObsLon=%s", obsLon);
+        astSet(specframe, buffer);
+    }
+    const char *obsLat = astGetC(frame, "ObsLat");
+    if (obsLat)
+    {
+        (void) snprintf(buffer, sizeof(buffer), "ObsLat=%s", obsLat);
+        astSet(specframe, buffer);
+    }
+    const char *obsAlt = astGetC(frame, "ObsAlt");
+    if (obsAlt)
+    {
+        (void) snprintf(buffer, sizeof(buffer), "ObsAlt=%s", obsAlt);
+        astSet(specframe, buffer);
+    }
+    const char *refRA = astGetC(frame, "RefRA");
+    if (refRA)
+    {
+        (void) snprintf(buffer, sizeof(buffer), "RefRA=%s", refRA);
+        astSet(specframe, buffer);
+    }
+    const char *refDec = astGetC(frame, "RefDec");
+    if (refDec)
+    {
+        (void) snprintf(buffer, sizeof(buffer), "RefDec=%s", refDec);
+        astSet(specframe, buffer);
+    }
+    const char *restFreq = astGetC(frame, "RestFreq");
+    if (restFreq)
+    {
+        (void) snprintf(buffer, sizeof(buffer), "RestFreq=%s", restFreq);
+        astSet(specframe, buffer);
+    }
+    const char *stdOfRest = astGetC(frame, "StdOfRest");
+    if (stdOfRest)
+    {
+        (void) snprintf(buffer, sizeof(buffer), "StdOfRest=%s", stdOfRest);
+        astSet(specframe, buffer);
+    }
 
     if (!astOK)
     {
@@ -141,7 +202,7 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(
     }
     else if (specframe == AST__NULL)
     {
-        cout << "No spectral axis" << endl;
+        cout << "Create 1D spectral frame failed." << endl;
         return nullptr;
     }
 
@@ -300,26 +361,27 @@ EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const doubl
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, char* specTypeTo, char* specUnitTo, char* specSysTo, int npoint, const double zIn[], int forward, double zOut[])
+EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, const char* specTypeTo, const char* specUnitTo, const char* specSysTo, const int npoint, const double zIn[], const int forward, double zOut[])
 {
     if (!specFrameFrom || !specTypeTo ||!specUnitTo || !specSysTo)
     {
         return 1;
     }
 
-    // assemble parameter strings
-    char specTypeStr[128];
-    (void) sprintf(specTypeStr, "System=%s", specTypeTo);
-    char specUnitStr[128];
-    (void) sprintf(specUnitStr, "Unit=%s", specUnitTo);
-    char specSysStr[128];
-    (void) sprintf(specSysStr, "StdOfRest=%s", specSysTo);
-
     AstSpecFrame* specFrameTo = nullptr;
     specFrameTo = static_cast<AstSpecFrame*> astCopy(specFrameFrom);
-    astSet(specFrameTo, specTypeStr);
-    astSet(specFrameTo, specUnitStr);
-    astSet(specFrameTo, specSysStr);
+    if (!specFrameTo)
+    {
+        return 1;
+    }
+
+    char buffer[128];
+    (void) snprintf(buffer, sizeof(buffer), "System=%s", specTypeTo);
+    astSet(specFrameTo, buffer);
+    (void) snprintf(buffer, sizeof(buffer), "Unit=%s", specUnitTo);
+    astSet(specFrameTo, buffer);
+    (void) snprintf(buffer, sizeof(buffer), "StdOfRest=%s", specSysTo);
+    astSet(specFrameTo, buffer);
 
     AstFrameSet *cvt;
     cvt = static_cast<AstFrameSet*> astConvert(specFrameFrom, specFrameTo, "");

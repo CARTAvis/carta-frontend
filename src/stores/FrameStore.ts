@@ -535,50 +535,59 @@ export class FrameStore {
 
     @action private initSpectralFrame = () => {
         this.spectralFrame = null;
-
         const entries = this.frameInfo.fileInfoExtended.headerEntries;
         const channelTypeInfo = findChannelType(entries);
-        if (channelTypeInfo) {
-            const system = channelTypeInfo.type.code;
-            const unit = channelTypeInfo.type.unit;
-            let found;
-            // find DATE-OBS, RESTFRQ, SPECSYS
-            found = entries.find(entry => entry.name.includes("DATE-OBS"));
-            const epoch = found ? trimFitsComment(found.value) : "";
-            found = entries.find(entry => entry.name.includes("RESTFRQ"));
-            const restFreq = found ? trimFitsComment(found.value) + " Hz" : "";
-            found = entries.find(entry => entry.name.includes("SPECSYS"));
-            const stdOfRest = found ? trimFitsComment(found.value) : "";
+        if (!channelTypeInfo) {
+            return;
+        }
+        this.spectralAxis.type = channelTypeInfo.type.code;
+        this.spectralAxis.unit = channelTypeInfo.type.unit;
 
-            // find horizontal coordinate from OBSGEO-X, OBSGEO-Y, OBSGEO-Z
-            found = entries.find(entry => entry.name.includes("OBSGEO-X"));
-            const x = found ? trimFitsComment(found.value) : "";
-            found = entries.find(entry => entry.name.includes("OBSGEO-Y"));
-            const y = found ? trimFitsComment(found.value) : "";
-            found = entries.find(entry => entry.name.includes("OBSGEO-Z"));
-            const z = found ? trimFitsComment(found.value) : "";
-            const geodetic = cartesian2Geodetic(Number(x), Number(y), Number(z));
-            const obsLon = geodetic.longitude.toString();
-            const obsLat = geodetic.latitude.toString();
-            const obsAlt = geodetic.altitude.toString();
-
-            // find reference point in explicit FK5, J2000 coordinate from OBSRA, OBSDEC
-            found = entries.find(entry => entry.name.includes("OBSRA"));
-            const refRAStr = found ? trimFitsComment(found.value) : "";
-            const refRA = time2HMS(Number(refRAStr));
-            found = entries.find(entry => entry.name.includes("OBSDEC"));
-            const refDecStr = found ? trimFitsComment(found.value) : "";
-            const refDec = degree2DMS(Number(refDecStr));
-
-            this.spectralAxis.type = system;
-            this.spectralAxis.unit = unit;
-            this.spectralAxis.specsys = stdOfRest;
-
-            const initResult = AST.initSpectralFrame(system, unit, epoch, obsLon, obsLat, obsAlt, refRA, refDec, restFreq, stdOfRest);
-            if (initResult) {
-                this.spectralFrame = initResult;
-                console.log("Initialised spectral info from frame");
+        const dimension = channelTypeInfo.dimension;
+        const skipRegex = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[^1|2|${dimension.toString()}]`, "i");
+        const spectralAxisRegex = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[${dimension.toString()}]`, "i");
+        let headerString = "";
+        for (let entry of entries) {
+            // Skip empty header entries
+            if (!entry.value.length) {
+                continue;
             }
+            // Skip other dimensions, however spectral frame still need skyframe's info (RefRA, RefDec), keep NAXIS1 & NAXIS2.
+            // skyframe (NAXIS1 & NAXIS2) and spectral frame (NAXIS3 or NAXIS4) headers are provided, unify spectral axis to NAXIS3
+            if (entry.name.match(skipRegex)) {
+                continue;
+            }
+
+            let name = entry.name;
+            let value = trimFitsComment(entry.value);
+            if (entry.name.toUpperCase() === "NAXIS") {
+                value = "3";
+            }
+            if (entry.name.match(spectralAxisRegex)) {
+                name = entry.name.replace(dimension.toString(), "3");
+            }
+            if  (entry.name.toUpperCase() === "SPECSYS") {
+                this.spectralAxis.specsys = value;
+            }
+            if (entry.entryType === CARTA.EntryType.STRING) {
+                value = `'${value}'`;
+            }
+
+            while (name.length < 8) {
+                name += " ";
+            }
+
+            let entryString = `${name}=  ${value}`;
+            while (entryString.length < 80) {
+                entryString += " ";
+            }
+            headerString += entryString;
+        }
+
+        const initResult = AST.initSpectralFrame(headerString, channelTypeInfo.type.code, channelTypeInfo.type.unit);
+        if (initResult) {
+            this.spectralFrame = initResult;
+            console.log("Initialised spectral info from frame");
         }
     };
 
