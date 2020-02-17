@@ -235,6 +235,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
                 this.spectralType = frame.spectralInfo.channelType.code as SpectralType;
                 this.spectralUnit = frame.spectralInfo.channelType.unit as SpectralUnit;
                 this.spectralSystem = frame.spectralInfo.specsys as SpectralSystem;
+            } else {
+                this.spectralType = null;
+                this.spectralUnit = null;
+                this.spectralSystem = SpectralSystem.LSRK;
             }
         });
     }
@@ -260,7 +264,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (frame && frame.spectralInfo) {
             const type = frame.spectralInfo.channelType.code as SpectralType;
             const unit = frame.spectralInfo.channelType.unit as SpectralUnit;
-            return type && unit && (<any> Object).values(SpectralType).includes(type) && (<any> Object).values(SpectralUnit).includes(unit) ? true : false;
+            return type && unit && (<any> Object).values(SpectralType).includes(type) && (<any> Object).values(SpectralUnit).includes(unit);
         }
         return false;
     }
@@ -269,7 +273,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const frame = this.appStore.activeFrame;
         if (frame && frame.spectralInfo) {
             const specsys = frame.spectralInfo.specsys as SpectralSystem;
-            return specsys && (<any> Object).values(SpectralSystem).includes(specsys) ? true : false;
+            return specsys && (<any> Object).values(SpectralSystem).includes(specsys);
         }
         return false;
     }
