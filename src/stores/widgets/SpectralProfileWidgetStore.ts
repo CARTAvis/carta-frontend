@@ -35,6 +35,7 @@ export enum SpectralSystem {
 }
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
+    private readonly appStore: AppStore;
     @observable coordinate: string;
     @observable statsType: CARTA.StatsType;
     @observable minX: number;
@@ -116,13 +117,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     private static ValidStatsTypes = [
         CARTA.StatsType.Sum, CARTA.StatsType.FluxDensity, CARTA.StatsType.Mean, CARTA.StatsType.Sigma,
-        CARTA.StatsType.Min, CARTA.StatsType.Max, CARTA.StatsType.RMS, CARTA.StatsType.SumSq];
-
-    private static IsSpectralSupported = (type: string, unit: string, specsys: string): boolean => {
-        return type && unit && specsys && (<any> Object).values(SpectralType).includes(type) &&
-            (<any> Object).values(SpectralUnit).includes(unit) &&
-            (<any> Object).values(SpectralSystem).includes(specsys) ? true : false;
-    };
+        CARTA.StatsType.Min, CARTA.StatsType.Max, CARTA.StatsType.RMS, CARTA.StatsType.SumSq
+    ];
 
     @action setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
@@ -218,6 +214,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     constructor(appStore: AppStore, coordinate: string = "z") {
         super();
+        this.appStore = appStore;
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
         this.spectralType = SpectralType.VRAD;
@@ -236,12 +233,10 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         // Sync widget settings with frame spectral settings when switching activeframe
         autorun(() => {
             const frame = appStore.activeFrame;
-            if (frame && frame.spectralInfo) {
-                if (SpectralProfileWidgetStore.IsSpectralSupported(frame.spectralInfo.channelType.code, frame.spectralInfo.channelType.unit, frame.spectralInfo.specsys)) {
-                    this.spectralType = frame.spectralInfo.channelType.code as SpectralType;
-                    this.spectralUnit = frame.spectralInfo.channelType.unit as SpectralUnit;
-                    this.spectralSystem = frame.spectralInfo.specsys as SpectralSystem;
-                }
+            if (frame && frame.spectralInfo && this.isSpectralCoordinateSupported && this.isSpectralSystemSupported) {
+                this.spectralType = frame.spectralInfo.channelType.code as SpectralType;
+                this.spectralUnit = frame.spectralInfo.channelType.unit as SpectralUnit;
+                this.spectralSystem = frame.spectralInfo.specsys as SpectralSystem;
             }
         });
     }
@@ -260,6 +255,25 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get isCoordChannel() {
         return this.spectralCoordinate === "Channel";
+    }
+
+    @computed get isSpectralCoordinateSupported(): boolean {
+        const frame = this.appStore.activeFrame;
+        if (frame && frame.spectralInfo) {
+            const type = frame.spectralInfo.channelType.code as SpectralType;
+            const unit = frame.spectralInfo.channelType.unit as SpectralUnit;
+            return type && unit && (<any> Object).values(SpectralType).includes(type) && (<any> Object).values(SpectralUnit).includes(unit) ? true : false;
+        }
+        return false;
+    }
+
+    @computed get isSpectralSystemSupported(): boolean {
+        const frame = this.appStore.activeFrame;
+        if (frame && frame.spectralInfo) {
+            const specsys = frame.spectralInfo.specsys as SpectralSystem;
+            return specsys && (<any> Object).values(SpectralSystem).includes(specsys) ? true : false;
+        }
+        return false;
     }
 
     public static CalculateRequirementsMap(frame: FrameStore, widgetsMap: Map<string, SpectralProfileWidgetStore>) {
