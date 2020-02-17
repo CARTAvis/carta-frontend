@@ -954,6 +954,13 @@ export class AppStore {
         return this.frames.find(f => f.frameInfo.fileId === fileId);
     }
 
+    @computed get selectedRegion(): RegionStore {
+        if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && this.activeFrame.regionSet.selectedRegion.regionId !== 0) {
+            return this.activeFrame.regionSet.selectedRegion;
+        }
+        return null;
+    }
+
     @action deleteSelectedRegion = () => {
         if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && !this.activeFrame.regionSet.selectedRegion.locked) {
             this.deleteRegion(this.activeFrame.regionSet.selectedRegion);

@@ -3,23 +3,16 @@ import {observer} from "mobx-react";
 import {action, computed, observable} from "mobx";
 import {Button, FormGroup, MenuItem, NumericInput, TagInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
-import {FrameScaling, FrameStore} from "stores";
+import {ContourGeneratorType, FrameScaling, FrameStore} from "stores";
 import {ScalingSelectComponent, ClearableNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
 import {getPercentiles, scaleValue} from "utilities";
 import "./ContourGeneratorPanelComponent.css";
 
-enum ContourGeneratorType {
-    StartStepMultiplier = "start-step-multiplier",
-    MinMaxNScaling = "min-max-scaling",
-    PercentagesRefValue = "percentages-ref.value",
-    MeanSigmaList = "mean-sigma-list"
-}
-
 const GeneratorSelect = Select.ofType<ContourGeneratorType>();
 
 @observer
-export class ContourGeneratorPanelComponent extends React.Component<{ frame: FrameStore, onLevelsGenerated: (levels: number[]) => void }> {
-    @observable generator: ContourGeneratorType = ContourGeneratorType.MinMaxNScaling;
+export class ContourGeneratorPanelComponent extends React.Component<{ frame: FrameStore, generatorType: ContourGeneratorType, onLevelsGenerated: (levels: number[]) => void }> {
+    @observable generator: ContourGeneratorType = this.props.generatorType ? this.props.generatorType : ContourGeneratorType.StartStepMultiplier;
 
     @observable numLevels: number = 5;
 

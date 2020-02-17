@@ -12,6 +12,7 @@ import {AppStore, FrameStore} from "stores";
 import {RenderConfigWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed} from "utilities";
+import {CustomIcon} from "icons/CustomIcons";
 import "./ContourDialogComponent.css";
 
 enum ContourDialogTabs {
@@ -267,7 +268,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
         const appStore = this.props.appStore;
 
         const dialogProps: IDialogProps = {
-            icon: "heatmap",
+            icon: <CustomIcon icon="contour" size={CustomIcon.SIZE_LARGE}/>,
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
@@ -409,7 +410,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                 <div className="histogram-plot">
                     <LinePlotComponent {...linePlotProps}/>
                 </div>
-                <ContourGeneratorPanelComponent frame={frame} onLevelsGenerated={this.handleLevelsGenerated}/>
+                <ContourGeneratorPanelComponent frame={frame} generatorType={appStore.preferenceStore.contourGeneratorType} onLevelsGenerated={this.handleLevelsGenerated}/>
                 <FormGroup label={"Levels"} inline={true}>
                     <TagInput
                         addOnBlur={true}
