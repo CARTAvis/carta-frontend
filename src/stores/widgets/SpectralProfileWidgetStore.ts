@@ -215,9 +215,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         super(appStore, RegionsType.CLOSED_AND_POINT);
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
-        this.spectralType = SpectralType.VRAD;
-        this.spectralUnit = SpectralUnit.KMS;
-        this.spectralSystem = SpectralSystem.LSRK;
+        this.initSpectralSettings();
 
         // Describes how the data is visualised
         this.plotType = PlotType.STEPS;
@@ -227,21 +225,20 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
-
-        // Sync widget settings with frame spectral settings when switching activeframe
-        autorun(() => {
-            const frame = appStore.activeFrame;
-            if (frame && frame.spectralInfo && this.isSpectralCoordinateSupported && this.isSpectralSystemSupported) {
-                this.spectralType = frame.spectralInfo.channelType.code as SpectralType;
-                this.spectralUnit = frame.spectralInfo.channelType.unit as SpectralUnit;
-                this.spectralSystem = frame.spectralInfo.specsys as SpectralSystem;
-            } else {
-                this.spectralType = null;
-                this.spectralUnit = null;
-                this.spectralSystem = SpectralSystem.LSRK;
-            }
-        });
     }
+
+    public initSpectralSettings = () => {
+        const frame = this.appStore.activeFrame;
+        if (frame && frame.spectralInfo && this.isSpectralCoordinateSupported && this.isSpectralSystemSupported) {
+            this.spectralType = frame.spectralInfo.channelType.code as SpectralType;
+            this.spectralUnit = frame.spectralInfo.channelType.unit as SpectralUnit;
+            this.spectralSystem = frame.spectralInfo.specsys as SpectralSystem;
+        } else {
+            this.spectralType = null;
+            this.spectralUnit = null;
+            this.spectralSystem = SpectralSystem.LSRK;
+        }
+    };
 
     @computed get isAutoScaledX() {
         return (this.minX === undefined || this.maxX === undefined);

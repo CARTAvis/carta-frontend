@@ -616,6 +616,10 @@ export class WidgetsStore {
         return id;
     }
 
+    @action updateSpectralProfileWidgetSpectralSettings() {
+        Array.from(this.spectralProfileWidgets.values()).forEach((widgetStore) => widgetStore.initSpectralSettings());
+    }
+
     // endregion
 
     // region Stokes Profile Widgets
