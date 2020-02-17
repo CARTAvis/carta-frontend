@@ -29,7 +29,9 @@ export class BackendService {
     private eventCounter: number;
     private animationId: number;
     private sessionId: number;
+    // TODO: These can be readonly instead of private to get rid of boilerplate gets
     private readonly rasterTileStream: Subject<CARTA.RasterTileData>;
+    readonly rasterSyncStream: Subject<CARTA.RasterTileSync>;
     private readonly histogramStream: Subject<CARTA.RegionHistogramData>;
     private readonly errorStream: Subject<CARTA.ErrorData>;
     private readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
@@ -53,6 +55,7 @@ export class BackendService {
         this.animationId = INVALID_ANIMATION_ID;
         this.connectionStatus = ConnectionStatus.CLOSED;
         this.rasterTileStream = new Subject<CARTA.RasterTileData>();
+        this.rasterSyncStream = new Subject<CARTA.RasterTileSync>();
         this.histogramStream = new Subject<CARTA.RegionHistogramData>();
         this.errorStream = new Subject<CARTA.ErrorData>();
         this.spatialProfileStream = new Subject<CARTA.SpatialProfileData>();
@@ -82,7 +85,8 @@ export class BackendService {
             [CARTA.EventType.SPATIAL_PROFILE_DATA, this.onStreamedSpatialProfileData],
             [CARTA.EventType.SPECTRAL_PROFILE_DATA, this.onStreamedSpectralProfileData],
             [CARTA.EventType.REGION_STATS_DATA, this.onStreamedRegionStatsData],
-            [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData]
+            [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData],
+            [CARTA.EventType.RASTER_TILE_SYNC, this.onStreamedRasterSync]
         ]);
 
         this.decoderMap = new Map<CARTA.EventType, any>([
@@ -105,7 +109,8 @@ export class BackendService {
             [CARTA.EventType.REGION_STATS_DATA, CARTA.RegionStatsData],
             [CARTA.EventType.CONTOUR_IMAGE_DATA, CARTA.ContourImageData],
             [CARTA.EventType.SET_USER_LAYOUT_ACK, CARTA.SetUserLayoutAck],
-            [CARTA.EventType.SET_USER_PREFERENCES_ACK, CARTA.SetUserPreferencesAck]
+            [CARTA.EventType.SET_USER_PREFERENCES_ACK, CARTA.SetUserPreferencesAck],
+            [CARTA.EventType.RASTER_TILE_SYNC, CARTA.RasterTileSync]
         ]);
 
         // check ping every 5 seconds
@@ -705,6 +710,10 @@ export class BackendService {
 
     private onStreamedRasterTileData(eventId: number, rasterTileData: CARTA.RasterTileData) {
         this.rasterTileStream.next(rasterTileData);
+    }
+
+    private onStreamedRasterSync(eventId: number, rasterTileSync: CARTA.RasterTileSync) {
+        this.rasterSyncStream.next(rasterTileSync);
     }
 
     private onStreamedRegionHistogramData(eventId: number, regionHistogramData: CARTA.RegionHistogramData) {

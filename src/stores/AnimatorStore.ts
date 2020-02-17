@@ -91,13 +91,13 @@ export class AnimatorStore {
             frameRate: this.frameRate
         };
 
-        this.appStore.backendService.startAnimation(animationMessage).subscribe(ack => {
-            if (ack.success) {
-                this.appStore.tileService.setAnimationEnabled(true);
-                console.log("Animation started successfully");
-            }
+        this.appStore.backendService.startAnimation(animationMessage).subscribe(() => {
+            console.log("Animation started successfully");
+        }, err => {
+            console.log(err);
+            this.appStore.tileService.setAnimationEnabled(false);
         });
-
+        this.appStore.tileService.setAnimationEnabled(true);
         this.animationState = AnimationState.PLAYING;
     };
 

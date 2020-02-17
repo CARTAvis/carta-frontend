@@ -102,9 +102,11 @@ export class TileService {
 
         this.compressionRequestCounter = 0;
         this.remainingTiles = 0;
+        this.animationEnabled = false;
 
         this.tileStream = new Subject<TileStreamDetails>();
         this.backendService.getRasterTileStream().subscribe(this.handleStreamedTiles);
+        this.backendService.rasterSyncStream.subscribe(this.handleStreamSync);
 
         const ZFPWorker = require("worker-loader!zfp_wrapper");
         this.workers = new Array<Worker>(Math.min(navigator.hardwareConcurrency || 4, 4));
@@ -312,6 +314,18 @@ export class TileService {
         this.textureCoordinateQueue.push(tile.textureCoordinate);
     };
 
+    private handleStreamSync = (syncMessage: CARTA.IRasterTileSync) => {
+        if (syncMessage.endSync) {
+            let channelArray = this.completedChannels.get(syncMessage.fileId);
+            if (!channelArray) {
+                channelArray = [];
+                this.completedChannels.set(syncMessage.fileId, channelArray);
+            }
+            // TODO: Handle stokes
+            channelArray.push(syncMessage.channel);
+        }
+    };
+
     private handleStreamedTiles = (tileMessage: CARTA.IRasterTileData) => {
         if (tileMessage.compressionType !== CARTA.CompressionType.NONE && tileMessage.compressionType !== CARTA.CompressionType.ZFP) {
             console.error("Unsupported compression type");
@@ -324,18 +338,13 @@ export class TileService {
             return;
         }
 
-        if (this.animationEnabled) {
-            this.channelMap.set(tileMessage.fileId, {channel: tileMessage.channel, stokes: tileMessage.stokes});
+        if (this.animationEnabled !== !!tileMessage.animationId) {
+            console.log(`Skipping stale tile based on animation ID`);
+            return;
         }
 
-        if (!tileMessage.tiles || !tileMessage.tiles.length) {
-            let channelArray = this.completedChannels.get(tileMessage.fileId);
-            if (!channelArray) {
-                channelArray = [];
-                this.completedChannels.set(tileMessage.fileId, channelArray);
-            }
-            // TODO: Handle stokes
-            channelArray.push(tileMessage.channel);
+        if (this.animationEnabled) {
+            this.channelMap.set(tileMessage.fileId, {channel: tileMessage.channel, stokes: tileMessage.stokes});
         }
 
         for (let tile of tileMessage.tiles) {
