@@ -64,7 +64,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                 <FormGroup label={"Stokes"} inline={true} disabled={!enableStokesSelect}>
                     <HTMLSelect value={widgetStore.coordinate} options={profileCoordinateOptions} onChange={this.handleCoordinateChanged} disabled={!enableStokesSelect}/>
                 </FormGroup>
-                <FormGroup label={"X coordinate"} inline={true} disabled={!this.props.appStore.activeFrame || !this.props.appStore.activeFrame.spectralFrame || !widgetStore.isSpectralCoordinateSupported}>
+                <FormGroup label={"Coordinate"} inline={true} disabled={!this.props.appStore.activeFrame || !this.props.appStore.activeFrame.spectralFrame || !widgetStore.isSpectralCoordinateSupported}>
                     <HTMLSelect
                         disabled={this.props.appStore.activeFrame && this.props.appStore.activeFrame.spectralFrame ? false : true}
                         value={widgetStore.spectralCoordinate}
@@ -72,7 +72,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
                         onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setSpectralCoordinate(event.currentTarget.value as string)}
                     /> 
                 </FormGroup>
-                <FormGroup label={"Spectral frame"} inline={true} disabled={!this.props.appStore.activeFrame || !this.props.appStore.activeFrame.spectralFrame || !widgetStore.isSpectralSystemSupported}>
+                <FormGroup label={"System"} inline={true} disabled={!this.props.appStore.activeFrame || !this.props.appStore.activeFrame.spectralFrame || !widgetStore.isSpectralSystemSupported}>
                     <HTMLSelect
                         disabled={this.props.appStore.activeFrame && this.props.appStore.activeFrame.spectralFrame ? false : true}
                         value={widgetStore.spectralSystem}
