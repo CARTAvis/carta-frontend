@@ -35,11 +35,10 @@ export class RegionWidgetStore {
         this.regionIdMap.set(fileId, regionId);
     };
 
-    @computed get regionIdAdjustedWithSelectedRegion() {
-        let regionId: number;
+    @computed get effectiveRegionId() {
         if (this.appStore.activeFrame) {
-            regionId = this.regionIdMap.get(this.appStore.activeFrame.frameInfo.fileId);
-            if (regionId === -3 || regionId === undefined) {
+            const regionId = this.regionIdMap.get(this.appStore.activeFrame.frameInfo.fileId);
+            if (regionId === RegionId.ACTIVE || regionId === undefined) {
                 const selectedRegion = this.appStore.selectedRegion;
                 if (selectedRegion) {
                     return (this.type === RegionsType.CLOSED && !selectedRegion.isClosedRegion) ? RegionId.IMAGE : selectedRegion.regionId;
@@ -54,7 +53,7 @@ export class RegionWidgetStore {
 
     @computed get matchesSelectedRegion() {
         if (this.appStore.selectedRegion) {
-            return this.regionIdAdjustedWithSelectedRegion === this.appStore.selectedRegion.regionId;
+            return this.effectiveRegionId === this.appStore.selectedRegion.regionId;
         }
         return false;
     }
@@ -64,7 +63,7 @@ export class RegionWidgetStore {
         const fileId = frame.frameInfo.fileId;
 
         widgetsMap.forEach(widgetStore => {
-            const regionId = widgetStore.regionIdAdjustedWithSelectedRegion;
+            const regionId = widgetStore.effectiveRegionId;
             if (!frame.regionSet) {
                 return;
             }

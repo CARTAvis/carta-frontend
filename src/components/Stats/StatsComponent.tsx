@@ -45,7 +45,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
         if (appStore.activeFrame) {
             let fileId = appStore.activeFrame.frameInfo.fileId;
-            let regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
+            let regionId = this.widgetStore.effectiveRegionId;
 
             const frameMap = appStore.regionStats.get(fileId);
             if (!frameMap) {
@@ -89,8 +89,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
             if (this.widgetStore && appStore.activeFrame) {
                 let regionString = "Unknown";
 
-                const regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
-                const selectedString = this.widgetStore.matchesSelectedRegion ? "(Selected)" : "";
+                const regionId = this.widgetStore.effectiveRegionId;
+                const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
                 if (regionId === -1) {
                     regionString = "Image";
                 } else if (appStore.activeFrame && appStore.activeFrame.regionSet) {

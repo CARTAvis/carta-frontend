@@ -48,7 +48,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     @computed get profileStore(): SpectralProfileStore {
         if (this.props.appStore && this.props.appStore.activeFrame) {
             let fileId = this.props.appStore.activeFrame.frameInfo.fileId;
-            const regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
+            const regionId = this.widgetStore.effectiveRegionId;
             const frameMap = this.props.appStore.spectralProfiles.get(fileId);
             if (frameMap) {
                 return frameMap.get(regionId);
@@ -65,7 +65,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         const fileId = frame.frameInfo.fileId;
         let coordinateData: ProcessedSpectralProfile;
-        let regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
+        let regionId = this.widgetStore.effectiveRegionId;
         if (frame.regionSet) {
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (region && this.profileStore) {
@@ -145,7 +145,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         let headerString = [];
         const frame = this.props.appStore.activeFrame;
         if (frame && frame.frameInfo && frame.regionSet) {
-            const regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
+            const regionId = this.widgetStore.effectiveRegionId;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
 
             // statistic type, ignore when region == cursor
@@ -191,9 +191,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     } else {
                         coordinateString = `Z Profile`;
                     }
-                    const regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
+                    const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Selected)" : "";
+                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
                     this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString} ${selectedString} ${progressString}`);
                 }
                 if (currentData) {

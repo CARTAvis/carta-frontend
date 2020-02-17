@@ -44,9 +44,9 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
                 const appStore = this.props.appStore;
                 const frame = appStore.activeFrame;
                 if (frame) {
-                    const regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
+                    const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Selected)" : "";
+                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
                     this.props.appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Stokes Analysis Settings: ${regionString} ${selectedString}`);
                 }
             }

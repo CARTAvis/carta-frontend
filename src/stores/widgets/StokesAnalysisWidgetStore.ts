@@ -91,7 +91,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         : Map<number, Map<number, CARTA.SetSpectralRequirements>> {
         widgetsMap.forEach(widgetStore => {
             const fileId = frame.frameInfo.fileId;
-            const regionId = widgetStore.regionIdAdjustedWithSelectedRegion;
+            const regionId = widgetStore.effectiveRegionId;
             const coordinates = StokesAnalysisWidgetStore.requiredCoordinate(widgetStore);
             let statsType = widgetStore.statsType;
 

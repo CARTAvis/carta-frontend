@@ -23,12 +23,11 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
         let enableRegionSelect = false;
         let selectedValue: number = RegionId.ACTIVE;
         let regionOptions: IOptionProps[] = [{value: RegionId.ACTIVE, label: "Active"}];
-        if (widgetStore.type === RegionsType.CLOSED) {
-            regionOptions = regionOptions.concat([{value: RegionId.IMAGE, label: "Image"}]);
-        }
 
         if (appStore.activeFrame && appStore.activeFrame.regionSet) {
-            selectedValue = widgetStore.regionIdMap.get(appStore.activeFrame.frameInfo.fileId);
+            if (widgetStore.type === RegionsType.CLOSED) {
+                regionOptions = regionOptions.concat([{value: RegionId.IMAGE, label: "Image"}]);
+            }
 
             let fiteredRegions: RegionStore[];
             let regions = appStore.activeFrame.regionSet.regions;
@@ -44,7 +43,12 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
             }
             regionOptions = regionOptions.concat(fiteredRegions.map(r => {return {value: r.regionId, label: r.nameString}; }));
 
-            enableRegionSelect = regionOptions.length > 2;
+            if (widgetStore.type === RegionsType.CLOSED_AND_POINT && regionOptions.length === 1) {
+                regionOptions = regionOptions.concat([{value: RegionId.CURSOR, label: "Cursor"}]);
+            }
+
+            selectedValue = widgetStore.regionIdMap.get(appStore.activeFrame.frameInfo.fileId);
+            enableRegionSelect = true;
         }
 
         return (

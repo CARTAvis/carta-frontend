@@ -50,7 +50,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
         if (appStore.activeFrame) {
             let fileId = appStore.activeFrame.frameInfo.fileId;
-            let regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
+            let regionId = this.widgetStore.effectiveRegionId;
 
             // // Image histograms handled slightly differently
             // if (regionId === -1) {
@@ -113,7 +113,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         // region info
         const frame = this.props.appStore.activeFrame;
         if (frame && frame.frameInfo && frame.regionSet) {
-            const regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
+            const regionId = this.widgetStore.effectiveRegionId;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (region) {
                 headerString.push(region.regionProperties);
@@ -141,7 +141,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             const appStore = this.props.appStore;
             if (this.widgetStore && appStore.activeFrame) {
                 let regionString = "Unknown";
-                const regionId = this.widgetStore.regionIdAdjustedWithSelectedRegion;
+                const regionId = this.widgetStore.effectiveRegionId;
 
                 if (regionId === -1) {
                     regionString = "Image";
@@ -151,7 +151,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
                         regionString = region.nameString;
                     }
                 }
-                const selectedString = this.widgetStore.matchesSelectedRegion ? "(Selected)" : "";
+                const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
                 appStore.widgetsStore.setWidgetTitle(this.props.id, `Histogram: ${regionString} ${selectedString}`);
             } else {
                 appStore.widgetsStore.setWidgetTitle(this.props.id, `Histogram`);

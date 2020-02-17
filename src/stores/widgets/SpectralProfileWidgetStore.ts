@@ -170,7 +170,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         widgetsMap.forEach(widgetStore => {
             const fileId = frame.frameInfo.fileId;
-            const regionId = widgetStore.regionIdAdjustedWithSelectedRegion;
+            const regionId = widgetStore.effectiveRegionId;
             const coordinate = widgetStore.coordinate;
             let statsType = widgetStore.statsType;
 
