@@ -503,16 +503,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     }
 
     // true: red->blue, false: blue->red
-    private frequencyDecreases(data: Point3D[]): boolean {
-        const zFirst = data[0].z;
-        const zLast = data[data.length - 1].z;
-        if (zFirst > zLast) {
-            return false;
-        }
-        return true;
-    }
-
-    // true: red->blue, false: blue->red
     private getColorMapOrder(): boolean {
         const appStore = this.props.appStore;
         if (appStore && appStore.activeFrame) {
@@ -541,7 +531,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (data && data.length && zIndex && interactionBorder) {
             let xlinePlotRange = interactionBorder;
             const outOfRangeColor = `hsla(0, 0%, 50%, ${this.opacityOutRange})`;
-            // const zOrder = this.frequencyDecreases(data);
             const redToBlue = this.widgetStore.invertedColorMap;
             const minMaxZ = minMaxPointArrayZ(data);
             for (let index = 0; index < data.length; index++) {
