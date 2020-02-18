@@ -36,18 +36,6 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         return null;
     }
 
-    @computed get matchesSelectedRegion() {
-        const appStore = this.props.appStore;
-        const frame = appStore.activeFrame;
-        if (frame) {
-            const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
-            if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
-                return widgetRegion === frame.regionSet.selectedRegion.regionId;
-            }
-        }
-        return false;
-    }
-
     constructor(props: WidgetProps) {
         super(props);
 
@@ -56,9 +44,9 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
                 const appStore = this.props.appStore;
                 const frame = appStore.activeFrame;
                 if (frame) {
-                    const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
+                    const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
+                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
                     this.props.appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Stokes Analysis Settings: ${regionString} ${selectedString}`);
                 }
             }

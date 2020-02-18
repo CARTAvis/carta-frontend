@@ -2,7 +2,8 @@ import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
-import {RegionWidgetStore} from "./RegionWidgetStore";
+import {AppStore} from "../AppStore";
+import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {FrameStore} from "../FrameStore";
 import {isColorValid} from "utilities";
 
@@ -141,8 +142,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.isMouseMoveIntoLinePlots = val;
     };
 
-    constructor(coordinate: string = "z") {
-        super();
+    constructor(appStore: AppStore, coordinate: string = "z") {
+        super(appStore, RegionsType.CLOSED_AND_POINT);
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
 
@@ -169,7 +170,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         widgetsMap.forEach(widgetStore => {
             const fileId = frame.frameInfo.fileId;
-            const regionId = widgetStore.regionIdMap.get(fileId) || 0;
+            const regionId = widgetStore.effectiveRegionId;
             const coordinate = widgetStore.coordinate;
             let statsType = widgetStore.statsType;
 

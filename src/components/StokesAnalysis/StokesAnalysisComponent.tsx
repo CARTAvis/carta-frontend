@@ -6,14 +6,13 @@ import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {ChartArea} from "chart.js";
 import {CARTA} from "carta-protobuf";
-import {LinePlotComponent, LinePlotComponentProps, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING, PlotType} from "components/Shared";
+import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING, PlotType} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {StokesAnalysisProfilerInfoComponent} from "./ProfilerInfo/ProfilerInfoComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {ChannelInfo, Point2D} from "models";
-import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, minMaxPointArrayZ} from "utilities";
+import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation} from "utilities";
 import "./StokesAnalysisComponent.css";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
@@ -38,7 +37,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             type: "stokes",
             minWidth: 320,
             minHeight: 400,
-            defaultWidth: 400,
+            defaultWidth: 520,
             defaultHeight: 650,
             title: "Stokes Analysis",
             isCloseable: true
@@ -56,13 +55,13 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
         }
         console.log("can't find store for widget");
-        return new StokesAnalysisWidgetStore();
+        return new StokesAnalysisWidgetStore(this.props.appStore);
     }
 
     @computed get profileStore(): SpectralProfileStore {
         if (this.props.appStore && this.props.appStore.activeFrame) {
             let fileId = this.props.appStore.activeFrame.frameInfo.fileId;
-            const regionId = this.widgetStore.regionIdMap.get(fileId) || 0;
+            const regionId = this.widgetStore.effectiveRegionId;
             const frameMap = this.props.appStore.spectralProfiles.get(fileId);
             if (frameMap) {
                 return frameMap.get(regionId);
@@ -75,7 +74,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         let headerString = [];
         const frame = this.props.appStore.activeFrame;
         if (frame && frame.frameInfo && frame.regionSet) {
-            const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
+            const regionId = this.widgetStore.effectiveRegionId;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
 
             if (region) {
@@ -83,18 +82,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
         }
         return headerString;
-    }
-
-    @computed get matchesSelectedRegion() {
-        const appStore = this.props.appStore;
-        const frame = appStore.activeFrame;
-        if (frame) {
-            const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
-            if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
-                return widgetRegion === frame.regionSet.selectedRegion.regionId;
-            }
-        }
-        return false;
     }
 
     constructor(props: WidgetProps) {
@@ -105,7 +92,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         } else {
             if (!this.props.appStore.widgetsStore.stokesAnalysisWidgets.has(this.props.id)) {
                 console.log(`can't find store for widget with id=${this.props.id}`);
-                this.props.appStore.widgetsStore.stokesAnalysisWidgets.set(this.props.id, new StokesAnalysisWidgetStore());
+                this.props.appStore.widgetsStore.stokesAnalysisWidgets.set(this.props.id, new StokesAnalysisWidgetStore(this.props.appStore));
             }
         }
 
@@ -129,9 +116,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     this.minProgress = minProgress;
                 }
                 if (frame) {
-                    const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
+                    const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
-                    const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
+                    const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
                     this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
                 }
             } else {
@@ -640,7 +627,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             uProgress: number,
             iProgress: number
         };
-        let regionId = this.widgetStore.regionIdMap.get(fileId) || 0;
+        let regionId = this.widgetStore.effectiveRegionId;
         if (frame.regionSet) {
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
             if (region) {
@@ -754,6 +741,29 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             };
         }
         return cursorInfo;
+    };
+
+    private genProfilerInfo = (): string[] => {
+        let profilerInfo: string[] = [];
+        if (!this.cursorInfo || this.cursorInfo.quValue.x === null || this.cursorInfo.quValue.y === null ||
+            isNaN(this.cursorInfo.quValue.x) || isNaN(this.cursorInfo.quValue.y)) {
+            return profilerInfo;
+        }
+        const xLabel = this.cursorInfo.xUnit === "Channel" ?
+                    "Channel " + toFixed(this.cursorInfo.channel) :
+                    formattedNotation(this.cursorInfo.channel) + " " + this.cursorInfo.xUnit;
+        const fractionalPol = this.widgetStore.fractionalPolVisible;
+        const qLabel = fractionalPol ? ", Q/I: " : ", Q: ";
+        const uLabel = fractionalPol ? ", U/I: " : ", U: ";
+        const piLabel = fractionalPol ? ", PI/I: " : ", PI: ";
+        const cursorString = "(" + xLabel
+            + qLabel + toExponential(this.cursorInfo.quValue.x, 2)
+            + uLabel + toExponential(this.cursorInfo.quValue.y, 2)
+            + piLabel + toExponential(this.cursorInfo.pi, 2)
+            + ", PA: " + toFixed(this.cursorInfo.pa, 2)
+            + ")";
+        profilerInfo.push(`${this.cursorInfo.isMouseEntered ? "Cursor:" : "Data:"} ${cursorString}`);
+        return profilerInfo;
     };
     
     render() {
@@ -1122,13 +1132,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     <div className="profile-plot-qvsu">
                         <ScatterPlotComponent {...quScatterPlotProps}/>
                     </div>
-                    {this.cursorInfo &&
-                    <StokesAnalysisProfilerInfoComponent
-                        darkMode={appStore.darkTheme}
-                        cursorInfo={this.cursorInfo}
-                        fractionalPol={this.widgetStore.fractionalPolVisible}
-                    />
-                    }
+                    <ProfilerInfoComponent info={this.genProfilerInfo()}/>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
