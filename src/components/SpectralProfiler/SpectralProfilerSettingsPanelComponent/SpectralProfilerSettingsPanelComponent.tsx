@@ -6,7 +6,6 @@ import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, Spe
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig} from "stores";
 import {parseNumber} from "utilities";
-import "./SpectralProfilerSettingsPanelComponent.css";
 
 const KEYCODE_ENTER = 13;
 
