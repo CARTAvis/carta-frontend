@@ -8,7 +8,7 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {LinePlotComponent, LinePlotComponentProps, PlotType, SCALING_POPOVER_PROPS} from "components/Shared";
 import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelComponent";
 import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGeneratorPanelComponent";
-import {AppStore, FrameStore} from "stores";
+import {AppStore, FrameStore, HelpType} from "stores";
 import {RenderConfigWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed} from "utilities";
@@ -280,7 +280,14 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
 
         if (!appStore || !appStore.activeFrame) {
             return (
-                <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={ContourDialogComponent.DefaultWidth} defaultHeight={ContourDialogComponent.DefaultHeight} enableResizing={true}>
+                <DraggableDialogComponent
+                    dialogProps={dialogProps}
+                    appStore={appStore}
+                    helpType={HelpType.CONTOUR}
+                    defaultWidth={ContourDialogComponent.DefaultWidth}
+                    defaultHeight={ContourDialogComponent.DefaultHeight}
+                    enableResizing={true}
+                >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
                 </DraggableDialogComponent>
             );
@@ -452,7 +459,14 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={ContourDialogComponent.DefaultWidth} defaultHeight={ContourDialogComponent.DefaultHeight} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                appStore={appStore}
+                helpType={HelpType.CONTOUR}
+                defaultWidth={ContourDialogComponent.DefaultWidth}
+                defaultHeight={ContourDialogComponent.DefaultHeight}
+                enableResizing={true}
+            >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data Source">
                         <DataSourceSelect

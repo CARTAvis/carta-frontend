@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {AnchorButton, Classes, IDialogProps, Intent} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore} from "stores";
+import {AppStore, HelpType} from "stores";
 import {CARTA_INFO} from "models";
 import "./AboutDialogComponent.css";
 import * as logoPng from "static/carta_logo.png";
@@ -26,7 +26,7 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={620} defaultHeight={700} enableResizing={false}>
+            <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} defaultWidth={620} defaultHeight={700} enableResizing={false}>
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
                         <img src={logoPng} width={100}/>

@@ -10,7 +10,7 @@ import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
 import {RegionViewComponent} from "./RegionView/RegionViewComponent";
-import {AnimationMode, AnimationState, RegionStore, WidgetConfig, WidgetProps} from "stores";
+import {AnimationMode, AnimationState, RegionStore, WidgetConfig, WidgetProps, HelpType} from "stores";
 import {CursorInfo, Point2D} from "models";
 import {toFixed} from "utilities";
 import "./ImageViewComponent.css";
@@ -76,7 +76,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             defaultWidth: 600,
             defaultHeight: 600,
             title: "Image view",
-            isCloseable: false
+            isCloseable: false,
+            helpType: HelpType.IMAGE_VIEW
         };
     }
 

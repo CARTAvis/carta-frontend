@@ -125,17 +125,17 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     <div className={"floating-title"}>
                         {widgetConfig.title}
                     </div>
-                    {!widgetConfig.helpContext &&
-                    <div className={buttonClass} onClick={() => appStore.helpStore.showHelpDrawer(widgetConfig.title)}>
-                        <Tooltip content="Help" position={Position.BOTTOM_RIGHT}>
-                            <Icon icon={"help"}/>
-                        </Tooltip>
-                    </div>
-                    }
                     {this.props.showFloatingSettingsButton &&
                     <div className={buttonClass} onClick={() => appStore.widgetsStore.createFloatingSettingsWidget(widgetConfig.title, widgetConfig.id, widgetConfig.type)}>
                         <Tooltip content="Settings" position={Position.BOTTOM_RIGHT}>
                             <Icon icon={"cog"}/>
+                        </Tooltip>
+                    </div>
+                    }
+                    {widgetConfig.helpType &&
+                    <div className={buttonClass} onClick={() => appStore.helpStore.showHelpDrawer(widgetConfig.helpType)}>
+                        <Tooltip content="Help" position={Position.BOTTOM_RIGHT}>
+                            <Icon icon={"help"}/>
                         </Tooltip>
                     </div>
                     }

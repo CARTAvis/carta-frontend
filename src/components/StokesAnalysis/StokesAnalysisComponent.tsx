@@ -10,7 +10,7 @@ import {LinePlotComponent, LinePlotComponentProps, ScatterPlotComponent, Scatter
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {StokesAnalysisProfilerInfoComponent} from "./ProfilerInfo/ProfilerInfoComponent";
-import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
+import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {ChannelInfo, Point2D} from "models";
 import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, minMaxPointArrayZ} from "utilities";
@@ -41,7 +41,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             defaultWidth: 400,
             defaultHeight: 650,
             title: "Stokes Analysis",
-            isCloseable: true
+            isCloseable: true,
+            helpType: HelpType.STOKES_ANALYSIS
         };
     }
 

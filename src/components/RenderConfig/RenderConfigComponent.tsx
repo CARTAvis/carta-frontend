@@ -9,7 +9,7 @@ import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigC
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
-import {AnimationState, FrameScaling, FrameStore, RenderConfigStore, WidgetConfig, WidgetProps} from "stores";
+import {AnimationState, FrameScaling, FrameStore, RenderConfigStore, WidgetConfig, WidgetProps, HelpType} from "stores";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed} from "utilities";
 import "./RenderConfigComponent.css";
@@ -27,7 +27,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
             defaultWidth: 650,
             defaultHeight: 225,
             title: "Render Configuration",
-            isCloseable: true
+            isCloseable: true,
+            helpType: HelpType.RENDER_CONFIG
         };
     }
 

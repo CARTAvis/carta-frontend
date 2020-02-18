@@ -5,7 +5,7 @@ import {observer} from "mobx-react";
 import {AnchorButton, NonIdealState, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import ReactResizeDetector from "react-resize-detector";
-import {WidgetConfig, WidgetProps} from "stores";
+import {WidgetConfig, WidgetProps, HelpType} from "stores";
 import "./LayerListComponent.css";
 
 @observer
@@ -23,7 +23,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             defaultWidth: 650,
             defaultHeight: 180,
             title: "Layer List",
-            isCloseable: true
+            isCloseable: true,
+            helpType: HelpType.LAYER_LIST
         };
     }
 

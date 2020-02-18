@@ -20,24 +20,19 @@ export class HelpDrawerComponent extends React.Component<{ appStore: AppStore }>
             icon: "help",
             className: className,
             backdropClassName: "minimal-drawer-backdrop",
-            canOutsideClickClose: false,
             lazy: true,
             isOpen: helpStore.helpVisible,
             onClose: helpStore.hideHelpDrawer,
             title: helpStore.helpTitle,
             position: Position.RIGHT,
-            size: Drawer.SIZE_STANDARD,
+            size: "33%",
             hasBackdrop: true
         };
 
         return (
             <Drawer {...drawerProps} >
                 <div className={Classes.DRAWER_BODY}>
-                    <div className={Classes.DIALOG_BODY}>
-                        <p>
-                            {helpStore.helpContext}
-                        </p>
-                    </div>
+                    <div className={Classes.DIALOG_BODY} dangerouslySetInnerHTML={{__html: helpStore.helpContext}}/>
                 </div>
                 <div className={Classes.DRAWER_FOOTER}>Footer</div>
             </Drawer>

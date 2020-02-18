@@ -9,7 +9,7 @@ import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramTo
 import {LinePlotComponent, LinePlotComponentProps, PlotType} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {HistogramWidgetStore} from "stores/widgets";
-import {FrameStore, WidgetConfig, WidgetProps} from "stores";
+import {FrameStore, WidgetConfig, WidgetProps, HelpType} from "stores";
 import {clamp} from "utilities";
 import {Point2D} from "models";
 import "./HistogramComponent.css";
@@ -25,7 +25,8 @@ export class HistogramComponent extends React.Component<WidgetProps> {
             defaultWidth: 650,
             defaultHeight: 225,
             title: "Histogram",
-            isCloseable: true
+            isCloseable: true,
+            helpType: HelpType.HISTOGRAM
         };
     }
 

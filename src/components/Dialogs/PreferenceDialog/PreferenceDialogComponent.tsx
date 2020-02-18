@@ -16,7 +16,7 @@ import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/S
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {ColorPickerComponent, ColormapComponent} from "components/Shared";
 import {Theme, CursorPosition, Zoom, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
-import {AppStore, BeamType, FrameScaling, RegionStore, RenderConfigStore} from "stores";
+import {AppStore, BeamType, FrameScaling, RegionStore, RenderConfigStore, HelpType} from "stores";
 import {hexStringToRgba, SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.css";
 
@@ -519,7 +519,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} minWidth={450} minHeight={300} defaultWidth={775} defaultHeight={500} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} helpType={HelpType.PREFERENCES} minWidth={450} minHeight={300} defaultWidth={775} defaultHeight={500} enableResizing={true}>
                 <div className="bp3-dialog-body">
                     <Tabs
                         id="preferenceTabs"

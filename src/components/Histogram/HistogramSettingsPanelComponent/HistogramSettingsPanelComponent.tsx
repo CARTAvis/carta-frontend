@@ -4,7 +4,7 @@ import {computed, autorun} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {HistogramWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig} from "stores";
+import {WidgetProps, WidgetConfig, HelpType} from "stores";
 import {parseNumber} from "utilities";
 
 const KEYCODE_ENTER = 13;
@@ -23,7 +23,8 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
             title: "histogram-settings",
             isCloseable: true,
             parentId: "histogram",
-            parentType: "histogram"
+            parentType: "histogram",
+            helpType: HelpType.HISTOGRAM_SETTINGS
         };
     }
 
