@@ -1,9 +1,9 @@
 import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
-import {Colors, FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
-import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
-import {SpectralProfileWidgetStore, SpectralSystem} from "stores/widgets";
+import {Colors} from "@blueprintjs/core";
+import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent} from "components/Shared";
+import {SpectralProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig} from "stores";
 import {parseNumber} from "utilities";
 import "./SpectralProfilerSettingsPanelComponent.css";
@@ -158,28 +158,10 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             yMaxVal: parseNumber(widgetStore.maxY, widgetStore.linePlotInitXYBoundaries.maxYVal),
             handleYMaxChange: this.handleYMaxChange
         };
-        const spectralCoordinateOptions: IOptionProps[] = Array.from(SpectralProfileWidgetStore.SpectralCoordSupported.keys()).map((coord: string) => { return {value: coord, label: coord}; });
 
         return (
             <React.Fragment>
-                <div className="spectral-coordinate-settings">
-                    <FormGroup label={"Coordinate"} inline={true} disabled={!this.props.appStore.activeFrame || !this.props.appStore.activeFrame.spectralFrame || !widgetStore.isSpectralCoordinateSupported}>
-                        <HTMLSelect
-                            disabled={!this.props.appStore.activeFrame || !this.props.appStore.activeFrame.spectralFrame || !widgetStore.isSpectralCoordinateSupported}
-                            value={widgetStore.spectralCoordinate}
-                            options={spectralCoordinateOptions}
-                            onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setSpectralCoordinate(event.currentTarget.value as string)}
-                        />
-                    </FormGroup>
-                    <FormGroup label={"System"} inline={true} disabled={!this.props.appStore.activeFrame || !this.props.appStore.activeFrame.spectralFrame || !widgetStore.isSpectralSystemSupported}>
-                        <HTMLSelect
-                            disabled={!this.props.appStore.activeFrame || !this.props.appStore.activeFrame.spectralFrame || !widgetStore.isSpectralSystemSupported}
-                            value={widgetStore.spectralSystem}
-                            options={Object.keys(SpectralSystem).map((key) => ({label: key, value: SpectralSystem[key]}))}
-                            onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setSpectralSystem(event.currentTarget.value as SpectralSystem)}
-                        />
-                    </FormGroup>
-                </div>
+                <SpectralSettingsComponent appStore={this.props.appStore} widgetStore={widgetStore}/>
                 <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
             </React.Fragment>
         );

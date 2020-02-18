@@ -5,34 +5,7 @@ import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {AppStore, FrameStore} from "..";
 import {isColorValid} from "utilities";
-
-export enum SpectralType {
-    VRAD = "VRAD",
-    VOPT = "VOPT",
-    FREQ = "FREQ",
-    WAVE = "WAVE",
-    AWAV = "AWAV"
-}
-
-export enum SpectralUnit {
-    KMS = "km/s",
-    MS = "m/s",
-    GHZ = "GHz",
-    MHZ = "MHz",
-    KHZ = "kHz",
-    HZ = "Hz",
-    MM = "mm",
-    UM = "um",
-    NM = "nm",
-    ANGSTROM  = "Angstrom"
-}
-
-export enum SpectralSystem {
-    LSRK = "LSRK",
-    LSRD = "LSRD",
-    BARY = "BARYCENT",
-    TOPO = "TOPOCENT"
-}
+import {GenCoordinateLabel, IsSpectralSystemValid, IsSpectralTypeValid, IsSpectralUnitValid, SpectralSystem, SpectralType, SpectralUnit, SPECTRAL_COORDS_SUPPORTED} from "models";
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
@@ -57,38 +30,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
 
-     private static readonly SpectralTypeString = new Map<SpectralType, string>([
-        [SpectralType.VRAD, "Radio velocity"],
-        [SpectralType.VOPT, "Optical velocity"],
-        [SpectralType.FREQ, "Frequency"],
-        [SpectralType.WAVE, "Wave length"],
-        [SpectralType.AWAV, "Air wave length"]
-    ]);
-
-    private static GenCoordinateXLabel = (type: SpectralType, unit: SpectralUnit): string => {
-        return type && unit ? SpectralProfileWidgetStore.SpectralTypeString.get(type) + " (" + unit + ")" : "";
-    }
-
-    public static readonly SpectralCoordSupported = new Map<string, {type: SpectralType, unit: SpectralUnit}>([
-        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.VRAD, SpectralUnit.KMS), {type: SpectralType.VRAD, unit: SpectralUnit.KMS}],
-        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.VRAD, SpectralUnit.MS), {type: SpectralType.VRAD, unit: SpectralUnit.MS}],
-        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.VOPT, SpectralUnit.KMS), {type: SpectralType.VOPT, unit: SpectralUnit.KMS}],
-        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.VOPT, SpectralUnit.MS), {type: SpectralType.VOPT, unit: SpectralUnit.MS}],
-        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.FREQ, SpectralUnit.GHZ), {type: SpectralType.FREQ, unit: SpectralUnit.GHZ}],
-        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.FREQ, SpectralUnit.MHZ), {type: SpectralType.FREQ, unit: SpectralUnit.MHZ}],
-        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.FREQ, SpectralUnit.KHZ), {type: SpectralType.FREQ, unit: SpectralUnit.KHZ}],
-        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.FREQ, SpectralUnit.HZ), {type: SpectralType.FREQ, unit: SpectralUnit.HZ}],
-        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.WAVE, SpectralUnit.MM), {type: SpectralType.WAVE, unit: SpectralUnit.MM}],
-        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.WAVE, SpectralUnit.UM), {type: SpectralType.WAVE, unit: SpectralUnit.UM}],
-        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.WAVE, SpectralUnit.NM), {type: SpectralType.WAVE, unit: SpectralUnit.NM}],
-        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.WAVE, SpectralUnit.ANGSTROM), {type: SpectralType.WAVE, unit: SpectralUnit.ANGSTROM}],
-        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.AWAV, SpectralUnit.MM), {type: SpectralType.AWAV, unit: SpectralUnit.MM}],
-        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.AWAV, SpectralUnit.UM), {type: SpectralType.AWAV, unit: SpectralUnit.UM}],
-        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.AWAV, SpectralUnit.NM), {type: SpectralType.AWAV, unit: SpectralUnit.NM}],
-        [SpectralProfileWidgetStore.GenCoordinateXLabel(SpectralType.AWAV, SpectralUnit.ANGSTROM), {type: SpectralType.AWAV, unit: SpectralUnit.ANGSTROM}],
-        ["Channel", {type: null, unit: null}]
-    ]);
-    
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
             case CARTA.StatsType.Sum:
@@ -140,8 +81,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {
-        if (SpectralProfileWidgetStore.SpectralCoordSupported.has(coordStr)) {
-            const coord: {type: SpectralType, unit: SpectralUnit} = SpectralProfileWidgetStore.SpectralCoordSupported.get(coordStr);
+        if (SPECTRAL_COORDS_SUPPORTED.has(coordStr)) {
+            const coord: {type: SpectralType, unit: SpectralUnit} = SPECTRAL_COORDS_SUPPORTED.get(coordStr);
             this.spectralType = coord.type;
             this.spectralUnit = coord.unit;
             this.clearXBounds();
@@ -249,7 +190,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     }
 
     @computed get spectralCoordinate() {
-        return this.spectralType && this.spectralUnit ? SpectralProfileWidgetStore.GenCoordinateXLabel(this.spectralType, this.spectralUnit) : "Channel";
+        return this.spectralType && this.spectralUnit ? GenCoordinateLabel(this.spectralType, this.spectralUnit) : "Channel";
     }
 
     @computed get isCoordChannel() {
@@ -259,9 +200,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @computed get isSpectralCoordinateSupported(): boolean {
         const frame = this.appStore.activeFrame;
         if (frame && frame.spectralInfo) {
-            const type = frame.spectralInfo.channelType.code as SpectralType;
-            const unit = frame.spectralInfo.channelType.unit as SpectralUnit;
-            return type && unit && (<any> Object).values(SpectralType).includes(type) && (<any> Object).values(SpectralUnit).includes(unit);
+            const type = frame.spectralInfo.channelType.code as string;
+            const unit = frame.spectralInfo.channelType.unit as string;
+            return type && unit && IsSpectralTypeValid(type) && IsSpectralUnitValid(unit);
         }
         return false;
     }
@@ -269,8 +210,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @computed get isSpectralSystemSupported(): boolean {
         const frame = this.appStore.activeFrame;
         if (frame && frame.spectralInfo) {
-            const specsys = frame.spectralInfo.specsys as SpectralSystem;
-            return specsys && (<any> Object).values(SpectralSystem).includes(specsys);
+            const specsys = frame.spectralInfo.specsys as string;
+            return specsys && IsSpectralSystemValid(specsys);
         }
         return false;
     }
