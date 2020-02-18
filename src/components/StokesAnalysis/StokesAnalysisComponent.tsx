@@ -9,7 +9,7 @@ import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING, PlotType} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
+import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, FrameStore} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {ChannelInfo, Point2D} from "models";
 import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation} from "utilities";
@@ -17,6 +17,19 @@ import "./StokesAnalysisComponent.css";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
 type Point3D = { x: number, y: number, z?: number };
+
+enum SpectralCoordinateType {
+    Frequency = "FREQ",
+    Energy = "ENER",
+    Wavenumber = "WAVN",
+    RadioVelocity = "VRAD",
+    VacuumWavelength = "WAVE",
+    OpticalVelocity = "VOPT",
+    Redshift = "ZOPT",
+    AirWavelength = "AWAV",
+    ApparentRadialVelocity = "VELO",
+    BetaFactor = "BETA"
+}
 
 @observer
 export class StokesAnalysisComponent extends React.Component<WidgetProps> {
@@ -30,6 +43,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         horizontal: 2,
     };
     private multicolorLineColorOutRange = "hsla(0, 0%, 50%, 0.5)";
+    private spectralCoordinateTypeColorMapGroup = [
+        SpectralCoordinateType.Frequency,
+        SpectralCoordinateType.Energy,
+        SpectralCoordinateType.Wavenumber
+    ];
+    private fileId = -1;
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -96,12 +115,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
         }
 
-        if (this.widgetStore) {
-            // init color Map according CTYPE3 and CDELT3
-            const redToBlue = this.getColorMapOrder();
-            this.widgetStore.setInvertedColorMap(redToBlue);
-        }
-
         autorun(() => {
             if (this.widgetStore) {
                 const appStore = this.props.appStore;
@@ -120,6 +133,16 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
                     this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis : ${regionString} ${selectedString} ${progressString}`);
+
+                    // init color Map according CTYPE3 and CDELT3, if file changed
+                    if (this.fileId !== frame.frameInfo.fileId) {
+                        // Todo, reset zoom level for spatial and spectral issue #463
+                        const redToBlue = this.getColorMapOrder(frame);
+                        this.widgetStore.setInvertedColorMap(redToBlue);
+                        this.widgetStore.clearLinePlotsXYBounds();
+                        this.widgetStore.clearScatterPlotXYBounds();
+                        this.fileId = frame.frameInfo.fileId;
+                    }
                 }
             } else {
                 this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Stokes Analysis: Cursor`);
@@ -132,6 +155,28 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         this.height = height;
         this.widgetStore.clearScatterPlotXYBounds();
     };
+
+    // true: red->blue, false: blue->red
+    private getColorMapOrder(frame: FrameStore): boolean {    
+        const headers = frame.frameInfo.fileInfoExtended.headerEntries;
+        const CTYPE3 =  headers.find(obj => { return obj.name === "CTYPE3"; });
+        const CDELT3 =  headers.find(obj => { return obj.name === "CDELT3"; });
+        if (CTYPE3 && CDELT3) {
+            const inGroup = this.spectralCoordinateTypeColorMapGroup.find(type => { return type === CTYPE3.value; });
+            if (CDELT3.numericValue > 0) {
+                if (inGroup !== undefined) {
+                    return true;
+                }
+                return false;
+            } else {
+                if (inGroup !== undefined) {
+                    return false;
+                }
+                return true;
+            }
+        }
+        return true;
+    }
 
     private getChannelLabel = (): string => {
         const frame = this.props.appStore.activeFrame;
@@ -487,30 +532,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         const index = Math.round(percentage * mapSize) * 4;
         const opacity = this.widgetStore.pointTransparency ? this.widgetStore.pointTransparency : 1;  
         return `rgba(${colorMap[index]}, ${colorMap[index + 1]}, ${colorMap[index + 2]}, ${opacity})`;
-    }
-
-    // true: red->blue, false: blue->red
-    private getColorMapOrder(): boolean {
-        const appStore = this.props.appStore;
-        if (appStore && appStore.activeFrame) {
-            const headers = appStore.activeFrame.frameInfo.fileInfoExtended.headerEntries;
-            const CTYPE3 =  headers.find(obj => { return obj.name === "CTYPE3"; });
-            const CDELT3 =  headers.find(obj => { return obj.name === "CDELT3"; });
-            if (CTYPE3 && CDELT3) {
-                if (CDELT3.numericValue > 0) {
-                    if (CTYPE3.value === "FREQ") {
-                        return true;
-                    }
-                    return false;
-                } else {
-                    if (CTYPE3.value === "FREQ") {
-                        return false;
-                    }
-                    return true;
-                }
-            }
-        }
-        return true;
     }
 
     private fillScatterColor(data: Array<{ x: number, y: number, z?: number }>, interactionBorder: { xMin: number, xMax: number }, zIndex: boolean): Array<string> {
