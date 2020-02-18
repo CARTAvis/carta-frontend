@@ -1,17 +1,9 @@
-.spectral-profile-settings-panel-form {
-    .bp3-control-group {
-        margin-top: 10px;
-        margin-left: 2px;
-        margin-right: 5px;
-	user-select: none;
-        .bp3-form-group {
-            margin-bottom: 5px;
-        }
-        .bp3-control {
-            margin-top: 0;
-        }
-    }
-    .plot-type-selector {
-        margin: 0 auto 10px;
+.spectral-coordinate-settings {
+    width: 100%;
+    margin-top: 10px;
+
+    .bp3-form-group .bp3-label {
+        width: 10em;
+        text-align: right;
     }
 }
