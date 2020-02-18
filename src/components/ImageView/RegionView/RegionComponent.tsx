@@ -258,9 +258,13 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         const frame = this.props.frame;
         const centerImageSpace = region.controlPoints[0];
 
-        const centerPixelSpace = imageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
-        let width = (region.controlPoints[1].x * frame.zoomLevel) / devicePixelRatio;
-        let height = (region.controlPoints[1].y * frame.zoomLevel) / devicePixelRatio;
+        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+        const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
+        // TODO: rotate and scale correctly
+
+        const centerPixelSpace = imageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frameView, this.props.layerWidth, this.props.layerHeight);
+        let width = (region.controlPoints[1].x * zoomLevel) / devicePixelRatio;
+        let height = (region.controlPoints[1].y * zoomLevel) / devicePixelRatio;
 
         // Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
         const borderDash = [(width + height) * 4 / 100.0];
