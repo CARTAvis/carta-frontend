@@ -137,9 +137,9 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(const char* header, const c
 
     // set spectral system, unit from parameter (CTYPE, CUNIT)
     char buffer[128];
-    (void) snprintf(buffer, sizeof(buffer), "System=%s", system);
+    snprintf(buffer, sizeof(buffer), "System=%s", system);
     astSet(specframe, buffer);
-    (void) snprintf(buffer, sizeof(buffer), "Unit=%s", unit);
+    snprintf(buffer, sizeof(buffer), "Unit=%s", unit);
     astSet(specframe, buffer);
 
     // get Epoch, ObsLon, ObsLat, ObsAlt, RefRA, RefDec, RestFreq, StdOfRest attributes from AST compound frame
@@ -148,49 +148,49 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(const char* header, const c
     const char *epoch = astGetC(frame, "Epoch");
     if (epoch)
     {
-        (void) snprintf(buffer, sizeof(buffer), "Epoch=%s", epoch);
+        snprintf(buffer, sizeof(buffer), "Epoch=%s", epoch);
         astSet(specframe, buffer);
     }
     const char *obsLon = astGetC(frame, "ObsLon");
     if (obsLon)
     {
-        (void) snprintf(buffer, sizeof(buffer), "ObsLon=%s", obsLon);
+        snprintf(buffer, sizeof(buffer), "ObsLon=%s", obsLon);
         astSet(specframe, buffer);
     }
     const char *obsLat = astGetC(frame, "ObsLat");
     if (obsLat)
     {
-        (void) snprintf(buffer, sizeof(buffer), "ObsLat=%s", obsLat);
+        snprintf(buffer, sizeof(buffer), "ObsLat=%s", obsLat);
         astSet(specframe, buffer);
     }
     const char *obsAlt = astGetC(frame, "ObsAlt");
     if (obsAlt)
     {
-        (void) snprintf(buffer, sizeof(buffer), "ObsAlt=%s", obsAlt);
+        snprintf(buffer, sizeof(buffer), "ObsAlt=%s", obsAlt);
         astSet(specframe, buffer);
     }
     const char *refRA = astGetC(frame, "RefRA");
     if (refRA)
     {
-        (void) snprintf(buffer, sizeof(buffer), "RefRA=%s", refRA);
+        snprintf(buffer, sizeof(buffer), "RefRA=%s", refRA);
         astSet(specframe, buffer);
     }
     const char *refDec = astGetC(frame, "RefDec");
     if (refDec)
     {
-        (void) snprintf(buffer, sizeof(buffer), "RefDec=%s", refDec);
+        snprintf(buffer, sizeof(buffer), "RefDec=%s", refDec);
         astSet(specframe, buffer);
     }
     const char *restFreq = astGetC(frame, "RestFreq");
     if (restFreq)
     {
-        (void) snprintf(buffer, sizeof(buffer), "RestFreq=%s", restFreq);
+        snprintf(buffer, sizeof(buffer), "RestFreq=%s", restFreq);
         astSet(specframe, buffer);
     }
     const char *stdOfRest = astGetC(frame, "StdOfRest");
     if (stdOfRest)
     {
-        (void) snprintf(buffer, sizeof(buffer), "StdOfRest=%s", stdOfRest);
+        snprintf(buffer, sizeof(buffer), "StdOfRest=%s", stdOfRest);
         astSet(specframe, buffer);
     }
 
@@ -376,11 +376,11 @@ EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, const ch
     }
 
     char buffer[128];
-    (void) snprintf(buffer, sizeof(buffer), "System=%s", specTypeTo);
+    snprintf(buffer, sizeof(buffer), "System=%s", specTypeTo);
     astSet(specFrameTo, buffer);
-    (void) snprintf(buffer, sizeof(buffer), "Unit=%s", specUnitTo);
+    snprintf(buffer, sizeof(buffer), "Unit=%s", specUnitTo);
     astSet(specFrameTo, buffer);
-    (void) snprintf(buffer, sizeof(buffer), "StdOfRest=%s", specSysTo);
+    snprintf(buffer, sizeof(buffer), "StdOfRest=%s", specSysTo);
     astSet(specFrameTo, buffer);
 
     AstFrameSet *cvt;
