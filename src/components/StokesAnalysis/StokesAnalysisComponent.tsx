@@ -109,6 +109,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
         }
 
+        if (this.widgetStore) {
+            // init color Map according CTYPE3 and CDELT3
+            const redToBlue = this.getColorMapOrder();
+            this.widgetStore.setInvertedColorMap(redToBlue);
+        }
+
         autorun(() => {
             if (this.widgetStore) {
                 const appStore = this.props.appStore;
@@ -485,10 +491,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return a === b && a === c && a === d && a !== null;
     }
 
-    private getScatterColor(percentage: number, frequencyIncreases: boolean): string {
+    private getScatterColor(percentage: number, redToBlue: boolean): string {
         const colorMap = this.widgetStore.colorPixel.color;
         const mapSize = this.widgetStore.colorPixel.size;
-        if (!frequencyIncreases || this.widgetStore.invertedColorMap) {
+        if (redToBlue) {
             percentage = 1 - percentage;
         }
         const index = Math.round(percentage * mapSize) * 4;
@@ -496,11 +502,36 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return `rgba(${colorMap[index]}, ${colorMap[index + 1]}, ${colorMap[index + 2]}, ${opacity})`;
     }
 
-    private frequencyIncreases(data: Point3D[]): boolean {
+    // true: red->blue, false: blue->red
+    private frequencyDecreases(data: Point3D[]): boolean {
         const zFirst = data[0].z;
         const zLast = data[data.length - 1].z;
         if (zFirst > zLast) {
             return false;
+        }
+        return true;
+    }
+
+    // true: red->blue, false: blue->red
+    private getColorMapOrder(): boolean {
+        const appStore = this.props.appStore;
+        if (appStore && appStore.activeFrame) {
+            const headers = appStore.activeFrame.frameInfo.fileInfoExtended.headerEntries;
+            const CTYPE3 =  headers.find(obj => { return obj.name === "CTYPE3"; });
+            const CDELT3 =  headers.find(obj => { return obj.name === "CDELT3"; });
+            if (CTYPE3 && CDELT3) {
+                if (CDELT3.numericValue > 0) {
+                    if (CTYPE3.value === "FREQ") {
+                        return true;
+                    }
+                    return false;
+                } else {
+                    if (CTYPE3.value === "FREQ") {
+                        return false;
+                    }
+                    return true;
+                }
+            }
         }
         return true;
     }
@@ -510,7 +541,8 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (data && data.length && zIndex && interactionBorder) {
             let xlinePlotRange = interactionBorder;
             const outOfRangeColor = `hsla(0, 0%, 50%, ${this.opacityOutRange})`;
-            const zOrder = this.frequencyIncreases(data);
+            // const zOrder = this.frequencyDecreases(data);
+            const redToBlue = this.widgetStore.invertedColorMap;
             const minMaxZ = minMaxPointArrayZ(data);
             for (let index = 0; index < data.length; index++) {
                 const point = data[index];
@@ -520,7 +552,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     outRange = false;
                 }
                 const percentage = (point.z - minMaxZ.minVal) / (minMaxZ.maxVal - minMaxZ.minVal);
-                pointColor = outRange ? outOfRangeColor : this.getScatterColor(percentage, zOrder);
+                pointColor = outRange ? outOfRangeColor : this.getScatterColor(percentage, redToBlue);
                 scatterColors.push(pointColor);
                 
             }
