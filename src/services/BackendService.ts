@@ -353,18 +353,6 @@ export class BackendService {
         return false;
     }
 
-    // @action("set image view")
-    // setImageView(fileId: number, xMin: number, xMax: number, yMin: number, yMax: number, mip: number, compressionQuality: number): boolean {
-    //     if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-    //         const message = CARTA.SetImageView.create({fileId, imageBounds: {xMin, xMax, yMin, yMax}, mip, compressionType: CARTA.CompressionType.ZFP, compressionQuality, numSubsets: this.subsetsRequired});
-    //         this.logEvent(CARTA.EventType.SET_IMAGE_VIEW, this.eventCounter, message, false);
-    //         if (this.sendEvent(CARTA.EventType.SET_IMAGE_VIEW, CARTA.SetImageView.encode(message).finish())) {
-    //             return true;
-    //         }
-    //     }
-    //     return false;
-    // }
-
     @action("set channels")
     setChannels(fileId: number, channel: number, stokes: number, requiredTiles: CARTA.IAddRequiredTiles): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
