@@ -30,8 +30,8 @@ export enum SpectralUnit {
 export enum SpectralSystem {
     LSRK = "LSRK",
     LSRD = "LSRD",
-    BARY = "BARY",
-    TOPO = "TOPO"
+    BARY = "BARYCENT",
+    TOPO = "TOPOCENT"
 }
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
