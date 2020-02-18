@@ -1,7 +1,7 @@
 import * as React from "react";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
-import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, EditableCell, TableLoadingOption} from "@blueprintjs/table";
+import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, EditableCell} from "@blueprintjs/table";
 import {ControlHeader} from "stores/widgets";
 import {getTableDataByType} from "utilities";
 
@@ -36,7 +36,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 name={columnName} 
                 columnHeaderCellRenderer={(columnIndex: number) => this.renderColumnHeaderCell(columnIndex, columnName)} 
                 cellRenderer={(rowIndex, columnIndex) => (
-                    <Cell key={`cell_${columnIndex}_${rowIndex}`} interactive={true}>{coloumnData[rowIndex]}</Cell>
+                    <Cell key={`cell_${columnIndex}_${rowIndex}`} loading={this.isLoading(rowIndex)} interactive={true}>{coloumnData[rowIndex]}</Cell>
                     )}
             />
         );
@@ -61,12 +61,11 @@ export class TableComponent extends React.Component<TableComponentProps> {
         );
     }
 
-    private getLoadingOptions() {
-        const loadingOptions: TableLoadingOption[] = [];
-        if (this.props.loadingCell) {
-            loadingOptions.push(TableLoadingOption.CELLS);
+    private isLoading(rowIndex: number): boolean {
+        if (this.props.loadingCell && rowIndex + 4 > this.props.numVisibleRows) {
+            return true;
         }
-        return loadingOptions;
+        return false;
     }
 
     private infiniteLoad(rowIndexEnd: number, numVisibleRows: number) {
@@ -121,7 +120,6 @@ export class TableComponent extends React.Component<TableComponentProps> {
                     renderMode={RenderMode.NONE}
                     enableRowReordering={false}
                     selectionModes={SelectionModes.NONE}
-                    loadingOptions={this.getLoadingOptions()}
                     onVisibleCellsChange={(rowIndices) => this.infiniteLoad(rowIndices.rowIndexEnd, table.numVisibleRows)}
                     columnWidths={table.columnWidts}
                     onColumnWidthChanged={this.updateTableColumnWidth}
