@@ -3,10 +3,10 @@ import {ChartArea} from "chart.js";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, ScatterSettings} from "components/Shared";
-import {AppStore} from "../AppStore";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {FrameStore} from "stores";
+import {AppStore, FrameStore} from "stores";
 import {getColorsForValues, isColorValid} from "utilities";
+import {GenCoordinateLabel, IsSpectralSystemValid, IsSpectralTypeValid, IsSpectralUnitValid, SpectralSystem, SpectralType, SpectralUnit, SPECTRAL_COORDS_SUPPORTED} from "models";
 
 export enum StokesCoordinate {
     CurrentZ = "z",
@@ -48,6 +48,9 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @observable quScatterMaxY: number;
     @observable linePlotcursorX: number;
     @observable channel: number;
+    @observable spectralType: SpectralType;
+    @observable spectralUnit: SpectralUnit;
+    @observable spectralSystem: SpectralSystem;
     @observable scatterPlotCursorX: number;
     @observable scatterPlotCursorY: number;
     @observable isMouseMoveIntoScatterPlots: boolean;
@@ -154,6 +157,20 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         }
     };
 
+    @action setSpectralCoordinate = (coordStr: string) => {
+        if (SPECTRAL_COORDS_SUPPORTED.has(coordStr)) {
+            const coord: {type: SpectralType, unit: SpectralUnit} = SPECTRAL_COORDS_SUPPORTED.get(coordStr);
+            this.spectralType = coord.type;
+            this.spectralUnit = coord.unit;
+            this.clearSharedXBounds();
+        }
+    };
+
+    @action setSpectralSystem = (specsys: SpectralSystem) => {
+        this.spectralSystem = specsys;
+        this.clearSharedXBounds();
+    };
+
     @action setSharedXBounds = (minVal: number, maxVal: number) => {
         this.sharedMinX = minVal;
         this.sharedMaxX = maxVal;
@@ -221,7 +238,21 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.scatterPlotPointSize = DEFAULTS.scatterPlotPointSize;
         this.equalAxes = DEFAULTS.equalAxes;
         this.pointTransparency = DEFAULTS.pointTransparency;
+        this.initSpectralSettings();
     }
+
+    public initSpectralSettings = () => {
+        const frame = this.appStore.activeFrame;
+        if (frame && frame.spectralInfo && this.isSpectralCoordinateSupported && this.isSpectralSystemSupported) {
+            this.spectralType = frame.spectralInfo.channelType.code as SpectralType;
+            this.spectralUnit = frame.spectralInfo.channelType.unit as SpectralUnit;
+            this.spectralSystem = frame.spectralInfo.specsys as SpectralSystem;
+        } else {
+            this.spectralType = null;
+            this.spectralUnit = null;
+            this.spectralSystem = SpectralSystem.LSRK;
+        }
+    };
 
     @action setQUScatterPlotXBounds = (minVal: number, maxVal: number) => {
         this.quScatterMinX = minVal;
@@ -334,6 +365,33 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         if (val >= ScatterSettings.MIN_TRANSPARENCY && val <= ScatterSettings.MAX_TRANSPARENCY) {
             this.pointTransparency = val;   
         }
+    }
+
+    @computed get spectralCoordinate() {
+        return this.spectralType && this.spectralUnit ? GenCoordinateLabel(this.spectralType, this.spectralUnit) : "Channel";
+    }
+
+    @computed get isCoordChannel() {
+        return this.spectralCoordinate === "Channel";
+    }
+
+    @computed get isSpectralCoordinateSupported(): boolean {
+        const frame = this.appStore.activeFrame;
+        if (frame && frame.spectralInfo) {
+            const type = frame.spectralInfo.channelType.code as string;
+            const unit = frame.spectralInfo.channelType.unit as string;
+            return type && unit && IsSpectralTypeValid(type) && IsSpectralUnitValid(unit);
+        }
+        return false;
+    }
+
+    @computed get isSpectralSystemSupported(): boolean {
+        const frame = this.appStore.activeFrame;
+        if (frame && frame.spectralInfo) {
+            const specsys = frame.spectralInfo.specsys as string;
+            return specsys && IsSpectralSystemValid(specsys);
+        }
+        return false;
     }
 
     @computed get isLinePlotsAutoScaledX() {

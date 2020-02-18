@@ -160,7 +160,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
         return (
             <React.Fragment>
-                <SpectralSettingsComponent appStore={this.props.appStore} widgetStore={widgetStore}/>
+                <SpectralSettingsComponent appStore={this.props.appStore} widgetStore={widgetStore} disable={false}/>
                 <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
             </React.Fragment>
         );

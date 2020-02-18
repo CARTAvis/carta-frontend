@@ -2,7 +2,7 @@ import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
 import {Colors} from "@blueprintjs/core";
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent} from "components/Shared";
+import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, SpectralSettingsComponent} from "components/Shared";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig} from "stores";
 import "./StokesAnalysisSettingsPanelComponent.css";
@@ -62,9 +62,10 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
     };
 
     render() {
+        const appStore = this.props.appStore;
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            darkMode: this.props.appStore.darkTheme,
+            darkMode: appStore.darkTheme,
             primaryDarkModeLineColor: Colors.BLUE4,
             primaryLineColor: widgetStore.primaryLineColor,
             lineWidth: widgetStore.lineWidth,
@@ -92,9 +93,13 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             handleEqualAxesValuesChanged: this.handleEqualAxesValuesChanged
         };
 
+        const hasStokes = appStore.activeFrame && appStore.activeFrame.frameInfo && appStore.activeFrame.frameInfo.fileInfoExtended.stokes > 1;
+
         return (
             <React.Fragment>
                 <div className="stokes-settings">
+                    <p>Spectral Settings:</p>
+                    <SpectralSettingsComponent appStore={appStore} widgetStore={widgetStore} disable={!hasStokes}/>
                     <p>Line Plots:</p>
                     <div className={"stokes-line-settings"}>
                         <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
