@@ -44,7 +44,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
 	astClearStatus;
     astBegin;
 
-    fitschan = astFitsChan(NULL, NULL, "");
+    fitschan = astFitsChan(nullptr, nullptr, "");
     if (!fitschan)
     {
         cout << "astFitsChan returned null :(" << endl;
@@ -98,7 +98,7 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(const char* header, const c
 	astClearStatus;
     astBegin;
 
-    fitschan = astFitsChan(NULL, NULL, "");
+    fitschan = astFitsChan(nullptr, nullptr, "");
     if (!fitschan)
     {
         cout << "astFitsChan returned null :(" << endl;
