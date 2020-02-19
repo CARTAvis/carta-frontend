@@ -46,7 +46,7 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
                     <ul>
                         <li>Source code for CARTA is available on <a href="https://github.com/cartavis" target="_blank">GitHub</a></li>
                         <li>Please report bugs or suggestions to <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw" target="_blank">carta_helpdesk@asiaa.sinica.edu.tw</a></li>
-                        <li>Documentation is available <a href="https://carta.readthedocs.io/en/latest" target="_blank">online</a></li>
+                        <li>Documentation is available <a href="https://carta.readthedocs.io/en/1.3" target="_blank">online</a></li>
                     </ul>
                     <h3>License</h3>
                     <p>
