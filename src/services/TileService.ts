@@ -60,10 +60,6 @@ export class TileService {
         return this.workersReady && this.workersReady.every(v => v);
     }
 
-    get waitingForSync() {
-        return this.pendingDecompressions.size || (this.pendingSynchronisedTiles && this.pendingSynchronisedTiles.length > 0);
-    }
-
     public GetTileStream() {
         return this.tileStream;
     }
@@ -201,7 +197,11 @@ export class TileService {
                 const pendingCompressionMap = this.pendingDecompressions.get(key);
                 const tileIsQueuedForDecompression = pendingCompressionMap && pendingCompressionMap.has(encodedCoordinate);
                 if (compressedTile && !tileIsQueuedForDecompression) {
+                    if (!pendingCompressionMap) {
+                        this.pendingDecompressions.set(key, new Map<number, boolean>());
+                    }
                     // Load from L2 cache instead
+
                     this.asyncDecompressTile(fileId, channel, stokes, compressedTile.tile, compressedTile.compressionQuality, encodedCoordinate);
                 } else if (!compressedTile) {
                     // Request from backend
@@ -226,6 +226,10 @@ export class TileService {
             } else {
                 this.backendService.addRequiredTiles(fileId, sortedRequests, compressionQuality);
             }
+        } else {
+            // No requests required, mark channel as complete
+            const key = `${fileId}_${stokes}_${channel}`;
+            this.completedChannels.set(key, true);
         }
     }
 
@@ -318,15 +322,13 @@ export class TileService {
     };
 
     private handleStreamSync = (syncMessage: CARTA.IRasterTileSync) => {
+        const key = `${syncMessage.fileId}_${syncMessage.stokes}_${syncMessage.channel}`;
         if (this.animationEnabled && syncMessage.animationId !== this.backendService.animationId) {
-            console.log(`Skipping stale sync message during animation. Message animation_id: ${syncMessage.animationId}. Service animation_id: ${this.backendService.animationId}`);
             return;
         } else if (!this.animationEnabled && syncMessage.animationId !== 0) {
-            console.log(`Skipping stale animation sync message outside of animation. Message animation_id: ${syncMessage.animationId}. Service animation_id: ${this.backendService.animationId}`);
             return;
         }
 
-        const key = `${syncMessage.fileId}_${syncMessage.stokes}_${syncMessage.channel}`;
         // At the start of the stream, create a new pending decompressions map for the channel about to be streamed
         if (!syncMessage.endSync) {
             this.pendingDecompressions.set(key, new Map<number, boolean>());
@@ -337,6 +339,8 @@ export class TileService {
     };
 
     private handleStreamedTiles = (tileMessage: CARTA.IRasterTileData) => {
+        const key = `${tileMessage.fileId}_${tileMessage.stokes}_${tileMessage.channel}`;
+
         if (tileMessage.compressionType !== CARTA.CompressionType.NONE && tileMessage.compressionType !== CARTA.CompressionType.ZFP) {
             console.error("Unsupported compression type");
         }
@@ -356,10 +360,8 @@ export class TileService {
             return;
         }
 
-        const key = `${tileMessage.fileId}_${tileMessage.stokes}_${tileMessage.channel}`;
         const pendingCompressionMap = this.pendingDecompressions.get(key);
         if (!pendingCompressionMap) {
-            console.log(`Skipping stale tile based on mismatched pending tile queue`);
             return;
         }
 
@@ -421,7 +423,7 @@ export class TileService {
         const key = `${fileId}_${stokes}_${channel}`;
         const pendingCompressionMap = this.pendingDecompressions.get(key);
         if (!pendingCompressionMap) {
-            console.log("Problem decompressing tile!");
+            console.log(`Problem decompressing tile. Missing pending decompression map ${key}!`);
             return;
         }
 
@@ -448,6 +450,9 @@ export class TileService {
                 this.pendingDecompressions.delete(key);
                 const tileCount = this.receivedSynchronisedTiles.length;
                 this.clearGPUCache();
+                if (this.animationEnabled) {
+                    this.clearCompressedCache(fileId);
+                }
                 this.resetCoordinateQueue();
 
                 for (const tilePair of this.receivedSynchronisedTiles) {

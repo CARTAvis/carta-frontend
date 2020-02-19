@@ -107,6 +107,9 @@ export class AnimatorStore {
             return;
         }
 
+        this.animationState = AnimationState.STOPPED;
+        this.appStore.tileService.setAnimationEnabled(false);
+
         if (this.animationMode === AnimationMode.FRAME) {
             clearInterval(this.animateHandle);
         } else {
@@ -121,8 +124,6 @@ export class AnimatorStore {
             };
             this.appStore.backendService.stopAnimation(stopMessage);
         }
-        this.animationState = AnimationState.STOPPED;
-        this.appStore.tileService.setAnimationEnabled(false);
     };
 
     @action animate = () => {
