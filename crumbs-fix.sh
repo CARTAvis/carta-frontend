@@ -26,3 +26,5 @@ if [ "$(uname)" == "Linux" ]; then
   fi
 
 fi
+
+rm patch.txt
