@@ -1,0 +1,21 @@
+<div class="section" id="file-browser">
+<h2>File browser</h2>
+<p>File browser, accessible via the menu <strong>File</strong> -&gt; <strong>Open image</strong> or the menu <strong>File</strong> -&gt; <strong>Append image</strong>, provides information of images supported by CARTA. Currently CARTA supports images in:</p>
+<ul class="simple">
+<li>CASA format</li>
+<li>HDF5-IDIA format</li>
+<li>FITS format</li>
+<li>MIRIAD format</li>
+</ul>
+<p>Only these formats will be shown in the file list with image type and file size. When an image is selected, a brief summary of image properties is provided on the right side of the dialog. Full header is also available in the second tab. To view an image, click the <strong>Load</strong> button at the bottom-right corner. To view a new image with all the loaded images closed, use <strong>File</strong> -&gt; <strong>Open image</strong> -&gt; <strong>Load</strong>. To view multiple images, use <strong>File</strong> -&gt; <strong>Append image</strong> -&gt; <strong>Append</strong>.</p>
+
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>When viewing images in appending mode, alignments in the world coordinate system (WCS) and the frequency/velocity space are not available in this version. This feature is expected in v1.2.</p>
+<p class="last">The support of HDF5-IDIA is conditional. Full support will be available in v1.1</p>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">When the file information of an image cube with a <em>per-plane-beam</em> is requested, CARTA will spend a significant amount of time to calculate the beam information. This also applies when opening images with a per-plane-beam. This is a known issue and the development team will try to solve it as soon as possible.</p>
+</div>
+</div>
