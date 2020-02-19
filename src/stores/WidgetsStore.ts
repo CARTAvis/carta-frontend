@@ -618,6 +618,7 @@ export class WidgetsStore {
 
     @action updateSpectralProfileWidgetSpectralSettings() {
         Array.from(this.spectralProfileWidgets.values()).forEach((widgetStore) => widgetStore.initSpectralSettings());
+        Array.from(this.stokesAnalysisWidgets.values()).forEach((widgetStore) => widgetStore.initSpectralSettings());
     }
 
     // endregion
