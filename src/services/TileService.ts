@@ -318,6 +318,14 @@ export class TileService {
     };
 
     private handleStreamSync = (syncMessage: CARTA.IRasterTileSync) => {
+        if (this.animationEnabled && syncMessage.animationId !== this.backendService.animationId) {
+            console.log(`Skipping stale sync message during animation. Message animation_id: ${syncMessage.animationId}. Service animation_id: ${this.backendService.animationId}`);
+            return;
+        } else if (!this.animationEnabled && syncMessage.animationId !== 0) {
+            console.log(`Skipping stale animation sync message outside of animation. Message animation_id: ${syncMessage.animationId}. Service animation_id: ${this.backendService.animationId}`);
+            return;
+        }
+
         const key = `${syncMessage.fileId}_${syncMessage.stokes}_${syncMessage.channel}`;
         // At the start of the stream, create a new pending decompressions map for the channel about to be streamed
         if (!syncMessage.endSync) {
@@ -341,10 +349,10 @@ export class TileService {
         }
 
         if (this.animationEnabled && tileMessage.animationId !== this.backendService.animationId) {
-            console.log(`Skipping stale tile during animation`);
+            console.log(`Skipping stale tile during animation Message animation_id: ${tileMessage.animationId}. Service animation_id: ${this.backendService.animationId}`);
             return;
         } else if (!this.animationEnabled && tileMessage.animationId !== 0) {
-            console.log(`Skipping stale animation tile based outside of animation`);
+            console.log(`Skipping stale animation tile outside of animation. Message animation_id: ${tileMessage.animationId}. Service animation_id: ${this.backendService.animationId}`);
             return;
         }
 
