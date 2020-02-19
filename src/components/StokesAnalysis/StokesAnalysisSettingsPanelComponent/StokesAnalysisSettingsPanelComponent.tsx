@@ -53,10 +53,6 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         });
     }
 
-    handleWcsValuesChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.widgetStore.setUseWcsValues(changeEvent.target.checked);
-    };
-
     handleEqualAxesValuesChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.widgetStore.setEqualAxesValue(changeEvent.target.checked);
     };
@@ -71,11 +67,9 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
-            useWcsValues: widgetStore.useWcsValues,
             setPrimaryLineColor: widgetStore.setPrimaryLineColor,
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
-            handleWcsValuesChanged: this.handleWcsValuesChanged,
             setPlotType: widgetStore.setPlotType,
             secondaryDarkModeLineColor: Colors.ORANGE4,
             secondaryLineColor: widgetStore.secondaryLineColor,

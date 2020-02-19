@@ -21,7 +21,6 @@ export enum StokesCoordinate {
 
 const DEFAULTS = {
         fractionalPolVisible: false,
-        useWcsValues: true,
         scatterOutRangePointsZIndex: [],
         primaryLineColor: { colorHex: Colors.BLUE2, fixed: false },
         secondaryLineColor: { colorHex: Colors.ORANGE2, fixed: false },
@@ -61,7 +60,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     scatterOutRangePointsZIndex: Array<number>;
 
     // settings 
-    @observable useWcsValues: boolean;
     @observable plotType: PlotType;
     @observable primaryLineColor: { colorHex: string, fixed: boolean };
     @observable secondaryLineColor: { colorHex: string, fixed: boolean };
@@ -215,13 +213,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.clearScatterPlotXYBounds();
     };
 
-    @action setUseWcsValues = (val: boolean) => {
-        if (val !== this.useWcsValues) {
-            this.clearSharedXBounds();
-        }
-        this.useWcsValues = val;
-    };
-
     constructor(appStore: AppStore) {
         super(appStore, RegionsType.CLOSED_AND_POINT);
         this.colorMap = DEFAULTS.colorMap;
@@ -229,7 +220,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.statsType = CARTA.StatsType.Mean;
         this.plotType = PlotType.STEPS;
         this.fractionalPolVisible = DEFAULTS.fractionalPolVisible;
-        this.useWcsValues = DEFAULTS.useWcsValues;
         this.scatterOutRangePointsZIndex = DEFAULTS.scatterOutRangePointsZIndex;
         this.primaryLineColor = DEFAULTS.primaryLineColor;
         this.secondaryLineColor = DEFAULTS.secondaryLineColor;
@@ -434,9 +424,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         if (typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE && widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
             this.linePlotPointSize = widgetSettings.linePlotPointSize;
         }
-        if (typeof widgetSettings.useWcsValues === "boolean") {
-            this.useWcsValues = widgetSettings.useWcsValues;
-        }
         if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
             this.plotType = widgetSettings.plotType;
         }
@@ -460,7 +447,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
             secondaryLineColor: this.secondaryLineColor.colorHex,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
-            useWcsValues: this.useWcsValues,
             plotType: this.plotType,
             colorMap: this.colorMap,
             scatterPlotPointSize: this.scatterPlotPointSize,
