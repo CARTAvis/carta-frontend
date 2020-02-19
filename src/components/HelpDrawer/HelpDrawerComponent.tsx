@@ -1,6 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Drawer, IDrawerProps, Position, Classes} from "@blueprintjs/core";
+import {HelpFileBrowserComponent} from "./HelpContent/HelpFileBrowserComponent";
 import {AppStore, HelpType} from "stores";
 import "./HelpDrawerComponent.css";
 
@@ -23,7 +24,7 @@ export class HelpDrawerComponent extends React.Component<{ appStore: AppStore }>
             lazy: true,
             isOpen: helpStore.helpVisible,
             onClose: helpStore.hideHelpDrawer,
-            title: HELP_CONFIG.get(helpStore.type) ? HELP_CONFIG.get(helpStore.type).title : "",
+            title: HELP_MAP.get(helpStore.type) ? HELP_MAP.get(helpStore.type).title : "",
             position: Position.RIGHT,
             size: "33%",
             hasBackdrop: true
@@ -32,117 +33,119 @@ export class HelpDrawerComponent extends React.Component<{ appStore: AppStore }>
         return (
             <Drawer {...drawerProps} >
                 <div className={Classes.DRAWER_BODY}>
-                    <div className={Classes.DIALOG_BODY} dangerouslySetInnerHTML={{__html: HELP_CONFIG.get(helpStore.type) ? HELP_CONFIG.get(helpStore.type).conten : "" }}/>
+                    <div className={Classes.DIALOG_BODY}>
+                        {HELP_MAP.get(helpStore.type) ? HELP_MAP.get(helpStore.type).content : ""}
+                    </div>
                 </div>
             </Drawer>
         );
     }
 }
 
-const HELP_CONFIG = new Map<HelpType, { title: string, conten: string }>([
+const HELP_MAP = new Map<HelpType, {title: string, content: any}>([
     // Dialog
     [
         HelpType.CONTOUR, {
             title: "Contour Configuration",
-            conten: ""
+            content: ""
     }], [
         HelpType.FILE_Browser, {
             title: "File Browser",
-            conten: require("!raw-loader!./HelpContent/file_browser.html")
+            content: <HelpFileBrowserComponent/>
     }], [
         HelpType.FILE_INFO, {
             title: "File Info",
-            conten: ""
+            content: ""
     }], [
         HelpType.SAVE_LAYOUT, {
             title: "Save Layout",
-            conten: ""
+            content: ""
     }], [
         HelpType.OVERLAY_SETTINGS, {
             title: "Overlay Settings",
-            conten: ""
+            content: ""
     }], [
         HelpType.PREFERENCES, {
             title: "Preferences",
-            conten: ""
+            content: ""
     }], [
         HelpType.REGION_DIALOG, {
             title: "Region Dialog",
-            conten: ""
+            content: ""
     }],
 
     // Widgets
     [
         HelpType.ANIMATOR, {
             title: "Animator",
-            conten: ""
+            content: ""
     }], [
         HelpType.HISTOGRAM, {
             title: "Histogram",
-            conten: ""
+            content: ""
     }], [
         HelpType.HISTOGRAM_SETTINGS, {
             title: "Histogram Settings",
-            conten: ""
+            content: ""
     }], [
         HelpType.ANIMATOR, {
             title: "Animator",
-            conten: ""
+            content: ""
     }], [
         HelpType.IMAGE_VIEW, {
             title: "Image View",
-            conten: require("!raw-loader!./HelpContent/image_view.html")
+            content: ""
     }], [
         HelpType.LAYER_LIST, {
             title: "Layer List",
-            conten: ""
+            content: ""
     }], [
         HelpType.LOG, {
             title: "Log",
-            conten: ""
+            content: ""
     }], [
         HelpType.PLACEHOLDER, {
             title: "Placeholder",
-            conten: ""
+            content: ""
     }], [
         HelpType.REGION_LIST, {
             title: "Region List",
-            conten: ""
+            content: ""
     }], [
         HelpType.RENDER_CONFIG, {
             title: "Render Configuration",
-            conten: ""
+            content: ""
     }], [
         HelpType.RENDER_CONFIG_SETTINGS, {
             title: "Render Configuration Settings",
-            conten: ""
+            content: ""
     }], [
         HelpType.SPATIAL_PROFILER, {
             title: "Spatial Profiler",
-            conten: ""
+            content: ""
     }], [
         HelpType.SPATIAL_PROFILER_SETTINGS, {
             title: "Spatial Profiler Settings",
-            conten: ""
+            content: ""
     }], [
         HelpType.SPECTRAL_PROFILER, {
             title: "Spectral Profiler",
-            conten: ""
+            content: ""
     }], [
         HelpType.SPECTRAL_PROFILER_SETTINGS, {
             title: "Spectral Profiler Settings",
-            conten: ""
+            content: ""
     }], [
         HelpType.STATS, {
             title: "Statistics",
-            conten: ""
+            content: ""
     }], [
         HelpType.STOKES_ANALYSIS, {
             title: "Stokes Analysis",
-            conten: ""
+            content: ""
     }], [
         HelpType.STOKES_ANALYSIS_SETTINGS, {
             title: "Stokes Settings",
-            conten: ""
+            content: ""
     }]
 ]);
