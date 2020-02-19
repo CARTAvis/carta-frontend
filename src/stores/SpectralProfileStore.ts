@@ -3,8 +3,8 @@ import {CARTA} from "carta-protobuf";
 import {ProcessedSpectralProfile} from "models";
 
 export class SpectralProfileStore {
-    @observable regionId: number;
-    @observable fileId: number;
+    readonly regionId: number;
+    readonly fileId: number;
     @observable stokes: number;
     @observable x: number;
     @observable y: number;

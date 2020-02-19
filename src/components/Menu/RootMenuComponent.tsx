@@ -5,9 +5,10 @@ import {Alert, Icon, Menu, Popover, Position, Tooltip, Tag} from "@blueprintjs/c
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {exportImage} from "components";
 import {PresetLayout} from "models";
-import {AppStore, BrowserMode} from "stores";
+import {AppStore, BrowserMode, PreferenceKeys} from "stores";
 import {ConnectionStatus} from "services";
 import {toFixed} from "utilities";
+import {CustomIcon} from "icons/CustomIcons";
 import "./RootMenuComponent.css";
 
 @observer
@@ -39,6 +40,12 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
                     onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}
                 />
+                <Menu.Item
+                    text="Close image"
+                    label={`${modString}W`}
+                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
+                    onClick={() => appStore.closeCurrentFile(true)}
+                />
                 <Menu.Divider/>
                 <Menu.Item
                     text="Import regions"
@@ -57,7 +64,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     disabled={!appStore.activeFrame}
                     onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
                 />
-                <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog}/>
+                <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}/>
             </Menu>
         );
 
@@ -97,7 +104,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 />
                 <Menu.Item
                     text="Contours"
-                    icon={"heatmap"}
+                    icon={<CustomIcon icon="contour"/>}
                     onClick={appStore.dialogStore.showContourDialog}
                 />
             </Menu>
@@ -144,7 +151,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                                 onClick={() => {
                                     appStore.layoutStore.deleteLayout(value);
                                     if (value === appStore.preferenceStore.layout) {
-                                        appStore.preferenceStore.setLayout(PresetLayout.DEFAULT);
+                                        appStore.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
                                     }
                                 }}
                             />

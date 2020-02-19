@@ -10,7 +10,7 @@ export const CURSOR_REGION_ID = 0;
 export const FOCUS_REGION_RATIO = 0.4;
 
 export class RegionStore {
-    @observable fileId: number;
+    readonly fileId: number;
     @observable regionId: number;
     @observable name: string;
     @observable color: string;

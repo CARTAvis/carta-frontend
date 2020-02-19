@@ -21,6 +21,7 @@ import {
     LogStore,
     nightPalette,
     OverlayStore,
+    PreferenceKeys,
     PreferenceStore,
     RasterRenderType,
     RegionFileType,
@@ -51,19 +52,21 @@ export class AppStore {
     // Animation
     @observable animatorStore: AnimatorStore;
     // Error alerts
-    @observable alertStore: AlertStore;
+    readonly alertStore: AlertStore;
     // Logs
-    @observable logStore: LogStore;
+    readonly logStore: LogStore;
     // User preference
     @observable preferenceStore: PreferenceStore;
     // Layouts
-    @observable layoutStore: LayoutStore;
+    readonly layoutStore: LayoutStore;
     // Dialogs
-    @observable dialogStore: DialogStore;
+    readonly dialogStore: DialogStore;
     // Overlay
-    @observable overlayStore: OverlayStore;
+    readonly overlayStore: OverlayStore;
     // File Browser
-    @observable fileBrowserStore: FileBrowserStore;
+    readonly fileBrowserStore: FileBrowserStore;
+    // Widgets
+    readonly widgetsStore: WidgetsStore;
     // Help
     @observable helpStore: HelpStore;
 
@@ -165,6 +168,11 @@ export class AppStore {
             // Init layout/preference store after connection is built
             const supportsServerLayout = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_LAYOUTS ? true : false;
             this.layoutStore.initUserDefinedLayouts(supportsServerLayout, ack.userLayouts);
+            const supportsServerPreference = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_PREFERENCES ? true : false;
+            this.preferenceStore.initUserDefinedPreferences(supportsServerPreference, ack.userPreferences);
+            this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
+            this.layoutStore.applyLayout(this.preferenceStore.layout);
+            this.compressionQuality = this.preferenceStore.imageCompressionQuality;
 
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
@@ -216,16 +224,13 @@ export class AppStore {
         return "alt + ";
     }
 
-    // Widgets
-    @observable widgetsStore: WidgetsStore;
-
     // Dark theme
     @computed get darkTheme(): boolean {
         return this.preferenceStore.isDarkTheme;
     }
 
     // Frame actions
-    @computed get getActiveFrameIndex(): number {
+    @computed get activeFrameIndex(): number {
         if (!this.activeFrame) {
             return -1;
         }
@@ -238,9 +243,7 @@ export class AppStore {
 
     @computed get frameNames(): IOptionProps [] {
         let names: IOptionProps [] = [];
-        if (this.frameNum > 0) {
-            this.frames.forEach(frame => names.push({label: frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
-        }
+        this.frames.forEach(frame => names.push({label: frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));
         return names;
     }
 
@@ -250,6 +253,30 @@ export class AppStore {
 
     @computed get frameStokes(): number [] {
         return this.frames.map(frame => frame.stokes);
+    }
+
+    @computed get spatialGroup(): FrameStore[] {
+        if (!this.frames || !this.frames.length || !this.activeFrame) {
+            return [];
+        }
+
+        const activeGroupFrames = [];
+        for (const frame of this.frames) {
+            const groupMember = (frame === this.activeFrame)                                                 // Frame is active
+                || (frame === this.activeFrame.spatialReference)                                             // Frame is the active frame's reference
+                || (frame.spatialReference === this.activeFrame)                                             // Frame is a secondary image of the active frame
+                || (frame.spatialReference && frame.spatialReference === this.activeFrame.spatialReference); // Frame has the same reference as the active frame
+
+            if (groupMember) {
+                activeGroupFrames.push(frame);
+            }
+        }
+
+        return activeGroupFrames;
+    }
+
+    @computed get contourFrames(): FrameStore[] {
+        return this.spatialGroup.filter(f => f.contourConfig.enabled && f.contourConfig.visible);
     }
 
     @action addFrame = (directory: string, file: string, hdu: string, fileId: number) => {
@@ -326,9 +353,36 @@ export class AppStore {
         this.addFrame(directory, file, hdu, 0);
     };
 
-    @action removeFrame = (fileId: number) => {
-        const frame = this.frames.find(f => f.frameInfo.fileId === fileId);
+    @action closeCurrentFile = (confirmClose: boolean = true) => {
+        // Display confirmation if image has secondary images
+        if (confirmClose && this.activeFrame && this.activeFrame.secondaryImages && this.activeFrame.secondaryImages.length) {
+            const numSecondaries = this.activeFrame.secondaryImages.length;
+            this.alertStore.showInteractiveAlert(
+                `${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} spatially matched to this image will be unmatched and regions will be removed.`,
+                (confirmed => {
+                    if (confirmed) {
+                        this.removeFrame(this.activeFrame);
+                    }
+                }));
+        } else {
+            this.removeFrame(this.activeFrame);
+        }
+    };
+
+    @action removeFrame = (frame: FrameStore) => {
         if (frame) {
+            // Unlink any associated secondary images
+            if (frame.secondaryImages) {
+                // Create a copy of the array, since clearing the spatial reference will modify it
+                const secondaryImages = frame.secondaryImages.slice();
+                for (const f of secondaryImages) {
+                    f.clearSpatialReference();
+                }
+            }
+
+            const removedFrameIsSpatialReference = frame === this.spatialReference;
+            const fileId = frame.frameInfo.fileId;
+
             // adjust requirements for stores
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets, fileId);
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.histogramWidgets, fileId);
@@ -336,12 +390,23 @@ export class AppStore {
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.stokesAnalysisWidgets, fileId);
 
             if (this.backendService.closeFile(fileId)) {
-                if (this.activeFrame.frameInfo.fileId === fileId) {
-                    this.activeFrame = null;
-                }
+                frame.clearSpatialReference();
                 frame.clearContours(false);
                 this.tileService.clearCompressedCache(fileId);
                 this.frames = this.frames.filter(f => f.frameInfo.fileId !== fileId);
+                // Clean up if frame is active
+                if (this.activeFrame.frameInfo.fileId === fileId) {
+                    this.activeFrame = this.frames.length ? this.frames[0] : null;
+                }
+                // Clean up if frame is currently spatial reference
+                if (removedFrameIsSpatialReference) {
+                    const newReference = this.frames.length ? this.frames[0] : null;
+                    if (newReference) {
+                        this.setSpatialReference(newReference);
+                    } else {
+                        this.clearSpatialReference();
+                    }
+                }
             }
         }
     };
@@ -445,11 +510,11 @@ export class AppStore {
     };
 
     @action setDarkTheme = () => {
-        this.preferenceStore.setTheme(Theme.DARK);
+        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.DARK);
     };
 
     @action setLightTheme = () => {
-        this.preferenceStore.setTheme(Theme.LIGHT);
+        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.LIGHT);
     };
 
     @action toggleCursorFrozen = () => {
@@ -487,7 +552,7 @@ export class AppStore {
         this.preferenceStore = new PreferenceStore(this);
         this.logStore = new LogStore();
         this.backendService = new BackendService(this.logStore, this.preferenceStore);
-        this.tileService = new TileService(this.backendService, this.preferenceStore.GPUTileCache, this.preferenceStore.systemTileCache);
+        this.tileService = new TileService(this.backendService);
         this.astReady = false;
         this.cartaComputeReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
@@ -546,7 +611,7 @@ export class AppStore {
         // Update frame view outside of animation
         autorun(() => {
             if (this.activeFrame &&
-                (this.preferenceStore.streamTilesWhileZooming || !this.activeFrame.zooming) &&
+                (this.preferenceStore.streamContoursWhileZooming || !this.activeFrame.zooming) &&
                 (this.animatorStore.animationState === AnimationState.STOPPED || this.animatorStore.animationMode === AnimationMode.FRAME)) {
                 // Trigger update raster view/title when switching layout
                 const layout = this.layoutStore.dockedLayout;
@@ -900,6 +965,13 @@ export class AppStore {
         return this.frames.find(f => f.frameInfo.fileId === fileId);
     }
 
+    @computed get selectedRegion(): RegionStore {
+        if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && this.activeFrame.regionSet.selectedRegion.regionId !== 0) {
+            return this.activeFrame.regionSet.selectedRegion;
+        }
+        return null;
+    }
+
     @action deleteSelectedRegion = () => {
         if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && !this.activeFrame.regionSet.selectedRegion.locked) {
             this.deleteRegion(this.activeFrame.regionSet.selectedRegion);
@@ -944,6 +1016,13 @@ export class AppStore {
             } else if (f.spatialReference) {
                 f.setSpatialReference(frame);
             }
+        }
+    };
+
+    @action clearSpatialReference = () => {
+        this.spatialReference = null;
+        for (const f of this.frames) {
+            f.clearSpatialReference();
         }
     };
 

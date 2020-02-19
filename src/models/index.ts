@@ -10,6 +10,7 @@ export * from "./Theme";
 export * from "./PresetLayout";
 export * from "./CursorPosition";
 export * from "./Zoom";
+export * from "./ZoomPoint";
 export * from "./WCSType";
 export * from "./RegionCreationMode";
 export * from "./CompressionQuality";

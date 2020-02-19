@@ -92,3 +92,15 @@ export function scaleValue(x: number, scaling: FrameScaling, alpha: number = 100
             return x;
     }
 }
+
+export function roundToPower(val: number, power: number) {
+    return Math.pow(power, Math.round(Math.log(val) / Math.log(power)));
+}
+
+export function ceilToPower(val: number, power: number) {
+    return Math.pow(power, Math.ceil(Math.log(val) / Math.log(power)));
+}
+
+export function floorToPower(val: number, power: number) {
+    return Math.pow(power, Math.floor(Math.log(val) / Math.log(power)));
+}

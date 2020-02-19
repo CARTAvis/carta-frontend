@@ -3,7 +3,7 @@ import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
-import {ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, Transform2D} from "models";
+import {ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, Transform2D, ZoomPoint} from "models";
 import {clamp, findChannelType, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates, length2D, minMax2D, rotate2D, subtract2D, toFixed, trimFitsComment, velocityStringFromFrequency} from "utilities";
 import {BackendService} from "services";
 import {ControlMap} from "../models/ControlMap";
@@ -54,7 +54,7 @@ export class FrameStore {
     @observable regionSet: RegionSetStore;
     @observable overlayBeamSettings: OverlayBeamStore;
     @observable spatialReference: FrameStore;
-    @observable controlMaps: Map<FrameStore, ControlMap>;
+
     @observable secondaryImages: FrameStore[];
 
     @computed get requiredFrameView(): FrameView {
@@ -407,6 +407,7 @@ export class FrameStore {
     private readonly preference: PreferenceStore;
     private readonly backendService: BackendService;
     private readonly contourContext: WebGLRenderingContext;
+    private readonly controlMaps: Map<FrameStore, ControlMap>;
     private spatialTransformAST: number;
     private cachedTransformedWcsInfo: number = -1;
     private zoomTimeoutHandler;
@@ -452,7 +453,7 @@ export class FrameStore {
             overlay.labels.setVisible(astLabelsVisible);
         }
 
-        this.regionSet = new RegionSetStore(this, preference.regionContainer, backendService);
+        this.regionSet = new RegionSetStore(this, preference, backendService);
         this.valid = true;
         this.currentFrameView = {
             xMin: 0,
@@ -468,7 +469,7 @@ export class FrameStore {
         this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
 
         // need initialized wcs to get correct cursor info
-        this.cursorInfo = this.getCursorInfoImageSpace({x: 0, y: 0});
+        this.cursorInfo = this.getCursorInfoImageSpace(this.center);
         this.cursorValue = 0;
         this.cursorFrozen = preference.isCursorFrozen;
 
@@ -604,6 +605,29 @@ export class FrameStore {
     public getCursorInfoCanvasSpace(cursorPosCanvasSpace: Point2D): CursorInfo {
         const cursorPosImageSpace = this.getImagePos(cursorPosCanvasSpace.x, cursorPosCanvasSpace.y);
         return this.getCursorInfoImageSpace(cursorPosImageSpace);
+    }
+
+    public getControlMap(frame: FrameStore) {
+        let controlMap = this.controlMaps.get(frame);
+        if (!controlMap) {
+            const tStart = performance.now();
+            controlMap = new ControlMap(this, frame, -1, this.preference.contourControlMapWidth, this.preference.contourControlMapWidth);
+            this.controlMaps.set(frame, controlMap);
+            const tEnd = performance.now();
+            const dt = tEnd - tStart;
+            console.log(`Created ${this.preference.contourControlMapWidth}x${this.preference.contourControlMapWidth} transform grid for ${this.frameInfo.fileId} -> ${frame.frameInfo.fileId} in ${dt} ms`);
+        }
+
+        return controlMap;
+    }
+
+    public removeControlMap(frame: FrameStore) {
+        const controlMap = this.controlMaps.get(frame);
+        if (controlMap && this.contourContext && controlMap.hasTextureForContext(this.contourContext)) {
+            const texture = controlMap.getTextureX(this.contourContext);
+            this.contourContext.deleteTexture(texture);
+        }
+        this.controlMaps.delete(frame);
     }
 
     @action updateFromRasterData(rasterImageData: CARTA.RasterImageData) {
@@ -760,12 +784,14 @@ export class FrameStore {
             const pointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
-            const newCenter = {
-                x: x + this.zoomLevel / zoom * (this.center.x - x),
-                y: y + this.zoomLevel / zoom * (this.center.y - y)
-            };
+            if (this.preference.zoomPoint === ZoomPoint.CURSOR) {
+                const newCenter = {
+                    x: x + this.zoomLevel / zoom * (this.center.x - x),
+                    y: y + this.zoomLevel / zoom * (this.center.y - y)
+                };
+                this.center = newCenter;
+            }
             this.setZoom(zoom);
-            this.center = newCenter;
         }
     }
 
@@ -883,12 +909,6 @@ export class FrameStore {
         AST.delete(copyDest);
         if (!this.spatialTransformAST) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
-        } else {
-            const tStart = performance.now();
-            this.controlMaps.set(this.spatialReference, new ControlMap(this, this.spatialReference, this.spatialTransformAST, this.preference.contourControlMapWidth, this.preference.contourControlMapWidth));
-            const tEnd = performance.now();
-            const dt = tEnd - tStart;
-            console.log(`Created ${this.preference.contourControlMapWidth}x${this.preference.contourControlMapWidth} transform grid in ${dt} ms`);
         }
     };
 
@@ -905,6 +925,18 @@ export class FrameStore {
             AST.delete(this.spatialTransformAST);
         }
         this.spatialTransformAST = null;
+        if (this.contourContext) {
+            this.controlMaps.forEach(controlMap => {
+                if (controlMap.hasTextureForContext(this.contourContext)) {
+                    const texture = controlMap.getTextureX(this.contourContext);
+                    this.contourContext.deleteTexture(texture);
+                }
+            });
+        }
+        this.controlMaps.forEach((controlMap, frame) => {
+            this.removeControlMap(frame);
+        });
+        this.controlMaps.clear();
     };
 
     @action addSecondaryImage = (frame: FrameStore) => {
