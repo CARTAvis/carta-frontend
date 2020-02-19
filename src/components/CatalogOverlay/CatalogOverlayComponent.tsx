@@ -128,6 +128,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private handleHeaderDisplayChange(changeEvent: any, columnName: string) {
         const val = changeEvent.target.checked;
         this.widgetStore.setHeaderDisplay(val, columnName);
+        this.handleFilterClick();
     }
 
     private handleHeaderRepresentationChange(changeEvent: any, columnName: string) {
@@ -163,10 +164,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const controlHeader = widgetStore.catalogControlHeader.get(columnName);
         const dataType = widgetStore.catalogHeader[controlHeader.dataIndex].dataType;
         const supportedRepresentations = CatalogOverlayComponent.DataTypeRepresentationMap.get(dataType);
+        const disabled = !controlHeader.display;
         return (
             <Cell key={`cell_drop_down_${rowIndex}`}>
                 <React.Fragment>
-                    <HTMLSelect className="bp3-minimal bp3-fill " value={controlHeader.representAs} onChange={changeEvent => this.handleHeaderRepresentationChange(changeEvent, columnName)}>
+                    <HTMLSelect className="bp3-minimal bp3-fill " value={controlHeader.representAs} disabled={disabled} onChange={changeEvent => this.handleHeaderRepresentationChange(changeEvent, columnName)}>
                         {supportedRepresentations.map( representation => <option key={representation} value={representation}>{representation}</option>)}
                     </HTMLSelect>
                 </React.Fragment>
@@ -354,18 +356,18 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         catalogFilter.fileId = widgetStore.catalogInfo.fileId;
         catalogFilter.filterConfigs = this.getUserFilters();
         // control in fronend
-        catalogFilter.hidedHeaders = null;
+        catalogFilter.hidedHeaders = widgetStore.hidedHeaders;
         appStore.sendCatalogFilter(catalogFilter);
     };
 
     private updateTableData = () => {
         const widgetStore = this.widgetStore;
-        if (widgetStore.loadingData === false && widgetStore.updateMode === CatalogUpdateMode.TableUpdate) {
+        if (widgetStore.loadingData === false && widgetStore.updateMode === CatalogUpdateMode.TableUpdate && widgetStore.shouldUpdateTableData) {
             const filter = this.widgetStore.updateRequestDataSize;
-            if (widgetStore.shouldUpdateTableData) {
-                this.props.appStore.sendCatalogFilter(filter);
-                widgetStore.setLoadingDataStatus(true);
-            }
+            const currentHidedHeaders = widgetStore.hidedHeaders;
+            filter.hidedHeaders = currentHidedHeaders;
+            this.props.appStore.sendCatalogFilter(filter);
+            widgetStore.setLoadingDataStatus(true);
         }
     }
 

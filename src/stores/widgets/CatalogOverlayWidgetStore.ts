@@ -298,7 +298,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         const previewDatasize = CatalogOverlayWidgetStore.InitTableRows;
         catalogFilter.fileId = this.catalogInfo.fileId;
         catalogFilter.filterConfigs = null;
-        catalogFilter.hidedHeaders = null;
+        catalogFilter.hidedHeaders = this.hidedHeaders;
         catalogFilter.subsetStartIndex = 0;
         catalogFilter.imageBounds = imageBounds;
         catalogFilter.regionId = null;
