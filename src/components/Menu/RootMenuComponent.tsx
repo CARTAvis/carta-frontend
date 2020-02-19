@@ -241,7 +241,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 </Tooltip>
             );
         } else {
-            loadingIndicator =<Icon icon={"cloud-download"} className={loadingIndicatorClass}/>;
+            loadingIndicator = <Icon icon={"cloud-download"} className={loadingIndicatorClass}/>;
         }
 
         return (
