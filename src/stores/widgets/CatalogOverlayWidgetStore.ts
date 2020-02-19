@@ -35,7 +35,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     public static readonly InitTableRows = 50;
     private static readonly DataChunkSize = 100;
-    private static readonly InitialedDisplayColumnsKeyWords = ["ra", "dec", "de", "glon", "glat", "ang", "angular", "source"];
+    private static readonly InitialedDisplayColumnsKeyWords = ["ra", "dec", "glon", "glat", "ang", "angular", "source"];
     private wcs = 0;
     private initDatasize = 0;
     
@@ -280,16 +280,6 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         });
     }
 
-    @computed get numOfDisplayedColumn() {
-        let numOfColumn = 0;
-        this.catalogControlHeader.forEach((value, key) => {
-            if (value.display) {
-                numOfColumn += 1;
-            }
-        });
-        return numOfColumn;
-    }
-
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
         let displayedColumnHeaders = [];
         this.catalogControlHeader.forEach((value, key) => {
@@ -396,6 +386,16 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         return shapeColumn;
     }
 
+    @computed get hidedHeaders(): Array<string> {
+        let header = [];
+        this.catalogControlHeader.forEach((value, key) => {
+            if (!value.display) {
+                header.push(key);
+            }
+        });
+        return header;
+    }
+
     private findKeywords(val: string): boolean {
        const keyWords = CatalogOverlayWidgetStore.InitialedDisplayColumnsKeyWords;
        for (let index = 0; index < keyWords.length; index++) {
@@ -411,7 +411,9 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         for (let index = 0; index < initData.length; index++) {
             const init = initData[index];
             const source = sourceData[index];
-            init.doubleColumn.push(...source.doubleColumn);
+            if (init && source) {
+                init.doubleColumn.push(...source.doubleColumn);
+            }
         }
     }
 
@@ -419,7 +421,9 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         for (let index = 0; index < initData.length; index++) {
             const init = initData[index];
             const source = sourceData[index];
-            init.boolColumn.push(...source.boolColumn);
+            if (init && source) {
+                init.boolColumn.push(...source.boolColumn);
+            }
         }
     }
 
@@ -427,7 +431,9 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         for (let index = 0; index < initData.length; index++) {
             const init = initData[index];
             const source = sourceData[index];
-            init.floatColumn.push(...source.floatColumn);
+            if (init && source) {
+                init.floatColumn.push(...source.floatColumn);
+            }
         }
     }
 
@@ -435,7 +441,9 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         for (let index = 0; index < initData.length; index++) {
             const init = initData[index];
             const source = sourceData[index];
-            init.stringColumn.push(...source.stringColumn);
+            if (init && source) {
+                init.stringColumn.push(...source.stringColumn);
+            }
         }
     }
 
@@ -443,7 +451,9 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         for (let index = 0; index < initData.length; index++) {
             const init = initData[index];
             const source = sourceData[index];
-            init.intColumn.push(...source.intColumn);
+            if (init && source) {
+                init.intColumn.push(...source.intColumn);
+            }
         }
     }
 
@@ -451,7 +461,9 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         for (let index = 0; index < initData.length; index++) {
             const init = initData[index];
             const source = sourceData[index];
-            init.llColumn.push(...source.llColumn);
+            if (init && source) {
+                init.llColumn.push(...source.llColumn);   
+            }
         }
     }
 
@@ -470,10 +482,9 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                 const xPixelValue = pixelCoordsX[index];
                 const yPixelValue = pixelCoordsY[index];
                 const pointWCS = AST.transformPoint(wcsInfo, xPixelValue, yPixelValue);
-                const normVals = AST.normalizeCoordinates(wcsInfo, pointWCS.x, pointWCS.y);
                 // x1, y1, x2, y2 ...
-                webGlData.push(normVals.x);
-                webGlData.push(normVals.y);
+                webGlData.push(pointWCS.x);
+                webGlData.push(pointWCS.y);
             }
         }
         return webGlData;

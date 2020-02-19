@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {autorun, computed, observable, keys} from "mobx";
+import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Switch, HTMLSelect, AnchorButton, Intent, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Table, SelectionModes, RenderMode} from "@blueprintjs/table";
