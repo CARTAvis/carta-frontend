@@ -918,7 +918,6 @@ export class AppStore {
             catalogWidgetStore.updateCatalogData(catalogFilter);
             catalogWidgetStore.setProgress(progress);
             if (progress === 1) {
-                catalogWidgetStore.setOffset(0);
                 catalogWidgetStore.setLoadingDataStatus(false);
                 catalogWidgetStore.setPlotingData(false);
             }

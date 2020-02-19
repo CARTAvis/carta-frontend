@@ -37,7 +37,6 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     private static readonly DataChunkSize = 100;
     private static readonly InitialedDisplayColumnsKeyWords = ["ra", "dec", "glon", "glat", "ang", "angular", "source"];
     private wcs = 0;
-    private initDatasize = 0;
     
     @observable imageCoordinates: Float32Array[];
     
@@ -56,7 +55,6 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable subsetEndIndex: number;
     @observable plotingData: boolean;
     @observable updateMode: CatalogUpdateMode;
-    @observable offset: number;
     @observable userFilters: CARTA.CatalogFilterRequest;
 
     constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData) {
@@ -72,7 +70,6 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.plotingData = false;
         this.imageCoordinates = [];
         this.updateMode = CatalogUpdateMode.TableUpdate;
-        this.offset = 0;
         this.headerTableColumnWidts = [75, 75, 65, 100, null];
 
         const initTableRows = CatalogOverlayWidgetStore.InitTableRows;
@@ -106,7 +103,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         let subsetDataSize = catalogFilter.subsetDataSize;
         const subsetEndIndex = catalogFilter.subsetEndIndex;
         if (this.subsetEndIndex <= this.catalogInfo.dataSize) {
-            let numVisibleRows = this.numVisibleRows + subsetDataSize - this.offset;
+            let numVisibleRows = this.numVisibleRows + subsetDataSize;
             this.addSubsetBoolData(this.catalogData.boolColumn, catalogData.boolColumn);
             this.addSubsetDoubleData(this.catalogData.doubleColumn, catalogData.doubleColumn);
             this.addSubsetFloatData(this.catalogData.floatColumn, catalogData.floatColumn);
@@ -114,22 +111,18 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             this.addSubsetLLData(this.catalogData.llColumn, catalogData.llColumn);
             this.addSubsetStringData(this.catalogData.stringColumn, catalogData.stringColumn);
             this.setNumVisibleRows(numVisibleRows);
-            if (this.xColumnRepresentation && this.yColumnRepresentation && this.plotingData) {
-                this.imageCoordinates.push(Float32Array.from(this.transformCatalogData(this.wcs, this.offset + this.initDatasize)));    
+            const xColumn = this.xColumnRepresentation;
+            const yColumn = this.yColumnRepresentation;
+            if (xColumn && yColumn && this.plotingData) {
+                this.imageCoordinates.push(Float32Array.from(this.transformCatalogData(this.wcs, catalogData)));    
             }  
             this.subsetEndIndex = subsetEndIndex;
-            this.offset = subsetDataSize;
         }
-    }
-
-    @action setOffset(val: number) {
-        this.offset = val;
     }
 
     @action initWebGLData(wcsInfo: number) {
         this.wcs = wcsInfo;
-        const data = Float32Array.from(this.transformCatalogData(wcsInfo, 0));
-        this.initDatasize = data.length / 2;
+        const data = Float32Array.from(this.transformCatalogData(wcsInfo, this.catalogData));
         this.imageCoordinates.push(data);
     }
 
@@ -247,7 +240,6 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogSize = 1;
         this.userFilters = this.initUserFilters;
         this.updateMode = CatalogUpdateMode.TableUpdate;
-        this.offset = 0;
         this.plotingData = false;
         this.imageCoordinates = [];
     }
@@ -467,15 +459,15 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         }
     }
 
-    private transformCatalogData(wcsInfo: number, startIndex: number) {
+    private transformCatalogData(wcsInfo: number, catalogData: CARTA.ICatalogColumnsData) {
         const webGlData = [];
         const controlHeader = this.catalogControlHeader;
         const xHeader = controlHeader.get(this.xColumnRepresentation);
         const yHeader = controlHeader.get(this.yColumnRepresentation);
-        const xHeaderData = this.catalogHeader[xHeader.dataIndex];
-        const yHeaderData = this.catalogHeader[yHeader.dataIndex];
-        const pixelCoordsX = getTableDataByType(this.catalogData, xHeaderData.dataType, xHeaderData.dataTypeIndex).slice(startIndex);
-        const pixelCoordsY = getTableDataByType(this.catalogData, yHeaderData.dataType, yHeaderData.dataTypeIndex).slice(startIndex);
+        const xHeaderInfo = this.catalogHeader[xHeader.dataIndex];
+        const yHeaderInfo = this.catalogHeader[yHeader.dataIndex];
+        const pixelCoordsX = getTableDataByType(catalogData, xHeaderInfo.dataType, xHeaderInfo.dataTypeIndex);
+        const pixelCoordsY = getTableDataByType(catalogData, yHeaderInfo.dataType, yHeaderInfo.dataTypeIndex);
 
         if (pixelCoordsX.length === pixelCoordsY.length) {
             for (let index = 0; index < pixelCoordsX.length; index++) {
