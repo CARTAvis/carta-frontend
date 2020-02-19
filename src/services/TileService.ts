@@ -340,8 +340,11 @@ export class TileService {
             return;
         }
 
-        if (this.animationEnabled !== !!tileMessage.animationId) {
-            console.log(`Skipping stale tile based on animation ID`);
+        if (this.animationEnabled && tileMessage.animationId !== this.backendService.animationId) {
+            console.log(`Skipping stale tile during animation`);
+            return;
+        } else if (!this.animationEnabled && tileMessage.animationId !== 0) {
+            console.log(`Skipping stale animation tile based outside of animation`);
             return;
         }
 

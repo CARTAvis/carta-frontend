@@ -21,13 +21,14 @@ export class BackendService {
     @observable connectionDropped: boolean;
     @observable endToEndPing: number;
 
+    public animationId: number;
+
     private connection: WebSocket;
     private lastPingTime: number;
     private lastPongTime: number;
     private autoReconnect: boolean;
     private observerRequestMap: Map<number, Observer<any>>;
     private eventCounter: number;
-    private animationId: number;
     private sessionId: number;
     // TODO: These can be readonly instead of private to get rid of boilerplate gets
     private readonly rasterTileStream: Subject<CARTA.RasterTileData>;
@@ -681,10 +682,10 @@ export class BackendService {
     }
 
     private onStartAnimationAck(eventId: number, ack: CARTA.StartAnimationAck) {
+        this.animationId = ack.success ? ack.animationId : INVALID_ANIMATION_ID;
         const observer = this.observerRequestMap.get(eventId);
         if (observer) {
             if (ack.success) {
-                this.animationId = ack.animationId;
                 observer.next(ack);
             } else {
                 observer.error(ack.message);
