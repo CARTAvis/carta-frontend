@@ -50,7 +50,6 @@ export class AppStore {
     // Frames
     @observable frames: FrameStore[];
     @observable activeFrame: FrameStore;
-    readonly forcedRenderStream: Subject<number>;
     // Animation
     @observable animatorStore: AnimatorStore;
     // Error alerts
@@ -601,7 +600,6 @@ export class AppStore {
 
         this.frames = [];
         this.activeFrame = null;
-        this.forcedRenderStream = new Subject<number>();
         this.fileBrowserStore = new FileBrowserStore(this, this.backendService);
         this.animatorStore = new AnimatorStore(this);
         this.overlayStore = new OverlayStore(this, this.preferenceStore);
@@ -819,7 +817,6 @@ export class AppStore {
         if (this.activeFrame) {
             this.activeFrame.renderType = RasterRenderType.TILED;
         }
-        this.forcedRenderStream.next(tileStreamDetails.fileId);
     };
 
     handleRegionStatsStream = (regionStatsData: CARTA.RegionStatsData) => {

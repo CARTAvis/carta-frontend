@@ -176,6 +176,8 @@ export class TileService {
             this.clearCompressedCache(fileId);
         }
 
+        const key = `${fileId}_${stokes}_${channel}`;
+
         const newRequests = new Array<TileCoordinate>();
         for (const tile of tiles) {
             if (tile.layer < 0) {
@@ -186,7 +188,6 @@ export class TileService {
                 || (tile.layer >= NUM_PERSISTENT_LAYERS && this.cachedTiles.has(encodedCoordinate)));
             if (!tileCached && !this.pendingRequests.has(encodedCoordinate)) {
                 const compressedTile = !channelsChanged && this.getCompressedCache(fileId).get(encodedCoordinate);
-                const key = `${fileId}_${stokes}_${channel}`;
                 const pendingCompressionMap = this.pendingDecompressions.get(key);
                 const tileIsQueuedForDecompression = pendingCompressionMap && pendingCompressionMap.has(encodedCoordinate);
                 if (compressedTile && !tileIsQueuedForDecompression) {
@@ -219,11 +220,8 @@ export class TileService {
             } else {
                 this.backendService.addRequiredTiles(fileId, sortedRequests, compressionQuality);
             }
-        } else if (!channelsChanged) {
-            // No requests required, mark channel as complete
-            const key = `${fileId}_${stokes}_${channel}`;
-            // console.log(`Marking key=${key} as complete`);
-            // this.completedChannels.set(key, true);
+        } else {
+            this.completedChannels.set(key, true);
         }
     }
 
