@@ -419,8 +419,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return {xMin, xMax, yMin, yMax};
     }
 
-    private assembleLinePlotData(spectralFrame: number, profile: Array<number>, type: StokesCoordinate): { dataset: Array<Point2D>, border: Border } {
-        if (spectralFrame && profile && profile.length &&
+    private assembleLinePlotData(profile: Array<number>, type: StokesCoordinate): {
+        dataset: Array<Point2D>,
+        border: Border
+    } {
+        if (profile && profile.length &&
             this.widgetStore.channelValues && this.widgetStore.channelValues.length &&
             profile.length === this.widgetStore.channelValues.length) {
             const channelValues = this.widgetStore.channelValues;
@@ -443,11 +446,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    private assembleScatterPlotData(spectralFrame: number, qProfile: Array<number>, uProfile: Array<number>, type: StokesCoordinate): {
+    private assembleScatterPlotData(qProfile: Array<number>, uProfile: Array<number>, type: StokesCoordinate): {
         dataset: Array<{ x: number, y: number, z: number }>,
         border: Border
     } {
-        if (spectralFrame && qProfile && qProfile.length && uProfile && uProfile.length &&
+        if (qProfile && qProfile.length && uProfile && uProfile.length &&
             this.widgetStore.channelValues && this.widgetStore.channelValues.length &&
             qProfile.length === uProfile.length && qProfile.length === this.widgetStore.channelValues.length) {
             const channelValues = this.widgetStore.channelValues;
@@ -622,11 +625,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
         let channelInfo = frame.channelInfo;
         if (compositeProfile && channelInfo) {
-            let quDic = this.assembleScatterPlotData(frame.spectralFrame, compositeProfile.qProfile, compositeProfile.uProfile, StokesCoordinate.PolarizationQU);
-            let piDic = this.assembleLinePlotData(frame.spectralFrame, compositeProfile.piProfile, StokesCoordinate.PolarizedIntensity);
-            let paDic = this.assembleLinePlotData(frame.spectralFrame, compositeProfile.paProfile, StokesCoordinate.PolarizationAngle);
-            let qDic = this.assembleLinePlotData(frame.spectralFrame, compositeProfile.qProfile, StokesCoordinate.LinearPolarizationQ);
-            let uDic = this.assembleLinePlotData(frame.spectralFrame, compositeProfile.uProfile, StokesCoordinate.LinearPolarizationU);
+            let quDic = this.assembleScatterPlotData(compositeProfile.qProfile, compositeProfile.uProfile, StokesCoordinate.PolarizationQU);
+            let piDic = this.assembleLinePlotData(compositeProfile.piProfile, StokesCoordinate.PolarizedIntensity);
+            let paDic = this.assembleLinePlotData(compositeProfile.paProfile, StokesCoordinate.PolarizationAngle);
+            let qDic = this.assembleLinePlotData(compositeProfile.qProfile, StokesCoordinate.LinearPolarizationQ);
+            let uDic = this.assembleLinePlotData(compositeProfile.uProfile, StokesCoordinate.LinearPolarizationU);
 
             return {
                 qValues: qDic, 
