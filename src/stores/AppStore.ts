@@ -392,7 +392,6 @@ export class AppStore {
             if (this.backendService.closeFile(fileId)) {
                 frame.clearSpatialReference();
                 frame.clearContours(false);
-                this.tileService.handleFileClosed(fileId);
                 this.frames = this.frames.filter(f => f.frameInfo.fileId !== fileId);
                 // Clean up if frame is active
                 if (this.activeFrame.frameInfo.fileId === fileId) {
@@ -407,6 +406,8 @@ export class AppStore {
                         this.clearSpatialReference();
                     }
                 }
+                this.tileService.handleFileClosed(fileId);
+
             }
         }
     };
@@ -415,7 +416,10 @@ export class AppStore {
         if (this.backendService.closeFile(-1)) {
             this.activeFrame = null;
             this.tileService.clearCompressedCache(-1);
-            this.frames.forEach(frame => frame.clearContours(false));
+            this.frames.forEach(frame => {
+                frame.clearContours(false);
+                this.tileService.handleFileClosed(frame.frameInfo.fileId);
+            });
             this.frames = [];
             // adjust requirements for stores
             WidgetsStore.RemoveFrameFromRegionWidgets(this.widgetsStore.statsWidgets);

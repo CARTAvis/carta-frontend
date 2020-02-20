@@ -333,7 +333,7 @@ export class TileService {
         const currentChannels = this.channelMap.get(tileMessage.fileId);
         // Ignore stale tiles that don't match the currently required tiles. During animation, ignore changes to channel
         if (this.currentFileId !== tileMessage.fileId || (!this.animationEnabled && (!currentChannels || currentChannels.channel !== tileMessage.channel || currentChannels.stokes !== tileMessage.stokes))) {
-            console.log(`Ignoring stale tile ${tileMessage.channel}`);
+            console.log(`Ignoring stale tile for channel=${tileMessage.channel}`);
             console.log(currentChannels);
             return;
         }
