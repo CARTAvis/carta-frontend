@@ -12,7 +12,7 @@ import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/S
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
-import {ChannelInfo, Point2D} from "models";
+import {Point2D} from "models";
 import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation} from "utilities";
 import "./StokesAnalysisComponent.css";
 
@@ -419,7 +419,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return {xMin, xMax, yMin, yMax};
     }
 
-    private assembleLinePlotData(spectralFrame: number, profile: Array<number>, type: StokesCoordinate): { isIncremental: boolean, dataset: Array<Point2D>, border: Border } {
+    private assembleLinePlotData(spectralFrame: number, profile: Array<number>, type: StokesCoordinate): { dataset: Array<Point2D>, border: Border } {
         if (spectralFrame && profile && profile.length &&
             this.widgetStore.channelValues && this.widgetStore.channelValues.length &&
             profile.length === this.widgetStore.channelValues.length) {
@@ -438,13 +438,12 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     values.push({x, y});
                 }
             }
-            return {isIncremental, dataset: values, border};
+            return {dataset: values, border};
         }
         return null;
     }
 
     private assembleScatterPlotData(spectralFrame: number, qProfile: Array<number>, uProfile: Array<number>, type: StokesCoordinate): {
-        isIncremental: boolean,
         dataset: Array<{ x: number, y: number, z: number }>,
         border: Border
     } {
@@ -470,7 +469,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     this.widgetStore.scatterOutRangePointsZIndex.push(z);  
                 } 
             }
-            return {isIncremental, dataset: values, border: equalScalerBorder};
+            return {dataset: values, border: equalScalerBorder};
         }
         return null;
     }
@@ -589,11 +588,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     }
 
     @computed get plotData(): {
-        qValues: { isIncremental: boolean, dataset: Array<Point2D>, border: Border },
-        uValues: { isIncremental: boolean, dataset: Array<Point2D>, border: Border },
-        piValues: { isIncremental: boolean, dataset: Array<Point2D>, border: Border },
-        paValues: { isIncremental: boolean, dataset: Array<Point2D>, border: Border },
-        quValues: { isIncremental: boolean, dataset: Array<{ x: number, y: number, z: number }>, border: Border },
+        qValues: { dataset: Array<Point2D>, border: Border },
+        uValues: { dataset: Array<Point2D>, border: Border },
+        piValues: { dataset: Array<Point2D>, border: Border },
+        paValues: { dataset: Array<Point2D>, border: Border },
+        quValues: { dataset: Array<{ x: number, y: number, z: number }>, border: Border },
         qProgress: number,
         uProgress: number,
         iProgress: number
