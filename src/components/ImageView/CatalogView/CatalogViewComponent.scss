@@ -1,0 +1,13 @@
+.catalog-div {
+    position: absolute;
+    // left: 0;
+
+    &.docked {
+        z-index: 3;
+    }
+
+    .catalog-layer {
+        position: absolute;
+        z-index: 0;
+    }
+}

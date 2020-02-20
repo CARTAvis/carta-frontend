@@ -10,7 +10,7 @@ import {TableComponent, TableComponentProps, TableType} from "components/Shared"
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
 import {WidgetConfig, WidgetProps} from "stores";
 import {CatalogOverlayWidgetStore, CatalogOverlay, CatalogUpdateMode} from "stores/widgets";
-import {toFixed} from "utilities";
+import {toFixed, getTableDataByType} from "utilities";
 import "./CatalogOverlayComponent.css";
 
 enum HeaderTableColumnName {
@@ -343,6 +343,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private handleFilterClick = () => {
         const widgetStore = this.widgetStore;
         const appStore = this.props.appStore;
+        widgetStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
         widgetStore.clearData();
         widgetStore.setNumVisibleRows(0);
         widgetStore.setSubsetEndIndex(0);
@@ -355,7 +356,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         
         catalogFilter.fileId = widgetStore.catalogInfo.fileId;
         catalogFilter.filterConfigs = this.getUserFilters();
-        // control in fronend
         catalogFilter.hidedHeaders = widgetStore.hidedHeaders;
         appStore.sendCatalogFilter(catalogFilter);
     };
@@ -363,6 +363,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private updateTableData = () => {
         const widgetStore = this.widgetStore;
         if (widgetStore.loadingData === false && widgetStore.updateMode === CatalogUpdateMode.TableUpdate && widgetStore.shouldUpdateTableData) {
+            widgetStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
             const filter = this.widgetStore.updateRequestDataSize;
             const currentHidedHeaders = widgetStore.hidedHeaders;
             filter.hidedHeaders = currentHidedHeaders;
@@ -374,8 +375,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private handleClearClick = () => {
         const widgetStore = this.widgetStore;
         const appStore = this.props.appStore;
-        if (widgetStore && this.catalogdataTableRef) {
+        if (widgetStore) {
             widgetStore.reset();
+            appStore.catalogStore.clearData(this.props.id);
             const catalogFilter = widgetStore.initUserFilters;
             appStore.sendCatalogFilter(catalogFilter); 
         }
@@ -386,14 +388,30 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const appStore = this.props.appStore;
         const frame = appStore.activeFrame;
         widgetStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
-        widgetStore.setPlotingData(true);
 
         if (frame) {
             const wcs = frame.validWcs ? frame.wcsInfo : 0;
-            widgetStore.initWebGLData(wcs);
+            const id = this.props.id;
+            const catalogStore = appStore.catalogStore;
+            catalogStore.clearData(this.props.id);
+            // init plot data   
+            const controlHeader = widgetStore.catalogControlHeader;
+            const xHeader = controlHeader.get(widgetStore.xColumnRepresentation);
+            const yHeader = controlHeader.get(widgetStore.yColumnRepresentation);
+            const xHeaderInfo = widgetStore.catalogHeader[xHeader.dataIndex];
+            const yHeaderInfo = widgetStore.catalogHeader[yHeader.dataIndex];
+            const wscCoordsX = getTableDataByType(widgetStore.catalogData, xHeaderInfo.dataType, xHeaderInfo.dataTypeIndex);
+            const wcsCoordsY = getTableDataByType(widgetStore.catalogData, yHeaderInfo.dataType, yHeaderInfo.dataTypeIndex);
+            catalogStore.updateCatalogData(id, wscCoordsX, wcsCoordsY, wcs, xHeaderInfo.units, yHeaderInfo.units);
+            catalogStore.updateCatalogColor(id, widgetStore.catalogColor);
+            catalogStore.updateCatalogSize(id, widgetStore.catalogSize);
         }
-        let catalogFilter = widgetStore.updateRequestDataSize;
-        appStore.sendCatalogFilter(catalogFilter);
+
+        if (widgetStore.subsetEndIndex !== widgetStore.catalogInfo.dataSize) {
+            widgetStore.setPlotingData(true);   
+            let catalogFilter = widgetStore.updateRequestDataSize;
+            appStore.sendCatalogFilter(catalogFilter);
+        }
     }
 
     public render() {
@@ -424,7 +442,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return (
             <div className={"catalog-overlay"}>
                 <div className={"catalog-overlay-filter-settings"}>
-                    <CatalogOverlayPlotSettingsComponent widgetStore={this.widgetStore} appStore={appStore}/>
+                    <CatalogOverlayPlotSettingsComponent widgetStore={this.widgetStore} appStore={appStore} id={this.props.id}/>
                 </div>
                 <div className={"catalog-overlay-column-header-container"}>
                     {this.createHeaderTable()}
@@ -449,7 +467,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             disabled={widgetStore.loading}
                         />
                         </Tooltip>
-                        <Tooltip content={"Clear filter"}>
+                        <Tooltip content={"Clear filter and catalog data"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             text="Clear"

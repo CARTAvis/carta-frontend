@@ -69,7 +69,6 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
         const centerImageSpace = region.controlPoints[0];
 
         const centerPixelSpace = imageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
-
         return (
             <Group>
                 <Rect

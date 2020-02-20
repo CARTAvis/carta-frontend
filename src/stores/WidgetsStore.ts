@@ -877,9 +877,10 @@ export class WidgetsStore {
                 return;
             }
 
-            // close catalog file
+            // close catalog file and overlay
             if (this.catalogOverlayWidgets.get(id)) {
                 this.appStore.reomveCatalog(id);
+                this.appStore.catalogStore.removeCatalog(id);
             }
             this.removeWidget(id, widget.type);
         }

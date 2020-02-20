@@ -1,9 +1,7 @@
-import * as AST from "ast_wrapper";
-import {action, computed, observable, values} from "mobx";
+import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore} from "./RegionWidgetStore";
-import {getTableDataByType} from "utilities";
 
 export interface CatalogInfo {
     fileId: number;
@@ -21,7 +19,6 @@ export enum CatalogOverlay {
 
 export enum CatalogOverlayShape {
     Circle = "Circle",
-    Square = "Square"
 }
 
 export enum CatalogUpdateMode {
@@ -36,7 +33,6 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     public static readonly InitTableRows = 50;
     private static readonly DataChunkSize = 100;
     private static readonly InitialedDisplayColumnsKeyWords = ["ra", "dec", "glon", "glat", "ang", "angular", "source"];
-    private wcs = 0;
     
     @observable imageCoordinates: Float32Array[];
     
@@ -65,7 +61,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogControlHeader = this.initCatalogControlHeader;
         this.loadingData = false;
         this.catalogColor = Colors.RED2;
-        this.catalogSize = 1;
+        this.catalogSize = 3;
         this.userFilters = this.initUserFilters;
         this.plotingData = false;
         this.imageCoordinates = [];
@@ -110,20 +106,9 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             this.addSubsetIntData(this.catalogData.intColumn, catalogData.intColumn);
             this.addSubsetLLData(this.catalogData.llColumn, catalogData.llColumn);
             this.addSubsetStringData(this.catalogData.stringColumn, catalogData.stringColumn);
-            this.setNumVisibleRows(numVisibleRows);
-            const xColumn = this.xColumnRepresentation;
-            const yColumn = this.yColumnRepresentation;
-            if (xColumn && yColumn && this.plotingData) {
-                this.imageCoordinates.push(Float32Array.from(this.transformCatalogData(this.wcs, catalogData)));    
-            }  
+            this.setNumVisibleRows(numVisibleRows); 
             this.subsetEndIndex = subsetEndIndex;
         }
-    }
-
-    @action initWebGLData(wcsInfo: number) {
-        this.wcs = wcsInfo;
-        const data = Float32Array.from(this.transformCatalogData(wcsInfo, this.catalogData));
-        this.imageCoordinates.push(data);
     }
 
     @action clearData() {
@@ -237,7 +222,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.resetFilter();
         this.loadingData = false;
         this.catalogColor = Colors.RED2;
-        this.catalogSize = 1;
+        this.catalogSize = 3;
         this.userFilters = this.initUserFilters;
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.plotingData = false;
@@ -457,28 +442,5 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                 init.llColumn.push(...source.llColumn);   
             }
         }
-    }
-
-    private transformCatalogData(wcsInfo: number, catalogData: CARTA.ICatalogColumnsData) {
-        const webGlData = [];
-        const controlHeader = this.catalogControlHeader;
-        const xHeader = controlHeader.get(this.xColumnRepresentation);
-        const yHeader = controlHeader.get(this.yColumnRepresentation);
-        const xHeaderInfo = this.catalogHeader[xHeader.dataIndex];
-        const yHeaderInfo = this.catalogHeader[yHeader.dataIndex];
-        const pixelCoordsX = getTableDataByType(catalogData, xHeaderInfo.dataType, xHeaderInfo.dataTypeIndex);
-        const pixelCoordsY = getTableDataByType(catalogData, yHeaderInfo.dataType, yHeaderInfo.dataTypeIndex);
-
-        if (pixelCoordsX.length === pixelCoordsY.length) {
-            for (let index = 0; index < pixelCoordsX.length; index++) {
-                const xPixelValue = pixelCoordsX[index];
-                const yPixelValue = pixelCoordsY[index];
-                const pointWCS = AST.transformPoint(wcsInfo, xPixelValue, yPixelValue);
-                // x1, y1, x2, y2 ...
-                webGlData.push(pointWCS.x);
-                webGlData.push(pointWCS.y);
-            }
-        }
-        return webGlData;
     }
 }

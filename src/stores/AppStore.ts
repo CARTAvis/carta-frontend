@@ -28,9 +28,10 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore
+    WidgetsStore,
+    CatalogStore
 } from ".";
-import {GetRequiredTiles} from "utilities";
+import {GetRequiredTiles, getTableDataByType} from "utilities";
 import {BackendService, ConnectionStatus, TileService} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme} from "models";
 import {
@@ -67,6 +68,9 @@ export class AppStore {
     @observable preferenceStore: PreferenceStore;
     // catalog map catalog widget with file
     @observable catalogs: Map<string, number>;
+    // catalog data for plotting
+    @observable catalogStore: CatalogStore;
+
     readonly layoutStore: LayoutStore;
     // Dialogs
     readonly dialogStore: DialogStore;
@@ -472,6 +476,7 @@ export class AppStore {
                 let catalogInfo: CatalogInfo = {fileId : fileId, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 const catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);
                 this.catalogs.set(catalogWidgetId, fileId);
+                this.catalogStore.initCatalogs(catalogWidgetId);
                 this.fileBrowserStore.hideFileBrowser();
             }
         }, error => {
@@ -615,6 +620,7 @@ export class AppStore {
 
         this.frames = [];
         this.catalogs = new Map();
+        this.catalogStore = new CatalogStore();
         this.activeFrame = null;
         this.fileBrowserStore = new FileBrowserStore(this, this.backendService);
         this.animatorStore = new AnimatorStore(this);
@@ -923,8 +929,18 @@ export class AppStore {
             }
 
             if (catalogWidgetStore.updateMode === CatalogUpdateMode.ViewUpdate) { 
-                // Todo plot catalog
-                console.log(catalogWidgetStore.imageCoordinates);
+                // update plot data, allow update ovelay while table loading                
+                const controlHeader = catalogWidgetStore.catalogControlHeader;
+                if (catalogWidgetStore.xColumnRepresentation && catalogWidgetStore.yColumnRepresentation) {
+                    const xHeader = controlHeader.get(catalogWidgetStore.xColumnRepresentation);
+                    const yHeader = controlHeader.get(catalogWidgetStore.yColumnRepresentation);
+                    const xHeaderInfo = catalogWidgetStore.catalogHeader[xHeader.dataIndex];
+                    const yHeaderInfo = catalogWidgetStore.catalogHeader[yHeader.dataIndex];
+                    const wcsCoordsX = getTableDataByType(catalogFilter.columnsData, xHeaderInfo.dataType, xHeaderInfo.dataTypeIndex);
+                    const wcsCoordsY = getTableDataByType(catalogFilter.columnsData, yHeaderInfo.dataType, yHeaderInfo.dataTypeIndex);
+                    const wcs = this.activeFrame.validWcs ? this.activeFrame.wcsInfo : 0;
+                    this.catalogStore.updateCatalogData(catalogWidgetId, wcsCoordsX, wcsCoordsY, wcs, xHeaderInfo.units, yHeaderInfo.units);
+                }
             }
         }
     }
