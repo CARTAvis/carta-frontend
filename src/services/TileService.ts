@@ -299,6 +299,7 @@ export class TileService {
 
         // At the start of the stream, create a new pending decompressions map for the channel about to be streamed
         if (!syncMessage.endSync) {
+            this.completedChannels.delete(key);
             this.pendingDecompressions.set(key, new Map<number, boolean>());
         } else {
             // mark the channel as complete
