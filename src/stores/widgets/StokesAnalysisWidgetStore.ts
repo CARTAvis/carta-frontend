@@ -235,7 +235,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         // if type/unit/specsys changes, trigger transformation
         autorun(() => {
             const frame = this.appStore.activeFrame;
-            if (frame && frame.channelInfo && this.isSpectralCoordinateSupported && this.isSpectralSystemSupported) {
+            if (frame && frame.channelInfo && this.isSpectralSettingsSupported) {
                 if (this.isCoordChannel) {
                     this.channelValues = frame.channelInfo.indexes;
                 } else {
@@ -258,14 +258,14 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     public initSpectralSettings = () => {
         const frame = this.appStore.activeFrame;
-        if (frame && frame.spectralInfo && this.isSpectralCoordinateSupported && this.isSpectralSystemSupported) {
+        if (frame && frame.spectralInfo && this.isSpectralSettingsSupported) {
             this.spectralType = frame.spectralInfo.channelType.code as SpectralType;
             this.spectralUnit = DEFAULT_UNIT.get(this.spectralType);
             this.spectralSystem = frame.spectralInfo.specsys as SpectralSystem;
         } else {
             this.spectralType = null;
             this.spectralUnit = null;
-            this.spectralSystem = SpectralSystem.LSRK;
+            this.spectralSystem = null;
         }
 
         this.channelValues = null;
@@ -430,6 +430,10 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
             return specsys && IsSpectralSystemValid(specsys);
         }
         return false;
+    }
+
+    @computed get isSpectralSettingsSupported(): boolean {
+        return this.isSpectralCoordinateSupported && this.isSpectralSystemSupported;
     }
 
     @computed get isLinePlotsAutoScaledX() {
