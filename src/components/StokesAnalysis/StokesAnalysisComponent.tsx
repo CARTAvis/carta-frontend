@@ -134,30 +134,26 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     @computed get currentChannelValue(): number {
         const frame = this.props.appStore.activeFrame;
-        if (!frame || !this.plotData) {
+        if (!frame || !this.widgetStore.channelValues) {
             return null;
         }
         const channel = frame.channel;
-        const qValues = this.plotData.qValues;
-        const index = qValues.isIncremental ? channel : qValues.dataset.length - 1 - channel;
-        if (index < 0 || index >= qValues.dataset.length) {
+        if (channel < 0 || channel >= this.widgetStore.channelValues.length) {
             return null;
         }
-        return this.widgetStore.isCoordChannel ? index : qValues.dataset[index].x;
+        return this.widgetStore.isCoordChannel ? channel : this.widgetStore.channelValues[channel];
     }
 
     @computed get requiredChannelValue(): number {
         const frame = this.props.appStore.activeFrame;
-        if (!frame || !this.plotData) {
+        if (!frame || !this.widgetStore.channelValues) {
             return null;
         }
         const channel = frame.requiredChannel;
-        const qValues = this.plotData.qValues;
-        const index = qValues.isIncremental ? channel : qValues.dataset.length - 1 - channel;
-        if (index < 0 || index >= qValues.dataset.length) {
+        if (channel < 0 || channel >= this.widgetStore.channelValues.length) {
             return null;
         }
-        return this.widgetStore.isCoordChannel ? index : qValues.dataset[index].x;
+        return this.widgetStore.isCoordChannel ? channel : this.widgetStore.channelValues[channel];
     }
 
     onChannelChanged = (x: number) => {

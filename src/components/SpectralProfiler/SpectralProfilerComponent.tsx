@@ -240,28 +240,26 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     @computed get currentChannelValue(): number {
         const frame = this.props.appStore.activeFrame;
-        if (!frame || !this.plotData) {
+        if (!frame || !this.widgetStore.channelValues) {
             return null;
         }
         const channel = frame.channel;
-        const index = this.plotData.isIncremental ? channel : this.plotData.values.length - 1 - channel;
-        if (index < 0 || index >= this.plotData.values.length) {
+        if (channel < 0 || channel >= this.widgetStore.channelValues.length) {
             return null;
         }
-        return this.widgetStore.isCoordChannel ? index : this.plotData.values[index].x;
+        return this.widgetStore.isCoordChannel ? channel : this.widgetStore.channelValues[channel];
     }
 
     @computed get requiredChannelValue(): number {
         const frame = this.props.appStore.activeFrame;
-        if (!frame || !this.plotData) {
+        if (!frame || !this.widgetStore.channelValues) {
             return null;
         }
         const channel = frame.requiredChannel;
-        const index = this.plotData.isIncremental ? channel : this.plotData.values.length - 1 - channel;
-        if (index < 0 || index >= this.plotData.values.length) {
+        if (channel < 0 || channel >= this.widgetStore.channelValues.length) {
             return null;
         }
-        return this.widgetStore.isCoordChannel ? index : this.plotData.values[index].x;
+        return this.widgetStore.isCoordChannel ? channel : this.widgetStore.channelValues[channel];
     }
 
     private getChannelUnit = (): string => {
