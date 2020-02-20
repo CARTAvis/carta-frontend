@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as helpFileBrowserPng from "static/help/carta_fn_fileBrowser.png";
 
-export class HelpFileBrowserComponent extends React.Component {
+export class FileBrowserHelpComponent extends React.Component {
     public render() {
         return (
             <div>
