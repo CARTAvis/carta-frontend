@@ -75,20 +75,8 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         let channelInfo = frame.channelInfo;
-        if (coordinateData && channelInfo && coordinateData.values && coordinateData.values.length && coordinateData.values.length === channelInfo.values.length) {
-            let channelValues;
-            if (this.widgetStore.isCoordChannel) {
-                channelValues = channelInfo.indexes;
-            } else {
-                if (this.isSpectralPropsEqual()) {
-                    channelValues = channelInfo.values;
-                } else {  // transform x if widget's spectral props are different from frame's spectral props
-                    channelValues = [...channelInfo.values];
-                    for (let i = 0; i < channelValues.length; i++) {
-                        channelValues[i] = AST.transformSpectralPoint(frame.spectralFrame, this.widgetStore.spectralType, this.widgetStore.spectralUnit, this.widgetStore.spectralSystem, channelValues[i]);
-                    }
-                }
-            }
+        if (coordinateData && channelInfo && coordinateData.values && coordinateData.values.length && coordinateData.values.length === channelInfo.values.length && this.widgetStore.channelValues) {
+            const channelValues = this.widgetStore.channelValues;
             let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
             let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1]);
 
@@ -235,7 +223,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (this.widgetStore.isCoordChannel) {
                 nearestIndex = channelInfo.getChannelIndexSimple(x);
             } else {
-                if (this.isSpectralPropsEqual()) {
+                if (this.widgetStore.isSpectralPropsEqual) {
                     nearestIndex = channelInfo.getChannelIndexWCS(x);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
@@ -315,20 +303,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
         }
         return profilerInfo;
-    };
-
-    // compare active frame's spectral props with selected spectral props in widget
-    private isSpectralPropsEqual = (): boolean => {
-        const appStore = this.props.appStore;
-        const frame = appStore.activeFrame;
-        let result = true;
-        if (frame && frame.spectralInfo && this.widgetStore) {
-            const isTypeEqual = frame.spectralInfo.channelType.code === (this.widgetStore.spectralType as string);
-            const isUnitEqual = frame.spectralInfo.channelType.unit === (this.widgetStore.spectralUnit as string);
-            const isSpecsysEqual = frame.spectralInfo.specsys === (this.widgetStore.spectralSystem as string);
-            result = isTypeEqual && isUnitEqual && isSpecsysEqual;
-        }
-        return result;
     };
 
     render() {

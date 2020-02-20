@@ -1,11 +1,12 @@
-import {action, computed, observable} from "mobx";
+import * as AST from "ast_wrapper";
+import {action, autorun, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {AppStore, FrameStore} from "..";
 import {isColorValid} from "utilities";
-import {GenCoordinateLabel, IsSpectralSystemValid, IsSpectralTypeValid, IsSpectralUnitValid, SpectralSystem, SpectralType, SpectralUnit, SPECTRAL_COORDS_SUPPORTED} from "models";
+import {DEFAULT_UNIT, GenCoordinateLabel, IsSpectralSystemValid, IsSpectralTypeValid, IsSpectralUnitValid, SpectralSystem, SpectralType, SpectralUnit, SPECTRAL_COORDS_SUPPORTED} from "models";
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
@@ -19,6 +20,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable spectralType: SpectralType;
     @observable spectralUnit: SpectralUnit;
     @observable spectralSystem: SpectralSystem;
+    @observable channelValues:  Array<number>;
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
 
@@ -166,20 +168,66 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
+
+        // if type/unit/specsys changes, trigger transformation
+        autorun(() => {
+            const frame = this.appStore.activeFrame;
+            if (frame && frame.channelInfo && this.isSpectralCoordinateSupported && this.isSpectralSystemSupported) {
+                if (this.isCoordChannel) {
+                    this.channelValues = frame.channelInfo.indexes;
+                } else {
+                    this.channelValues = this.isSpectralPropsEqual ? frame.channelInfo.values : this.convertSpectral(frame.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, frame.channelInfo.values);
+                }
+            }
+        });
     }
+
+    private convertSpectral = (spectralFrame: number, type: SpectralType, unit: SpectralUnit, system: SpectralSystem, x: Array<number>): Array<number> => {
+        if (!spectralFrame || !type || !unit || !system || !x) {
+            return null;
+        }
+        let tx: Array<number> = new Array<number>(x.length);
+        for (let i = 0; i < x.length; i++) {
+            tx[i] = AST.transformSpectralPoint(this.appStore.activeFrame.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x[i]);
+        }
+        return tx;
+    };
 
     public initSpectralSettings = () => {
         const frame = this.appStore.activeFrame;
         if (frame && frame.spectralInfo && this.isSpectralCoordinateSupported && this.isSpectralSystemSupported) {
             this.spectralType = frame.spectralInfo.channelType.code as SpectralType;
-            this.spectralUnit = frame.spectralInfo.channelType.unit as SpectralUnit;
+            this.spectralUnit = DEFAULT_UNIT.get(this.spectralType);
             this.spectralSystem = frame.spectralInfo.specsys as SpectralSystem;
         } else {
             this.spectralType = null;
             this.spectralUnit = null;
             this.spectralSystem = SpectralSystem.LSRK;
         }
+
+        this.channelValues = null;
+        if (frame && frame.channelInfo) {
+            if (this.isCoordChannel) {
+                this.channelValues = frame.channelInfo.indexes;
+            } else {
+                this.channelValues = this.isSpectralPropsEqual ? frame.channelInfo.values : this.convertSpectral(frame.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, frame.channelInfo.values);
+            }
+        }
     };
+
+    // check the type, unit, specsys are the same between widget and active frame
+    @computed get isSpectralPropsEqual(): boolean {
+        const appStore = this.appStore;
+        const frame = appStore.activeFrame;
+        let result = false;
+        if (frame && frame.spectralInfo) {
+            const isTypeEqual = frame.spectralInfo.channelType.code === (this.spectralType as string);
+            const isUnitEqual = frame.spectralInfo.channelType.unit === (this.spectralUnit as string);
+            const isSpecsysEqual = frame.spectralInfo.specsys === (this.spectralSystem as string);
+            result = isTypeEqual && isUnitEqual && isSpecsysEqual;
+        }
+        return result;
+    }
 
     @computed get isAutoScaledX() {
         return (this.minX === undefined || this.maxX === undefined);

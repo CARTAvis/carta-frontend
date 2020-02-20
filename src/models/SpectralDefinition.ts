@@ -59,8 +59,16 @@ export const SPECTRAL_TYPE_STRING = new Map<SpectralType, string>([
     [SpectralType.VRAD, "Radio velocity"],
     [SpectralType.VOPT, "Optical velocity"],
     [SpectralType.FREQ, "Frequency"],
-    [SpectralType.WAVE, "Wave length"],
-    [SpectralType.AWAV, "Air wave length"]
+    [SpectralType.WAVE, "Wavelength"],
+    [SpectralType.AWAV, "Air wavelength"]
+]);
+
+export const DEFAULT_UNIT = new Map<SpectralType, SpectralUnit>([
+    [SpectralType.VRAD, SpectralUnit.KMS],
+    [SpectralType.VOPT, SpectralUnit.KMS],
+    [SpectralType.FREQ, SpectralUnit.GHZ],
+    [SpectralType.WAVE, SpectralUnit.MM],
+    [SpectralType.AWAV, SpectralUnit.MM]
 ]);
 
 export const GenCoordinateLabel = (type: SpectralType, unit: SpectralUnit): string => {
