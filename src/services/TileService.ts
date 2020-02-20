@@ -158,15 +158,8 @@ export class TileService {
         return this.cachedTiles.get(tileCoordinateEncoded);
     }
 
-    requestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number) {
-        let channelsChanged;
+    requestTiles(tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D, compressionQuality: number, channelsChanged: boolean = false) {
         let fileChanged = this.currentFileId !== fileId;
-        const currentChannels = this.channelMap.get(fileId);
-        if (currentChannels) {
-            channelsChanged = (channel !== currentChannels.channel || stokes !== currentChannels.stokes);
-        } else {
-            channelsChanged = true;
-        }
 
         if (fileChanged) {
             this.currentFileId = fileId;
@@ -175,7 +168,7 @@ export class TileService {
             this.clearRequestQueue();
         }
 
-        if (channelsChanged) {
+        if (channelsChanged || !this.channelMap.has(fileId)) {
             this.pendingSynchronisedTiles = tiles.map(tile => tile.encode());
             this.receivedSynchronisedTiles = [];
             this.clearRequestQueue();
@@ -226,10 +219,11 @@ export class TileService {
             } else {
                 this.backendService.addRequiredTiles(fileId, sortedRequests, compressionQuality);
             }
-        } else {
+        } else if (!channelsChanged) {
             // No requests required, mark channel as complete
             const key = `${fileId}_${stokes}_${channel}`;
-            this.completedChannels.set(key, true);
+            // console.log(`Marking key=${key} as complete`);
+            // this.completedChannels.set(key, true);
         }
     }
 
@@ -336,6 +330,7 @@ export class TileService {
 
         const pendingCompressionMap = this.pendingDecompressions.get(key);
         if (!pendingCompressionMap) {
+            console.log(`Missing compression map for key=${key}`);
             return;
         }
 
@@ -418,7 +413,6 @@ export class TileService {
             pendingCompressionMap.delete(encodedCoordinate);
 
             // If all tiles are in place, add them to the LRU and fire the stream observable
-            this.completedChannels.get(key);
             if (!pendingCompressionMap.size && this.completedChannels.get(key)) {
                 this.completedChannels.delete(key);
                 this.pendingDecompressions.delete(key);

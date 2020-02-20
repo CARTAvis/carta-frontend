@@ -547,6 +547,43 @@ export class AppStore {
     private histogramRequirements: Map<number, Array<number>>;
     private pendingChannelHistograms: Map<string, CARTA.IRegionHistogramData>;
 
+    throttledSetChannels = _.throttle((fileId: number, channel: number, stokes: number) => {
+        const frame = this.getFrame(fileId);
+        if (!frame) {
+            return;
+        }
+
+        frame.channel = channel;
+        frame.stokes = stokes;
+
+        // Calculate new required frame view (cropped to file size)
+        const reqView = frame.requiredFrameView;
+
+        const croppedReq: FrameView = {
+            xMin: Math.max(0, reqView.xMin),
+            xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
+            yMin: Math.max(0, reqView.yMin),
+            yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
+            mip: reqView.mip
+        };
+        const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
+        const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
+        const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
+        // TODO: dynamic tile size
+        const tileSizeFullRes = reqView.mip * 256;
+        const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
+        this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.preferenceStore.imageCompressionQuality, true);
+    }, AppStore.ImageChannelThrottleTime);
+
+    throttledSetView = _.throttle((tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D) => {
+        const isAnimating = (this.animatorStore.animationState !== AnimationState.STOPPED && this.animatorStore.animationMode !== AnimationMode.FRAME);
+        if (isAnimating) {
+            this.backendService.addRequiredTiles(fileId, tiles.map(t => t.encode()), this.preferenceStore.animationCompressionQuality);
+        } else {
+            this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, this.preferenceStore.imageCompressionQuality);
+        }
+    }, AppStore.ImageChannelThrottleTime);
+
     constructor() {
         this.alertStore = new AlertStore();
         this.layoutStore = new LayoutStore(this, this.alertStore);
@@ -572,43 +609,6 @@ export class AppStore {
         this.initRequirements();
         this.dialogStore = new DialogStore(this);
         this.helpStore = new HelpStore();
-
-        const throttledSetChannels = _.throttle((fileId: number, channel: number, stokes: number) => {
-            const frame = this.getFrame(fileId);
-            if (!frame) {
-                return;
-            }
-
-            frame.channel = channel;
-            frame.stokes = stokes;
-
-            // Calculate new required frame view (cropped to file size)
-            const reqView = frame.requiredFrameView;
-
-            const croppedReq: FrameView = {
-                xMin: Math.max(0, reqView.xMin),
-                xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
-                yMin: Math.max(0, reqView.yMin),
-                yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
-                mip: reqView.mip
-            };
-            const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
-            const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
-            const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
-            // TODO: dynamic tile size
-            const tileSizeFullRes = reqView.mip * 256;
-            const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-            this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.preferenceStore.imageCompressionQuality);
-        }, AppStore.ImageChannelThrottleTime);
-
-        const throttledSetView = _.throttle((tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D) => {
-            const isAnimating = (this.animatorStore.animationState !== AnimationState.STOPPED && this.animatorStore.animationMode !== AnimationMode.FRAME);
-            if (isAnimating) {
-                this.backendService.addRequiredTiles(fileId, tiles.map(t => t.encode()), this.preferenceStore.animationCompressionQuality);
-            } else {
-                this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, this.preferenceStore.imageCompressionQuality);
-            }
-        }, AppStore.ImageChannelThrottleTime);
 
         const throttledSetCursorRotated = _.throttle(this.setCursor, AppStore.CursorThrottleTimeRotated);
         const throttledSetCursor = _.throttle(this.setCursor, AppStore.CursorThrottleTime);
@@ -637,7 +637,7 @@ export class AppStore {
                 // TODO: dynamic tile size
                 const tileSizeFullRes = reqView.mip * 256;
                 const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-                throttledSetView(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords);
+                this.throttledSetView(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords);
             }
         });
 
@@ -649,7 +649,7 @@ export class AppStore {
                 const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
                 // Don't auto-update when animation is playing
                 if (this.animatorStore.animationState === AnimationState.STOPPED && updateRequiredChannels) {
-                    throttledSetChannels(this.activeFrame.frameInfo.fileId, this.activeFrame.requiredChannel, this.activeFrame.requiredStokes);
+                    this.throttledSetChannels(this.activeFrame.frameInfo.fileId, this.activeFrame.requiredChannel, this.activeFrame.requiredStokes);
                 }
             }
         });
