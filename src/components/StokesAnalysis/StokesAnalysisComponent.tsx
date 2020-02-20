@@ -172,7 +172,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             if (this.widgetStore.isCoordChannel) {
                 nearestIndex = channelInfo.getChannelIndexSimple(x);
             } else {
-                if (this.isSpectralPropsEqual()) {
+                if (this.widgetStore.isSpectralPropsEqual) {
                     nearestIndex = channelInfo.getChannelIndexWCS(x);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
@@ -198,7 +198,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             if (this.widgetStore.isCoordChannel) {
                 nearestIndex = channelInfo.getChannelIndexSimple(zIndex);
             } else {
-                if (this.isSpectralPropsEqual()) {
+                if (this.widgetStore.isSpectralPropsEqual) {
                     nearestIndex = channelInfo.getChannelIndexWCS(zIndex);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
@@ -423,21 +423,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return {xMin, xMax, yMin, yMax};
     }
 
-    private assembleLinePlotData(spectralFrame: number, profile: Array<number>, channelInfo: ChannelInfo, type: StokesCoordinate): { isIncremental: boolean, dataset: Array<Point2D>, border: Border } {
-        if (spectralFrame && profile && profile.length && profile.length === channelInfo.values.length) {
-            let channelValues;
-            if (this.widgetStore.isCoordChannel) {
-                channelValues = channelInfo.indexes;
-            } else {
-                if (this.isSpectralPropsEqual()) {
-                    channelValues = channelInfo.values;
-                } else {  // transform x if widget's spectral props are different from frame's spectral props
-                    channelValues = [...channelInfo.values];
-                    for (let i = 0; i < channelValues.length; i++) {
-                        channelValues[i] = AST.transformSpectralPoint(spectralFrame, this.widgetStore.spectralType, this.widgetStore.spectralUnit, this.widgetStore.spectralSystem, channelValues[i]);
-                    }
-                }
-            }
+    private assembleLinePlotData(spectralFrame: number, profile: Array<number>, type: StokesCoordinate): { isIncremental: boolean, dataset: Array<Point2D>, border: Border } {
+        if (spectralFrame && profile && profile.length &&
+            this.widgetStore.channelValues && this.widgetStore.channelValues.length &&
+            profile.length === this.widgetStore.channelValues.length) {
+            const channelValues = this.widgetStore.channelValues;
             let border = this.calculateXYborder(channelValues, profile, true, type);
             let values: Array<{ x: number, y: number }> = [];
             const isIncremental = channelValues[0] <= channelValues[channelValues.length - 1];
@@ -457,23 +447,15 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         return null;
     }
 
-    private assembleScatterPlotData(
-        spectralFrame: number, qProfile: Array<number>, uProfile: Array<number>, channelInfo: ChannelInfo, type: StokesCoordinate
-    ): { isIncremental: boolean, dataset: Array<{ x: number, y: number, z: number }>, border: Border } {
-        if (spectralFrame && qProfile && qProfile.length && uProfile && uProfile.length && qProfile.length === uProfile.length && qProfile.length === channelInfo.values.length) {
-            let channelValues;
-            if (this.widgetStore.isCoordChannel) {
-                channelValues = channelInfo.indexes;
-            } else {
-                if (this.isSpectralPropsEqual()) {
-                    channelValues = channelInfo.values;
-                } else {  // transform x if widget's spectral props are different from frame's spectral props
-                    channelValues = [...channelInfo.values];
-                    for (let i = 0; i < channelValues.length; i++) {
-                        channelValues[i] = AST.transformSpectralPoint(spectralFrame, this.widgetStore.spectralType, this.widgetStore.spectralUnit, this.widgetStore.spectralSystem, channelValues[i]);
-                    }
-                }
-            }
+    private assembleScatterPlotData(spectralFrame: number, qProfile: Array<number>, uProfile: Array<number>, type: StokesCoordinate): {
+        isIncremental: boolean,
+        dataset: Array<{ x: number, y: number, z: number }>,
+        border: Border
+    } {
+        if (spectralFrame && qProfile && qProfile.length && uProfile && uProfile.length &&
+            this.widgetStore.channelValues && this.widgetStore.channelValues.length &&
+            qProfile.length === uProfile.length && qProfile.length === this.widgetStore.channelValues.length) {
+            const channelValues = this.widgetStore.channelValues;
             let border = this.calculateXYborder(qProfile, uProfile, false, type);
             let values: Array<{ x: number, y: number, z: number }> = [];
             const isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
@@ -645,11 +627,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
         let channelInfo = frame.channelInfo;
         if (compositeProfile && channelInfo) {
-            let quDic = this.assembleScatterPlotData(frame.spectralFrame, compositeProfile.qProfile, compositeProfile.uProfile, channelInfo, StokesCoordinate.PolarizationQU);
-            let piDic = this.assembleLinePlotData(frame.spectralFrame, compositeProfile.piProfile, channelInfo, StokesCoordinate.PolarizedIntensity);
-            let paDic = this.assembleLinePlotData(frame.spectralFrame, compositeProfile.paProfile, channelInfo, StokesCoordinate.PolarizationAngle);
-            let qDic = this.assembleLinePlotData(frame.spectralFrame, compositeProfile.qProfile, channelInfo, StokesCoordinate.LinearPolarizationQ);
-            let uDic = this.assembleLinePlotData(frame.spectralFrame, compositeProfile.uProfile, channelInfo, StokesCoordinate.LinearPolarizationU);
+            let quDic = this.assembleScatterPlotData(frame.spectralFrame, compositeProfile.qProfile, compositeProfile.uProfile, StokesCoordinate.PolarizationQU);
+            let piDic = this.assembleLinePlotData(frame.spectralFrame, compositeProfile.piProfile, StokesCoordinate.PolarizedIntensity);
+            let paDic = this.assembleLinePlotData(frame.spectralFrame, compositeProfile.paProfile, StokesCoordinate.PolarizationAngle);
+            let qDic = this.assembleLinePlotData(frame.spectralFrame, compositeProfile.qProfile, StokesCoordinate.LinearPolarizationQ);
+            let uDic = this.assembleLinePlotData(frame.spectralFrame, compositeProfile.uProfile, StokesCoordinate.LinearPolarizationU);
 
             return {
                 qValues: qDic, 
@@ -772,20 +754,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             + ")";
         profilerInfo.push(`${this.cursorInfo.isMouseEntered ? "Cursor:" : "Data:"} ${cursorString}`);
         return profilerInfo;
-    };
-
-    // compare active frame's spectral props with selected spectral props in widget
-    private isSpectralPropsEqual = (): boolean => {
-        const appStore = this.props.appStore;
-        const frame = appStore.activeFrame;
-        let result = true;
-        if (frame && frame.spectralInfo && this.widgetStore) {
-            const isTypeEqual = frame.spectralInfo.channelType.code === (this.widgetStore.spectralType as string);
-            const isUnitEqual = frame.spectralInfo.channelType.unit === (this.widgetStore.spectralUnit as string);
-            const isSpecsysEqual = frame.spectralInfo.specsys === (this.widgetStore.spectralSystem as string);
-            result = isTypeEqual && isUnitEqual && isSpecsysEqual;
-        }
-        return result;
     };
     
     render() {

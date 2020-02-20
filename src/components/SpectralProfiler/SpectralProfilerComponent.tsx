@@ -74,8 +74,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             }
         }
 
-        let channelInfo = frame.channelInfo;
-        if (coordinateData && channelInfo && coordinateData.values && coordinateData.values.length && coordinateData.values.length === channelInfo.values.length && this.widgetStore.channelValues) {
+        if (coordinateData && coordinateData.values && coordinateData.values.length &&
+            this.widgetStore.channelValues && this.widgetStore.channelValues.length &&
+            coordinateData.values.length === this.widgetStore.channelValues.length) {
             const channelValues = this.widgetStore.channelValues;
             let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
             let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1]);
