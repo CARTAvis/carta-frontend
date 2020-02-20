@@ -29,7 +29,8 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore
+    WidgetsStore,
+    HelpStore
 } from ".";
 import {GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, TileService, TileStreamDetails} from "services";
@@ -68,6 +69,8 @@ export class AppStore {
     readonly fileBrowserStore: FileBrowserStore;
     // Widgets
     readonly widgetsStore: WidgetsStore;
+    // Help
+    @observable helpStore: HelpStore;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -568,6 +571,7 @@ export class AppStore {
         this.widgetsStore = new WidgetsStore(this);
         this.initRequirements();
         this.dialogStore = new DialogStore(this);
+        this.helpStore = new HelpStore();
 
         const throttledSetChannels = _.throttle((fileId: number, channel: number, stokes: number) => {
             const frame = this.getFrame(fileId);
@@ -689,7 +693,7 @@ export class AppStore {
         this.backendService.getErrorStream().subscribe(this.handleErrorStream);
         this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
         this.backendService.getReconnectStream().subscribe(this.handleReconnectStream);
-        this.tileService.GetTileStream().subscribe(this.handleTileStream);
+        this.tileService.tileStream.subscribe(this.handleTileStream);
 
         // Auth and connection
         if (process.env.REACT_APP_AUTHENTICATION === "true") {

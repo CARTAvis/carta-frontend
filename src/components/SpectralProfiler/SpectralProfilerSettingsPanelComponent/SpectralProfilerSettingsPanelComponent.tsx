@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Colors} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {SpectralProfileWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig} from "stores";
+import {WidgetProps, WidgetConfig, HelpType} from "stores";
 import {parseNumber} from "utilities";
 
 const KEYCODE_ENTER = 13;
@@ -23,7 +23,8 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             title: "spectral-profiler-settings",
             isCloseable: true,
             parentId: "spectal-profiler",
-            parentType: "spectral-profiler"
+            parentType: "spectral-profiler",
+            helpType: HelpType.SPECTRAL_PROFILER_SETTINGS
         };
     }
 
