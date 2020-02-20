@@ -707,7 +707,7 @@ export class AppStore {
         this.backendService.getErrorStream().subscribe(this.handleErrorStream);
         this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
         this.backendService.getReconnectStream().subscribe(this.handleReconnectStream);
-        this.tileService.GetTileStream().subscribe(this.handleTileStream);
+        this.tileService.tileStream.subscribe(this.handleTileStream);
 
         // Auth and connection
         if (process.env.REACT_APP_AUTHENTICATION === "true") {
