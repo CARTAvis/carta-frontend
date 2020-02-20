@@ -355,7 +355,7 @@ export class FrameStore {
         return spectralInfo;
     }
 
-    @computed get hasStoke(): boolean {
+    @computed get hasStokes(): boolean {
         return this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.stokes > 1;
     }
 
