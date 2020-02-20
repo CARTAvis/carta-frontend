@@ -952,7 +952,7 @@ export class AppStore {
         }
         this.activeFrame = frame;
         this.widgetsStore.updateImageWidgetTitle();
-        this.widgetsStore.updateSpectralProfileWidgetSpectralSettings();
+        this.widgetsStore.updateSpectralRelatedWidgetsSpectralSettings();
     }
 
     getFrame(fileId: number) {
