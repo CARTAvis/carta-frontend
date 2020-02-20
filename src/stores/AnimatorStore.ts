@@ -85,6 +85,9 @@ export class AnimatorStore {
         });
 
         this.animationState = AnimationState.PLAYING;
+
+        clearTimeout(this.stopHandle);
+        this.stopHandle = setTimeout(this.stopAnimation, 1000 * 30);
     };
 
     @action stopAnimation = () => {
@@ -119,6 +122,7 @@ export class AnimatorStore {
 
     private readonly appStore: AppStore;
     private animateHandle;
+    private stopHandle;
 
     constructor(appStore: AppStore) {
         this.frameRate = 5;
