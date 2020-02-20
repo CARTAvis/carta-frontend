@@ -87,7 +87,7 @@ export class AnimatorStore {
         this.animationState = AnimationState.PLAYING;
 
         clearTimeout(this.stopHandle);
-        this.stopHandle = setTimeout(this.stopAnimation, 1000 * 30);
+        this.stopHandle = setTimeout(this.stopAnimation, 1000 * this.appStore.preferenceStore.stopAnimationPlaybackMinutes);
     };
 
     @action stopAnimation = () => {

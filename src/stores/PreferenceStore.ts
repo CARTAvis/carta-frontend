@@ -58,6 +58,7 @@ export enum PreferenceKeys {
     PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH,
     PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
     PERFORMANCE_LOW_BAND_WIDTH_MODE,
+    PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
 
     LOG_EVENT
 }
@@ -113,6 +114,7 @@ const KEY_TO_STRING = new Map<PreferenceKeys, string>([
     [PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, "contourControlMapWidth"],
     [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, "streamContoursWhileZooming"],
     [PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, "lowBandwidthMode"],
+    [PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES, "stopAnimationPlaybackMinutes"],
 
     [PreferenceKeys.LOG_EVENT, "logEventList"]
 ]);
@@ -174,6 +176,7 @@ const DEFAULTS = {
         contourControlMapWidth: 256,
         streamContoursWhileZooming: false,
         lowBandwidthMode: false,
+        stopAnimationPlaybackMinutes: 5
     },
     LOG_EVENT: {
         eventLoggingEnabled: false
@@ -249,7 +252,9 @@ export class PreferenceStore {
         [PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH,
             (value: string): number => { return value && isFinite(parseInt(value)) && ControlMap.IsWidthValid(parseInt(value)) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourControlMapWidth; }],
         [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, (value: string): boolean => { return parseBoolean(value, DEFAULTS.PERFORMANCE.streamContoursWhileZooming); }],
-        [PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.PERFORMANCE.lowBandwidthMode); }]
+        [PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.PERFORMANCE.lowBandwidthMode); }],
+        [PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
+            (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) > 0  && parseInt(value) <= 30) ? parseInt(value) : DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes; }]
     ]);
 
     // getters for global settings
@@ -438,6 +443,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE);
     }
 
+    @computed get stopAnimationPlaybackMinutes(): number {
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES);
+    }
+
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
         return Event.isEventTypeValid(eventType) && this.preferences.get(PreferenceKeys.LOG_EVENT).get(eventType);
     };
@@ -582,6 +591,7 @@ export class PreferenceStore {
         this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, DEFAULTS.PERFORMANCE.contourControlMapWidth);
         this.setPreference(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, DEFAULTS.PERFORMANCE.streamContoursWhileZooming);
         this.setPreference(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, DEFAULTS.PERFORMANCE.lowBandwidthMode);
+        this.setPreference(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES, DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes);
     };
 
     @action resetLogEventSettings = () => {
@@ -654,6 +664,7 @@ export class PreferenceStore {
             [PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, DEFAULTS.PERFORMANCE.contourControlMapWidth],
             [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, DEFAULTS.PERFORMANCE.streamContoursWhileZooming],
             [PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, DEFAULTS.PERFORMANCE.lowBandwidthMode],
+            [PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES, DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes],
 
             [PreferenceKeys.LOG_EVENT, new Map<CARTA.EventType, boolean>()]
         ]);
