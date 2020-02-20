@@ -1092,7 +1092,7 @@ export class AppStore {
         }
 
         const updatedRequirements = SpectralProfileWidgetStore.CalculateRequirementsMap(this.activeFrame, this.widgetsStore.spectralProfileWidgets);
-        if (this.widgetsStore.stokesAnalysisWidgets.size > 0) {
+        if (this.activeFrame.hasStoke && this.widgetsStore.stokesAnalysisWidgets.size > 0) {
             StokesAnalysisWidgetStore.addToRequirementsMap(this.activeFrame, updatedRequirements, this.widgetsStore.stokesAnalysisWidgets);
         }
         const diffList = SpectralProfileWidgetStore.DiffSpectralRequirements(this.spectralRequirements, updatedRequirements);
