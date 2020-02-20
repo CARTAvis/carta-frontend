@@ -1,19 +1,42 @@
 // Based on code from https://github.com/palantir/blueprint/issues/336
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 import {ResizeEnable, Rnd} from "react-rnd";
-import {Dialog, IDialogProps} from "@blueprintjs/core";
+import {Dialog, IDialogProps, Button} from "@blueprintjs/core";
 import "./DraggableDialogComponent.css";
+import { AppStore, HelpType } from "stores";
 
 export class ResizableDialogComponentProps {
+    appStore: AppStore;
     dialogProps: IDialogProps;
     defaultWidth: number;
     defaultHeight: number;
     minWidth?: number;
     minHeight?: number;
     enableResizing: boolean;
+    helpType?: HelpType;
 }
 
 export class DraggableDialogComponent extends React.Component<ResizableDialogComponentProps> {
+
+    private dd: HTMLDivElement;
+
+    componentDidUpdate() {
+        const header = this.dd.getElementsByClassName("bp3-dialog-header");
+        if (this.props.helpType && header.length > 0 && this.dd.getElementsByClassName("help-button").length === 0) {
+            const helpButton = <Button icon="help" minimal={true} onClick={() => this.props.appStore.helpStore.showHelpDrawer(this.props.helpType)}/>;
+            const helpButtonDiv = document.createElement("div") as HTMLDivElement;
+            helpButtonDiv.setAttribute("class", "help-button");
+            ReactDOM.render(helpButton, helpButtonDiv);
+            const closeButton = this.dd.getElementsByClassName("bp3-dialog-close-button");
+            if (closeButton.length > 0) {
+                closeButton[0].before(helpButtonDiv);
+            } else {
+                header[0].append(helpButtonDiv);
+            }
+        }
+    }
+
     render() {
         const w = window,
             d = document,
@@ -35,7 +58,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
         };
 
         return (
-            <div className={"draggable-dialog"}>
+            <div className={"draggable-dialog"} ref={ref => this.dd = ref}>
                 {this.props.dialogProps.isOpen &&
                 <Rnd
                     enableResizing={resizeSettings}
