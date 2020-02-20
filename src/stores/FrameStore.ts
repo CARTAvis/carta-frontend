@@ -355,6 +355,10 @@ export class FrameStore {
         return spectralInfo;
     }
 
+    @computed get hasStokes(): boolean {
+        return this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.stokes > 1;
+    }
+
     @computed
     private get zoomLevelForFit() {
         return Math.min(this.calculateZoomX, this.calculateZoomY);
