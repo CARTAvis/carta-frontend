@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Colors} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent} from "components/Shared";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig} from "stores";
+import {WidgetProps, WidgetConfig, HelpType} from "stores";
 import "./StokesAnalysisSettingsPanelComponent.css";
 
 @observer
@@ -21,7 +21,8 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             title: "stokes-settings",
             isCloseable: true,
             parentId: "stokes",
-            parentType: "stokes"
+            parentType: "stokes",
+            helpType: HelpType.STOKES_ANALYSIS_SETTINGS
         };
     }
 

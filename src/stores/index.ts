@@ -15,4 +15,7 @@ export * from "./RegionStore";
 export * from "./RegionSetStore";
 export * from "./PreferenceStore";
 export * from "./LayoutStore";
+export * from "./ContourStore";
+export * from "./ContourConfigStore";
 export * from "./DialogStore";
+export * from "./HelpStore";

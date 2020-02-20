@@ -23,3 +23,4 @@ export * from "./SplashScreen/SplashScreenComponent";
 export * from "./FileInfo/FileInfoComponent";
 export * from "./App/UIControllerComponent";
 export * from "./RegionSelector/RegionSelectorComponent";
+export * from "./HelpDrawer/HelpDrawerComponent";

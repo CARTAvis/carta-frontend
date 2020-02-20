@@ -4,7 +4,7 @@ import { observer } from "mobx-react";
 import { HTMLTable, Icon, NonIdealState } from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import { CARTA } from "carta-protobuf";
-import { RegionStore, WidgetConfig, WidgetProps } from "stores";
+import { RegionStore, WidgetConfig, WidgetProps, HelpType } from "stores";
 import { Point2D} from "models";
 import { toFixed } from "utilities";
 import "./RegionListComponent.css";
@@ -38,7 +38,8 @@ export class RegionListComponent extends React.Component<WidgetProps> {
             defaultWidth: 650,
             defaultHeight: 180,
             title: "Region List",
-            isCloseable: true
+            isCloseable: true,
+            helpType: HelpType.REGION_LIST
         };
     }
 
