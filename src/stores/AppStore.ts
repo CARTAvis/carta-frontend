@@ -393,7 +393,7 @@ export class AppStore {
             if (this.backendService.closeFile(fileId)) {
                 frame.clearSpatialReference();
                 frame.clearContours(false);
-                this.tileService.clearCompressedCache(fileId);
+                this.tileService.handleFileClosed(fileId);
                 this.frames = this.frames.filter(f => f.frameInfo.fileId !== fileId);
                 // Clean up if frame is active
                 if (this.activeFrame.frameInfo.fileId === fileId) {

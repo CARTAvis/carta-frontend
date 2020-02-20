@@ -247,6 +247,24 @@ export class TileService {
         this.updateRemainingTileCount();
     }
 
+    handleFileClosed(fileId: number) {
+        this.clearCompressedCache(fileId);
+        this.channelMap.delete(fileId);
+        const fileKey = `${fileId}`;
+        // remove all entries from the map with fileId in the key
+        this.completedChannels.forEach((value, key) => {
+            if (key.startsWith(fileKey)) {
+                this.completedChannels.delete(key);
+            }
+        });
+
+        this.pendingDecompressions.forEach((value, key) => {
+            if (key.startsWith(fileKey)) {
+                this.pendingDecompressions.delete(key);
+            }
+        });
+    }
+
     private initTextures() {
         const textureSizeMb = TEXTURE_SIZE * TEXTURE_SIZE * 4 / 1024 / 1024;
         console.log(`Creating ${this.textureArray.length} tile textures of size ${textureSizeMb} MB each (${textureSizeMb * this.textureArray.length} MB total)`);
@@ -318,6 +336,7 @@ export class TileService {
         // Ignore stale tiles that don't match the currently required tiles. During animation, ignore changes to channel
         if (this.currentFileId !== tileMessage.fileId || (!this.animationEnabled && (!currentChannels || currentChannels.channel !== tileMessage.channel || currentChannels.stokes !== tileMessage.stokes))) {
             console.log(`Ignoring stale tile ${tileMessage.channel}`);
+            console.log(currentChannels);
             return;
         }
 
