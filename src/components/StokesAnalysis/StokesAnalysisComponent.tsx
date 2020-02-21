@@ -156,14 +156,42 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         this.widgetStore.clearScatterPlotXYBounds();
     };
 
+    private getSpectralInfo(frame: FrameStore): {CTYPE: CARTA.IHeaderEntry, CDELT: CARTA.IHeaderEntry} {
+        const headers = frame.frameInfo.fileInfoExtended.headerEntries;
+        let CDELT = null;
+        const CTYPE =  headers.find(obj => { 
+            return (obj.value === SpectralCoordinateType.Frequency
+                    || obj.value === SpectralCoordinateType.Energy
+                    || obj.value === SpectralCoordinateType.Wavenumber
+                    || obj.value === SpectralCoordinateType.RadioVelocity
+                    || obj.value === SpectralCoordinateType.VacuumWavelength
+                    || obj.value === SpectralCoordinateType.OpticalVelocity
+                    || obj.value === SpectralCoordinateType.Redshift
+                    || obj.value === SpectralCoordinateType.AirWavelength
+                    || obj.value === SpectralCoordinateType.ApparentRadialVelocity
+                    || obj.value === SpectralCoordinateType.BetaFactor
+            ); 
+        });
+        if (CTYPE) {
+            if (CTYPE.name.includes("1")) {
+                CDELT = headers.find(obj => { return obj.name === "CDELT1"; });
+            } else if (CTYPE.name.includes("2")) {
+                CDELT = headers.find(obj => { return obj.name === "CDELT2"; });
+            }  else if (CTYPE.name.includes("3")) {
+                CDELT = headers.find(obj => { return obj.name === "CDELT3"; });
+            }  else if (CTYPE.name.includes("4")) {
+                CDELT = headers.find(obj => { return obj.name === "CDELT4"; });
+            }
+        }
+        return {CTYPE: CTYPE, CDELT: CDELT};
+    }
+
     // true: red->blue, false: blue->red
     private getColorMapOrder(frame: FrameStore): boolean {    
-        const headers = frame.frameInfo.fileInfoExtended.headerEntries;
-        const CTYPE3 =  headers.find(obj => { return obj.name === "CTYPE3"; });
-        const CDELT3 =  headers.find(obj => { return obj.name === "CDELT3"; });
-        if (CTYPE3 && CDELT3) {
-            const inGroup = this.spectralCoordinateTypeColorMapGroup.find(type => { return type === CTYPE3.value; });
-            if (CDELT3.numericValue > 0) {
+        const spectralInfo = this.getSpectralInfo(frame);
+        if (spectralInfo.CTYPE && spectralInfo.CDELT) {
+            const inGroup = this.spectralCoordinateTypeColorMapGroup.find(type => { return type === spectralInfo.CTYPE.value; });
+            if (spectralInfo.CDELT.numericValue > 0) {
                 if (inGroup !== undefined) {
                     return true;
                 }
