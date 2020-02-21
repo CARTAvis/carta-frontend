@@ -500,6 +500,15 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 <FormGroup inline={true} label="Stream image tiles while zooming">
                     <Switch checked={preference.streamContoursWhileZooming} onChange={(ev) => preference.setPreference(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, ev.currentTarget.checked)}/>
                 </FormGroup>
+                <FormGroup inline={true} label="Stop animation playback in">
+                    <HTMLSelect value={preference.stopAnimationPlaybackMinutes} onChange={(ev) => preference.setPreference(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES, parseInt(ev.currentTarget.value))}>
+                        <option key={0} value={5}>5 minutes</option>
+                        <option key={1} value={10}>10 minutes</option>
+                        <option key={2} value={15}>15 minutes</option>
+                        <option key={3} value={20}>20 minutes</option>
+                        <option key={4} value={30}>30 minutes</option>
+                    </HTMLSelect>
+                </FormGroup>
             </React.Fragment>
         );
 

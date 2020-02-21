@@ -99,6 +99,9 @@ export class AnimatorStore {
         });
         this.appStore.tileService.setAnimationEnabled(true);
         this.animationState = AnimationState.PLAYING;
+
+        clearTimeout(this.stopHandle);
+        this.stopHandle = setTimeout(this.stopAnimation, 1000 * 60 * this.appStore.preferenceStore.stopAnimationPlaybackMinutes);
     };
 
     @action stopAnimation = () => {
@@ -136,6 +139,7 @@ export class AnimatorStore {
 
     private readonly appStore: AppStore;
     private animateHandle;
+    private stopHandle;
 
     constructor(appStore: AppStore) {
         this.frameRate = 5;
