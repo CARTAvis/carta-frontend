@@ -1,8 +1,8 @@
 import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {AppStore, FrameStore} from "stores";
-import {clamp} from "utilities";
-import {FrameView} from "models";
+import {clamp, GetRequiredTiles} from "utilities";
+import {FrameView, Point2D} from "models";
 
 export enum AnimationMode {
     CHANNEL = 0,
@@ -60,11 +60,24 @@ export class AnimatorStore {
         if (!animationFrames) {
             return;
         }
+        // Calculate new required frame view (cropped to file size)
+        const reqView = frame.requiredFrameView;
 
-        const imageView = this.genImageView(frame);
-        if (!imageView) {
-            return;
-        }
+        const croppedReq: FrameView = {
+            xMin: Math.max(0, reqView.xMin),
+            xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
+            yMin: Math.max(0, reqView.yMin),
+            yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
+            mip: reqView.mip
+        };
+        const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
+        const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256}).map(tile => tile.encode());
+        const requiredTiles: CARTA.IAddRequiredTiles = {
+            fileId: frame.frameInfo.fileId,
+            tiles: tiles,
+            compressionType: CARTA.CompressionType.ZFP,
+            compressionQuality: this.appStore.preferenceStore.animationCompressionQuality,
+        };
 
         const animationMessage: CARTA.IStartAnimation = {
             fileId: frame.frameInfo.fileId,
@@ -72,19 +85,23 @@ export class AnimatorStore {
             firstFrame: animationFrames.firstFrame,
             lastFrame: animationFrames.lastFrame,
             deltaFrame: animationFrames.deltaFrame,
-            imageView: imageView,
+            requiredTiles: requiredTiles,
             looping: true,
             reverse: this.playMode === PlayMode.BOUNCING,
             frameRate: this.frameRate
         };
 
-        this.appStore.backendService.startAnimation(animationMessage).subscribe(ack => {
-            if (ack.success) {
-                console.log("Animation started successfully");
-            }
+        this.appStore.backendService.startAnimation(animationMessage).subscribe(() => {
+            console.log("Animation started successfully");
+        }, err => {
+            console.log(err);
+            this.appStore.tileService.setAnimationEnabled(false);
         });
-
+        this.appStore.tileService.setAnimationEnabled(true);
         this.animationState = AnimationState.PLAYING;
+
+        clearTimeout(this.stopHandle);
+        this.stopHandle = setTimeout(this.stopAnimation, 1000 * 60 * this.appStore.preferenceStore.stopAnimationPlaybackMinutes);
     };
 
     @action stopAnimation = () => {
@@ -92,6 +109,9 @@ export class AnimatorStore {
         if (!frame) {
             return;
         }
+
+        this.animationState = AnimationState.STOPPED;
+        this.appStore.tileService.setAnimationEnabled(false);
 
         if (this.animationMode === AnimationMode.FRAME) {
             clearInterval(this.animateHandle);
@@ -106,8 +126,8 @@ export class AnimatorStore {
                 endFrame
             };
             this.appStore.backendService.stopAnimation(stopMessage);
+            this.appStore.throttledSetChannels(frame.frameInfo.fileId, frame.requiredChannel, frame.requiredStokes);
         }
-        this.animationState = AnimationState.STOPPED;
     };
 
     @action animate = () => {
@@ -119,6 +139,7 @@ export class AnimatorStore {
 
     private readonly appStore: AppStore;
     private animateHandle;
+    private stopHandle;
 
     constructor(appStore: AppStore) {
         this.frameRate = 5;
@@ -231,35 +252,5 @@ export class AnimatorStore {
             lastFrame: lastFrame,
             deltaFrame: deltaFrame,
         };
-    };
-
-    private genImageView = (frame: FrameStore): CARTA.ISetImageView => {
-        if (!frame) {
-            return null;
-        }
-
-        const reqView = frame.requiredFrameView;
-
-        const croppedReq: FrameView = {
-            xMin: Math.max(0, reqView.xMin),
-            xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
-            yMin: Math.max(0, reqView.yMin),
-            yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
-            mip: reqView.mip
-        };
-
-        const imageView: CARTA.ISetImageView = {
-            imageBounds: {
-                xMin: croppedReq.xMin,
-                xMax: croppedReq.xMax,
-                yMin: croppedReq.yMin,
-                yMax: croppedReq.yMax
-            },
-            mip: croppedReq.mip,
-            compressionType: CARTA.CompressionType.ZFP,
-            compressionQuality: this.appStore.preferenceStore.animationCompressionQuality,
-        };
-
-        return imageView;
     };
 }

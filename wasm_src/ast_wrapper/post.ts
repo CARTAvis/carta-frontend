@@ -8,6 +8,8 @@ addOnPostRun(function () {
     Module.yIn = Module._malloc(Module.numArrayCoordinates * 8);
     Module.xOut = Module._malloc(Module.numArrayCoordinates * 8);
     Module.yOut = Module._malloc(Module.numArrayCoordinates * 8);
+    Module.zIn = Module._malloc(Module.numArrayCoordinates * 8);
+    Module.zOut = Module._malloc(Module.numArrayCoordinates * 8);
 
     console.log("AST WebAssembly module loaded");
 });
@@ -91,6 +93,7 @@ Module.setCanvas = function (canvas) {
 
 Module.plot = Module.cwrap("plotGrid", "number", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "string"]);
 Module.initFrame = Module.cwrap("initFrame", "number", ["string"]);
+Module.initSpectralFrame = Module.cwrap("initSpectralFrame", "number", ["string", "string", "string"]);
 Module.initDummyFrame = Module.cwrap("initDummyFrame", "number", []);
 Module.set = Module.cwrap("set", "number", ["number", "string"]);
 Module.getString = Module.cwrap("getString", "string", ["number", "string"]);
@@ -99,6 +102,7 @@ Module.norm = Module.cwrap("norm", "number", ["number", "number"]);
 Module.axDistance = Module.cwrap("axDistance", "number", ["number", "number", "number", "number"]);
 Module.format = Module.cwrap("format", "string", ["number", "number", "number"]);
 Module.transform = Module.cwrap("transform", "number", ["number", "number", "number", "number", "number", "number", "number"]);
+Module.spectralTransform = Module.cwrap("spectralTransform", "number", ["number", "string", "string", "string", "number", "number", "number", "number"]);
 Module.getLastErrorMessage = Module.cwrap("getLastErrorMessage", "string");
 Module.clearLastErrorMessage = Module.cwrap("clearLastErrorMessage", null);
 Module.copy = Module.cwrap("copy", null, ["number"]);
@@ -171,6 +175,15 @@ Module.transformPoint = function (transformFrameSet: number, xIn: number, yIn: n
     const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N);
     const yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N);
     return {x: xOut[0], y: yOut[0]};
+};
+
+Module.transformSpectralPoint = function (spectralFrameFrom: number, specType: string, specUnit: string, specSys: string, zIn: number, forward: boolean = true) {
+    // Return empty array if arguments are invalid
+    const N = 1;
+    Module.HEAPF64.set(new Float64Array([zIn]), Module.zIn / 8);
+    Module.spectralTransform(spectralFrameFrom, specType, specUnit, specSys, N, Module.zIn, forward, Module.zOut);
+    const zOut = new Float64Array(Module.HEAPF64.buffer, Module.zOut, N);
+    return zOut[0];
 };
 
 Module.normalizeCoordinates = function (wcsInfo, xIn, yIn) {

@@ -1,10 +1,13 @@
-import {action, autorun, computed, observable, toJS} from "mobx";
+import {action, autorun, computed, observable} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
 import {ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, Transform2D, ZoomPoint} from "models";
-import {clamp, findChannelType, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates, length2D, minMax2D, rotate2D, subtract2D, toFixed, trimFitsComment, velocityStringFromFrequency} from "utilities";
+import {
+    clamp, findChannelType, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates,
+    minMax2D, rotate2D, toFixed, trimFitsComment, velocityStringFromFrequency
+} from "utilities";
 import {BackendService} from "services";
 import {ControlMap} from "../models/ControlMap";
 
@@ -20,7 +23,6 @@ export interface FrameInfo {
 
 export enum RasterRenderType {
     NONE,
-    ANIMATION,
     TILED
 }
 
@@ -28,6 +30,7 @@ export class FrameStore {
     @observable frameInfo: FrameInfo;
     @observable renderHiDPI: boolean;
     @observable wcsInfo: number;
+    @observable spectralFrame: number;
     @observable validWcs: boolean;
     @observable center: Point2D;
     @observable cursorInfo: CursorInfo;
@@ -45,9 +48,6 @@ export class FrameStore {
     @observable renderConfig: RenderConfigStore;
     @observable contourConfig: ContourConfigStore;
     @observable contourStores: Map<number, ContourStore>;
-    @observable rasterData: Float32Array;
-    @observable overviewRasterData: Float32Array;
-    @observable overviewRasterView: FrameView;
     @observable valid: boolean;
     @observable moving: boolean;
     @observable zooming: boolean;
@@ -257,24 +257,12 @@ export class FrameStore {
                         channelTypeInfo.type.unit = unit;
                     }
 
-                    let scalingFactor = 1.0;
-                    // Use km/s by default for m/s values
-                    if (channelTypeInfo.type.unit === "m/s") {
-                        scalingFactor = 1e-3;
-                        channelTypeInfo.type.unit = "km/s";
-                    }
-                    // Use GHz by default for Hz values
-                    if (channelTypeInfo.type.unit === "Hz") {
-                        scalingFactor = 1e-9;
-                        channelTypeInfo.type.unit = "GHz";
-                    }
-
                     for (let i = 0; i < N; i++) {
                         // FITS standard uses 1 for the first pixel
                         const channelOffset = i + 1 - refPix;
                         indexes[i] = i;
                         rawValues[i] = (channelOffset * delta + refVal);
-                        values[i] = rawValues[i] * scalingFactor;
+                        values[i] = rawValues[i];
                     }
                     return {
                         fromWCS: true,
@@ -287,7 +275,7 @@ export class FrameStore {
                                 return null;
                             }
 
-                            const index = (value / scalingFactor - refVal) / delta + refPix - 1;
+                            const index = (value - refVal) / delta + refPix - 1;
                             if (index < 0) {
                                 return 0;
                             } else if (index > values.length - 1) {
@@ -311,7 +299,7 @@ export class FrameStore {
             rawValues[i] = i;
         }
         return {
-            fromWCS: false, channelType: {code: "", name: "Channel"}, indexes, values, rawValues,
+            fromWCS: false, channelType: {code: "", name: "Channel", unit: ""}, indexes, values, rawValues,
             getChannelIndexWCS: null, getChannelIndexSimple: getChannelIndexSimple
         };
     }
@@ -319,7 +307,8 @@ export class FrameStore {
     @computed get spectralInfo(): SpectralInfo {
         const spectralInfo: SpectralInfo = {
             channel: this.channel,
-            channelType: {code: "", name: "Channel"},
+            channelType: {code: "", name: "Channel", unit: ""},
+            specsys: "",
             spectralString: ""
         };
 
@@ -334,6 +323,7 @@ export class FrameStore {
                 spectralInfo.channelType = channelInfo.channelType;
                 let spectralName;
                 if (specSysValue) {
+                    spectralInfo.specsys = specSysValue.toUpperCase();
                     spectralName = `${channelInfo.channelType.name}\u00a0(${specSysValue})`;
                 } else {
                     spectralName = channelInfo.channelType.name;
@@ -353,6 +343,10 @@ export class FrameStore {
         }
 
         return spectralInfo;
+    }
+
+    @computed get hasStokes(): boolean {
+        return this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.stokes > 1;
     }
 
     @computed
@@ -421,6 +415,7 @@ export class FrameStore {
         this.backendService = backendService;
         this.preference = preference;
         this.contourContext = gl;
+        this.spectralFrame = null;
         this.validWcs = false;
         this.frameInfo = frameInfo;
         this.renderHiDPI = true;
@@ -465,6 +460,7 @@ export class FrameStore {
         this.animationChannelRange = [0, frameInfo.fileInfoExtended.depth - 1];
 
         this.initWCS();
+        this.initSpectralFrame();
         this.initCenter();
         this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
 
@@ -528,6 +524,59 @@ export class FrameStore {
             this.validWcs = true;
             this.overlayStore.setDefaultsFromAST(this);
             console.log("Initialised WCS info from frame");
+        }
+    };
+
+    @action private initSpectralFrame = () => {
+        this.spectralFrame = null;
+        const entries = this.frameInfo.fileInfoExtended.headerEntries;
+        const channelTypeInfo = findChannelType(entries);
+        if (!channelTypeInfo) {
+            return;
+        }
+
+        const dimension = channelTypeInfo.dimension;
+        const skipRegex = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[^1|2|${dimension.toString()}]`, "i");
+        const spectralAxisRegex = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[${dimension.toString()}]`, "i");
+        let headerString = "";
+        for (let entry of entries) {
+            // Skip empty header entries
+            if (!entry.value.length) {
+                continue;
+            }
+            // Skip other dimensions, however spectral frame still need skyframe's info (RefRA, RefDec), keep NAXIS1 & NAXIS2.
+            // skyframe (NAXIS1 & NAXIS2) and spectral frame (NAXIS3 or NAXIS4) headers are provided, unify spectral axis to NAXIS3
+            if (entry.name.match(skipRegex)) {
+                continue;
+            }
+
+            let name = entry.name;
+            let value = trimFitsComment(entry.value);
+            if (entry.name.toUpperCase() === "NAXIS") {
+                value = "3";
+            }
+            if (entry.name.match(spectralAxisRegex)) {
+                name = entry.name.replace(dimension.toString(), "3");
+            }
+            if (entry.entryType === CARTA.EntryType.STRING) {
+                value = `'${value}'`;
+            }
+
+            while (name.length < 8) {
+                name += " ";
+            }
+
+            let entryString = `${name}=  ${value}`;
+            while (entryString.length < 80) {
+                entryString += " ";
+            }
+            headerString += entryString;
+        }
+
+        const initResult = AST.initSpectralFrame(headerString, channelTypeInfo.type.code, channelTypeInfo.type.unit);
+        if (initResult) {
+            this.spectralFrame = initResult;
+            console.log("Initialised spectral info from frame");
         }
     };
 
@@ -630,49 +679,6 @@ export class FrameStore {
         this.controlMaps.delete(frame);
     }
 
-    @action updateFromRasterData(rasterImageData: CARTA.RasterImageData) {
-        this.stokes = rasterImageData.stokes;
-        this.channel = rasterImageData.channel;
-        this.currentCompressionQuality = rasterImageData.compressionQuality;
-        // if there's a valid channel histogram bundled into the message, update it
-        if (rasterImageData.channelHistogramData) {
-            // Update channel histograms
-            if (rasterImageData.channelHistogramData.regionId === -1 && rasterImageData.channelHistogramData.histograms.length) {
-                this.renderConfig.updateChannelHistogram(rasterImageData.channelHistogramData.histograms[0]);
-            }
-        }
-
-        this.currentFrameView = {
-            xMin: rasterImageData.imageBounds.xMin,
-            xMax: rasterImageData.imageBounds.xMax,
-            yMin: rasterImageData.imageBounds.yMin,
-            yMax: rasterImageData.imageBounds.yMax,
-            mip: rasterImageData.mip
-        };
-
-        const rawData = rasterImageData.imageData[0];
-        // Don't need to copy buffer when dealing with compressed data
-        if (rasterImageData.compressionType !== CARTA.CompressionType.NONE) {
-            this.rasterData = new Float32Array(rawData.buffer);
-        } else {
-            this.rasterData = new Float32Array(rawData.buffer.slice(rawData.byteOffset, rawData.byteOffset + rawData.byteLength));
-        }
-
-        // Cache a copy of the approximate full image data
-        if (rasterImageData.imageBounds.xMin === 0 && rasterImageData.imageBounds.yMin === 0
-            && rasterImageData.imageBounds.xMax === this.frameInfo.fileInfoExtended.width
-            && rasterImageData.imageBounds.yMax === this.frameInfo.fileInfoExtended.height) {
-            this.overviewRasterData = this.rasterData.slice(0);
-            this.overviewRasterView = {
-                xMin: rasterImageData.imageBounds.xMin,
-                xMax: rasterImageData.imageBounds.xMax,
-                yMin: rasterImageData.imageBounds.yMin,
-                yMax: rasterImageData.imageBounds.yMax,
-                mip: rasterImageData.mip
-            };
-        }
-    }
-
     @action updateFromContourData(contourImageData: CARTA.ContourImageData) {
         let vertexCounter = 0;
 
@@ -710,16 +716,10 @@ export class FrameStore {
                 totalChunks += contourStore.chunkCount;
             }
         });
-
-        const progress = totalProgress / (this.contourConfig.levels ? this.contourConfig.levels.length : 1);
-        if (progress >= 1) {
-            console.log(`Contours complete: ${totalVertices} vertices in ${totalChunks} chunks`);
-        }
     }
 
     @action setChannels(channel: number, stokes: number) {
         // Automatically switch to per-channel histograms when Stokes parameter changes
-        this.renderConfig.setStokes(stokes);
         if (this.requiredStokes !== stokes) {
             this.renderConfig.setUseCubeHistogram(false);
             this.renderConfig.updateCubeHistogram(null, 0);

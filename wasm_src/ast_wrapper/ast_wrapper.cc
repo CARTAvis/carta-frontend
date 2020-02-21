@@ -44,7 +44,7 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
 	astClearStatus;
     astBegin;
 
-    fitschan = astFitsChan(NULL, NULL, "");
+    fitschan = astFitsChan(nullptr, nullptr, "");
     if (!fitschan)
     {
         cout << "astFitsChan returned null :(" << endl;
@@ -78,6 +78,135 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
     }
 
     return wcsinfo;
+}
+
+EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(const char* header, const char *system, const char *unit)
+{
+     if (!header || !system || !unit)
+    {
+        cout << "Missing header argument." << endl;
+        return nullptr;
+    }
+
+    AstFitsChan* fitschan = nullptr;
+    AstFrameSet* frame = nullptr;
+    int status = 0;
+    if (frame)
+    {
+        astEnd;
+    }
+	astClearStatus;
+    astBegin;
+
+    fitschan = astFitsChan(nullptr, nullptr, "");
+    if (!fitschan)
+    {
+        cout << "astFitsChan returned null :(" << endl;
+        astClearStatus;
+        return nullptr;
+    }
+
+    astPutCards(fitschan, header);
+    frame = static_cast<AstFrameSet*>(astRead(fitschan));
+    if (!astOK)
+    {
+        cout << "Some AST LIB error, check logs." << endl;
+        astClearStatus;
+        return nullptr;
+    }
+    else if (frame == AST__NULL)
+    {
+        cout << "No WCS found" << endl;
+        return nullptr;
+    }
+    else if (strcmp(astGetC(frame, "Class"), "FrameSet"))
+    {
+        cout << "check FITS header (astlib)" << endl;
+        return nullptr;
+    }
+
+    // create a simple 1D spectral frame through astSet() for spectral conversion
+    AstSpecFrame *specframe = nullptr;
+    specframe = astSpecFrame("");
+    if (!specframe)
+    {
+        cout << "Create empty spectral frame failed." << endl;
+        astClearStatus;
+        return nullptr;
+    }
+
+    // set spectral system, unit from parameter (CTYPE, CUNIT)
+    char buffer[128];
+    snprintf(buffer, sizeof(buffer), "System=%s", system);
+    astSet(specframe, buffer);
+    snprintf(buffer, sizeof(buffer), "Unit=%s", unit);
+    astSet(specframe, buffer);
+
+    // get Epoch, ObsLon, ObsLat, ObsAlt, RefRA, RefDec, RestFreq, StdOfRest attributes from AST compound frame
+    // due to observation coordinate (ObsLon/ObsLat/ObsAlt) has to be geodetic, RefRA/RefDec has to be FK5, J2000.
+    // RefRA/RefDec will be 0 if skyframe is not provided, & the conversion will be imprecise.
+    const char *epoch = astGetC(frame, "Epoch");
+    if (epoch)
+    {
+        snprintf(buffer, sizeof(buffer), "Epoch=%s", epoch);
+        astSet(specframe, buffer);
+    }
+    const char *obsLon = astGetC(frame, "ObsLon");
+    if (obsLon)
+    {
+        snprintf(buffer, sizeof(buffer), "ObsLon=%s", obsLon);
+        astSet(specframe, buffer);
+    }
+    const char *obsLat = astGetC(frame, "ObsLat");
+    if (obsLat)
+    {
+        snprintf(buffer, sizeof(buffer), "ObsLat=%s", obsLat);
+        astSet(specframe, buffer);
+    }
+    const char *obsAlt = astGetC(frame, "ObsAlt");
+    if (obsAlt)
+    {
+        snprintf(buffer, sizeof(buffer), "ObsAlt=%s", obsAlt);
+        astSet(specframe, buffer);
+    }
+    const char *refRA = astGetC(frame, "RefRA");
+    if (refRA)
+    {
+        snprintf(buffer, sizeof(buffer), "RefRA=%s", refRA);
+        astSet(specframe, buffer);
+    }
+    const char *refDec = astGetC(frame, "RefDec");
+    if (refDec)
+    {
+        snprintf(buffer, sizeof(buffer), "RefDec=%s", refDec);
+        astSet(specframe, buffer);
+    }
+    const char *restFreq = astGetC(frame, "RestFreq");
+    if (restFreq)
+    {
+        snprintf(buffer, sizeof(buffer), "RestFreq=%s", restFreq);
+        astSet(specframe, buffer);
+    }
+    const char *stdOfRest = astGetC(frame, "StdOfRest");
+    if (stdOfRest)
+    {
+        snprintf(buffer, sizeof(buffer), "StdOfRest=%s", stdOfRest);
+        astSet(specframe, buffer);
+    }
+
+    if (!astOK)
+    {
+        cout << "Some AST LIB error, check logs." << endl;
+        astClearStatus;
+        return nullptr;
+    }
+    else if (specframe == AST__NULL)
+    {
+        cout << "Create 1D spectral frame failed." << endl;
+        return nullptr;
+    }
+
+    return specframe;
 }
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* createTransformedFrameset(AstFrameSet* wcsinfo, double offsetX, double offsetY, double angle, double originX, double originY, double scaleX, double scaleY)
@@ -224,6 +353,40 @@ EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const doubl
     }
 
     astTran2(wcsinfo, npoint, xin, yin, forward, xout, yout);
+    if (!astOK)
+    {
+        astClearStatus;
+        return 1;
+    }
+    return 0;
+}
+
+EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, const char* specTypeTo, const char* specUnitTo, const char* specSysTo, const int npoint, const double zIn[], const int forward, double zOut[])
+{
+    if (!specFrameFrom || !specTypeTo ||!specUnitTo || !specSysTo)
+    {
+        return 1;
+    }
+
+    AstSpecFrame* specFrameTo = nullptr;
+    specFrameTo = static_cast<AstSpecFrame*> astCopy(specFrameFrom);
+    if (!specFrameTo)
+    {
+        return 1;
+    }
+
+    char buffer[128];
+    snprintf(buffer, sizeof(buffer), "System=%s", specTypeTo);
+    astSet(specFrameTo, buffer);
+    snprintf(buffer, sizeof(buffer), "Unit=%s", specUnitTo);
+    astSet(specFrameTo, buffer);
+    snprintf(buffer, sizeof(buffer), "StdOfRest=%s", specSysTo);
+    astSet(specFrameTo, buffer);
+
+    AstFrameSet *cvt;
+    cvt = static_cast<AstFrameSet*> astConvert(specFrameFrom, specFrameTo, "");
+
+    astTran1(cvt, npoint, zIn, forward, zOut);
     if (!astOK)
     {
         astClearStatus;

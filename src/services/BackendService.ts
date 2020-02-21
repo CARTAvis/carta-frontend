@@ -1,9 +1,7 @@
-import {action, autorun, computed, observable} from "mobx";
-import * as Long from "long";
+import {action, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Observable, Observer, Subject, throwError} from "rxjs";
 import {LogStore, PreferenceStore, RegionStore} from "stores";
-import {DecompressionService} from "./DecompressionService";
 
 export enum ConnectionStatus {
     CLOSED = 0,
@@ -16,12 +14,14 @@ export const INVALID_ANIMATION_ID = -1;
 type HandlerFunction = (eventId: number, parsedMessage: any) => void;
 
 export class BackendService {
-    private static readonly IcdVersion = 11;
+    private static readonly IcdVersion = 12;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
     readonly loggingEnabled: boolean;
     @observable connectionDropped: boolean;
     @observable endToEndPing: number;
+
+    public animationId: number;
 
     private connection: WebSocket;
     private lastPingTime: number;
@@ -29,10 +29,10 @@ export class BackendService {
     private autoReconnect: boolean;
     private observerRequestMap: Map<number, Observer<any>>;
     private eventCounter: number;
-    private animationId: number;
     private sessionId: number;
-    private readonly rasterStream: Subject<CARTA.RasterImageData>;
+    // TODO: These can be readonly instead of private to get rid of boilerplate gets
     private readonly rasterTileStream: Subject<CARTA.RasterTileData>;
+    readonly rasterSyncStream: Subject<CARTA.RasterTileSync>;
     private readonly histogramStream: Subject<CARTA.RegionHistogramData>;
     private readonly errorStream: Subject<CARTA.ErrorData>;
     private readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
@@ -40,8 +40,6 @@ export class BackendService {
     private readonly statsStream: Subject<CARTA.RegionStatsData>;
     private readonly contourStream: Subject<CARTA.ContourImageData>;
     private readonly reconnectStream: Subject<void>;
-    private readonly decompressionService: DecompressionService;
-    private readonly subsetsRequired: number;
     private readonly logStore: LogStore;
     private readonly preferenceStore: PreferenceStore;
     private readonly handlerMap: Map<CARTA.EventType, HandlerFunction>;
@@ -57,8 +55,8 @@ export class BackendService {
         this.endToEndPing = NaN;
         this.animationId = INVALID_ANIMATION_ID;
         this.connectionStatus = ConnectionStatus.CLOSED;
-        this.rasterStream = new Subject<CARTA.RasterImageData>();
         this.rasterTileStream = new Subject<CARTA.RasterTileData>();
+        this.rasterSyncStream = new Subject<CARTA.RasterTileSync>();
         this.histogramStream = new Subject<CARTA.RegionHistogramData>();
         this.errorStream = new Subject<CARTA.ErrorData>();
         this.spatialProfileStream = new Subject<CARTA.SpatialProfileData>();
@@ -66,11 +64,6 @@ export class BackendService {
         this.statsStream = new Subject<CARTA.RegionStatsData>();
         this.contourStream = new Subject<CARTA.ContourImageData>();
         this.reconnectStream = new Subject<void>();
-
-        this.subsetsRequired = Math.min(navigator.hardwareConcurrency || 4, 4);
-        if (process.env.NODE_ENV !== "test") {
-            this.decompressionService = new DecompressionService(this.subsetsRequired);
-        }
 
         // Construct handler and decoder maps
         this.handlerMap = new Map<CARTA.EventType, HandlerFunction>([
@@ -87,14 +80,14 @@ export class BackendService {
             [CARTA.EventType.SET_USER_PREFERENCES_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.RESUME_SESSION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.START_ANIMATION_ACK, this.onStartAnimationAck],
-            [CARTA.EventType.RASTER_IMAGE_DATA, this.onStreamedRasterImageData],
             [CARTA.EventType.RASTER_TILE_DATA, this.onStreamedRasterTileData],
             [CARTA.EventType.REGION_HISTOGRAM_DATA, this.onStreamedRegionHistogramData],
             [CARTA.EventType.ERROR_DATA, this.onStreamedErrorData],
             [CARTA.EventType.SPATIAL_PROFILE_DATA, this.onStreamedSpatialProfileData],
             [CARTA.EventType.SPECTRAL_PROFILE_DATA, this.onStreamedSpectralProfileData],
             [CARTA.EventType.REGION_STATS_DATA, this.onStreamedRegionStatsData],
-            [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData]
+            [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData],
+            [CARTA.EventType.RASTER_TILE_SYNC, this.onStreamedRasterSync]
         ]);
 
         this.decoderMap = new Map<CARTA.EventType, any>([
@@ -109,7 +102,6 @@ export class BackendService {
             [CARTA.EventType.SET_REGION_ACK, CARTA.SetRegionAck],
             [CARTA.EventType.RESUME_SESSION_ACK, CARTA.ResumeSessionAck],
             [CARTA.EventType.START_ANIMATION_ACK, CARTA.StartAnimationAck],
-            [CARTA.EventType.RASTER_IMAGE_DATA, CARTA.RasterImageData],
             [CARTA.EventType.RASTER_TILE_DATA, CARTA.RasterTileData],
             [CARTA.EventType.REGION_HISTOGRAM_DATA, CARTA.RegionHistogramData],
             [CARTA.EventType.ERROR_DATA, CARTA.ErrorData],
@@ -118,25 +110,12 @@ export class BackendService {
             [CARTA.EventType.REGION_STATS_DATA, CARTA.RegionStatsData],
             [CARTA.EventType.CONTOUR_IMAGE_DATA, CARTA.ContourImageData],
             [CARTA.EventType.SET_USER_LAYOUT_ACK, CARTA.SetUserLayoutAck],
-            [CARTA.EventType.SET_USER_PREFERENCES_ACK, CARTA.SetUserPreferencesAck]
+            [CARTA.EventType.SET_USER_PREFERENCES_ACK, CARTA.SetUserPreferencesAck],
+            [CARTA.EventType.RASTER_TILE_SYNC, CARTA.RasterTileSync]
         ]);
-
-        autorun(() => {
-            if (this.zfpReady) {
-                this.logStore.addInfo(`ZFP loaded with ${this.subsetsRequired} workers`, ["zfp"]);
-            }
-        });
 
         // check ping every 5 seconds
         setInterval(this.sendPing, 5000);
-    }
-
-    @computed get zfpReady() {
-        return (this.decompressionService && this.decompressionService.zfpReady);
-    }
-
-    getRasterStream() {
-        return this.rasterStream;
     }
 
     getRasterTileStream() {
@@ -375,18 +354,6 @@ export class BackendService {
         return false;
     }
 
-    @action("set image view")
-    setImageView(fileId: number, xMin: number, xMax: number, yMin: number, yMax: number, mip: number, compressionQuality: number): boolean {
-        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
-            const message = CARTA.SetImageView.create({fileId, imageBounds: {xMin, xMax, yMin, yMax}, mip, compressionType: CARTA.CompressionType.ZFP, compressionQuality, numSubsets: this.subsetsRequired});
-            this.logEvent(CARTA.EventType.SET_IMAGE_VIEW, this.eventCounter, message, false);
-            if (this.sendEvent(CARTA.EventType.SET_IMAGE_VIEW, CARTA.SetImageView.encode(message).finish())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     @action("set channels")
     setChannels(fileId: number, channel: number, stokes: number, requiredTiles: CARTA.IAddRequiredTiles): boolean {
         if (this.connectionStatus === ConnectionStatus.ACTIVE) {
@@ -522,9 +489,6 @@ export class BackendService {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
             return throwError(new Error("Not connected"));
         } else {
-            if (animationMessage.imageView) {
-                animationMessage.imageView.numSubsets = this.subsetsRequired;
-            }
             const requestId = this.eventCounter;
             this.logEvent(CARTA.EventType.START_ANIMATION, requestId, animationMessage, false);
             if (this.sendEvent(CARTA.EventType.START_ANIMATION, CARTA.StartAnimation.encode(animationMessage).finish())) {
@@ -718,10 +682,10 @@ export class BackendService {
     }
 
     private onStartAnimationAck(eventId: number, ack: CARTA.StartAnimationAck) {
+        this.animationId = ack.success ? ack.animationId : INVALID_ANIMATION_ID;
         const observer = this.observerRequestMap.get(eventId);
         if (observer) {
             if (ack.success) {
-                this.animationId = ack.animationId;
                 observer.next(ack);
             } else {
                 observer.error(ack.message);
@@ -733,36 +697,12 @@ export class BackendService {
         }
     }
 
-    private onStreamedRasterImageData(eventId: number, rasterImageData: CARTA.RasterImageData) {
-        // Skip animation data for previous animations
-        if (rasterImageData.animationId !== this.animationId) {
-            return;
-        }
-        // Flow control
-        const flowControlMessage: CARTA.IAnimationFlowControl = {
-            fileId: rasterImageData.fileId,
-            animationId: rasterImageData.animationId,
-            receivedFrame: {
-                channel: rasterImageData.channel,
-                stokes: rasterImageData.stokes
-            },
-            timestamp: Long.fromNumber(Date.now())
-        };
-
-        this.sendAnimationFlowControl(flowControlMessage);
-
-        // Decompression
-        if (rasterImageData.compressionType === CARTA.CompressionType.NONE) {
-            this.rasterStream.next(rasterImageData);
-        } else {
-            this.decompressionService.decompressRasterData(rasterImageData).then(decompressedMessage => {
-                this.rasterStream.next(decompressedMessage);
-            });
-        }
-    }
-
     private onStreamedRasterTileData(eventId: number, rasterTileData: CARTA.RasterTileData) {
         this.rasterTileStream.next(rasterTileData);
+    }
+
+    private onStreamedRasterSync(eventId: number, rasterTileSync: CARTA.RasterTileSync) {
+        this.rasterSyncStream.next(rasterTileSync);
     }
 
     private onStreamedRegionHistogramData(eventId: number, regionHistogramData: CARTA.RegionHistogramData) {

@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {AnchorButton, Classes, IDialogProps, Intent, NonIdealState, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, RegionStore} from "stores";
+import {AppStore, RegionStore, HelpType} from "stores";
 import {PointRegionForm} from "./PointRegionForm/PointRegionForm";
 import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionForm";
 import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
@@ -107,7 +107,7 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={600} defaultHeight={450} minHeight={300} minWidth={400} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} helpType={HelpType.REGION_DIALOG} defaultWidth={600} defaultHeight={450} minHeight={300} minWidth={400} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     {bodyContent}
                 </div>

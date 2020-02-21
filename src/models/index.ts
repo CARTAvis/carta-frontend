@@ -1,6 +1,6 @@
 export * from "./CursorInfo";
 export * from "./ChannelInfo";
-export * from "./ChannelType";
+export * from "./SpectralDefinition";
 export * from "./FrameView";
 export * from "./Point2D";
 export * from "./Transform2D";

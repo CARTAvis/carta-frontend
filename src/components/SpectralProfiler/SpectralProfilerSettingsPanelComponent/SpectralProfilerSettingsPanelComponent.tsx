@@ -2,9 +2,9 @@ import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
 import {Colors} from "@blueprintjs/core";
-import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
+import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent} from "components/Shared";
 import {SpectralProfileWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig} from "stores";
+import {WidgetProps, WidgetConfig, HelpType} from "stores";
 import {parseNumber} from "utilities";
 
 const KEYCODE_ENTER = 13;
@@ -18,12 +18,13 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             type: "floating-settings",
             minWidth: 280,
             minHeight: 225,
-            defaultWidth: 300,
+            defaultWidth: 350,
             defaultHeight: 375,
             title: "spectral-profiler-settings",
             isCloseable: true,
             parentId: "spectal-profiler",
-            parentType: "spectral-profiler"
+            parentType: "spectral-profiler",
+            helpType: HelpType.SPECTRAL_PROFILER_SETTINGS
         };
     }
 
@@ -64,10 +65,6 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
     handleMeanRmsChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.widgetStore.setMeanRmsVisible(changeEvent.target.checked);
-    };
-
-    handleWcsValuesChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.widgetStore.setUseWcsValues(changeEvent.target.checked);
     };
 
     handleXMinChange = (ev: React.KeyboardEvent<HTMLInputElement>) => {
@@ -143,11 +140,9 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
-            useWcsValues: widgetStore.useWcsValues,
             setPrimaryLineColor: widgetStore.setPrimaryLineColor,
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
-            handleWcsValuesChanged: this.handleWcsValuesChanged,
             setPlotType: widgetStore.setPlotType,
             meanRmsVisible: widgetStore.meanRmsVisible,
             handleMeanRmsChanged: this.handleMeanRmsChanged,
@@ -165,7 +160,10 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         };
 
         return (
-            <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
+            <React.Fragment>
+                <SpectralSettingsComponent appStore={this.props.appStore} widgetStore={widgetStore} disable={false}/>
+                <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
+            </React.Fragment>
         );
     }
 }
