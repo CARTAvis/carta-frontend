@@ -248,11 +248,9 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         return (
             <div className="image-view-div" onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                 <RasterViewComponent
-                    frame={appStore.activeFrame}
+                    appStore={appStore}
                     docked={this.props.docked}
                     overlaySettings={appStore.overlayStore}
-                    preference={appStore.preferenceStore}
-                    tileService={appStore.tileService}
                 />
                 <ContourViewComponent
                     appStore={appStore}

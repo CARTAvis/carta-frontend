@@ -233,11 +233,16 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
             loadingIndicatorClass += " icon-visible";
         }
 
-        const loadingIndicator = (
-            <Tooltip content={loadingTooltipFragment}>
-                <Icon icon={"cloud-download"} className={loadingIndicatorClass}/>
-            </Tooltip>
-        );
+        let loadingIndicator;
+        if (loadingTooltipFragment) {
+            loadingIndicator = (
+                <Tooltip content={loadingTooltipFragment}>
+                    <Icon icon={"cloud-download"} className={loadingIndicatorClass}/>
+                </Tooltip>
+            );
+        } else {
+            loadingIndicator = <Icon icon={"cloud-download"} className={loadingIndicatorClass}/>;
+        }
 
         return (
             <div className="root-menu">

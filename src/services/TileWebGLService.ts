@@ -24,7 +24,6 @@ interface ShaderUniforms {
     RotationOrigin: WebGLUniformLocation;
     RotationAngle: WebGLUniformLocation;
     ScaleAdjustment: WebGLUniformLocation;
-    TiledRendering: WebGLUniformLocation;
     TileSize: WebGLUniformLocation;
     TileScaling: WebGLUniformLocation;
     TileOffset: WebGLUniformLocation;
@@ -83,7 +82,6 @@ export class TileWebGLService {
             ScaleAdjustment: this.gl.getUniformLocation(this.shaderProgram, "uScaleAdjustment"),
             RotationOrigin: this.gl.getUniformLocation(this.shaderProgram, "uRotationOrigin"),
             RotationAngle: this.gl.getUniformLocation(this.shaderProgram, "uRotationAngle"),
-            TiledRendering: this.gl.getUniformLocation(this.shaderProgram, "uTiledRendering"),
             TileSize: this.gl.getUniformLocation(this.shaderProgram, "uTileSize"),
             TileScaling: this.gl.getUniformLocation(this.shaderProgram, "uTileScaling"),
             TileOffset: this.gl.getUniformLocation(this.shaderProgram, "uTileOffset"),
@@ -104,7 +102,6 @@ export class TileWebGLService {
         this.gl.uniform1f(this.shaderUniforms.Gamma, 1);
         this.gl.uniform1f(this.shaderUniforms.Alpha, 1000);
         this.gl.uniform1i(this.shaderUniforms.Inverted, 0);
-        this.gl.uniform1i(this.shaderUniforms.TiledRendering, 1);
         this.gl.uniform1f(this.shaderUniforms.TileBorder, 0 / TILE_SIZE);
         this.gl.uniform2f(this.shaderUniforms.TileSize, 1, 1);
         this.gl.uniform2f(this.shaderUniforms.TileScaling, 1, 1);
