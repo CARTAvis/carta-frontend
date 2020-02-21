@@ -2,7 +2,7 @@ import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
 import {Colors} from "@blueprintjs/core";
-import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent} from "components/Shared";
+import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, SpectralSettingsComponent} from "components/Shared";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig, HelpType} from "stores";
 import "./StokesAnalysisSettingsPanelComponent.css";
@@ -16,7 +16,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             type: "floating-settings",
             minWidth: 350,
             minHeight: 300,
-            defaultWidth: 350,
+            defaultWidth: 400,
             defaultHeight: 550,
             title: "stokes-settings",
             isCloseable: true,
@@ -54,28 +54,23 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         });
     }
 
-    handleWcsValuesChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
-        this.widgetStore.setUseWcsValues(changeEvent.target.checked);
-    };
-
     handleEqualAxesValuesChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
         this.widgetStore.setEqualAxesValue(changeEvent.target.checked);
     };
 
     render() {
+        const appStore = this.props.appStore;
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            darkMode: this.props.appStore.darkTheme,
+            darkMode: appStore.darkTheme,
             primaryDarkModeLineColor: Colors.BLUE4,
             primaryLineColor: widgetStore.primaryLineColor,
             lineWidth: widgetStore.lineWidth,
             plotType: widgetStore.plotType,
             linePlotPointSize: widgetStore.linePlotPointSize,
-            useWcsValues: widgetStore.useWcsValues,
             setPrimaryLineColor: widgetStore.setPrimaryLineColor,
             setLineWidth: widgetStore.setLineWidth,
             setLinePlotPointSize: widgetStore.setLinePlotPointSize,
-            handleWcsValuesChanged: this.handleWcsValuesChanged,
             setPlotType: widgetStore.setPlotType,
             secondaryDarkModeLineColor: Colors.ORANGE4,
             secondaryLineColor: widgetStore.secondaryLineColor,
@@ -93,9 +88,13 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             handleEqualAxesValuesChanged: this.handleEqualAxesValuesChanged
         };
 
+        const hasStokes = appStore.activeFrame && appStore.activeFrame.frameInfo && appStore.activeFrame.frameInfo.fileInfoExtended.stokes > 1;
+
         return (
             <React.Fragment>
                 <div className="stokes-settings">
+                    <p>Spectral Settings:</p>
+                    <SpectralSettingsComponent appStore={appStore} widgetStore={widgetStore} disable={!hasStokes}/>
                     <p>Line Plots:</p>
                     <div className={"stokes-line-settings"}>
                         <LinePlotSettingsPanelComponent {...lineSettingsProps}/>

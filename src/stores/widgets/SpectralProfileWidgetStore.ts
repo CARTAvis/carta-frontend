@@ -1,11 +1,12 @@
-import {action, computed, observable} from "mobx";
+import * as AST from "ast_wrapper";
+import {action, autorun, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
-import {AppStore} from "../AppStore";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {FrameStore} from "../FrameStore";
+import {AppStore, FrameStore} from "..";
 import {isColorValid} from "utilities";
+import {DEFAULT_UNIT, GenCoordinateLabel, IsSpectralSystemValid, IsSpectralTypeValid, IsSpectralUnitValid, SpectralSystem, SpectralType, SpectralUnit, SPECTRAL_COORDS_SUPPORTED} from "models";
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
@@ -16,18 +17,21 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable maxY: number;
     @observable cursorX: number;
     @observable channel: number;
+    @observable spectralType: SpectralType;
+    @observable spectralUnit: SpectralUnit;
+    @observable spectralSystem: SpectralSystem;
+    @observable channelValues:  Array<number>;
     @observable markerTextVisible: boolean;
     @observable isMouseMoveIntoLinePlots: boolean;
 
     // settings 
-    @observable useWcsValues: boolean;
     @observable plotType: PlotType;
     @observable meanRmsVisible: boolean;
     @observable primaryLineColor: { colorHex: string, fixed: boolean };
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
-    
+
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
             case CARTA.StatsType.Sum:
@@ -55,7 +59,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     private static ValidStatsTypes = [
         CARTA.StatsType.Sum, CARTA.StatsType.FluxDensity, CARTA.StatsType.Mean, CARTA.StatsType.Sigma,
-        CARTA.StatsType.Min, CARTA.StatsType.Max, CARTA.StatsType.RMS, CARTA.StatsType.SumSq];
+        CARTA.StatsType.Min, CARTA.StatsType.Max, CARTA.StatsType.RMS, CARTA.StatsType.SumSq
+    ];
 
     @action setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
@@ -75,6 +80,20 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             this.clearXYBounds();
             this.coordinate = coordinate;
         }
+    };
+
+    @action setSpectralCoordinate = (coordStr: string) => {
+        if (SPECTRAL_COORDS_SUPPORTED.has(coordStr)) {
+            const coord: {type: SpectralType, unit: SpectralUnit} = SPECTRAL_COORDS_SUPPORTED.get(coordStr);
+            this.spectralType = coord.type;
+            this.spectralUnit = coord.unit;
+            this.clearXBounds();
+        }
+    };
+
+    @action setSpectralSystem = (specsys: SpectralSystem) => {
+        this.spectralSystem = specsys;
+        this.clearXBounds();
     };
 
     @action setXBounds = (minVal: number, maxVal: number) => {
@@ -119,13 +138,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.meanRmsVisible = val;
     };
 
-    @action setUseWcsValues = (val: boolean) => {
-        if (val !== this.useWcsValues) {
-            this.clearXBounds();
-        }
-        this.useWcsValues = val;
-    };
-
     @action setPlotType = (val: PlotType) => {
         this.plotType = val;
     };
@@ -146,16 +158,75 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         super(appStore, RegionsType.CLOSED_AND_POINT);
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
+        this.initSpectralSettings();
 
         // Describes how the data is visualised
         this.plotType = PlotType.STEPS;
         this.meanRmsVisible = false;
         this.markerTextVisible = false;
-        this.useWcsValues = true;
         this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
+
+        // if type/unit/specsys changes, trigger transformation
+        autorun(() => {
+            const frame = this.appStore.activeFrame;
+            if (frame && frame.channelInfo && this.isSpectralSettingsSupported) {
+                if (this.isCoordChannel) {
+                    this.channelValues = frame.channelInfo.indexes;
+                } else {
+                    this.channelValues = this.isSpectralPropsEqual ? frame.channelInfo.values : this.convertSpectral(frame.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, frame.channelInfo.values);
+                }
+            }
+        });
+    }
+
+    private convertSpectral = (spectralFrame: number, type: SpectralType, unit: SpectralUnit, system: SpectralSystem, x: Array<number>): Array<number> => {
+        if (!spectralFrame || !type || !unit || !system || !x) {
+            return null;
+        }
+        let tx: Array<number> = new Array<number>(x.length);
+        for (let i = 0; i < x.length; i++) {
+            tx[i] = AST.transformSpectralPoint(this.appStore.activeFrame.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x[i]);
+        }
+        return tx;
+    };
+
+    public initSpectralSettings = () => {
+        const frame = this.appStore.activeFrame;
+        if (frame && frame.spectralInfo && this.isSpectralSettingsSupported) {
+            this.spectralType = frame.spectralInfo.channelType.code as SpectralType;
+            this.spectralUnit = DEFAULT_UNIT.get(this.spectralType);
+            this.spectralSystem = frame.spectralInfo.specsys as SpectralSystem;
+        } else {
+            this.spectralType = null;
+            this.spectralUnit = null;
+            this.spectralSystem = null;
+        }
+
+        this.channelValues = null;
+        if (frame && frame.channelInfo) {
+            if (this.isCoordChannel) {
+                this.channelValues = frame.channelInfo.indexes;
+            } else {
+                this.channelValues = this.isSpectralPropsEqual ? frame.channelInfo.values : this.convertSpectral(frame.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, frame.channelInfo.values);
+            }
+        }
+    };
+
+    // check the type, unit, specsys are the same between widget and active frame
+    @computed get isSpectralPropsEqual(): boolean {
+        const appStore = this.appStore;
+        const frame = appStore.activeFrame;
+        let result = false;
+        if (frame && frame.spectralInfo) {
+            const isTypeEqual = frame.spectralInfo.channelType.code === (this.spectralType as string);
+            const isUnitEqual = frame.spectralInfo.channelType.unit === (this.spectralUnit as string);
+            const isSpecsysEqual = frame.spectralInfo.specsys === (this.spectralSystem as string);
+            result = isTypeEqual && isUnitEqual && isSpecsysEqual;
+        }
+        return result;
     }
 
     @computed get isAutoScaledX() {
@@ -164,6 +235,37 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     @computed get isAutoScaledY() {
         return (this.minY === undefined || this.maxY === undefined);
+    }
+
+    @computed get spectralCoordinate() {
+        return this.spectralType && this.spectralUnit ? GenCoordinateLabel(this.spectralType, this.spectralUnit) : "Channel";
+    }
+
+    @computed get isCoordChannel() {
+        return this.spectralCoordinate === "Channel";
+    }
+
+    @computed get isSpectralCoordinateSupported(): boolean {
+        const frame = this.appStore.activeFrame;
+        if (frame && frame.spectralInfo) {
+            const type = frame.spectralInfo.channelType.code as string;
+            const unit = frame.spectralInfo.channelType.unit as string;
+            return type && unit && IsSpectralTypeValid(type) && IsSpectralUnitValid(unit);
+        }
+        return false;
+    }
+
+    @computed get isSpectralSystemSupported(): boolean {
+        const frame = this.appStore.activeFrame;
+        if (frame && frame.spectralInfo) {
+            const specsys = frame.spectralInfo.specsys as string;
+            return specsys && IsSpectralSystemValid(specsys);
+        }
+        return false;
+    }
+
+    @computed get isSpectralSettingsSupported(): boolean {
+        return this.isSpectralCoordinateSupported && this.isSpectralSystemSupported;
     }
 
     public static CalculateRequirementsMap(frame: FrameStore, widgetsMap: Map<string, SpectralProfileWidgetStore>) {
@@ -339,9 +441,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         if (typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE && widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
             this.linePlotPointSize = widgetSettings.linePlotPointSize;
         }
-        if (typeof widgetSettings.useWcsValues === "boolean") {
-            this.useWcsValues = widgetSettings.useWcsValues;
-        }
         if (typeof widgetSettings.meanRmsVisible === "boolean") {
             this.meanRmsVisible = widgetSettings.meanRmsVisible;
         }
@@ -367,7 +466,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             primaryLineColor: this.primaryLineColor.colorHex,
             lineWidth: this.lineWidth,
             linePlotPointSize: this.linePlotPointSize,
-            useWcsValues: this.useWcsValues,
             meanRmsVisible: this.meanRmsVisible,
             plotType: this.plotType,
             minXVal: this.linePlotInitXYBoundaries.minXVal,
