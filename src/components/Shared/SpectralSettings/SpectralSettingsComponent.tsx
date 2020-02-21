@@ -10,17 +10,23 @@ import "./SpectralSettingsComponent.css";
 export class SpectralSettingsComponent extends React.Component<{appStore: AppStore, widgetStore: SpectralProfileWidgetStore|StokesAnalysisWidgetStore, disable: boolean}> {
 
     render() {
+        const frame = this.props.appStore.activeFrame;
         const widgetStore = this.props.widgetStore;
-        const spectralCoordinateOptions: IOptionProps[] = Array.from(SPECTRAL_COORDS_SUPPORTED.keys()).map((coord: string) => { return {value: coord, label: coord}; });
+        const spectralCoordinateOptions: IOptionProps[] = frame && frame.spectralCoordsSupported ?
+            Array.from(frame.spectralCoordsSupported.keys()).map((coord: string) => { return {value: coord, label: coord}; }) :
+            Array.from(SPECTRAL_COORDS_SUPPORTED.keys()).map((coord: string) => { return {value: coord, label: coord}; });
+        const spectralSystemOptions: IOptionProps[] = frame && frame.spectralSystemsSupported ?
+            frame.spectralSystemsSupported.map((system) => { return {value: system, label: system}; }) :
+            Object.keys(SpectralSystem).map((key) => ({label: key, value: SpectralSystem[key]}));
+        const disableSetting = this.props.disable || !frame || !frame.spectralFrame || !frame.isSpectralSettingsSupported;
 
-        const disableSetting = this.props.disable || !this.props.appStore.activeFrame || !this.props.appStore.activeFrame.spectralFrame || !widgetStore.isSpectralSettingsSupported;
         return (
             <React.Fragment>
                 <div className="spectral-settings">
                     <FormGroup label={"Coordinate"} inline={true} disabled={disableSetting}>
                         <HTMLSelect
                             disabled={disableSetting}
-                            value={widgetStore.spectralCoordinate}
+                            value={widgetStore.spectralCoordinate ? widgetStore.spectralCoordinate : ""}
                             options={spectralCoordinateOptions}
                             onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setSpectralCoordinate(event.currentTarget.value as string)}
                         />
@@ -28,8 +34,8 @@ export class SpectralSettingsComponent extends React.Component<{appStore: AppSto
                     <FormGroup label={"System"} inline={true} disabled={disableSetting}>
                         <HTMLSelect
                             disabled={disableSetting}
-                            value={widgetStore.spectralSystem}
-                            options={Object.keys(SpectralSystem).map((key) => ({label: key, value: SpectralSystem[key]}))}
+                            value={widgetStore.spectralSystem ? widgetStore.spectralSystem : ""}
+                            options={spectralSystemOptions}
                             onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setSpectralSystem(event.currentTarget.value as SpectralSystem)}
                         />
                     </FormGroup>

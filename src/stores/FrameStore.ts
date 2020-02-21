@@ -3,7 +3,10 @@ import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
-import {ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, Transform2D, ZoomPoint} from "models";
+import {
+    ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, Transform2D, ZoomPoint,
+    SpectralSystem, SpectralType, SpectralUnit, SPECTRAL_COORDS_SUPPORTED, IsSpectralSystemValid, IsSpectralTypeValid, IsSpectralUnitValid
+} from "models";
 import {
     clamp, findChannelType, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates,
     minMax2D, rotate2D, toFixed, trimFitsComment, velocityStringFromFrequency
@@ -27,10 +30,13 @@ export enum RasterRenderType {
 }
 
 export class FrameStore {
+    public spectralFrame: number;
+    public spectralCoordsSupported: Map<string, {type: SpectralType, unit: SpectralUnit}>;
+    public spectralSystemsSupported: Array<SpectralSystem>;
+
     @observable frameInfo: FrameInfo;
     @observable renderHiDPI: boolean;
     @observable wcsInfo: number;
-    @observable spectralFrame: number;
     @observable validWcs: boolean;
     @observable center: Point2D;
     @observable cursorInfo: CursorInfo;
@@ -345,6 +351,16 @@ export class FrameStore {
         return spectralInfo;
     }
 
+    @computed get isSpectralSettingsSupported(): boolean {
+        if (!this.spectralInfo) {
+            return false;
+        }
+        const type = this.spectralInfo.channelType.code as string;
+        const unit = this.spectralInfo.channelType.unit as string;
+        const specsys = this.spectralInfo.specsys as string;
+        return type && unit && specsys && IsSpectralTypeValid(type) && IsSpectralUnitValid(unit) && IsSpectralSystemValid(specsys);
+    }
+
     @computed get hasStokes(): boolean {
         return this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.stokes > 1;
     }
@@ -416,6 +432,8 @@ export class FrameStore {
         this.preference = preference;
         this.contourContext = gl;
         this.spectralFrame = null;
+        this.spectralCoordsSupported = null;
+        this.spectralSystemsSupported = null;
         this.validWcs = false;
         this.frameInfo = frameInfo;
         this.renderHiDPI = true;
@@ -576,7 +594,74 @@ export class FrameStore {
         const initResult = AST.initSpectralFrame(headerString, channelTypeInfo.type.code, channelTypeInfo.type.unit);
         if (initResult) {
             this.spectralFrame = initResult;
+            this.initSupportedSpectralConversion();
             console.log("Initialised spectral info from frame");
+        }
+    };
+
+    private initSupportedSpectralConversion = () => {
+        const entries = this.frameInfo.fileInfoExtended.headerEntries;
+
+        // generate spectral coordinate options
+        const spectralType = this.spectralInfo.channelType.code;
+        if (IsSpectralTypeValid(spectralType)) {
+            // check RESTFRQ
+            const restFrqHeader = entries.find(entry => entry.name.indexOf("RESTFRQ") !== -1);
+            if (restFrqHeader) {
+                this.spectralCoordsSupported = SPECTRAL_COORDS_SUPPORTED;
+            } else {
+                this.spectralCoordsSupported = new Map<string, {type: SpectralType, unit: SpectralUnit}>();
+                Array.from(SPECTRAL_COORDS_SUPPORTED.keys()).forEach((key: string) => {
+                    const value = SPECTRAL_COORDS_SUPPORTED.get(key);
+                    const isVolecity = spectralType === SpectralType.VRAD || spectralType === SpectralType.VOPT;
+                    const isValueVolecity = value.type === SpectralType.VRAD || value.type === SpectralType.VOPT;
+                    if (isVolecity && isValueVolecity) { // VRAD, VOPT
+                        this.spectralCoordsSupported.set(key, value);
+                    }
+                    if (!isVolecity && !isValueVolecity) { // FREQ, WAVE, AWAV
+                        this.spectralCoordsSupported.set(key, value);
+                    }
+                });
+                this.spectralCoordsSupported.set("Channel", {type: null, unit: null});
+            }
+        } else {
+            this.spectralCoordsSupported = new Map<string, {type: SpectralType, unit: SpectralUnit}>([
+                ["Channel", {type: null, unit: null}]
+            ]);
+        }
+
+        // generate spectral system options
+        const spectralSystem = this.spectralInfo.specsys;
+        if (IsSpectralSystemValid(spectralSystem)) {
+            const dateObsHeader = entries.find(entry => entry.name.indexOf("DATE-OBS") !== -1);
+            const obsgeoxHeader = entries.find(entry => entry.name.indexOf("OBSGEO-X") !== -1);
+            const obsgeoyHeader = entries.find(entry => entry.name.indexOf("OBSGEO-Y") !== -1);
+            const obsgeozHeader = entries.find(entry => entry.name.indexOf("OBSGEO-Z") !== -1);
+            if (spectralSystem === SpectralSystem.LSRK || spectralSystem === SpectralSystem.LSRD) { // LSRK, LSRD
+                if (dateObsHeader && (obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY, SpectralSystem.TOPO];
+                } else if (dateObsHeader && !(obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY];
+                } else {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD];
+                }
+            } else if (spectralSystem === SpectralSystem.BARY) { // BARY
+                if (dateObsHeader && (obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY, SpectralSystem.TOPO];
+                } else if (dateObsHeader && !(obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY];
+                } else {
+                    this.spectralSystemsSupported = [SpectralSystem.BARY];
+                }
+            } else { // TOPO
+                if (dateObsHeader && (obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY, SpectralSystem.TOPO];
+                } else {
+                    this.spectralSystemsSupported = [SpectralSystem.TOPO];
+                }
+            }
+        } else {
+            this.spectralSystemsSupported = [];
         }
     };
 
