@@ -1,8 +1,9 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {Group, Layer, Ring, Stage} from "react-konva";
-import {AppStore, OverlayStore} from "../../../stores";
+import {AppStore, OverlayStore} from "stores";
 import {imageToCanvasPos} from "../RegionView/shared";
+import {Point2D} from "models";
 import "./CatalogViewComponent.css";
 
 export interface CatalogViewComponentProps {
@@ -13,6 +14,7 @@ export interface CatalogViewComponentProps {
 
 @observer
 export class CatalogViewComponent extends React.Component<CatalogViewComponentProps> {
+    private infinity = 1.7976931348623157e+308;
     private catalogs = [];
 
     private genCircle(id: string, color: string, valueCanvasSpaceX: number, valueCanvasSpaceY: number, scale: number, radius: number) {
@@ -23,6 +25,14 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 <Ring innerRadius={innerRadius} outerRadius={outerRadius} fill={color}/>
             </Group>
         );
+    }
+
+    // ignore point outof current sky
+    private infinityPoint(point: Point2D): boolean {
+        if (point.x === this.infinity || point.x === -this.infinity || point.y === this.infinity || point.y === -this.infinity) {
+            return true;
+        }
+        return false;
     }
 
     private addCatalogs() {
@@ -37,9 +47,11 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                     const pointArray = value.pixelData[i];
                     for (let j = 0; j < pointArray.length; j++) {
                         const point = pointArray[j];
-                        const id = key + "-" + i + "-" + j;
-                        const currentCenterPixelSpace = imageToCanvasPos(point.x - 1, point.y - 1, frame.requiredFrameView, width, height);
-                        this.catalogs.push(this.genCircle(id, value.color, currentCenterPixelSpace.x, currentCenterPixelSpace.y, 1, value.size));  
+                        if (!this.infinityPoint(point)) {
+                            const id = key + "-" + i + "-" + j;
+                            const currentCenterPixelSpace = imageToCanvasPos(point.x - 1, point.y - 1, frame.requiredFrameView, width, height);
+                            this.catalogs.push(this.genCircle(id, value.color, currentCenterPixelSpace.x, currentCenterPixelSpace.y, 1, value.size));  
+                        }
                     }
                 }
             });

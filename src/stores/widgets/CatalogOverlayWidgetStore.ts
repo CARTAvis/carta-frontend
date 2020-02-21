@@ -2,6 +2,7 @@ import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore} from "./RegionWidgetStore";
+import {getTableDataByType} from "utilities";
 
 export interface CatalogInfo {
     fileId: number;
@@ -32,7 +33,21 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     public static readonly InitTableRows = 50;
     private static readonly DataChunkSize = 100;
-    private static readonly InitialedDisplayColumnsKeyWords = ["ra", "dec", "glon", "glat", "ang", "angular", "source"];
+    private readonly InitialedColumnsKeyWords = [
+        "ANGULAR DISTANCE",
+        "MAIN IDENTIFIER", 
+        "RADIAL VELOCITY", 
+        "REDSHIFT"];
+    private readonly InitialedExcludeColumnsKeyWords = [
+        "PROPER MOTION",
+        "SIGMA"
+    ];
+    private InitialedRAColumnsKeyWords = [
+        "RIGHT ASCENSION", "RA", "R.A"
+    ];
+    private InitialedDECColumnsKeyWords = [
+        "DECLINATION", "DEC", "Dec."
+    ];
     
     @observable imageCoordinates: Float32Array[];
     
@@ -221,8 +236,6 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.setLoadingDataStatus(true);
         this.resetFilter();
         this.loadingData = false;
-        this.catalogColor = Colors.RED2;
-        this.catalogSize = 3;
         this.userFilters = this.initUserFilters;
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.plotingData = false;
@@ -240,9 +253,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
                 let display = false;
-                if (this.findKeywords(header.name)) {
+                if (this.findKeywords(header.description)) {
                     display = true;
                 }
+                // Todo: set default x and y representation 
                 let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, representAs: CatalogOverlay.NULL, filter: undefined, columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
@@ -374,14 +388,33 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     }
 
     private findKeywords(val: string): boolean {
-       const keyWords = CatalogOverlayWidgetStore.InitialedDisplayColumnsKeyWords;
-       for (let index = 0; index < keyWords.length; index++) {
-           const subString = keyWords[index];
-           if (val.toLocaleLowerCase().includes(subString)) {
-               return true;
-           }
-       }
-       return false;
+        const keyWords = this.InitialedColumnsKeyWords;
+        const raKeywords = this.InitialedRAColumnsKeyWords;
+        const decKeywords = this.InitialedDECColumnsKeyWords;
+        const excludeKeywords = this.InitialedExcludeColumnsKeyWords;
+        const description = val.toUpperCase();
+        for (let index = 0; index < keyWords.length; index++) {
+            const subString = keyWords[index];
+            if (description.includes(subString)) {
+                return true;
+            }
+        }
+        if (description.includes(excludeKeywords[0]) || description.includes(excludeKeywords[1])) {
+            return false;
+        }
+        for (let index = 0; index < raKeywords.length; index++) {
+            const ra = raKeywords[index];
+            if (description.includes(ra)) {
+                return true;
+            }
+        }
+        for (let index = 0; index < decKeywords.length; index++) {
+            const dec = decKeywords[index];
+            if (description.includes(dec)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private addSubsetDoubleData(initData: Array<CARTA.IDoubleColumn>, sourceData:  Array<CARTA.IDoubleColumn>) {

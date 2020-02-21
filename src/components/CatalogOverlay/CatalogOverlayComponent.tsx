@@ -39,11 +39,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private controlHeaderTableRef: Table;
     private static readonly DataTypeRepresentationMap = new Map<CARTA.EntryType, Array<CatalogOverlay>>([
         [CARTA.EntryType.BOOL, [CatalogOverlay.NULL]],
-        [CARTA.EntryType.DOUBLE, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.PlotSize, CatalogOverlay.NULL]],
-        [CARTA.EntryType.FLOAT, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.PlotSize, CatalogOverlay.NULL]],
-        [CARTA.EntryType.INT, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.PlotSize, CatalogOverlay.NULL]],
-        [CARTA.EntryType.LONGLONG, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.PlotSize, CatalogOverlay.NULL]],
-        [CARTA.EntryType.STRING, [CatalogOverlay.PlotShape, CatalogOverlay.NULL]],
+        [CARTA.EntryType.DOUBLE, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NULL]],
+        [CARTA.EntryType.FLOAT, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NULL]],
+        [CARTA.EntryType.INT, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NULL]],
+        [CARTA.EntryType.LONGLONG, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NULL]],
+        [CARTA.EntryType.STRING, [CatalogOverlay.NULL]],
         [CARTA.EntryType.UNKNOWN_TYPE, [CatalogOverlay.NULL]]
     ]);
 
@@ -434,7 +434,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         let tableInfo = (widgetStore.catalogInfo.dataSize) ? (
             <tr>
                 <td className="td-label">
-                    <pre>{"Table Size: " + widgetStore.catalogInfo.dataSize}</pre>
+                    <pre>{"Table Size: " + widgetStore.catalogInfo.dataSize + ", " + widgetStore.numVisibleRows}</pre>
                 </td>
             </tr>
         ) : null;
