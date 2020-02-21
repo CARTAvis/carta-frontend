@@ -203,7 +203,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         return pointArray;
     }
 
-    private anchorNode(x: number, y: number, key: number = undefined, editableAnchor: boolean = false) {
+    private anchorNode(x: number, y: number, rotation: number = 0, key: number = undefined, editableAnchor: boolean = false) {
         let anchorProps: any = {
             x: x,
             y: y,
@@ -214,6 +214,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             fill: "white",
             strokeWidth: 1,
             stroke: "black",
+            rotation: rotation
         };
         if (editableAnchor) {
             anchorProps = {
@@ -239,11 +240,13 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         const frame = this.props.frame;
         const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
         let offset = {x: 1.0, y: 1.0};
+        let rotation = 0.0;
 
         let controlPoints = region.controlPoints;
         if (frame.spatialReference) {
             controlPoints = controlPoints.map(p => frame.spatialTransform.transformCoordinate(p, true));
             offset = scale2D(rotate2D(offset, frame.spatialTransform.rotation), frame.spatialTransform.scale);
+            rotation = -frame.spatialTransform.rotation * 180.0 / Math.PI;
         }
 
         let centerPoint = average2D(controlPoints);
@@ -260,7 +263,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         if (this.props.selected && !region.locked) {
             anchors = new Array<React.ReactNode>(pointArray.length / 2);
             for (let i = 0; i < pointArray.length / 2; i++) {
-                anchors[i] = this.anchorNode(centerPointCanvasSpace.x + pointArray[i * 2], centerPointCanvasSpace.y + pointArray[i * 2 + 1], i, true);
+                anchors[i] = this.anchorNode(centerPointCanvasSpace.x + pointArray[i * 2], centerPointCanvasSpace.y + pointArray[i * 2 + 1], rotation, i, true);
             }
         }
 
@@ -271,7 +274,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
                 hoverPoint = frame.spatialTransform.transformCoordinate(hoverPoint, true);
             }
             const anchorPositionPixelSpace = imageToCanvasPos(hoverPoint.x, hoverPoint.y, frameView, this.props.layerWidth, this.props.layerHeight, offset);
-            newAnchor = this.anchorNode(anchorPositionPixelSpace.x, anchorPositionPixelSpace.y);
+            newAnchor = this.anchorNode(anchorPositionPixelSpace.x, anchorPositionPixelSpace.y, rotation);
         }
 
         return (
