@@ -3,7 +3,7 @@ import {action, computed, observable} from "mobx";
 import LRUCache from "mnemonist/lru-cache";
 import {CARTA} from "carta-protobuf";
 import {Point2D, TileCoordinate} from "models";
-import {BackendService} from "services";
+import {BackendService, TileWebGLService} from "services";
 import {copyToFP32Texture, createFP32Texture} from "../utilities";
 
 export interface RasterTile {
@@ -32,8 +32,7 @@ export class TileService {
     private readonly pendingDecompressions: Map<number, boolean>;
     private readonly channelMap: Map<number, { channel: number, stokes: number }>;
     private currentFileId: number;
-    private readonly tileStream: Subject<number>;
-    private glContext: WebGLRenderingContext;
+    readonly tileStream: Subject<number>;
     private cachedTiles: LRUCache<number, RasterTile>;
     private lruCapacitySystem: number;
     private textureArray: Array<WebGLTexture>;
@@ -44,13 +43,10 @@ export class TileService {
     private receivedSynchronisedTiles: Array<{ coordinate: number, tile: RasterTile }>;
 
     @observable remainingTiles: number;
+    readonly tileWebGLService: TileWebGLService;
 
     @computed get waitingForSync() {
         return this.pendingSynchronisedTiles && this.pendingSynchronisedTiles.length > 0;
-    }
-
-    public GetTileStream() {
-        return this.tileStream;
     }
 
     public setCache = (lruCapacityGPU: number, lruCapacitySystem: number) => {
@@ -62,9 +58,7 @@ export class TileService {
         console.log(`lruGPU capacity rounded to : ${lruCapacityGPU}`);
 
         this.textureArray = new Array<WebGLTexture>(numTextures);
-        if (this.textureArray && this.glContext) {
-            this.initTextures();
-        }
+        this.initTextures();
         this.resetCoordinateQueue();
         this.cachedTiles = new LRUCache<number, RasterTile>(Int32Array, null, lruCapacityGPU);
 
@@ -74,6 +68,8 @@ export class TileService {
 
     constructor(backendService: BackendService) {
         this.backendService = backendService;
+        this.tileWebGLService = new TileWebGLService();
+
         this.channelMap = new Map<number, { channel: number, stokes: number }>();
         this.persistentTiles = new Map<number, RasterTile>();
         this.pendingRequests = new Map<number, boolean>();
@@ -221,61 +217,35 @@ export class TileService {
         this.updateRemainingTileCount();
     }
 
-    setContext(gl: WebGLRenderingContext) {
-        this.glContext = gl;
-        if (this.textureArray && this.glContext) {
-            this.initTextures();
-        }
-    }
-
     private initTextures() {
         const textureSizeMb = TEXTURE_SIZE * TEXTURE_SIZE * 4 / 1024 / 1024;
         console.log(`Creating ${this.textureArray.length} tile textures of size ${textureSizeMb} MB each (${textureSizeMb * this.textureArray.length} MB total)`);
         for (let i = 0; i < this.textureArray.length; i++) {
-            this.textureArray[i] = createFP32Texture(this.glContext, TEXTURE_SIZE, TEXTURE_SIZE, WebGLRenderingContext.TEXTURE0);
+            this.textureArray[i] = createFP32Texture(this.tileWebGLService.gl, TEXTURE_SIZE, TEXTURE_SIZE, WebGLRenderingContext.TEXTURE0);
         }
-    }
-
-    clearContext() {
-        if (this.glContext) {
-            console.log(`Deleting ${this.textureArray.length} tile textures`);
-            for (let i = 0; i < this.textureArray.length; i++) {
-                this.glContext.deleteTexture(this.textureArray[i]);
-            }
-            this.glContext = null;
-        }
-        // Clear GPU cache, but keep compressed cache, as this will be used to recreate GPU resources
-        this.clearGPUCache();
-        this.resetCoordinateQueue();
     }
 
     uploadTileToGPU(tile: RasterTile) {
-        if (this.glContext) {
-            const numTilesPerTexture = (TEXTURE_SIZE * TEXTURE_SIZE) / (TILE_SIZE * TILE_SIZE);
-            const localOffset = tile.textureCoordinate % numTilesPerTexture;
-            const textureIndex = Math.floor((tile.textureCoordinate - localOffset) / numTilesPerTexture);
-            const tilesPerRow = TEXTURE_SIZE / TILE_SIZE;
-            const xOffset = (localOffset % tilesPerRow) * TILE_SIZE;
-            const yOffset = Math.floor(localOffset / tilesPerRow) * TILE_SIZE;
-            copyToFP32Texture(this.glContext, this.textureArray[textureIndex], tile.data, WebGLRenderingContext.TEXTURE0, tile.width, tile.height, xOffset, yOffset);
-        }
+        const numTilesPerTexture = (TEXTURE_SIZE * TEXTURE_SIZE) / (TILE_SIZE * TILE_SIZE);
+        const localOffset = tile.textureCoordinate % numTilesPerTexture;
+        const textureIndex = Math.floor((tile.textureCoordinate - localOffset) / numTilesPerTexture);
+        const tilesPerRow = TEXTURE_SIZE / TILE_SIZE;
+        const xOffset = (localOffset % tilesPerRow) * TILE_SIZE;
+        const yOffset = Math.floor(localOffset / tilesPerRow) * TILE_SIZE;
+        copyToFP32Texture(this.tileWebGLService.gl, this.textureArray[textureIndex], tile.data, WebGLRenderingContext.TEXTURE0, tile.width, tile.height, xOffset, yOffset);
     }
 
     getTileTextureParameters(tile: RasterTile) {
-        if (this.glContext) {
-            const numTilesPerTexture = (TEXTURE_SIZE * TEXTURE_SIZE) / (TILE_SIZE * TILE_SIZE);
-            const localOffset = tile.textureCoordinate % numTilesPerTexture;
-            const textureIndex = Math.floor((tile.textureCoordinate - localOffset) / numTilesPerTexture);
-            const tilesPerRow = TEXTURE_SIZE / TILE_SIZE;
-            const xOffset = (localOffset % tilesPerRow) * TILE_SIZE;
-            const yOffset = Math.floor(localOffset / tilesPerRow) * TILE_SIZE;
-            return {
-                texture: this.textureArray[textureIndex],
-                offset: {x: xOffset, y: yOffset}
-            };
-        } else {
-            return null;
-        }
+        const numTilesPerTexture = (TEXTURE_SIZE * TEXTURE_SIZE) / (TILE_SIZE * TILE_SIZE);
+        const localOffset = tile.textureCoordinate % numTilesPerTexture;
+        const textureIndex = Math.floor((tile.textureCoordinate - localOffset) / numTilesPerTexture);
+        const tilesPerRow = TEXTURE_SIZE / TILE_SIZE;
+        const xOffset = (localOffset % tilesPerRow) * TILE_SIZE;
+        const yOffset = Math.floor(localOffset / tilesPerRow) * TILE_SIZE;
+        return {
+            texture: this.textureArray[textureIndex],
+            offset: {x: xOffset, y: yOffset}
+        };
     }
 
     @action updateRemainingTileCount = () => {
