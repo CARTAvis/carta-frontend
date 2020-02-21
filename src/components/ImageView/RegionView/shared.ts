@@ -8,11 +8,11 @@ export function canvasToImagePos(canvasX: number, canvasY: number, frameView: Fr
     };
 }
 
-export function imageToCanvasPos(imageX: number, imageY: number, frameView: FrameView, layerWidth: number, layerHeight: number): Point2D {
+export function imageToCanvasPos(imageX: number, imageY: number, frameView: FrameView, layerWidth: number, layerHeight: number, offset: Point2D = {x: 1.0, y: 1.0}): Point2D {
     const viewWidth = frameView.xMax - frameView.xMin;
     const viewHeight = frameView.yMax - frameView.yMin;
     return {
-        x: ((imageX + 1 - frameView.xMin) / viewWidth * layerWidth),
-        y: layerHeight - ((imageY + 1 - frameView.yMin) / viewHeight * layerHeight)
+        x: ((imageX + offset.x - frameView.xMin) / viewWidth * layerWidth),
+        y: layerHeight - ((imageY + offset.y - frameView.yMin) / viewHeight * layerHeight)
     };
 }

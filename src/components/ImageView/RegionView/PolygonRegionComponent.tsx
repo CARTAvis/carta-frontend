@@ -6,7 +6,7 @@ import Konva from "konva";
 import {Colors} from "@blueprintjs/core";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
-import {add2D, average2D, closestPointOnLine} from "utilities";
+import {add2D, average2D, closestPointOnLine, rotate2D, scale2D} from "utilities";
 import {canvasToImagePos, imageToCanvasPos} from "./shared";
 
 export interface PolygonRegionComponentProps {
@@ -182,14 +182,21 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             return null;
         }
 
-        const currentView = this.props.frame.requiredFrameView;
+        const frame = this.props.frame;
+
+        const currentView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
         const viewWidth = currentView.xMax - currentView.xMin;
         const viewHeight = currentView.yMax - currentView.yMin;
+        let offset = {x: 1.0, y: 1.0};
+
+        if (frame.spatialReference) {
+            offset = scale2D(rotate2D(offset, frame.spatialTransform.rotation), frame.spatialTransform.scale);
+        }
 
         const pointArray = new Array<number>(points.length * 2);
         for (let i = 0; i < points.length; i++) {
-            const x = ((points[i].x + 1 - currentView.xMin) / viewWidth * this.props.layerWidth);
-            const y = this.props.layerHeight - ((points[i].y + 1 - currentView.yMin) / viewHeight * this.props.layerHeight);
+            const x = ((points[i].x + offset.x - currentView.xMin) / viewWidth * this.props.layerWidth);
+            const y = this.props.layerHeight - ((points[i].y + offset.y - currentView.yMin) / viewHeight * this.props.layerHeight);
             pointArray[i * 2] = x;
             pointArray[i * 2 + 1] = y;
         }
@@ -229,10 +236,19 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
 
     render() {
         const region = this.props.region;
+        const frame = this.props.frame;
+        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+        let offset = {x: 1.0, y: 1.0};
 
-        const centerPoint = average2D(region.controlPoints);
-        const centerPointCanvasSpace = imageToCanvasPos(centerPoint.x, centerPoint.y, this.props.frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
-        const pointArray = this.getCanvasPointArray(region.controlPoints);
+        let controlPoints = region.controlPoints;
+        if (frame.spatialReference) {
+            controlPoints = controlPoints.map(p => frame.spatialTransform.transformCoordinate(p, true));
+            offset = scale2D(rotate2D(offset, frame.spatialTransform.rotation), frame.spatialTransform.scale);
+        }
+
+        let centerPoint = average2D(controlPoints);
+        const centerPointCanvasSpace = imageToCanvasPos(centerPoint.x, centerPoint.y, frameView, this.props.layerWidth, this.props.layerHeight, offset);
+        const pointArray = this.getCanvasPointArray(controlPoints);
 
         for (let i = 0; i < pointArray.length / 2; i++) {
             pointArray[i * 2] -= centerPointCanvasSpace.x;
@@ -250,7 +266,11 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
 
         let newAnchor = null;
         if (this.hoverIntersection && !region.locked) {
-            const anchorPositionPixelSpace = imageToCanvasPos(this.hoverIntersection.x, this.hoverIntersection.y, this.props.frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
+            let hoverPoint = this.hoverIntersection;
+            if (frame.spatialReference) {
+                hoverPoint = frame.spatialTransform.transformCoordinate(hoverPoint, true);
+            }
+            const anchorPositionPixelSpace = imageToCanvasPos(hoverPoint.x, hoverPoint.y, frameView, this.props.layerWidth, this.props.layerHeight, offset);
             newAnchor = this.anchorNode(anchorPositionPixelSpace.x, anchorPositionPixelSpace.y);
         }
 

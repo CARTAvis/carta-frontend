@@ -3,6 +3,7 @@ import {observer} from "mobx-react";
 import {Group, Rect} from "react-konva";
 import Konva from "konva";
 import {FrameStore, RegionStore} from "stores";
+import {rotate2D, scale2D} from "utilities";
 import {imageToCanvasPos} from "./shared";
 
 export interface PointRegionComponentProps {
@@ -66,13 +67,23 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
     render() {
         const region = this.props.region;
         const frame = this.props.frame;
-        const centerImageSpace = region.controlPoints[0];
+        let centerImageSpace = region.controlPoints[0];
+        let offset = {x: 1.0, y: 1.0};
 
-        const centerPixelSpace = imageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
+        if (frame.spatialReference) {
+            centerImageSpace = frame.spatialTransform.transformCoordinate(centerImageSpace, true);
+            offset = scale2D(rotate2D(offset, frame.spatialTransform.rotation), frame.spatialTransform.scale);
+        }
+
+        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+        console.log(frame.spatialTransform);
+        const centerPixelSpace = imageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frameView, this.props.layerWidth, this.props.layerHeight, offset);
+        const rotation = frame.spatialReference ? frame.spatialTransform.rotation * 180.0 / Math.PI : 0.0;
 
         return (
             <Group>
                 <Rect
+                    rotation={-rotation}
                     x={centerPixelSpace.x}
                     y={centerPixelSpace.y}
                     width={POINT_WIDTH}
@@ -82,6 +93,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
                     fill={region.color}
                 />
                 <Rect
+                    rotation={-rotation}
                     x={centerPixelSpace.x}
                     y={centerPixelSpace.y}
                     width={POINT_DRAG_WIDTH}

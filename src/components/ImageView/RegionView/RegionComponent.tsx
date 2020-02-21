@@ -7,6 +7,7 @@ import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
+import {rotate2D, scale2D} from "utilities";
 import {canvasToImagePos, imageToCanvasPos} from "./shared";
 
 export interface RegionComponentProps {
@@ -256,13 +257,18 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
     render() {
         const region = this.props.region;
         const frame = this.props.frame;
-        const centerImageSpace = region.controlPoints[0];
+        let offset = {x: 1.0, y: 1.0};
 
+        let centerImageSpace = region.controlPoints[0];
+        if (frame.spatialReference) {
+            centerImageSpace = frame.spatialTransform.transformCoordinate(centerImageSpace, true);
+            offset = scale2D(rotate2D(offset, frame.spatialTransform.rotation), frame.spatialTransform.scale);
+        }
         const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
         const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
-        // TODO: rotate and scale correctly
+        const rotation = frame.spatialReference ? frame.spatialTransform.rotation * 180.0 / Math.PI + region.rotation : region.rotation;
 
-        const centerPixelSpace = imageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frameView, this.props.layerWidth, this.props.layerHeight);
+        const centerPixelSpace = imageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frameView, this.props.layerWidth, this.props.layerHeight, offset);
         let width = (region.controlPoints[1].x * zoomLevel) / devicePixelRatio;
         let height = (region.controlPoints[1].y * zoomLevel) / devicePixelRatio;
 
@@ -270,7 +276,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         const borderDash = [(width + height) * 4 / 100.0];
 
         const commonProps = {
-            rotation: -region.rotation,
+            rotation: -rotation,
             x: centerPixelSpace.x,
             y: centerPixelSpace.y,
             stroke: region.color,
