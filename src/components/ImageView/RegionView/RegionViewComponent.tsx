@@ -9,10 +9,10 @@ import {FrameStore, OverlayStore, RegionMode, RegionStore} from "stores";
 import {RegionComponent} from "./RegionComponent";
 import {PolygonRegionComponent} from "./PolygonRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
-import {CursorInfo, Point2D} from "models";
-import "./RegionViewComponent.css";
-import {average2D, length2D, subtract2D, pointDistanceSquared} from "utilities";
 import {canvasToImagePos, imageToCanvasPos} from "./shared";
+import {CursorInfo, Point2D} from "models";
+import {average2D, length2D, subtract2D, pointDistanceSquared} from "utilities";
+import "./RegionViewComponent.css";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;

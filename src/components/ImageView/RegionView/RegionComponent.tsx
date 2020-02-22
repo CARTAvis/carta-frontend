@@ -78,15 +78,15 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         // Ellipse control points are radii, not diameter
         const sizeFactor = this.props.region.regionType === CARTA.RegionType.RECTANGLE ? 0.5 : 1.0;
 
-        if (this.editAnchor.indexOf("left") >= 0) {
+        if (this.editAnchor.includes("left")) {
             relativeOppositeAnchorPointUnrotated.x = +w * sizeFactor;
-        } else if (this.editAnchor.indexOf("right") >= 0) {
+        } else if (this.editAnchor.includes("right")) {
             relativeOppositeAnchorPointUnrotated.x = -w * sizeFactor;
         }
 
-        if (this.editAnchor.indexOf("top") >= 0) {
+        if (this.editAnchor.includes("top")) {
             relativeOppositeAnchorPointUnrotated.y = -h * sizeFactor;
-        } else if (this.editAnchor.indexOf("bottom") >= 0) {
+        } else if (this.editAnchor.includes("bottom")) {
             relativeOppositeAnchorPointUnrotated.y = +h * sizeFactor;
         }
 
@@ -143,7 +143,13 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
     };
 
     applyCornerScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string) => {
-        const newAnchorPoint = canvasToImagePos(canvasX, canvasY, this.props.frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
+        const frame = this.props.frame;
+        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+        let newAnchorPoint = canvasToImagePos(canvasX, canvasY, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform);
+
+        if (frame.spatialReference) {
+            newAnchorPoint = frame.spatialTransform.transformCoordinate(newAnchorPoint, false);
+        }
 
         let w: number, h: number;
         let sizeFactor: number;
@@ -165,13 +171,13 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         // Apply inverse rotation to get difference between anchors without rotation
         const deltaAnchorsUnrotated = {x: cosX * deltaAnchors.x + sinX * deltaAnchors.y, y: -sinX * deltaAnchors.x + cosX * deltaAnchors.y};
 
-        if (anchor.indexOf("left") >= 0 || anchor.indexOf("right") >= 0) {
+        if (anchor.includes("left") || anchor.includes("right")) {
             w = Math.abs(deltaAnchorsUnrotated.x) * sizeFactor;
         } else {
             // anchors without "left" or "right" are purely vertical, so they are clamped in x
             deltaAnchorsUnrotated.x = 0;
         }
-        if (anchor.indexOf("top") >= 0 || anchor.indexOf("bottom") >= 0) {
+        if (anchor.includes("top") || anchor.includes("bottom")) {
             // anchors without "top" or "bottom" are purely horizontal, so they are clamped in y
             h = Math.abs(deltaAnchorsUnrotated.y) * sizeFactor;
         } else {
@@ -191,7 +197,13 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
     };
 
     applyCenterScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, keepAspect: boolean) => {
-        const newAnchorPoint = canvasToImagePos(canvasX, canvasY, this.props.frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
+        const frame = this.props.frame;
+        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+        let newAnchorPoint = canvasToImagePos(canvasX, canvasY, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform);
+
+        if (frame.spatialReference) {
+            newAnchorPoint = frame.spatialTransform.transformCoordinate(newAnchorPoint, false);
+        }
         const centerPoint = region.controlPoints[0];
 
         let w: number, h: number;
@@ -214,10 +226,10 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         // Apply inverse rotation to get difference between anchor and center without rotation
         const deltaAnchorPointUnrotated = {x: cosX * deltaAnchorPoint.x + sinX * deltaAnchorPoint.y, y: -sinX * deltaAnchorPoint.x + cosX * deltaAnchorPoint.y};
 
-        if (anchor.indexOf("left") >= 0 || anchor.indexOf("right") >= 0) {
+        if (anchor.includes("left") || anchor.includes("right")) {
             w = Math.abs(deltaAnchorPointUnrotated.x) * sizeFactor;
         }
-        if (anchor.indexOf("top") >= 0 || anchor.indexOf("bottom") >= 0) {
+        if (anchor.includes("top") || anchor.includes("bottom")) {
             h = Math.abs(deltaAnchorPointUnrotated.y) * sizeFactor;
         }
 
@@ -250,7 +262,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
             const region = this.props.region;
             const frame = this.props.frame;
             const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel : frame.zoomLevel;
-            const newPosition = getUpdatedPosition (region.controlPoints[0], node.position(), zoomLevel, frame, this.props.layerWidth, this.props.layerHeight);
+            const newPosition = getUpdatedPosition(region.controlPoints[0], node.position(), zoomLevel, frame, this.props.layerWidth, this.props.layerHeight);
             region.setControlPoint(0, newPosition);
         }
     };
