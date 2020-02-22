@@ -1029,7 +1029,13 @@ export class AppStore {
         if (frame.spatialReference) {
             frame.clearSpatialReference();
         } else {
-            frame.setSpatialReference(this.spatialReference);
+            if (!frame.setSpatialReference(this.spatialReference)) {
+                AppToaster.show({
+                    icon: "warning-sign",
+                    message: `Could not enable spatial matching of ${frame.frameInfo.fileInfo.name} to reference image ${this.spatialReference.frameInfo.fileInfo.name}. No valid transform was found`,
+                    intent: "warning",
+                    timeout: 3000});
+            }
         }
     };
 
