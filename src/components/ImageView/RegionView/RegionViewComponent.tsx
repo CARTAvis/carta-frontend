@@ -56,13 +56,18 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     }, 100);
 
     private getCursorCanvasPos(imageX: number, imageY: number): Point2D {
-        const frameView = this.props.frame.requiredFrameView;
+        const frame = this.props.frame;
+        let cursorPos = {x: imageX, y: imageY};
+
+        if (frame.spatialReference) {
+            cursorPos = frame.spatialTransform.transformCoordinate(cursorPos, true);
+        }
+
+        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+        const posCanvasSpace = imageToCanvasPos(cursorPos.x, cursorPos.y, frameView, this.props.width, this.props.height, frame.spatialTransform);
+
         const width = this.props.width;
         const height = this.props.height;
-        const posCanvasSpace = {
-            x: Math.floor((imageX + 1 - frameView.xMin) / (frameView.xMax - frameView.xMin) * width),
-            y: Math.floor((frameView.yMax - imageY - 1) / (frameView.yMax - frameView.yMin) * height)
-        };
 
         if (posCanvasSpace.x < 0 || posCanvasSpace.x > width || posCanvasSpace.y < 0 || posCanvasSpace.y > height) {
             return null;
@@ -453,15 +458,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         let cursorMarker = null;
 
         if (this.props.cursorFrozen && this.props.cursorPoint) {
-            let cursorPos = this.props.cursorPoint;
-
-            if (frame.spatialReference) {
-                cursorPos = frame.spatialTransform.transformCoordinate(cursorPos, true);
-            }
-
-            const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+            const cursorPosPixelSpace = this.getCursorCanvasPos(this.props.cursorPoint.x, this.props.cursorPoint.y);
             const rotation = frame.spatialReference ? frame.spatialTransform.rotation * 180.0 / Math.PI : 0.0;
-            const cursorPosPixelSpace = imageToCanvasPos(cursorPos.x, cursorPos.y, frameView, this.props.width, this.props.height, frame.spatialTransform);
 
             if (cursorPosPixelSpace) {
                 const crosshairLength = 20 * devicePixelRatio;
