@@ -5,7 +5,7 @@ import {rotate2D, scale2D} from "utilities";
 export function canvasToImagePos(canvasX: number, canvasY: number, frameView: FrameView, layerWidth: number, layerHeight: number, spatialTransform: Transform2D = null): Point2D {
     let offset = {x: 1.0, y: 1.0};
     if (spatialTransform) {
-        offset = scale2D(rotate2D(offset, -spatialTransform.rotation), 1.0 / spatialTransform.scale);
+        offset = scale2D(rotate2D(offset, spatialTransform.rotation), spatialTransform.scale);
     }
     return {
         x: (canvasX / layerWidth) * (frameView.xMax - frameView.xMin) + frameView.xMin - offset.x,
@@ -25,6 +25,16 @@ export function imageToCanvasPos(imageX: number, imageY: number, frameView: Fram
         x: ((imageX + offset.x - frameView.xMin) / viewWidth * layerWidth),
         y: layerHeight - ((imageY + offset.y - frameView.yMin) / viewHeight * layerHeight)
     };
+}
+
+export function canvasToTransformedImagePos(canvasX: number, canvasY: number, frame: FrameStore, layerWidth: number, layerHeight: number, ) {
+    const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+    let imagePos = canvasToImagePos(canvasX, canvasY, frameView, layerWidth, layerHeight, frame.spatialTransform);
+
+    if (frame.spatialReference) {
+        imagePos = frame.spatialTransform.transformCoordinate(imagePos, false);
+    }
+    return imagePos;
 }
 
 export function getUpdatedPosition(currentPositionImageSpace: Point2D, newPositionPixelSpace: Point2D, zoomLevel: number, frame: FrameStore, layerWidth: number, layerHeight: number) {
