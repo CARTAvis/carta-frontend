@@ -25,6 +25,11 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
         }
 
         const frame = this.props.frame;
+
+        if (!frame.beamProperties) {
+            return null;
+        }
+
         const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const beamSettings = this.props.overlayBeamSettings;
         const color = beamSettings.color;
