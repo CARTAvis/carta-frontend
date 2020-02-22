@@ -453,14 +453,23 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         let cursorMarker = null;
 
         if (this.props.cursorFrozen && this.props.cursorPoint) {
-            let cursorPosCanvas = this.getCursorCanvasPos(this.props.cursorPoint.x, this.props.cursorPoint.y);
-            if (cursorPosCanvas) {
+            let cursorPos = this.props.cursorPoint;
+
+            if (frame.spatialReference) {
+                cursorPos = frame.spatialTransform.transformCoordinate(cursorPos, true);
+            }
+
+            const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+            const rotation = frame.spatialReference ? frame.spatialTransform.rotation * 180.0 / Math.PI : 0.0;
+            const cursorPosPixelSpace = imageToCanvasPos(cursorPos.x, cursorPos.y, frameView, this.props.width, this.props.height, frame.spatialTransform);
+
+            if (cursorPosPixelSpace) {
                 const crosshairLength = 20 * devicePixelRatio;
                 const crosshairThicknessWide = 3;
                 const crosshairThicknessNarrow = 1;
                 const crosshairGap = 7;
                 cursorMarker = (
-                    <Group x={Math.floor(cursorPosCanvas.x) + 0.5} y={Math.floor(cursorPosCanvas.y) + 0.5}>
+                    <Group x={Math.floor(cursorPosPixelSpace.x) + 0.5} y={Math.floor(cursorPosPixelSpace.y) + 0.5} rotation={-rotation}>
                         <Line listening={false} points={[-crosshairLength / 2 - crosshairThicknessWide / 2, 0, -crosshairGap / 2, 0]} strokeWidth={crosshairThicknessWide} stroke="black"/>
                         <Line listening={false} points={[crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessWide / 2, 0]} strokeWidth={crosshairThicknessWide} stroke="black"/>
                         <Line listening={false} points={[0, -crosshairLength / 2 - crosshairThicknessWide / 2, 0, -crosshairGap / 2]} strokeWidth={crosshairThicknessWide} stroke="black"/>
