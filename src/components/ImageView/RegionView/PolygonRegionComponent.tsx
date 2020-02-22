@@ -249,7 +249,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             rotation = -frame.spatialTransform.rotation * 180.0 / Math.PI;
         }
 
-        let centerPoint = average2D(controlPoints);
+        const centerPoint = average2D(controlPoints);
         const centerPointCanvasSpace = imageToCanvasPos(centerPoint.x, centerPoint.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform);
         const pointArray = this.getCanvasPointArray(controlPoints);
 
