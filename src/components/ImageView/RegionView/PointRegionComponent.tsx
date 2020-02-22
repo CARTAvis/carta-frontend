@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {Group, Rect} from "react-konva";
 import Konva from "konva";
 import {FrameStore, RegionStore} from "stores";
-import {getUpdatedPosition, imageToCanvasPos} from "./shared";
+import {getUpdatedPosition, transformedImageToCanvasPos} from "./shared";
 
 export interface PointRegionComponentProps {
     region: RegionStore;
@@ -64,12 +64,7 @@ export class PointRegionComponent extends React.Component<PointRegionComponentPr
         const frame = this.props.frame;
         let centerImageSpace = region.controlPoints[0];
 
-        if (frame.spatialReference) {
-            centerImageSpace = frame.spatialTransform.transformCoordinate(centerImageSpace, true);
-        }
-
-        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
-        const centerPixelSpace = imageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform);
+        const centerPixelSpace = transformedImageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frame, this.props.layerWidth, this.props.layerHeight);
         const rotation = frame.spatialReference ? frame.spatialTransform.rotation * 180.0 / Math.PI : 0.0;
 
         return (

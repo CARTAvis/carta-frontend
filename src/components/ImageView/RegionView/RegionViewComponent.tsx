@@ -9,7 +9,7 @@ import {FrameStore, OverlayStore, RegionMode, RegionStore} from "stores";
 import {RegionComponent} from "./RegionComponent";
 import {PolygonRegionComponent} from "./PolygonRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
-import {canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos} from "./shared";
+import {canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {CursorInfo, Point2D} from "models";
 import {average2D, length2D, subtract2D, pointDistanceSquared} from "utilities";
 import "./RegionViewComponent.css";
@@ -59,14 +59,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     private getCursorCanvasPos(imageX: number, imageY: number): Point2D {
         const frame = this.props.frame;
-        let cursorPos = {x: imageX, y: imageY};
-
-        if (frame.spatialReference) {
-            cursorPos = frame.spatialTransform.transformCoordinate(cursorPos, true);
-        }
-
-        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
-        const posCanvasSpace = imageToCanvasPos(cursorPos.x, cursorPos.y, frameView, this.props.width, this.props.height, frame.spatialTransform);
+        const posCanvasSpace = transformedImageToCanvasPos(imageX, imageY, frame, this.props.width, this.props.height);
 
         const width = this.props.width;
         const height = this.props.height;

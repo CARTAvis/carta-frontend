@@ -7,7 +7,7 @@ import {Colors} from "@blueprintjs/core";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
 import {add2D, average2D, closestPointOnLine, rotate2D, scale2D, subtract2D} from "utilities";
-import {canvasToImagePos, getUpdatedPosition, imageToCanvasPos} from "./shared";
+import {canvasToTransformedImagePos, getUpdatedPosition, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 
 export interface PolygonRegionComponentProps {
     region: RegionStore;
@@ -81,11 +81,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             const frame = this.props.frame;
             const index = node.index;
             if (index >= 0 && index < region.controlPoints.length) {
-                const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
-                let positionImageSpace = canvasToImagePos(node.position().x, node.position().y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform);
-                if (frame.spatialReference) {
-                    positionImageSpace = frame.spatialTransform.transformCoordinate(positionImageSpace, false);
-                }
+                const positionImageSpace = canvasToTransformedImagePos(node.position().x, node.position().y, frame, this.props.layerWidth, this.props.layerHeight);
                 region.setControlPoint(index, positionImageSpace);
                 this.hoverIntersection = null;
             }
@@ -121,13 +117,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
         const frame = this.props.frame;
 
         if (this.props.selected && region.controlPoints.length >= 2) {
-            const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
-            let positionImageSpace = canvasToImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform);
-
-            if (frame.spatialReference) {
-                positionImageSpace = frame.spatialTransform.transformCoordinate(positionImageSpace, false);
-            }
-
+            const positionImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.layerWidth, this.props.layerHeight);
             let minDistance = Number.MAX_VALUE;
             let closestIndex = -1;
             let closestPoint: Point2D = null;
@@ -182,7 +172,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
             const frame = this.props.frame;
             const centerImageSpace = average2D(region.controlPoints);
             const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel : frame.zoomLevel;
-            const newPosition = getUpdatedPosition (centerImageSpace, node.position(), zoomLevel, frame, this.props.layerWidth, this.props.layerHeight);
+            const newPosition = getUpdatedPosition(centerImageSpace, node.position(), zoomLevel, frame, this.props.layerWidth, this.props.layerHeight);
             const deltaPosition = subtract2D(newPosition, centerImageSpace);
             const newPoints = region.controlPoints.map(p => add2D(p, deltaPosition));
             region.setControlPoints(newPoints, false, false);
@@ -279,11 +269,7 @@ export class PolygonRegionComponent extends React.Component<PolygonRegionCompone
 
         let newAnchor = null;
         if (this.hoverIntersection && !region.locked) {
-            let hoverPoint = this.hoverIntersection;
-            if (frame.spatialReference) {
-                hoverPoint = frame.spatialTransform.transformCoordinate(hoverPoint, true);
-            }
-            const anchorPositionPixelSpace = imageToCanvasPos(hoverPoint.x, hoverPoint.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform);
+            const anchorPositionPixelSpace = transformedImageToCanvasPos(this.hoverIntersection.x, this.hoverIntersection.y, frame, this.props.layerWidth, this.props.layerHeight);
             newAnchor = this.anchorNode(anchorPositionPixelSpace.x, anchorPositionPixelSpace.y, rotation);
         }
 

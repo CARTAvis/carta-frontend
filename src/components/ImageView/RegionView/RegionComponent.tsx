@@ -7,7 +7,7 @@ import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
-import {canvasToImagePos, getUpdatedPosition, imageToCanvasPos} from "./shared";
+import {canvasToTransformedImagePos, getUpdatedPosition, transformedImageToCanvasPos} from "./shared";
 
 export interface RegionComponentProps {
     region: RegionStore;
@@ -114,7 +114,6 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
             const anchor = konvaEvent.currentTarget.movingResizer as string;
             const node = konvaEvent.currentTarget.node() as Konva.Node;
             const frame = this.props.frame;
-            const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
             const region = this.props.region;
             if (anchor.includes("rotater")) {
                 // handle rotation (canvas rotation is clockwise, CASA rotation is anti-clockwise)
@@ -123,10 +122,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
             } else {
                 // revert node scaling and position before adjusting region control points
                 let centerImageSpace = region.controlPoints[0];
-                if (frame.spatialReference) {
-                    centerImageSpace = frame.spatialTransform.transformCoordinate(centerImageSpace, true);
-                }
-                const centerCanvasPos = imageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform);
+                const centerCanvasPos = transformedImageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frame, this.props.layerWidth, this.props.layerHeight);
                 node.x(centerCanvasPos.x);
                 node.y(centerCanvasPos.y);
                 node.scaleX(1);
@@ -144,12 +140,7 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
 
     applyCornerScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string) => {
         const frame = this.props.frame;
-        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
-        let newAnchorPoint = canvasToImagePos(canvasX, canvasY, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform);
-
-        if (frame.spatialReference) {
-            newAnchorPoint = frame.spatialTransform.transformCoordinate(newAnchorPoint, false);
-        }
+        let newAnchorPoint = canvasToTransformedImagePos(canvasX, canvasY, frame, this.props.layerWidth, this.props.layerHeight);
 
         let w: number, h: number;
         let sizeFactor: number;
@@ -198,12 +189,8 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
 
     applyCenterScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, keepAspect: boolean) => {
         const frame = this.props.frame;
-        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
-        let newAnchorPoint = canvasToImagePos(canvasX, canvasY, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform);
+        let newAnchorPoint = canvasToTransformedImagePos(canvasX, canvasY, frame, this.props.layerWidth, this.props.layerHeight);
 
-        if (frame.spatialReference) {
-            newAnchorPoint = frame.spatialTransform.transformCoordinate(newAnchorPoint, false);
-        }
         const centerPoint = region.controlPoints[0];
 
         let w: number, h: number;
@@ -271,15 +258,10 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         const region = this.props.region;
         const frame = this.props.frame;
 
-        let centerImageSpace = region.controlPoints[0];
-        if (frame.spatialReference) {
-            centerImageSpace = frame.spatialTransform.transformCoordinate(centerImageSpace, true);
-        }
-        const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
         const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const rotation = frame.spatialReference ? frame.spatialTransform.rotation * 180.0 / Math.PI + region.rotation : region.rotation;
 
-        const centerPixelSpace = imageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frameView, this.props.layerWidth, this.props.layerHeight, frame.spatialTransform);
+        const centerPixelSpace = transformedImageToCanvasPos(region.controlPoints[0].x, region.controlPoints[0].y, frame, this.props.layerWidth, this.props.layerHeight);
         let width = (region.controlPoints[1].x * zoomLevel) / devicePixelRatio;
         let height = (region.controlPoints[1].y * zoomLevel) / devicePixelRatio;
 

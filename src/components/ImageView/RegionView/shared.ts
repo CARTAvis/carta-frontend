@@ -27,7 +27,7 @@ export function imageToCanvasPos(imageX: number, imageY: number, frameView: Fram
     };
 }
 
-export function canvasToTransformedImagePos(canvasX: number, canvasY: number, frame: FrameStore, layerWidth: number, layerHeight: number, ) {
+export function canvasToTransformedImagePos(canvasX: number, canvasY: number, frame: FrameStore, layerWidth: number, layerHeight: number) {
     const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
     let imagePos = canvasToImagePos(canvasX, canvasY, frameView, layerWidth, layerHeight, frame.spatialTransform);
 
@@ -35,6 +35,16 @@ export function canvasToTransformedImagePos(canvasX: number, canvasY: number, fr
         imagePos = frame.spatialTransform.transformCoordinate(imagePos, false);
     }
     return imagePos;
+}
+
+export function transformedImageToCanvasPos(imageX: number, imageY: number, frame: FrameStore, layerWidth: number, layerHeight: number) {
+    let imagePos = {x: imageX, y: imageY};
+    if (frame.spatialReference) {
+        imagePos = frame.spatialTransform.transformCoordinate(imagePos, true);
+    }
+
+    const frameView = frame.spatialReference ? frame.spatialReference.requiredFrameView : frame.requiredFrameView;
+    return imageToCanvasPos(imagePos.x, imagePos.y, frameView, layerWidth, layerHeight, frame.spatialTransform);
 }
 
 export function getUpdatedPosition(currentPositionImageSpace: Point2D, newPositionPixelSpace: Point2D, zoomLevel: number, frame: FrameStore, layerWidth: number, layerHeight: number) {
