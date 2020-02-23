@@ -36,8 +36,7 @@ import {GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
-import {AppToaster} from "../components/Shared";
-import {Subject} from "rxjs";
+import {AppToaster} from "components/Shared";
 
 export class AppStore {
     // Backend services
@@ -77,8 +76,9 @@ export class AppStore {
     @observable regionStats: Map<number, ObservableMap<number, CARTA.RegionStatsData>>;
     @observable regionHistograms: Map<number, ObservableMap<number, CARTA.IRegionHistogramData>>;
 
-    // Spatial WCS reference
+    // Spatial and spectral WCS references
     @observable spatialReference: FrameStore;
+    @observable spectralReference: FrameStore;
 
     private appContainer: HTMLElement;
     private contourWebGLContext: WebGLRenderingContext;
@@ -355,8 +355,8 @@ export class AppStore {
 
     @action closeCurrentFile = (confirmClose: boolean = true) => {
         // Display confirmation if image has secondary images
-        if (confirmClose && this.activeFrame && this.activeFrame.secondaryImages && this.activeFrame.secondaryImages.length) {
-            const numSecondaries = this.activeFrame.secondaryImages.length;
+        if (confirmClose && this.activeFrame && this.activeFrame.secondarySpatialImages && this.activeFrame.secondarySpatialImages.length) {
+            const numSecondaries = this.activeFrame.secondarySpatialImages.length;
             this.alertStore.showInteractiveAlert(
                 `${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} spatially matched to this image will be unmatched and regions will be removed.`,
                 (confirmed => {
@@ -372,9 +372,9 @@ export class AppStore {
     @action removeFrame = (frame: FrameStore) => {
         if (frame) {
             // Unlink any associated secondary images
-            if (frame.secondaryImages) {
+            if (frame.secondarySpatialImages) {
                 // Create a copy of the array, since clearing the spatial reference will modify it
-                const secondaryImages = frame.secondaryImages.slice();
+                const secondaryImages = frame.secondarySpatialImages.slice();
                 for (const f of secondaryImages) {
                     f.clearSpatialReference();
                 }
@@ -1030,6 +1030,38 @@ export class AppStore {
             frame.clearSpatialReference();
         } else {
             frame.setSpatialReference(this.spatialReference);
+        }
+    };
+
+    @action setSpectralReference = (frame: FrameStore) => {
+        this.spectralReference = frame;
+
+        for (const f of this.frames) {
+            // The reference image can't reference itself
+            if (f === frame) {
+                f.clearSpectralReference();
+            } else if (f.spectralReference) {
+                f.setSpectralReference(frame);
+            }
+        }
+    };
+
+    @action clearSpectralReference = () => {
+        this.spectralReference = null;
+        for (const f of this.frames) {
+            f.clearSpectralReference();
+        }
+    };
+
+    @action toggleSpectralMatching = (frame: FrameStore) => {
+        if (!frame || frame === this.spectralReference) {
+            return;
+        }
+
+        if (frame.spectralReference) {
+            frame.clearSpectralReference();
+        } else {
+            frame.setSpectralReference(this.spectralReference);
         }
     };
 

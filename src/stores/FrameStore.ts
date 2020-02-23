@@ -54,8 +54,9 @@ export class FrameStore {
     @observable regionSet: RegionSetStore;
     @observable overlayBeamSettings: OverlayBeamStore;
     @observable spatialReference: FrameStore;
-
-    @observable secondaryImages: FrameStore[];
+    @observable spectralReference: FrameStore;
+    @observable secondarySpatialImages: FrameStore[];
+    @observable secondarySpectralImages: FrameStore[];
 
     @computed get requiredFrameView(): FrameView {
         // use spatial reference frame to calculate frame view, if it exists
@@ -403,6 +404,7 @@ export class FrameStore {
     private readonly contourContext: WebGLRenderingContext;
     private readonly controlMaps: Map<FrameStore, ControlMap>;
     private spatialTransformAST: number;
+    private spectralTransformAST: number;
     private cachedTransformedWcsInfo: number = -1;
     private zoomTimeoutHandler;
 
@@ -432,6 +434,7 @@ export class FrameStore {
         this.zooming = false;
         this.overlayBeamSettings = new OverlayBeamStore(preference);
         this.spatialTransformAST = null;
+        this.spectralTransformAST = null;
         this.controlMaps = new Map<FrameStore, ControlMap>();
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
@@ -874,7 +877,7 @@ export class FrameStore {
         }
         console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
         this.spatialReference = frame;
-        this.spatialReference.addSecondaryImage(this);
+        this.spatialReference.addSecondarySpatialImage(this);
 
         const copySrc = AST.copy(this.wcsInfo);
         const copyDest = AST.copy(frame.wcsInfo);
@@ -893,7 +896,7 @@ export class FrameStore {
         if (this.spatialReference) {
             this.center = this.spatialTransform.transformCoordinate(this.spatialReference.center, false);
             this.zoomLevel = this.spatialReference.zoomLevel * this.spatialTransform.scale;
-            this.spatialReference.removeSecondaryImage(this);
+            this.spatialReference.removeSecondarySpatialImage(this);
             this.spatialReference = null;
         }
 
@@ -915,17 +918,62 @@ export class FrameStore {
         this.controlMaps.clear();
     };
 
-    @action addSecondaryImage = (frame: FrameStore) => {
-        if (!this.secondaryImages) {
-            this.secondaryImages = [frame];
-        } else if (!this.secondaryImages.find(f => f.frameInfo.fileId === frame.frameInfo.fileId)) {
-            this.secondaryImages.push(frame);
+    @action addSecondarySpatialImage = (frame: FrameStore) => {
+        if (!this.secondarySpatialImages) {
+            this.secondarySpatialImages = [frame];
+        } else if (!this.secondarySpatialImages.find(f => f.frameInfo.fileId === frame.frameInfo.fileId)) {
+            this.secondarySpatialImages.push(frame);
         }
     };
 
-    @action removeSecondaryImage = (frame: FrameStore) => {
-        if (this.secondaryImages) {
-            this.secondaryImages = this.secondaryImages.filter(f => f.frameInfo.fileId !== frame.frameInfo.fileId);
+    @action removeSecondarySpatialImage = (frame: FrameStore) => {
+        if (this.secondarySpatialImages) {
+            this.secondarySpatialImages = this.secondarySpatialImages.filter(f => f.frameInfo.fileId !== frame.frameInfo.fileId);
+        }
+    };
+
+    // Spectral WCS matching
+    @action setSpectralReference = (frame: FrameStore) => {
+        if (frame === this) {
+            this.clearSpatialReference();
+            console.log(`Skipping spectral self-reference`);
+        }
+        console.log(`Setting spectral reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
+        this.spectralReference = frame;
+        this.spectralReference.addSecondarySpectralImage(this);
+
+        // TODO
+        //
+        // const copySrc = AST.copy(this.wcsInfo);
+        // const copyDest = AST.copy(frame.wcsInfo);
+        // AST.invert(copySrc);
+        // AST.invert(copyDest);
+        // this.spatialTransformAST = AST.convert(copySrc, copyDest, "");
+        // AST.delete(copySrc);
+        // AST.delete(copyDest);
+        // if (!this.spatialTransformAST) {
+        //     console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
+        // }
+    };
+
+    @action clearSpectralReference = () => {
+        if (this.spectralReference) {
+            this.spectralReference.removeSecondarySpectralImage(this);
+            this.spectralReference = null;
+        }
+    };
+
+    @action addSecondarySpectralImage = (frame: FrameStore) => {
+        if (!this.secondarySpectralImages) {
+            this.secondarySpectralImages = [frame];
+        } else if (!this.secondarySpectralImages.find(f => f.frameInfo.fileId === frame.frameInfo.fileId)) {
+            this.secondarySpectralImages.push(frame);
+        }
+    };
+
+    @action removeSecondarySpectralImage = (frame: FrameStore) => {
+        if (this.secondarySpectralImages) {
+            this.secondarySpectralImages = this.secondarySpectralImages.filter(f => f.frameInfo.fileId !== frame.frameInfo.fileId);
         }
     };
 }
