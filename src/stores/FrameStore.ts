@@ -869,12 +869,16 @@ export class FrameStore {
     // Spatial WCS Matching
     @action setSpatialReference = (frame: FrameStore) => {
         if (frame === this) {
-            this.clearSpatialReference();
             console.log(`Skipping spatial self-reference`);
+            this.clearSpatialReference();
+            return false;
         }
-        console.log(`Setting spatial reference for file ${this.frameInfo.fileId} to ${frame.frameInfo.fileId}`);
-        this.spatialReference = frame;
-        this.spatialReference.addSecondaryImage(this);
+
+        if (this.validWcs !== frame.validWcs) {
+            console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
+            this.spatialReference = null;
+            return false;
+        }
 
         const copySrc = AST.copy(this.wcsInfo);
         const copyDest = AST.copy(frame.wcsInfo);
@@ -885,7 +889,22 @@ export class FrameStore {
         AST.delete(copyDest);
         if (!this.spatialTransformAST) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
+            this.spatialReference = null;
+            return false;
         }
+        this.spatialReference = frame;
+        const currentTransform = this.spatialTransform;
+        if (!isFinite(currentTransform.rotation) || !isFinite(currentTransform.scale) || !isFinite(currentTransform.translation.x) || !isFinite(currentTransform.translation.y)
+            || !isFinite(currentTransform.origin.x) || !isFinite(currentTransform.origin.y)) {
+            console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}`);
+            this.spatialReference = null;
+            AST.delete(this.spatialTransformAST);
+            this.spatialTransformAST = null;
+            return false;
+        }
+
+        this.spatialReference.addSecondaryImage(this);
+        return true;
     };
 
     @action clearSpatialReference = () => {
