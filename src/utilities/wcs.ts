@@ -1,7 +1,6 @@
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
-import {CHANNEL_TYPES, Point2D, Transform2D} from "models";
-import {add2D, length2D, scaleAboutPoint2D, scaleAndRotateAboutPoint2D, subtract2D} from "./math2d";
+import {CHANNEL_TYPES, Point2D, SpectralType} from "models";
 
 export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
     if (!headerEntry) {
@@ -50,4 +49,30 @@ export function findChannelType(entries: CARTA.IHeaderEntry[]) {
 export function getTransformedCoordinates(astTransform: number, point: Point2D, forward: boolean = true) {
     const transformed: Point2D = AST.transformPoint(astTransform, point.x, point.y, forward);
     return transformed;
+}
+
+export function getTransformedChannel(srcTransform: number, destTransform: number, matchingType: SpectralType, srcChannel: number) {
+    if (matchingType === SpectralType.CHANNEL) {
+        return srcChannel;
+    }
+
+    // Set spectral system for both transforms
+    AST.set(srcTransform, `System=${matchingType}`);
+    AST.set(destTransform, `System=${matchingType}`);
+    // Get spectral value from forward transform. Adjust for 1-based index
+    const sourceSpectralValue = AST.transform3DPoint(srcTransform, 1, 1, srcChannel + 1, true);
+    if (!sourceSpectralValue || !isFinite(sourceSpectralValue.z)) {
+        return NaN;
+    }
+
+    // Get a sensible pixel coordinate for the reverse transform by forward transforming first pixel in image
+    const dummySpectralValue = AST.transform3DPoint(destTransform, 1, 1, 1, true);
+    // Get pixel value from destination transform (reverse)
+    const destPixelValue = AST.transform3DPoint(destTransform, dummySpectralValue.x, dummySpectralValue.y, sourceSpectralValue.z, false);
+    if (!destPixelValue || !isFinite(destPixelValue.z)) {
+        return NaN;
+    }
+
+    // Revert back to 0-based index
+    return destPixelValue.z  - 1;
 }

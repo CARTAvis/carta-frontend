@@ -126,7 +126,7 @@ export class AnimatorStore {
                 endFrame
             };
             this.appStore.backendService.stopAnimation(stopMessage);
-            this.appStore.throttledSetChannels(frame.frameInfo.fileId, frame.requiredChannel, frame.requiredStokes);
+            this.appStore.throttledSetChannels([{frame, channel: frame.requiredChannel, stokes: frame.requiredStokes}]);
         }
     };
 

@@ -248,11 +248,11 @@ export class AppStore {
     }
 
     @computed get frameChannels(): number [] {
-        return this.frames.map(frame => frame.channel);
+        return this.frames.map(frame => frame.requiredChannel);
     }
 
     @computed get frameStokes(): number [] {
-        return this.frames.map(frame => frame.stokes);
+        return this.frames.map(frame => frame.requiredStokes);
     }
 
     @computed get spatialGroup(): FrameStore[] {
@@ -326,6 +326,11 @@ export class AppStore {
                 this.setSpatialReference(this.frames[0]);
             }
 
+            // Use this image as a spectral reference if it has a spectral axis and there isn't an existing spectral reference
+            if (newFrame.frameInfo.fileInfoExtended.depth > 1 && (this.frames.length === 1 || !this.spectralReference)) {
+                this.setSpectralReference(newFrame);
+            }
+
             this.setActiveFrame(newFrame.frameInfo.fileId);
             this.fileBrowserStore.hideFileBrowser();
         }, err => {
@@ -379,8 +384,16 @@ export class AppStore {
                     f.clearSpatialReference();
                 }
             }
+            if (frame.secondarySpectralImages) {
+                // Create a copy of the array, since clearing the spatial reference will modify it
+                const secondaryImages = frame.secondarySpectralImages.slice();
+                for (const f of secondaryImages) {
+                    f.clearSpectralReference();
+                }
+            }
 
             const removedFrameIsSpatialReference = frame === this.spatialReference;
+            const removedFrameIsSpectralReference = frame === this.spectralReference;
             const fileId = frame.frameInfo.fileId;
 
             // adjust requirements for stores
@@ -391,6 +404,7 @@ export class AppStore {
 
             if (this.backendService.closeFile(fileId)) {
                 frame.clearSpatialReference();
+                frame.clearSpectralReference();
                 frame.clearContours(false);
                 this.frames = this.frames.filter(f => f.frameInfo.fileId !== fileId);
                 // Clean up if frame is active
@@ -404,6 +418,17 @@ export class AppStore {
                         this.setSpatialReference(newReference);
                     } else {
                         this.clearSpatialReference();
+                    }
+                }
+                // Clean up if frame is currently spectral reference
+                if (removedFrameIsSpectralReference) {
+                    // New spectral reference must have spectral axis
+                    const spectralFrames = this.frames.filter(f => f.frameInfo.fileInfoExtended.depth > 1);
+                    const newReference = spectralFrames.length ? spectralFrames[0] : null;
+                    if (newReference) {
+                        this.setSpectralReference(newReference);
+                    } else {
+                        this.clearSpectralReference();
                     }
                 }
                 this.tileService.handleFileClosed(fileId);
@@ -550,32 +575,43 @@ export class AppStore {
     private histogramRequirements: Map<number, Array<number>>;
     private pendingChannelHistograms: Map<string, CARTA.IRegionHistogramData>;
 
-    throttledSetChannels = _.throttle((fileId: number, channel: number, stokes: number) => {
-        const frame = this.getFrame(fileId);
-        if (!frame) {
+    throttledSetChannels = _.throttle((updates: { frame: FrameStore, channel: number, stokes: number }[]) => {
+        if (!updates || !updates.length) {
             return;
         }
 
-        frame.channel = channel;
-        frame.stokes = stokes;
+        updates.forEach(update => {
+            const frame = update.frame;
+            if (!frame) {
+                return;
+            }
 
-        // Calculate new required frame view (cropped to file size)
-        const reqView = frame.requiredFrameView;
+            frame.channel = update.channel;
+            frame.stokes = update.stokes;
 
-        const croppedReq: FrameView = {
-            xMin: Math.max(0, reqView.xMin),
-            xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
-            yMin: Math.max(0, reqView.yMin),
-            yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
-            mip: reqView.mip
-        };
-        const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
-        const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
-        const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
-        // TODO: dynamic tile size
-        const tileSizeFullRes = reqView.mip * 256;
-        const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-        this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.preferenceStore.imageCompressionQuality, true);
+            if (frame === this.activeFrame) {
+                // Calculate new required frame view (cropped to file size)
+                const reqView = frame.requiredFrameView;
+
+                const croppedReq: FrameView = {
+                    xMin: Math.max(0, reqView.xMin),
+                    xMax: Math.min(frame.frameInfo.fileInfoExtended.width, reqView.xMax),
+                    yMin: Math.max(0, reqView.yMin),
+                    yMax: Math.min(frame.frameInfo.fileInfoExtended.height, reqView.yMax),
+                    mip: reqView.mip
+                };
+                const imageSize: Point2D = {x: frame.frameInfo.fileInfoExtended.width, y: frame.frameInfo.fileInfoExtended.height};
+                const tiles = GetRequiredTiles(croppedReq, imageSize, {x: 256, y: 256});
+                const midPointImageCoords = {x: (reqView.xMax + reqView.xMin) / 2.0, y: (reqView.yMin + reqView.yMax) / 2.0};
+                // TODO: dynamic tile size
+                const tileSizeFullRes = reqView.mip * 256;
+                const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
+                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.preferenceStore.imageCompressionQuality, true);
+            } else {
+                // Update inactive channels
+                this.backendService.setChannels(frame.frameInfo.fileId, frame.channel, frame.stokes, {});
+            }
+        });
     }, AppStore.ImageChannelThrottleTime);
 
     throttledSetView = _.throttle((tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D) => {
@@ -647,11 +683,24 @@ export class AppStore {
         // Update channels when manually changed
         autorun(() => {
             if (this.activeFrame) {
+                const updates = [];
                 // Calculate if new data is required
                 const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
                 // Don't auto-update when animation is playing
                 if (this.animatorStore.animationState === AnimationState.STOPPED && updateRequiredChannels) {
-                    this.throttledSetChannels(this.activeFrame.frameInfo.fileId, this.activeFrame.requiredChannel, this.activeFrame.requiredStokes);
+                    updates.push({frame: this.activeFrame, channel: this.activeFrame.requiredChannel, stokes: this.activeFrame.requiredStokes});
+                }
+
+                // Update any sibling channels
+                this.activeFrame.spectralSiblings.forEach(frame => {
+                    const siblingUpdateRequired = frame.requiredChannel !== frame.channel || frame.requiredStokes !== frame.stokes;
+                    if (siblingUpdateRequired) {
+                        updates.push({frame, channel: frame.requiredChannel, stokes: frame.requiredStokes});
+                    }
+                });
+
+                if (updates.length) {
+                    this.throttledSetChannels(updates);
                 }
             }
         });
@@ -798,7 +847,7 @@ export class AppStore {
 
             const frame = this.getFrame(tileStreamDetails.fileId);
             if (frame) {
-                frame.setChannels(tileStreamDetails.channel, tileStreamDetails.stokes);
+                frame.setChannels(tileStreamDetails.channel, tileStreamDetails.stokes, false);
                 frame.channel = tileStreamDetails.channel;
                 frame.stokes = tileStreamDetails.stokes;
             }
@@ -1068,7 +1117,14 @@ export class AppStore {
         if (frame.spectralReference) {
             frame.clearSpectralReference();
         } else {
-            frame.setSpectralReference(this.spectralReference);
+            if (!frame.setSpectralReference(this.spectralReference)) {
+                AppToaster.show({
+                    icon: "warning-sign",
+                    message: `Could not enable spectral matching (velocity system) of ${frame.frameInfo.fileInfo.name} to reference image ${this.spectralReference.frameInfo.fileInfo.name}. No valid transform was found`,
+                    intent: "warning",
+                    timeout: 3000
+                });
+            }
         }
     };
 

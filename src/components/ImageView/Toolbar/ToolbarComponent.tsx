@@ -63,7 +63,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     };
 
     handleSpectralReferenceToggled = () => {
-        this.props.appStore.toggleSpatialMatching(this.props.appStore.activeFrame);
+        this.props.appStore.toggleSpectralMatching(this.props.appStore.activeFrame);
     };
 
     render() {
@@ -168,7 +168,13 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                     </AnchorButton>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Toggle spectral matching</span>}>
-                    <AnchorButton className={"link-button"} icon="link" disabled={appStore.spectralReference === frame} active={!!frame.spectralReference} onClick={this.handleSpectralReferenceToggled}>
+                    <AnchorButton
+                        className={"link-button"}
+                        icon="link"
+                        disabled={!appStore.spectralReference || appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1}
+                        active={!!frame.spectralReference}
+                        onClick={this.handleSpectralReferenceToggled}
+                    >
                         &nbsp;z
                     </AnchorButton>
                 </Tooltip>
