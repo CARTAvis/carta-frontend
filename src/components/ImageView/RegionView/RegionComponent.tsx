@@ -7,7 +7,7 @@ import Konva from "konva";
 import {CARTA} from "carta-protobuf";
 import {FrameStore, RegionStore} from "stores";
 import {Point2D} from "models";
-import {canvasToImagePos, imageToCanvasPos} from "./shared";
+import {canvasToTransformedImagePos, getUpdatedPosition, transformedImageToCanvasPos} from "./shared";
 
 export interface RegionComponentProps {
     region: RegionStore;
@@ -78,15 +78,15 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         // Ellipse control points are radii, not diameter
         const sizeFactor = this.props.region.regionType === CARTA.RegionType.RECTANGLE ? 0.5 : 1.0;
 
-        if (this.editAnchor.indexOf("left") >= 0) {
+        if (this.editAnchor.includes("left")) {
             relativeOppositeAnchorPointUnrotated.x = +w * sizeFactor;
-        } else if (this.editAnchor.indexOf("right") >= 0) {
+        } else if (this.editAnchor.includes("right")) {
             relativeOppositeAnchorPointUnrotated.x = -w * sizeFactor;
         }
 
-        if (this.editAnchor.indexOf("top") >= 0) {
+        if (this.editAnchor.includes("top")) {
             relativeOppositeAnchorPointUnrotated.y = -h * sizeFactor;
-        } else if (this.editAnchor.indexOf("bottom") >= 0) {
+        } else if (this.editAnchor.includes("bottom")) {
             relativeOppositeAnchorPointUnrotated.y = +h * sizeFactor;
         }
 
@@ -113,14 +113,16 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         if (konvaEvent.currentTarget && konvaEvent.currentTarget.node) {
             const anchor = konvaEvent.currentTarget.movingResizer as string;
             const node = konvaEvent.currentTarget.node() as Konva.Node;
+            const frame = this.props.frame;
             const region = this.props.region;
-            if (anchor.indexOf("rotater") >= 0) {
-                // handle rotation (canvas rotation is clockwise, CASA rotation is anti-clockwise
-                const rotation = node.rotation();
+            if (anchor.includes("rotater")) {
+                // handle rotation (canvas rotation is clockwise, CASA rotation is anti-clockwise)
+                const rotation = frame.spatialReference ? frame.spatialTransform.rotation * 180.0 / Math.PI + node.rotation() : node.rotation();
                 region.setRotation(-rotation);
             } else {
                 // revert node scaling and position before adjusting region control points
-                const centerCanvasPos = imageToCanvasPos(region.controlPoints[0].x, region.controlPoints[0].y, this.props.frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
+                let centerImageSpace = region.controlPoints[0];
+                const centerCanvasPos = transformedImageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frame, this.props.layerWidth, this.props.layerHeight);
                 node.x(centerCanvasPos.x);
                 node.y(centerCanvasPos.y);
                 node.scaleX(1);
@@ -137,7 +139,8 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
     };
 
     applyCornerScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string) => {
-        const newAnchorPoint = canvasToImagePos(canvasX, canvasY, this.props.frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
+        const frame = this.props.frame;
+        let newAnchorPoint = canvasToTransformedImagePos(canvasX, canvasY, frame, this.props.layerWidth, this.props.layerHeight);
 
         let w: number, h: number;
         let sizeFactor: number;
@@ -159,13 +162,13 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         // Apply inverse rotation to get difference between anchors without rotation
         const deltaAnchorsUnrotated = {x: cosX * deltaAnchors.x + sinX * deltaAnchors.y, y: -sinX * deltaAnchors.x + cosX * deltaAnchors.y};
 
-        if (anchor.indexOf("left") >= 0 || anchor.indexOf("right") >= 0) {
+        if (anchor.includes("left") || anchor.includes("right")) {
             w = Math.abs(deltaAnchorsUnrotated.x) * sizeFactor;
         } else {
             // anchors without "left" or "right" are purely vertical, so they are clamped in x
             deltaAnchorsUnrotated.x = 0;
         }
-        if (anchor.indexOf("top") >= 0 || anchor.indexOf("bottom") >= 0) {
+        if (anchor.includes("top") || anchor.includes("bottom")) {
             // anchors without "top" or "bottom" are purely horizontal, so they are clamped in y
             h = Math.abs(deltaAnchorsUnrotated.y) * sizeFactor;
         } else {
@@ -185,7 +188,9 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
     };
 
     applyCenterScaling = (region: RegionStore, canvasX: number, canvasY: number, anchor: string, keepAspect: boolean) => {
-        const newAnchorPoint = canvasToImagePos(canvasX, canvasY, this.props.frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
+        const frame = this.props.frame;
+        let newAnchorPoint = canvasToTransformedImagePos(canvasX, canvasY, frame, this.props.layerWidth, this.props.layerHeight);
+
         const centerPoint = region.controlPoints[0];
 
         let w: number, h: number;
@@ -208,10 +213,10 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
         // Apply inverse rotation to get difference between anchor and center without rotation
         const deltaAnchorPointUnrotated = {x: cosX * deltaAnchorPoint.x + sinX * deltaAnchorPoint.y, y: -sinX * deltaAnchorPoint.x + cosX * deltaAnchorPoint.y};
 
-        if (anchor.indexOf("left") >= 0 || anchor.indexOf("right") >= 0) {
+        if (anchor.includes("left") || anchor.includes("right")) {
             w = Math.abs(deltaAnchorPointUnrotated.x) * sizeFactor;
         }
-        if (anchor.indexOf("top") >= 0 || anchor.indexOf("bottom") >= 0) {
+        if (anchor.includes("top") || anchor.includes("bottom")) {
             h = Math.abs(deltaAnchorPointUnrotated.y) * sizeFactor;
         }
 
@@ -243,12 +248,8 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
             const node = konvaEvent.target;
             const region = this.props.region;
             const frame = this.props.frame;
-            const centerImageSpace = region.controlPoints[0];
-
-            const currentCenterPixelSpace = imageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
-            const newCenterPixelSpace = node.position();
-            const deltaPositionImageSpace = {x: (newCenterPixelSpace.x - currentCenterPixelSpace.x) / frame.zoomLevel, y: -(newCenterPixelSpace.y - currentCenterPixelSpace.y) / frame.zoomLevel};
-            const newPosition = {x: centerImageSpace.x + deltaPositionImageSpace.x, y: centerImageSpace.y + deltaPositionImageSpace.y};
+            const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel : frame.zoomLevel;
+            const newPosition = getUpdatedPosition(region.controlPoints[0], node.position(), zoomLevel, frame, this.props.layerWidth, this.props.layerHeight);
             region.setControlPoint(0, newPosition);
         }
     };
@@ -256,17 +257,19 @@ export class RegionComponent extends React.Component<RegionComponentProps> {
     render() {
         const region = this.props.region;
         const frame = this.props.frame;
-        const centerImageSpace = region.controlPoints[0];
 
-        const centerPixelSpace = imageToCanvasPos(centerImageSpace.x, centerImageSpace.y, frame.requiredFrameView, this.props.layerWidth, this.props.layerHeight);
-        let width = (region.controlPoints[1].x * frame.zoomLevel) / devicePixelRatio;
-        let height = (region.controlPoints[1].y * frame.zoomLevel) / devicePixelRatio;
+        const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
+        const rotation = frame.spatialReference ? frame.spatialTransform.rotation * 180.0 / Math.PI + region.rotation : region.rotation;
+
+        const centerPixelSpace = transformedImageToCanvasPos(region.controlPoints[0].x, region.controlPoints[0].y, frame, this.props.layerWidth, this.props.layerHeight);
+        let width = (region.controlPoints[1].x * zoomLevel) / devicePixelRatio;
+        let height = (region.controlPoints[1].y * zoomLevel) / devicePixelRatio;
 
         // Adjusts the dash length to force the total number of dashes around the bounding box perimeter to 50
         const borderDash = [(width + height) * 4 / 100.0];
 
         const commonProps = {
-            rotation: -region.rotation,
+            rotation: -rotation,
             x: centerPixelSpace.x,
             y: centerPixelSpace.y,
             stroke: region.color,
