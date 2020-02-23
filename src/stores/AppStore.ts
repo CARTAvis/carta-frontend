@@ -1034,7 +1034,8 @@ export class AppStore {
                     icon: "warning-sign",
                     message: `Could not enable spatial matching of ${frame.frameInfo.fileInfo.name} to reference image ${this.spatialReference.frameInfo.fileInfo.name}. No valid transform was found`,
                     intent: "warning",
-                    timeout: 3000});
+                    timeout: 3000
+                });
             }
         }
     };
