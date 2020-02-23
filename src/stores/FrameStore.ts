@@ -465,7 +465,7 @@ export class FrameStore {
         this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
 
         // need initialized wcs to get correct cursor info
-        this.cursorInfo = this.getCursorInfoImageSpace(this.center);
+        this.cursorInfo = this.getCursorInfo(this.center);
         this.cursorValue = 0;
         this.cursorFrozen = preference.isCursorFrozen;
 
@@ -580,26 +580,7 @@ export class FrameStore {
         }
     };
 
-    public getImagePos(canvasX: number, canvasY: number): Point2D {
-        if (this.spatialReference) {
-            const frameView = this.spatialReference.requiredFrameView;
-            const imagePosRefImage = {
-                x: (canvasX / this.spatialReference.renderWidth) * (frameView.xMax - frameView.xMin) + frameView.xMin - 1,
-                // y coordinate is flipped in image space
-                y: (canvasY / this.spatialReference.renderHeight) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
-            };
-            return this.spatialTransform.transformCoordinate(imagePosRefImage, false);
-        } else {
-            const frameView = this.requiredFrameView;
-            return {
-                x: (canvasX / this.renderWidth) * (frameView.xMax - frameView.xMin) + frameView.xMin - 1,
-                // y coordinate is flipped in image space
-                y: (canvasY / this.renderHeight) * (frameView.yMin - frameView.yMax) + frameView.yMax - 1
-            };
-        }
-    }
-
-    public getCursorInfoImageSpace(cursorPosImageSpace: Point2D) {
+    public getCursorInfo(cursorPosImageSpace: Point2D) {
         let cursorPosWCS, cursorPosFormatted;
         if (this.validWcs) {
             // We need to compare X and Y coordinates in both directions
@@ -649,11 +630,6 @@ export class FrameStore {
             posWCS: cursorPosWCS,
             infoWCS: cursorPosFormatted,
         };
-    }
-
-    public getCursorInfoCanvasSpace(cursorPosCanvasSpace: Point2D): CursorInfo {
-        const cursorPosImageSpace = this.getImagePos(cursorPosCanvasSpace.x, cursorPosCanvasSpace.y);
-        return this.getCursorInfoImageSpace(cursorPosImageSpace);
     }
 
     public getControlMap(frame: FrameStore) {

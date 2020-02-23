@@ -2,19 +2,16 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {Ellipse, Group, Layer, Line, Stage} from "react-konva";
 import {Colors} from "@blueprintjs/core";
-import {BeamType, OverlayBeamStore} from "stores";
+import {BeamType, FrameStore, OverlayBeamStore} from "stores";
 import "./BeamProfileOverlayComponent.css";
 
 interface BeamProfileOverlayComponentProps {
+    frame: FrameStore;
     docked: boolean;
     width: number;
     height: number;
     top: number;
     left: number;
-    beamMajor: number;
-    beamMinor: number;
-    beamAngle: number;
-    zoomLevel: number;
     overlayBeamSettings: OverlayBeamStore;
     padding?: number;
 }
@@ -27,17 +24,27 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
             className += " docked";
         }
 
+        const frame = this.props.frame;
+
+        if (!frame.beamProperties) {
+            return null;
+        }
+
+        const zoomLevel = frame.spatialReference ? frame.spatialReference.zoomLevel * frame.spatialTransform.scale : frame.zoomLevel;
         const beamSettings = this.props.overlayBeamSettings;
-        const color =  beamSettings.color;
+        const color = beamSettings.color;
         const axisColor = beamSettings.type === BeamType.Solid ? Colors.WHITE : color;
         const type = beamSettings.type;
         const strokeWidth = beamSettings.width;
         const paddingOffset = this.props.padding ? this.props.padding * devicePixelRatio : 0;
         const shiftX = beamSettings.shiftX;
         const shiftY = beamSettings.shiftY;
-        const a = this.props.beamMajor / 2.0 * this.props.zoomLevel / devicePixelRatio;
-        const b = this.props.beamMinor / 2.0 * this.props.zoomLevel / devicePixelRatio;
-        const theta = (90.0 - this.props.beamAngle) * Math.PI / 180.0;
+        const a = frame.beamProperties.x / 2.0 * zoomLevel / devicePixelRatio;
+        const b = frame.beamProperties.y / 2.0 * zoomLevel / devicePixelRatio;
+        let theta = (90.0 - frame.beamProperties.angle) * Math.PI / 180.0;
+        if (frame.spatialTransform) {
+            theta -= frame.spatialTransform.rotation;
+        }
 
         // Bounding box of a rotated ellipse: https://math.stackexchange.com/questions/91132/how-to-get-the-limits-of-rotated-ellipse
         const sinTheta = Math.sin(theta);
@@ -61,7 +68,8 @@ export class BeamProfileOverlayComponent extends React.Component<BeamProfileOver
 
         let ellipse;
         switch (type) {
-            case BeamType.Open: default:
+            case BeamType.Open:
+            default:
                 ellipse = <Ellipse radiusX={a} radiusY={b} stroke={color} strokeWidth={strokeWidth}/>;
                 break;
             case  BeamType.Solid:
