@@ -29,6 +29,10 @@
             font-size: smaller;
             color: $gray1;
         }
+
+        .bp3-icon {
+            transform: scale(-1, 1);
+        }
     }
 
     &.bp3-dark {

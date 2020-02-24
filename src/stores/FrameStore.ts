@@ -3,7 +3,7 @@ import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
-import {ChannelInfo, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, ControlMap, Transform2D, ZoomPoint} from "models";
+import {ChannelInfo, ControlMap, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, SpectralType, Transform2D, ZoomPoint} from "models";
 import {clamp, findChannelType, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedChannel, getTransformedCoordinates, minMax2D, rotate2D, toFixed, trimFitsComment, velocityStringFromFrequency} from "utilities";
 import {BackendService} from "services";
 
@@ -1052,8 +1052,12 @@ export class FrameStore {
         // For now, this is just done to ensure a mapping can be constructed
         const copySrc = AST.copy(this.fullWcsInfo);
         const copyDest = AST.copy(frame.fullWcsInfo);
-        AST.set(copySrc, `AlignSystem=${this.preference.spectralMatchingType}`);
-        AST.set(copyDest, `AlignSystem=${this.preference.spectralMatchingType}`);
+        const spectralMatchingType = this.preference.spectralMatchingType;
+        // Ensure that a mapping for the current alignment system is possible
+        if (spectralMatchingType !== SpectralType.CHANNEL) {
+            AST.set(copySrc, `AlignSystem=${this.preference.spectralMatchingType}`);
+            AST.set(copyDest, `AlignSystem=${this.preference.spectralMatchingType}`);
+        }
         AST.invert(copySrc);
         AST.invert(copyDest);
         this.spectralTransformAST = AST.convert(copySrc, copyDest, "");

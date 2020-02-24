@@ -1,7 +1,7 @@
 import * as React from "react";
 import {CSSProperties} from "react";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {exportImage} from "components";
 import {AppStore, RegionMode, SystemType} from "stores";
@@ -128,13 +128,42 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const spectralMatchingEnabled = !!frame.spectralReference;
         const canEnableSpatialMatching = appStore.spatialReference !== frame;
         const canEnableSpectralMatching = appStore.spectralReference && appStore.spectralReference !== frame && frame.frameInfo.fileInfoExtended.depth > 1;
+        const wcsButtonSuperscript = (spatialMatchingEnabled ? "x" : "") + (spectralMatchingEnabled ? "z" : "");
+        const wcsButtonTooltipEntries = [];
+        if (spectralMatchingEnabled) {
+            wcsButtonTooltipEntries.push(`Spectral (${appStore.preferenceStore.spectralMatchingType})`);
+        }
+        if (spatialMatchingEnabled) {
+            wcsButtonTooltipEntries.push("Spatial");
+        }
+        const wcsButtonTooltip = wcsButtonTooltipEntries.join(" and ") || "None";
 
         const wcsMatchingMenu = (
             <Menu>
-                <MenuItem text="Spectral and Spatial" disabled={!canEnableSpatialMatching || !canEnableSpectralMatching} active={spectralMatchingEnabled && spatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(true, true)}/>
-                <MenuItem text="Spectral only" disabled={!canEnableSpectralMatching} active={spectralMatchingEnabled && !spatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(false, true)}/>
-                <MenuItem text="Spatial only" disabled={!canEnableSpatialMatching} active={!spectralMatchingEnabled && spatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(true, false)}/>
-                <MenuItem text="None" disabled={!canEnableSpatialMatching} active={!spectralMatchingEnabled && !spatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(false, false)}/>
+                <MenuItem
+                    text={`Spectral (${appStore.preferenceStore.spectralMatchingType}) and Spatial`}
+                    disabled={!canEnableSpatialMatching || !canEnableSpectralMatching}
+                    active={spectralMatchingEnabled && spatialMatchingEnabled}
+                    onClick={() => appStore.setMatchingEnabled(true, true)}
+                />
+                <MenuItem
+                    text={`Spectral (${appStore.preferenceStore.spectralMatchingType})  only`}
+                    disabled={!canEnableSpectralMatching}
+                    active={spectralMatchingEnabled && !spatialMatchingEnabled}
+                    onClick={() => appStore.setMatchingEnabled(false, true)}
+                />
+                <MenuItem
+                    text="Spatial only"
+                    disabled={!canEnableSpatialMatching}
+                    active={!spectralMatchingEnabled && spatialMatchingEnabled}
+                    onClick={() => appStore.setMatchingEnabled(true, false)}
+                />
+                <MenuItem
+                    text="None"
+                    disabled={!canEnableSpatialMatching}
+                    active={!spectralMatchingEnabled && !spatialMatchingEnabled}
+                    onClick={() => appStore.setMatchingEnabled(false, false)}
+                />
             </Menu>
         );
 
@@ -168,9 +197,11 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <Tooltip position={tooltipPosition} content={<span>Zoom to fit{currentZoomSpan}</span>}>
                     <Button icon="zoom-to-fit" onClick={frame.fitZoom}/>
                 </Tooltip>
-                <Tooltip position={tooltipPosition} content={<span>WCS Matching <br/><small><i>Current: TODO</i></small></span>}>
+                <Tooltip position={tooltipPosition} content={<span>WCS Matching <br/><small><i>Current: {wcsButtonTooltip}</i></small></span>}>
                     <Popover content={wcsMatchingMenu} position={Position.TOP} minimal={true}>
-                        <AnchorButton icon="link" disabled={!canEnableSpatialMatching && !canEnableSpectralMatching}/>
+                        <Button icon="link" className="link-button">
+                            {wcsButtonSuperscript}
+                        </Button>
                     </Popover>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Overlay Coordinate <br/><small><i>Current: {ToolbarComponent.CoordinateSystemTooltip.get(coordinateSystem)}</i></small></span>}>
