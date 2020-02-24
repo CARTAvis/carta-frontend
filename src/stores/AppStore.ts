@@ -1070,14 +1070,13 @@ export class AppStore {
         }
     };
 
-    @action toggleSpatialMatching = (frame: FrameStore) => {
+    @action setSpatialMatchingEnabled = (val: boolean) => {
+        const frame = this.activeFrame;
         if (!frame || frame === this.spatialReference) {
             return;
         }
 
-        if (frame.spatialReference) {
-            frame.clearSpatialReference();
-        } else {
+        if (val) {
             if (!frame.setSpatialReference(this.spatialReference)) {
                 AppToaster.show({
                     icon: "warning-sign",
@@ -1086,6 +1085,8 @@ export class AppStore {
                     timeout: 3000
                 });
             }
+        } else {
+            frame.clearSpatialReference();
         }
     };
 
@@ -1109,14 +1110,13 @@ export class AppStore {
         }
     };
 
-    @action toggleSpectralMatching = (frame: FrameStore) => {
+    @action setSpectralMatchingEnabled = (val: boolean) => {
+        const frame = this.activeFrame;
         if (!frame || frame === this.spectralReference) {
             return;
         }
 
-        if (frame.spectralReference) {
-            frame.clearSpectralReference();
-        } else {
+        if (val) {
             if (!frame.setSpectralReference(this.spectralReference)) {
                 AppToaster.show({
                     icon: "warning-sign",
@@ -1125,7 +1125,14 @@ export class AppStore {
                     timeout: 3000
                 });
             }
+        } else {
+            frame.clearSpectralReference();
         }
+    };
+
+    @action setMatchingEnabled = (spatial: boolean, spectral: boolean) => {
+        this.setSpatialMatchingEnabled(spatial);
+        this.setSpectralMatchingEnabled(spectral);
     };
 
     // region requirements calculations

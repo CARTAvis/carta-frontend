@@ -58,14 +58,6 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         this.props.appStore.overlayStore.global.setSystem(coordinateSystem);
     };
 
-    handleSpatialReferenceToggled = () => {
-        this.props.appStore.toggleSpatialMatching(this.props.appStore.activeFrame);
-    };
-
-    handleSpectralReferenceToggled = () => {
-        this.props.appStore.toggleSpectralMatching(this.props.appStore.activeFrame);
-    };
-
     render() {
         const appStore = this.props.appStore;
         const frame = appStore.activeFrame;
@@ -132,6 +124,20 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 regionIcon = "error";
         }
 
+        const spatialMatchingEnabled = !!frame.spatialReference;
+        const spectralMatchingEnabled = !!frame.spectralReference;
+        const canEnableSpatialMatching = appStore.spatialReference !== frame;
+        const canEnableSpectralMatching = appStore.spectralReference && appStore.spectralReference !== frame && frame.frameInfo.fileInfoExtended.depth > 1;
+
+        const wcsMatchingMenu = (
+            <Menu>
+                <MenuItem text="Spectral and Spatial" disabled={!canEnableSpatialMatching || !canEnableSpectralMatching} active={spectralMatchingEnabled && spatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(true, true)}/>
+                <MenuItem text="Spectral only" disabled={!canEnableSpectralMatching} active={spectralMatchingEnabled && !spatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(false, true)}/>
+                <MenuItem text="Spatial only" disabled={!canEnableSpatialMatching} active={!spectralMatchingEnabled && spatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(true, false)}/>
+                <MenuItem text="None" disabled={!canEnableSpatialMatching} active={!spectralMatchingEnabled && !spatialMatchingEnabled} onClick={() => appStore.setMatchingEnabled(false, false)}/>
+            </Menu>
+        );
+
         return (
             <ButtonGroup className={className} style={styleProps} vertical={this.props.vertical}>
 
@@ -162,21 +168,10 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 <Tooltip position={tooltipPosition} content={<span>Zoom to fit{currentZoomSpan}</span>}>
                     <Button icon="zoom-to-fit" onClick={frame.fitZoom}/>
                 </Tooltip>
-                <Tooltip position={tooltipPosition} content={<span>Toggle spatial matching</span>}>
-                    <AnchorButton className={"link-button"} icon="link" disabled={appStore.spatialReference === frame} active={!!frame.spatialReference} onClick={this.handleSpatialReferenceToggled}>
-                        xy
-                    </AnchorButton>
-                </Tooltip>
-                <Tooltip position={tooltipPosition} content={<span>Toggle spectral matching</span>}>
-                    <AnchorButton
-                        className={"link-button"}
-                        icon="link"
-                        disabled={!appStore.spectralReference || appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1}
-                        active={!!frame.spectralReference}
-                        onClick={this.handleSpectralReferenceToggled}
-                    >
-                        &nbsp;z
-                    </AnchorButton>
+                <Tooltip position={tooltipPosition} content={<span>WCS Matching <br/><small><i>Current: TODO</i></small></span>}>
+                    <Popover content={wcsMatchingMenu} position={Position.TOP} minimal={true}>
+                        <AnchorButton icon="link" disabled={!canEnableSpatialMatching && !canEnableSpectralMatching}/>
+                    </Popover>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={<span>Overlay Coordinate <br/><small><i>Current: {ToolbarComponent.CoordinateSystemTooltip.get(coordinateSystem)}</i></small></span>}>
                     <Popover content={coordinateSystemMenu} position={Position.TOP} minimal={true}>

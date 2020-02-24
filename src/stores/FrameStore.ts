@@ -416,6 +416,7 @@ export class FrameStore {
     private readonly contourContext: WebGLRenderingContext;
     private readonly controlMaps: Map<FrameStore, ControlMap>;
     private spatialTransformAST: number;
+    private spectralTransformAST: number;
     private cachedTransformedWcsInfo: number = -1;
     private zoomTimeoutHandler;
 
@@ -1051,13 +1052,20 @@ export class FrameStore {
         // For now, this is just done to ensure a mapping can be constructed
         const copySrc = AST.copy(this.fullWcsInfo);
         const copyDest = AST.copy(frame.fullWcsInfo);
+        AST.set(copySrc, `AlignSystem=${this.preference.spectralMatchingType}`);
+        AST.set(copyDest, `AlignSystem=${this.preference.spectralMatchingType}`);
         AST.invert(copySrc);
         AST.invert(copyDest);
-        const spectralTransformAST = AST.convert(copySrc, copyDest, "");
+        this.spectralTransformAST = AST.convert(copySrc, copyDest, "");
         AST.delete(copySrc);
         AST.delete(copyDest);
 
-        if (!spectralTransformAST) {
+        for (let i = 0; i < 16; i++) {
+            const refVal = AST.transform3DPoint(this.spectralTransformAST, 1, 1, i + 1, true);
+            console.log(`${i} => ${refVal.z - 1} @ ${refVal.x}, ${refVal.y}`);
+        }
+
+        if (!this.spectralTransformAST) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}. Could not create AST transform`);
             this.spectralReference = null;
             return false;
@@ -1075,6 +1083,11 @@ export class FrameStore {
             this.spectralReference.removeSecondarySpectralImage(this);
             this.spectralReference = null;
         }
+
+        if (this.spectralTransformAST) {
+            AST.delete(this.spectralTransformAST);
+        }
+        this.spectralTransformAST = null;
     };
 
     @action addSecondarySpectralImage = (frame: FrameStore) => {
