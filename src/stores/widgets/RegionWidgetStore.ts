@@ -13,7 +13,7 @@ export enum RegionsType {
     CLOSED_AND_POINT
 }
 export class RegionWidgetStore {
-    private readonly appStore: AppStore;
+    protected readonly appStore: AppStore;
     @observable regionIdMap: Map<number, number>;
     @observable type: RegionsType;
 

@@ -1,4 +1,4 @@
-import {ChannelType} from "./ChannelType";
+import {ChannelType} from "./SpectralDefinition";
 
 export interface ChannelInfo {
     fromWCS: boolean;

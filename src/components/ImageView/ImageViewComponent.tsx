@@ -10,7 +10,7 @@ import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
 import {RegionViewComponent} from "./RegionView/RegionViewComponent";
-import {AnimationMode, AnimationState, RegionStore, WidgetConfig, WidgetProps} from "stores";
+import {AnimationMode, AnimationState, RegionStore, WidgetConfig, WidgetProps, HelpType} from "stores";
 import {CursorInfo, Point2D} from "models";
 import {toFixed} from "utilities";
 import "./ImageViewComponent.css";
@@ -79,7 +79,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             defaultWidth: 600,
             defaultHeight: 600,
             title: "Image view",
-            isCloseable: false
+            isCloseable: false,
+            helpType: HelpType.IMAGE_VIEW
         };
     }
 
@@ -198,10 +199,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         height={appStore.activeFrame.renderHeight}
                         top={appStore.overlayStore.padding.top}
                         left={appStore.overlayStore.padding.left}
-                        beamMajor={appStore.activeFrame.beamProperties.x}
-                        beamMinor={appStore.activeFrame.beamProperties.y}
-                        beamAngle={appStore.activeFrame.beamProperties.angle}
-                        zoomLevel={appStore.activeFrame.spatialReference ? appStore.activeFrame.spatialReference.zoomLevel * appStore.activeFrame.spatialTransform.scale : appStore.activeFrame.zoomLevel}
+                        frame={appStore.activeFrame}
                         docked={this.props.docked}
                         padding={10}
                         overlayBeamSettings={appStore.activeFrame.beamProperties.overlayBeamSettings}
@@ -247,11 +245,9 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         return (
             <div className="image-view-div" onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                 <RasterViewComponent
-                    frame={appStore.activeFrame}
+                    appStore={appStore}
                     docked={this.props.docked}
                     overlaySettings={appStore.overlayStore}
-                    preference={appStore.preferenceStore}
-                    tileService={appStore.tileService}
                 />
                 <ContourViewComponent
                     appStore={appStore}

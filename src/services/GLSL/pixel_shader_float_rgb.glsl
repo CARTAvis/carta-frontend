@@ -12,7 +12,6 @@ precision highp float;
 #define FLT_MAX 3.402823466e+38
 
 varying vec2 vUV;
-uniform bool uTiledRendering;
 // Textures
 uniform sampler2D uDataTexture;
 uniform sampler2D uCmapTexture;
@@ -48,16 +47,11 @@ void main(void) {
     }
     vec2 texCoords;
 
-    if (uTiledRendering) {
-        // Mimic texel fetch in WebGL1
-        vec2 tileCoordsPixel = vUV * uTileTextureSize;
-        // Prevent edge artefacts
-        vec2 texCoordsPixel = clamp(tileCoordsPixel, 0.5, uTileTextureSize - 0.5) + uTileTextureOffset;
-        texCoords = texCoordsPixel / uTextureSize;
-    }
-    else {
-        texCoords = vUV;
-    }
+    // Mimic texel fetch in WebGL1
+    vec2 tileCoordsPixel = vUV * uTileTextureSize;
+    // Prevent edge artefacts
+    vec2 texCoordsPixel = clamp(tileCoordsPixel, 0.5, uTileTextureSize - 0.5) + uTileTextureOffset;
+    texCoords = texCoordsPixel / uTextureSize;
 
     float range = uMaxVal - uMinVal;
     float rawVal = texture2D(uDataTexture, texCoords).r;

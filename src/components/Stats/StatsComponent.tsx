@@ -4,7 +4,7 @@ import {autorun, computed, observable} from "mobx";
 import {HTMLTable, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {WidgetConfig, WidgetProps} from "stores";
+import {WidgetConfig, WidgetProps, HelpType} from "stores";
 import {StatsWidgetStore} from "stores/widgets";
 import {toExponential} from "utilities";
 import {RegionSelectorComponent} from "components";
@@ -22,7 +22,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
             defaultWidth: 300,
             defaultHeight: 250,
             title: "Statistics",
-            isCloseable: true
+            isCloseable: true,
+            helpType: HelpType.STATS
         };
     }
 

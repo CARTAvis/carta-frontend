@@ -21,7 +21,7 @@ import {
     RenderConfigSettingsPanelComponent,
     HistogramSettingsPanelComponent
 } from "components";
-import {AppStore} from "stores";
+import {AppStore, HelpType} from "stores";
 import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 
 export class WidgetConfig {
@@ -37,6 +37,7 @@ export class WidgetConfig {
     @observable title: string;
     parentId?: string;
     parentType?: string;
+    helpType: HelpType;
 }
 
 export class WidgetProps {
@@ -370,17 +371,20 @@ export class WidgetsStore {
             let unpinButton = $(`<li class="lm-pin" title="detach"><span class="bp3-icon-standard bp3-icon-unpin"/></li>`);
             unpinButton.on("click", () => this.unpinWidget(stack.getActiveContentItem()));
             stack.header.controlsContainer.prepend(unpinButton);
+            let helpButton = $(`<li class="lm-help" title="help"><span class="bp3-icon-standard bp3-icon-help"/></li>`);
+            helpButton.on("click", () => this.onHelpPinedClick(stack.getActiveContentItem()));
+            stack.header.controlsContainer.prepend(helpButton);
 
             stack.on("activeContentItemChanged", function(contentItem: any) {
                 if (stack && stack.config && stack.header.controlsContainer && stack.config.content.length) {
                     const activeTabItem = stack.getActiveContentItem();
                     const component = activeTabItem.config.component;
                     const stackHeaderControlButtons = stack.header.controlsContainer[0];
-                    if (component && showCogWidgets.includes(component) && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount < 4) {
+                    if (component && showCogWidgets.includes(component) && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount < 5) {
                         const cogPinedButton = $(`<li class="lm_settings" title="settings"><span class="bp3-icon-standard bp3-icon-cog"/></li>`);
                         cogPinedButton.on("click", () => contentItem.config.props.appStore.widgetsStore.onCogPinedClick(stack.getActiveContentItem()));
                         stack.header.controlsContainer.prepend(cogPinedButton);
-                    } else if (!showCogWidgets.includes(component) && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount === 4) {
+                    } else if (!showCogWidgets.includes(component) && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount === 5) {
                         stack.header.controlsContainer[0].children[0].remove();
                     }
                 }
@@ -480,6 +484,17 @@ export class WidgetsStore {
         const config = item.config as GoldenLayout.ReactComponentConfig;
         config.component = "floated";
         item.remove();
+    };
+
+    @action onHelpPinedClick = (item: GoldenLayout.ContentItem) => {
+        const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
+        const type = itemConfig.component;
+
+        // Get widget config from type
+        let widgetConfig = WidgetsStore.getDefaultWidgetConfig(type);
+        if (widgetConfig.helpType) {
+            this.appStore.helpStore.showHelpDrawer(widgetConfig.helpType);
+        }
     };
 
     @action handleItemCreation = (item: GoldenLayout.ContentItem) => {
@@ -614,6 +629,11 @@ export class WidgetsStore {
             this.spectralProfileWidgets.set(id, widgetStore);
         }
         return id;
+    }
+
+    @action updateSpectralRelatedWidgetsSpectralSettings() {
+        Array.from(this.spectralProfileWidgets.values()).forEach((widgetStore) => widgetStore.initSpectralSettings());
+        Array.from(this.stokesAnalysisWidgets.values()).forEach((widgetStore) => widgetStore.initSpectralSettings());
     }
 
     // endregion
