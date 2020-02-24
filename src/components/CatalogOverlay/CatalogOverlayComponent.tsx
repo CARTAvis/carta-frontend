@@ -403,7 +403,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             const yHeaderInfo = widgetStore.catalogHeader[yHeader.dataIndex];
             const wscCoordsX = getTableDataByType(widgetStore.catalogData, xHeaderInfo.dataType, xHeaderInfo.dataTypeIndex);
             const wcsCoordsY = getTableDataByType(widgetStore.catalogData, yHeaderInfo.dataType, yHeaderInfo.dataTypeIndex);
-            catalogStore.updateCatalogData(id, wscCoordsX, wcsCoordsY, wcs, xHeaderInfo.units, yHeaderInfo.units);
+            catalogStore.updateCatalogData(id, wscCoordsX, wcsCoordsY, wcs, xHeaderInfo.units, yHeaderInfo.units, widgetStore.catalogFrame);
             catalogStore.updateCatalogColor(id, widgetStore.catalogColor);
             catalogStore.updateCatalogSize(id, widgetStore.catalogSize);
         }

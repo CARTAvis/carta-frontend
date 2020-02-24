@@ -1,10 +1,10 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {FormGroup, HTMLSelect, NumericInput} from "@blueprintjs/core";
-import {AppStore} from "stores";
+import {AppStore, SystemType} from "stores";
 import {CatalogOverlayWidgetStore, CatalogOverlayShape} from "stores/widgets";
 import {ColorResult} from "react-color";
-import {ColorPickerComponent} from "../../Shared";
+import {ColorPickerComponent} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
 
 @observer
@@ -29,12 +29,27 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
         this.props.appStore.catalogStore.updateCatalogColor(this.props.id, color);
     }
 
+    private handleHeaderCatalogFramChange(changeEvent: any) {
+        const val = changeEvent.currentTarget.value;
+        this.props.widgetStore.setCatalogFrame(val);
+    }
+
     public render() {
         const appStore = this.props.appStore;
         const widgetStore = this.props.widgetStore;
 
         return (
             <div className="catalog-overlay-plot-settings">
+                <FormGroup  inline={true} label="Frame">
+                    <HTMLSelect className="bp3-fill" value={widgetStore.catalogFrame} onChange={changeEvent => this.handleHeaderCatalogFramChange(changeEvent)}>
+                        {Object.keys(SystemType).map(key => {
+                            if (SystemType[key] === SystemType.Auto) {
+                                return null;
+                            }
+                            return (<option key={key} value={SystemType[key]}>{SystemType[key]}</option>);
+                        })}
+                    </HTMLSelect>
+                </FormGroup>
                 <FormGroup label={"Color"} inline={true}>
                     <ColorPickerComponent
                         color={widgetStore.catalogColor}

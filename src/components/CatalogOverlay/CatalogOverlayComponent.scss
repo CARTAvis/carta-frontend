@@ -29,8 +29,7 @@
         }
     
         .bp3-form-group .bp3-label {
-            width: 5em;
-            text-align: right;
+            text-align: left;
         }
     
         .bp3-numeric-input {
@@ -62,6 +61,10 @@
         .catalog-overlay-plot-settings{
             display: inline-flex;
             height: 100%;
+
+            .bp3-form-content {
+                margin-right: 5px;
+            }
         }
     }
 

@@ -2,7 +2,7 @@ import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
-import {AppStore} from "stores";
+import {AppStore, SystemType} from "stores";
 
 export interface CatalogInfo {
     fileId: number;
@@ -67,6 +67,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable plotingData: boolean;
     @observable updateMode: CatalogUpdateMode;
     @observable userFilters: CARTA.CatalogFilterRequest;
+    @observable catalogFrame: SystemType;
 
     constructor(appStore: AppStore, catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData) {
         super(appStore, RegionsType.CLOSED_AND_POINT);
@@ -82,6 +83,8 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.imageCoordinates = [];
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.headerTableColumnWidts = [75, 75, 65, 100, null];
+        // Todo auto set according catalog header
+        this.catalogFrame = SystemType.Galactic;
 
         const initTableRows = CatalogOverlayWidgetStore.InitTableRows;
         if (catalogInfo.dataSize < initTableRows) {
@@ -91,6 +94,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             this.numVisibleRows = initTableRows;
             this.subsetEndIndex = initTableRows;
         }
+    }
+
+    @action setCatalogFrame(catalogFram: SystemType) {
+        this.catalogFrame = catalogFram;
     }
 
     @action setUserFilter(userFilters: CARTA.CatalogFilterRequest) {

@@ -1,6 +1,7 @@
 import * as AST from "ast_wrapper";
 import {action, observable, ObservableMap} from "mobx";
 import {Colors} from "@blueprintjs/core";
+import {SystemType} from "stores";
 import {Point2D} from "models";
 
 type CatalogSettings = {
@@ -25,8 +26,8 @@ export class CatalogStore {
         this.catalogs.set(widgetId, { color: Colors.RED2, size: 1, pixelData: [] });
     }
 
-    @action updateCatalogData(widgetId: string, xWcsData: Array<any>, yWcsData: Array<any>, wcsInfo: number, xUnit: string, yUnit: string) {
-        const pixelData = this.transformCatalogData(xWcsData, yWcsData, wcsInfo, xUnit, yUnit);
+    @action updateCatalogData(widgetId: string, xWcsData: Array<any>, yWcsData: Array<any>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType) {
+        const pixelData = this.transformCatalogData(xWcsData, yWcsData, wcsInfo, xUnit, yUnit, catalogFrame);
         this.catalogs.get(widgetId).pixelData.push(pixelData);
     }
 
@@ -46,7 +47,7 @@ export class CatalogStore {
         this.catalogs.delete(widgetId);
     }
 
-    private transformCatalogData(xWcsData: Array<any>, yWcsData: Array<any>, wcsInfo: number, xUnit: string, yUnit: string): Array<Point2D> {
+    private transformCatalogData(xWcsData: Array<any>, yWcsData: Array<any>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType): Array<Point2D> {
         const pixelData = [];
         // Todo: add offset accoring coordinate system
         if (xWcsData.length === yWcsData.length) {
@@ -54,6 +55,9 @@ export class CatalogStore {
             const yUnitLowerCase = yUnit.toLocaleLowerCase();
             let xFraction = 1;
             let yFraction = 1;
+            let wcsCopy = AST.copy(wcsInfo);
+            let system = "System=" + catalogFrame;
+            AST.set(wcsCopy, system);
             if (this.degreeUnits.indexOf(xUnitLowerCase) !== -1) {
                 xFraction = Math.PI / 180.0;
             } else if (this.arcminUnits.indexOf(xUnitLowerCase) !== -1) {
@@ -72,9 +76,10 @@ export class CatalogStore {
             for (let index = 0; index < xWcsData.length; index++) {
                 const xWCSValue = xWcsData[index] * xFraction;
                 const yWCSValue = yWcsData[index] * yFraction;
-                const pixelValue = AST.transformPoint(wcsInfo, xWCSValue, yWCSValue, false);
+                const pixelValue = AST.transformPoint(wcsCopy, xWCSValue, yWCSValue, false);
                 pixelData.push(pixelValue);
             }
+            AST.delete(wcsCopy);
         }
         return pixelData;
     }
