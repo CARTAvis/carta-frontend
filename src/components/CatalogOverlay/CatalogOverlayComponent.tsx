@@ -8,7 +8,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
-import {WidgetConfig, WidgetProps} from "stores";
+import {WidgetConfig, WidgetProps, HelpType} from "stores";
 import {CatalogOverlayWidgetStore, CatalogOverlay, CatalogUpdateMode} from "stores/widgets";
 import {toFixed, getTableDataByType} from "utilities";
 import "./CatalogOverlayComponent.css";
@@ -56,7 +56,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             defaultWidth: 600,
             defaultHeight: 350,
             title: "Catalog Overlay",
-            isCloseable: true
+            isCloseable: true,
+            helpType: HelpType.CATALOG_OVERLAY
         };
     }
 

@@ -2,7 +2,7 @@ import {observable, computed, action} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
-import {AppStore, BeamType, FrameScaling, RenderConfigStore, RegionStore} from "stores";
+import {AppStore, BeamType, ContourGeneratorType, FrameScaling, RenderConfigStore, RegionStore} from "stores";
 import {Theme, PresetLayout, CursorPosition, Zoom, ZoomPoint, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
 import {isColorValid, parseBoolean} from "utilities";
 import {ControlMap} from "../models/ControlMap";
@@ -24,6 +24,7 @@ export enum PreferenceKeys {
     RENDER_CONFIG_NAN_COLOR_HEX,
     RENDER_CONFIG_NAN_ALPHA,
 
+    CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE,
     CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE,
     CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR,
     CONTOUR_CONFIG_CONTOUR_NUM_LEVELS,
@@ -57,6 +58,7 @@ export enum PreferenceKeys {
     PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH,
     PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING,
     PERFORMANCE_LOW_BAND_WIDTH_MODE,
+    PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
 
     LOG_EVENT
 }
@@ -78,6 +80,7 @@ const KEY_TO_STRING = new Map<PreferenceKeys, string>([
     [PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, "nanColorHex"],
     [PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, "nanAlpha"],
 
+    [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, "contourGeneratorType"],
     [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE, "contourSmoothingMode"],
     [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, "contourSmoothingFactor"],
     [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS, "contourNumLevels"],
@@ -111,6 +114,7 @@ const KEY_TO_STRING = new Map<PreferenceKeys, string>([
     [PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, "contourControlMapWidth"],
     [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, "streamContoursWhileZooming"],
     [PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, "lowBandwidthMode"],
+    [PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES, "stopAnimationPlaybackMinutes"],
 
     [PreferenceKeys.LOG_EVENT, "logEventList"]
 ]);
@@ -135,6 +139,7 @@ const DEFAULTS = {
         nanAlpha: 1,
     },
     CONTOUR_CONFIG: {
+        contourGeneratorType: ContourGeneratorType.StartStepMultiplier,
         contourSmoothingMode: CARTA.SmoothingMode.BlockAverage,
         contourSmoothingFactor: 4,
         contourNumLevels: 5,
@@ -171,6 +176,7 @@ const DEFAULTS = {
         contourControlMapWidth: 256,
         streamContoursWhileZooming: false,
         lowBandwidthMode: false,
+        stopAnimationPlaybackMinutes: 5
     },
     LOG_EVENT: {
         eventLoggingEnabled: false
@@ -200,6 +206,10 @@ export class PreferenceStore {
         [PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, (value: string): string => { return value && isColorValid(value) ? value : DEFAULTS.RENDER_CONFIG.nanColorHex; }],
         [PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, (value: string): number => { return value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1 ? Number(value) : DEFAULTS.RENDER_CONFIG.nanAlpha; }],
 
+        [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, (value: ContourGeneratorType): ContourGeneratorType => {
+            return value && (value === ContourGeneratorType.StartStepMultiplier || value === ContourGeneratorType.MinMaxNScaling || value === ContourGeneratorType.PercentagesRefValue ||
+                value === ContourGeneratorType.MeanSigmaList) ? value : DEFAULTS.CONTOUR_CONFIG.contourGeneratorType;
+        }],
         [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE,
             (value: string): number => { return value && isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 2 ? Number(value) : DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode; }],
         [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR,
@@ -242,7 +252,9 @@ export class PreferenceStore {
         [PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH,
             (value: string): number => { return value && isFinite(parseInt(value)) && ControlMap.IsWidthValid(parseInt(value)) ? parseInt(value) : DEFAULTS.PERFORMANCE.contourControlMapWidth; }],
         [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, (value: string): boolean => { return parseBoolean(value, DEFAULTS.PERFORMANCE.streamContoursWhileZooming); }],
-        [PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.PERFORMANCE.lowBandwidthMode); }]
+        [PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, (value: string): boolean => { return parseBoolean(value, DEFAULTS.PERFORMANCE.lowBandwidthMode); }],
+        [PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES,
+            (value: string): number => { return value && (isFinite(parseInt(value)) && parseInt(value) > 0  && parseInt(value) <= 30) ? parseInt(value) : DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes; }]
     ]);
 
     // getters for global settings
@@ -304,6 +316,10 @@ export class PreferenceStore {
     }
 
     // getters for Contour Config
+    @computed get contourGeneratorType(): ContourGeneratorType {
+        return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE);
+    }
+
     @computed get contourColormapEnabled(): boolean {
         return this.preferences.get(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_COLORMAP_ENABLED);
     }
@@ -427,6 +443,10 @@ export class PreferenceStore {
         return this.preferences.get(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE);
     }
 
+    @computed get stopAnimationPlaybackMinutes(): number {
+        return this.preferences.get(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES);
+    }
+
     public isEventLoggingEnabled = (eventType: CARTA.EventType): boolean => {
         return Event.isEventTypeValid(eventType) && this.preferences.get(PreferenceKeys.LOG_EVENT).get(eventType);
     };
@@ -531,6 +551,7 @@ export class PreferenceStore {
     };
 
     @action resetContourConfigSettings = () => {
+        this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, DEFAULTS.CONTOUR_CONFIG.contourGeneratorType);
         this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE, DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode);
         this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor);
         this.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS, DEFAULTS.CONTOUR_CONFIG.contourNumLevels);
@@ -570,6 +591,7 @@ export class PreferenceStore {
         this.setPreference(PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, DEFAULTS.PERFORMANCE.contourControlMapWidth);
         this.setPreference(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, DEFAULTS.PERFORMANCE.streamContoursWhileZooming);
         this.setPreference(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, DEFAULTS.PERFORMANCE.lowBandwidthMode);
+        this.setPreference(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES, DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes);
     };
 
     @action resetLogEventSettings = () => {
@@ -608,6 +630,7 @@ export class PreferenceStore {
             [PreferenceKeys.RENDER_CONFIG_NAN_COLOR_HEX, DEFAULTS.RENDER_CONFIG.nanColorHex],
             [PreferenceKeys.RENDER_CONFIG_NAN_ALPHA, DEFAULTS.RENDER_CONFIG.nanAlpha],
 
+            [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, DEFAULTS.CONTOUR_CONFIG.contourGeneratorType],
             [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_MODE, DEFAULTS.CONTOUR_CONFIG.contourSmoothingMode],
             [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_SMOOTHING_FACTOR, DEFAULTS.CONTOUR_CONFIG.contourSmoothingFactor],
             [PreferenceKeys.CONTOUR_CONFIG_CONTOUR_NUM_LEVELS, DEFAULTS.CONTOUR_CONFIG.contourNumLevels],
@@ -641,6 +664,7 @@ export class PreferenceStore {
             [PreferenceKeys.PERFORMANCE_CONTOUR_CONTROL_MAP_WIDTH, DEFAULTS.PERFORMANCE.contourControlMapWidth],
             [PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, DEFAULTS.PERFORMANCE.streamContoursWhileZooming],
             [PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, DEFAULTS.PERFORMANCE.lowBandwidthMode],
+            [PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES, DEFAULTS.PERFORMANCE.stopAnimationPlaybackMinutes],
 
             [PreferenceKeys.LOG_EVENT, new Map<CARTA.EventType, boolean>()]
         ]);

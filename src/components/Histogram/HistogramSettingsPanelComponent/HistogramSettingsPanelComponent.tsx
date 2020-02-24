@@ -4,7 +4,7 @@ import {computed, autorun} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {HistogramWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig} from "stores";
+import {WidgetProps, WidgetConfig, HelpType} from "stores";
 import {parseNumber} from "utilities";
 
 const KEYCODE_ENTER = 13;
@@ -23,7 +23,8 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
             title: "histogram-settings",
             isCloseable: true,
             parentId: "histogram",
-            parentType: "histogram"
+            parentType: "histogram",
+            helpType: HelpType.HISTOGRAM_SETTINGS
         };
     }
 
@@ -38,18 +39,6 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
         return null;
     }
 
-    @computed get matchesSelectedRegion() {
-        const appStore = this.props.appStore;
-        const frame = appStore.activeFrame;
-        if (frame) {
-            const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
-            if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
-                return widgetRegion === frame.regionSet.selectedRegion.regionId;
-            }
-        }
-        return false;
-    }
-
     constructor(props: WidgetProps) {
         super(props);
 
@@ -58,7 +47,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
             const appStore = this.props.appStore;
             if (this.widgetStore && appStore.activeFrame) {
                 let regionString = "Unknown";
-                const regionId = this.widgetStore.regionIdMap.get(appStore.activeFrame.frameInfo.fileId) || -1;
+                const regionId = this.widgetStore.effectiveRegionId;
 
                 if (regionId === -1) {
                     regionString = "Image";
@@ -68,7 +57,7 @@ export class HistogramSettingsPanelComponent extends React.Component<WidgetProps
                         regionString = region.nameString;
                     }
                 }
-                const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
+                const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
                 appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Histogram Settings: ${regionString} ${selectedString}`);
             } else {
                 appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `Histogram Settings`);

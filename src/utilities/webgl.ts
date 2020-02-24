@@ -50,22 +50,6 @@ export function loadImageTexture(gl: WebGLRenderingContext, url: string, texInde
     });
 }
 
-export function loadFP32Texture(gl: WebGLRenderingContext, data: Float32Array, width: number, height: number, dataWidth: number, dataHeight: number, texIndex: number, filtering: number = GL.NEAREST) {
-    gl.activeTexture(texIndex);
-    if (dataWidth === width && dataHeight === height) {
-        gl.texImage2D(GL.TEXTURE_2D, 0, GL.LUMINANCE, width, height, 0, GL.LUMINANCE, GL.FLOAT, data);
-    } else {
-        gl.texImage2D(GL.TEXTURE_2D, 0, GL.LUMINANCE, width, height, 0, GL.LUMINANCE, GL.FLOAT, null);
-        gl.texSubImage2D(GL.TEXTURE_2D, 0, 0, 0, dataWidth, dataHeight, GL.LUMINANCE, GL.FLOAT, data);
-    }
-
-    // set the filtering so we don't need mips and it's not filtered
-    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, filtering);
-    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, filtering);
-    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
-    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
-}
-
 export function createFP32Texture(gl: WebGLRenderingContext, width: number, height: number, texIndex: number, filtering: number = gl.NEAREST) {
     const texture = gl.createTexture();
     gl.activeTexture(texIndex);

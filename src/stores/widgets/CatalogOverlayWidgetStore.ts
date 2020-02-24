@@ -1,8 +1,8 @@
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {RegionWidgetStore} from "./RegionWidgetStore";
-import {getTableDataByType} from "utilities";
+import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
+import {AppStore} from "stores";
 
 export interface CatalogInfo {
     fileId: number;
@@ -68,8 +68,8 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable updateMode: CatalogUpdateMode;
     @observable userFilters: CARTA.CatalogFilterRequest;
 
-    constructor(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData) {
-        super();
+    constructor(appStore: AppStore, catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData) {
+        super(appStore, RegionsType.CLOSED_AND_POINT);
         this.catalogInfo = catalogInfo;
         this.catalogHeader = catalogHeader.sort((a, b) => { return (a.columnIndex - b.columnIndex); });
         this.catalogData = catalogData;

@@ -42,7 +42,7 @@
         "start-js": "react-scripts-ts start",
         "start": "npm run git-info; npm-run-all -p watch-css start-js",
         "build-js": "react-scripts-ts --max_old_space_size=4096 build",
-        "build": "npm run git-info; npm-run-all build-wrappers build-protobuf build-css build-js",
+        "build": "npm run git-info; npm-run-all build-wrappers build-protobuf build-css build-js; ./crumbs-fix.sh",
         "test": "react-scripts-ts test --env=jsdom",
         "eject": "react-scripts-ts eject"
     },

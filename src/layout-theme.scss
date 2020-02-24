@@ -205,6 +205,9 @@ $custom-pane-controls-color-dark: white;
 
 // Custom pane controls
 .lm_header .lm_controls {
+    .lm-help {
+        color: $custom-pane-controls-color;
+    }
 
     .lm-pin {
         color: $custom-pane-controls-color;
@@ -431,6 +434,10 @@ $custom-pane-controls-color-dark: white;
 
     //Custom pane controls
     .lm_header .lm_controls {
+        .lm-help {
+            color: $custom-pane-controls-color-dark;
+        }
+
         .lm-pin {
             color: $custom-pane-controls-color-dark;
         }

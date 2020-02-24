@@ -7,7 +7,7 @@ import {FileListComponent} from "./FileList/FileListComponent";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {TableComponentProps, TableType} from "components/Shared";
-import {AppStore, BrowserMode} from "stores";
+import {AppStore, BrowserMode, HelpType} from "stores";
 import {CatalogOverlayWidgetStore} from "stores/widgets";
 import "./FileBrowserDialogComponent.css";
 
@@ -255,7 +255,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         }
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} minWidth={400} minHeight={400} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} helpType={HelpType.FILE_Browser} minWidth={400} minHeight={400} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
                 <div className="file-path">
                     {this.pathItems &&
                     <React.Fragment>

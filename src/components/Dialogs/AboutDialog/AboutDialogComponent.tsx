@@ -2,7 +2,7 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {AnchorButton, Classes, IDialogProps, Intent} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore} from "stores";
+import {AppStore, HelpType} from "stores";
 import {CARTA_INFO} from "models";
 import "./AboutDialogComponent.css";
 import * as logoPng from "static/carta_logo.png";
@@ -26,7 +26,7 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={620} defaultHeight={700} enableResizing={false}>
+            <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} defaultWidth={620} defaultHeight={700} enableResizing={false}>
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
                         <img src={logoPng} width={100}/>
@@ -46,7 +46,7 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
                     <ul>
                         <li>Source code for CARTA is available on <a href="https://github.com/cartavis" target="_blank">GitHub</a></li>
                         <li>Please report bugs or suggestions to <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw" target="_blank">carta_helpdesk@asiaa.sinica.edu.tw</a></li>
-                        <li>Documentation is available <a href="https://carta.readthedocs.io/en/latest" target="_blank">online</a></li>
+                        <li>Documentation is available <a href="https://carta.readthedocs.io/en/1.3" target="_blank">online</a></li>
                     </ul>
                     <h3>License</h3>
                     <p>

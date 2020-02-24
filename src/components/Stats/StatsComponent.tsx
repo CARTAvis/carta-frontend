@@ -1,12 +1,13 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {autorun, computed, observable} from "mobx";
-import {FormGroup, HTMLSelect, HTMLTable, IOptionProps, NonIdealState} from "@blueprintjs/core";
+import {HTMLTable, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
-import {WidgetConfig, WidgetProps} from "stores";
+import {WidgetConfig, WidgetProps, HelpType} from "stores";
 import {StatsWidgetStore} from "stores/widgets";
 import {toExponential} from "utilities";
+import {RegionSelectorComponent} from "components";
 import "./StatsComponent.css";
 
 @observer
@@ -21,7 +22,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
             defaultWidth: 300,
             defaultHeight: 250,
             title: "Statistics",
-            isCloseable: true
+            isCloseable: true,
+            helpType: HelpType.STATS
         };
     }
 
@@ -36,7 +38,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
             }
         }
         console.log("can't find store for widget");
-        return new StatsWidgetStore();
+        return new StatsWidgetStore(this.props.appStore);
     }
 
     @computed get statsData(): CARTA.RegionStatsData {
@@ -44,7 +46,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
         if (appStore.activeFrame) {
             let fileId = appStore.activeFrame.frameInfo.fileId;
-            let regionId = this.widgetStore.regionIdMap.get(fileId) || -1;
+            let regionId = this.widgetStore.effectiveRegionId;
 
             const frameMap = appStore.regionStats.get(fileId);
             if (!frameMap) {
@@ -53,18 +55,6 @@ export class StatsComponent extends React.Component<WidgetProps> {
             return frameMap.get(regionId);
         }
         return null;
-    }
-
-    @computed get matchesSelectedRegion() {
-        const appStore = this.props.appStore;
-        const frame = appStore.activeFrame;
-        if (frame) {
-            const widgetRegion = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId);
-            if (frame.regionSet.selectedRegion && frame.regionSet.selectedRegion.regionId !== 0) {
-                return widgetRegion === frame.regionSet.selectedRegion.regionId;
-            }
-        }
-        return false;
     }
 
     private static readonly STATS_NAME_MAP = new Map<CARTA.StatsType, string>([
@@ -91,7 +81,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         } else {
             if (!this.props.appStore.widgetsStore.statsWidgets.has(this.props.id)) {
                 console.log(`can't find store for widget with id=${this.props.id}`);
-                this.props.appStore.widgetsStore.statsWidgets.set(this.props.id, new StatsWidgetStore());
+                this.props.appStore.widgetsStore.statsWidgets.set(this.props.id, new StatsWidgetStore(this.props.appStore));
             }
         }
         // Update widget title when region or coordinate changes
@@ -100,8 +90,8 @@ export class StatsComponent extends React.Component<WidgetProps> {
             if (this.widgetStore && appStore.activeFrame) {
                 let regionString = "Unknown";
 
-                const regionId = this.widgetStore.regionIdMap.get(appStore.activeFrame.frameInfo.fileId) || -1;
-                const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
+                const regionId = this.widgetStore.effectiveRegionId;
+                const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
                 if (regionId === -1) {
                     regionString = "Image";
                 } else if (appStore.activeFrame && appStore.activeFrame.regionSet) {
@@ -117,13 +107,6 @@ export class StatsComponent extends React.Component<WidgetProps> {
         });
     }
 
-    private handleRegionChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
-        const appStore = this.props.appStore;
-        if (appStore.activeFrame) {
-            this.widgetStore.setRegionId(appStore.activeFrame.frameInfo.fileId, parseInt(changeEvent.target.value));
-        }
-    };
-
     private onResize = (width: number, height: number) => {
         this.width = width;
         this.height = height;
@@ -131,22 +114,6 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
     public render() {
         const appStore = this.props.appStore;
-
-        let enableRegionSelect = false;
-        // Fill region select options with all non-temporary regions that are closed
-        let profileRegionOptions: IOptionProps[] = [{value: -1, label: "Image"}];
-        let regionId = -1;
-        if (appStore.activeFrame && appStore.activeFrame.regionSet) {
-            let fileId = appStore.activeFrame.frameInfo.fileId;
-            regionId = this.widgetStore.regionIdMap.get(fileId) || -1;
-            profileRegionOptions = profileRegionOptions.concat(this.props.appStore.activeFrame.regionSet.regions.filter(r => !r.isTemporary && r.isClosedRegion).map(r => {
-                return {
-                    value: r.regionId,
-                    label: r.nameString
-                };
-            }));
-            enableRegionSelect = profileRegionOptions.length > 1;
-        }
 
         let formContent;
         if (this.statsData) {
@@ -204,7 +171,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
         }
 
         let className = "stats-widget";
-        if (this.matchesSelectedRegion) {
+        if (this.widgetStore.matchesSelectedRegion) {
             className += " linked-to-selected";
         }
 
@@ -214,9 +181,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
         return (
             <div className={className}>
-                <FormGroup label={"Region"} inline={true} disabled={!enableRegionSelect}>
-                    <HTMLSelect value={regionId} options={profileRegionOptions} onChange={this.handleRegionChanged} disabled={!enableRegionSelect}/>
-                </FormGroup>
+                <RegionSelectorComponent widgetStore={this.widgetStore} appStore={this.props.appStore}/>
                 <div className="stats-display">
                     {formContent}
                 </div>

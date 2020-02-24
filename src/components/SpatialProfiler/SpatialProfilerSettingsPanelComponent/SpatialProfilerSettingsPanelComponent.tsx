@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Colors} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {SpatialProfileWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig} from "stores";
+import {WidgetProps, WidgetConfig, HelpType} from "stores";
 import {parseNumber} from "utilities";
 
 const KEYCODE_ENTER = 13;
@@ -23,7 +23,8 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
             title: "spatial-profiler-settings",
             isCloseable: true,
             parentId: "spatial-profiler",
-            parentType: "spatial-profiler"
+            parentType: "spatial-profiler",
+            helpType: HelpType.SPATIAL_PROFILER_SETTINGS
         };
     }
 

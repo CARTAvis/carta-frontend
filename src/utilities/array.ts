@@ -1,5 +1,6 @@
 import {Point2D} from "../models";
 
+// TODO: upgrade binary search to bi-directional for supporting both incremental & decremental data
 export function binarySearchByX(array: readonly Point2D[], x: number): {point: Point2D, index: number} {
     if (array === undefined || array.length === 0 || x === undefined) {
         return null;
