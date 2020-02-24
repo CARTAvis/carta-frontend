@@ -858,10 +858,12 @@ export class AppStore {
         const pendingHistogram = this.pendingChannelHistograms.get(key);
         if (pendingHistogram && pendingHistogram.histograms && pendingHistogram.histograms.length) {
             const updatedFrame = this.getFrame(pendingHistogram.fileId);
-            const channelHist = pendingHistogram.histograms.find(hist => hist.channel === updatedFrame.requiredChannel);
+            const channelHist = pendingHistogram.histograms.find(hist => hist.channel === updatedFrame.channel);
             if (updatedFrame && channelHist) {
                 updatedFrame.renderConfig.setStokes(pendingHistogram.stokes);
                 updatedFrame.renderConfig.updateChannelHistogram(channelHist);
+                updatedFrame.channel = tileStreamDetails.channel;
+                updatedFrame.stokes = tileStreamDetails.stokes;
             }
             this.pendingChannelHistograms.delete(key);
         }
