@@ -31,6 +31,8 @@ export class HistogramHelpComponent extends React.Component {
                             <li>display y in logarithmic scale (default)</li>
                         </ul>
                 
+                <br />
+
                 <blockquote>
                     <p><strong>NOTE</strong></p>
                     <p>In the current release, the number of histogram bins is automatically dervied as the square root of the product of region bound box sizes in x and y. The developmemt team will improve this in future releases.</p>
