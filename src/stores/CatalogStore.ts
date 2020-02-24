@@ -49,15 +49,25 @@ export class CatalogStore {
 
     private transformCatalogData(xWcsData: Array<any>, yWcsData: Array<any>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType): Array<Point2D> {
         const pixelData = [];
-        // Todo: add offset accoring coordinate system
         if (xWcsData.length === yWcsData.length) {
             const xUnitLowerCase = xUnit.toLocaleLowerCase();
             const yUnitLowerCase = yUnit.toLocaleLowerCase();
             let xFraction = 1;
             let yFraction = 1;
+
             let wcsCopy = AST.copy(wcsInfo);
             let system = "System=" + catalogFrame;
             AST.set(wcsCopy, system);
+            if (catalogFrame === SystemType.FK4) {
+                AST.set(wcsCopy, "Epoch=B1950");
+                AST.set(wcsCopy, "Equinox=1950");
+            }
+
+            if (catalogFrame === SystemType.FK5) {
+                AST.set(wcsCopy, "Epoch=J2000");
+                AST.set(wcsCopy, "Equinox=2000");
+            }
+
             if (this.degreeUnits.indexOf(xUnitLowerCase) !== -1) {
                 xFraction = Math.PI / 180.0;
             } else if (this.arcminUnits.indexOf(xUnitLowerCase) !== -1) {
