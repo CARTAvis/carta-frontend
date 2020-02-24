@@ -5,8 +5,7 @@ export class FileInfoHelpComponent extends React.Component {
     public render() {
         return (
             <React.Fragment>
-                <p>To be added.</p>
-                <img src={underConstruction} style={{width: "20%", height: "auto"}}/>
+                <p>File information dialogue provides a summary of the properties and full image header of the image in the current image viewer. To switch to other images, use the frame slider in the animator widget.</p>
             </React.Fragment>
         );
     }
