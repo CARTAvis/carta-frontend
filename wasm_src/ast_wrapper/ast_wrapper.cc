@@ -318,6 +318,22 @@ EMSCRIPTEN_KEEPALIVE int set(AstFrameSet* wcsinfo, const char* attrib)
     return 0;
 }
 
+EMSCRIPTEN_KEEPALIVE int clear(AstObject* obj, const char* attrib)
+{
+    if (!obj)
+    {
+        return 1;
+    }
+
+    astSet(obj, attrib);
+    if (!astOK)
+    {
+        astClearStatus;
+        return 1;
+    }
+    return 0;
+}
+
 EMSCRIPTEN_KEEPALIVE void dump(AstFrameSet* wcsinfo)
 {
     if (wcsinfo)

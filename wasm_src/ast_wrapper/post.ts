@@ -96,6 +96,7 @@ Module.initFrame = Module.cwrap("initFrame", "number", ["string"]);
 Module.initSpectralFrame = Module.cwrap("initSpectralFrame", "number", ["string", "string", "string"]);
 Module.initDummyFrame = Module.cwrap("initDummyFrame", "number", []);
 Module.set = Module.cwrap("set", "number", ["number", "string"]);
+Module.clear = Module.cwrap("clear", "number", ["number", "string"]);
 Module.getString = Module.cwrap("getString", "string", ["number", "string"]);
 Module.dump = Module.cwrap("dump", null, ["number"]);
 Module.norm = Module.cwrap("norm", "number", ["number", "number"]);
