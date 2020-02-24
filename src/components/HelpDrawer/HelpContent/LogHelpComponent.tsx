@@ -4,10 +4,17 @@ import * as underConstruction from "static/help/under_construction.png";
 export class LogHelpComponent extends React.Component {
     public render() {
         return (
-            <React.Fragment>
-                <p>To be added.</p>
-                <img src={underConstruction} style={{width: "20%", height: "auto"}}/>
-            </React.Fragment>
+            <div>
+                <p>Log widget provides information for diagnostics when something went wrong. The log levels include:</p>
+                <ul>
+                    <li>Debug</li>
+                    <li>Info (default)</li>
+                    <li>Warning</li>
+                    <li>Error</li>
+                    <li>Critial</li>
+                </ul>
+                <p>When users believe there is something wrong, please contact the <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw">helpdesk</a> or file an issue on <a href="https://github.com/CARTAvis/carta/issues">Github</a> (recommanded).</p>
+            </div>    
         );
     }
 }
