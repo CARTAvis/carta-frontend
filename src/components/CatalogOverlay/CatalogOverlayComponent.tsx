@@ -432,10 +432,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             updateTableColumnWidth: widgetStore.setTableColumnWidth
         };
 
+        let startIndex = 0;
+        if (widgetStore.numVisibleRows) {
+            startIndex = 1;
+        }
         let tableInfo = (widgetStore.catalogInfo.dataSize) ? (
             <tr>
                 <td className="td-label">
-                    <pre>{"Table Size: " + widgetStore.catalogInfo.dataSize + ", " + widgetStore.numVisibleRows}</pre>
+                    <pre>{"Showing " + startIndex + " to " + widgetStore.numVisibleRows + " of " + widgetStore.catalogInfo.dataSize + " entries"}</pre>
                 </td>
             </tr>
         ) : null;
