@@ -234,7 +234,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
         // if type/unit/specsys changes, trigger transformation
         autorun(() => {
-            const frame = this.appStore.activeFrame;
+            const frame = this.effectiveFrame;
             if (frame && frame.channelInfo && this.isSpectralSettingsSupported) {
                 if (this.isCoordChannel) {
                     this.channelValues = frame.channelInfo.indexes;
@@ -251,13 +251,13 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         }
         let tx: Array<number> = new Array<number>(x.length);
         for (let i = 0; i < x.length; i++) {
-            tx[i] = AST.transformSpectralPoint(this.appStore.activeFrame.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x[i]);
+            tx[i] = AST.transformSpectralPoint(this.effectiveFrame.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x[i]);
         }
         return tx;
     };
 
     public initSpectralSettings = () => {
-        const frame = this.appStore.activeFrame;
+        const frame = this.effectiveFrame;
         if (frame && frame.spectralInfo && this.isSpectralSettingsSupported) {
             this.spectralType = frame.spectralInfo.channelType.code as SpectralType;
             this.spectralUnit = DEFAULT_UNIT.get(this.spectralType);
@@ -280,8 +280,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
 
     // check the type, unit, specsys are the same between widget and active frame
     @computed get isSpectralPropsEqual(): boolean {
-        const appStore = this.appStore;
-        const frame = appStore.activeFrame;
+        const frame = this.effectiveFrame;
         let result = false;
         if (frame && frame.spectralInfo) {
             const isTypeEqual = frame.spectralInfo.channelType.code === (this.spectralType as string);
@@ -414,7 +413,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     }
 
     @computed get isSpectralCoordinateSupported(): boolean {
-        const frame = this.appStore.activeFrame;
+        const frame = this.effectiveFrame;
         if (frame && frame.spectralInfo) {
             const type = frame.spectralInfo.channelType.code as string;
             const unit = frame.spectralInfo.channelType.unit as string;
@@ -424,7 +423,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     }
 
     @computed get isSpectralSystemSupported(): boolean {
-        const frame = this.appStore.activeFrame;
+        const frame = this.effectiveFrame;
         if (frame && frame.spectralInfo) {
             const specsys = frame.spectralInfo.specsys as string;
             return specsys && IsSpectralSystemValid(specsys);
