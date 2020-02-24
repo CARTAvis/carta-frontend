@@ -1042,6 +1042,12 @@ export class AppStore {
 
     // region requirements calculations
 
+    @observable requiredFrame: FrameStore;
+
+    @action setRequiredFrame(frame: FrameStore) {
+        this.requiredFrame = frame;
+    }
+
     private initRequirements = () => {
         this.spectralRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         this.spatialRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
@@ -1057,11 +1063,11 @@ export class AppStore {
     };
 
     private recalculateStatsRequirements() {
-        if (!this.activeFrame) {
+        if (!this.requiredFrame) {
             return;
         }
 
-        const updatedRequirements = RegionWidgetStore.CalculateRequirementsArray(this.activeFrame, this.widgetsStore.statsWidgets);
+        const updatedRequirements = RegionWidgetStore.CalculateRequirementsArray(this.requiredFrame, this.widgetsStore.statsWidgets);
         const diffList = StatsWidgetStore.DiffRequirementsArray(this.statsRequirements, updatedRequirements);
         this.statsRequirements = updatedRequirements;
 
@@ -1073,11 +1079,11 @@ export class AppStore {
     }
 
     private recalculateHistogramRequirements() {
-        if (!this.activeFrame) {
+        if (!this.requiredFrame) {
             return;
         }
 
-        const updatedRequirements = RegionWidgetStore.CalculateRequirementsArray(this.activeFrame, this.widgetsStore.histogramWidgets);
+        const updatedRequirements = RegionWidgetStore.CalculateRequirementsArray(this.requiredFrame, this.widgetsStore.histogramWidgets);
         const diffList = HistogramWidgetStore.DiffRequirementsArray(this.histogramRequirements, updatedRequirements);
         this.histogramRequirements = updatedRequirements;
 
@@ -1089,13 +1095,13 @@ export class AppStore {
     }
 
     private recalculateSpectralRequirements() {
-        if (!this.activeFrame) {
+        if (!this.requiredFrame) {
             return;
         }
 
-        const updatedRequirements = SpectralProfileWidgetStore.CalculateRequirementsMap(this.activeFrame, this.widgetsStore.spectralProfileWidgets);
-        if (this.activeFrame.hasStokes && this.widgetsStore.stokesAnalysisWidgets.size > 0) {
-            StokesAnalysisWidgetStore.addToRequirementsMap(this.activeFrame, updatedRequirements, this.widgetsStore.stokesAnalysisWidgets);
+        const updatedRequirements = SpectralProfileWidgetStore.CalculateRequirementsMap(this.requiredFrame, this.widgetsStore.spectralProfileWidgets);
+        if (this.requiredFrame.hasStokes && this.widgetsStore.stokesAnalysisWidgets.size > 0) {
+            StokesAnalysisWidgetStore.addToRequirementsMap(this.requiredFrame, updatedRequirements, this.widgetsStore.stokesAnalysisWidgets);
         }
         const diffList = SpectralProfileWidgetStore.DiffSpectralRequirements(this.spectralRequirements, updatedRequirements);
         this.spectralRequirements = updatedRequirements;
@@ -1106,11 +1112,11 @@ export class AppStore {
     }
 
     private recalculateSpatialRequirements() {
-        if (!this.activeFrame) {
+        if (!this.requiredFrame) {
             return;
         }
 
-        const updatedRequirements = SpatialProfileWidgetStore.CalculateRequirementsMap(this.activeFrame, this.widgetsStore.spatialProfileWidgets);
+        const updatedRequirements = SpatialProfileWidgetStore.CalculateRequirementsMap(this.requiredFrame, this.widgetsStore.spatialProfileWidgets);
         const diffList = SpatialProfileWidgetStore.DiffSpatialRequirements(this.spatialRequirements, updatedRequirements);
         this.spatialRequirements = updatedRequirements;
 

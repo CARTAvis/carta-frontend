@@ -25,13 +25,14 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
         let enableStatsSelect = false;
         let enableStokesSelect = false;
         let regionId = 0;
-        if (appStore.activeFrame && appStore.activeFrame.regionSet) {
+
+        if (appStore.activeFrame && widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
             let fileId = appStore.activeFrame.frameInfo.fileId;
             regionId = widgetStore.effectiveRegionId;
 
-            const selectedRegion = appStore.activeFrame.regionSet.regions.find(r => r.regionId === regionId);
+            const selectedRegion = widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
             enableStatsSelect = (selectedRegion && selectedRegion.isClosedRegion);
-            enableStokesSelect = appStore.activeFrame.frameInfo.fileInfoExtended.stokes > 1;
+            enableStokesSelect = widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes > 1;
         }
 
         const profileCoordinateOptions = [

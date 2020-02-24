@@ -42,8 +42,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
 
         autorun(() => {
             if (this.widgetStore) {
-                const appStore = this.props.appStore;
-                const frame = appStore.activeFrame;
+                const frame = this.widgetStore.effectiveFrame;
                 if (frame) {
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;

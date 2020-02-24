@@ -48,9 +48,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed get profileStore(): SpectralProfileStore {
-        if (this.props.appStore && this.props.appStore.activeFrame) {
-            let fileId = this.props.appStore.activeFrame.frameInfo.fileId;
+        if (this.props.appStore && this.props.appStore.activeFrame && this.widgetStore.effectiveFrame) {
+            let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
             const regionId = this.widgetStore.effectiveRegionId;
+            this.props.appStore.setRequiredFrame(this.widgetStore.effectiveFrame);
             const frameMap = this.props.appStore.spectralProfiles.get(fileId);
             if (frameMap) {
                 return frameMap.get(regionId);
@@ -60,7 +61,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed get plotData(): PlotData {
-        const frame = this.props.appStore.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (!frame) {
             return null;
         }
@@ -146,7 +147,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     @computed get exportHeaders(): string[] {
         let headerString = [];
-        const frame = this.props.appStore.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (frame && frame.frameInfo && frame.regionSet) {
             const regionId = this.widgetStore.effectiveRegionId;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
@@ -180,8 +181,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         autorun(() => {
             if (this.widgetStore) {
                 const coordinate = this.widgetStore.coordinate;
-                const appStore = this.props.appStore;
-                const frame = appStore.activeFrame;
+                const frame = this.widgetStore.effectiveFrame;
                 let progressString = "";
                 const currentData = this.plotData;
                 if (currentData && isFinite(currentData.progress) && currentData.progress < 1.0) {
@@ -214,7 +214,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     onChannelChanged = (x: number) => {
-        const frame = this.props.appStore.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (this.props.appStore.animatorStore.animationState === AnimationState.PLAYING) {
             return;
         }
@@ -240,7 +240,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     };
 
     @computed get currentChannelValue(): number {
-        const frame = this.props.appStore.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (!frame || !this.widgetStore.channelValues) {
             return null;
         }
@@ -252,7 +252,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed get requiredChannelValue(): number {
-        const frame = this.props.appStore.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (!frame || !this.widgetStore.channelValues) {
             return null;
         }
@@ -311,7 +311,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
         }
 
-        const frame = appStore.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         const imageName = (frame ? frame.frameInfo.fileInfo.name : undefined);
 
         let linePlotProps: LinePlotComponentProps = {

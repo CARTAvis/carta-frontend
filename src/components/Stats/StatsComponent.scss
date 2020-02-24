@@ -19,6 +19,11 @@
         transition: border 250ms linear;
     }
 
+    .stats-toolbar {
+        overflow: hidden;
+        display: flex;
+    }
+
     .bp3-form-group {
         padding: 5px 5px 1px;
         margin: 0;
