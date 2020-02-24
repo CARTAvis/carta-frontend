@@ -1,11 +1,12 @@
 import * as React from "react";
+import * as underConstruction from "static/help/under_construction.png";
 
 export class StokesAnalysisHelpComponent extends React.Component {
     public render() {
         return (
             <React.Fragment>
-                <h1>This is title</h1>
-                <p>This is help.</p>
+                <p>To be added.</p>
+                <img src={underConstruction} style={{width: "20%", height: "auto"}}/>
             </React.Fragment>
         );
     }
