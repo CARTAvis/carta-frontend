@@ -1,4 +1,4 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, has} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
@@ -38,7 +38,7 @@ export type ControlHeader = { columnIndex: number, dataIndex: number, display: b
 export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     public static readonly InitTableRows = 50;
-    private static readonly DataChunkSize = 100;
+    private static readonly DataChunkSize = 50;
     private readonly InitialedColumnsKeyWords = [
         "ANGULAR DISTANCE",
         "MAIN IDENTIFIER", 
@@ -406,6 +406,16 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             }
         });
         return header;
+    }
+
+    @computed get hasFilter(): boolean {
+        let filters = [];
+        this.catalogControlHeader.forEach((value, key) => {
+            if (value.filter !== undefined) {
+                filters.push(value);
+            }
+        });
+        return filters.length > 0;
     }
 
     private findKeywords(val: string): boolean {
