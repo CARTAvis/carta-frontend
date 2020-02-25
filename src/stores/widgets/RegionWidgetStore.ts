@@ -1,10 +1,25 @@
-import {action, observable} from "mobx";
+import {action, observable, computed} from "mobx";
+import {AppStore} from "../AppStore";
 import {FrameStore} from "../FrameStore";
 
-export class RegionWidgetStore {
-    @observable regionIdMap: Map<number, number>;
+export enum RegionId {
+    ACTIVE = -3,
+    IMAGE = -1,
+    CURSOR = 0
+}
 
-    constructor() {
+export enum RegionsType {
+    CLOSED,
+    CLOSED_AND_POINT
+}
+export class RegionWidgetStore {
+    protected readonly appStore: AppStore;
+    @observable regionIdMap: Map<number, number>;
+    @observable type: RegionsType;
+
+    constructor(appStore: AppStore, type: RegionsType) {
+        this.appStore = appStore;
+        this.type = type;
         this.regionIdMap = new Map<number, number>();
     }
 
@@ -20,12 +35,35 @@ export class RegionWidgetStore {
         this.regionIdMap.set(fileId, regionId);
     };
 
+    @computed get effectiveRegionId() {
+        if (this.appStore.activeFrame) {
+            const regionId = this.regionIdMap.get(this.appStore.activeFrame.frameInfo.fileId);
+            if (regionId === RegionId.ACTIVE || regionId === undefined) {
+                const selectedRegion = this.appStore.selectedRegion;
+                if (selectedRegion) {
+                    return (this.type === RegionsType.CLOSED && !selectedRegion.isClosedRegion) ? RegionId.IMAGE : selectedRegion.regionId;
+                } else {
+                    return this.type === RegionsType.CLOSED ? RegionId.IMAGE : RegionId.CURSOR;
+                }
+            }
+            return regionId;
+        }
+        return this.type === RegionsType.CLOSED ? RegionId.IMAGE : RegionId.CURSOR;
+    }
+
+    @computed get matchesSelectedRegion() {
+        if (this.appStore.selectedRegion) {
+            return this.effectiveRegionId === this.appStore.selectedRegion.regionId;
+        }
+        return false;
+    }
+
     public static CalculateRequirementsArray(frame: FrameStore, widgetsMap: Map<string, RegionWidgetStore>) {
         const updatedRequirements = new Map<number, Array<number>>();
         const fileId = frame.frameInfo.fileId;
 
         widgetsMap.forEach(widgetStore => {
-            const regionId = widgetStore.regionIdMap.get(fileId) || -1;
+            const regionId = widgetStore.effectiveRegionId;
             if (!frame.regionSet) {
                 return;
             }

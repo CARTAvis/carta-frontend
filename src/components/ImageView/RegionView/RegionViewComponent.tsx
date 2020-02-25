@@ -9,10 +9,10 @@ import {FrameStore, OverlayStore, RegionMode, RegionStore} from "stores";
 import {RegionComponent} from "./RegionComponent";
 import {PolygonRegionComponent} from "./PolygonRegionComponent";
 import {PointRegionComponent} from "./PointRegionComponent";
+import {canvasToImagePos, canvasToTransformedImagePos, imageToCanvasPos, transformedImageToCanvasPos} from "./shared";
 import {CursorInfo, Point2D} from "models";
-import "./RegionViewComponent.css";
 import {average2D, length2D, subtract2D, pointDistanceSquared} from "utilities";
-import {canvasToImagePos, imageToCanvasPos} from "./shared";
+import "./RegionViewComponent.css";
 
 export interface RegionViewComponentProps {
     frame: FrameStore;
@@ -50,19 +50,19 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     private initialPinchDistance: number;
 
     updateCursorPos = _.throttle((x: number, y: number) => {
-        if (this.props.frame.wcsInfo) {
-            this.props.frame.setCursorInfo(this.props.frame.getCursorInfoCanvasSpace({x, y}));
+        const frame = this.props.frame;
+        if (frame.wcsInfo) {
+            const imagePos = canvasToTransformedImagePos(x, y, frame, this.props.width, this.props.height);
+            this.props.frame.setCursorInfo(this.props.frame.getCursorInfo(imagePos));
         }
     }, 100);
 
     private getCursorCanvasPos(imageX: number, imageY: number): Point2D {
-        const frameView = this.props.frame.requiredFrameView;
+        const frame = this.props.frame;
+        const posCanvasSpace = transformedImageToCanvasPos(imageX, imageY, frame, this.props.width, this.props.height);
+
         const width = this.props.width;
         const height = this.props.height;
-        const posCanvasSpace = {
-            x: Math.floor((imageX + 1 - frameView.xMin) / (frameView.xMax - frameView.xMin) * width),
-            y: Math.floor((frameView.yMax - imageY - 1) / (frameView.yMax - frameView.yMin) * height)
-        };
 
         if (posCanvasSpace.x < 0 || posCanvasSpace.x > width || posCanvasSpace.y < 0 || posCanvasSpace.y > height) {
             return null;
@@ -78,8 +78,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         const mouseEvent = konvaEvent.evt as MouseEvent;
         const frame = this.props.frame;
         const regionType = frame.regionSet.newRegionType;
+        const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
 
-        const cursorPosImageSpace = this.props.frame.getImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
         switch (regionType) {
             case CARTA.RegionType.POINT:
                 this.creatingRegion = frame.regionSet.addPointRegion(cursorPosImageSpace, false);
@@ -239,7 +239,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     @action
     private handleMouseUpPolygonRegion(mouseEvent: MouseEvent) {
         const frame = this.props.frame;
-        const cursorPosImageSpace = this.props.frame.getImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
+        const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
         if (this.creatingRegion && this.creatingRegion.regionType === CARTA.RegionType.POLYGON) {
             if (this.creatingRegion.controlPoints.length) {
                 const previousPoint = this.creatingRegion.controlPoints[this.creatingRegion.controlPoints.length - 1];
@@ -257,6 +257,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     handleClick = (konvaEvent: Konva.KonvaEventObject<MouseEvent>) => {
         const mouseEvent = konvaEvent.evt;
+        const frame = this.props.frame;
 
         const isSecondaryClick = mouseEvent.button !== 0 || mouseEvent.ctrlKey || mouseEvent.metaKey;
 
@@ -279,19 +280,20 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             this.props.frame.regionSet.deselectRegion();
         }
 
-        const cursorPosCanvasSpace = {x: mouseEvent.offsetX, y: mouseEvent.offsetY};
         if (this.props.frame.wcsInfo && this.props.onClicked && (!this.props.dragPanningEnabled || isSecondaryClick)) {
-            this.props.onClicked(this.props.frame.getCursorInfoCanvasSpace(cursorPosCanvasSpace));
+            const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
+            this.props.onClicked(this.props.frame.getCursorInfo(cursorPosImageSpace));
         }
     };
 
     handleWheel = (konvaEvent: Konva.KonvaEventObject<WheelEvent>) => {
         const mouseEvent = konvaEvent.evt;
+        const frame = this.props.frame;
         const lineHeight = 15;
         const delta = mouseEvent.deltaMode === WheelEvent.DOM_DELTA_PIXEL ? mouseEvent.deltaY : mouseEvent.deltaY * lineHeight;
-        const cursorPosCanvasSpace = {x: mouseEvent.offsetX, y: mouseEvent.offsetY};
         if (this.props.frame.wcsInfo && this.props.onZoomed) {
-            this.props.onZoomed(this.props.frame.getCursorInfoCanvasSpace(cursorPosCanvasSpace), -delta);
+            const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
+            this.props.onZoomed(this.props.frame.getCursorInfo(cursorPosImageSpace), -delta);
         }
     };
 
@@ -320,7 +322,8 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
     };
 
     private handleRegularRegionMouseMove(mouseEvent: MouseEvent) {
-        const cursorPosImageSpace = this.props.frame.getImagePos(mouseEvent.offsetX, mouseEvent.offsetY);
+        const frame = this.props.frame;
+        const cursorPosImageSpace = canvasToTransformedImagePos(mouseEvent.offsetX, mouseEvent.offsetY, frame, this.props.width, this.props.height);
         let dx = (cursorPosImageSpace.x - this.regionStartPoint.x);
         let dy = (cursorPosImageSpace.y - this.regionStartPoint.y);
         if (mouseEvent.shiftKey) {
@@ -453,14 +456,16 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         let cursorMarker = null;
 
         if (this.props.cursorFrozen && this.props.cursorPoint) {
-            let cursorPosCanvas = this.getCursorCanvasPos(this.props.cursorPoint.x, this.props.cursorPoint.y);
-            if (cursorPosCanvas) {
+            const cursorPosPixelSpace = this.getCursorCanvasPos(this.props.cursorPoint.x, this.props.cursorPoint.y);
+            const rotation = frame.spatialReference ? frame.spatialTransform.rotation * 180.0 / Math.PI : 0.0;
+
+            if (cursorPosPixelSpace) {
                 const crosshairLength = 20 * devicePixelRatio;
                 const crosshairThicknessWide = 3;
                 const crosshairThicknessNarrow = 1;
                 const crosshairGap = 7;
                 cursorMarker = (
-                    <Group x={Math.floor(cursorPosCanvas.x) + 0.5} y={Math.floor(cursorPosCanvas.y) + 0.5}>
+                    <Group x={Math.floor(cursorPosPixelSpace.x) + 0.5} y={Math.floor(cursorPosPixelSpace.y) + 0.5} rotation={-rotation}>
                         <Line listening={false} points={[-crosshairLength / 2 - crosshairThicknessWide / 2, 0, -crosshairGap / 2, 0]} strokeWidth={crosshairThicknessWide} stroke="black"/>
                         <Line listening={false} points={[crosshairGap / 2, 0, crosshairLength / 2 + crosshairThicknessWide / 2, 0]} strokeWidth={crosshairThicknessWide} stroke="black"/>
                         <Line listening={false} points={[0, -crosshairLength / 2 - crosshairThicknessWide / 2, 0, -crosshairGap / 2]} strokeWidth={crosshairThicknessWide} stroke="black"/>

@@ -16,7 +16,7 @@ import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/S
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {ColorPickerComponent, ColormapComponent} from "components/Shared";
 import {Theme, CursorPosition, Zoom, ZoomPoint, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
-import {AppStore, BeamType, FrameScaling, PreferenceKeys, RegionStore, RenderConfigStore} from "stores";
+import {AppStore, BeamType, ContourGeneratorType, FrameScaling, PreferenceKeys, RegionStore, RenderConfigStore, HelpType} from "stores";
 import {hexStringToRgba, SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.css";
 
@@ -218,6 +218,13 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
 
         const contourConfigPanel = (
             <React.Fragment>
+                <FormGroup inline={true} label="Generator Type">
+                    <HTMLSelect
+                        value={preference.contourGeneratorType}
+                        options={Object.keys(ContourGeneratorType).map((key) => ({label: ContourGeneratorType[key], value: ContourGeneratorType[key]}))}
+                        onChange={(ev) => preference.setPreference(PreferenceKeys.CONTOUR_CONFIG_CONTOUR_GENERATOR_TYPE, ev.currentTarget.value as ContourGeneratorType)}
+                    />
+                </FormGroup>
                 <FormGroup inline={true} label="Smoothing Mode">
                     <HTMLSelect
                         value={preference.contourSmoothingMode}
@@ -493,6 +500,15 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 <FormGroup inline={true} label="Stream image tiles while zooming">
                     <Switch checked={preference.streamContoursWhileZooming} onChange={(ev) => preference.setPreference(PreferenceKeys.PERFORMANCE_STREAM_CONTOURS_WHILE_ZOOMING, ev.currentTarget.checked)}/>
                 </FormGroup>
+                <FormGroup inline={true} label="Stop animation playback in">
+                    <HTMLSelect value={preference.stopAnimationPlaybackMinutes} onChange={(ev) => preference.setPreference(PreferenceKeys.PERFORMANCE_STOP_ANIMATION_PLAYBACK_MINUTES, parseInt(ev.currentTarget.value))}>
+                        <option key={0} value={5}>5 minutes</option>
+                        <option key={1} value={10}>10 minutes</option>
+                        <option key={2} value={15}>15 minutes</option>
+                        <option key={3} value={20}>20 minutes</option>
+                        <option key={4} value={30}>30 minutes</option>
+                    </HTMLSelect>
+                </FormGroup>
             </React.Fragment>
         );
 
@@ -529,7 +545,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} minWidth={450} minHeight={300} defaultWidth={775} defaultHeight={500} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} helpType={HelpType.PREFERENCES} minWidth={450} minHeight={300} defaultWidth={775} defaultHeight={500} enableResizing={true}>
                 <div className="bp3-dialog-body">
                     <Tabs
                         id="preferenceTabs"

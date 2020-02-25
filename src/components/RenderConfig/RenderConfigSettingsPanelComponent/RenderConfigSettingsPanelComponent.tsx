@@ -4,7 +4,7 @@ import {computed} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {RenderConfigWidgetStore} from "stores/widgets/RenderConfigWidgetStore";
-import {WidgetProps, WidgetConfig} from "stores";
+import {WidgetProps, WidgetConfig, HelpType} from "stores";
 import {parseNumber} from "utilities";
 
 const KEYCODE_ENTER = 13;
@@ -23,7 +23,8 @@ export class RenderConfigSettingsPanelComponent extends React.Component<WidgetPr
             title: "render-config-settings",
             isCloseable: true,
             parentId: "render-config",
-            parentType: "render-config"
+            parentType: "render-config",
+            helpType: HelpType.RENDER_CONFIG_SETTINGS
         };
     }
 

@@ -8,10 +8,11 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {LinePlotComponent, LinePlotComponentProps, PlotType, SCALING_POPOVER_PROPS} from "components/Shared";
 import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelComponent";
 import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGeneratorPanelComponent";
-import {AppStore, FrameStore} from "stores";
+import {AppStore, FrameStore, HelpType} from "stores";
 import {RenderConfigWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed} from "utilities";
+import {CustomIcon} from "icons/CustomIcons";
 import "./ContourDialogComponent.css";
 
 enum ContourDialogTabs {
@@ -261,7 +262,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
         const appStore = this.props.appStore;
 
         const dialogProps: IDialogProps = {
-            icon: "heatmap",
+            icon: <CustomIcon icon="contour" size={CustomIcon.SIZE_LARGE}/>,
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
@@ -274,7 +275,14 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
 
         if (!appStore || !appStore.contourDataSource) {
             return (
-                <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={ContourDialogComponent.DefaultWidth} defaultHeight={ContourDialogComponent.DefaultHeight} enableResizing={true}>
+                <DraggableDialogComponent
+                    dialogProps={dialogProps}
+                    appStore={appStore}
+                    helpType={HelpType.CONTOUR}
+                    defaultWidth={ContourDialogComponent.DefaultWidth}
+                    defaultHeight={ContourDialogComponent.DefaultHeight}
+                    enableResizing={true}
+                >
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>
                 </DraggableDialogComponent>
             );
@@ -403,7 +411,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                 <div className="histogram-plot">
                     <LinePlotComponent {...linePlotProps}/>
                 </div>
-                <ContourGeneratorPanelComponent frame={dataSource} onLevelsGenerated={this.handleLevelsGenerated}/>
+                <ContourGeneratorPanelComponent frame={dataSource} generatorType={appStore.preferenceStore.contourGeneratorType} onLevelsGenerated={this.handleLevelsGenerated}/>
                 <FormGroup label={"Levels"} inline={true}>
                     <TagInput
                         addOnBlur={true}
@@ -446,7 +454,14 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={ContourDialogComponent.DefaultWidth} defaultHeight={ContourDialogComponent.DefaultHeight} enableResizing={true}>
+            <DraggableDialogComponent
+                dialogProps={dialogProps}
+                appStore={appStore}
+                helpType={HelpType.CONTOUR}
+                defaultWidth={ContourDialogComponent.DefaultWidth}
+                defaultHeight={ContourDialogComponent.DefaultHeight}
+                enableResizing={true}
+            >
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Data Source">
                         <DataSourceSelect

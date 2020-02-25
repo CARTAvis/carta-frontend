@@ -1,6 +1,6 @@
 import * as React from "react";
 import { observer } from "mobx-react";
-import {RootMenuComponent, SplashScreenComponent} from "components";
+import {RootMenuComponent, SplashScreenComponent, HelpDrawerComponent} from "components";
 import {
     AboutDialogComponent,
     AuthDialogComponent,
@@ -33,6 +33,7 @@ export class UIControllerComponent extends React.Component<{appStore: AppStore}>
                 <SaveLayoutDialogComponent appStore={appStore}/>
                 <FileInfoDialogComponent appStore={appStore}/>
                 <ContourDialogComponent appStore={appStore}/>
+                <HelpDrawerComponent appStore={appStore}/>
             </React.Fragment>
         );
     }

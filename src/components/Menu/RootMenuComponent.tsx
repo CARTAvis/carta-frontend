@@ -8,6 +8,7 @@ import {PresetLayout} from "models";
 import {AppStore, BrowserMode, PreferenceKeys} from "stores";
 import {ConnectionStatus} from "services";
 import {toFixed} from "utilities";
+import {CustomIcon} from "icons/CustomIcons";
 import "./RootMenuComponent.css";
 
 @observer
@@ -103,7 +104,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 />
                 <Menu.Item
                     text="Contours"
-                    icon={"heatmap"}
+                    icon={<CustomIcon icon="contour"/>}
                     onClick={appStore.dialogStore.showContourDialog}
                 />
             </Menu>
@@ -240,11 +241,16 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
             loadingIndicatorClass += " icon-visible";
         }
 
-        const loadingIndicator = (
-            <Tooltip content={loadingTooltipFragment}>
-                <Icon icon={"cloud-download"} className={loadingIndicatorClass}/>
-            </Tooltip>
-        );
+        let loadingIndicator;
+        if (loadingTooltipFragment) {
+            loadingIndicator = (
+                <Tooltip content={loadingTooltipFragment}>
+                    <Icon icon={"cloud-download"} className={loadingIndicatorClass}/>
+                </Tooltip>
+            );
+        } else {
+            loadingIndicator = <Icon icon={"cloud-download"} className={loadingIndicatorClass}/>;
+        }
 
         return (
             <div className="root-menu">
@@ -291,7 +297,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
     }
 
     handleDocumentationClicked = () => {
-        window.open("https://carta.readthedocs.io/en/latest", "_blank", "width=1024");
+        window.open("https://carta.readthedocs.io/en/1.3", "_blank", "width=1024");
         if (process.env.REACT_APP_TARGET !== "linux" && process.env.REACT_APP_TARGET !== "darwin") {
             this.documentationAlertVisible = true;
             clearTimeout(this.documentationAlertTimeoutHandle);

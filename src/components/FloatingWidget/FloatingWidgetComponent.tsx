@@ -132,6 +132,13 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                         </Tooltip>
                     </div>
                     }
+                    {widgetConfig.helpType &&
+                    <div className={buttonClass} onClick={() => appStore.helpStore.showHelpDrawer(widgetConfig.helpType)}>
+                        <Tooltip content="Help" position={Position.BOTTOM_RIGHT}>
+                            <Icon icon={"help"}/>
+                        </Tooltip>
+                    </div>
+                    }
                     {this.props.showPinButton &&
                     <div className={buttonClass} ref={ref => this.pinElementRef = ref} onClick={() => console.log("pin!")}>
                         <Tooltip content="Drag pin to dock this widget" position={Position.BOTTOM_RIGHT}>

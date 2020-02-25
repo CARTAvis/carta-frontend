@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {AppStore, WidgetConfig} from "stores";
+import {AppStore, WidgetConfig, HelpType} from "stores";
 import "./PlaceholderComponent.css";
 
 class PlaceholderComponentProps {
@@ -22,7 +22,8 @@ export class PlaceholderComponent extends React.Component<PlaceholderComponentPr
             defaultWidth: 300,
             defaultHeight: 225,
             title: "Placeholder",
-            isCloseable: true
+            isCloseable: true,
+            helpType: HelpType.PLACEHOLDER
         };
     }
 

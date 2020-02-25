@@ -7,7 +7,7 @@ import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps} from "stores";
+import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps, HelpType} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
@@ -27,7 +27,8 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
             defaultWidth: 650,
             defaultHeight: 225,
             title: "X Profile: Cursor",
-            isCloseable: true
+            isCloseable: true,
+            helpType: HelpType.SPATIAL_PROFILER
         };
     }
 

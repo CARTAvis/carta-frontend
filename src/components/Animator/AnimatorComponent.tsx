@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {action, observable} from "mobx";
 import {Button, ButtonGroup, FormGroup, IconName, Menu, MenuItem, NonIdealState, NumberRange, NumericInput, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {AnimationMode, AnimationState, PlayMode, WidgetConfig, WidgetProps} from "stores";
+import {AnimationMode, AnimationState, PlayMode, WidgetConfig, WidgetProps, HelpType} from "stores";
 import "./AnimatorComponent.css";
 
 @observer
@@ -17,7 +17,8 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             defaultWidth: 650,
             defaultHeight: 180,
             title: "Animator",
-            isCloseable: true
+            isCloseable: true,
+            helpType: HelpType.ANIMATOR
         };
     }
 
