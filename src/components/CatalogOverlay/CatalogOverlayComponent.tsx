@@ -52,7 +52,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         [SystemType.FK5, {X : CatalogOverlay.RA, Y : CatalogOverlay.DEC}],
         [SystemType.ICRS, {X : CatalogOverlay.RA, Y : CatalogOverlay.DEC}],
         [SystemType.Galactic, {X : CatalogOverlay.GLAT, Y : CatalogOverlay.GLON}],
-        [SystemType.Ecliptic, {X : CatalogOverlay.GLAT, Y : CatalogOverlay.GLON}],
+        [SystemType.Ecliptic, {X : CatalogOverlay.ELAT, Y : CatalogOverlay.ELON}],
     ]);
 
     public static get WIDGET_CONFIG(): WidgetConfig {

@@ -19,7 +19,9 @@ export enum CatalogOverlay {
     RA = "RA",
     DEC = "DEC",
     GLAT = "GLAT",
-    GLON = "GLON"
+    GLON = "GLON",
+    ELON = "ELON",
+    ELAT = "ELAT"
 }
 
 export enum CatalogOverlayShape {
