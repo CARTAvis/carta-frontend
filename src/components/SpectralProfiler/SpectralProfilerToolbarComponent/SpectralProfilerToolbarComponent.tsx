@@ -18,6 +18,10 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
         this.props.widgetStore.setCoordinate(changeEvent.target.value);
     };
 
+    private handleFrameChanged = () => {
+        this.props.widgetStore.setCoordinate("z");
+    }
+
     public render() {
         const appStore = this.props.appStore;
         const widgetStore = this.props.widgetStore;
@@ -56,7 +60,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
 
         return (
             <div className="spectral-profiler-toolbar">
-                <RegionSelectorComponent widgetStore={widgetStore} appStore={appStore}/>
+                <RegionSelectorComponent widgetStore={widgetStore} appStore={appStore} onFrameChanged={this.handleFrameChanged}/>
                 <FormGroup label={"Statistic"} inline={true} disabled={!enableStatsSelect}>
                     <HTMLSelect value={enableStatsSelect ? widgetStore.statsType : CARTA.StatsType.Mean} options={profileStatsOptions} onChange={this.handleStatsChanged} disabled={!enableStatsSelect}/>
                 </FormGroup>

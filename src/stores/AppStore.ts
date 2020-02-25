@@ -1112,11 +1112,11 @@ export class AppStore {
     }
 
     private recalculateSpatialRequirements() {
-        if (!this.requiredFrame) {
+        if (!this.activeFrame) {
             return;
         }
 
-        const updatedRequirements = SpatialProfileWidgetStore.CalculateRequirementsMap(this.requiredFrame, this.widgetsStore.spatialProfileWidgets);
+        const updatedRequirements = SpatialProfileWidgetStore.CalculateRequirementsMap(this.activeFrame, this.widgetsStore.spatialProfileWidgets);
         const diffList = SpatialProfileWidgetStore.DiffSpatialRequirements(this.spatialRequirements, updatedRequirements);
         this.spatialRequirements = updatedRequirements;
 

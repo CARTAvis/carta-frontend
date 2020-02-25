@@ -8,7 +8,7 @@ import {RegionWidgetStore, RegionsType, RegionId, CURRENT_FILE_ID} from "stores/
 import "./RegionSelectorComponent.css";
 
 @observer
-export class RegionSelectorComponent extends React.Component<{ widgetStore: RegionWidgetStore, appStore: AppStore }> {
+export class RegionSelectorComponent extends React.Component<{ widgetStore: RegionWidgetStore, appStore: AppStore, onFrameChanged?: () => void }> {
 
     private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         const appStore = this.props.appStore;
@@ -17,6 +17,7 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
             const selectedFileId = parseInt(changeEvent.target.value);
             widgetStore.setFileId(selectedFileId);
             widgetStore.setRegionId(widgetStore.effectiveFrame.frameInfo.fileId, RegionId.ACTIVE);
+            this.props.onFrameChanged();
         }
     };
 
