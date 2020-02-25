@@ -15,7 +15,11 @@ export enum CatalogOverlay {
     Y = "Y",
     PlotSize = "Size",
     PlotShape = "Shape",
-    NULL = "Null"
+    NULL = "Null",
+    RA = "RA",
+    DEC = "DEC",
+    GLAT = "GLAT",
+    GLON = "GLON"
 }
 
 export enum CatalogOverlayShape {
@@ -84,7 +88,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.headerTableColumnWidts = [75, 75, 65, 100, null];
         // Todo auto set according catalog header
-        this.catalogFrame = SystemType.Galactic;
+        this.catalogFrame = SystemType.ICRS;
 
         const initTableRows = CatalogOverlayWidgetStore.InitTableRows;
         if (catalogInfo.dataSize < initTableRows) {
@@ -98,6 +102,14 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     @action setCatalogFrame(catalogFram: SystemType) {
         this.catalogFrame = catalogFram;
+        const x = this.xColumnRepresentation;
+        const y = this.yColumnRepresentation;
+        if (x) {
+            this.catalogControlHeader.get(x).representAs = CatalogOverlay.NULL;
+        }
+        if (y) {
+            this.catalogControlHeader.get(y).representAs = CatalogOverlay.NULL;
+        }
     }
 
     @action setUserFilter(userFilters: CARTA.CatalogFilterRequest) {

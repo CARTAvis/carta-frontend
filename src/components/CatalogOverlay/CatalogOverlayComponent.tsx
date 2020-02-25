@@ -8,7 +8,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
-import {WidgetConfig, WidgetProps, HelpType} from "stores";
+import {WidgetConfig, WidgetProps, HelpType, SystemType} from "stores";
 import {CatalogOverlayWidgetStore, CatalogOverlay, CatalogUpdateMode} from "stores/widgets";
 import {toFixed, getTableDataByType} from "utilities";
 import "./CatalogOverlayComponent.css";
@@ -45,6 +45,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         [CARTA.EntryType.LONGLONG, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NULL]],
         [CARTA.EntryType.STRING, [CatalogOverlay.NULL]],
         [CARTA.EntryType.UNKNOWN_TYPE, [CatalogOverlay.NULL]]
+    ]);
+
+    private readonly systemCoordinateMap = new Map<SystemType, {X: CatalogOverlay, Y: CatalogOverlay}>([
+        [SystemType.FK4, {X : CatalogOverlay.RA, Y : CatalogOverlay.DEC}],
+        [SystemType.FK5, {X : CatalogOverlay.RA, Y : CatalogOverlay.DEC}],
+        [SystemType.ICRS, {X : CatalogOverlay.RA, Y : CatalogOverlay.DEC}],
+        [SystemType.Galactic, {X : CatalogOverlay.GLAT, Y : CatalogOverlay.GLON}],
+        [SystemType.Ecliptic, {X : CatalogOverlay.GLAT, Y : CatalogOverlay.GLON}],
     ]);
 
     public static get WIDGET_CONFIG(): WidgetConfig {
@@ -166,11 +174,21 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const dataType = widgetStore.catalogHeader[controlHeader.dataIndex].dataType;
         const supportedRepresentations = CatalogOverlayComponent.DataTypeRepresentationMap.get(dataType);
         const disabled = !controlHeader.display;
+        const system = widgetStore.catalogFrame;
+        const coordinate = this.systemCoordinateMap.get(system);
         return (
             <Cell key={`cell_drop_down_${rowIndex}`}>
                 <React.Fragment>
                     <HTMLSelect className="bp3-minimal bp3-fill " value={controlHeader.representAs} disabled={disabled} onChange={changeEvent => this.handleHeaderRepresentationChange(changeEvent, columnName)}>
-                        {supportedRepresentations.map( representation => <option key={representation} value={representation}>{representation}</option>)}
+                        {supportedRepresentations.map( representation => {                           
+                            if (representation === CatalogOverlay.X) {
+                                return (<option key={representation} value={representation}>{coordinate.X}</option>);
+                            } else if (representation === CatalogOverlay.Y) {
+                                return (<option key={representation} value={representation}>{coordinate.Y}</option>);
+                            } else {
+                                return (<option key={representation} value={representation}>{representation}</option>);
+                            }   
+                        })}
                     </HTMLSelect>
                 </React.Fragment>
             </Cell>
