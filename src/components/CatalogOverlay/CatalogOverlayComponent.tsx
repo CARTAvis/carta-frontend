@@ -38,13 +38,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private catalogdataTableRef: Table;
     private controlHeaderTableRef: Table;
     private static readonly DataTypeRepresentationMap = new Map<CARTA.EntryType, Array<CatalogOverlay>>([
-        [CARTA.EntryType.BOOL, [CatalogOverlay.NULL]],
-        [CARTA.EntryType.DOUBLE, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NULL]],
-        [CARTA.EntryType.FLOAT, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NULL]],
-        [CARTA.EntryType.INT, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NULL]],
-        [CARTA.EntryType.LONGLONG, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NULL]],
-        [CARTA.EntryType.STRING, [CatalogOverlay.NULL]],
-        [CARTA.EntryType.UNKNOWN_TYPE, [CatalogOverlay.NULL]]
+        [CARTA.EntryType.BOOL, [CatalogOverlay.NONE]],
+        [CARTA.EntryType.DOUBLE, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
+        [CARTA.EntryType.FLOAT, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
+        [CARTA.EntryType.INT, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
+        [CARTA.EntryType.LONGLONG, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
+        [CARTA.EntryType.STRING, [CatalogOverlay.NONE]],
+        [CARTA.EntryType.UNKNOWN_TYPE, [CatalogOverlay.NONE]]
     ]);
 
     private readonly systemCoordinateMap = new Map<SystemType, {X: CatalogOverlay, Y: CatalogOverlay}>([
@@ -174,7 +174,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const dataType = widgetStore.catalogHeader[controlHeader.dataIndex].dataType;
         const supportedRepresentations = CatalogOverlayComponent.DataTypeRepresentationMap.get(dataType);
         const disabled = !controlHeader.display;
-        const system = widgetStore.catalogFrame;
+        const system = widgetStore.catalogSystem;
         const coordinate = this.systemCoordinateMap.get(system);
         return (
             <Cell key={`cell_drop_down_${rowIndex}`}>
@@ -421,7 +421,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             const yHeaderInfo = widgetStore.catalogHeader[yHeader.dataIndex];
             const wscCoordsX = getTableDataByType(widgetStore.catalogData, xHeaderInfo.dataType, xHeaderInfo.dataTypeIndex);
             const wcsCoordsY = getTableDataByType(widgetStore.catalogData, yHeaderInfo.dataType, yHeaderInfo.dataTypeIndex);
-            catalogStore.updateCatalogData(id, wscCoordsX, wcsCoordsY, wcs, xHeaderInfo.units, yHeaderInfo.units, widgetStore.catalogFrame);
+            catalogStore.updateCatalogData(id, wscCoordsX, wcsCoordsY, wcs, xHeaderInfo.units, yHeaderInfo.units, widgetStore.catalogSystem);
             catalogStore.updateCatalogColor(id, widgetStore.catalogColor);
             catalogStore.updateCatalogSize(id, widgetStore.catalogSize);
         }

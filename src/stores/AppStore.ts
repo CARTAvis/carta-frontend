@@ -928,7 +928,7 @@ export class AppStore {
                     const wcsCoordsX = getTableDataByType(catalogFilter.columnsData, xHeaderInfo.dataType, xHeaderInfo.dataTypeIndex);
                     const wcsCoordsY = getTableDataByType(catalogFilter.columnsData, yHeaderInfo.dataType, yHeaderInfo.dataTypeIndex);
                     const wcs = this.activeFrame.validWcs ? this.activeFrame.wcsInfo : 0;
-                    this.catalogStore.updateCatalogData(catalogWidgetId, wcsCoordsX, wcsCoordsY, wcs, xHeaderInfo.units, yHeaderInfo.units, catalogWidgetStore.catalogFrame);
+                    this.catalogStore.updateCatalogData(catalogWidgetId, wcsCoordsX, wcsCoordsY, wcs, xHeaderInfo.units, yHeaderInfo.units, catalogWidgetStore.catalogSystem);
                 }
             }
         }

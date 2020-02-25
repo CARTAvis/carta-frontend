@@ -15,7 +15,7 @@ export enum CatalogOverlay {
     Y = "Y",
     PlotSize = "Size",
     PlotShape = "Shape",
-    NULL = "Null",
+    NONE = "None",
     RA = "RA",
     DEC = "DEC",
     GLAT = "GLAT",
@@ -73,7 +73,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable plotingData: boolean;
     @observable updateMode: CatalogUpdateMode;
     @observable userFilters: CARTA.CatalogFilterRequest;
-    @observable catalogFrame: SystemType;
+    @observable catalogSystem: SystemType;
 
     constructor(appStore: AppStore, catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData) {
         super(appStore, RegionsType.CLOSED_AND_POINT);
@@ -90,7 +90,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.headerTableColumnWidts = [75, 75, 65, 100, null];
         // Todo auto set according catalog header
-        this.catalogFrame = SystemType.ICRS;
+        this.catalogSystem = SystemType.ICRS;
 
         const initTableRows = CatalogOverlayWidgetStore.InitTableRows;
         if (catalogInfo.dataSize < initTableRows) {
@@ -102,15 +102,15 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         }
     }
 
-    @action setCatalogFrame(catalogFram: SystemType) {
-        this.catalogFrame = catalogFram;
+    @action setCatalogSystem(catalogSystem: SystemType) {
+        this.catalogSystem = catalogSystem;
         const x = this.xColumnRepresentation;
         const y = this.yColumnRepresentation;
         if (x) {
-            this.catalogControlHeader.get(x).representAs = CatalogOverlay.NULL;
+            this.catalogControlHeader.get(x).representAs = CatalogOverlay.NONE;
         }
         if (y) {
-            this.catalogControlHeader.get(y).representAs = CatalogOverlay.NULL;
+            this.catalogControlHeader.get(y).representAs = CatalogOverlay.NONE;
         }
     }
 
@@ -167,25 +167,25 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                 case CatalogOverlay.X:
                     const currentX = this.xColumnRepresentation;
                     if (currentX) {
-                        this.catalogControlHeader.get(currentX).representAs = CatalogOverlay.NULL;
+                        this.catalogControlHeader.get(currentX).representAs = CatalogOverlay.NONE;
                     }
                     break;
                 case CatalogOverlay.Y:
                     const currentY = this.yColumnRepresentation;
                     if (currentY) {
-                        this.catalogControlHeader.get(currentY).representAs = CatalogOverlay.NULL;
+                        this.catalogControlHeader.get(currentY).representAs = CatalogOverlay.NONE;
                     }
                     break;
                 case CatalogOverlay.PlotSize:
                     const currentSize = this.sizeColumnRepresentation;
                     if (currentSize) {
-                        this.catalogControlHeader.get(currentSize).representAs = CatalogOverlay.NULL;
+                        this.catalogControlHeader.get(currentSize).representAs = CatalogOverlay.NONE;
                     }
                     break;
                 case CatalogOverlay.PlotShape:
                     const currentShape = this.shapeColumnRepresentation;
                     if (currentShape) {
-                        this.catalogControlHeader.get(currentShape).representAs = CatalogOverlay.NULL;
+                        this.catalogControlHeader.get(currentShape).representAs = CatalogOverlay.NONE;
                     }
                     break;     
                 default:
@@ -278,7 +278,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                     display = true;
                 }
                 // Todo: set default x and y representation 
-                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, representAs: CatalogOverlay.NULL, filter: undefined, columnWidth: null};
+                let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, representAs: CatalogOverlay.NONE, filter: undefined, columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
         }

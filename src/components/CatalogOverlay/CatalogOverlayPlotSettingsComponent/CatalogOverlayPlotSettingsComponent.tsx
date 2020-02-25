@@ -12,6 +12,14 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
     private readonly MinOverlaySize = 1;
     private readonly MaxOverlaySize = 100;
 
+    private static readonly CoordinateSystemName = new Map<SystemType, string>([
+        [SystemType.FK5, "FK5"],
+        [SystemType.FK4, "FK4"],
+        [SystemType.Galactic, "GAL"],
+        [SystemType.Ecliptic, "ECL"],
+        [SystemType.ICRS, "ICRS"],
+    ]);
+
     private handleHeaderRepresentationChange(changeEvent: any) {
         const val = changeEvent.currentTarget.value;
         this.props.widgetStore.setCatalogShape(val);
@@ -31,23 +39,23 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
 
     private handleHeaderCatalogFramChange(changeEvent: any) {
         const val = changeEvent.currentTarget.value;
-        this.props.widgetStore.setCatalogFrame(val);
+        this.props.widgetStore.setCatalogSystem(val);
     }
 
     public render() {
         const appStore = this.props.appStore;
         const widgetStore = this.props.widgetStore;
 
+        let systemOptions =[];
+        CatalogOverlayPlotSettingsComponent.CoordinateSystemName.forEach((value, key) => {
+            systemOptions.push(<option key={key} value={key}>{value}</option>)
+        })
+
         return (
             <div className="catalog-overlay-plot-settings">
-                <FormGroup  inline={true} label="Frame">
-                    <HTMLSelect className="bp3-fill" value={widgetStore.catalogFrame} onChange={changeEvent => this.handleHeaderCatalogFramChange(changeEvent)}>
-                        {Object.keys(SystemType).map(key => {
-                            if (SystemType[key] === SystemType.Auto) {
-                                return null;
-                            }
-                            return (<option key={key} value={SystemType[key]}>{SystemType[key]}</option>);
-                        })}
+                <FormGroup  inline={true} label="System">
+                    <HTMLSelect className="bp3-fill" value={widgetStore.catalogSystem} onChange={changeEvent => this.handleHeaderCatalogFramChange(changeEvent)}>
+                        {systemOptions}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup label={"Color"} inline={true}>
