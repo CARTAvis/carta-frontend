@@ -48,7 +48,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed get profileStore(): SpectralProfileStore {
-        if (this.props.appStore && this.props.appStore.activeFrame && this.widgetStore.effectiveFrame) {
+        if (this.props.appStore && this.widgetStore.effectiveFrame) {
             let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
             const regionId = this.widgetStore.effectiveRegionId;
             this.props.appStore.setRequiredFrame(this.widgetStore.effectiveFrame);
@@ -66,7 +66,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             return null;
         }
 
-        const fileId = frame.frameInfo.fileId;
         let coordinateData: ProcessedSpectralProfile;
         let regionId = this.widgetStore.effectiveRegionId;
         if (frame.regionSet) {

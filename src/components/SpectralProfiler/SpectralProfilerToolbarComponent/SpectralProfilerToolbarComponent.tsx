@@ -30,8 +30,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
         let enableStokesSelect = false;
         let regionId = 0;
 
-        if (appStore.activeFrame && widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
-            let fileId = appStore.activeFrame.frameInfo.fileId;
+        if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
             regionId = widgetStore.effectiveRegionId;
 
             const selectedRegion = widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);

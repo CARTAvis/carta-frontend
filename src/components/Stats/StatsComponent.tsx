@@ -43,7 +43,7 @@ export class StatsComponent extends React.Component<WidgetProps> {
 
     @computed get statsData(): CARTA.RegionStatsData {
         const appStore = this.props.appStore;
-        if (appStore.activeFrame && this.widgetStore.effectiveFrame) {
+        if (this.widgetStore.effectiveFrame) {
             let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
             let regionId = this.widgetStore.effectiveRegionId;
             appStore.setRequiredFrame(this.widgetStore.effectiveFrame);

@@ -17,7 +17,9 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
             const selectedFileId = parseInt(changeEvent.target.value);
             widgetStore.setFileId(selectedFileId);
             widgetStore.setRegionId(widgetStore.effectiveFrame.frameInfo.fileId, RegionId.ACTIVE);
-            this.props.onFrameChanged();
+            if (this.props.onFrameChanged) {
+                this.props.onFrameChanged();
+            }
         }
     };
 
@@ -49,7 +51,7 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
         let selectedValue: number = RegionId.ACTIVE;
         let regionOptions: IOptionProps[] = [{value: RegionId.ACTIVE, label: "Active"}];
 
-        if (appStore.activeFrame && widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
+        if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
             if (widgetStore.type === RegionsType.CLOSED) {
                 regionOptions = regionOptions.concat([{value: RegionId.IMAGE, label: "Image"}]);
             }
