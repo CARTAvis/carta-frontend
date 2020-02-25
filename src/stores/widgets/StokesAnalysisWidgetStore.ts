@@ -235,8 +235,8 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         // if type/unit/specsys changes, trigger transformation
         autorun(() => {
             const frame = this.effectiveFrame;
-            if (frame && frame.channelInfo && this.isSpectralSettingsSupported) {
-                if (this.isCoordChannel) {
+            if (frame && frame.channelInfo) {
+                if (this.isCoordChannel || !this.isSpectralSettingsSupported) {
                     this.channelValues = frame.channelInfo.indexes;
                 } else {
                     this.channelValues = this.isSpectralPropsEqual ? frame.channelInfo.values : this.convertSpectral(frame.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, frame.channelInfo.values);
