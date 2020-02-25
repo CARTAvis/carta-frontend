@@ -3,9 +3,8 @@ import {Colors} from "@blueprintjs/core";
 import * as AST from "ast_wrapper";
 import {CARTA} from "carta-protobuf";
 import {AppStore, BeamType, ContourGeneratorType, FrameScaling, RenderConfigStore, RegionStore} from "stores";
-import {Theme, PresetLayout, CursorPosition, Zoom, ZoomPoint, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
+import {Theme, PresetLayout, CursorPosition, Zoom, ZoomPoint, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event, ControlMap, SpectralType, IsSpectralMatchingTypeValid} from "models";
 import {isColorValid, parseBoolean} from "utilities";
-import {ControlMap} from "../models/ControlMap";
 
 export enum PreferenceKeys {
     GLOBAL_THEME = 1,
@@ -15,6 +14,7 @@ export enum PreferenceKeys {
     GLOBAL_ZOOM_MODE,
     GLOBAL_ZOOM_POINT,
     GLOBAL_DRAG_PANNING,
+    GLOBAL_SPECTRAL_MATCHING_TYPE,
 
     RENDER_CONFIG_SCALING,
     RENDER_CONFIG_COLORMAP,
@@ -71,6 +71,7 @@ const KEY_TO_STRING = new Map<PreferenceKeys, string>([
     [PreferenceKeys.GLOBAL_ZOOM_MODE, "zoomMode"],
     [PreferenceKeys.GLOBAL_ZOOM_POINT, "zoomPoint"],
     [PreferenceKeys.GLOBAL_DRAG_PANNING, "dragPanning"],
+    [PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, "spectralMatchingType"],
 
     [PreferenceKeys.RENDER_CONFIG_SCALING, "scaling"],
     [PreferenceKeys.RENDER_CONFIG_COLORMAP, "colormap"],
@@ -128,6 +129,7 @@ const DEFAULTS = {
         zoomMode: Zoom.FIT,
         zoomPoint: ZoomPoint.CURSOR,
         dragPanning: true,
+        spectralMatchingType: SpectralType.VRAD
     },
     RENDER_CONFIG: {
         scaling: FrameScaling.LINEAR,
@@ -197,6 +199,7 @@ export class PreferenceStore {
         [PreferenceKeys.GLOBAL_ZOOM_MODE, (value: string): string => { return value && Zoom.isValid(value) ? value : DEFAULTS.GLOBAL.zoomMode; }],
         [PreferenceKeys.GLOBAL_ZOOM_POINT, (value: string): string => { return value && ZoomPoint.isValid(value) ? value : DEFAULTS.GLOBAL.zoomPoint; }],
         [PreferenceKeys.GLOBAL_DRAG_PANNING, (value: string): boolean => { return value === "false" ? false : DEFAULTS.GLOBAL.dragPanning; }],
+        [PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, (value: SpectralType): string => { return IsSpectralMatchingTypeValid(value) ? value : DEFAULTS.GLOBAL.spectralMatchingType; }],
 
         [PreferenceKeys.RENDER_CONFIG_SCALING, (value: string): number => { return value && isFinite(Number(value)) && RenderConfigStore.IsScalingValid(Number(value)) ? Number(value) : DEFAULTS.RENDER_CONFIG.scaling; }],
         [PreferenceKeys.RENDER_CONFIG_COLORMAP, (value: string): string => { return value && RenderConfigStore.IsColormapValid(value) ? value : DEFAULTS.RENDER_CONFIG.colormap; }],
@@ -284,6 +287,10 @@ export class PreferenceStore {
 
     @computed get dragPanning(): boolean {
         return this.preferences.get(PreferenceKeys.GLOBAL_DRAG_PANNING);
+    }
+
+    @computed get spectralMatchingType(): SpectralType {
+        return this.preferences.get(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE);
     }
 
     // getters for render config
@@ -538,6 +545,7 @@ export class PreferenceStore {
         this.setPreference(PreferenceKeys.GLOBAL_ZOOM_MODE, DEFAULTS.GLOBAL.zoomMode);
         this.setPreference(PreferenceKeys.GLOBAL_ZOOM_POINT, DEFAULTS.GLOBAL.zoomPoint);
         this.setPreference(PreferenceKeys.GLOBAL_DRAG_PANNING, DEFAULTS.GLOBAL.dragPanning);
+        this.setPreference(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, DEFAULTS.GLOBAL.spectralMatchingType);
     };
 
     @action resetRenderConfigSettings = () => {
@@ -621,6 +629,7 @@ export class PreferenceStore {
             [PreferenceKeys.GLOBAL_ZOOM_MODE, DEFAULTS.GLOBAL.zoomMode],
             [PreferenceKeys.GLOBAL_ZOOM_POINT, DEFAULTS.GLOBAL.zoomPoint],
             [PreferenceKeys.GLOBAL_DRAG_PANNING, DEFAULTS.GLOBAL.dragPanning],
+            [PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, DEFAULTS.GLOBAL.spectralMatchingType],
 
             [PreferenceKeys.RENDER_CONFIG_SCALING, DEFAULTS.RENDER_CONFIG.scaling],
             [PreferenceKeys.RENDER_CONFIG_COLORMAP, DEFAULTS.RENDER_CONFIG.colormap],

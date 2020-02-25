@@ -234,7 +234,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 }
             }
             if (nearestIndex !== null && nearestIndex !== undefined) {
-                frame.setChannels(nearestIndex, frame.requiredStokes);
+                frame.setChannels(nearestIndex, frame.requiredStokes, true);
             }
         }
     };
