@@ -32,7 +32,7 @@ import {
     WidgetsStore,
     HelpStore
 } from ".";
-import {GetRequiredTiles} from "utilities";
+import {distinct, GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
@@ -359,16 +359,19 @@ export class AppStore {
     };
 
     @action closeCurrentFile = (confirmClose: boolean = true) => {
+        if (!this.activeFrame) {
+            return;
+        }
+
         // Display confirmation if image has secondary images
-        if (confirmClose && this.activeFrame && this.activeFrame.secondarySpatialImages && this.activeFrame.secondarySpatialImages.length) {
-            const numSecondaries = this.activeFrame.secondarySpatialImages.length;
-            this.alertStore.showInteractiveAlert(
-                `${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} spatially matched to this image will be unmatched and regions will be removed.`,
-                (confirmed => {
-                    if (confirmed) {
-                        this.removeFrame(this.activeFrame);
-                    }
-                }));
+        const secondaries = this.activeFrame.secondarySpatialImages.concat(this.activeFrame.secondarySpectralImages).filter(distinct);
+        const numSecondaries = secondaries.length;
+        if (confirmClose && numSecondaries) {
+            this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`, confirmed => {
+                if (confirmed) {
+                    this.removeFrame(this.activeFrame);
+                }
+            });
         } else {
             this.removeFrame(this.activeFrame);
         }
@@ -377,19 +380,15 @@ export class AppStore {
     @action removeFrame = (frame: FrameStore) => {
         if (frame) {
             // Unlink any associated secondary images
-            if (frame.secondarySpatialImages) {
-                // Create a copy of the array, since clearing the spatial reference will modify it
-                const secondaryImages = frame.secondarySpatialImages.slice();
-                for (const f of secondaryImages) {
-                    f.clearSpatialReference();
-                }
+            // Create a copy of the array, since clearing the spatial reference will modify it
+            const secondarySpatialImages = frame.secondarySpatialImages.slice();
+            for (const f of secondarySpatialImages) {
+                f.clearSpatialReference();
             }
-            if (frame.secondarySpectralImages) {
-                // Create a copy of the array, since clearing the spatial reference will modify it
-                const secondaryImages = frame.secondarySpectralImages.slice();
-                for (const f of secondaryImages) {
-                    f.clearSpectralReference();
-                }
+            // Create a copy of the array, since clearing the spatial reference will modify it
+            const secondarySpectralImages = frame.secondarySpectralImages.slice();
+            for (const f of secondarySpectralImages) {
+                f.clearSpectralReference();
             }
 
             const removedFrameIsSpatialReference = frame === this.spatialReference;
@@ -675,6 +674,10 @@ export class AppStore {
                 const tileSizeFullRes = reqView.mip * 256;
                 const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
                 this.throttledSetView(tiles, this.activeFrame.frameInfo.fileId, this.activeFrame.channel, this.activeFrame.stokes, midPointTileCoords);
+            }
+
+            if (!this.activeFrame) {
+                this.widgetsStore.updateImageWidgetTitle();
             }
         });
 

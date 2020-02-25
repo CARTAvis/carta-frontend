@@ -351,15 +351,11 @@ export class FrameStore {
         if (this.spectralReference) {
             let siblings = [];
             siblings.push(this.spectralReference);
-            if (this.spectralReference.secondarySpectralImages) {
-                siblings.push(...this.spectralReference.secondarySpectralImages.slice().filter(f => f !== this));
-            }
+            siblings.push(...this.spectralReference.secondarySpectralImages.slice().filter(f => f !== this));
             return siblings;
-        } else if (this.secondarySpectralImages) {
+        } else {
             return this.secondarySpectralImages.slice();
         }
-
-        return [];
     }
 
     @computed
@@ -448,6 +444,8 @@ export class FrameStore {
         this.overlayBeamSettings = new OverlayBeamStore(preference);
         this.spatialTransformAST = null;
         this.controlMaps = new Map<FrameStore, ControlMap>();
+        this.secondarySpatialImages = [];
+        this.secondarySpectralImages = [];
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preference.astColor;
@@ -1021,17 +1019,13 @@ export class FrameStore {
     };
 
     @action addSecondarySpatialImage = (frame: FrameStore) => {
-        if (!this.secondarySpatialImages) {
-            this.secondarySpatialImages = [frame];
-        } else if (!this.secondarySpatialImages.find(f => f.frameInfo.fileId === frame.frameInfo.fileId)) {
+        if (!this.secondarySpatialImages.find(f => f.frameInfo.fileId === frame.frameInfo.fileId)) {
             this.secondarySpatialImages.push(frame);
         }
     };
 
     @action removeSecondarySpatialImage = (frame: FrameStore) => {
-        if (this.secondarySpatialImages) {
-            this.secondarySpatialImages = this.secondarySpatialImages.filter(f => f.frameInfo.fileId !== frame.frameInfo.fileId);
-        }
+        this.secondarySpatialImages = this.secondarySpatialImages.filter(f => f.frameInfo.fileId !== frame.frameInfo.fileId);
     };
 
     // Spectral WCS matching
@@ -1095,16 +1089,12 @@ export class FrameStore {
     };
 
     @action addSecondarySpectralImage = (frame: FrameStore) => {
-        if (!this.secondarySpectralImages) {
-            this.secondarySpectralImages = [frame];
-        } else if (!this.secondarySpectralImages.find(f => f.frameInfo.fileId === frame.frameInfo.fileId)) {
+        if (!this.secondarySpectralImages.find(f => f.frameInfo.fileId === frame.frameInfo.fileId)) {
             this.secondarySpectralImages.push(frame);
         }
     };
 
     @action removeSecondarySpectralImage = (frame: FrameStore) => {
-        if (this.secondarySpectralImages) {
-            this.secondarySpectralImages = this.secondarySpectralImages.filter(f => f.frameInfo.fileId !== frame.frameInfo.fileId);
-        }
+        this.secondarySpectralImages = this.secondarySpectralImages.filter(f => f.frameInfo.fileId !== frame.frameInfo.fileId);
     };
 }
