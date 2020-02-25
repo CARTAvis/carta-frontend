@@ -608,8 +608,7 @@ export class AppStore {
                 const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
                 this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.preferenceStore.imageCompressionQuality, true);
             } else {
-                // Update inactive channels
-                this.backendService.setChannels(frame.frameInfo.fileId, frame.channel, frame.stokes, {});
+                this.tileService.updateInactiveFileChannel(frame.frameInfo.fileId, frame.channel, frame.stokes);
             }
         });
     }, AppStore.ImageChannelThrottleTime);
