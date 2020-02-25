@@ -284,19 +284,15 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
         const contourFrames = this.props.appStore.contourFrames;
         for (const frame of contourFrames) {
-            if (frame) {
-                const contourData = frame.contourStores;
-                const config = frame.contourConfig;
-                const thickness = config.thickness;
-                const color = config.colormapEnabled ? config.colormap : config.color;
-                const dashMode = config.dashMode;
-                const bias = config.colormapBias;
-                const contrast = config.colormapContrast;
-
-                contourData.forEach(contourStore => {
-                    const numVertices = contourStore.vertexCount;
-                });
-            }
+            const config = frame.contourConfig;
+            const thickness = config.thickness;
+            const color = config.colormapEnabled ? config.colormap : config.color;
+            const dashMode = config.dashMode;
+            const bias = config.colormapBias;
+            const contrast = config.colormapContrast;
+            frame.contourStores.forEach(contourStore => {
+                const numVertices = contourStore.vertexCount;
+            });
         }
 
         const padding = this.props.overlaySettings.padding;
