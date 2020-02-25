@@ -57,8 +57,8 @@ export function getTransformedChannel(srcTransform: number, destTransform: numbe
     }
 
     // Set spectral system for both transforms
-    AST.set(srcTransform, `System=${matchingType}`);
-    AST.set(destTransform, `System=${matchingType}`);
+    AST.set(srcTransform, `System=${matchingType}, StdOfRest=Helio`);
+    AST.set(destTransform, `System=${matchingType}, StdOfRest=Helio`);
     // Get spectral value from forward transform. Adjust for 1-based index
     const sourceSpectralValue = AST.transform3DPoint(srcTransform, 1, 1, srcChannel + 1, true);
     if (!sourceSpectralValue || !isFinite(sourceSpectralValue.z)) {
