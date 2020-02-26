@@ -164,7 +164,6 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     columnWidths={this.columnWidths}
                     enableColumnResizing={true}
                     onColumnWidthChanged={this.onColumnWidthsChange}
-
                 >
                     <Column
                         columnHeaderCellRenderer={this.columnHeaderRenderer}
