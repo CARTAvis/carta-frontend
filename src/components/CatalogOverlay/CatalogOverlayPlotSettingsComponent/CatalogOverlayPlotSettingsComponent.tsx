@@ -37,24 +37,24 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
         this.props.appStore.catalogStore.updateCatalogColor(this.props.id, color);
     }
 
-    private handleHeaderCatalogFramChange(changeEvent: any) {
+    private handleHeaderCatalogSystemChange(changeEvent: any) {
         const val = changeEvent.currentTarget.value;
-        this.props.widgetStore.setCatalogSystem(val);
+        this.props.widgetStore.setCatalogCoordinateSystem(val);
     }
 
     public render() {
         const appStore = this.props.appStore;
         const widgetStore = this.props.widgetStore;
 
-        let systemOptions =[];
+        let systemOptions = [];
         CatalogOverlayPlotSettingsComponent.CoordinateSystemName.forEach((value, key) => {
-            systemOptions.push(<option key={key} value={key}>{value}</option>)
-        })
+            systemOptions.push(<option key={key} value={key}>{value}</option>);
+        });
 
         return (
             <div className="catalog-overlay-plot-settings">
                 <FormGroup  inline={true} label="System">
-                    <HTMLSelect className="bp3-fill" value={widgetStore.catalogSystem} onChange={changeEvent => this.handleHeaderCatalogFramChange(changeEvent)}>
+                    <HTMLSelect className="bp3-fill" value={widgetStore.catalogCoordinateSystem.system} onChange={changeEvent => this.handleHeaderCatalogSystemChange(changeEvent)}>
                         {systemOptions}
                     </HTMLSelect>
                 </FormGroup>

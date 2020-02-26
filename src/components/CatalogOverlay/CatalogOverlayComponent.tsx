@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {autorun, computed, observable} from "mobx";
+import {autorun, computed, observable, action, values} from "mobx";
 import {observer} from "mobx-react";
 import {Switch, HTMLSelect, AnchorButton, Intent, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Table, SelectionModes, RenderMode} from "@blueprintjs/table";
@@ -8,7 +8,7 @@ import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
-import {WidgetConfig, WidgetProps, HelpType, SystemType} from "stores";
+import {WidgetConfig, WidgetProps, HelpType} from "stores";
 import {CatalogOverlayWidgetStore, CatalogOverlay, CatalogUpdateMode} from "stores/widgets";
 import {toFixed, getTableDataByType} from "utilities";
 import "./CatalogOverlayComponent.css";
@@ -35,6 +35,9 @@ enum ComparisonOperator {
 
 @observer
 export class CatalogOverlayComponent extends React.Component<WidgetProps> {
+    @observable width: number;
+    @observable height: number;
+    @observable coordinate: {x: CatalogOverlay, y: CatalogOverlay};
     private catalogdataTableRef: Table;
     private controlHeaderTableRef: Table;
     private static readonly DataTypeRepresentationMap = new Map<CARTA.EntryType, Array<CatalogOverlay>>([
@@ -45,14 +48,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         [CARTA.EntryType.LONGLONG, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
         [CARTA.EntryType.STRING, [CatalogOverlay.NONE]],
         [CARTA.EntryType.UNKNOWN_TYPE, [CatalogOverlay.NONE]]
-    ]);
-
-    private readonly systemCoordinateMap = new Map<SystemType, {X: CatalogOverlay, Y: CatalogOverlay}>([
-        [SystemType.FK4, {X : CatalogOverlay.RA, Y : CatalogOverlay.DEC}],
-        [SystemType.FK5, {X : CatalogOverlay.RA, Y : CatalogOverlay.DEC}],
-        [SystemType.ICRS, {X : CatalogOverlay.RA, Y : CatalogOverlay.DEC}],
-        [SystemType.Galactic, {X : CatalogOverlay.GLON, Y : CatalogOverlay.GLAT}],
-        [SystemType.Ecliptic, {X : CatalogOverlay.ELON, Y : CatalogOverlay.ELAT}],
     ]);
 
     public static get WIDGET_CONFIG(): WidgetConfig {
@@ -68,9 +63,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             helpType: HelpType.CATALOG_OVERLAY
         };
     }
-
-    @observable width: number;
-    @observable height: number;
 
     @computed get widgetStore(): CatalogOverlayWidgetStore {
         const widgetStore = this.props.appStore.widgetsStore.catalogOverlayWidgets.get(this.props.id); 
@@ -174,17 +166,16 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const dataType = widgetStore.catalogHeader[controlHeader.dataIndex].dataType;
         const supportedRepresentations = CatalogOverlayComponent.DataTypeRepresentationMap.get(dataType);
         const disabled = !controlHeader.display;
-        const system = widgetStore.catalogSystem;
-        const coordinate = this.systemCoordinateMap.get(system);
+
         return (
             <Cell key={`cell_drop_down_${rowIndex}`}>
                 <React.Fragment>
                     <HTMLSelect className="bp3-minimal bp3-fill " value={controlHeader.representAs} disabled={disabled} onChange={changeEvent => this.handleHeaderRepresentationChange(changeEvent, columnName)}>
                         {supportedRepresentations.map( representation => {                           
                             if (representation === CatalogOverlay.X) {
-                                return (<option key={representation} value={representation}>{coordinate.X}</option>);
+                                return (<option key={representation} value={representation}>{this.coordinate.x}</option>);
                             } else if (representation === CatalogOverlay.Y) {
-                                return (<option key={representation} value={representation}>{coordinate.Y}</option>);
+                                return (<option key={representation} value={representation}>{this.coordinate.y}</option>);
                             } else {
                                 return (<option key={representation} value={representation}>{representation}</option>);
                             }   
@@ -421,7 +412,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             const yHeaderInfo = widgetStore.catalogHeader[yHeader.dataIndex];
             const wscCoordsX = getTableDataByType(widgetStore.catalogData, xHeaderInfo.dataType, xHeaderInfo.dataTypeIndex);
             const wcsCoordsY = getTableDataByType(widgetStore.catalogData, yHeaderInfo.dataType, yHeaderInfo.dataTypeIndex);
-            catalogStore.updateCatalogData(id, wscCoordsX, wcsCoordsY, wcs, xHeaderInfo.units, yHeaderInfo.units, widgetStore.catalogSystem);
+            catalogStore.updateCatalogData(id, wscCoordsX, wcsCoordsY, wcs, xHeaderInfo.units, yHeaderInfo.units, widgetStore.catalogCoordinateSystem.system);
             catalogStore.updateCatalogColor(id, widgetStore.catalogColor);
             catalogStore.updateCatalogSize(id, widgetStore.catalogSize);
         }
@@ -436,6 +427,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     public render() {
         const appStore = this.props.appStore;
         const widgetStore = this.widgetStore;
+        this.coordinate = widgetStore.catalogCoordinateSystem.coordinate;
         const dataTableProps: TableComponentProps = {
             type: TableType.ColumnFilter,
             dataset: widgetStore.catalogData,

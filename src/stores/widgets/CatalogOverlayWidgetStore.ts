@@ -1,4 +1,4 @@
-import {action, computed, observable, has} from "mobx";
+import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
@@ -39,6 +39,14 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     public static readonly InitTableRows = 50;
     private static readonly DataChunkSize = 50;
+    private systemCoordinateMap = new Map<SystemType, {x: CatalogOverlay, y: CatalogOverlay}>([
+        [SystemType.FK4, {x : CatalogOverlay.RA, y : CatalogOverlay.DEC}],
+        [SystemType.FK5, {x : CatalogOverlay.RA, y : CatalogOverlay.DEC}],
+        [SystemType.ICRS, {x : CatalogOverlay.RA, y : CatalogOverlay.DEC}],
+        [SystemType.Galactic, {x : CatalogOverlay.GLON, y : CatalogOverlay.GLAT}],
+        [SystemType.Ecliptic, {x : CatalogOverlay.ELON, y : CatalogOverlay.ELAT}],
+    ]);
+
     private readonly InitialedColumnsKeyWords = [
         "ANGULAR DISTANCE",
         "MAIN IDENTIFIER", 
@@ -54,8 +62,6 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     private InitialedDECColumnsKeyWords = [
         "DECLINATION", "DEC", "Dec."
     ];
-    
-    @observable imageCoordinates: Float32Array[];
     
     @observable progress: number;
     @observable catalogInfo: CatalogInfo;
@@ -73,7 +79,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable plotingData: boolean;
     @observable updateMode: CatalogUpdateMode;
     @observable userFilters: CARTA.CatalogFilterRequest;
-    @observable catalogSystem: SystemType;
+    @observable catalogCoordinateSystem: {system: SystemType, coordinate: {x: CatalogOverlay, y: CatalogOverlay}};
 
     constructor(appStore: AppStore, catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData) {
         super(appStore, RegionsType.CLOSED_AND_POINT);
@@ -86,11 +92,9 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogSize = 3;
         this.userFilters = this.initUserFilters;
         this.plotingData = false;
-        this.imageCoordinates = [];
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.headerTableColumnWidts = [75, 75, 65, 100, null];
-        // Todo auto set according catalog header
-        this.catalogSystem = SystemType.ICRS;
+        this.catalogCoordinateSystem = {system: SystemType.ICRS, coordinate: this.systemCoordinateMap.get(SystemType.ICRS)};
 
         const initTableRows = CatalogOverlayWidgetStore.InitTableRows;
         if (catalogInfo.dataSize < initTableRows) {
@@ -102,8 +106,8 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         }
     }
 
-    @action setCatalogSystem(catalogSystem: SystemType) {
-        this.catalogSystem = catalogSystem;
+    @action setCatalogCoordinateSystem(catalogSystem: SystemType) {
+        this.catalogCoordinateSystem.system = catalogSystem;
         const x = this.xColumnRepresentation;
         const y = this.yColumnRepresentation;
         if (x) {
@@ -112,6 +116,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         if (y) {
             this.catalogControlHeader.get(y).representAs = CatalogOverlay.NONE;
         }
+        this.catalogCoordinateSystem.coordinate = this.systemCoordinateMap.get(catalogSystem);
     }
 
     @action setUserFilter(userFilters: CARTA.CatalogFilterRequest) {
@@ -260,7 +265,6 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.userFilters = this.initUserFilters;
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.plotingData = false;
-        this.imageCoordinates = [];
     }
 
     @computed get loading() {
