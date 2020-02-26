@@ -481,7 +481,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                             <Button text={frame.frameInfo.fileInfo.name} rightIcon="double-caret-vertical" alignText={"right"}/>
                         </DataSourceSelect>
                     </FormGroup>
-                    <Tabs defaultSelectedTabId={ContourDialogTabs.Levels} renderActiveTabPanelOnly={true}>
+                    <Tabs defaultSelectedTabId={ContourDialogTabs.Levels} renderActiveTabPanelOnly={false}>
                         <Tab id={ContourDialogTabs.Levels} title="Levels" panel={levelPanel} panelClassName="contour-level-panel"/>
                         <Tab id={ContourDialogTabs.Configuration} title="Configuration" panel={configPanel} panelClassName="contour-config-panel"/>
                         <Tab id={ContourDialogTabs.Styling} title="Styling" panel={<ContourStylePanelComponent frame={frame} darkTheme={appStore.darkTheme}/>}/>

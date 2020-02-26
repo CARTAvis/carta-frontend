@@ -66,7 +66,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell/>;
         }
-        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].channel}</Cell>;
+        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].requiredChannel}</Cell>;
     };
 
     private stokesRenderer = (rowIndex: number) => {
@@ -74,7 +74,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell/>;
         }
-        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].stokes}</Cell>;
+        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].requiredStokes}</Cell>;
     };
 
     private typeRenderer = (rowIndex: number) => {

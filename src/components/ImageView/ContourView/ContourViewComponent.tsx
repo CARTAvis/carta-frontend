@@ -280,7 +280,6 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
         const frame = this.props.appStore.activeFrame;
         if (frame) {
             const view = frame.requiredFrameView;
-            const contourData = frame.contourStores;
             const config = frame.contourConfig;
             const thickness = config.thickness;
             const color = config.colormapEnabled ? config.colormap : config.color;
@@ -289,10 +288,9 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             const contrast = config.colormapContrast;
 
             const contourFrames = this.props.appStore.contourFrames;
-
-            contourData.forEach(contourStore => {
+            contourFrames.forEach(f => f.contourStores.forEach(contourStore => {
                 const numVertices = contourStore.vertexCount;
-            });
+            }));
         }
         const padding = this.props.overlaySettings.padding;
         let className = "contour-div";

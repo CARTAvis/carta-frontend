@@ -318,6 +318,22 @@ EMSCRIPTEN_KEEPALIVE int set(AstFrameSet* wcsinfo, const char* attrib)
     return 0;
 }
 
+EMSCRIPTEN_KEEPALIVE int clear(AstObject* obj, const char* attrib)
+{
+    if (!obj)
+    {
+        return 1;
+    }
+
+    astSet(obj, attrib);
+    if (!astOK)
+    {
+        astClearStatus;
+        return 1;
+    }
+    return 0;
+}
+
 EMSCRIPTEN_KEEPALIVE void dump(AstFrameSet* wcsinfo)
 {
     if (wcsinfo)
@@ -353,6 +369,23 @@ EMSCRIPTEN_KEEPALIVE int transform(AstFrameSet* wcsinfo, int npoint, const doubl
     }
 
     astTran2(wcsinfo, npoint, xin, yin, forward, xout, yout);
+    if (!astOK)
+    {
+        astClearStatus;
+        return 1;
+    }
+    return 0;
+}
+
+EMSCRIPTEN_KEEPALIVE int transform3D(AstSpecFrame* wcsinfo, double x, double y, double z, const int forward, double* out)
+{
+    if (!wcsinfo)
+    {
+        return 1;
+    }
+
+    double in[] ={x, y, z};
+    astTranN(wcsinfo, 1, 3, 1, in, forward, 3, 1, out);
     if (!astOK)
     {
         astClearStatus;
