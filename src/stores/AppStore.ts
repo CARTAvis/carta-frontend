@@ -17,6 +17,7 @@ import {
     FileBrowserStore,
     FrameInfo,
     FrameStore,
+    HelpStore,
     LayoutStore,
     LogEntry,
     LogStore,
@@ -29,12 +30,11 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore,
-    HelpStore
+    WidgetsStore
 } from ".";
 import {distinct, GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, TileService, TileStreamDetails} from "services";
-import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate} from "models";
+import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {AppToaster} from "components/Shared";
 
@@ -332,6 +332,16 @@ export class AppStore {
             }
 
             this.setActiveFrame(newFrame.frameInfo.fileId);
+
+            if (this.frames.length > 1) {
+                if ((this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL) && this.spatialReference !== newFrame) {
+                    this.setSpatialMatchingEnabled(true);
+                }
+                if ((this.preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL) && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
+                    this.setSpectralMatchingEnabled(true);
+                }
+            }
+
             this.fileBrowserStore.hideFileBrowser();
         }, err => {
             this.alertStore.showAlert(`Error loading file: ${err}`);
