@@ -179,7 +179,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
 
     // region percentages-ref
     @observable enteredRefValue: number | undefined;
-    @observable lowerPercentage: number = 60;
+    @observable lowerPercentage: number = 20;
     @observable upperPercentage: number = 100;
 
     @computed get refValue() {

@@ -2,21 +2,16 @@ import * as React from "react";
 import * as _ from "lodash";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {
-    Button, IDialogProps, Intent, Tab, Tabs,
-    FormGroup, TabId, MenuItem, Switch, RadioGroup,
-    Radio, HTMLSelect, AnchorButton, NumericInput, Tooltip,
-    Position, Checkbox
-} from "@blueprintjs/core";
+import {AnchorButton, Button, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, NumericInput, Position, Radio, RadioGroup, Switch, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {ColorResult} from "react-color";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/ScalingSelectComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
-import {ColorPickerComponent, ColormapComponent} from "components/Shared";
-import {Theme, CursorPosition, Zoom, ZoomPoint, WCSType, RegionCreationMode, CompressionQuality, TileCache, Event} from "models";
-import {AppStore, BeamType, ContourGeneratorType, FrameScaling, PreferenceKeys, RegionStore, RenderConfigStore, HelpType} from "stores";
+import {ColormapComponent, ColorPickerComponent} from "components/Shared";
+import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
+import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, PreferenceKeys, RegionStore, RenderConfigStore} from "stores";
 import {hexStringToRgba, SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.css";
 
@@ -143,6 +138,22 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </FormGroup>
                 <FormGroup inline={true} label="Enable drag-to-pan">
                     <Switch checked={preference.dragPanning} onChange={(ev) => preference.setPreference(PreferenceKeys.GLOBAL_DRAG_PANNING, ev.currentTarget.checked)}/>
+                </FormGroup>
+                <FormGroup inline={true} label="WCS matching on append">
+                    <HTMLSelect
+                        value={preference.autoWCSMatching}
+                        onChange={(ev) => preference.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, Number(ev.currentTarget.value))}
+                    >
+                        <option value={WCSMatchingType.NONE}>None</option>
+                        <option value={WCSMatchingType.SPATIAL}>Spatial Only</option>
+                        <option value={WCSMatchingType.SPECTRAL}>Spectral Only</option>
+                        <option value={WCSMatchingType.SPATIAL | WCSMatchingType.SPECTRAL}>Spatial and Spectral</option>
+                    </HTMLSelect>
+                </FormGroup>
+                <FormGroup inline={true} label="Spectral Matching">
+                    <HTMLSelect value={preference.spectralMatchingType} onChange={(ev) => preference.setPreference(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, ev.currentTarget.value)}>
+                        {SPECTRAL_MATCHING_TYPES.map(type => <option key={type} value={type}>{SPECTRAL_TYPE_STRING.get(type)}</option>)}
+                    </HTMLSelect>
                 </FormGroup>
             </React.Fragment>
         );

@@ -32,3 +32,7 @@ export function binarySearchByX(array: readonly Point2D[], x: number): {point: P
     const closer = ((array[start].x - x) < (x - array[end].x)) ? start : end;
     return {point: array[closer], index: closer};
 }
+
+export const distinct = (value: any, index: number, self: Array<any>) => {
+    return self.indexOf(value) === index;
+};

@@ -460,7 +460,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
             const rotation = frame.spatialReference ? frame.spatialTransform.rotation * 180.0 / Math.PI : 0.0;
 
             if (cursorPosPixelSpace) {
-                const crosshairLength = 20 * devicePixelRatio;
+                const crosshairLength = 20;
                 const crosshairThicknessWide = 3;
                 const crosshairThicknessNarrow = 1;
                 const crosshairGap = 7;
