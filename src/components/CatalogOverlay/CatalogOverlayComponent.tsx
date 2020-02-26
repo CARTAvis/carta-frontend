@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {autorun, computed, observable, action, values} from "mobx";
+import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
 import {Switch, HTMLSelect, AnchorButton, Intent, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Table, SelectionModes, RenderMode} from "@blueprintjs/table";
@@ -129,7 +129,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private handleHeaderDisplayChange(changeEvent: any, columnName: string) {
         const val = changeEvent.target.checked;
         this.widgetStore.setHeaderDisplay(val, columnName);
-        this.handleFilterClick();
+        this.handleFilterClick();   
     }
 
     private handleHeaderRepresentationChange(changeEvent: any, columnName: string) {
@@ -151,10 +151,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private renderSwitchButtonCell(rowIndex: number, columnName: string) {
         const display = this.widgetStore.catalogControlHeader.get(columnName).display;
+        const disable = this.widgetStore.loadingData;
         return (
             <Cell key={`cell_switch_${rowIndex}`}>
                 <React.Fragment>
-                    <Switch className="display-switch" key={`cell_switch_button_${rowIndex}`} checked={display} onChange={changeEvent => this.handleHeaderDisplayChange(changeEvent, columnName)}/>
+                    <Switch className="display-switch" key={`cell_switch_button_${rowIndex}`} disabled={disable} checked={display} onChange={changeEvent => this.handleHeaderDisplayChange(changeEvent, columnName)}/>
                 </React.Fragment>
             </Cell>
         );
@@ -483,7 +484,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             intent={Intent.PRIMARY}
                             text="Filter"
                             onClick={this.handleFilterClick}
-                            disabled={widgetStore.loading}
+                            disabled={widgetStore.loadOntoImage}
                         />
                         </Tooltip>
                         <Tooltip content={"Clear filter and catalog data"}>
@@ -491,7 +492,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             intent={Intent.PRIMARY}
                             text="Clear"
                             onClick={this.handleClearClick}
-                            disabled={widgetStore.loading}
+                            disabled={widgetStore.loadOntoImage}
                         />
                         </Tooltip>
                         <Tooltip content={"Load"}>

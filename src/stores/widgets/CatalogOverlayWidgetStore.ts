@@ -267,7 +267,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.plotingData = false;
     }
 
-    @computed get loading() {
+    @computed get loadOntoImage() {
         return (this.loadingData || this.plotingData);
     }
 
