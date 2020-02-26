@@ -1112,8 +1112,7 @@ export class AppStore {
         }
     };
 
-    @action setSpatialMatchingEnabled = (val: boolean) => {
-        const frame = this.activeFrame;
+    @action setSpatialMatchingEnabled = (frame: FrameStore, val: boolean) => {
         if (!frame || frame === this.spatialReference) {
             return;
         }
@@ -1130,6 +1129,14 @@ export class AppStore {
         } else {
             frame.clearSpatialReference();
         }
+    };
+
+    @action toggleSpatialMatching = (frame: FrameStore) => {
+        if (!frame || frame === this.spatialReference) {
+            return;
+        }
+
+        this.setSpatialMatchingEnabled(frame, !frame.spatialReference);
     };
 
     @action setSpectralReference = (frame: FrameStore) => {
@@ -1152,8 +1159,7 @@ export class AppStore {
         }
     };
 
-    @action setSpectralMatchingEnabled = (val: boolean) => {
-        const frame = this.activeFrame;
+    @action setSpectralMatchingEnabled = (frame: FrameStore, val: boolean) => {
         if (!frame || frame === this.spectralReference) {
             return;
         }
@@ -1172,9 +1178,17 @@ export class AppStore {
         }
     };
 
+    @action toggleSpectralMatching = (frame: FrameStore) => {
+        if (!frame || frame === this.spectralReference) {
+            return;
+        }
+
+        this.setSpectralMatchingEnabled(frame, !frame.spectralReference);
+    };
+
     @action setMatchingEnabled = (spatial: boolean, spectral: boolean) => {
-        this.setSpatialMatchingEnabled(spatial);
-        this.setSpectralMatchingEnabled(spectral);
+        this.setSpatialMatchingEnabled(this.activeFrame, spatial);
+        this.setSpectralMatchingEnabled(this.activeFrame, spectral);
     };
 
     // region requirements calculations
