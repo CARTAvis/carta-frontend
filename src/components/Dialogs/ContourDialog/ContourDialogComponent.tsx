@@ -478,7 +478,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                             <Button icon={appStore.frameLockedToContour ? "lock" : "unlock"} minimal={true} onClick={appStore.toggleFrameContourLock}/>
                         </Tooltip>
                     </FormGroup>
-                    <Tabs defaultSelectedTabId={ContourDialogTabs.Levels} renderActiveTabPanelOnly={true}>
+                    <Tabs defaultSelectedTabId={ContourDialogTabs.Levels} renderActiveTabPanelOnly={false}>
                         <Tab id={ContourDialogTabs.Levels} title="Levels" panel={levelPanel} panelClassName="contour-level-panel"/>
                         <Tab id={ContourDialogTabs.Configuration} title="Configuration" panel={configPanel} panelClassName="contour-config-panel"/>
                         <Tab id={ContourDialogTabs.Styling} title="Styling" panel={<ContourStylePanelComponent frame={dataSource} darkTheme={appStore.darkTheme}/>}/>
