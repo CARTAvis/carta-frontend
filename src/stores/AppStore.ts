@@ -373,23 +373,27 @@ export class AppStore {
         this.addFrame(directory, file, hdu, 0);
     };
 
-    @action closeCurrentFile = (confirmClose: boolean = true) => {
-        if (!this.activeFrame) {
+    @action closeFile = (frame: FrameStore, confirmClose: boolean = true) => {
+        if (!frame) {
             return;
         }
 
         // Display confirmation if image has secondary images
-        const secondaries = this.activeFrame.secondarySpatialImages.concat(this.activeFrame.secondarySpectralImages).filter(distinct);
+        const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(distinct);
         const numSecondaries = secondaries.length;
         if (confirmClose && numSecondaries) {
             this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`, confirmed => {
                 if (confirmed) {
-                    this.removeFrame(this.activeFrame);
+                    this.removeFrame(frame);
                 }
             });
         } else {
-            this.removeFrame(this.activeFrame);
+            this.removeFrame(frame);
         }
+    };
+
+    @action closeCurrentFile = (confirmClose: boolean = true) => {
+        this.closeFile(this.activeFrame, confirmClose);
     };
 
     @action removeFrame = (frame: FrameStore) => {
@@ -1102,7 +1106,17 @@ export class AppStore {
     };
 
     @action setSpatialReference = (frame: FrameStore) => {
+        const oldRef = this.spatialReference;
+
+        // check if the new reference is currently a secondary image of the existing reference
+        const newRefIsSecondary = oldRef && oldRef.secondarySpatialImages.includes(frame);
+
         this.spatialReference = frame;
+
+        // Maintain link between old and new references
+        if (newRefIsSecondary) {
+            oldRef.setSpatialReference(frame);
+        }
 
         for (const f of this.frames) {
             // The reference image can't reference itself
@@ -1112,6 +1126,7 @@ export class AppStore {
                 f.setSpatialReference(frame);
             }
         }
+
     };
 
     @action clearSpatialReference = () => {
@@ -1149,7 +1164,17 @@ export class AppStore {
     };
 
     @action setSpectralReference = (frame: FrameStore) => {
+        const oldRef = this.spectralReference;
+
+        // check if the new reference is currently a secondary image of the existing reference
+        const newRefIsSecondary = oldRef && oldRef.secondarySpectralImages.includes(frame);
+
         this.spectralReference = frame;
+
+        // Maintain link between old and new references
+        if (newRefIsSecondary) {
+            oldRef.setSpectralReference(frame);
+        }
 
         for (const f of this.frames) {
             // The reference image can't reference itself
