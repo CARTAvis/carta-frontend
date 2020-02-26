@@ -5,11 +5,14 @@ export class SpatialProfilerHelpComponent extends React.Component {
     public render() {
         return (
             <div>
-                <p>Spatial profiler widget allows users to view a profile from a horizontal cut or a vertical cut at the cursor position in the image viewer. The cursor position may be fixed in the image viewer by pressing <code>F</code> key. Pressing again will unfreeze the cursor.</p>
+                <p>Spatial profiler widget allows users to view a profile from a horizontal cut or a vertical cut at the cursor position in the image viewer. The cursor position may be fixed in the image viewer by
+                    pressing <code>F</code> key. Pressing again will unfreeze the cursor.</p>
                 <p>The cursor postition in image coordinate is displayed as a red vertical line in the spatial profile plot.</p>
-                <p>When cursor is in the image viewer, the cursor position and pointed pixel value are reported at the bottom-left corner of the spatial profiler widget. When cursor moves into the spatial profile plot, numerical values of the profile at the cursor position (displayed as a grey vertical line) will be reported instead.</p>
+                <p>When cursor is in the image viewer, the cursor position and pointed pixel value are reported at the bottom-left corner of the spatial profiler widget. When cursor moves into the spatial profile plot, numerical values of
+                    the profile at the cursor position (displayed as a grey vertical line) will be reported instead.</p>
                 <h3 id="profile-mean-and-rms">Profile mean and RMS</h3>
-                <p>As an option in the spatial profiler settings dialogue, mean and RMS values of the profile can be visualized as a green dashed line and a shaded area in the profile plot. Numerical values are displayed at the bottom-left corner. Note that CARTA includes all data in the current zoom level of the profile plot to perform the calculations. If zoom level changes, mean and RMS values will be updated too.</p>
+                <p>As an option in the spatial profiler settings dialogue, mean and RMS values of the profile can be visualized as a green dashed line and a shaded area in the profile plot. Numerical values are displayed at the bottom-left
+                    corner. Note that CARTA includes all data in the current zoom level of the profile plot to perform the calculations. If zoom level changes, mean and RMS values will be updated too.</p>
                 <h3 id="interactivity-zoom-and-pan">Interactivity: zoom and pan</h3>
                 <p>The x and y ranges of the spatial profile plot can be modified by</p>
                 <ul>
@@ -32,9 +35,11 @@ export class SpatialProfilerHelpComponent extends React.Component {
                     <li>point size for dots</li>
                     <li>display alternative horizonal axis in world coordinate</li>
                 </ul>
-                <br />
+                <br/>
                 <h4 id="note">NOTE</h4>
-                <p>For performance concerns, a profile is decimated before rendering if the number of points of the profile is greater than the screen resolution of the spatial profiler widget. The kernel size of profile decimation is dynamically adjusted so that profile features are mostly preserved. When decimation is applied, the line style of the profile plot is switched to &quot;line&quot;, regardless the setting in the spatial profiler settings dialogue. When no decimation is applied (e.g., at higher profile zoom level, or profile has fewer points than the screen resolution), the line style becomes &quot;step&quot; (as default in the settings dialogue).</p>
+                <p>For performance concerns, a profile is decimated before rendering if the number of points of the profile is greater than the screen resolution of the spatial profiler widget. The kernel size of profile decimation is
+                    dynamically adjusted so that profile features are mostly preserved. When decimation is applied, the line style of the profile plot is switched to &quot;line&quot;, regardless the setting in the spatial profiler settings
+                    dialogue. When no decimation is applied (e.g., at higher profile zoom level, or profile has fewer points than the screen resolution), the line style becomes &quot;step&quot; (as default in the settings dialogue).</p>
 
             </div>
         );

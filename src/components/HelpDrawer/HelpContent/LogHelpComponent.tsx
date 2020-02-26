@@ -11,9 +11,12 @@ export class LogHelpComponent extends React.Component {
                     <li>Info (default)</li>
                     <li>Warning</li>
                     <li>Error</li>
-                    <li>Critial</li>
+                    <li>Critical</li>
                 </ul>
-                <p>When users believe there is something wrong, please contact the <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw">helpdesk</a> or file an issue on <a href="https://github.com/CARTAvis/carta/issues">Github</a> (recommanded).</p>
+                <p>
+                    When users believe there is something wrong, please contact the <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw">helpdesk</a> or file an issue on
+                    <a href="https://github.com/CARTAvis/carta/issues">Github</a> (recommended).
+                </p>
 
             </div>
         );

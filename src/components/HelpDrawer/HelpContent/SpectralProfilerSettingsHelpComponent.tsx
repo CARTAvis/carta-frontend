@@ -37,7 +37,8 @@ export class SpectralProfilerSettingsHelpComponent extends React.Component {
                     <li>point size for dots</li>
                 </ul>
                 <h3 id="profile-mean-and-rms">Profile mean and RMS</h3>
-                <p>As an option in the spectral profiler settings dialogue, mean and RMS values of the profile can be visualized as a green dashed line and a shaded area in the profile plot. Numerical values are displayed at the bottom-left corner. Note that CARTA includes all data in the current zoom level of the profile plot to perform the calculations. If zoom level changes, mean and RMS values will be updated too.</p>
+                <p>As an option in the spectral profiler settings dialogue, mean and RMS values of the profile can be visualized as a green dashed line and a shaded area in the profile plot. Numerical values are displayed at the bottom-left
+                    corner. Note that CARTA includes all data in the current zoom level of the profile plot to perform the calculations. If zoom level changes, mean and RMS values will be updated too.</p>
 
             </div>
         );

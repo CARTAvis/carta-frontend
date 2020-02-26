@@ -17,7 +17,7 @@ export class RegionDialogHelpComponent extends React.Component {
                     <li>region name</li>
                     <li>region location and shape properties</li>
                 </ul>
-                <br />
+                <br/>
                 <h4 id="tip">TIP</h4>
                 <p><code>Double-Click</code> on a region in the image viewer or on an entry in the region list widget will bring up this region configuration dialogue.</p>
 

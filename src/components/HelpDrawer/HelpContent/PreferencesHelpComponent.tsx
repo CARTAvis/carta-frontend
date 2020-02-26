@@ -5,7 +5,8 @@ export class PreferencesHelpComponent extends React.Component {
     public render() {
         return (
             <div>
-                <p>The preferences dialogue provides a centralized place to customize the entire graphical user interface and performance control parameters. All settings are recorded and applied to new CARTA sessions. Some settings are effective immediately.</p>
+                <p>The preferences dialogue provides a centralized place to customize the entire graphical user interface and performance control parameters. All settings are recorded and applied to new CARTA sessions. Some settings are
+                    effective immediately.</p>
                 <h3 id="global">Global</h3>
                 <p>This section provides usability customization.</p>
                 <ul>
@@ -28,7 +29,7 @@ export class PreferencesHelpComponent extends React.Component {
                     <li>NaN color: color to render a NaN (not a number) pixel</li>
                 </ul>
                 <h3 id="contour-configuration">Contour configuration</h3>
-                <p>This section provides customization of how a contour layer is calculated and  rendered by default.</p>
+                <p>This section provides customization of how a contour layer is calculated and rendered by default.</p>
                 <ul>
                     <li>Generator type: default level generator type</li>
                     <li>Smoothing mode: smoothing method to be applied before calculating contour vertices</li>
@@ -61,7 +62,8 @@ export class PreferencesHelpComponent extends React.Component {
                     <li>Creation mode: the way how rectangle and ellipse regions are created with cursor</li>
                 </ul>
                 <h3 id="performance">Performance</h3>
-                <p>Performance related control parameters are included here. We do not recommand users to change the settings here. If the bandwidth connecting to a CARTA server is limited, users may enable the &quot;low bandwidth mode&quot;. Note that artefects in raster image and/or contour layer might be noticible in this mode, depending on the characteristics of image data.</p>
+                <p>Performance related control parameters are included here. We do not recommand users to change the settings here. If the bandwidth connecting to a CARTA server is limited, users may enable the &quot;low bandwidth
+                    mode&quot;. Note that artefects in raster image and/or contour layer might be noticible in this mode, depending on the characteristics of image data.</p>
                 <h3 id="log-events">Log events</h3>
                 <p>This is for development and debugging purpose. General users should not enable anything here.</p>
 
