@@ -60,11 +60,13 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
         const frame = appStore.frames[rowIndex];
 
-        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
-            <div onDoubleClick={() => appStore.setActiveFrame(frame.frameInfo.fileId)}>
-                {frame.frameInfo.fileInfo.name}
-            </div>
-        </Cell>;
+        return (
+            <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
+                <div className="name-cell" onClick={() => appStore.setActiveFrame(frame.frameInfo.fileId)}>
+                    {frame.frameInfo.fileInfo.name}
+                </div>
+            </Cell>
+        );
     };
 
     private channelRenderer = (rowIndex: number) => {

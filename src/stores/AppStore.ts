@@ -340,10 +340,10 @@ export class AppStore {
 
             if (this.frames.length > 1) {
                 if ((this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL) && this.spatialReference !== newFrame) {
-                    this.setSpatialMatchingEnabled(true);
+                    this.setSpatialMatchingEnabled(newFrame, true);
                 }
                 if ((this.preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL) && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
-                    this.setSpectralMatchingEnabled(true);
+                    this.setSpectralMatchingEnabled(newFrame, true);
                 }
             }
 
