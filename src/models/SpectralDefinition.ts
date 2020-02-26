@@ -104,5 +104,5 @@ export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType, un
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.UM), {type: SpectralType.AWAV, unit: SpectralUnit.UM}],
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.NM), {type: SpectralType.AWAV, unit: SpectralUnit.NM}],
     [GenCoordinateLabel(SpectralType.AWAV, SpectralUnit.ANGSTROM), {type: SpectralType.AWAV, unit: SpectralUnit.ANGSTROM}],
-    ["Channel", {type: null, unit: null}]
+    ["Channel", {type: SpectralType.CHANNEL, unit: null}],
 ]);

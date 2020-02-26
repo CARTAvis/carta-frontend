@@ -26,7 +26,7 @@ export class SpectralSettingsComponent extends React.Component<{appStore: AppSto
                     <FormGroup label={"Coordinate"} inline={true} disabled={disableSetting}>
                         <HTMLSelect
                             disabled={disableSetting}
-                            value={widgetStore.spectralCoordinate ? widgetStore.spectralCoordinate : ""}
+                            value={frame && frame.spectralCoordinate ? frame.spectralCoordinate : ""}
                             options={spectralCoordinateOptions}
                             onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setSpectralCoordinate(event.currentTarget.value as string)}
                         />
@@ -34,7 +34,7 @@ export class SpectralSettingsComponent extends React.Component<{appStore: AppSto
                     <FormGroup label={"System"} inline={true} disabled={disableSetting}>
                         <HTMLSelect
                             disabled={disableSetting}
-                            value={widgetStore.spectralSystem ? widgetStore.spectralSystem : ""}
+                            value={frame && frame.spectralSystem ? frame.spectralSystem : ""}
                             options={spectralSystemOptions}
                             onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setSpectralSystem(event.currentTarget.value as SpectralSystem)}
                         />
