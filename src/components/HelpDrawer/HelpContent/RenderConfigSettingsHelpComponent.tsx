@@ -4,10 +4,19 @@ import * as underConstruction from "static/help/under_construction.png";
 export class RenderConfigSettingsHelpComponent extends React.Component {
     public render() {
         return (
-            <React.Fragment>
-                <p>To be added.</p>
-                <img src={underConstruction} style={{width: "20%", height: "auto"}}/>
-            </React.Fragment>
+            <div>
+                <p>The appearance of the histogram plot in the render configuration widget can be customized through this settings dialogue, including:</p>
+                <ul>
+                    <li>color of the plot</li>
+                    <li>plot styles including steps (default), lines, and dots</li>
+                    <li>line width for steps or lines</li>
+                    <li>point size for dots</li>
+                    <li>display y in logarithmic scale (default)</li>
+                    <li>display mean and RMS</li>
+                    <li>display clip labels</li>
+                </ul>
+
+            </div>
         );
     }
 }
