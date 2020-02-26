@@ -2,8 +2,9 @@ import * as React from "react";
 import {CSSProperties} from "react";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, NonIdealState, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
+import {IMenuContext} from "@blueprintjs/table/src/interactions/menus/menuContext";
 import ReactResizeDetector from "react-resize-detector";
 import {WidgetConfig, WidgetProps, HelpType} from "stores";
 import "./LayerListComponent.css";
@@ -198,6 +199,25 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         return <ColumnHeaderCell name={name} style={columnHeaderStyleProps}/>;
     };
 
+    private contextMenuRenderer = (context: IMenuContext) => {
+        const rows = context.getTarget().rows;
+        const appStore = this.props.appStore;
+        if (rows && rows.length && appStore.frames[rows[0]]) {
+            const frame = appStore.frames[rows[0]];
+            if (frame) {
+                return (
+                    <Menu>
+                        <MenuItem disabled={appStore.spatialReference === frame} text="Set as spatial reference" onClick={() => appStore.setSpatialReference(frame)}/>
+                        <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)}/>
+                        <MenuDivider/>
+                        <MenuItem text="Close image" onClick={() => appStore.closeFile(frame)}/>
+                    </Menu>
+                );
+            }
+        }
+        return null;
+    };
+
     render() {
         const appStore = this.props.appStore;
         const frameNum = appStore.frameNum;
@@ -237,6 +257,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     columnWidths={this.columnWidths}
                     enableColumnResizing={true}
                     onColumnWidthChanged={this.onColumnWidthsChange}
+                    bodyContextMenuRenderer={this.contextMenuRenderer}
                 >
                     <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.fileNameRenderer}/>
                     <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.typeRenderer}/>
