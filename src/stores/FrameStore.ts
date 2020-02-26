@@ -366,6 +366,15 @@ export class FrameStore {
         return type && unit && specsys && IsSpectralTypeValid(type) && IsSpectralUnitValid(unit) && IsSpectralSystemValid(specsys);
     }
 
+    @computed get nativeSpectralCoordinate(): string {
+        if (this.isSpectralSettingsSupported) {
+            const type = this.spectralInfo.channelType.code as SpectralType;
+            const unit = SPECTRAL_DEFAULT_UNIT.get(type);
+            return GenCoordinateLabel(type, unit);
+        }
+        return "";
+    }
+
     @computed get isSpectralPropsEqual(): boolean {
         let result = false;
         if (this.isSpectralSettingsSupported) {

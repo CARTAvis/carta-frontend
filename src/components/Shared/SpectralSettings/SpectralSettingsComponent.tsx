@@ -11,10 +11,11 @@ export class SpectralSettingsComponent extends React.Component<{appStore: AppSto
 
     render() {
         const frame = this.props.appStore.activeFrame;
+        const nativeSpectralCoordinate = frame ? frame.nativeSpectralCoordinate : undefined;
         const widgetStore = this.props.widgetStore;
         const spectralCoordinateOptions: IOptionProps[] = frame && frame.spectralCoordsSupported ?
-            Array.from(frame.spectralCoordsSupported.keys()).map((coord: string) => { return {value: coord, label: coord}; }) :
-            Array.from(SPECTRAL_COORDS_SUPPORTED.keys()).map((coord: string) => { return {value: coord, label: coord}; });
+            Array.from(frame.spectralCoordsSupported.keys()).map((coord: string) => { return {value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native)" : coord}; }) :
+            Array.from(SPECTRAL_COORDS_SUPPORTED.keys()).map((coord: string) => { return {value: coord, label: coord === nativeSpectralCoordinate ? coord + " (Native)" :  coord}; });
         const spectralSystemOptions: IOptionProps[] = frame && frame.spectralSystemsSupported ?
             frame.spectralSystemsSupported.map((system) => { return {value: system, label: system}; }) :
             Object.keys(SpectralSystem).map((key) => ({label: key, value: SpectralSystem[key]}));
