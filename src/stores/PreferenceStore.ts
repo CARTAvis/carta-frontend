@@ -145,7 +145,7 @@ const DEFAULTS = {
     },
     CONTOUR_CONFIG: {
         contourGeneratorType: ContourGeneratorType.StartStepMultiplier,
-        contourSmoothingMode: CARTA.SmoothingMode.BlockAverage,
+        contourSmoothingMode: CARTA.SmoothingMode.GaussianBlur,
         contourSmoothingFactor: 4,
         contourNumLevels: 5,
         contourThickness: 1,
