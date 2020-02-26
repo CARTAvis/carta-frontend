@@ -62,9 +62,11 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
         return (
             <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
-                <div className="name-cell" onClick={() => appStore.setActiveFrame(frame.frameInfo.fileId)}>
-                    {frame.frameInfo.fileInfo.name}
-                </div>
+                <React.Fragment>
+                    <div className="name-cell" onClick={() => appStore.setActiveFrame(frame.frameInfo.fileId)}>
+                        {frame.frameInfo.fileInfo.name}
+                    </div>
+                </React.Fragment>
             </Cell>
         );
     };
@@ -158,10 +160,10 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
         return (
             <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
-                <div className="matching-cell">
+                <React.Fragment>
                     {spatialMatchingButton}
                     {spectralMatchingButton}
-                </div>
+                </React.Fragment>
             </Cell>
         );
     };
@@ -217,6 +219,8 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const visibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
         const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
         const matchingTypes = appStore.frames.map(f => f.spatialReference && f.spectralReference);
+        const currentSpectralReference = appStore.spectralReference;
+        const currentSpatialReference = appStore.spatialReference;
 
         return (
             <div className="layer-list-widget">
@@ -233,7 +237,6 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     columnWidths={this.columnWidths}
                     enableColumnResizing={true}
                     onColumnWidthChanged={this.onColumnWidthsChange}
-                    onSelection={r => console.log(r)}
                 >
                     <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.fileNameRenderer}/>
                     <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.typeRenderer}/>
