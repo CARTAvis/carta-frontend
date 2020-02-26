@@ -475,7 +475,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                             <Button text={dataSource.frameInfo.fileInfo.name} rightIcon="double-caret-vertical" alignText={"right"}/>
                         </DataSourceSelect>
                         <Tooltip content={appStore.frameLockedToContour ? "Data source is locked to active image" : "Data source is independent of active image"}>
-                            <Button icon={appStore.frameLockedToContour ? "lock" : "unlock"} minimal={true} onClick={appStore.toggleFrameContourLock}/>
+                            <Button className="lock-button" icon={appStore.frameLockedToContour ? "lock" : "unlock"} minimal={true} onClick={appStore.toggleFrameContourLock}/>
                         </Tooltip>
                     </FormGroup>
                     <Tabs defaultSelectedTabId={ContourDialogTabs.Levels} renderActiveTabPanelOnly={false}>

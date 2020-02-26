@@ -648,6 +648,9 @@ export class AppStore {
 
         this.frames = [];
         this.activeFrame = null;
+        this.contourDataSource = null;
+        this.syncFrameToContour = true;
+        this.syncContourToFrame = true;
         this.fileBrowserStore = new FileBrowserStore(this, this.backendService);
         this.animatorStore = new AnimatorStore(this);
         this.overlayStore = new OverlayStore(this, this.preferenceStore);
