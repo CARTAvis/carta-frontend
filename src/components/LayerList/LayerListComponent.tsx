@@ -12,7 +12,7 @@ import "./LayerListComponent.css";
 export class LayerListComponent extends React.Component<WidgetProps> {
     @observable width: number = 0;
     @observable height: number = 0;
-    @observable columnWidths = [150, 80, 80, 70];
+    @observable columnWidths = [150, 70, 85, 80, 70];
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -58,7 +58,17 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             return <Cell/>;
         }
 
-        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].frameInfo.fileInfo.name}</Cell>;
+        const frame = appStore.frames[rowIndex];
+
+        return (
+            <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
+                <React.Fragment>
+                    <div className="name-cell" onClick={() => appStore.setActiveFrame(frame.frameInfo.fileId)}>
+                        {frame.frameInfo.fileInfo.name}
+                    </div>
+                </React.Fragment>
+            </Cell>
+        );
     };
 
     private channelRenderer = (rowIndex: number) => {
@@ -101,6 +111,63 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         );
     };
 
+    private matchingRenderer = (rowIndex: number) => {
+        const appStore = this.props.appStore;
+        if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
+            return <Cell/>;
+        }
+
+        const frame = appStore.frames[rowIndex];
+
+        let spatialMatchingButton: React.ReactNode;
+        if (appStore.spatialReference) {
+            let tooltipSubtitle: string;
+            if (frame === appStore.spatialReference) {
+                tooltipSubtitle = `${frame.frameInfo.fileInfo.name} is the current spatial reference`;
+            } else {
+                tooltipSubtitle = `Click to ${frame.spatialReference ? "disable" : "enable"} matching to ${appStore.spatialReference.frameInfo.fileInfo.name}`;
+            }
+            spatialMatchingButton = (
+                <Tooltip content={<span>Spatial matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
+                    <AnchorButton minimal={true} small={true} active={frame === appStore.spatialReference} intent={frame.spatialReference ? "primary" : "none"} onClick={() => appStore.toggleSpatialMatching(frame)}>XY</AnchorButton>
+                </Tooltip>
+            );
+        }
+
+        let spectralMatchingButton: React.ReactNode;
+        if (frame.frameInfo.fileInfoExtended.depth > 1 && appStore.spectralReference) {
+            let tooltipSubtitle: string;
+            if (frame === appStore.spectralReference) {
+                tooltipSubtitle = `${frame.frameInfo.fileInfo.name} is the current spectral reference`;
+            } else {
+                tooltipSubtitle = `Click to ${frame.spectralReference ? "disable" : "enable"} matching to ${appStore.spectralReference.frameInfo.fileInfo.name}`;
+            }
+            spectralMatchingButton = (
+                <Tooltip content={<span>Spectral matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
+                    <AnchorButton
+                        className="spectral-matching-button"
+                        minimal={true}
+                        small={true}
+                        active={frame === appStore.spectralReference}
+                        intent={frame.spectralReference ? "primary" : "none"}
+                        onClick={() => appStore.toggleSpectralMatching(frame)}
+                    >
+                        Z
+                    </AnchorButton>
+                </Tooltip>
+            );
+        }
+
+        return (
+            <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
+                <React.Fragment>
+                    {spatialMatchingButton}
+                    {spectralMatchingButton}
+                </React.Fragment>
+            </Cell>
+        );
+    };
+
     private columnHeaderRenderer = (columnIndex: number) => {
         let name: string;
         switch (columnIndex) {
@@ -111,9 +178,12 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 name = "Type";
                 break;
             case 2:
-                name = "Channel";
+                name = "Matching";
                 break;
             case 3:
+                name = "Channel";
+                break;
+            case 4:
                 name = "Stokes";
                 break;
             default:
@@ -148,6 +218,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const activeFrameIndex = this.props.appStore.activeFrameIndex;
         const visibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
         const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
+        const matchingTypes = appStore.frames.map(f => f.spatialReference && f.spectralReference);
+        const currentSpectralReference = appStore.spectralReference;
+        const currentSpatialReference = appStore.spatialReference;
 
         return (
             <div className="layer-list-widget">
@@ -165,22 +238,11 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     enableColumnResizing={true}
                     onColumnWidthChanged={this.onColumnWidthsChange}
                 >
-                    <Column
-                        columnHeaderCellRenderer={this.columnHeaderRenderer}
-                        cellRenderer={this.fileNameRenderer}
-                    />
-                    <Column
-                        columnHeaderCellRenderer={this.columnHeaderRenderer}
-                        cellRenderer={this.typeRenderer}
-                    />
-                    <Column
-                        columnHeaderCellRenderer={this.columnHeaderRenderer}
-                        cellRenderer={this.channelRenderer}
-                    />
-                    <Column
-                        columnHeaderCellRenderer={this.columnHeaderRenderer}
-                        cellRenderer={this.stokesRenderer}
-                    />
+                    <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.fileNameRenderer}/>
+                    <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.typeRenderer}/>
+                    <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.matchingRenderer}/>
+                    <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.channelRenderer}/>
+                    <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.stokesRenderer}/>
                 </Table>
                 }
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
