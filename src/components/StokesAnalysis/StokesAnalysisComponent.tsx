@@ -178,7 +178,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 }
             }
             if (nearestIndex !== null && nearestIndex !== undefined) {
-                frame.setChannels(nearestIndex, frame.requiredStokes);
+                frame.setChannels(nearestIndex, frame.requiredStokes, true);
             }
         }
     };
@@ -204,7 +204,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 }
             }
             if (nearestIndex !== null && nearestIndex !== undefined) {
-                frame.setChannels(nearestIndex, frame.requiredStokes);
+                frame.setChannels(nearestIndex, frame.requiredStokes, true);
             }
         }
     };

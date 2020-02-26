@@ -12,7 +12,7 @@ import "./LayerListComponent.css";
 export class LayerListComponent extends React.Component<WidgetProps> {
     @observable width: number = 0;
     @observable height: number = 0;
-    private columnWidths = [150, 80, 80, 70];
+    @observable columnWidths = [150, 80, 80, 70];
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -66,7 +66,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell/>;
         }
-        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].channel}</Cell>;
+        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].requiredChannel}</Cell>;
     };
 
     private stokesRenderer = (rowIndex: number) => {
@@ -74,7 +74,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell/>;
         }
-        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].stokes}</Cell>;
+        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].requiredStokes}</Cell>;
     };
 
     private typeRenderer = (rowIndex: number) => {
@@ -151,6 +151,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
         return (
             <div className="layer-list-widget">
+                {this.width > 0 &&
                 <Table
                     numRows={frameNum}
                     rowHeaderCellRenderer={this.rowHeaderCellRenderer}
@@ -181,6 +182,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                         cellRenderer={this.stokesRenderer}
                     />
                 </Table>
+                }
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>
             </div>
         );

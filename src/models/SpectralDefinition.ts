@@ -23,11 +23,19 @@ export enum SpectralType {
     VOPT = "VOPT",
     FREQ = "FREQ",
     WAVE = "WAVE",
-    AWAV = "AWAV"
+    AWAV = "AWAV",
+    CHANNEL = "CHANNEL"
 }
+
+// Channel is not a valid standalone spectral type
 export const IsSpectralTypeValid = (type: string): boolean => {
-    return type && (<any> Object).values(SpectralType).includes(type);
+    return type && type !== SpectralType.CHANNEL && (<any> Object).values(SpectralType).includes(type);
 };
+
+export const SPECTRAL_MATCHING_TYPES: SpectralType[] = [SpectralType.VRAD, SpectralType.VOPT, SpectralType.FREQ, SpectralType.CHANNEL];
+export function IsSpectralMatchingTypeValid(type: SpectralType) {
+    return type && SPECTRAL_MATCHING_TYPES.includes(type);
+}
 
 export enum SpectralUnit {
     KMS = "km/s",
@@ -60,7 +68,8 @@ export const SPECTRAL_TYPE_STRING = new Map<SpectralType, string>([
     [SpectralType.VOPT, "Optical velocity"],
     [SpectralType.FREQ, "Frequency"],
     [SpectralType.WAVE, "Wavelength"],
-    [SpectralType.AWAV, "Air wavelength"]
+    [SpectralType.AWAV, "Air wavelength"],
+    [SpectralType.CHANNEL, "Channel"]
 ]);
 
 export const DEFAULT_UNIT = new Map<SpectralType, SpectralUnit>([

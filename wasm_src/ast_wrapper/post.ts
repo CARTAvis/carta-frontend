@@ -96,12 +96,14 @@ Module.initFrame = Module.cwrap("initFrame", "number", ["string"]);
 Module.initSpectralFrame = Module.cwrap("initSpectralFrame", "number", ["string", "string", "string"]);
 Module.initDummyFrame = Module.cwrap("initDummyFrame", "number", []);
 Module.set = Module.cwrap("set", "number", ["number", "string"]);
+Module.clear = Module.cwrap("clear", "number", ["number", "string"]);
 Module.getString = Module.cwrap("getString", "string", ["number", "string"]);
 Module.dump = Module.cwrap("dump", null, ["number"]);
 Module.norm = Module.cwrap("norm", "number", ["number", "number"]);
 Module.axDistance = Module.cwrap("axDistance", "number", ["number", "number", "number", "number"]);
 Module.format = Module.cwrap("format", "string", ["number", "number", "number"]);
 Module.transform = Module.cwrap("transform", "number", ["number", "number", "number", "number", "number", "number", "number"]);
+Module.transform3D = Module.cwrap("transform3D", "number", ["number", "number", "number", "number", "number", "number"]);
 Module.spectralTransform = Module.cwrap("spectralTransform", "number", ["number", "string", "string", "string", "number", "number", "number", "number"]);
 Module.getLastErrorMessage = Module.cwrap("getLastErrorMessage", "string");
 Module.clearLastErrorMessage = Module.cwrap("clearLastErrorMessage", null);
@@ -167,7 +169,6 @@ Module.pixToWCSVector = function (wcsInfo, xIn, yIn) {
 };
 
 Module.transformPoint = function (transformFrameSet: number, xIn: number, yIn: number, forward: boolean = true) {
-    // Return empty array if arguments are invalid
     const N = 1;
     Module.HEAPF64.set(new Float64Array([xIn]), Module.xIn / 8);
     Module.HEAPF64.set(new Float64Array([yIn]), Module.yIn / 8);
@@ -175,6 +176,16 @@ Module.transformPoint = function (transformFrameSet: number, xIn: number, yIn: n
     const xOut = new Float64Array(Module.HEAPF64.buffer, Module.xOut, N);
     const yOut = new Float64Array(Module.HEAPF64.buffer, Module.yOut, N);
     return {x: xOut[0], y: yOut[0]};
+};
+
+Module.transform3DPoint = function (transformFrameSet: number, xIn: number, yIn: number, zIn: number, forward: boolean = true) {
+    const N = 1;
+    const outPtr = Module._malloc(24);
+    Module.transform3D(transformFrameSet, xIn, yIn, zIn, forward, outPtr);
+    const out = new Float64Array(Module.HEAPF64.buffer, outPtr, 3);
+    const res = {x: out[0], y: out[1], z: out[2]};
+    Module._free(outPtr);
+    return res;
 };
 
 Module.transformSpectralPoint = function (spectralFrameFrom: number, specType: string, specUnit: string, specSys: string, zIn: number, forward: boolean = true) {
