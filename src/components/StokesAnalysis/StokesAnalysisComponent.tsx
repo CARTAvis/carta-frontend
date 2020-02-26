@@ -12,25 +12,12 @@ import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/S
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, FrameStore} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
-import {Point2D} from "models";
+import {Point2D, SPECTRAL_COLORMAP_GROUP} from "models";
 import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation} from "utilities";
 import "./StokesAnalysisComponent.css";
 
 type Border = { xMin: number, xMax: number, yMin: number, yMax: number };
 type Point3D = { x: number, y: number, z?: number };
-
-enum SpectralCoordinateType {
-    Frequency = "FREQ",
-    Energy = "ENER",
-    Wavenumber = "WAVN",
-    RadioVelocity = "VRAD",
-    VacuumWavelength = "WAVE",
-    OpticalVelocity = "VOPT",
-    Redshift = "ZOPT",
-    AirWavelength = "AWAV",
-    ApparentRadialVelocity = "VELO",
-    BetaFactor = "BETA"
-}
 
 @observer
 export class StokesAnalysisComponent extends React.Component<WidgetProps> {
@@ -44,11 +31,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         horizontal: 2,
     };
     private multicolorLineColorOutRange = "hsla(0, 0%, 50%, 0.5)";
-    private spectralCoordinateTypeColorMapGroup = [
-        SpectralCoordinateType.Frequency,
-        SpectralCoordinateType.Energy,
-        SpectralCoordinateType.Wavenumber
-    ];
     private fileId = -1;
 
     public static get WIDGET_CONFIG(): WidgetConfig {
@@ -158,51 +140,16 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         this.widgetStore.clearScatterPlotXYBounds();
     };
 
-    private getSpectralInfo(frame: FrameStore): {CTYPE: CARTA.IHeaderEntry, CDELT: CARTA.IHeaderEntry} {
-        const headers = frame.frameInfo.fileInfoExtended.headerEntries;
-        let CDELT = null;
-        const CTYPE =  headers.find(obj => { 
-            return (obj.value === SpectralCoordinateType.Frequency
-                    || obj.value === SpectralCoordinateType.Energy
-                    || obj.value === SpectralCoordinateType.Wavenumber
-                    || obj.value === SpectralCoordinateType.RadioVelocity
-                    || obj.value === SpectralCoordinateType.VacuumWavelength
-                    || obj.value === SpectralCoordinateType.OpticalVelocity
-                    || obj.value === SpectralCoordinateType.Redshift
-                    || obj.value === SpectralCoordinateType.AirWavelength
-                    || obj.value === SpectralCoordinateType.ApparentRadialVelocity
-                    || obj.value === SpectralCoordinateType.BetaFactor
-            ); 
-        });
-        if (CTYPE) {
-            if (CTYPE.name.includes("1")) {
-                CDELT = headers.find(obj => { return obj.name === "CDELT1"; });
-            } else if (CTYPE.name.includes("2")) {
-                CDELT = headers.find(obj => { return obj.name === "CDELT2"; });
-            }  else if (CTYPE.name.includes("3")) {
-                CDELT = headers.find(obj => { return obj.name === "CDELT3"; });
-            }  else if (CTYPE.name.includes("4")) {
-                CDELT = headers.find(obj => { return obj.name === "CDELT4"; });
-            }
-        }
-        return {CTYPE: CTYPE, CDELT: CDELT};
-    }
-
     // true: red->blue, false: blue->red
     private getColorMapOrder(frame: FrameStore): boolean {    
-        const spectralInfo = this.getSpectralInfo(frame);
-        if (spectralInfo.CTYPE && spectralInfo.CDELT) {
-            const inGroup = this.spectralCoordinateTypeColorMapGroup.find(type => { return type === spectralInfo.CTYPE.value; });
-            if (spectralInfo.CDELT.numericValue > 0) {
-                if (inGroup !== undefined) {
-                    return true;
-                }
-                return false;
+        if (frame && frame.channelInfo && frame.channelInfo.fromWCS && frame.channelInfo.channelType && !isNaN(frame.channelInfo.delta)) {
+            const CTYPE = frame.channelInfo.channelType.code;
+            const CDELT = frame.channelInfo.delta;
+            const inGroup = SPECTRAL_COLORMAP_GROUP.includes(CTYPE);
+            if (CDELT > 0) {
+                return inGroup ? true : false;
             } else {
-                if (inGroup !== undefined) {
-                    return false;
-                }
-                return true;
+                return inGroup ? false : true;
             }
         }
         return true;

@@ -267,9 +267,10 @@ export class FrameStore {
                     return {
                         fromWCS: true,
                         channelType: channelTypeInfo.type,
-                        indexes,
-                        values,
-                        rawValues,
+                        delta: delta,
+                        indexes: indexes,
+                        values: values,
+                        rawValues: rawValues,
                         getChannelIndexWCS: (value: number): number => {
                             if (!value) {
                                 return null;
@@ -299,8 +300,14 @@ export class FrameStore {
             rawValues[i] = i;
         }
         return {
-            fromWCS: false, channelType: {code: "", name: "Channel", unit: ""}, indexes, values, rawValues,
-            getChannelIndexWCS: null, getChannelIndexSimple: getChannelIndexSimple
+            fromWCS: false,
+            channelType: {code: "", name: "Channel", unit: ""},
+            delta: undefined,
+            indexes: indexes,
+            values: values,
+            rawValues: rawValues,
+            getChannelIndexWCS: null,
+            getChannelIndexSimple: getChannelIndexSimple
         };
     }
 
