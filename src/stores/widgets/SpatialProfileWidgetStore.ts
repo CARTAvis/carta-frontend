@@ -132,42 +132,43 @@ export class SpatialProfileWidgetStore {
         return (this.minY === undefined || this.maxY === undefined);
     }
 
-    public static CalculateRequirementsMap(frame: FrameStore, widgetsMap: Map<string, SpatialProfileWidgetStore>) {
+    public static CalculateRequirementsMap(frames: FrameStore[], widgetsMap: Map<string, SpatialProfileWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpatialRequirements>>();
-        widgetsMap.forEach(widgetStore => {
-            const fileId = frame.frameInfo.fileId;
-            // Cursor region only for now
-            const regionId = 0;
-            const coordinate = widgetStore.coordinate;
+        frames.forEach((frame) => {
+            widgetsMap.forEach(widgetStore => {
+                const fileId = frame.frameInfo.fileId;
+                // Cursor region only for now
+                const regionId = 0;
+                const coordinate = widgetStore.coordinate;
 
-            if (!frame.regionSet) {
-                return;
-            }
-
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-            if (region) {
-                let frameRequirements = updatedRequirements.get(fileId);
-                if (!frameRequirements) {
-                    frameRequirements = new Map<number, CARTA.SetSpatialRequirements>();
-                    updatedRequirements.set(fileId, frameRequirements);
+                if (!frame.regionSet) {
+                    return;
                 }
 
-                let regionRequirements = frameRequirements.get(regionId);
-                if (!regionRequirements) {
-                    regionRequirements = new CARTA.SetSpatialRequirements({regionId, fileId});
-                    frameRequirements.set(regionId, regionRequirements);
-                }
+                const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+                if (region) {
+                    let frameRequirements = updatedRequirements.get(fileId);
+                    if (!frameRequirements) {
+                        frameRequirements = new Map<number, CARTA.SetSpatialRequirements>();
+                        updatedRequirements.set(fileId, frameRequirements);
+                    }
 
-                if (!regionRequirements.spatialProfiles) {
-                    regionRequirements.spatialProfiles = [];
-                }
+                    let regionRequirements = frameRequirements.get(regionId);
+                    if (!regionRequirements) {
+                        regionRequirements = new CARTA.SetSpatialRequirements({regionId, fileId});
+                        frameRequirements.set(regionId, regionRequirements);
+                    }
 
-                if (regionRequirements.spatialProfiles.indexOf(coordinate) === -1) {
-                    regionRequirements.spatialProfiles.push(coordinate);
+                    if (!regionRequirements.spatialProfiles) {
+                        regionRequirements.spatialProfiles = [];
+                    }
+
+                    if (regionRequirements.spatialProfiles.indexOf(coordinate) === -1) {
+                        regionRequirements.spatialProfiles.push(coordinate);
+                    }
                 }
-            }
+            });
         });
-
         return updatedRequirements;
     }
 

@@ -79,26 +79,29 @@ export class RegionWidgetStore {
         return false;
     }
 
-    public static CalculateRequirementsArray(frame: FrameStore, widgetsMap: Map<string, RegionWidgetStore>) {
+    public static CalculateRequirementsArray(frames: FrameStore[], widgetsMap: Map<string, RegionWidgetStore>) {
         const updatedRequirements = new Map<number, Array<number>>();
-        const fileId = frame.frameInfo.fileId;
 
-        widgetsMap.forEach(widgetStore => {
-            const regionId = widgetStore.effectiveRegionId;
-            if (!frame.regionSet) {
+        frames.forEach(frame => {
+            const fileId = frame.frameInfo.fileId;
+
+            widgetsMap.forEach(widgetStore => {
+                const regionId = widgetStore.effectiveRegionId;
+                if (!frame.regionSet) {
                 return;
-            }
-            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-            if (regionId === -1 || region && region.isClosedRegion) {
-                let frameRequirementsArray = updatedRequirements.get(fileId);
-                if (!frameRequirementsArray) {
-                    frameRequirementsArray = [];
-                    updatedRequirements.set(fileId, frameRequirementsArray);
                 }
-                if (frameRequirementsArray.indexOf(regionId) === -1) {
-                    frameRequirementsArray.push(regionId);
+                const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+                if (regionId === -1 || region && region.isClosedRegion) {
+                    let frameRequirementsArray = updatedRequirements.get(fileId);
+                    if (!frameRequirementsArray) {
+                        frameRequirementsArray = [];
+                        updatedRequirements.set(fileId, frameRequirementsArray);
+                    }
+                    if (frameRequirementsArray.indexOf(regionId) === -1) {
+                        frameRequirementsArray.push(regionId);
+                    }
                 }
-            }
+            });
         });
         return updatedRequirements;
     }

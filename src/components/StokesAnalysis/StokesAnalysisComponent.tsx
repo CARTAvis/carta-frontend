@@ -64,7 +64,6 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (this.props.appStore && this.widgetStore.effectiveFrame) {
             let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
             const regionId = this.widgetStore.effectiveRegionId;
-            this.props.appStore.setRequiredFrame(this.widgetStore.effectiveFrame);
             const frameMap = this.props.appStore.spectralProfiles.get(fileId);
             if (frameMap) {
                 return frameMap.get(regionId);

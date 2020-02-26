@@ -46,7 +46,6 @@ export class StatsComponent extends React.Component<WidgetProps> {
         if (this.widgetStore.effectiveFrame) {
             let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
             let regionId = this.widgetStore.effectiveRegionId;
-            appStore.setRequiredFrame(this.widgetStore.effectiveFrame);
 
             const frameMap = appStore.regionStats.get(fileId);
             if (!frameMap) {

@@ -52,7 +52,6 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         if (this.widgetStore.effectiveFrame) {
             let fileId = this.widgetStore.effectiveFrame.frameInfo.fileId;
             let regionId = this.widgetStore.effectiveRegionId;
-            appStore.setRequiredFrame(this.widgetStore.effectiveFrame);
 
             // // Image histograms handled slightly differently
             // if (regionId === -1) {

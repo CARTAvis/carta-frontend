@@ -2,7 +2,7 @@ import {observer} from "mobx-react";
 import * as React from "react";
 import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {AppStore} from "stores";
+import {AppStore, FrameStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {RegionSelectorComponent} from "components";
 import "./SpectralProfilerToolbarComponent.css";
@@ -18,8 +18,10 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
         this.props.widgetStore.setCoordinate(changeEvent.target.value);
     };
 
-    private handleFrameChanged = () => {
-        this.props.widgetStore.setCoordinate("z");
+    private handleFrameChanged = (newFrame: FrameStore) => {
+        if (newFrame && newFrame.regionSet && !(newFrame.frameInfo.fileInfoExtended.stokes > 1)) {
+            this.props.widgetStore.setCoordinate("z");
+        }
     }
 
     public render() {

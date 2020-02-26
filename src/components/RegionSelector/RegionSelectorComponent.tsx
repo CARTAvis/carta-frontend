@@ -2,13 +2,13 @@ import {observer} from "mobx-react";
 import * as React from "react";
 import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {AppStore, RegionStore} from "stores";
+import {AppStore, RegionStore, FrameStore} from "stores";
 import {RegionWidgetStore, RegionsType, RegionId, CURRENT_FILE_ID} from "stores/widgets";
 
 import "./RegionSelectorComponent.css";
 
 @observer
-export class RegionSelectorComponent extends React.Component<{ widgetStore: RegionWidgetStore, appStore: AppStore, onFrameChanged?: () => void }> {
+export class RegionSelectorComponent extends React.Component<{ widgetStore: RegionWidgetStore, appStore: AppStore, onFrameChanged?: (newFrame: FrameStore) => void }> {
 
     private handleFrameChanged = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
         const appStore = this.props.appStore;
@@ -18,7 +18,7 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
             widgetStore.setFileId(selectedFileId);
             widgetStore.setRegionId(widgetStore.effectiveFrame.frameInfo.fileId, RegionId.ACTIVE);
             if (this.props.onFrameChanged) {
-                this.props.onFrameChanged();
+                this.props.onFrameChanged(widgetStore.effectiveFrame);
             }
         }
     };

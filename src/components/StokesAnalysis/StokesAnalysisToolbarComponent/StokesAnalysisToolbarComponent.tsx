@@ -1,7 +1,7 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import {FormGroup, Switch} from "@blueprintjs/core";
-import {AppStore} from "stores";
+import {AppStore, FrameStore} from "stores";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {RegionSelectorComponent} from "components";
 import "./StokesAnalysisToolbarComponent.css";
@@ -13,12 +13,13 @@ export class StokesAnalysisToolbarComponent extends React.Component<{widgetStore
         this.props.widgetStore.setFractionalPolVisible(changeEvent.target.checked);
     };
 
-    private handleFrameChanged = () => {
-        this.props.widgetStore.setFractionalPolVisible(false);
+    private handleFrameChanged = (newFrame: FrameStore) => {
+        if (newFrame && newFrame.regionSet && !(newFrame.frameInfo.fileInfoExtended.stokes > 1)) {
+            this.props.widgetStore.setFractionalPolVisible(false);
+        }
     }
 
     public render() {
-        const appStore = this.props.appStore;
         const widgetStore = this.props.widgetStore;
 
         let enableFractionalPol = false;
