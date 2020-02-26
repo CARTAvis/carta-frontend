@@ -73,7 +73,7 @@ export const SPECTRAL_TYPE_STRING = new Map<SpectralType, string>([
     [SpectralType.CHANNEL, "Channel"]
 ]);
 
-export const DEFAULT_UNIT = new Map<SpectralType, SpectralUnit>([
+export const SPECTRAL_DEFAULT_UNIT = new Map<SpectralType, SpectralUnit>([
     [SpectralType.VRAD, SpectralUnit.KMS],
     [SpectralType.VOPT, SpectralUnit.KMS],
     [SpectralType.FREQ, SpectralUnit.GHZ],

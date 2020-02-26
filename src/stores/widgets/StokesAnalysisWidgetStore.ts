@@ -7,7 +7,7 @@ import {PlotType, LineSettings, ScatterSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {AppStore, FrameStore} from "stores";
 import {getColorsForValues, isColorValid} from "utilities";
-import {DEFAULT_UNIT, GenCoordinateLabel, SpectralSystem, SpectralType, SpectralUnit} from "models";
+import {SPECTRAL_DEFAULT_UNIT, GenCoordinateLabel, SpectralSystem, SpectralType, SpectralUnit} from "models";
 
 export enum StokesCoordinate {
     CurrentZ = "z",
@@ -264,7 +264,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         const frame = this.appStore.activeFrame;
         if (frame && frame.spectralInfo && frame.isSpectralSettingsSupported) {
             this.spectralType = frame.spectralInfo.channelType.code as SpectralType;
-            this.spectralUnit = DEFAULT_UNIT.get(this.spectralType);
+            this.spectralUnit = SPECTRAL_DEFAULT_UNIT.get(this.spectralType);
             this.spectralSystem = frame.spectralInfo.specsys as SpectralSystem;
         } else {
             this.spectralType = null;
