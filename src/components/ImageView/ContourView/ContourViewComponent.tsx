@@ -84,17 +84,18 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             return;
         }
 
-        const reqWidth = Math.max(1, frame.renderWidth * devicePixelRatio);
-        const reqHeight = Math.max(1, frame.renderHeight * devicePixelRatio);
+        const reqWidth = Math.round(Math.max(1, frame.renderWidth * devicePixelRatio));
+        const reqHeight = Math.round(Math.max(1, frame.renderHeight * devicePixelRatio));
         // Resize canvas if necessary
         if (this.canvas.width !== reqWidth || this.canvas.height !== reqHeight) {
             this.canvas.width = reqWidth;
             this.canvas.height = reqHeight;
             this.gl.viewport(0, 0, reqWidth, reqHeight);
-        } else {
-            // Otherwise just clear it
-            this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT);
         }
+        // Otherwise just clear it
+        this.gl.clearColor(0, 0, 0, 0);
+        const clearMask = WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT | WebGLRenderingContext.STENCIL_BUFFER_BIT;
+        this.gl.clear(clearMask);
     }
 
     private updateCanvas = () => {
