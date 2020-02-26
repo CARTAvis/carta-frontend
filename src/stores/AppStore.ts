@@ -1029,7 +1029,6 @@ export class AppStore {
         if (this.syncContourToFrame) {
             this.contourDataSource = frame;
         }
-        this.widgetsStore.updateSpectralRelatedWidgetsSpectralSettings();
     }
 
     @action setContourDataSource = (frame: FrameStore) => {
