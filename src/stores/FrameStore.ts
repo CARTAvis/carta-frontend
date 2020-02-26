@@ -1146,11 +1146,6 @@ export class FrameStore {
         AST.delete(copySrc);
         AST.delete(copyDest);
 
-        for (let i = 0; i < 16; i++) {
-            const refVal = AST.transform3DPoint(this.spectralTransformAST, 1, 1, i + 1, true);
-            console.log(`${i} => ${refVal.z - 1} @ ${refVal.x}, ${refVal.y}`);
-        }
-
         if (!this.spectralTransformAST) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}. Could not create AST transform`);
             this.spectralReference = null;

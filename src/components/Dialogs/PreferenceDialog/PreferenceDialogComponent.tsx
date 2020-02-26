@@ -10,7 +10,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/ScalingSelectComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
 import {ColormapComponent, ColorPickerComponent} from "components/Shared";
-import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, SpectralType, Theme, TileCache, WCSType, Zoom, ZoomPoint} from "models";
+import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, PreferenceKeys, RegionStore, RenderConfigStore} from "stores";
 import {hexStringToRgba, SWATCH_COLORS} from "utilities";
 import "./PreferenceDialogComponent.css";
@@ -138,6 +138,17 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </FormGroup>
                 <FormGroup inline={true} label="Enable drag-to-pan">
                     <Switch checked={preference.dragPanning} onChange={(ev) => preference.setPreference(PreferenceKeys.GLOBAL_DRAG_PANNING, ev.currentTarget.checked)}/>
+                </FormGroup>
+                <FormGroup inline={true} label="WCS matching on append">
+                    <HTMLSelect
+                        value={preference.autoWCSMatching}
+                        onChange={(ev) => preference.setPreference(PreferenceKeys.GLOBAL_AUTO_WCS_MATCHING, Number(ev.currentTarget.value))}
+                    >
+                        <option value={WCSMatchingType.NONE}>None</option>
+                        <option value={WCSMatchingType.SPATIAL}>Spatial Only</option>
+                        <option value={WCSMatchingType.SPECTRAL}>Spectral Only</option>
+                        <option value={WCSMatchingType.SPATIAL | WCSMatchingType.SPECTRAL}>Spatial and Spectral</option>
+                    </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Spectral Matching">
                     <HTMLSelect value={preference.spectralMatchingType} onChange={(ev) => preference.setPreference(PreferenceKeys.GLOBAL_SPECTRAL_MATCHING_TYPE, ev.currentTarget.value)}>
