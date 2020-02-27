@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as _ from "lodash";
-import {autorun, computed, observable} from "mobx";
+import {autorun, computed, observable, values} from "mobx";
 import {observer} from "mobx-react";
 import {Switch, HTMLSelect, AnchorButton, Intent, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, Table, SelectionModes, RenderMode} from "@blueprintjs/table";
@@ -128,8 +128,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private handleHeaderDisplayChange(changeEvent: any, columnName: string) {
         const val = changeEvent.target.checked;
+        const withFilter = this.widgetStore.catalogControlHeader.get(columnName);
         this.widgetStore.setHeaderDisplay(val, columnName);
-        this.handleFilterClick();   
+        if (val === true || (withFilter.filter !== undefined && val === false)) {
+            this.handleFilterClick();   
+        }   
     }
 
     private handleHeaderRepresentationChange(changeEvent: any, columnName: string) {
@@ -151,7 +154,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private renderSwitchButtonCell(rowIndex: number, columnName: string) {
         const display = this.widgetStore.catalogControlHeader.get(columnName).display;
-        const disable = this.widgetStore.loadingData;
+        let disable = this.widgetStore.loadingData;
+        const progress = this.widgetStore.progress;
+        if (progress === 1 || progress === undefined) {
+            disable = false;
+        }
         return (
             <Cell key={`cell_switch_${rowIndex}`}>
                 <React.Fragment>
@@ -258,7 +265,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         let userFilters: CARTA.FilterConfig[] = [];
         const filters = this.widgetStore.catalogControlHeader;
         filters.forEach((value, key) => {
-            if (value.filter !== undefined) {
+            if (value.filter !== undefined && value.display) {
                 let filter = new CARTA.FilterConfig();
                 const dataType = this.widgetStore.catalogHeader[value.dataIndex].dataType;
                 filter.columnName = key;
