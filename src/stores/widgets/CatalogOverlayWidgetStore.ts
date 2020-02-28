@@ -33,12 +33,26 @@ export enum CatalogUpdateMode {
     ViewUpdate = "ViewUpdate"
 }
 
+export enum CatalogPlotType {
+    ImageOverlay = "as image overlay",
+    D2Scatter = "as 2D scatter",
+    // D3Scatter = "as 3D scatter"
+}
+
 export type ControlHeader = { columnIndex: number, dataIndex: number, display: boolean, representAs: CatalogOverlay, filter: string, columnWidth: number };
 
 export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     public static readonly InitTableRows = 50;
+
     private static readonly DataChunkSize = 50;
+    private readonly CoordinateSystemName = new Map<SystemType, string>([
+        [SystemType.FK5, "FK5"],
+        [SystemType.FK4, "FK4"],
+        [SystemType.Galactic, "GAL"],
+        [SystemType.Ecliptic, "ECL"],
+        [SystemType.ICRS, "ICRS"],
+    ]);
     private systemCoordinateMap = new Map<SystemType, {x: CatalogOverlay, y: CatalogOverlay}>([
         [SystemType.FK4, {x : CatalogOverlay.RA, y : CatalogOverlay.DEC}],
         [SystemType.FK5, {x : CatalogOverlay.RA, y : CatalogOverlay.DEC}],
@@ -79,7 +93,8 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable plotingData: boolean;
     @observable updateMode: CatalogUpdateMode;
     @observable userFilters: CARTA.CatalogFilterRequest;
-    @observable catalogCoordinateSystem: {system: SystemType, coordinate: {x: CatalogOverlay, y: CatalogOverlay}};
+    @observable catalogCoordinateSystem: {system: SystemType, equinox: string, epoch: string, coordinate: {x: CatalogOverlay, y: CatalogOverlay}};
+    @observable catalogPlotType: CatalogPlotType;
 
     constructor(appStore: AppStore, catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData) {
         super(appStore, RegionsType.CLOSED_AND_POINT);
@@ -94,7 +109,18 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.plotingData = false;
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.headerTableColumnWidts = [75, 75, 65, 100, null];
-        this.catalogCoordinateSystem = {system: SystemType.ICRS, coordinate: this.systemCoordinateMap.get(SystemType.ICRS)};
+
+        this.catalogPlotType = CatalogPlotType.ImageOverlay;
+        const coordinateSystem = catalogInfo.fileInfo.coosys[0];
+        if (coordinateSystem) {
+            const system = this.getCatalogSystem(coordinateSystem.system);
+            this.catalogCoordinateSystem = {
+                system: system,
+                equinox: coordinateSystem.equinox,
+                epoch: coordinateSystem.epoch, 
+                coordinate: this.systemCoordinateMap.get(SystemType.ICRS)
+            };   
+        }
 
         const initTableRows = CatalogOverlayWidgetStore.InitTableRows;
         if (catalogInfo.dataSize < initTableRows) {
@@ -104,6 +130,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             this.numVisibleRows = initTableRows;
             this.subsetEndIndex = initTableRows;
         }
+    }
+
+    @action setCatalogPlotType(type: CatalogPlotType) {
+        this.catalogPlotType = type;
     }
 
     @action setCatalogCoordinateSystem(catalogSystem: SystemType) {
@@ -450,6 +480,17 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             }
         }
         return false;
+    }
+
+    private getCatalogSystem(system: string): SystemType {
+        let catalogSystem = SystemType.ICRS;
+        const systemMap = this.CoordinateSystemName;
+        systemMap.forEach((value, key) => {
+            if (system.toUpperCase().includes(value.toUpperCase())) {
+                catalogSystem = key;
+            }
+        });
+        return catalogSystem;
     }
 
     private addSubsetDoubleData(initData: Array<CARTA.IDoubleColumn>, sourceData:  Array<CARTA.IDoubleColumn>) {

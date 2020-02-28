@@ -9,7 +9,7 @@ import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
 import {WidgetConfig, WidgetProps, HelpType} from "stores";
-import {CatalogOverlayWidgetStore, CatalogOverlay, CatalogUpdateMode} from "stores/widgets";
+import {CatalogOverlayWidgetStore, CatalogOverlay, CatalogUpdateMode, CatalogPlotType} from "stores/widgets";
 import {toFixed, getTableDataByType} from "utilities";
 import "./CatalogOverlayComponent.css";
 
@@ -135,8 +135,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }   
     }
 
-    private handleHeaderRepresentationChange(changeEvent: any, columnName: string) {
-        const val = changeEvent.currentTarget.value;
+    private handleHeaderRepresentationChange(changeEvent: React.ChangeEvent<HTMLSelectElement>, columnName: string) {
+        const val = changeEvent.currentTarget.value as CatalogOverlay;
         this.widgetStore.setHeaderRepresentation(val, columnName);
     }
 
@@ -401,28 +401,29 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private handleLoadClick = () => {
+    private handlePlotClick = () => {
         const widgetStore = this.widgetStore;
         const appStore = this.props.appStore;
         const frame = appStore.activeFrame;
-        widgetStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
-
-        if (frame) {
-            const wcs = frame.validWcs ? frame.wcsInfo : 0;
-            const id = this.props.id;
-            const catalogStore = appStore.catalogStore;
-            catalogStore.clearData(this.props.id);
-            // init plot data   
-            const controlHeader = widgetStore.catalogControlHeader;
-            const xHeader = controlHeader.get(widgetStore.xColumnRepresentation);
-            const yHeader = controlHeader.get(widgetStore.yColumnRepresentation);
-            const xHeaderInfo = widgetStore.catalogHeader[xHeader.dataIndex];
-            const yHeaderInfo = widgetStore.catalogHeader[yHeader.dataIndex];
-            const wscCoordsX = getTableDataByType(widgetStore.catalogData, xHeaderInfo.dataType, xHeaderInfo.dataTypeIndex);
-            const wcsCoordsY = getTableDataByType(widgetStore.catalogData, yHeaderInfo.dataType, yHeaderInfo.dataTypeIndex);
-            catalogStore.updateCatalogData(id, wscCoordsX, wcsCoordsY, wcs, xHeaderInfo.units, yHeaderInfo.units, widgetStore.catalogCoordinateSystem.system);
-            catalogStore.updateCatalogColor(id, widgetStore.catalogColor);
-            catalogStore.updateCatalogSize(id, widgetStore.catalogSize);
+        if (widgetStore.catalogPlotType === CatalogPlotType.ImageOverlay) {
+            widgetStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
+            if (frame) {
+                const wcs = frame.validWcs ? frame.wcsInfo : 0;
+                const id = this.props.id;
+                const catalogStore = appStore.catalogStore;
+                catalogStore.clearData(this.props.id);
+                // init plot data   
+                const controlHeader = widgetStore.catalogControlHeader;
+                const xHeader = controlHeader.get(widgetStore.xColumnRepresentation);
+                const yHeader = controlHeader.get(widgetStore.yColumnRepresentation);
+                const xHeaderInfo = widgetStore.catalogHeader[xHeader.dataIndex];
+                const yHeaderInfo = widgetStore.catalogHeader[yHeader.dataIndex];
+                const wscCoordsX = getTableDataByType(widgetStore.catalogData, xHeaderInfo.dataType, xHeaderInfo.dataTypeIndex);
+                const wcsCoordsY = getTableDataByType(widgetStore.catalogData, yHeaderInfo.dataType, yHeaderInfo.dataTypeIndex);
+                catalogStore.updateCatalogData(id, wscCoordsX, wcsCoordsY, wcs, xHeaderInfo.units, yHeaderInfo.units, widgetStore.catalogCoordinateSystem.system);
+                catalogStore.updateCatalogColor(id, widgetStore.catalogColor);
+                catalogStore.updateCatalogSize(id, widgetStore.catalogSize);
+            }
         }
 
         if (widgetStore.subsetEndIndex !== widgetStore.catalogInfo.dataSize) {
@@ -430,6 +431,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             let catalogFilter = widgetStore.updateRequestDataSize;
             appStore.sendCatalogFilter(catalogFilter);
         }
+    }
+
+    private handlePlotTypeChange(changeEvent: React.ChangeEvent<HTMLSelectElement>) {
+        const val = changeEvent.currentTarget.value as CatalogPlotType;
+        this.widgetStore.setCatalogPlotType(val);
     }
 
     public render() {
@@ -494,22 +500,27 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             disabled={widgetStore.loadOntoImage}
                         />
                         </Tooltip>
-                        <Tooltip content={"Clear filter and catalog data"}>
+                        <Tooltip content={"Reset filter and catalog data"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
-                            text="Clear"
+                            text="Reset"
                             onClick={this.handleClearClick}
                             disabled={widgetStore.loadOntoImage}
                         />
                         </Tooltip>
-                        <Tooltip content={"Load"}>
+                        <Tooltip content={"Plot data"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
-                            text="Load"
-                            onClick={this.handleLoadClick}
+                            text="Plot"
+                            onClick={this.handlePlotClick}
                             disabled={!widgetStore.enableLoadButton}
                         />
                         </Tooltip>
+                        <HTMLSelect className="bp3-minimal" value={widgetStore.catalogPlotType} onChange={changeEvent => this.handlePlotTypeChange(changeEvent)}>
+                            {Object.keys(CatalogPlotType).map(plotType => {                           
+                                return <option key={plotType} value={CatalogPlotType[plotType]}>{CatalogPlotType[plotType]}</option>;
+                            })}
+                        </HTMLSelect>
                     </div>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>

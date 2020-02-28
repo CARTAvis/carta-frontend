@@ -20,8 +20,8 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
         [SystemType.ICRS, "ICRS"],
     ]);
 
-    private handleHeaderRepresentationChange(changeEvent: any) {
-        const val = changeEvent.currentTarget.value;
+    private handleHeaderRepresentationChange(changeEvent: React.ChangeEvent<HTMLSelectElement>) {
+        const val = changeEvent.currentTarget.value as CatalogOverlayShape;
         this.props.widgetStore.setCatalogShape(val);
     }
 
@@ -37,8 +37,8 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
         this.props.appStore.catalogStore.updateCatalogColor(this.props.id, color);
     }
 
-    private handleHeaderCatalogSystemChange(changeEvent: any) {
-        const val = changeEvent.currentTarget.value;
+    private handleHeaderCatalogSystemChange(changeEvent: React.ChangeEvent<HTMLSelectElement>) {
+        const val = changeEvent.currentTarget.value as SystemType;
         this.props.widgetStore.setCatalogCoordinateSystem(val);
     }
 
