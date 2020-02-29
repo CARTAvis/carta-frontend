@@ -91,9 +91,15 @@ class ExecutionEntry {
     }
 
     private mapMacro = (parameter: any) => {
-        // For now, only one macro supported
+        // For now, only a few macros supported
         if (parameter === "$ActiveFrame") {
             return this.appStore.activeFrame;
+        } else if (parameter === "$SpatialReference") {
+            return this.appStore.spatialReference;
+        } else if (parameter === "$SpectralReference") {
+            return this.appStore.spectralReference;
+        } else if (parameter === "$ContourDataSource") {
+            return this.appStore.contourDataSource;
         }
 
         return parameter;
