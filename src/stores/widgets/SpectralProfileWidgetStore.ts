@@ -2,8 +2,10 @@ import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
-import {RegionWidgetStore} from "./RegionWidgetStore";
-import {FrameStore} from "../FrameStore";
+import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
+import {AppStore, FrameStore} from "..";
+import {isColorValid} from "utilities";
+import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
@@ -18,14 +20,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable isMouseMoveIntoLinePlots: boolean;
 
     // settings 
-    @observable useWcsValues: boolean;
     @observable plotType: PlotType;
     @observable meanRmsVisible: boolean;
     @observable primaryLineColor: { colorHex: string, fixed: boolean };
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
-    
+
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
             case CARTA.StatsType.Sum:
@@ -53,7 +54,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
 
     private static ValidStatsTypes = [
         CARTA.StatsType.Sum, CARTA.StatsType.FluxDensity, CARTA.StatsType.Mean, CARTA.StatsType.Sigma,
-        CARTA.StatsType.Min, CARTA.StatsType.Max, CARTA.StatsType.RMS, CARTA.StatsType.SumSq];
+        CARTA.StatsType.Min, CARTA.StatsType.Max, CARTA.StatsType.RMS, CARTA.StatsType.SumSq
+    ];
 
     @action setRegionId = (fileId: number, regionId: number) => {
         this.regionIdMap.set(fileId, regionId);
@@ -72,6 +74,24 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             // Reset zoom when changing between coordinates
             this.clearXYBounds();
             this.coordinate = coordinate;
+        }
+    };
+
+    @action setSpectralCoordinate = (coordStr: string) => {
+        const frame = this.appStore.activeFrame;
+        if (frame && frame.spectralCoordsSupported && frame.spectralCoordsSupported.has(coordStr)) {
+            const coord: {type: SpectralType, unit: SpectralUnit} = frame.spectralCoordsSupported.get(coordStr);
+            frame.spectralType = coord.type;
+            frame.spectralUnit = coord.unit;
+            this.clearXBounds();
+        }
+    };
+
+    @action setSpectralSystem = (specsys: SpectralSystem) => {
+        const frame = this.appStore.activeFrame;
+        if (frame && frame.spectralSystemsSupported && frame.spectralSystemsSupported.includes(specsys)) {
+            frame.spectralSystem = specsys;
+            this.clearXBounds();
         }
     };
 
@@ -117,13 +137,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.meanRmsVisible = val;
     };
 
-    @action setUseWcsValues = (val: boolean) => {
-        if (val !== this.useWcsValues) {
-            this.clearXBounds();
-        }
-        this.useWcsValues = val;
-    };
-
     @action setPlotType = (val: PlotType) => {
         this.plotType = val;
     };
@@ -140,8 +153,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.isMouseMoveIntoLinePlots = val;
     };
 
-    constructor(coordinate: string = "z") {
-        super();
+    constructor(appStore: AppStore, coordinate: string = "z") {
+        super(appStore, RegionsType.CLOSED_AND_POINT);
         this.coordinate = coordinate;
         this.statsType = CARTA.StatsType.Mean;
 
@@ -149,7 +162,6 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.plotType = PlotType.STEPS;
         this.meanRmsVisible = false;
         this.markerTextVisible = false;
-        this.useWcsValues = true;
         this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
@@ -168,7 +180,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
         widgetsMap.forEach(widgetStore => {
             const fileId = frame.frameInfo.fileId;
-            const regionId = widgetStore.regionIdMap.get(fileId) || 0;
+            const regionId = widgetStore.effectiveRegionId;
             const coordinate = widgetStore.coordinate;
             let statsType = widgetStore.statsType;
 
@@ -323,4 +335,51 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @action initXYBoundaries (minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
         this.linePlotInitXYBoundaries = { minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal };
     }
+
+    public init = (widgetSettings): void => {
+        if (!widgetSettings) {
+            return;
+        }
+        if (typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
+            this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
+        }
+        if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
+            this.lineWidth = widgetSettings.lineWidth;
+        }
+        if (typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE && widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
+            this.linePlotPointSize = widgetSettings.linePlotPointSize;
+        }
+        if (typeof widgetSettings.meanRmsVisible === "boolean") {
+            this.meanRmsVisible = widgetSettings.meanRmsVisible;
+        }
+        if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
+            this.plotType = widgetSettings.plotType;
+        }
+        if (typeof widgetSettings.minXVal === "number") {
+            this.linePlotInitXYBoundaries.minXVal = widgetSettings.minXVal;
+        }
+        if (typeof widgetSettings.maxXVal === "number") {
+            this.linePlotInitXYBoundaries.maxXVal = widgetSettings.maxXVal;
+        }
+        if (typeof widgetSettings.minYVal === "number") {
+            this.linePlotInitXYBoundaries.minYVal = widgetSettings.minYVal;
+        }
+        if (typeof widgetSettings.maxYVal === "number") {
+            this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
+        }
+    };
+
+    public toConfig = () => {
+        return {
+            primaryLineColor: this.primaryLineColor.colorHex,
+            lineWidth: this.lineWidth,
+            linePlotPointSize: this.linePlotPointSize,
+            meanRmsVisible: this.meanRmsVisible,
+            plotType: this.plotType,
+            minXVal: this.linePlotInitXYBoundaries.minXVal,
+            maxXVal: this.linePlotInitXYBoundaries.maxXVal,
+            minYVal: this.linePlotInitXYBoundaries.minYVal,
+            maxYVal: this.linePlotInitXYBoundaries.maxYVal
+        };
+    };
 }

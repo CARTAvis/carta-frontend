@@ -3,8 +3,8 @@ import {observer} from "mobx-react";
 import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
 import {AppStore, WidgetConfig} from "stores";
 import {AnimatorComponent, HistogramComponent, LayerListComponent, LogComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent, StatsComponent, StokesAnalysisComponent} from "components";
+import {CustomIcon} from "icons/CustomIcons";
 import "./ToolbarMenuComponent.css";
-
 @observer
 export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }> {
     public static get DRAGSOURCE_WIDGETCONFIG_MAP(): Map<string, WidgetConfig> {
@@ -84,7 +84,7 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
                         <Button icon={"settings"} onClick={dialogStore.showOverlaySettings} className={dialogStore.overlaySettingsDialogVisible ? "bp3-active" : ""}/>
                     </Tooltip>
                     <Tooltip content={<span>Contours</span>}>
-                        <Button icon={"heatmap"} onClick={dialogStore.showContourDialog} className={dialogStore.contourDialogVisible ? "bp3-active" : ""}/>
+                        <Button icon={<CustomIcon icon={"contour"}/>} onClick={dialogStore.showContourDialog} className={dialogStore.contourDialogVisible ? "bp3-active" : ""}/>
                     </Tooltip>
                     <Tooltip content={<span>Debug Execution</span>}>
                         <Button icon={"console"} onClick={dialogStore.showDebugExecutionDialog} className={dialogStore.debugExecutionDialogVisible ? "bp3-active" : ""}/>

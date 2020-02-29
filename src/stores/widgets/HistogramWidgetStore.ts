@@ -2,7 +2,9 @@ import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {Colors} from "@blueprintjs/core";
 import {PlotType, LineSettings} from "components/Shared";
-import {RegionWidgetStore} from "./RegionWidgetStore";
+import {AppStore} from "../AppStore";
+import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
+import {isColorValid} from "utilities";
 
 export class HistogramWidgetStore extends RegionWidgetStore {
     @observable minX: number;
@@ -119,8 +121,8 @@ export class HistogramWidgetStore extends RegionWidgetStore {
         return diffList;
     }
 
-    constructor() {
-        super();
+    constructor(appStore: AppStore) {
+        super(appStore, RegionsType.CLOSED);
         this.logScaleY = true;
         this.plotType = PlotType.STEPS;
         this.primaryLineColor = { colorHex: Colors.BLUE2, fixed: false };
@@ -153,4 +155,51 @@ export class HistogramWidgetStore extends RegionWidgetStore {
     @action initXYBoundaries (minXVal: number, maxXVal: number, minYVal: number, maxYVal: number) {
         this.linePlotInitXYBoundaries = { minXVal: minXVal, maxXVal: maxXVal, minYVal: minYVal, maxYVal: maxYVal };
     }
+
+    public init = (widgetSettings): void => {
+        if (!widgetSettings) {
+            return;
+        }
+        if (typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
+            this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
+        }
+        if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
+            this.lineWidth = widgetSettings.lineWidth;
+        }
+        if (typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE && widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
+            this.linePlotPointSize = widgetSettings.linePlotPointSize;
+        }
+        if (typeof widgetSettings.logScaleY === "boolean") {
+            this.logScaleY = widgetSettings.logScaleY;
+        }
+        if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
+            this.plotType = widgetSettings.plotType;
+        }
+        if (typeof widgetSettings.minXVal === "number") {
+            this.linePlotInitXYBoundaries.minXVal = widgetSettings.minXVal;
+        }
+        if (typeof widgetSettings.maxXVal === "number") {
+            this.linePlotInitXYBoundaries.maxXVal = widgetSettings.maxXVal;
+        }
+        if (typeof widgetSettings.minYVal === "number") {
+            this.linePlotInitXYBoundaries.minYVal = widgetSettings.minYVal;
+        }
+        if (typeof widgetSettings.maxYVal === "number") {
+            this.linePlotInitXYBoundaries.maxYVal = widgetSettings.maxYVal;
+        }
+    };
+
+    public toConfig = () => {
+        return {
+            primaryLineColor: this.primaryLineColor.colorHex,
+            lineWidth: this.lineWidth,
+            linePlotPointSize: this.linePlotPointSize,
+            logScaleY: this.logScaleY,
+            plotType: this.plotType,
+            minXVal: this.linePlotInitXYBoundaries.minXVal,
+            maxXVal: this.linePlotInitXYBoundaries.maxXVal,
+            minYVal: this.linePlotInitXYBoundaries.minYVal,
+            maxYVal: this.linePlotInitXYBoundaries.maxYVal
+        };
+    };
 }

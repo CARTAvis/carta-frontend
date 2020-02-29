@@ -10,7 +10,7 @@ import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
 import {RegionViewComponent} from "./RegionView/RegionViewComponent";
-import {AnimationMode, AnimationState, RegionStore, WidgetConfig, WidgetProps} from "stores";
+import {AnimationMode, AnimationState, RegionStore, WidgetConfig, WidgetProps, HelpType} from "stores";
 import {CursorInfo, Point2D} from "models";
 import {toFixed} from "utilities";
 import "./ImageViewComponent.css";
@@ -18,7 +18,9 @@ import {ContourViewComponent} from "./ContourView/ContourViewComponent";
 
 export const exportImage = (padding, darkTheme, imageName) => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
+    const contourCanvas = document.getElementById("contour-canvas") as HTMLCanvasElement;
     const overlayCanvas = document.getElementById("overlay-canvas") as HTMLCanvasElement;
+
     let regionCanvas: HTMLCanvasElement;
     let beamProfileCanvas: HTMLCanvasElement;
     const beamProfileQuery = $(".beam-profile-stage").children().children("canvas");
@@ -39,6 +41,7 @@ export const exportImage = (padding, darkTheme, imageName) => {
     ctx.fillStyle = "rgba(255, 255, 255, 0.0)";
     ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
     ctx.drawImage(rasterCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
+    ctx.drawImage(contourCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     if (beamProfileCanvas) {
         ctx.drawImage(beamProfileCanvas, padding.left * devicePixelRatio, padding.top * devicePixelRatio);
     }
@@ -76,7 +79,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             defaultWidth: 600,
             defaultHeight: 600,
             title: "Image view",
-            isCloseable: false
+            isCloseable: false,
+            helpType: HelpType.IMAGE_VIEW
         };
     }
 
@@ -195,10 +199,7 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         height={appStore.activeFrame.renderHeight}
                         top={appStore.overlayStore.padding.top}
                         left={appStore.overlayStore.padding.left}
-                        beamMajor={appStore.activeFrame.beamProperties.x}
-                        beamMinor={appStore.activeFrame.beamProperties.y}
-                        beamAngle={appStore.activeFrame.beamProperties.angle}
-                        zoomLevel={appStore.activeFrame.zoomLevel}
+                        frame={appStore.activeFrame}
                         docked={this.props.docked}
                         padding={10}
                         overlayBeamSettings={appStore.activeFrame.beamProperties.overlayBeamSettings}
@@ -242,13 +243,11 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         }
 
         return (
-            <div className="image-view-div" onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
+            <div className="image-view-div" onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                 <RasterViewComponent
-                    frame={appStore.activeFrame}
+                    appStore={appStore}
                     docked={this.props.docked}
                     overlaySettings={appStore.overlayStore}
-                    preference={appStore.preferenceStore}
-                    tileService={appStore.tileService}
                 />
                 <ContourViewComponent
                     appStore={appStore}

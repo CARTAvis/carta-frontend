@@ -3,9 +3,10 @@ import {ChartArea} from "chart.js";
 import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings, ScatterSettings} from "components/Shared";
-import {RegionWidgetStore} from "./RegionWidgetStore";
-import {FrameStore} from "stores";
-import {getColorsForValues} from "utilities";
+import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
+import {AppStore, FrameStore} from "stores";
+import {getColorsForValues, isColorValid} from "utilities";
+import {SpectralSystem, SpectralType, SpectralUnit} from "models";
 
 export enum StokesCoordinate {
     CurrentZ = "z",
@@ -20,7 +21,6 @@ export enum StokesCoordinate {
 
 const DEFAULTS = {
         fractionalPolVisible: false,
-        useWcsValues: true,
         scatterOutRangePointsZIndex: [],
         primaryLineColor: { colorHex: Colors.BLUE2, fixed: false },
         secondaryLineColor: { colorHex: Colors.ORANGE2, fixed: false },
@@ -57,7 +57,6 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     scatterOutRangePointsZIndex: Array<number>;
 
     // settings 
-    @observable useWcsValues: boolean;
     @observable plotType: PlotType;
     @observable primaryLineColor: { colorHex: string, fixed: boolean };
     @observable secondaryLineColor: { colorHex: string, fixed: boolean };
@@ -90,7 +89,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         : Map<number, Map<number, CARTA.SetSpectralRequirements>> {
         widgetsMap.forEach(widgetStore => {
             const fileId = frame.frameInfo.fileId;
-            const regionId = widgetStore.regionIdMap.get(fileId) || 0;
+            const regionId = widgetStore.effectiveRegionId;
             const coordinates = StokesAnalysisWidgetStore.requiredCoordinate(widgetStore);
             let statsType = widgetStore.statsType;
 
@@ -153,6 +152,24 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         }
     };
 
+    @action setSpectralCoordinate = (coordStr: string) => {
+        const frame = this.appStore.activeFrame;
+        if (frame && frame.spectralCoordsSupported && frame.spectralCoordsSupported.has(coordStr)) {
+            const coord: {type: SpectralType, unit: SpectralUnit} = frame.spectralCoordsSupported.get(coordStr);
+            frame.spectralType = coord.type;
+            frame.spectralUnit = coord.unit;
+            this.clearSharedXBounds();
+        }
+    };
+
+    @action setSpectralSystem = (specsys: SpectralSystem) => {
+        const frame = this.appStore.activeFrame;
+        if (frame && frame.spectralSystemsSupported && frame.spectralSystemsSupported.includes(specsys)) {
+            frame.spectralSystem = specsys;
+            this.clearSharedXBounds();
+        }
+    };
+
     @action setSharedXBounds = (minVal: number, maxVal: number) => {
         this.sharedMinX = minVal;
         this.sharedMaxX = maxVal;
@@ -197,21 +214,13 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
         this.clearScatterPlotXYBounds();
     };
 
-    @action setUseWcsValues = (val: boolean) => {
-        if (val !== this.useWcsValues) {
-            this.clearSharedXBounds();
-        }
-        this.useWcsValues = val;
-    };
-
-    constructor() {
-        super();
+    constructor(appStore: AppStore) {
+        super(appStore, RegionsType.CLOSED_AND_POINT);
         this.colorMap = DEFAULTS.colorMap;
         this.colorPixel = getColorsForValues(DEFAULTS.colorMap);
         this.statsType = CARTA.StatsType.Mean;
         this.plotType = PlotType.STEPS;
         this.fractionalPolVisible = DEFAULTS.fractionalPolVisible;
-        this.useWcsValues = DEFAULTS.useWcsValues;
         this.scatterOutRangePointsZIndex = DEFAULTS.scatterOutRangePointsZIndex;
         this.primaryLineColor = DEFAULTS.primaryLineColor;
         this.secondaryLineColor = DEFAULTS.secondaryLineColor;
@@ -358,4 +367,51 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     @computed get isPolAngleAutoScaledY() {
         return (this.polAngleMinY === undefined || this.polAngleMaxY === undefined);
     }
+
+    public init = (widgetSettings): void => {
+        if (!widgetSettings) {
+            return;
+        }
+        if (typeof widgetSettings.primaryLineColor === "string" && isColorValid(widgetSettings.primaryLineColor)) {
+            this.primaryLineColor.colorHex = widgetSettings.primaryLineColor;
+        }
+        if (typeof widgetSettings.secondaryLineColor === "string" && isColorValid(widgetSettings.secondaryLineColor)) {
+            this.secondaryLineColor.colorHex = widgetSettings.secondaryLineColor;
+        }
+        if (typeof widgetSettings.lineWidth === "number" && widgetSettings.lineWidth >= LineSettings.MIN_WIDTH && widgetSettings.lineWidth <= LineSettings.MAX_WIDTH) {
+            this.lineWidth = widgetSettings.lineWidth;
+        }
+        if (typeof widgetSettings.linePlotPointSize === "number" && widgetSettings.linePlotPointSize >= LineSettings.MIN_POINT_SIZE && widgetSettings.linePlotPointSize <= LineSettings.MAX_POINT_SIZE) {
+            this.linePlotPointSize = widgetSettings.linePlotPointSize;
+        }
+        if (typeof widgetSettings.plotType === "string" && (widgetSettings.plotType === PlotType.STEPS || widgetSettings.plotType === PlotType.LINES || widgetSettings.plotType === PlotType.POINTS)) {
+            this.plotType = widgetSettings.plotType;
+        }
+        if (typeof widgetSettings.colorMap === "string") {
+            this.colorMap = widgetSettings.colorMap;
+        }
+        if (typeof widgetSettings.scatterPlotPointSize === "number" && widgetSettings.scatterPlotPointSize >= ScatterSettings.MIN_POINT_SIZE && widgetSettings.scatterPlotPointSize <= ScatterSettings.MAX_POINT_SIZE ) {
+            this.scatterPlotPointSize = widgetSettings.scatterPlotPointSize;
+        }
+        if (typeof widgetSettings.pointTransparency === "number" && widgetSettings.pointTransparency >= ScatterSettings.MIN_TRANSPARENCY && widgetSettings.pointTransparency <= ScatterSettings.MAX_TRANSPARENCY) {
+            this.pointTransparency = widgetSettings.pointTransparency;
+        }
+        if (typeof widgetSettings.equalAxes === "boolean") {
+            this.equalAxes = widgetSettings.equalAxes;
+        }
+    };
+
+    public toConfig = () => {
+        return {
+            primaryLineColor: this.primaryLineColor.colorHex,
+            secondaryLineColor: this.secondaryLineColor.colorHex,
+            lineWidth: this.lineWidth,
+            linePlotPointSize: this.linePlotPointSize,
+            plotType: this.plotType,
+            colorMap: this.colorMap,
+            scatterPlotPointSize: this.scatterPlotPointSize,
+            pointTransparency: this.pointTransparency,
+            equalAxes: this.equalAxes
+        };
+    };
 }

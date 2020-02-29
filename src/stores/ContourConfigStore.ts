@@ -1,7 +1,14 @@
-import {action, computed, observable} from "mobx";
+import {action, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
 import {PreferenceStore} from "./PreferenceStore";
 import {hexStringToRgba, RGBA} from "../utilities";
+
+export enum ContourGeneratorType {
+    StartStepMultiplier = "start-step-multiplier",
+    MinMaxNScaling = "min-max-scaling",
+    PercentagesRefValue = "percentages-ref.value",
+    MeanSigmaList = "mean-sigma-list"
+}
 
 export enum ContourDashMode {
     None,
@@ -22,6 +29,7 @@ export class ContourConfigStore {
     @observable colormapBias: number;
     @observable dashMode: ContourDashMode;
     @observable thickness: number;
+    @observable visible: boolean;
 
     private readonly preferenceStore: PreferenceStore;
 
@@ -39,6 +47,7 @@ export class ContourConfigStore {
         this.colormapContrast = 1.0;
         this.thickness = 1.0;
         this.dashMode = ContourDashMode.NegativeOnly;
+        this.visible = true;
     }
 
     @action setEnabled(val: boolean) {
@@ -78,5 +87,13 @@ export class ContourConfigStore {
 
     @action setColormapContrast = (val: number) => {
         this.colormapContrast = val;
+    };
+
+    @action setVisible = (visible: boolean) => {
+        this.visible = visible;
+    };
+
+    @action toggleVisibility = () => {
+        this.visible = !this.visible;
     };
 }

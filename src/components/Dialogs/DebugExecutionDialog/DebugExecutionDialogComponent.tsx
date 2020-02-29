@@ -1,20 +1,28 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, computed, observable} from "mobx";
-import {AnchorButton, Classes, Dialog, EditableText, FormGroup, IDialogProps, InputGroup, Intent} from "@blueprintjs/core";
+import {AnchorButton, Classes, EditableText, IDialogProps, Intent} from "@blueprintjs/core";
+import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore} from "stores";
 import "./DebugExecutionDialogComponent.css";
-import {DraggableDialogComponent} from "..";
-
-const KEYCODE_ENTER = 13;
 
 class ExecutionEntry {
+
+    private static Delay(timeout: number) {
+        return new Promise<void>(resolve => {
+            setTimeout(resolve, timeout);
+        });
+    }
+
     action: any;
     parameters: any[];
     valid: boolean;
     async: boolean;
+    private appStore: AppStore;
 
     constructor(entry: string, appStore: AppStore) {
+        this.appStore = appStore;
+
         entry = entry.trim();
         if (entry.length && entry.charAt(0) === "+") {
             this.async = true;
@@ -32,9 +40,12 @@ class ExecutionEntry {
                 return;
             }
             this.action.bind(appStore);
-            const parameterString = entry.substring(entry.indexOf("(") + 1, entry.lastIndexOf(")"));
+            let parameterString = entry.substring(entry.indexOf("(") + 1, entry.lastIndexOf(")"));
 
             if (parameterString) {
+                // Macro replacement
+                parameterString = parameterString.replace("$ActiveFrame", `"$ActiveFrame"`);
+
                 try {
                     this.parameters = JSON.parse(`[${parameterString}]`);
                     if (!Array.isArray(this.parameters) || !this.parameters.length) {
@@ -52,6 +63,41 @@ class ExecutionEntry {
             this.valid = true;
         }
     }
+
+    async execute() {
+        try {
+            let response;
+            if (this.parameters && this.parameters.length) {
+                const currentParameters = this.parameters.map(this.mapMacro);
+
+                if (this.async) {
+                    response = await this.action(...currentParameters);
+                    await ExecutionEntry.Delay(10);
+                } else {
+                    response = this.action(...currentParameters);
+                }
+            } else {
+                if (this.async) {
+                    response = await this.action();
+                    await ExecutionEntry.Delay(10);
+                } else {
+                    response = this.action();
+                }
+            }
+            console.log(response);
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
+    private mapMacro = (parameter: any) => {
+        // For now, only one macro supported
+        if (parameter === "$ActiveFrame") {
+            return this.appStore.activeFrame;
+        }
+
+        return parameter;
+    };
 }
 
 @observer
@@ -100,7 +146,7 @@ export class DebugExecutionDialogComponent extends React.Component<{ appStore: A
         const validInput = (this.executionEntries && this.executionEntries.length);
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={500} defaultHeight={300} enableResizing={true}>
+            <DraggableDialogComponent appStore={appStore} dialogProps={dialogProps} defaultWidth={500} defaultHeight={300} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     <EditableText className="input-text" onChange={this.handleActionInput} value={this.inputString} minLines={5} intent={!validInput ? "warning" : "success"} placeholder="Enter execution string" multiline={true}/>
                 </div>
@@ -118,12 +164,6 @@ export class DebugExecutionDialogComponent extends React.Component<{ appStore: A
         this.inputString = newValue;
     };
 
-    private static Delay = (timeout: number) => {
-        return new Promise<void>(resolve => {
-            setTimeout(resolve, timeout);
-        });
-    };
-
     // TODO: This should be moved to a scripting service
     onExecuteClicked = async () => {
         if (!this.executionEntries || !this.executionEntries.length) {
@@ -133,27 +173,7 @@ export class DebugExecutionDialogComponent extends React.Component<{ appStore: A
         this.isExecuting = true;
 
         for (const entry of this.executionEntries) {
-            try {
-                let response;
-                if (entry.parameters && entry.parameters.length) {
-                    if (entry.async) {
-                        response = await entry.action(...entry.parameters);
-                        await DebugExecutionDialogComponent.Delay(10);
-                    } else {
-                        response = entry.action(...entry.parameters);
-                    }
-                } else {
-                    if (entry.async) {
-                        response = await entry.action();
-                        await DebugExecutionDialogComponent.Delay(10);
-                    } else {
-                        response = entry.action();
-                    }
-                }
-                console.log(response);
-            } catch (e) {
-                console.log(e);
-            }
+            await entry.execute();
         }
 
         this.isExecuting = false;

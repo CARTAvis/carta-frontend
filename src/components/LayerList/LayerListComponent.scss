@@ -5,4 +5,16 @@
     height: 100%;
     user-select: none;
     padding: 5px;
+
+    .active-row-cell {
+        font-weight: bold;
+    }
+
+    .spectral-matching-button {
+        margin-left: 3px;
+    }
+
+    .name-cell {
+        cursor: pointer;
+    }
 }

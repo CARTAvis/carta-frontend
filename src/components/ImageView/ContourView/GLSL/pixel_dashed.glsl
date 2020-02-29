@@ -20,6 +20,9 @@ void main(void) {
     if (uDashLength > 1e-3) {
         float dashRepeatLength = 2.0 * uDashLength;
         dashStrength = mod(vLinePosition, dashRepeatLength) / dashRepeatLength <= 0.75 ? 1.0: 0.0;
+        if (dashStrength == 0.0) {
+            discard;
+        }
     }
     else {
         dashStrength = 1.0;

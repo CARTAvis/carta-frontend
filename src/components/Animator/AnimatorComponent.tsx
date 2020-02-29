@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {action, observable} from "mobx";
 import {Button, ButtonGroup, FormGroup, IconName, Menu, MenuItem, NonIdealState, NumberRange, NumericInput, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
-import {AnimationMode, AnimationState, PlayMode, WidgetConfig, WidgetProps} from "stores";
+import {AnimationMode, AnimationState, PlayMode, WidgetConfig, WidgetProps, HelpType} from "stores";
 import "./AnimatorComponent.css";
 
 @observer
@@ -17,7 +17,8 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             defaultWidth: 650,
             defaultHeight: 180,
             title: "Animator",
-            isCloseable: true
+            isCloseable: true,
+            helpType: HelpType.ANIMATOR
         };
     }
 
@@ -37,7 +38,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             if (val >= this.props.appStore.activeFrame.frameInfo.fileInfoExtended.depth) {
                 val = 0;
             }
-            this.props.appStore.activeFrame.setChannels(val, this.props.appStore.activeFrame.requiredStokes);
+            this.props.appStore.activeFrame.setChannels(val, this.props.appStore.activeFrame.requiredStokes, true);
         }
     };
 
@@ -58,7 +59,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
             if (val >= this.props.appStore.activeFrame.frameInfo.fileInfoExtended.stokes) {
                 val = 0;
             }
-            this.props.appStore.activeFrame.setChannels(this.props.appStore.activeFrame.requiredChannel, val);
+            this.props.appStore.activeFrame.setChannels(this.props.appStore.activeFrame.requiredChannel, val, true);
         }
     };
 
@@ -90,10 +91,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 appStore.setActiveFrameByIndex(0);
                 break;
             case AnimationMode.CHANNEL:
-                frame.setChannels(0, frame.stokes);
+                frame.setChannels(0, frame.stokes, true);
                 break;
             case AnimationMode.STOKES:
-                frame.setChannels(frame.channel, 0);
+                frame.setChannels(frame.channel, 0, true);
                 break;
             default:
                 break;
@@ -113,10 +114,10 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                 appStore.setActiveFrameByIndex(appStore.frames.length - 1);
                 break;
             case AnimationMode.CHANNEL:
-                frame.setChannels(frame.frameInfo.fileInfoExtended.depth - 1, frame.stokes);
+                frame.setChannels(frame.frameInfo.fileInfoExtended.depth - 1, frame.stokes, true);
                 break;
             case AnimationMode.STOKES:
-                frame.setChannels(frame.channel, frame.frameInfo.fileInfoExtended.stokes - 1);
+                frame.setChannels(frame.channel, frame.frameInfo.fileInfoExtended.stokes - 1, true);
                 break;
             default:
                 break;

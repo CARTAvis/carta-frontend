@@ -3,7 +3,7 @@ import {observable, computed} from "mobx";
 import {observer} from "mobx-react";
 import {FormGroup, InputGroup, IDialogProps, Button, Intent, Classes, Tooltip} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore} from "stores";
+import {AppStore, HelpType} from "stores";
 import {PresetLayout} from "models";
 import "./SaveLayoutDialogComponent.css";
 
@@ -35,7 +35,7 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
         appStore.dialogStore.hideSaveLayoutDialog();
         layoutStore.setLayoutToBeSaved(this.layoutName);
         if (layoutStore.layoutExist(this.layoutName)) {
-            if (PresetLayout.isValid(this.layoutName)) {
+            if (PresetLayout.isPreset(this.layoutName)) {
                 alertStore.showAlert("Layout name cannot be the same as system presets.");
             } else {
                 alertStore.showInteractiveAlert(`Are you sure to overwrite the existing layout ${this.layoutName}?`, (confirmed: boolean) => {
@@ -74,7 +74,7 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} defaultWidth={400} defaultHeight={185} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} helpType={HelpType.SAVE_LAYOUT} defaultWidth={400} defaultHeight={185} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup inline={true} label="Save current layout as:">
                         <InputGroup className="layout-name-input" placeholder="Enter layout name" value={this.layoutName} autoFocus={true} onChange={this.handleInput} onKeyDown={this.handleKeyDown}/>

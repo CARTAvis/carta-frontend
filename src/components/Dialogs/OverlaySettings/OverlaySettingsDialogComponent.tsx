@@ -12,7 +12,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {ColorComponent} from "./ColorComponent";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent} from "components/Shared";
-import {AppStore, BeamType, LabelType, SystemType} from "stores";
+import {AppStore, BeamType, LabelType, SystemType, HelpType} from "stores";
 import {hexStringToRgba, SWATCH_COLORS} from "utilities";
 import "./OverlaySettingsDialogComponent.css";
 
@@ -652,7 +652,7 @@ export class OverlaySettingsDialogComponent extends React.Component<{ appStore: 
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} minWidth={300} minHeight={300} defaultWidth={630} defaultHeight={450} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} helpType={HelpType.OVERLAY_SETTINGS} minWidth={300} minHeight={300} defaultWidth={630} defaultHeight={450} enableResizing={true}>
                 <div className="bp3-dialog-body">
                     <Tabs
                         id="overlayTabs"
