@@ -28,7 +28,7 @@ class ExecutionEntry {
             this.async = true;
             entry = entry.substring(1);
         }
-        const entryRegex = /^(\S+)\((.*)\)$/gm;
+        const entryRegex = /^(\S+)\((.*)\);?$/gm;
         if (!entryRegex.test(entry)) {
             this.valid = false;
             return;
@@ -43,9 +43,10 @@ class ExecutionEntry {
             let parameterString = entry.substring(entry.indexOf("(") + 1, entry.lastIndexOf(")"));
 
             if (parameterString) {
-                // Macro replacement
-                parameterString = parameterString.replace("$ActiveFrame", `"$ActiveFrame"`);
-
+                // Macro replacement: replace inputs with "$" prefix as an object literal
+                const macroRegex = /\$(\S+[^"'`])\s*(]|,)/gm;
+                // Macro replacement: surround with quotation marks so that they can be parsed
+                parameterString = parameterString.replace(macroRegex, "{\"macroName\": \"$1\"}$2");
                 try {
                     this.parameters = JSON.parse(`[${parameterString}]`);
                     if (!Array.isArray(this.parameters) || !this.parameters.length) {
@@ -54,12 +55,10 @@ class ExecutionEntry {
                         return;
                     }
                 } catch (e) {
-                    console.log(e);
                     this.valid = false;
                     return;
                 }
             }
-
             this.valid = true;
         }
     }
@@ -91,17 +90,9 @@ class ExecutionEntry {
     }
 
     private mapMacro = (parameter: any) => {
-        // For now, only a few macros supported
-        if (parameter === "$ActiveFrame") {
-            return this.appStore.activeFrame;
-        } else if (parameter === "$SpatialReference") {
-            return this.appStore.spatialReference;
-        } else if (parameter === "$SpectralReference") {
-            return this.appStore.spectralReference;
-        } else if (parameter === "$ContourDataSource") {
-            return this.appStore.contourDataSource;
+        if (typeof parameter === "object" && parameter.macroName) {
+            return this.appStore[parameter.macroName];
         }
-
         return parameter;
     };
 }
@@ -114,11 +105,11 @@ export class DebugExecutionDialogComponent extends React.Component<{ appStore: A
 
     @computed get executionEntries() {
         const appStore = this.props.appStore;
-        let entries = this.inputString.split(";");
+        let entries = this.inputString.split("\n");
         let executionStrings = new Array<ExecutionEntry>();
 
         for (let entry of entries) {
-            if (!entry) {
+            if (!entry || !entry.length || entry.startsWith("//")) {
                 continue;
             }
             const executionEntry = new ExecutionEntry(entry, appStore);
