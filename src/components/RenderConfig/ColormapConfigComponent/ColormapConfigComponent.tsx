@@ -87,7 +87,7 @@ export class ColormapConfigComponent extends React.Component<ColormapConfigProps
                 <FormGroup label={"Color map"} inline={true}>
                     <ColormapComponent
                         inverted={renderConfig.inverted}
-                        selectedItem={renderConfig.colorMapName}
+                        selectedItem={renderConfig.colorMap}
                         onItemSelect={renderConfig.setColorMap}
                     />
                 </FormGroup>

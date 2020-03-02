@@ -5,6 +5,7 @@ import {AnchorButton, Classes, EditableText, IDialogProps, Intent} from "@bluepr
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore} from "stores";
 import "./DebugExecutionDialogComponent.css";
+import {act} from "react-dom/test-utils";
 
 class ExecutionEntry {
 
@@ -18,7 +19,7 @@ class ExecutionEntry {
     parameters: any[];
     valid: boolean;
     async: boolean;
-    private appStore: AppStore;
+    private readonly appStore: AppStore;
 
     constructor(entry: string, appStore: AppStore) {
         this.appStore = appStore;
@@ -34,29 +35,43 @@ class ExecutionEntry {
             return;
         } else {
             const actionString = entry.substring(0, entry.indexOf("("));
-            this.action = appStore[actionString];
+            const actionArray = actionString.split(".");
+
+            // Determine the action target by traversing object tree
+            let target = this.appStore;
+            for (let i = 0; i < actionArray.length - 1; i++) {
+                target = target[actionArray[i]];
+                if (target == null) {
+                    this.valid = false;
+                    return;
+                }
+            }
+
+            // Determine the action function
+            this.action = target[actionArray[actionArray.length - 1]];
             if (!this.action || typeof (this.action) !== "function") {
                 this.valid = false;
                 return;
             }
-            this.action.bind(appStore);
-            let parameterString = entry.substring(entry.indexOf("(") + 1, entry.lastIndexOf(")"));
+            this.action.bind(target);
 
-            if (parameterString) {
-                // Macro replacement: replace inputs with "$" prefix as an object literal
-                const macroRegex = /\$(\S+[^"'`])\s*(]|,)/gm;
-                // Macro replacement: surround with quotation marks so that they can be parsed
-                parameterString = parameterString.replace(macroRegex, "{\"macroName\": \"$1\"}$2");
-                try {
-                    this.parameters = JSON.parse(`[${parameterString}]`);
-                    if (!Array.isArray(this.parameters) || !this.parameters.length) {
-                        console.log("Invalid parameter array");
+            let argumentString = entry.substring(entry.indexOf("(") + 1, entry.lastIndexOf(")"));
+
+            if (argumentString) {
+                const parameterStringArray = argumentString.split(",");
+                this.parameters = [];
+                for (let parameterString of parameterStringArray) {
+                    parameterString = parameterString.trim();
+                    try {
+                        if (parameterString.startsWith("$")) {
+                            this.parameters.push({macroName: parameterString.substring(1)});
+                        } else {
+                            this.parameters.push(JSON.parse(parameterString));
+                        }
+                    } catch (e) {
                         this.valid = false;
                         return;
                     }
-                } catch (e) {
-                    this.valid = false;
-                    return;
                 }
             }
             this.valid = true;
@@ -91,7 +106,31 @@ class ExecutionEntry {
 
     private mapMacro = (parameter: any) => {
         if (typeof parameter === "object" && parameter.macroName) {
-            return this.appStore[parameter.macroName];
+            const macroNameArray = parameter.macroName.split(".");
+            console.log(macroNameArray);
+            let obj = this.appStore;
+            // Traverse objects based on parameter
+            for (const entry of macroNameArray) {
+                // Array matching
+                const arrayOpeningIndex = entry.indexOf("[");
+                const arrayClosingIndex = entry.lastIndexOf("]");
+                if (arrayOpeningIndex > 0 && arrayClosingIndex > arrayOpeningIndex) {
+                    const arrayName = entry.substring(0, arrayOpeningIndex);
+                    const arrayElement = entry.substring(arrayOpeningIndex + 1, arrayClosingIndex);
+                    obj = obj[arrayName];
+                    if (obj == null) {
+                        return null;
+                    }
+                    obj = obj[arrayElement];
+                } else {
+                    obj = obj[entry];
+                }
+                console.log(obj);
+                if (obj == null) {
+                    return null;
+                }
+            }
+            return obj;
         }
         return parameter;
     };

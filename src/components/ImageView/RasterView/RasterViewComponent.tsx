@@ -57,7 +57,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         if (renderConfig && preference && tileRenderService.shaderUniforms) {
             this.gl.uniform1f(tileRenderService.shaderUniforms.MinVal, renderConfig.scaleMinVal);
             this.gl.uniform1f(tileRenderService.shaderUniforms.MaxVal, renderConfig.scaleMaxVal);
-            this.gl.uniform1i(tileRenderService.shaderUniforms.CmapIndex, renderConfig.colorMap);
+            this.gl.uniform1i(tileRenderService.shaderUniforms.CmapIndex, renderConfig.colorMapIndex);
             this.gl.uniform1i(tileRenderService.shaderUniforms.ScaleType, renderConfig.scaling);
             this.gl.uniform1i(tileRenderService.shaderUniforms.Inverted, renderConfig.inverted ? 1 : 0);
             this.gl.uniform1f(tileRenderService.shaderUniforms.Bias, renderConfig.bias);
@@ -273,7 +273,7 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
             const colorMapping = {
                 min: frame.renderConfig.scaleMinVal,
                 max: frame.renderConfig.scaleMaxVal,
-                colorMap: frame.renderConfig.colorMap,
+                colorMap: frame.renderConfig.colorMapIndex,
                 contrast: frame.renderConfig.contrast,
                 bias: frame.renderConfig.bias,
                 scaling: frame.renderConfig.scaling,
