@@ -5,10 +5,8 @@ import {AnchorButton, Classes, EditableText, IDialogProps, Intent} from "@bluepr
 import {DraggableDialogComponent} from "components/Dialogs";
 import {AppStore} from "stores";
 import "./DebugExecutionDialogComponent.css";
-import {act} from "react-dom/test-utils";
 
 class ExecutionEntry {
-
     private static Delay(timeout: number) {
         return new Promise<void>(resolve => {
             setTimeout(resolve, timeout);
