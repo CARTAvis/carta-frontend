@@ -2,8 +2,9 @@ import * as React from "react";
 import {CSSProperties} from "react";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, NonIdealState, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from "@blueprintjs/core";
 import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
+import {IMenuContext} from "@blueprintjs/table/src/interactions/menus/menuContext";
 import ReactResizeDetector from "react-resize-detector";
 import {WidgetConfig, WidgetProps, HelpType} from "stores";
 import "./LayerListComponent.css";
@@ -12,7 +13,7 @@ import "./LayerListComponent.css";
 export class LayerListComponent extends React.Component<WidgetProps> {
     @observable width: number = 0;
     @observable height: number = 0;
-    @observable columnWidths = [150, 80, 80, 70];
+    @observable columnWidths = [150, 70, 85, 80, 70];
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -58,7 +59,17 @@ export class LayerListComponent extends React.Component<WidgetProps> {
             return <Cell/>;
         }
 
-        return <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>{appStore.frames[rowIndex].frameInfo.fileInfo.name}</Cell>;
+        const frame = appStore.frames[rowIndex];
+
+        return (
+            <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
+                <React.Fragment>
+                    <div className="name-cell" onClick={() => appStore.setActiveFrame(frame.frameInfo.fileId)}>
+                        {frame.frameInfo.fileInfo.name}
+                    </div>
+                </React.Fragment>
+            </Cell>
+        );
     };
 
     private channelRenderer = (rowIndex: number) => {
@@ -101,6 +112,63 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         );
     };
 
+    private matchingRenderer = (rowIndex: number) => {
+        const appStore = this.props.appStore;
+        if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
+            return <Cell/>;
+        }
+
+        const frame = appStore.frames[rowIndex];
+
+        let spatialMatchingButton: React.ReactNode;
+        if (appStore.spatialReference) {
+            let tooltipSubtitle: string;
+            if (frame === appStore.spatialReference) {
+                tooltipSubtitle = `${frame.frameInfo.fileInfo.name} is the current spatial reference`;
+            } else {
+                tooltipSubtitle = `Click to ${frame.spatialReference ? "disable" : "enable"} matching to ${appStore.spatialReference.frameInfo.fileInfo.name}`;
+            }
+            spatialMatchingButton = (
+                <Tooltip content={<span>Spatial matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
+                    <AnchorButton minimal={true} small={true} active={frame === appStore.spatialReference} intent={frame.spatialReference ? "primary" : "none"} onClick={() => appStore.toggleSpatialMatching(frame)}>XY</AnchorButton>
+                </Tooltip>
+            );
+        }
+
+        let spectralMatchingButton: React.ReactNode;
+        if (frame.frameInfo.fileInfoExtended.depth > 1 && appStore.spectralReference) {
+            let tooltipSubtitle: string;
+            if (frame === appStore.spectralReference) {
+                tooltipSubtitle = `${frame.frameInfo.fileInfo.name} is the current spectral reference`;
+            } else {
+                tooltipSubtitle = `Click to ${frame.spectralReference ? "disable" : "enable"} matching to ${appStore.spectralReference.frameInfo.fileInfo.name}`;
+            }
+            spectralMatchingButton = (
+                <Tooltip content={<span>Spectral matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
+                    <AnchorButton
+                        className="spectral-matching-button"
+                        minimal={true}
+                        small={true}
+                        active={frame === appStore.spectralReference}
+                        intent={frame.spectralReference ? "primary" : "none"}
+                        onClick={() => appStore.toggleSpectralMatching(frame)}
+                    >
+                        Z
+                    </AnchorButton>
+                </Tooltip>
+            );
+        }
+
+        return (
+            <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
+                <React.Fragment>
+                    {spatialMatchingButton}
+                    {spectralMatchingButton}
+                </React.Fragment>
+            </Cell>
+        );
+    };
+
     private columnHeaderRenderer = (columnIndex: number) => {
         let name: string;
         switch (columnIndex) {
@@ -111,9 +179,12 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 name = "Type";
                 break;
             case 2:
-                name = "Channel";
+                name = "Matching";
                 break;
             case 3:
+                name = "Channel";
+                break;
+            case 4:
                 name = "Stokes";
                 break;
             default:
@@ -126,6 +197,25 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         };
 
         return <ColumnHeaderCell name={name} style={columnHeaderStyleProps}/>;
+    };
+
+    private contextMenuRenderer = (context: IMenuContext) => {
+        const rows = context.getTarget().rows;
+        const appStore = this.props.appStore;
+        if (rows && rows.length && appStore.frames[rows[0]]) {
+            const frame = appStore.frames[rows[0]];
+            if (frame) {
+                return (
+                    <Menu>
+                        <MenuItem disabled={appStore.spatialReference === frame} text="Set as spatial reference" onClick={() => appStore.setSpatialReference(frame)}/>
+                        <MenuItem disabled={appStore.spectralReference === frame || frame.frameInfo.fileInfoExtended.depth <= 1} text="Set as spectral reference" onClick={() => appStore.setSpectralReference(frame)}/>
+                        <MenuDivider/>
+                        <MenuItem text="Close image" onClick={() => appStore.closeFile(frame)}/>
+                    </Menu>
+                );
+            }
+        }
+        return null;
     };
 
     render() {
@@ -148,6 +238,9 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         const activeFrameIndex = this.props.appStore.activeFrameIndex;
         const visibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
         const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
+        const matchingTypes = appStore.frames.map(f => f.spatialReference && f.spectralReference);
+        const currentSpectralReference = appStore.spectralReference;
+        const currentSpatialReference = appStore.spatialReference;
 
         return (
             <div className="layer-list-widget">
@@ -164,23 +257,13 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     columnWidths={this.columnWidths}
                     enableColumnResizing={true}
                     onColumnWidthChanged={this.onColumnWidthsChange}
+                    bodyContextMenuRenderer={this.contextMenuRenderer}
                 >
-                    <Column
-                        columnHeaderCellRenderer={this.columnHeaderRenderer}
-                        cellRenderer={this.fileNameRenderer}
-                    />
-                    <Column
-                        columnHeaderCellRenderer={this.columnHeaderRenderer}
-                        cellRenderer={this.typeRenderer}
-                    />
-                    <Column
-                        columnHeaderCellRenderer={this.columnHeaderRenderer}
-                        cellRenderer={this.channelRenderer}
-                    />
-                    <Column
-                        columnHeaderCellRenderer={this.columnHeaderRenderer}
-                        cellRenderer={this.stokesRenderer}
-                    />
+                    <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.fileNameRenderer}/>
+                    <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.typeRenderer}/>
+                    <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.matchingRenderer}/>
+                    <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.channelRenderer}/>
+                    <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.stokesRenderer}/>
                 </Table>
                 }
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize}/>

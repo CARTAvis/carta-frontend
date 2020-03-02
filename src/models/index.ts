@@ -20,3 +20,4 @@ export * from "./Event";
 export * from "./CARTAInfo";
 export * from "./LayoutConfig";
 export * from "./ControlMap";
+export * from "./WCSMatchingType";

@@ -3,8 +3,14 @@ import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
-import {ChannelInfo, ControlMap, CursorInfo, FrameView, Point2D, ProtobufProcessing, SpectralInfo, SpectralType, Transform2D, ZoomPoint} from "models";
-import {clamp, findChannelType, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedChannel, getTransformedCoordinates, minMax2D, rotate2D, toFixed, trimFitsComment, velocityStringFromFrequency} from "utilities";
+import {
+    ChannelInfo, ControlMap, CursorInfo, FrameView, GenCoordinateLabel, Point2D, ProtobufProcessing, SpectralInfo, Transform2D, ZoomPoint,
+    SpectralSystem, SpectralType, SpectralUnit, SPECTRAL_COORDS_SUPPORTED, SPECTRAL_DEFAULT_UNIT, IsSpectralSystemValid, IsSpectralTypeValid, IsSpectralUnitValid
+} from "models";
+import {
+    clamp, findChannelType, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates,
+    getTransformedChannel, minMax2D, rotate2D, toFixed, trimFitsComment, velocityStringFromFrequency
+} from "utilities";
 import {BackendService} from "services";
 
 export interface FrameInfo {
@@ -23,11 +29,18 @@ export enum RasterRenderType {
 }
 
 export class FrameStore {
+    public spectralFrame: number;
+    public spectralCoordsSupported: Map<string, {type: SpectralType, unit: SpectralUnit}>;
+    public spectralSystemsSupported: Array<SpectralSystem>;
+
     @observable frameInfo: FrameInfo;
     @observable renderHiDPI: boolean;
     @observable wcsInfo: number;
+    @observable spectralType: SpectralType;
+    @observable spectralUnit: SpectralUnit;
+    @observable spectralSystem: SpectralSystem;
+    @observable channelValues:  Array<number>;
     @observable fullWcsInfo: number;
-    @observable spectralFrame: number;
     @observable validWcs: boolean;
     @observable center: Point2D;
     @observable cursorInfo: CursorInfo;
@@ -343,6 +356,47 @@ export class FrameStore {
         return spectralInfo;
     }
 
+    @computed get isSpectralSettingsSupported(): boolean {
+        if (!this.spectralInfo) {
+            return false;
+        }
+        const type = this.spectralInfo.channelType.code as string;
+        const unit = this.spectralInfo.channelType.unit as string;
+        const specsys = this.spectralInfo.specsys as string;
+        return type && unit && specsys && IsSpectralTypeValid(type) && IsSpectralUnitValid(unit) && IsSpectralSystemValid(specsys);
+    }
+
+    @computed get nativeSpectralCoordinate(): string {
+        if (this.isSpectralSettingsSupported) {
+            const type = this.spectralInfo.channelType.code as SpectralType;
+            const unit = SPECTRAL_DEFAULT_UNIT.get(type);
+            return GenCoordinateLabel(type, unit);
+        }
+        return "";
+    }
+
+    @computed get isSpectralPropsEqual(): boolean {
+        let result = false;
+        if (this.isSpectralSettingsSupported) {
+            const isTypeEqual = this.spectralInfo.channelType.code === (this.spectralType as string);
+            const isUnitEqual = this.spectralInfo.channelType.unit === (this.spectralUnit as string);
+            const isSpecsysEqual = this.spectralInfo.specsys === (this.spectralSystem as string);
+            result = isTypeEqual && isUnitEqual && isSpecsysEqual;
+        }
+        return result;
+    }
+
+    @computed get isCoordChannel(): boolean {
+        return !this.isSpectralSettingsSupported || this.spectralType === SpectralType.CHANNEL;
+    }
+
+    @computed get spectralCoordinate(): string {
+        if (this.isCoordChannel) {
+            return "Channel";
+        }
+        return GenCoordinateLabel(this.spectralType, this.spectralUnit);
+    }
+
     @computed get hasStokes(): boolean {
         return this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.stokes > 1;
     }
@@ -426,6 +480,12 @@ export class FrameStore {
         this.preference = preference;
         this.contourContext = gl;
         this.spectralFrame = null;
+        this.spectralType = null;
+        this.spectralUnit = null;
+        this.spectralSystem = null;
+        this.channelValues = null;
+        this.spectralCoordsSupported = null;
+        this.spectralSystemsSupported = null;
         this.fullWcsInfo = null;
         this.validWcs = false;
         this.frameInfo = frameInfo;
@@ -480,6 +540,13 @@ export class FrameStore {
         this.initCenter();
         this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
 
+        // init spectral settings
+        if (this.isSpectralSettingsSupported) {
+            this.spectralType = this.spectralInfo.channelType.code as SpectralType;
+            this.spectralUnit = SPECTRAL_DEFAULT_UNIT.get(this.spectralType);
+            this.spectralSystem = this.spectralInfo.specsys as SpectralSystem;
+        }
+
         // need initialized wcs to get correct cursor info
         this.cursorInfo = this.getCursorInfo(this.center);
         this.cursorValue = 0;
@@ -491,7 +558,32 @@ export class FrameStore {
                 this.setZoom(this.zoomLevelForFit);
             }
         });
+
+        // if type/unit/specsys changes, trigger transformation
+        autorun(() => {
+            const type = this.spectralType;
+            const unit = this.spectralUnit;
+            const specsys = this.spectralSystem;
+            if (this.channelInfo) {
+                if (this.spectralType === SpectralType.CHANNEL || !this.isSpectralSettingsSupported) {
+                    this.channelValues = this.channelInfo.indexes;
+                } else {
+                    this.channelValues = this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectral(this.channelInfo.values);
+                }
+            }
+        });
     }
+
+    private convertSpectral = (x: Array<number>): Array<number> => {
+        if (!x) {
+            return null;
+        }
+        let tx: Array<number> = new Array<number>(x.length);
+        for (let i = 0; i < x.length; i++) {
+            tx[i] = AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x[i]);
+        }
+        return tx;
+    };
 
     @action private initWCS = () => {
         let headerString = "";
@@ -640,7 +732,74 @@ export class FrameStore {
         const initResult = AST.initSpectralFrame(headerString, channelTypeInfo.type.code, channelTypeInfo.type.unit);
         if (initResult) {
             this.spectralFrame = initResult;
+            this.initSupportedSpectralConversion();
             console.log("Initialised spectral info from frame");
+        }
+    };
+
+    private initSupportedSpectralConversion = () => {
+        const entries = this.frameInfo.fileInfoExtended.headerEntries;
+
+        // generate spectral coordinate options
+        const spectralType = this.spectralInfo.channelType.code;
+        if (IsSpectralTypeValid(spectralType)) {
+            // check RESTFRQ
+            const restFrqHeader = entries.find(entry => entry.name.indexOf("RESTFRQ") !== -1);
+            if (restFrqHeader) {
+                this.spectralCoordsSupported = SPECTRAL_COORDS_SUPPORTED;
+            } else {
+                this.spectralCoordsSupported = new Map<string, {type: SpectralType, unit: SpectralUnit}>();
+                Array.from(SPECTRAL_COORDS_SUPPORTED.keys()).forEach((key: string) => {
+                    const value = SPECTRAL_COORDS_SUPPORTED.get(key);
+                    const isVolecity = spectralType === SpectralType.VRAD || spectralType === SpectralType.VOPT;
+                    const isValueVolecity = value.type === SpectralType.VRAD || value.type === SpectralType.VOPT;
+                    if (isVolecity && isValueVolecity) { // VRAD, VOPT
+                        this.spectralCoordsSupported.set(key, value);
+                    }
+                    if (!isVolecity && !isValueVolecity) { // FREQ, WAVE, AWAV
+                        this.spectralCoordsSupported.set(key, value);
+                    }
+                });
+                this.spectralCoordsSupported.set("Channel", {type: null, unit: null});
+            }
+        } else {
+            this.spectralCoordsSupported = new Map<string, {type: SpectralType, unit: SpectralUnit}>([
+                ["Channel", {type: null, unit: null}]
+            ]);
+        }
+
+        // generate spectral system options
+        const spectralSystem = this.spectralInfo.specsys;
+        if (IsSpectralSystemValid(spectralSystem)) {
+            const dateObsHeader = entries.find(entry => entry.name.indexOf("DATE-OBS") !== -1);
+            const obsgeoxHeader = entries.find(entry => entry.name.indexOf("OBSGEO-X") !== -1);
+            const obsgeoyHeader = entries.find(entry => entry.name.indexOf("OBSGEO-Y") !== -1);
+            const obsgeozHeader = entries.find(entry => entry.name.indexOf("OBSGEO-Z") !== -1);
+            if (spectralSystem === SpectralSystem.LSRK || spectralSystem === SpectralSystem.LSRD) { // LSRK, LSRD
+                if (dateObsHeader && (obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY, SpectralSystem.TOPO];
+                } else if (dateObsHeader && !(obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY];
+                } else {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD];
+                }
+            } else if (spectralSystem === SpectralSystem.BARY) { // BARY
+                if (dateObsHeader && (obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY, SpectralSystem.TOPO];
+                } else if (dateObsHeader && !(obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY];
+                } else {
+                    this.spectralSystemsSupported = [SpectralSystem.BARY];
+                }
+            } else { // TOPO
+                if (dateObsHeader && (obsgeoxHeader && obsgeoyHeader && obsgeozHeader)) {
+                    this.spectralSystemsSupported = [SpectralSystem.LSRK, SpectralSystem.LSRD, SpectralSystem.BARY, SpectralSystem.TOPO];
+                } else {
+                    this.spectralSystemsSupported = [SpectralSystem.TOPO];
+                }
+            }
+        } else {
+            this.spectralSystemsSupported = [];
         }
     };
 
@@ -1057,11 +1216,6 @@ export class FrameStore {
         this.spectralTransformAST = AST.convert(copySrc, copyDest, "");
         AST.delete(copySrc);
         AST.delete(copyDest);
-
-        for (let i = 0; i < 16; i++) {
-            const refVal = AST.transform3DPoint(this.spectralTransformAST, 1, 1, i + 1, true);
-            console.log(`${i} => ${refVal.z - 1} @ ${refVal.x}, ${refVal.y}`);
-        }
 
         if (!this.spectralTransformAST) {
             console.log(`Error creating spatial transform between files ${this.frameInfo.fileId} and ${frame.frameInfo.fileId}. Could not create AST transform`);

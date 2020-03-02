@@ -84,17 +84,18 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
             return;
         }
 
-        const reqWidth = Math.max(1, frame.renderWidth * devicePixelRatio);
-        const reqHeight = Math.max(1, frame.renderHeight * devicePixelRatio);
+        const reqWidth = Math.round(Math.max(1, frame.renderWidth * devicePixelRatio));
+        const reqHeight = Math.round(Math.max(1, frame.renderHeight * devicePixelRatio));
         // Resize canvas if necessary
         if (this.canvas.width !== reqWidth || this.canvas.height !== reqHeight) {
             this.canvas.width = reqWidth;
             this.canvas.height = reqHeight;
             this.gl.viewport(0, 0, reqWidth, reqHeight);
-        } else {
-            // Otherwise just clear it
-            this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT);
         }
+        // Otherwise just clear it
+        this.gl.clearColor(0, 0, 0, 0);
+        const clearMask = WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT | WebGLRenderingContext.STENCIL_BUFFER_BIT;
+        this.gl.clear(clearMask);
     }
 
     private updateCanvas = () => {
@@ -277,21 +278,24 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
 
     render() {
         // dummy values to trigger React's componentDidUpdate()
-        const frame = this.props.appStore.activeFrame;
-        if (frame) {
-            const view = frame.requiredFrameView;
+        const baseFrame = this.props.appStore.activeFrame;
+        if (baseFrame) {
+            const view = baseFrame.requiredFrameView;
+        }
+
+        const contourFrames = this.props.appStore.contourFrames;
+        for (const frame of contourFrames) {
             const config = frame.contourConfig;
             const thickness = config.thickness;
             const color = config.colormapEnabled ? config.colormap : config.color;
             const dashMode = config.dashMode;
             const bias = config.colormapBias;
             const contrast = config.colormapContrast;
-
-            const contourFrames = this.props.appStore.contourFrames;
-            contourFrames.forEach(f => f.contourStores.forEach(contourStore => {
+            frame.contourStores.forEach(contourStore => {
                 const numVertices = contourStore.vertexCount;
-            }));
+            });
         }
+
         const padding = this.props.overlaySettings.padding;
         let className = "contour-div";
         if (this.props.docked) {
@@ -306,8 +310,8 @@ export class ContourViewComponent extends React.Component<ContourViewComponentPr
                     style={{
                         top: padding.top,
                         left: padding.left,
-                        width: frame ? frame.renderWidth || 1 : 1,
-                        height: frame ? frame.renderHeight || 1 : 1
+                        width: baseFrame ? baseFrame.renderWidth || 1 : 1,
+                        height: baseFrame ? baseFrame.renderHeight || 1 : 1
                     }}
                 />
             </div>);

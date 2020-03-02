@@ -17,6 +17,7 @@ import {
     FileBrowserStore,
     FrameInfo,
     FrameStore,
+    HelpStore,
     LayoutStore,
     LogEntry,
     LogStore,
@@ -29,12 +30,11 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore,
-    HelpStore
+    WidgetsStore
 } from ".";
 import {distinct, GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, TileService, TileStreamDetails} from "services";
-import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate} from "models";
+import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {AppToaster} from "components/Shared";
 
@@ -49,6 +49,10 @@ export class AppStore {
     // Frames
     @observable frames: FrameStore[];
     @observable activeFrame: FrameStore;
+    @observable contourDataSource: FrameStore;
+    @observable syncContourToFrame: boolean;
+    @observable syncFrameToContour: boolean;
+
     // Animation
     @observable animatorStore: AnimatorStore;
     // Error alerts
@@ -321,9 +325,10 @@ export class AppStore {
                 this.frames.push(newFrame);
             }
 
-            // First image defaults to spatial reference
+            // First image defaults to spatial reference and contour source
             if (this.frames.length === 1) {
                 this.setSpatialReference(this.frames[0]);
+                this.setContourDataSource(this.frames[0]);
             }
 
             // Use this image as a spectral reference if it has a spectral axis and there isn't an existing spectral reference
@@ -332,6 +337,16 @@ export class AppStore {
             }
 
             this.setActiveFrame(newFrame.frameInfo.fileId);
+
+            if (this.frames.length > 1) {
+                if ((this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL) && this.spatialReference !== newFrame) {
+                    this.setSpatialMatchingEnabled(newFrame, true);
+                }
+                if ((this.preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL) && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
+                    this.setSpectralMatchingEnabled(newFrame, true);
+                }
+            }
+
             this.fileBrowserStore.hideFileBrowser();
         }, err => {
             this.alertStore.showAlert(`Error loading file: ${err}`);
@@ -358,23 +373,27 @@ export class AppStore {
         this.addFrame(directory, file, hdu, 0);
     };
 
-    @action closeCurrentFile = (confirmClose: boolean = true) => {
-        if (!this.activeFrame) {
+    @action closeFile = (frame: FrameStore, confirmClose: boolean = true) => {
+        if (!frame) {
             return;
         }
 
         // Display confirmation if image has secondary images
-        const secondaries = this.activeFrame.secondarySpatialImages.concat(this.activeFrame.secondarySpectralImages).filter(distinct);
+        const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(distinct);
         const numSecondaries = secondaries.length;
         if (confirmClose && numSecondaries) {
             this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`, confirmed => {
                 if (confirmed) {
-                    this.removeFrame(this.activeFrame);
+                    this.removeFrame(frame);
                 }
             });
         } else {
-            this.removeFrame(this.activeFrame);
+            this.removeFrame(frame);
         }
+    };
+
+    @action closeCurrentFile = (confirmClose: boolean = true) => {
+        this.closeFile(this.activeFrame, confirmClose);
     };
 
     @action removeFrame = (frame: FrameStore) => {
@@ -406,13 +425,18 @@ export class AppStore {
                 frame.clearSpectralReference();
                 frame.clearContours(false);
                 this.frames = this.frames.filter(f => f.frameInfo.fileId !== fileId);
+                const firstFrame = this.frames.length ? this.frames[0] : null;
                 // Clean up if frame is active
                 if (this.activeFrame.frameInfo.fileId === fileId) {
-                    this.activeFrame = this.frames.length ? this.frames[0] : null;
+                    this.activeFrame = firstFrame;
+                }
+                // Clean up if frame is contour data source
+                if (this.contourDataSource.frameInfo.fileId === fileId) {
+                    this.contourDataSource = firstFrame;
                 }
                 // Clean up if frame is currently spatial reference
                 if (removedFrameIsSpatialReference) {
-                    const newReference = this.frames.length ? this.frames[0] : null;
+                    const newReference = firstFrame;
                     if (newReference) {
                         this.setSpatialReference(newReference);
                     } else {
@@ -638,6 +662,9 @@ export class AppStore {
 
         this.frames = [];
         this.activeFrame = null;
+        this.contourDataSource = null;
+        this.syncFrameToContour = true;
+        this.syncContourToFrame = true;
         this.fileBrowserStore = new FileBrowserStore(this, this.backendService);
         this.animatorStore = new AnimatorStore(this);
         this.overlayStore = new OverlayStore(this, this.preferenceStore);
@@ -1003,8 +1030,32 @@ export class AppStore {
         }
         this.activeFrame = frame;
         this.widgetsStore.updateImageWidgetTitle();
-        this.widgetsStore.updateSpectralRelatedWidgetsSpectralSettings();
+        if (this.syncContourToFrame) {
+            this.contourDataSource = frame;
+        }
     }
+
+    @action setContourDataSource = (frame: FrameStore) => {
+        this.contourDataSource = frame;
+        if (this.syncFrameToContour) {
+            this.setActiveFrame(frame.frameInfo.fileId);
+        }
+    };
+
+    @computed get frameLockedToContour() {
+        return this.syncFrameToContour && this.syncContourToFrame;
+    }
+
+    @action toggleFrameContourLock = () => {
+        if (this.frameLockedToContour) {
+            this.syncFrameToContour = false;
+            this.syncContourToFrame = false;
+        } else {
+            this.syncContourToFrame = true;
+            this.syncFrameToContour = true;
+            this.contourDataSource = this.activeFrame;
+        }
+    };
 
     getFrame(fileId: number) {
         if (fileId === -1) {
@@ -1055,7 +1106,17 @@ export class AppStore {
     };
 
     @action setSpatialReference = (frame: FrameStore) => {
+        const oldRef = this.spatialReference;
+
+        // check if the new reference is currently a secondary image of the existing reference
+        const newRefIsSecondary = oldRef && oldRef.secondarySpatialImages.includes(frame);
+
         this.spatialReference = frame;
+
+        // Maintain link between old and new references
+        if (newRefIsSecondary) {
+            oldRef.setSpatialReference(frame);
+        }
 
         for (const f of this.frames) {
             // The reference image can't reference itself
@@ -1065,6 +1126,7 @@ export class AppStore {
                 f.setSpatialReference(frame);
             }
         }
+
     };
 
     @action clearSpatialReference = () => {
@@ -1074,8 +1136,7 @@ export class AppStore {
         }
     };
 
-    @action setSpatialMatchingEnabled = (val: boolean) => {
-        const frame = this.activeFrame;
+    @action setSpatialMatchingEnabled = (frame: FrameStore, val: boolean) => {
         if (!frame || frame === this.spatialReference) {
             return;
         }
@@ -1094,8 +1155,26 @@ export class AppStore {
         }
     };
 
+    @action toggleSpatialMatching = (frame: FrameStore) => {
+        if (!frame || frame === this.spatialReference) {
+            return;
+        }
+
+        this.setSpatialMatchingEnabled(frame, !frame.spatialReference);
+    };
+
     @action setSpectralReference = (frame: FrameStore) => {
+        const oldRef = this.spectralReference;
+
+        // check if the new reference is currently a secondary image of the existing reference
+        const newRefIsSecondary = oldRef && oldRef.secondarySpectralImages.includes(frame);
+
         this.spectralReference = frame;
+
+        // Maintain link between old and new references
+        if (newRefIsSecondary) {
+            oldRef.setSpectralReference(frame);
+        }
 
         for (const f of this.frames) {
             // The reference image can't reference itself
@@ -1114,8 +1193,7 @@ export class AppStore {
         }
     };
 
-    @action setSpectralMatchingEnabled = (val: boolean) => {
-        const frame = this.activeFrame;
+    @action setSpectralMatchingEnabled = (frame: FrameStore, val: boolean) => {
         if (!frame || frame === this.spectralReference) {
             return;
         }
@@ -1134,9 +1212,17 @@ export class AppStore {
         }
     };
 
+    @action toggleSpectralMatching = (frame: FrameStore) => {
+        if (!frame || frame === this.spectralReference) {
+            return;
+        }
+
+        this.setSpectralMatchingEnabled(frame, !frame.spectralReference);
+    };
+
     @action setMatchingEnabled = (spatial: boolean, spectral: boolean) => {
-        this.setSpatialMatchingEnabled(spatial);
-        this.setSpectralMatchingEnabled(spectral);
+        this.setSpatialMatchingEnabled(this.activeFrame, spatial);
+        this.setSpectralMatchingEnabled(this.activeFrame, spectral);
     };
 
     // region requirements calculations

@@ -128,33 +128,34 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         this.widgetStore.clearScatterPlotXYBounds();
     };
 
-    private getChannelUnit = (): string => {
-        return this.widgetStore.isCoordChannel ? "Channel" : this.widgetStore.spectralUnit;
-    };
-
     @computed get currentChannelValue(): number {
         const frame = this.widgetStore.effectiveFrame;
-        if (!frame || !this.widgetStore.channelValues) {
+        if (!frame || !frame.channelValues) {
             return null;
         }
         const channel = frame.channel;
-        if (channel < 0 || channel >= this.widgetStore.channelValues.length) {
+        if (channel < 0 || channel >= frame.channelValues.length) {
             return null;
         }
-        return this.widgetStore.isCoordChannel ? channel : this.widgetStore.channelValues[channel];
+        return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
 
     @computed get requiredChannelValue(): number {
         const frame = this.widgetStore.effectiveFrame;
-        if (!frame || !this.widgetStore.channelValues) {
+        if (!frame || !frame.channelValues) {
             return null;
         }
         const channel = frame.requiredChannel;
-        if (channel < 0 || channel >= this.widgetStore.channelValues.length) {
+        if (channel < 0 || channel >= frame.channelValues.length) {
             return null;
         }
-        return this.widgetStore.isCoordChannel ? channel : this.widgetStore.channelValues[channel];
+        return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
+
+    private getChannelUnit = (): string => {
+        const frame = this.props.appStore.activeFrame;
+        return frame && !frame.isCoordChannel ? frame.spectralUnit : "Channel";
+    };
 
     onChannelChanged = (x: number) => {
         const frame = this.widgetStore.effectiveFrame;
@@ -165,14 +166,14 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (frame && frame.channelInfo) {
             let channelInfo = frame.channelInfo;
             let nearestIndex;
-            if (this.widgetStore.isCoordChannel) {
+            if (frame.isCoordChannel) {
                 nearestIndex = channelInfo.getChannelIndexSimple(x);
             } else {
-                if (this.widgetStore.isSpectralPropsEqual) {
+                if (frame.isSpectralPropsEqual) {
                     nearestIndex = channelInfo.getChannelIndexWCS(x);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
-                    const tx =  AST.transformSpectralPoint(frame.spectralFrame, this.widgetStore.spectralType, this.widgetStore.spectralUnit, this.widgetStore.spectralSystem, x, false);
+                    const tx =  AST.transformSpectralPoint(frame.spectralFrame, frame.spectralType, frame.spectralUnit, frame.spectralSystem, x, false);
                     nearestIndex = channelInfo.getChannelIndexWCS(tx);
                 }
             }
@@ -191,14 +192,14 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             let channelInfo = frame.channelInfo;
             const zIndex = this.matchZindex(x, y, data);
             let nearestIndex;
-            if (this.widgetStore.isCoordChannel) {
+            if (frame.isCoordChannel) {
                 nearestIndex = channelInfo.getChannelIndexSimple(zIndex);
             } else {
-                if (this.widgetStore.isSpectralPropsEqual) {
+                if (frame.isSpectralPropsEqual) {
                     nearestIndex = channelInfo.getChannelIndexWCS(zIndex);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
-                    const tx =  AST.transformSpectralPoint(frame.spectralFrame, this.widgetStore.spectralType, this.widgetStore.spectralUnit, this.widgetStore.spectralSystem, zIndex, false);
+                    const tx =  AST.transformSpectralPoint(frame.spectralFrame, frame.spectralType, frame.spectralUnit, frame.spectralSystem, zIndex, false);
                     nearestIndex = channelInfo.getChannelIndexWCS(tx);
                 }
             }
@@ -423,10 +424,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         dataset: Array<Point2D>,
         border: Border
     } {
+        const frame = this.props.appStore.activeFrame;
         if (profile && profile.length &&
-            this.widgetStore.channelValues && this.widgetStore.channelValues.length &&
-            profile.length === this.widgetStore.channelValues.length) {
-            const channelValues = this.widgetStore.channelValues;
+            frame.channelValues && frame.channelValues.length &&
+            profile.length === frame.channelValues.length) {
+            const channelValues = frame.channelValues;
             let border = this.calculateXYborder(channelValues, profile, true, type);
             let values: Array<{ x: number, y: number }> = [];
             const isIncremental = channelValues[0] <= channelValues[channelValues.length - 1];
@@ -450,10 +452,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         dataset: Array<{ x: number, y: number, z: number }>,
         border: Border
     } {
+        const frame = this.props.appStore.activeFrame;
         if (qProfile && qProfile.length && uProfile && uProfile.length &&
-            this.widgetStore.channelValues && this.widgetStore.channelValues.length &&
-            qProfile.length === uProfile.length && qProfile.length === this.widgetStore.channelValues.length) {
-            const channelValues = this.widgetStore.channelValues;
+            frame.channelValues && frame.channelValues.length &&
+            qProfile.length === uProfile.length && qProfile.length === frame.channelValues.length) {
+            const channelValues = frame.channelValues;
             let border = this.calculateXYborder(qProfile, uProfile, false, type);
             let values: Array<{ x: number, y: number, z: number }> = [];
             const isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
@@ -1016,10 +1019,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 quScatterPlotProps.yLabel = "Stokes U (" + frame.unit + ")";
             }
 
-            if (!this.widgetStore.isCoordChannel) {
-                paLinePlotProps.xLabel = `${this.widgetStore.spectralSystem}, ${this.widgetStore.spectralCoordinate}`;
-                piLinePlotProps.xLabel = `${this.widgetStore.spectralSystem}, ${this.widgetStore.spectralCoordinate}`;
-                quLinePlotProps.xLabel = `${this.widgetStore.spectralSystem}, ${this.widgetStore.spectralCoordinate}`;
+            if (!frame.isCoordChannel) {
+                paLinePlotProps.xLabel = `${frame.spectralSystem}, ${frame.spectralCoordinate}`;
+                piLinePlotProps.xLabel = `${frame.spectralSystem}, ${frame.spectralCoordinate}`;
+                quLinePlotProps.xLabel = `${frame.spectralSystem}, ${frame.spectralCoordinate}`;
             }
 
             paLinePlotProps.markers = [];
