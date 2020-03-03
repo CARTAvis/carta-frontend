@@ -36,6 +36,7 @@ import {distinct, GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
+import {getImageCanvas} from "components";
 import {AppToaster} from "components/Shared";
 
 export class AppStore {
@@ -1228,6 +1229,40 @@ export class AppStore {
         this.setSpatialMatchingEnabled(this.activeFrame, spatial);
         this.setSpectralMatchingEnabled(this.activeFrame, spectral);
     };
+
+    exportImage = (): boolean => {
+        if (this.activeFrame) {
+            const composedCanvas = getImageCanvas(this.overlayStore.padding);
+            if (composedCanvas) {
+                composedCanvas.toBlob((blob) => {
+                    const now = new Date();
+                    const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
+                    const link = document.createElement("a") as HTMLAnchorElement;
+                    link.download = `${this.activeFrame.frameInfo.fileInfo.name}-image-${timestamp}.png`;
+                    link.href = URL.createObjectURL(blob);
+                    link.dispatchEvent(new MouseEvent("click"));
+                }, "image/png");
+                return true;
+            }
+        }
+        return false;
+    };
+
+    getImageDataUrl = (backgroundColor: string) => {
+        if (this.activeFrame) {
+            const composedCanvas = getImageCanvas(this.overlayStore.padding, backgroundColor);
+            if (composedCanvas) {
+                return composedCanvas.toDataURL();
+            }
+        }
+        return null;
+    };
+
+    delay(time: number) {
+        return new Promise(resolve => {
+            setTimeout(resolve, time);
+        });
+    }
 
     // region requirements calculations
 

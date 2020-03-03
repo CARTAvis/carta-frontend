@@ -5,12 +5,11 @@ import {observer} from "mobx-react";
 import {autorun} from "mobx";
 import ReactResizeDetector from "react-resize-detector";
 import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget, Intent} from "@blueprintjs/core";
-import {UIControllerComponent, exportImage, FloatingWidgetManagerComponent} from "./components";
+import {UIControllerComponent, FloatingWidgetManagerComponent} from "./components";
 import {AppToaster} from "./components/Shared";
 import {TaskProgressDialogComponent} from "./components/Dialogs";
 import {AppStore, BrowserMode, dayPalette, nightPalette, RegionMode} from "./stores";
 import {ConnectionStatus} from "./services";
-import {PresetLayout} from "models";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
 import "./layout-base.css";
@@ -225,7 +224,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
             <Hotkey key={0} group={fileGroupTitle} global={true} combo={`${modString}O`} label="Open image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File)}/>,
             <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}L`} label="Append image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}/>,
             <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}W`} label="Close image" onKeyDown={() => appStore.closeCurrentFile(true)}/>,
-            <Hotkey key={2} group={fileGroupTitle} global={true} combo={`${modString}E`} label="Export image" onKeyDown={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>
+            <Hotkey key={2} group={fileGroupTitle} global={true} combo={`${modString}E`} label="Export image" onKeyDown={appStore.exportImage}/>
         ];
 
         const otherHotKeys = [

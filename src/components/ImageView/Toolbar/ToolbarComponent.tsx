@@ -3,7 +3,6 @@ import {CSSProperties} from "react";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
-import {exportImage} from "components";
 import {AppStore, RegionMode, SystemType} from "stores";
 import {toFixed} from "utilities";
 import "./ToolbarComponent.css";
@@ -216,7 +215,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                     <Button icon="numerical" active={!overlay.labelsHidden} onClick={overlay.toggleLabels}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={`Export image (${appStore.modifierString}E)`}>
-                    <Button icon="floppy-disk" onClick={() => exportImage(overlay.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>
+                    <Button icon="floppy-disk" onClick={appStore.exportImage}/>
                 </Tooltip>
             </ButtonGroup>
         );

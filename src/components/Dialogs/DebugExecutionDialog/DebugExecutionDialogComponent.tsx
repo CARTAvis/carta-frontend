@@ -7,7 +7,7 @@ import {AppStore} from "stores";
 import "./DebugExecutionDialogComponent.css";
 
 class ExecutionEntry {
-    private static Delay(timeout: number) {
+    static Delay(timeout: number) {
         return new Promise<void>(resolve => {
             setTimeout(resolve, timeout);
         });
@@ -52,59 +52,6 @@ class ExecutionEntry {
         } else {
             this.valid = false;
         }
-
-        /*
-        if (entry.length && entry.charAt(0) === "+") {
-            this.async = true;
-            entry = entry.substring(1);
-        }
-        const entryRegex = /^(\S+)\((.*)\);?$/gm;
-        if (!entryRegex.test(entry)) {
-            this.valid = false;
-            return;
-        } else {
-            const actionString = entry.substring(0, entry.indexOf("("));
-            const actionArray = actionString.split(".");
-
-            // Determine the action target by traversing object tree
-            let target = this.appStore;
-            for (let i = 0; i < actionArray.length - 1; i++) {
-                target = target[actionArray[i]];
-                if (target == null) {
-                    this.valid = false;
-                    return;
-                }
-            }
-
-            // Determine the action function
-            this.action = target[actionArray[actionArray.length - 1]];
-            if (!this.action || typeof (this.action) !== "function") {
-                this.valid = false;
-                return;
-            }
-            this.action.bind(target);
-
-            let argumentString = entry.substring(entry.indexOf("(") + 1, entry.lastIndexOf(")"));
-
-            if (argumentString) {
-                const parameterStringArray = argumentString.split(",");
-                this.parameters = [];
-                for (let parameterString of parameterStringArray) {
-                    parameterString = parameterString.trim();
-                    try {
-                        if (parameterString.startsWith("$")) {
-                            this.parameters.push({macroName: parameterString.substring(1)});
-                        } else {
-                            this.parameters.push(JSON.parse(parameterString));
-                        }
-                    } catch (e) {
-                        this.valid = false;
-                        return;
-                    }
-                }
-            }
-            this.valid = true;
-        }*/
     }
 
     async execute() {
@@ -123,10 +70,9 @@ class ExecutionEntry {
         actionFunction.bind(targetObject);
         let response;
         if (this.async) {
-            response = await actionFunction(...currentParameters);
-            await ExecutionEntry.Delay(10);
-        } else {
             response = actionFunction(...currentParameters);
+        } else {
+            response = await actionFunction(...currentParameters);
         }
         return response;
     }
@@ -241,7 +187,16 @@ export class DebugExecutionDialogComponent extends React.Component<{ appStore: A
 
         for (const entry of this.executionEntries) {
             try {
-                await entry.execute();
+                if (entry.async) {
+                    // If entry is asynchronous, don't wait for it to complete before moving to the next entry
+                    const response = entry.execute();
+                    console.log(response);
+                } else {
+                    const response = await entry.execute();
+                    console.log(response);
+                    // TODO: more tests to see if this is really necessary
+                    await ExecutionEntry.Delay(10);
+                }
             } catch (err) {
                 console.log(err);
             }

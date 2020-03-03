@@ -3,7 +3,6 @@ import {observable} from "mobx";
 import {observer} from "mobx-react";
 import {Alert, Icon, Menu, Popover, Position, Tooltip, Tag} from "@blueprintjs/core";
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
-import {exportImage} from "components";
 import {PresetLayout} from "models";
 import {AppStore, BrowserMode, PreferenceKeys} from "stores";
 import {ConnectionStatus} from "services";
@@ -62,7 +61,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     text="Export image"
                     label={`${modString}E`}
                     disabled={!appStore.activeFrame}
-                    onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
+                    onClick={appStore.exportImage}
                 />
                 <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}/>
             </Menu>
