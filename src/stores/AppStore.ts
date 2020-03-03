@@ -1264,13 +1264,21 @@ export class AppStore {
         });
     }
 
-    waitForImageData = () => {
+    // Waits for image data to be ready. This consists of three steps:
+    // 1. Wait 25 ms to allow other commands that may request new data to execute
+    // 2. Use a MobX "when" to wait until no tiles or contours are required
+    // 3. Wait 25 ms to allow for re-rendering of tiles
+    waitForImageData = async () => {
+        await this.delay(25);
         return new Promise(resolve => {
             when(() => {
                 const tilesLoading = this.tileService.remainingTiles > 0;
                 const contoursLoading = this.activeFrame && this.activeFrame.contourProgress >= 0 && this.activeFrame.contourProgress < 1;
                 return !tilesLoading && !contoursLoading;
-            }, resolve);
+            }, async () => {
+                await this.delay(25);
+                resolve();
+            });
         });
     };
 
