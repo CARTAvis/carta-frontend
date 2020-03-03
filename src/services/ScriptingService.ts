@@ -43,6 +43,11 @@ export class ExecutionEntry {
     }
 
     private parseParameters(parameterString: string, pad: boolean) {
+        if (!parameterString) {
+            this.parameters = [];
+            return true;
+        }
+
         const parameterRegex = /(\$(?:[\w\[\]]+\.)*)([\w\[\]]+)/gm;
         try {
             let substitutedParameterString = parameterString.replace(parameterRegex, "{\"macroTarget\": \"$1\", \"macroVariable\": \"$2\"}");
