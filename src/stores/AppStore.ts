@@ -1,7 +1,7 @@
 import * as _ from "lodash";
 import * as AST from "ast_wrapper";
 import * as Long from "long";
-import {action, autorun, computed, observable, ObservableMap} from "mobx";
+import {action, autorun, computed, observable, ObservableMap, when} from "mobx";
 import {IOptionProps} from "@blueprintjs/core";
 import {Utils} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
@@ -1263,6 +1263,16 @@ export class AppStore {
             setTimeout(resolve, time);
         });
     }
+
+    waitForImageData = () => {
+        return new Promise(resolve => {
+            when(() => {
+                const tilesLoading = this.tileService.remainingTiles > 0;
+                const contoursLoading = this.activeFrame && this.activeFrame.contourProgress >= 0 && this.activeFrame.contourProgress < 1;
+                return !tilesLoading && !contoursLoading;
+            }, resolve);
+        });
+    };
 
     // region requirements calculations
 
