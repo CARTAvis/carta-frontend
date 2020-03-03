@@ -50,15 +50,15 @@ export function loadImageTexture(gl: WebGLRenderingContext, url: string, texInde
     });
 }
 
-export function createFP32Texture(gl: WebGLRenderingContext, width: number, height: number, texIndex: number, filtering: number = gl.NEAREST) {
+export function createFP32Texture(gl: WebGLRenderingContext, width: number, height: number, texIndex: number, filtering: number = GL.NEAREST) {
     const texture = gl.createTexture();
     gl.activeTexture(texIndex);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, width, height, 0, gl.LUMINANCE, gl.FLOAT, null);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filtering);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filtering);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(GL.TEXTURE_2D, texture);
+    gl.texImage2D(GL.TEXTURE_2D, 0, GL.LUMINANCE, width, height, 0, GL.LUMINANCE, GL.FLOAT, new Float32Array(width * height));
+    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, filtering);
+    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, filtering);
+    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
+    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
     return texture;
 }
 
@@ -66,8 +66,8 @@ export function copyToFP32Texture(gl: WebGLRenderingContext, texture: WebGLTextu
     gl.bindTexture(GL.TEXTURE_2D, texture);
     gl.activeTexture(texIndex);
     gl.texSubImage2D(GL.TEXTURE_2D, 0, xOffset, yOffset, dataWidth, dataHeight, GL.LUMINANCE, GL.FLOAT, data);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, GL.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, GL.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
+    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
+    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
+    gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
 }
