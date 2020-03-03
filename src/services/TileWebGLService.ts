@@ -1,9 +1,9 @@
 import allMaps from "static/allmaps.png";
-import {getShaderProgram, loadImageTexture} from "../utilities";
+import {getShaderProgram, loadImageTexture} from "utilities";
 import {TEXTURE_SIZE, TILE_SIZE} from "./TileService";
 
-const vertexShader = require("!raw-loader!./GLSL/vertex_shader.glsl");
-const pixelShader = require("!raw-loader!./GLSL/pixel_shader_float_rgb.glsl");
+const vertexShader = require("!raw-loader!./GLSL/vertex_shader_raster.glsl");
+const pixelShader = require("!raw-loader!./GLSL/pixel_shader_raster.glsl");
 
 interface ShaderUniforms {
     MinVal: WebGLUniformLocation;
@@ -34,13 +34,12 @@ interface ShaderUniforms {
 }
 
 export class TileWebGLService {
+    private static staticInstance: TileWebGLService;
+
     readonly gl: WebGLRenderingContext;
-    // GL buffers
-    rasterDataBuffer: ArrayBufferLike;
     cmapTexture: WebGLTexture;
-    animationDataTexture: WebGLTexture;
+    // GL buffers
     vertexPositionBuffer: WebGLBuffer;
-    animationVertexPositionBuffer: WebGLBuffer;
     vertexUVBuffer: WebGLBuffer;
     // Shader attribute handles
     vertexPositionAttribute: number;
@@ -48,6 +47,13 @@ export class TileWebGLService {
     // Shader uniform handles
     shaderProgram: WebGLProgram;
     shaderUniforms: ShaderUniforms;
+
+    static get Instance() {
+        if (!TileWebGLService.staticInstance) {
+            TileWebGLService.staticInstance = new TileWebGLService();
+        }
+        return TileWebGLService.staticInstance;
+    }
 
     public setCanvasSize = (width: number, height: number) => {
         this.gl.canvas.width = width;
@@ -132,14 +138,9 @@ export class TileWebGLService {
             1.0, 1.0
         ]);
         this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, uvs, WebGLRenderingContext.STATIC_DRAW);
-
-        this.animationVertexPositionBuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.animationVertexPositionBuffer);
-        this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, vertices, WebGLRenderingContext.DYNAMIC_DRAW);
-        this.animationDataTexture = this.gl.createTexture();
     }
 
-    constructor() {
+    private constructor() {
         this.gl = document.createElement("canvas").getContext("webgl");
         this.gl.getExtension("OES_texture_float");
         this.initShaders();
