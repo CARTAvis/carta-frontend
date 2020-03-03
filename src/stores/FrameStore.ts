@@ -369,10 +369,10 @@ export class FrameStore {
     @computed get nativeSpectralCoordinate(): string {
         if (this.isSpectralSettingsSupported) {
             const type = this.spectralInfo.channelType.code as SpectralType;
-            const unit = SPECTRAL_DEFAULT_UNIT.get(type);
+            const unit = this.spectralInfo.channelType.unit as SpectralUnit;
             return GenCoordinateLabel(type, unit);
         }
-        return "";
+        return undefined;
     }
 
     @computed get isSpectralPropsEqual(): boolean {
