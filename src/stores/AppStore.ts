@@ -310,7 +310,7 @@ export class AppStore {
                 // Clear existing tile cache if it exists
                 this.tileService.clearCompressedCache(fileId);
 
-                let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, this.logStore, frameInfo, this.backendService, this.ContourContext);
+                let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, this.logStore, frameInfo, this.backendService);
 
                 // clear existing requirements for the frame
                 this.spectralRequirements.delete(ack.fileId);
@@ -1006,7 +1006,7 @@ export class AppStore {
         return (this.tileService && this.tileService.workersReady);
     }
 
-    @action setActiveFrame = (fileId: number) => {
+    @action setActiveFrame(fileId: number) {
         // Disable rendering of old frame
         if (this.activeFrame && this.activeFrame.frameInfo.fileId !== fileId) {
             this.activeFrame.renderType = RasterRenderType.NONE;
@@ -1018,15 +1018,15 @@ export class AppStore {
         } else {
             console.log(`Can't find required frame ${fileId}`);
         }
-    };
+    }
 
-    @action setActiveFrameByIndex = (index: number) => {
+    @action setActiveFrameByIndex(index: number) {
         if (index >= 0 && this.frames.length > index) {
             this.changeActiveFrame(this.frames[index]);
         } else {
             console.log(`Invalid frame index ${index}`);
         }
-    };
+    }
 
     private changeActiveFrame(frame: FrameStore) {
         if (frame !== this.activeFrame) {
@@ -1062,12 +1062,12 @@ export class AppStore {
         }
     };
 
-    getFrame = (fileId: number) => {
+    getFrame(fileId: number) {
         if (fileId === -1) {
             return this.activeFrame;
         }
         return this.frames.find(f => f.frameInfo.fileId === fileId);
-    };
+    }
 
     @computed get selectedRegion(): RegionStore {
         if (this.activeFrame && this.activeFrame.regionSet && this.activeFrame.regionSet.selectedRegion && this.activeFrame.regionSet.selectedRegion.regionId !== 0) {

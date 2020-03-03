@@ -292,7 +292,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
     };
 
     @action private handleLevelRemoved = (value: string, index: number) => {
-        this.sigmaLevels.splice(index, 1);
+        this.sigmaLevels = this.sigmaLevels.filter((v, i) => i !== index);
     };
 
     private renderMeanSigmaParameterRow() {
