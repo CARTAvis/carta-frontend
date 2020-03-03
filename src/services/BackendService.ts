@@ -39,6 +39,7 @@ export class BackendService {
     private readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
     private readonly statsStream: Subject<CARTA.RegionStatsData>;
     private readonly contourStream: Subject<CARTA.ContourImageData>;
+    readonly scriptingStream: Subject<CARTA.ScriptingRequest>;
     private readonly reconnectStream: Subject<void>;
     private readonly logStore: LogStore;
     private readonly preferenceStore: PreferenceStore;
@@ -63,6 +64,7 @@ export class BackendService {
         this.spectralProfileStream = new Subject<CARTA.SpectralProfileData>();
         this.statsStream = new Subject<CARTA.RegionStatsData>();
         this.contourStream = new Subject<CARTA.ContourImageData>();
+        this.scriptingStream = new Subject<CARTA.ScriptingRequest>();
         this.reconnectStream = new Subject<void>();
 
         // Construct handler and decoder maps
@@ -87,7 +89,8 @@ export class BackendService {
             [CARTA.EventType.SPECTRAL_PROFILE_DATA, this.onStreamedSpectralProfileData],
             [CARTA.EventType.REGION_STATS_DATA, this.onStreamedRegionStatsData],
             [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData],
-            [CARTA.EventType.RASTER_TILE_SYNC, this.onStreamedRasterSync]
+            [CARTA.EventType.RASTER_TILE_SYNC, this.onStreamedRasterSync],
+            [CARTA.EventType.SCRIPTING_REQUEST, this.onScriptingRequest]
         ]);
 
         this.decoderMap = new Map<CARTA.EventType, any>([
@@ -111,7 +114,8 @@ export class BackendService {
             [CARTA.EventType.CONTOUR_IMAGE_DATA, CARTA.ContourImageData],
             [CARTA.EventType.SET_USER_LAYOUT_ACK, CARTA.SetUserLayoutAck],
             [CARTA.EventType.SET_USER_PREFERENCES_ACK, CARTA.SetUserPreferencesAck],
-            [CARTA.EventType.RASTER_TILE_SYNC, CARTA.RasterTileSync]
+            [CARTA.EventType.RASTER_TILE_SYNC, CARTA.RasterTileSync],
+            [CARTA.EventType.SCRIPTING_REQUEST, CARTA.ScriptingRequest]
         ]);
 
         // check ping every 5 seconds
@@ -613,6 +617,16 @@ export class BackendService {
         document.cookie = `CARTA-Authorization=${token}; path=/`;
     };
 
+    sendScriptingResponse = (message: CARTA.IScriptingResponse) => {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            this.logEvent(CARTA.EventType.SCRIPTING_RESPONSE, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.SCRIPTING_RESPONSE, CARTA.ScriptingResponse.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
+    };
+
     private messageHandler(event: MessageEvent) {
         if (event.data === "PONG") {
             this.lastPongTime = performance.now();
@@ -727,6 +741,10 @@ export class BackendService {
 
     private onStreamedContourData(eventId: number, contourData: CARTA.ContourImageData) {
         this.contourStream.next(contourData);
+    }
+
+    private onScriptingRequest(eventId: number, scriptingRequest: CARTA.ScriptingRequest) {
+        this.scriptingStream.next(scriptingRequest);
     }
 
     private sendEvent(eventType: CARTA.EventType, payload: Uint8Array): boolean {

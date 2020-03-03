@@ -33,7 +33,7 @@ import {
     WidgetsStore
 } from ".";
 import {distinct, GetRequiredTiles} from "utilities";
-import {BackendService, ConnectionStatus, TileService, TileStreamDetails} from "services";
+import {BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
 import {getImageCanvas} from "components";
@@ -778,6 +778,7 @@ export class AppStore {
         this.backendService.getErrorStream().subscribe(this.handleErrorStream);
         this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
         this.backendService.getReconnectStream().subscribe(this.handleReconnectStream);
+        this.backendService.scriptingStream.subscribe(this.handleScriptingRequest);
         this.tileService.tileStream.subscribe(this.handleTileStream);
 
         // Auth and connection
@@ -943,6 +944,10 @@ export class AppStore {
 
     handleReconnectStream = () => {
         this.alertStore.showInteractiveAlert("You have reconnected to the CARTA server. Do you want to resume your session?", this.onResumeAlertClosed);
+    };
+
+    handleScriptingRequest = (request: CARTA.IScriptingRequest) => {
+        ScriptingService.Instance.handleScriptingRequest(request, this).then(this.backendService.sendScriptingResponse);
     };
 
     // endregion
