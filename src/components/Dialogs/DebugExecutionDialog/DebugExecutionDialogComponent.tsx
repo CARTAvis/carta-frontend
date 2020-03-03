@@ -61,13 +61,13 @@ class ExecutionEntry {
             return;
         }
         const currentParameters = this.parameters.map(this.mapMacro);
-        const actionFunction = targetObject[this.action];
+        let actionFunction = targetObject[this.action];
         if (!actionFunction || typeof (actionFunction) !== "function") {
             console.log(`Missing action function: ${this.action}`);
             console.log(actionFunction);
             return;
         }
-        actionFunction.bind(targetObject);
+        actionFunction = actionFunction.bind(targetObject);
         let response;
         if (this.async) {
             response = actionFunction(...currentParameters);
