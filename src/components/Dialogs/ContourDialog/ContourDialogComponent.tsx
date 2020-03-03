@@ -227,7 +227,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
 
         // remove it from the array
         if (closestIndex >= 0) {
-            this.levels.splice(closestIndex, 1);
+            this.levels = this.levels.filter((v, i) => i !== closestIndex);
         }
     };
 
@@ -245,7 +245,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     };
 
     @action private handleLevelRemoved = (value: string, index: number) => {
-        this.levels.splice(index, 1);
+        this.levels = this.levels.filter((v, i) => i !== index);
     };
 
     @action private handleLevelDragged = (index: number) => (val: number) => {
