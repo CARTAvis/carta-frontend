@@ -12,8 +12,6 @@ export interface CatalogViewComponentProps {
 
 @observer
 export class CatalogViewComponent extends React.Component<CatalogViewComponentProps> {
-    private infinity = 1.7976931348623157e+308;
-    private catalogs = [];
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
 
@@ -54,19 +52,28 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             const height = frame.renderHeight;
             catalogStore.catalogs.forEach((set, key) => {
                 this.ctx.strokeStyle = set.color;
-                this.ctx.lineWidth = devicePixelRatio;
-                this.ctx.resetTransform();
+                this.ctx.save();
                 this.ctx.scale(devicePixelRatio, devicePixelRatio);
+                // Use two control points to determine shift and scaling transforms, rather than converting each point
+                // Note, this may have a single-pixel (canvas or image space) offset...
+                const zeroPoint = imageToCanvasPos(0, 0, frame.requiredFrameView, width, height);
+                const onePoint = imageToCanvasPos(1, 1, frame.requiredFrameView, width, height);
+                const scale = onePoint.x - zeroPoint.x;
+                this.ctx.scale(scale, scale);
+                const shapeSize = set.size / scale;
+                this.ctx.lineWidth = 1.0 / scale;
+                this.ctx.translate(zeroPoint.x / scale, zeroPoint.y / scale);
+                this.ctx.scale(1, -1);
                 // This approach assumes all points have the same color, so the stroke can be batched
                 this.ctx.beginPath();
                 for (const arr of set.pixelData) {
                     for (const point of arr) {
-                        const currentCenterPixelSpace = imageToCanvasPos(point.x - 1, point.y - 1, frame.requiredFrameView, width, height);
-                        this.ctx.moveTo(currentCenterPixelSpace.x + set.size, currentCenterPixelSpace.y);
-                        this.ctx.arc(currentCenterPixelSpace.x, currentCenterPixelSpace.y, set.size, 0, 2 * Math.PI);
+                        this.ctx.moveTo(point.x + shapeSize, point.y);
+                        this.ctx.arc(point.x, point.y, shapeSize, 0, 2 * Math.PI);
                     }
                 }
                 this.ctx.stroke();
+                this.ctx.restore();
             });
         }
     };
