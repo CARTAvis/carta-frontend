@@ -9,12 +9,12 @@ export const CHANNEL_TYPES: ChannelType[] = [
     {code: "FREQ", name: "Frequency", unit: "Hz"},
     {code: "ENER", name: "Energy", unit: "J"},
     {code: "WAVN", name: "Wavenumber", unit: "1/m"},
-    {code: "VRAD", name: "Velocity", unit: "m/s"},
+    {code: "VRAD", name: "Radio velocity", unit: "m/s"},
     {code: "WAVE", name: "Vacuum wavelength", unit: "m"},
-    {code: "VOPT", name: "Velocity\u00a0(OPT)", unit: "m/s"},
+    {code: "VOPT", name: "Optical velocity", unit: "m/s"},
     {code: "ZOPT", name: "Redshift", unit: ""},
     {code: "AWAV", name: "Air wavelength", unit: "m"},
-    {code: "VELO", name: "Velocity\u00a0(Radial)", unit: "m/s"},
+    {code: "VELO", name: "Apparent radial velocity", unit: "m/s"},
     {code: "BETA", name: "Beta", unit: ""},
 ];
 
@@ -65,8 +65,8 @@ export const IsSpectralSystemSupported = (system: string): boolean => {
 };
 
 export const SPECTRAL_TYPE_STRING = new Map<SpectralType, string>([
-    [SpectralType.VRAD, "Velocity"],
-    [SpectralType.VOPT, "Velocity\u00a0(OPT)"],
+    [SpectralType.VRAD, "Radio velocity"],
+    [SpectralType.VOPT, "Optical velocity"],
     [SpectralType.FREQ, "Frequency"],
     [SpectralType.WAVE, "Vacuum wavelength"],
     [SpectralType.AWAV, "Air wavelength"],
