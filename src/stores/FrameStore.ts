@@ -11,7 +11,7 @@ import {
     clamp, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates, getTransformedChannel,
     minMax2D, rotate2D, toFixed, trimFitsComment, velocityStringFromFrequency
 } from "utilities";
-import {BackendService} from "services";
+import {BackendService, ContourWebGLService} from "services";
 
 export interface FrameInfo {
     fileId: number;
@@ -493,7 +493,6 @@ export class FrameStore {
     private readonly logStore: LogStore;
     private readonly preference: PreferenceStore;
     private readonly backendService: BackendService;
-    private readonly contourContext: WebGLRenderingContext;
     private readonly controlMaps: Map<FrameStore, ControlMap>;
     private spatialTransformAST: number;
     private spectralTransformAST: number;
@@ -503,12 +502,11 @@ export class FrameStore {
     private static readonly CursorInfoMaxPrecision = 25;
     private static readonly ZoomInertiaDuration = 250;
 
-    constructor(preference: PreferenceStore, overlay: OverlayStore, logStore: LogStore, frameInfo: FrameInfo, backendService: BackendService, gl: WebGLRenderingContext) {
+    constructor(preference: PreferenceStore, overlay: OverlayStore, logStore: LogStore, frameInfo: FrameInfo, backendService: BackendService) {
         this.overlayStore = overlay;
         this.logStore = logStore;
         this.backendService = backendService;
         this.preference = preference;
-        this.contourContext = gl;
         this.spectralFrame = null;
         this.spectralType = null;
         this.spectralUnit = null;
@@ -901,10 +899,11 @@ export class FrameStore {
     }
 
     public removeControlMap(frame: FrameStore) {
+        const gl = ContourWebGLService.Instance.gl;
         const controlMap = this.controlMaps.get(frame);
-        if (controlMap && this.contourContext && controlMap.hasTextureForContext(this.contourContext)) {
-            const texture = controlMap.getTextureX(this.contourContext);
-            this.contourContext.deleteTexture(texture);
+        if (controlMap && gl && controlMap.hasTextureForContext(gl)) {
+            const texture = controlMap.getTextureX(gl);
+            gl.deleteTexture(texture);
         }
         this.controlMaps.delete(frame);
     }
@@ -922,7 +921,7 @@ export class FrameStore {
         for (const contourSet of processedData.contourSets) {
             let contourStore = this.contourStores.get(contourSet.level);
             if (!contourStore) {
-                contourStore = new ContourStore(this.contourContext);
+                contourStore = new ContourStore();
                 this.contourStores.set(contourSet.level, contourStore);
             }
 
@@ -1194,11 +1193,12 @@ export class FrameStore {
             AST.delete(this.spatialTransformAST);
         }
         this.spatialTransformAST = null;
-        if (this.contourContext) {
+        const gl = ContourWebGLService.Instance.gl;
+        if (gl) {
             this.controlMaps.forEach(controlMap => {
-                if (controlMap.hasTextureForContext(this.contourContext)) {
-                    const texture = controlMap.getTextureX(this.contourContext);
-                    this.contourContext.deleteTexture(texture);
+                if (controlMap.hasTextureForContext(gl)) {
+                    const texture = controlMap.getTextureX(gl);
+                    gl.deleteTexture(texture);
                 }
             });
         }
