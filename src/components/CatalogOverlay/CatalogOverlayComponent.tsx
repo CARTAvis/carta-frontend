@@ -9,7 +9,7 @@ import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType} from "components/Shared";
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
 import {WidgetConfig, WidgetProps, HelpType} from "stores";
-import {CatalogOverlayWidgetStore, CatalogOverlay, CatalogUpdateMode, CatalogPlotType} from "stores/widgets";
+import {CatalogOverlayWidgetStore, CatalogOverlay, CatalogUpdateMode, CatalogPlotType, CatalogScatterWidgetStoreProps} from "stores/widgets";
 import {toFixed, getTableDataByType} from "utilities";
 import "./CatalogOverlayComponent.css";
 
@@ -405,31 +405,43 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         const appStore = this.props.appStore;
         const frame = appStore.activeFrame;
-        if (widgetStore.catalogPlotType === CatalogPlotType.ImageOverlay) {
-            widgetStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
-            if (frame) {
-                const wcs = frame.validWcs ? frame.wcsInfo : 0;
-                const id = this.props.id;
-                const catalogStore = appStore.catalogStore;
-                catalogStore.clearData(this.props.id);
-                // init plot data   
-                const controlHeader = widgetStore.catalogControlHeader;
-                const xHeader = controlHeader.get(widgetStore.xColumnRepresentation);
-                const yHeader = controlHeader.get(widgetStore.yColumnRepresentation);
-                const xHeaderInfo = widgetStore.catalogHeader[xHeader.dataIndex];
-                const yHeaderInfo = widgetStore.catalogHeader[yHeader.dataIndex];
-                const wscCoordsX = getTableDataByType(widgetStore.catalogData, xHeaderInfo.dataType, xHeaderInfo.dataTypeIndex);
-                const wcsCoordsY = getTableDataByType(widgetStore.catalogData, yHeaderInfo.dataType, yHeaderInfo.dataTypeIndex);
-                catalogStore.updateCatalogData(id, wscCoordsX, wcsCoordsY, wcs, xHeaderInfo.units, yHeaderInfo.units, widgetStore.catalogCoordinateSystem.system);
-                catalogStore.updateCatalogColor(id, widgetStore.catalogColor);
-                catalogStore.updateCatalogSize(id, widgetStore.catalogSize);
-            }
-        }
 
-        if (widgetStore.subsetEndIndex !== widgetStore.catalogInfo.dataSize) {
-            widgetStore.setPlotingData(true);   
-            let catalogFilter = widgetStore.updateRequestDataSize;
-            appStore.sendCatalogFilter(catalogFilter);
+        // init plot data   
+        const coords = widgetStore.get2DPlotData(widgetStore.xColumnRepresentation, widgetStore.yColumnRepresentation, widgetStore.catalogData);
+
+        switch (widgetStore.catalogPlotType) {
+            case CatalogPlotType.ImageOverlay:
+                widgetStore.setUpdateMode(CatalogUpdateMode.ViewUpdate);
+                if (frame) {
+                    const wcs = frame.validWcs ? frame.wcsInfo : 0;
+                    const id = this.props.id;
+                    const catalogStore = appStore.catalogStore;
+                    catalogStore.clearData(this.props.id);
+                    catalogStore.updateCatalogData(id, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, widgetStore.catalogCoordinateSystem.system);
+                    catalogStore.updateCatalogColor(id, widgetStore.catalogColor);
+                    catalogStore.updateCatalogSize(id, widgetStore.catalogSize);
+                }
+
+                if (widgetStore.subsetEndIndex !== widgetStore.catalogInfo.dataSize) {
+                    widgetStore.setPlotingData(true);   
+                    let catalogFilter = widgetStore.updateRequestDataSize;
+                    appStore.sendCatalogFilter(catalogFilter);
+                }
+
+                break;
+            case CatalogPlotType.D2Scatter:
+                if (!widgetStore.scatterPlot) {
+                    const scatterProps: CatalogScatterWidgetStoreProps = {
+                        x: coords.wcsX,
+                        y: coords.wcsY,
+                        catalogOverlayWidgetStore: this.widgetStore
+                    };
+                    const scatterWidgetId = appStore.widgetsStore.createFloatingCatalogScatterWidget(scatterProps);
+                    widgetStore.setCatalogScatterWidget(scatterWidgetId);
+                }
+                break;
+            default:
+                break;
         }
     }
 

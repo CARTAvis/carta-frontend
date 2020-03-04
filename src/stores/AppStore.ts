@@ -919,16 +919,18 @@ export class AppStore {
 
             if (catalogWidgetStore.updateMode === CatalogUpdateMode.ViewUpdate) { 
                 // update plot data, allow update ovelay while table loading                
-                const controlHeader = catalogWidgetStore.catalogControlHeader;
-                if (catalogWidgetStore.xColumnRepresentation && catalogWidgetStore.yColumnRepresentation) {
-                    const xHeader = controlHeader.get(catalogWidgetStore.xColumnRepresentation);
-                    const yHeader = controlHeader.get(catalogWidgetStore.yColumnRepresentation);
-                    const xHeaderInfo = catalogWidgetStore.catalogHeader[xHeader.dataIndex];
-                    const yHeaderInfo = catalogWidgetStore.catalogHeader[yHeader.dataIndex];
-                    const wcsCoordsX = getTableDataByType(catalogFilter.columnsData, xHeaderInfo.dataType, xHeaderInfo.dataTypeIndex);
-                    const wcsCoordsY = getTableDataByType(catalogFilter.columnsData, yHeaderInfo.dataType, yHeaderInfo.dataTypeIndex);
+                const xColumn = catalogWidgetStore.xColumnRepresentation;
+                const yColumn = catalogWidgetStore.yColumnRepresentation;
+                if (xColumn && yColumn) {
+                    const coords = catalogWidgetStore.get2DPlotData(xColumn, yColumn, catalogFilter.columnsData);
                     const wcs = this.activeFrame.validWcs ? this.activeFrame.wcsInfo : 0;
-                    this.catalogStore.updateCatalogData(catalogWidgetId, wcsCoordsX, wcsCoordsY, wcs, xHeaderInfo.units, yHeaderInfo.units, catalogWidgetStore.catalogCoordinateSystem.system);
+                    this.catalogStore.updateCatalogData(catalogWidgetId, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogWidgetStore.catalogCoordinateSystem.system);
+                }
+
+                // update 
+                const scatterWidget = this.widgetsStore.catalogScatterWidgets.get(catalogWidgetStore.catalogScatterWidgetId);
+                if (scatterWidget) {
+                    scatterWidget.updateScatterData(catalogFilter.columnsData);   
                 }
             }
         }

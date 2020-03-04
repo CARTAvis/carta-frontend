@@ -1,0 +1,24 @@
+
+.catalog-2D {
+    width: 100%;
+    height: 100%;
+
+    .catalog-2D-option {
+        width: calc(100% - 25px);
+        height: 35px;
+        display: inline-flex;
+        margin-left: 25px;
+        padding-top: 5px;
+        padding-bottom: 5px;
+
+        .bp3-form-content {
+            margin-right: 5px;
+        }
+    }
+
+    .catalog-2D-scatter {
+        width: calc(100% - 10px);
+        height: calc(100% - 35px);
+        position: relative;
+    }
+}

@@ -3,6 +3,9 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {AppStore, SystemType} from "stores";
+import {Point2D} from "models";
+import {getTableDataByType} from "utilities";
+import {CatalogScatterWidgetStore} from "./CatalogScatterWidgetStore";
 
 export interface CatalogInfo {
     fileId: number;
@@ -95,6 +98,8 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable userFilters: CARTA.CatalogFilterRequest;
     @observable catalogCoordinateSystem: {system: SystemType, equinox: string, epoch: string, coordinate: {x: CatalogOverlay, y: CatalogOverlay}};
     @observable catalogPlotType: CatalogPlotType;
+    @observable catalogScatterWidgetId: string;
+    // @observable catalogScatterWidgetMap: Map<string, CatalogScatterWidgetStore>;
 
     constructor(appStore: AppStore, catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData) {
         super(appStore, RegionsType.CLOSED_AND_POINT);
@@ -109,6 +114,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.plotingData = false;
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.headerTableColumnWidts = [75, 75, 65, 100, null];
+        this.catalogScatterWidgetId = undefined;
 
         this.catalogPlotType = CatalogPlotType.ImageOverlay;
         const coordinateSystem = catalogInfo.fileInfo.coosys[0];
@@ -130,6 +136,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             this.numVisibleRows = initTableRows;
             this.subsetEndIndex = initTableRows;
         }
+    }
+
+    @action setCatalogScatterWidget(id: string) {
+        this.catalogScatterWidgetId = id;
     }
 
     @action setCatalogPlotType(type: CatalogPlotType) {
@@ -450,6 +460,29 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             }
         });
         return filters.length > 0;
+    }
+
+    @computed get scatterPlot(): boolean {
+        return this.catalogScatterWidgetId !== undefined;
+    }
+
+    public get2DPlotData(xColumn: string, yColumn: string, columnsData: CARTA.ICatalogColumnsData): {wcsX: Array<any>, wcsY: Array<any>, xHeaderInfo: CARTA.ICatalogHeader, yHeaderInfo: CARTA.ICatalogHeader} {
+        const controlHeader = this.catalogControlHeader;
+        const xHeader = controlHeader.get(xColumn);
+        const yHeader = controlHeader.get(yColumn);
+        const xHeaderInfo = this.catalogHeader[xHeader.dataIndex];
+        const yHeaderInfo = this.catalogHeader[yHeader.dataIndex];
+        const wcsX = getTableDataByType(columnsData, xHeaderInfo.dataType, xHeaderInfo.dataTypeIndex);
+        const wcsY = getTableDataByType(columnsData, yHeaderInfo.dataType, yHeaderInfo.dataTypeIndex);
+        return {wcsX: wcsX, wcsY: wcsY, xHeaderInfo: xHeaderInfo, yHeaderInfo: yHeaderInfo};
+    }
+
+    public get1DPlotData(column: string): {wcsData: Array<any>, headerInfo: CARTA.ICatalogHeader} {
+        const controlHeader = this.catalogControlHeader;
+        const header = controlHeader.get(column);
+        const headerInfo = this.catalogHeader[header.dataIndex];
+        const wcsData = getTableDataByType(this.catalogData, headerInfo.dataType, headerInfo.dataTypeIndex);
+        return {wcsData: wcsData, headerInfo: headerInfo};
     }
 
     private findKeywords(val: string): boolean {
