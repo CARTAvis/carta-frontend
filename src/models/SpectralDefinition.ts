@@ -28,7 +28,7 @@ export enum SpectralType {
 }
 
 // Channel is not a valid standalone spectral type
-export const IsSpectralTypeValid = (type: string): boolean => {
+export const IsSpectralTypeSupported = (type: string): boolean => {
     return type && type !== SpectralType.CHANNEL && (<any> Object).values(SpectralType).includes(type);
 };
 
@@ -50,7 +50,7 @@ export enum SpectralUnit {
     NM = "nm",
     ANGSTROM  = "Angstrom"
 }
-export const IsSpectralUnitValid = (unit: string): boolean => {
+export const IsSpectralUnitSupported = (unit: string): boolean => {
     return unit && (<any> Object).values(SpectralUnit).includes(unit);
 };
 
@@ -60,7 +60,7 @@ export enum SpectralSystem {
     BARY = "BARYCENT",
     TOPO = "TOPOCENT"
 }
-export const IsSpectralSystemValid = (system: string): boolean => {
+export const IsSpectralSystemSupported = (system: string): boolean => {
     return system && (<any> Object).values(SpectralSystem).includes(system);
 };
 
@@ -81,8 +81,8 @@ export const SPECTRAL_DEFAULT_UNIT = new Map<SpectralType, SpectralUnit>([
     [SpectralType.AWAV, SpectralUnit.MM]
 ]);
 
-export const GenCoordinateLabel = (type: SpectralType, unit: SpectralUnit): string => {
-    return type && unit ? `${SPECTRAL_TYPE_STRING.get(type)} (${unit})` : "Channel";
+export const GenCoordinateLabel = (type: string, unit: string): string => {
+    return `${type && IsSpectralTypeSupported(type) ? SPECTRAL_TYPE_STRING.get(type as SpectralType) : type}${unit ? " (" + unit + ")" : ""}`;
 };
 
 export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType, unit: SpectralUnit}>([
