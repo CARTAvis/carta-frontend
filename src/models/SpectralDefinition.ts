@@ -65,10 +65,10 @@ export const IsSpectralSystemSupported = (system: string): boolean => {
 };
 
 export const SPECTRAL_TYPE_STRING = new Map<SpectralType, string>([
-    [SpectralType.VRAD, "Radio velocity"],
-    [SpectralType.VOPT, "Optical velocity"],
+    [SpectralType.VRAD, "Velocity"],
+    [SpectralType.VOPT, "Velocity\u00a0(OPT)"],
     [SpectralType.FREQ, "Frequency"],
-    [SpectralType.WAVE, "Wavelength"],
+    [SpectralType.WAVE, "Vacuum wavelength"],
     [SpectralType.AWAV, "Air wavelength"],
     [SpectralType.CHANNEL, "Channel"]
 ]);
@@ -81,8 +81,8 @@ export const SPECTRAL_DEFAULT_UNIT = new Map<SpectralType, SpectralUnit>([
     [SpectralType.AWAV, SpectralUnit.MM]
 ]);
 
-export const GenCoordinateLabel = (type: string, unit: string): string => {
-    return `${type && IsSpectralTypeSupported(type) ? SPECTRAL_TYPE_STRING.get(type as SpectralType) : type}${unit ? " (" + unit + ")" : ""}`;
+export const GenCoordinateLabel = (type: SpectralType, unit: SpectralUnit): string => {
+    return `${type ? SPECTRAL_TYPE_STRING.get(type) : ""}${unit ? " (" + unit + ")" : ""}`;
 };
 
 export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType, unit: SpectralUnit}>([
