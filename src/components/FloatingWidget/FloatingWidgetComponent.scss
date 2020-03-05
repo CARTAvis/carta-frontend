@@ -8,13 +8,13 @@ $title-color-dark: $pt-dark-text-color-muted;
 $selected-title-color: $blue2;
 $selected-title-color-dark: $pt-dark-heading-color;
 $border-color: $gray4;
-$border-color-dark: $black;
+$border-color-dark: $dark-gray4;
 $shadow-color: rgba($blue2, 0.1);
 
 .floating-widget {
     background-color: $widget-background;
     border: 1px solid $border-color;
-    .bp3-dark {
+    &.bp3-dark {
         background-color: $widget-background-dark;
         border: 1px solid $border-color-dark;
     }
@@ -32,14 +32,14 @@ $shadow-color: rgba($blue2, 0.1);
         border-bottom: 1px solid $border-color;
         &.bp3-dark {
             background-color: lighten($widget-background-dark, 10%);
-            border: 1px solid $border-color-dark;
+            border-bottom: 1px solid $border-color-dark;
         }
 
         &.selected {
             background-color: darken($widget-background, 10%);
             &.bp3-dark {
                 background-color: lighten($widget-background-dark, 15%);
-                border: 1px solid $border-color-dark;
+                border-bottom: 1px solid $border-color-dark;
             }
         }
 
