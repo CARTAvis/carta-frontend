@@ -1,9 +1,7 @@
 import {observer} from "mobx-react";
 import * as React from "react";
-import {Group, Layer, Ring, Stage} from "react-konva";
 import {AppStore, OverlayStore} from "stores";
 import {imageToCanvasPos} from "../RegionView/shared";
-import {Point2D} from "models";
 import "./CatalogViewComponent.css";
 
 export interface CatalogViewComponentProps {
@@ -14,56 +12,87 @@ export interface CatalogViewComponentProps {
 
 @observer
 export class CatalogViewComponent extends React.Component<CatalogViewComponentProps> {
-    private infinity = 1.7976931348623157e+308;
-    private catalogs = [];
+    private canvas: HTMLCanvasElement;
+    private ctx: CanvasRenderingContext2D;
 
-    private genCircle(id: string, color: string, valueCanvasSpaceX: number, valueCanvasSpaceY: number, scale: number, radius: number) {
-        let innerRadius = radius * scale;
-        let outerRadius = (radius + 1) * scale;
-        return (
-            <Group key={id} x={valueCanvasSpaceX} y={valueCanvasSpaceY}>
-                <Ring innerRadius={innerRadius} outerRadius={outerRadius} fill={color}/>
-            </Group>
-        );
+    componentDidMount() {
+        this.ctx = this.canvas.getContext("2d");
     }
 
-    // ignore point outof current sky
-    private infinityPoint(point: Point2D): boolean {
-        if (point.x === this.infinity || point.x === -this.infinity || point.y === this.infinity || point.y === -this.infinity) {
-            return true;
+    componentDidUpdate() {
+        requestAnimationFrame(this.updateCanvas);
+    }
+
+    private resizeAndClearCanvas() {
+        const frame = this.props.appStore.activeFrame;
+        if (!frame) {
+            return;
         }
-        return false;
+
+        const reqWidth = Math.max(1, frame.renderWidth * devicePixelRatio);
+        const reqHeight = Math.max(1, frame.renderHeight * devicePixelRatio);
+        // Resize canvas if necessary
+        if (this.canvas.width !== reqWidth || this.canvas.height !== reqHeight) {
+            this.canvas.width = reqWidth;
+            this.canvas.height = reqHeight;
+        } else {
+            // Otherwise just clear it
+            this.ctx.clearRect(0, 0, reqWidth, reqHeight);
+        }
     }
 
-    private addCatalogs() {
+    private updateCanvas = () => {
         const catalogStore = this.props.appStore.catalogStore;
         const frame = this.props.appStore.activeFrame;
-        this.catalogs = [];
-        const width = frame ? frame.renderWidth || 1 : 1;
-        const height = frame ? frame.renderHeight || 1 : 1;
-        if (catalogStore) {
-            catalogStore.catalogs.forEach((value, key) => {
-                for (let i = 0; i < value.pixelData.length; i++) {
-                    const pointArray = value.pixelData[i];
-                    for (let j = 0; j < pointArray.length; j++) {
-                        const point = pointArray[j];
-                        if (!this.infinityPoint(point)) {
-                            const id = key + "-" + i + "-" + j;
-                            const currentCenterPixelSpace = imageToCanvasPos(point.x - 1, point.y - 1, frame.requiredFrameView, width, height);
-                            this.catalogs.push(this.genCircle(id, value.color, currentCenterPixelSpace.x, currentCenterPixelSpace.y, 1, value.size));  
-                        }
+
+        this.resizeAndClearCanvas();
+
+        if (frame && catalogStore) {
+            const width = frame.renderWidth;
+            const height = frame.renderHeight;
+            catalogStore.catalogs.forEach((set, key) => {
+                this.ctx.strokeStyle = set.color;
+                this.ctx.save();
+                this.ctx.scale(devicePixelRatio, devicePixelRatio);
+                // Use two control points to determine shift and scaling transforms, rather than converting each point
+                // Note, this may have a single-pixel (canvas or image space) offset...
+                const zeroPoint = imageToCanvasPos(0, 0, frame.requiredFrameView, width, height);
+                const onePoint = imageToCanvasPos(1, 1, frame.requiredFrameView, width, height);
+                const scale = onePoint.x - zeroPoint.x;
+                this.ctx.scale(scale, scale);
+                const shapeSize = set.size / scale;
+                this.ctx.lineWidth = 1.0 / scale;
+                this.ctx.translate(zeroPoint.x / scale, zeroPoint.y / scale);
+                this.ctx.scale(1, -1);
+                // This approach assumes all points have the same color, so the stroke can be batched
+                this.ctx.beginPath();
+                for (const arr of set.pixelData) {
+                    for (const point of arr) {
+                        this.ctx.moveTo(point.x + shapeSize, point.y);
+                        this.ctx.arc(point.x, point.y, shapeSize, 0, 2 * Math.PI);
                     }
                 }
+                this.ctx.stroke();
+                this.ctx.restore();
             });
         }
-    }
+    };
 
     render() {
+        // dummy values to trigger React's componentDidUpdate()
         const frame = this.props.appStore.activeFrame;
-        const width = frame ? frame.renderWidth || 1 : 1;
-        const height = frame ? frame.renderHeight || 1 : 1;
+        const catalogStore = this.props.appStore.catalogStore;
         if (frame) {
-            this.addCatalogs();
+            const catalogs = catalogStore.catalogs;
+            const view = frame.requiredFrameView;
+            catalogs.forEach(catalogSettings => {
+                const color = catalogSettings.color;
+                const size = catalogSettings.size;
+                let total = 0;
+                for (const arr of catalogSettings.pixelData) {
+                    total += arr.length;
+                }
+            });
         }
         const padding = this.props.overlaySettings.padding;
         let className = "catalog-div";
@@ -71,29 +100,18 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             className += " docked";
         }
         return (
-            <Stage
-                className={className}
-                width={width}
-                height={height}
-                style={{
-                    left: padding.left, 
-                    top: padding.top
-                }}
-                x={0}
-                y={0}
-            >
-                <Layer 
-                    className="catalog-layer"
+            <div className={className}>
+                <canvas
+                    id="catalog-canvas"
+                    className="catalog-canvas"
+                    ref={(ref) => this.canvas = ref}
                     style={{
                         top: padding.top,
                         left: padding.left,
-                        width: width,
-                        height: height
+                        width: frame ? frame.renderWidth || 1 : 1,
+                        height: frame ? frame.renderHeight || 1 : 1
                     }}
-                >
-                    {this.catalogs}
-                </Layer>
-            </Stage>
-        );
+                />
+            </div>);
     }
 }

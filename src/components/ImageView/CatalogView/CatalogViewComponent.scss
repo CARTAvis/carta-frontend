@@ -1,12 +1,12 @@
 .catalog-div {
     position: absolute;
-    // left: 0;
+    left: 0;
 
     &.docked {
         z-index: 3;
     }
 
-    .catalog-layer {
+    .catalog-canvas {
         position: absolute;
         z-index: 0;
     }
