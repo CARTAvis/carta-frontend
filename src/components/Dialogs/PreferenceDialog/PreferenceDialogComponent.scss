@@ -6,9 +6,14 @@
         width: 100%;
     }
 
-    .bp3-form-group .bp3-label {
-        width: 15em;
-        text-align: right;
+    .bp3-form-group {
+        &:first-of-type {
+            margin-left: 0px;
+        }
+        .bp3-label {
+            width: 15em;
+            text-align: right;
+        }
     }
 
     .bp3-numeric-input {
