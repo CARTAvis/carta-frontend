@@ -316,6 +316,9 @@ export class WidgetsStore {
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 itemId = this.addStokesWidget(null, widgetSettings);
                 break;
+            // case CatalogOverlayComponent.WIDGET_CONFIG.type:
+            //     itemId = this.addCatalogOverlayWidget();
+            //     break;
             default:
                 // Remove it from the floating widget array, while preserving its store
                 if (this.floatingWidgets.find(w => w.id === widgetType)) {
@@ -693,7 +696,15 @@ export class WidgetsStore {
         let config = CatalogOverlayComponent.WIDGET_CONFIG;
         config.id = this.addCatalogOverlayWidget(catalogInfo, catalogHeader, catalogData);
         this.addFloatingWidget(config);
-        return config.id;
+        return config.id;   
+    };
+
+    reloadFloatingCatalogOverlayWidget = () => {
+        if (this.appStore.catalogs.size > 0) {
+            let config = CatalogOverlayComponent.WIDGET_CONFIG;
+            config.id = this.getNextId(CatalogOverlayComponent.WIDGET_CONFIG.type);
+            this.addFloatingWidget(config);   
+        }
     };
 
     @action addCatalogOverlayWidget(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData, id: string = null) {
@@ -925,10 +936,15 @@ export class WidgetsStore {
                 return;
             }
 
-            // close catalog file and overlay
+            // remove widget, keep widget store
             if (this.catalogOverlayWidgets.get(id)) {
-                this.appStore.reomveCatalog(id);
-                this.appStore.catalogStore.removeCatalog(id);
+                // this.appStore.reomveCatalog(id);
+                // this.appStore.catalogStore.removeCatalog(id);
+                return;
+            }
+            
+            if (this.catalogScatterWidgets.get(id)) {
+                this.catalogScatterWidgets.get(id).catalogOverlayWidgetStore.setCatalogScatterWidget(undefined);
             }
             this.removeWidget(id, widget.type);
         }

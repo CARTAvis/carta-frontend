@@ -472,10 +472,17 @@ export class AppStore {
         this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => {
             if (frame && ack.success && ack.dataSize) {
                 let catalogInfo: CatalogInfo = {fileId : fileId, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
-                const catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);
-                this.catalogs.set(catalogWidgetId, fileId);
-                this.catalogStore.initCatalogs(catalogWidgetId);
-                this.fileBrowserStore.hideFileBrowser();
+                let catalogWidgetId = null;
+                if (this.catalogs.size === 0) {
+                    catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);   
+                } else {
+                    catalogWidgetId = this.widgetsStore.addCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);
+                }
+                if (catalogWidgetId) {
+                    this.catalogs.set(catalogWidgetId, fileId);
+                    this.catalogStore.initCatalogs(catalogWidgetId);
+                    this.fileBrowserStore.hideFileBrowser();   
+                }
             }
         }, error => {
             console.error(error);
@@ -486,7 +493,6 @@ export class AppStore {
     @action reomveCatalog(catalogId: string) {
         const fileId = this.catalogs.get(catalogId);
         if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
-            // Todo clean catalog data from image viewer
             this.catalogs.delete(catalogId);
         }
     }

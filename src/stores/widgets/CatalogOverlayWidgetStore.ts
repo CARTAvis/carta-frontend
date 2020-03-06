@@ -99,7 +99,6 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable catalogCoordinateSystem: {system: SystemType, equinox: string, epoch: string, coordinate: {x: CatalogOverlay, y: CatalogOverlay}};
     @observable catalogPlotType: CatalogPlotType;
     @observable catalogScatterWidgetId: string;
-    // @observable catalogScatterWidgetMap: Map<string, CatalogScatterWidgetStore>;
 
     constructor(appStore: AppStore, catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData) {
         super(appStore, RegionsType.CLOSED_AND_POINT);
@@ -126,6 +125,13 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                 epoch: coordinateSystem.epoch, 
                 coordinate: this.systemCoordinateMap.get(SystemType.ICRS)
             };   
+        } else {
+            this.catalogCoordinateSystem = {
+                system: SystemType.ICRS,
+                equinox: null,
+                epoch: null, 
+                coordinate: this.systemCoordinateMap.get(SystemType.ICRS)
+            }; 
         }
 
         const initTableRows = CatalogOverlayWidgetStore.InitTableRows;

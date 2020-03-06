@@ -49,7 +49,7 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
         let systemOptions = [];
         CatalogOverlayPlotSettingsComponent.CoordinateSystemName.forEach((value, key) => {
             systemOptions.push(<option key={key} value={key}>{value}</option>);
-        });
+        }); 
 
         return (
             <div className="catalog-overlay-plot-settings">
