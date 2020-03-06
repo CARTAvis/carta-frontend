@@ -1,11 +1,14 @@
 import {action, observable} from "mobx";
+import {Position} from "@blueprintjs/core";
 
 export class HelpStore {
     @observable type: HelpType;
     @observable helpVisible: boolean = false;
+    @observable position: Position = Position.RIGHT;
 
-    @action showHelpDrawer = (helpType: HelpType) => {
+    @action showHelpDrawer = (helpType: HelpType, clientX: number) => {
         this.type = helpType;
+        this.position = clientX / document.body.clientWidth < 0.65 ? Position.RIGHT : Position.LEFT;
         this.helpVisible = true;
     };
 

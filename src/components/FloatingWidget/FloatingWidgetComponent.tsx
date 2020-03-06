@@ -69,6 +69,10 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         }
     }
 
+    onClickHelpButton(ev: React.MouseEvent<HTMLDivElement>) {
+        this.props.appStore.helpStore.showHelpDrawer(this.props.widgetConfig.helpType, ev.clientX);
+    }
+
     constructor(props: FloatingWidgetComponentProps) {
         super(props);
     }
@@ -133,7 +137,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     </div>
                     }
                     {widgetConfig.helpType &&
-                    <div className={buttonClass} onClick={() => appStore.helpStore.showHelpDrawer(widgetConfig.helpType)}>
+                    <div className={buttonClass} onClick={(ev) => this.onClickHelpButton(ev)}>
                         <Tooltip content="Help" position={Position.BOTTOM_RIGHT}>
                             <Icon icon={"help"}/>
                         </Tooltip>

@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Drawer, IDrawerProps, Position, Classes} from "@blueprintjs/core";
+import {Drawer, IDrawerProps, Classes} from "@blueprintjs/core";
 import {
     ContourHelpComponent,
     FileBrowserHelpComponent,
@@ -49,7 +49,7 @@ export class HelpDrawerComponent extends React.Component<{ appStore: AppStore }>
             isOpen: helpStore.helpVisible,
             onClose: helpStore.hideHelpDrawer,
             title: HELP_MAP.get(helpStore.type) ? HELP_MAP.get(helpStore.type).title : "",
-            position: Position.RIGHT,
+            position: helpStore.position,
             size: "33%",
             hasBackdrop: true
         };

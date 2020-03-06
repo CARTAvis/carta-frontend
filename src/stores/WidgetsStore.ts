@@ -372,7 +372,7 @@ export class WidgetsStore {
             unpinButton.on("click", () => this.unpinWidget(stack.getActiveContentItem()));
             stack.header.controlsContainer.prepend(unpinButton);
             let helpButton = $(`<li class="lm-help" title="help"><span class="bp3-icon-standard bp3-icon-help"/></li>`);
-            helpButton.on("click", () => this.onHelpPinedClick(stack.getActiveContentItem()));
+            helpButton.on("click", (ev) => this.onHelpPinedClick(ev, stack.getActiveContentItem()));
             stack.header.controlsContainer.prepend(helpButton);
 
             stack.on("activeContentItemChanged", function(contentItem: any) {
@@ -486,14 +486,14 @@ export class WidgetsStore {
         item.remove();
     };
 
-    @action onHelpPinedClick = (item: GoldenLayout.ContentItem) => {
+    @action onHelpPinedClick = (ev: JQuery.ClickEvent<HTMLElement>, item: GoldenLayout.ContentItem) => {
         const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
         const type = itemConfig.component;
 
         // Get widget config from type
         let widgetConfig = WidgetsStore.getDefaultWidgetConfig(type);
         if (widgetConfig.helpType) {
-            this.appStore.helpStore.showHelpDrawer(widgetConfig.helpType);
+            this.appStore.helpStore.showHelpDrawer(widgetConfig.helpType, ev.clientX);
         }
     };
 
