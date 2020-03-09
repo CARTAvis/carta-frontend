@@ -6,11 +6,21 @@
             height: 30px;
             margin-left: 10px;
         }
+
+        .bp3-form-group .bp3-label {
+            width: 6em;
+            text-align: left;
+        }
     }
 
     .generator-parameters-row {
         display: flex;
         flex-wrap: wrap;
+
+        .label-parameters .bp3-label {
+            width: 6em;
+            text-align: left;
+        }
 
         .bp3-form-group {
             padding-right: 10px;
