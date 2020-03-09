@@ -7,10 +7,7 @@ import {
     ChannelInfo, ChannelType, CHANNEL_TYPES, ControlMap, CursorInfo, FrameView, GenCoordinateLabel, Point2D, ProtobufProcessing, SpectralInfo, Transform2D, ZoomPoint,
     SpectralSystem, SpectralType, SpectralUnit, SPECTRAL_COORDS_SUPPORTED, SPECTRAL_DEFAULT_UNIT, IsSpectralSystemSupported, IsSpectralTypeSupported, IsSpectralUnitSupported
 } from "models";
-import {
-    clamp, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates, getTransformedChannel,
-    minMax2D, rotate2D, toFixed, trimFitsComment, velocityStringFromFrequency
-} from "utilities";
+import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedCoordinates, getTransformedChannel, minMax2D, rotate2D, toFixed, trimFitsComment} from "utilities";
 import {BackendService, ContourWebGLService} from "services";
 
 export interface FrameInfo {
@@ -209,21 +206,6 @@ export class FrameStore {
         return null;
     }
 
-    @computed get referenceFrequency(): number {
-        if (!this.frameInfo || !this.frameInfo.fileInfoExtended || this.frameInfo.fileInfoExtended.depth <= 1 || !this.frameInfo.fileInfoExtended.headerEntries) {
-            return undefined;
-        }
-        const restFreqHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`RESTFRQ`) !== -1);
-        if (restFreqHeader) {
-            const restFreqVal = getHeaderNumericValue(restFreqHeader);
-            if (isFinite(restFreqVal)) {
-                return restFreqVal;
-            }
-        }
-
-        return undefined;
-    }
-
     @computed get channelInfo(): ChannelInfo {
         if (!this.frameInfo || !this.frameInfo.fileInfoExtended || this.frameInfo.fileInfoExtended.depth <= 1 || !this.frameInfo.fileInfoExtended.headerEntries) {
             return undefined;
@@ -333,14 +315,19 @@ export class FrameStore {
                 }
                 spectralInfo.spectralString = `${spectralName}:\u00a0${toFixed(channelInfo.values[this.channel], 4)}\u00a0${channelInfo.channelType.unit}`;
 
-                const refFreq = this.referenceFrequency;
                 // Add velocity conversion
-                if (channelInfo.channelType.code === "FREQ" && isFinite(refFreq)) {
+                if (channelInfo.channelType.code === "FREQ") {
                     const freqVal = channelInfo.rawValues[this.channel];
-                    spectralInfo.velocityString = velocityStringFromFrequency(freqVal, refFreq);
+                    const velocityVal = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, freqVal);
+                    if (isFinite(velocityVal)) {
+                        spectralInfo.velocityString = `Velocity:\u00a0${velocityVal}\u00a0km/s`;
+                    }
                 } else if (channelInfo.channelType.code === "VRAD") {
                     const velocityVal = channelInfo.rawValues[this.channel];
-                    spectralInfo.freqString = frequencyStringFromVelocity(velocityVal, refFreq);
+                    const freqGHz = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.GHZ, this.spectralSystem, velocityVal);
+                    if (isFinite(freqGHz)) {
+                        spectralInfo.freqString = `Frequency:\u00a0${formattedFrequency(freqGHz)}`;
+                    }
                 }
             }
         }
@@ -604,15 +591,15 @@ export class FrameStore {
         });
     }
 
-    private convertSpectral = (x: Array<number>): Array<number> => {
-        if (!x) {
-            return null;
+    private convertSpectral = (values: Array<number>): Array<number> => {
+        return values && values.length > 0 ? values.map(value => this.astSpectralTransform(this.spectralType, this.spectralUnit, this.spectralSystem, value)) : null;
+    };
+
+    private astSpectralTransform = (type: SpectralType, unit: SpectralUnit, system: SpectralSystem, value: number): number => {
+        if (!this.spectralFrame || !isFinite(value)) {
+            return undefined;
         }
-        let tx: Array<number> = new Array<number>(x.length);
-        for (let i = 0; i < x.length; i++) {
-            tx[i] = AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, x[i]);
-        }
-        return tx;
+        return AST.transformSpectralPoint(this.spectralFrame, type, unit, system, value);
     };
 
     @action private initWCS = () => {
