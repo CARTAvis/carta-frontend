@@ -33,7 +33,7 @@ import {
     CatalogStore,
     HelpStore
 } from ".";
-import {GetRequiredTiles, getTableDataByType} from "utilities";
+import {GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore, CatalogInfo, CatalogUpdateMode} from "./widgets";
@@ -480,8 +480,8 @@ export class AppStore {
                 }
                 if (catalogWidgetId) {
                     this.catalogs.set(catalogWidgetId, fileId);
-                    this.catalogStore.initCatalogs(catalogWidgetId);
-                    this.fileBrowserStore.hideFileBrowser();   
+                    this.catalogStore.addCatalogs(catalogWidgetId);
+                    this.fileBrowserStore.hideFileBrowser(); 
                 }
             }
         }, error => {
@@ -490,10 +490,15 @@ export class AppStore {
         });
     };
 
-    @action reomveCatalog(catalogId: string) {
-        const fileId = this.catalogs.get(catalogId);
+    @action reomveCatalog(catalogWidgetId: string, catalogComponentId: string) {
+        const fileId = this.catalogs.get(catalogWidgetId);
         if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
-            this.catalogs.delete(catalogId);
+            this.catalogs.delete(catalogWidgetId);
+            if (this.catalogs.size === 0) {
+                this.widgetsStore.removeFloatingWidget(catalogComponentId, true);
+            }
+            this.widgetsStore.catalogOverlayWidgets.delete(catalogWidgetId);
+            this.catalogStore.clearData(catalogWidgetId);
         }
     }
 

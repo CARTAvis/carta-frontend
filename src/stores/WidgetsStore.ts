@@ -316,9 +316,6 @@ export class WidgetsStore {
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 itemId = this.addStokesWidget(null, widgetSettings);
                 break;
-            // case CatalogOverlayComponent.WIDGET_CONFIG.type:
-            //     itemId = this.addCatalogOverlayWidget();
-            //     break;
             default:
                 // Remove it from the floating widget array, while preserving its store
                 if (this.floatingWidgets.find(w => w.id === widgetType)) {
@@ -694,16 +691,17 @@ export class WidgetsStore {
     // region Catalog Overlay Widgets
     createFloatingCatalogOverlayWidget = (catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData): string => {
         let config = CatalogOverlayComponent.WIDGET_CONFIG;
-        config.id = this.addCatalogOverlayWidget(catalogInfo, catalogHeader, catalogData);
+        const widgetId = this.addCatalogOverlayWidget(catalogInfo, catalogHeader, catalogData);
+        config.id = config.id + "-component-" + (this.floatingWidgets.length + 1).toString();
         this.addFloatingWidget(config);
-        return config.id;   
+        return widgetId;  
     };
 
     reloadFloatingCatalogOverlayWidget = () => {
         if (this.appStore.catalogs.size > 0) {
             let config = CatalogOverlayComponent.WIDGET_CONFIG;
-            config.id = this.getNextId(CatalogOverlayComponent.WIDGET_CONFIG.type);
-            this.addFloatingWidget(config);   
+            config.id = config.id + "-component-" + (this.floatingWidgets.length + 1).toString();
+            this.addFloatingWidget(config);
         }
     };
 

@@ -22,7 +22,7 @@ export class CatalogStore {
         this.catalogs = new ObservableMap();
     }
 
-    @action initCatalogs(widgetId: string) {
+    @action addCatalogs(widgetId: string) {
         this.catalogs.set(widgetId, { color: Colors.RED2, size: 1, pixelData: [] });
     }
 

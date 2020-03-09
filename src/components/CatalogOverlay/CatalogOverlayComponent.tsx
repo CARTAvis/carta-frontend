@@ -2,7 +2,7 @@ import * as React from "react";
 import * as _ from "lodash";
 import {autorun, computed, observable, action} from "mobx";
 import {observer} from "mobx-react";
-import {Switch, HTMLSelect, AnchorButton, Intent, Tooltip, FormGroup} from "@blueprintjs/core";
+import {Switch, HTMLSelect, AnchorButton, Intent, Tooltip, FormGroup, NonIdealState} from "@blueprintjs/core";
 import {Cell, Column, Table, SelectionModes, RenderMode} from "@blueprintjs/table";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
@@ -10,7 +10,7 @@ import {TableComponent, TableComponentProps, TableType} from "components/Shared"
 import {CatalogOverlayPlotSettingsComponent} from "./CatalogOverlayPlotSettingsComponent/CatalogOverlayPlotSettingsComponent";
 import {WidgetConfig, WidgetProps, HelpType} from "stores";
 import {CatalogOverlayWidgetStore, CatalogOverlay, CatalogUpdateMode, CatalogPlotType, CatalogScatterWidgetStoreProps} from "stores/widgets";
-import {toFixed, getTableDataByType} from "utilities";
+import {toFixed} from "utilities";
 import "./CatalogOverlayComponent.css";
 
 enum HeaderTableColumnName {
@@ -132,6 +132,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 }
             } else {
                 this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Catalog : Cursor`);
+                this.props.appStore.widgetsStore.removeFloatingWidget(this.props.id, true);
             }
         });
     }
@@ -411,6 +412,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     private updateTableData = () => {
         const widgetStore = this.widgetStore;
+        // const profile = this.profileStore;
         if (widgetStore.loadingData === false && widgetStore.updateMode === CatalogUpdateMode.TableUpdate && widgetStore.shouldUpdateTableData) {
             widgetStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
             const filter = this.widgetStore.updateRequestDataSize;
@@ -481,9 +483,27 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCatalogPlotType(val);
     }
 
+    @action handleFileCloseClick = () => {
+        const appStore = this.props.appStore;
+        appStore.reomveCatalog(this.widgetId, this.props.id);
+        if (appStore.catalogs.size > 0) {
+            const catalogFileId = appStore.catalogs.values().next().value;
+            this.catalogFileId = catalogFileId;
+        }
+    }
+
     public render() {
         const appStore = this.props.appStore;
         const widgetStore = this.widgetStore;
+
+        if (!widgetStore) {
+            return (
+                <div className="catalog-overlay">
+                    <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>;
+                </div>
+            );
+        }
+
         this.coordinate = widgetStore.catalogCoordinateSystem.coordinate;
         const dataTableProps: TableComponentProps = {
             type: TableType.ColumnFilter,
@@ -559,6 +579,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                             intent={Intent.PRIMARY}
                             text="Reset"
                             onClick={this.handleClearClick}
+                            disabled={widgetStore.loadOntoImage}
+                        />
+                        </Tooltip>
+                        <Tooltip content={"Close file"}>
+                        <AnchorButton
+                            intent={Intent.PRIMARY}
+                            text="Close"
+                            onClick={this.handleFileCloseClick}
                             disabled={widgetStore.loadOntoImage}
                         />
                         </Tooltip>
