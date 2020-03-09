@@ -299,34 +299,41 @@ export class FrameStore {
 
         if (this.frameInfo.fileInfoExtended.depth > 1) {
             const channelInfo = this.channelInfo;
+            spectralInfo.channelType = channelInfo.channelType;
             if (channelInfo.channelType.code) {
-                let specSysValue = "";
                 const specSysHeader = this.frameInfo.fileInfoExtended.headerEntries.find(entry => entry.name.indexOf(`SPECSYS`) !== -1);
                 if (specSysHeader && specSysHeader.value) {
-                    specSysValue = trimFitsComment(specSysHeader.value);
+                    spectralInfo.specsys = trimFitsComment(specSysHeader.value).toUpperCase();
                 }
-                spectralInfo.channelType = channelInfo.channelType;
-                let spectralName;
-                if (specSysValue) {
-                    spectralInfo.specsys = specSysValue.toUpperCase();
-                    spectralName = `${channelInfo.channelType.name}\u00a0(${specSysValue})`;
-                } else {
-                    spectralName = channelInfo.channelType.name;
-                }
-                spectralInfo.spectralString = `${spectralName}:\u00a0${toFixed(channelInfo.values[this.channel], 4)}\u00a0${channelInfo.channelType.unit}`;
 
-                // Add velocity conversion
+                spectralInfo.spectralString = `${channelInfo.channelType.name} (${spectralInfo.specsys}): ${toFixed(channelInfo.values[this.channel], 4)} ${channelInfo.channelType.unit}`;
                 if (channelInfo.channelType.code === "FREQ") {
                     const freqVal = channelInfo.rawValues[this.channel];
+                    // convert frequency value to unit in GHz
+                    if (this.isSpectralCoordinateConvertible && channelInfo.channelType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.FREQ)) {
+                        const freqGHz = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.GHZ, this.spectralSystem, freqVal);
+                        if (isFinite(freqGHz)) {
+                            spectralInfo.spectralString = `Frequency (${spectralInfo.specsys}): ${formattedFrequency(freqGHz)}`;
+                        }
+                    }
+                    // convert frequency to volecity
                     const velocityVal = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, freqVal);
                     if (isFinite(velocityVal)) {
-                        spectralInfo.velocityString = `Velocity:\u00a0${velocityVal}\u00a0km/s`;
+                        spectralInfo.velocityString = `Velocity: ${toFixed(velocityVal, 4)} km/s`;
                     }
                 } else if (channelInfo.channelType.code === "VRAD") {
                     const velocityVal = channelInfo.rawValues[this.channel];
+                    // convert velocity value to unit in km/s
+                    if (this.isSpectralCoordinateConvertible && channelInfo.channelType.unit !== SPECTRAL_DEFAULT_UNIT.get(SpectralType.VRAD)) {
+                        const volecityKMS = this.astSpectralTransform(SpectralType.VRAD, SpectralUnit.KMS, this.spectralSystem, velocityVal);
+                        if (isFinite(volecityKMS)) {
+                            spectralInfo.spectralString = `Velocity (${spectralInfo.specsys}): ${toFixed(volecityKMS, 4)} km/s`;
+                        }
+                    }
+                    // convert velocity to frequency
                     const freqGHz = this.astSpectralTransform(SpectralType.FREQ, SpectralUnit.GHZ, this.spectralSystem, velocityVal);
                     if (isFinite(freqGHz)) {
-                        spectralInfo.freqString = `Frequency:\u00a0${formattedFrequency(freqGHz)}`;
+                        spectralInfo.freqString = `Frequency: ${formattedFrequency(freqGHz)}`;
                     }
                 }
             }
