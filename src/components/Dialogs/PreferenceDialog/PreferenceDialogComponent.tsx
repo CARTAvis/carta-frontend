@@ -524,7 +524,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
         );
 
         const logEventsPanel = (
-            <React.Fragment>
+            <div className="log-event-panel">
                 <FormGroup inline={false} label="Enable logged event type" className="log-event-list">
                     {Event.EVENT_TYPES.map((eventType) =>
                         <Checkbox
@@ -536,7 +536,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                         />
                     )}
                 </FormGroup>
-            </React.Fragment>
+            </div>
         );
 
         let className = "preference-dialog";
