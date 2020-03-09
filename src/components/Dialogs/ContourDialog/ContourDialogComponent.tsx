@@ -32,7 +32,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     @observable smoothingMode: CARTA.SmoothingMode;
     @observable smoothingFactor: number;
 
-    private static readonly DefaultWidth = 660;
+    private static readonly DefaultWidth = 850;
     private static readonly DefaultHeight = 660;
 
     private readonly widgetStore: RenderConfigWidgetStore;
@@ -393,7 +393,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
             .map(level => Math.abs(level) < 0.1 ? toExponential(level, 2) : toFixed(level, 2));
 
         const levelPanel = (
-            <React.Fragment>
+            <div className="contour-level-panel">
                 {dataSource.frameInfo.fileInfoExtended.depth > 1 &&
                 <FormGroup label={"Histogram"} inline={true}>
                     <HistogramSelect
@@ -412,23 +412,25 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                     <LinePlotComponent {...linePlotProps}/>
                 </div>
                 <ContourGeneratorPanelComponent frame={dataSource} generatorType={appStore.preferenceStore.contourGeneratorType} onLevelsGenerated={this.handleLevelsGenerated}/>
-                <FormGroup label={"Levels"} inline={true}>
-                    <TagInput
-                        addOnBlur={true}
-                        fill={true}
-                        tagProps={{
-                            minimal: true,
-                        }}
-                        onAdd={this.handleLevelAdded}
-                        onRemove={this.handleLevelRemoved}
-                        values={sortedLevels}
-                    />
-                </FormGroup>
-            </React.Fragment>
+                <div className="contour-level-panel-levels">
+                    <FormGroup label={"Levels"} inline={true}>
+                        <TagInput
+                            addOnBlur={true}
+                            fill={true}
+                            tagProps={{
+                                minimal: true,
+                            }}
+                            onAdd={this.handleLevelAdded}
+                            onRemove={this.handleLevelRemoved}
+                            values={sortedLevels}
+                        />
+                    </FormGroup>
+                </div>
+            </div>
         );
 
         const configPanel = (
-            <React.Fragment>
+            <div className="contour-config-panel">
                 <FormGroup inline={true} label="Smoothing Mode">
                     <HTMLSelect
                         value={this.smoothingMode}
@@ -450,7 +452,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                         onValueChange={val => this.smoothingFactor = val}
                     />
                 </FormGroup>
-            </React.Fragment>
+            </div>
         );
 
         return (
