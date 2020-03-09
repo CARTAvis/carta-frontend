@@ -6,6 +6,7 @@ import {ColorResult} from "react-color";
 import {ContourDashMode, FrameStore} from "stores";
 import {ColormapComponent, ColorPickerComponent} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
+import "./ContourStylePanelComponent.css";
 
 const DashModeSelect = Select.ofType<ContourDashMode>();
 
@@ -19,7 +20,7 @@ export class ContourStylePanelComponent extends React.Component<{ frame: FrameSt
     render() {
         const frame = this.props.frame;
         return (
-            <React.Fragment>
+            <div className="contour-style-panel">
                 <FormGroup inline={true} label="Thickness">
                     <NumericInput
                         placeholder="Thickness"
@@ -91,7 +92,7 @@ export class ContourStylePanelComponent extends React.Component<{ frame: FrameSt
                         darkTheme={this.props.darkTheme}
                     />
                 </FormGroup>
-            </React.Fragment>
+            </div>
         );
     }
 }
