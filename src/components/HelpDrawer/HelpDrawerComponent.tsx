@@ -44,11 +44,10 @@ export class HelpDrawerComponent extends React.Component<{ appStore: AppStore }>
         const drawerProps: IDrawerProps = {
             icon: "help",
             className: className,
-            backdropClassName: "minimal-drawer-backdrop",
             lazy: true,
             isOpen: helpStore.helpVisible,
             onClose: helpStore.hideHelpDrawer,
-            title: HELP_MAP.get(helpStore.type) ? HELP_MAP.get(helpStore.type).title : "",
+            title: this.HELP_MAP.get(helpStore.type) ? this.HELP_MAP.get(helpStore.type).title : "",
             position: helpStore.position,
             size: "33%",
             hasBackdrop: true
@@ -58,114 +57,114 @@ export class HelpDrawerComponent extends React.Component<{ appStore: AppStore }>
             <Drawer {...drawerProps} >
                 <div className={Classes.DRAWER_BODY}>
                     <div className={Classes.DIALOG_BODY}>
-                        {HELP_MAP.get(helpStore.type) ? HELP_MAP.get(helpStore.type).content : ""}
+                        {this.HELP_MAP.get(helpStore.type) ? this.HELP_MAP.get(helpStore.type).content : ""}
                     </div>
                 </div>
             </Drawer>
         );
     }
+
+    private readonly HELP_MAP = new Map<HelpType, {title: string, content: any}>([
+        // Dialog
+        [
+            HelpType.CONTOUR, {
+                title: "Contour Configuration",
+                content: <ContourHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.FILE_Browser, {
+                title: "File Browser",
+                content: <FileBrowserHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.FILE_INFO, {
+                title: "File Info",
+                content: <FileInfoHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.SAVE_LAYOUT, {
+                title: "Save Layout",
+                content: <SaveLayoutHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.OVERLAY_SETTINGS, {
+                title: "Overlay Settings",
+                content: <OverlaySettingsHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.PREFERENCES, {
+                title: "Preferences",
+                content: <PreferencesHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.REGION_DIALOG, {
+                title: "Region Dialog",
+                content: <RegionDialogHelpComponent appStore={this.props.appStore}/>
+        }],
+
+        // Widgets
+        [
+            HelpType.ANIMATOR, {
+                title: "Animator",
+                content: <AnimatorHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.HISTOGRAM, {
+                title: "Histogram",
+                content: <HistogramHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.HISTOGRAM_SETTINGS, {
+                title: "Histogram Settings",
+                content: <HistogramSettingsHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.IMAGE_VIEW, {
+                title: "Image View",
+                content: <ImageViewHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.LAYER_LIST, {
+                title: "Layer List",
+                content: <LayerListHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.LOG, {
+                title: "Log",
+                content: <LogHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.PLACEHOLDER, {
+                title: "Placeholder",
+                content: <PlaceholderHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.REGION_LIST, {
+                title: "Region List",
+                content: <RegionListHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.RENDER_CONFIG, {
+                title: "Render Configuration",
+                content: <RenderConfigHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.RENDER_CONFIG_SETTINGS, {
+                title: "Render Configuration Settings",
+                content: <RenderConfigSettingsHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.SPATIAL_PROFILER, {
+                title: "Spatial Profiler",
+                content: <SpatialProfilerHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.SPATIAL_PROFILER_SETTINGS, {
+                title: "Spatial Profiler Settings",
+                content: <SpatialProfilerSettingsHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.SPECTRAL_PROFILER, {
+                title: "Spectral Profiler",
+                content: <SpectralProfilerHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.SPECTRAL_PROFILER_SETTINGS, {
+                title: "Spectral Profiler Settings",
+                content: <SpectralProfilerSettingsHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.STATS, {
+                title: "Statistics",
+                content: <StatsHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.STOKES_ANALYSIS, {
+                title: "Stokes Analysis",
+                content: <StokesAnalysisHelpComponent appStore={this.props.appStore}/>
+        }], [
+            HelpType.STOKES_ANALYSIS_SETTINGS, {
+                title: "Stokes Settings",
+                content: <StokesAnalysisSettingsHelpComponent appStore={this.props.appStore}/>
+        }]
+    ]);
 }
-
-const HELP_MAP = new Map<HelpType, {title: string, content: any}>([
-    // Dialog
-    [
-        HelpType.CONTOUR, {
-            title: "Contour Configuration",
-            content: <ContourHelpComponent/>
-    }], [
-        HelpType.FILE_Browser, {
-            title: "File Browser",
-            content: <FileBrowserHelpComponent/>
-    }], [
-        HelpType.FILE_INFO, {
-            title: "File Info",
-            content: <FileInfoHelpComponent/>
-    }], [
-        HelpType.SAVE_LAYOUT, {
-            title: "Save Layout",
-            content: <SaveLayoutHelpComponent/>
-    }], [
-        HelpType.OVERLAY_SETTINGS, {
-            title: "Overlay Settings",
-            content: <OverlaySettingsHelpComponent/>
-    }], [
-        HelpType.PREFERENCES, {
-            title: "Preferences",
-            content: <PreferencesHelpComponent/>
-    }], [
-        HelpType.REGION_DIALOG, {
-            title: "Region Dialog",
-            content: <RegionDialogHelpComponent/>
-    }],
-
-    // Widgets
-    [
-        HelpType.ANIMATOR, {
-            title: "Animator",
-            content: <AnimatorHelpComponent/>
-    }], [
-        HelpType.HISTOGRAM, {
-            title: "Histogram",
-            content: <HistogramHelpComponent/>
-    }], [
-        HelpType.HISTOGRAM_SETTINGS, {
-            title: "Histogram Settings",
-            content: <HistogramSettingsHelpComponent/>
-    }], [
-        HelpType.IMAGE_VIEW, {
-            title: "Image View",
-            content: <ImageViewHelpComponent/>
-    }], [
-        HelpType.LAYER_LIST, {
-            title: "Layer List",
-            content: <LayerListHelpComponent/>
-    }], [
-        HelpType.LOG, {
-            title: "Log",
-            content: <LogHelpComponent/>
-    }], [
-        HelpType.PLACEHOLDER, {
-            title: "Placeholder",
-            content: <PlaceholderHelpComponent/>
-    }], [
-        HelpType.REGION_LIST, {
-            title: "Region List",
-            content: <RegionListHelpComponent/>
-    }], [
-        HelpType.RENDER_CONFIG, {
-            title: "Render Configuration",
-            content: <RenderConfigHelpComponent/>
-    }], [
-        HelpType.RENDER_CONFIG_SETTINGS, {
-            title: "Render Configuration Settings",
-            content: <RenderConfigSettingsHelpComponent/>
-    }], [
-        HelpType.SPATIAL_PROFILER, {
-            title: "Spatial Profiler",
-            content: <SpatialProfilerHelpComponent/>
-    }], [
-        HelpType.SPATIAL_PROFILER_SETTINGS, {
-            title: "Spatial Profiler Settings",
-            content: <SpatialProfilerSettingsHelpComponent/>
-    }], [
-        HelpType.SPECTRAL_PROFILER, {
-            title: "Spectral Profiler",
-            content: <SpectralProfilerHelpComponent/>
-    }], [
-        HelpType.SPECTRAL_PROFILER_SETTINGS, {
-            title: "Spectral Profiler Settings",
-            content: <SpectralProfilerSettingsHelpComponent/>
-    }], [
-        HelpType.STATS, {
-            title: "Statistics",
-            content: <StatsHelpComponent/>
-    }], [
-        HelpType.STOKES_ANALYSIS, {
-            title: "Stokes Analysis",
-            content: <StokesAnalysisHelpComponent/>
-    }], [
-        HelpType.STOKES_ANALYSIS_SETTINGS, {
-            title: "Stokes Settings",
-            content: <StokesAnalysisSettingsHelpComponent/>
-    }]
-]);
