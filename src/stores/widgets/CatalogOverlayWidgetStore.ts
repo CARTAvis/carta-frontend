@@ -28,7 +28,8 @@ export enum CatalogOverlay {
 }
 
 export enum CatalogOverlayShape {
-    Circle = "Circle",
+    Circle = "circle-open",
+    Square = "square-open"
 }
 
 export enum CatalogUpdateMode {
@@ -109,6 +110,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.loadingData = false;
         this.catalogColor = Colors.RED2;
         this.catalogSize = 3;
+        this.catalogShape = CatalogOverlayShape.Circle;
         this.userFilters = this.initUserFilters;
         this.plotingData = false;
         this.updateMode = CatalogUpdateMode.TableUpdate;

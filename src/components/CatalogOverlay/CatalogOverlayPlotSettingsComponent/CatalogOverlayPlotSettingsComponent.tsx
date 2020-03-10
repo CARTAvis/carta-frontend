@@ -20,9 +20,10 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
         [SystemType.ICRS, "ICRS"],
     ]);
 
-    private handleHeaderRepresentationChange(changeEvent: React.ChangeEvent<HTMLSelectElement>) {
+    private handleCatalogShapeChange(changeEvent: React.ChangeEvent<HTMLSelectElement>) {
         const val = changeEvent.currentTarget.value as CatalogOverlayShape;
         this.props.widgetStore.setCatalogShape(val);
+        this.props.appStore.catalogStore.updateCatalogShape(this.props.id, val);
     }
 
     private handleCatalogSizeChange(val: number) {
@@ -70,8 +71,8 @@ export class CatalogOverlayPlotSettingsComponent extends React.Component<{widget
                     />
                 </FormGroup>
                 <FormGroup  inline={true} label="Shape">
-                    <HTMLSelect className="bp3-fill" value={widgetStore.catalogShape} onChange={changeEvent => this.handleHeaderRepresentationChange(changeEvent)}>
-                        {Object.keys(CatalogOverlayShape).map(key => <option key={key} value={CatalogOverlayShape[key]}>{CatalogOverlayShape[key]}</option>)}
+                    <HTMLSelect className="bp3-fill" value={widgetStore.catalogShape} onChange={changeEvent => this.handleCatalogShapeChange(changeEvent)}>
+                        {Object.keys(CatalogOverlayShape).map(key => <option key={key} value={CatalogOverlayShape[key]}>{key}</option>)}
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup  inline={true} label="Size" labelInfo="(px)">

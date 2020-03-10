@@ -10,4 +10,11 @@
         position: absolute;
         z-index: 0;
     }
+
+    .gl-container {
+        top: 0px;
+        left: 0px;
+        width: inherit;
+        height: inherit;
+    }
 }

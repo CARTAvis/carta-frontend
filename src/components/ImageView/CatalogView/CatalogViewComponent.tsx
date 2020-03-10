@@ -1,5 +1,6 @@
 import {observer} from "mobx-react";
 import * as React from "react";
+import Plotly from "plotly.js";
 import {AppStore, OverlayStore} from "stores";
 import {imageToCanvasPos} from "../RegionView/shared";
 import "./CatalogViewComponent.css";
@@ -12,71 +13,95 @@ export interface CatalogViewComponentProps {
 
 @observer
 export class CatalogViewComponent extends React.Component<CatalogViewComponentProps> {
-    private canvas: HTMLCanvasElement;
-    private ctx: CanvasRenderingContext2D;
+    private scattergl: HTMLElement;
 
     componentDidMount() {
-        this.ctx = this.canvas.getContext("2d");
+        this.scattergl = document.getElementById("catalog-div");
     }
 
     componentDidUpdate() {
-        requestAnimationFrame(this.updateCanvas);
-    }
-
-    private resizeAndClearCanvas() {
         const frame = this.props.appStore.activeFrame;
-        if (!frame) {
-            return;
-        }
+        const width = frame ? frame.renderWidth || 1 : 1;
+        const height = frame ? frame.renderHeight || 1 : 1;
+        const dataset = this.updatePlot();
 
-        const reqWidth = Math.max(1, frame.renderWidth * devicePixelRatio);
-        const reqHeight = Math.max(1, frame.renderHeight * devicePixelRatio);
-        // Resize canvas if necessary
-        if (this.canvas.width !== reqWidth || this.canvas.height !== reqHeight) {
-            this.canvas.width = reqWidth;
-            this.canvas.height = reqHeight;
-        } else {
-            // Otherwise just clear it
-            this.ctx.clearRect(0, 0, reqWidth, reqHeight);
-        }
+        const layout = {
+            width: width, 
+            height: height,
+            paper_bgcolor: "rgba(255,255,255, 0)", 
+            plot_bgcolor: "rgba(255,255,255, 0)",
+            xaxis: {
+                autorange: false,
+                showgrid: false,
+                zeroline: false,
+                showline: false,
+                showticklabels: false,
+                range: [0, width]
+            },
+            yaxis: {
+                autorange: false,
+                showgrid: false,
+                zeroline: false,
+                showline: false,
+                showticklabels: false,
+                range: [height, 0]
+            },
+            margin: {
+                l: 0,
+                r: 0,
+                b: 0,
+                t: 0,
+                pad: 0
+            }
+        };
+        const data = [{
+            x: dataset.xArray,
+            y: dataset.yArray,
+            type: "scattergl",
+            mode: "markers",
+            marker: {
+                symbol: dataset.shapeArray, 
+                color: dataset.colorArray,
+                size: dataset.sizeArray,
+                line: {
+                    width: 1.5
+                }
+            }
+        }];
+        const config = {
+            displayModeBar: false,
+            hovermode: false
+        };
+        Plotly.react(this.scattergl, data, layout, config);
     }
 
-    private updateCanvas = () => {
+    private updatePlot = () => {
         const catalogStore = this.props.appStore.catalogStore;
         const frame = this.props.appStore.activeFrame;
-
-        this.resizeAndClearCanvas();
-
-        if (frame && catalogStore) {
-            const width = frame.renderWidth;
-            const height = frame.renderHeight;
-            catalogStore.catalogs.forEach((set, key) => {
-                this.ctx.strokeStyle = set.color;
-                this.ctx.save();
-                this.ctx.scale(devicePixelRatio, devicePixelRatio);
-                // Use two control points to determine shift and scaling transforms, rather than converting each point
-                // Note, this may have a single-pixel (canvas or image space) offset...
-                const zeroPoint = imageToCanvasPos(0, 0, frame.requiredFrameView, width, height);
-                const onePoint = imageToCanvasPos(1, 1, frame.requiredFrameView, width, height);
-                const scale = onePoint.x - zeroPoint.x;
-                this.ctx.scale(scale, scale);
-                const shapeSize = set.size / scale;
-                this.ctx.lineWidth = 1.0 / scale;
-                this.ctx.translate(zeroPoint.x / scale, zeroPoint.y / scale);
-                this.ctx.scale(1, -1);
-                // This approach assumes all points have the same color, so the stroke can be batched
-                this.ctx.beginPath();
-                for (const arr of set.pixelData) {
-                    for (const point of arr) {
-                        this.ctx.moveTo(point.x + shapeSize, point.y);
-                        this.ctx.arc(point.x, point.y, shapeSize, 0, 2 * Math.PI);
-                    }
+        const width = frame ? frame.renderWidth || 1 : 1;
+        const height = frame ? frame.renderHeight || 1 : 1;
+        const xArray = [];
+        const yArray = [];
+        const colorArray = [];
+        const sizeArray = [];
+        const shapeArray = [];
+        
+        catalogStore.catalogs.forEach((set, key) => {
+            for (let i = 0; i < set.pixelData.length; i++) {
+                const pointArray = set.pixelData[i];
+                for (let j = 0; j < pointArray.length; j++) {
+                    const point = pointArray[j];
+                    const currentCenterPixelSpace = imageToCanvasPos(point.x - 1, point.y - 1, frame.requiredFrameView, width, height);
+                    xArray.push(currentCenterPixelSpace.x);
+                    yArray.push(currentCenterPixelSpace.y);
+                    colorArray.push(set.color);
+                    sizeArray.push(set.size);
+                    shapeArray.push(set.shape);
                 }
-                this.ctx.stroke();
-                this.ctx.restore();
-            });
-        }
-    };
+            }
+        });
+        return { xArray: xArray, yArray: yArray, colorArray: colorArray, sizeArray: sizeArray, shapeArray: shapeArray };
+    }
 
     render() {
         // dummy values to trigger React's componentDidUpdate()
@@ -88,6 +113,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             catalogs.forEach(catalogSettings => {
                 const color = catalogSettings.color;
                 const size = catalogSettings.size;
+                const shape = catalogSettings.shape;
                 let total = 0;
                 for (const arr of catalogSettings.pixelData) {
                     total += arr.length;
@@ -99,19 +125,9 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
         if (this.props.docked) {
             className += " docked";
         }
+
         return (
-            <div className={className}>
-                <canvas
-                    id="catalog-canvas"
-                    className="catalog-canvas"
-                    ref={(ref) => this.canvas = ref}
-                    style={{
-                        top: padding.top,
-                        left: padding.left,
-                        width: frame ? frame.renderWidth || 1 : 1,
-                        height: frame ? frame.renderHeight || 1 : 1
-                    }}
-                />
-            </div>);
+            <div className={className} id={"catalog-div"} style={{left: padding.left, top: padding.top}}/>
+          );
     }
 }

@@ -2,11 +2,13 @@ import * as AST from "ast_wrapper";
 import {action, observable, ObservableMap} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {SystemType} from "stores";
+import {CatalogOverlayShape} from "stores/widgets";
 import {Point2D} from "models";
 
 type CatalogSettings = {
     color: string,
     size: number,
+    shape: CatalogOverlayShape,
     pixelData: Array<Point2D>[]
 };
 
@@ -23,7 +25,7 @@ export class CatalogStore {
     }
 
     @action addCatalogs(widgetId: string) {
-        this.catalogs.set(widgetId, { color: Colors.RED2, size: 1, pixelData: [] });
+        this.catalogs.set(widgetId, { color: Colors.RED2, size: 1, shape: CatalogOverlayShape.Circle, pixelData: [] });
     }
 
     @action updateCatalogData(widgetId: string, xWcsData: Array<any>, yWcsData: Array<any>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType) {
@@ -37,6 +39,10 @@ export class CatalogStore {
 
     @action updateCatalogColor(widgetId: string, color: string) {
         this.catalogs.get(widgetId).color = color;
+    }
+
+    @action updateCatalogShape(widgetId: string, shape: CatalogOverlayShape) {
+        this.catalogs.get(widgetId).shape = shape;
     }
 
     @action clearData(widgetId: string) {

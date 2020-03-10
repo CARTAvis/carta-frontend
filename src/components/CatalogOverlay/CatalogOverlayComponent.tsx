@@ -453,6 +453,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     catalogStore.updateCatalogData(id, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, widgetStore.catalogCoordinateSystem.system);
                     catalogStore.updateCatalogColor(id, widgetStore.catalogColor);
                     catalogStore.updateCatalogSize(id, widgetStore.catalogSize);
+                    catalogStore.updateCatalogShape(id, widgetStore.catalogShape);
                 }
 
                 if (widgetStore.subsetEndIndex !== widgetStore.catalogInfo.dataSize) {
