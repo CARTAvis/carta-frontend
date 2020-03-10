@@ -17,6 +17,7 @@
         "mnemonist": "^0.29.0",
         "mobx": "^5.14.0",
         "mobx-react": "^5.4.4",
+        "plotly.js": "^1.52.3",
         "raw-loader": "^0.5.1",
         "react": "^16.10.2",
         "react-chartjs-2": "^2.8.0",
