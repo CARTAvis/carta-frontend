@@ -19,7 +19,7 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
     };
 
     private handleFrameChanged = (newFrame: FrameStore) => {
-        if (newFrame && newFrame.regionSet && !(newFrame.frameInfo.fileInfoExtended.stokes > 1)) {
+        if (newFrame && !newFrame.stokesInfo.includes(this.props.widgetStore.coordinate)) {
             this.props.widgetStore.setCoordinate("z");
         }
     }
@@ -31,22 +31,29 @@ export class SpectralProfilerToolbarComponent extends React.Component<{ widgetSt
         let enableStatsSelect = false;
         let enableStokesSelect = false;
         let regionId = 0;
-
+        const profileCoordinateOptions = [{value: "z", label: "Current"}];
+        
         if (widgetStore.effectiveFrame && widgetStore.effectiveFrame.regionSet) {
             regionId = widgetStore.effectiveRegionId;
 
             const selectedRegion = widgetStore.effectiveFrame.regionSet.regions.find(r => r.regionId === regionId);
             enableStatsSelect = (selectedRegion && selectedRegion.isClosedRegion);
             enableStokesSelect = widgetStore.effectiveFrame.frameInfo.fileInfoExtended.stokes > 1;
+            
+            const stokesInfo = widgetStore.effectiveFrame.stokesInfo;
+            if (stokesInfo.includes("Iz")) {
+                profileCoordinateOptions.push({value: "Iz", label: "I"});
+            }
+            if (stokesInfo.includes("Qz")) {
+                profileCoordinateOptions.push({value: "Qz", label: "Q"});
+            }
+            if (stokesInfo.includes("Uz")) {
+                profileCoordinateOptions.push({value: "Uz", label: "U"});
+            }
+            if (stokesInfo.includes("Vz")) {
+                profileCoordinateOptions.push({value: "Vz", label: "V"});
+            }
         }
-
-        const profileCoordinateOptions = [
-            {value: "z", label: "Current"},
-            {value: "Iz", label: "I"},
-            {value: "Qz", label: "Q"},
-            {value: "Uz", label: "U"},
-            {value: "Vz", label: "V"}
-        ];
 
         const profileStatsOptions: IOptionProps[] = [
             {value: CARTA.StatsType.Sum, label: SpectralProfileWidgetStore.StatsTypeString(CARTA.StatsType.Sum)},
