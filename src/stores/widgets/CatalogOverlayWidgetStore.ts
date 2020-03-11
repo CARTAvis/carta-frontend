@@ -109,7 +109,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogControlHeader = this.initCatalogControlHeader;
         this.loadingData = false;
         this.catalogColor = Colors.RED2;
-        this.catalogSize = 3;
+        this.catalogSize = 5;
         this.catalogShape = CatalogOverlayShape.Circle;
         this.userFilters = this.initUserFilters;
         this.plotingData = false;

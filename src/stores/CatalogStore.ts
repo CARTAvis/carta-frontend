@@ -3,13 +3,13 @@ import {action, observable, ObservableMap} from "mobx";
 import {Colors} from "@blueprintjs/core";
 import {SystemType} from "stores";
 import {CatalogOverlayShape} from "stores/widgets";
-import {Point2D} from "models";
 
 type CatalogSettings = {
     color: string,
     size: number,
     shape: CatalogOverlayShape,
-    pixelData: Array<Point2D>[]
+    xImageCoords: Array<number>[],
+    yImageCoords: Array<number>[],
 };
 
 export class CatalogStore {
@@ -25,12 +25,13 @@ export class CatalogStore {
     }
 
     @action addCatalogs(widgetId: string) {
-        this.catalogs.set(widgetId, { color: Colors.RED2, size: 1, shape: CatalogOverlayShape.Circle, pixelData: [] });
+        this.catalogs.set(widgetId, { color: Colors.RED2, size: 5, shape: CatalogOverlayShape.Circle, xImageCoords: [], yImageCoords: [] });
     }
 
     @action updateCatalogData(widgetId: string, xWcsData: Array<any>, yWcsData: Array<any>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType) {
         const pixelData = this.transformCatalogData(xWcsData, yWcsData, wcsInfo, xUnit, yUnit, catalogFrame);
-        this.catalogs.get(widgetId).pixelData.push(pixelData);
+        this.catalogs.get(widgetId).xImageCoords.push(pixelData.xImageCoords);
+        this.catalogs.get(widgetId).yImageCoords.push(pixelData.yImageCoords);
     }
 
     @action updateCatalogSize(widgetId: string, size: number) {
@@ -46,15 +47,17 @@ export class CatalogStore {
     }
 
     @action clearData(widgetId: string) {
-        this.catalogs.get(widgetId).pixelData = [];
+        this.catalogs.get(widgetId).xImageCoords = [];
+        this.catalogs.get(widgetId).yImageCoords = [];
     }
 
     @action removeCatalog(widgetId: string) {
         this.catalogs.delete(widgetId);
     }
 
-    private transformCatalogData(xWcsData: Array<any>, yWcsData: Array<any>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType): Array<Point2D> {
-        const pixelData = [];
+    private transformCatalogData(xWcsData: Array<any>, yWcsData: Array<any>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType): {xImageCoords: Array<number>, yImageCoords: Array<number>} {
+        const xImageCoords = [];
+        const yImageCoords = [];
         if (xWcsData.length === yWcsData.length) {
             const xUnitLowerCase = xUnit.toLocaleLowerCase();
             const yUnitLowerCase = yUnit.toLocaleLowerCase();
@@ -93,10 +96,11 @@ export class CatalogStore {
                 const xWCSValue = xWcsData[index] * xFraction;
                 const yWCSValue = yWcsData[index] * yFraction;
                 const pixelValue = AST.transformPoint(wcsCopy, xWCSValue, yWCSValue, false);
-                pixelData.push(pixelValue);
+                xImageCoords.push(pixelValue.x);
+                yImageCoords.push(pixelValue.y);
             }
             AST.delete(wcsCopy);
         }
-        return pixelData;
+        return {xImageCoords: xImageCoords, yImageCoords: yImageCoords};
     }
 }
