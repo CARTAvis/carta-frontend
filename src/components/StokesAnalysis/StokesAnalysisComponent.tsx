@@ -876,7 +876,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
         let interactionBorder = {xMin: 0, xMax: 0};
-        if (this.profileStore && frame) {
+        if (this.profileStore && frame && frame.hasSpectralAxis) {
             const cursorX = {
                 profiler: this.widgetStore.linePlotcursorX,
                 image: this.currentChannelValue,
@@ -1020,9 +1020,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             }
 
             if (!frame.isCoordChannel) {
-                paLinePlotProps.xLabel = `${frame.spectralSystem}, ${frame.spectralCoordinate}`;
-                piLinePlotProps.xLabel = `${frame.spectralSystem}, ${frame.spectralCoordinate}`;
-                quLinePlotProps.xLabel = `${frame.spectralSystem}, ${frame.spectralCoordinate}`;
+                const spectralCoordinate = frame.isSpectralCoordinateConvertible ? frame.spectralCoordinate : `${frame.spectralInfo.channelType.code} (${frame.spectralInfo.channelType.unit})`;
+                const spectralSystem = frame.isSpectralSystemConvertible ? frame.spectralSystem : `${frame.spectralInfo.specsys}`;
+                paLinePlotProps.xLabel = piLinePlotProps.xLabel = quLinePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${spectralCoordinate}`;
             }
 
             paLinePlotProps.markers = [];

@@ -95,14 +95,6 @@ export class AppStore {
         this.appContainer = container;
     };
 
-    public get ContourContext() {
-        return this.contourWebGLContext;
-    }
-
-    public set ContourContext(gl: WebGLRenderingContext) {
-        this.contourWebGLContext = gl;
-    }
-
     // Splash screen
     @observable splashScreenVisible: boolean = true;
     @action showSplashScreen = () => {
@@ -308,7 +300,7 @@ export class AppStore {
             // Clear existing tile cache if it exists
             this.tileService.clearCompressedCache(fileId);
 
-            let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, this.logStore, frameInfo, this.backendService, this.ContourContext);
+            let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, this.logStore, frameInfo, this.backendService);
 
             // clear existing requirements for the frame
             this.spectralRequirements.delete(ack.fileId);

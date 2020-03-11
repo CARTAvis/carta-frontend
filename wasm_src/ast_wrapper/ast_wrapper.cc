@@ -396,7 +396,7 @@ EMSCRIPTEN_KEEPALIVE int transform3D(AstSpecFrame* wcsinfo, double x, double y, 
 
 EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, const char* specTypeTo, const char* specUnitTo, const char* specSysTo, const int npoint, const double zIn[], const int forward, double zOut[])
 {
-    if (!specFrameFrom || !specTypeTo ||!specUnitTo || !specSysTo)
+    if (!specFrameFrom)
     {
         return 1;
     }
@@ -409,12 +409,18 @@ EMSCRIPTEN_KEEPALIVE int spectralTransform(AstSpecFrame* specFrameFrom, const ch
     }
 
     char buffer[128];
-    snprintf(buffer, sizeof(buffer), "System=%s", specTypeTo);
-    astSet(specFrameTo, buffer);
-    snprintf(buffer, sizeof(buffer), "Unit=%s", specUnitTo);
-    astSet(specFrameTo, buffer);
-    snprintf(buffer, sizeof(buffer), "StdOfRest=%s", specSysTo);
-    astSet(specFrameTo, buffer);
+    if (specTypeTo) {
+        snprintf(buffer, sizeof(buffer), "System=%s", specTypeTo);
+        astSet(specFrameTo, buffer);
+    }
+    if (specUnitTo) {
+        snprintf(buffer, sizeof(buffer), "Unit=%s", specUnitTo);
+        astSet(specFrameTo, buffer);
+    }
+    if (specSysTo) {
+        snprintf(buffer, sizeof(buffer), "StdOfRest=%s", specSysTo);
+        astSet(specFrameTo, buffer);
+    }
 
     AstFrameSet *cvt;
     cvt = static_cast<AstFrameSet*> astConvert(specFrameFrom, specFrameTo, "");
