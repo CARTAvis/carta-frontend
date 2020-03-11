@@ -507,7 +507,6 @@ export class FrameStore {
         this.logStore = logStore;
         this.backendService = backendService;
         this.preference = preference;
-        this.spectralFrame = null;
         this.spectralType = null;
         this.spectralUnit = null;
         this.spectralSystem = null;
@@ -564,7 +563,13 @@ export class FrameStore {
         if (frameInfo.fileInfoExtended.depth > 1) {
             this.initFullWCS();
         }
-        this.initSpectralFrame();
+
+        // init WCS spectral conversion
+        this.spectralFrame = this.initSpectralFrame();
+        if (this.spectralFrame) {
+            this.initSupportedSpectralConversion();
+        }
+
         this.initCenter();
         this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
 
@@ -713,44 +718,26 @@ export class FrameStore {
         }
     };
 
-    @action private initSpectralFrame = () => {
-        this.spectralFrame = null;
-        const entries = this.frameInfo.fileInfoExtended.headerEntries;
+    @action private initSpectralFrame = (): number => {
         if (!this.spectralAxis) {
-            return;
+            return null;
         }
 
-        const dimension = this.spectralAxis.dimension;
-        const skipRegex = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[^1|2|${dimension.toString()}]`, "i");
-        const spectralAxisRegex = new RegExp(`(CTYPE|CDELT|CRPIX|CRVAL|CUNIT|NAXIS|CROTA)[${dimension.toString()}]`, "i");
         let headerString = "";
+        const entries = this.frameInfo.fileInfoExtended.headerEntries;
         for (let entry of entries) {
             // Skip empty header entries
             if (!entry.value.length) {
                 continue;
             }
-            // Skip other dimensions, however spectral frame still need skyframe's info (RefRA, RefDec), keep NAXIS1 & NAXIS2.
-            // skyframe (NAXIS1 & NAXIS2) and spectral frame (NAXIS3 or NAXIS4) headers are provided, unify spectral axis to NAXIS3
-            if (entry.name.match(skipRegex)) {
-                continue;
-            }
-
             let name = entry.name;
             let value = trimFitsComment(entry.value);
-            if (entry.name.toUpperCase() === "NAXIS") {
-                value = "3";
-            }
-            if (entry.name.match(spectralAxisRegex)) {
-                name = entry.name.replace(dimension.toString(), "3");
-            }
             if (entry.entryType === CARTA.EntryType.STRING) {
                 value = `'${value}'`;
             }
-
             while (name.length < 8) {
                 name += " ";
             }
-
             let entryString = `${name}=  ${value}`;
             while (entryString.length < 80) {
                 entryString += " ";
@@ -758,15 +745,10 @@ export class FrameStore {
             headerString += entryString;
         }
 
-        const initResult = AST.initSpectralFrame(headerString, this.spectralAxis.type.code, this.spectralAxis.type.unit);
-        if (initResult) {
-            this.spectralFrame = initResult;
-            this.initSupportedSpectralConversion();
-            console.log("Initialised spectral info from frame");
-        }
+        return AST.initSpectralFrame(headerString, this.spectralAxis.type.unit);
     };
 
-    private initSupportedSpectralConversion = () => {
+    @action private initSupportedSpectralConversion = () => {
         const entries = this.frameInfo.fileInfoExtended.headerEntries;
 
         // generate spectral coordinate options
