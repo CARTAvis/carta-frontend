@@ -111,8 +111,8 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(const char* header)
         cout << "Creating spectral template failed." << endl;
         return nullptr;
     }
-     AstFrameSet* found = static_cast<AstFrameSet*>astFindFrame(frameSet, spectralTemplate, " " );
-     if (!found)
+    AstFrameSet* found = static_cast<AstFrameSet*>astFindFrame(frameSet, spectralTemplate, " " );
+    if (!found)
     {
         cout << "Spectral frame not found." << endl;
         return nullptr;
