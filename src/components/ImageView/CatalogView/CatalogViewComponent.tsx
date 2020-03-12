@@ -1,8 +1,8 @@
 import {observer} from "mobx-react";
 import * as React from "react";
 import * as Plotly from "plotly.js";
+import Plot from "react-plotly.js";
 import {AppStore, OverlayStore} from "stores";
-import {imageToCanvasPos} from "../RegionView/shared";
 import "./CatalogViewComponent.css";
 import {computed} from "mobx";
 
@@ -14,60 +14,10 @@ export interface CatalogViewComponentProps {
 
 @observer
 export class CatalogViewComponent extends React.Component<CatalogViewComponentProps> {
-    private scattergl: HTMLElement;
-    private sctterDataset: Plotly.Data[] = [];
 
-    componentDidMount() {
-        this.scattergl = document.getElementById("catalog-div");
-    }
-
-    componentDidUpdate() {
-        const frame = this.props.appStore.activeFrame;
-        if (frame) {
-            const width = frame ? frame.renderWidth || 1 : 1;
-            const height = frame ? frame.renderHeight || 1 : 1;
-            const border = frame.requiredFrameView;
-            const layout: Partial<Plotly.Layout> = {
-                width: width, 
-                height: height,
-                paper_bgcolor: "rgba(255,255,255, 0)", 
-                plot_bgcolor: "rgba(255,255,255, 0)",
-                xaxis: {
-                    autorange: false,
-                    showgrid: false,
-                    zeroline: false,
-                    showline: false,
-                    showticklabels: false,
-                    range: [border.xMin, border.xMax]
-                },
-                yaxis: {
-                    autorange: false,
-                    showgrid: false,
-                    zeroline: false,
-                    showline: false,
-                    showticklabels: false,
-                    range: [border.yMin, border.yMax]
-                },
-                margin: {
-                    l: 0,
-                    r: 0,
-                    b: 0,
-                    t: 0,
-                    pad: 0
-                },
-                showlegend: false
-            };
-
-            const config: Partial<Plotly.Config> = {
-                displayModeBar: false
-            };
-            Plotly.react(this.scattergl, this.sctterDataset, layout, config);
-        }
-    }
-
-    @computed get updatePlot() {
+    @computed get scatterDatasets() {
         const catalogStore = this.props.appStore.catalogStore;
-        this.sctterDataset = [];
+        let scatterDatasets: Plotly.Data[] = [];
         catalogStore.catalogs.forEach((catalog, key) => {
             let data: Plotly.Data = {};
             data.type = "scattergl";
@@ -88,36 +38,67 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             }
             data.x = xArray;
             data.y = yArray;
-            this.sctterDataset.push(data);
+            scatterDatasets.push(data);
         });
-        return true;
+        return scatterDatasets;
     }
 
     render() {
-        // dummy values to trigger React's componentDidUpdate()
         const frame = this.props.appStore.activeFrame;
-        const catalogStore = this.props.appStore.catalogStore;
-        if (frame && this.updatePlot) {
-            const catalogs = catalogStore.catalogs;
-            const view = frame.requiredFrameView;
-            catalogs.forEach(catalogSettings => {
-                const color = catalogSettings.color;
-                const size = catalogSettings.size;
-                const shape = catalogSettings.shape;
-                let total = 0;
-                for (const arr of catalogSettings.xImageCoords) {
-                    total += arr.length;
-                }
-            });
-        }
+        const width = frame ? frame.renderWidth || 1 : 1;
+        const height = frame ? frame.renderHeight || 1 : 1;
         const padding = this.props.overlaySettings.padding;
         let className = "catalog-div";
         if (this.props.docked) {
             className += " docked";
         }
 
+        let layout: Partial<Plotly.Layout> = {
+            width: width, 
+            height: height,
+            paper_bgcolor: "rgba(255,255,255, 0)", 
+            plot_bgcolor: "rgba(255,255,255, 0)",
+            xaxis: {
+                autorange: false,
+                showgrid: false,
+                zeroline: false,
+                showline: false,
+                showticklabels: false
+            },
+            yaxis: {
+                autorange: false,
+                showgrid: false,
+                zeroline: false,
+                showline: false,
+                showticklabels: false
+            },
+            margin: {
+                l: 0,
+                r: 0,
+                b: 0,
+                t: 0,
+                pad: 0
+            },
+            showlegend: false
+        };
+        const config: Partial<Plotly.Config> = {
+            displayModeBar: false
+        };
+
+        if (frame) {
+            const border = frame.requiredFrameView;
+            layout.xaxis.range =  [border.xMin, border.xMax];
+            layout.yaxis.range =  [border.yMin, border.yMax];
+        }
+
         return (
-            <div className={className} id={"catalog-div"} style={{left: padding.left, top: padding.top}}/>
-          );
+            <div className={className} style={{left: padding.left, top: padding.top}}>
+                <Plot
+                    data={this.scatterDatasets}
+                    layout={layout}
+                    config={config}
+                />
+            </div>
+        );
     }
 }
