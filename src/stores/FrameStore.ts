@@ -744,8 +744,7 @@ export class FrameStore {
             }
             headerString += entryString;
         }
-
-        return AST.initSpectralFrame(headerString, this.spectralAxis.type.unit);
+        return AST.initSpectralFrame(headerString);
     };
 
     @action private initSupportedSpectralConversion = () => {

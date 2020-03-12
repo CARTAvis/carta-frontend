@@ -80,9 +80,9 @@ EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
     return wcsinfo;
 }
 
-EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(const char* header, const char *unit)
+EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(const char* header)
 {
-     if (!header || !unit)
+     if (!header)
     {
         cout << "Missing header argument." << endl;
         return nullptr;
