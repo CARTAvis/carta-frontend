@@ -2,7 +2,7 @@ import {action, observable, computed} from "mobx";
 import {AppStore} from "../AppStore";
 import {FrameStore} from "../FrameStore";
 
-export const CURRENT_FILE_ID = -1;
+export const ACTIVE_FILE_ID = -1;
 
 export enum RegionId {
     ACTIVE = -3,
@@ -22,7 +22,7 @@ export class RegionWidgetStore {
 
     constructor(appStore: AppStore, type: RegionsType) {
         this.appStore = appStore;
-        this.fileId = CURRENT_FILE_ID;
+        this.fileId = ACTIVE_FILE_ID;
         this.type = type;
         this.regionIdMap = new Map<number, number>();
     }
@@ -45,13 +45,13 @@ export class RegionWidgetStore {
 
     @computed get effectiveFrame() {
         if (this.appStore.activeFrame && this.appStore.frames && this.appStore.frames.length > 0) {
-            return this.fileId === CURRENT_FILE_ID ? this.appStore.activeFrame : this.appStore.getFrame(this.fileId);
+            return this.fileId === ACTIVE_FILE_ID ? this.appStore.activeFrame : this.appStore.getFrame(this.fileId);
         }
         return null;
     }
 
     @computed get matchActiveFrame() {
-        if ( this.fileId === CURRENT_FILE_ID || (this.appStore.activeFrame && this.appStore.activeFrame.frameInfo.fileId === this.fileId )) {
+        if ( this.fileId === ACTIVE_FILE_ID || (this.appStore.activeFrame && this.appStore.activeFrame.frameInfo.fileId === this.fileId )) {
             return true;
         }
         return false;
@@ -79,29 +79,27 @@ export class RegionWidgetStore {
         return false;
     }
 
-    public static CalculateRequirementsArray(frames: FrameStore[], widgetsMap: Map<string, RegionWidgetStore>) {
+    public static CalculateRequirementsArray(widgetsMap: Map<string, RegionWidgetStore>) {
         const updatedRequirements = new Map<number, Array<number>>();
 
-        frames.forEach(frame => {
+        widgetsMap.forEach(widgetStore => {
+            const frame = widgetStore.effectiveFrame;
+            if (!frame || !frame.regionSet) {
+            return;
+            }
             const fileId = frame.frameInfo.fileId;
-
-            widgetsMap.forEach(widgetStore => {
-                const regionId = widgetStore.effectiveRegionId;
-                if (!frame.regionSet) {
-                return;
+            const regionId = widgetStore.effectiveRegionId;
+            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+            if (regionId === -1 || region && region.isClosedRegion) {
+                let frameRequirementsArray = updatedRequirements.get(fileId);
+                if (!frameRequirementsArray) {
+                    frameRequirementsArray = [];
+                    updatedRequirements.set(fileId, frameRequirementsArray);
                 }
-                const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-                if (regionId === -1 || region && region.isClosedRegion) {
-                    let frameRequirementsArray = updatedRequirements.get(fileId);
-                    if (!frameRequirementsArray) {
-                        frameRequirementsArray = [];
-                        updatedRequirements.set(fileId, frameRequirementsArray);
-                    }
-                    if (frameRequirementsArray.indexOf(regionId) === -1) {
-                        frameRequirementsArray.push(regionId);
-                    }
+                if (frameRequirementsArray.indexOf(regionId) === -1) {
+                    frameRequirementsArray.push(regionId);
                 }
-            });
+            }
         });
         return updatedRequirements;
     }

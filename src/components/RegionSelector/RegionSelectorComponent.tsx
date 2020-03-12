@@ -3,7 +3,7 @@ import * as React from "react";
 import {FormGroup, HTMLSelect, IOptionProps} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {AppStore, RegionStore, FrameStore} from "stores";
-import {RegionWidgetStore, RegionsType, RegionId, CURRENT_FILE_ID} from "stores/widgets";
+import {RegionWidgetStore, RegionsType, RegionId, ACTIVE_FILE_ID} from "stores/widgets";
 
 import "./RegionSelectorComponent.css";
 
@@ -38,8 +38,8 @@ export class RegionSelectorComponent extends React.Component<{ widgetStore: Regi
         const widgetStore = this.props.widgetStore;
 
         let enableFrameselect = false;
-        let selectedFrameValue: number = CURRENT_FILE_ID;
-        let frameOptions: IOptionProps[] = [{value: CURRENT_FILE_ID, label: "Current"}];
+        let selectedFrameValue: number = ACTIVE_FILE_ID;
+        let frameOptions: IOptionProps[] = [{value: ACTIVE_FILE_ID, label: "Active"}];
 
         if (appStore.activeFrame) {
             frameOptions = frameOptions.concat(appStore.frameNames);

@@ -176,51 +176,51 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         return (this.minY === undefined || this.maxY === undefined);
     }
 
-    public static CalculateRequirementsMap(frames: FrameStore[], widgetsMap: Map<string, SpectralProfileWidgetStore>) {
+    public static CalculateRequirementsMap(widgetsMap: Map<string, SpectralProfileWidgetStore>) {
         const updatedRequirements = new Map<number, Map<number, CARTA.SetSpectralRequirements>>();
-        frames.forEach((frame) => {
-            widgetsMap.forEach(widgetStore => {
-                const fileId = frame.frameInfo.fileId;
-                const regionId = widgetStore.effectiveRegionId;
-                const coordinate = widgetStore.coordinate;
-                let statsType = widgetStore.statsType;
 
-                if (!frame.regionSet) {
+        widgetsMap.forEach(widgetStore => {
+            const frame = widgetStore.effectiveFrame;
+            if (!frame || !frame.regionSet) {
                 return;
+            }
+            const fileId = frame.frameInfo.fileId;
+            const regionId = widgetStore.effectiveRegionId;
+            const coordinate = widgetStore.coordinate;
+            let statsType = widgetStore.statsType;
+
+            const region = frame.regionSet.regions.find(r => r.regionId === regionId);
+            if (region) {
+                // Point regions have no meaningful stats type, default to Sum
+                if (region.regionType === CARTA.RegionType.POINT) {
+                    statsType = CARTA.StatsType.Sum;
                 }
-                const region = frame.regionSet.regions.find(r => r.regionId === regionId);
-                if (region) {
-                    // Point regions have no meaningful stats type, default to Sum
-                    if (region.regionType === CARTA.RegionType.POINT) {
-                        statsType = CARTA.StatsType.Sum;
-                    }
 
-                    let frameRequirements = updatedRequirements.get(fileId);
-                    if (!frameRequirements) {
-                        frameRequirements = new Map<number, CARTA.SetSpectralRequirements>();
-                        updatedRequirements.set(fileId, frameRequirements);
-                    }
-
-                    let regionRequirements = frameRequirements.get(regionId);
-                    if (!regionRequirements) {
-                        regionRequirements = new CARTA.SetSpectralRequirements({regionId, fileId});
-                        frameRequirements.set(regionId, regionRequirements);
-                    }
-
-                    if (!regionRequirements.spectralProfiles) {
-                        regionRequirements.spectralProfiles = [];
-                    }
-
-                    let spectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === coordinate);
-                    if (!spectralConfig) {
-                        // create new spectral config
-                        regionRequirements.spectralProfiles.push({coordinate, statsTypes: [statsType]});
-                    } else if (spectralConfig.statsTypes.indexOf(statsType) === -1) {
-                        // add to the stats type array
-                        spectralConfig.statsTypes.push(statsType);
-                    }
+                let frameRequirements = updatedRequirements.get(fileId);
+                if (!frameRequirements) {
+                    frameRequirements = new Map<number, CARTA.SetSpectralRequirements>();
+                    updatedRequirements.set(fileId, frameRequirements);
                 }
-            });
+
+                let regionRequirements = frameRequirements.get(regionId);
+                if (!regionRequirements) {
+                    regionRequirements = new CARTA.SetSpectralRequirements({regionId, fileId});
+                    frameRequirements.set(regionId, regionRequirements);
+                }
+
+                if (!regionRequirements.spectralProfiles) {
+                    regionRequirements.spectralProfiles = [];
+                }
+
+                let spectralConfig = regionRequirements.spectralProfiles.find(profiles => profiles.coordinate === coordinate);
+                if (!spectralConfig) {
+                    // create new spectral config
+                    regionRequirements.spectralProfiles.push({coordinate, statsTypes: [statsType]});
+                } else if (spectralConfig.statsTypes.indexOf(statsType) === -1) {
+                    // add to the stats type array
+                    spectralConfig.statsTypes.push(statsType);
+                }
+            }
         });
 
         return updatedRequirements;
