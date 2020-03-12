@@ -275,7 +275,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private genProfilerInfo = (): string[] => {
         let profilerInfo: string[] = [];
         const frame = this.props.appStore.activeFrame;
-        if (frame && this.plotData) {
+        if (frame && frame.hasSpectralAxis && this.plotData) {
             const cursorX = {
                 profiler: this.widgetStore.cursorX,
                 image: this.currentChannelValue,
