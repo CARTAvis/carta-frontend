@@ -24,7 +24,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
     componentDidUpdate() {
         const header = this.dd.getElementsByClassName("bp3-dialog-header");
         if (this.props.helpType && header.length > 0 && this.dd.getElementsByClassName("help-button").length === 0) {
-            const helpButton = <Button icon="help" minimal={true} onClick={(ev: React.MouseEvent<HTMLButtonElement>) => this.onClickHelpButton(ev)}/>;
+            const helpButton = <Button icon="help" minimal={true} onClick={this.onClickHelpButton}/>;
             const helpButtonDiv = document.createElement("div") as HTMLDivElement;
             helpButtonDiv.setAttribute("class", "help-button");
             ReactDOM.render(helpButton, helpButtonDiv);
@@ -37,7 +37,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
         }
     }
 
-    onClickHelpButton(ev: React.MouseEvent<HTMLButtonElement>) {
+    private onClickHelpButton = (ev: React.MouseEvent<HTMLButtonElement>) => {
         this.props.appStore.helpStore.showHelpDrawer(this.props.helpType, ev.clientX);
     }
 
