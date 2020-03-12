@@ -399,7 +399,7 @@ export class FrameStore {
         // Test each header entry to see if it has a valid channel type
         if (typeHeader3) {
             const headerVal = typeHeader3.value.trim().toUpperCase();
-            const channelType = CHANNEL_TYPES.find(type => headerVal.indexOf(type.code) !== -1);
+            const channelType = CHANNEL_TYPES.find(type => headerVal === type.code);
             if (channelType) {
                 const unitHeader = entries.find(entry => entry.name.includes("CUNIT3"));
                 const unit =  unitHeader ? unitHeader.value.trim() : channelType.unit;
@@ -409,7 +409,7 @@ export class FrameStore {
 
         if (typeHeader4) {
             const headerVal = typeHeader4.value.trim().toUpperCase();
-            const channelType = CHANNEL_TYPES.find(type => headerVal.indexOf(type.code) !== -1);
+            const channelType = CHANNEL_TYPES.find(type => headerVal === type.code);
             if (channelType) {
                 const unitHeader = entries.find(entry => entry.name.includes("CUNIT4"));
                 const unit =  unitHeader ? unitHeader.value.trim() : channelType.unit;
