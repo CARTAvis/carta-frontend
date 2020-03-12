@@ -4,7 +4,7 @@
     position: absolute;
     margin: 5px;
     transition: opacity 400ms;
-   
+
     &.docked {
         z-index: 4;
     }
@@ -14,14 +14,37 @@
         padding-right: 0;
         font-weight: bold;
         font-size: smaller;
+
         span {
             color: $gray1;
         }
     }
 
+    .link-button {
+        width: 30px;
+
+        .bp3-button-text {
+            position: absolute;
+            top: 0;
+            left: 16px;
+            font-size: smaller;
+            color: $gray1;
+        }
+
+        .bp3-icon {
+            transform: scale(-1, 1);
+        }
+    }
+
     &.bp3-dark {
         .full-zoom-button {
-            span {
+            .bp3-button-text {
+                color: $gray5;
+            }
+        }
+
+        .link-button {
+            .bp3-button-text {
                 color: $gray5;
             }
         }

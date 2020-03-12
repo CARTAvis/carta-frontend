@@ -188,7 +188,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
         const userString = appStore.username ? ` as ${appStore.username}` : "";
         switch (connectionStatus) {
             case ConnectionStatus.PENDING:
-                connectivityTooltip = <span>Connecting to server${userString}</span>;
+                connectivityTooltip = <span>Connecting to server{userString}</span>;
                 connectivityClass += " warning";
                 break;
             case ConnectionStatus.ACTIVE:

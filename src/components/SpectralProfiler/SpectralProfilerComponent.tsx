@@ -76,9 +76,9 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         }
 
         if (coordinateData && coordinateData.values && coordinateData.values.length &&
-            this.widgetStore.channelValues && this.widgetStore.channelValues.length &&
-            coordinateData.values.length === this.widgetStore.channelValues.length) {
-            const channelValues = this.widgetStore.channelValues;
+            frame.channelValues && frame.channelValues.length &&
+            coordinateData.values.length === frame.channelValues.length) {
+            const channelValues = frame.channelValues;
             let xMin = Math.min(channelValues[0], channelValues[channelValues.length - 1]);
             let xMax = Math.max(channelValues[0], channelValues[channelValues.length - 1]);
 
@@ -222,49 +222,50 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         if (frame && frame.channelInfo) {
             let channelInfo = frame.channelInfo;
             let nearestIndex;
-            if (this.widgetStore.isCoordChannel) {
+            if (frame.isCoordChannel) {
                 nearestIndex = channelInfo.getChannelIndexSimple(x);
             } else {
-                if (this.widgetStore.isSpectralPropsEqual) {
+                if (frame.isSpectralPropsEqual) {
                     nearestIndex = channelInfo.getChannelIndexWCS(x);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
-                    const tx =  AST.transformSpectralPoint(frame.spectralFrame, this.widgetStore.spectralType, this.widgetStore.spectralUnit, this.widgetStore.spectralSystem, x, false);
+                    const tx =  AST.transformSpectralPoint(frame.spectralFrame, frame.spectralType, frame.spectralUnit, frame.spectralSystem, x, false);
                     nearestIndex = channelInfo.getChannelIndexWCS(tx);
                 }
             }
             if (nearestIndex !== null && nearestIndex !== undefined) {
-                frame.setChannels(nearestIndex, frame.requiredStokes);
+                frame.setChannels(nearestIndex, frame.requiredStokes, true);
             }
         }
     };
 
     @computed get currentChannelValue(): number {
         const frame = this.props.appStore.activeFrame;
-        if (!frame || !this.widgetStore.channelValues) {
+        if (!frame || !frame.channelValues) {
             return null;
         }
         const channel = frame.channel;
-        if (channel < 0 || channel >= this.widgetStore.channelValues.length) {
+        if (channel < 0 || channel >= frame.channelValues.length) {
             return null;
         }
-        return this.widgetStore.isCoordChannel ? channel : this.widgetStore.channelValues[channel];
+        return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
 
     @computed get requiredChannelValue(): number {
         const frame = this.props.appStore.activeFrame;
-        if (!frame || !this.widgetStore.channelValues) {
+        if (!frame || !frame.channelValues) {
             return null;
         }
         const channel = frame.requiredChannel;
-        if (channel < 0 || channel >= this.widgetStore.channelValues.length) {
+        if (channel < 0 || channel >= frame.channelValues.length) {
             return null;
         }
-        return this.widgetStore.isCoordChannel ? channel : this.widgetStore.channelValues[channel];
+        return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
 
     private getChannelUnit = (): string => {
-        return this.widgetStore.isCoordChannel ? "Channel" : this.widgetStore.spectralUnit;
+        const frame = this.props.appStore.activeFrame;
+        return frame && !frame.isCoordChannel ? frame.spectralUnit : "Channel";
     };
 
     onGraphCursorMoved = _.throttle((x) => {
@@ -337,9 +338,11 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             zeroLineWidth: 2
         };
 
-        if (this.profileStore && frame) {
-            if (!this.widgetStore.isCoordChannel) {
-                linePlotProps.xLabel = `${this.widgetStore.spectralSystem}, ${this.widgetStore.spectralCoordinate}`;
+        if (this.profileStore && frame && frame.hasSpectralAxis) {
+            if (!frame.isCoordChannel) {
+                const spectralCoordinate = frame.isSpectralCoordinateConvertible ? frame.spectralCoordinate : `${frame.spectralInfo.channelType.code} (${frame.spectralInfo.channelType.unit})`;
+                const spectralSystem = frame.isSpectralSystemConvertible ? frame.spectralSystem : `${frame.spectralInfo.specsys}`;
+                linePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${spectralCoordinate}`;
             }
             if (frame.unit) {
                 linePlotProps.yLabel = `Value (${frame.unit})`;

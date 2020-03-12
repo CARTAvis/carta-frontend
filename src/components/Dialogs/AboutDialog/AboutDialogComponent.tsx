@@ -29,11 +29,10 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
             <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} defaultWidth={620} defaultHeight={700} enableResizing={false}>
                 <div className={Classes.DIALOG_BODY}>
                     <div className={"image-div"}>
-                        <img src={logoPng} width={100}/>
+                        <img src={logoPng} width={80}/>
                         <h3>{CARTA_INFO.acronym} {CARTA_INFO.version} ({CARTA_INFO.date})</h3>
                         <p>{CARTA_INFO.fullName}</p>
                     </div>
-
                     <h3>Development team:</h3>
                     <p>The development of the CARTA project is a joint effort from:</p>
                     <ul>
@@ -45,12 +44,13 @@ export class AboutDialogComponent extends React.Component<{ appStore: AppStore }
                     <h3>Useful links:</h3>
                     <ul>
                         <li>Source code for CARTA is available on <a href="https://github.com/cartavis" target="_blank">GitHub</a></li>
-                        <li>Please report bugs or suggestions to <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw" target="_blank">carta_helpdesk@asiaa.sinica.edu.tw</a></li>
+                        {/* tslint:disable-next-line:max-line-length */}
+                        <li>Please report bugs or suggestions to the <a href="mailto:carta_helpdesk@asiaa.sinica.edu.tw" target="_blank">CARTA helpdesk</a> or file a <a href="https://github.com/CARTAvis/carta/issues" target="_blank">GitHub issue</a></li>
                         <li>Documentation is available <a href="https://carta.readthedocs.io/en/1.3" target="_blank">online</a></li>
                     </ul>
                     <h3>License</h3>
-                    <p>
-                        Copyright (C) 2018-2019 ASIAA, IDIA, NRAO, and Department of Physics, University of Alberta. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
+                    <p className={Classes.TEXT_SMALL}>
+                        Copyright (C) 2018-2020 ASIAA, IDIA, NRAO, and Department of Physics, University of Alberta. This program is free software; you can redistribute it and/or modify it under the terms of the&#160;
                         <a href="http://www.gnu.org/copyleft/gpl.html" target="_blank">GNU General Public License version 3</a>&#160;
                         as published by the Free Software Foundation.
                     </p>

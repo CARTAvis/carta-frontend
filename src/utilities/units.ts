@@ -1,5 +1,3 @@
-import {CARTA} from "carta-protobuf";
-
 export function velocityFromFrequency(freq: number, refFreq: number): number {
     const c = 299792458;
     return c * (1.0 - freq / refFreq);
@@ -67,4 +65,20 @@ export function formattedExponential(val: number, digits: number, unit: string =
         valString = `${valString} ${unit}`;
     }
     return valString;
+}
+
+export function formattedFrequency(freqGHz: number): string {
+    if (!isFinite(freqGHz)) {
+        return null;
+    }
+
+    let freqString = "";
+    if (freqGHz < 3) {
+        freqString = `${toFixed(freqGHz * 1000, 4)} MHz`;
+    } else if (freqGHz >= 3 && freqGHz < 1000) {
+        freqString = `${toFixed(freqGHz, 4)} GHz`;
+    } else {
+        freqString = `${toFixed(freqGHz / 1000, 4)} THz`;
+    }
+    return freqString;
 }
