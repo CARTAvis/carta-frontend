@@ -48,12 +48,12 @@ export class CursorOverlayComponent extends React.Component<CursorOverlayProps> 
             infoStrings.push(`Channel:\u00a0${this.props.spectralInfo.channel}`);
         }
         if (this.props.showSpectral && this.props.spectralInfo.spectralString) {
-            infoStrings.push(this.props.spectralInfo.spectralString);
+            infoStrings.push(this.props.spectralInfo.spectralString.replace(/\s/g, "\u00a0"));
             if (this.props.spectralInfo.freqString) {
-                infoStrings.push(this.props.spectralInfo.freqString);
+                infoStrings.push(this.props.spectralInfo.freqString.replace(/\s/g, "\u00a0"));
             }
             if (this.props.spectralInfo.velocityString) {
-                infoStrings.push(this.props.spectralInfo.velocityString);
+                infoStrings.push(this.props.spectralInfo.velocityString.replace(/\s/g, "\u00a0"));
             }
         }
 
