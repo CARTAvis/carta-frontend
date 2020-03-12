@@ -4,7 +4,7 @@
 #include <math.h>
 
 extern "C" {
-#include "grf.h"
+#include "src/grf.h"
 #include "ast.h"
 
 #define LOG printf

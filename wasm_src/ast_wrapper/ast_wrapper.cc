@@ -124,10 +124,6 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(const char* header, const c
         return nullptr;
     }
 
-    // Need to specifically set the unit attribute of specframe(sync with FITS header),
-    // or AST will use specframe's default & leads to incorrect conversion
-    astSetC(specframe, "Unit", unit);
-
     return specframe;
 }
 
