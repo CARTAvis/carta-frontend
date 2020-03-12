@@ -2,6 +2,22 @@
     .bp3-dialog-body {
         user-select: none;
 
+        .bp3-form-group {
+            &:first-of-type {
+                margin-left: 0px;
+            }
+        }
+
+        .contour-level-panel-levels .bp3-form-group .bp3-label {
+            width: 6em;
+            text-align: left;
+        }
+
+        .contour-config-panel .bp3-form-group .bp3-label {
+            width: 10em;
+            text-align: left;
+        }
+
         .bp3-tabs {
             margin: 2px;
         }
@@ -9,6 +25,10 @@
         .histogram-plot {
             height: 200px;
             position: relative;
+        }
+
+        .lock-button {
+            margin-left: 5px;
         }
     }
 }

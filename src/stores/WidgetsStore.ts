@@ -657,11 +657,6 @@ export class WidgetsStore {
         return id;
     }
 
-    @action updateSpectralRelatedWidgetsSpectralSettings() {
-        Array.from(this.spectralProfileWidgets.values()).forEach((widgetStore) => widgetStore.initSpectralSettings());
-        Array.from(this.stokesAnalysisWidgets.values()).forEach((widgetStore) => widgetStore.initSpectralSettings());
-    }
-
     // endregion
 
     // region Stokes Profile Widgets

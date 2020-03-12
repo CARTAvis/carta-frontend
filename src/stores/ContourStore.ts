@@ -1,5 +1,6 @@
 import {action, computed, observable} from "mobx";
 import * as CARTACompute from "carta_computation";
+import {ContourWebGLService} from "../services";
 
 export class ContourStore {
     @observable progress: number;
@@ -28,8 +29,8 @@ export class ContourStore {
         return this.progress >= 1.0;
     }
 
-    constructor(gl: WebGLRenderingContext) {
-        this.gl = gl;
+    constructor() {
+        this.gl = ContourWebGLService.Instance.gl;
     }
 
     @action setContourData = (indexOffsets: Int32Array, vertexData: Float32Array, progress: number) => {

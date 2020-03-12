@@ -51,10 +51,10 @@ export class TileService {
     private pendingSynchronisedTiles: Array<number>;
     private receivedSynchronisedTiles: Array<{ coordinate: number, tile: RasterTile }>;
     private animationEnabled: boolean;
+    private gl: WebGLRenderingContext;
 
     @observable remainingTiles: number;
     @observable workersReady: boolean[];
-    readonly tileWebGLService: TileWebGLService;
 
     @computed get zfpReady() {
         return this.workersReady && this.workersReady.every(v => v);
@@ -87,7 +87,7 @@ export class TileService {
 
     constructor(backendService: BackendService) {
         this.backendService = backendService;
-        this.tileWebGLService = new TileWebGLService();
+        this.gl = TileWebGLService.Instance.gl;
 
         this.channelMap = new Map<number, { channel: number, stokes: number }>();
         this.persistentTiles = new Map<number, RasterTile>();
@@ -225,6 +225,12 @@ export class TileService {
         }
     }
 
+    updateInactiveFileChannel(fileId: number, channel: number, stokes: number) {
+        this.clearCompressedCache(fileId);
+        this.channelMap.set(fileId, {channel, stokes});
+        this.backendService.setChannels(fileId, channel, stokes, {});
+    }
+
     clearGPUCache() {
         this.cachedTiles.forEach(this.clearTile);
         this.cachedTiles.clear();
@@ -267,7 +273,7 @@ export class TileService {
         const textureSizeMb = TEXTURE_SIZE * TEXTURE_SIZE * 4 / 1024 / 1024;
         console.log(`Creating ${this.textureArray.length} tile textures of size ${textureSizeMb} MB each (${textureSizeMb * this.textureArray.length} MB total)`);
         for (let i = 0; i < this.textureArray.length; i++) {
-            this.textureArray[i] = createFP32Texture(this.tileWebGLService.gl, TEXTURE_SIZE, TEXTURE_SIZE, WebGLRenderingContext.TEXTURE0);
+            this.textureArray[i] = createFP32Texture(this.gl, TEXTURE_SIZE, TEXTURE_SIZE, WebGLRenderingContext.TEXTURE0);
         }
     }
 
@@ -278,7 +284,7 @@ export class TileService {
         const tilesPerRow = TEXTURE_SIZE / TILE_SIZE;
         const xOffset = (localOffset % tilesPerRow) * TILE_SIZE;
         const yOffset = Math.floor(localOffset / tilesPerRow) * TILE_SIZE;
-        copyToFP32Texture(this.tileWebGLService.gl, this.textureArray[textureIndex], tile.data, WebGLRenderingContext.TEXTURE0, tile.width, tile.height, xOffset, yOffset);
+        copyToFP32Texture(this.gl, this.textureArray[textureIndex], tile.data, WebGLRenderingContext.TEXTURE0, tile.width, tile.height, xOffset, yOffset);
     }
 
     getTileTextureParameters(tile: RasterTile) {
