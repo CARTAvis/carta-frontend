@@ -20,5 +20,13 @@
         width: calc(100% - 10px);
         height: calc(100% - 35px);
         position: relative;
+
+        .gl-container {
+            top: 0px;
+            left: 0px;
+            width: inherit;
+            height: inherit;
+            z-index: inherit;
+        }
     }
 }

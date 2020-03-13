@@ -1,5 +1,7 @@
 import * as React from "react";
 import * as _ from "lodash";
+import * as Plotly from "plotly.js";
+import Plot from "react-plotly.js";
 import {autorun, computed, observable, values} from "mobx";
 import {observer} from "mobx-react";
 import {FormGroup, HTMLSelect} from "@blueprintjs/core";
@@ -61,6 +63,11 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         });
     }
 
+    onResize = (width: number, height: number) => {
+        this.width = width;
+        this.height = height;
+    };
+
     @computed get widgetStore(): CatalogScatterWidgetStore {
         const widgetStore = this.props.appStore.widgetsStore.catalogScatterWidgets.get(this.props.id); 
         return widgetStore;
@@ -81,10 +88,25 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         return catalog2D;
     }
 
-    onResize = (width: number, height: number) => {
-        this.width = width;
-        this.height = height;
-    };
+    @computed get scatterDatasets() {
+        const widgetStore = this.widgetStore;
+        let scatterDatasets: Plotly.Data[] = [];
+        let data: Plotly.Data = {};
+        data.type = "scattergl";
+        data.mode = "markers";
+        // data.marker = {
+        //     symbol: "circle", 
+        //     color: "red",
+        //     size: 5,
+        //     // line: {
+        //     //     width: 1.5
+        //     // }
+        // };
+        data.x = widgetStore.xDataset;
+        data.y = widgetStore.yDataset;
+        scatterDatasets.push(data);
+        return scatterDatasets;
+    }
 
     private handleColumnNameChange(type: string, changeEvent: React.ChangeEvent<HTMLSelectElement>) {
         const val = changeEvent.currentTarget.value;
@@ -107,22 +129,51 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             }
         }
 
-        let scatter2D: ScatterPlotComponentProps = {
-            xLabel: widgetStore.columnsName.x,
-            yLabel: widgetStore.columnsName.y,
-            darkMode: appStore.darkTheme,
-            plotName: "profile",
-            showXAxisTicks: true,
-            showXAxisLabel: true,
-            usePointSymbols: true,
-            zeroLineWidth: 2,
-            isGroupSubPlot: false,
-            scrollZoom: true,
-            // settings
-            pointRadius: 2
-        };
+        // let scatter2D: ScatterPlotComponentProps = {
+        //     xLabel: widgetStore.columnsName.x,
+        //     yLabel: widgetStore.columnsName.y,
+        //     darkMode: appStore.darkTheme,
+        //     plotName: "profile",
+        //     showXAxisTicks: true,
+        //     showXAxisLabel: true,
+        //     usePointSymbols: true,
+        //     zeroLineWidth: 2,
+        //     isGroupSubPlot: false,
+        //     scrollZoom: true,
+        //     // settings
+        //     pointRadius: 2
+        // };
+        // scatter2D.data = this.scatterData;
 
-        scatter2D.data = this.scatterData;
+        let layout: Partial<Plotly.Layout> = {
+            width: this.width, 
+            height: this.height - 35,
+            // paper_bgcolor: "rgba(255,255,255, 0)", 
+            // plot_bgcolor: "rgba(255,255,255, 0)",
+            // xaxis: {
+            //     autorange: false,
+            //     showgrid: false,
+            //     zeroline: false,
+            //     showline: false,
+            //     showticklabels: false
+            // },
+            // yaxis: {
+            //     autorange: false,
+            //     showgrid: false,
+            //     zeroline: false,
+            //     showline: false,
+            //     showticklabels: false
+            // },
+            // margin: {
+            //     l: 0,
+            //     r: 0,
+            //     b: 0,
+            //     t: 0,
+            //     pad: 0
+            // },
+            showlegend: false
+        };
+        const data = this.scatterDatasets;
 
         return(
             <div className={"catalog-2D"}>
@@ -139,8 +190,15 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                     </FormGroup>
                 </div>
                 <div className={"catalog-2D-scatter"}>
-                    <ScatterPlotComponent {...scatter2D}/>
+                    {/* <ScatterPlotComponent {...scatter2D}/> */}
+                    <Plot
+                        data={data}
+                        layout={layout}
+                        config={{scrollZoom: true}}
+                        useResizeHandler={true}
+                    />
                 </div>
+                <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
         );
     }
