@@ -275,7 +275,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     private genProfilerInfo = (): string[] => {
         let profilerInfo: string[] = [];
         const frame = this.props.appStore.activeFrame;
-        if (frame && frame.hasSpectralAxis && this.plotData) {
+        if (frame && this.plotData) {
             const cursorX = {
                 profiler: this.widgetStore.cursorX,
                 image: this.currentChannelValue,
@@ -338,7 +338,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             zeroLineWidth: 2
         };
 
-        if (this.profileStore && frame && frame.hasSpectralAxis) {
+        if (this.profileStore && frame) {
             if (!frame.isCoordChannel) {
                 const spectralCoordinate = frame.isSpectralCoordinateConvertible ? frame.spectralCoordinate : `${frame.spectralInfo.channelType.code} (${frame.spectralInfo.channelType.unit})`;
                 const spectralSystem = frame.isSpectralSystemConvertible ? frame.spectralSystem : `${frame.spectralInfo.specsys}`;
