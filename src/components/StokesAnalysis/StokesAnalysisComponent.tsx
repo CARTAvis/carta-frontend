@@ -877,7 +877,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
         let interactionBorder = {xMin: 0, xMax: 0};
-        if (this.profileStore && frame && frame.hasSpectralAxis) {
+        if (this.profileStore && frame) {
             const cursorX = {
                 profiler: this.widgetStore.linePlotcursorX,
                 image: this.currentChannelValue,

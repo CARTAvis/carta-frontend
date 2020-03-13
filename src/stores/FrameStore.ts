@@ -401,7 +401,7 @@ export class FrameStore {
     }
 
     @computed get isCoordChannel(): boolean {
-        return this.spectralType === SpectralType.CHANNEL;
+        return !this.isSpectralCoordinateConvertible || this.spectralType === SpectralType.CHANNEL;
     }
 
     @computed get spectralCoordinate(): string {
@@ -442,10 +442,6 @@ export class FrameStore {
         }
 
         return undefined;
-    }
-
-    @computed get hasSpectralAxis(): boolean {
-        return this.spectralAxis !== undefined;
     }
 
     @computed get hasStokes(): boolean {
@@ -613,7 +609,7 @@ export class FrameStore {
             const unit = this.spectralUnit;
             const specsys = this.spectralSystem;
             if (this.channelInfo) {
-                if (this.spectralType === SpectralType.CHANNEL) {
+                if (this.isCoordChannel) {
                     this.channelValues = this.channelInfo.indexes;
                 } else {
                     this.channelValues = this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectral(this.channelInfo.values);
