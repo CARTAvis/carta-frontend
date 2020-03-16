@@ -156,7 +156,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralCoordinate = (coordStr: string) => {
-        const frame = this.appStore.activeFrame;
+        const frame = this.effectiveFrame;
         if (frame && frame.spectralCoordsSupported && frame.spectralCoordsSupported.has(coordStr)) {
             const coord: {type: SpectralType, unit: SpectralUnit} = frame.spectralCoordsSupported.get(coordStr);
             frame.spectralType = coord.type;
@@ -166,7 +166,7 @@ export class StokesAnalysisWidgetStore extends RegionWidgetStore {
     };
 
     @action setSpectralSystem = (specsys: SpectralSystem) => {
-        const frame = this.appStore.activeFrame;
+        const frame = this.effectiveFrame;
         if (frame && frame.spectralSystemsSupported && frame.spectralSystemsSupported.includes(specsys)) {
             frame.spectralSystem = specsys;
             this.clearSharedXBounds();

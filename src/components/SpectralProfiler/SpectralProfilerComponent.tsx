@@ -262,7 +262,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
     }
 
     private getChannelUnit = (): string => {
-        const frame = this.props.appStore.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         return frame && !frame.isCoordChannel ? frame.spectralUnit : "Channel";
     };
 
@@ -272,7 +272,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     private genProfilerInfo = (): string[] => {
         let profilerInfo: string[] = [];
-        const frame = this.props.appStore.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (frame && this.plotData) {
             const cursorX = {
                 profiler: this.widgetStore.cursorX,

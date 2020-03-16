@@ -153,7 +153,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     }
 
     private getChannelUnit = (): string => {
-        const frame = this.props.appStore.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         return frame && !frame.isCoordChannel ? frame.spectralUnit : "Channel";
     };
 
@@ -424,7 +424,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         dataset: Array<Point2D>,
         border: Border
     } {
-        const frame = this.props.appStore.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (profile && profile.length &&
             frame.channelValues && frame.channelValues.length &&
             profile.length === frame.channelValues.length) {
@@ -452,7 +452,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         dataset: Array<{ x: number, y: number, z: number }>,
         border: Border
     } {
-        const frame = this.props.appStore.activeFrame;
+        const frame = this.widgetStore.effectiveFrame;
         if (qProfile && qProfile.length && uProfile && uProfile.length &&
             frame.channelValues && frame.channelValues.length &&
             qProfile.length === uProfile.length && qProfile.length === frame.channelValues.length) {
