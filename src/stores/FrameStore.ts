@@ -441,7 +441,7 @@ export class FrameStore {
     }
 
     @computed get spectralUnitStr(): string {
-        if (!this.spectralType && !this.spectralUnit) {
+        if (this.spectralAxis && !this.spectralType && !this.spectralUnit) {
             return this.spectralAxis.type.unit;
         }
         return this.isCoordChannel ? SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL) : this.spectralUnit as string;

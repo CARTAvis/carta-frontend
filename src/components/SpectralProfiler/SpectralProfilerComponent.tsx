@@ -334,7 +334,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         };
 
         if (this.profileStore && frame) {
-            if (!frame.isCoordChannel) {
+            if (frame.spectralAxis && !frame.isCoordChannel) {
                 const spectralSystem = frame.isSpectralSystemConvertible ? frame.spectralSystem : `${frame.spectralInfo.specsys}`;
                 linePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${frame.spectralCoordinate}`;
             }
