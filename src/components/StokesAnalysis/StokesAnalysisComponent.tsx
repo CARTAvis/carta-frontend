@@ -165,7 +165,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             if (frame.isCoordChannel) {
                 nearestIndex = channelInfo.getChannelIndexSimple(x);
             } else {
-                if (frame.isSpectralPropsEqual) {
+                if ((frame.spectralAxis && !frame.spectralAxis.valid) || frame.isSpectralPropsEqual) {
                     nearestIndex = channelInfo.getChannelIndexWCS(x);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
