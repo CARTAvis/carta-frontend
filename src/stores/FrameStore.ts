@@ -1,16 +1,31 @@
-import {action, autorun, computed, observable} from "mobx";
+import {action, autorun, computed, observable, toJS} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
 import {
-    ChannelInfo, ChannelType, CHANNEL_TYPES, ControlMap, CursorInfo, FrameView, GenCoordinateLabel, Point2D, ProtobufProcessing, SpectralInfo, Transform2D, ZoomPoint,
-    SpectralSystem, SpectralType, SpectralUnit, SPECTRAL_COORDS_SUPPORTED, SPECTRAL_DEFAULT_UNIT, IsSpectralSystemSupported, IsSpectralTypeSupported, IsSpectralUnitSupported
+    CHANNEL_TYPES,
+    ChannelInfo,
+    ChannelType,
+    ControlMap,
+    CursorInfo,
+    FrameView,
+    GenCoordinateLabel,
+    IsSpectralSystemSupported,
+    IsSpectralTypeSupported,
+    IsSpectralUnitSupported,
+    Point2D,
+    ProtobufProcessing,
+    SPECTRAL_COORDS_SUPPORTED,
+    SPECTRAL_DEFAULT_UNIT,
+    SpectralInfo,
+    SpectralSystem,
+    SpectralType,
+    SpectralUnit,
+    Transform2D,
+    ZoomPoint
 } from "models";
-import {
-    clamp, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedCoordinates, getTransformedChannel,
-    minMax2D, rotate2D, toFixed, trimFitsComment, velocityStringFromFrequency
-} from "utilities";
+import {clamp, frequencyStringFromVelocity, getHeaderNumericValue, getTransformedChannel, getTransformedCoordinates, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment, velocityStringFromFrequency} from "utilities";
 import {BackendService, ContourWebGLService} from "services";
 
 export interface FrameInfo {
@@ -131,7 +146,13 @@ export class FrameStore {
     @computed get spatialTransform() {
         if (this.spatialReference && this.spatialTransformAST) {
             const center = getTransformedCoordinates(this.spatialTransformAST, this.spatialReference.center, false);
-            return new Transform2D(this.spatialTransformAST, center);
+            // Try use center of the screen as a reference point
+            if (!isAstBadPoint(center)) {
+                return new Transform2D(this.spatialTransformAST, center);
+            } else {
+                // Otherwise use the center of the image
+                return new Transform2D(this.spatialTransformAST, {x: this.frameInfo.fileInfoExtended.width / 2.0 + 0.5, y: this.frameInfo.fileInfoExtended.height / 2.0 + 0.5});
+            }
         }
         return null;
     }
@@ -1031,15 +1052,14 @@ export class FrameStore {
         if (this.spatialReference) {
             // Adjust zoom by scaling factor if zoom level is not absolute
             const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
-            const pointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
+            const pointRefImage = getTransformedCoordinates(this.spatialTransformAST, {x, y}, true);
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
             if (this.preference.zoomPoint === ZoomPoint.CURSOR) {
-                const newCenter = {
+                this.center = {
                     x: x + this.zoomLevel / zoom * (this.center.x - x),
                     y: y + this.zoomLevel / zoom * (this.center.y - y)
                 };
-                this.center = newCenter;
             }
             this.setZoom(zoom);
         }
@@ -1171,6 +1191,18 @@ export class FrameStore {
             this.spatialReference = null;
             return false;
         }
+
+        let validTransform = true;
+        for (let i = 0; i < 100000; i++) {
+            const testPoint = {x: Math.random() * this.frameInfo.fileInfoExtended.width, y: Math.random() * this.frameInfo.fileInfoExtended.height};
+            const refPoint = getTransformedCoordinates(this.spatialTransformAST, testPoint, true);
+            if (isAstBadPoint(refPoint)) {
+                validTransform = false;
+                console.log(`Found bad transform point: (${testPoint.x}, ${testPoint.y})`);
+                break;
+            }
+        }
+
         this.spatialReference = frame;
         const currentTransform = this.spatialTransform;
         if (!isFinite(currentTransform.rotation) || !isFinite(currentTransform.scale) || !isFinite(currentTransform.translation.x) || !isFinite(currentTransform.translation.y)
