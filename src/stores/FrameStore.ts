@@ -1075,8 +1075,9 @@ export class FrameStore {
             const {minPoint, maxPoint} = minMax2D(corners);
             const rangeX = maxPoint.x - minPoint.x;
             const rangeY = maxPoint.y - minPoint.y;
-            const zoomX = this.spatialReference.renderWidth / rangeX;
-            const zoomY = this.spatialReference.renderHeight / rangeY;
+            const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
+            const zoomX = this.spatialReference.renderWidth * pixelRatio / rangeX;
+            const zoomY = this.spatialReference.renderHeight * pixelRatio / rangeY;
             this.spatialReference.setZoom(Math.min(zoomX, zoomY), true);
         } else {
             this.zoomLevel = this.zoomLevelForFit;
