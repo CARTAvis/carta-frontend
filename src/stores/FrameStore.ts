@@ -1,4 +1,4 @@
-import {action, autorun, computed, observable, toJS} from "mobx";
+import {action, autorun, computed, observable} from "mobx";
 import {NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
