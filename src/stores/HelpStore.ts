@@ -8,7 +8,7 @@ export class HelpStore {
 
     @action showHelpDrawer = (helpType: HelpType, clientX: number) => {
         this.type = helpType;
-        this.position = clientX / document.body.clientWidth < 0.65 ? Position.RIGHT : Position.LEFT;
+        this.position = clientX > document.body.clientWidth * 0.5 ? Position.LEFT : Position.RIGHT;
         this.helpVisible = true;
     };
 

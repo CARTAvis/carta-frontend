@@ -69,8 +69,9 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         }
     }
 
-    private onClickHelpButton = (ev: React.MouseEvent<HTMLDivElement>) => {
-        this.props.appStore.helpStore.showHelpDrawer(this.props.widgetConfig.helpType, ev.clientX);
+    private onClickHelpButton = () => {
+        const centerX = this.rnd.draggable.state.x + this.rnd.resizable.size.width * 0.5;
+        this.props.appStore.helpStore.showHelpDrawer(this.props.widgetConfig.helpType, centerX);
     }
 
     constructor(props: FloatingWidgetComponentProps) {

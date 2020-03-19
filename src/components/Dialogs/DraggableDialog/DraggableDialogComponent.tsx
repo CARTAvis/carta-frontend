@@ -20,6 +20,7 @@ export class ResizableDialogComponentProps {
 export class DraggableDialogComponent extends React.Component<ResizableDialogComponentProps> {
 
     private dd: HTMLDivElement;
+    private rnd: Rnd;
 
     componentDidUpdate() {
         const header = this.dd.getElementsByClassName("bp3-dialog-header");
@@ -37,8 +38,9 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
         }
     }
 
-    private onClickHelpButton = (ev: React.MouseEvent<HTMLButtonElement>) => {
-        this.props.appStore.helpStore.showHelpDrawer(this.props.helpType, ev.clientX);
+    private onClickHelpButton = () => {
+        const centerX = this.rnd.draggable.state.x + this.rnd.resizable.size.width * 0.5;
+        this.props.appStore.helpStore.showHelpDrawer(this.props.helpType, centerX);
     }
 
     render() {
@@ -78,6 +80,7 @@ export class DraggableDialogComponent extends React.Component<ResizableDialogCom
                     minWidth={this.props.minWidth}
                     minHeight={this.props.minHeight}
                     dragHandleClassName={"bp3-dialog-header"}
+                    ref={c => { this.rnd = c; }}
                 >
                     <Dialog hasBackdrop={false} usePortal={false}  enforceFocus={false} autoFocus={true} {...this.props.dialogProps} children={this.props.children}/>
                 </Rnd>
