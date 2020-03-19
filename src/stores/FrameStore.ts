@@ -4,10 +4,29 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
 import {
-    ChannelInfo, ChannelType, CHANNEL_TYPES, ControlMap, CursorInfo, FrameView, GenCoordinateLabel, Point2D, ProtobufProcessing, SpectralInfo, Transform2D, ZoomPoint,
-    SpectralSystem, SpectralType, SpectralUnit, SPECTRAL_COORDS_SUPPORTED, SPECTRAL_DEFAULT_UNIT, SPECTRAL_TYPE_STRING, IsSpectralSystemSupported, IsSpectralTypeSupported, IsSpectralUnitSupported
+    CHANNEL_TYPES,
+    ChannelInfo,
+    ChannelType,
+    ControlMap,
+    CursorInfo,
+    FrameView,
+    GenCoordinateLabel,
+    IsSpectralSystemSupported,
+    IsSpectralTypeSupported,
+    IsSpectralUnitSupported,
+    Point2D,
+    ProtobufProcessing,
+    SPECTRAL_COORDS_SUPPORTED,
+    SPECTRAL_DEFAULT_UNIT,
+    SPECTRAL_TYPE_STRING,
+    SpectralInfo,
+    SpectralSystem,
+    SpectralType,
+    SpectralUnit,
+    Transform2D,
+    ZoomPoint
 } from "models";
-import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedCoordinates, getTransformedChannel, minMax2D, rotate2D, toFixed, trimFitsComment} from "utilities";
+import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, getTransformedCoordinates, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment} from "utilities";
 import {BackendService, ContourWebGLService} from "services";
 
 export interface FrameInfo {
@@ -36,7 +55,7 @@ export class FrameStore {
     @observable spectralType: SpectralType;
     @observable spectralUnit: SpectralUnit;
     @observable spectralSystem: SpectralSystem;
-    @observable channelValues:  Array<number>;
+    @observable channelValues: Array<number>;
     @observable fullWcsInfo: number;
     @observable validWcs: boolean;
     @observable center: Point2D;
@@ -128,7 +147,13 @@ export class FrameStore {
     @computed get spatialTransform() {
         if (this.spatialReference && this.spatialTransformAST) {
             const center = getTransformedCoordinates(this.spatialTransformAST, this.spatialReference.center, false);
-            return new Transform2D(this.spatialTransformAST, center);
+            // Try use center of the screen as a reference point
+            if (!isAstBadPoint(center)) {
+                return new Transform2D(this.spatialTransformAST, center);
+            } else {
+                // Otherwise use the center of the image
+                return new Transform2D(this.spatialTransformAST, {x: this.frameInfo.fileInfoExtended.width / 2.0 + 0.5, y: this.frameInfo.fileInfoExtended.height / 2.0 + 0.5});
+            }
         }
         return null;
     }
@@ -1035,15 +1060,14 @@ export class FrameStore {
         if (this.spatialReference) {
             // Adjust zoom by scaling factor if zoom level is not absolute
             const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
-            const pointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
+            const pointRefImage = getTransformedCoordinates(this.spatialTransformAST, {x, y}, true);
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
             if (this.preference.zoomPoint === ZoomPoint.CURSOR) {
-                const newCenter = {
+                this.center = {
                     x: x + this.zoomLevel / zoom * (this.center.x - x),
                     y: y + this.zoomLevel / zoom * (this.center.y - y)
                 };
-                this.center = newCenter;
             }
             this.setZoom(zoom);
         }
@@ -1066,6 +1090,9 @@ export class FrameStore {
 
     @action fitZoom = () => {
         if (this.spatialReference) {
+            // Calculate midpoint of image
+            const imageCenterReferenceSpace = getTransformedCoordinates(this.spatialTransformAST, this.center, true);
+            this.spatialReference.setCenter(imageCenterReferenceSpace.x, imageCenterReferenceSpace.y);
             // Calculate bounding box for transformed image
             const corners = [
                 this.spatialTransform.transformCoordinate({x: 0, y: 0}, true),
@@ -1076,10 +1103,10 @@ export class FrameStore {
             const {minPoint, maxPoint} = minMax2D(corners);
             const rangeX = maxPoint.x - minPoint.x;
             const rangeY = maxPoint.y - minPoint.y;
-            const zoomX = this.spatialReference.renderWidth / rangeX;
-            const zoomY = this.spatialReference.renderHeight / rangeY;
+            const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
+            const zoomX = this.spatialReference.renderWidth * pixelRatio / rangeX;
+            const zoomY = this.spatialReference.renderHeight * pixelRatio / rangeY;
             this.spatialReference.setZoom(Math.min(zoomX, zoomY), true);
-            this.spatialReference.setCenter((maxPoint.x + minPoint.x) / 2.0 + 0.5, (maxPoint.y + minPoint.y) / 2.0 + 0.5);
         } else {
             this.zoomLevel = this.zoomLevelForFit;
             this.initCenter();
