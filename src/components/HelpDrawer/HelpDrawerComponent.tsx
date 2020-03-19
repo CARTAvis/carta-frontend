@@ -50,7 +50,7 @@ export class HelpDrawerComponent extends React.Component<{ appStore: AppStore }>
             title: this.HELP_MAP.get(helpStore.type) ? this.HELP_MAP.get(helpStore.type).title : "",
             position: helpStore.position,
             size: "33%",
-            hasBackdrop: true
+            hasBackdrop: false
         };
 
         return (
