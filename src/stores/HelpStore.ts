@@ -6,9 +6,9 @@ export class HelpStore {
     @observable helpVisible: boolean = false;
     @observable position: Position = Position.RIGHT;
 
-    @action showHelpDrawer = (helpType: HelpType, clientX: number) => {
+    @action showHelpDrawer = (helpType: HelpType, centerX: number) => {
         this.type = helpType;
-        this.position = clientX > document.body.clientWidth * 0.5 ? Position.LEFT : Position.RIGHT;
+        this.position = centerX > document.body.clientWidth * 0.5 ? Position.LEFT : Position.RIGHT;
         this.helpVisible = true;
     };
 
