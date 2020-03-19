@@ -489,14 +489,13 @@ export class WidgetsStore {
     @action onHelpPinedClick = (ev: JQuery.ClickEvent<HTMLElement>, item: GoldenLayout.ContentItem) => {
         const itemConfig = item.config as GoldenLayout.ReactComponentConfig;
         const type = itemConfig.component;
-
         // Get widget config from type
         let widgetConfig = WidgetsStore.getDefaultWidgetConfig(type);
         if (widgetConfig.helpType) {
             const container = item["container"] as GoldenLayout.Container;
             let centerX = 0;
             if (container && container.width) {
-                centerX = ev.clientX + 54 - container.width * 0.5; // 54(px) is the length between help button and right border of widget
+                centerX = ev.toElement.getBoundingClientRect().right + 36 - container.width * 0.5; // 36(px) is the length between help button and right border of widget
             }
             this.appStore.helpStore.showHelpDrawer(widgetConfig.helpType, centerX);
         }
