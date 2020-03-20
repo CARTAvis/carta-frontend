@@ -9,6 +9,7 @@ test("test binarySearchByX with sorted array in incremental/decremental order", 
     expect(binarySearchByX(null, 10)).toEqual(null);
     expect(binarySearchByX(incremental, null)).toEqual(null);
     expect(binarySearchByX([], 10)).toEqual(null);
+    expect(binarySearchByX(incremental, NaN)).toEqual(null);
 
     expect(binarySearchByX(incremental, -99)).toEqual({point: {x: -1, y: 0}, index: 0});
     expect(binarySearchByX(incremental, 0)).toEqual({point: {x: -1, y: 0}, index: 0});
