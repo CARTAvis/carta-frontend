@@ -432,11 +432,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             const channelValues = frame.channelValues;
             let border = this.calculateXYborder(channelValues, profile, true, type);
             let values: Array<{ x: number, y: number }> = [];
-            const isIncremental = channelValues[0] <= channelValues[channelValues.length - 1];
             for (let i = 0; i < channelValues.length; i++) {
-                let index = isIncremental ? i : channelValues.length - 1 - i;
-                const x = channelValues[index];
-                const y = profile[index];
+                const x = channelValues[i];
+                const y = profile[i];
 
                 if (x < border.xMin || x > border.xMax || y < border.yMin || y > border.yMax) {
                     values.push({x: x, y: NaN});
@@ -460,15 +458,13 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             const channelValues = frame.channelValues;
             let border = this.calculateXYborder(qProfile, uProfile, false, type);
             let values: Array<{ x: number, y: number, z: number }> = [];
-            const isIncremental = channelValues[0] <= channelValues[channelValues.length - 1] ? true : false;
             // centered origin and equal scaler
             let equalScalerBorder = this.resizeScatterData(border.xMin, border.xMax, border.yMin, border.yMax);
             this.widgetStore.scatterOutRangePointsZIndex = [];
             for (let i = 0; i < channelValues.length; i++) {
-                let index = isIncremental ? i : channelValues.length - 1 - i;
-                const x = qProfile[index];
-                const y = uProfile[index];
-                const z = channelValues[index];
+                const x = qProfile[i];
+                const y = uProfile[i];
+                const z = channelValues[i];
                 values.push({x, y, z});
 
                 // update line plot color array
