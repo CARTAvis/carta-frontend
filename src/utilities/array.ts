@@ -10,15 +10,13 @@ export function binarySearchByX(sortedArray: readonly Point2D[], x: number): {po
     if (incremental) {
         if (x <= sortedArray[0].x) {
             return {point: sortedArray[0], index: 0};
-        }
-        if (x >= sortedArray[sortedArray.length - 1].x) {
+        } else if (x >= sortedArray[sortedArray.length - 1].x) {
             return {point: sortedArray[sortedArray.length - 1], index: sortedArray.length - 1};
         }
     } else {
         if (x >= sortedArray[0].x) {
             return {point: sortedArray[0], index: 0};
-        }
-        if (x <= sortedArray[sortedArray.length - 1].x) {
+        } else if (x <= sortedArray[sortedArray.length - 1].x) {
             return {point: sortedArray[sortedArray.length - 1], index: sortedArray.length - 1};
         }
     }
