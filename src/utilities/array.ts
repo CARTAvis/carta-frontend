@@ -6,7 +6,7 @@ export function binarySearchByX(sortedArray: readonly Point2D[], x: number): {po
         return null;
     }
 
-    const incremental = sortedArray[0] <= sortedArray[sortedArray.length - 1];
+    const incremental = sortedArray[0].x <= sortedArray[sortedArray.length - 1].x;
     if (incremental) {
         if (x <= sortedArray[0].x) {
             return {point: sortedArray[0], index: 0};
