@@ -244,7 +244,11 @@ export class AppStore {
 
     // catalog 
     @computed get catalogNum(): number {
-        return this.catalogs.size;
+        const fileNumbers = Array.from(this.catalogs.values());
+        if (fileNumbers.length) {
+            return Math.max(...fileNumbers);   
+        }
+        return 0;
     }
 
     @computed get frameNames(): IOptionProps [] {
@@ -1009,12 +1013,11 @@ export class AppStore {
                     const wcs = this.activeFrame.validWcs ? this.activeFrame.wcsInfo : 0;
                     this.catalogStore.updateCatalogData(catalogWidgetId, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogWidgetStore.catalogCoordinateSystem.system);
                 }
-
-                // update 
-                const scatterWidget = this.widgetsStore.catalogScatterWidgets.get(catalogWidgetStore.catalogScatterWidgetId);
-                if (scatterWidget) {
-                    scatterWidget.updateScatterData(catalogFilter.columnsData);   
-                }
+            }
+            // update 
+            const scatterWidget = this.widgetsStore.catalogScatterWidgets.get(catalogWidgetStore.catalogScatterWidgetId);
+            if (scatterWidget) {
+                scatterWidget.updateScatterData();   
             }
         }
     }

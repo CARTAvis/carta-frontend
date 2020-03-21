@@ -74,7 +74,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
     public render() {
         const appStore = this.props.appStore;
         let className = "App";
-        let glClassName = "gl-container";
+        let glClassName = "gl-container-app";
         if (appStore.darkTheme) {
             className += " bp3-dark";
             glClassName += " dark-theme";

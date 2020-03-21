@@ -34,7 +34,8 @@ export enum CatalogOverlayShape {
 
 export enum CatalogUpdateMode {
     TableUpdate = "TableUpdate",
-    ViewUpdate = "ViewUpdate"
+    ViewUpdate = "ViewUpdate",
+    PlotsUpdate = "PlotsUpdate"
 }
 
 export enum CatalogPlotType {
@@ -393,13 +394,13 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
                 subsetDataSize = dataSize;
             }
             this.userFilters.subsetDataSize = subsetDataSize;
-        } else if (this.updateMode === CatalogUpdateMode.ViewUpdate) {
+        } else {
             this.userFilters.subsetDataSize = dataSize;
         }
         return this.userFilters;
     }
 
-    @computed get shouldUpdateTableData(): boolean {
+    @computed get shouldUpdateData(): boolean {
         if (this.subsetEndIndex < this.catalogInfo.dataSize) {
             return true;
         }

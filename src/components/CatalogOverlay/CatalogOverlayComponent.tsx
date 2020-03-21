@@ -413,7 +413,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private updateTableData = () => {
         const widgetStore = this.widgetStore;
         // const profile = this.profileStore;
-        if (widgetStore.loadingData === false && widgetStore.updateMode === CatalogUpdateMode.TableUpdate && widgetStore.shouldUpdateTableData) {
+        if (widgetStore.loadingData === false && widgetStore.updateMode === CatalogUpdateMode.TableUpdate && widgetStore.shouldUpdateData) {
             widgetStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
             const filter = this.widgetStore.updateRequestDataSize;
             const currentHidedHeaders = widgetStore.hidedHeaders;
@@ -455,8 +455,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     catalogStore.updateCatalogSize(id, widgetStore.catalogSize);
                     catalogStore.updateCatalogShape(id, widgetStore.catalogShape);
                 }
-
-                if (widgetStore.subsetEndIndex !== widgetStore.catalogInfo.dataSize) {
+                if (widgetStore.shouldUpdateData) {
                     widgetStore.setPlotingData(true);   
                     let catalogFilter = widgetStore.updateRequestDataSize;
                     appStore.sendCatalogFilter(catalogFilter);

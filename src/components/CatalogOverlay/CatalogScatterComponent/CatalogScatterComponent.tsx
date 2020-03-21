@@ -2,19 +2,18 @@ import * as React from "react";
 import * as _ from "lodash";
 import * as Plotly from "plotly.js";
 import Plot from "react-plotly.js";
-import {autorun, computed, observable, values} from "mobx";
+import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {FormGroup, HTMLSelect} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, AnchorButton, Intent, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {WidgetConfig, WidgetProps, HelpType} from "stores";
-import {CatalogScatterWidgetStore} from "stores/widgets";
-import {ScatterPlotComponent, ScatterPlotComponentProps} from "components/Shared";
+import {CatalogScatterWidgetStore, Border, CatalogUpdateMode} from "stores/widgets";
+import {ProfilerInfoComponent} from "components/Shared";
 import {TickType} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {Colors} from "@blueprintjs/core";
-import {toFixed, getTableDataByType} from "utilities";
+import {toFixed} from "utilities";
 import "./CatalogScatterComponent.css";
-import {Point2D} from "models";
 
 @observer
 export class CatalogScatterComponent extends React.Component<WidgetProps> {
@@ -33,18 +32,18 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             defaultHeight: 350,
             title: "Catalog Scatter",
             isCloseable: true,
-            // add
+            // Todo add helptype
             helpType: HelpType.CATALOG_OVERLAY
         };
     }
 
     constructor(props: WidgetProps) {
         super(props);
-        // this.catalog2D = [];
         autorun(() => {
             if (this.widgetStore && this.widgetStore.catalogOverlayWidgetStore) {
                 let progressString = "";
-                const fileName = this.widgetStore.catalogOverlayWidgetStore.catalogInfo.fileInfo.name || "";
+                const catalogFile = this.widgetStore.catalogOverlayWidgetStore.catalogInfo;
+                const fileName = catalogFile.fileInfo.name || "";
                 const appStore = this.props.appStore;
                 const frame = appStore.activeFrame;
                 const progress = this.widgetStore.catalogOverlayWidgetStore.progress;
@@ -55,7 +54,8 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                     // const regionId = this.widgetStore.catalogOverlayWidgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
                     // const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     // const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
-                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Catalog ${fileName} : ${progressString}`);
+                    const catalogFileId = catalogFile.fileId || "";
+                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Catalog ${fileName} : ${catalogFileId} ${progressString}`);
                 }
             } else {
                 this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Catalog : Cursor`);
@@ -75,33 +75,16 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
 
     @computed get scatterData() {
         const widgetStore = this.widgetStore;
-        const columnsName = widgetStore.columnsName;
-        // Todo update chart with partial data
-        let catalog2D = [];
-        if (columnsName.x && columnsName.y) {
-            for (let index = 0; index < widgetStore.xDataset.length; index++) {
-                const x = widgetStore.xDataset[index];
-                const y = widgetStore.yDataset[index];
-                catalog2D.push({x: x, y: y});
-            }   
-        }
-        return catalog2D;
-    }
-
-    @computed get scatterDatasets() {
-        const widgetStore = this.widgetStore;
         let scatterDatasets: Plotly.Data[] = [];
         let data: Plotly.Data = {};
         data.type = "scattergl";
         data.mode = "markers";
-        // data.marker = {
-        //     symbol: "circle", 
-        //     color: "red",
-        //     size: 5,
-        //     // line: {
-        //     //     width: 1.5
-        //     // }
-        // };
+        data.marker = {
+            symbol: "circle", 
+            color: Colors.BLUE2,
+            size: 5,
+        };
+        data.hoverinfo = "none";
         data.x = widgetStore.xDataset;
         data.y = widgetStore.yDataset;
         scatterDatasets.push(data);
@@ -115,6 +98,56 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         } else if (type === "y") {
             this.widgetStore.setColumnY(val);
         }
+        this.widgetStore.setBorder(this.widgetStore.initBorder);
+    }
+
+    private onHover = (event: Plotly.PlotMouseEvent) => {
+        const points = event.points;
+        if (points.length) {
+            const point = points[0];
+            this.widgetStore.setIndicator({x: point.x as number, y: point.y as number});
+            const border: Border = {
+                xMin: point.xaxis.range[0],
+                xMax: point.xaxis.range[1],
+                yMin: point.yaxis.range[0],
+                yMax: point.yaxis.range[1]
+            };
+            this.widgetStore.setBorder(border);   
+        }
+    }
+
+    private genProfilerInfo = (): string[] => {
+        let profilerInfo: string[] = [];
+        const widgetStore = this.widgetStore;
+        const column = widgetStore.columnsName;
+        const indicatorInfo = widgetStore.indicatorInfo;
+        if (indicatorInfo) {
+            profilerInfo.push(column.x + ": " + indicatorInfo.x + ", " + column.y + ": " + indicatorInfo.y);   
+        }
+        return profilerInfo;
+    }
+
+    private onDoubleClick = () => {
+        const border = this.widgetStore.initBorder;
+        this.widgetStore.setBorder(border);
+    }
+
+    private onRelayout = (event: any) => {
+        if (event.dragmode) {
+            this.widgetStore.setDragmode(event.dragmode);
+        }
+    }
+
+    private handlePlotClick = () => {
+        const catalogOverlayWidgetStore = this.widgetStore.catalogOverlayWidgetStore;
+        const appStore = this.props.appStore;
+
+        if (catalogOverlayWidgetStore.shouldUpdateData) {
+            catalogOverlayWidgetStore.setUpdateMode(CatalogUpdateMode.PlotsUpdate);
+            catalogOverlayWidgetStore.setPlotingData(true);   
+            let catalogFilter = catalogOverlayWidgetStore.updateRequestDataSize;
+            appStore.sendCatalogFilter(catalogFilter);
+        }
     }
 
     public render() {
@@ -122,6 +155,12 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         const appStore = this.props.appStore;
         const columnsName = widgetStore.catalogOverlayWidgetStore.displayedColumnHeaders;
         const xyOptions = [];
+        let themeColor = Colors.LIGHT_GRAY5;
+        let lableColor = Colors.GRAY1;
+        let gridColor = Colors.LIGHT_GRAY1;
+        let markerColor = Colors.GRAY2;
+        let spikeLineClass = "catalog-2D-scatter"; 
+        
         for (let index = 0; index < columnsName.length; index++) {
             const column = columnsName[index];
             if (this.DataTypes.indexOf(column.dataType) !== -1) {
@@ -129,51 +168,94 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             }
         }
 
-        // let scatter2D: ScatterPlotComponentProps = {
-        //     xLabel: widgetStore.columnsName.x,
-        //     yLabel: widgetStore.columnsName.y,
-        //     darkMode: appStore.darkTheme,
-        //     plotName: "profile",
-        //     showXAxisTicks: true,
-        //     showXAxisLabel: true,
-        //     usePointSymbols: true,
-        //     zeroLineWidth: 2,
-        //     isGroupSubPlot: false,
-        //     scrollZoom: true,
-        //     // settings
-        //     pointRadius: 2
-        // };
-        // scatter2D.data = this.scatterData;
+        if (appStore.darkTheme) {
+            gridColor = Colors.DARK_GRAY5;
+            lableColor = Colors.LIGHT_GRAY5;
+            themeColor = Colors.DARK_GRAY3;
+            markerColor = Colors.GRAY4;
+            spikeLineClass = "catalog-2D-scatter-dark";
+        }
 
+        // Todo add E
+        const border = widgetStore.border;
         let layout: Partial<Plotly.Layout> = {
             width: this.width, 
             height: this.height - 35,
-            // paper_bgcolor: "rgba(255,255,255, 0)", 
-            // plot_bgcolor: "rgba(255,255,255, 0)",
-            // xaxis: {
-            //     autorange: false,
-            //     showgrid: false,
-            //     zeroline: false,
-            //     showline: false,
-            //     showticklabels: false
-            // },
-            // yaxis: {
-            //     autorange: false,
-            //     showgrid: false,
-            //     zeroline: false,
-            //     showline: false,
-            //     showticklabels: false
-            // },
-            // margin: {
-            //     l: 0,
-            //     r: 0,
-            //     b: 0,
-            //     t: 0,
-            //     pad: 0
-            // },
-            showlegend: false
+            paper_bgcolor: themeColor, 
+            plot_bgcolor: themeColor,
+            hovermode: "closest" ,
+            xaxis: {
+                title: widgetStore.columnsName.x,
+                titlefont: {
+                    size: 12,
+                    color: lableColor
+                },
+                showticklabels: true,
+                tickfont: {
+                    size: 12,
+                    color: lableColor
+                },
+                tickcolor: gridColor,
+                gridcolor: gridColor,
+                zerolinecolor: gridColor,
+                zerolinewidth: 2,
+                // box boreder
+                mirror: true,
+                linecolor: gridColor,
+                showline: true,
+                // indicator 
+                spikemode: "across",
+                spikedash: "solid",
+                spikecolor: markerColor,
+                spikethickness: 1,
+                range: [border.xMin, border.xMax],
+            },
+            yaxis: {
+                title: widgetStore.columnsName.y,
+                titlefont: {
+                    size: 12,
+                    color: lableColor
+                },
+                showticklabels: true,
+                tickfont: {
+                    size: 12,
+                    color: lableColor
+                },
+                tickcolor: gridColor,
+                gridcolor: gridColor,
+                zerolinecolor: gridColor,
+                zerolinewidth: 2,
+                mirror: true,
+                linecolor: gridColor,
+                showline: true,
+                spikemode: "across",
+                spikedash: "solid",
+                spikecolor: markerColor,
+                spikethickness: 1,
+                range: [border.yMin, border.yMax],
+            },
+            margin: {
+                r: 10,
+                t: 10,
+            },
+            showlegend: false,
+            dragmode: widgetStore.dragmode,
         };
-        const data = this.scatterDatasets;
+        const data = this.scatterData;
+        const config: Partial<Plotly.Config> = {
+            displaylogo: false,
+            scrollZoom: true,
+            showTips: false,
+            doubleClick: false,
+            modeBarButtonsToRemove: [
+                "zoomIn2d",
+                "zoomOut2d",
+                "resetScale2d",
+                "toggleSpikelines",
+                "hoverClosestCartesian",
+                "hoverCompareCartesian",
+            ],
+        };
 
         return(
             <div className={"catalog-2D"}>
@@ -189,14 +271,27 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                         </HTMLSelect>
                     </FormGroup>
                 </div>
-                <div className={"catalog-2D-scatter"}>
-                    {/* <ScatterPlotComponent {...scatter2D}/> */}
+                <div className={spikeLineClass}>
                     <Plot
                         data={data}
                         layout={layout}
-                        config={{scrollZoom: true}}
+                        config={config}
                         useResizeHandler={true}
+                        onHover={this.onHover}
+                        onDoubleClick={this.onDoubleClick}
+                        onRelayout={this.onRelayout}
                     />
+                </div>
+                <div className="catalog-2D-footer" >
+                    <ProfilerInfoComponent info={this.genProfilerInfo()}/>
+                    <Tooltip className="plot-button" content={"Update scatter plot"}>
+                        <AnchorButton
+                            intent={Intent.PRIMARY}
+                            text="Update"
+                            onClick={this.handlePlotClick}
+                            disabled={!widgetStore.catalogOverlayWidgetStore.enableLoadButton}
+                        />
+                    </Tooltip>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>
