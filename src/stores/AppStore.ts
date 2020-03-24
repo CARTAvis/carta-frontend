@@ -1014,10 +1014,14 @@ export class AppStore {
                     this.catalogStore.updateCatalogData(catalogWidgetId, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogWidgetStore.catalogCoordinateSystem.system);
                 }
             }
-            // update 
-            const scatterWidget = this.widgetsStore.catalogScatterWidgets.get(catalogWidgetStore.catalogScatterWidgetId);
-            if (scatterWidget) {
-                scatterWidget.updateScatterData();   
+            // update scatter plot
+            const scatterWidgetsStore = catalogWidgetStore.catalogScatterWidgetsId;
+            for (let index = 0; index < scatterWidgetsStore.length; index++) {
+                const scatterWidgetStore = scatterWidgetsStore[index];
+                const scatterWidget = this.widgetsStore.catalogScatterWidgets.get(scatterWidgetStore);
+                if (scatterWidget) {
+                    scatterWidget.updateScatterData();   
+                }    
             }
         }
     }

@@ -83,6 +83,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             symbol: "circle", 
             color: Colors.BLUE2,
             size: 5,
+            opacity: 1
         };
         data.hoverinfo = "none";
         data.x = widgetStore.xDataset;
@@ -148,6 +149,22 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             let catalogFilter = catalogOverlayWidgetStore.updateRequestDataSize;
             appStore.sendCatalogFilter(catalogFilter);
         }
+    }
+
+    private onLassoSelected = (event: Plotly.PlotSelectionEvent) => {
+        if (event) {
+            let selectedPointsIndex = [];
+            const points = event.points;
+            for (let index = 0; index < points.length; index++) {
+                const selectedPoint = points[index];
+                selectedPointsIndex.push(selectedPoint.pointIndex);
+            }
+            this.widgetStore.catalogOverlayWidgetStore.setSelectedPointsIndex(selectedPointsIndex);
+        }
+    }
+
+    private onDeselect = () => {
+        this.widgetStore.catalogOverlayWidgetStore.setSelectedPointsIndex([]);
     }
 
     public render() {
@@ -241,7 +258,19 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             showlegend: false,
             dragmode: widgetStore.dragmode,
         };
-        const data = this.scatterData;
+        let data = this.scatterData;
+        const selectedPointsIndex = widgetStore.catalogOverlayWidgetStore.selectedPointsIndex;
+        let scatterDataMarker = data[0].marker;
+        if (selectedPointsIndex.length > 0) {
+            data[0]["selectedpoints"] = selectedPointsIndex;
+            data[0]["selected"] = {"marker": {"color": Colors.RED2}};
+            data[0]["unselected"] = {"marker": {"opacity": 0.5}};
+        } else {
+            data[0]["selectedpoints"] = [];
+            scatterDataMarker.color = Colors.BLUE2;
+            data[0]["unselected"] = {"marker": {"opacity": 1}};
+        }
+
         const config: Partial<Plotly.Config> = {
             displaylogo: false,
             scrollZoom: true,
@@ -280,6 +309,8 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                         onHover={this.onHover}
                         onDoubleClick={this.onDoubleClick}
                         onRelayout={this.onRelayout}
+                        onSelected={this.onLassoSelected}
+                        onDeselect={this.onDeselect}
                     />
                 </div>
                 <div className="catalog-2D-footer" >

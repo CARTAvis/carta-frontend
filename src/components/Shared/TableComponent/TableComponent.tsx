@@ -20,6 +20,7 @@ export class TableComponentProps {
     columnWidts?: Array<number>;
     type: TableType;
     loadingCell?: boolean;
+    selectedDataIndex?: number[];
     upTableRef?: (ref: Table) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
     updateTableData?: (rowIndexEnd: number) => void;
@@ -35,11 +36,17 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 key={columnName} 
                 name={columnName} 
                 columnHeaderCellRenderer={(columnIndex: number) => this.renderColumnHeaderCell(columnIndex, columnName)} 
-                cellRenderer={(rowIndex, columnIndex) => (
-                    <Cell key={`cell_${columnIndex}_${rowIndex}`} loading={this.isLoading(rowIndex)} interactive={true}>{coloumnData[rowIndex]}</Cell>
-                    )}
+                cellRenderer={(rowIndex, columnIndex) => this.renderCell(rowIndex, columnIndex, coloumnData)}
             />
         );
+    }
+
+    private renderCell = (rowIndex: number, columnIndex: number, coloumnData: any) => {
+        const dataIndex = this.props.selectedDataIndex;
+        if (dataIndex && dataIndex.includes(rowIndex)) {
+            return <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={"danger"} loading={this.isLoading(rowIndex)} interactive={true}>{coloumnData[rowIndex]}</Cell>;
+        }
+        return <Cell key={`cell_${columnIndex}_${rowIndex}`} loading={this.isLoading(rowIndex)} interactive={true}>{coloumnData[rowIndex]}</Cell>;
     }
 
     private renderColumnHeaderCell = (columnIndex: number, columnName: string) => {

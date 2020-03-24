@@ -58,7 +58,7 @@
         "@types/react-color": "^3.0.1",
         "@types/react-dom": "^16.9.2",
         "@types/react-resize-detector": "^3.1.1",
-        "@types/plotly.js": "1.44.28",
+        "@types/plotly.js": "^1.44.33",
         "@types/react-plotly.js": "^2.2.4",
         "chokidar-cli": "^1.2.2",
         "mobx-react-devtools": "^6.1.1",

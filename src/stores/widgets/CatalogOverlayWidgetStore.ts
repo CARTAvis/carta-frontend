@@ -100,7 +100,8 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable userFilters: CARTA.CatalogFilterRequest;
     @observable catalogCoordinateSystem: {system: SystemType, equinox: string, epoch: string, coordinate: {x: CatalogOverlay, y: CatalogOverlay}};
     @observable catalogPlotType: CatalogPlotType;
-    @observable catalogScatterWidgetId: string;
+    @observable catalogScatterWidgetsId: string[];
+    @observable selectedPointsIndex: number[];
 
     constructor(appStore: AppStore, catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData) {
         super(appStore, RegionsType.CLOSED_AND_POINT);
@@ -116,7 +117,8 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.plotingData = false;
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.headerTableColumnWidts = [75, 75, 65, 100, null];
-        this.catalogScatterWidgetId = undefined;
+        this.catalogScatterWidgetsId = [];
+        this.selectedPointsIndex = [];
 
         this.catalogPlotType = CatalogPlotType.ImageOverlay;
         const coordinateSystem = catalogInfo.fileInfo.coosys[0];
@@ -148,7 +150,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     }
 
     @action setCatalogScatterWidget(id: string) {
-        this.catalogScatterWidgetId = id;
+        this.catalogScatterWidgetsId.push(id);
     }
 
     @action setCatalogPlotType(type: CatalogPlotType) {
@@ -345,6 +347,13 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         });
     }
 
+    @action setSelectedPointsIndex(pointsIndex: Array<number>) {
+        this.selectedPointsIndex = pointsIndex;
+        // this..forEach(element => {
+            
+        // });
+    }
+
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
         let displayedColumnHeaders = [];
         this.catalogControlHeader.forEach((value, key) => {
@@ -469,10 +478,6 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             }
         });
         return filters.length > 0;
-    }
-
-    @computed get scatterPlot(): boolean {
-        return this.catalogScatterWidgetId !== undefined;
     }
 
     public get2DPlotData(xColumn: string, yColumn: string, columnsData: CARTA.ICatalogColumnsData): {wcsX: Array<any>, wcsY: Array<any>, xHeaderInfo: CARTA.ICatalogHeader, yHeaderInfo: CARTA.ICatalogHeader} {

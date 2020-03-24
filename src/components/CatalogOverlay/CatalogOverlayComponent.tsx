@@ -397,6 +397,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         widgetStore.clearData();
         widgetStore.setNumVisibleRows(0);
         widgetStore.setSubsetEndIndex(0);
+        widgetStore.setSelectedPointsIndex([]);
         widgetStore.setLoadingDataStatus(true);
         let catalogFilter = widgetStore.updateRequestDataSize;
 
@@ -423,11 +424,12 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private handleClearClick = () => {
+    private handleResetClick = () => {
         const widgetStore = this.widgetStore;
         const appStore = this.props.appStore;
         if (widgetStore) {
             widgetStore.reset();
+            widgetStore.setSelectedPointsIndex([]);
             appStore.catalogStore.clearData(this.widgetId);
             const catalogFilter = widgetStore.initUserFilters;
             appStore.sendCatalogFilter(catalogFilter); 
@@ -463,15 +465,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
                 break;
             case CatalogPlotType.D2Scatter:
-                if (!widgetStore.scatterPlot) {
-                    const scatterProps: CatalogScatterWidgetStoreProps = {
-                        x: coords.wcsX,
-                        y: coords.wcsY,
-                        catalogOverlayWidgetStore: this.widgetStore
-                    };
-                    const scatterWidgetId = appStore.widgetsStore.createFloatingCatalogScatterWidget(scatterProps);
-                    widgetStore.setCatalogScatterWidget(scatterWidgetId);
-                }
+                const scatterProps: CatalogScatterWidgetStoreProps = {
+                    x: coords.wcsX,
+                    y: coords.wcsY,
+                    catalogOverlayWidgetStore: this.widgetStore
+                };
+                const scatterWidgetId = appStore.widgetsStore.createFloatingCatalogScatterWidget(scatterProps);
+                widgetStore.setCatalogScatterWidget(scatterWidgetId);
                 break;
             default:
                 break;
@@ -512,9 +512,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             columnHeaders: widgetStore.displayedColumnHeaders,
             numVisibleRows: widgetStore.numVisibleRows,
             columnWidts: widgetStore.tableColumnWidts,
+            loadingCell: widgetStore.loadingData,
+            selectedDataIndex: widgetStore.selectedPointsIndex,
             upTableRef: this.onCatalogdataTableRefUpdated,
             updateColumnFilter: widgetStore.setColumnFilter,
-            loadingCell: widgetStore.loadingData,
             updateTableData: this.updateTableData,
             updateTableColumnWidth: widgetStore.setTableColumnWidth
         };
@@ -578,7 +579,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                         <AnchorButton
                             intent={Intent.PRIMARY}
                             text="Reset"
-                            onClick={this.handleClearClick}
+                            onClick={this.handleResetClick}
                             disabled={widgetStore.loadOntoImage}
                         />
                         </Tooltip>
