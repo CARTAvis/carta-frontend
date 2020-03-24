@@ -15,7 +15,16 @@
 
     .generator-parameters-row {
         display: flex;
-        flex-wrap: wrap;
+
+        .parameter-container{
+            display: flex;
+            flex-direction: column;
+            .parameter-line{
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+        }
 
         .label-parameters .bp3-label {
             width: 6em;

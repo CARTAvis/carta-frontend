@@ -44,7 +44,8 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
         }
 
         return (
-            <React.Fragment>
+            <div className="parameter-container">
+            <div className="parameter-line">
                 <ClearableNumericInput
                     label="Min"
                     value={this.minValue}
@@ -57,6 +58,8 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                     onValueChanged={val => this.enteredMaxValue = val}
                     onValueCleared={() => this.enteredMaxValue = undefined}
                 />
+            </div>
+            <div className="parameter-line">
                 <FormGroup label="N" inline={true}>
                     <NumericInput
                         value={this.numLevels}
@@ -70,7 +73,8 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                 <FormGroup>
                     <ScalingSelectComponent selectedItem={this.scalingType} onItemSelect={val => this.scalingType = val}/>
                 </FormGroup>
-            </React.Fragment>
+            </div>
+            </div>
         );
     }
 
@@ -121,7 +125,8 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
         }
 
         return (
-            <React.Fragment>
+            <div className="parameter-container">
+                <div className="parameter-line">
                 <ClearableNumericInput
                     label="Start"
                     value={this.startValue}
@@ -134,6 +139,8 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                     onValueChanged={val => this.enteredStepValue = val}
                     onValueCleared={() => this.enteredStepValue = undefined}
                 />
+                </div>
+                <div className="parameter-line">              
                 <FormGroup label="N" inline={true}>
                     <NumericInput
                         value={this.numLevels}
@@ -152,8 +159,9 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                         className="narrow"
                         onValueChange={val => this.multiplierValue = val}
                     />
-                </FormGroup>
-            </React.Fragment>
+                </FormGroup>              
+                </div>
+            </div>
         );
     }
 
@@ -197,33 +205,14 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
         }
 
         return (
-            <React.Fragment>
+            <div className="parameter-container">
+            <div className="parameter-line">
                 <ClearableNumericInput
                     label="Reference"
                     value={this.refValue}
                     onValueChanged={val => this.enteredRefValue = val}
                     onValueCleared={() => this.enteredRefValue = undefined}
                 />
-                <FormGroup label="Lower (%)" inline={true}>
-                    <NumericInput
-                        value={this.lowerPercentage}
-                        min={0}
-                        max={100}
-                        step={1}
-                        className="narrow"
-                        onValueChange={val => this.lowerPercentage = val}
-                    />
-                </FormGroup>
-                <FormGroup label="Upper (%)" inline={true}>
-                    <NumericInput
-                        value={this.upperPercentage}
-                        min={0}
-                        max={100}
-                        step={1}
-                        className="narrow"
-                        onValueChange={val => this.upperPercentage = val}
-                    />
-                </FormGroup>
                 <FormGroup label="N" inline={true}>
                     <NumericInput
                         value={this.numLevels}
@@ -234,7 +223,30 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                         onValueChange={val => this.numLevels = Math.floor(val)}
                     />
                 </FormGroup>
-            </React.Fragment>
+            </div>
+            <div className="parameter-line">
+                <FormGroup label="Upper (%)" inline={true}>
+                    <NumericInput
+                        value={this.upperPercentage}
+                        min={0}
+                        max={100}
+                        step={1}
+                        className="narrow"
+                        onValueChange={val => this.upperPercentage = val}
+                    />
+                </FormGroup>
+                <FormGroup label="Lower (%)" inline={true}>
+                    <NumericInput
+                        value={this.lowerPercentage}
+                        min={0}
+                        max={100}
+                        step={1}
+                        className="narrow"
+                        onValueChange={val => this.lowerPercentage = val}
+                    />
+                </FormGroup>
+            </div>
+            </div>
         );
     }
 
@@ -302,7 +314,8 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
         }
 
         return (
-            <React.Fragment>
+            <div className="parameter-container">
+            <div className="parameter-line">
                 <ClearableNumericInput
                     label="Mean"
                     value={this.meanValue}
@@ -315,6 +328,8 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                     onValueChanged={val => this.enteredSigmaValue = val}
                     onValueCleared={() => this.enteredSigmaValue = undefined}
                 />
+            </div>
+            <div className="parameter-line">
                 <FormGroup label={"Sigma List"} inline={true}>
                     <TagInput
                         addOnBlur={true}
@@ -327,7 +342,8 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                         values={this.sigmaLevels}
                     />
                 </FormGroup>
-            </React.Fragment>
+            </div>
+            </div>
         );
     }
 
@@ -408,8 +424,9 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                     <Button intent="success" className="generate-button" onClick={this.generateLevels}>Generate</Button>
                 </div>
                 <div className="generator-parameters-row">
-                    <FormGroup label="Parameters" inline={true}/>
+                    <FormGroup label="Parameters" inline={true}>
                     {generatorParameters}
+                    </FormGroup>
                 </div>
             </div>
         );
