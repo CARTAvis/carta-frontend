@@ -2,14 +2,14 @@ import * as React from "react";
 import * as _ from "lodash";
 import {observable} from "mobx";
 import {observer} from "mobx-react";
-import {AnchorButton, Button, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, NumericInput, Position, Radio, RadioGroup, Switch, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
+import {AnchorButton, Button, Checkbox, FormGroup, HTMLSelect, IDialogProps, Intent, MenuItem, Position, Radio, RadioGroup, Switch, Tab, TabId, Tabs, Tooltip} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {ColorResult} from "react-color";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {ScalingSelectComponent} from "components/Shared/ScalingSelectComponent/ScalingSelectComponent";
 import {ColorComponent} from "components/Dialogs/OverlaySettings/ColorComponent";
-import {ColormapComponent, ColorPickerComponent} from "components/Shared";
+import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {CompressionQuality, CursorPosition, Event, RegionCreationMode, SPECTRAL_MATCHING_TYPES, SPECTRAL_TYPE_STRING, Theme, TileCache, WCSMatchingType, WCSType, Zoom, ZoomPoint} from "models";
 import {AppStore, BeamType, ContourGeneratorType, FrameScaling, HelpType, PreferenceKeys, RegionStore, RenderConfigStore} from "stores";
 import {hexStringToRgba, SWATCH_COLORS} from "utilities";
@@ -184,31 +184,23 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                 </FormGroup>
                 {(preference.scaling === FrameScaling.LOG || preference.scaling === FrameScaling.POWER) &&
                 <FormGroup label={"Alpha"} inline={true}>
-                    <NumericInput
+                    <SafeNumericInput
                         buttonPosition={"none"}
                         value={preference.scalingAlpha}
-                        onValueChange={(value: number) => {
-                            if (isFinite(value)) {
-                                preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, value);
-                            }
-                        }}
+                        onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_ALPHA, value)}
                     />
                 </FormGroup>
                 }
                 {preference.scaling === FrameScaling.GAMMA &&
                 <FormGroup label={"Gamma"} inline={true}>
-                    <NumericInput
+                    <SafeNumericInput
                         min={RenderConfigStore.GAMMA_MIN}
                         max={RenderConfigStore.GAMMA_MAX}
                         stepSize={0.1}
                         minorStepSize={0.01}
                         majorStepSize={0.5}
                         value={preference.scalingGamma}
-                        onValueChange={(value: number) => {
-                            if (isFinite(value)) {
-                                preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, value);
-                            }
-                        }}
+                        onValueChange={value => preference.setPreference(PreferenceKeys.RENDER_CONFIG_SCALING_GAMMA, value)}
                     />
                 </FormGroup>
                 }
@@ -247,7 +239,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     </HTMLSelect>
                 </FormGroup>
                 <FormGroup inline={true} label="Default Smoothing Factor">
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Default Smoothing Factor"
                         min={1}
                         max={33}
@@ -258,7 +250,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Default Contour Levels">
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Default Contour Levels"
                         min={1}
                         max={15}
@@ -269,7 +261,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Thickness">
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Thickness"
                         min={0.5}
                         max={10}
@@ -354,7 +346,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Beam Width" labelInfo="(px)">
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Beam Width"
                         min={0.5}
                         max={10}
@@ -385,7 +377,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Line Width" labelInfo="(px)">
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Line Width"
                         min={RegionStore.MIN_LINE_WIDTH}
                         max={RegionStore.MAX_LINE_WIDTH}
@@ -395,7 +387,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Dash Length" labelInfo="(px)">
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Dash Length"
                         min={0}
                         max={RegionStore.MAX_DASH_LENGTH}
@@ -427,7 +419,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     <Switch checked={preference.lowBandwidthMode} onChange={(ev) => preference.setPreference(PreferenceKeys.PERFORMANCE_LOW_BAND_WIDTH_MODE, ev.currentTarget.checked)}/>
                 </FormGroup>
                 <FormGroup inline={true} label="Compression Quality" labelInfo={"(Images)"}>
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Compression Quality"
                         min={CompressionQuality.IMAGE_MIN}
                         max={CompressionQuality.IMAGE_MAX}
@@ -437,7 +429,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Compression Quality" labelInfo={"(Animation)"}>
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Compression Quality"
                         min={CompressionQuality.ANIMATION_MIN}
                         max={CompressionQuality.ANIMATION_MAX}
@@ -447,7 +439,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="GPU Tile Cache Size">
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="GPU Tile Cache Size"
                         min={TileCache.GPU_MIN}
                         max={TileCache.GPU_MAX}
@@ -458,7 +450,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="System Tile Cache Size">
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="System Tile Cache Size"
                         min={TileCache.SYSTEM_MIN}
                         max={TileCache.SYSTEM_MAX}
@@ -469,7 +461,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Contour Rounding Factor">
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Contour Rounding Factor"
                         min={1}
                         max={32}
@@ -480,7 +472,7 @@ export class PreferenceDialogComponent extends React.Component<{ appStore: AppSt
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Contour Compression Level">
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Contour Compression Level"
                         min={0}
                         max={19}
