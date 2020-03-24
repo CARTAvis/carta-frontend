@@ -49,8 +49,8 @@ export type ControlHeader = { columnIndex: number, dataIndex: number, display: b
 export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     public static readonly InitTableRows = 50;
-
     private static readonly DataChunkSize = 50;
+    private static readonly initDisplayedColumnSize = 10;
     private readonly CoordinateSystemName = new Map<SystemType, string>([
         [SystemType.FK5, "FK5"],
         [SystemType.FK4, "FK4"],
@@ -325,14 +325,17 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @computed get initCatalogControlHeader() {
         const controlHeaders = new Map<string, ControlHeader>();
         const catalogHeader = this.catalogHeader;
+
         if (catalogHeader.length) {
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
                 let display = false;
-                if (this.findKeywords(header.description)) {
+                // if (this.findKeywords(header.description)) {
+                //     display = true;
+                // }
+                if (index < CatalogOverlayWidgetStore.initDisplayedColumnSize) {
                     display = true;
                 }
-                // Todo: set default x and y representation 
                 let controlHeader: ControlHeader = {columnIndex: header.columnIndex, dataIndex: index, display: display, representAs: CatalogOverlay.NONE, filter: undefined, columnWidth: null};
                 controlHeaders.set(header.name, controlHeader);
             }
@@ -349,9 +352,6 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
 
     @action setSelectedPointsIndex(pointsIndex: Array<number>) {
         this.selectedPointsIndex = pointsIndex;
-        // this..forEach(element => {
-            
-        // });
     }
 
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
