@@ -32,7 +32,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     @observable smoothingMode: CARTA.SmoothingMode;
     @observable smoothingFactor: number;
 
-    private static readonly DefaultWidth = 850;
+    private static readonly DefaultWidth = 650;
     private static readonly DefaultHeight = 660;
 
     private readonly widgetStore: RenderConfigWidgetStore;

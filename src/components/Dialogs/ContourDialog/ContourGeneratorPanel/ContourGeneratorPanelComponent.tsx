@@ -70,7 +70,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                         onValueChange={val => this.numLevels = Math.floor(val)}
                     />
                 </FormGroup>
-                <FormGroup>
+                <FormGroup label="Scaling" inline={true}>
                     <ScalingSelectComponent selectedItem={this.scalingType} onItemSelect={val => this.scalingType = val}/>
                 </FormGroup>
             </div>
