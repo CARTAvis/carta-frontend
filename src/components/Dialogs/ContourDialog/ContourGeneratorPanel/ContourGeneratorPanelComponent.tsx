@@ -4,7 +4,7 @@ import {action, computed, observable} from "mobx";
 import {Button, FormGroup, MenuItem, NumericInput, TagInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {ContourGeneratorType, FrameScaling, FrameStore} from "stores";
-import {ScalingSelectComponent, ClearableNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
+import {ScalingSelectComponent, ClearableNumericInput, SCALING_POPOVER_PROPS, SafeNumericInput} from "components/Shared";
 import {getPercentiles, scaleValue} from "utilities";
 import "./ContourGeneratorPanelComponent.css";
 
@@ -61,7 +61,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
             </div>
             <div className="parameter-line">
                 <FormGroup label="N" inline={true}>
-                    <NumericInput
+                    <SafeNumericInput
                         value={this.numLevels}
                         min={1}
                         max={20}
@@ -142,7 +142,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                 </div>
                 <div className="parameter-line">              
                 <FormGroup label="N" inline={true}>
-                    <NumericInput
+                    <SafeNumericInput
                         value={this.numLevels}
                         min={1}
                         max={20}
@@ -152,7 +152,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                     />
                 </FormGroup>
                 <FormGroup label="Multiplier" inline={true}>
-                    <NumericInput
+                    <SafeNumericInput
                         value={this.multiplierValue}
                         min={0.1}
                         step={1}
@@ -214,7 +214,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                     onValueCleared={() => this.enteredRefValue = undefined}
                 />
                 <FormGroup label="N" inline={true}>
-                    <NumericInput
+                    <SafeNumericInput
                         value={this.numLevels}
                         min={1}
                         max={20}
@@ -226,7 +226,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
             </div>
             <div className="parameter-line">
                 <FormGroup label="Upper (%)" inline={true}>
-                    <NumericInput
+                    <SafeNumericInput
                         value={this.upperPercentage}
                         min={0}
                         max={100}
@@ -236,7 +236,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                     />
                 </FormGroup>
                 <FormGroup label="Lower (%)" inline={true}>
-                    <NumericInput
+                    <SafeNumericInput
                         value={this.lowerPercentage}
                         min={0}
                         max={100}
