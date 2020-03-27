@@ -99,12 +99,12 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         return (
             <Cell className={rowIndex === appStore.activeFrameIndex ? "active-row-cell" : ""}>
                 <React.Fragment>
-                    <Tooltip content={<span>Raster image<br/><i><small>Click to {frame.renderConfig.visible ? "hide" : "show"}</small></i></span>}>
-                        <AnchorButton minimal={true} small={true} intent={frame.renderConfig.visible ? "success" : "none"} onClick={frame.renderConfig.toggleVisibility}>R</AnchorButton>
+                    <Tooltip position={"bottom"} content={<span>Raster image<br/><i><small>Click to {frame.renderConfig.visible ? "hide" : "show"}</small></i></span>}>
+                        <AnchorButton minimal={true} small={true} active={frame.renderConfig.visible} intent={frame.renderConfig.visible ? "success" : "none"} onClick={frame.renderConfig.toggleVisibility}>R</AnchorButton>
                     </Tooltip>
                     {frame.contourConfig.enabled &&
-                    <Tooltip content={<span>Contour image<br/><i><small>Click to {frame.contourConfig.visible ? "hide" : "show"}</small></i></span>}>
-                        <AnchorButton minimal={true} small={true} intent={frame.contourConfig.visible ? "success" : "none"} onClick={frame.contourConfig.toggleVisibility}>C</AnchorButton>
+                    <Tooltip position={"bottom"} content={<span>Contour image<br/><i><small>Click to {frame.contourConfig.visible ? "hide" : "show"}</small></i></span>}>
+                        <AnchorButton minimal={true} small={true} active={frame.contourConfig.visible} intent={frame.contourConfig.visible ? "success" : "none"} onClick={frame.contourConfig.toggleVisibility}>C</AnchorButton>
                     </Tooltip>
                     }
                 </React.Fragment>
@@ -129,8 +129,17 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 tooltipSubtitle = `Click to ${frame.spatialReference ? "disable" : "enable"} matching to ${appStore.spatialReference.frameInfo.fileInfo.name}`;
             }
             spatialMatchingButton = (
-                <Tooltip content={<span>Spatial matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
-                    <AnchorButton minimal={true} small={true} active={frame === appStore.spatialReference} intent={frame.spatialReference ? "primary" : "none"} onClick={() => appStore.toggleSpatialMatching(frame)}>XY</AnchorButton>
+                <Tooltip position={"bottom"} content={<span>Spatial matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
+                    <AnchorButton
+                        className={frame === appStore.spatialReference ? "outlined" : ""}
+                        minimal={true}
+                        small={true}
+                        active={!!frame.spatialReference}
+                        intent={frame.spatialReference ? "success" : "none"}
+                        onClick={() => appStore.toggleSpatialMatching(frame)}
+                    >
+                        XY
+                    </AnchorButton>
                 </Tooltip>
             );
         }
@@ -144,13 +153,13 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                 tooltipSubtitle = `Click to ${frame.spectralReference ? "disable" : "enable"} matching to ${appStore.spectralReference.frameInfo.fileInfo.name}`;
             }
             spectralMatchingButton = (
-                <Tooltip content={<span>Spectral matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
+                <Tooltip position={"bottom"} content={<span>Spectral matching<br/><i><small>{tooltipSubtitle}</small></i></span>}>
                     <AnchorButton
-                        className="spectral-matching-button"
+                        className={frame === appStore.spectralReference ? "outlined" : ""}
                         minimal={true}
                         small={true}
-                        active={frame === appStore.spectralReference}
-                        intent={frame.spectralReference ? "primary" : "none"}
+                        active={!!frame.spectralReference}
+                        intent={frame.spectralReference ? "success" : "none"}
                         onClick={() => appStore.toggleSpectralMatching(frame)}
                     >
                         Z
@@ -257,7 +266,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
                     columnWidths={this.columnWidths}
                     enableColumnResizing={true}
                     onColumnWidthChanged={this.onColumnWidthsChange}
-                    bodyContextMenuRenderer={this.contextMenuRenderer}
+                    //bodyContextMenuRenderer={this.contextMenuRenderer}
                 >
                     <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.fileNameRenderer}/>
                     <Column columnHeaderCellRenderer={this.columnHeaderRenderer} cellRenderer={this.typeRenderer}/>
