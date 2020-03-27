@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, computed, observable} from "mobx";
-import {Button, FormGroup, MenuItem, NumericInput, TagInput} from "@blueprintjs/core";
+import {Button, FormGroup, MenuItem, TagInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {ContourGeneratorType, FrameScaling, FrameStore} from "stores";
 import {ScalingSelectComponent, ClearableNumericInputComponent, SCALING_POPOVER_PROPS, SafeNumericInput} from "components/Shared";
