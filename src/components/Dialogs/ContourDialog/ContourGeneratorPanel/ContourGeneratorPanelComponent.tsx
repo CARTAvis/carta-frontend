@@ -51,12 +51,14 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                     value={this.minValue}
                     onValueChanged={val => this.enteredMinValue = val}
                     onValueCleared={() => this.enteredMinValue = undefined}
+                    displayExponential={true}
                 />
                 <ClearableNumericInputComponent
                     label="Max"
                     value={this.maxValue}
                     onValueChanged={val => this.enteredMaxValue = val}
                     onValueCleared={() => this.enteredMaxValue = undefined}
+                    displayExponential={true}
                 />
             </div>
             <div className="parameter-line">
@@ -214,6 +216,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                     value={this.refValue}
                     onValueChanged={val => this.enteredRefValue = val}
                     onValueCleared={() => this.enteredRefValue = undefined}
+                    displayExponential={true}
                 />
                 <FormGroup label="N" inline={true}>
                     <SafeNumericInput
@@ -323,12 +326,14 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
                     value={this.meanValue}
                     onValueChanged={val => this.enteredMeanValue = val}
                     onValueCleared={() => this.enteredMeanValue = undefined}
+                    displayExponential={true}
                 />
                 <ClearableNumericInputComponent
                     label="Sigma"
                     value={this.sigmaValue}
                     onValueChanged={val => this.enteredSigmaValue = val}
                     onValueCleared={() => this.enteredSigmaValue = undefined}
+                    displayExponential={true}
                 />
             </div>
             <div className="parameter-line">

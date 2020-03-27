@@ -31,7 +31,6 @@
                 flex-wrap: wrap;
 
                 .bp3-form-group {
-                    // width:200px;
                     padding-right: 10px;
                     .bp3-label {
                         width: 5em;
@@ -42,16 +41,24 @@
         }
 
         .bp3-numeric-input {
+            width:110px;
             .bp3-input-group {
+                height: 30px;
                 input {
-                    width: 105px;
+                    width: 110px;
                 }
             }
 
             &.narrow {
                 .bp3-input-group {
                     input {
-                        width: 75px;
+                        width: 80px;
+                    }
+                }
+
+                .bp3-button-group {
+                    .bp3-button {
+                        width: 30px;
                     }
                 }
             }
