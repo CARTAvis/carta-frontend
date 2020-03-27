@@ -4,7 +4,7 @@ import {action, computed, observable} from "mobx";
 import {Button, FormGroup, MenuItem, NumericInput, TagInput} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {ContourGeneratorType, FrameScaling, FrameStore} from "stores";
-import {ScalingSelectComponent, ClearableNumericInput, SCALING_POPOVER_PROPS, SafeNumericInput} from "components/Shared";
+import {ScalingSelectComponent, ClearableNumericInputComponent, SCALING_POPOVER_PROPS, SafeNumericInput} from "components/Shared";
 import {getPercentiles, scaleValue} from "utilities";
 import "./ContourGeneratorPanelComponent.css";
 
@@ -46,13 +46,13 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
         return (
             <div className="parameter-container">
             <div className="parameter-line">
-                <ClearableNumericInput
+                <ClearableNumericInputComponent
                     label="Min"
                     value={this.minValue}
                     onValueChanged={val => this.enteredMinValue = val}
                     onValueCleared={() => this.enteredMinValue = undefined}
                 />
-                <ClearableNumericInput
+                <ClearableNumericInputComponent
                     label="Max"
                     value={this.maxValue}
                     onValueChanged={val => this.enteredMaxValue = val}
@@ -127,17 +127,19 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
         return (
             <div className="parameter-container">
                 <div className="parameter-line">
-                <ClearableNumericInput
+                <ClearableNumericInputComponent
                     label="Start"
                     value={this.startValue}
                     onValueChanged={val => this.enteredStartValue = val}
                     onValueCleared={() => this.enteredStartValue = undefined}
+                    displayExponential={true}
                 />
-                <ClearableNumericInput
+                <ClearableNumericInputComponent
                     label="Step"
                     value={this.stepValue}
                     onValueChanged={val => this.enteredStepValue = val}
                     onValueCleared={() => this.enteredStepValue = undefined}
+                    displayExponential={true}
                 />
                 </div>
                 <div className="parameter-line">              
@@ -207,7 +209,7 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
         return (
             <div className="parameter-container">
             <div className="parameter-line">
-                <ClearableNumericInput
+                <ClearableNumericInputComponent
                     label="Reference"
                     value={this.refValue}
                     onValueChanged={val => this.enteredRefValue = val}
@@ -316,13 +318,13 @@ export class ContourGeneratorPanelComponent extends React.Component<{ frame: Fra
         return (
             <div className="parameter-container">
             <div className="parameter-line">
-                <ClearableNumericInput
+                <ClearableNumericInputComponent
                     label="Mean"
                     value={this.meanValue}
                     onValueChanged={val => this.enteredMeanValue = val}
                     onValueCleared={() => this.enteredMeanValue = undefined}
                 />
-                <ClearableNumericInput
+                <ClearableNumericInputComponent
                     label="Sigma"
                     value={this.sigmaValue}
                     onValueChanged={val => this.enteredSigmaValue = val}
