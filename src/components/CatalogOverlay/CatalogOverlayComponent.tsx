@@ -525,8 +525,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             startIndex = 1;
         }
         let info = `Showing ${startIndex} to ${widgetStore.numVisibleRows} of ${widgetStore.catalogInfo.dataSize} entries`;
-        if (widgetStore.hasFilter && widgetStore.subsetEndIndex) {
-            info = `Showing ${startIndex} to ${widgetStore.numVisibleRows} of ${widgetStore.subsetEndIndex} entries, total ${widgetStore.catalogInfo.dataSize} entries`;
+        if (widgetStore.hasFilter && widgetStore.filterDataSize) {
+            info = `Showing ${startIndex} to ${widgetStore.numVisibleRows} of ${widgetStore.filterDataSize} entries, total ${widgetStore.catalogInfo.dataSize} entries`;
         }
         let tableInfo = (widgetStore.catalogInfo.dataSize) ? (
             <tr>

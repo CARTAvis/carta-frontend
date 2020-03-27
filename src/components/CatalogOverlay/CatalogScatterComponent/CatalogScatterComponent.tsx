@@ -318,7 +318,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                     <Tooltip className="plot-button" content={"Update scatter plot"}>
                         <AnchorButton
                             intent={Intent.PRIMARY}
-                            text="Update"
+                            text="Plot All"
                             onClick={this.handlePlotClick}
                             disabled={!widgetStore.catalogOverlayWidgetStore.enableLoadButton}
                         />

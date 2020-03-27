@@ -102,6 +102,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable catalogPlotType: CatalogPlotType;
     @observable catalogScatterWidgetsId: string[];
     @observable selectedPointsIndex: number[];
+    @observable filterDataSize: number;
 
     constructor(appStore: AppStore, catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData) {
         super(appStore, RegionsType.CLOSED_AND_POINT);
@@ -119,6 +120,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.headerTableColumnWidts = [75, 75, 65, 100, null];
         this.catalogScatterWidgetsId = [];
         this.selectedPointsIndex = [];
+        this.filterDataSize = undefined;
 
         this.catalogPlotType = CatalogPlotType.ImageOverlay;
         const coordinateSystem = catalogInfo.fileInfo.coosys[0];
@@ -200,6 +202,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             this.addSubsetStringData(this.catalogData.stringColumn, catalogData.stringColumn);
             this.setNumVisibleRows(numVisibleRows); 
             this.subsetEndIndex = subsetEndIndex;
+            this.filterDataSize = catalogFilter.filterDataSize;
         }
     }
 
@@ -348,6 +351,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         controlHeaders.forEach((value, key) => {
             value.filter = undefined;
         });
+        this.filterDataSize = undefined;
     }
 
     @action setSelectedPointsIndex(pointsIndex: Array<number>) {

@@ -1004,8 +1004,7 @@ export class AppStore {
                 catalogWidgetStore.setPlotingData(false);
             }
 
-            if (catalogWidgetStore.updateMode === CatalogUpdateMode.ViewUpdate) { 
-                // update plot data, allow update ovelay while table loading                
+            if (catalogWidgetStore.updateMode === CatalogUpdateMode.ViewUpdate) {               
                 const xColumn = catalogWidgetStore.xColumnRepresentation;
                 const yColumn = catalogWidgetStore.yColumnRepresentation;
                 if (xColumn && yColumn) {
