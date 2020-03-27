@@ -51,13 +51,16 @@
 
             &.narrow {
                 .bp3-input-group {
+                    height: 30px;
                     input {
-                        width: 80px;
+                        width: 81px;
                     }
                 }
 
                 .bp3-button-group {
+                    height: 30px;
                     .bp3-button {
+                        height: 15px;
                         width: 30px;
                     }
                 }
