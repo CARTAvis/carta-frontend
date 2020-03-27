@@ -42,17 +42,16 @@
         }
 
         .bp3-numeric-input {
-            width: 90px;
             .bp3-input-group {
                 input {
-                    width: 90px;
+                    width: 105px;
                 }
             }
 
             &.narrow {
                 .bp3-input-group {
                     input {
-                        width: 50px;
+                        width: 75px;
                     }
                 }
             }
