@@ -12,7 +12,7 @@ export class PresetLayout {
             },
             rightColumnContent: [{type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "x"}}, {type: "component", id: "spatial-profiler", widgetSettings: {coordinate: "y"}}, {
                 type: "stack",
-                content: [{type: "component", id: "animator"}, {type: "component", id: "region-list"}, {type: "component", id: "layer-list"}]
+                content: [{type: "component", id: "layer-list"}, {type: "component", id: "animator"}, {type: "component", id: "region-list"}]
             }]
         }],
         [PresetLayout.CUBEVIEW, {
