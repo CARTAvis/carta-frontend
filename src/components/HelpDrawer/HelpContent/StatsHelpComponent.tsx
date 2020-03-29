@@ -26,7 +26,7 @@ export class StatsHelpComponent extends React.Component<{ appStore: AppStore }> 
                 </ul>
                 <br/>
                 <h4 id="tip">TIP</h4>
-                <p>Multiple statistics widgets can be created to show statistis for different regions.</p>
+                <p>Multiple statistics widgets can be created to show statistics for different regions.</p>
             </div>
         );
     }
