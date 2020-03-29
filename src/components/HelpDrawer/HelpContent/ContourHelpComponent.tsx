@@ -55,10 +55,8 @@ export class ContourHelpComponent extends React.Component<{ appStore: AppStore }
                 </ul>
                 <p>Note that changes in styling will be applied immediately if the contour levels set does not change.</p>
                 <h3 id="customizing-the-contour-configuration-dialogue">Customizing the contour configuration dialogue</h3>
-                <p>The defaults of many options in the contour configuration dialogue are customizable via the &quot;Contour configuration&quot; tab in the preference dialogue.</p>
-                <p>Performance related options are included in the &quot;Performance&quot; tab of the preference dialogue.</p>           
+                <p>The defaults of many options in the contour configuration dialogue are customizable via the &quot;Contour configuration&quot; tab in the preference dialogue. Performance related options are included in the &quot;Performance&quot; tab of the preference dialogue.</p>       
                 <p><em>Note that we do not recommend to modify the factory defaults. Change with cautions.</em></p>
-           
             </div>
         );
     }
