@@ -8,9 +8,9 @@ export class RenderConfigHelpComponent extends React.Component<{ appStore: AppSt
         return (
             <div>
                 <p>Render configuration widget controls how a raster image is rendered in color space. The widget equips with a set of clip levels as buttons on the top. The clip boundaries are displayed in the &quot;Clip
-                    Min&quot; and &quot;Clip Max&quot; fields. These fields can be manually edited and the clip level will switch to &quot;Custom&quot;. The clip boundaries are visualized as two vertial lines (also draggable) in red in the
+                    Min&quot; and &quot;Clip Max&quot; fields. These fields can be manually edited and the clip level will switch to &quot;Custom&quot;. The clip boundaries are visualized as two vertical lines (also draggable) in red in the
                     histogram.</p>
-                <p>As default, a per-channel histogram is shown, and optionally a per-cube histogram can be displayed via the &quot;Histogram&quot; dropdown. Different scaling functions and colormaps can be choosed via
+                <p>As default, a per-channel histogram is shown, and optionally a per-cube histogram can be displayed via the &quot;Histogram&quot; dropdown. Different scaling functions and colormaps can be chosen via
                     the &quot;Scaling&quot; and &quot;Color map&quot; dropdowns, respectively. A color map might be inverted via the &quot;Invert color map&quot; toggle.</p>
                 <p>The appearance of the histogram plot can be configured through the render configuration settings dialogue, including:</p>
                 <ul>
