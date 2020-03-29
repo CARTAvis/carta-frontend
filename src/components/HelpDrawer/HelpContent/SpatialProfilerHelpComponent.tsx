@@ -9,7 +9,7 @@ export class SpatialProfilerHelpComponent extends React.Component<{ appStore: Ap
             <div>
                 <p>Spatial profiler widget allows users to view a profile from a horizontal cut or a vertical cut at the cursor position in the image viewer. The cursor position may be fixed in the image viewer by
                     pressing <code>F</code> key. Pressing again will unfreeze the cursor.</p>
-                <p>The cursor postition in image coordinate is displayed as a red vertical line in the spatial profile plot.</p>
+                <p>The cursor position in image coordinate is displayed as a red vertical line in the spatial profile plot.</p>
                 <p>When cursor is in the image viewer, the cursor position and pointed pixel value are reported at the bottom-left corner of the spatial profiler widget. When cursor moves into the spatial profile plot, numerical values of
                     the profile at the cursor position (displayed as a grey vertical line) will be reported instead.</p>
                 <h3 id="profile-mean-and-rms">Profile mean and RMS</h3>
@@ -25,9 +25,9 @@ export class SpatialProfilerHelpComponent extends React.Component<{ appStore: Ap
                     <li><code>double-click</code> to reset x and y ranges</li>
                     <li><code>shift + click-and-drag</code> to pan in x</li>
                 </ul>
-                <p>In addition, the x and y ranges can be explicitly set in the spaital profiler settings dialogue.</p>
+                <p>In addition, the x and y ranges can be explicitly set in the spatial profiler settings dialogue.</p>
                 <h3 id="exports">Exports</h3>
-                <p>The spatial profile plot can be exported as a png file or a text file in tsv format via the buttons at the bottm-right corner (shown when hovering over the plot).</p>
+                <p>The spatial profile plot can be exported as a png file or a text file in tsv format via the buttons at the bottom-right corner (shown when hovering over the plot).</p>
                 <h3 id="plot-cosmetics">Plot cosmetics</h3>
                 <p>The appearance of the spatial profile plot is customizable via the spatial profiler settings dialogue (the cog icon). Supported options are:</p>
                 <ul>
@@ -35,7 +35,7 @@ export class SpatialProfilerHelpComponent extends React.Component<{ appStore: Ap
                     <li>plot styles including steps (default), lines, and dots</li>
                     <li>line width for steps or lines</li>
                     <li>point size for dots</li>
-                    <li>display alternative horizonal axis in world coordinate</li>
+                    <li>display alternative horizontal axis in world coordinate</li>
                 </ul>
                 <br/>
                 <h4 id="note">NOTE</h4>
