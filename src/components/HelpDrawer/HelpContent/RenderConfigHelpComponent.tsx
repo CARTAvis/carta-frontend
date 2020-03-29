@@ -1,7 +1,7 @@
 import * as React from "react";
 import {AppStore} from "stores";
 import {ImageComponent} from "./ImageComponent";
-import * as headRenderconfigButton from "static/help/head_rendercongfig_button.png";
+import * as headRenderconfigButton from "static/help/head_renderconfig_button.png";
 import * as headRenderconfigButton_d from "static/help/head_renderconfig_button_d.png";
 
 
