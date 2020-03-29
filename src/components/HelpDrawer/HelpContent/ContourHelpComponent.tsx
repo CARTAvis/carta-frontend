@@ -7,7 +7,7 @@ export class ContourHelpComponent extends React.Component<{ appStore: AppStore }
     public render() {
         return (
             <div>
-                <p>Contour configuration dialogue allows users to geneate a contour layer on top of a raster image in the image
+                <p>Contour configuration dialogue allows users to generate a contour layer on top of a raster image in the image
         viewer. Steps to create a contour layer with the &quot;Levels&quot; tab are:</p>
                 <ol>
                     <li>
@@ -22,7 +22,7 @@ export class ContourHelpComponent extends React.Component<{ appStore: AppStore }
                         <ul>
                             <li><code>Click</code> on the histogram plot to create a level. <code>Right-Click</code> on a line to
                     remove a level. Numerical values of levels are displayed in the &quot;Levels&quot; field.</li>
-                            <li>Use the level generator. There are four preset generators. The genetator will create a set of levels
+                            <li>Use the level generator. There are four preset generators. The generator will create a set of levels
                     based on the control parameters by pressing the &quot;Generate&quot; button.</li>
                             <li>Manually input levels in the &quot;Level&quot; field. Note that this field can be modified at any
                     time, for example, after using the level generator.</li>
@@ -34,18 +34,18 @@ export class ContourHelpComponent extends React.Component<{ appStore: AppStore }
                     </li>
                 </ol>
                 <p>To remove a contour layer, press the &quot;Clear&quot; button.</p>
-                <p>Users may use the lock button next to the data source dropdown to disable or enable sychronization of data source
+                <p>Users may use the lock button next to the data source dropdown to disable or enable synchronization of data source
         with the frame slider in the animator.</p>
                 <h3 id="contour-smoothness">Contour smoothness</h3>
-                <p>By default, image is block-smoothed with a kernal size of four pixels before calculating contour vertices. This
-        can be customized in the &quot;Confoguration&quot; tab. Smoothing mode incldues:</p>
+                <p>By default, image is block-smoothed with a kernel size of four pixels before calculating contour vertices. This
+        can be customized in the &quot;Configuration&quot; tab. Smoothing mode includes:</p>
                 <ul>
                     <li>No smoothing</li>
                     <li>Block (default, faster, but not ideal for compact objects)</li>
                     <li>Gaussian (slower, but better appearance)</li>
                 </ul>
                 <h3 id="contour-cosmetics">Contour cosmetics</h3>
-                <p>The cosmectics of contours can be customized with the &quot;Styling&quot; tab. Supported options are:</p>
+                <p>The cosmetics of contours can be customized with the &quot;Styling&quot; tab. Supported options are:</p>
                 <ul>
                     <li>Line thickness</li>
                     <li>Representation of dashed line</li>
@@ -75,7 +75,7 @@ export class ContourHelpComponent extends React.Component<{ appStore: AppStore }
                     <li>Contour chunk size</li>
                     <li>Contour control map resolution</li>
                 </ul>
-                <p><em>Note that we do not recommand to modify the factory defaults. Change with cautions.</em></p>
+                <p><em>Note that we do not recommend to modify the factory defaults. Change with cautions.</em></p>
             </div>
         );
     }
