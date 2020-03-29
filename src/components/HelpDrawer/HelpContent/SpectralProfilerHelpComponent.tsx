@@ -1,12 +1,15 @@
 import * as React from "react";
 import {AppStore} from "stores";
 import {ImageComponent} from "./ImageComponent";
-import * as underConstruction from "static/help/under_construction.png";
+import * as headSpectralButton from "static/help/head_spectral_button.png";
+import * as headSpectralButton_d from "static/help/head_spectral_button_d.png";
 
 export class SpectralProfilerHelpComponent extends React.Component<{ appStore: AppStore }> {
     public render() {
+        const appStore = this.props.appStore;
         return (
             <div>
+                <p><ImageComponent appStore={appStore} light={headSpectralButton} dark={headSpectralButton_d} width="90%"/></p>
                 <p>The spectral profiler widget allows users to view a region spectral profile of an image cube with a specific statistic (via the &quot;Statistic&quot; dropdown; default as mean). If Stokes axis exists, users may view a
                     specific Stokes via the &quot;Stokes&quot; dropdown.</p>
                 <h3 id="regions">Regions</h3>

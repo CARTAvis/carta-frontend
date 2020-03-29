@@ -1,12 +1,15 @@
 import * as React from "react";
 import {AppStore} from "stores";
 import {ImageComponent} from "./ImageComponent";
-import * as underConstruction from "static/help/under_construction.png";
+import * as headHistogramButton from "static/help/head_histogram_button.png";
+import * as headHistogramButton_d from "static/help/head_histogram_button_d.png";
 
 export class HistogramHelpComponent extends React.Component<{ appStore: AppStore }> {
     public render() {
+        const appStore = this.props.appStore;
         return (
             <div>
+                <p><ImageComponent appStore={appStore} light={headHistogramButton} dark={headHistogramButton_d} width="90%"/></p>
                 <p>Histogram widget displays a histogram plot derived from a 2D region. When no region is created or selected, it
         displays a histogram derived from the current full image in the image viewer.</p>
                 <h3 id="regions">Regions</h3>

@@ -1,12 +1,15 @@
 import * as React from "react";
 import {AppStore} from "stores";
 import {ImageComponent} from "./ImageComponent";
-import * as underConstruction from "static/help/under_construction.png";
+import * as headSpatialButton from "static/help/head_spatial_button.png";
+import * as headSpatialButton_d from "static/help/head_spatial_button_d.png";
 
 export class SpatialProfilerHelpComponent extends React.Component<{ appStore: AppStore }> {
     public render() {
+        const appStore = this.props.appStore;
         return (
             <div>
+                <p><ImageComponent appStore={appStore} light={headSpatialButton} dark={headSpatialButton_d} width="90%"/></p>
                 <p>Spatial profiler widget allows users to view a profile from a horizontal cut or a vertical cut at the cursor position in the image viewer. The cursor position may be fixed in the image viewer by
                     pressing <code>F</code> key. Pressing again will unfreeze the cursor.</p>
                 <p>The cursor position in image coordinate is displayed as a red vertical line in the spatial profile plot.</p>
