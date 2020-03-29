@@ -12,7 +12,7 @@ export class RegionDialogHelpComponent extends React.Component<{ appStore: AppSt
                 <ul>
                     <li>color</li>
                     <li>linewidth</li>
-                    <li>line style (solid or dashd)</li>
+                    <li>line style (solid or dashed)</li>
                 </ul>
                 <p>and region properties, such as</p>
                 <ul>
