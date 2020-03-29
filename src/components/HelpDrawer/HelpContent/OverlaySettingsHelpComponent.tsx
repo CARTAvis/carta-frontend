@@ -31,7 +31,7 @@ export class OverlaySettingsHelpComponent extends React.Component<{ appStore: Ap
                 <h3 id="labels">Labels</h3>
                 <p>This section allows users to modify the style of x and y labels.</p>
                 <h3 id="beam">Beam</h3>
-                <p>This section allows users to change the appearace of a beam overlay and adjust its position in the image viewer.</p>
+                <p>This section allows users to change the appearance of a beam overlay and adjust its position in the image viewer.</p>
             </div>
         );
     }
