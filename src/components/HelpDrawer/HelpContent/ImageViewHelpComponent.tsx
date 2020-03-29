@@ -5,6 +5,7 @@ import * as contourButton from "static/help/contour_button.png";
 import * as exportPNGButton from "static/help/export_png_button.png";
 import * as imageInfoButton from "static/help/image_info_button.png";
 import * as imageTools from "static/help/image_tools.png";
+import * as imageTools_d from "static/help/image_tools_d.png";
 import * as overlaySettingButton from "static/help/overlay_setting_button.png";
 import * as regionButton from "static/help/region_button.png";
 import * as WCSMatchButton from "static/help/wcs_match_button.png";
@@ -30,7 +31,7 @@ export class ImageViewHelpComponent extends React.Component<{ appStore: AppStore
                     <li>Enable/disable grid lines and coordinate labels</li>
                     <li>Export image</li>
                 </ul>
-                <p><ImageComponent appStore={appStore} light={imageTools} dark={imageTools} width="80%"/></p>
+                <p><ImageComponent appStore={appStore} light={imageTools} dark={imageTools_d} width="80%"/></p>
                 <h3 id="zoom-and-pan">Zoom and pan</h3>
                 <p>Zoom actions can be triggered in different ways. The most common one is to use mouse and scroll wheel. By scrolling up, image is zoomed in, while by scrolling down, image is zoomed out. Alternatively, users may use the
                     tool buttons at the bottom-right corner of the image viewer to zoom in, zoom out, zoom to fit screen resolution, or zoom to fit image view.</p>
