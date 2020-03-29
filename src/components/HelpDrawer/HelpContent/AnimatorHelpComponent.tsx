@@ -1,12 +1,13 @@
 import * as React from "react";
-import { AppStore } from "stores";
-import { ImageComponent } from "./ImageComponent";
+import {AppStore} from "stores";
+import {ImageComponent} from "./ImageComponent";
 import * as headAnimatorButton from "static/help/head_animator_button.png";
 import * as headAnimatorButton_d from "static/help/head_animator_button_d.png";
 
 
 export class AnimatorHelpComponent extends React.Component<{ appStore: AppStore }> {
     public render() {
+        const appStore = this.props.appStore;
         return (
             <div>
                 <p><ImageComponent appStore={appStore} light={headAnimatorButton} dark={headAnimatorButton_d} width="90%"/></p>
