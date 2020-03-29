@@ -23,29 +23,29 @@ export class ContourHelpComponent extends React.Component<{ appStore: AppStore }
                             <li><code>Click</code> on the histogram plot to create a level. <code>Right-Click</code> on a line to
                     remove a level. Numerical values of levels are displayed in the &quot;Levels&quot; field.</li>
                             <li>Use the level generator. There are four preset generators. The generator will create a set of levels
-                    based on the control parameters by pressing the &quot;Generate&quot; button.</li>
-                            <li>Manually input levels in the &quot;Level&quot; field. Note that this field can be modified at any
+                    based on the control parameters by clicking the &quot;Generate&quot; button.</li>
+                            <li>Manually input levels in the &quot;Levels&quot; field. Note that this field can be modified at any
                     time, for example, after using the level generator.</li>
                         </ul>
                     </li>
                     <li>
-                        <p>When a set of levels is defined, pressing the &quot;Apply&quot; button will trigger the contour
+                        <p>When a set of levels is defined, clicking the &quot;Apply&quot; button will trigger the contour
                 calculations and render in the image viewer.</p>
                     </li>
                 </ol>
-                <p>To remove a contour layer, press the &quot;Clear&quot; button.</p>
+                <p>To remove a contour layer, click the &quot;Clear&quot; button.</p>
                 <p>Users may use the lock button next to the data source dropdown to disable or enable synchronization of data source
         with the frame slider in the animator.</p>
                 <h3 id="contour-smoothness">Contour smoothness</h3>
-                <p>By default, image is block-smoothed with a kernel size of four pixels before calculating contour vertices. This
+                <p>By default, image is Gaussian-smoothed with a kernel size of four pixels before calculating contour vertices. This
         can be customized in the &quot;Configuration&quot; tab. Smoothing mode includes:</p>
                 <ul>
                     <li>No smoothing</li>
-                    <li>Block (default, faster, but not ideal for compact objects)</li>
-                    <li>Gaussian (slower, but better appearance)</li>
+                    <li>Block (faster, not ideal for compact objects)</li>
+                    <li>Gaussian (default, slower, better appearance)</li>
                 </ul>
-                <h3 id="contour-cosmetics">Contour cosmetics</h3>
-                <p>The cosmetics of contours can be customized with the &quot;Styling&quot; tab. Supported options are:</p>
+                <h3 id="contour-cosmetics">Contour styling</h3>
+                <p>The styling of contours can be customized with the &quot;Styling&quot; tab. Supported options are:</p>
                 <ul>
                     <li>Line thickness</li>
                     <li>Representation of dashed line</li>
@@ -53,28 +53,10 @@ export class ContourHelpComponent extends React.Component<{ appStore: AppStore }
                     <li>Bias</li>
                     <li>Contrast</li>
                 </ul>
-                <p>Note that changes in cosmetics will be applied immediately if the contour levels set does not change.</p>
+                <p>Note that changes in styling will be applied immediately if the contour levels set does not change.</p>
                 <h3 id="customizing-the-contour-configuration-dialogue">Customizing the contour configuration dialogue</h3>
-                <p>The defaults of many options in the contour configuration dialogue are customizable via the preference dialogue.
-        In the &quot;Contour configuration&quot; tab, those include:</p>
-                <ul>
-                    <li>Level generator type</li>
-                    <li>Contour smoothing mode</li>
-                    <li>Smoothing factor</li>
-                    <li>Number of contour levels</li>
-                    <li>Contour line thickness</li>
-                    <li>Contour color mode</li>
-                    <li>Contour colormap</li>
-                    <li>Contour constant color</li>
-                </ul>
-                <p>Performance related options are included in the &quot;Performance&quot; tab of the preference dialogue,
-        including:</p>
-                <ul>
-                    <li>Contour rounding factor</li>
-                    <li>Contour compression level</li>
-                    <li>Contour chunk size</li>
-                    <li>Contour control map resolution</li>
-                </ul>
+                <p>The defaults of many options in the contour configuration dialogue are customizable via the &quot;Contour configuration&quot; tab in the preference dialogue.
+                <p>Performance related options are included in the &quot;Performance&quot; tab of the preference dialogue.
                 <p><em>Note that we do not recommend to modify the factory defaults. Change with cautions.</em></p>
             </div>
         );
