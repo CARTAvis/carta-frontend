@@ -15,7 +15,7 @@ export class ImageViewHelpComponent extends React.Component<{ appStore: AppStore
         const appStore = this.props.appStore;
         return (
             <div>
-                <p>The image viewer widget serves as the core compoment of CARTA. It allows users to visualize images in rasters and in contours. Region of interests can be defined interactively with the image viewer and subsequent image
+                <p>The image viewer widget serves as the core component of CARTA. It allows users to visualize images in rasters and in contours. Region of interests can be defined interactively with the image viewer and subsequent image
                     analysis can be performed with other widgets.</p>
                 <p>Images can be loaded via <strong>File</strong> -&gt; <strong>Open image</strong> (will close all loaded image first) If users may load multiple images via <strong>File</strong> -&gt; <strong>Append image</strong>. All
                     images are loaded as raster by default. Contour layers can be further generated via the contour configuration dialogue.</p>
@@ -44,7 +44,7 @@ export class ImageViewHelpComponent extends React.Component<{ appStore: AppStore
                 <ul>
                     <li>None: zoom levels of different images are independent. No matching in the spectral domain.</li>
                     <li>Spatial only: images are matched to the reference image in the spatial domain by translation, rotation, and scaling.</li>
-                    <li>Spectral only: images are matched to the reference image in the spectral domain with nearest interploration.</li>
+                    <li>Spectral only: images are matched to the reference image in the spectral domain with nearest interpolation.</li>
                     <li>Spatial and spectral: images are matched to the reference image both in the spatial domain and spectral domain.</li>
                 </ul>
                 <p>Note that images are spatially matched by applying translation, rotation, and scaling. Inconsistency may be prominent when attempting to match wide field images or images with different projection types. However, grid
@@ -69,7 +69,7 @@ export class ImageViewHelpComponent extends React.Component<{ appStore: AppStore
                 <p>What users see in the current image view can be exported as a PNG file with the &quot;Export image&quot; button in the image tool bar.</p>
                 <p><ImageComponent appStore={appStore} light={exportPNGButton} dark={exportPNGButton} width="70%"/></p>
                 <h3 id="image-information-and-header">Image information and header</h3>
-                <p>Basic image informaion and full image headers are displayed in the image information dialogue.</p>
+                <p>Basic image information and full image headers are displayed in the image information dialogue.</p>
                 <p><ImageComponent appStore={appStore} light={imageInfoButton} dark={imageInfoButton} width="30%"/></p>
             </div>
         );
