@@ -11,3 +11,4 @@ export * from "./ScatterPlot/PlotSettings/ScatterPlotSettingsPanelComponent";
 export * from "./ScalingSelectComponent/ScalingSelectComponent";
 export * from "./ClearableNumericInput/ClearableNumericInput";
 export * from "./SpectralSettings/SpectralSettingsComponent";
+export * from "./SafeNumericInput/SafeNumericInput";
