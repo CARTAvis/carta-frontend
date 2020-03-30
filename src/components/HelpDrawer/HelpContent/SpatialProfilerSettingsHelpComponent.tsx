@@ -15,7 +15,7 @@ export class SpatialProfilerSettingsHelpComponent extends React.Component<{ appS
                     <li>plot styles including steps (default), lines, and dots</li>
                     <li>line width for steps or lines</li>
                     <li>point size for dots</li>
-                    <li>display alternative horizonal axis in world coordinate</li>
+                    <li>display alternative horizontal axis in world coordinate</li>
                 </ul>
             </div>
         );

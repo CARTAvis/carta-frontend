@@ -1,20 +1,23 @@
 import * as React from "react";
 import {AppStore} from "stores";
 import {ImageComponent} from "./ImageComponent";
-import * as underConstruction from "static/help/under_construction.png";
+import * as headSpectralButton from "static/help/head_spectral_button.png";
+import * as headSpectralButton_d from "static/help/head_spectral_button_d.png";
 
 export class SpectralProfilerHelpComponent extends React.Component<{ appStore: AppStore }> {
     public render() {
+        const appStore = this.props.appStore;
         return (
             <div>
-                <p>The spectral profiler widget allows users to view a region spectral profile of an image cube with a specific statistic (via the &quot;Statistic&quot; dropdown; defaut as mean). If Stokes axis exists, users may view a
+                <p><ImageComponent appStore={appStore} light={headSpectralButton} dark={headSpectralButton_d} width="90%"/></p>
+                <p>The spectral profiler widget allows users to view a region spectral profile of an image cube with a specific statistic (via the &quot;Statistic&quot; dropdown; default as mean). If Stokes axis exists, users may view a
                     specific Stokes via the &quot;Stokes&quot; dropdown.</p>
                 <h3 id="regions">Regions</h3>
                 <p>The region dropdown defaults to &quot;Active&quot; region which means a selected region in the image viewer. Users can select a region by clicking one on the image viewer, or by clicking a region entry on the region list
-                    widget. Spectral profile plot of the selected region will be updated accordingly. If no region is selectd, &quot;Active&quot; region defaults to cursor.</p>
+                    widget. Spectral profile plot of the selected region will be updated accordingly. If no region is selected, &quot;Active&quot; region defaults to cursor.</p>
                 <h3 id="responsive-and-progressive-profile-update">Responsive and progressive profile update</h3>
                 <p>When a region spectral profile is requested, depending on the performance of the server, users may see profiles are updated piece by piece in regular interval. This feature provides a visual progress update for better
-                    user experience. In addtion, if users move a region while its spectral profile is being updating, the old calculations will be terminated immediately and calculations of the new region spectral profile will start and
+                    user experience. In addition, if users move a region while its spectral profile is being updating, the old calculations will be terminated immediately and calculations of the new region spectral profile will start and
                     users will see a partial profile in seconds.</p>
                 <h3 id="spectral-conventions-and-reference-frame">Spectral conventions and reference frame</h3>
                 <p>With the spectral profiler settings dialogue, users can change the spectral convention, including:</p>
@@ -51,7 +54,7 @@ export class SpectralProfilerHelpComponent extends React.Component<{ appStore: A
                 <p>Users may click on the spectral profile plot to switch to a channel (as indicated by a red vertical line) and view the image in the image viewer. The red line is draggable and acts equivalently like the channel slider in
                     the animator widget.</p>
                 <h3 id="exports">Exports</h3>
-                <p>The spectral profile plot can be exported as a png file or a text file in tsv format via the buttons at the bottm-right corner (shown when hovering over the plot).</p>
+                <p>The spectral profile plot can be exported as a png file or a text file in tsv format via the buttons at the bottom-right corner (shown when hovering over the plot).</p>
                 <h3 id="plot-cosmetics">Plot cosmetics</h3>
                 <p>The appearance of the spectral profile plot is customizable via the spectral profile settings dialogue (the cog icon). Supported options are:</p>
                 <ul>
