@@ -1067,6 +1067,7 @@ export class FrameStore {
     @action fitZoom = () => {
         if (this.spatialReference) {
             // Calculate midpoint of image
+            this.initCenter();
             const imageCenterReferenceSpace = getTransformedCoordinates(this.spatialTransformAST, this.center, true);
             this.spatialReference.setCenter(imageCenterReferenceSpace.x, imageCenterReferenceSpace.y);
             // Calculate bounding box for transformed image
