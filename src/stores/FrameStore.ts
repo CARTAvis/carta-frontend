@@ -732,7 +732,7 @@ export class FrameStore {
         }
     };
 
-    @action private initSpectralFrame = (): number => {
+    private initSpectralFrame = (): number => {
         if (!this.spectralAxis || !this.spectralAxis.valid) {
             return null;
         }
