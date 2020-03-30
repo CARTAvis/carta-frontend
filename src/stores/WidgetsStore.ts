@@ -495,7 +495,7 @@ export class WidgetsStore {
             const container = item["container"] as GoldenLayout.Container;
             let centerX = 0;
             if (container && container.width) {
-                centerX = ev.toElement.getBoundingClientRect().right + 36 - container.width * 0.5; // 36(px) is the length between help button and right border of widget
+                centerX = ev.target.getBoundingClientRect().right + 36 - container.width * 0.5; // 36(px) is the length between help button and right border of widget
             }
             this.appStore.helpStore.showHelpDrawer(widgetConfig.helpType, centerX);
         }
