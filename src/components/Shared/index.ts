@@ -9,6 +9,6 @@ export * from "./ScatterPlot/ScatterPlotComponent";
 export * from "./LinePlot/PlotSettings/LinePlotSettingsPanelComponent";
 export * from "./ScatterPlot/PlotSettings/ScatterPlotSettingsPanelComponent";
 export * from "./ScalingSelectComponent/ScalingSelectComponent";
-export * from "./ClearableNumericInput/ClearableNumericInput";
+export * from "./ClearableNumericInput/ClearableNumericInputComponent";
 export * from "./SpectralSettings/SpectralSettingsComponent";
 export * from "./SafeNumericInput/SafeNumericInput";

@@ -15,28 +15,53 @@
 
     .generator-parameters-row {
         display: flex;
-        flex-wrap: wrap;
 
-        .label-parameters .bp3-label {
+
+        .bp3-form-group .bp3-label {
             width: 6em;
             text-align: left;
         }
 
-        .bp3-form-group {
-            padding-right: 10px;
+        .parameter-container{
+            display: flex;
+            flex-direction: column;
+            .parameter-line{
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+
+                .bp3-form-group {
+                    padding-right: 10px;
+                    .bp3-label {
+                        width: 5em;
+                        text-align: right;
+                    }
+                }
+            }
         }
 
         .bp3-numeric-input {
+            width:110px;
             .bp3-input-group {
+                height: 30px;
                 input {
-                    width: 90px;
+                    width: 110px;
                 }
             }
 
             &.narrow {
                 .bp3-input-group {
+                    height: 30px;
                     input {
-                        width: 50px;
+                        width: 80px;
+                    }
+                }
+
+                .bp3-button-group {
+                    height: 30px;
+                    .bp3-button {
+                        height: 15px;
+                        width: 30px;
                     }
                 }
             }
