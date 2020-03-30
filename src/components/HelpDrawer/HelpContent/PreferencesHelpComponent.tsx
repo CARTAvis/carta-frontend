@@ -1,12 +1,15 @@
 import * as React from "react";
 import {AppStore} from "stores";
 import {ImageComponent} from "./ImageComponent";
-import * as underConstruction from "static/help/under_construction.png";
+import * as headPreferenceButton from "static/help/head_preference_button.png";
+import * as headPreferenceButton_d from "static/help/head_preference_button_d.png";
 
 export class PreferencesHelpComponent extends React.Component<{ appStore: AppStore }> {
     public render() {
+        const appStore = this.props.appStore;
         return (
             <div>
+                <p><ImageComponent appStore={appStore} light={headPreferenceButton} dark={headPreferenceButton_d} width="90%"/></p>
                 <p>The preferences dialogue provides a centralized place to customize the entire graphical user interface and performance control parameters. All settings are recorded and applied to new CARTA sessions. Some settings are
                     effective immediately.</p>
                 <h3 id="global">Global</h3>
@@ -18,8 +21,8 @@ export class PreferencesHelpComponent extends React.Component<{ appStore: AppSto
                     <li>Initial cursor position: fix cursor at the image center or have cursor free to move</li>
                     <li>Initial zoom level: view full image or view image with one image pixel to one screen pixel ratio</li>
                     <li>Zoom to: control the focus of zooming with scrolling wheel</li>
-                    <li>Enable drag-to-pan: when enabled, pan action is achieved by click-and-draggin. When disabled, pan action is achieved by a click where the clicked pixel will be centered in the image viewer.</li>
-                    <li>WCS matching on apppend:</li>
+                    <li>Enable drag-to-pan: when enabled, pan action is achieved by click-and-dragging. When disabled, pan action is achieved by a click where the clicked pixel will be centered in the image viewer.</li>
+                    <li>WCS matching on append: trigger WCS matching automatically for appended images</li>
                     <li>Spectral matching: spectral convention to be used for spectral matching of image cubes</li>
                 </ul>
                 <h3 id="render-configuration">Render configuration</h3>
@@ -38,9 +41,9 @@ export class PreferencesHelpComponent extends React.Component<{ appStore: AppSto
                     <li>Default smoothing factor: kernel size of the selected smoothing mode</li>
                     <li>Default contour levels: number of contour levels to be generated</li>
                     <li>Thickness: contour line thickness</li>
-                    <li>Default color mode: to render contours with contant color or to render color-mapped contours</li>
+                    <li>Default color mode: to render contours with constant color or to render color-mapped contours</li>
                     <li>Default color map: colormap for rendering color-mapped contours</li>
-                    <li>Default color: color for rendering contours with contant color</li>
+                    <li>Default color: color for rendering contours with constant color</li>
                 </ul>
                 <h3 id="overlay-configuration">Overlay configuration</h3>
                 <p>This section provides customization of the image overlay in the image viewer.</p>
@@ -48,7 +51,7 @@ export class PreferencesHelpComponent extends React.Component<{ appStore: AppSto
                     <li>AST color: the default color theme of the grid layers including the coordinate bound box</li>
                     <li>AST grid visible: grid line rendering</li>
                     <li>AST label visible: grid x and y labels rendering</li>
-                    <li>WCS format: show world coordinates in degrees or sexiagesimal or auto-formatted</li>
+                    <li>WCS format: show world coordinates in degrees or sexagesimal or auto-formatted</li>
                     <li>Beam visible: beam rendering at the bottom-left corner of the image viewer</li>
                     <li>Beam color: the color to render a beam element</li>
                     <li>Beam type: render a beam as open shape or filled shape</li>
@@ -64,8 +67,8 @@ export class PreferencesHelpComponent extends React.Component<{ appStore: AppSto
                     <li>Creation mode: the way how rectangle and ellipse regions are created with cursor</li>
                 </ul>
                 <h3 id="performance">Performance</h3>
-                <p>Performance related control parameters are included here. We do not recommand users to change the settings here. If the bandwidth connecting to a CARTA server is limited, users may enable the &quot;low bandwidth
-                    mode&quot;. Note that artefects in raster image and/or contour layer might be noticible in this mode, depending on the characteristics of image data.</p>
+                <p>Performance related control parameters are included here. We do not recommend users to change the settings here. If the bandwidth connecting to a CARTA server is limited, users may enable the &quot;low bandwidth
+                    mode&quot; which reduces displayed image resolution and cursor responsiveness.</p>
                 <h3 id="log-events">Log events</h3>
                 <p>This is for development and debugging purpose. General users should not enable anything here.</p>
 
