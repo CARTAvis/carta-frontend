@@ -33,6 +33,7 @@ export interface RegionViewComponentProps {
 
 const DUPLICATE_POINT_THRESHOLD = 0.01;
 const DOUBLE_CLICK_DISTANCE = 5;
+const KEYCODE_ESC = 27;
 
 @observer
 export class RegionViewComponent extends React.Component<RegionViewComponentProps> {
@@ -394,6 +395,14 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
     };
 
+    onKeyDown = (ev: React.KeyboardEvent) => {
+        const frame = this.props.frame;
+        if (frame && frame.regionSet.mode === RegionMode.CREATING && ev.keyCode === KEYCODE_ESC) {
+            this.creatingRegion = null;
+            console.log("cancel region creation");
+        }
+    };
+
     render() {
         const frame = this.props.frame;
         const regionSet = frame.regionSet;
@@ -510,30 +519,32 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
         }
 
         return (
-            <Stage
-                className={className}
-                width={this.props.width}
-                height={this.props.height}
-                style={{left: this.props.left, top: this.props.top, cursor}}
-                onClick={this.handleClick}
-                onWheel={this.handleWheel}
-                onMouseMove={this.handleMove}
-                onDblClick={this.handleStageDoubleClick}
-                onMouseDown={regionSet.mode === RegionMode.CREATING ? this.regionCreationStart : null}
-                onMouseUp={regionSet.mode === RegionMode.CREATING ? this.regionCreationEnd : null}
-                draggable={regionSet.mode !== RegionMode.CREATING && this.props.dragPanningEnabled}
-                onDragStart={this.handleDragStart}
-                onDragMove={this.handleDragMove}
-                onDragEnd={this.handleDragEnd}
-                x={0}
-                y={0}
-            >
-                <Layer>
-                    {regionComponents}
-                    {polygonCreatingLine}
-                    {cursorMarker}
-                </Layer>
-            </Stage>
+            <div onKeyDown={this.onKeyDown} tabIndex={0}>
+                <Stage
+                    className={className}
+                    width={this.props.width}
+                    height={this.props.height}
+                    style={{left: this.props.left, top: this.props.top, cursor}}
+                    onClick={this.handleClick}
+                    onWheel={this.handleWheel}
+                    onMouseMove={this.handleMove}
+                    onDblClick={this.handleStageDoubleClick}
+                    onMouseDown={regionSet.mode === RegionMode.CREATING ? this.regionCreationStart : null}
+                    onMouseUp={regionSet.mode === RegionMode.CREATING ? this.regionCreationEnd : null}
+                    draggable={regionSet.mode !== RegionMode.CREATING && this.props.dragPanningEnabled}
+                    onDragStart={this.handleDragStart}
+                    onDragMove={this.handleDragMove}
+                    onDragEnd={this.handleDragEnd}
+                    x={0}
+                    y={0}
+                >
+                    <Layer>
+                        {regionComponents}
+                        {polygonCreatingLine}
+                        {cursorMarker}
+                    </Layer>
+                </Stage>
+            </div>
         );
     }
 }
