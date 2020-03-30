@@ -4,7 +4,6 @@ import {ImageComponent} from "./ImageComponent";
 import * as headStatisticsButton from "static/help/head_statistics_button.png";
 import * as headStatisticsButton_d from "static/help/head_statistics_button_d.png";
 
-
 export class StatsHelpComponent extends React.Component<{ appStore: AppStore }> {
     public render() {
         const appStore = this.props.appStore;
