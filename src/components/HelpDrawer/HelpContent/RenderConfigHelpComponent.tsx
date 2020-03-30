@@ -4,7 +4,6 @@ import {ImageComponent} from "./ImageComponent";
 import * as headRenderconfigButton from "static/help/head_renderconfig_button.png";
 import * as headRenderconfigButton_d from "static/help/head_renderconfig_button_d.png";
 
-
 export class RenderConfigHelpComponent extends React.Component<{ appStore: AppStore }> {
     public render() {
         const appStore = this.props.appStore;

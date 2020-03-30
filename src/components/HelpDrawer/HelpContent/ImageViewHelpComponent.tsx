@@ -18,7 +18,6 @@ import * as WCSMatchButton_d from "static/help/wcs_match_button_d.png";
 import * as zoomButton from "static/help/zoom_button.png";
 import * as zoomButton_d from "static/help/zoom_button_d.png";
 
-
 export class ImageViewHelpComponent extends React.Component<{ appStore: AppStore }> {
     public render() {
         const appStore = this.props.appStore;

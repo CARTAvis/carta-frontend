@@ -4,7 +4,6 @@ import {ImageComponent} from "./ImageComponent";
 import * as headRegionButton from "static/help/head_region_button.png";
 import * as headRegionButton_d from "static/help/head_region_button_d.png";
 
-
 export class RegionListHelpComponent extends React.Component<{ appStore: AppStore }> {
     public render() {
         const appStore = this.props.appStore;
