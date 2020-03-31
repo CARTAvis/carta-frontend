@@ -151,12 +151,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         }
         return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
-
-    private getChannelUnit = (): string => {
-        const frame = this.widgetStore.effectiveFrame;
-        return frame && !frame.isCoordChannel ? frame.spectralUnit : "Channel";
-    };
-
+ev
     onChannelChanged = (x: number) => {
         const frame = this.widgetStore.effectiveFrame;
         if (this.props.appStore.animatorStore.animationState === AnimationState.PLAYING) {
@@ -169,7 +164,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             if (frame.isCoordChannel) {
                 nearestIndex = channelInfo.getChannelIndexSimple(x);
             } else {
-                if (frame.isSpectralPropsEqual) {
+                if ((frame.spectralAxis && !frame.spectralAxis.valid) || frame.isSpectralPropsEqual) {
                     nearestIndex = channelInfo.getChannelIndexWCS(x);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
@@ -702,7 +697,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
     ) => {
         let cursorInfo = null;
         const isMouseEntered = this.widgetStore.isMouseMoveIntoLinePlots || this.widgetStore.isMouseMoveIntoScatterPlots;
-        const xUnit =  this.getChannelUnit();
+        const xUnit =  this.props.appStore.activeFrame ? this.props.appStore.activeFrame.spectralUnitStr : "Channel";
         if (isMouseEntered) {
             let profilerData = {q: NaN, u: NaN, pi: NaN, pa: NaN, channel: NaN};
             if (this.widgetStore.isMouseMoveIntoLinePlots) {
@@ -740,20 +735,23 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
             isNaN(this.cursorInfo.quValue.x) || isNaN(this.cursorInfo.quValue.y)) {
             return profilerInfo;
         }
-        const xLabel = this.cursorInfo.xUnit === "Channel" ?
-                    "Channel " + toFixed(this.cursorInfo.channel) :
-                    formattedNotation(this.cursorInfo.channel) + " " + this.cursorInfo.xUnit;
-        const fractionalPol = this.widgetStore.fractionalPolVisible;
-        const qLabel = fractionalPol ? ", Q/I: " : ", Q: ";
-        const uLabel = fractionalPol ? ", U/I: " : ", U: ";
-        const piLabel = fractionalPol ? ", PI/I: " : ", PI: ";
-        const cursorString = "(" + xLabel
-            + qLabel + toExponential(this.cursorInfo.quValue.x, 2)
-            + uLabel + toExponential(this.cursorInfo.quValue.y, 2)
-            + piLabel + toExponential(this.cursorInfo.pi, 2)
-            + ", PA: " + toFixed(this.cursorInfo.pa, 2)
-            + ")";
-        profilerInfo.push(`${this.cursorInfo.isMouseEntered ? "Cursor:" : "Data:"} ${cursorString}`);
+        const frame = this.props.appStore.activeFrame;
+        if (frame && this.plotData) {
+            const xLabel = this.cursorInfo.xUnit === "Channel" ?
+                        "Channel " + toFixed(this.cursorInfo.channel) :
+                        formattedNotation(this.cursorInfo.channel) + " " + this.cursorInfo.xUnit;
+            const fractionalPol = this.widgetStore.fractionalPolVisible;
+            const qLabel = fractionalPol ? ", Q/I: " : ", Q: ";
+            const uLabel = fractionalPol ? ", U/I: " : ", U: ";
+            const piLabel = fractionalPol ? ", PI/I: " : ", PI: ";
+            const cursorString = "(" + xLabel
+                + qLabel + toExponential(this.cursorInfo.quValue.x, 2)
+                + uLabel + toExponential(this.cursorInfo.quValue.y, 2)
+                + piLabel + toExponential(this.cursorInfo.pi, 2)
+                + ", PA: " + toFixed(this.cursorInfo.pa, 2)
+                + ")";
+            profilerInfo.push(`${this.cursorInfo.isMouseEntered ? "Cursor:" : "Data:"} ${cursorString}`);
+        }
         return profilerInfo;
     };
     
@@ -876,11 +874,11 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
         let className = "profile-container-" + StokesAnalysisComponent.calculateLayout(this.width, this.height);
         let interactionBorder = {xMin: 0, xMax: 0};
-        if (this.profileStore && frame && frame.hasSpectralAxis) {
+        if (this.profileStore && frame) {
             const cursorX = {
                 profiler: this.widgetStore.linePlotcursorX,
                 image: this.currentChannelValue,
-                unit: this.getChannelUnit()
+                unit: frame.spectralUnitStr
             };
             const currentPlotData = this.plotData;
             let channel = {channelCurrent: 0, channelHovered: 0};
@@ -990,7 +988,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 let scatterCursorInfor = {
                     profiler: { x: this.widgetStore.scatterPlotCursorX, y: this.widgetStore.scatterPlotCursorY},
                     image: this.matchXYindex(cursorX.image, currentPlotData.quValues.dataset),
-                    unit: this.getChannelUnit()
+                    unit: frame.spectralUnitStr
                 };
                 quScatterPlotProps.cursorXY = scatterCursorInfor;
                 this.cursorInfo = this.getCursorInfo(
@@ -1019,10 +1017,9 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 quScatterPlotProps.yLabel = "Stokes U (" + frame.unit + ")";
             }
 
-            if (!frame.isCoordChannel) {
-                const spectralCoordinate = frame.isSpectralCoordinateConvertible ? frame.spectralCoordinate : `${frame.spectralInfo.channelType.code} (${frame.spectralInfo.channelType.unit})`;
+            if (frame.spectralAxis && !frame.isCoordChannel) {
                 const spectralSystem = frame.isSpectralSystemConvertible ? frame.spectralSystem : `${frame.spectralInfo.specsys}`;
-                paLinePlotProps.xLabel = piLinePlotProps.xLabel = quLinePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${spectralCoordinate}`;
+                paLinePlotProps.xLabel = piLinePlotProps.xLabel = quLinePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${frame.spectralCoordinate}`;
             }
 
             paLinePlotProps.markers = [];

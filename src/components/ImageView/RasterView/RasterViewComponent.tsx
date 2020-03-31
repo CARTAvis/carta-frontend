@@ -234,7 +234,6 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
         let bottomLeft = {x: (0.5 + tileImageView.xMin - full.xMin), y: (0.5 + tileImageView.yMin - full.yMin)};
         let tileScaling = scale2D({x: 1, y: 1}, mip * spatialRef.zoomLevel);
 
-        // Experimental code to handle WCS spatial transforms
         if (frame.spatialReference && frame.spatialTransform) {
             bottomLeft = add2D(bottomLeft, frame.spatialTransform.translation);
             // set origin of rotation to image center
