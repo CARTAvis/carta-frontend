@@ -9,7 +9,7 @@ export function getTableDataByType (columnsData: CARTA.ICatalogColumnsData, data
         case CARTA.EntryType.BOOL:
             return columnsData.boolColumn[index].boolColumn;
         case CARTA.EntryType.DOUBLE:
-                return columnsData.doubleColumn[index].doubleColumn;
+            return columnsData.doubleColumn[index].doubleColumn;
         case CARTA.EntryType.FLOAT:
             return columnsData.floatColumn[index].floatColumn;   
         case CARTA.EntryType.LONGLONG:

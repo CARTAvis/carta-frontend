@@ -21,6 +21,7 @@ export class TableComponentProps {
     type: TableType;
     loadingCell?: boolean;
     selectedDataIndex?: number[];
+    showSelectedData?: boolean;
     upTableRef?: (ref: Table) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
     updateTableData?: (rowIndexEnd: number) => void;
@@ -43,10 +44,11 @@ export class TableComponent extends React.Component<TableComponentProps> {
 
     private renderCell = (rowIndex: number, columnIndex: number, coloumnData: any) => {
         const dataIndex = this.props.selectedDataIndex;
-        if (dataIndex && dataIndex.includes(rowIndex)) {
+        if (dataIndex && dataIndex.includes(rowIndex) && !this.props.showSelectedData) {
             return <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={"danger"} loading={this.isLoading(rowIndex)} interactive={true}>{coloumnData[rowIndex]}</Cell>;
+        } else {
+            return <Cell key={`cell_${columnIndex}_${rowIndex}`} loading={this.isLoading(rowIndex)} interactive={true}>{coloumnData[rowIndex]}</Cell>;
         }
-        return <Cell key={`cell_${columnIndex}_${rowIndex}`} loading={this.isLoading(rowIndex)} interactive={true}>{coloumnData[rowIndex]}</Cell>;
     }
 
     private renderColumnHeaderCell = (columnIndex: number, columnName: string) => {
@@ -77,7 +79,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
 
     private infiniteLoad(rowIndexEnd: number, numVisibleRows: number) {
         const currentIndex = rowIndexEnd + 1;
-        if (rowIndexEnd > 0 && currentIndex >= numVisibleRows && !this.props.loadingCell) {
+        if (rowIndexEnd > 0 && currentIndex >= numVisibleRows && !this.props.loadingCell && !this.props.showSelectedData) {
             this.props.updateTableData(rowIndexEnd);
         }
     }
@@ -109,7 +111,8 @@ export class TableComponent extends React.Component<TableComponentProps> {
             const header = table.columnHeaders[index];
             const dataType = header.dataType;
             const dataIndex = header.dataTypeIndex;
-            const dataArray = getTableDataByType(tableData, dataType, dataIndex);
+            let dataArray = getTableDataByType(tableData, dataType, dataIndex);
+
             if (table.type === TableType.ColumnFilter) {
                 const column = this.renderDataColumnWithFilter(header.name, dataArray);
                 tableColumns.push(column); 
@@ -124,7 +127,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
                 <Table
                     ref={(ref) => table.upTableRef(ref)}
                     numRows={table.numVisibleRows}
-                    renderMode={RenderMode.NONE}
+                    renderMode={RenderMode.BATCH}
                     enableRowReordering={false}
                     selectionModes={SelectionModes.NONE}
                     onVisibleCellsChange={(rowIndices) => this.infiniteLoad(rowIndices.rowIndexEnd, table.numVisibleRows)}

@@ -700,6 +700,7 @@ export class WidgetsStore {
         }
     };
 
+    // add catalog overlay widget store
     @action addCatalogOverlayWidget(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData, id: string = null) {
         // Generate new id if none passed in
         if (!id) {
@@ -707,7 +708,7 @@ export class WidgetsStore {
         }
 
         if (id) {
-            this.catalogOverlayWidgets.set(id, new CatalogOverlayWidgetStore(this.appStore, catalogInfo, catalogHeader, catalogData));
+            this.catalogOverlayWidgets.set(id, new CatalogOverlayWidgetStore(this.appStore, catalogInfo, catalogHeader, catalogData, id));
         }
         return id;
     }

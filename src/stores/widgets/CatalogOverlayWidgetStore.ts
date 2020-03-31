@@ -3,9 +3,7 @@ import {Colors} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {AppStore, SystemType} from "stores";
-import {Point2D} from "models";
 import {getTableDataByType} from "utilities";
-import {CatalogScatterWidgetStore} from "./CatalogScatterWidgetStore";
 
 export interface CatalogInfo {
     fileId: number;
@@ -82,6 +80,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         "DECLINATION", "DEC", "Dec."
     ];
     
+    @observable storeId: string;
     @observable progress: number;
     @observable catalogInfo: CatalogInfo;
     @observable catalogControlHeader: Map<string, ControlHeader>;
@@ -101,11 +100,13 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable catalogCoordinateSystem: {system: SystemType, equinox: string, epoch: string, coordinate: {x: CatalogOverlay, y: CatalogOverlay}};
     @observable catalogPlotType: CatalogPlotType;
     @observable catalogScatterWidgetsId: string[];
-    @observable selectedPointsIndex: number[];
+    @observable selectedPointIndexs: number[];
     @observable filterDataSize: number;
+    @observable showSelectedData: boolean;
 
-    constructor(appStore: AppStore, catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData) {
+    constructor(appStore: AppStore, catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData, id: string) {
         super(appStore, RegionsType.CLOSED_AND_POINT);
+        this.storeId = id;
         this.catalogInfo = catalogInfo;
         this.catalogHeader = catalogHeader.sort((a, b) => { return (a.columnIndex - b.columnIndex); });
         this.catalogData = catalogData;
@@ -119,8 +120,9 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.updateMode = CatalogUpdateMode.TableUpdate;
         this.headerTableColumnWidts = [75, 75, 65, 100, null];
         this.catalogScatterWidgetsId = [];
-        this.selectedPointsIndex = [];
+        this.selectedPointIndexs = [];
         this.filterDataSize = undefined;
+        this.showSelectedData = false;
 
         this.catalogPlotType = CatalogPlotType.ImageOverlay;
         const coordinateSystem = catalogInfo.fileInfo.coosys[0];
@@ -149,6 +151,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             this.numVisibleRows = initTableRows;
             this.subsetEndIndex = initTableRows;
         }
+    }
+
+    @action setShowSelectedData(val: boolean) {
+        this.showSelectedData = val;
     }
 
     @action setCatalogScatterWidget(id: string) {
@@ -333,9 +339,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             for (let index = 0; index < catalogHeader.length; index++) {
                 const header = catalogHeader[index];
                 let display = false;
-                // if (this.findKeywords(header.description)) {
-                //     display = true;
-                // }
+                // this.findKeywords(header.description) init displayed according discription
                 if (index < CatalogOverlayWidgetStore.initDisplayedColumnSize) {
                     display = true;
                 }
@@ -354,8 +358,8 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.filterDataSize = undefined;
     }
 
-    @action setSelectedPointsIndex(pointsIndex: Array<number>) {
-        this.selectedPointsIndex = pointsIndex;
+    @action setselectedPointIndexs(pointsIndex: Array<number>) {
+        this.selectedPointIndexs = pointsIndex;
     }
 
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
@@ -482,6 +486,66 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             }
         });
         return filters.length > 0;
+    }
+
+    @computed get selectedData(): CARTA.ICatalogColumnsData {
+        let catalogColumnsData = this.catalogData;
+        const selectedPointIndexs = this.selectedPointIndexs;
+
+        if (selectedPointIndexs.length > 0) {
+            let datas: CARTA.ICatalogColumnsData = new CARTA.CatalogColumnsData();
+
+            for (let index = 0; index < catalogColumnsData.boolColumn.length; index++) {
+                const data = catalogColumnsData.boolColumn[index];
+                datas.boolColumn[index] = new CARTA.BoolColumn();
+                datas.boolColumn[index].boolColumn = this.filterBySelectedDataIndexs(selectedPointIndexs, data.boolColumn);
+            }
+
+            for (let index = 0; index < catalogColumnsData.doubleColumn.length; index++) {
+                const data = catalogColumnsData.doubleColumn[index];
+                datas.doubleColumn[index] = new CARTA.DoubleColumn();
+                datas.doubleColumn[index].doubleColumn = this.filterBySelectedDataIndexs(selectedPointIndexs, data.doubleColumn);
+            }
+
+            for (let index = 0; index < catalogColumnsData.floatColumn.length; index++) {
+                const data = catalogColumnsData.floatColumn[index];
+                datas.floatColumn[index] = new CARTA.FloatColumn();
+                datas.floatColumn[index].floatColumn = this.filterBySelectedDataIndexs(selectedPointIndexs, data.floatColumn);
+            }
+
+            for (let index = 0; index < catalogColumnsData.intColumn.length; index++) {
+                const data = catalogColumnsData.intColumn[index];
+                datas.intColumn[index] = new CARTA.IntColumn();
+                datas.intColumn[index].intColumn = this.filterBySelectedDataIndexs(selectedPointIndexs, data.intColumn);
+            }
+
+            for (let index = 0; index < catalogColumnsData.llColumn.length; index++) {
+                const data = catalogColumnsData.llColumn[index];
+                datas.llColumn[index] = new CARTA.LLColumn();
+                datas.llColumn[index].llColumn = this.filterBySelectedDataIndexs(selectedPointIndexs, data.llColumn);
+            }
+
+            for (let index = 0; index < catalogColumnsData.stringColumn.length; index++) {
+                const data = catalogColumnsData.stringColumn[index];
+                datas.stringColumn[index] = new CARTA.StringColumn();
+                datas.stringColumn[index].stringColumn = this.filterBySelectedDataIndexs(selectedPointIndexs, data.stringColumn);
+            }
+            return datas;
+        }
+        return catalogColumnsData;
+    }
+
+    @computed get regionSelected(): number {
+        return this.selectedPointIndexs.length;
+    }
+
+    private filterBySelectedDataIndexs(selectedPointIndexs: Array<number>, dataArray: any) {
+        let data = [];
+        for (let index = 0; index < selectedPointIndexs.length; index++) {
+            const dataIndex = selectedPointIndexs[index];
+            data.push(dataArray[dataIndex]);
+        }
+        return data;
     }
 
     public get2DPlotData(xColumn: string, yColumn: string, columnsData: CARTA.ICatalogColumnsData): {wcsX: Array<any>, wcsY: Array<any>, xHeaderInfo: CARTA.ICatalogHeader, yHeaderInfo: CARTA.ICatalogHeader} {

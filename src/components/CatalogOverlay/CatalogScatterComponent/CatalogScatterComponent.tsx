@@ -4,7 +4,7 @@ import * as Plotly from "plotly.js";
 import Plot from "react-plotly.js";
 import {autorun, computed, observable} from "mobx";
 import {observer} from "mobx-react";
-import {FormGroup, HTMLSelect, AnchorButton, Intent, Tooltip} from "@blueprintjs/core";
+import {FormGroup, HTMLSelect, AnchorButton, Intent, Tooltip, Switch} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {WidgetConfig, WidgetProps, HelpType} from "stores";
@@ -102,6 +102,13 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         this.widgetStore.setBorder(this.widgetStore.initBorder);
     }
 
+    private handleShowSelectedDataChanged = (changeEvent: React.ChangeEvent<HTMLInputElement>) => {
+        const val = changeEvent.target.checked;
+        this.widgetStore.catalogOverlayWidgetStore.setShowSelectedData(val);
+        const storeId = this.widgetStore.catalogOverlayWidgetStore.storeId;
+        this.props.appStore.catalogStore.updateShowSelectedData(storeId, val);
+    }
+
     private onHover = (event: Plotly.PlotMouseEvent) => {
         const points = event.points;
         if (points.length) {
@@ -152,19 +159,25 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
     }
 
     private onLassoSelected = (event: Plotly.PlotSelectionEvent) => {
-        if (event) {
-            let selectedPointsIndex = [];
+        if (event && event.points && event.points.length > 0) {
+            let selectedPointIndexs = [];
             const points = event.points;
             for (let index = 0; index < points.length; index++) {
                 const selectedPoint = points[index];
-                selectedPointsIndex.push(selectedPoint.pointIndex);
+                selectedPointIndexs.push(selectedPoint.pointIndex);
             }
-            this.widgetStore.catalogOverlayWidgetStore.setSelectedPointsIndex(selectedPointsIndex);
+            this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs(selectedPointIndexs);
+            const storeId = this.widgetStore.catalogOverlayWidgetStore.storeId;
+            this.props.appStore.catalogStore.updateSelectedPoints(storeId, selectedPointIndexs);
         }
     }
 
     private onDeselect = () => {
-        this.widgetStore.catalogOverlayWidgetStore.setSelectedPointsIndex([]);
+        this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs([]);
+        const storeId = this.widgetStore.catalogOverlayWidgetStore.storeId;
+        this.props.appStore.catalogStore.updateSelectedPoints(storeId, []);
+        this.widgetStore.catalogOverlayWidgetStore.setShowSelectedData(false);
+        this.props.appStore.catalogStore.updateShowSelectedData(storeId, false);
     }
 
     public render() {
@@ -259,10 +272,10 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             dragmode: widgetStore.dragmode,
         };
         let data = this.scatterData;
-        const selectedPointsIndex = widgetStore.catalogOverlayWidgetStore.selectedPointsIndex;
+        const selectedPointIndexs = widgetStore.catalogOverlayWidgetStore.selectedPointIndexs;
         let scatterDataMarker = data[0].marker;
-        if (selectedPointsIndex.length > 0) {
-            data[0]["selectedpoints"] = selectedPointsIndex;
+        if (selectedPointIndexs.length > 0) {
+            data[0]["selectedpoints"] = selectedPointIndexs;
             data[0]["selected"] = {"marker": {"color": Colors.RED2}};
             data[0]["unselected"] = {"marker": {"opacity": 0.5}};
         } else {
@@ -285,6 +298,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                 "hoverCompareCartesian",
             ],
         };
+        const disabled = !widgetStore.catalogOverlayWidgetStore.enableLoadButton;
 
         return(
             <div className={"catalog-2D"}>
@@ -298,6 +312,9 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                         <HTMLSelect className="bp3-fill" value={widgetStore.columnsName.y} onChange={changeEvent => this.handleColumnNameChange("y", changeEvent)}>
                             {xyOptions}
                         </HTMLSelect>
+                    </FormGroup>
+                    <FormGroup label={"Show selected sources"} inline={true} disabled={disabled}>
+                        <Switch checked={widgetStore.catalogOverlayWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled}/>
                     </FormGroup>
                 </div>
                 <div className={spikeLineClass}>
@@ -320,7 +337,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                             intent={Intent.PRIMARY}
                             text="Plot All"
                             onClick={this.handlePlotClick}
-                            disabled={!widgetStore.catalogOverlayWidgetStore.enableLoadButton}
+                            disabled={disabled}
                         />
                     </Tooltip>
                 </div>

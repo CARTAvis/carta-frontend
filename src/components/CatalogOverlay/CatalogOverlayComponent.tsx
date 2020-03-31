@@ -266,7 +266,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 ref={(ref) => this.onControlHeaderTableRef(ref)}
                 numRows={numResultsRows} 
                 enableRowReordering={false}
-                renderMode={RenderMode.NONE} 
+                renderMode={RenderMode.BATCH} 
                 selectionModes={SelectionModes.NONE} 
                 defaultRowHeight={35}
                 minRowHeight={20}
@@ -397,7 +397,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         widgetStore.clearData();
         widgetStore.setNumVisibleRows(0);
         widgetStore.setSubsetEndIndex(0);
-        widgetStore.setSelectedPointsIndex([]);
+        widgetStore.setselectedPointIndexs([]);
         widgetStore.setLoadingDataStatus(true);
         let catalogFilter = widgetStore.updateRequestDataSize;
 
@@ -414,7 +414,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     private updateTableData = () => {
         const widgetStore = this.widgetStore;
         // const profile = this.profileStore;
-        if (widgetStore.loadingData === false && widgetStore.updateMode === CatalogUpdateMode.TableUpdate && widgetStore.shouldUpdateData) {
+        if (widgetStore.loadingData === false && widgetStore.updateMode === CatalogUpdateMode.TableUpdate && widgetStore.shouldUpdateData && !widgetStore.showSelectedData) {
             widgetStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
             const filter = this.widgetStore.updateRequestDataSize;
             const currentHidedHeaders = widgetStore.hidedHeaders;
@@ -429,7 +429,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const appStore = this.props.appStore;
         if (widgetStore) {
             widgetStore.reset();
-            widgetStore.setSelectedPointsIndex([]);
+            widgetStore.setselectedPointIndexs([]);
             appStore.catalogStore.clearData(this.widgetId);
             const catalogFilter = widgetStore.initUserFilters;
             appStore.sendCatalogFilter(catalogFilter); 
@@ -505,15 +505,23 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         this.coordinate = widgetStore.catalogCoordinateSystem.coordinate;
+        let dataset = widgetStore.catalogData;
+        let numVisibleRows = widgetStore.numVisibleRows;
+        // Todo optimal filter method
+        if (widgetStore.regionSelected && widgetStore.showSelectedData) {
+            dataset = widgetStore.selectedData;
+            numVisibleRows = widgetStore.regionSelected;
+        }
         const dataTableProps: TableComponentProps = {
             type: TableType.ColumnFilter,
-            dataset: widgetStore.catalogData,
+            dataset: dataset,
             filter: widgetStore.catalogControlHeader,
             columnHeaders: widgetStore.displayedColumnHeaders,
-            numVisibleRows: widgetStore.numVisibleRows,
+            numVisibleRows: numVisibleRows,
             columnWidts: widgetStore.tableColumnWidts,
             loadingCell: widgetStore.loadingData,
-            selectedDataIndex: widgetStore.selectedPointsIndex,
+            selectedDataIndex: widgetStore.selectedPointIndexs,
+            showSelectedData: widgetStore.showSelectedData,
             upTableRef: this.onCatalogdataTableRefUpdated,
             updateColumnFilter: widgetStore.setColumnFilter,
             updateTableData: this.updateTableData,
@@ -524,9 +532,9 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         if (widgetStore.numVisibleRows) {
             startIndex = 1;
         }
-        let info = `Showing ${startIndex} to ${widgetStore.numVisibleRows} of ${widgetStore.catalogInfo.dataSize} entries`;
+        let info = `Showing ${startIndex} to ${numVisibleRows} of ${widgetStore.catalogInfo.dataSize} entries`;
         if (widgetStore.hasFilter && widgetStore.filterDataSize) {
-            info = `Showing ${startIndex} to ${widgetStore.numVisibleRows} of ${widgetStore.filterDataSize} entries, total ${widgetStore.catalogInfo.dataSize} entries`;
+            info = `Showing ${startIndex} to ${numVisibleRows} of ${widgetStore.filterDataSize} entries, total ${widgetStore.catalogInfo.dataSize} entries`;
         }
         let tableInfo = (widgetStore.catalogInfo.dataSize) ? (
             <tr>

@@ -10,6 +10,8 @@ type CatalogSettings = {
     shape: CatalogOverlayShape,
     xImageCoords: Array<number>[],
     yImageCoords: Array<number>[],
+    selectedPointIndexs: Array<number>,
+    showSelectedData: boolean;
 };
 
 export class CatalogStore {
@@ -17,7 +19,6 @@ export class CatalogStore {
     private readonly arcsecUnits = ["arcsec", "arcsecond"];
     private readonly arcminUnits = ["arcmin", "arcminute"];
 
-    // catalogOverlayWidget Id: settings
     @observable catalogs: ObservableMap<string, CatalogSettings>;
 
     constructor() {
@@ -25,7 +26,15 @@ export class CatalogStore {
     }
 
     @action addCatalogs(widgetId: string) {
-        this.catalogs.set(widgetId, { color: Colors.RED2, size: 5, shape: CatalogOverlayShape.Circle, xImageCoords: [], yImageCoords: [] });
+        this.catalogs.set(widgetId, { 
+            color: Colors.RED2, 
+            size: 5, 
+            shape: CatalogOverlayShape.Circle, 
+            xImageCoords: [], 
+            yImageCoords: [], 
+            selectedPointIndexs: [],
+            showSelectedData: false 
+        });
     }
 
     @action updateCatalogData(widgetId: string, xWcsData: Array<any>, yWcsData: Array<any>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType) {
@@ -53,6 +62,16 @@ export class CatalogStore {
 
     @action removeCatalog(widgetId: string) {
         this.catalogs.delete(widgetId);
+    }
+
+    @action updateSelectedPoints(widgetId: string, selectedPointIndexs: number[]) {
+        const catalog = this.catalogs.get(widgetId);
+        catalog.selectedPointIndexs = selectedPointIndexs;
+    }
+
+    @action updateShowSelectedData(widgetId: string, val: boolean) {
+        const catalog = this.catalogs.get(widgetId);
+        catalog.showSelectedData = val;
     }
 
     private transformCatalogData(xWcsData: Array<any>, yWcsData: Array<any>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType): {xImageCoords: Array<number>, yImageCoords: Array<number>} {
@@ -83,6 +102,9 @@ export class CatalogStore {
                 xFraction = Math.PI / 10800.0;
             } else if (this.arcsecUnits.indexOf(xUnitLowerCase) !== -1) {
                 xFraction = Math.PI / 648000.0;
+            } else {
+                // if unit is null, using deg as default
+                xFraction = Math.PI / 180.0;
             }
 
             if (this.degreeUnits.indexOf(yUnitLowerCase) !== -1) {
@@ -91,7 +113,10 @@ export class CatalogStore {
                 yFraction = Math.PI / 10800.0;
             } else if (this.arcsecUnits.indexOf(yUnitLowerCase) !== -1) {
                 yFraction = Math.PI / 648000.0;
+            } else {
+                yFraction = Math.PI / 180.0;
             }
+
             for (let index = 0; index < xWcsData.length; index++) {
                 const xWCSValue = xWcsData[index] * xFraction;
                 const yWCSValue = yWcsData[index] * yFraction;

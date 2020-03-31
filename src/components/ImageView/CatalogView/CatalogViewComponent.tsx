@@ -38,6 +38,19 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             }
             data.x = xArray;
             data.y = yArray;
+            const selectedPointIndexs = catalog.selectedPointIndexs;
+            if (selectedPointIndexs.length > 0) {
+                data["selectedpoints"] = selectedPointIndexs;
+                let opacity = 0.2;
+                if (catalog.showSelectedData) {
+                    opacity = 0;
+                }
+                data["unselected"] = {"marker": {"opacity": opacity}};
+            } else {
+                data["selectedpoints"] = [];
+                data["unselected"] = {"marker": {"opacity": 1}};
+            }
+
             scatterDatasets.push(data);
         });
         return scatterDatasets;

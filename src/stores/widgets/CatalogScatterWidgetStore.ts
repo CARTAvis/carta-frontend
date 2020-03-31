@@ -1,5 +1,4 @@
-import {action, observable, computed, autorun} from "mobx";
-import {CARTA} from "carta-protobuf";
+import {action, observable, computed} from "mobx";
 import {CatalogOverlayWidgetStore} from "./CatalogOverlayWidgetStore";
 import {Point2D} from "models";
 
