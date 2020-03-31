@@ -161,7 +161,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
         if (frame && frame.channelInfo) {
             let channelInfo = frame.channelInfo;
-            let nearestIndex;
+            let nearestIndex = undefined;
             if (frame.isCoordChannel) {
                 nearestIndex = channelInfo.getChannelIndexSimple(x);
             } else {
@@ -169,8 +169,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     nearestIndex = channelInfo.getChannelIndexWCS(x);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
-                    const tx =  AST.transformSpectralPoint(frame.spectralFrame, frame.spectralType, frame.spectralUnit, frame.spectralSystem, x, false);
-                    nearestIndex = channelInfo.getChannelIndexWCS(tx);
+                    const nativeX = frame.invertToNativeWCS(x);
+                    if (isFinite(nativeX)) {
+                        nearestIndex = channelInfo.getChannelIndexWCS(nativeX);
+                    }
                 }
             }
             if (nearestIndex !== null && nearestIndex !== undefined) {
@@ -187,7 +189,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
         if (data.length > 0 && frame && frame.channelInfo) {
             let channelInfo = frame.channelInfo;
             const zIndex = this.matchZindex(x, y, data);
-            let nearestIndex;
+            let nearestIndex = undefined;
             if (frame.isCoordChannel) {
                 nearestIndex = channelInfo.getChannelIndexSimple(zIndex);
             } else {
@@ -195,8 +197,10 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                     nearestIndex = channelInfo.getChannelIndexWCS(zIndex);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
-                    const tx =  AST.transformSpectralPoint(frame.spectralFrame, frame.spectralType, frame.spectralUnit, frame.spectralSystem, zIndex, false);
-                    nearestIndex = channelInfo.getChannelIndexWCS(tx);
+                    const nativeX = frame.invertToNativeWCS(x);
+                    if (isFinite(nativeX)) {
+                        nearestIndex = channelInfo.getChannelIndexWCS(nativeX);
+                    }
                 }
             }
             if (nearestIndex !== null && nearestIndex !== undefined) {

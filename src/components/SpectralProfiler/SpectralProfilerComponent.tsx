@@ -221,7 +221,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
         if (frame && frame.channelInfo) {
             let channelInfo = frame.channelInfo;
-            let nearestIndex;
+            let nearestIndex = undefined;
             if (frame.isCoordChannel) {
                 nearestIndex = channelInfo.getChannelIndexSimple(x);
             } else {
@@ -229,8 +229,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                     nearestIndex = channelInfo.getChannelIndexWCS(x);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
-                    const tx =  AST.transformSpectralPoint(frame.spectralFrame, frame.spectralType, frame.spectralUnit, frame.spectralSystem, x, false);
-                    nearestIndex = channelInfo.getChannelIndexWCS(tx);
+                    const nativeX = frame.invertToNativeWCS(x);
+                    if (isFinite(nativeX)) {
+                        nearestIndex = channelInfo.getChannelIndexWCS(nativeX);
+                    }
                 }
             }
             if (nearestIndex !== null && nearestIndex !== undefined) {

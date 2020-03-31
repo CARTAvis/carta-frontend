@@ -46,7 +46,7 @@ export enum RasterRenderType {
 
 export class FrameStore {
     private astFrameSet: number;
-    public spectralFrame: number;
+    private spectralFrame: number;
     public spectralCoordsSupported: Map<string, {type: SpectralType, unit: SpectralUnit}>;
     public spectralSystemsSupported: Array<SpectralSystem>;
 
@@ -845,6 +845,13 @@ export class FrameStore {
         } else {
             this.spectralSystemsSupported = [];
         }
+    };
+
+    public invertToNativeWCS = (value: number): number => {
+        if (!this.spectralFrame || !isFinite(value)) {
+            return undefined;
+        }
+        return AST.transformSpectralPoint(this.spectralFrame, this.spectralType, this.spectralUnit, this.spectralSystem, value, false);
     };
 
     public getCursorInfo(cursorPosImageSpace: Point2D) {
