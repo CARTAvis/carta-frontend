@@ -397,7 +397,7 @@ export class RegionViewComponent extends React.Component<RegionViewComponentProp
 
     onKeyDown = (ev: React.KeyboardEvent) => {
         const frame = this.props.frame;
-        if (frame && frame.regionSet.mode === RegionMode.CREATING && ev.keyCode === KEYCODE_ESC) {
+        if (frame && frame.regionSet.mode === RegionMode.CREATING && this.creatingRegion && ev.keyCode === KEYCODE_ESC) {
             frame.regionSet.deleteRegion(this.creatingRegion);
             this.creatingRegion = null;
         }
