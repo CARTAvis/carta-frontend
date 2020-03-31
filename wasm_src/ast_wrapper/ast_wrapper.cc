@@ -34,54 +34,6 @@ extern "C" {
 
 EMSCRIPTEN_KEEPALIVE AstFrameSet* initFrame(const char* header)
 {
-    AstFitsChan* fitschan = nullptr;
-    AstFrameSet* wcsinfo = nullptr;
-    int status = 0;
-    if (wcsinfo)
-    {
-        astEnd;
-    }
-	astClearStatus;
-    astBegin;
-
-    fitschan = astFitsChan(nullptr, nullptr, "");
-    if (!fitschan)
-    {
-        cout << "astFitsChan returned null :(" << endl;
-        astClearStatus;
-        return nullptr;
-    }
-    if (!header)
-    {
-        cout << "Missing header argument." << endl;
-        return nullptr;
-    }
-
-    astPutCards(fitschan, header);
-    wcsinfo = static_cast<AstFrameSet*>(astRead(fitschan));
-
-    if (!astOK)
-    {
-        cout << "Some AST LIB error, check logs." << endl;
-        astClearStatus;
-        return nullptr;
-    }
-    else if (wcsinfo == AST__NULL)
-    {
-        cout << "No WCS found" << endl;
-        return nullptr;
-    }
-    else if (strcmp(astGetC(wcsinfo, "Class"), "FrameSet"))
-    {
-        cout << "check FITS header (astlib)" << endl;
-        return nullptr;
-    }
-
-    return wcsinfo;
-}
-
-EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(const char* header)
-{
      if (!header)
     {
         cout << "Missing header argument." << endl;
@@ -101,6 +53,16 @@ EMSCRIPTEN_KEEPALIVE AstSpecFrame* initSpectralFrame(const char* header)
     if (!frameSet || !astIsAFrameSet(frameSet))
     {
         cout << "Creating frame set failed." << endl;
+        return nullptr;
+    }
+    return frameSet;
+}
+
+EMSCRIPTEN_KEEPALIVE AstSpecFrame* getSpectralFrame(AstFrameSet* frameSet)
+{
+   if (!frameSet || !astIsAFrameSet(frameSet))
+    {
+        cout << "Invalid frame set." << endl;
         return nullptr;
     }
 

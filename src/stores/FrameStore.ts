@@ -45,6 +45,7 @@ export enum RasterRenderType {
 }
 
 export class FrameStore {
+    private astFrameSet: number;
     public spectralFrame: number;
     public spectralCoordsSupported: Map<string, {type: SpectralType, unit: SpectralUnit}>;
     public spectralSystemsSupported: Array<SpectralSystem>;
@@ -524,6 +525,8 @@ export class FrameStore {
         this.logStore = logStore;
         this.backendService = backendService;
         this.preference = preference;
+        this.astFrameSet = null;
+        this.spectralFrame = null;
         this.spectralType = null;
         this.spectralUnit = null;
         this.spectralSystem = null;
@@ -580,7 +583,11 @@ export class FrameStore {
         if (frameInfo.fileInfoExtended.depth > 1) {
             this.initFullWCS();
         }
-        this.spectralFrame = this.initSpectralFrame();
+
+        this.astFrameSet = this.initFrame();
+        if (this.astFrameSet) {
+            this.spectralFrame = AST.getSpectralFrame(this.astFrameSet);
+        }
         this.initSupportedSpectralConversion();
         this.initCenter();
         this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
@@ -732,7 +739,7 @@ export class FrameStore {
         }
     };
 
-    private initSpectralFrame = (): number => {
+    private initFrame = (): number => {
         if (!this.spectralAxis || !this.spectralAxis.valid) {
             return null;
         }
@@ -758,7 +765,7 @@ export class FrameStore {
             }
             headerString += entryString;
         }
-        return AST.initSpectralFrame(headerString);
+        return AST.initFrame(headerString);
     };
 
     @action private initSupportedSpectralConversion = () => {
