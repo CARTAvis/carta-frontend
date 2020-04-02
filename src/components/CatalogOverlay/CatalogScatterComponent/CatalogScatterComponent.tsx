@@ -10,7 +10,6 @@ import {CARTA} from "carta-protobuf";
 import {WidgetConfig, WidgetProps, HelpType} from "stores";
 import {CatalogScatterWidgetStore, Border, CatalogUpdateMode} from "stores/widgets";
 import {ProfilerInfoComponent} from "components/Shared";
-import {TickType} from "components/Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {Colors} from "@blueprintjs/core";
 import {toFixed} from "utilities";
 import "./CatalogScatterComponent.css";
@@ -184,6 +183,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         const appStore = this.props.appStore;
         const columnsName = widgetStore.catalogOverlayWidgetStore.displayedColumnHeaders;
         const xyOptions = [];
+        const fontFamily = "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif";
         let themeColor = Colors.LIGHT_GRAY5;
         let lableColor = Colors.GRAY1;
         let gridColor = Colors.LIGHT_GRAY1;
@@ -205,22 +205,23 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             spikeLineClass = "catalog-2D-scatter-dark";
         }
 
-        // Todo add E
         const border = widgetStore.border;
         let layout: Partial<Plotly.Layout> = {
             width: this.width, 
-            height: this.height - 35,
+            height: this.height - 85,
             paper_bgcolor: themeColor, 
             plot_bgcolor: themeColor,
             hovermode: "closest" ,
             xaxis: {
                 title: widgetStore.columnsName.x,
                 titlefont: {
+                    family: fontFamily,
                     size: 12,
                     color: lableColor
                 },
                 showticklabels: true,
                 tickfont: {
+                    family: fontFamily,
                     size: 12,
                     color: lableColor
                 },
@@ -238,15 +239,19 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                 spikecolor: markerColor,
                 spikethickness: 1,
                 range: [border.xMin, border.xMax],
+                // d3 format
+                tickformat: ".2e",
             },
             yaxis: {
                 title: widgetStore.columnsName.y,
                 titlefont: {
+                    family: fontFamily,
                     size: 12,
                     color: lableColor
                 },
                 showticklabels: true,
                 tickfont: {
+                    family: fontFamily,
                     size: 12,
                     color: lableColor
                 },
@@ -262,10 +267,14 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                 spikecolor: markerColor,
                 spikethickness: 1,
                 range: [border.yMin, border.yMax],
+                tickformat: ".2e",
             },
             margin: {
-                r: 10,
-                t: 10,
+                t: 5,
+                b: 40,
+                l: 80,
+                r: 5,
+                pad: 0
             },
             showlegend: false,
             dragmode: widgetStore.dragmode,
@@ -312,9 +321,6 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                             {xyOptions}
                         </HTMLSelect>
                     </FormGroup>
-                    <FormGroup label={"Show selected sources"} inline={true} disabled={disabled}>
-                        <Switch checked={widgetStore.catalogOverlayWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled}/>
-                    </FormGroup>
                 </div>
                 <div className={spikeLineClass}>
                     <Plot
@@ -330,15 +336,22 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                     />
                 </div>
                 <div className="catalog-2D-footer" >
-                    <ProfilerInfoComponent info={this.genProfilerInfo()}/>
-                    <Tooltip className="plot-button" content={"Update scatter plot"}>
-                        <AnchorButton
-                            intent={Intent.PRIMARY}
-                            text="Plot All"
-                            onClick={this.handlePlotClick}
-                            disabled={disabled}
-                        />
-                    </Tooltip>
+                    <div className="scatter-info">
+                        <ProfilerInfoComponent info={this.genProfilerInfo()}/>
+                    </div>
+                    <div className="actions">
+                        <FormGroup label={"Show only selected sources"} inline={true} disabled={disabled}>
+                            <Switch checked={widgetStore.catalogOverlayWidgetStore.showSelectedData} onChange={this.handleShowSelectedDataChanged} disabled={disabled}/>
+                        </FormGroup>
+                        <Tooltip className="plot-button" content={"Update scatter plot with all data"}>
+                            <AnchorButton
+                                intent={Intent.PRIMARY}
+                                text="Plot All"
+                                onClick={this.handlePlotClick}
+                                disabled={disabled}
+                            />
+                        </Tooltip>
+                    </div>
                 </div>
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>
             </div>

@@ -95,7 +95,8 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             showlegend: false
         };
         const config: Partial<Plotly.Config> = {
-            displayModeBar: false
+            displayModeBar: false,
+            showTips: false
         };
 
         if (frame) {
