@@ -38,6 +38,7 @@ import {BackendService, ConnectionStatus, TileService, TileStreamDetails} from "
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
 import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore, CatalogInfo, CatalogUpdateMode} from "./widgets";
 import {AppToaster} from "../components/Shared";
+import {CatalogOverlayComponent} from "components";
 
 export class AppStore {
     // Backend services
@@ -62,9 +63,9 @@ export class AppStore {
     readonly logStore: LogStore;
     // User preference
     @observable preferenceStore: PreferenceStore;
-    // catalog map catalog widget with file
+    // catalog map catalog widget store with file Id
     @observable catalogs: Map<string, number>;
-    // catalog data for plotting
+    // catalog data for image viewer
     @observable catalogStore: CatalogStore;
 
     readonly layoutStore: LayoutStore;
@@ -517,7 +518,17 @@ export class AppStore {
             if (frame && ack.success && ack.dataSize) {
                 let catalogInfo: CatalogInfo = {fileId : fileId, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 let catalogWidgetId = null;
-                if (this.catalogs.size === 0) {
+                let floatingCatalogWidgets = true;
+                const dockedCatalogWidgets = this.widgetsStore.dockedWidgets.length === 0;
+                const catalogWidgetStores = this.catalogs.size === 0;
+
+                this.widgetsStore.floatingWidgets.forEach(widgetConfig => {
+                    if (widgetConfig.componentId && widgetConfig.componentId.includes(CatalogOverlayComponent.WIDGET_CONFIG.componentId)) {
+                        floatingCatalogWidgets = false;
+                    }
+                });
+
+                if (floatingCatalogWidgets && dockedCatalogWidgets && catalogWidgetStores) {
                     catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);   
                 } else {
                     catalogWidgetId = this.widgetsStore.addCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);

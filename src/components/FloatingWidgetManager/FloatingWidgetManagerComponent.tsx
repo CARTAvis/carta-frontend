@@ -38,7 +38,6 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
 
     private getWidgetContent(widgetConfig: WidgetConfig) {
         const appStore = this.props.appStore;
-
         switch (widgetConfig.type) {
             case ImageViewComponent.WIDGET_CONFIG.type:
                 return <ImageViewComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
@@ -123,13 +122,14 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
         return (
             <div>
                 {widgetConfigs.map((w, index) => {
-                    const showPinButton = this.showPin(w); 
+                    const showPinButton = this.showPin(w);
+                    const id = w.componentId ? w.componentId : w.id;
                     return (
-                        <div key={w.id}>
+                        <div key={id}>
                             <FloatingWidgetComponent
                                 isSelected={index === widgetConfigs.length - 1}
                                 appStore={appStore}
-                                key={w.id}
+                                key={id}
                                 widgetConfig={w}
                                 zIndex={index}
                                 showPinButton={showPinButton}

@@ -42,5 +42,6 @@ export enum HelpType {
     STATS = "stats",
     STOKES_ANALYSIS = "stoke-analysis",
     STOKES_ANALYSIS_SETTINGS = "stoke-analysis-settings",
-    CATALOG_OVERLAY = "catalog-overlay"
+    CATALOG_OVERLAY = "catalog-overlay",
+    CATALOG_SCATTER = "catalog-scatter"
 }

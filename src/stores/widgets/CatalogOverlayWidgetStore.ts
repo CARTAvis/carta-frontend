@@ -161,6 +161,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.catalogScatterWidgetsId.push(id);
     }
 
+    @action updateCatalogScatterWidget(id: string) {
+        this.catalogScatterWidgetsId = this.catalogScatterWidgetsId.filter(scatterWidgetsId => scatterWidgetsId !== id);
+    }
+
     @action setCatalogPlotType(type: CatalogPlotType) {
         this.catalogPlotType = type;
     }

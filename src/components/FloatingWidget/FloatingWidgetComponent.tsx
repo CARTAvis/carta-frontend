@@ -92,6 +92,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
             floatingContentClassName = "floating-settings-content";
         }
         const widgetConfig = this.props.widgetConfig;
+        
         return (
             <Rnd
                 ref={c => this.rnd = c}

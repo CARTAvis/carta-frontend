@@ -32,8 +32,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
             defaultHeight: 350,
             title: "Catalog Scatter",
             isCloseable: true,
-            // Todo add helptype
-            helpType: HelpType.CATALOG_OVERLAY
+            helpType: HelpType.CATALOG_SCATTER
         };
     }
 

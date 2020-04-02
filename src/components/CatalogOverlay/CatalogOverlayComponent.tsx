@@ -63,7 +63,8 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
             defaultHeight: 350,
             title: "Catalog Overlay",
             isCloseable: true,
-            helpType: HelpType.CATALOG_OVERLAY
+            helpType: HelpType.CATALOG_OVERLAY,
+            componentId: "catalog-overlay-component"
         };
     }
 
@@ -92,7 +93,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     @computed get matchesSelectedCatalogFile(): string {
-        let widgetId = null;
+        let widgetId = undefined;
         this.props.appStore.catalogs.forEach((value, key) => {
             if (value === this.catalogFileId) {
                 widgetId = key;
@@ -109,9 +110,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
-        this.widgetId = this.props.id;
+        this.widgetId = "catalog-overlay-0";
         if (this.widgetStore) {
-            this.catalogFileId = this.widgetStore.catalogInfo.fileId;  
+            this.catalogFileId = this.widgetStore.catalogInfo.fileId; 
+        } else {
+            this.catalogFileId = 1;
         }
         autorun(() => {
             if (this.widgetStore) {
@@ -132,7 +135,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                 }
             } else {
                 this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Catalog : Cursor`);
-                this.props.appStore.widgetsStore.removeFloatingWidget(this.props.id, true);
             }
         });
     }
@@ -440,7 +442,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const widgetStore = this.widgetStore;
         const appStore = this.props.appStore;
         const frame = appStore.activeFrame;
-
         // init plot data   
         const coords = widgetStore.get2DPlotData(widgetStore.xColumnRepresentation, widgetStore.yColumnRepresentation, widgetStore.catalogData);
 
@@ -495,7 +496,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     public render() {
         const appStore = this.props.appStore;
         const widgetStore = this.widgetStore;
-
         if (!widgetStore) {
             return (
                 <div className="catalog-overlay">

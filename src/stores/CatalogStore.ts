@@ -39,8 +39,11 @@ export class CatalogStore {
 
     @action updateCatalogData(widgetId: string, xWcsData: Array<any>, yWcsData: Array<any>, wcsInfo: number, xUnit: string, yUnit: string, catalogFrame: SystemType) {
         const pixelData = this.transformCatalogData(xWcsData, yWcsData, wcsInfo, xUnit, yUnit, catalogFrame);
-        this.catalogs.get(widgetId).xImageCoords.push(pixelData.xImageCoords);
-        this.catalogs.get(widgetId).yImageCoords.push(pixelData.yImageCoords);
+        const catalogSettings = this.catalogs.get(widgetId);
+        if (catalogSettings) {
+            catalogSettings.xImageCoords.push(pixelData.xImageCoords);
+            catalogSettings.yImageCoords.push(pixelData.yImageCoords);   
+        }
     }
 
     @action updateCatalogSize(widgetId: string, size: number) {
@@ -56,8 +59,11 @@ export class CatalogStore {
     }
 
     @action clearData(widgetId: string) {
-        this.catalogs.get(widgetId).xImageCoords = [];
-        this.catalogs.get(widgetId).yImageCoords = [];
+        const catalogSettings = this.catalogs.get(widgetId);
+        if (catalogSettings) {
+            catalogSettings.xImageCoords = [];
+            catalogSettings.yImageCoords = [];   
+        }
     }
 
     @action removeCatalog(widgetId: string) {
