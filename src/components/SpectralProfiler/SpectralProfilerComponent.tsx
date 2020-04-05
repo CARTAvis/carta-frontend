@@ -98,13 +98,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             let ySum2 = 0;
             let yCount = 0;
 
-            // values are needed to be sorted in incremental order for binary search
             let values: Array<{ x: number, y: number }> = [];
-            const isIncremental = channelValues[0] <= channelValues[channelValues.length - 1];
             for (let i = 0; i < channelValues.length; i++) {
-                let index = isIncremental ? i : channelValues.length - 1 - i;
-                const x = channelValues[index];
-                const y = coordinateData.values[index];
+                const x = channelValues[i];
+                const y = coordinateData.values[i];
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
                 if (x < xMin || x > xMax) {
