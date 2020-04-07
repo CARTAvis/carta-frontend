@@ -31,7 +31,7 @@ export class CatalogScatterWidgetStore {
         };
         this.indicatorInfo = undefined;
         this.border = this.initBorder;
-        this.dragmode = "zoom";
+        this.dragmode = "select";
     }
 
     @action setColumnX(columnName: string) {

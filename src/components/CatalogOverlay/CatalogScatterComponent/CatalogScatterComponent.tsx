@@ -8,7 +8,7 @@ import {FormGroup, HTMLSelect, AnchorButton, Intent, Tooltip, Switch} from "@blu
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {WidgetConfig, WidgetProps, HelpType} from "stores";
-import {CatalogScatterWidgetStore, Border, CatalogUpdateMode} from "stores/widgets";
+import {CatalogScatterWidgetStore, Border, CatalogUpdateMode, DragMode} from "stores/widgets";
 import {ProfilerInfoComponent} from "components/Shared";
 import {Colors} from "@blueprintjs/core";
 import {toFixed} from "utilities";
@@ -156,6 +156,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         }
     }
 
+    // region selection
     private onLassoSelected = (event: Plotly.PlotSelectionEvent) => {
         if (event && event.points && event.points.length > 0) {
             let selectedPointIndexs = [];
@@ -164,7 +165,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                 const selectedPoint = points[index];
                 selectedPointIndexs.push(selectedPoint.pointIndex);
             }
-            this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs(selectedPointIndexs);
+            this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs(selectedPointIndexs, true);
             const storeId = this.widgetStore.catalogOverlayWidgetStore.storeId;
             this.props.appStore.catalogStore.updateSelectedPoints(storeId, selectedPointIndexs);
         }
@@ -176,6 +177,20 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
         this.props.appStore.catalogStore.updateSelectedPoints(storeId, []);
         this.widgetStore.catalogOverlayWidgetStore.setShowSelectedData(false);
         this.props.appStore.catalogStore.updateShowSelectedData(storeId, false);
+    }
+
+    // Single source selected
+    private onSingleSourceClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
+        const dragmode: DragMode[] = ["select", "lasso"];
+        const inDragmode = dragmode.includes(this.widgetStore.dragmode);
+        if (event && event.points && event.points.length > 0 && inDragmode) {
+            let selectedPointIndex = [];
+            const selectedPoint = event.points[0];
+            selectedPointIndex.push(selectedPoint.pointIndex);
+            this.widgetStore.catalogOverlayWidgetStore.setselectedPointIndexs(selectedPointIndex, true);
+            const storeId = this.widgetStore.catalogOverlayWidgetStore.storeId;
+            this.props.appStore.catalogStore.updateSelectedPoints(storeId, selectedPointIndex);
+        }
     }
 
     public render() {
@@ -333,6 +348,7 @@ export class CatalogScatterComponent extends React.Component<WidgetProps> {
                         onRelayout={this.onRelayout}
                         onSelected={this.onLassoSelected}
                         onDeselect={this.onDeselect}
+                        onClick={this.onSingleSourceClick}
                     />
                 </div>
                 <div className="catalog-2D-footer" >

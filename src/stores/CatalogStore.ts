@@ -72,7 +72,9 @@ export class CatalogStore {
 
     @action updateSelectedPoints(widgetId: string, selectedPointIndexs: number[]) {
         const catalog = this.catalogs.get(widgetId);
-        catalog.selectedPointIndexs = selectedPointIndexs;
+        if (catalog) {
+            catalog.selectedPointIndexs = selectedPointIndexs;   
+        }
     }
 
     @action updateShowSelectedData(widgetId: string, val: boolean) {

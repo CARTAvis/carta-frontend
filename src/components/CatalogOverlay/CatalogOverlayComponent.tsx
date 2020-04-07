@@ -3,7 +3,7 @@ import * as _ from "lodash";
 import {autorun, computed, observable, action} from "mobx";
 import {observer} from "mobx-react";
 import {Switch, HTMLSelect, AnchorButton, Intent, Tooltip, FormGroup, NonIdealState} from "@blueprintjs/core";
-import {Cell, Column, Table, SelectionModes, RenderMode} from "@blueprintjs/table";
+import {Cell, Column, Table, SelectionModes, RenderMode, Regions, IRegion} from "@blueprintjs/table";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType} from "components/Shared";
@@ -41,8 +41,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     @observable widgetId: string;
     @observable catalogFileId: number;
 
-    private catalogdataTableRef: Table;
-    private controlHeaderTableRef: Table;
+    private catalogHeaderTableRef: Table;
     private static readonly DataTypeRepresentationMap = new Map<CARTA.EntryType, Array<CatalogOverlay>>([
         [CARTA.EntryType.BOOL, [CatalogOverlay.NONE]],
         [CARTA.EntryType.DOUBLE, [CatalogOverlay.X, CatalogOverlay.Y, CatalogOverlay.NONE]],
@@ -108,6 +107,30 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         this.widgetId = this.matchesSelectedCatalogFile;
     }
 
+    @action handleFileCloseClick = () => {
+        const appStore = this.props.appStore;
+        appStore.reomveCatalog(this.widgetId, this.props.id);
+        if (appStore.catalogs.size > 0) {
+            const catalogFileId = appStore.catalogs.values().next().value;
+            this.catalogFileId = catalogFileId;
+        }
+    }
+
+    @computed get tableInfo(): {dataset: CARTA.ICatalogColumnsData, numVisibleRows: number} {
+        const widgetStore = this.widgetStore;
+        let dataset = [] as CARTA.ICatalogColumnsData;
+        let numVisibleRows = 0;
+        if (widgetStore) {
+            dataset = widgetStore.catalogData;
+            numVisibleRows = widgetStore.numVisibleRows;
+            if (widgetStore.regionSelected && widgetStore.showSelectedData) {
+                dataset = widgetStore.selectedData;
+                numVisibleRows = widgetStore.regionSelected;
+            }
+        }
+        return {dataset: dataset, numVisibleRows: numVisibleRows};
+    }
+
     constructor(props: WidgetProps) {
         super(props);
         this.widgetId = "catalog-overlay-0";
@@ -140,11 +163,14 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
     }
 
     onCatalogdataTableRefUpdated = (ref) => {
-        this.catalogdataTableRef = ref;
+        const widgetStore = this.widgetStore;
+        if (widgetStore) {
+            widgetStore.setCatalogTableRef(ref);
+        }
     }
 
     onControlHeaderTableRef = (ref) => {
-        this.controlHeaderTableRef = ref;
+        this.catalogHeaderTableRef = ref;
     }
 
     onResize = (width: number, height: number) => {
@@ -152,11 +178,11 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         this.height = height;
         const widgetStore = this.widgetStore;
         // fixed bug from blueprintjs, only display 4 rows.
-        if (widgetStore && this.controlHeaderTableRef) {
-            this.updateTableSize(this.controlHeaderTableRef); 
+        if (widgetStore && this.catalogHeaderTableRef) {
+            this.updateTableSize(this.catalogHeaderTableRef, this.props.docked); 
         }
-        if (widgetStore && this.catalogdataTableRef) {
-            this.updateTableSize(this.catalogdataTableRef);
+        if (widgetStore && widgetStore.catalogTableRef) {
+            this.updateTableSize(widgetStore.catalogTableRef, this.props.docked);
         }
     };
 
@@ -290,9 +316,13 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
     }
 
-    private updateTableSize(ref: any) {
+    private updateTableSize(ref: any, docked: boolean) {
         const viewportRect = ref.locator.getViewportRect();
-        ref.updateViewportRect(viewportRect); 
+        ref.updateViewportRect(viewportRect);
+        // fixed bug for blueprint table, first column overlap with row index
+        if (docked) {
+            ref.scrollToRegion(Regions.column(0));   
+        }
     }
 
     private getUserFilters(): CARTA.FilterConfig[] {
@@ -392,31 +422,41 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         return result;
     }
 
+    private initSelectedPointIndexs = () => {
+        const widgetStore = this.widgetStore;
+        const appStore = this.props.appStore;
+        widgetStore.setselectedPointIndexs([]);
+        widgetStore.setShowSelectedData(false);
+        appStore.catalogStore.updateSelectedPoints(this.widgetId, []);
+    } 
+
     private handleFilterClick = () => {
         const widgetStore = this.widgetStore;
         const appStore = this.props.appStore;
-        widgetStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
-        widgetStore.clearData();
-        widgetStore.setNumVisibleRows(0);
-        widgetStore.setSubsetEndIndex(0);
-        widgetStore.setselectedPointIndexs([]);
-        widgetStore.setLoadingDataStatus(true);
-        let catalogFilter = widgetStore.updateRequestDataSize;
+        if (widgetStore && appStore) {
+            widgetStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
+            widgetStore.clearData();
+            widgetStore.setNumVisibleRows(0);
+            widgetStore.setSubsetEndIndex(0);
+            widgetStore.setLoadingDataStatus(true);
+            this.initSelectedPointIndexs();
+            let catalogFilter = widgetStore.updateRequestDataSize;
 
-        // Todo filter by region Id and Imageview boundary
-        catalogFilter.imageBounds.xColumnName = widgetStore.xColumnRepresentation;
-        catalogFilter.imageBounds.yColumnName = widgetStore.yColumnRepresentation;
-        
-        catalogFilter.fileId = widgetStore.catalogInfo.fileId;
-        catalogFilter.filterConfigs = this.getUserFilters();
-        catalogFilter.hidedHeaders = widgetStore.hidedHeaders;
-        appStore.sendCatalogFilter(catalogFilter);
+            // Todo filter by region Id and Imageview boundary
+            catalogFilter.imageBounds.xColumnName = widgetStore.xColumnRepresentation;
+            catalogFilter.imageBounds.yColumnName = widgetStore.yColumnRepresentation;
+            
+            catalogFilter.fileId = widgetStore.catalogInfo.fileId;
+            catalogFilter.filterConfigs = this.getUserFilters();
+            catalogFilter.hidedHeaders = widgetStore.hidedHeaders;
+            appStore.sendCatalogFilter(catalogFilter);
+        }
     };
 
-    private updateTableData = () => {
+    private updateByInfiniteScroll = () => {
         const widgetStore = this.widgetStore;
-        // const profile = this.profileStore;
-        if (widgetStore.loadingData === false && widgetStore.updateMode === CatalogUpdateMode.TableUpdate && widgetStore.shouldUpdateData && !widgetStore.showSelectedData) {
+        const selectedMode = widgetStore.showSelectedData;
+        if (widgetStore.loadingData === false && widgetStore.updateMode === CatalogUpdateMode.TableUpdate && widgetStore.shouldUpdateData && !selectedMode) {
             widgetStore.setUpdateMode(CatalogUpdateMode.TableUpdate);
             const filter = this.widgetStore.updateRequestDataSize;
             const currentHidedHeaders = widgetStore.hidedHeaders;
@@ -431,7 +471,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const appStore = this.props.appStore;
         if (widgetStore) {
             widgetStore.reset();
-            widgetStore.setselectedPointIndexs([]);
+            this.initSelectedPointIndexs();
             appStore.catalogStore.clearData(this.widgetId);
             const catalogFilter = widgetStore.initUserFilters;
             appStore.sendCatalogFilter(catalogFilter); 
@@ -484,19 +524,18 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         this.widgetStore.setCatalogPlotType(val);
     }
 
-    @action handleFileCloseClick = () => {
-        const appStore = this.props.appStore;
-        appStore.reomveCatalog(this.widgetId, this.props.id);
-        if (appStore.catalogs.size > 0) {
-            const catalogFileId = appStore.catalogs.values().next().value;
-            this.catalogFileId = catalogFileId;
-        }
+    // single source selected in table
+    private onCatalogTableDataSelected = (selectedDataIndex: number) => {
+        const selectedData = [selectedDataIndex];
+        this.widgetStore.setselectedPointIndexs(selectedData);
+        this.props.appStore.catalogStore.updateSelectedPoints(this.widgetId, selectedData);
     }
 
     public render() {
         const appStore = this.props.appStore;
         const widgetStore = this.widgetStore;
-        if (!widgetStore) {
+
+        if (!widgetStore || !appStore) {
             return (
                 <div className="catalog-overlay">
                     <NonIdealState icon={"folder-open"} title={"No file loaded"} description={"Load a file using the menu"}/>;
@@ -505,36 +544,31 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         }
 
         this.coordinate = widgetStore.catalogCoordinateSystem.coordinate;
-        let dataset = widgetStore.catalogData;
-        let numVisibleRows = widgetStore.numVisibleRows;
-        // Todo optimal filter method
-        if (widgetStore.regionSelected && widgetStore.showSelectedData) {
-            dataset = widgetStore.selectedData;
-            numVisibleRows = widgetStore.regionSelected;
-        }
+        const catalogTable = this.tableInfo;
         const dataTableProps: TableComponentProps = {
             type: TableType.ColumnFilter,
-            dataset: dataset,
+            dataset: catalogTable.dataset,
             filter: widgetStore.catalogControlHeader,
             columnHeaders: widgetStore.displayedColumnHeaders,
-            numVisibleRows: numVisibleRows,
+            numVisibleRows: catalogTable.numVisibleRows,
             columnWidts: widgetStore.tableColumnWidts,
             loadingCell: widgetStore.loadingData,
             selectedDataIndex: widgetStore.selectedPointIndexs,
             showSelectedData: widgetStore.showSelectedData,
             upTableRef: this.onCatalogdataTableRefUpdated,
             updateColumnFilter: widgetStore.setColumnFilter,
-            updateTableData: this.updateTableData,
-            updateTableColumnWidth: widgetStore.setTableColumnWidth
+            updateByInfiniteScroll: this.updateByInfiniteScroll,
+            updateTableColumnWidth: widgetStore.setTableColumnWidth,
+            updateSelectedRow: this.onCatalogTableDataSelected,
         };
 
         let startIndex = 0;
         if (widgetStore.numVisibleRows) {
             startIndex = 1;
         }
-        let info = `Showing ${startIndex} to ${numVisibleRows} of ${widgetStore.catalogInfo.dataSize} entries`;
+        let info = `Showing ${startIndex} to ${catalogTable.numVisibleRows} of ${widgetStore.catalogInfo.dataSize} entries`;
         if (widgetStore.hasFilter && widgetStore.filterDataSize) {
-            info = `Showing ${startIndex} to ${numVisibleRows} of ${widgetStore.filterDataSize} entries, total ${widgetStore.catalogInfo.dataSize} entries`;
+            info = `Showing ${startIndex} to ${catalogTable.numVisibleRows} of ${widgetStore.filterDataSize} entries, total ${widgetStore.catalogInfo.dataSize} entries`;
         }
         let tableInfo = (widgetStore.catalogInfo.dataSize) ? (
             <tr>
@@ -545,7 +579,6 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         ) : null;
 
         let catalogFile = [];
-        // Todo map file id with name
         appStore.catalogs.forEach((value, key) => {
             catalogFile.push(<option key={key} value={value}>{value}</option>);
         }); 

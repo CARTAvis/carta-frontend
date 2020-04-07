@@ -1,5 +1,6 @@
 import {action, computed, observable} from "mobx";
 import {Colors} from "@blueprintjs/core";
+import {Table, Regions, IRegion} from "@blueprintjs/table";
 import {CARTA} from "carta-protobuf";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {AppStore, SystemType} from "stores";
@@ -103,6 +104,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
     @observable selectedPointIndexs: number[];
     @observable filterDataSize: number;
     @observable showSelectedData: boolean;
+    @observable catalogTableRef: Table;
 
     constructor(appStore: AppStore, catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData, id: string) {
         super(appStore, RegionsType.CLOSED_AND_POINT);
@@ -123,6 +125,7 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.selectedPointIndexs = [];
         this.filterDataSize = undefined;
         this.showSelectedData = false;
+        this.catalogTableRef = undefined;
 
         this.catalogPlotType = CatalogPlotType.ImageOverlay;
         const coordinateSystem = catalogInfo.fileInfo.coosys[0];
@@ -151,6 +154,10 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
             this.numVisibleRows = initTableRows;
             this.subsetEndIndex = initTableRows;
         }
+    }
+
+    @action setCatalogTableRef(ref: Table) {
+        this.catalogTableRef = ref;
     }
 
     @action setShowSelectedData(val: boolean) {
@@ -362,8 +369,11 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         this.filterDataSize = undefined;
     }
 
-    @action setselectedPointIndexs(pointsIndex: Array<number>) {
-        this.selectedPointIndexs = pointsIndex;
+    @action setselectedPointIndexs = (pointIndexs: Array<number>, autoScroll: boolean = false) => {
+        this.selectedPointIndexs = pointIndexs;
+        if (pointIndexs.length > 0 && this.catalogTableRef && autoScroll) {
+            this.catalogTableRef.scrollToRegion(this.autoScrollRowNumber);   
+        }
     }
 
     @computed get displayedColumnHeaders(): Array<CARTA.CatalogHeader> {
@@ -543,13 +553,13 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         return this.selectedPointIndexs.length;
     }
 
-    private filterBySelectedDataIndexs(selectedPointIndexs: Array<number>, dataArray: any) {
-        let data = [];
-        for (let index = 0; index < selectedPointIndexs.length; index++) {
-            const dataIndex = selectedPointIndexs[index];
-            data.push(dataArray[dataIndex]);
+    @computed get autoScrollRowNumber(): IRegion {
+        let singleRowRegion: IRegion = null;
+        const selectedPointIndex = this.selectedPointIndexs;
+        if (selectedPointIndex.length > 0) {
+            singleRowRegion = Regions.row(selectedPointIndex[0]);   
         }
-        return data;
+        return singleRowRegion;
     }
 
     public get2DPlotData(xColumn: string, yColumn: string, columnsData: CARTA.ICatalogColumnsData): {wcsX: Array<any>, wcsY: Array<any>, xHeaderInfo: CARTA.ICatalogHeader, yHeaderInfo: CARTA.ICatalogHeader} {
@@ -569,6 +579,15 @@ export class CatalogOverlayWidgetStore extends RegionWidgetStore {
         const headerInfo = this.catalogHeader[header.dataIndex];
         const wcsData = getTableDataByType(this.catalogData, headerInfo.dataType, headerInfo.dataTypeIndex);
         return {wcsData: wcsData, headerInfo: headerInfo};
+    }
+
+    private filterBySelectedDataIndexs(selectedPointIndexs: Array<number>, dataArray: any) {
+        let data = [];
+        for (let index = 0; index < selectedPointIndexs.length; index++) {
+            const dataIndex = selectedPointIndexs[index];
+            data.push(dataArray[dataIndex]);
+        }
+        return data;
     }
 
     private findKeywords(val: string): boolean {

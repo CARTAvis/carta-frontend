@@ -1,7 +1,8 @@
 import * as React from "react";
 import {CARTA} from "carta-protobuf";
 import {observer} from "mobx-react";
-import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, EditableCell} from "@blueprintjs/table";
+import {Cell, Column, Table, SelectionModes, RenderMode, ColumnHeaderCell, EditableCell, IRegion} from "@blueprintjs/table";
+import {IRowIndices} from "@blueprintjs/table/lib/esm/common/grid";
 import {ControlHeader} from "stores/widgets";
 import {getTableDataByType} from "utilities";
 
@@ -24,8 +25,9 @@ export class TableComponentProps {
     showSelectedData?: boolean;
     upTableRef?: (ref: Table) => void;
     updateColumnFilter?: (value: string, columnName: string) => void;
-    updateTableData?: (rowIndexEnd: number) => void;
+    updateByInfiniteScroll?: (rowIndexEnd: number) => void;
     updateTableColumnWidth?: (width: number, columnName: string) => void;
+    updateSelectedRow?: (dataIndex: number) => void;
 }
 
 @observer
@@ -77,10 +79,12 @@ export class TableComponent extends React.Component<TableComponentProps> {
         return false;
     }
 
-    private infiniteLoad(rowIndexEnd: number, numVisibleRows: number) {
-        const currentIndex = rowIndexEnd + 1;
-        if (rowIndexEnd > 0 && currentIndex >= numVisibleRows && !this.props.loadingCell && !this.props.showSelectedData) {
-            this.props.updateTableData(rowIndexEnd);
+    private infiniteScroll = (rowIndices: IRowIndices) => {
+        // rowIndices offset around 5 form blueprintjs tabel
+        const currentIndex = rowIndices.rowIndexEnd + 1;
+        // console.log(rowIndices)
+        if (rowIndices.rowIndexEnd > 0 && currentIndex >= this.props.numVisibleRows && !this.props.loadingCell && !this.props.showSelectedData) {
+            this.props.updateByInfiniteScroll(rowIndices.rowIndexEnd);
         }
     }
 
@@ -103,10 +107,17 @@ export class TableComponent extends React.Component<TableComponentProps> {
         }
     }
 
+    private onRowIndexSelection = (selectedRegions: IRegion[]) => {
+        if (selectedRegions.length > 0) {
+            this.props.updateSelectedRow(selectedRegions[0].rows["0"]);
+        }
+    }
+
     render() {
         const table = this.props;
         const tableColumns = [];
         const tableData = table.dataset;
+
         for (let index = 0; index < table.columnHeaders.length; index++) {
             const header = table.columnHeaders[index];
             const dataType = header.dataType;
@@ -129,11 +140,14 @@ export class TableComponent extends React.Component<TableComponentProps> {
                     numRows={table.numVisibleRows}
                     renderMode={RenderMode.BATCH}
                     enableRowReordering={false}
-                    selectionModes={SelectionModes.NONE}
-                    onVisibleCellsChange={(rowIndices) => this.infiniteLoad(rowIndices.rowIndexEnd, table.numVisibleRows)}
+                    selectionModes={SelectionModes.ROWS_AND_CELLS}
+                    onVisibleCellsChange={this.infiniteScroll}
                     columnWidths={table.columnWidts}
                     onColumnWidthChanged={this.updateTableColumnWidth}
                     enableGhostCells={true}
+                    // selectedRegions={null}
+                    onSelection={this.onRowIndexSelection}
+                    enableMultipleSelection={false}
                 >
                     {tableColumns}
                 </Table>

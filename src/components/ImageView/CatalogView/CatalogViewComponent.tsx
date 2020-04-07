@@ -18,10 +18,16 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
     @computed get scatterDatasets() {
         const catalogStore = this.props.appStore.catalogStore;
         let scatterDatasets: Plotly.Data[] = [];
+
         catalogStore.catalogs.forEach((catalog, key) => {
+            const selectedPointIndexs = catalog.selectedPointIndexs;
             let data: Plotly.Data = {};
+            let xArray = [];
+            let yArray = [];
+
             data.type = "scattergl";
             data.mode = "markers";
+            data.hoverinfo = "none";
             data.marker = {
                 symbol: catalog.shape, 
                 color: catalog.color,
@@ -30,15 +36,15 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                     width: 1.5
                 }
             };
-            let xArray = [];
-            let yArray = [];
+
             for (let i = 0; i < catalog.xImageCoords.length; i++) {
                 xArray.push(...catalog.xImageCoords[i]);
                 yArray.push(...catalog.yImageCoords[i]);
             }
+
             data.x = xArray;
             data.y = yArray;
-            const selectedPointIndexs = catalog.selectedPointIndexs;
+
             if (selectedPointIndexs.length > 0) {
                 data["selectedpoints"] = selectedPointIndexs;
                 let opacity = 0.2;
@@ -71,6 +77,7 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
             height: height,
             paper_bgcolor: "rgba(255,255,255, 0)", 
             plot_bgcolor: "rgba(255,255,255, 0)",
+            hovermode: "closest",
             xaxis: {
                 autorange: false,
                 showgrid: false,
@@ -92,11 +99,14 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
                 t: 0,
                 pad: 0
             },
-            showlegend: false
+            showlegend: false,
+            dragmode: false,
         };
         const config: Partial<Plotly.Config> = {
             displayModeBar: false,
-            showTips: false
+            showTips: false,
+            doubleClick: false,
+            displaylogo: false,
         };
 
         if (frame) {
