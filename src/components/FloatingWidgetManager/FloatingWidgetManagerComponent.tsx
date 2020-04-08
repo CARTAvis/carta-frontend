@@ -29,11 +29,25 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
     private floatingSettingType = "floating-settings";
 
     onFloatingWidgetSelected = (widget: WidgetConfig) => {
-        this.props.appStore.widgetsStore.selectFloatingWidget(widget.id);
+        // rearrange will cause a bug of empty table, ToDo change z-index 
+        if (widget.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+            return;
+        } else {
+            this.props.appStore.widgetsStore.selectFloatingWidget(widget.id);
+        }
     };
 
     onFloatingWidgetClosed = (widget: WidgetConfig) => {
-        this.props.appStore.widgetsStore.removeFloatingWidget(widget.id);
+        const widgetsStore = this.props.appStore.widgetsStore;
+        switch (widget.type) {
+            case CatalogOverlayComponent.WIDGET_CONFIG.type:
+                // remove widget component only
+                widgetsStore.removeFloatingWidgetComponent(widget.componentId);
+                break;
+            default:
+                widgetsStore.removeFloatingWidget(widget.id);
+                break;
+        }
     };
 
     private getWidgetContent(widgetConfig: WidgetConfig) {
@@ -118,7 +132,6 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
     public render() {
         const appStore = this.props.appStore;
         const widgetConfigs = appStore.widgetsStore.floatingWidgets;
-
         return (
             <div>
                 {widgetConfigs.map((w, index) => {
@@ -136,6 +149,7 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
                                 onSelected={() => this.onFloatingWidgetSelected(w)}
                                 onClosed={() => this.onFloatingWidgetClosed(w)}
                                 showFloatingSettingsButton={this.showFloatingSettingsButton(w)}
+                                floatingWidgets={this.props.appStore.widgetsStore.floatingWidgets.length}
                             >
                                 {showPinButton ?
                                     this.getWidgetContent(w)

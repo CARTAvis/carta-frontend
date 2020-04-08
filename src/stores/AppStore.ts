@@ -520,7 +520,6 @@ export class AppStore {
                 let catalogWidgetId = null;
                 let floatingCatalogWidgets = true;
                 const dockedCatalogWidgets = this.widgetsStore.dockedWidgets.length === 0;
-                const catalogWidgetStores = this.catalogs.size === 0;
 
                 this.widgetsStore.floatingWidgets.forEach(widgetConfig => {
                     if (widgetConfig.componentId && widgetConfig.componentId.includes(CatalogOverlayComponent.WIDGET_CONFIG.componentId)) {
@@ -528,7 +527,7 @@ export class AppStore {
                     }
                 });
 
-                if (floatingCatalogWidgets && dockedCatalogWidgets && catalogWidgetStores) {
+                if (floatingCatalogWidgets && dockedCatalogWidgets) {
                     catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);   
                 } else {
                     catalogWidgetId = this.widgetsStore.addCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);
@@ -550,7 +549,7 @@ export class AppStore {
         if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
             this.catalogs.delete(catalogWidgetId);
             if (this.catalogs.size === 0) {
-                this.widgetsStore.removeFloatingWidget(catalogComponentId, true);
+                this.widgetsStore.removeFloatingWidgetComponent(catalogComponentId);
             }
             this.widgetsStore.catalogOverlayWidgets.delete(catalogWidgetId);
             this.catalogStore.clearData(catalogWidgetId);

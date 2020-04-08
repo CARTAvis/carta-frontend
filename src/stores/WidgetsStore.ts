@@ -940,15 +940,9 @@ export class WidgetsStore {
     // Removes a widget from the floating widget array, optionally removing the widget's associated store
     @action removeFloatingWidget = (id: string, preserveStore: boolean = false) => {
         const widget = this.floatingWidgets.find(w => w.id === id);
-
         if (widget) {
             this.floatingWidgets = this.floatingWidgets.filter(w => w.id !== id);
             if (preserveStore) {
-                return;
-            }
-
-            // remove widget, keep widget store
-            if (this.catalogOverlayWidgets.get(id)) {
                 return;
             }
             
@@ -957,8 +951,17 @@ export class WidgetsStore {
             if (catalogScatterWidget) {
                 catalogScatterWidget.catalogOverlayWidgetStore.updateCatalogScatterWidget(id);
             }
+
             this.removeWidget(id, widget.type);
         }
     };
     // endregion
+
+    // remove a widget component by componentId
+    @action removeFloatingWidgetComponent = (componentId: string) => {
+        const widget = this.floatingWidgets.find(w => w.componentId === componentId);
+        if (widget) {
+            this.floatingWidgets = this.floatingWidgets.filter(w => w.componentId !== componentId);
+        }
+    }
 }

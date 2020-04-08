@@ -82,7 +82,6 @@ export class TableComponent extends React.Component<TableComponentProps> {
     private infiniteScroll = (rowIndices: IRowIndices) => {
         // rowIndices offset around 5 form blueprintjs tabel
         const currentIndex = rowIndices.rowIndexEnd + 1;
-        // console.log(rowIndices)
         if (rowIndices.rowIndexEnd > 0 && currentIndex >= this.props.numVisibleRows && !this.props.loadingCell && !this.props.showSelectedData) {
             this.props.updateByInfiniteScroll(rowIndices.rowIndexEnd);
         }
@@ -117,7 +116,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
         const table = this.props;
         const tableColumns = [];
         const tableData = table.dataset;
-
+        
         for (let index = 0; index < table.columnHeaders.length; index++) {
             const header = table.columnHeaders[index];
             const dataType = header.dataType;

@@ -17,6 +17,7 @@ class FloatingWidgetComponentProps {
     isSelected?: boolean;
     onSelected?: () => void;
     onClosed?: () => void;
+    floatingWidgets?: number;
 }
 
 @observer
@@ -81,7 +82,6 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         let floatingContentClassName = "floating-content";
         let titleClass = this.props.isSelected ? "floating-header selected" : "floating-header";
         let buttonClass = "floating-header-button";
-
         if (appStore.darkTheme) {
             className += " bp3-dark";
             titleClass += " bp3-dark";

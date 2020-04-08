@@ -3,7 +3,7 @@ import * as _ from "lodash";
 import {autorun, computed, observable, action} from "mobx";
 import {observer} from "mobx-react";
 import {Switch, HTMLSelect, AnchorButton, Intent, Tooltip, FormGroup, NonIdealState} from "@blueprintjs/core";
-import {Cell, Column, Table, SelectionModes, RenderMode, Regions, IRegion} from "@blueprintjs/table";
+import {Cell, Column, Table, SelectionModes, RenderMode, Regions} from "@blueprintjs/table";
 import ReactResizeDetector from "react-resize-detector";
 import {CARTA} from "carta-protobuf";
 import {TableComponent, TableComponentProps, TableType} from "components/Shared";
@@ -320,6 +320,7 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
         const viewportRect = ref.locator.getViewportRect();
         ref.updateViewportRect(viewportRect);
         // fixed bug for blueprint table, first column overlap with row index
+        // triger table update  
         if (docked) {
             ref.scrollToRegion(Regions.column(0));   
         }
