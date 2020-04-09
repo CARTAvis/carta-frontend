@@ -447,7 +447,6 @@ export class AppStore {
                     }
                 }
                 this.tileService.handleFileClosed(fileId);
-
             }
         }
     };
@@ -581,7 +580,7 @@ export class AppStore {
     private static readonly CursorThrottleTime = 200;
     private static readonly CursorThrottleTimeRotated = 100;
     private static readonly ImageThrottleTime = 200;
-    private static readonly ImageChannelThrottleTime = 500;
+    private static readonly ImageChannelThrottleTime = 33;
     private static readonly RequirementsCheckInterval = 200;
 
     private spectralRequirements: Map<number, Map<number, CARTA.SetSpectralRequirements>>;
@@ -635,7 +634,7 @@ export class AppStore {
         } else {
             this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, this.preferenceStore.imageCompressionQuality);
         }
-    }, AppStore.ImageChannelThrottleTime);
+    }, AppStore.ImageThrottleTime);
 
     constructor() {
         this.alertStore = new AlertStore();
@@ -1017,8 +1016,7 @@ export class AppStore {
 
     private changeActiveFrame(frame: FrameStore) {
         if (frame !== this.activeFrame) {
-            this.tileService.clearGPUCache();
-            this.tileService.clearRequestQueue();
+            this.tileService.clearRequestQueue(frame.frameInfo.fileId);
         }
         this.activeFrame = frame;
         this.widgetsStore.updateImageWidgetTitle();

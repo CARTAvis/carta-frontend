@@ -20,6 +20,7 @@
         "noImplicitAny": false,
         "strictNullChecks": false,
         "suppressImplicitAnyIndexErrors": true,
+        "downlevelIteration": true,
         "noUnusedLocals": false
     },
     "exclude": [
