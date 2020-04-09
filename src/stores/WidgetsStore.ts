@@ -1,7 +1,7 @@
 import * as GoldenLayout from "golden-layout";
 import * as $ from "jquery";
 import {CARTA} from "carta-protobuf";
-import {action, observable} from "mobx";
+import {action, observable, computed} from "mobx";
 import {
     AnimatorComponent,
     HistogramComponent,
@@ -79,8 +79,6 @@ export class WidgetsStore {
     @observable floatingSettingsWidgets: Map<string, string>;
     @observable catalogOverlayWidgets: Map<string, CatalogOverlayWidgetStore>;
     @observable catalogScatterWidgets: Map<string, CatalogScatterWidgetStore>;
-    // docked widgets
-    @observable dockedWidgets: string[];
 
     private appStore: AppStore;
     private widgetsMap: Map<string, Map<string, any>>;
@@ -141,7 +139,6 @@ export class WidgetsStore {
 
         this.floatingWidgets = [];
         this.defaultFloatingWidgetOffset = 100;
-        this.dockedWidgets = [];
     }
 
     private static getDefaultWidgetConfig(type: string) {
@@ -319,6 +316,9 @@ export class WidgetsStore {
                 break;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 itemId = this.addStokesWidget(null, widgetSettings);
+                break;
+            case CatalogOverlayComponent.WIDGET_CONFIG.type:
+                itemId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
                 break;
             default:
                 // Remove it from the floating widget array, while preserving its store
@@ -498,6 +498,10 @@ export class WidgetsStore {
         widgetConfig.id = id;
         widgetConfig.title = title;
 
+        if (type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+            widgetConfig.componentId = id;
+        }
+
         // Set default size and position from the existing item
         const container = item["container"] as GoldenLayout.Container;
         if (container && container.width && container.height) {
@@ -514,11 +518,6 @@ export class WidgetsStore {
         const config = item.config as GoldenLayout.ReactComponentConfig;
         config.component = "floated";
         item.remove();
-
-        // removed docked catalog widget component
-        if (widgetConfig.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
-            this.dockedWidgets = this.dockedWidgets.filter(dockedId => dockedId !== widgetConfig.id);
-        }
     };
 
     @action onHelpPinedClick = (item: GoldenLayout.ContentItem) => {
@@ -541,11 +540,6 @@ export class WidgetsStore {
             config.id = itemId;
             config.props.id = itemId;
         }
-
-        if (id === CatalogOverlayComponent.WIDGET_CONFIG.id) {
-            const catalogWidgetComponentId = this.getCatalogWidgetComponentId(CatalogOverlayComponent.WIDGET_CONFIG.componentId);
-            this.dockedWidgets.push(catalogWidgetComponentId);
-        }
     };
 
     @action handleItemRemoval = (item: GoldenLayout.ContentItem) => {
@@ -553,7 +547,7 @@ export class WidgetsStore {
             const config = item.config as GoldenLayout.ReactComponentConfig;
 
             // Clean up removed widget's store (ignoring items that have been floated)
-            if (config.component !== "floated") {
+            if (config.component !== "floated" && config.component !== CatalogOverlayComponent.WIDGET_CONFIG.type) {
                 const id = config.id as string;
                 this.removeWidget(id, config.component);
             }
@@ -615,6 +609,21 @@ export class WidgetsStore {
         const widget = this.floatingWidgets.find(w => w.id === id);
         if (widget) {
             widget.title = title;
+        }
+    }
+
+    @action setWidgetComponentTitle(componentId: string, title: string) {
+        const layoutStore = this.appStore.layoutStore;
+        if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
+            const matchingComponents = layoutStore.dockedLayout.root.getItemsById(componentId);
+            if (matchingComponents.length) {
+                matchingComponents[0].setTitle(title);
+            }
+        }
+        
+        const widgetComponent = this.floatingWidgets.find(w => w.componentId === componentId);
+        if (widgetComponent) {
+            widgetComponent.title = title;
         }
     }
 
@@ -698,21 +707,67 @@ export class WidgetsStore {
     // endregion
 
     // region Catalog Overlay Widgets
-    private getCatalogWidgetComponentId = (defaultId: string) => {
-        return (defaultId + "-" + (this.floatingWidgets.length + this.dockedWidgets.length).toString());
+    private getNextComponentId = (config: WidgetConfig) => {
+        // Find the next appropriate ID
+        let nextIndex = 0;
+        let componentIds = [];
+        const floatingCatalogWidgets = this.getFloatingWidgetByComponentId(config.componentId);
+        const dockedCatalogWidgets = this.getDockedWidgetByType(config.type);
+        
+        floatingCatalogWidgets.forEach(floatingConfig => {
+            componentIds.push(floatingConfig.componentId);
+        });
+        dockedCatalogWidgets.forEach(contentItem => {
+            componentIds.push(contentItem.config.id);
+        });
+        
+        while (true) {
+            const nextId = `${config.componentId}-${nextIndex}`;
+            if (!componentIds.includes(nextId)) {
+                return nextId;
+            }
+            nextIndex++;
+        }
+    };
+
+    getDockedWidgetByType(type: string): GoldenLayout.ContentItem[] {
+        const layoutStore = this.appStore.layoutStore;
+        let matchingComponents = [];
+        if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
+            matchingComponents = layoutStore.dockedLayout.root.getItemsByFilter(
+                item => {
+                    const config = item.config as GoldenLayout.ReactComponentConfig;
+                    return config.component === type;
+                }
+            );
+        }
+        return matchingComponents;
+    }
+
+    getFloatingWidgetByComponentId(componentId: string): WidgetConfig[] {
+        let floatingCatalogWidgetComponent = [];
+        this.floatingWidgets.forEach(widgetConfig => {
+            if (widgetConfig.componentId && widgetConfig.componentId.includes(componentId)) {
+                floatingCatalogWidgetComponent.push(widgetConfig);
+            }
+        });
+        return floatingCatalogWidgetComponent;
     }
 
     createFloatingCatalogOverlayWidget = (catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData): string => {
         let config = CatalogOverlayComponent.WIDGET_CONFIG;
         const widgetId = this.addCatalogOverlayWidget(catalogInfo, catalogHeader, catalogData);
-        config.componentId = this.getCatalogWidgetComponentId(config.componentId);
+        config.id = widgetId;
+        config.componentId = this.getNextComponentId(config);
         this.addFloatingWidget(config);
         return widgetId;  
     };
 
     reloadFloatingCatalogOverlayWidget = () => {
         let config = CatalogOverlayComponent.WIDGET_CONFIG;
-        config.componentId = this.getCatalogWidgetComponentId(config.componentId);
+        const componentId = this.getNextComponentId(config);
+        config.componentId = componentId;
+        config.id = componentId; 
         this.addFloatingWidget(config);
     };
 
@@ -943,6 +998,10 @@ export class WidgetsStore {
         if (widget) {
             this.floatingWidgets = this.floatingWidgets.filter(w => w.id !== id);
             if (preserveStore) {
+                return;
+            }
+
+            if (widget.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
                 return;
             }
             

@@ -518,16 +518,11 @@ export class AppStore {
             if (frame && ack.success && ack.dataSize) {
                 let catalogInfo: CatalogInfo = {fileId : fileId, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 let catalogWidgetId = null;
-                let floatingCatalogWidgets = true;
-                const dockedCatalogWidgets = this.widgetsStore.dockedWidgets.length === 0;
+                const config = CatalogOverlayComponent.WIDGET_CONFIG;
+                let floatingCatalogWidgets = this.widgetsStore.getFloatingWidgetByComponentId(config.componentId).length;
+                let dockedCatalogWidgets = this.widgetsStore.getDockedWidgetByType(config.type).length;
 
-                this.widgetsStore.floatingWidgets.forEach(widgetConfig => {
-                    if (widgetConfig.componentId && widgetConfig.componentId.includes(CatalogOverlayComponent.WIDGET_CONFIG.componentId)) {
-                        floatingCatalogWidgets = false;
-                    }
-                });
-
-                if (floatingCatalogWidgets && dockedCatalogWidgets) {
+                if (floatingCatalogWidgets === 0  && dockedCatalogWidgets === 0) {
                     catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);   
                 } else {
                     catalogWidgetId = this.widgetsStore.addCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);

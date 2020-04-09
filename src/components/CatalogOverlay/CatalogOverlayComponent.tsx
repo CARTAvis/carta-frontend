@@ -154,10 +154,10 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
                     const regionId = this.widgetStore.regionIdMap.get(frame.frameInfo.fileId) || 0;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.matchesSelectedRegion ? "(Selected)" : "";
-                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Catalog ${fileName} : ${regionString} ${selectedString} ${progressString}`);
+                    this.props.appStore.widgetsStore.setWidgetComponentTitle(this.props.id, `Catalog ${fileName} : ${regionString} ${selectedString} ${progressString}`);
                 }
             } else {
-                this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `Catalog : Cursor`);
+                this.props.appStore.widgetsStore.setWidgetComponentTitle(this.props.id, `Catalog : Cursor`);
             }
         });
     }

@@ -76,7 +76,7 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 return <StokesAnalysisComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
             case CatalogOverlayComponent.WIDGET_CONFIG.type:
-                return <CatalogOverlayComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+                return <CatalogOverlayComponent appStore={appStore} id={widgetConfig.componentId} docked={false}/>;
             case CatalogScatterComponent.WIDGET_CONFIG.type:
                 return <CatalogScatterComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
             default:
