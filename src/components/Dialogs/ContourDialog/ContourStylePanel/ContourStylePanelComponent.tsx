@@ -1,11 +1,12 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Button, FormGroup, HTMLSelect, MenuItem, NumericInput} from "@blueprintjs/core";
+import {Button, FormGroup, HTMLSelect, MenuItem} from "@blueprintjs/core";
 import {Select} from "@blueprintjs/select";
 import {ColorResult} from "react-color";
 import {ContourDashMode, FrameStore} from "stores";
-import {ColormapComponent, ColorPickerComponent} from "components/Shared";
+import {ColormapComponent, ColorPickerComponent, SafeNumericInput} from "components/Shared";
 import {SWATCH_COLORS} from "utilities";
+import "./ContourStylePanelComponent.css";
 
 const DashModeSelect = Select.ofType<ContourDashMode>();
 
@@ -19,9 +20,9 @@ export class ContourStylePanelComponent extends React.Component<{ frame: FrameSt
     render() {
         const frame = this.props.frame;
         return (
-            <React.Fragment>
+            <div className="contour-style-panel">
                 <FormGroup inline={true} label="Thickness">
-                    <NumericInput
+                    <SafeNumericInput
                         placeholder="Thickness"
                         min={0.5}
                         max={10}
@@ -58,7 +59,7 @@ export class ContourStylePanelComponent extends React.Component<{ frame: FrameSt
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Bias" disabled={!frame.contourConfig.colormapEnabled}>
-                    <NumericInput
+                    <SafeNumericInput
                         disabled={!frame.contourConfig.colormapEnabled}
                         placeholder="Bias"
                         min={-1.0}
@@ -70,7 +71,7 @@ export class ContourStylePanelComponent extends React.Component<{ frame: FrameSt
                     />
                 </FormGroup>
                 <FormGroup inline={true} label="Contrast" disabled={!frame.contourConfig.colormapEnabled}>
-                    <NumericInput
+                    <SafeNumericInput
                         disabled={!frame.contourConfig.colormapEnabled}
                         placeholder="Contrast"
                         min={0.0}
@@ -91,7 +92,7 @@ export class ContourStylePanelComponent extends React.Component<{ frame: FrameSt
                         darkTheme={this.props.darkTheme}
                     />
                 </FormGroup>
-            </React.Fragment>
+            </div>
         );
     }
 }

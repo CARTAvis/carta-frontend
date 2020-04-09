@@ -1,7 +1,9 @@
 import * as React from "react";
+import {AppStore} from "stores";
+import {ImageComponent} from "./ImageComponent";
 import * as underConstruction from "static/help/under_construction.png";
 
-export class RegionDialogHelpComponent extends React.Component {
+export class RegionDialogHelpComponent extends React.Component<{ appStore: AppStore }> {
     public render() {
         return (
             <div>
@@ -10,7 +12,7 @@ export class RegionDialogHelpComponent extends React.Component {
                 <ul>
                     <li>color</li>
                     <li>linewidth</li>
-                    <li>line style (solid or dashd)</li>
+                    <li>line style (solid or dashed)</li>
                 </ul>
                 <p>and region properties, such as</p>
                 <ul>

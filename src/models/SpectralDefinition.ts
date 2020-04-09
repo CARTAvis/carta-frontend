@@ -9,12 +9,12 @@ export const CHANNEL_TYPES: ChannelType[] = [
     {code: "FREQ", name: "Frequency", unit: "Hz"},
     {code: "ENER", name: "Energy", unit: "J"},
     {code: "WAVN", name: "Wavenumber", unit: "1/m"},
-    {code: "VRAD", name: "Velocity", unit: "m/s"},
+    {code: "VRAD", name: "Radio velocity", unit: "m/s"},
     {code: "WAVE", name: "Vacuum wavelength", unit: "m"},
-    {code: "VOPT", name: "Velocity\u00a0(OPT)", unit: "m/s"},
+    {code: "VOPT", name: "Optical velocity", unit: "m/s"},
     {code: "ZOPT", name: "Redshift", unit: ""},
     {code: "AWAV", name: "Air wavelength", unit: "m"},
-    {code: "VELO", name: "Velocity\u00a0(Radial)", unit: "m/s"},
+    {code: "VELO", name: "Apparent radial velocity", unit: "m/s"},
     {code: "BETA", name: "Beta", unit: ""},
 ];
 
@@ -28,7 +28,7 @@ export enum SpectralType {
 }
 
 // Channel is not a valid standalone spectral type
-export const IsSpectralTypeValid = (type: string): boolean => {
+export const IsSpectralTypeSupported = (type: string): boolean => {
     return type && type !== SpectralType.CHANNEL && (<any> Object).values(SpectralType).includes(type);
 };
 
@@ -50,7 +50,7 @@ export enum SpectralUnit {
     NM = "nm",
     ANGSTROM  = "Angstrom"
 }
-export const IsSpectralUnitValid = (unit: string): boolean => {
+export const IsSpectralUnitSupported = (unit: string): boolean => {
     return unit && (<any> Object).values(SpectralUnit).includes(unit);
 };
 
@@ -60,7 +60,7 @@ export enum SpectralSystem {
     BARY = "BARYCENT",
     TOPO = "TOPOCENT"
 }
-export const IsSpectralSystemValid = (system: string): boolean => {
+export const IsSpectralSystemSupported = (system: string): boolean => {
     return system && (<any> Object).values(SpectralSystem).includes(system);
 };
 
@@ -68,7 +68,7 @@ export const SPECTRAL_TYPE_STRING = new Map<SpectralType, string>([
     [SpectralType.VRAD, "Radio velocity"],
     [SpectralType.VOPT, "Optical velocity"],
     [SpectralType.FREQ, "Frequency"],
-    [SpectralType.WAVE, "Wavelength"],
+    [SpectralType.WAVE, "Vacuum wavelength"],
     [SpectralType.AWAV, "Air wavelength"],
     [SpectralType.CHANNEL, "Channel"]
 ]);
@@ -82,7 +82,7 @@ export const SPECTRAL_DEFAULT_UNIT = new Map<SpectralType, SpectralUnit>([
 ]);
 
 export const GenCoordinateLabel = (type: SpectralType, unit: SpectralUnit): string => {
-    return type && unit ? `${SPECTRAL_TYPE_STRING.get(type)} (${unit})` : "Channel";
+    return `${type ? SPECTRAL_TYPE_STRING.get(type) : ""}${unit ? " (" + unit + ")" : ""}`;
 };
 
 export const SPECTRAL_COORDS_SUPPORTED = new Map<string, {type: SpectralType, unit: SpectralUnit}>([
