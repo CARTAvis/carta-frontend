@@ -246,6 +246,16 @@ export class AppStore {
         return this.frames.length;
     }
 
+    @computed get frameMap(): Map<number, FrameStore> {
+        const frameMap = new Map<number, FrameStore>();
+
+        for (const frame of this.frames) {
+            frameMap.set(frame.frameInfo.fileId, frame);
+        }
+
+        return frameMap;
+    }
+
     @computed get frameNames(): IOptionProps [] {
         let names: IOptionProps [] = [];
         this.frames.forEach(frame => names.push({label: frame.frameInfo.fileInfo.name, value: frame.frameInfo.fileId}));

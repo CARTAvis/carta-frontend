@@ -95,16 +95,28 @@ export class ExecutionEntry {
 
         let target = baseObject;
         const targetNameArray = targetString.split(".");
+
+        console.log(targetNameArray);
+
         for (const targetEntry of targetNameArray) {
             const arrayRegex = /(\w+)(?:\[(\d+)\])?/gm;
             const matches = arrayRegex.exec(targetEntry);
             // Check if there's an array index in this parameter
             if (matches && matches.length === 3 && matches[2] !== undefined) {
+                console.log(target);
+                console.log(matches);
                 target = target[matches[1]];
                 if (target == null) {
                     return null;
                 }
-                target = target[matches[2]];
+                if (target instanceof Map) {
+                    const key = JSON.parse(matches[2]);
+                    target = target.get(key);
+                } else if (Array.isArray(target)) {
+                    target = target[matches[2]];
+                } else {
+                    return null;
+                }
             } else {
                 target = target[targetEntry];
             }
