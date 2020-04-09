@@ -195,7 +195,7 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                     connectivityTooltip = <span>Reconnected to server {userString} after disconnect. Some errors may occur<br/><i><small>Latency: {latencyString}</small></i></span>;
                     connectivityClass += " warning";
                 } else {
-                    connectivityTooltip = <span>Connected to server {userString}<br/><i><small>Latency: {latencyString}</small></i></span>;
+                    connectivityTooltip = <span>Connected to server {userString}<br/><i><small>Latency: {latencyString}<br/>Session ID: {appStore.backendService.sessionId}</small></i></span>;
                     connectivityClass += " online";
                 }
                 break;

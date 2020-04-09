@@ -22,6 +22,7 @@ export class BackendService {
     @observable endToEndPing: number;
 
     public animationId: number;
+    public sessionId: number;
 
     private connection: WebSocket;
     private lastPingTime: number;
@@ -29,7 +30,6 @@ export class BackendService {
     private autoReconnect: boolean;
     private observerRequestMap: Map<number, Observer<any>>;
     private eventCounter: number;
-    private sessionId: number;
     // TODO: These can be readonly instead of private to get rid of boilerplate gets
     private readonly rasterTileStream: Subject<CARTA.RasterTileData>;
     readonly rasterSyncStream: Subject<CARTA.RasterTileSync>;
