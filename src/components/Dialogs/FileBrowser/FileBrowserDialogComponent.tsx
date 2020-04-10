@@ -292,7 +292,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
 
     private renderBreadcrumb = (props: IBreadcrumbProps) => {
         return (
-            <Breadcrumb onClick={() => this.props.appStore.fileBrowserStore.selectFolder(props.target, true)}>
+            <Breadcrumb onClick={props.onClick}>
                 {props.icon &&
                 <Icon icon={props.icon}/>
                 }
@@ -302,7 +302,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
     };
 
     @computed get pathItems() {
-        let pathItems: IBreadcrumbProps[] = [{icon: "desktop", target: "."}];
+        let pathItems: IBreadcrumbProps[] = [{icon: "desktop", onClick: () => this.props.appStore.fileBrowserStore.selectFolder(".", true)}];
         if (this.props.appStore.fileBrowserStore.fileList) {
             const path = this.props.appStore.fileBrowserStore.fileList.directory;
             if (path && path !== ".") {
@@ -314,9 +314,10 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                             continue;
                         }
                         parentPath += `/${dirName}`;
+                        const targetPath = parentPath;
                         pathItems.push({
                             text: dirName,
-                            target: parentPath
+                            onClick: () => this.props.appStore.fileBrowserStore.selectFolder(targetPath, true)
                         });
                     }
                 }

@@ -1,7 +1,8 @@
 import * as React from "react";
-import * as underConstruction from "static/help/under_construction.png";
+import {AppStore} from "stores";
+import {ImageComponent} from "./ImageComponent";
 
-export class RenderConfigSettingsHelpComponent extends React.Component {
+export class RenderConfigSettingsHelpComponent extends React.Component<{ appStore: AppStore }> {
     public render() {
         return (
             <div>

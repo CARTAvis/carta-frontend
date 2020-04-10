@@ -15,8 +15,7 @@ export function getHeaderNumericValue(headerEntry: CARTA.IHeaderEntry): number {
 }
 
 export function getTransformedCoordinates(astTransform: number, point: Point2D, forward: boolean = true) {
-    const transformed: Point2D = AST.transformPoint(astTransform, point.x, point.y, forward);
-    return transformed;
+    return AST.transformPoint(astTransform, point.x, point.y, forward);
 }
 
 export function getTransformedChannel(srcTransform: number, destTransform: number, matchingType: SpectralType, srcChannel: number) {
@@ -42,5 +41,13 @@ export function getTransformedChannel(srcTransform: number, destTransform: numbe
     }
 
     // Revert back to 0-based index
-    return destPixelValue.z  - 1;
+    return destPixelValue.z - 1;
+}
+
+export function isAstBad(value: number) {
+    return !isFinite(value) || value === -Number.MAX_VALUE;
+}
+
+export function isAstBadPoint(point: Point2D) {
+    return !point || isAstBad(point.x) || isAstBad(point.y);
 }
