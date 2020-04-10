@@ -70,6 +70,11 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         }
     }
 
+    private onClickHelpButton = () => {
+        const centerX = this.rnd.draggable.state.x + this.rnd.resizable.size.width * 0.5;
+        this.props.appStore.helpStore.showHelpDrawer(this.props.widgetConfig.helpType, centerX);
+    }
+
     constructor(props: FloatingWidgetComponentProps) {
         super(props);
     }
@@ -134,7 +139,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                     </div>
                     }
                     {widgetConfig.helpType &&
-                    <div className={buttonClass} onClick={() => appStore.helpStore.showHelpDrawer(widgetConfig.helpType)}>
+                    <div className={buttonClass} onClick={this.onClickHelpButton}>
                         <Tooltip content="Help" position={Position.BOTTOM_RIGHT}>
                             <Icon icon={"help"}/>
                         </Tooltip>

@@ -4,10 +4,29 @@ import {CARTA} from "carta-protobuf";
 import * as AST from "ast_wrapper";
 import {ASTSettingsString, ContourConfigStore, ContourStore, LogStore, OverlayBeamStore, OverlayStore, PreferenceStore, RegionSetStore, RenderConfigStore} from "stores";
 import {
-    ChannelInfo, ChannelType, CHANNEL_TYPES, ControlMap, CursorInfo, FrameView, GenCoordinateLabel, Point2D, ProtobufProcessing, SpectralInfo, Transform2D, ZoomPoint,
-    SpectralSystem, SpectralType, SpectralUnit, SPECTRAL_COORDS_SUPPORTED, SPECTRAL_DEFAULT_UNIT, IsSpectralSystemSupported, IsSpectralTypeSupported, IsSpectralUnitSupported
+    CHANNEL_TYPES,
+    ChannelInfo,
+    ChannelType,
+    ControlMap,
+    CursorInfo,
+    FrameView,
+    GenCoordinateLabel,
+    IsSpectralSystemSupported,
+    IsSpectralTypeSupported,
+    IsSpectralUnitSupported,
+    Point2D,
+    ProtobufProcessing,
+    SPECTRAL_COORDS_SUPPORTED,
+    SPECTRAL_DEFAULT_UNIT,
+    SPECTRAL_TYPE_STRING,
+    SpectralInfo,
+    SpectralSystem,
+    SpectralType,
+    SpectralUnit,
+    Transform2D,
+    ZoomPoint
 } from "models";
-import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedCoordinates, getTransformedChannel, minMax2D, rotate2D, toFixed, trimFitsComment} from "utilities";
+import {clamp, formattedFrequency, getHeaderNumericValue, getTransformedChannel, getTransformedCoordinates, isAstBadPoint, minMax2D, rotate2D, toFixed, trimFitsComment} from "utilities";
 import {BackendService, ContourWebGLService} from "services";
 
 export interface FrameInfo {
@@ -36,7 +55,7 @@ export class FrameStore {
     @observable spectralType: SpectralType;
     @observable spectralUnit: SpectralUnit;
     @observable spectralSystem: SpectralSystem;
-    @observable channelValues:  Array<number>;
+    @observable channelValues: Array<number>;
     @observable fullWcsInfo: number;
     @observable validWcs: boolean;
     @observable center: Point2D;
@@ -128,7 +147,13 @@ export class FrameStore {
     @computed get spatialTransform() {
         if (this.spatialReference && this.spatialTransformAST) {
             const center = getTransformedCoordinates(this.spatialTransformAST, this.spatialReference.center, false);
-            return new Transform2D(this.spatialTransformAST, center);
+            // Try use center of the screen as a reference point
+            if (!isAstBadPoint(center)) {
+                return new Transform2D(this.spatialTransformAST, center);
+            } else {
+                // Otherwise use the center of the image
+                return new Transform2D(this.spatialTransformAST, {x: this.frameInfo.fileInfoExtended.width / 2.0 + 0.5, y: this.frameInfo.fileInfoExtended.height / 2.0 + 0.5});
+            }
         }
         return null;
     }
@@ -342,8 +367,44 @@ export class FrameStore {
         return spectralInfo;
     }
 
+    @computed get spectralAxis(): {valid: boolean; dimension: number, type: ChannelType} {
+        if (!this.frameInfo || !this.frameInfo.fileInfoExtended || this.frameInfo.fileInfoExtended.depth <= 1 || !this.frameInfo.fileInfoExtended.headerEntries) {
+            return undefined;
+        }
+        const entries = this.frameInfo.fileInfoExtended.headerEntries;
+        const typeHeader3 = entries.find(entry => entry.name.includes("CTYPE3"));
+        const typeHeader4 = entries.find(entry => entry.name.includes("CTYPE4"));
+        if ((!typeHeader3 && !typeHeader4) ||
+            (typeHeader3 && typeHeader3.value.match(/stokes/i) && !typeHeader4) ||
+            (!typeHeader3 && typeHeader4 && typeHeader4.value.match(/stokes/i)) ||
+            (typeHeader3 && typeHeader3.value.match(/stokes/i) && typeHeader4 && typeHeader4.value.match(/stokes/i))) {
+            return undefined;
+        }
+
+        if (typeHeader3 && !typeHeader3.value.match(/stokes/i)) { // spectral axis should be CTYPE3
+            const headerVal = typeHeader3.value.trim().toUpperCase();
+            const channelType = CHANNEL_TYPES.find(type => headerVal === type.code);
+            const unitHeader = entries.find(entry => entry.name.includes("CUNIT3"));
+            if (channelType) {
+                return {valid: true, dimension: 3, type: {name: channelType.name, code: channelType.code, unit: unitHeader ? unitHeader.value.trim() : channelType.unit}};
+            } else {
+                return {valid: false, dimension: 3, type: {name: headerVal, code: headerVal, unit: unitHeader ? unitHeader.value.trim() : undefined}};
+            }
+        } else if (typeHeader4 && !typeHeader4.value.match(/stokes/i)) { // spectral axis should be CTYPE4
+            const headerVal = typeHeader4.value.trim().toUpperCase();
+            const channelType = CHANNEL_TYPES.find(type => headerVal === type.code);
+            const unitHeader = entries.find(entry => entry.name.includes("CUNIT4"));
+            if (channelType) {
+                return {valid: true, dimension: 4, type: {name: channelType.name, code: channelType.code, unit: unitHeader ? unitHeader.value.trim() : channelType.unit}};
+            } else {
+                return {valid: false, dimension: 4, type: {name: headerVal, code: headerVal, unit: unitHeader ? unitHeader.value.trim() : undefined}};
+            }
+        }
+        return undefined;
+    }
+
     @computed get isSpectralCoordinateConvertible(): boolean {
-        if (!this.spectralAxis || !this.spectralFrame) {
+        if (!this.spectralAxis || (this.spectralAxis && !this.spectralAxis.valid) || !this.spectralFrame) {
             return false;
         }
         return IsSpectralTypeSupported(this.spectralAxis.type.code as string) && IsSpectralUnitSupported(this.spectralAxis.type.unit as string);
@@ -354,15 +415,6 @@ export class FrameStore {
             return false;
         }
         return IsSpectralSystemSupported(this.spectralInfo.specsys as string);
-    }
-
-    @computed get nativeSpectralCoordinate(): string {
-        if (this.spectralAxis) {
-            const name = this.spectralAxis.type.name;
-            const unit = this.spectralAxis.type.unit;
-            return `${name} (${unit})`;
-        }
-        return undefined;
     }
 
     @computed get isSpectralPropsEqual(): boolean {
@@ -380,48 +432,19 @@ export class FrameStore {
         return this.spectralType === SpectralType.CHANNEL;
     }
 
+    @computed get nativeSpectralCoordinate(): string {
+        return this.spectralAxis ? `${this.spectralAxis.type.name} (${this.spectralAxis.type.unit})` : undefined;
+    }
+
     @computed get spectralCoordinate(): string {
-        return GenCoordinateLabel(this.spectralType, this.spectralUnit);
+        return !this.spectralType && !this.spectralUnit ? this.nativeSpectralCoordinate : GenCoordinateLabel(this.spectralType, this.spectralUnit);
     }
 
-    // TODO: extend search beyond dimension 3 and 4
-    @computed get spectralAxis(): {dimension: number, type: ChannelType} {
-        if (!this.frameInfo || !this.frameInfo.fileInfoExtended || this.frameInfo.fileInfoExtended.depth <= 1 || !this.frameInfo.fileInfoExtended.headerEntries) {
-            return undefined;
+    @computed get spectralUnitStr(): string {
+        if (this.spectralAxis && !this.spectralType && !this.spectralUnit) {
+            return this.spectralAxis.type.unit;
         }
-        const entries = this.frameInfo.fileInfoExtended.headerEntries;
-        const typeHeader3 = entries.find(entry => entry.name.includes("CTYPE3"));
-        const typeHeader4 = entries.find(entry => entry.name.includes("CTYPE4"));
-        if (!typeHeader3 && !typeHeader4) {
-            return undefined;
-        }
-
-        // Test each header entry to see if it has a valid channel type
-        if (typeHeader3) {
-            const headerVal = typeHeader3.value.trim().toUpperCase();
-            const channelType = CHANNEL_TYPES.find(type => headerVal.indexOf(type.code) !== -1);
-            if (channelType) {
-                const unitHeader = entries.find(entry => entry.name.includes("CUNIT3"));
-                const unit =  unitHeader ? unitHeader.value.trim() : channelType.unit;
-                return {dimension: 3, type: {name: channelType.name, code: channelType.code, unit: unit}};
-            }
-        }
-
-        if (typeHeader4) {
-            const headerVal = typeHeader4.value.trim().toUpperCase();
-            const channelType = CHANNEL_TYPES.find(type => headerVal.indexOf(type.code) !== -1);
-            if (channelType) {
-                const unitHeader = entries.find(entry => entry.name.includes("CUNIT4"));
-                const unit =  unitHeader ? unitHeader.value.trim() : channelType.unit;
-                return {dimension: 4, type: {name: channelType.name, code: channelType.code, unit: unit}};
-            }
-        }
-
-        return undefined;
-    }
-
-    @computed get hasSpectralAxis(): boolean {
-        return this.spectralAxis !== undefined;
+        return this.isCoordChannel ? SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL) : this.spectralUnit as string;
     }
 
     @computed get hasStokes(): boolean {
@@ -559,12 +582,13 @@ export class FrameStore {
             this.initFullWCS();
         }
         this.initSpectralFrame();
+        this.initSupportedSpectralConversion();
         this.initCenter();
         this.zoomLevel = preference.isZoomRAWMode ? 1.0 : this.zoomLevelForFit;
 
         // init spectral settings
-        if (this.isSpectralCoordinateConvertible) {
-            this.spectralType = this.spectralInfo.channelType.code as SpectralType;
+        if (this.spectralAxis && IsSpectralTypeSupported(this.spectralAxis.type.code as string) && IsSpectralUnitSupported(this.spectralAxis.type.unit as string)) {
+            this.spectralType = this.spectralAxis.type.code as SpectralType;
             this.spectralUnit = SPECTRAL_DEFAULT_UNIT.get(this.spectralType);
         }
         if (this.isSpectralSystemConvertible) {
@@ -589,7 +613,9 @@ export class FrameStore {
             const unit = this.spectralUnit;
             const specsys = this.spectralSystem;
             if (this.channelInfo) {
-                if (this.spectralType === SpectralType.CHANNEL) {
+                if (!type && !unit) {
+                    this.channelValues = this.channelInfo.values;
+                } else if (this.isCoordChannel) {
                     this.channelValues = this.channelInfo.indexes;
                 } else {
                     this.channelValues = this.isSpectralPropsEqual ? this.channelInfo.values : this.convertSpectral(this.channelInfo.values);
@@ -710,7 +736,7 @@ export class FrameStore {
     @action private initSpectralFrame = () => {
         this.spectralFrame = null;
         const entries = this.frameInfo.fileInfoExtended.headerEntries;
-        if (!this.spectralAxis) {
+        if (!this.spectralAxis || !this.spectralAxis.valid) {
             return;
         }
 
@@ -755,15 +781,27 @@ export class FrameStore {
         const initResult = AST.initSpectralFrame(headerString, this.spectralAxis.type.code, this.spectralAxis.type.unit);
         if (initResult) {
             this.spectralFrame = initResult;
-            this.initSupportedSpectralConversion();
             console.log("Initialised spectral info from frame");
         }
     };
 
     private initSupportedSpectralConversion = () => {
-        const entries = this.frameInfo.fileInfoExtended.headerEntries;
+        if (this.spectralAxis && !this.spectralAxis.valid) {
+            this.channelValues = this.channelInfo.values;
+            this.spectralCoordsSupported = new Map<string, {type: SpectralType, unit: SpectralUnit}>([
+                [this.nativeSpectralCoordinate, {type: null, unit: null}],
+                [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
+            ]);
+            this.spectralSystemsSupported = [];
+            return;
+        } else if (!this.spectralAxis || !this.spectralFrame) {
+            this.spectralCoordsSupported = null;
+            this.spectralSystemsSupported = null;
+            return;
+        }
 
         // generate spectral coordinate options
+        const entries = this.frameInfo.fileInfoExtended.headerEntries;
         const spectralType = this.spectralInfo.channelType.code;
         if (IsSpectralTypeSupported(spectralType)) {
             // check RESTFRQ
@@ -783,11 +821,11 @@ export class FrameStore {
                         this.spectralCoordsSupported.set(key, value);
                     }
                 });
-                this.spectralCoordsSupported.set("Channel", {type: SpectralType.CHANNEL, unit: null});
+                this.spectralCoordsSupported.set(SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null});
             }
         } else {
             this.spectralCoordsSupported = new Map<string, {type: SpectralType, unit: SpectralUnit}>([
-                ["Channel", {type: SpectralType.CHANNEL, unit: null}]
+                [SPECTRAL_TYPE_STRING.get(SpectralType.CHANNEL), {type: SpectralType.CHANNEL, unit: null}]
             ]);
         }
 
@@ -1022,15 +1060,14 @@ export class FrameStore {
         if (this.spatialReference) {
             // Adjust zoom by scaling factor if zoom level is not absolute
             const adjustedZoom = absolute ? zoom : zoom / this.spatialTransform.scale;
-            const pointRefImage = this.spatialTransform.transformCoordinate({x, y}, true);
+            const pointRefImage = getTransformedCoordinates(this.spatialTransformAST, {x, y}, true);
             this.spatialReference.zoomToPoint(pointRefImage.x, pointRefImage.y, adjustedZoom);
         } else {
             if (this.preference.zoomPoint === ZoomPoint.CURSOR) {
-                const newCenter = {
+                this.center = {
                     x: x + this.zoomLevel / zoom * (this.center.x - x),
                     y: y + this.zoomLevel / zoom * (this.center.y - y)
                 };
-                this.center = newCenter;
             }
             this.setZoom(zoom);
         }
@@ -1053,6 +1090,10 @@ export class FrameStore {
 
     @action fitZoom = () => {
         if (this.spatialReference) {
+            // Calculate midpoint of image
+            this.initCenter();
+            const imageCenterReferenceSpace = getTransformedCoordinates(this.spatialTransformAST, this.center, true);
+            this.spatialReference.setCenter(imageCenterReferenceSpace.x, imageCenterReferenceSpace.y);
             // Calculate bounding box for transformed image
             const corners = [
                 this.spatialTransform.transformCoordinate({x: 0, y: 0}, true),
@@ -1063,10 +1104,10 @@ export class FrameStore {
             const {minPoint, maxPoint} = minMax2D(corners);
             const rangeX = maxPoint.x - minPoint.x;
             const rangeY = maxPoint.y - minPoint.y;
-            const zoomX = this.spatialReference.renderWidth / rangeX;
-            const zoomY = this.spatialReference.renderHeight / rangeY;
+            const pixelRatio = this.renderHiDPI ? devicePixelRatio : 1.0;
+            const zoomX = this.spatialReference.renderWidth * pixelRatio / rangeX;
+            const zoomY = this.spatialReference.renderHeight * pixelRatio / rangeY;
             this.spatialReference.setZoom(Math.min(zoomX, zoomY), true);
-            this.spatialReference.setCenter((maxPoint.x + minPoint.x) / 2.0 + 0.5, (maxPoint.y + minPoint.y) / 2.0 + 0.5);
         } else {
             this.zoomLevel = this.zoomLevelForFit;
             this.initCenter();

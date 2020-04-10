@@ -98,13 +98,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             let ySum2 = 0;
             let yCount = 0;
 
-            // values are needed to be sorted in incremental order for binary search
             let values: Array<{ x: number, y: number }> = [];
-            const isIncremental = channelValues[0] <= channelValues[channelValues.length - 1];
             for (let i = 0; i < channelValues.length; i++) {
-                let index = isIncremental ? i : channelValues.length - 1 - i;
-                const x = channelValues[index];
-                const y = coordinateData.values[index];
+                const x = channelValues[i];
+                const y = coordinateData.values[i];
 
                 // Skip values outside of range. If array already contains elements, we've reached the end of the range, and can break
                 if (x < xMin || x > xMax) {
@@ -225,7 +222,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             if (frame.isCoordChannel) {
                 nearestIndex = channelInfo.getChannelIndexSimple(x);
             } else {
-                if (frame.isSpectralPropsEqual) {
+                if ((frame.spectralAxis && !frame.spectralAxis.valid) || frame.isSpectralPropsEqual) {
                     nearestIndex = channelInfo.getChannelIndexWCS(x);
                 } else {
                     // invert x in selected widget wcs to frame's default wcs
@@ -263,11 +260,6 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
         return frame.isCoordChannel ? channel : frame.channelValues[channel];
     }
 
-    private getChannelUnit = (): string => {
-        const frame = this.props.appStore.activeFrame;
-        return frame && !frame.isCoordChannel ? frame.spectralUnit : "Channel";
-    };
-
     onGraphCursorMoved = _.throttle((x) => {
         this.widgetStore.setCursor(x);
     }, 33);
@@ -279,7 +271,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             const cursorX = {
                 profiler: this.widgetStore.cursorX,
                 image: this.currentChannelValue,
-                unit: this.getChannelUnit()
+                unit: frame.spectralUnitStr
             };
             const data = this.plotData.values;
             const nearest = binarySearchByX(data, this.widgetStore.isMouseMoveIntoLinePlots ? cursorX.profiler : cursorX.image);
@@ -338,11 +330,10 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
             zeroLineWidth: 2
         };
 
-        if (this.profileStore && frame && frame.hasSpectralAxis) {
-            if (!frame.isCoordChannel) {
-                const spectralCoordinate = frame.isSpectralCoordinateConvertible ? frame.spectralCoordinate : `${frame.spectralInfo.channelType.code} (${frame.spectralInfo.channelType.unit})`;
+        if (this.profileStore && frame) {
+            if (frame.spectralAxis && !frame.isCoordChannel) {
                 const spectralSystem = frame.isSpectralSystemConvertible ? frame.spectralSystem : `${frame.spectralInfo.specsys}`;
-                linePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${spectralCoordinate}`;
+                linePlotProps.xLabel = `${spectralSystem && spectralSystem !== "" ? spectralSystem + ", " : ""}${frame.spectralCoordinate}`;
             }
             if (frame.unit) {
                 linePlotProps.yLabel = `Value (${frame.unit})`;

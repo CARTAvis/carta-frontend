@@ -1,9 +1,10 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, observable} from "mobx";
-import {Button, ButtonGroup, FormGroup, IconName, Menu, MenuItem, NonIdealState, NumberRange, NumericInput, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
+import {Button, ButtonGroup, FormGroup, IconName, Menu, MenuItem, NonIdealState, NumberRange, Popover, Position, Radio, RangeSlider, Slider, Tooltip} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {AnimationMode, AnimationState, PlayMode, WidgetConfig, WidgetProps, HelpType} from "stores";
+import {SafeNumericInput} from "components/Shared";
 import "./AnimatorComponent.css";
 
 @observer
@@ -221,7 +222,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         label="Frame"
                     />
                     {hideSliders &&
-                    <NumericInput
+                    <SafeNumericInput
                         value={frameIndex}
                         min={-1}
                         max={appStore.frames.length}
@@ -265,7 +266,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         label="Channel"
                     />
                     {hideSliders &&
-                    <NumericInput
+                    <SafeNumericInput
                         value={activeFrame.requiredChannel}
                         min={-1}
                         max={numChannels}
@@ -328,7 +329,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
                         label="Stokes"
                     />
                     {hideSliders &&
-                    <NumericInput
+                    <SafeNumericInput
                         value={activeFrame.requiredStokes}
                         min={-1}
                         max={activeFrame.frameInfo.fileInfoExtended.stokes}
@@ -398,7 +399,7 @@ export class AnimatorComponent extends React.Component<WidgetProps> {
 
         const frameControl = (
             <FormGroup label="Frame rate" inline={true} className="playback-framerate">
-                <NumericInput
+                <SafeNumericInput
                     id="framerate-numeric"
                     value={appStore.animatorStore.frameRate}
                     min={appStore.animatorStore.minFrameRate}

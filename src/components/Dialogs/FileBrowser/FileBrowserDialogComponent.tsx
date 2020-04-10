@@ -327,7 +327,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
 
     private renderBreadcrumb = (props: IBreadcrumbProps) => {
         return (
-            <Breadcrumb onClick={() => this.props.appStore.fileBrowserStore.selectFolder(props.target, true)}>
+            <Breadcrumb onClick={props.onClick}>
                 {props.icon &&
                 <Icon icon={props.icon}/>
                 }
@@ -348,7 +348,8 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
     }
 
     @computed get pathItems() {
-        let pathItems: IBreadcrumbProps[] = [{icon: "desktop", target: "."}];
+        // let pathItems: IBreadcrumbProps[] = [{icon: "desktop", target: "."}];
+        let pathItems: IBreadcrumbProps[] = [{icon: "desktop", onClick: () => this.props.appStore.fileBrowserStore.selectFolder(".", true)}];
         const fileList = this.props.appStore.fileBrowserStore.getfileListByMode;
         if (fileList) {
             const path = fileList.directory;
@@ -360,13 +361,19 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         if (!dirName) {
                             continue;
                         }
-                        if (dirName !== ".") {
-                            parentPath += `/${dirName}`;
-                            pathItems.push({
-                                text: dirName,
-                                target: parentPath
-                            });
-                        }
+                        // if (dirName !== ".") {
+                        //     parentPath += `/${dirName}`;
+                        //     pathItems.push({
+                        //         text: dirName,
+                        //         target: parentPath
+                        //     });
+                        // }
+                        parentPath += `/${dirName}`;
+                        const targetPath = parentPath;
+                        pathItems.push({
+                            text: dirName,
+                            onClick: () => this.props.appStore.fileBrowserStore.selectFolder(targetPath, true)
+                        });
                     }
                 }
             }
