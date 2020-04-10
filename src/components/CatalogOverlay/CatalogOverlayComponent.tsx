@@ -527,8 +527,15 @@ export class CatalogOverlayComponent extends React.Component<WidgetProps> {
 
     // single source selected in table
     private onCatalogTableDataSelected = (selectedDataIndex: number) => {
-        const selectedData = [selectedDataIndex];
-        this.widgetStore.setselectedPointIndexs(selectedData);
+        const widgetsStore = this.widgetStore;
+        const selectedPointIndexs = widgetsStore.selectedPointIndexs;
+        const selectedData = [];
+        if (widgetsStore.showSelectedData && selectedPointIndexs.length) {
+            selectedData.push(selectedPointIndexs[selectedDataIndex]);
+        } else {
+            selectedData.push(selectedDataIndex);
+        }
+        widgetsStore.setselectedPointIndexs(selectedData);
         this.props.appStore.catalogStore.updateSelectedPoints(this.widgetId, selectedData);
     }
 
