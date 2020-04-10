@@ -46,7 +46,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
 
     private renderCell = (rowIndex: number, columnIndex: number, coloumnData: any) => {
         const dataIndex = this.props.selectedDataIndex;
-        if (dataIndex && dataIndex.includes(rowIndex) && !this.props.showSelectedData) {
+        if (dataIndex && dataIndex.includes(rowIndex)) {
             return <Cell key={`cell_${columnIndex}_${rowIndex}`} intent={"danger"} loading={this.isLoading(rowIndex)} interactive={true}>{coloumnData[rowIndex]}</Cell>;
         } else {
             return <Cell key={`cell_${columnIndex}_${rowIndex}`} loading={this.isLoading(rowIndex)} interactive={true}>{coloumnData[rowIndex]}</Cell>;
@@ -116,7 +116,7 @@ export class TableComponent extends React.Component<TableComponentProps> {
         const table = this.props;
         const tableColumns = [];
         const tableData = table.dataset;
-        
+
         for (let index = 0; index < table.columnHeaders.length; index++) {
             const header = table.columnHeaders[index];
             const dataType = header.dataType;

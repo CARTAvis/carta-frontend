@@ -29,12 +29,8 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
     private floatingSettingType = "floating-settings";
 
     onFloatingWidgetSelected = (widget: WidgetConfig) => {
-        // rearrange will cause a bug of empty table, ToDo change z-index 
-        if (widget.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
-            return;
-        } else {
-            this.props.appStore.widgetsStore.selectFloatingWidget(widget.id);
-        }
+        // rearrange will cause a bug of empty table, change to zIndex 
+        this.props.appStore.widgetsStore.updateSelectFloatingWidgetzIndex(widget.id);
     };
 
     onFloatingWidgetClosed = (widget: WidgetConfig) => {
@@ -134,17 +130,17 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
         const widgetConfigs = appStore.widgetsStore.floatingWidgets;
         return (
             <div>
-                {widgetConfigs.map((w, index) => {
+                {widgetConfigs.map((w) => {
                     const showPinButton = this.showPin(w);
                     const id = w.componentId ? w.componentId : w.id;
                     return (
                         <div key={id}>
                             <FloatingWidgetComponent
-                                isSelected={index === widgetConfigs.length - 1}
+                                isSelected={w.zIndex === widgetConfigs.length}
                                 appStore={appStore}
                                 key={id}
                                 widgetConfig={w}
-                                zIndex={index}
+                                zIndex={w.zIndex}
                                 showPinButton={showPinButton}
                                 onSelected={() => this.onFloatingWidgetSelected(w)}
                                 onClosed={() => this.onFloatingWidgetClosed(w)}

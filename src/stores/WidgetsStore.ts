@@ -53,6 +53,7 @@ export class WidgetConfig {
     parentType?: string;
     helpType: HelpType;
     componentId?: string;
+    zIndex?: number = 0;
 }
 
 export class WidgetProps {
@@ -987,8 +988,38 @@ export class WidgetsStore {
         }
     };
 
+    @action updateSelectFloatingWidgetzIndex = (id: string) => {
+        const selectedWidgetIndex = this.floatingWidgets.findIndex(w => w.id === id);
+        const selectedWidget = this.floatingWidgets[selectedWidgetIndex];
+        const N = this.floatingWidgets.length;
+        if (N > 1 && selectedWidgetIndex >= 0 && selectedWidget.zIndex < N) {
+            for (let i = 0; i < N; i++) {
+                let currentWidgetzIndex = this.floatingWidgets[i].zIndex;
+                if (currentWidgetzIndex >= selectedWidget.zIndex) {
+                    this.floatingWidgets[i].zIndex = currentWidgetzIndex - 1;
+                }
+            }
+            this.floatingWidgets[selectedWidgetIndex].zIndex = this.floatingWidgets.length;
+        }
+
+    };
+
+    // update widget zIndex when remove a widget
+    private updateFloatingWidgetzIndexOnRemove(widgetzIndex: number) {
+        const N = this.floatingWidgets.length;
+        if (widgetzIndex < N) {
+            for (let index = 0; index < N; index++) {
+                const zIndex = this.floatingWidgets[index].zIndex;
+                if (zIndex > widgetzIndex) {
+                    this.floatingWidgets[index].zIndex = zIndex - 1;
+                }
+            }
+        }
+    }
+
     @action addFloatingWidget = (widget: WidgetConfig) => {
         widget["defaultX"] = widget["defaultY"] = this.getFloatingWidgetOffset();
+        widget.zIndex = this.floatingWidgets.length + 1;
         this.floatingWidgets.push(widget);
     };
 
@@ -996,6 +1027,7 @@ export class WidgetsStore {
     @action removeFloatingWidget = (id: string, preserveStore: boolean = false) => {
         const widget = this.floatingWidgets.find(w => w.id === id);
         if (widget) {
+            this.updateFloatingWidgetzIndexOnRemove(widget.zIndex);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.id !== id);
             if (preserveStore) {
                 return;
@@ -1020,6 +1052,7 @@ export class WidgetsStore {
     @action removeFloatingWidgetComponent = (componentId: string) => {
         const widget = this.floatingWidgets.find(w => w.componentId === componentId);
         if (widget) {
+            this.updateFloatingWidgetzIndexOnRemove(widget.zIndex);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.componentId !== componentId);
         }
     }
