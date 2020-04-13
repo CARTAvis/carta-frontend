@@ -11,7 +11,6 @@ const KEYCODE_ENTER = 13;
 
 @observer
 export class SpectralProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
-    @observable selectedTab: TabId = "conversion";
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -161,7 +160,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         };
 
         return (
-            <Tabs id="spectralSettingTabs" vertical={true} selectedTabId={this.selectedTab} onChange={(tabId) => this.selectedTab = tabId}>
+            <Tabs id="spectralSettingTabs">
                 <Tab id="conversion" title="Conversion" panel={<SpectralSettingsComponent appStore={this.props.appStore} widgetStore={widgetStore} disable={false}/>}/>
                 <Tab id="style" title="Style" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
             </Tabs>
