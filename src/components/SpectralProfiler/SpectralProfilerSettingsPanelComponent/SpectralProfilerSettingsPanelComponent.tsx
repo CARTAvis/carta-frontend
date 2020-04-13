@@ -1,7 +1,7 @@
 import * as React from "react";
-import {computed, autorun} from "mobx";
+import {computed, autorun, observable} from "mobx";
 import {observer} from "mobx-react";
-import {Colors} from "@blueprintjs/core";
+import {Colors, Tab, TabId, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent} from "components/Shared";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig, HelpType} from "stores";
@@ -11,6 +11,7 @@ const KEYCODE_ENTER = 13;
 
 @observer
 export class SpectralProfilerSettingsPanelComponent extends React.Component<WidgetProps> {
+    @observable selectedTab: TabId = "conversion";
 
     public static get WIDGET_CONFIG(): WidgetConfig {
         return {
@@ -160,10 +161,10 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         };
 
         return (
-            <React.Fragment>
-                <SpectralSettingsComponent appStore={this.props.appStore} widgetStore={widgetStore} disable={false}/>
-                <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
-            </React.Fragment>
+            <Tabs id="spectralSettingTabs" vertical={true} selectedTabId={this.selectedTab} onChange={(tabId) => this.selectedTab = tabId}>
+                <Tab id="conversion" title="Conversion" panel={<SpectralSettingsComponent appStore={this.props.appStore} widgetStore={widgetStore} disable={false}/>}/>
+                <Tab id="style" title="Style" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
+            </Tabs>
         );
     }
 }
