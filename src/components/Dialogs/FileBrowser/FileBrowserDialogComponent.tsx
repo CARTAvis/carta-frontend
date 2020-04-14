@@ -254,6 +254,8 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             };
         }
 
+        const fileList = this.props.appStore.fileBrowserStore.getfileListByMode;
+
         return (
             <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} helpType={HelpType.FILE_Browser} minWidth={400} minHeight={400} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
                 <div className="file-path">
@@ -262,7 +264,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         <Tooltip content={"Refresh current directory"}>
                             <Button
                                 icon="repeat"
-                                onClick={() => fileBrowserStore.selectFolder(fileBrowserStore.fileList.directory, true)}
+                                onClick={() => fileBrowserStore.selectFolder(fileList.directory, true)}
                                 minimal={true}
                                 style={{marginRight: "10px"}}
                             />
@@ -348,7 +350,6 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
     }
 
     @computed get pathItems() {
-        // let pathItems: IBreadcrumbProps[] = [{icon: "desktop", target: "."}];
         let pathItems: IBreadcrumbProps[] = [{icon: "desktop", onClick: () => this.props.appStore.fileBrowserStore.selectFolder(".", true)}];
         const fileList = this.props.appStore.fileBrowserStore.getfileListByMode;
         if (fileList) {
@@ -361,13 +362,6 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         if (!dirName) {
                             continue;
                         }
-                        // if (dirName !== ".") {
-                        //     parentPath += `/${dirName}`;
-                        //     pathItems.push({
-                        //         text: dirName,
-                        //         target: parentPath
-                        //     });
-                        // }
                         parentPath += `/${dirName}`;
                         const targetPath = parentPath;
                         pathItems.push({
