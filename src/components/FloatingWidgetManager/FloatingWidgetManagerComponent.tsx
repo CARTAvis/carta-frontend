@@ -14,6 +14,8 @@ import {
     SpectralProfilerComponent,
     StatsComponent,
     StokesAnalysisComponent,
+    CatalogOverlayComponent,
+    CatalogScatterComponent,
     StokesAnalysisSettingsPanelComponent,
     SpectralProfilerSettingsPanelComponent,
     SpatialProfilerSettingsPanelComponent,
@@ -27,16 +29,25 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
     private floatingSettingType = "floating-settings";
 
     onFloatingWidgetSelected = (widget: WidgetConfig) => {
-        this.props.appStore.widgetsStore.selectFloatingWidget(widget.id);
+        // rearrange will cause a bug of empty table, change to zIndex 
+        this.props.appStore.widgetsStore.updateSelectFloatingWidgetzIndex(widget.id);
     };
 
     onFloatingWidgetClosed = (widget: WidgetConfig) => {
-        this.props.appStore.widgetsStore.removeFloatingWidget(widget.id);
+        const widgetsStore = this.props.appStore.widgetsStore;
+        switch (widget.type) {
+            case CatalogOverlayComponent.WIDGET_CONFIG.type:
+                // remove widget component only
+                widgetsStore.removeFloatingWidgetComponent(widget.componentId);
+                break;
+            default:
+                widgetsStore.removeFloatingWidget(widget.id);
+                break;
+        }
     };
 
     private getWidgetContent(widgetConfig: WidgetConfig) {
         const appStore = this.props.appStore;
-
         switch (widgetConfig.type) {
             case ImageViewComponent.WIDGET_CONFIG.type:
                 return <ImageViewComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
@@ -60,6 +71,10 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
                 return <RegionListComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 return <StokesAnalysisComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
+            case CatalogOverlayComponent.WIDGET_CONFIG.type:
+                return <CatalogOverlayComponent appStore={appStore} id={widgetConfig.componentId} docked={false}/>;
+            case CatalogScatterComponent.WIDGET_CONFIG.type:
+                return <CatalogScatterComponent appStore={appStore} id={widgetConfig.id} docked={false}/>;
             default:
                 return <PlaceholderComponent appStore={appStore} id={widgetConfig.id} docked={false} label={widgetConfig.title}/>;
         }
@@ -113,23 +128,24 @@ export class FloatingWidgetManagerComponent extends React.Component<{ appStore: 
     public render() {
         const appStore = this.props.appStore;
         const widgetConfigs = appStore.widgetsStore.floatingWidgets;
-
         return (
             <div>
-                {widgetConfigs.map((w, index) => {
-                    const showPinButton = this.showPin(w); 
+                {widgetConfigs.map((w) => {
+                    const showPinButton = this.showPin(w);
+                    const id = w.componentId ? w.componentId : w.id;
                     return (
-                        <div key={w.id}>
+                        <div key={id}>
                             <FloatingWidgetComponent
-                                isSelected={index === widgetConfigs.length - 1}
+                                isSelected={w.zIndex === widgetConfigs.length}
                                 appStore={appStore}
-                                key={w.id}
+                                key={id}
                                 widgetConfig={w}
-                                zIndex={index}
+                                zIndex={w.zIndex}
                                 showPinButton={showPinButton}
                                 onSelected={() => this.onFloatingWidgetSelected(w)}
                                 onClosed={() => this.onFloatingWidgetClosed(w)}
                                 showFloatingSettingsButton={this.showFloatingSettingsButton(w)}
+                                floatingWidgets={this.props.appStore.widgetsStore.floatingWidgets.length}
                             >
                                 {showPinButton ?
                                     this.getWidgetContent(w)
