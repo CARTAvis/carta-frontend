@@ -39,6 +39,7 @@ export class BackendService {
     private readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
     private readonly statsStream: Subject<CARTA.RegionStatsData>;
     private readonly contourStream: Subject<CARTA.ContourImageData>;
+    private readonly catalogStream: Subject<CARTA.CatalogFilterResponse>;
     private readonly reconnectStream: Subject<void>;
     private readonly logStore: LogStore;
     private readonly preferenceStore: PreferenceStore;
@@ -63,6 +64,7 @@ export class BackendService {
         this.spectralProfileStream = new Subject<CARTA.SpectralProfileData>();
         this.statsStream = new Subject<CARTA.RegionStatsData>();
         this.contourStream = new Subject<CARTA.ContourImageData>();
+        this.catalogStream = new Subject<CARTA.CatalogFilterResponse>();
         this.reconnectStream = new Subject<void>();
 
         // Construct handler and decoder maps
@@ -70,9 +72,12 @@ export class BackendService {
             [CARTA.EventType.REGISTER_VIEWER_ACK, this.onRegisterViewerAck],
             [CARTA.EventType.FILE_LIST_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.REGION_LIST_RESPONSE, this.onSimpleMappedResponse],
+            [CARTA.EventType.CATALOG_LIST_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.REGION_FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
+            [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, this.onSimpleMappedResponse],
             [CARTA.EventType.OPEN_FILE_ACK, this.onSimpleMappedResponse],
+            [CARTA.EventType.OPEN_CATALOG_FILE_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.IMPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.EXPORT_REGION_ACK, this.onSimpleMappedResponse],
             [CARTA.EventType.SET_REGION_ACK, this.onSimpleMappedResponse],
@@ -87,6 +92,7 @@ export class BackendService {
             [CARTA.EventType.SPECTRAL_PROFILE_DATA, this.onStreamedSpectralProfileData],
             [CARTA.EventType.REGION_STATS_DATA, this.onStreamedRegionStatsData],
             [CARTA.EventType.CONTOUR_IMAGE_DATA, this.onStreamedContourData],
+            [CARTA.EventType.CATALOG_FILTER_RESPONSE, this.onStreamedCatalogData],
             [CARTA.EventType.RASTER_TILE_SYNC, this.onStreamedRasterSync]
         ]);
 
@@ -94,9 +100,12 @@ export class BackendService {
             [CARTA.EventType.REGISTER_VIEWER_ACK, CARTA.RegisterViewerAck],
             [CARTA.EventType.FILE_LIST_RESPONSE, CARTA.FileListResponse],
             [CARTA.EventType.REGION_LIST_RESPONSE, CARTA.RegionListResponse],
+            [CARTA.EventType.CATALOG_LIST_RESPONSE, CARTA.CatalogListResponse],
             [CARTA.EventType.FILE_INFO_RESPONSE, CARTA.FileInfoResponse],
             [CARTA.EventType.REGION_FILE_INFO_RESPONSE, CARTA.RegionFileInfoResponse],
+            [CARTA.EventType.CATALOG_FILE_INFO_RESPONSE, CARTA.CatalogFileInfoResponse],
             [CARTA.EventType.OPEN_FILE_ACK, CARTA.OpenFileAck],
+            [CARTA.EventType.OPEN_CATALOG_FILE_ACK, CARTA.OpenCatalogFileAck],
             [CARTA.EventType.IMPORT_REGION_ACK, CARTA.ImportRegionAck],
             [CARTA.EventType.EXPORT_REGION_ACK, CARTA.ExportRegionAck],
             [CARTA.EventType.SET_REGION_ACK, CARTA.SetRegionAck],
@@ -109,6 +118,7 @@ export class BackendService {
             [CARTA.EventType.SPECTRAL_PROFILE_DATA, CARTA.SpectralProfileData],
             [CARTA.EventType.REGION_STATS_DATA, CARTA.RegionStatsData],
             [CARTA.EventType.CONTOUR_IMAGE_DATA, CARTA.ContourImageData],
+            [CARTA.EventType.CATALOG_FILTER_RESPONSE, CARTA.CatalogFilterResponse],
             [CARTA.EventType.SET_USER_LAYOUT_ACK, CARTA.SetUserLayoutAck],
             [CARTA.EventType.SET_USER_PREFERENCES_ACK, CARTA.SetUserPreferencesAck],
             [CARTA.EventType.RASTER_TILE_SYNC, CARTA.RasterTileSync]
@@ -144,6 +154,10 @@ export class BackendService {
 
     getContourStream() {
         return this.contourStream;
+    }
+
+    getCatalogStream() {
+        return this.catalogStream;
     }
 
     getReconnectStream() {
@@ -252,6 +266,24 @@ export class BackendService {
         }
     }
 
+    @action("catalog list")
+    getCatalogList(directory: string): Observable<CARTA.CatalogListResponse> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.CatalogListRequest.create({directory});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.CATALOG_LIST_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.CATALOG_LIST_REQUEST, CARTA.CatalogListRequest.encode(message).finish())) {
+                return new Observable<CARTA.CatalogListResponse>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
     @action("file info")
     getFileInfo(directory: string, file: string, hdu: string): Observable<CARTA.FileInfoResponse> {
         if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
@@ -280,6 +312,24 @@ export class BackendService {
             this.logEvent(CARTA.EventType.REGION_FILE_INFO_REQUEST, requestId, message, false);
             if (this.sendEvent(CARTA.EventType.REGION_FILE_INFO_REQUEST, CARTA.RegionFileInfoRequest.encode(message).finish())) {
                 return new Observable<CARTA.RegionFileInfoResponse>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("catalog info")
+    getCatalogFileInfo(directory: string, name: string): Observable<CARTA.CatalogFileInfoResponse> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.CatalogFileInfoRequest.create({directory, name});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.CATALOG_FILE_INFO_REQUEST, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.CATALOG_FILE_INFO_REQUEST, CARTA.CatalogFileInfoRequest.encode(message).finish())) {
+                return new Observable<CARTA.CatalogFileInfoResponse>(observer => {
                     this.observerRequestMap.set(requestId, observer);
                 });
             } else {
@@ -340,6 +390,36 @@ export class BackendService {
                 return throwError(new Error("Could not send event"));
             }
         }
+    }
+
+    @action("load catalog file")
+    loadCatalogFile(directory: string, name: string, fileId: number, previewDataSize: number): Observable<CARTA.OpenCatalogFileAck> {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            const message = CARTA.OpenCatalogFile.create({directory, name, fileId, previewDataSize});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.OPEN_CATALOG_FILE, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.OPEN_CATALOG_FILE, CARTA.OpenCatalogFile.encode(message).finish())) {
+                return new Observable<CARTA.OpenCatalogFileAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+        }
+    }
+
+    @action("close catalog file")
+    closeCatalogFile(fileId: number): boolean {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            const message = CARTA.CloseCatalogFile.create({fileId});
+            this.logEvent(CARTA.EventType.CLOSE_CATALOG_FILE, this.eventCounter, message, false);
+            if (this.sendEvent(CARTA.EventType.CLOSE_CATALOG_FILE, CARTA.CloseCatalogFile.encode(message).finish())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @action("close file")
@@ -415,6 +495,17 @@ export class BackendService {
         }
         return false;
     }
+
+    @action("set catalog filter")
+    setCatalogFilterRequest(filterRequest: CARTA.ICatalogFilterRequest) {
+        if (this.connectionStatus === ConnectionStatus.ACTIVE) {
+            this.logEvent(CARTA.EventType.CATALOG_FILTER_REQUEST, this.eventCounter, filterRequest, false);
+            if (this.sendEvent(CARTA.EventType.CATALOG_FILTER_REQUEST, CARTA.CatalogFilterRequest.encode(filterRequest).finish())) {
+                return true;
+            }
+        }
+        return false;
+    } 
 
     @action("set spatial requirements")
     setSpatialRequirements(requirementsMessage: CARTA.ISetSpectralRequirements) {
@@ -634,7 +725,6 @@ export class BackendService {
         if (eventIcdVersion !== BackendService.IcdVersion) {
             console.warn(`Server event has ICD version ${eventIcdVersion}, which differs from frontend version ${BackendService.IcdVersion}. Errors may occur`);
         }
-
         try {
             const messageClass = this.decoderMap.get(eventType);
             if (messageClass) {
@@ -727,6 +817,10 @@ export class BackendService {
 
     private onStreamedContourData(eventId: number, contourData: CARTA.ContourImageData) {
         this.contourStream.next(contourData);
+    }
+
+    private onStreamedCatalogData(eventId: number, catalogFilter: CARTA.CatalogFilterResponse) {
+        this.catalogStream.next(catalogFilter);
     }
 
     private sendEvent(eventType: CARTA.EventType, payload: Uint8Array): boolean {

@@ -106,9 +106,13 @@ export class PlotContainerComponent extends React.Component<PlotContainerProps> 
 
     private afterChartLayout = (chart: any) => {
         if (this.props.isGroupSubPlot) {
+            
             var xScale = chart.scales["x-axis-0"];
             var yScale = chart.scales["y-axis-0"];
             const currentWidth = chart.width;
+
+            chart.chartArea.left = 85;
+            chart.chartArea.right = currentWidth - 1;
 
             xScale.left = 85;
             xScale.right = currentWidth - 1;

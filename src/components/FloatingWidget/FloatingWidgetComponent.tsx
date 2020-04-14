@@ -17,6 +17,7 @@ class FloatingWidgetComponentProps {
     isSelected?: boolean;
     onSelected?: () => void;
     onClosed?: () => void;
+    floatingWidgets?: number;
 }
 
 @observer
@@ -86,7 +87,6 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
         let floatingContentClassName = "floating-content";
         let titleClass = this.props.isSelected ? "floating-header selected" : "floating-header";
         let buttonClass = "floating-header-button";
-
         if (appStore.darkTheme) {
             className += " bp3-dark";
             titleClass += " bp3-dark";
@@ -97,6 +97,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
             floatingContentClassName = "floating-settings-content";
         }
         const widgetConfig = this.props.widgetConfig;
+        
         return (
             <Rnd
                 ref={c => this.rnd = c}
@@ -112,7 +113,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
                 dragGrid={[25, 25]}
                 minWidth={widgetConfig.minWidth}
                 minHeight={widgetConfig.minHeight + headerHeight}
-                bounds={".gl-container"}
+                bounds={".gl-container-app"}
                 dragHandleClassName={"floating-title"}
                 onMouseDown={this.props.onSelected}
                 onDragStop={(e, data) => {
