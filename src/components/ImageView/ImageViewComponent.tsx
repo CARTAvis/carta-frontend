@@ -11,6 +11,7 @@ import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
 import {RegionViewComponent} from "./RegionView/RegionViewComponent";
 import {ContourViewComponent} from "./ContourView/ContourViewComponent";
+import {CatalogViewComponent} from "./CatalogView/CatalogViewComponent";
 import {RegionStore, WidgetConfig, WidgetProps, HelpType, Padding} from "stores";
 import {CursorInfo, Point2D} from "models";
 import {toFixed} from "utilities";
@@ -250,6 +251,11 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     appStore={appStore}
                     docked={this.props.docked}
                     overlaySettings={appStore.overlayStore}
+                />
+                <CatalogViewComponent
+                    appStore={appStore}
+                    overlaySettings={appStore.overlayStore}
+                    docked={this.props.docked}
                 />
                 {divContents}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>

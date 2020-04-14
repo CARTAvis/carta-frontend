@@ -30,14 +30,16 @@ import {
     RegionStore,
     SpatialProfileStore,
     SpectralProfileStore,
-    WidgetsStore
+    WidgetsStore,
+    CatalogStore
 } from ".";
 import {distinct, GetRequiredTiles} from "utilities";
 import {BackendService, ConnectionStatus, ScriptingService, TileService, TileStreamDetails} from "services";
 import {FrameView, Point2D, ProtobufProcessing, Theme, TileCoordinate, WCSMatchingType} from "models";
-import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
+import {HistogramWidgetStore, RegionWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore, CatalogInfo, CatalogUpdateMode} from "./widgets";
 import {getImageCanvas} from "components";
-import {AppToaster} from "components/Shared";
+import {CatalogOverlayComponent} from "components";
+import {AppToaster} from "../components/Shared";
 
 export class AppStore {
     // Backend services
@@ -62,7 +64,11 @@ export class AppStore {
     readonly logStore: LogStore;
     // User preference
     @observable preferenceStore: PreferenceStore;
-    // Layouts
+    // catalog map catalog widget store with file Id
+    @observable catalogs: Map<string, number>;
+    // catalog data for image viewer
+    @observable catalogStore: CatalogStore;
+
     readonly layoutStore: LayoutStore;
     // Dialogs
     readonly dialogStore: DialogStore;
@@ -254,6 +260,15 @@ export class AppStore {
         }
 
         return frameMap;
+    }
+
+    // catalog
+    @computed get catalogNum(): number {
+        const fileNumbers = Array.from(this.catalogs.values());
+        if (fileNumbers.length) {
+            return Math.max(...fileNumbers);
+        }
+        return 0;
     }
 
     @computed get frameNames(): IOptionProps [] {
@@ -509,6 +524,63 @@ export class AppStore {
         this.shiftFrame(-1);
     };
 
+    // Open catalog file
+    @action appendCatalog = (directory: string, file: string, previewDataSize: number, type: CARTA.CatalogFileType) => {
+        if (!this.activeFrame) {
+            AppToaster.show({icon: "warning-sign", message: `Please load the image file`, intent: "danger", timeout: 3000});
+            return;
+        }
+        if (!(type === CARTA.CatalogFileType.VOTable)) {
+            AppToaster.show({icon: "warning-sign", message: `Catalog type not supported`, intent: "danger", timeout: 3000});
+            return;
+        }
+
+        const frame = this.activeFrame;
+        const fileId = this.catalogNum + 1;
+        this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => {
+            if (frame && ack.success && ack.dataSize) {
+                let catalogInfo: CatalogInfo = {fileId : fileId, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
+                let catalogWidgetId = null;
+                const config = CatalogOverlayComponent.WIDGET_CONFIG;
+                let floatingCatalogWidgets = this.widgetsStore.getFloatingWidgetByComponentId(config.componentId).length;
+                let dockedCatalogWidgets = this.widgetsStore.getDockedWidgetByType(config.type).length;
+
+                if (floatingCatalogWidgets === 0  && dockedCatalogWidgets === 0) {
+                    catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);
+                } else {
+                    catalogWidgetId = this.widgetsStore.addCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);
+                }
+                if (catalogWidgetId) {
+                    this.catalogs.set(catalogWidgetId, fileId);
+                    this.catalogStore.addCatalogs(catalogWidgetId);
+                    this.fileBrowserStore.hideFileBrowser();
+                }
+            }
+        }, error => {
+            console.error(error);
+            AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
+        });
+    };
+
+    @action reomveCatalog(catalogWidgetId: string, catalogComponentId: string) {
+        const fileId = this.catalogs.get(catalogWidgetId);
+        if (fileId > -1 && this.backendService.closeCatalogFile(fileId)) {
+            this.catalogs.delete(catalogWidgetId);
+            if (this.catalogs.size === 0) {
+                this.widgetsStore.removeFloatingWidgetComponent(catalogComponentId);
+            }
+            this.widgetsStore.catalogOverlayWidgets.delete(catalogWidgetId);
+            this.catalogStore.clearData(catalogWidgetId);
+        }
+    }
+
+    @action sendCatalogFilter(catalogFilter: CARTA.CatalogFilterRequest) {
+        if (!this.activeFrame) {
+            return;
+        }
+        this.backendService.setCatalogFilterRequest(catalogFilter);
+    }
+
     @action reorderFrame = (oldIndex: number, newIndex: number, length: number) => {
         if (!Number.isInteger(oldIndex) || oldIndex < 0 || oldIndex >= this.frameNum ||
             !Number.isInteger(newIndex) || newIndex < 0 || newIndex >= this.frameNum ||
@@ -520,7 +592,7 @@ export class AppStore {
     };
 
     // Region file actions
-    @action importRegion = (directory: string, file: string, type: CARTA.FileType) => {
+    @action importRegion = (directory: string, file: string, type: CARTA.FileType | CARTA.CatalogFileType) => {
         if (!this.activeFrame || !(type === CARTA.FileType.CRTF || type === CARTA.FileType.REG)) {
             AppToaster.show({icon: "warning-sign", message: `Region type not supported`, intent: "danger", timeout: 3000});
             return;
@@ -676,6 +748,8 @@ export class AppStore {
         this.pendingChannelHistograms = new Map<string, CARTA.IRegionHistogramData>();
 
         this.frames = [];
+        this.catalogs = new Map();
+        this.catalogStore = new CatalogStore();
         this.activeFrame = null;
         this.contourDataSource = null;
         this.syncFrameToContour = true;
@@ -785,6 +859,7 @@ export class AppStore {
         this.backendService.getSpectralProfileStream().subscribe(this.handleSpectralProfileStream);
         this.backendService.getRegionHistogramStream().subscribe(this.handleRegionHistogramStream);
         this.backendService.getContourStream().subscribe(this.handleContourImageStream);
+        this.backendService.getCatalogStream().subscribe(this.handleCatalogFilterStream);
         this.backendService.getErrorStream().subscribe(this.handleErrorStream);
         this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
         this.backendService.getReconnectStream().subscribe(this.handleReconnectStream);
@@ -939,6 +1014,45 @@ export class AppStore {
             updatedFrame.updateFromContourData(contourImageData);
         }
     };
+
+    @action handleCatalogFilterStream = (catalogFilter: CARTA.CatalogFilterResponse) => {
+        let catalogWidgetId = null;
+        this.catalogs.forEach((value, key) => {
+            if (value === catalogFilter.fileId) {
+                catalogWidgetId = key;
+            }
+        });
+
+        const progress = catalogFilter.progress;
+        const catalogWidgetStore = this.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
+        if (catalogWidgetStore) {
+            catalogWidgetStore.updateCatalogData(catalogFilter);
+            catalogWidgetStore.setProgress(progress);
+            if (progress === 1) {
+                catalogWidgetStore.setLoadingDataStatus(false);
+                catalogWidgetStore.setPlotingData(false);
+            }
+
+            if (catalogWidgetStore.updateMode === CatalogUpdateMode.ViewUpdate) {
+                const xColumn = catalogWidgetStore.xColumnRepresentation;
+                const yColumn = catalogWidgetStore.yColumnRepresentation;
+                if (xColumn && yColumn) {
+                    const coords = catalogWidgetStore.get2DPlotData(xColumn, yColumn, catalogFilter.columnsData);
+                    const wcs = this.activeFrame.validWcs ? this.activeFrame.wcsInfo : 0;
+                    this.catalogStore.updateCatalogData(catalogWidgetId, coords.wcsX, coords.wcsY, wcs, coords.xHeaderInfo.units, coords.yHeaderInfo.units, catalogWidgetStore.catalogCoordinateSystem.system);
+                }
+            }
+            // update scatter plot
+            const scatterWidgetsStore = catalogWidgetStore.catalogScatterWidgetsId;
+            for (let index = 0; index < scatterWidgetsStore.length; index++) {
+                const scatterWidgetStore = scatterWidgetsStore[index];
+                const scatterWidget = this.widgetsStore.catalogScatterWidgets.get(scatterWidgetStore);
+                if (scatterWidget) {
+                    scatterWidget.updateScatterData();
+                }
+            }
+        }
+    }
 
     handleErrorStream = (errorData: CARTA.ErrorData) => {
         if (errorData) {

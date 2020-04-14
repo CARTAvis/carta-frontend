@@ -73,7 +73,7 @@ export class App extends React.Component<{ appStore: AppStore }> {
     public render() {
         const appStore = this.props.appStore;
         let className = "App";
-        let glClassName = "gl-container";
+        let glClassName = "gl-container-app";
         if (appStore.darkTheme) {
             className += " bp3-dark";
             glClassName += " dark-theme";
@@ -224,7 +224,8 @@ export class App extends React.Component<{ appStore: AppStore }> {
             <Hotkey key={0} group={fileGroupTitle} global={true} combo={`${modString}O`} label="Open image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File)}/>,
             <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}L`} label="Append image" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}/>,
             <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}W`} label="Close image" onKeyDown={() => appStore.closeCurrentFile(true)}/>,
-            <Hotkey key={2} group={fileGroupTitle} global={true} combo={`${modString}E`} label="Export image" onKeyDown={appStore.exportImage}/>
+            <Hotkey key={2} group={fileGroupTitle} global={true} combo={`${modString}E`} label="Export image" onKeyDown={appStore.exportImage}/>,
+            <Hotkey key={3} group={fileGroupTitle} global={true} combo={`${modString}C`} label="Append catalog" onKeyDown={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}/>
         ];
 
         const otherHotKeys = [

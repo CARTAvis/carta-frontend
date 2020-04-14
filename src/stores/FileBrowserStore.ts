@@ -8,11 +8,13 @@ import {FileInfoType} from "components";
 export enum BrowserMode {
     File,
     RegionImport,
-    RegionExport
+    RegionExport,
+    Catalog
 }
 
 export type RegionFileType = CARTA.FileType.CRTF | CARTA.FileType.REG;
 export type ImageFileType = CARTA.FileType.CASA | CARTA.FileType.FITS | CARTA.FileType.HDF5 | CARTA.FileType.MIRIAD;
+export type CatalogFileType = CARTA.CatalogFileType.VOTable;
 
 export class FileBrowserStore {
     private readonly appStore: AppStore;
@@ -20,7 +22,7 @@ export class FileBrowserStore {
     @observable browserMode: BrowserMode = BrowserMode.File;
     @observable appendingFrame = false;
     @observable fileList: CARTA.IFileListResponse;
-    @observable selectedFile: CARTA.IFileInfo;
+    @observable selectedFile: CARTA.IFileInfo| CARTA.ICatalogFileInfo;
     @observable selectedHDU: string;
     @observable fileInfoExtended: CARTA.IFileInfoExtended;
     @observable regionFileInfo: string[];
@@ -34,14 +36,20 @@ export class FileBrowserStore {
     @observable exportCoordinateType: CARTA.CoordinateType;
     @observable exportFileType: RegionFileType;
 
+    @observable catalogFileList: CARTA.ICatalogListResponse;
+    @observable selectedCatalogFile: CARTA.ICatalogFileInfo;
+    @observable catalogFileInfor: CARTA.ICatalogFileInfo;
+    @observable catalogHeaders: Array<CARTA.ICatalogHeader>;
+
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
         this.browserMode = mode;
         this.appStore.dialogStore.showFileBrowserDialog();
         this.fileList = null;
-        this.selectedTab = (BrowserMode.File === mode) ? FileInfoType.IMAGE_FILE : FileInfoType.REGION_FILE;
+        this.selectedTab = this.getBrowserMode;
         this.responseErrorMessage = "";
         this.exportFilename = "";
+        this.catalogFileList = null;
         this.getFileList(this.startingDirectory);
     };
 
@@ -59,6 +67,13 @@ export class FileBrowserStore {
         if (this.browserMode === BrowserMode.File) {
             this.backendService.getFileList(directory).subscribe(res => {
                 this.fileList = res;
+            }, err => {
+                console.log(err);
+                this.loadingList = false;
+            });
+        } else if (this.browserMode === BrowserMode.Catalog) {
+            this.backendService.getCatalogList(directory).subscribe(res => {
+                this.catalogFileList = res;
             }, err => {
                 console.log(err);
                 this.loadingList = false;
@@ -113,14 +128,42 @@ export class FileBrowserStore {
         });
     };
 
-    @action selectFile = (file: CARTA.IFileInfo, hdu: string) => {
+    @action getCatalogFileInfo = (directory: string, filename: string) => {
+        this.loadingInfo = true;
+        this.fileInfoResp = false;
+        this.catalogFileInfor = null;
+        this.catalogHeaders = [];
+        this.backendService.getCatalogFileInfo(directory, filename).subscribe((res: CARTA.ICatalogFileInfoResponse) => {
+            if (res.fileInfo && this.selectedFile && res.fileInfo.name === this.selectedFile.name) {
+                this.loadingInfo = false;
+                this.catalogFileInfor = res.fileInfo;
+                this.catalogHeaders = res.headers.sort((a, b) => { return a.columnIndex - b.columnIndex; });
+            }
+            this.fileInfoResp = res.success;
+        }, err => {
+            console.log(err);
+            this.responseErrorMessage = err;
+            this.fileInfoResp = false;
+            this.catalogFileInfor = null;
+            this.loadingInfo = false;
+        });
+    };
+
+    @action selectFile = (file: CARTA.IFileInfo | CARTA.ICatalogFileInfo, hdu?: string) => {
+        const fileList = this.getfileListByMode;
         this.selectedFile = file;
-        this.selectedHDU = hdu;
+
+        if (hdu) {
+            this.selectedHDU = hdu;   
+        }
+
         if (this.browserMode === BrowserMode.File) {
-            this.getFileInfo(this.fileList.directory, file.name, hdu);
+            this.getFileInfo(fileList.directory, file.name, hdu);
+        } else if (this.browserMode === BrowserMode.Catalog) {
+            this.getCatalogFileInfo(fileList.directory, file.name);
         } else {
             this.setExportFilename(file.name);
-            this.getRegionFileInfo(this.fileList.directory, file.name);
+            this.getRegionFileInfo(fileList.directory, file.name);
         }
     };
 
@@ -129,11 +172,11 @@ export class FileBrowserStore {
             this.getFileList(folder);
             return;
         }
-
+        const fileList = this.getfileListByMode;
         if (folder === "..") {
             this.selectParent();
-        } else if (this.fileList) {
-            const currentDir = this.fileList.directory;
+        } else if (fileList) {
+            const currentDir = fileList.directory;
             let newFolder = folder;
             if (currentDir.length && !(currentDir.length === 1 && currentDir[0] === "/")) {
                 newFolder = `${currentDir}/${folder}`;
@@ -143,8 +186,9 @@ export class FileBrowserStore {
     };
 
     @action selectParent() {
-        if (this.fileList && this.fileList.parent) {
-            this.getFileList(this.fileList.parent);
+        const fileList = this.getfileListByMode;
+        if (fileList && fileList.parent) {
+            this.getFileList(fileList.parent);
         }
     }
 
@@ -153,7 +197,11 @@ export class FileBrowserStore {
     }
 
     @action saveStartingDirectory() {
-        this.startingDirectory = this.fileList.directory;
+        if (this.browserMode === BrowserMode.Catalog) {
+            this.startingDirectory = this.catalogFileList.directory;
+        } else {
+            this.startingDirectory = this.fileList.directory;
+        }
     }
 
     @action setExportFilename = (filename: string) => {
@@ -190,6 +238,47 @@ export class FileBrowserStore {
             });
         }
         return headers;
+    }
+
+    @computed get getfileListByMode(): CARTA.IFileListResponse | CARTA.ICatalogListResponse {
+        switch (this.browserMode) {
+            case BrowserMode.Catalog:
+                return this.catalogFileList;
+            default:
+                return this.fileList;
+        }
+    }
+
+    @computed get getBrowserMode(): FileInfoType {
+        switch (this.browserMode) {
+            case BrowserMode.File:
+                return FileInfoType.IMAGE_FILE;
+            case BrowserMode.Catalog:
+                return FileInfoType.CATALOG_FILE;
+            default:
+                return FileInfoType.REGION_FILE;
+        }
+    }
+
+    @computed get catalogHeaderDataset(): {columnHeaders: Array<CARTA.CatalogHeader>, columnsData: CARTA.CatalogColumnsData} {
+        let columnsData = new CARTA.CatalogColumnsData();
+        columnsData.stringColumn[0] = new CARTA.StringColumn();
+        columnsData.stringColumn[1] = new CARTA.StringColumn();
+        columnsData.stringColumn[2] = new CARTA.StringColumn();
+
+        let columnHeaders: Array<CARTA.CatalogHeader> = [];
+        for (let index = 0; index < this.catalogHeaders.length; index++) {
+            const catalogHeader = this.catalogHeaders[index];
+            columnsData.stringColumn[0].stringColumn.push(catalogHeader.name);
+            columnsData.stringColumn[1].stringColumn.push(catalogHeader.description);
+            columnsData.stringColumn[2].stringColumn.push(catalogHeader.units);
+        }
+        const stringType = CARTA.EntryType.STRING;
+        columnHeaders[0] = new CARTA.CatalogHeader({name: "Name", dataType: stringType, columnIndex: 0, dataTypeIndex: 0});
+        columnHeaders[1] = new CARTA.CatalogHeader({name: "Description", dataType: stringType, columnIndex: 1, dataTypeIndex: 1});
+        columnHeaders[2] = new CARTA.CatalogHeader({name: "Unit", dataType: stringType, columnIndex: 2, dataTypeIndex: 2});
+
+        return {columnHeaders: columnHeaders, columnsData: columnsData};
     }
 
     private backendService: BackendService;

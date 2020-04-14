@@ -1,6 +1,7 @@
 import * as GoldenLayout from "golden-layout";
 import * as $ from "jquery";
-import {action, observable} from "mobx";
+import {CARTA} from "carta-protobuf";
+import {action, observable, computed} from "mobx";
 import {
     AnimatorComponent,
     HistogramComponent,
@@ -15,6 +16,9 @@ import {
     StatsComponent,
     ToolbarMenuComponent,
     StokesAnalysisComponent,
+    CatalogOverlayComponent,
+    CatalogScatterComponent,
+    // setting Panel
     StokesAnalysisSettingsPanelComponent,
     SpectralProfilerSettingsPanelComponent,
     SpatialProfilerSettingsPanelComponent,
@@ -22,7 +26,17 @@ import {
     HistogramSettingsPanelComponent
 } from "components";
 import {AppStore, HelpType} from "stores";
-import {EmptyWidgetStore, HistogramWidgetStore, RegionWidgetStore, RenderConfigWidgetStore, SpatialProfileWidgetStore, SpectralProfileWidgetStore, StatsWidgetStore, StokesAnalysisWidgetStore} from "./widgets";
+import {
+    EmptyWidgetStore, 
+    HistogramWidgetStore, 
+    RegionWidgetStore, 
+    RenderConfigWidgetStore, 
+    SpatialProfileWidgetStore, 
+    SpectralProfileWidgetStore, 
+    StatsWidgetStore, 
+    StokesAnalysisWidgetStore, 
+    CatalogOverlayWidgetStore, CatalogInfo, CatalogScatterWidgetStore, CatalogScatterWidgetStoreProps
+} from "./widgets";
 
 export class WidgetConfig {
     id: string;
@@ -38,6 +52,8 @@ export class WidgetConfig {
     parentId?: string;
     parentType?: string;
     helpType: HelpType;
+    componentId?: string;
+    zIndex?: number = 0;
 }
 
 export class WidgetProps {
@@ -62,6 +78,8 @@ export class WidgetsStore {
     @observable animatorWidgets: Map<string, EmptyWidgetStore>;
     @observable stokesAnalysisWidgets: Map<string, StokesAnalysisWidgetStore>;
     @observable floatingSettingsWidgets: Map<string, string>;
+    @observable catalogOverlayWidgets: Map<string, CatalogOverlayWidgetStore>;
+    @observable catalogScatterWidgets: Map<string, CatalogScatterWidgetStore>;
 
     private appStore: AppStore;
     private widgetsMap: Map<string, Map<string, any>>;
@@ -101,7 +119,9 @@ export class WidgetsStore {
         this.logWidgets = new Map<string, EmptyWidgetStore>();
         this.regionListWidgets = new Map<string, EmptyWidgetStore>();
         this.stokesAnalysisWidgets = new Map<string, StokesAnalysisWidgetStore>();
+        this.catalogOverlayWidgets = new Map<string, CatalogOverlayWidgetStore>();
         this.floatingSettingsWidgets = new Map<string, string>();
+        this.catalogScatterWidgets = new Map<string, CatalogScatterWidgetStore>();
 
         this.widgetsMap = new Map<string, Map<string, any>>([
             [SpatialProfilerComponent.WIDGET_CONFIG.type, this.spatialProfileWidgets],
@@ -113,7 +133,9 @@ export class WidgetsStore {
             [LayerListComponent.WIDGET_CONFIG.type, this.layerListWidgets],
             [LogComponent.WIDGET_CONFIG.type, this.logWidgets],
             [RegionListComponent.WIDGET_CONFIG.type, this.regionListWidgets],
-            [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets]
+            [StokesAnalysisComponent.WIDGET_CONFIG.type, this.stokesAnalysisWidgets],
+            [CatalogOverlayComponent.WIDGET_CONFIG.type, this.catalogOverlayWidgets],
+            [CatalogScatterComponent.WIDGET_CONFIG.type, this.catalogScatterWidgets]
         ]);
 
         this.floatingWidgets = [];
@@ -144,6 +166,10 @@ export class WidgetsStore {
                 return RegionListComponent.WIDGET_CONFIG;
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 return StokesAnalysisComponent.WIDGET_CONFIG;
+            case CatalogOverlayComponent.WIDGET_CONFIG.type:
+                return CatalogOverlayComponent.WIDGET_CONFIG;
+            case CatalogScatterComponent.WIDGET_CONFIG.type:
+                return CatalogScatterComponent.WIDGET_CONFIG;    
             default:
                 return PlaceholderComponent.WIDGET_CONFIG;
         }
@@ -292,6 +318,9 @@ export class WidgetsStore {
             case StokesAnalysisComponent.WIDGET_CONFIG.type:
                 itemId = this.addStokesWidget(null, widgetSettings);
                 break;
+            case CatalogOverlayComponent.WIDGET_CONFIG.type:
+                itemId = this.getNextComponentId(CatalogOverlayComponent.WIDGET_CONFIG);
+                break;
             default:
                 // Remove it from the floating widget array, while preserving its store
                 if (this.floatingWidgets.find(w => w.id === widgetType)) {
@@ -362,6 +391,8 @@ export class WidgetsStore {
         layout.registerComponent("log", LogComponent);
         layout.registerComponent("animator", AnimatorComponent);
         layout.registerComponent("stokes", StokesAnalysisComponent);
+        layout.registerComponent("catalog-overlay", CatalogOverlayComponent);
+        layout.registerComponent("catalog-scatter", CatalogScatterComponent);
 
         const showCogWidgets = ["spatial-profiler", "spectral-profiler", "histogram", "render-config", "stokes"];
         // add drag source buttons from ToolbarMenuComponent
@@ -468,6 +499,10 @@ export class WidgetsStore {
         widgetConfig.id = id;
         widgetConfig.title = title;
 
+        if (type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+            widgetConfig.componentId = id;
+        }
+
         // Set default size and position from the existing item
         const container = item["container"] as GoldenLayout.Container;
         if (container && container.width && container.height) {
@@ -504,8 +539,8 @@ export class WidgetsStore {
     @action handleItemCreation = (item: GoldenLayout.ContentItem) => {
         const config = item.config as GoldenLayout.ReactComponentConfig;
         const id = config.id as string;
-
         const itemId = this.addWidgetByType(id);
+
         if (itemId) {
             config.id = itemId;
             config.props.id = itemId;
@@ -517,7 +552,7 @@ export class WidgetsStore {
             const config = item.config as GoldenLayout.ReactComponentConfig;
 
             // Clean up removed widget's store (ignoring items that have been floated)
-            if (config.component !== "floated") {
+            if (config.component !== "floated" && config.component !== CatalogOverlayComponent.WIDGET_CONFIG.type) {
                 const id = config.id as string;
                 this.removeWidget(id, config.component);
             }
@@ -579,6 +614,21 @@ export class WidgetsStore {
         const widget = this.floatingWidgets.find(w => w.id === id);
         if (widget) {
             widget.title = title;
+        }
+    }
+
+    @action setWidgetComponentTitle(componentId: string, title: string) {
+        const layoutStore = this.appStore.layoutStore;
+        if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
+            const matchingComponents = layoutStore.dockedLayout.root.getItemsById(componentId);
+            if (matchingComponents.length) {
+                matchingComponents[0].setTitle(title);
+            }
+        }
+        
+        const widgetComponent = this.floatingWidgets.find(w => w.componentId === componentId);
+        if (widgetComponent) {
+            widgetComponent.title = title;
         }
     }
 
@@ -660,6 +710,106 @@ export class WidgetsStore {
     }
 
     // endregion
+
+    // region Catalog Overlay Widgets
+    private getNextComponentId = (config: WidgetConfig) => {
+        // Find the next appropriate ID
+        let nextIndex = 0;
+        let componentIds = [];
+        const floatingCatalogWidgets = this.getFloatingWidgetByComponentId(config.componentId);
+        const dockedCatalogWidgets = this.getDockedWidgetByType(config.type);
+        
+        floatingCatalogWidgets.forEach(floatingConfig => {
+            componentIds.push(floatingConfig.componentId);
+        });
+        dockedCatalogWidgets.forEach(contentItem => {
+            componentIds.push(contentItem.config.id);
+        });
+        
+        while (true) {
+            const nextId = `${config.componentId}-${nextIndex}`;
+            if (!componentIds.includes(nextId)) {
+                return nextId;
+            }
+            nextIndex++;
+        }
+    };
+
+    getDockedWidgetByType(type: string): GoldenLayout.ContentItem[] {
+        const layoutStore = this.appStore.layoutStore;
+        let matchingComponents = [];
+        if (layoutStore.dockedLayout && layoutStore.dockedLayout.root) {
+            matchingComponents = layoutStore.dockedLayout.root.getItemsByFilter(
+                item => {
+                    const config = item.config as GoldenLayout.ReactComponentConfig;
+                    return config.component === type;
+                }
+            );
+        }
+        return matchingComponents;
+    }
+
+    getFloatingWidgetByComponentId(componentId: string): WidgetConfig[] {
+        let floatingCatalogWidgetComponent = [];
+        this.floatingWidgets.forEach(widgetConfig => {
+            if (widgetConfig.componentId && widgetConfig.componentId.includes(componentId)) {
+                floatingCatalogWidgetComponent.push(widgetConfig);
+            }
+        });
+        return floatingCatalogWidgetComponent;
+    }
+
+    createFloatingCatalogOverlayWidget = (catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData): string => {
+        let config = CatalogOverlayComponent.WIDGET_CONFIG;
+        const widgetId = this.addCatalogOverlayWidget(catalogInfo, catalogHeader, catalogData);
+        config.id = widgetId;
+        config.componentId = this.getNextComponentId(config);
+        this.addFloatingWidget(config);
+        return widgetId;  
+    };
+
+    reloadFloatingCatalogOverlayWidget = () => {
+        let config = CatalogOverlayComponent.WIDGET_CONFIG;
+        const componentId = this.getNextComponentId(config);
+        config.componentId = componentId;
+        config.id = componentId; 
+        this.addFloatingWidget(config);
+    };
+
+    // add catalog overlay widget store
+    @action addCatalogOverlayWidget(catalogInfo: CatalogInfo, catalogHeader: Array<CARTA.ICatalogHeader>, catalogData: CARTA.ICatalogColumnsData, id: string = null) {
+        // Generate new id if none passed in
+        if (!id) {
+            id = this.getNextId(CatalogOverlayComponent.WIDGET_CONFIG.type);
+        }
+
+        if (id) {
+            this.catalogOverlayWidgets.set(id, new CatalogOverlayWidgetStore(this.appStore, catalogInfo, catalogHeader, catalogData, id));
+        }
+        return id;
+    }
+    // endregion 
+
+    // region Catalog Scatter Widgets
+    createFloatingCatalogScatterWidget = (porps: CatalogScatterWidgetStoreProps): string => {
+        let config = CatalogScatterComponent.WIDGET_CONFIG;
+        config.id = this.addCatalogScatterWidget(porps);
+        this.addFloatingWidget(config);
+        return config.id;
+    };
+
+    @action addCatalogScatterWidget(porps: CatalogScatterWidgetStoreProps, id: string = null) {
+        // Generate new id if none passed in
+        if (!id) {
+            id = this.getNextId(CatalogScatterComponent.WIDGET_CONFIG.type);
+        }
+
+        if (id) {
+            this.catalogScatterWidgets.set(id, new CatalogScatterWidgetStore(porps));
+        }
+        return id;
+    }
+    // endregion 
 
     // region Floating Settings
     createFloatingSettingsWidget = (title: string, parentId: string, parentType: string) => {
@@ -842,8 +992,38 @@ export class WidgetsStore {
         }
     };
 
+    @action updateSelectFloatingWidgetzIndex = (id: string) => {
+        const selectedWidgetIndex = this.floatingWidgets.findIndex(w => w.id === id);
+        const selectedWidget = this.floatingWidgets[selectedWidgetIndex];
+        const N = this.floatingWidgets.length;
+        if (N > 1 && selectedWidgetIndex >= 0 && selectedWidget.zIndex < N) {
+            for (let i = 0; i < N; i++) {
+                let currentWidgetzIndex = this.floatingWidgets[i].zIndex;
+                if (currentWidgetzIndex >= selectedWidget.zIndex) {
+                    this.floatingWidgets[i].zIndex = currentWidgetzIndex - 1;
+                }
+            }
+            this.floatingWidgets[selectedWidgetIndex].zIndex = this.floatingWidgets.length;
+        }
+
+    };
+
+    // update widget zIndex when remove a widget
+    private updateFloatingWidgetzIndexOnRemove(widgetzIndex: number) {
+        const N = this.floatingWidgets.length;
+        if (widgetzIndex < N) {
+            for (let index = 0; index < N; index++) {
+                const zIndex = this.floatingWidgets[index].zIndex;
+                if (zIndex > widgetzIndex) {
+                    this.floatingWidgets[index].zIndex = zIndex - 1;
+                }
+            }
+        }
+    }
+
     @action addFloatingWidget = (widget: WidgetConfig) => {
         widget["defaultX"] = widget["defaultY"] = this.getFloatingWidgetOffset();
+        widget.zIndex = this.floatingWidgets.length + 1;
         this.floatingWidgets.push(widget);
     };
 
@@ -851,13 +1031,33 @@ export class WidgetsStore {
     @action removeFloatingWidget = (id: string, preserveStore: boolean = false) => {
         const widget = this.floatingWidgets.find(w => w.id === id);
         if (widget) {
+            this.updateFloatingWidgetzIndexOnRemove(widget.zIndex);
             this.floatingWidgets = this.floatingWidgets.filter(w => w.id !== id);
             if (preserveStore) {
                 return;
+            }
+
+            if (widget.type === CatalogOverlayComponent.WIDGET_CONFIG.type) {
+                return;
+            }
+            
+            // update scatter widget id with associated scatter store.
+            const catalogScatterWidget = this.catalogScatterWidgets.get(id);
+            if (catalogScatterWidget) {
+                catalogScatterWidget.catalogOverlayWidgetStore.updateCatalogScatterWidget(id);
             }
 
             this.removeWidget(id, widget.type);
         }
     };
     // endregion
+
+    // remove a widget component by componentId
+    @action removeFloatingWidgetComponent = (componentId: string) => {
+        const widget = this.floatingWidgets.find(w => w.componentId === componentId);
+        if (widget) {
+            this.updateFloatingWidgetzIndexOnRemove(widget.zIndex);
+            this.floatingWidgets = this.floatingWidgets.filter(w => w.componentId !== componentId);
+        }
+    }
 }

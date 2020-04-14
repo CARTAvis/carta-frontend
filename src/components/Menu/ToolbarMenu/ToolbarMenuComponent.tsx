@@ -2,7 +2,19 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
 import {AppStore, WidgetConfig} from "stores";
-import {AnimatorComponent, HistogramComponent, LayerListComponent, LogComponent, RegionListComponent, RenderConfigComponent, SpatialProfilerComponent, SpectralProfilerComponent, StatsComponent, StokesAnalysisComponent} from "components";
+import {
+    AnimatorComponent, 
+    HistogramComponent, 
+    LayerListComponent, 
+    LogComponent, 
+    RegionListComponent, 
+    RenderConfigComponent, 
+    SpatialProfilerComponent, 
+    SpectralProfilerComponent, 
+    StatsComponent, 
+    StokesAnalysisComponent, 
+    CatalogOverlayComponent
+} from "components";
 import {CustomIcon} from "icons/CustomIcons";
 import "./ToolbarMenuComponent.css";
 @observer
@@ -19,6 +31,7 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
             ["statsButton", StatsComponent.WIDGET_CONFIG],
             ["histogramButton", HistogramComponent.WIDGET_CONFIG],
             ["stokesAnalysisButton", StokesAnalysisComponent.WIDGET_CONFIG],
+            ["catalogOverlayButton", CatalogOverlayComponent.WIDGET_CONFIG]
         ]);
     }
 
@@ -71,6 +84,9 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
                     </Tooltip>
                     <Tooltip content={<span>Layer List Widget{commonTooltip}</span>}>
                         <Button icon={"layers"} id="layerListButton" onClick={this.props.appStore.widgetsStore.createFloatingLayerListWidget}/>
+                    </Tooltip>
+                    <Tooltip content={<span>Catalog Widget{commonTooltip}</span>}>
+                        <Button icon={"heatmap"} id="catalogOverlayButton" onClick={this.props.appStore.widgetsStore.reloadFloatingCatalogOverlayWidget}/>
                     </Tooltip>
                 </ButtonGroup>
                 <ButtonGroup className={dialogClassName}>
