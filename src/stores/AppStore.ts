@@ -92,7 +92,6 @@ export class AppStore {
     @observable spectralReference: FrameStore;
 
     private appContainer: HTMLElement;
-    private contourWebGLContext: WebGLRenderingContext;
 
     public getAppContainer = (): HTMLElement => {
         return this.appContainer;
@@ -101,14 +100,6 @@ export class AppStore {
     public setAppContainer = (container: HTMLElement) => {
         this.appContainer = container;
     };
-
-    public get ContourContext() {
-        return this.contourWebGLContext;
-    }
-
-    public set ContourContext(gl: WebGLRenderingContext) {
-        this.contourWebGLContext = gl;
-    }
 
     // Splash screen
     @observable splashScreenVisible: boolean = true;
