@@ -1,11 +1,12 @@
 import * as React from "react";
-import {computed, autorun, observable} from "mobx";
+import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
-import {Colors, Tab, TabId, Tabs} from "@blueprintjs/core";
+import {Colors, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent} from "components/Shared";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig, HelpType} from "stores";
 import {parseNumber} from "utilities";
+import "./SpectralProfilerSettingsPanelComponent.css";
 
 const KEYCODE_ENTER = 13;
 
@@ -18,8 +19,8 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             type: "floating-settings",
             minWidth: 280,
             minHeight: 225,
-            defaultWidth: 450,
-            defaultHeight: 375,
+            defaultWidth: 550,
+            defaultHeight: 450,
             title: "spectral-profiler-settings",
             isCloseable: true,
             parentId: "spectal-profiler",
@@ -160,10 +161,12 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         };
 
         return (
-            <Tabs id="spectralSettingTabs">
-                <Tab id="conversion" title="Conversion" panel={<SpectralSettingsComponent appStore={this.props.appStore} widgetStore={widgetStore} disable={false}/>}/>
-                <Tab id="style" title="Style" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
-            </Tabs>
+            <div className="spectral-settings">
+                <Tabs id="spectralSettingTabs">
+                    <Tab id="conversion" title="Conversion" panel={<SpectralSettingsComponent appStore={this.props.appStore} widgetStore={widgetStore} disable={false}/>}/>
+                    <Tab id="linePlot" title="Line Plot" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
+                </Tabs>
+            </div>
         );
     }
 }

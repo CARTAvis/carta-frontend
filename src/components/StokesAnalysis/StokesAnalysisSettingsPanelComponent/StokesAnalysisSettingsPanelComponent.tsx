@@ -1,7 +1,7 @@
 import * as React from "react";
 import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
-import {Colors} from "@blueprintjs/core";
+import {Colors, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponent, LinePlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponentProps, ScatterPlotSettingsPanelComponent, SpectralSettingsComponent} from "components/Shared";
 import {StokesAnalysisWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig, HelpType} from "stores";
@@ -16,8 +16,8 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             type: "floating-settings",
             minWidth: 350,
             minHeight: 300,
-            defaultWidth: 450,
-            defaultHeight: 550,
+            defaultWidth: 550,
+            defaultHeight: 450,
             title: "stokes-settings",
             isCloseable: true,
             parentId: "stokes",
@@ -91,20 +91,13 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
         const hasStokes = appStore.activeFrame && appStore.activeFrame.frameInfo && appStore.activeFrame.frameInfo.fileInfoExtended.stokes > 1;
 
         return (
-            <React.Fragment>
-                <div className="stokes-settings">
-                    <p>Spectral Settings:</p>
-                    <SpectralSettingsComponent appStore={appStore} widgetStore={widgetStore} disable={!hasStokes}/>
-                    <p>Line Plots:</p>
-                    <div className={"stokes-line-settings"}>
-                        <LinePlotSettingsPanelComponent {...lineSettingsProps}/>
-                    </div>
-                    <p>Scatter Plot:</p>
-                    <div className={"stokes-scatter-settings"}>
-                        <ScatterPlotSettingsPanelComponent {...scatterSettingsProrps}/>
-                    </div>
-                </div>
-            </React.Fragment>
+            <div className="stokes-settings">
+                <Tabs id="spectralSettingTabs">
+                    <Tab id="conversion" title="Conversion" panel={<SpectralSettingsComponent appStore={appStore} widgetStore={widgetStore} disable={!hasStokes}/>}/>
+                    <Tab id="linePlot" title="Line Plot" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
+                    <Tab id="scatterPlot" title="Scatter Plot" panel={<ScatterPlotSettingsPanelComponent {...scatterSettingsProrps}/>}/>
+                </Tabs>
+            </div>
         );
     }
 }
