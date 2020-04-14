@@ -144,7 +144,6 @@ export class TableComponent extends React.Component<TableComponentProps> {
                     columnWidths={table.columnWidts}
                     onColumnWidthChanged={this.updateTableColumnWidth}
                     enableGhostCells={true}
-                    // selectedRegions={null}
                     onSelection={this.onRowIndexSelection}
                     enableMultipleSelection={false}
                 >
