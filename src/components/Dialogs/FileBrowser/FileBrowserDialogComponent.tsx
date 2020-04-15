@@ -1,12 +1,14 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {action, computed, observable} from "mobx";
-import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, Popover, Position, TabId, Tooltip} from "@blueprintjs/core";
+import {Alert, AnchorButton, Breadcrumb, Breadcrumbs, Button, IBreadcrumbProps, Icon, IDialogProps, InputGroup, Intent, Menu, MenuItem, NonIdealState, Popover, Position, Pre, Spinner, Tab, TabId, Tabs, Tooltip, Text, Switch} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {FileListComponent} from "./FileList/FileListComponent";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
+import {TableComponentProps, TableType} from "components/Shared";
 import {AppStore, BrowserMode, HelpType} from "stores";
+import {CatalogOverlayWidgetStore} from "stores/widgets";
 import "./FileBrowserDialogComponent.css";
 
 @observer
@@ -22,7 +24,7 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         this.loadFile(fileBrowserStore.selectedFile, fileBrowserStore.selectedHDU);
     };
 
-    private loadFile = (fileInfo: CARTA.IFileInfo, hdu: string) => {
+    private loadFile = (fileInfo: CARTA.IFileInfo | CARTA.ICatalogFileInfo, hdu?: string) => {
         const fileBrowserStore = this.props.appStore.fileBrowserStore;
 
         // Ignore load if in export mode
@@ -37,6 +39,8 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             } else {
                 this.props.appStore.appendFile(fileBrowserStore.fileList.directory, fileInfo.name, hdu);
             }
+        } else if (fileBrowserStore.browserMode === BrowserMode.Catalog) {
+            this.props.appStore.appendCatalog(fileBrowserStore.catalogFileList.directory, fileInfo.name, CatalogOverlayWidgetStore.InitTableRows, CARTA.CatalogFileType.VOTable);
         } else {
             this.props.appStore.importRegion(fileBrowserStore.fileList.directory, fileInfo.name, fileInfo.type);
         }
@@ -124,6 +128,17 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                     />
                 </Tooltip>
             );
+        } else if (browserMode === BrowserMode.Catalog) {
+            return (
+                <Tooltip content={"Load a catalog file for the currently active frame"}>
+                    <AnchorButton
+                        intent={Intent.PRIMARY}
+                        disabled={this.props.appStore.fileLoading || !fileBrowserStore.selectedFile || !fileBrowserStore.fileInfoResp || fileBrowserStore.loadingInfo || !this.props.appStore.activeFrame}
+                        onClick={this.loadSelectedFile}
+                        text="Load Catalog"
+                    />
+                </Tooltip>
+            );
         } else {
             const frame = this.props.appStore.activeFrame;
             return (
@@ -186,8 +201,14 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
     // Refresh file list to trigger the Breadcrumb re-rendering
     @action
     private refreshFileList() {
-        if (this.props.appStore.fileBrowserStore.fileList) {
-            this.props.appStore.fileBrowserStore.fileList = {...this.props.appStore.fileBrowserStore.fileList};
+        const fileBrowserStore = this.props.appStore.fileBrowserStore;
+        switch (fileBrowserStore.browserMode) {
+            case BrowserMode.Catalog:
+                fileBrowserStore.catalogFileList = {...fileBrowserStore.catalogFileList};
+                break;
+            default:
+                fileBrowserStore.fileList = {...fileBrowserStore.fileList};
+                break;
         }
     }
 
@@ -222,6 +243,17 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
             paneClassName += " extended";
         }
 
+        let tableProps: TableComponentProps = null;
+        if (fileBrowserStore.browserMode === BrowserMode.Catalog && fileBrowserStore.catalogHeaders && fileBrowserStore.catalogHeaders.length) {
+            const table = fileBrowserStore.catalogHeaderDataset;
+            tableProps = {
+                type: TableType.Normal,
+                dataset: table.columnsData,
+                columnHeaders: table.columnHeaders,
+                numVisibleRows: fileBrowserStore.catalogHeaders.length
+            };
+        }
+
         return (
             <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} helpType={HelpType.FILE_Browser} minWidth={400} minHeight={400} defaultWidth={1200} defaultHeight={600} enableResizing={true}>
                 <div className="file-path">
@@ -247,7 +279,8 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         <div className="file-list">
                             <FileListComponent
                                 darkTheme={this.props.appStore.darkTheme}
-                                files={fileBrowserStore.fileList}
+                                files={fileBrowserStore.getfileListByMode}
+                                fileBrowserMode={fileBrowserStore.browserMode}
                                 selectedFile={fileBrowserStore.selectedFile}
                                 selectedHDU={fileBrowserStore.selectedHDU}
                                 onFileClicked={fileBrowserStore.selectFile}
@@ -257,13 +290,15 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         </div>
                         <div className="file-info-pane">
                             <FileInfoComponent
-                                infoTypes={fileBrowserStore.browserMode === BrowserMode.File ? [FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER] : [FileInfoType.REGION_FILE]}
+                                infoTypes={this.getFileInfoTypes(fileBrowserStore.browserMode)}
                                 fileInfoExtended={fileBrowserStore.fileInfoExtended}
                                 regionFileInfo={fileBrowserStore.regionFileInfo ? fileBrowserStore.regionFileInfo.join("\n") : ""}
+                                catalogFileInfo={fileBrowserStore.catalogFileInfor}
                                 selectedTab={fileBrowserStore.selectedTab as FileInfoType}
                                 handleTabChange={this.handleTabChange}
                                 isLoading={fileBrowserStore.loadingInfo}
                                 errorMessage={fileBrowserStore.responseErrorMessage}
+                                catalogHeaderTable={tableProps}
                             />
                         </div>
                     </div>
@@ -301,10 +336,23 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
         );
     };
 
+    private getFileInfoTypes(fileBrowserMode: BrowserMode): Array<FileInfoType> {
+        switch (fileBrowserMode) {
+            case BrowserMode.File:
+                return [FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER];
+            case BrowserMode.Catalog:
+                return [FileInfoType.CATALOG_FILE, FileInfoType.CATALOG_HEADER];
+            default:
+                return [FileInfoType.REGION_FILE];
+        }
+    }
+
     @computed get pathItems() {
+        // let pathItems: IBreadcrumbProps[] = [{icon: "desktop", target: "."}];
         let pathItems: IBreadcrumbProps[] = [{icon: "desktop", onClick: () => this.props.appStore.fileBrowserStore.selectFolder(".", true)}];
-        if (this.props.appStore.fileBrowserStore.fileList) {
-            const path = this.props.appStore.fileBrowserStore.fileList.directory;
+        const fileList = this.props.appStore.fileBrowserStore.getfileListByMode;
+        if (fileList) {
+            const path = fileList.directory;
             if (path && path !== ".") {
                 const dirNames = path.split("/");
                 let parentPath = "";
@@ -313,6 +361,13 @@ export class FileBrowserDialogComponent extends React.Component<{ appStore: AppS
                         if (!dirName) {
                             continue;
                         }
+                        // if (dirName !== ".") {
+                        //     parentPath += `/${dirName}`;
+                        //     pathItems.push({
+                        //         text: dirName,
+                        //         target: parentPath
+                        //     });
+                        // }
                         parentPath += `/${dirName}`;
                         const targetPath = parentPath;
                         pathItems.push({

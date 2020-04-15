@@ -11,4 +11,11 @@
     .bp3-heading {
         flex: 0 0 auto;
     }
+
+    .file-header-table {
+        overflow: auto;
+        height: 100%;
+        flex: 2 2 auto;
+        padding: 1px;
+    }
 }

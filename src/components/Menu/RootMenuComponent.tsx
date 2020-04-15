@@ -59,6 +59,13 @@ export class RootMenuComponent extends React.Component<{ appStore: AppStore }> {
                 />
                 <Menu.Divider/>
                 <Menu.Item
+                    text="Append catalog"
+                    label={`${modString}C`}
+                    disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}
+                />
+                <Menu.Divider/>
+                <Menu.Item
                     text="Export image"
                     label={`${modString}E`}
                     disabled={!appStore.activeFrame}
