@@ -88,7 +88,7 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             handleEqualAxesValuesChanged: this.handleEqualAxesValuesChanged
         };
 
-        const hasStokes = appStore.activeFrame && appStore.activeFrame.frameInfo && appStore.activeFrame.frameInfo.fileInfoExtended.stokes > 1;
+        const hasStokes = appStore.activeFrame && appStore.activeFrame.hasStokes;
 
         return (
             <div className="stokes-settings">
