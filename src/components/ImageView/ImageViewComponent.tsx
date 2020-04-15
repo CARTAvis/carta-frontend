@@ -15,6 +15,7 @@ import {CursorInfo, Point2D} from "models";
 import {toFixed} from "utilities";
 import "./ImageViewComponent.css";
 import {ContourViewComponent} from "./ContourView/ContourViewComponent";
+import {CatalogViewComponent} from "./CatalogView/CatalogViewComponent";
 
 export const exportImage = (padding, darkTheme, imageName) => {
     const rasterCanvas = document.getElementById("raster-canvas") as HTMLCanvasElement;
@@ -253,6 +254,11 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     appStore={appStore}
                     docked={this.props.docked}
                     overlaySettings={appStore.overlayStore}
+                />
+                <CatalogViewComponent
+                    appStore={appStore}
+                    overlaySettings={appStore.overlayStore}
+                    docked={this.props.docked}
                 />
                 {divContents}
                 <ReactResizeDetector handleWidth handleHeight onResize={this.onResize} refreshMode={"throttle"} refreshRate={33}/>

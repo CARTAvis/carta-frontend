@@ -44,5 +44,7 @@ export enum HelpType {
     SPECTRAL_PROFILER_SETTINGS = "spectral-profiler-settings",
     STATS = "stats",
     STOKES_ANALYSIS = "stoke-analysis",
-    STOKES_ANALYSIS_SETTINGS = "stoke-analysis-settings"
+    STOKES_ANALYSIS_SETTINGS = "stoke-analysis-settings",
+    CATALOG_OVERLAY = "catalog-overlay",
+    CATALOG_SCATTER = "catalog-scatter"
 }
