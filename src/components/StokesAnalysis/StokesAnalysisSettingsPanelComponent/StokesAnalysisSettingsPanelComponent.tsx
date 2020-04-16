@@ -94,8 +94,8 @@ export class StokesAnalysisSettingsPanelComponent extends React.Component<Widget
             <div className="stokes-settings">
                 <Tabs id="spectralSettingTabs">
                     <Tab id="conversion" title="Conversion" panel={<SpectralSettingsComponent appStore={appStore} widgetStore={widgetStore} disable={!hasStokes}/>}/>
-                    <Tab id="linePlot" title="Line Plot" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
-                    <Tab id="scatterPlot" title="Scatter Plot" panel={<ScatterPlotSettingsPanelComponent {...scatterSettingsProrps}/>}/>
+                    <Tab id="linePlotStyling" title="Line Plot Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
+                    <Tab id="scatterPlotStyling" title="Scatter Plot Styling" panel={<ScatterPlotSettingsPanelComponent {...scatterSettingsProrps}/>}/>
                 </Tabs>
             </div>
         );

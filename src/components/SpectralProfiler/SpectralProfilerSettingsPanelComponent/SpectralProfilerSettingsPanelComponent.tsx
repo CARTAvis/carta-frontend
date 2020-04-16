@@ -164,7 +164,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             <div className="spectral-settings">
                 <Tabs id="spectralSettingTabs">
                     <Tab id="conversion" title="Conversion" panel={<SpectralSettingsComponent appStore={this.props.appStore} widgetStore={widgetStore} disable={false}/>}/>
-                    <Tab id="linePlot" title="Line Plot" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
+                    <Tab id="styling" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
                 </Tabs>
             </div>
         );
