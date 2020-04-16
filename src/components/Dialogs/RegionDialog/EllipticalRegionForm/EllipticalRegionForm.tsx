@@ -55,11 +55,11 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
             return;
         }
         const valueString = ev.currentTarget.value;
-        const value = parseFloat(valueString);
+        const semiValue = parseFloat(valueString) / 2;
         const existingValue = this.props.region.controlPoints[1].x;
 
-        if (isFinite(value) && value > 0 && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setControlPoint(1, {x: value, y: this.props.region.controlPoints[1].y});
+        if (isFinite(semiValue) && semiValue > 0 && !closeTo(semiValue, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
+            this.props.region.setControlPoint(1, {x: semiValue, y: this.props.region.controlPoints[1].y});
             return;
         }
 
@@ -71,11 +71,11 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
             return;
         }
         const valueString = ev.currentTarget.value;
-        const value = parseFloat(valueString);
+        const semiValue = parseFloat(valueString) / 2;
         const existingValue = this.props.region.controlPoints[1].y;
 
-        if (isFinite(value) && value > 0 && !closeTo(value, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
-            this.props.region.setControlPoint(1, {x: this.props.region.controlPoints[1].x, y: value});
+        if (isFinite(semiValue) && semiValue > 0 && !closeTo(semiValue, existingValue, EllipticalRegionForm.REGION_PIXEL_EPS)) {
+            this.props.region.setControlPoint(1, {x: this.props.region.controlPoints[1].x, y: semiValue});
             return;
         }
 
@@ -169,10 +169,10 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
                         <tr>
                             <td>Axes {pxUnitSpan}</td>
                             <td>
-                                <NumericInput {...commonProps} buttonPosition="none" placeholder="Semi-Major Axis" value={sizeDims.x} onBlur={this.handleMajorAxisChange} onKeyDown={this.handleMajorAxisChange}/>
+                                <NumericInput {...commonProps} buttonPosition="none" placeholder="Major Axis" value={sizeDims.x * 2} onBlur={this.handleMajorAxisChange} onKeyDown={this.handleMajorAxisChange}/>
                             </td>
                             <td>
-                                <NumericInput{...commonProps} buttonPosition="none" placeholder="Semi-Minor Axis" value={sizeDims.y} onBlur={this.handleMinorAxisChange} onKeyDown={this.handleMinorAxisChange}/>
+                                <NumericInput{...commonProps} buttonPosition="none" placeholder="Minor Axis" value={sizeDims.y * 2} onBlur={this.handleMinorAxisChange} onKeyDown={this.handleMinorAxisChange}/>
                             </td>
                             <td>
                                 <span className="wcs-string">{wcsStringSize}</span>
