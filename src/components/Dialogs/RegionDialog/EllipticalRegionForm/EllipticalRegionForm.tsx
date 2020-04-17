@@ -63,7 +63,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
             return;
         }
 
-        ev.currentTarget.value = existingValue;
+        ev.currentTarget.value = existingValue * 2;
     };
 
     private handleMinorAxisChange = (ev) => {
@@ -79,7 +79,7 @@ export class EllipticalRegionForm extends React.Component<{ region: RegionStore,
             return;
         }
 
-        ev.currentTarget.value = existingValue;
+        ev.currentTarget.value = existingValue * 2;
     };
 
     private handleRotationChange = (ev) => {
