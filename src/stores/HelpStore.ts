@@ -2,6 +2,15 @@ import {action, observable} from "mobx";
 import {Position} from "@blueprintjs/core";
 
 export class HelpStore {
+    private static staticInstance: HelpStore;
+
+    static get Instance() {
+        if (!HelpStore.staticInstance) {
+            HelpStore.staticInstance = new HelpStore();
+        }
+        return HelpStore.staticInstance;
+    }
+
     @observable type: HelpType;
     @observable helpVisible: boolean = false;
     @observable position: Position = Position.RIGHT;

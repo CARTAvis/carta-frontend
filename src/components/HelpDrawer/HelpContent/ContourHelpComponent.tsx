@@ -4,9 +4,9 @@ import {ImageComponent} from "./ImageComponent";
 import * as headContourButton from "static/help/head_contour_button.png";
 import * as headContourButton_d from "static/help/head_contour_button_d.png";
 
-export class ContourHelpComponent extends React.Component<{ appStore: AppStore }> {
+export class ContourHelpComponent extends React.Component {
     public render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         return (
             <div>
                 <p><ImageComponent appStore={appStore} light={headContourButton} dark={headContourButton_d} width="90%"/></p>

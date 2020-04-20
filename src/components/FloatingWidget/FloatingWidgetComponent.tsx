@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Rnd} from "react-rnd";
 import {Icon, Position, Tooltip} from "@blueprintjs/core";
 import {PlaceholderComponent} from "components";
-import {AppStore, WidgetConfig} from "stores";
+import {AppStore, HelpStore, WidgetConfig} from "stores";
 import "./FloatingWidgetComponent.css";
 
 class FloatingWidgetComponentProps {
@@ -72,7 +72,7 @@ export class FloatingWidgetComponent extends React.Component<FloatingWidgetCompo
 
     private onClickHelpButton = () => {
         const centerX = this.rnd.draggable.state.x + this.rnd.resizable.size.width * 0.5;
-        this.props.appStore.helpStore.showHelpDrawer(this.props.widgetConfig.helpType, centerX);
+        HelpStore.Instance.showHelpDrawer(this.props.widgetConfig.helpType, centerX);
     }
 
     constructor(props: FloatingWidgetComponentProps) {

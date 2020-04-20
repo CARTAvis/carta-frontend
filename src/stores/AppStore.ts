@@ -80,8 +80,6 @@ export class AppStore {
     readonly fileBrowserStore: FileBrowserStore;
     // Widgets
     readonly widgetsStore: WidgetsStore;
-    // Help
-    @observable helpStore: HelpStore;
 
     // Profiles and region data
     @observable spatialProfiles: Map<string, SpatialProfileStore>;
@@ -736,7 +734,6 @@ export class AppStore {
         this.widgetsStore = new WidgetsStore(this);
         this.initRequirements();
         this.dialogStore = new DialogStore(this);
-        this.helpStore = new HelpStore();
 
         const throttledSetCursorRotated = _.throttle(this.setCursor, AppStore.CursorThrottleTimeRotated);
         const throttledSetCursor = _.throttle(this.setCursor, AppStore.CursorThrottleTime);

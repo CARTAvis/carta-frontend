@@ -1,15 +1,13 @@
 import * as React from "react";
-import {AppStore} from "stores";
 import {ImageComponent} from "./ImageComponent";
 import * as headLogButton from "static/help/head_log_button.png";
 import * as headLogButton_d from "static/help/head_log_button_d.png";
 
-export class LogHelpComponent extends React.Component<{ appStore: AppStore }> {
+export class LogHelpComponent extends React.Component {
     public render() {
-        const appStore = this.props.appStore;
         return (
             <div>
-                <p><ImageComponent appStore={appStore} light={headLogButton} dark={headLogButton_d} width="90%"/></p>
+                <p><ImageComponent light={headLogButton} dark={headLogButton_d} width="90%"/></p>
                 <p>Log widget provides information for diagnostics when something went wrong. The log levels include:</p>
                 <ul>
                     <li>Debug</li>
