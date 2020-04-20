@@ -4,7 +4,7 @@ import { observer } from "mobx-react";
 import { HTMLTable, Icon, NonIdealState } from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import { CARTA } from "carta-protobuf";
-import { RegionStore, WidgetConfig, WidgetProps, HelpType } from "stores";
+import {RegionStore, WidgetConfig, WidgetProps, HelpType, DialogStore} from "stores";
 import { Point2D} from "models";
 import { toFixed } from "utilities";
 import "./RegionListComponent.css";
@@ -59,7 +59,7 @@ export class RegionListComponent extends React.Component<WidgetProps> {
     };
 
     private handleRegionListDoubleClick = () => {
-        this.props.appStore.dialogStore.showRegionDialog();
+        DialogStore.Instance.showRegionDialog();
     };
 
     render() {

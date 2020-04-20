@@ -4,12 +4,19 @@ import {TabId} from "@blueprintjs/core";
 import {FileInfoType} from "../components";
 
 export class DialogStore {
-    private readonly appStore: AppStore;
-    
+    private static staticInstance: DialogStore;
+
+    static get Instance() {
+        if (!DialogStore.staticInstance) {
+            DialogStore.staticInstance = new DialogStore();
+        }
+        return DialogStore.staticInstance;
+    }
+
     // Region
     @observable regionDialogVisible: boolean;
     @action showRegionDialog = () => {
-        console.log(`Showing dialog for ${this.appStore.activeFrame.regionSet.selectedRegion}`);
+        console.log(`Showing dialog for ${AppStore.Instance.activeFrame.regionSet.selectedRegion}`);
         this.regionDialogVisible = true;
     };
     @action hideRegionDialog = () => {
@@ -109,9 +116,4 @@ export class DialogStore {
     @action hideContourDialog = () => {
         this.contourDialogVisible = false;
     };
-
-    constructor(appStore: AppStore) {
-        this.appStore = appStore;
-    }
-
 }

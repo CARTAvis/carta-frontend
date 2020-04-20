@@ -3,11 +3,10 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import {ResizeEnable, Rnd} from "react-rnd";
 import {Dialog, IDialogProps, Button} from "@blueprintjs/core";
+import {HelpStore, HelpType} from "stores";
 import "./DraggableDialogComponent.css";
-import {AppStore, HelpStore, HelpType} from "stores";
 
 export class ResizableDialogComponentProps {
-    appStore: AppStore;
     dialogProps: IDialogProps;
     defaultWidth: number;
     defaultHeight: number;

@@ -1,7 +1,7 @@
 import * as React from "react";
 import {observer} from "mobx-react";
 import {Button, ButtonGroup, Tooltip} from "@blueprintjs/core";
-import {AppStore, WidgetConfig} from "stores";
+import {AppStore, DialogStore, WidgetConfig} from "stores";
 import {
     AnimatorComponent, 
     HistogramComponent, 
@@ -18,7 +18,7 @@ import {
 import {CustomIcon} from "icons/CustomIcons";
 import "./ToolbarMenuComponent.css";
 @observer
-export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }> {
+export class ToolbarMenuComponent extends React.Component {
     public static get DRAGSOURCE_WIDGETCONFIG_MAP(): Map<string, WidgetConfig> {
         return new Map<string, WidgetConfig>([
             ["renderConfigButton", RenderConfigComponent.WIDGET_CONFIG],
@@ -36,57 +36,58 @@ export class ToolbarMenuComponent extends React.Component<{ appStore: AppStore }
     }
 
     public render() {
+        const appStore = AppStore.Instance;
+        const dialogStore = DialogStore.Instance;
+
         let className = "toolbar-menu";
         let dialogClassName = "dialog-toolbar-menu";
-        if (this.props.appStore.darkTheme) {
+        if (appStore.darkTheme) {
             className += " bp3-dark";
             dialogClassName += " bp3-dark";
         }
-
-        const dialogStore = this.props.appStore.dialogStore;
 
         const commonTooltip = <span><br/><i><small>Drag to place docked widget<br/>Click to place a floating widget</small></i></span>;
         return (
             <React.Fragment>
                 <ButtonGroup className={className}>
                     <Tooltip content={<span>Region List Widget{commonTooltip}</span>}>
-                        <Button icon={"th-list"} id="regionListButton" onClick={this.props.appStore.widgetsStore.createFloatingRegionListWidget}/>
+                        <Button icon={"th-list"} id="regionListButton" onClick={appStore.widgetsStore.createFloatingRegionListWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Log Widget{commonTooltip}</span>}>
-                        <Button icon={"application"} id="logButton" onClick={this.props.appStore.widgetsStore.createFloatingLogWidget}/>
+                        <Button icon={"application"} id="logButton" onClick={appStore.widgetsStore.createFloatingLogWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Spatial Profiler{commonTooltip}</span>}>
-                        <Button icon={"pulse"} id="spatialProfilerButton" className={"profiler-button"} onClick={this.props.appStore.widgetsStore.createFloatingSpatialProfilerWidget}>
+                        <Button icon={"pulse"} id="spatialProfilerButton" className={"profiler-button"} onClick={appStore.widgetsStore.createFloatingSpatialProfilerWidget}>
                             xy
                         </Button>
                     </Tooltip>
                     <Tooltip content={<span>Spectral Profiler{commonTooltip}</span>}>
-                        <Button icon={"pulse"} id="spectralProfilerButton" className={"profiler-button"} onClick={this.props.appStore.widgetsStore.createFloatingSpectralProfilerWidget}>
+                        <Button icon={"pulse"} id="spectralProfilerButton" className={"profiler-button"} onClick={appStore.widgetsStore.createFloatingSpectralProfilerWidget}>
                             &nbsp;z
                         </Button>
                     </Tooltip>
                     <Tooltip content={<span>Statistics Widget{commonTooltip}</span>}>
-                        <Button icon={"calculator"} id="statsButton" onClick={this.props.appStore.widgetsStore.createFloatingStatsWidget}/>
+                        <Button icon={"calculator"} id="statsButton" onClick={appStore.widgetsStore.createFloatingStatsWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Histogram Widget{commonTooltip}</span>}>
-                        <Button icon={"timeline-bar-chart"} id="histogramButton" onClick={this.props.appStore.widgetsStore.createFloatingHistogramWidget}/>
+                        <Button icon={"timeline-bar-chart"} id="histogramButton" onClick={appStore.widgetsStore.createFloatingHistogramWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Animator Widget{commonTooltip}</span>}>
-                        <Button icon={"video"} id="animatorButton" onClick={this.props.appStore.widgetsStore.createFloatingAnimatorWidget}/>
+                        <Button icon={"video"} id="animatorButton" onClick={appStore.widgetsStore.createFloatingAnimatorWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Render Config Widget{commonTooltip}</span>}>
-                        <Button icon={"style"} id="renderConfigButton" onClick={this.props.appStore.widgetsStore.createFloatingRenderWidget}/>
+                        <Button icon={"style"} id="renderConfigButton" onClick={appStore.widgetsStore.createFloatingRenderWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Stokes Analysis Widget{commonTooltip}</span>}>
-                        <Button icon={"pulse"} id="stokesAnalysisButton" className={"profiler-button"} onClick={this.props.appStore.widgetsStore.createFloatingStokesWidget}>
+                        <Button icon={"pulse"} id="stokesAnalysisButton" className={"profiler-button"} onClick={appStore.widgetsStore.createFloatingStokesWidget}>
                             &nbsp;s
                         </Button>
                     </Tooltip>
                     <Tooltip content={<span>Layer List Widget{commonTooltip}</span>}>
-                        <Button icon={"layers"} id="layerListButton" onClick={this.props.appStore.widgetsStore.createFloatingLayerListWidget}/>
+                        <Button icon={"layers"} id="layerListButton" onClick={appStore.widgetsStore.createFloatingLayerListWidget}/>
                     </Tooltip>
                     <Tooltip content={<span>Catalog Widget{commonTooltip}</span>}>
-                        <Button icon={"heatmap"} id="catalogOverlayButton" onClick={this.props.appStore.widgetsStore.reloadFloatingCatalogOverlayWidget}/>
+                        <Button icon={"heatmap"} id="catalogOverlayButton" onClick={appStore.widgetsStore.reloadFloatingCatalogOverlayWidget}/>
                     </Tooltip>
                 </ButtonGroup>
                 <ButtonGroup className={dialogClassName}>

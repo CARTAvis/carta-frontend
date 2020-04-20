@@ -8,7 +8,7 @@ import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget, Intent} 
 import {UIControllerComponent, exportImage, FloatingWidgetManagerComponent} from "./components";
 import {AppToaster} from "./components/Shared";
 import {TaskProgressDialogComponent} from "./components/Dialogs";
-import {AlertStore, AppStore, BrowserMode, dayPalette, LogStore, nightPalette, RegionMode} from "./stores";
+import {AlertStore, AppStore, BrowserMode, dayPalette, DialogStore, LogStore, nightPalette, RegionMode} from "./stores";
 import {ConnectionStatus} from "./services";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
@@ -105,7 +105,7 @@ export class App extends React.Component {
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}/>
                 </div>
                 <FloatingWidgetManagerComponent appStore={appStore}/>
-                <Dialog isOpen={appStore.dialogStore.hotkeyDialogVisible} className={"bp3-hotkey-dialog"} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.dialogStore.hideHotkeyDialog}>
+                <Dialog isOpen={DialogStore.Instance.hotkeyDialogVisible} className={"bp3-hotkey-dialog"} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={DialogStore.Instance.hideHotkeyDialog}>
                     <div className={Classes.DIALOG_BODY}>
                         {this.renderHotkeys()}
                     </div>

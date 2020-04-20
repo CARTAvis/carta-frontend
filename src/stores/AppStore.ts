@@ -72,8 +72,6 @@ export class AppStore {
     @observable catalogStore: CatalogStore;
 
     readonly layoutStore: LayoutStore;
-    // Dialogs
-    readonly dialogStore: DialogStore;
     // Overlay
     readonly overlayStore: OverlayStore;
     // File Browser
@@ -733,7 +731,6 @@ export class AppStore {
         this.overlayStore = new OverlayStore(this, this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this);
         this.initRequirements();
-        this.dialogStore = new DialogStore(this);
 
         const throttledSetCursorRotated = _.throttle(this.setCursor, AppStore.CursorThrottleTimeRotated);
         const throttledSetCursor = _.throttle(this.setCursor, AppStore.CursorThrottleTime);
@@ -840,7 +837,7 @@ export class AppStore {
 
         // Auth and connection
         if (process.env.REACT_APP_AUTHENTICATION === "true") {
-            this.dialogStore.showAuthDialog();
+            DialogStore.Instance.showAuthDialog();
         } else {
             this.connectToServer();
         }

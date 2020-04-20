@@ -8,7 +8,7 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {LinePlotComponent, LinePlotComponentProps, PlotType, SafeNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
 import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelComponent";
 import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGeneratorPanelComponent";
-import {AppStore, FrameStore, HelpType} from "stores";
+import {AppStore, DialogStore, FrameStore, HelpType} from "stores";
 import {RenderConfigWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed} from "utilities";
@@ -25,7 +25,7 @@ const DataSourceSelect = Select.ofType<FrameStore>();
 const HistogramSelect = Select.ofType<boolean>();
 
 @observer
-export class ContourDialogComponent extends React.Component<{ appStore: AppStore }> {
+export class ContourDialogComponent extends React.Component {
     @observable showCubeHistogramAlert: boolean;
     @observable currentTab: ContourDialogTabs = ContourDialogTabs.Levels;
     @observable levels: number[];
@@ -45,7 +45,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
         this.setDefaultContourParameters();
 
         autorun(() => {
-            const appStore = this.props.appStore;
+            const appStore = AppStore.Instance;
             if (appStore.contourDataSource) {
                 const newHist = appStore.contourDataSource.renderConfig.contourHistogram;
                 if (newHist !== this.cachedHistogram) {
@@ -64,28 +64,30 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     }
 
     @action setDefaultContourParameters() {
-        const dataSource = this.props.appStore.contourDataSource;
+        const appStore = AppStore.Instance;
+        const dataSource = appStore.contourDataSource;
         if (dataSource) {
             this.levels = dataSource.contourConfig.levels.slice();
             this.smoothingMode = dataSource.contourConfig.smoothingMode;
             this.smoothingFactor = dataSource.contourConfig.smoothingFactor;
         } else {
             this.levels = [];
-            this.smoothingMode = this.props.appStore.preferenceStore.contourSmoothingMode;
-            this.smoothingFactor = this.props.appStore.preferenceStore.contourSmoothingFactor;
+            this.smoothingMode = appStore.preferenceStore.contourSmoothingMode;
+            this.smoothingFactor = appStore.preferenceStore.contourSmoothingFactor;
         }
     }
 
     componentDidUpdate() {
-        if (this.props.appStore.contourDataSource !== this.cachedFrame) {
-            this.cachedFrame = this.props.appStore.contourDataSource;
+        const appStore = AppStore.Instance;
+        if (AppStore.Instance.contourDataSource !== this.cachedFrame) {
+            this.cachedFrame = appStore.contourDataSource;
             this.widgetStore.clearXYBounds();
             this.setDefaultContourParameters();
         }
     }
 
     @computed get contourConfigChanged(): boolean {
-        const dataSource = this.props.appStore.contourDataSource;
+        const dataSource = AppStore.Instance.contourDataSource;
         if (dataSource) {
             const numContourLevels = this.levels.length;
             if (dataSource.contourConfig.smoothingMode !== this.smoothingMode) {
@@ -106,7 +108,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     }
 
     @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number } {
-        const dataSource = this.props.appStore.contourDataSource;
+        const dataSource = AppStore.Instance.contourDataSource;
         if (dataSource && dataSource.renderConfig.contourHistogram && dataSource.renderConfig.contourHistogram.bins && dataSource.renderConfig.contourHistogram.bins.length) {
             const histogram = dataSource.renderConfig.contourHistogram;
             let minIndex = 0;
@@ -153,7 +155,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     };
 
     private handleHistogramChange = (value: boolean) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (!appStore || !appStore.contourDataSource) {
             return;
         }
@@ -170,11 +172,12 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     };
 
     private handleAlertConfirm = () => {
-        const dataSource = this.props.appStore.contourDataSource;
+        const appStore = AppStore.Instance;
+        const dataSource = appStore.contourDataSource;
         if (dataSource && dataSource.renderConfig) {
             dataSource.renderConfig.setUseCubeHistogramContours(true);
             if (dataSource.renderConfig.cubeHistogramProgress < 1.0) {
-                this.props.appStore.requestCubeHistogram(dataSource.frameInfo.fileId);
+                appStore.requestCubeHistogram(dataSource.frameInfo.fileId);
             }
         }
         this.showCubeHistogramAlert = false;
@@ -185,15 +188,16 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     };
 
     private handleCubeHistogramCancelled = () => {
-        const dataSource = this.props.appStore.contourDataSource;
+        const appStore = AppStore.Instance;
+        const dataSource = appStore.contourDataSource;
         if (dataSource && dataSource.renderConfig) {
             dataSource.renderConfig.setUseCubeHistogramContours(false);
         }
-        this.props.appStore.cancelCubeHistogramRequest(dataSource.frameInfo.fileId);
+        appStore.cancelCubeHistogramRequest(dataSource.frameInfo.fileId);
     };
 
     private handleApplyContours = () => {
-        const dataSource = this.props.appStore.contourDataSource;
+        const dataSource = AppStore.Instance.contourDataSource;
         if (dataSource) {
             dataSource.contourConfig.setContourConfiguration(this.levels.slice(), this.smoothingMode, this.smoothingFactor);
             dataSource.applyContours();
@@ -201,11 +205,13 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     };
 
     private handleClearContours = () => {
-        if (!this.props.appStore.contourDataSource) {
+        const appStore = AppStore.Instance;
+
+        if (!appStore.contourDataSource) {
             return;
         }
 
-        this.props.appStore.contourDataSource.clearContours();
+        appStore.contourDataSource.clearContours();
     };
 
     private handleGraphClicked = (x: number) => {
@@ -259,15 +265,16 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
     };
 
     public render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
+        const dialogStore = DialogStore.Instance;
 
         const dialogProps: IDialogProps = {
             icon: <CustomIcon icon="contour" size={CustomIcon.SIZE_LARGE}/>,
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: false,
             lazy: true,
-            isOpen: appStore.dialogStore.contourDialogVisible,
-            onClose: appStore.dialogStore.hideContourDialog,
+            isOpen: dialogStore.contourDialogVisible,
+            onClose: dialogStore.hideContourDialog,
             className: "contour-dialog",
             canEscapeKeyClose: true,
             title: "Contour Configuration",
@@ -277,7 +284,6 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
             return (
                 <DraggableDialogComponent
                     dialogProps={dialogProps}
-                    appStore={appStore}
                     helpType={HelpType.CONTOUR}
                     defaultWidth={ContourDialogComponent.DefaultWidth}
                     defaultHeight={ContourDialogComponent.DefaultHeight}
@@ -458,7 +464,6 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
         return (
             <DraggableDialogComponent
                 dialogProps={dialogProps}
-                appStore={appStore}
                 helpType={HelpType.CONTOUR}
                 defaultWidth={ContourDialogComponent.DefaultWidth}
                 defaultHeight={ContourDialogComponent.DefaultHeight}
@@ -490,7 +495,7 @@ export class ContourDialogComponent extends React.Component<{ appStore: AppStore
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         <AnchorButton intent={Intent.WARNING} onClick={this.handleClearContours} disabled={!dataSource.contourConfig.enabled} text="Clear"/>
                         <AnchorButton intent={Intent.SUCCESS} onClick={this.handleApplyContours} disabled={!hasLevels || (!this.contourConfigChanged && dataSource.contourConfig.enabled)} text="Apply"/>
-                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideContourDialog} text="Close"/>
+                        <AnchorButton intent={Intent.NONE} onClick={dialogStore.hideContourDialog} text="Close"/>
                     </div>
                 </div>
                 <Alert icon={"time"} isOpen={this.showCubeHistogramAlert} onCancel={this.handleAlertCancel} onConfirm={this.handleAlertConfirm} cancelButtonText={"Cancel"}>

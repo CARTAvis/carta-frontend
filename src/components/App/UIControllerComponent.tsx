@@ -23,16 +23,16 @@ export class UIControllerComponent extends React.Component<{appStore: AppStore}>
         return (
             <React.Fragment>
                 <SplashScreenComponent/>
-                <RootMenuComponent appStore={appStore}/>
-                <OverlaySettingsDialogComponent appStore={appStore}/>
-                <AuthDialogComponent appStore={appStore}/>
-                <FileBrowserDialogComponent appStore={appStore}/>
-                <AboutDialogComponent appStore={appStore}/>
-                <RegionDialogComponent appStore={appStore}/>
-                <PreferenceDialogComponent appStore={appStore}/>
-                <SaveLayoutDialogComponent appStore={appStore}/>
-                <FileInfoDialogComponent appStore={appStore}/>
-                <ContourDialogComponent appStore={appStore}/>
+                <RootMenuComponent/>
+                <OverlaySettingsDialogComponent/>
+                <AuthDialogComponent/>
+                <FileBrowserDialogComponent/>
+                <AboutDialogComponent/>
+                <RegionDialogComponent/>
+                <PreferenceDialogComponent/>
+                <SaveLayoutDialogComponent/>
+                <FileInfoDialogComponent/>
+                <ContourDialogComponent/>
                 <HelpDrawerComponent/>
             </React.Fragment>
         );

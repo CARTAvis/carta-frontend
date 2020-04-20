@@ -2,13 +2,13 @@ import * as React from "react";
 import {observer} from "mobx-react";
 import {computed, observable} from "mobx";
 import {AnchorButton, Classes, Dialog, FormGroup, InputGroup, Intent} from "@blueprintjs/core";
-import {AppStore} from "stores";
+import {AppStore, DialogStore} from "stores";
 import "./AuthDialogComponent.css";
 
 const KEYCODE_ENTER = 13;
 
 @observer
-export class AuthDialogComponent extends React.Component<{ appStore: AppStore }> {
+export class AuthDialogComponent extends React.Component {
     @observable username: string = "";
     @observable password: string = "";
     @observable isAuthenticating: boolean;
@@ -19,14 +19,14 @@ export class AuthDialogComponent extends React.Component<{ appStore: AppStore }>
     }
 
     public render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         let className = "auth-dialog";
         if (appStore.darkTheme) {
             className += " bp3-dark";
         }
 
         return (
-            <Dialog icon="key" className={className} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={appStore.dialogStore.authDialogVisible} isCloseButtonShown={false} title="Sign In">
+            <Dialog icon="key" className={className} canEscapeKeyClose={false} canOutsideClickClose={false} isOpen={DialogStore.Instance.authDialogVisible} isCloseButtonShown={false} title="Sign In">
                 <div className={Classes.DIALOG_BODY}>
                     <FormGroup helperText={this.errorString} intent={this.errorString ? "danger" : "none"}>
                         <InputGroup placeholder="Username" value={this.username} onChange={this.handleUsernameInput} onKeyDown={this.handleKeyDown} autoFocus={true}/>
@@ -58,7 +58,7 @@ export class AuthDialogComponent extends React.Component<{ appStore: AppStore }>
 
     onSignInClicked = () => {
         this.isAuthenticating = true;
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         appStore.backendService.authenticate(this.username, this.password).then(res => {
             this.isAuthenticating = false;
             if (res.ok) {
@@ -69,7 +69,7 @@ export class AuthDialogComponent extends React.Component<{ appStore: AppStore }>
                             appStore.backendService.setAuthToken(responseData.token);
                             appStore.setUsername(responseData.username);
                             appStore.connectToServer(responseData.socket);
-                            appStore.dialogStore.hideAuthDialog();
+                            DialogStore.Instance.hideAuthDialog();
                         }, 50);
                     }
                 }, parseError => {

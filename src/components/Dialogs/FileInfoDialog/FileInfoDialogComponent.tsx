@@ -3,20 +3,20 @@ import {observer} from "mobx-react";
 import {IDialogProps} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
-import {AppStore, HelpType} from "stores";
+import {AppStore, DialogStore, HelpType} from "stores";
 import "./FileInfoDialogComponent.css";
 
 @observer
-export class FileInfoDialogComponent extends React.Component<{ appStore: AppStore }> {
+export class FileInfoDialogComponent extends React.Component {
 
     render() {
+        const appStore = AppStore.Instance;
+        const dialogStore = DialogStore.Instance;
+
         let className = "file-info-dialog";
-        if (this.props.appStore.darkTheme) {
+        if (appStore.darkTheme) {
             className += " bp3-dark";
         }
-
-        const appStore = this.props.appStore;
-        const dialogStore = appStore.dialogStore;
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
@@ -30,7 +30,7 @@ export class FileInfoDialogComponent extends React.Component<{ appStore: AppStor
         };
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} helpType={HelpType.FILE_INFO} minWidth={400} minHeight={400} defaultWidth={800} defaultHeight={600} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.FILE_INFO} minWidth={400} minHeight={400} defaultWidth={800} defaultHeight={600} enableResizing={true}>
                 <div className="bp3-dialog-body">
                     <FileInfoComponent
                         infoTypes={[FileInfoType.IMAGE_FILE, FileInfoType.IMAGE_HEADER]}

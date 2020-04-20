@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import {AnchorButton, Classes, IDialogProps, Intent, NonIdealState, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, RegionStore, HelpType} from "stores";
+import {AppStore, RegionStore, HelpType, DialogStore} from "stores";
 import {PointRegionForm} from "./PointRegionForm/PointRegionForm";
 import {RectangularRegionForm} from "./RectangularRegionForm/RectangularRegionForm";
 import {EllipticalRegionForm} from "./EllipticalRegionForm/EllipticalRegionForm";
@@ -12,30 +12,31 @@ import {PolygonRegionForm} from "./PolygonRegionForm/PolygonRegionForm";
 import "./RegionDialogComponent.css";
 
 @observer
-export class RegionDialogComponent extends React.Component<{ appStore: AppStore }> {
+export class RegionDialogComponent extends React.Component {
     private static readonly MissingRegionNode = <NonIdealState icon={"folder-open"} title={"No region selected"} description={"Select a region using the list or image view"}/>;
     private static readonly InvalidRegionNode = <NonIdealState icon={"error"} title={"Region not supported"} description={"The selected region does not have any editable properties"}/>;
 
     private handleDeleteClicked = () => {
-        const appStore = this.props.appStore;
-        appStore.dialogStore.hideRegionDialog();
+        const appStore = AppStore.Instance;
+        DialogStore.Instance.hideRegionDialog();
         if (appStore.activeFrame && appStore.activeFrame.regionSet.selectedRegion) {
             appStore.deleteRegion(appStore.activeFrame.regionSet.selectedRegion);
         }
     };
 
-    private handleFocusClicked = () => this.props.appStore.activeFrame.regionSet.selectedRegion.focusCenter();
+    private handleFocusClicked = () => AppStore.Instance.activeFrame.regionSet.selectedRegion.focusCenter();
 
     public render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
+        const dialogStore = DialogStore.Instance;
 
         const dialogProps: IDialogProps = {
             icon: "info-sign",
             backdropClassName: "minimal-dialog-backdrop",
             canOutsideClickClose: true,
             lazy: true,
-            isOpen: appStore.dialogStore.regionDialogVisible,
-            onClose: appStore.dialogStore.hideRegionDialog,
+            isOpen: dialogStore.regionDialogVisible,
+            onClose: dialogStore.hideRegionDialog,
             className: "region-dialog",
             canEscapeKeyClose: true,
             title: "No region selected",
@@ -107,7 +108,7 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
         );
 
         return (
-            <DraggableDialogComponent dialogProps={dialogProps} appStore={appStore} helpType={HelpType.REGION_DIALOG} defaultWidth={600} defaultHeight={450} minHeight={300} minWidth={400} enableResizing={true}>
+            <DraggableDialogComponent dialogProps={dialogProps} helpType={HelpType.REGION_DIALOG} defaultWidth={600} defaultHeight={450} minHeight={300} minWidth={400} enableResizing={true}>
                 <div className={Classes.DIALOG_BODY}>
                     {bodyContent}
                 </div>
@@ -115,7 +116,7 @@ export class RegionDialogComponent extends React.Component<{ appStore: AppStore 
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
                         {tooltips}
                         {editableRegion && <AnchorButton intent={Intent.DANGER} icon={"trash"} text="Delete" onClick={this.handleDeleteClicked}/>}
-                        <AnchorButton intent={Intent.NONE} onClick={appStore.dialogStore.hideRegionDialog} text="Close"/>
+                        <AnchorButton intent={Intent.NONE} onClick={dialogStore.hideRegionDialog} text="Close"/>
                     </div>
                 </div>
             </DraggableDialogComponent>

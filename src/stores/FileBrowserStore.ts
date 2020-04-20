@@ -2,7 +2,7 @@ import {action, computed, observable} from "mobx";
 import {TabId} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {BackendService} from "services";
-import { AppStore } from "stores";
+import {AppStore, DialogStore} from "stores";
 import {FileInfoType} from "components";
 
 export enum BrowserMode {
@@ -44,7 +44,7 @@ export class FileBrowserStore {
     @action showFileBrowser = (mode: BrowserMode, append = false) => {
         this.appendingFrame = append;
         this.browserMode = mode;
-        this.appStore.dialogStore.showFileBrowserDialog();
+        DialogStore.Instance.showFileBrowserDialog();
         this.fileList = null;
         this.selectedTab = this.getBrowserMode;
         this.responseErrorMessage = "";
@@ -54,7 +54,7 @@ export class FileBrowserStore {
     };
 
     @action hideFileBrowser = () => {
-        this.appStore.dialogStore.hideFileBrowserDialog();
+        DialogStore.Instance.hideFileBrowserDialog();
     };
 
     @action getFileList = (directory: string) => {
