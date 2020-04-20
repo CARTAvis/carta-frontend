@@ -9,7 +9,7 @@ import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigC
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
-import {AnimationState, FrameScaling, FrameStore, RenderConfigStore, WidgetConfig, WidgetProps, HelpType} from "stores";
+import {AnimationState, FrameScaling, FrameStore, RenderConfigStore, WidgetConfig, WidgetProps, HelpType, AlertStore, LogStore, AppStore, AnimatorStore} from "stores";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed} from "utilities";
 import "./RenderConfigComponent.css";
@@ -163,8 +163,8 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     handlePercentileRankClick = (value: number) => {
         if (!this.props.appStore.activeFrame.renderConfig.setPercentileRank(value)) {
-            this.props.appStore.alertStore.showAlert(`Couldn't set percentile of rank ${value}%`);
-            this.props.appStore.logStore.addError(`Couldn't set percentile of rank ${value}%`, ["render"]);
+            AlertStore.Instance.showAlert(`Couldn't set percentile of rank ${value}%`);
+            LogStore.Instance.addError(`Couldn't set percentile of rank ${value}%`, ["render"]);
         }
     };
 
@@ -236,7 +236,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     };
 
     render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
 
         if (!frame || !this.widgetStore) {
@@ -407,7 +407,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                         renderConfig={frame.renderConfig}
                         onCubeHistogramSelected={this.handleCubeHistogramSelected}
                         showHistogramSelect={frame.frameInfo.fileInfoExtended.depth > 1}
-                        disableHistogramSelect={appStore.animatorStore.animationState === AnimationState.PLAYING}
+                        disableHistogramSelect={AnimatorStore.Instance.animationState === AnimationState.PLAYING}
                         warnOnCubeHistogram={(frame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.CUBE_HISTOGRAMS) === 0}
                     />
                     <FormGroup label={"Clip Min"} inline={true}>

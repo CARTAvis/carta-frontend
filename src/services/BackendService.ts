@@ -14,6 +14,15 @@ export const INVALID_ANIMATION_ID = -1;
 type HandlerFunction = (eventId: number, parsedMessage: any) => void;
 
 export class BackendService {
+    private static staticInstance: BackendService;
+
+    static get Instance() {
+        if (!BackendService.staticInstance) {
+            BackendService.staticInstance = new BackendService();
+        }
+        return BackendService.staticInstance;
+    }
+
     private static readonly IcdVersion = 12;
     private static readonly DefaultFeatureFlags = CARTA.ClientFeatureFlags.WEB_ASSEMBLY | CARTA.ClientFeatureFlags.WEB_GL;
     @observable connectionStatus: ConnectionStatus;
@@ -41,14 +50,10 @@ export class BackendService {
     private readonly contourStream: Subject<CARTA.ContourImageData>;
     private readonly catalogStream: Subject<CARTA.CatalogFilterResponse>;
     private readonly reconnectStream: Subject<void>;
-    private readonly logStore: LogStore;
-    private readonly preferenceStore: PreferenceStore;
     private readonly handlerMap: Map<CARTA.EventType, HandlerFunction>;
     private readonly decoderMap: Map<CARTA.EventType, any>;
 
-    constructor(logStore: LogStore, preferenceStore: PreferenceStore) {
-        this.logStore = logStore;
-        this.preferenceStore = preferenceStore;
+    private constructor() {
         this.loggingEnabled = true;
         this.observerRequestMap = new Map<number, Observer<any>>();
         this.eventCounter = 1;
@@ -845,7 +850,7 @@ export class BackendService {
 
     private logEvent(eventType: CARTA.EventType, eventId: number, message: any, incoming: boolean = true) {
         const eventName = CARTA.EventType[eventType];
-        if (this.loggingEnabled && this.preferenceStore.isEventLoggingEnabled(eventType)) {
+        if (this.loggingEnabled && PreferenceStore.Instance.isEventLoggingEnabled(eventType)) {
             if (incoming) {
                 if (eventId === 0) {
                     console.log(`<== ${eventName} [Stream]`);

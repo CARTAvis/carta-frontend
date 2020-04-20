@@ -10,7 +10,7 @@ import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, ProfilerInfoComponent, ScatterPlotComponent, ScatterPlotComponentProps, VERTICAL_RANGE_PADDING, PlotType} from "components/Shared";
 import {StokesAnalysisToolbarComponent} from "./StokesAnalysisToolbarComponent/StokesAnalysisToolbarComponent";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType} from "stores";
+import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore} from "stores";
 import {StokesAnalysisWidgetStore, StokesCoordinate} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp, normalising, polarizationAngle, polarizedIntensity, binarySearchByX, closestPointIndexToCursor, toFixed, toExponential, minMaxPointArrayZ, formattedNotation} from "utilities";
@@ -155,7 +155,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     onChannelChanged = (x: number) => {
         const frame = this.props.appStore.activeFrame;
-        if (this.props.appStore.animatorStore.animationState === AnimationState.PLAYING) {
+        if (AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
             return;
         }
 
@@ -181,7 +181,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
 
     onScatterChannelChanged = (x: number, y: number, data: Point3D[]) => {
         const frame = this.props.appStore.activeFrame;
-        if (this.props.appStore.animatorStore.animationState === AnimationState.PLAYING) {
+        if (AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
             return;
         }
         if (data.length > 0 && frame && frame.channelInfo) {
@@ -1069,7 +1069,7 @@ export class StokesAnalysisComponent extends React.Component<WidgetProps> {
                 let channelRequired = {
                     value: this.requiredChannelValue,
                     id: "marker-channel-required",
-                    draggable: appStore.animatorStore.animationState !== AnimationState.PLAYING,
+                    draggable: AnimatorStore.Instance.animationState !== AnimationState.PLAYING,
                     dragMove: this.onChannelChanged,
                     horizontal: false,
                 };

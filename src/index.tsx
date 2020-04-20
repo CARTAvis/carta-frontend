@@ -29,10 +29,8 @@ FocusStyleManager.onlyShowFocusOnTabs();
 window["React"] = React; // tslint:disable-line
 window["ReactDOM"] = ReactDOM; // tslint:disable-line
 
-const appStore = new AppStore();
-
 ReactDOM.render(
-    <App appStore={appStore}/>,
+    <App/>,
     document.getElementById("root") as HTMLElement
 );
 

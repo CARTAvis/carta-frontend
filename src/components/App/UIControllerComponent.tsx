@@ -22,7 +22,7 @@ export class UIControllerComponent extends React.Component<{appStore: AppStore}>
 
         return (
             <React.Fragment>
-                <SplashScreenComponent appStore={appStore}/>
+                <SplashScreenComponent/>
                 <RootMenuComponent appStore={appStore}/>
                 <OverlaySettingsDialogComponent appStore={appStore}/>
                 <AuthDialogComponent appStore={appStore}/>

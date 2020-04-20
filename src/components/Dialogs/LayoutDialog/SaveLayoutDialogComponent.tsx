@@ -3,7 +3,7 @@ import {observable, computed} from "mobx";
 import {observer} from "mobx-react";
 import {FormGroup, InputGroup, IDialogProps, Button, Intent, Classes, Tooltip} from "@blueprintjs/core";
 import {DraggableDialogComponent} from "components/Dialogs";
-import {AppStore, HelpType} from "stores";
+import {AlertStore, AppStore, HelpType} from "stores";
 import {PresetLayout} from "models";
 import "./SaveLayoutDialogComponent.css";
 
@@ -30,7 +30,7 @@ export class SaveLayoutDialogComponent extends React.Component<{ appStore: AppSt
     private saveLayout = () => {
         const appStore = this.props.appStore;
         const layoutStore = this.props.appStore.layoutStore;
-        const alertStore = this.props.appStore.alertStore;
+        const alertStore = AlertStore.Instance;
 
         appStore.dialogStore.hideSaveLayoutDialog();
         layoutStore.setLayoutToBeSaved(this.layoutName);

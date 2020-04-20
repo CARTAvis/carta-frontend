@@ -41,6 +41,15 @@ import {AppToaster} from "../components/Shared";
 import {CatalogOverlayComponent} from "components";
 
 export class AppStore {
+    private static staticInstance: AppStore;
+
+    static get Instance() {
+        if (!AppStore.staticInstance) {
+            AppStore.staticInstance = new AppStore();
+        }
+        return AppStore.staticInstance;
+    }
+
     // Backend services
     backendService: BackendService;
     tileService: TileService;
@@ -55,12 +64,6 @@ export class AppStore {
     @observable syncContourToFrame: boolean;
     @observable syncFrameToContour: boolean;
 
-    // Animation
-    @observable animatorStore: AnimatorStore;
-    // Error alerts
-    readonly alertStore: AlertStore;
-    // Logs
-    readonly logStore: LogStore;
     // User preference
     @observable preferenceStore: PreferenceStore;
     // catalog map catalog widget store with file Id
@@ -91,7 +94,6 @@ export class AppStore {
     @observable spectralReference: FrameStore;
 
     private appContainer: HTMLElement;
-    private contourWebGLContext: WebGLRenderingContext;
 
     public getAppContainer = (): HTMLElement => {
         return this.appContainer;
@@ -166,7 +168,7 @@ export class AppStore {
         this.backendService.connect(wsURL).subscribe(ack => {
             console.log(`Connected with session ID ${ack.sessionId}`);
             connected = true;
-            this.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
+            LogStore.Instance.addInfo(`Connected to server ${wsURL}`, ["network"]);
 
             // Init layout/preference store after connection is built
             const supportsServerLayout = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_LAYOUTS ? true : false;
@@ -301,7 +303,7 @@ export class AppStore {
                     dimensionsString += ` (${ack.fileInfoExtended.stokes} Stokes cubes)`;
                 }
             }
-            this.logStore.addInfo(`Loaded file ${ack.fileInfo.name} with dimensions ${dimensionsString}`, ["file"]);
+            LogStore.Instance.addInfo(`Loaded file ${ack.fileInfo.name} with dimensions ${dimensionsString}`, ["file"]);
             const frameInfo: FrameInfo = {
                 fileId: ack.fileId,
                 directory,
@@ -315,7 +317,7 @@ export class AppStore {
             // Clear existing tile cache if it exists
             this.tileService.clearCompressedCache(fileId);
 
-            let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, this.logStore, frameInfo, this.backendService);
+            let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, LogStore.Instance, frameInfo, this.backendService);
 
             // clear existing requirements for the frame
             this.spectralRequirements.delete(ack.fileId);
@@ -356,15 +358,15 @@ export class AppStore {
 
             this.fileBrowserStore.hideFileBrowser();
         }, err => {
-            this.alertStore.showAlert(`Error loading file: ${err}`);
+            AlertStore.Instance.showAlert(`Error loading file: ${err}`);
             this.fileLoading = false;
         });
     };
 
     @action appendFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
-        if (this.animatorStore.animationState === AnimationState.PLAYING) {
-            this.animatorStore.stopAnimation();
+        if (AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
+            AnimatorStore.Instance.stopAnimation();
         }
         const currentIdList = this.frames.map(frame => frame.frameInfo.fileId).sort((a, b) => a - b);
         const newId = currentIdList.pop() + 1;
@@ -373,8 +375,8 @@ export class AppStore {
 
     @action openFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
-        if (this.animatorStore.animationState === AnimationState.PLAYING) {
-            this.animatorStore.stopAnimation();
+        if (AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
+            AnimatorStore.Instance.stopAnimation();
         }
         this.removeAllFrames();
         this.addFrame(directory, file, hdu, 0);
@@ -389,7 +391,7 @@ export class AppStore {
         const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(distinct);
         const numSecondaries = secondaries.length;
         if (confirmClose && numSecondaries) {
-            this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`, confirmed => {
+            AlertStore.Instance.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`, confirmed => {
                 if (confirmed) {
                     this.removeFrame(frame);
                 }
@@ -701,7 +703,7 @@ export class AppStore {
     }, AppStore.ImageChannelThrottleTime);
 
     throttledSetView = _.throttle((tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D) => {
-        const isAnimating = (this.animatorStore.animationState !== AnimationState.STOPPED && this.animatorStore.animationMode !== AnimationMode.FRAME);
+        const isAnimating = (AnimatorStore.Instance.animationState !== AnimationState.STOPPED && AnimatorStore.Instance.animationMode !== AnimationMode.FRAME);
         if (isAnimating) {
             this.backendService.addRequiredTiles(fileId, tiles.map(t => t.encode()), this.preferenceStore.animationCompressionQuality);
         } else {
@@ -709,13 +711,11 @@ export class AppStore {
         }
     }, AppStore.ImageChannelThrottleTime);
 
-    constructor() {
-        this.alertStore = new AlertStore();
-        this.layoutStore = new LayoutStore(this, this.alertStore);
-        this.preferenceStore = new PreferenceStore(this);
-        this.logStore = new LogStore();
-        this.backendService = new BackendService(this.logStore, this.preferenceStore);
-        this.tileService = new TileService(this.backendService);
+    private constructor() {
+        this.layoutStore = new LayoutStore(this, AlertStore.Instance);
+        this.preferenceStore = PreferenceStore.Instance;
+        this.backendService = BackendService.Instance;
+        this.tileService = TileService.Instance;
         this.astReady = false;
         this.cartaComputeReady = false;
         this.spatialProfiles = new Map<string, SpatialProfileStore>();
@@ -732,7 +732,6 @@ export class AppStore {
         this.syncFrameToContour = true;
         this.syncContourToFrame = true;
         this.fileBrowserStore = new FileBrowserStore(this, this.backendService);
-        this.animatorStore = new AnimatorStore(this);
         this.overlayStore = new OverlayStore(this, this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this);
         this.initRequirements();
@@ -782,7 +781,7 @@ export class AppStore {
                 // Calculate if new data is required
                 const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
                 // Don't auto-update when animation is playing
-                if (this.animatorStore.animationState === AnimationState.STOPPED && updateRequiredChannels) {
+                if (AnimatorStore.Instance.animationState === AnimationState.STOPPED && updateRequiredChannels) {
                     updates.push({frame: this.activeFrame, channel: this.activeFrame.requiredChannel, stokes: this.activeFrame.requiredStokes});
                 }
 
@@ -927,7 +926,7 @@ export class AppStore {
     };
 
     @action handleTileStream = (tileStreamDetails: TileStreamDetails) => {
-        if (this.animatorStore.animationState === AnimationState.PLAYING && this.animatorStore.animationMode !== AnimationMode.FRAME) {
+        if (AnimatorStore.Instance.animationState === AnimationState.PLAYING && AnimatorStore.Instance.animationMode !== AnimationMode.FRAME) {
             // Flow control
             const flowControlMessage: CARTA.IAnimationFlowControl = {
                 fileId: tileStreamDetails.fileId,
@@ -1038,12 +1037,12 @@ export class AppStore {
                 tags: errorData.tags.concat(["server-sent"]),
                 title: null
             };
-            this.logStore.addLog(logEntry);
+            LogStore.Instance.addLog(logEntry);
         }
     };
 
     handleReconnectStream = () => {
-        this.alertStore.showInteractiveAlert("You have reconnected to the CARTA server. Do you want to resume your session?", this.onResumeAlertClosed);
+        AlertStore.Instance.showInteractiveAlert("You have reconnected to the CARTA server. Do you want to resume your session?", this.onResumeAlertClosed);
     };
 
     // endregion
@@ -1055,7 +1054,7 @@ export class AppStore {
         }
 
         // Some things should be reset when the user reconnects
-        this.animatorStore.stopAnimation();
+        AnimatorStore.Instance.stopAnimation();
         this.tileService.clearRequestQueue();
 
         const images: CARTA.IImageProperties[] = this.frames.map(frame => {
@@ -1091,7 +1090,7 @@ export class AppStore {
 
         this.backendService.resumeSession({images}).subscribe(this.onSessionResumed, err => {
             console.error(err);
-            this.alertStore.showAlert("Error resuming session");
+            AlertStore.Instance.showAlert("Error resuming session");
         });
     };
 

@@ -9,7 +9,7 @@ import {CARTA} from "carta-protobuf";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {SpectralProfilerToolbarComponent} from "./SpectralProfilerToolbarComponent/SpectralProfilerToolbarComponent";
-import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType} from "stores";
+import {AnimationState, SpectralProfileStore, WidgetConfig, WidgetProps, HelpType, AnimatorStore} from "stores";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {Point2D, ProcessedSpectralProfile} from "models";
 import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
@@ -212,7 +212,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
 
     onChannelChanged = (x: number) => {
         const frame = this.props.appStore.activeFrame;
-        if (this.props.appStore.animatorStore.animationState === AnimationState.PLAYING) {
+        if (AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
             return;
         }
 
@@ -396,7 +396,7 @@ export class SpectralProfilerComponent extends React.Component<WidgetProps> {
                 linePlotProps.markers.push({
                     value: this.requiredChannelValue,
                     id: "marker-channel-required",
-                    draggable: appStore.animatorStore.animationState !== AnimationState.PLAYING,
+                    draggable: AnimatorStore.Instance.animationState !== AnimationState.PLAYING,
                     dragMove: this.onChannelChanged,
                     horizontal: false,
                 });
