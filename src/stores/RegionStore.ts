@@ -164,7 +164,7 @@ export class RegionStore {
                     `${toFixed(this.rotation, 1)}deg]`;
             case CARTA.RegionType.ELLIPSE:
                 return `ellipse[[${center}], ` +
-                    `[${toFixed(this.controlPoints[1].x, 1)}pix, ${toFixed(this.controlPoints[1].y, 1)}pix], ` +
+                    `[${toFixed(this.controlPoints[1].x * 2, 1)}pix, ${toFixed(this.controlPoints[1].y * 2, 1)}pix], ` +
                     `${toFixed(this.rotation, 1)}deg]`;
             case CARTA.RegionType.POLYGON:
                 // TODO: Region properties
