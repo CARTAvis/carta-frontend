@@ -17,7 +17,6 @@ import {
     FileBrowserStore,
     FrameInfo,
     FrameStore,
-    HelpStore,
     LayoutStore,
     LogEntry,
     LogStore,
@@ -64,16 +63,12 @@ export class AppStore {
     @observable syncContourToFrame: boolean;
     @observable syncFrameToContour: boolean;
 
-    // User preference
-    @observable preferenceStore: PreferenceStore;
     // catalog map catalog widget store with file Id
     @observable catalogs: Map<string, number>;
     // catalog data for image viewer
     @observable catalogStore: CatalogStore;
 
     readonly layoutStore: LayoutStore;
-    // Overlay
-    readonly overlayStore: OverlayStore;
     // Widgets
     readonly widgetsStore: WidgetsStore;
 
@@ -108,7 +103,7 @@ export class AppStore {
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
-        this.overlayStore.setViewDimension(w, h);
+        OverlayStore.Instance.setViewDimension(w, h);
     };
 
     // Image toolbar
@@ -159,6 +154,8 @@ export class AppStore {
             }
         });
 
+        const preferenceStore = PreferenceStore.Instance;
+
         this.backendService.connect(wsURL).subscribe(ack => {
             console.log(`Connected with session ID ${ack.sessionId}`);
             connected = true;
@@ -168,15 +165,15 @@ export class AppStore {
             const supportsServerLayout = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_LAYOUTS ? true : false;
             this.layoutStore.initUserDefinedLayouts(supportsServerLayout, ack.userLayouts);
             const supportsServerPreference = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_PREFERENCES ? true : false;
-            this.preferenceStore.initUserDefinedPreferences(supportsServerPreference, ack.userPreferences);
-            this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
-            this.layoutStore.applyLayout(this.preferenceStore.layout);
+            preferenceStore.initUserDefinedPreferences(supportsServerPreference, ack.userPreferences);
+            this.tileService.setCache(preferenceStore.gpuTileCache, preferenceStore.systemTileCache);
+            this.layoutStore.applyLayout(preferenceStore.layout);
 
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
                 this.addFrame(folderSearchParam, fileSearchParam, "", 0);
             }
-            if (this.preferenceStore.autoLaunch) {
+            if (preferenceStore.autoLaunch) {
                 FileBrowserStore.Instance.showFileBrowser(BrowserMode.File);
             }
         }, err => console.log(err));
@@ -224,7 +221,7 @@ export class AppStore {
 
     // Dark theme
     @computed get darkTheme(): boolean {
-        return this.preferenceStore.isDarkTheme;
+        return PreferenceStore.Instance.isDarkTheme;
     }
 
     // Frame actions
@@ -288,6 +285,7 @@ export class AppStore {
 
     @action addFrame = (directory: string, file: string, hdu: string, fileId: number) => {
         this.fileLoading = true;
+        const preferenceStore = PreferenceStore.Instance;
         this.backendService.loadFile(directory, file, hdu, fileId, CARTA.RenderMode.RASTER).subscribe(ack => {
             this.fileLoading = false;
             let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
@@ -311,7 +309,7 @@ export class AppStore {
             // Clear existing tile cache if it exists
             this.tileService.clearCompressedCache(fileId);
 
-            let newFrame = new FrameStore(this.preferenceStore, this.overlayStore, LogStore.Instance, frameInfo, this.backendService);
+            let newFrame = new FrameStore(OverlayStore.Instance, LogStore.Instance, frameInfo, BackendService.Instance);
 
             // clear existing requirements for the frame
             this.spectralRequirements.delete(ack.fileId);
@@ -342,10 +340,10 @@ export class AppStore {
             this.setActiveFrame(newFrame.frameInfo.fileId);
 
             if (this.frames.length > 1) {
-                if ((this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL) && this.spatialReference !== newFrame) {
+                if ((preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL) && this.spatialReference !== newFrame) {
                     this.setSpatialMatchingEnabled(newFrame, true);
                 }
-                if ((this.preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL) && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
+                if ((preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL) && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
                     this.setSpectralMatchingEnabled(newFrame, true);
                 }
             }
@@ -622,11 +620,11 @@ export class AppStore {
     };
 
     @action setDarkTheme = () => {
-        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.DARK);
+        PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.DARK);
     };
 
     @action setLightTheme = () => {
-        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.LIGHT);
+        PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.LIGHT);
     };
 
     @action toggleCursorFrozen = () => {
@@ -689,7 +687,7 @@ export class AppStore {
                 // TODO: dynamic tile size
                 const tileSizeFullRes = reqView.mip * 256;
                 const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.preferenceStore.imageCompressionQuality, true);
+                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, PreferenceStore.Instance.imageCompressionQuality, true);
             } else {
                 this.tileService.updateInactiveFileChannel(frame.frameInfo.fileId, frame.channel, frame.stokes);
             }
@@ -699,15 +697,14 @@ export class AppStore {
     throttledSetView = _.throttle((tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D) => {
         const isAnimating = (AnimatorStore.Instance.animationState !== AnimationState.STOPPED && AnimatorStore.Instance.animationMode !== AnimationMode.FRAME);
         if (isAnimating) {
-            this.backendService.addRequiredTiles(fileId, tiles.map(t => t.encode()), this.preferenceStore.animationCompressionQuality);
+            this.backendService.addRequiredTiles(fileId, tiles.map(t => t.encode()), PreferenceStore.Instance.animationCompressionQuality);
         } else {
-            this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, this.preferenceStore.imageCompressionQuality);
+            this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, PreferenceStore.Instance.imageCompressionQuality);
         }
     }, AppStore.ImageChannelThrottleTime);
 
     private constructor() {
         this.layoutStore = new LayoutStore(this, AlertStore.Instance);
-        this.preferenceStore = PreferenceStore.Instance;
         this.backendService = BackendService.Instance;
         this.tileService = TileService.Instance;
         this.astReady = false;
@@ -725,7 +722,6 @@ export class AppStore {
         this.contourDataSource = null;
         this.syncFrameToContour = true;
         this.syncContourToFrame = true;
-        this.overlayStore = new OverlayStore(this, this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this);
         this.initRequirements();
 
@@ -736,7 +732,7 @@ export class AppStore {
 
         // Update frame view
         autorun(() => {
-            if (this.activeFrame && (this.preferenceStore.streamContoursWhileZooming || !this.activeFrame.zooming)) {
+            if (this.activeFrame && (PreferenceStore.Instance.streamContoursWhileZooming || !this.activeFrame.zooming)) {
                 // Trigger update raster view/title when switching layout
                 const layout = this.layoutStore.dockedLayout;
                 this.widgetsStore.updateImageWidgetTitle();
@@ -795,7 +791,7 @@ export class AppStore {
             if (this.activeFrame && this.activeFrame.cursorInfo && this.activeFrame.cursorInfo.posImageSpace) {
                 const pos = {x: Math.round(this.activeFrame.cursorInfo.posImageSpace.x), y: Math.round(this.activeFrame.cursorInfo.posImageSpace.y)};
                 if (pos.x >= 0 && pos.x <= this.activeFrame.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y <= this.activeFrame.frameInfo.fileInfoExtended.height - 1) {
-                    if (this.preferenceStore.lowBandwidthMode) {
+                    if (PreferenceStore.Instance.lowBandwidthMode) {
                         throttledSetCursorLowBandwidth(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
                     } else if (this.activeFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
                         throttledSetCursorRotated(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
@@ -809,7 +805,7 @@ export class AppStore {
         // Set overlay defaults from current frame
         autorun(() => {
             if (this.activeFrame) {
-                this.overlayStore.setDefaultsFromAST(this.activeFrame);
+                OverlayStore.Instance.setDefaultsFromAST(this.activeFrame);
             }
         });
 

@@ -10,7 +10,7 @@ import {RasterViewComponent} from "./RasterView/RasterViewComponent";
 import {ToolbarComponent} from "./Toolbar/ToolbarComponent";
 import {BeamProfileOverlayComponent} from "./BeamProfileOverlay/BeamProfileOverlayComponent";
 import {RegionViewComponent} from "./RegionView/RegionViewComponent";
-import {AnimationMode, AnimationState, RegionStore, WidgetConfig, WidgetProps, HelpType, DialogStore} from "stores";
+import {AnimationMode, AnimationState, RegionStore, WidgetConfig, WidgetProps, HelpType, DialogStore, PreferenceStore, AppStore, OverlayStore} from "stores";
 import {CursorInfo, Point2D} from "models";
 import {toFixed} from "utilities";
 import "./ImageViewComponent.css";
@@ -157,20 +157,21 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
     };
 
     render() {
-        const appStore = this.props.appStore;
-
+        const appStore = AppStore.Instance;
+        const preferenceStore = PreferenceStore.Instance;
+        const overlayStore = OverlayStore.Instance;
         let divContents;
         if (appStore.activeFrame && appStore.activeFrame.isRenderable && appStore.astReady) {
             const effectiveWidth = appStore.activeFrame.renderWidth * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
             const effectiveHeight = appStore.activeFrame.renderHeight * (appStore.activeFrame.renderHiDPI ? devicePixelRatio : 1);
-            const imageRatioTagOffset = {x: appStore.overlayStore.padding.left + appStore.overlayStore.viewWidth / 2.0, y: appStore.overlayStore.padding.top + appStore.overlayStore.viewHeight / 2.0};
+            const imageRatioTagOffset = {x: overlayStore.padding.left + overlayStore.viewWidth / 2.0, y: overlayStore.padding.top + overlayStore.viewHeight / 2.0};
 
             divContents = (
                 <React.Fragment>
                     {appStore.activeFrame.valid &&
                     <OverlayComponent
                         frame={appStore.activeFrame}
-                        overlaySettings={appStore.overlayStore}
+                        overlaySettings={overlayStore}
                         docked={this.props.docked}
                     />
                     }
@@ -179,12 +180,12 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         cursorInfo={appStore.activeFrame.cursorInfo}
                         cursorValue={appStore.activeFrame.cursorValue}
                         spectralInfo={appStore.activeFrame.spectralInfo}
-                        width={appStore.overlayStore.viewWidth}
-                        left={appStore.overlayStore.padding.left}
-                        right={appStore.overlayStore.padding.right}
+                        width={overlayStore.viewWidth}
+                        left={overlayStore.padding.left}
+                        right={overlayStore.padding.right}
                         docked={this.props.docked}
                         unit={appStore.activeFrame.unit}
-                        top={appStore.overlayStore.padding.top}
+                        top={overlayStore.padding.top}
                         showImage={true}
                         showWCS={true}
                         showValue={true}
@@ -198,8 +199,8 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     <BeamProfileOverlayComponent
                         width={appStore.activeFrame.renderWidth}
                         height={appStore.activeFrame.renderHeight}
-                        top={appStore.overlayStore.padding.top}
-                        left={appStore.overlayStore.padding.left}
+                        top={overlayStore.padding.top}
+                        left={overlayStore.padding.left}
                         frame={appStore.activeFrame}
                         docked={this.props.docked}
                         padding={10}
@@ -211,14 +212,14 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                         frame={appStore.activeFrame}
                         width={appStore.activeFrame.renderWidth}
                         height={appStore.activeFrame.renderHeight}
-                        top={appStore.overlayStore.padding.top}
-                        left={appStore.overlayStore.padding.left}
+                        top={overlayStore.padding.top}
+                        left={overlayStore.padding.left}
                         onClicked={this.onClicked}
                         onRegionDoubleClicked={this.handleRegionDoubleClicked}
                         onZoomed={this.onZoomed}
-                        overlaySettings={appStore.overlayStore}
-                        isRegionCornerMode={appStore.preferenceStore.isRegionCornerMode}
-                        dragPanningEnabled={appStore.preferenceStore.dragPanning}
+                        overlaySettings={overlayStore}
+                        isRegionCornerMode={preferenceStore.isRegionCornerMode}
+                        dragPanningEnabled={preferenceStore.dragPanning}
                         cursorFrozen={appStore.activeFrame.cursorFrozen}
                         cursorPoint={appStore.activeFrame.cursorInfo.posImageSpace}
                         docked={this.props.docked}
@@ -246,18 +247,17 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         return (
             <div className="image-view-div" onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                 <RasterViewComponent
-                    appStore={appStore}
                     docked={this.props.docked}
-                    overlaySettings={appStore.overlayStore}
+                    overlaySettings={overlayStore}
                 />
                 <ContourViewComponent
                     appStore={appStore}
                     docked={this.props.docked}
-                    overlaySettings={appStore.overlayStore}
+                    overlaySettings={overlayStore}
                 />
                 <CatalogViewComponent
                     appStore={appStore}
-                    overlaySettings={appStore.overlayStore}
+                    overlaySettings={overlayStore}
                     docked={this.props.docked}
                 />
                 {divContents}

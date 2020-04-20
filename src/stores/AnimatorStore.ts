@@ -1,6 +1,6 @@
 import {action, computed, observable} from "mobx";
 import {CARTA} from "carta-protobuf";
-import {AppStore, FrameStore} from "stores";
+import {AppStore, FrameStore, PreferenceStore} from "stores";
 import {clamp, GetRequiredTiles} from "utilities";
 import {FrameView, Point2D} from "models";
 
@@ -53,6 +53,7 @@ export class AnimatorStore {
 
     @action startAnimation = () => {
         const appStore = AppStore.Instance;
+        const preferenceStore = PreferenceStore.Instance;
         const frame = appStore.activeFrame;
         if (!frame) {
             return;
@@ -86,7 +87,7 @@ export class AnimatorStore {
             fileId: frame.frameInfo.fileId,
             tiles: tiles,
             compressionType: CARTA.CompressionType.ZFP,
-            compressionQuality: appStore.preferenceStore.animationCompressionQuality,
+            compressionQuality: preferenceStore.animationCompressionQuality,
         };
 
         const animationMessage: CARTA.IStartAnimation = {
@@ -111,7 +112,7 @@ export class AnimatorStore {
         this.animationState = AnimationState.PLAYING;
 
         clearTimeout(this.stopHandle);
-        this.stopHandle = setTimeout(this.stopAnimation, 1000 * 60 * appStore.preferenceStore.stopAnimationPlaybackMinutes);
+        this.stopHandle = setTimeout(this.stopAnimation, 1000 * 60 * preferenceStore.stopAnimationPlaybackMinutes);
     };
 
     @action stopAnimation = () => {

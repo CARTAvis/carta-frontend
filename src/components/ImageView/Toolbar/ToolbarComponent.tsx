@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Button, ButtonGroup, IconName, Menu, MenuItem, Popover, PopoverPosition, Position, Tooltip} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {exportImage} from "components";
-import {AppStore, RegionMode, SystemType} from "stores";
+import {AppStore, OverlayStore, PreferenceStore, RegionMode, SystemType} from "stores";
 import {toFixed} from "utilities";
 import "./ToolbarComponent.css";
 
@@ -55,13 +55,14 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     };
 
     handleCoordinateSystemClicked = (coordinateSystem: SystemType) => {
-        this.props.appStore.overlayStore.global.setSystem(coordinateSystem);
+        OverlayStore.Instance.global.setSystem(coordinateSystem);
     };
 
     render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
+        const preferenceStore = PreferenceStore.Instance;
+        const overlay = OverlayStore.Instance;
         const frame = appStore.activeFrame;
-        const overlay = appStore.overlayStore;
         const grid = overlay.grid;
 
         let styleProps: CSSProperties = {
@@ -93,7 +94,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
-        let coordinateSystem = this.props.appStore.overlayStore.global.system;
+        let coordinateSystem = OverlayStore.Instance.global.system;
 
         const coordinateSystemMenu = (
             <Menu>
@@ -131,7 +132,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const wcsButtonSuperscript = (spatialMatchingEnabled ? "x" : "") + (spectralMatchingEnabled ? "z" : "");
         const wcsButtonTooltipEntries = [];
         if (spectralMatchingEnabled) {
-            wcsButtonTooltipEntries.push(`Spectral (${appStore.preferenceStore.spectralMatchingType})`);
+            wcsButtonTooltipEntries.push(`Spectral (${preferenceStore.spectralMatchingType})`);
         }
         if (spatialMatchingEnabled) {
             wcsButtonTooltipEntries.push("Spatial");
@@ -141,13 +142,13 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
         const wcsMatchingMenu = (
             <Menu>
                 <MenuItem
-                    text={`Spectral (${appStore.preferenceStore.spectralMatchingType}) and Spatial`}
+                    text={`Spectral (${preferenceStore.spectralMatchingType}) and Spatial`}
                     disabled={!canEnableSpatialMatching || !canEnableSpectralMatching}
                     active={spectralMatchingEnabled && spatialMatchingEnabled}
                     onClick={() => appStore.setMatchingEnabled(true, true)}
                 />
                 <MenuItem
-                    text={`Spectral (${appStore.preferenceStore.spectralMatchingType})  only`}
+                    text={`Spectral (${preferenceStore.spectralMatchingType})  only`}
                     disabled={!canEnableSpectralMatching}
                     active={spectralMatchingEnabled && !spatialMatchingEnabled}
                     onClick={() => appStore.setMatchingEnabled(false, true)}

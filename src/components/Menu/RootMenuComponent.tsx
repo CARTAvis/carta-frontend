@@ -5,7 +5,7 @@ import {Alert, Icon, Menu, Popover, Position, Tooltip, Tag} from "@blueprintjs/c
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {exportImage} from "components";
 import {PresetLayout} from "models";
-import {AppStore, BrowserMode, DialogStore, FileBrowserStore, PreferenceKeys} from "stores";
+import {AppStore, BrowserMode, DialogStore, FileBrowserStore, OverlayStore, PreferenceKeys, PreferenceStore} from "stores";
 import {ConnectionStatus} from "services";
 import {toFixed} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
@@ -20,6 +20,7 @@ export class RootMenuComponent extends React.Component {
         const appStore = AppStore.Instance;
         const dialogStore = DialogStore.Instance;
         const fileBrowserStore = FileBrowserStore.Instance;
+        const preferenceStore = PreferenceStore.Instance;
         const modString = appStore.modifierString;
         const connectionStatus = appStore.backendService.connectionStatus;
 
@@ -71,9 +72,9 @@ export class RootMenuComponent extends React.Component {
                     text="Export image"
                     label={`${modString}E`}
                     disabled={!appStore.activeFrame}
-                    onClick={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
+                    onClick={() => exportImage(OverlayStore.Instance.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
                 />
-                <Menu.Item text="Preferences" onClick={dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}/>
+                <Menu.Item text="Preferences" onClick={dialogStore.showPreferenceDialog} disabled={preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}/>
             </Menu>
         );
 
@@ -159,8 +160,8 @@ export class RootMenuComponent extends React.Component {
                                 active={value === appStore.layoutStore.currentLayoutName}
                                 onClick={() => {
                                     appStore.layoutStore.deleteLayout(value);
-                                    if (value === appStore.preferenceStore.layout) {
-                                        appStore.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
+                                    if (value === preferenceStore.layout) {
+                                        preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
                                     }
                                 }}
                             />
@@ -280,7 +281,7 @@ export class RootMenuComponent extends React.Component {
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
                 {loadingIndicator}
-                {appStore.preferenceStore.lowBandwidthMode &&
+                {preferenceStore.lowBandwidthMode &&
                 <Tooltip content={<span>CARTA is running in low bandwidth mode<br/><i><small>Image resolution and cursor responsiveness will be reduced</small></i></span>}>
                     <Icon icon={"feed"} className="connectivity-icon warning"/>
                 </Tooltip>

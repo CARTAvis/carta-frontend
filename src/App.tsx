@@ -8,7 +8,7 @@ import {Alert, Classes, Colors, Dialog, Hotkey, Hotkeys, HotkeysTarget, Intent} 
 import {UIControllerComponent, exportImage, FloatingWidgetManagerComponent} from "./components";
 import {AppToaster} from "./components/Shared";
 import {TaskProgressDialogComponent} from "./components/Dialogs";
-import {AlertStore, AppStore, BrowserMode, dayPalette, DialogStore, FileBrowserStore, LogStore, nightPalette, RegionMode} from "./stores";
+import {AlertStore, AppStore, BrowserMode, dayPalette, DialogStore, FileBrowserStore, LogStore, nightPalette, OverlayStore, RegionMode} from "./stores";
 import {ConnectionStatus} from "./services";
 import GitCommit from "./static/gitInfo";
 import "./App.css";
@@ -228,7 +228,7 @@ export class App extends React.Component {
             <Hotkey key={0} group={fileGroupTitle} global={true} combo={`${modString}O`} label="Open image" onKeyDown={() => fileBrowserStore.showFileBrowser(BrowserMode.File)}/>,
             <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}L`} label="Append image" onKeyDown={() => fileBrowserStore.showFileBrowser(BrowserMode.File, true)}/>,
             <Hotkey key={1} group={fileGroupTitle} global={true} combo={`${modString}W`} label="Close image" onKeyDown={() => appStore.closeCurrentFile(true)}/>,
-            <Hotkey key={2} group={fileGroupTitle} global={true} combo={`${modString}E`} label="Export image" onKeyDown={() => exportImage(appStore.overlayStore.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>,
+            <Hotkey key={2} group={fileGroupTitle} global={true} combo={`${modString}E`} label="Export image" onKeyDown={() => exportImage(OverlayStore.Instance.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>,
             <Hotkey key={3} group={fileGroupTitle} global={true} combo={`${modString}C`} label="Append catalog" onKeyDown={() => fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}/>
         ];
 

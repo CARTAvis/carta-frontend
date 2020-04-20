@@ -12,7 +12,7 @@ import {DraggableDialogComponent} from "components/Dialogs";
 import {ColorComponent} from "./ColorComponent";
 import {ColorResult} from "react-color";
 import {ColorPickerComponent, SafeNumericInput} from "components/Shared";
-import {AppStore, BeamType, LabelType, SystemType, HelpType, DialogStore} from "stores";
+import {AppStore, BeamType, LabelType, SystemType, HelpType, DialogStore, OverlayStore} from "stores";
 import {hexStringToRgba, SWATCH_COLORS} from "utilities";
 import "./OverlaySettingsDialogComponent.css";
 
@@ -90,7 +90,7 @@ export class OverlaySettingsDialogComponent extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        const overlayStore = appStore.overlayStore;
+        const overlayStore = OverlayStore.Instance;
         const global = overlayStore.global;
         const title = overlayStore.title;
         const grid = overlayStore.grid;

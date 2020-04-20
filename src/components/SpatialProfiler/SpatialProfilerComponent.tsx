@@ -7,7 +7,7 @@ import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps, HelpType} from "stores";
+import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps, HelpType, OverlayStore} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
@@ -276,7 +276,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
         const isXProfile = this.widgetStore.coordinate.indexOf("x") >= 0;
 
         let astString = new ASTSettingsString();
-        astString.add("System", this.props.appStore.overlayStore.global.explicitSystem);
+        astString.add("System", OverlayStore.Instance.global.explicitSystem);
 
         if (isXProfile) {
             for (let i = 0; i < values.length; i++) {

@@ -8,7 +8,7 @@ import {DraggableDialogComponent, TaskProgressDialogComponent} from "components/
 import {LinePlotComponent, LinePlotComponentProps, PlotType, SafeNumericInput, SCALING_POPOVER_PROPS} from "components/Shared";
 import {ContourStylePanelComponent} from "./ContourStylePanel/ContourStylePanelComponent";
 import {ContourGeneratorPanelComponent} from "./ContourGeneratorPanel/ContourGeneratorPanelComponent";
-import {AppStore, DialogStore, FrameStore, HelpType} from "stores";
+import {AppStore, DialogStore, FrameStore, HelpType, PreferenceStore} from "stores";
 import {RenderConfigWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed} from "utilities";
@@ -66,14 +66,15 @@ export class ContourDialogComponent extends React.Component {
     @action setDefaultContourParameters() {
         const appStore = AppStore.Instance;
         const dataSource = appStore.contourDataSource;
+        const preferenceStore = PreferenceStore.Instance;
         if (dataSource) {
             this.levels = dataSource.contourConfig.levels.slice();
             this.smoothingMode = dataSource.contourConfig.smoothingMode;
             this.smoothingFactor = dataSource.contourConfig.smoothingFactor;
         } else {
             this.levels = [];
-            this.smoothingMode = appStore.preferenceStore.contourSmoothingMode;
-            this.smoothingFactor = appStore.preferenceStore.contourSmoothingFactor;
+            this.smoothingMode = preferenceStore.contourSmoothingMode;
+            this.smoothingFactor = preferenceStore.contourSmoothingFactor;
         }
     }
 
@@ -417,7 +418,7 @@ export class ContourDialogComponent extends React.Component {
                 <div className="histogram-plot">
                     <LinePlotComponent {...linePlotProps}/>
                 </div>
-                <ContourGeneratorPanelComponent frame={dataSource} generatorType={appStore.preferenceStore.contourGeneratorType} onLevelsGenerated={this.handleLevelsGenerated}/>
+                <ContourGeneratorPanelComponent frame={dataSource} generatorType={PreferenceStore.Instance.contourGeneratorType} onLevelsGenerated={this.handleLevelsGenerated}/>
                 <div className="contour-level-panel-levels">
                     <FormGroup label={"Levels"} inline={true}>
                         <TagInput
