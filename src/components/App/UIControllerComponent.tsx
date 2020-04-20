@@ -33,7 +33,7 @@ export class UIControllerComponent extends React.Component<{appStore: AppStore}>
                 <SaveLayoutDialogComponent appStore={appStore}/>
                 <FileInfoDialogComponent appStore={appStore}/>
                 <ContourDialogComponent appStore={appStore}/>
-                <HelpDrawerComponent appStore={appStore}/>
+                <HelpDrawerComponent/>
             </React.Fragment>
         );
     }

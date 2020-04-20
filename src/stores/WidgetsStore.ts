@@ -25,7 +25,7 @@ import {
     RenderConfigSettingsPanelComponent,
     HistogramSettingsPanelComponent
 } from "components";
-import {AppStore, HelpType} from "stores";
+import {AppStore, HelpStore, HelpType} from "stores";
 import {
     EmptyWidgetStore, 
     HistogramWidgetStore, 
@@ -532,7 +532,7 @@ export class WidgetsStore {
             if (container && container.width) {
                 centerX = ev.target.getBoundingClientRect().right + 36 - container.width * 0.5; // 36(px) is the length between help button and right border of widget
             }
-            this.appStore.helpStore.showHelpDrawer(widgetConfig.helpType, centerX);
+            HelpStore.Instance.showHelpDrawer(widgetConfig.helpType, centerX);
         }
     };
 
