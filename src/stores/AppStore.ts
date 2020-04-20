@@ -825,14 +825,14 @@ export class AppStore {
         setInterval(this.recalculateRequirements, AppStore.RequirementsCheckInterval);
 
         // Subscribe to frontend streams
-        this.backendService.getSpatialProfileStream().subscribe(this.handleSpatialProfileStream);
-        this.backendService.getSpectralProfileStream().subscribe(this.handleSpectralProfileStream);
-        this.backendService.getRegionHistogramStream().subscribe(this.handleRegionHistogramStream);
-        this.backendService.getContourStream().subscribe(this.handleContourImageStream);
-        this.backendService.getCatalogStream().subscribe(this.handleCatalogFilterStream);
-        this.backendService.getErrorStream().subscribe(this.handleErrorStream);
-        this.backendService.getRegionStatsStream().subscribe(this.handleRegionStatsStream);
-        this.backendService.getReconnectStream().subscribe(this.handleReconnectStream);
+        this.backendService.spatialProfileStream.subscribe(this.handleSpatialProfileStream);
+        this.backendService.spectralProfileStream.subscribe(this.handleSpectralProfileStream);
+        this.backendService.histogramStream.subscribe(this.handleRegionHistogramStream);
+        this.backendService.contourStream.subscribe(this.handleContourImageStream);
+        this.backendService.catalogStream.subscribe(this.handleCatalogFilterStream);
+        this.backendService.errorStream.subscribe(this.handleErrorStream);
+        this.backendService.statsStream.subscribe(this.handleRegionStatsStream);
+        this.backendService.reconnectStream.subscribe(this.handleReconnectStream);
         this.tileService.tileStream.subscribe(this.handleTileStream);
 
         // Auth and connection

@@ -39,17 +39,17 @@ export class BackendService {
     private observerRequestMap: Map<number, Observer<any>>;
     private eventCounter: number;
     private sessionId: number;
-    // TODO: These can be readonly instead of private to get rid of boilerplate gets
-    private readonly rasterTileStream: Subject<CARTA.RasterTileData>;
+
+    readonly rasterTileStream: Subject<CARTA.RasterTileData>;
     readonly rasterSyncStream: Subject<CARTA.RasterTileSync>;
-    private readonly histogramStream: Subject<CARTA.RegionHistogramData>;
-    private readonly errorStream: Subject<CARTA.ErrorData>;
-    private readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
-    private readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
-    private readonly statsStream: Subject<CARTA.RegionStatsData>;
-    private readonly contourStream: Subject<CARTA.ContourImageData>;
-    private readonly catalogStream: Subject<CARTA.CatalogFilterResponse>;
-    private readonly reconnectStream: Subject<void>;
+    readonly histogramStream: Subject<CARTA.RegionHistogramData>;
+    readonly errorStream: Subject<CARTA.ErrorData>;
+    readonly spatialProfileStream: Subject<CARTA.SpatialProfileData>;
+    readonly spectralProfileStream: Subject<CARTA.SpectralProfileData>;
+    readonly statsStream: Subject<CARTA.RegionStatsData>;
+    readonly contourStream: Subject<CARTA.ContourImageData>;
+    readonly catalogStream: Subject<CARTA.CatalogFilterResponse>;
+    readonly reconnectStream: Subject<void>;
     private readonly handlerMap: Map<CARTA.EventType, HandlerFunction>;
     private readonly decoderMap: Map<CARTA.EventType, any>;
 
@@ -131,42 +131,6 @@ export class BackendService {
 
         // check ping every 5 seconds
         setInterval(this.sendPing, 5000);
-    }
-
-    getRasterTileStream() {
-        return this.rasterTileStream;
-    }
-
-    getRegionHistogramStream() {
-        return this.histogramStream;
-    }
-
-    getErrorStream() {
-        return this.errorStream;
-    }
-
-    getSpatialProfileStream() {
-        return this.spatialProfileStream;
-    }
-
-    getSpectralProfileStream() {
-        return this.spectralProfileStream;
-    }
-
-    getRegionStatsStream() {
-        return this.statsStream;
-    }
-
-    getContourStream() {
-        return this.contourStream;
-    }
-
-    getCatalogStream() {
-        return this.catalogStream;
-    }
-
-    getReconnectStream() {
-        return this.reconnectStream;
     }
 
     @action("connect")

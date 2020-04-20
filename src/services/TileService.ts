@@ -110,7 +110,7 @@ export class TileService {
         this.animationEnabled = false;
 
         this.tileStream = new Subject<TileStreamDetails>();
-        this.backendService.getRasterTileStream().subscribe(this.handleStreamedTiles);
+        this.backendService.rasterTileStream.subscribe(this.handleStreamedTiles);
         this.backendService.rasterSyncStream.subscribe(this.handleStreamSync);
 
         const ZFPWorker = require("worker-loader!zfp_wrapper");
