@@ -74,8 +74,6 @@ export class AppStore {
     readonly layoutStore: LayoutStore;
     // Overlay
     readonly overlayStore: OverlayStore;
-    // File Browser
-    readonly fileBrowserStore: FileBrowserStore;
     // Widgets
     readonly widgetsStore: WidgetsStore;
 
@@ -179,7 +177,7 @@ export class AppStore {
                 this.addFrame(folderSearchParam, fileSearchParam, "", 0);
             }
             if (this.preferenceStore.autoLaunch) {
-                this.fileBrowserStore.showFileBrowser(BrowserMode.File);
+                FileBrowserStore.Instance.showFileBrowser(BrowserMode.File);
             }
         }, err => console.log(err));
     };
@@ -245,7 +243,7 @@ export class AppStore {
     @computed get catalogNum(): number {
         const fileNumbers = Array.from(this.catalogs.values());
         if (fileNumbers.length) {
-            return Math.max(...fileNumbers);   
+            return Math.max(...fileNumbers);
         }
         return 0;
     }
@@ -352,7 +350,7 @@ export class AppStore {
                 }
             }
 
-            this.fileBrowserStore.hideFileBrowser();
+            FileBrowserStore.Instance.hideFileBrowser();
         }, err => {
             AlertStore.Instance.showAlert(`Error loading file: ${err}`);
             this.fileLoading = false;
@@ -514,21 +512,21 @@ export class AppStore {
         const fileId = this.catalogNum + 1;
         this.backendService.loadCatalogFile(directory, file, fileId, previewDataSize).subscribe(ack => {
             if (frame && ack.success && ack.dataSize) {
-                let catalogInfo: CatalogInfo = {fileId : fileId, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
+                let catalogInfo: CatalogInfo = {fileId: fileId, fileInfo: ack.fileInfo, dataSize: ack.dataSize};
                 let catalogWidgetId = null;
                 const config = CatalogOverlayComponent.WIDGET_CONFIG;
                 let floatingCatalogWidgets = this.widgetsStore.getFloatingWidgetByComponentId(config.componentId).length;
                 let dockedCatalogWidgets = this.widgetsStore.getDockedWidgetByType(config.type).length;
 
-                if (floatingCatalogWidgets === 0  && dockedCatalogWidgets === 0) {
-                    catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);   
+                if (floatingCatalogWidgets === 0 && dockedCatalogWidgets === 0) {
+                    catalogWidgetId = this.widgetsStore.createFloatingCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);
                 } else {
                     catalogWidgetId = this.widgetsStore.addCatalogOverlayWidget(catalogInfo, ack.headers, ack.columnsData);
                 }
                 if (catalogWidgetId) {
                     this.catalogs.set(catalogWidgetId, fileId);
                     this.catalogStore.addCatalogs(catalogWidgetId);
-                    this.fileBrowserStore.hideFileBrowser(); 
+                    FileBrowserStore.Instance.hideFileBrowser();
                 }
             }
         }, error => {
@@ -583,7 +581,7 @@ export class AppStore {
                     }
                 }
             }
-            this.fileBrowserStore.hideFileBrowser();
+            FileBrowserStore.Instance.hideFileBrowser();
         }, error => {
             console.error(error);
             AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
@@ -600,7 +598,7 @@ export class AppStore {
         const regionIds = frame.regionSet.regions.map(r => r.regionId).filter(id => id !== CURSOR_REGION_ID);
         this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionIds).subscribe(() => {
             AppToaster.show({icon: "saved", message: `Exported regions for ${frame.frameInfo.fileInfo.name} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`, intent: "success", timeout: 3000});
-            this.fileBrowserStore.hideFileBrowser();
+            FileBrowserStore.Instance.hideFileBrowser();
         }, error => {
             console.error(error);
             AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
@@ -727,7 +725,6 @@ export class AppStore {
         this.contourDataSource = null;
         this.syncFrameToContour = true;
         this.syncContourToFrame = true;
-        this.fileBrowserStore = new FileBrowserStore(this, this.backendService);
         this.overlayStore = new OverlayStore(this, this.preferenceStore);
         this.widgetsStore = new WidgetsStore(this);
         this.initRequirements();
@@ -992,7 +989,7 @@ export class AppStore {
             }
         });
 
-        const progress = catalogFilter.progress; 
+        const progress = catalogFilter.progress;
         const catalogWidgetStore = this.widgetsStore.catalogOverlayWidgets.get(catalogWidgetId);
         if (catalogWidgetStore) {
             catalogWidgetStore.updateCatalogData(catalogFilter);
@@ -1002,7 +999,7 @@ export class AppStore {
                 catalogWidgetStore.setPlotingData(false);
             }
 
-            if (catalogWidgetStore.updateMode === CatalogUpdateMode.ViewUpdate) {               
+            if (catalogWidgetStore.updateMode === CatalogUpdateMode.ViewUpdate) {
                 const xColumn = catalogWidgetStore.xColumnRepresentation;
                 const yColumn = catalogWidgetStore.yColumnRepresentation;
                 if (xColumn && yColumn) {
@@ -1017,11 +1014,11 @@ export class AppStore {
                 const scatterWidgetStore = scatterWidgetsStore[index];
                 const scatterWidget = this.widgetsStore.catalogScatterWidgets.get(scatterWidgetStore);
                 if (scatterWidget) {
-                    scatterWidget.updateScatterData();   
-                }    
+                    scatterWidget.updateScatterData();
+                }
             }
         }
-    }
+    };
 
     handleErrorStream = (errorData: CARTA.ErrorData) => {
         if (errorData) {

@@ -7,7 +7,7 @@ import {FileListComponent} from "./FileList/FileListComponent";
 import {FileInfoComponent, FileInfoType} from "components/FileInfo/FileInfoComponent";
 import {DraggableDialogComponent} from "components/Dialogs";
 import {TableComponentProps, TableType} from "components/Shared";
-import {AppStore, BrowserMode, DialogStore, HelpType} from "stores";
+import {AppStore, BrowserMode, DialogStore, FileBrowserStore, HelpType} from "stores";
 import {CatalogOverlayWidgetStore} from "stores/widgets";
 import "./FileBrowserDialogComponent.css";
 
@@ -16,17 +16,17 @@ export class FileBrowserDialogComponent extends React.Component {
     @observable overwriteExistingFileAlertVisible: boolean;
 
     private handleTabChange = (newId: TabId) => {
-        AppStore.Instance.fileBrowserStore.setSelectedTab(newId);
+        FileBrowserStore.Instance.setSelectedTab(newId);
     };
 
     private loadSelectedFile = () => {
-        const fileBrowserStore = AppStore.Instance.fileBrowserStore;
+        const fileBrowserStore = FileBrowserStore.Instance;
         this.loadFile(fileBrowserStore.selectedFile, fileBrowserStore.selectedHDU);
     };
 
     private loadFile = (fileInfo: CARTA.IFileInfo | CARTA.ICatalogFileInfo, hdu?: string) => {
         const appStore = AppStore.Instance;
-        const fileBrowserStore = appStore.fileBrowserStore;
+        const fileBrowserStore = FileBrowserStore.Instance;
 
         // Ignore load if in export mode
         if (fileBrowserStore.browserMode === BrowserMode.RegionExport) {
@@ -51,7 +51,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
     private handleExportRegionsClicked = () => {
         const appStore = AppStore.Instance;
-        const fileBrowserStore = appStore.fileBrowserStore;
+        const fileBrowserStore = FileBrowserStore.Instance;
         const filename = fileBrowserStore.exportFilename.trim();
         if (fileBrowserStore.fileList && fileBrowserStore.fileList.files && fileBrowserStore.fileList.files.find(f => f.name.trim() === filename)) {
             // Existing file being replaced. Alert the user
@@ -68,7 +68,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
         filename = filename.trim();
         const appStore = AppStore.Instance;
-        const fileBrowserStore = appStore.fileBrowserStore;
+        const fileBrowserStore = FileBrowserStore.Instance;
         appStore.exportRegions(directory, filename, fileBrowserStore.exportCoordinateType, fileBrowserStore.exportFileType);
         console.log(`Exporting all regions to ${directory}/${filename}`);
     }
@@ -76,8 +76,8 @@ export class FileBrowserDialogComponent extends React.Component {
     private handleOverwriteAlertConfirmed = () => {
         this.overwriteExistingFileAlertVisible = false;
         const appStore = AppStore.Instance;
-        const fileBrowserStore = appStore.fileBrowserStore;
-        const filename = appStore.fileBrowserStore.exportFilename.trim();
+        const fileBrowserStore = FileBrowserStore.Instance;
+        const filename = fileBrowserStore.exportFilename.trim();
         this.exportRegion(fileBrowserStore.fileList.directory, filename);
     };
 
@@ -86,7 +86,7 @@ export class FileBrowserDialogComponent extends React.Component {
     };
 
     private handleExportInputChanged = (ev: React.ChangeEvent<HTMLInputElement>) => {
-        const fileBrowserStore = AppStore.Instance.fileBrowserStore;
+        const fileBrowserStore = FileBrowserStore.Instance;
         fileBrowserStore.setExportFilename(ev.target.value);
     };
 
@@ -97,7 +97,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
     private renderActionButton(browserMode: BrowserMode, appending: boolean) {
         const appStore = AppStore.Instance;
-        const fileBrowserStore = appStore.fileBrowserStore;
+        const fileBrowserStore = FileBrowserStore.Instance;
 
         if (browserMode === BrowserMode.File) {
             if (appending) {
@@ -160,7 +160,7 @@ export class FileBrowserDialogComponent extends React.Component {
     }
 
     private renderExportFilenameInput() {
-        const fileBrowserStore = AppStore.Instance.fileBrowserStore;
+        const fileBrowserStore = FileBrowserStore.Instance;
 
         const coordinateTypeMenu = (
             <Popover
@@ -206,7 +206,7 @@ export class FileBrowserDialogComponent extends React.Component {
     // Refresh file list to trigger the Breadcrumb re-rendering
     @action
     private refreshFileList() {
-        const fileBrowserStore = AppStore.Instance.fileBrowserStore;
+        const fileBrowserStore = FileBrowserStore.Instance;
         switch (fileBrowserStore.browserMode) {
             case BrowserMode.Catalog:
                 fileBrowserStore.catalogFileList = {...fileBrowserStore.catalogFileList};
@@ -219,7 +219,7 @@ export class FileBrowserDialogComponent extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        const fileBrowserStore = appStore.fileBrowserStore;
+        const fileBrowserStore = FileBrowserStore.Instance;
 
         let className = "file-browser-dialog";
         if (appStore.darkTheme) {
@@ -355,9 +355,11 @@ export class FileBrowserDialogComponent extends React.Component {
 
     @computed get pathItems() {
         const appStore = AppStore.Instance;
+        const fileBrowserStore = FileBrowserStore.Instance;
+
         // let pathItems: IBreadcrumbProps[] = [{icon: "desktop", target: "."}];
-        let pathItems: IBreadcrumbProps[] = [{icon: "desktop", onClick: () => appStore.fileBrowserStore.selectFolder(".", true)}];
-        const fileList = appStore.fileBrowserStore.getfileListByMode;
+        let pathItems: IBreadcrumbProps[] = [{icon: "desktop", onClick: () => fileBrowserStore.selectFolder(".", true)}];
+        const fileList = fileBrowserStore.getfileListByMode;
         if (fileList) {
             const path = fileList.directory;
             if (path && path !== ".") {
@@ -379,7 +381,7 @@ export class FileBrowserDialogComponent extends React.Component {
                         const targetPath = parentPath;
                         pathItems.push({
                             text: dirName,
-                            onClick: () => appStore.fileBrowserStore.selectFolder(targetPath, true)
+                            onClick: () => fileBrowserStore.selectFolder(targetPath, true)
                         });
                     }
                 }

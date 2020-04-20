@@ -5,7 +5,7 @@ import {Alert, Icon, Menu, Popover, Position, Tooltip, Tag} from "@blueprintjs/c
 import {ToolbarMenuComponent} from "./ToolbarMenu/ToolbarMenuComponent";
 import {exportImage} from "components";
 import {PresetLayout} from "models";
-import {AppStore, BrowserMode, DialogStore, PreferenceKeys} from "stores";
+import {AppStore, BrowserMode, DialogStore, FileBrowserStore, PreferenceKeys} from "stores";
 import {ConnectionStatus} from "services";
 import {toFixed} from "utilities";
 import {CustomIcon} from "icons/CustomIcons";
@@ -19,6 +19,7 @@ export class RootMenuComponent extends React.Component {
     render() {
         const appStore = AppStore.Instance;
         const dialogStore = DialogStore.Instance;
+        const fileBrowserStore = FileBrowserStore.Instance;
         const modString = appStore.modifierString;
         const connectionStatus = appStore.backendService.connectionStatus;
 
@@ -33,13 +34,13 @@ export class RootMenuComponent extends React.Component {
                     text="Open image"
                     label={`${modString}O`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || appStore.fileLoading}
-                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)}
+                    onClick={() => fileBrowserStore.showFileBrowser(BrowserMode.File, false)}
                 />
                 <Menu.Item
                     text="Append image"
                     label={`${modString}L`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
-                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}
+                    onClick={() => fileBrowserStore.showFileBrowser(BrowserMode.File, true)}
                 />
                 <Menu.Item
                     text="Close image"
@@ -51,19 +52,19 @@ export class RootMenuComponent extends React.Component {
                 <Menu.Item
                     text="Import regions"
                     disabled={!appStore.activeFrame}
-                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)}
+                    onClick={() => fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)}
                 />
                 <Menu.Item
                     text="Export regions"
                     disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1}
-                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionExport, false)}
+                    onClick={() => fileBrowserStore.showFileBrowser(BrowserMode.RegionExport, false)}
                 />
                 <Menu.Divider/>
                 <Menu.Item
                     text="Append catalog"
                     label={`${modString}C`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
-                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}
+                    onClick={() => fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}
                 />
                 <Menu.Divider/>
                 <Menu.Item
