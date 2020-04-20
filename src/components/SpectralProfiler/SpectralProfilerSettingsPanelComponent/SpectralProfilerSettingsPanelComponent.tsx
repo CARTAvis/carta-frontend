@@ -3,6 +3,7 @@ import {computed, autorun} from "mobx";
 import {observer} from "mobx-react";
 import {Colors, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent} from "components/Shared";
+import {MomentGeneratorComponent} from "../MomentGeneratorComponent/MomentGeneratorComponent";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {WidgetProps, WidgetConfig, HelpType} from "stores";
 import {parseNumber} from "utilities";
@@ -19,8 +20,8 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
             type: "floating-settings",
             minWidth: 280,
             minHeight: 225,
-            defaultWidth: 550,
-            defaultHeight: 450,
+            defaultWidth: 625,
+            defaultHeight: 500,
             title: "spectral-profiler-settings",
             isCloseable: true,
             parentId: "spectal-profiler",
@@ -165,6 +166,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                 <Tabs id="spectralSettingTabs">
                     <Tab id="conversion" title="Conversion" panel={<SpectralSettingsComponent appStore={this.props.appStore} widgetStore={widgetStore} disable={false}/>}/>
                     <Tab id="styling" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
+                    <Tab id="moments" title="Moments" panel={<MomentGeneratorComponent appStore={this.props.appStore} widgetStore={widgetStore}/>}/>
                 </Tabs>
             </div>
         );

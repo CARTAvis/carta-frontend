@@ -1,0 +1,37 @@
+.moment-generator {
+    display: flex;
+    flex-direction: row;
+
+    .bp3-form-group .bp3-label {
+        width: 6em;
+        text-align: left;
+    }
+    .bp3-numeric-input {
+        .bp3-input-group {
+            width: 60px;
+        }
+    }
+
+    .panel-left {
+        width: 325px;
+        .cursor-selection {
+            margin-left: 101px;
+            .cursor-selection-button{
+                width: 10em;
+            }
+        }
+    }
+
+    .panel-right {
+        width: 380px;
+        margin-left: 20px;
+        .bp3-form-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .moment-generate {
+            float: right;
+        }
+    }
+}
