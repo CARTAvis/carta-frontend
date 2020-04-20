@@ -704,6 +704,28 @@ export class BackendService {
         document.cookie = `CARTA-Authorization=${token}; path=/`;
     };
 
+    @action("generate moment")
+    generateMoment(fileId: number, regionId: number) {
+        if (this.connectionStatus !== ConnectionStatus.ACTIVE) {
+            return throwError(new Error("Not connected"));
+        } else {
+            /*
+            const message = CARTA.GenerateMoment.create({file, type, fileId, regionId});
+            const requestId = this.eventCounter;
+            this.logEvent(CARTA.EventType.GENERATE_MOMENT, requestId, message, false);
+            if (this.sendEvent(CARTA.EventType.GENERATE_MOMENT, CARTA.GenerateMoment.encode(message).finish())) {
+                return new Observable<CARTA.GenerateMomentAck>(observer => {
+                    this.observerRequestMap.set(requestId, observer);
+                });
+            } else {
+                return throwError(new Error("Could not send event"));
+            }
+            */
+            console.log("Under construction!");
+            return throwError(new Error("Under construction!"));
+        }
+    }
+
     private messageHandler(event: MessageEvent) {
         if (event.data === "PONG") {
             this.lastPongTime = performance.now();

@@ -625,6 +625,14 @@ export class AppStore {
         }
     };
 
+    @action generateMoment = (fileId: number = -1) => {
+        const frame = this.getFrame(fileId);
+        if (frame) {
+            this.backendService.generateMoment(frame.frameInfo.fileId, -2);
+            // this.restartTaskProgress();
+        }
+    };
+
     @action setDarkTheme = () => {
         this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.DARK);
     };

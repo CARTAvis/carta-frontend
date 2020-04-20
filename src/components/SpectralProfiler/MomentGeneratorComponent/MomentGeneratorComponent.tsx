@@ -25,6 +25,13 @@ export enum Moments {
 
 @observer
 export class MomentGeneratorComponent extends React.Component<{appStore: AppStore, widgetStore: SpectralProfileWidgetStore}> {
+    private handleMomentGenerate = () => {
+        const appStore = this.props.appStore;
+        if (appStore.activeFrame) {
+            appStore.generateMoment(appStore.activeFrame.frameInfo.fileId);
+        }
+    };
+
     render() {
         const regionPanel = <RegionSelectorComponent appStore={this.props.appStore} widgetStore={this.props.widgetStore}/>;
 
@@ -85,7 +92,7 @@ export class MomentGeneratorComponent extends React.Component<{appStore: AppStor
             <React.Fragment>
                 {Object.values(Moments).map((momentType) => <Checkbox key={momentType} checked={false} label={momentType} onChange={() => {}}/>)}
                 <div className="moment-generate">
-                    <Button intent="success">Generate</Button>
+                    <Button intent="success" onClick={this.handleMomentGenerate}>Generate</Button>
                 </div>
             </React.Fragment>
         );
