@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Button, Checkbox, Divider, FormGroup, HTMLSelect, NumericInput, NumberRange, RangeSlider} from "@blueprintjs/core";
+import {Button, Checkbox, Divider, FormGroup, HTMLSelect, NumericInput, NumberRange, Position, RangeSlider, Tooltip} from "@blueprintjs/core";
 import {RegionSelectorComponent} from "components";
 import {SpectralSettingsComponent} from "components/Shared";
 import {SpectralProfileWidgetStore} from "stores/widgets";
@@ -13,7 +13,7 @@ export class MomentGeneratorComponent extends React.Component<{appStore: AppStor
     private onChannelRangeChanged = (range: NumberRange) => {
         const frame = this.props.appStore.activeFrame;
         const widgetStore = this.props.widgetStore;
-        if (frame && range && range.length === 2 && range[0] >= 0 && range[0] < range[1] && range[1] < frame.frameInfo.fileInfoExtended.depth) {
+        if (frame && range && range.length === 2 && range[0] >= 0 && range[0] < range[1] && range[1] < frame.numChannels) {
             widgetStore.setChannelRange(range);
         }
     };
@@ -46,9 +46,15 @@ export class MomentGeneratorComponent extends React.Component<{appStore: AppStor
                                 onChange={this.onChannelRangeChanged}
                                 disabled={!activeFrame || activeFrame.numChannels <= 1}
                             />
-                        </FormGroup>
-                        <FormGroup inline={true} className="reset-range-content" disabled={!activeFrame || activeFrame.numChannels <= 1}>
-                            <Button className="cursor-selection" small={true} disabled={!activeFrame || activeFrame.numChannels <= 1}>Cursor selection</Button>
+                            <Tooltip content="Use cursor to select range in profiler" position={Position.BOTTOM}>
+                                <Button
+                                    className={widgetStore.isCursorSelect ? "bp3-active" : ""}
+                                    icon="select"
+                                    small={true}
+                                    onClick={() => widgetStore.setCursorSelect(!widgetStore.isCursorSelect)}
+                                    disabled={!activeFrame || activeFrame.numChannels <= 1}
+                                />
+                            </Tooltip>
                         </FormGroup>
                     </React.Fragment>
                 }
