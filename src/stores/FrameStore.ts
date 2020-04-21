@@ -518,10 +518,11 @@ export class FrameStore {
     private static readonly CursorInfoMaxPrecision = 25;
     private static readonly ZoomInertiaDuration = 250;
 
-    constructor(overlay: OverlayStore, logStore: LogStore, frameInfo: FrameInfo, backendService: BackendService) {
-        this.overlayStore = overlay;
-        this.logStore = logStore;
-        this.backendService = backendService;
+    constructor(frameInfo: FrameInfo) {
+        this.overlayStore = OverlayStore.Instance;
+        this.logStore = LogStore.Instance;
+        this.backendService = BackendService.Instance;
+        const preferenceStore = PreferenceStore.Instance;
 
         this.spectralFrame = null;
         this.spectralType = null;
@@ -539,8 +540,8 @@ export class FrameStore {
         this.channel = 0;
         this.requiredStokes = 0;
         this.requiredChannel = 0;
-        this.renderConfig = new RenderConfigStore(PreferenceStore.Instance);
-        this.contourConfig = new ContourConfigStore(PreferenceStore.Instance);
+        this.renderConfig = new RenderConfigStore(preferenceStore);
+        this.contourConfig = new ContourConfigStore(preferenceStore);
         this.contourStores = new Map<number, ContourStore>();
         this.renderType = RasterRenderType.NONE;
         this.moving = false;
@@ -551,20 +552,19 @@ export class FrameStore {
         this.secondarySpatialImages = [];
         this.secondarySpectralImages = [];
 
-        const preferenceStore = PreferenceStore.Instance;
 
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;
-        if (astColor !== overlay.global.color) {
-            overlay.global.setColor(astColor);
+        if (astColor !== this.overlayStore.global.color) {
+            this.overlayStore.global.setColor(astColor);
         }
         const astGridVisible = preferenceStore.astGridVisible;
-        if (astGridVisible !== overlay.grid.visible) {
-            overlay.grid.setVisible(astGridVisible);
+        if (astGridVisible !== this.overlayStore.grid.visible) {
+            this.overlayStore.grid.setVisible(astGridVisible);
         }
         const astLabelsVisible = preferenceStore.astLabelsVisible;
-        if (astLabelsVisible !== overlay.labels.visible) {
-            overlay.labels.setVisible(astLabelsVisible);
+        if (astLabelsVisible !== this.overlayStore.labels.visible) {
+            this.overlayStore.labels.setVisible(astLabelsVisible);
         }
 
         this.regionSet = new RegionSetStore(this, PreferenceStore.Instance, BackendService.Instance);

@@ -60,8 +60,8 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
 
     render() {
         const appStore = AppStore.Instance;
-        const preferenceStore = PreferenceStore.Instance;
-        const overlay = OverlayStore.Instance;
+        const preferenceStore = appStore.preferenceStore;
+        const overlay = appStore.overlayStore;
         const frame = appStore.activeFrame;
         const grid = overlay.grid;
 
@@ -94,7 +94,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
             </Menu>
         );
 
-        let coordinateSystem = OverlayStore.Instance.global.system;
+        let coordinateSystem = overlay.global.system;
 
         const coordinateSystemMenu = (
             <Menu>

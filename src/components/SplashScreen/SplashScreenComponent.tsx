@@ -10,7 +10,6 @@ import "./SplashScreenComponent.css";
 export class SplashScreenComponent extends React.Component {
     public render() {
         const appStore = AppStore.Instance;
-        const logStore = LogStore.Instance;
 
         let className = "splash-screen";
         if (appStore.darkTheme) {
@@ -29,7 +28,7 @@ export class SplashScreenComponent extends React.Component {
                     </div>
                     <Spinner intent={Intent.PRIMARY} size={30} value={null}/>
                     <div className={"loadingInfo-div"}>
-                        <p>{logStore.newestMsg}</p>
+                        <p>{appStore.logStore.newestMsg}</p>
                     </div>
                 </div>
             </Overlay>

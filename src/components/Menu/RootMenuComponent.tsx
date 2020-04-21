@@ -18,9 +18,6 @@ export class RootMenuComponent extends React.Component {
 
     render() {
         const appStore = AppStore.Instance;
-        const dialogStore = DialogStore.Instance;
-        const fileBrowserStore = FileBrowserStore.Instance;
-        const preferenceStore = PreferenceStore.Instance;
         const modString = appStore.modifierString;
         const connectionStatus = appStore.backendService.connectionStatus;
 
@@ -35,13 +32,13 @@ export class RootMenuComponent extends React.Component {
                     text="Open image"
                     label={`${modString}O`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || appStore.fileLoading}
-                    onClick={() => fileBrowserStore.showFileBrowser(BrowserMode.File, false)}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, false)}
                 />
                 <Menu.Item
                     text="Append image"
                     label={`${modString}L`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
-                    onClick={() => fileBrowserStore.showFileBrowser(BrowserMode.File, true)}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.File, true)}
                 />
                 <Menu.Item
                     text="Close image"
@@ -53,19 +50,19 @@ export class RootMenuComponent extends React.Component {
                 <Menu.Item
                     text="Import regions"
                     disabled={!appStore.activeFrame}
-                    onClick={() => fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionImport, false)}
                 />
                 <Menu.Item
                     text="Export regions"
                     disabled={!appStore.activeFrame || !appStore.activeFrame.regionSet.regions || appStore.activeFrame.regionSet.regions.length <= 1}
-                    onClick={() => fileBrowserStore.showFileBrowser(BrowserMode.RegionExport, false)}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.RegionExport, false)}
                 />
                 <Menu.Divider/>
                 <Menu.Item
                     text="Append catalog"
                     label={`${modString}C`}
                     disabled={connectionStatus !== ConnectionStatus.ACTIVE || !appStore.activeFrame || appStore.fileLoading}
-                    onClick={() => fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}
+                    onClick={() => appStore.fileBrowserStore.showFileBrowser(BrowserMode.Catalog, false)}
                 />
                 <Menu.Divider/>
                 <Menu.Item
@@ -74,7 +71,7 @@ export class RootMenuComponent extends React.Component {
                     disabled={!appStore.activeFrame}
                     onClick={() => exportImage(OverlayStore.Instance.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}
                 />
-                <Menu.Item text="Preferences" onClick={dialogStore.showPreferenceDialog} disabled={preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}/>
+                <Menu.Item text="Preferences" onClick={appStore.dialogStore.showPreferenceDialog} disabled={appStore.preferenceStore.supportsServer && connectionStatus !== ConnectionStatus.ACTIVE}/>
             </Menu>
         );
 
@@ -96,7 +93,7 @@ export class RootMenuComponent extends React.Component {
                     <Menu.Item text="Dark" icon={"moon"} onClick={appStore.setDarkTheme}/>
                 </Menu.Item>
                 <Menu.Item text="Overlay" icon={"widget"}>
-                    <Menu.Item text="Customize..." icon={"settings"} onClick={dialogStore.showOverlaySettings}/>
+                    <Menu.Item text="Customize..." icon={"settings"} onClick={appStore.dialogStore.showOverlaySettings}/>
                 </Menu.Item>
                 {layerItems.length > 0 &&
                 <Menu.Item text="Frames" icon={"layers"}>
@@ -110,12 +107,12 @@ export class RootMenuComponent extends React.Component {
                     text="File info"
                     icon={"info-sign"}
                     disabled={!appStore.activeFrame}
-                    onClick={dialogStore.showFileInfoDialog}
+                    onClick={appStore.dialogStore.showFileInfoDialog}
                 />
                 <Menu.Item
                     text="Contours"
                     icon={<CustomIcon icon="contour"/>}
-                    onClick={dialogStore.showContourDialog}
+                    onClick={appStore.dialogStore.showContourDialog}
                 />
             </Menu>
         );
@@ -151,7 +148,7 @@ export class RootMenuComponent extends React.Component {
                             />
                         )}
                     </Menu.Item>
-                    <Menu.Item text="Save Layout" onClick={dialogStore.showSaveLayoutDialog}/>
+                    <Menu.Item text="Save Layout" onClick={appStore.dialogStore.showSaveLayoutDialog}/>
                     <Menu.Item text="Delete Layout" disabled={!userLayouts || userLayouts.length <= 0}>
                         {userLayouts && userLayouts.length > 0 && userLayouts.map((value) =>
                             <Menu.Item
@@ -160,8 +157,8 @@ export class RootMenuComponent extends React.Component {
                                 active={value === appStore.layoutStore.currentLayoutName}
                                 onClick={() => {
                                     appStore.layoutStore.deleteLayout(value);
-                                    if (value === preferenceStore.layout) {
-                                        preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
+                                    if (value === appStore.preferenceStore.layout) {
+                                        appStore.preferenceStore.setPreference(PreferenceKeys.GLOBAL_LAYOUT, PresetLayout.DEFAULT);
                                     }
                                 }}
                             />
@@ -187,8 +184,8 @@ export class RootMenuComponent extends React.Component {
         const helpMenu = (
             <Menu>
                 <Menu.Item text="Online Manual" icon={"help"} onClick={this.handleDocumentationClicked}/>
-                <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={dialogStore.showHotkeyDialog}/>
-                <Menu.Item text="About" icon={"info-sign"} onClick={dialogStore.showAboutDialog}/>
+                <Menu.Item text="Controls and Shortcuts" label={"Shift + ?"} onClick={appStore.dialogStore.showHotkeyDialog}/>
+                <Menu.Item text="About" icon={"info-sign"} onClick={appStore.dialogStore.showAboutDialog}/>
             </Menu>
         );
 
@@ -281,7 +278,7 @@ export class RootMenuComponent extends React.Component {
                     Documentation will open in a new tab. Please ensure any popup blockers are disabled.
                 </Alert>
                 {loadingIndicator}
-                {preferenceStore.lowBandwidthMode &&
+                {appStore.preferenceStore.lowBandwidthMode &&
                 <Tooltip content={<span>CARTA is running in low bandwidth mode<br/><i><small>Image resolution and cursor responsiveness will be reduced</small></i></span>}>
                     <Icon icon={"feed"} className="connectivity-icon warning"/>
                 </Tooltip>

@@ -7,7 +7,6 @@ import {RasterTile, TILE_SIZE, TileService, TileWebGLService} from "services";
 import "./RasterViewComponent.css";
 
 export class RasterViewComponentProps {
-    overlaySettings: OverlayStore;
     docked: boolean;
 }
 
@@ -49,26 +48,27 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
     };
 
     private updateUniforms() {
-        const tileRenderService = TileWebGLService.Instance;
-        const frame = AppStore.Instance.activeFrame;
+        const appStore = AppStore.Instance;
+        const shaderUniforms = TileWebGLService.Instance.shaderUniforms;
+        const frame = appStore.activeFrame;
         const renderConfig = frame.renderConfig;
-        const preference = PreferenceStore.Instance;
-        if (renderConfig && preference && tileRenderService.shaderUniforms) {
-            this.gl.uniform1f(tileRenderService.shaderUniforms.MinVal, renderConfig.scaleMinVal);
-            this.gl.uniform1f(tileRenderService.shaderUniforms.MaxVal, renderConfig.scaleMaxVal);
-            this.gl.uniform1i(tileRenderService.shaderUniforms.CmapIndex, renderConfig.colorMap);
-            this.gl.uniform1i(tileRenderService.shaderUniforms.ScaleType, renderConfig.scaling);
-            this.gl.uniform1i(tileRenderService.shaderUniforms.Inverted, renderConfig.inverted ? 1 : 0);
-            this.gl.uniform1f(tileRenderService.shaderUniforms.Bias, renderConfig.bias);
-            this.gl.uniform1f(tileRenderService.shaderUniforms.Contrast, renderConfig.contrast);
-            this.gl.uniform1f(tileRenderService.shaderUniforms.Gamma, renderConfig.gamma);
-            this.gl.uniform1f(tileRenderService.shaderUniforms.Alpha, renderConfig.alpha);
-            this.gl.uniform1f(tileRenderService.shaderUniforms.CanvasWidth, frame.renderWidth * devicePixelRatio);
-            this.gl.uniform1f(tileRenderService.shaderUniforms.CanvasHeight, frame.renderHeight * devicePixelRatio);
 
-            const rgba = hexStringToRgba(preference.nanColorHex, preference.nanAlpha);
+        if (renderConfig && shaderUniforms) {
+            this.gl.uniform1f(shaderUniforms.MinVal, renderConfig.scaleMinVal);
+            this.gl.uniform1f(shaderUniforms.MaxVal, renderConfig.scaleMaxVal);
+            this.gl.uniform1i(shaderUniforms.CmapIndex, renderConfig.colorMap);
+            this.gl.uniform1i(shaderUniforms.ScaleType, renderConfig.scaling);
+            this.gl.uniform1i(shaderUniforms.Inverted, renderConfig.inverted ? 1 : 0);
+            this.gl.uniform1f(shaderUniforms.Bias, renderConfig.bias);
+            this.gl.uniform1f(shaderUniforms.Contrast, renderConfig.contrast);
+            this.gl.uniform1f(shaderUniforms.Gamma, renderConfig.gamma);
+            this.gl.uniform1f(shaderUniforms.Alpha, renderConfig.alpha);
+            this.gl.uniform1f(shaderUniforms.CanvasWidth, frame.renderWidth * devicePixelRatio);
+            this.gl.uniform1f(shaderUniforms.CanvasHeight, frame.renderHeight * devicePixelRatio);
+
+            const rgba = hexStringToRgba(appStore.preferenceStore.nanColorHex, appStore.preferenceStore.nanAlpha);
             if (rgba) {
-                this.gl.uniform4f(tileRenderService.shaderUniforms.NaNColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
+                this.gl.uniform4f(shaderUniforms.NaNColor, rgba.r / 255, rgba.g / 255, rgba.b / 255, rgba.a);
             }
         }
     }
@@ -261,8 +261,8 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
 
     render() {
         // dummy values to trigger React's componentDidUpdate()
-        const frame = AppStore.Instance.activeFrame;
-        const preference = PreferenceStore.Instance;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         if (frame) {
             const spatialReference = frame.spatialReference || frame;
             const frameView = spatialReference.requiredFrameView;
@@ -280,11 +280,11 @@ export class RasterViewComponent extends React.Component<RasterViewComponentProp
                 alpha: frame.renderConfig.alpha,
                 inverted: frame.renderConfig.inverted,
                 visibility: frame.renderConfig.visible,
-                nanColorHex: preference.nanColorHex,
-                nanAlpha: preference.nanAlpha
+                nanColorHex: appStore.preferenceStore.nanColorHex,
+                nanAlpha: appStore.preferenceStore.nanAlpha
             };
         }
-        const padding = this.props.overlaySettings.padding;
+        const padding = appStore.overlayStore.padding;
         let className = "raster-div";
         if (this.props.docked) {
             className += " docked";

@@ -110,7 +110,7 @@ export class AppStore {
 
     // Image view
     @action setImageViewDimensions = (w: number, h: number) => {
-        OverlayStore.Instance.setViewDimension(w, h);
+        this.overlayStore.setViewDimension(w, h);
     };
 
     // Image toolbar
@@ -161,27 +161,25 @@ export class AppStore {
             }
         });
 
-        const preferenceStore = PreferenceStore.Instance;
-
         this.backendService.connect(wsURL).subscribe(ack => {
             console.log(`Connected with session ID ${ack.sessionId}`);
             connected = true;
-            LogStore.Instance.addInfo(`Connected to server ${wsURL}`, ["network"]);
+            this.logStore.addInfo(`Connected to server ${wsURL}`, ["network"]);
 
             // Init layout/preference store after connection is built
             const supportsServerLayout = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_LAYOUTS ? true : false;
             this.layoutStore.initUserDefinedLayouts(supportsServerLayout, ack.userLayouts);
             const supportsServerPreference = ack.serverFeatureFlags & CARTA.ServerFeatureFlags.USER_PREFERENCES ? true : false;
-            preferenceStore.initUserDefinedPreferences(supportsServerPreference, ack.userPreferences);
-            this.tileService.setCache(preferenceStore.gpuTileCache, preferenceStore.systemTileCache);
-            this.layoutStore.applyLayout(preferenceStore.layout);
+            this.preferenceStore.initUserDefinedPreferences(supportsServerPreference, ack.userPreferences);
+            this.tileService.setCache(this.preferenceStore.gpuTileCache, this.preferenceStore.systemTileCache);
+            this.layoutStore.applyLayout(this.preferenceStore.layout);
 
             if (this.astReady && fileSearchParam) {
                 autoFileLoaded = true;
                 this.addFrame(folderSearchParam, fileSearchParam, "", 0);
             }
-            if (preferenceStore.autoLaunch) {
-                FileBrowserStore.Instance.showFileBrowser(BrowserMode.File);
+            if (this.preferenceStore.autoLaunch) {
+                this.fileBrowserStore.showFileBrowser(BrowserMode.File);
             }
         }, err => console.log(err));
     };
@@ -228,7 +226,7 @@ export class AppStore {
 
     // Dark theme
     @computed get darkTheme(): boolean {
-        return PreferenceStore.Instance.isDarkTheme;
+        return this.preferenceStore.isDarkTheme;
     }
 
     // Frame actions
@@ -292,7 +290,6 @@ export class AppStore {
 
     @action addFrame = (directory: string, file: string, hdu: string, fileId: number) => {
         this.fileLoading = true;
-        const preferenceStore = PreferenceStore.Instance;
         this.backendService.loadFile(directory, file, hdu, fileId, CARTA.RenderMode.RASTER).subscribe(ack => {
             this.fileLoading = false;
             let dimensionsString = `${ack.fileInfoExtended.width}\u00D7${ack.fileInfoExtended.height}`;
@@ -302,7 +299,7 @@ export class AppStore {
                     dimensionsString += ` (${ack.fileInfoExtended.stokes} Stokes cubes)`;
                 }
             }
-            LogStore.Instance.addInfo(`Loaded file ${ack.fileInfo.name} with dimensions ${dimensionsString}`, ["file"]);
+            this.logStore.addInfo(`Loaded file ${ack.fileInfo.name} with dimensions ${dimensionsString}`, ["file"]);
             const frameInfo: FrameInfo = {
                 fileId: ack.fileId,
                 directory,
@@ -316,7 +313,7 @@ export class AppStore {
             // Clear existing tile cache if it exists
             this.tileService.clearCompressedCache(fileId);
 
-            let newFrame = new FrameStore(OverlayStore.Instance, LogStore.Instance, frameInfo, BackendService.Instance);
+            let newFrame = new FrameStore(frameInfo);
 
             // clear existing requirements for the frame
             this.spectralRequirements.delete(ack.fileId);
@@ -347,25 +344,25 @@ export class AppStore {
             this.setActiveFrame(newFrame.frameInfo.fileId);
 
             if (this.frames.length > 1) {
-                if ((preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL) && this.spatialReference !== newFrame) {
+                if ((this.preferenceStore.autoWCSMatching & WCSMatchingType.SPATIAL) && this.spatialReference !== newFrame) {
                     this.setSpatialMatchingEnabled(newFrame, true);
                 }
-                if ((preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL) && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
+                if ((this.preferenceStore.autoWCSMatching & WCSMatchingType.SPECTRAL) && this.spectralReference !== newFrame && newFrame.frameInfo.fileInfoExtended.depth > 1) {
                     this.setSpectralMatchingEnabled(newFrame, true);
                 }
             }
 
-            FileBrowserStore.Instance.hideFileBrowser();
+            this.fileBrowserStore.hideFileBrowser();
         }, err => {
-            AlertStore.Instance.showAlert(`Error loading file: ${err}`);
+            this.alertStore.showAlert(`Error loading file: ${err}`);
             this.fileLoading = false;
         });
     };
 
     @action appendFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
-        if (AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
-            AnimatorStore.Instance.stopAnimation();
+        if (this.animatorStore.animationState === AnimationState.PLAYING) {
+            this.animatorStore.stopAnimation();
         }
         const currentIdList = this.frames.map(frame => frame.frameInfo.fileId).sort((a, b) => a - b);
         const newId = currentIdList.pop() + 1;
@@ -374,8 +371,8 @@ export class AppStore {
 
     @action openFile = (directory: string, file: string, hdu: string) => {
         // Stop animations playing before loading a new frame
-        if (AnimatorStore.Instance.animationState === AnimationState.PLAYING) {
-            AnimatorStore.Instance.stopAnimation();
+        if (this.animatorStore.animationState === AnimationState.PLAYING) {
+            this.animatorStore.stopAnimation();
         }
         this.removeAllFrames();
         this.addFrame(directory, file, hdu, 0);
@@ -390,7 +387,7 @@ export class AppStore {
         const secondaries = frame.secondarySpatialImages.concat(frame.secondarySpectralImages).filter(distinct);
         const numSecondaries = secondaries.length;
         if (confirmClose && numSecondaries) {
-            AlertStore.Instance.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`, confirmed => {
+            this.alertStore.showInteractiveAlert(`${numSecondaries} image${numSecondaries > 1 ? "s that are" : " that is"} matched to this image will be unmatched.`, confirmed => {
                 if (confirmed) {
                     this.removeFrame(frame);
                 }
@@ -531,7 +528,7 @@ export class AppStore {
                 if (catalogWidgetId) {
                     this.catalogs.set(catalogWidgetId, fileId);
                     this.catalogStore.addCatalogs(catalogWidgetId);
-                    FileBrowserStore.Instance.hideFileBrowser();
+                    this.fileBrowserStore.hideFileBrowser();
                 }
             }
         }, error => {
@@ -586,7 +583,7 @@ export class AppStore {
                     }
                 }
             }
-            FileBrowserStore.Instance.hideFileBrowser();
+            this.fileBrowserStore.hideFileBrowser();
         }, error => {
             console.error(error);
             AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
@@ -603,7 +600,7 @@ export class AppStore {
         const regionIds = frame.regionSet.regions.map(r => r.regionId).filter(id => id !== CURSOR_REGION_ID);
         this.backendService.exportRegion(directory, file, fileType, coordType, frame.frameInfo.fileId, regionIds).subscribe(() => {
             AppToaster.show({icon: "saved", message: `Exported regions for ${frame.frameInfo.fileInfo.name} using ${coordType === CARTA.CoordinateType.WORLD ? "world" : "pixel"} coordinates`, intent: "success", timeout: 3000});
-            FileBrowserStore.Instance.hideFileBrowser();
+            this.fileBrowserStore.hideFileBrowser();
         }, error => {
             console.error(error);
             AppToaster.show({icon: "warning-sign", message: error, intent: "danger", timeout: 3000});
@@ -627,11 +624,11 @@ export class AppStore {
     };
 
     @action setDarkTheme = () => {
-        PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.DARK);
+        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.DARK);
     };
 
     @action setLightTheme = () => {
-        PreferenceStore.Instance.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.LIGHT);
+        this.preferenceStore.setPreference(PreferenceKeys.GLOBAL_THEME, Theme.LIGHT);
     };
 
     @action toggleCursorFrozen = () => {
@@ -694,7 +691,7 @@ export class AppStore {
                 // TODO: dynamic tile size
                 const tileSizeFullRes = reqView.mip * 256;
                 const midPointTileCoords = {x: midPointImageCoords.x / tileSizeFullRes - 0.5, y: midPointImageCoords.y / tileSizeFullRes - 0.5};
-                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, PreferenceStore.Instance.imageCompressionQuality, true);
+                this.tileService.requestTiles(tiles, frame.frameInfo.fileId, frame.channel, frame.stokes, midPointTileCoords, this.preferenceStore.imageCompressionQuality, true);
             } else {
                 this.tileService.updateInactiveFileChannel(frame.frameInfo.fileId, frame.channel, frame.stokes);
             }
@@ -702,11 +699,11 @@ export class AppStore {
     }, AppStore.ImageChannelThrottleTime);
 
     throttledSetView = _.throttle((tiles: TileCoordinate[], fileId: number, channel: number, stokes: number, focusPoint: Point2D) => {
-        const isAnimating = (AnimatorStore.Instance.animationState !== AnimationState.STOPPED && AnimatorStore.Instance.animationMode !== AnimationMode.FRAME);
+        const isAnimating = (this.animatorStore.animationState !== AnimationState.STOPPED && this.animatorStore.animationMode !== AnimationMode.FRAME);
         if (isAnimating) {
-            this.backendService.addRequiredTiles(fileId, tiles.map(t => t.encode()), PreferenceStore.Instance.animationCompressionQuality);
+            this.backendService.addRequiredTiles(fileId, tiles.map(t => t.encode()), this.preferenceStore.animationCompressionQuality);
         } else {
-            this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, PreferenceStore.Instance.imageCompressionQuality);
+            this.tileService.requestTiles(tiles, fileId, channel, stokes, focusPoint, this.preferenceStore.imageCompressionQuality);
         }
     }, AppStore.ImageChannelThrottleTime);
 
@@ -751,7 +748,7 @@ export class AppStore {
 
         // Update frame view
         autorun(() => {
-            if (this.activeFrame && (PreferenceStore.Instance.streamContoursWhileZooming || !this.activeFrame.zooming)) {
+            if (this.activeFrame && (this.preferenceStore.streamContoursWhileZooming || !this.activeFrame.zooming)) {
                 // Trigger update raster view/title when switching layout
                 const layout = this.layoutStore.dockedLayout;
                 this.widgetsStore.updateImageWidgetTitle();
@@ -787,7 +784,7 @@ export class AppStore {
                 // Calculate if new data is required
                 const updateRequiredChannels = this.activeFrame.requiredChannel !== this.activeFrame.channel || this.activeFrame.requiredStokes !== this.activeFrame.stokes;
                 // Don't auto-update when animation is playing
-                if (AnimatorStore.Instance.animationState === AnimationState.STOPPED && updateRequiredChannels) {
+                if (this.animatorStore.animationState === AnimationState.STOPPED && updateRequiredChannels) {
                     updates.push({frame: this.activeFrame, channel: this.activeFrame.requiredChannel, stokes: this.activeFrame.requiredStokes});
                 }
 
@@ -810,7 +807,7 @@ export class AppStore {
             if (this.activeFrame && this.activeFrame.cursorInfo && this.activeFrame.cursorInfo.posImageSpace) {
                 const pos = {x: Math.round(this.activeFrame.cursorInfo.posImageSpace.x), y: Math.round(this.activeFrame.cursorInfo.posImageSpace.y)};
                 if (pos.x >= 0 && pos.x <= this.activeFrame.frameInfo.fileInfoExtended.width - 1 && pos.y >= 0 && pos.y <= this.activeFrame.frameInfo.fileInfoExtended.height - 1) {
-                    if (PreferenceStore.Instance.lowBandwidthMode) {
+                    if (this.preferenceStore.lowBandwidthMode) {
                         throttledSetCursorLowBandwidth(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
                     } else if (this.activeFrame.frameInfo.fileFeatureFlags & CARTA.FileFeatureFlags.ROTATED_DATASET) {
                         throttledSetCursorRotated(this.activeFrame.frameInfo.fileId, pos.x, pos.y);
@@ -824,7 +821,7 @@ export class AppStore {
         // Set overlay defaults from current frame
         autorun(() => {
             if (this.activeFrame) {
-                OverlayStore.Instance.setDefaultsFromAST(this.activeFrame);
+                this.overlayStore.setDefaultsFromAST(this.activeFrame);
             }
         });
 
@@ -849,7 +846,7 @@ export class AppStore {
 
         // Auth and connection
         if (process.env.REACT_APP_AUTHENTICATION === "true") {
-            DialogStore.Instance.showAuthDialog();
+            this.dialogStore.showAuthDialog();
         } else {
             this.connectToServer();
         }
@@ -932,7 +929,7 @@ export class AppStore {
     };
 
     @action handleTileStream = (tileStreamDetails: TileStreamDetails) => {
-        if (AnimatorStore.Instance.animationState === AnimationState.PLAYING && AnimatorStore.Instance.animationMode !== AnimationMode.FRAME) {
+        if (this.animatorStore.animationState === AnimationState.PLAYING && this.animatorStore.animationMode !== AnimationMode.FRAME) {
             // Flow control
             const flowControlMessage: CARTA.IAnimationFlowControl = {
                 fileId: tileStreamDetails.fileId,
@@ -1043,12 +1040,12 @@ export class AppStore {
                 tags: errorData.tags.concat(["server-sent"]),
                 title: null
             };
-            LogStore.Instance.addLog(logEntry);
+            this.logStore.addLog(logEntry);
         }
     };
 
     handleReconnectStream = () => {
-        AlertStore.Instance.showInteractiveAlert("You have reconnected to the CARTA server. Do you want to resume your session?", this.onResumeAlertClosed);
+        this.alertStore.showInteractiveAlert("You have reconnected to the CARTA server. Do you want to resume your session?", this.onResumeAlertClosed);
     };
 
     // endregion
@@ -1060,7 +1057,7 @@ export class AppStore {
         }
 
         // Some things should be reset when the user reconnects
-        AnimatorStore.Instance.stopAnimation();
+        this.animatorStore.stopAnimation();
         this.tileService.clearRequestQueue();
 
         const images: CARTA.IImageProperties[] = this.frames.map(frame => {
@@ -1096,7 +1093,7 @@ export class AppStore {
 
         this.backendService.resumeSession({images}).subscribe(this.onSessionResumed, err => {
             console.error(err);
-            AlertStore.Instance.showAlert("Error resuming session");
+            this.alertStore.showAlert("Error resuming session");
         });
     };
 

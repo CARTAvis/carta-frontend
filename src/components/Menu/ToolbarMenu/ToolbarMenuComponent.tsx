@@ -37,7 +37,7 @@ export class ToolbarMenuComponent extends React.Component {
 
     public render() {
         const appStore = AppStore.Instance;
-        const dialogStore = DialogStore.Instance;
+        const dialogStore = appStore.dialogStore;
 
         let className = "toolbar-menu";
         let dialogClassName = "dialog-toolbar-menu";
