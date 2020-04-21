@@ -76,7 +76,14 @@ export class MomentGeneratorComponent extends React.Component<{appStore: AppStor
 
         const momentsPanel = (
             <React.Fragment>
-                {Object.values(Moments).map((momentType) => <Checkbox key={momentType} checked={false} label={momentType} onChange={() => {}}/>)}
+                {Object.keys(Moments).map((momentType) =>
+                    <Checkbox
+                        key={momentType}
+                        checked={widgetStore.moments.get(momentType as Moments)}
+                        label={Moments[momentType]}
+                        onChange={() => widgetStore.moments.set(momentType as Moments, !widgetStore.moments.get(momentType as Moments))}
+                    />
+                )}
                 <div className="moment-generate">
                     <Button intent="success" onClick={this.handleMomentGenerate}>Generate</Button>
                 </div>
