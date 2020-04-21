@@ -57,7 +57,6 @@ export class WidgetConfig {
 }
 
 export class WidgetProps {
-    appStore: AppStore;
     id: string;
     docked: boolean;
     floatingSettingsId?: string;
@@ -420,7 +419,7 @@ export class WidgetsStore {
                     const stackHeaderControlButtons = stack.header.controlsContainer[0];
                     if (component && showCogWidgets.includes(component) && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount < 5) {
                         const cogPinedButton = $(`<li class="lm_settings" title="settings"><span class="bp3-icon-standard bp3-icon-cog"/></li>`);
-                        cogPinedButton.on("click", () => contentItem.config.props.appStore.widgetsStore.onCogPinedClick(stack.getActiveContentItem()));
+                        cogPinedButton.on("click", () => WidgetsStore.Instance.onCogPinedClick(stack.getActiveContentItem()));
                         stack.header.controlsContainer.prepend(cogPinedButton);
                     } else if (!showCogWidgets.includes(component) && stackHeaderControlButtons && stackHeaderControlButtons.childElementCount === 5) {
                         stack.header.controlsContainer[0].children[0].remove();

@@ -9,7 +9,6 @@ import {toFixed} from "utilities";
 import "./ToolbarComponent.css";
 
 export class ToolbarComponentProps {
-    appStore: AppStore;
     docked: boolean;
     visible: boolean;
     vertical: boolean;
@@ -36,22 +35,25 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
     ]);
 
     handleZoomToActualSizeClicked = () => {
-        this.props.appStore.activeFrame.setZoom(1.0);
+        AppStore.Instance.activeFrame.setZoom(1.0);
     };
 
     handleZoomInClicked = () => {
-        const frame = this.props.appStore.activeFrame.spatialReference || this.props.appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame.spatialReference || appStore.activeFrame;
         frame.setZoom(frame.zoomLevel * 2.0, true);
     };
 
     handleZoomOutClicked = () => {
-        const frame = this.props.appStore.activeFrame.spatialReference || this.props.appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame.spatialReference || appStore.activeFrame;
         frame.setZoom(frame.zoomLevel / 2.0, true);
     };
 
     handleRegionTypeClicked = (type: CARTA.RegionType) => {
-        this.props.appStore.activeFrame.regionSet.setNewRegionType(type);
-        this.props.appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
+        const appStore = AppStore.Instance;
+        appStore.activeFrame.regionSet.setNewRegionType(type);
+        appStore.activeFrame.regionSet.setMode(RegionMode.CREATING);
     };
 
     handleCoordinateSystemClicked = (coordinateSystem: SystemType) => {
@@ -180,7 +182,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                 }
                 {frame.regionSet.mode === RegionMode.MOVING &&
                 <Tooltip position={tooltipPosition} content={<span>Create region<br/><i><small>Double-click to select region type</small></i></span>}>
-                    <Button icon={regionIcon} onClick={() => this.props.appStore.activeFrame.regionSet.setMode(RegionMode.CREATING)}/>
+                    <Button icon={regionIcon} onClick={() => frame.regionSet.setMode(RegionMode.CREATING)}/>
                 </Tooltip>
                 }
                 <Tooltip position={tooltipPosition} content="Select and pan mode">
@@ -217,7 +219,7 @@ export class ToolbarComponent extends React.Component<ToolbarComponentProps> {
                     <Button icon="numerical" active={!overlay.labelsHidden} onClick={overlay.toggleLabels}/>
                 </Tooltip>
                 <Tooltip position={tooltipPosition} content={`Export image (${appStore.modifierString}E)`}>
-                    <Button icon="floppy-disk" onClick={() => exportImage(overlay.padding, appStore.darkTheme, appStore.activeFrame.frameInfo.fileInfo.name)}/>
+                    <Button icon="floppy-disk" onClick={() => exportImage(overlay.padding, appStore.darkTheme, frame.frameInfo.fileInfo.name)}/>
                 </Tooltip>
             </ButtonGroup>
         );

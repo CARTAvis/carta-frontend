@@ -89,9 +89,9 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
         super(props);
 
         autorun(() => {
-            const appStore = this.props.appStore;
-            if (appStore.activeFrame) {
-                const imageSize = {x: appStore.activeFrame.renderWidth, y: appStore.activeFrame.renderHeight};
+            const frame = AppStore.Instance.activeFrame;
+            if (frame) {
+                const imageSize = {x: frame.renderWidth, y: frame.renderHeight};
                 // Compare to cached image size to prevent duplicate events when changing frames
                 if (!this.cachedImageSize || this.cachedImageSize.x !== imageSize.x || this.cachedImageSize.y !== imageSize.y) {
                     this.cachedImageSize = imageSize;
@@ -107,46 +107,46 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
 
     onResize = (width: number, height: number) => {
         if (width > 0 && height > 0) {
-            this.props.appStore.setImageViewDimensions(width, height);
+            AppStore.Instance.setImageViewDimensions(width, height);
         }
     };
 
     onClicked = (cursorInfo: CursorInfo) => {
-        const appStore = this.props.appStore;
-        if (appStore.activeFrame) {
+        const frame = AppStore.Instance.activeFrame;
+        if (frame) {
             // Shift from one-indexed image space position to zero-indexed
-            appStore.activeFrame.setCenter(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1);
+            frame.setCenter(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1);
         }
     };
 
     onZoomed = (cursorInfo: CursorInfo, delta: number) => {
-        const appStore = this.props.appStore;
-        if (appStore.activeFrame) {
+        const frame = AppStore.Instance.activeFrame;
+        if (frame) {
             const zoomSpeed = 1 + Math.abs(delta / 750.0);
 
             // If frame is spatially matched, apply zoom to the reference frame, rather than the active frame
-            if (appStore.activeFrame.spatialReference) {
-                const newZoom = appStore.activeFrame.spatialReference.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
+            if (frame.spatialReference) {
+                const newZoom = frame.spatialReference.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
                 // Shift from one-indexed image space position to zero-indexed
-                appStore.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom, true);
+                frame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom, true);
             } else {
-                const newZoom = appStore.activeFrame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
+                const newZoom = frame.zoomLevel * (delta > 0 ? zoomSpeed : 1.0 / zoomSpeed);
                 // Shift from one-indexed image space position to zero-indexed
-                appStore.activeFrame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom, true);
+                frame.zoomToPoint(cursorInfo.posImageSpace.x + 1, cursorInfo.posImageSpace.y + 1, newZoom, true);
             }
         }
     };
 
     onMouseEnter = () => {
-        this.props.appStore.showImageToolbar();
+        AppStore.Instance.showImageToolbar();
     };
 
     onMouseLeave = () => {
-        this.props.appStore.hideImageToolbar();
+        AppStore.Instance.hideImageToolbar();
     };
 
     private handleRegionDoubleClicked = (region: RegionStore) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (region) {
             const frame = appStore.getFrame(region.fileId);
             if (frame) {
@@ -225,7 +225,6 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
                     />
                     }
                     <ToolbarComponent
-                        appStore={appStore}
                         docked={this.props.docked}
                         visible={appStore.imageToolbarVisible}
                         vertical={false}
@@ -247,16 +246,11 @@ export class ImageViewComponent extends React.Component<WidgetProps> {
             <div className="image-view-div" onMouseOver={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
                 <RasterViewComponent
                     docked={this.props.docked}
-                    overlaySettings={overlayStore}
                 />
                 <ContourViewComponent
-                    appStore={appStore}
                     docked={this.props.docked}
-                    overlaySettings={overlayStore}
                 />
                 <CatalogViewComponent
-                    appStore={appStore}
-                    overlaySettings={overlayStore}
                     docked={this.props.docked}
                 />
                 {divContents}

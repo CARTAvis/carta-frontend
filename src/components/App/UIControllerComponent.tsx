@@ -12,14 +12,11 @@ import {
     FileInfoDialogComponent,
     ContourDialogComponent
 } from "components/Dialogs";
-import { AppStore } from "stores";
 
 @observer
-export class UIControllerComponent extends React.Component<{appStore: AppStore}> {
+export class UIControllerComponent extends React.Component {
  
     render() {
-        const appStore = this.props.appStore;
-
         return (
             <React.Fragment>
                 <SplashScreenComponent/>

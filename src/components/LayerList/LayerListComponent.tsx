@@ -6,7 +6,7 @@ import {AnchorButton, Menu, MenuDivider, MenuItem, NonIdealState, Tooltip} from 
 import {Cell, Column, ColumnHeaderCell, RowHeaderCell, SelectionModes, Table} from "@blueprintjs/table";
 import {IMenuContext} from "@blueprintjs/table/src/interactions/menus/menuContext";
 import ReactResizeDetector from "react-resize-detector";
-import {WidgetConfig, WidgetProps, HelpType} from "stores";
+import {WidgetConfig, WidgetProps, HelpType, AppStore} from "stores";
 import "./LayerListComponent.css";
 
 @observer
@@ -46,15 +46,15 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         if (oldIndex === newIndex) {
             return;
         }
-        this.props.appStore.reorderFrame(oldIndex, newIndex, length);
+        AppStore.Instance.reorderFrame(oldIndex, newIndex, length);
     };
 
     private rowHeaderCellRenderer = (rowIndex: number) => {
-        return <RowHeaderCell name={rowIndex.toString()} className={rowIndex === this.props.appStore.activeFrameIndex ? "active-row-cell" : ""}/>;
+        return <RowHeaderCell name={rowIndex.toString()} className={rowIndex === AppStore.Instance.activeFrameIndex ? "active-row-cell" : ""}/>;
     };
 
     private fileNameRenderer = (rowIndex: number) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell/>;
         }
@@ -73,7 +73,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     };
 
     private channelRenderer = (rowIndex: number) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell/>;
         }
@@ -81,7 +81,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     };
 
     private stokesRenderer = (rowIndex: number) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell/>;
         }
@@ -89,7 +89,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     };
 
     private typeRenderer = (rowIndex: number) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell/>;
         }
@@ -113,7 +113,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     };
 
     private matchingRenderer = (rowIndex: number) => {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (rowIndex < 0 || rowIndex >= appStore.frames.length) {
             return <Cell/>;
         }
@@ -210,7 +210,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
 
     private contextMenuRenderer = (context: IMenuContext) => {
         const rows = context.getTarget().rows;
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (rows && rows.length && appStore.frames[rows[0]]) {
             const frame = appStore.frames[rows[0]];
             if (frame) {
@@ -228,7 +228,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
     };
 
     render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const frameNum = appStore.frameNum;
 
         if (frameNum <= 0) {
@@ -244,7 +244,7 @@ export class LayerListComponent extends React.Component<WidgetProps> {
         // There is probably a neater way to do this, though
         const frameChannels = appStore.frameChannels;
         const frameStokes = appStore.frameStokes;
-        const activeFrameIndex = this.props.appStore.activeFrameIndex;
+        const activeFrameIndex = appStore.activeFrameIndex;
         const visibilityRaster = appStore.frames.map(f => f.renderConfig.visible);
         const visibilityContour = appStore.frames.map(f => f.contourConfig.visible && f.contourConfig.enabled);
         const matchingTypes = appStore.frames.map(f => f.spatialReference && f.spectralReference);

@@ -2,7 +2,6 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import {FocusStyleManager} from "@blueprintjs/core";
 import {App} from "./App";
-import {AppStore} from "./stores";
 import {unregister} from "./registerServiceWorker";
 import "./index.css";
 import "@blueprintjs/core/lib/css/blueprint.css";

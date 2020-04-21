@@ -552,7 +552,6 @@ export class FrameStore {
         this.secondarySpatialImages = [];
         this.secondarySpectralImages = [];
 
-
         // synchronize AST overlay's color/grid/label with preference when frame is created
         const astColor = preferenceStore.astColor;
         if (astColor !== this.overlayStore.global.color) {

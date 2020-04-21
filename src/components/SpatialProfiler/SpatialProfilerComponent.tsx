@@ -7,7 +7,7 @@ import {Colors, NonIdealState} from "@blueprintjs/core";
 import ReactResizeDetector from "react-resize-detector";
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent, VERTICAL_RANGE_PADDING} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
-import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps, HelpType, OverlayStore} from "stores";
+import {ASTSettingsString, FrameStore, SpatialProfileStore, WidgetConfig, WidgetProps, HelpType, OverlayStore, WidgetsStore, AppStore} from "stores";
 import {SpatialProfileWidgetStore} from "stores/widgets";
 import {Point2D} from "models";
 import {binarySearchByX, clamp, formattedNotation, toExponential, toFixed} from "utilities";
@@ -42,8 +42,9 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     @observable autoScaleHorizontalMax: number;
 
     @computed get widgetStore(): SpatialProfileWidgetStore {
-        if (this.props.appStore && this.props.appStore.widgetsStore.spatialProfileWidgets) {
-            const widgetStore = this.props.appStore.widgetsStore.spatialProfileWidgets.get(this.props.id);
+        const widgetsStore = WidgetsStore.Instance;
+        if (widgetsStore.spatialProfileWidgets) {
+            const widgetStore = widgetsStore.spatialProfileWidgets.get(this.props.id);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -53,21 +54,22 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     }
 
     @computed get profileStore(): SpatialProfileStore {
-        if (this.props.appStore && this.props.appStore.activeFrame) {
+        const appStore = AppStore.Instance;
+        if (appStore.activeFrame) {
             let keyStruct = {fileId: this.widgetStore.fileId, regionId: this.widgetStore.regionId};
             // Replace "current file" fileId with active frame's fileId
             if (this.widgetStore.fileId === -1) {
-                keyStruct.fileId = this.props.appStore.activeFrame.frameInfo.fileId;
+                keyStruct.fileId = appStore.activeFrame.frameInfo.fileId;
             }
             const key = `${keyStruct.fileId}-${keyStruct.regionId}`;
-            return this.props.appStore.spatialProfiles.get(key);
+            return appStore.spatialProfiles.get(key);
         }
         return undefined;
     }
 
     @computed get frame(): FrameStore {
-        if (this.props.appStore && this.widgetStore) {
-            return this.props.appStore.getFrame(this.widgetStore.fileId);
+        if (this.widgetStore) {
+            return AppStore.Instance.getFrame(this.widgetStore.fileId);
         } else {
             return undefined;
         }
@@ -216,33 +218,33 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === SpatialProfilerComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
-            const id = props.appStore.widgetsStore.addSpatialProfileWidget();
-            props.appStore.widgetsStore.changeWidgetId(props.id, id);
+            const id = appStore.widgetsStore.addSpatialProfileWidget();
+            appStore.widgetsStore.changeWidgetId(props.id, id);
         } else {
-            if (!this.props.appStore.widgetsStore.spatialProfileWidgets.has(this.props.id)) {
+            if (!appStore.widgetsStore.spatialProfileWidgets.has(this.props.id)) {
                 console.log(`can't find store for widget with id=${this.props.id}`);
-                this.props.appStore.widgetsStore.spatialProfileWidgets.set(this.props.id, new SpatialProfileWidgetStore());
+                appStore.widgetsStore.spatialProfileWidgets.set(this.props.id, new SpatialProfileWidgetStore());
             }
         }
         // Update widget title when region or coordinate changes
         autorun(() => {
             if (this.widgetStore) {
                 const coordinate = this.widgetStore.coordinate;
-                const appStore = this.props.appStore;
                 const currentData = this.plotData;
                 if (appStore && coordinate) {
                     const coordinateString = `${coordinate.toUpperCase()} Profile`;
                     const regionString = this.widgetStore.regionId === 0 ? "Cursor" : `Region #${this.widgetStore.regionId}`;
-                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.props.id, `${coordinateString}: ${regionString}`);
                 }
                 if (currentData) {
                     this.widgetStore.initXYBoundaries(currentData.xMin, currentData.xMax, currentData.yMin, currentData.yMax);
                 }
             } else {
-                this.props.appStore.widgetsStore.setWidgetTitle(this.props.id, `X Profile: Cursor`);
+                appStore.widgetsStore.setWidgetTitle(this.props.id, `X Profile: Cursor`);
             }
         });
 
@@ -380,7 +382,7 @@ export class SpatialProfilerComponent extends React.Component<WidgetProps> {
     }, 33);
 
     render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         if (!this.widgetStore) {
             return <NonIdealState icon={"error"} title={"Missing profile"} description={"Profile not found"}/>;
         }

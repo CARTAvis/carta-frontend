@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Colors, Tab, Tabs} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent, SpectralSettingsComponent} from "components/Shared";
 import {SpectralProfileWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig, HelpType} from "stores";
+import {WidgetProps, WidgetConfig, HelpType, AppStore, WidgetsStore} from "stores";
 import {parseNumber} from "utilities";
 import "./SpectralProfilerSettingsPanelComponent.css";
 
@@ -30,8 +30,9 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
     }
 
     @computed get widgetStore(): SpectralProfileWidgetStore {
-        if (this.props.appStore && this.props.appStore.widgetsStore.spectralProfileWidgets) {
-            const widgetStore = this.props.appStore.widgetsStore.spectralProfileWidgets.get(this.props.id);
+        const widgetsStore = WidgetsStore.Instance;
+        if (widgetsStore.spectralProfileWidgets) {
+            const widgetStore = widgetsStore.spectralProfileWidgets.get(this.props.id);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -42,10 +43,9 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
 
     constructor(props: WidgetProps) {
         super(props);
-
+        const appStore = AppStore.Instance;
         autorun(() => {
             if (this.widgetStore) {
-                const appStore = this.props.appStore;
                 const frame = appStore.activeFrame;
                 const coordinate = this.widgetStore.coordinate;
                 if (frame && coordinate) {
@@ -58,7 +58,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
                     const regionId = this.widgetStore.effectiveRegionId;
                     const regionString = regionId === 0 ? "Cursor" : `Region #${regionId}`;
                     const selectedString = this.widgetStore.matchesSelectedRegion ? "(Active)" : "";
-                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Settings: ${regionString} ${selectedString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Settings: ${regionString} ${selectedString}`);
                 }
             }
         });
@@ -135,7 +135,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
     render() {
         const widgetStore = this.widgetStore;
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            darkMode: this.props.appStore.darkTheme,
+            darkMode: AppStore.Instance.darkTheme,
             primaryDarkModeLineColor: Colors.BLUE4,
             primaryLineColor: widgetStore.primaryLineColor,
             lineWidth: widgetStore.lineWidth,
@@ -163,7 +163,7 @@ export class SpectralProfilerSettingsPanelComponent extends React.Component<Widg
         return (
             <div className="spectral-settings">
                 <Tabs id="spectralSettingTabs">
-                    <Tab id="conversion" title="Conversion" panel={<SpectralSettingsComponent appStore={this.props.appStore} widgetStore={widgetStore} disable={false}/>}/>
+                    <Tab id="conversion" title="Conversion" panel={<SpectralSettingsComponent widgetStore={widgetStore} disable={false}/>}/>
                     <Tab id="styling" title="Styling" panel={<LinePlotSettingsPanelComponent {...lineSettingsProps}/>}/>
                 </Tabs>
             </div>

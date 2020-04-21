@@ -2,13 +2,11 @@ import {observer} from "mobx-react";
 import * as React from "react";
 import * as Plotly from "plotly.js";
 import Plot from "react-plotly.js";
-import {AppStore, OverlayStore} from "stores";
+import {AppStore, CatalogStore, OverlayStore} from "stores";
 import "./CatalogViewComponent.css";
 import {computed} from "mobx";
 
 export interface CatalogViewComponentProps {
-    overlaySettings: OverlayStore;
-    appStore: AppStore;
     docked: boolean;
 }
 
@@ -16,7 +14,7 @@ export interface CatalogViewComponentProps {
 export class CatalogViewComponent extends React.Component<CatalogViewComponentProps> {
 
     @computed get scatterDatasets() {
-        const catalogStore = this.props.appStore.catalogStore;
+        const catalogStore = CatalogStore.Instance;
         let scatterDatasets: Plotly.Data[] = [];
 
         catalogStore.catalogs.forEach((catalog, key) => {
@@ -63,10 +61,11 @@ export class CatalogViewComponent extends React.Component<CatalogViewComponentPr
     }
 
     render() {
-        const frame = this.props.appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         const width = frame ? frame.renderWidth || 1 : 1;
         const height = frame ? frame.renderHeight || 1 : 1;
-        const padding = this.props.overlaySettings.padding;
+        const padding = appStore.overlayStore.padding;
         let className = "catalog-div";
         if (this.props.docked) {
             className += " docked";

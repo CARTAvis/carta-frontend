@@ -9,7 +9,7 @@ import {HistogramToolbarComponent} from "./HistogramToolbarComponent/HistogramTo
 import {LinePlotComponent, LinePlotComponentProps, PlotType} from "components/Shared";
 import {TickType} from "../Shared/LinePlot/PlotContainer/PlotContainerComponent";
 import {HistogramWidgetStore} from "stores/widgets";
-import {FrameStore, WidgetConfig, WidgetProps, HelpType} from "stores";
+import {FrameStore, WidgetConfig, WidgetProps, HelpType, WidgetsStore, AppStore} from "stores";
 import {clamp} from "utilities";
 import {Point2D} from "models";
 import "./HistogramComponent.css";
@@ -36,8 +36,9 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     @observable height: number;
 
     @computed get widgetStore(): HistogramWidgetStore {
-        if (this.props.appStore && this.props.appStore.widgetsStore.histogramWidgets) {
-            const widgetStore = this.props.appStore.widgetsStore.histogramWidgets.get(this.props.id);
+        const widgetsStore = WidgetsStore.Instance;
+        if (widgetsStore.histogramWidgets) {
+            const widgetStore = widgetsStore.histogramWidgets.get(this.props.id);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -47,7 +48,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     }
 
     @computed get histogramData(): CARTA.IHistogram {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
 
         if (appStore.activeFrame) {
             let fileId = appStore.activeFrame.frameInfo.fileId;
@@ -112,7 +113,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         let headerString = [];
 
         // region info
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         if (frame && frame.frameInfo && frame.regionSet) {
             const regionId = this.widgetStore.effectiveRegionId;
             const region = frame.regionSet.regions.find(r => r.regionId === regionId);
@@ -126,20 +127,20 @@ export class HistogramComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === HistogramComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
-            const id = props.appStore.widgetsStore.addHistogramWidget();
-            props.appStore.widgetsStore.changeWidgetId(props.id, id);
+            const id = appStore.widgetsStore.addHistogramWidget();
+            appStore.widgetsStore.changeWidgetId(props.id, id);
         } else {
-            if (!this.props.appStore.widgetsStore.histogramWidgets.has(this.props.id)) {
+            if (!appStore.widgetsStore.histogramWidgets.has(this.props.id)) {
                 console.log(`can't find store for widget with id=${this.props.id}`);
-                this.props.appStore.widgetsStore.histogramWidgets.set(this.props.id, new HistogramWidgetStore());
+                appStore.widgetsStore.histogramWidgets.set(this.props.id, new HistogramWidgetStore());
             }
         }
         // Update widget title when region or coordinate changes
         autorun(() => {
-            const appStore = this.props.appStore;
             if (this.widgetStore && appStore.activeFrame) {
                 let regionString = "Unknown";
                 const regionId = this.widgetStore.effectiveRegionId;
@@ -168,7 +169,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     }
 
     componentDidUpdate() {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
 
         if (frame !== this.cachedFrame) {
             this.cachedFrame = frame;
@@ -186,7 +187,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
     }, 100);
 
     render() {
-        const appStore = this.props.appStore;
+        const appStore = AppStore.Instance;
         const frame = appStore.activeFrame;
 
         if (!frame || !this.widgetStore) {
@@ -276,7 +277,7 @@ export class HistogramComponent extends React.Component<WidgetProps> {
         return (
             <div className={className}>
                 <div className="histogram-container">
-                    <HistogramToolbarComponent widgetStore={this.widgetStore} appStore={appStore}/>
+                    <HistogramToolbarComponent widgetStore={this.widgetStore}/>
                     <div className="histogram-plot">
                         <LinePlotComponent {...linePlotProps}/>
                     </div>

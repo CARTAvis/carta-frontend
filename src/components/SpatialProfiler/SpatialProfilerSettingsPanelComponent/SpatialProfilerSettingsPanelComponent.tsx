@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import {Colors} from "@blueprintjs/core";
 import {LinePlotSettingsPanelComponentProps, LinePlotSettingsPanelComponent} from "components/Shared";
 import {SpatialProfileWidgetStore} from "stores/widgets";
-import {WidgetProps, WidgetConfig, HelpType} from "stores";
+import {WidgetProps, WidgetConfig, HelpType, WidgetsStore, AppStore} from "stores";
 import {parseNumber} from "utilities";
 
 const KEYCODE_ENTER = 13;
@@ -29,8 +29,9 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
     }
 
     @computed get widgetStore(): SpatialProfileWidgetStore {
-        if (this.props.appStore && this.props.appStore.widgetsStore.spatialProfileWidgets) {
-            const widgetStore = this.props.appStore.widgetsStore.spatialProfileWidgets.get(this.props.id);
+        const widgetsStore = WidgetsStore.Instance;
+        if (widgetsStore.spatialProfileWidgets) {
+            const widgetStore = widgetsStore.spatialProfileWidgets.get(this.props.id);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -41,19 +42,18 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
 
     constructor(props: WidgetProps) {
         super(props);
-
+        const appStore = AppStore.Instance;
         // Update widget title when region or coordinate changes
         autorun(() => {
             if (this.widgetStore) {
                 const coordinate = this.widgetStore.coordinate;
-                const appStore = this.props.appStore;
                 if (appStore && coordinate) {
                     const coordinateString = `${coordinate.toUpperCase()} Profile`;
                     const regionString = this.widgetStore.regionId === 0 ? "Cursor" : `Region #${this.widgetStore.regionId}`;
-                    this.props.appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Settings: ${regionString}`);
+                    appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `${coordinateString} Settings: ${regionString}`);
                 }
             } else {
-                this.props.appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `X Profile Settings: Cursor`);
+                appStore.widgetsStore.setWidgetTitle(this.props.floatingSettingsId, `X Profile Settings: Cursor`);
             }
         });
     }
@@ -143,7 +143,7 @@ export class SpatialProfilerSettingsPanelComponent extends React.Component<Widge
         }];
 
         const lineSettingsProps: LinePlotSettingsPanelComponentProps = {
-            darkMode: this.props.appStore.darkTheme,
+            darkMode: AppStore.Instance.darkTheme,
             primaryDarkModeLineColor: Colors.BLUE4,
             primaryLineColor: widgetStore.primaryLineColor,
             lineWidth: widgetStore.lineWidth,

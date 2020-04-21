@@ -84,7 +84,7 @@ export class App extends React.Component {
 
         return (
             <div className={className}>
-                <UIControllerComponent appStore={appStore}/>
+                <UIControllerComponent/>
                 <Alert isOpen={appStore.alertStore.alertVisible} onClose={appStore.alertStore.dismissAlert} canEscapeKeyCancel={true}>
                     <p>{appStore.alertStore.alertText}</p>
                 </Alert>
@@ -102,7 +102,7 @@ export class App extends React.Component {
                 <div className={glClassName} ref={ref => appStore.setAppContainer(ref)}>
                     <ReactResizeDetector handleWidth handleHeight onResize={this.onContainerResize} refreshMode={"throttle"} refreshRate={200}/>
                 </div>
-                <FloatingWidgetManagerComponent appStore={appStore}/>
+                <FloatingWidgetManagerComponent/>
                 <Dialog isOpen={appStore.dialogStore.hotkeyDialogVisible} className={"bp3-hotkey-dialog"} canEscapeKeyClose={true} canOutsideClickClose={true} onClose={appStore.dialogStore.hideHotkeyDialog}>
                     <div className={Classes.DIALOG_BODY}>
                         {this.renderHotkeys()}

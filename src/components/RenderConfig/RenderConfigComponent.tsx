@@ -9,7 +9,7 @@ import {ColormapConfigComponent} from "./ColormapConfigComponent/ColormapConfigC
 import {LinePlotComponent, LinePlotComponentProps, PlotType, ProfilerInfoComponent} from "components/Shared";
 import {TaskProgressDialogComponent} from "components/Dialogs";
 import {RenderConfigWidgetStore} from "stores/widgets";
-import {AnimationState, FrameScaling, FrameStore, RenderConfigStore, WidgetConfig, WidgetProps, HelpType, AlertStore, LogStore, AppStore, AnimatorStore} from "stores";
+import {AnimationState, FrameScaling, FrameStore, RenderConfigStore, WidgetConfig, WidgetProps, HelpType, AlertStore, LogStore, AppStore, AnimatorStore, WidgetsStore} from "stores";
 import {Point2D} from "models";
 import {clamp, toExponential, toFixed} from "utilities";
 import "./RenderConfigComponent.css";
@@ -39,8 +39,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     @observable height: number;
 
     @computed get widgetStore(): RenderConfigWidgetStore {
-        if (this.props.appStore && this.props.appStore.widgetsStore.renderConfigWidgets) {
-            const widgetStore = this.props.appStore.widgetsStore.renderConfigWidgets.get(this.props.id);
+        const widgetsStore = WidgetsStore.Instance;
+        if (widgetsStore.renderConfigWidgets) {
+            const widgetStore = widgetsStore.renderConfigWidgets.get(this.props.id);
             if (widgetStore) {
                 return widgetStore;
             }
@@ -50,7 +51,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     }
 
     @computed get plotData(): { values: Array<Point2D>, xMin: number, xMax: number, yMin: number, yMax: number } {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         if (frame && frame.renderConfig.histogram && frame.renderConfig.histogram.bins && frame.renderConfig.histogram.bins.length) {
             const histogram = frame.renderConfig.histogram;
             let minIndex = 0;
@@ -87,21 +88,22 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
 
     constructor(props: WidgetProps) {
         super(props);
+        const appStore = AppStore.Instance;
         // Check if this widget hasn't been assigned an ID yet
         if (!props.docked && props.id === RenderConfigComponent.WIDGET_CONFIG.type) {
             // Assign the next unique ID
-            const id = props.appStore.widgetsStore.addRenderConfigWidget();
-            props.appStore.widgetsStore.changeWidgetId(props.id, id);
+            const id = appStore.widgetsStore.addRenderConfigWidget();
+            appStore.widgetsStore.changeWidgetId(props.id, id);
         } else {
-            if (!this.props.appStore.widgetsStore.renderConfigWidgets.has(this.props.id)) {
+            if (!appStore.widgetsStore.renderConfigWidgets.has(this.props.id)) {
                 console.log(`can't find store for widget with id=${this.props.id}`);
-                this.props.appStore.widgetsStore.renderConfigWidgets.set(this.props.id, new RenderConfigWidgetStore());
+                appStore.widgetsStore.renderConfigWidgets.set(this.props.id, new RenderConfigWidgetStore());
             }
         }
 
         autorun(() => {
-            if (this.props.appStore.activeFrame) {
-                const newHist = this.props.appStore.activeFrame.renderConfig.histogram;
+            if (appStore.activeFrame) {
+                const newHist = appStore.activeFrame.renderConfig.histogram;
                 if (newHist !== this.cachedHistogram) {
                     this.cachedHistogram = newHist;
                     this.widgetStore.clearXYBounds();
@@ -118,7 +120,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     }
 
     componentDidUpdate() {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
 
         if (frame !== this.cachedFrame) {
             this.cachedFrame = frame;
@@ -126,22 +128,15 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         }
     }
 
-    handleColorMapChange = (newColorMap: string) => {
-        this.props.appStore.activeFrame.renderConfig.setColorMap(newColorMap);
-    };
-
-    handleScalingChange = (scaling: FrameScaling) => {
-        this.props.appStore.activeFrame.renderConfig.setScaling(scaling);
-    };
-
     handleScaleMinChange = (ev) => {
         if (ev.type === "keydown" && ev.keyCode !== KEYCODE_ENTER) {
             return;
         }
 
         const val = parseFloat(ev.currentTarget.value);
-        if (isFinite(val) && val !== this.props.appStore.activeFrame.renderConfig.scaleMinVal) {
-            this.props.appStore.activeFrame.renderConfig.setCustomScale(val, this.props.appStore.activeFrame.renderConfig.scaleMaxVal);
+        const frame = AppStore.Instance.activeFrame;
+        if (frame && isFinite(val) && val !== frame.renderConfig.scaleMinVal) {
+            frame.renderConfig.setCustomScale(val, frame.renderConfig.scaleMaxVal);
         }
     };
 
@@ -151,8 +146,9 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
         }
 
         const val = parseFloat(ev.currentTarget.value);
-        if (isFinite(val) && val !== this.props.appStore.activeFrame.renderConfig.scaleMaxVal) {
-            this.props.appStore.activeFrame.renderConfig.setCustomScale(this.props.appStore.activeFrame.renderConfig.scaleMinVal, val);
+        const frame = AppStore.Instance.activeFrame;
+        if (frame && isFinite(val) && val !== frame.renderConfig.scaleMaxVal) {
+            frame.renderConfig.setCustomScale(frame.renderConfig.scaleMinVal, val);
         }
     };
 
@@ -162,51 +158,54 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
     };
 
     handlePercentileRankClick = (value: number) => {
-        if (!this.props.appStore.activeFrame.renderConfig.setPercentileRank(value)) {
-            AlertStore.Instance.showAlert(`Couldn't set percentile of rank ${value}%`);
-            LogStore.Instance.addError(`Couldn't set percentile of rank ${value}%`, ["render"]);
+        const appStore = AppStore.Instance;
+        if (!appStore.activeFrame.renderConfig.setPercentileRank(value)) {
+            appStore.alertStore.showAlert(`Couldn't set percentile of rank ${value}%`);
+            appStore.logStore.addError(`Couldn't set percentile of rank ${value}%`, ["render"]);
         }
     };
 
     handlePercentileRankSelectChanged = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        this.props.appStore.activeFrame.renderConfig.setPercentileRank(+event.currentTarget.value);
+        AppStore.Instance.activeFrame.renderConfig.setPercentileRank(+event.currentTarget.value);
     };
 
     setCustomPercentileRank = () => {
-        this.props.appStore.activeFrame.renderConfig.setPercentileRank(-1);
+        AppStore.Instance.activeFrame.renderConfig.setPercentileRank(-1);
     };
 
     handleCubeHistogramSelected = () => {
-        const frame = this.props.appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         if (frame && frame.renderConfig) {
             frame.renderConfig.setUseCubeHistogram(true);
             if (frame.renderConfig.cubeHistogramProgress < 1.0) {
-                this.props.appStore.requestCubeHistogram();
+                appStore.requestCubeHistogram();
             }
         }
     };
 
     handleCubeHistogramCancelled = () => {
-        const frame = this.props.appStore.activeFrame;
+        const appStore = AppStore.Instance;
+        const frame = appStore.activeFrame;
         if (frame && frame.renderConfig) {
             frame.renderConfig.setUseCubeHistogram(false);
         }
-        this.props.appStore.cancelCubeHistogramRequest();
+        appStore.cancelCubeHistogramRequest();
     };
 
     onMinMoved = (x: number) => {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         // Check bounds first, to make sure the max isn't being moved below the min
         if (frame && frame.renderConfig && x < frame.renderConfig.scaleMaxVal) {
-            this.props.appStore.activeFrame.renderConfig.setCustomScale(x, this.props.appStore.activeFrame.renderConfig.scaleMaxVal);
+            frame.renderConfig.setCustomScale(x, frame.renderConfig.scaleMaxVal);
         }
     };
 
     onMaxMoved = (x: number) => {
-        const frame = this.props.appStore.activeFrame;
+        const frame = AppStore.Instance.activeFrame;
         // Check bounds first, to make sure the max isn't being moved below the min
         if (frame && frame.renderConfig && x > frame.renderConfig.scaleMinVal) {
-            this.props.appStore.activeFrame.renderConfig.setCustomScale(this.props.appStore.activeFrame.renderConfig.scaleMinVal, x);
+            frame.renderConfig.setCustomScale(frame.renderConfig.scaleMinVal, x);
         }
     };
 
@@ -225,7 +224,7 @@ export class RenderConfigComponent extends React.Component<WidgetProps> {
                 numberString = toFixed(this.widgetStore.cursorX, 2);
             }
 
-            const frame = this.props.appStore.activeFrame;
+            const frame = AppStore.Instance.activeFrame;
             if (frame.unit) {
                 numberString += ` ${frame.unit}`;
             }
