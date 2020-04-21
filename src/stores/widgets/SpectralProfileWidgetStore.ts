@@ -5,7 +5,7 @@ import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
 import {AppStore, FrameStore} from "..";
 import {isColorValid} from "utilities";
-import {SpectralSystem, SpectralType, SpectralUnit} from "models";
+import {MomentMask, SpectralSystem, SpectralType, SpectralUnit} from "models";
 
 export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable coordinate: string;
@@ -26,6 +26,9 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable lineWidth: number;
     @observable linePlotPointSize: number;
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
+
+    // moment settings
+    @observable momentMask: MomentMask;
 
     public static StatsTypeString(statsType: CARTA.StatsType) {
         switch (statsType) {
@@ -93,6 +96,13 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
             frame.spectralSystem = specsys;
             this.clearXBounds();
         }
+    };
+
+    @action setMomentMask = (momentMask: MomentMask) => {
+        if (momentMask) {
+            this.momentMask = momentMask;
+        }
+        console.log(this.momentMask);
     };
 
     @action setXBounds = (minVal: number, maxVal: number) => {
@@ -166,6 +176,8 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.linePlotPointSize = 1.5;
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
+
+        this.momentMask = MomentMask.NONE;
     }
 
     @computed get isAutoScaledX() {

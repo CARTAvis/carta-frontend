@@ -5,23 +5,8 @@ import {RegionSelectorComponent} from "components";
 import {SpectralSettingsComponent} from "components/Shared";
 import {SpectralProfileWidgetStore} from "stores/widgets";
 import {AppStore} from "stores";
+import {MomentMask, Moments} from "models";
 import "./MomentGeneratorComponent.css";
-
-export enum Moments {
-    TYPE_M1 = "-1: Mean value of the spectrum",
-    TYPE_0 = "0: Integrated value of the spectrum",
-    TYPE_1 = "1: Intensity weighted coordinate",
-    TYPE_2 = "2: Intensity weighted dispersion of the coordinate",
-    TYPE_3 = "3: Median value of the spectrum",
-    TYPE_4 = "4: Median coordinate",
-    TYPE_5 = "5: Standard deviation about the mean of the spectrum",
-    TYPE_6 = "6: Root mean square of the spectrum",
-    TYPE_7 = "7: Absolute mean deviation of the spectrum",
-    TYPE_8 = "8: Maximum value of the spectrum",
-    TYPE_9 = "9: Coordinate of the maximum value of the spectrum",
-    TYPE_10 = "10: Minimum value of the spectrum",
-    TYPE_11 = "11: Coordinate of the minimum value of the spectrum"
-}
 
 @observer
 export class MomentGeneratorComponent extends React.Component<{appStore: AppStore, widgetStore: SpectralProfileWidgetStore}> {
@@ -33,6 +18,7 @@ export class MomentGeneratorComponent extends React.Component<{appStore: AppStor
     };
 
     render() {
+        const widgetStore = this.props.widgetStore;
         const regionPanel = <RegionSelectorComponent appStore={this.props.appStore} widgetStore={this.props.widgetStore}/>;
 
         const spectralPanel = (
@@ -64,9 +50,9 @@ export class MomentGeneratorComponent extends React.Component<{appStore: AppStor
             <React.Fragment>
                 <FormGroup label="Mask" inline={true}>
                     <HTMLSelect
-                        value={"None"}
-                        options={["None", "Include", "Exclude"]}
-                        onChange={(event: React.FormEvent<HTMLSelectElement>) => {}}
+                        value={widgetStore.momentMask}
+                        options={Object.keys(MomentMask).map((key) => ({label: MomentMask[key], value: key}))}
+                        onChange={(event: React.FormEvent<HTMLSelectElement>) => widgetStore.setMomentMask(event.currentTarget.value as MomentMask)}
                     />
                 </FormGroup>
                 <FormGroup label="From" inline={true}>
