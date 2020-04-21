@@ -36,7 +36,7 @@ export class MomentGeneratorComponent extends React.Component<{appStore: AppStor
                 <SpectralSettingsComponent appStore={this.props.appStore} widgetStore={this.props.widgetStore} disable={false}/>
                 {activeFrame && activeFrame.numChannels > 1 &&
                     <React.Fragment>
-                        <FormGroup label="Channels" inline={true} disabled={!activeFrame || activeFrame.numChannels <= 1}>
+                        <FormGroup label="Channel" disabled={!activeFrame || activeFrame.numChannels <= 1}>
                             <RangeSlider
                                 value={widgetStore.channelRange}
                                 min={0}
