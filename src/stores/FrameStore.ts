@@ -451,6 +451,10 @@ export class FrameStore {
         return this.frameInfo && this.frameInfo.fileInfoExtended && this.frameInfo.fileInfoExtended.stokes > 1;
     }
 
+    @computed get numChannels(): number {
+        return this.frameInfo.fileInfoExtended.depth;
+    }
+
     @computed get spectralSiblings(): FrameStore[] {
         if (this.spectralReference) {
             let siblings = [];

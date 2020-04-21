@@ -1,5 +1,5 @@
-import {action, computed, observable} from "mobx";
-import {Colors} from "@blueprintjs/core";
+import {action, autorun, computed, observable} from "mobx";
+import {Colors, NumberRange} from "@blueprintjs/core";
 import {CARTA} from "carta-protobuf";
 import {PlotType, LineSettings} from "components/Shared";
 import {RegionWidgetStore, RegionsType} from "./RegionWidgetStore";
@@ -28,6 +28,7 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
     @observable linePlotInitXYBoundaries: { minXVal: number, maxXVal: number, minYVal: number, maxYVal: number };
 
     // moment settings
+    @observable channelRange: NumberRange;
     @observable momentMask: MomentMask;
     @observable moments: Map<Moments, boolean>;
 
@@ -99,11 +100,14 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         }
     };
 
+    @action setChannelRange = (range: NumberRange) => {
+        this.channelRange = range;
+    };
+
     @action setMomentMask = (momentMask: MomentMask) => {
         if (momentMask) {
             this.momentMask = momentMask;
         }
-        console.log(this.momentMask);
     };
 
     @action setXBounds = (minVal: number, maxVal: number) => {
@@ -178,9 +182,17 @@ export class SpectralProfileWidgetStore extends RegionWidgetStore {
         this.lineWidth = 1;
         this.linePlotInitXYBoundaries = { minXVal: 0, maxXVal: 0, minYVal: 0, maxYVal: 0 };
 
+        this.channelRange = [0, 0];
         this.momentMask = MomentMask.NONE;
         this.moments = new Map<Moments, boolean>();
         Object.keys(Moments).forEach(momentType => this.moments.set(momentType as Moments, false));
+
+        autorun(() => {
+            const frame = appStore.activeFrame;
+            if (frame) {
+                this.channelRange = [0, frame.numChannels - 1];
+            }
+        });
     }
 
     @computed get isAutoScaledX() {

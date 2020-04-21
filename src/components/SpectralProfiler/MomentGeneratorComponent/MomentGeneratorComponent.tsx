@@ -1,6 +1,6 @@
 import * as React from "react";
 import {observer} from "mobx-react";
-import {Button, Checkbox, Divider, FormGroup, HTMLSelect, NumericInput} from "@blueprintjs/core";
+import {Button, Checkbox, Divider, FormGroup, HTMLSelect, NumericInput, NumberRange, RangeSlider} from "@blueprintjs/core";
 import {RegionSelectorComponent} from "components";
 import {SpectralSettingsComponent} from "components/Shared";
 import {SpectralProfileWidgetStore} from "stores/widgets";
@@ -10,6 +10,14 @@ import "./MomentGeneratorComponent.css";
 
 @observer
 export class MomentGeneratorComponent extends React.Component<{appStore: AppStore, widgetStore: SpectralProfileWidgetStore}> {
+    private onChannelRangeChanged = (range: NumberRange) => {
+        const frame = this.props.appStore.activeFrame;
+        const widgetStore = this.props.widgetStore;
+        if (frame && range && range.length === 2 && range[0] >= 0 && range[0] < range[1] && range[1] < frame.frameInfo.fileInfoExtended.depth) {
+            widgetStore.setChannelRange(range);
+        }
+    };
+
     private handleMomentGenerate = () => {
         const appStore = this.props.appStore;
         if (appStore.activeFrame) {
@@ -19,33 +27,31 @@ export class MomentGeneratorComponent extends React.Component<{appStore: AppStor
 
     render() {
         const appStore = this.props.appStore;
+        const activeFrame = appStore.activeFrame;
         const widgetStore = this.props.widgetStore;
         const regionPanel = <RegionSelectorComponent appStore={this.props.appStore} widgetStore={this.props.widgetStore}/>;
 
         const spectralPanel = (
             <React.Fragment>
                 <SpectralSettingsComponent appStore={this.props.appStore} widgetStore={this.props.widgetStore} disable={false}/>
-                <FormGroup label="From" inline={true} disabled={!appStore.activeFrame}>
-                    <NumericInput
-                        value={0}
-                        selectAllOnFocus={true}
-                        buttonPosition={"none"}
-                        allowNumericCharactersOnly={true}
-                        disabled={!appStore.activeFrame}
-                    />
-                </FormGroup>
-                <FormGroup label="To" inline={true} disabled={!appStore.activeFrame}>
-                    <NumericInput
-                        value={0}
-                        selectAllOnFocus={true}
-                        buttonPosition={"none"}
-                        allowNumericCharactersOnly={true}
-                        disabled={!appStore.activeFrame}
-                    />
-                </FormGroup>
-                <FormGroup inline={true} className="reset-range-content" disabled={!appStore.activeFrame}>
-                    <Button className="cursor-selection" small={true} disabled={!appStore.activeFrame}>Cursor selection</Button>
-                </FormGroup>
+                {activeFrame && activeFrame.numChannels > 1 &&
+                    <React.Fragment>
+                        <FormGroup label="Channels" inline={true} disabled={!activeFrame || activeFrame.numChannels <= 1}>
+                            <RangeSlider
+                                value={widgetStore.channelRange}
+                                min={0}
+                                max={activeFrame ? activeFrame.numChannels - 1 : 0}
+                                labelStepSize={activeFrame && activeFrame.numChannels > 10 ? ((activeFrame.numChannels - 1) / 4) : 1}
+                                labelPrecision={0}
+                                onChange={this.onChannelRangeChanged}
+                                disabled={!activeFrame || activeFrame.numChannels <= 1}
+                            />
+                        </FormGroup>
+                        <FormGroup inline={true} className="reset-range-content" disabled={!activeFrame || activeFrame.numChannels <= 1}>
+                            <Button className="cursor-selection" small={true} disabled={!activeFrame || activeFrame.numChannels <= 1}>Cursor selection</Button>
+                        </FormGroup>
+                    </React.Fragment>
+                }
             </React.Fragment>
         );
 
